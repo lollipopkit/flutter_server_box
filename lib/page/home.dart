@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:toolbox/core/route.dart';
+import 'package:toolbox/page/debug.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key, required this.title}) : super(key: key);
@@ -42,16 +44,21 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: GestureDetector(
+          onLongPress: () => AppRoute(const DebugPage(), 'Debug Page').go(context),
+          child: Text(widget.title),
+        ),
       ),
       body: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 7),
           child: Column(
-        children: [
-          _buildInputTop(),
-          _buildTypeOption(),
-          _buildResult(),
-        ],
-      )),
+            children: [
+              const SizedBox(height: 13),
+              _buildInputTop(),
+              _buildTypeOption(),
+              _buildResult(),
+            ],
+          )),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           _textEditingControllerResult.text = doConvert();
