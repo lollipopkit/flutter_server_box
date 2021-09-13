@@ -102,9 +102,33 @@ class _EncodePageState extends State<EncodePage>
   Widget _buildTypeOption() {
     return Card(
       child: ExpansionTile(
-        title: Text(
+        leading: TextButton(
+          child: SizedBox(
+            width: _media.size.width * 0.2,
+            child: Row(
+            children: const [
+              Icon(Icons.change_circle),
+              Text('上下交换')
+            ],
+          ),
+          ),
+          onPressed: () {
+            final temp = _textEditingController.text;
+            _textEditingController.text = _textEditingControllerResult.text;
+            _textEditingControllerResult.text = temp;
+          },
+        ),
+        title: SizedBox(
+          width: _media.size.width * 0.4,
+          child: Row(
+            children: [
+              const VerticalDivider(width: 2, thickness: 2, indent: 2, endIndent: 2,),
+              Text(
           _typeOption[_typeOptionIndex],
           style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.w500),
+        )
+            ],
+          ),
         ),
         children: _typeOption
             .map((e) => ListTile(

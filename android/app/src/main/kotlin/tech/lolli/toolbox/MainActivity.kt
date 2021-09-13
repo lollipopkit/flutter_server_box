@@ -1,4 +1,4 @@
-package com.example.toolbox
+package tech.lolli.toolbox
 
 import io.flutter.embedding.android.FlutterActivity
 
