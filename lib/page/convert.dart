@@ -43,7 +43,8 @@ class _EncodePageState extends State<EncodePage>
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      body: SingleChildScrollView(
+      body: GestureDetector(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 7),
           child: AnimationLimiter(
               child: Column(
@@ -61,7 +62,10 @@ class _EncodePageState extends State<EncodePage>
               _buildTypeOption(),
               _buildResult(),
             ],
-          )))),
+          ))),
+        ),
+        onTap: () => FocusScope.of(context).requestFocus(FocusNode()),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           _textEditingControllerResult.text = doConvert();

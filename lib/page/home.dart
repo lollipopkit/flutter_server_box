@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/route.dart';
+import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/page/convert.dart';
 import 'package:toolbox/page/debug.dart';
 
@@ -37,6 +38,7 @@ class _MyHomePageState extends State<MyHomePage>
           controller: _tabController,
         ),
       ),
+      drawer: _buildDrawer(),
       body: TabBarView(controller: _tabController, children: const [
         EncodePage(),
         EncodePage(),
@@ -45,6 +47,38 @@ class _MyHomePageState extends State<MyHomePage>
         EncodePage()
       ]),
     );
+  }
+
+  Widget _buildDrawer() {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          UserAccountsDrawerHeader(
+            accountName: const Text('ToolBox'),
+            accountEmail: Text(_buildVersionStr()),
+          ),
+          const ListTile(
+            leading: Icon(Icons.settings),
+            title: Text('设置'),
+          ),
+          AboutListTile(
+            icon: const Icon(Icons.text_snippet),
+            child: const Text('开源证书'),
+            applicationName: BuildData.name,
+            applicationVersion: _buildVersionStr(),
+            aboutBoxChildren: const [
+              Text('''\nMade with ❤️ by Toast Studio .
+            \nAll rights reserved.'''),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _buildVersionStr() {
+    return 'Ver: 1.0.${BuildData.build}';
   }
 
   @override
