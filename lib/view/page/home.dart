@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/res/build_data.dart';
-import 'package:toolbox/page/convert.dart';
-import 'package:toolbox/page/debug.dart';
+import 'package:toolbox/view/page/convert.dart';
+import 'package:toolbox/view/page/debug.dart';
+import 'package:toolbox/view/page/server.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key, required this.title}) : super(key: key);
@@ -14,7 +15,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage>
     with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
-  final List<String> _tabs = ['编码', 'Ping', '1', '2', '3'];
+  final List<String> _tabs = ['服务器', '编/解码', '1', '2', '3'];
   late final TabController _tabController;
 
   @override
@@ -40,11 +41,11 @@ class _MyHomePageState extends State<MyHomePage>
       ),
       drawer: _buildDrawer(),
       body: TabBarView(controller: _tabController, children: const [
-        EncodePage(),
-        EncodePage(),
-        EncodePage(),
-        EncodePage(),
-        EncodePage()
+        ServerPage(),
+        ConvertPage(),
+        ConvertPage(),
+        ConvertPage(),
+        ConvertPage()
       ]),
     );
   }
@@ -57,6 +58,7 @@ class _MyHomePageState extends State<MyHomePage>
           UserAccountsDrawerHeader(
             accountName: const Text('ToolBox'),
             accountEmail: Text(_buildVersionStr()),
+            currentAccountPicture: _buildIcon(const Color(0x00083963)),
           ),
           const ListTile(
             leading: Icon(Icons.settings),
@@ -67,13 +69,21 @@ class _MyHomePageState extends State<MyHomePage>
             child: const Text('开源证书'),
             applicationName: BuildData.name,
             applicationVersion: _buildVersionStr(),
+            applicationIcon: _buildIcon(Colors.transparent),
             aboutBoxChildren: const [
-              Text('''\nMade with ❤️ by Toast Studio .
+              Text('''\nMade with Love.
             \nAll rights reserved.'''),
             ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildIcon(Color c) {
+    return CircleAvatar(
+      child: Image.asset('assets/app_icon.jpg'),
+      backgroundColor: c,
     );
   }
 

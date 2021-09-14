@@ -3,14 +3,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
-class EncodePage extends StatefulWidget {
-  const EncodePage({Key? key}) : super(key: key);
+class ConvertPage extends StatefulWidget {
+  const ConvertPage({Key? key}) : super(key: key);
 
   @override
-  _EncodePageState createState() => _EncodePageState();
+  _ConvertPageState createState() => _ConvertPageState();
 }
 
-class _EncodePageState extends State<EncodePage>
+class _ConvertPageState extends State<ConvertPage>
     with AutomaticKeepAliveClientMixin {
   late TextEditingController _textEditingController;
   late TextEditingController _textEditingControllerResult;
@@ -106,11 +106,8 @@ class _EncodePageState extends State<EncodePage>
           child: SizedBox(
             width: _media.size.width * 0.2,
             child: Row(
-            children: const [
-              Icon(Icons.change_circle),
-              Text('上下交换')
-            ],
-          ),
+              children: const [Icon(Icons.change_circle), Text('上下交换')],
+            ),
           ),
           onPressed: () {
             final temp = _textEditingController.text;
@@ -120,14 +117,9 @@ class _EncodePageState extends State<EncodePage>
         ),
         title: SizedBox(
           width: _media.size.width * 0.4,
-          child: Row(
-            children: [
-              const VerticalDivider(width: 2, thickness: 2, indent: 2, endIndent: 2,),
-              Text(
-          _typeOption[_typeOptionIndex],
-          style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.w500),
-        )
-            ],
+          child: Text(
+            _typeOption[_typeOptionIndex],
+            style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.w500),
           ),
         ),
         children: _typeOption

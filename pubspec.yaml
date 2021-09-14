@@ -43,6 +43,8 @@ dependencies:
     git: 
       url: https://github.com/Countly/countly-sdk-flutter-bridge.git
       ref: master
+  ssh2: ^2.2.2
+  charts_flutter: ^0.11.0
 
 
 dev_dependencies:
@@ -68,7 +70,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
+  assets:
+    - assets/
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
