@@ -1,6 +1,10 @@
+import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:toolbox/core/route.dart';
+import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/build_data.dart';
+import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/convert.dart';
 import 'package:toolbox/view/page/debug.dart';
 import 'package:toolbox/view/page/server.dart';
@@ -14,8 +18,11 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage>
-    with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
-  final List<String> _tabs = ['服务器', '编/解码', '1', '2', '3'];
+    with
+        AutomaticKeepAliveClientMixin,
+        SingleTickerProviderStateMixin,
+        AfterLayoutMixin {
+  final List<String> _tabs = ['服务器', '编/解码', '1', '2'];
   late final TabController _tabController;
 
   @override
@@ -45,7 +52,6 @@ class _MyHomePageState extends State<MyHomePage>
         ConvertPage(),
         ConvertPage(),
         ConvertPage(),
-        ConvertPage()
       ]),
     );
   }
@@ -93,4 +99,10 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   bool get wantKeepAlive => true;
+
+  @override
+  Future<void> afterFirstLayout(BuildContext context) async {
+    await GetIt.I.allReady();
+    await locator<ServerProvider>().loadData();
+  }
 }

@@ -7,11 +7,13 @@ import 'package:toolbox/app.dart';
 import 'package:toolbox/core/analysis.dart';
 import 'package:toolbox/data/provider/app.dart';
 import 'package:toolbox/data/provider/debug.dart';
+import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/locator.dart';
 
 Future<void> initApp() async {
   await Hive.initFlutter();
   await setupLocator();
+  locator<ServerProvider>().loadData();
 }
 
 void runInZone(dynamic Function() body) {
@@ -51,6 +53,7 @@ Future<void> main() async {
         providers: [
           ChangeNotifierProvider(create: (_) => locator<AppProvider>()),
           ChangeNotifierProvider(create: (_) => locator<DebugProvider>()),
+          ChangeNotifierProvider(create: (_) => locator<ServerProvider>()),
         ],
         child: const MyApp(),
       ),

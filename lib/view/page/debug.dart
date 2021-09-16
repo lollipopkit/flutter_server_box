@@ -10,8 +10,6 @@ class DebugPage extends StatefulWidget {
 }
 
 class _DebugPageState extends State<DebugPage> {
-  DebugProvider get debug => Provider.of<DebugProvider>(context);
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -33,11 +31,12 @@ class _DebugPageState extends State<DebugPage> {
           fontWeight: FontWeight.bold,
         ),
         child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: debug.widgets,
-          ),
+          child: Consumer<DebugProvider>(builder: (_, debug, __) {
+            return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: debug.widgets);
+          }),
         ),
       ),
     );
