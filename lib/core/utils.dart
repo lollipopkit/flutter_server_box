@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/view/widget/card_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -66,4 +68,17 @@ Widget buildSwitch(BuildContext context, StoreProperty<bool> prop,
           });
     },
   );
+}
+
+void setTransparentNavigationBar(BuildContext context) {
+  if (Platform.isAndroid) {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarContrastEnforced: true,
+      systemNavigationBarIconBrightness:
+          isDarkMode(context) ? Brightness.light : Brightness.dark,
+    ));
+  }
 }

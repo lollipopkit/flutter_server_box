@@ -2,6 +2,7 @@ import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:toolbox/core/route.dart';
+import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/locator.dart';
@@ -33,6 +34,7 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   Widget build(BuildContext context) {
+    setTransparentNavigationBar(context);
     super.build(context);
     return Scaffold(
       appBar: AppBar(
@@ -103,6 +105,6 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
     await GetIt.I.allReady();
-    await locator<ServerProvider>().loadData();
+    await locator<ServerProvider>().loadLocalData();
   }
 }

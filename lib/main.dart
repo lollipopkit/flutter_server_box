@@ -13,7 +13,7 @@ import 'package:toolbox/locator.dart';
 Future<void> initApp() async {
   await Hive.initFlutter();
   await setupLocator();
-  locator<ServerProvider>().loadData();
+  locator<ServerProvider>().loadLocalData();
 }
 
 void runInZone(dynamic Function() body) {
