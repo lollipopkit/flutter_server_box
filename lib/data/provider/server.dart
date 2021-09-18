@@ -70,7 +70,7 @@ class ServerProvider extends BusyProvider {
   }
 
   Future<void> startAutoRefresh() async {
-    Timer.periodic(const Duration(seconds: 7), (_) async {
+    Timer.periodic(const Duration(seconds: 3), (_) async {
       await refreshData();
     });
   }

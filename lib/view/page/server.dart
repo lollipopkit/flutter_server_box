@@ -52,29 +52,26 @@ class _ServerPageState extends State<ServerPage>
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      body: GestureDetector(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 7),
-          child: AnimationLimiter(
-              child: Consumer<ServerProvider>(builder: (_, pro, __) {
-            return Column(
-                children: AnimationConfiguration.toStaggeredList(
-              duration: const Duration(milliseconds: 377),
-              childAnimationBuilder: (widget) => SlideAnimation(
-                verticalOffset: 50.0,
-                child: FadeInAnimation(
-                  child: widget,
-                ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 7),
+        child: AnimationLimiter(
+            child: Consumer<ServerProvider>(builder: (_, pro, __) {
+          return Column(
+              children: AnimationConfiguration.toStaggeredList(
+            duration: const Duration(milliseconds: 377),
+            childAnimationBuilder: (widget) => SlideAnimation(
+              verticalOffset: 50.0,
+              child: FadeInAnimation(
+                child: widget,
               ),
-              children: [
-                const SizedBox(height: 13),
-                ...pro.servers.map((e) => _buildEachServerCard(
-                    pro.servers[pro.servers.indexOf(e)].status, e.info))
-              ],
-            ));
-          })),
-        ),
-        onTap: () => FocusScope.of(context).requestFocus(FocusNode()),
+            ),
+            children: [
+              const SizedBox(height: 13),
+              ...pro.servers.map((e) => _buildEachServerCard(
+                  pro.servers[pro.servers.indexOf(e)].status, e.info))
+            ],
+          ));
+        })),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => showAddServerDialog(),
@@ -166,27 +163,61 @@ class _ServerPageState extends State<ServerPage>
 
   Widget _buildEachServerCard(ServerStatus ss, ServerPrivateInfo spi) {
     return GestureDetector(
-      child: _buildEachCardContent(ss, spi),
-      onLongPress: () =>
-          showRoundDialog(context, '是否删除', const Text('删除后无法恢复'), [
-        TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('否')),
-        TextButton(
-            onPressed: () {
-              serverProvider.delServer(spi);
-              Navigator.of(context).pop();
-            },
-            child: const Text('是'))
-      ]),
-    );
+        child: _buildEachCardContent(ss, spi),
+        onLongPress: () {
+          nameController.text = spi.name ?? '';
+          ipController.text = spi.ip ?? '';
+          portController.text = (spi.port ?? 22).toString();
+          usernameController.text = spi.user ?? '';
+          if (spi.authorization is String) {
+            passwordController.text = spi.authorization as String? ?? '';
+          } else {
+            final auth = spi.authorization as Map;
+            passwordController.text = auth['passphrase'];
+            keyController.text = auth['privateKey'];
+          }
+
+          showRoundDialog(context, '新建服务器连接', _buildTextInputField(context), [
+            TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('关闭')),
+            TextButton(
+                onPressed: () {
+                  final authorization = keyController.text.isEmpty
+                      ? passwordController.text
+                      : {
+                          "privateKey": keyController.text,
+                          "passphrase": passwordController.text
+                        };
+                  serverProvider.updateServer(
+                      spi,
+                      ServerPrivateInfo(
+                          name: nameController.text,
+                          ip: ipController.text,
+                          port: int.parse(portController.text),
+                          user: usernameController.text,
+                          authorization: authorization));
+                  nameController.clear();
+                  ipController.clear();
+                  portController.clear();
+                  usernameController.clear();
+                  passwordController.clear();
+                  keyController.clear();
+                  Navigator.of(context).pop();
+                },
+                child: const Text('连接'))
+          ]);
+        });
   }
 
   Widget _buildEachCardContent(ServerStatus ss, ServerPrivateInfo spi) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(13),
-        child: _buildRealServerCard(ss, spi.name ?? ''),
+      child: InkWell(
+        child: Padding(
+          padding: const EdgeInsets.all(13),
+          child: _buildRealServerCard(ss, spi.name ?? ''),
+        ),
+        onTap: () {},
       ),
     );
   }
