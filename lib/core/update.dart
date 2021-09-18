@@ -38,7 +38,9 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
 
   showSnackBarWithAction(
       context,
-      '${BuildData.name}有更新啦，Ver：${update.newest}\n${update.changelog}',
+      update.min > BuildData.build
+          ? '您的版本过旧，请及时更新'
+          : '${BuildData.name}有更新啦，Ver：${update.newest}\n${update.changelog}',
       '更新',
       () => openUrl(Platform.isAndroid ? update.android : update.ios));
 }

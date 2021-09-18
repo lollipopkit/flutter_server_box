@@ -184,44 +184,49 @@ class _ServerPageState extends State<ServerPage>
             keyController.text = auth['privateKey'];
           }
 
-          showRoundDialog(context, '修改服务器信息', _buildTextInputField(context), [
-            TextButton(
-                onPressed: () {
-                  clearTextField();
-                  Navigator.of(context).pop();
-                },
-                child: const Text('关闭')),
-            TextButton(
-                onPressed: () {
-                  final authorization = keyController.text.isEmpty
-                      ? passwordController.text
-                      : {
-                          "privateKey": keyController.text,
-                          "passphrase": passwordController.text
-                        };
-                  serverProvider.updateServer(
-                      spi,
-                      ServerPrivateInfo(
-                          name: nameController.text,
-                          ip: ipController.text,
-                          port: int.parse(portController.text),
-                          user: usernameController.text,
-                          authorization: authorization));
-                  clearTextField();
-                  Navigator.of(context).pop();
-                },
-                child: const Text('保存')),
-            TextButton(
-                onPressed: () {
-                  serverProvider.delServer(spi);
-                  clearTextField();
-                  Navigator.of(context).pop();
-                },
-                child: const Text(
-                  '删除',
-                  style: TextStyle(color: Colors.red),
-                ))
-          ], barrierDismiss: false);
+          showRoundDialog(
+              context,
+              '修改服务器信息',
+              _buildTextInputField(context),
+              [
+                TextButton(
+                    onPressed: () {
+                      clearTextField();
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('关闭')),
+                TextButton(
+                    onPressed: () {
+                      final authorization = keyController.text.isEmpty
+                          ? passwordController.text
+                          : {
+                              "privateKey": keyController.text,
+                              "passphrase": passwordController.text
+                            };
+                      serverProvider.updateServer(
+                          spi,
+                          ServerPrivateInfo(
+                              name: nameController.text,
+                              ip: ipController.text,
+                              port: int.parse(portController.text),
+                              user: usernameController.text,
+                              authorization: authorization));
+                      clearTextField();
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('保存')),
+                TextButton(
+                    onPressed: () {
+                      serverProvider.delServer(spi);
+                      clearTextField();
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text(
+                      '删除',
+                      style: TextStyle(color: Colors.red),
+                    ))
+              ],
+              barrierDismiss: false);
         });
   }
 
