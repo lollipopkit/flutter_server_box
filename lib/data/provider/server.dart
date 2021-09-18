@@ -4,6 +4,7 @@ import 'package:ssh2/ssh2.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/provider_base.dart';
 import 'package:toolbox/data/model/disk_info.dart';
+import 'package:toolbox/data/model/server.dart';
 import 'package:toolbox/data/model/server_private_info.dart';
 import 'package:toolbox/data/model/server_status.dart';
 import 'package:toolbox/data/model/tcp_status.dart';
@@ -11,12 +12,8 @@ import 'package:toolbox/data/store/server.dart';
 import 'package:toolbox/locator.dart';
 
 class ServerProvider extends BusyProvider {
-  List<ServerPrivateInfo> _servers = [];
-  List<ServerStatus> _serversStatus = [];
-  List<SSHClient> _clients = [];
-
-  List<ServerPrivateInfo> get servers => _servers;
-  List<ServerStatus> get serversStatus => _serversStatus;
+  List<ServerInfo> _servers = [];
+  List<ServerInfo> get servers => _servers;
 
   ServerStatus get emptyStatus => ServerStatus(
       cpuPercent: 0,
@@ -36,41 +33,39 @@ class ServerProvider extends BusyProvider {
 
   Future<void> loadLocalData() async {
     setBusyState(true);
-    _servers = locator<ServerStore>().fetch();
-    initStatusList();
+    final infos = locator<ServerStore>().fetch();
+    _servers = List.generate(infos.length, (index) => genInfo(infos[index]));
     setBusyState(false);
     notifyListeners();
   }
 
-  void initStatusList() {
-    _clients = List.generate(
-        _servers.length,
-        (idx) => _fillClient(idx));
-    _serversStatus = List.generate(_servers.length, (idx) => _fillStatus(idx));
+  ServerInfo genInfo(ServerPrivateInfo spi) {
+    return ServerInfo(
+        spi,
+        emptyStatus,
+        SSHClient(
+            host: spi.ip!,
+            port: spi.port!,
+            username: spi.user!,
+            passwordOrKey: spi.authorization));
   }
 
-  SSHClient _fillClient(int idx) {
-    if (idx < _clients.length) {
-      return _clients[idx];
-    }
+  SSHClient genClient(ServerPrivateInfo spi) {
     return SSHClient(
-              host: _servers[idx].ip!,
-              port: _servers[idx].port!,
-              username: _servers[idx].user!,
-              passwordOrKey: _servers[idx].authorization,
-            );
-  }
-
-  ServerStatus _fillStatus(int idx) {
-    if (idx < _serversStatus.length) {
-      return _serversStatus[idx];
-    }
-    return emptyStatus;
+        host: spi.ip!,
+        port: spi.port!,
+        username: spi.user!,
+        passwordOrKey: spi.authorization);
   }
 
   Future<void> refreshData() async {
-    _serversStatus = await Future.wait(
-        _servers.map((s) => _getData(s, _servers.indexOf(s))));
+    final _serversStatus = await Future.wait(
+        _servers.map((s) => _getData(s.info, _servers.indexOf(s))));
+    int idx = 0;
+    for (var item in _serversStatus) {
+      _servers[idx].status = item;
+      idx++;
+    }
     notifyListeners();
   }
 
@@ -81,28 +76,27 @@ class ServerProvider extends BusyProvider {
   }
 
   void addServer(ServerPrivateInfo info) {
-    _servers.add(info);
+    _servers.add(genInfo(info));
     locator<ServerStore>().put(info);
-    initStatusList();
     notifyListeners();
   }
 
   void delServer(ServerPrivateInfo info) {
-    _servers.remove(info);
+    _servers.removeWhere((e) => e.info == info);
     locator<ServerStore>().delete(info);
-    initStatusList();
     notifyListeners();
   }
 
   void updateServer(ServerPrivateInfo old, ServerPrivateInfo newInfo) {
-    _servers[_servers.indexOf(old)] = newInfo;
+    final idx = _servers.indexWhere((e) => e.info == old);
+    _servers[idx].info = newInfo;
+    _servers[idx].client = genClient(newInfo);
     locator<ServerStore>().update(old, newInfo);
-    initStatusList();
     notifyListeners();
   }
 
   Future<ServerStatus> _getData(ServerPrivateInfo info, int idx) async {
-    final client = _clients[idx];
+    final client = _servers[idx].client;
     if (!(await client.isConnected())) {
       await client.connect();
     }

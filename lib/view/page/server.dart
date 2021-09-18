@@ -31,10 +31,6 @@ class _ServerPageState extends State<ServerPage>
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
   final keyController = TextEditingController();
-  final ipFocusNode = FocusNode();
-  final portFocusNode = FocusNode();
-  final usernameFocusNode = FocusNode();
-  final passwordFocusNode = FocusNode();
 
   late ServerProvider serverProvider;
   final cachedServerStatus = <ServerStatus?>[];
@@ -73,7 +69,7 @@ class _ServerPageState extends State<ServerPage>
               children: [
                 const SizedBox(height: 13),
                 ...pro.servers.map((e) => _buildEachServerCard(
-                    pro.serversStatus[pro.servers.indexOf(e)], e))
+                    pro.servers[pro.servers.indexOf(e)].status, e.info))
               ],
             ));
           })),
@@ -134,32 +130,21 @@ class _ServerPageState extends State<ServerPage>
             controller: nameController,
             keyboardType: TextInputType.text,
             decoration: _buildDecoration('名称'),
-            onSubmitted: (_) =>
-                FocusScope.of(context).requestFocus(ipFocusNode),
           ),
           TextField(
             controller: ipController,
-            focusNode: ipFocusNode,
             keyboardType: TextInputType.text,
             decoration: _buildDecoration('IP'),
-            onSubmitted: (_) =>
-                FocusScope.of(context).requestFocus(usernameFocusNode),
           ),
           TextField(
             controller: portController,
-            focusNode: portFocusNode,
             keyboardType: TextInputType.number,
             decoration: _buildDecoration('Port'),
-            onSubmitted: (_) =>
-                FocusScope.of(context).requestFocus(usernameFocusNode),
           ),
           TextField(
             controller: usernameController,
-            focusNode: usernameFocusNode,
             keyboardType: TextInputType.text,
             decoration: _buildDecoration('用户名'),
-            onSubmitted: (_) =>
-                FocusScope.of(context).requestFocus(passwordFocusNode),
           ),
           TextField(
             controller: keyController,
@@ -169,7 +154,6 @@ class _ServerPageState extends State<ServerPage>
           ),
           TextField(
             controller: passwordController,
-            focusNode: passwordFocusNode,
             obscureText: true,
             keyboardType: TextInputType.text,
             decoration: _buildDecoration('密码'),
@@ -216,12 +200,13 @@ class _ServerPageState extends State<ServerPage>
     for (var e in ss.memList!) {
       memData.add(IndexPercent(ss.memList!.indexOf(e), e!.toInt()));
     }
-    
+
     final mem1 = memData[1];
     memData[1] = memData.last;
     memData.last = mem1;
-    
-    final rootDisk = ss.disk!.firstWhere((element) => element!.mountLocation == '/');
+
+    final rootDisk =
+        ss.disk!.firstWhere((element) => element!.mountLocation == '/');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,8 +246,10 @@ class _ServerPageState extends State<ServerPage>
                 data: memData,
               )
             ]),
-            _buildIOData('Net', 'Conn:\n' + ss.tcp!.maxConn!.toString(), 'Fail:\n' + ss.tcp!.fail.toString()),
-            _buildIOData('Disk', 'Total:\n' + rootDisk!.size!, 'Used:\n' + rootDisk.usedPercent.toString() + '%')
+            _buildIOData('Net', 'Conn:\n' + ss.tcp!.maxConn!.toString(),
+                'Fail:\n' + ss.tcp!.fail.toString()),
+            _buildIOData('Disk', 'Total:\n' + rootDisk!.size!,
+                'Used:\n' + rootDisk.usedPercent.toString() + '%')
           ],
         ),
       ],
@@ -270,7 +257,8 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildIOData(String title, String up, String down) {
-    final statusTextStyle = TextStyle(fontSize: 11, color: _theme.textTheme.bodyText1!.color!.withAlpha(177));
+    final statusTextStyle = TextStyle(
+        fontSize: 11, color: _theme.textTheme.bodyText1!.color!.withAlpha(177));
     return SizedBox(
       width: _media.size.width * 0.2,
       height: _media.size.height * 0.1,
@@ -280,20 +268,20 @@ class _ServerPageState extends State<ServerPage>
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  up,
-                  style: statusTextStyle,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  down + '\n',
-                  style: statusTextStyle,
-                  textAlign: TextAlign.center,
-                )
-              ],
-            ),
+                children: [
+                  Text(
+                    up,
+                    style: statusTextStyle,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    down + '\n',
+                    style: statusTextStyle,
+                    textAlign: TextAlign.center,
+                  )
+                ],
+              ),
             ),
           ),
           Positioned(
@@ -315,10 +303,12 @@ class _ServerPageState extends State<ServerPage>
         children: [
           DonutPieChart(series),
           Positioned.fill(
-            child: Center(child: Text(
-              '${percent.toStringAsFixed(1)}%\n',
-              textAlign: TextAlign.center,
-            ),),
+            child: Center(
+              child: Text(
+                '${percent.toStringAsFixed(1)}%\n',
+                textAlign: TextAlign.center,
+              ),
+            ),
           ),
           Positioned(
               child: Text(title, textAlign: TextAlign.center),
