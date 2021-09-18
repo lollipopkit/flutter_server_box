@@ -38,7 +38,6 @@ void runInZone(dynamic Function() body) {
 }
 
 void onError(Object obj, StackTrace stack) {
-  print('error: $obj');
   Analysis.recordException(obj);
   final debugProvider = locator<DebugProvider>();
   debugProvider.addError(obj);

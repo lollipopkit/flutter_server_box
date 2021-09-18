@@ -85,7 +85,10 @@ class _ServerPageState extends State<ServerPage>
   void showAddServerDialog() {
     showRoundDialog(context, '新建服务器连接', _buildTextInputField(context), [
       TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            clearTextField();
+            Navigator.of(context).pop();
+          },
           child: const Text('关闭')),
       TextButton(
           onPressed: () {
@@ -101,12 +104,7 @@ class _ServerPageState extends State<ServerPage>
                 port: int.parse(portController.text),
                 user: usernameController.text,
                 authorization: authorization));
-            nameController.clear();
-            ipController.clear();
-            portController.clear();
-            usernameController.clear();
-            passwordController.clear();
-            keyController.clear();
+            clearTextField();
             Navigator.of(context).pop();
           },
           child: const Text('连接'))
@@ -161,6 +159,15 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
+  void clearTextField() {
+    nameController.clear();
+    ipController.clear();
+    portController.clear();
+    usernameController.clear();
+    passwordController.clear();
+    keyController.clear();
+  }
+
   Widget _buildEachServerCard(ServerStatus ss, ServerPrivateInfo spi) {
     return GestureDetector(
         child: _buildEachCardContent(ss, spi),
@@ -177,9 +184,12 @@ class _ServerPageState extends State<ServerPage>
             keyController.text = auth['privateKey'];
           }
 
-          showRoundDialog(context, '新建服务器连接', _buildTextInputField(context), [
+          showRoundDialog(context, '修改服务器信息', _buildTextInputField(context), [
             TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () {
+                  clearTextField();
+                  Navigator.of(context).pop();
+                },
                 child: const Text('关闭')),
             TextButton(
                 onPressed: () {
@@ -197,16 +207,21 @@ class _ServerPageState extends State<ServerPage>
                           port: int.parse(portController.text),
                           user: usernameController.text,
                           authorization: authorization));
-                  nameController.clear();
-                  ipController.clear();
-                  portController.clear();
-                  usernameController.clear();
-                  passwordController.clear();
-                  keyController.clear();
+                  clearTextField();
                   Navigator.of(context).pop();
                 },
-                child: const Text('连接'))
-          ]);
+                child: const Text('保存')),
+            TextButton(
+                onPressed: () {
+                  serverProvider.delServer(spi);
+                  clearTextField();
+                  Navigator.of(context).pop();
+                },
+                child: const Text(
+                  '删除',
+                  style: TextStyle(color: Colors.red),
+                ))
+          ], barrierDismiss: false);
         });
   }
 

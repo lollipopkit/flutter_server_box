@@ -2,6 +2,7 @@ import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:toolbox/core/route.dart';
+import 'package:toolbox/core/update.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/build_data.dart';
@@ -52,8 +53,12 @@ class _MyHomePageState extends State<MyHomePage>
       body: TabBarView(controller: _tabController, children: const [
         ServerPage(),
         ConvertPage(),
-        ConvertPage(),
-        ConvertPage(),
+        Center(
+          child: Text('1'),
+        ),
+        Center(
+          child: Text('2'),
+        ),
       ]),
     );
   }
@@ -106,5 +111,6 @@ class _MyHomePageState extends State<MyHomePage>
   Future<void> afterFirstLayout(BuildContext context) async {
     await GetIt.I.allReady();
     await locator<ServerProvider>().loadLocalData();
+    await doUpdate(context);
   }
 }

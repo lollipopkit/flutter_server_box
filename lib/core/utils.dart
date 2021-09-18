@@ -27,24 +27,22 @@ void showSnackBarWithAction(
 }
 
 Future<bool> openUrl(String url) async {
-  print('openUrl $url');
   if (!await canLaunch(url)) {
-    print('canLaunch false');
     return false;
   }
   final ok = await launch(url, forceSafariVC: false);
   if (ok == true) {
     return true;
   }
-  print('launch $url failed');
   return false;
 }
 
 Future<T?>? showRoundDialog<T>(
     BuildContext context, String title, Widget child, List<Widget> actions,
-    {EdgeInsets? padding}) {
+    {EdgeInsets? padding, bool barrierDismiss = true}) {
   return showDialog<T>(
       context: context,
+      barrierDismissible: barrierDismiss,
       builder: (ctx) {
         return CardDialog(
           title: Text(title),

@@ -19,7 +19,6 @@ class Analysis {
     await Countly.start();
     await Countly.enableCrashReporting();
     await Countly.giveAllConsent();
-    print('Countly init successfully.');
   }
 
   static void recordView(String view) {
