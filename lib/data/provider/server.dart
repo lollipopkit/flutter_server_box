@@ -11,9 +11,9 @@ import 'package:toolbox/data/store/server.dart';
 import 'package:toolbox/locator.dart';
 
 class ServerProvider extends BusyProvider {
-  late List<ServerPrivateInfo> _servers;
-  late List<ServerStatus> _serversStatus;
-  late List<SSHClient> _clients;
+  List<ServerPrivateInfo> _servers = [];
+  List<ServerStatus> _serversStatus = [];
+  List<SSHClient> _clients = [];
 
   List<ServerPrivateInfo> get servers => _servers;
   List<ServerStatus> get serversStatus => _serversStatus;
@@ -23,11 +23,11 @@ class ServerProvider extends BusyProvider {
       memList: [100, 0],
       disk: [
         DiskInfo(
-            mountLocation: '',
-            mountPath: '',
-            used: '',
-            size: '',
-            avail: '',
+            mountLocation: '/',
+            mountPath: '/',
+            used: '0',
+            size: '0',
+            avail: '0',
             usedPercent: 0)
       ],
       sysVer: '',
@@ -37,17 +37,35 @@ class ServerProvider extends BusyProvider {
   Future<void> loadLocalData() async {
     setBusyState(true);
     _servers = locator<ServerStore>().fetch();
-    _serversStatus = List.generate(_servers.length, (_) => emptyStatus);
+    initStatusList();
+    setBusyState(false);
+    notifyListeners();
+  }
+
+  void initStatusList() {
     _clients = List.generate(
         _servers.length,
-        (idx) => SSHClient(
+        (idx) => _fillClient(idx));
+    _serversStatus = List.generate(_servers.length, (idx) => _fillStatus(idx));
+  }
+
+  SSHClient _fillClient(int idx) {
+    if (idx < _clients.length) {
+      return _clients[idx];
+    }
+    return SSHClient(
               host: _servers[idx].ip!,
               port: _servers[idx].port!,
               username: _servers[idx].user!,
               passwordOrKey: _servers[idx].authorization,
-            ));
-    setBusyState(false);
-    notifyListeners();
+            );
+  }
+
+  ServerStatus _fillStatus(int idx) {
+    if (idx < _serversStatus.length) {
+      return _serversStatus[idx];
+    }
+    return emptyStatus;
   }
 
   Future<void> refreshData() async {
@@ -57,7 +75,7 @@ class ServerProvider extends BusyProvider {
   }
 
   Future<void> startAutoRefresh() async {
-    Timer.periodic(const Duration(seconds: 3), (_) async {
+    Timer.periodic(const Duration(seconds: 7), (_) async {
       await refreshData();
     });
   }
@@ -65,12 +83,21 @@ class ServerProvider extends BusyProvider {
   void addServer(ServerPrivateInfo info) {
     _servers.add(info);
     locator<ServerStore>().put(info);
+    initStatusList();
     notifyListeners();
   }
 
   void delServer(ServerPrivateInfo info) {
     _servers.remove(info);
     locator<ServerStore>().delete(info);
+    initStatusList();
+    notifyListeners();
+  }
+
+  void updateServer(ServerPrivateInfo old, ServerPrivateInfo newInfo) {
+    _servers[_servers.indexOf(old)] = newInfo;
+    locator<ServerStore>().update(old, newInfo);
+    initStatusList();
     notifyListeners();
   }
 

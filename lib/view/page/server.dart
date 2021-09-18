@@ -81,41 +81,43 @@ class _ServerPageState extends State<ServerPage>
         onTap: () => FocusScope.of(context).requestFocus(FocusNode()),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showRoundDialog(context, '新建服务器连接', _buildTextInputField(context), [
-            TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('关闭')),
-            TextButton(
-                onPressed: () {
-                  final authorization = keyController.text.isEmpty
-                      ? passwordController.text
-                      : {
-                          "privateKey": keyController.text,
-                          "passphrase": passwordController.text
-                        };
-                  serverProvider.addServer(ServerPrivateInfo(
-                      name: nameController.text,
-                      ip: ipController.text,
-                      port: int.parse(portController.text),
-                      user: usernameController.text,
-                      authorization: authorization));
-                  nameController.clear();
-                  ipController.clear();
-                  portController.clear();
-                  usernameController.clear();
-                  passwordController.clear();
-                  keyController.clear();
-                  Navigator.of(context).pop();
-                },
-                child: const Text('连接'))
-          ]);
-        },
+        onPressed: () => showAddServerDialog(),
         tooltip: 'add a server',
         heroTag: 'server page fab',
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  void showAddServerDialog() {
+    showRoundDialog(context, '新建服务器连接', _buildTextInputField(context), [
+      TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('关闭')),
+      TextButton(
+          onPressed: () {
+            final authorization = keyController.text.isEmpty
+                ? passwordController.text
+                : {
+                    "privateKey": keyController.text,
+                    "passphrase": passwordController.text
+                  };
+            serverProvider.addServer(ServerPrivateInfo(
+                name: nameController.text,
+                ip: ipController.text,
+                port: int.parse(portController.text),
+                user: usernameController.text,
+                authorization: authorization));
+            nameController.clear();
+            ipController.clear();
+            portController.clear();
+            usernameController.clear();
+            passwordController.clear();
+            keyController.clear();
+            Navigator.of(context).pop();
+          },
+          child: const Text('连接'))
+    ]);
   }
 
   InputDecoration _buildDecoration(String label, {TextStyle? textStyle}) {
@@ -214,6 +216,13 @@ class _ServerPageState extends State<ServerPage>
     for (var e in ss.memList!) {
       memData.add(IndexPercent(ss.memList!.indexOf(e), e!.toInt()));
     }
+    
+    final mem1 = memData[1];
+    memData[1] = memData.last;
+    memData.last = mem1;
+    
+    final rootDisk = ss.disk!.firstWhere((element) => element!.mountLocation == '/');
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -247,42 +256,45 @@ class _ServerPageState extends State<ServerPage>
                 ss.memList![1]! / ss.memList![0]! * 100, 'Mem', [
               chart.Series<IndexPercent, int>(
                 id: 'Mem',
-                domainFn: (IndexPercent sales, _) => sales.id,
-                measureFn: (IndexPercent sales, _) => sales.percent,
+                domainFn: (IndexPercent mem, _) => mem.id,
+                measureFn: (IndexPercent mem, _) => mem.percent,
                 data: memData,
               )
             ]),
-            _buildIOData('Net', ss.tcp!.maxConn!.toString(), '0kb/s'),
-            _buildIOData('Disk', '0kb/s', '0kb/s')
+            _buildIOData('Net', 'Conn:\n' + ss.tcp!.maxConn!.toString(), 'Fail:\n' + ss.tcp!.fail.toString()),
+            _buildIOData('Disk', 'Total:\n' + rootDisk!.size!, 'Used:\n' + rootDisk.usedPercent.toString() + '%')
           ],
-        )
+        ),
       ],
     );
   }
 
   Widget _buildIOData(String title, String up, String down) {
+    final statusTextStyle = TextStyle(fontSize: 11, color: _theme.textTheme.bodyText1!.color!.withAlpha(177));
     return SizedBox(
       width: _media.size.width * 0.2,
       height: _media.size.height * 0.1,
       child: Stack(
         children: [
-          Positioned(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+          Positioned.fill(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  '↓$up',
-                  textAlign: TextAlign.start,
+                  up,
+                  style: statusTextStyle,
+                  textAlign: TextAlign.center,
                 ),
+                const SizedBox(height: 3),
                 Text(
-                  '↑$down',
+                  down + '\n',
+                  style: statusTextStyle,
                   textAlign: TextAlign.center,
                 )
               ],
             ),
-            top: _media.size.height * 0.012,
-            left: 0,
-            right: 0,
+            ),
           ),
           Positioned(
               child: Text(title, textAlign: TextAlign.center),
@@ -302,14 +314,11 @@ class _ServerPageState extends State<ServerPage>
       child: Stack(
         children: [
           DonutPieChart(series),
-          Positioned(
-            child: Text(
-              '${percent.toStringAsFixed(1)}%',
+          Positioned.fill(
+            child: Center(child: Text(
+              '${percent.toStringAsFixed(1)}%\n',
               textAlign: TextAlign.center,
-            ),
-            left: 0,
-            right: 0,
-            top: _media.size.height * 0.03,
+            ),),
           ),
           Positioned(
               child: Text(title, textAlign: TextAlign.center),

@@ -2,8 +2,12 @@ PODS:
   - countly_flutter (20.11.4):
     - Flutter
   - Flutter (1.0.0)
+  - GZ-NMSSH (4.1.5)
   - path_provider (0.0.1):
     - Flutter
+  - ssh2 (2.2.2):
+    - Flutter
+    - GZ-NMSSH (~> 4.1.5)
   - url_launcher (0.0.1):
     - Flutter
 
@@ -11,7 +15,12 @@ DEPENDENCIES:
   - countly_flutter (from `.symlinks/plugins/countly_flutter/ios`)
   - Flutter (from `Flutter`)
   - path_provider (from `.symlinks/plugins/path_provider/ios`)
+  - ssh2 (from `.symlinks/plugins/ssh2/ios`)
   - url_launcher (from `.symlinks/plugins/url_launcher/ios`)
+
+SPEC REPOS:
+  trunk:
+    - GZ-NMSSH
 
 EXTERNAL SOURCES:
   countly_flutter:
@@ -20,15 +29,19 @@ EXTERNAL SOURCES:
     :path: Flutter
   path_provider:
     :path: ".symlinks/plugins/path_provider/ios"
+  ssh2:
+    :path: ".symlinks/plugins/ssh2/ios"
   url_launcher:
     :path: ".symlinks/plugins/url_launcher/ios"
 
 SPEC CHECKSUMS:
   countly_flutter: 38419412e193a1faa5babeb5d28a63fda260687d
   Flutter: 50d75fe2f02b26cc09d224853bb45737f8b3214a
+  GZ-NMSSH: d749f8ae2fd0094b953cd1d5abd8e0cab3c93f8d
   path_provider: abfe2b5c733d04e238b0d8691db0cfd63a27a93c
+  ssh2: 5ded7906964d0e71e2204e5e031a155528df4674
   url_launcher: 6fef411d543ceb26efce54b05a0a40bfd74cbbef
 
 PODFILE CHECKSUM: aafe91acc616949ddb318b77800a7f51bffa2a4c
 
-COCOAPODS: 1.10.2
+COCOAPODS: 1.11.2

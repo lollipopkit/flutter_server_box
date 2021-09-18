@@ -17,11 +17,18 @@ class ServerStore extends PersistentStore {
 
   void delete(ServerPrivateInfo s) {
     final ss = fetch();
-    ss.removeWhere((e) => e.ip == s.ip && e.port == s.port && e.user == e.user);
+    ss.removeAt(index(s));
     box.put('servers', json.encode(ss));
   }
 
-  bool have(ServerPrivateInfo s) => fetch()
-      .where((e) => e.ip == s.ip && e.port == s.port && e.user == e.user)
-      .isNotEmpty;
+  void update(ServerPrivateInfo old, ServerPrivateInfo newInfo) {
+    final ss = fetch();
+    ss[index(old)] = newInfo;
+    box.put('servers', json.encode(ss));
+  }
+
+  int index(ServerPrivateInfo s) => fetch()
+      .indexWhere((e) => e.ip == s.ip && e.port == s.port && e.user == e.user);
+
+  bool have(ServerPrivateInfo s) => index(s) != -1;
 }
