@@ -262,7 +262,7 @@ packages:
       name: path_provider
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.4"
+    version: "2.0.5"
   path_provider_linux:
     dependency: transitive
     description:
@@ -311,7 +311,7 @@ packages:
       name: plugin_platform_interface
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.1"
+    version: "2.0.2"
   process:
     dependency: transitive
     description:
@@ -325,7 +325,7 @@ packages:
       name: provider
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "6.0.0"
+    version: "6.0.1"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -344,7 +344,7 @@ packages:
       name: ssh2
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.2.2"
+    version: "2.2.3"
   stack_trace:
     dependency: transitive
     description:
@@ -393,7 +393,7 @@ packages:
       name: url_launcher
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "6.0.10"
+    version: "6.0.12"
   url_launcher_linux:
     dependency: transitive
     description:
@@ -458,5 +458,5 @@ packages:
     source: hosted
     version: "0.2.0"
 sdks:
-  dart: ">=2.13.0 <3.0.0"
-  flutter: ">=2.0.0"
+  dart: ">=2.14.0 <3.0.0"
+  flutter: ">=2.5.0"

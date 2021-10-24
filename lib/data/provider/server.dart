@@ -40,14 +40,7 @@ class ServerProvider extends BusyProvider {
   }
 
   ServerInfo genInfo(ServerPrivateInfo spi) {
-    return ServerInfo(
-        spi,
-        emptyStatus,
-        SSHClient(
-            host: spi.ip!,
-            port: spi.port!,
-            username: spi.user!,
-            passwordOrKey: spi.authorization));
+    return ServerInfo(spi, emptyStatus, genClient(spi));
   }
 
   SSHClient genClient(ServerPrivateInfo spi) {
@@ -97,7 +90,8 @@ class ServerProvider extends BusyProvider {
 
   Future<ServerStatus> _getData(ServerPrivateInfo info, int idx) async {
     final client = _servers[idx].client;
-    if (!(await client.isConnected())) {
+    final connected = await client.isConnected();
+    if (!connected) {
       await client.connect();
     }
     final cpu = await client.execute(

@@ -24,7 +24,7 @@ class _MyHomePageState extends State<MyHomePage>
         AutomaticKeepAliveClientMixin,
         SingleTickerProviderStateMixin,
         AfterLayoutMixin {
-  final List<String> _tabs = ['服务器', '编/解码', '1', '2'];
+  final List<String> _tabs = ['服务器', '编/解码'];
   late final TabController _tabController;
 
   @override
@@ -53,12 +53,6 @@ class _MyHomePageState extends State<MyHomePage>
       body: TabBarView(controller: _tabController, children: const [
         ServerPage(),
         ConvertPage(),
-        Center(
-          child: Text('1'),
-        ),
-        Center(
-          child: Text('2'),
-        ),
       ]),
     );
   }
@@ -73,10 +67,10 @@ class _MyHomePageState extends State<MyHomePage>
             accountEmail: Text(_buildVersionStr()),
             currentAccountPicture: _buildIcon(const Color(0x00083963)),
           ),
-          const ListTile(
-            leading: Icon(Icons.settings),
-            title: Text('设置'),
-          ),
+          // const ListTile(
+          //   leading: Icon(Icons.settings),
+          //   title: Text('设置'),
+          // ),
           AboutListTile(
             icon: const Icon(Icons.text_snippet),
             child: const Text('开源证书'),

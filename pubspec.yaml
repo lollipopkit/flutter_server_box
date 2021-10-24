@@ -43,7 +43,7 @@ dependencies:
     git: 
       url: https://github.com/Countly/countly-sdk-flutter-bridge.git
       ref: master
-  ssh2: ^2.2.2
+  ssh2: ^2.2.3
   charts_flutter: ^0.11.0
 
 
