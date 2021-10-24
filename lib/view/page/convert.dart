@@ -88,7 +88,7 @@ class _ConvertPageState extends State<ConvertPage>
       case 3:
         return Uri.decodeFull(text);
       default:
-        return '未知编码';
+        return 'Unknown';
     }
   }
 

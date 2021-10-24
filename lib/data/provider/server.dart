@@ -28,7 +28,7 @@ class ServerProvider extends BusyProvider {
             usedPercent: 0)
       ],
       sysVer: '',
-      uptime: '',
+      uptime: 'Connecting...',
       tcp: TcpStatus(maxConn: 0, active: 0, passive: 0, fail: 0));
 
   Future<void> loadLocalData() async {

@@ -83,13 +83,13 @@ class _ServerPageState extends State<ServerPage>
   }
 
   void showAddServerDialog() {
-    showRoundDialog(context, '新建服务器连接', _buildTextInputField(context), [
+    showRoundDialog(context, 'New', _buildTextInputField(context), [
       TextButton(
           onPressed: () {
             clearTextField();
             Navigator.of(context).pop();
           },
-          child: const Text('关闭')),
+          child: const Text('Close')),
       TextButton(
           onPressed: () {
             final authorization = keyController.text.isEmpty
@@ -107,7 +107,7 @@ class _ServerPageState extends State<ServerPage>
             clearTextField();
             Navigator.of(context).pop();
           },
-          child: const Text('连接'))
+          child: const Text('Connect'))
     ]);
   }
 
@@ -124,12 +124,12 @@ class _ServerPageState extends State<ServerPage>
           TextField(
             controller: nameController,
             keyboardType: TextInputType.text,
-            decoration: _buildDecoration('名称'),
+            decoration: _buildDecoration('Name'),
           ),
           TextField(
             controller: ipController,
             keyboardType: TextInputType.text,
-            decoration: _buildDecoration('IP'),
+            decoration: _buildDecoration('Host'),
           ),
           TextField(
             controller: portController,
@@ -139,19 +139,19 @@ class _ServerPageState extends State<ServerPage>
           TextField(
             controller: usernameController,
             keyboardType: TextInputType.text,
-            decoration: _buildDecoration('用户名'),
+            decoration: _buildDecoration('User'),
           ),
           TextField(
             controller: keyController,
             keyboardType: TextInputType.text,
-            decoration: _buildDecoration('密钥(可选)'),
+            decoration: _buildDecoration('Key(Optional)'),
             onSubmitted: (_) => {},
           ),
           TextField(
             controller: passwordController,
             obscureText: true,
             keyboardType: TextInputType.text,
-            decoration: _buildDecoration('密码'),
+            decoration: _buildDecoration('Pwd'),
             onSubmitted: (_) => {},
           ),
         ],
@@ -186,7 +186,7 @@ class _ServerPageState extends State<ServerPage>
 
           showRoundDialog(
               context,
-              '修改服务器信息',
+              'Edit',
               _buildTextInputField(context),
               [
                 TextButton(
@@ -194,7 +194,7 @@ class _ServerPageState extends State<ServerPage>
                       clearTextField();
                       Navigator.of(context).pop();
                     },
-                    child: const Text('关闭')),
+                    child: const Text('Close')),
                 TextButton(
                     onPressed: () {
                       final authorization = keyController.text.isEmpty
@@ -214,7 +214,7 @@ class _ServerPageState extends State<ServerPage>
                       clearTextField();
                       Navigator.of(context).pop();
                     },
-                    child: const Text('保存')),
+                    child: const Text('Save')),
                 TextButton(
                     onPressed: () {
                       serverProvider.delServer(spi);
@@ -222,7 +222,7 @@ class _ServerPageState extends State<ServerPage>
                       Navigator.of(context).pop();
                     },
                     child: const Text(
-                      '删除',
+                      'Delete',
                       style: TextStyle(color: Colors.red),
                     ))
               ],

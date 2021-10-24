@@ -24,7 +24,7 @@ class _MyHomePageState extends State<MyHomePage>
         AutomaticKeepAliveClientMixin,
         SingleTickerProviderStateMixin,
         AfterLayoutMixin {
-  final List<String> _tabs = ['服务器', '编/解码'];
+  final List<String> _tabs = ['Servers', 'En/Decode'];
   late final TabController _tabController;
 
   @override
@@ -65,7 +65,7 @@ class _MyHomePageState extends State<MyHomePage>
           UserAccountsDrawerHeader(
             accountName: const Text('ToolBox'),
             accountEmail: Text(_buildVersionStr()),
-            currentAccountPicture: _buildIcon(const Color(0x00083963)),
+            currentAccountPicture: _buildIcon(),
           ),
           // const ListTile(
           //   leading: Icon(Icons.settings),
@@ -73,10 +73,10 @@ class _MyHomePageState extends State<MyHomePage>
           // ),
           AboutListTile(
             icon: const Icon(Icons.text_snippet),
-            child: const Text('开源证书'),
+            child: const Text('Open source licenses'),
             applicationName: BuildData.name,
             applicationVersion: _buildVersionStr(),
-            applicationIcon: _buildIcon(Colors.transparent),
+            applicationIcon: _buildIcon(),
             aboutBoxChildren: const [
               Text('''\nMade with Love.
             \nAll rights reserved.'''),
@@ -87,10 +87,21 @@ class _MyHomePageState extends State<MyHomePage>
     );
   }
 
-  Widget _buildIcon(Color c) {
-    return CircleAvatar(
-      child: Image.asset('assets/app_icon.jpg'),
-      backgroundColor: c,
+  Widget _buildIcon() {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 60, maxWidth: 60),
+      child: Stack(
+        children: [
+          Center(
+            child: Container(
+              color: Colors.white,
+              height: 37,
+              width: 37,
+            ),
+          ),
+          Image.asset('assets/app_icon.jpg'),
+        ],
+      ),
     );
   }
 

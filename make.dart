@@ -67,8 +67,8 @@ Future<void> updateBuildData() async {
   await writeStaicConfigFile(data, 'BuildData', path);
 }
 
-void flutterRun() {
-  Process.start('flutter', ['run'],
+void flutterRun(String? mode) {
+  Process.start('flutter', ['run', mode == null ? '' : '--$mode'],
       mode: ProcessStartMode.inheritStdio, runInShell: true);
 }
 
@@ -121,7 +121,7 @@ void main(List<String> args) async {
 
   switch (command) {
     case 'run':
-      return flutterRun();
+      return flutterRun(args.length == 2 ? args[1] : null);
     case 'build':
       if (args.length > 1) {
         await updateBuildData();
