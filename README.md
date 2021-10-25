@@ -1,6 +1,6 @@
-# toolbox
+# Server Monitor & Toolbox
 
-A new Flutter project.
+A new Flutter project which provide a chart view to display server status data.
 
 ## ScreenShots
 <table>
@@ -14,3 +14,15 @@ A new Flutter project.
   </tr>
 </table>
 
+## Milestone
+- [x] SSH Connect
+- [x] Server Info Store
+- [x] Status Chart View
+- [x] Base64/Url En/Decode
+- [ ] Private Key Store
+- [ ] Server Status Detail Page
+- [ ] Theme Switch
+- [ ] Custom Home Page
+
+## License
+`Apache License. LollipopKit 2021`

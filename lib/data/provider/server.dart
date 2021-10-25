@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:logging/logging.dart';
 import 'package:ssh2/ssh2.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/provider_base.dart';
@@ -14,6 +15,8 @@ import 'package:toolbox/locator.dart';
 class ServerProvider extends BusyProvider {
   List<ServerInfo> _servers = [];
   List<ServerInfo> get servers => _servers;
+
+  final logger = Logger('ServerProvider');
 
   ServerStatus get emptyStatus => ServerStatus(
       cpuPercent: 0,
@@ -92,7 +95,11 @@ class ServerProvider extends BusyProvider {
     final client = _servers[idx].client;
     final connected = await client.isConnected();
     if (!connected) {
+      final time1 = DateTime.now();
       await client.connect();
+      final time2 = DateTime.now();
+      logger.info(
+          'Connected to [${info.name}] in [${time2.difference(time1).toString()}].');
     }
     final cpu = await client.execute(
             "top -bn1 | grep load | awk '{printf \"%.2f\", \$(NF-2)}'") ??

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/app.dart';
 import 'package:toolbox/core/analysis.dart';
@@ -13,7 +14,13 @@ import 'package:toolbox/locator.dart';
 Future<void> initApp() async {
   await Hive.initFlutter();
   await setupLocator();
-  locator<ServerProvider>().loadLocalData();
+
+  ///设置Logger
+  Logger.root.level = Level.ALL; // defaults to Level.INFO
+  Logger.root.onRecord.listen((record) {
+    // ignore: avoid_print
+    print('[${record.loggerName}][${record.level.name}]: ${record.message}');
+  });
 }
 
 void runInZone(dynamic Function() body) {
