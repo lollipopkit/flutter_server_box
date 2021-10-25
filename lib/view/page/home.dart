@@ -9,7 +9,7 @@ import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/convert.dart';
 import 'package:toolbox/view/page/debug.dart';
-import 'package:toolbox/view/page/server.dart';
+import 'package:toolbox/view/page/server/server_tab.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key, required this.title}) : super(key: key);

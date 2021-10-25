@@ -104,9 +104,9 @@ class _ConvertPageState extends State<ConvertPage>
       child: ExpansionTile(
         leading: TextButton(
           child: SizedBox(
-            width: _media.size.width * 0.2,
+            width: _media.size.width * 0.3,
             child: Row(
-              children: const [Icon(Icons.change_circle), Text('上下交换')],
+              children: const [Icon(Icons.change_circle), Text('Upside down')],
             ),
           ),
           onPressed: () {

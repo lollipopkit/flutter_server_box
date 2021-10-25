@@ -5,11 +5,12 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/utils.dart';
+import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/model/server_private_info.dart';
 import 'package:toolbox/data/model/server_status.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/locator.dart';
+import 'package:toolbox/view/page/server/server_edit.dart';
 import 'package:toolbox/view/widget/circle_pie.dart';
 
 class ServerPage extends StatefulWidget {
@@ -23,22 +24,13 @@ class _ServerPageState extends State<ServerPage>
     with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
   late MediaQueryData _media;
   late ThemeData _theme;
-  bool useKey = false;
 
-  final nameController = TextEditingController();
-  final ipController = TextEditingController();
-  final portController = TextEditingController();
-  final usernameController = TextEditingController();
-  final passwordController = TextEditingController();
-  final keyController = TextEditingController();
-
-  late ServerProvider serverProvider;
-  final cachedServerStatus = <ServerStatus?>[];
+  late ServerProvider _serverProvider;
 
   @override
   void initState() {
     super.initState();
-    serverProvider = locator<ServerProvider>();
+    _serverProvider = locator<ServerProvider>();
   }
 
   @override
@@ -74,7 +66,9 @@ class _ServerPageState extends State<ServerPage>
         })),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => showAddServerDialog(),
+        onPressed: () =>
+            AppRoute(const ServerEditPage(), 'Add server info page')
+                .go(context),
         tooltip: 'add a server',
         heroTag: 'server page fab',
         child: const Icon(Icons.add),
@@ -82,151 +76,16 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  void showAddServerDialog() {
-    showRoundDialog(context, 'New', _buildTextInputField(context), [
-      TextButton(
-          onPressed: () {
-            clearTextField();
-            Navigator.of(context).pop();
-          },
-          child: const Text('Close')),
-      TextButton(
-          onPressed: () {
-            final authorization = keyController.text.isEmpty
-                ? passwordController.text
-                : {
-                    "privateKey": keyController.text,
-                    "passphrase": passwordController.text
-                  };
-            serverProvider.addServer(ServerPrivateInfo(
-                name: nameController.text,
-                ip: ipController.text,
-                port: int.parse(portController.text),
-                user: usernameController.text,
-                authorization: authorization));
-            clearTextField();
-            Navigator.of(context).pop();
-          },
-          child: const Text('Connect'))
-    ]);
-  }
-
-  InputDecoration _buildDecoration(String label, {TextStyle? textStyle}) {
-    return InputDecoration(labelText: label, labelStyle: textStyle);
-  }
-
-  Widget _buildTextInputField(BuildContext ctx) {
-    return SingleChildScrollView(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: nameController,
-            keyboardType: TextInputType.text,
-            decoration: _buildDecoration('Name'),
-          ),
-          TextField(
-            controller: ipController,
-            keyboardType: TextInputType.text,
-            decoration: _buildDecoration('Host'),
-          ),
-          TextField(
-            controller: portController,
-            keyboardType: TextInputType.number,
-            decoration: _buildDecoration('Port'),
-          ),
-          TextField(
-            controller: usernameController,
-            keyboardType: TextInputType.text,
-            decoration: _buildDecoration('User'),
-          ),
-          TextField(
-            controller: keyController,
-            keyboardType: TextInputType.text,
-            decoration: _buildDecoration('Key(Optional)'),
-            onSubmitted: (_) => {},
-          ),
-          TextField(
-            controller: passwordController,
-            obscureText: true,
-            keyboardType: TextInputType.text,
-            decoration: _buildDecoration('Pwd'),
-            onSubmitted: (_) => {},
-          ),
-        ],
-      ),
-    );
-  }
-
-  void clearTextField() {
-    nameController.clear();
-    ipController.clear();
-    portController.clear();
-    usernameController.clear();
-    passwordController.clear();
-    keyController.clear();
-  }
-
   Widget _buildEachServerCard(ServerStatus ss, ServerPrivateInfo spi) {
     return GestureDetector(
         child: _buildEachCardContent(ss, spi),
         onLongPress: () {
-          nameController.text = spi.name ?? '';
-          ipController.text = spi.ip ?? '';
-          portController.text = (spi.port ?? 22).toString();
-          usernameController.text = spi.user ?? '';
-          if (spi.authorization is String) {
-            passwordController.text = spi.authorization as String? ?? '';
-          } else {
-            final auth = spi.authorization as Map;
-            passwordController.text = auth['passphrase'];
-            keyController.text = auth['privateKey'];
-          }
-
-          showRoundDialog(
-              context,
-              'Edit',
-              _buildTextInputField(context),
-              [
-                TextButton(
-                    onPressed: () {
-                      clearTextField();
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('Close')),
-                TextButton(
-                    onPressed: () {
-                      final authorization = keyController.text.isEmpty
-                          ? passwordController.text
-                          : {
-                              "privateKey": keyController.text,
-                              "passphrase": passwordController.text
-                            };
-                      serverProvider.updateServer(
-                          spi,
-                          ServerPrivateInfo(
-                              name: nameController.text,
-                              ip: ipController.text,
-                              port: int.parse(portController.text),
-                              user: usernameController.text,
-                              authorization: authorization));
-                      clearTextField();
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('Save')),
-                TextButton(
-                    onPressed: () {
-                      serverProvider.delServer(spi);
-                      clearTextField();
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text(
-                      'Delete',
-                      style: TextStyle(color: Colors.red),
-                    ))
-              ],
-              barrierDismiss: false);
+          AppRoute(
+                  ServerEditPage(
+                    spi: spi,
+                  ),
+                  'Edit server info page')
+              .go(context);
         });
   }
 
@@ -377,8 +236,8 @@ class _ServerPageState extends State<ServerPage>
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
     await GetIt.I.allReady();
-    await serverProvider.loadLocalData();
-    await serverProvider.refreshData();
-    await serverProvider.startAutoRefresh();
+    await _serverProvider.loadLocalData();
+    await _serverProvider.refreshData();
+    await _serverProvider.startAutoRefresh();
   }
 }
