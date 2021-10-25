@@ -1,8 +1,13 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:toolbox/core/route.dart';
+import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/model/server_private_info.dart';
+import 'package:toolbox/data/provider/private_key.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/locator.dart';
+import 'package:toolbox/view/page/private_key/edit.dart';
 
 class ServerEditPage extends StatefulWidget {
   const ServerEditPage({Key? key, this.spi}) : super(key: key);
@@ -25,6 +30,9 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
 
   bool usePublicKey = false;
 
+  int _typeOptionIndex = -1;
+  final List<String> _keyInfo = ['', ''];
+
   @override
   void initState() {
     super.initState();
@@ -34,7 +42,16 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit')),
+      appBar: AppBar(title: const Text('Edit'), actions: [
+        widget.spi != null
+            ? IconButton(
+                onPressed: () {
+                  _serverProvider.delServer(widget.spi!);
+                  Navigator.of(context).pop();
+                },
+                icon: const Icon(Icons.delete))
+            : const SizedBox()
+      ]),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(17),
         child: Column(
@@ -49,6 +66,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             TextField(
               controller: ipController,
               keyboardType: TextInputType.text,
+              autocorrect: false,
               decoration: _buildDecoration('Host', icon: Icons.storage),
             ),
             TextField(
@@ -60,6 +78,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             TextField(
               controller: usernameController,
               keyboardType: TextInputType.text,
+              autocorrect: false,
               decoration: _buildDecoration('User', icon: Icons.account_box),
             ),
             const SizedBox(height: 7),
@@ -71,37 +90,59 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                     onChanged: (val) => setState(() => usePublicKey = val)),
               ],
             ),
-            usePublicKey
+            !usePublicKey
                 ? TextField(
-                    controller: keyController,
+                    controller: passwordController,
+                    obscureText: true,
                     keyboardType: TextInputType.text,
-                    autocorrect: false,
-                    maxLines: 10,
-                    minLines: 5,
-                    decoration:
-                        _buildDecoration('Private Key', icon: Icons.vpn_key),
+                    decoration: _buildDecoration('Pwd', icon: Icons.password),
                     onSubmitted: (_) => {},
                   )
                 : const SizedBox(),
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              keyboardType: TextInputType.text,
-              decoration: _buildDecoration('Pwd', icon: Icons.password),
-              onSubmitted: (_) => {},
-            ),
+            usePublicKey
+                ? Consumer<PrivateKeyProvider>(builder: (_, key, __) {
+                    final tiles = key.infos
+                        .map(
+                          (e) => ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(e.id, textAlign: TextAlign.start),
+                              trailing: _buildRadio(key.infos.indexOf(e),
+                                  e.privateKey, e.password)),
+                        )
+                        .toList();
+                    tiles.add(ListTile(
+                      title: const Text('Add a Private Key'),
+                      contentPadding: EdgeInsets.zero,
+                      trailing: IconButton(
+                        icon: const Icon(Icons.add),
+                        onPressed: () => AppRoute(const PrivateKeyEditPage(),
+                                'private key edit page')
+                            .go(context),
+                      ),
+                    ));
+                    return ExpansionTile(
+                      tilePadding: EdgeInsets.zero,
+                      childrenPadding: EdgeInsets.zero,
+                      title: const Text(
+                        'Choose Key',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                      children: tiles,
+                    );
+                  })
+                : const SizedBox()
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.send),
         onPressed: () {
-          final authorization = keyController.text.isEmpty
-              ? passwordController.text
-              : {
-                  "privateKey": keyController.text,
-                  "passphrase": passwordController.text
-                };
+          if (usePublicKey && _typeOptionIndex == -1) {
+            showSnackBar(context, const Text('Please select a private key.'));
+          }
+          final authorization = usePublicKey
+              ? {"privateKey": _keyInfo[0], "passphrase": _keyInfo[1]}
+              : passwordController.text;
           final spi = ServerPrivateInfo(
               name: nameController.text,
               ip: ipController.text,
@@ -118,6 +159,20 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
           Navigator.of(context).pop();
         },
       ),
+    );
+  }
+
+  Radio _buildRadio(int index, String key, String pwd) {
+    return Radio<int>(
+      value: index,
+      groupValue: _typeOptionIndex,
+      onChanged: (int? value) {
+        setState(() {
+          _typeOptionIndex = value!;
+          _keyInfo[0] = key;
+          _keyInfo[1] = pwd;
+        });
+      },
     );
   }
 

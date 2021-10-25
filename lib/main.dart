@@ -8,12 +8,14 @@ import 'package:toolbox/app.dart';
 import 'package:toolbox/core/analysis.dart';
 import 'package:toolbox/data/provider/app.dart';
 import 'package:toolbox/data/provider/debug.dart';
+import 'package:toolbox/data/provider/private_key.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/locator.dart';
 
 Future<void> initApp() async {
   await Hive.initFlutter();
   await setupLocator();
+  locator<PrivateKeyProvider>().loadData();
 
   ///设置Logger
   Logger.root.level = Level.ALL; // defaults to Level.INFO
@@ -60,6 +62,7 @@ Future<void> main() async {
           ChangeNotifierProvider(create: (_) => locator<AppProvider>()),
           ChangeNotifierProvider(create: (_) => locator<DebugProvider>()),
           ChangeNotifierProvider(create: (_) => locator<ServerProvider>()),
+          ChangeNotifierProvider(create: (_) => locator<PrivateKeyProvider>()),
         ],
         child: const MyApp(),
       ),

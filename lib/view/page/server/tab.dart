@@ -1,5 +1,5 @@
 import 'package:after_layout/after_layout.dart';
-import 'package:charts_flutter/flutter.dart' as chart;
+import 'package:circle_chart/circle_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
@@ -9,9 +9,9 @@ import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/model/server_private_info.dart';
 import 'package:toolbox/data/model/server_status.dart';
 import 'package:toolbox/data/provider/server.dart';
+import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/locator.dart';
-import 'package:toolbox/view/page/server/server_edit.dart';
-import 'package:toolbox/view/widget/circle_pie.dart';
+import 'package:toolbox/view/page/server/edit.dart';
 
 class ServerPage extends StatefulWidget {
   const ServerPage({Key? key}) : super(key: key);
@@ -24,6 +24,7 @@ class _ServerPageState extends State<ServerPage>
     with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
   late MediaQueryData _media;
   late ThemeData _theme;
+  late Color _primaryColor;
 
   late ServerProvider _serverProvider;
 
@@ -38,6 +39,7 @@ class _ServerPageState extends State<ServerPage>
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
     _theme = Theme.of(context);
+    _primaryColor = Color(locator<SettingStore>().primaryColor.fetch()!);
   }
 
   @override
@@ -102,19 +104,6 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildRealServerCard(ServerStatus ss, String serverName) {
-    final cpuData = [
-      IndexPercent(0, ss.cpuPercent!.toInt()),
-      IndexPercent(1, 100 - ss.cpuPercent!.toInt()),
-    ];
-    final memData = <IndexPercent>[];
-    for (var e in ss.memList!) {
-      memData.add(IndexPercent(ss.memList!.indexOf(e), e!.toInt()));
-    }
-
-    final mem1 = memData[1];
-    memData[1] = memData.last;
-    memData.last = mem1;
-
     final rootDisk =
         ss.disk!.firstWhere((element) => element!.mountLocation == '/');
 
@@ -139,23 +128,9 @@ class _ServerPageState extends State<ServerPage>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildPercentCircle(ss.cpuPercent!, 'CPU', [
-              chart.Series<IndexPercent, int>(
-                id: 'CPU',
-                domainFn: (IndexPercent cpu, _) => cpu.id,
-                measureFn: (IndexPercent cpu, _) => cpu.percent,
-                data: cpuData,
-              )
-            ]),
+            _buildPercentCircle(ss.cpuPercent! + 0.01, 'CPU'),
             _buildPercentCircle(
-                ss.memList![1]! / ss.memList![0]! * 100, 'Mem', [
-              chart.Series<IndexPercent, int>(
-                id: 'Mem',
-                domainFn: (IndexPercent mem, _) => mem.id,
-                measureFn: (IndexPercent mem, _) => mem.percent,
-                data: memData,
-              )
-            ]),
+                ss.memList![1]! / ss.memList![0]! * 100 + 0.01, 'Mem'),
             _buildIOData('Net', 'Conn:\n' + ss.tcp!.maxConn!.toString(),
                 'Fail:\n' + ss.tcp!.fail.toString()),
             _buildIOData('Disk', 'Total:\n' + rootDisk!.size!,
@@ -172,59 +147,53 @@ class _ServerPageState extends State<ServerPage>
     return SizedBox(
       width: _media.size.width * 0.2,
       height: _media.size.height * 0.1,
-      child: Stack(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Positioned.fill(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    up,
-                    style: statusTextStyle,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    down + '\n',
-                    style: statusTextStyle,
-                    textAlign: TextAlign.center,
-                  )
-                ],
-              ),
-            ),
+          Text(
+            up,
+            style: statusTextStyle,
+            textAlign: TextAlign.center,
           ),
-          Positioned(
-              child: Text(title, textAlign: TextAlign.center),
-              bottom: 0,
-              left: 0,
-              right: 0)
+          const SizedBox(height: 3),
+          Text(
+            down + '\n',
+            style: statusTextStyle,
+            textAlign: TextAlign.center,
+          ),
+          Text(title, textAlign: TextAlign.center)
         ],
       ),
     );
   }
 
-  Widget _buildPercentCircle(double percent, String title,
-      List<chart.Series<IndexPercent, int>> series) {
+  Widget _buildPercentCircle(double percent, String title) {
     return SizedBox(
       width: _media.size.width * 0.2,
       height: _media.size.height * 0.1,
-      child: Stack(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          DonutPieChart(series),
-          Positioned.fill(
-            child: Center(
-              child: Text(
-                '${percent.toStringAsFixed(1)}%\n',
-                textAlign: TextAlign.center,
+          Stack(
+            children: [
+              CircleChart(
+                progressColor: _primaryColor,
+                progressNumber: percent,
+                maxNumber: 100,
+                width: _media.size.width * 0.37,
+                height: _media.size.height * 0.09,
               ),
-            ),
+              Positioned.fill(
+                child: Center(
+                  child: Text(
+                    '${percent.toStringAsFixed(1)}%',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ],
           ),
-          Positioned(
-              child: Text(title, textAlign: TextAlign.center),
-              bottom: 0,
-              left: 0,
-              right: 0)
+          Text(title, textAlign: TextAlign.center),
         ],
       ),
     );

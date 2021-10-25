@@ -9,11 +9,14 @@ import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/convert.dart';
 import 'package:toolbox/view/page/debug.dart';
-import 'package:toolbox/view/page/server/server_tab.dart';
+import 'package:toolbox/view/page/private_key/stored.dart';
+import 'package:toolbox/view/page/server/tab.dart';
+import 'package:toolbox/view/page/setting.dart';
+import 'package:toolbox/view/widget/url_text.dart';
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
-  final String title;
+  const MyHomePage({Key? key, required this.primaryColor}) : super(key: key);
+  final Color primaryColor;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -42,9 +45,10 @@ class _MyHomePageState extends State<MyHomePage>
         title: GestureDetector(
           onLongPress: () =>
               AppRoute(const DebugPage(), 'Debug Page').go(context),
-          child: Text(widget.title),
+          child: const Text('ToolBox'),
         ),
         bottom: TabBar(
+          indicatorColor: widget.primaryColor,
           tabs: _tabs.map((e) => Tab(text: e)).toList(),
           controller: _tabController,
         ),
@@ -67,19 +71,27 @@ class _MyHomePageState extends State<MyHomePage>
             accountEmail: Text(_buildVersionStr()),
             currentAccountPicture: _buildIcon(),
           ),
-          // const ListTile(
-          //   leading: Icon(Icons.settings),
-          //   title: Text('设置'),
-          // ),
+          ListTile(
+            leading: const Icon(Icons.settings),
+            title: const Text('Setting'),
+            onTap: () => AppRoute(const SettingPage(), 'Setting').go(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.vpn_key),
+            title: const Text('Private Key'),
+            onTap: () =>
+                AppRoute(const StoredPrivateKeysPage(), 'Setting').go(context),
+          ),
           AboutListTile(
             icon: const Icon(Icons.text_snippet),
-            child: const Text('Open source licenses'),
+            child: const Text('Licences'),
             applicationName: BuildData.name,
             applicationVersion: _buildVersionStr(),
             applicationIcon: _buildIcon(),
             aboutBoxChildren: const [
-              Text('''\nMade with Love.
-            \nAll rights reserved.'''),
+              UrlText(
+                  text: '''\nMade with ❤️ by https://github.com/LollipopKit .
+            \nAll rights reserved.''', replace: 'LollipopKit'),
             ],
           ),
         ],

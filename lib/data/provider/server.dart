@@ -10,6 +10,7 @@ import 'package:toolbox/data/model/server_private_info.dart';
 import 'package:toolbox/data/model/server_status.dart';
 import 'package:toolbox/data/model/tcp_status.dart';
 import 'package:toolbox/data/store/server.dart';
+import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/locator.dart';
 
 class ServerProvider extends BusyProvider {
@@ -55,18 +56,28 @@ class ServerProvider extends BusyProvider {
   }
 
   Future<void> refreshData() async {
-    final _serversStatus = await Future.wait(
-        _servers.map((s) => _getData(s.info, _servers.indexOf(s))));
-    int idx = 0;
-    for (var item in _serversStatus) {
-      _servers[idx].status = item;
-      idx++;
+    List<ServerStatus> _serversStatus = [];
+    try {
+      _serversStatus = await Future.wait(
+          _servers.map((s) => _getData(s.info, _servers.indexOf(s))));
+    } catch (e) {
+      rethrow;
+    } finally {
+      int idx = 0;
+      for (var item in _serversStatus) {
+        _servers[idx].status = item;
+        idx++;
+      }
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   Future<void> startAutoRefresh() async {
-    Timer.periodic(const Duration(seconds: 3), (_) async {
+    Timer.periodic(
+        Duration(
+            seconds: locator<SettingStore>()
+                .serverStatusUpdateInterval
+                .fetch()!), (_) async {
       await refreshData();
     });
   }
