@@ -115,15 +115,17 @@ class _ServerPageState extends State<ServerPage>
           children: [
             Text(
               serverName,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              textScaleFactor: 1.0,
             ),
             Text(ss.uptime!,
+                textScaleFactor: 1.0,
                 style: TextStyle(
-                    color: _theme.textTheme.bodyText1!.color!.withAlpha(100)))
+                    color: _theme.textTheme.bodyText1!.color!.withAlpha(100), fontSize: 11))
           ],
         ),
         const SizedBox(
-          height: 13,
+          height: 17,
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -143,7 +145,7 @@ class _ServerPageState extends State<ServerPage>
 
   Widget _buildIOData(String title, String up, String down) {
     final statusTextStyle = TextStyle(
-        fontSize: 11, color: _theme.textTheme.bodyText1!.color!.withAlpha(177));
+        fontSize: 9, color: _theme.textTheme.bodyText1!.color!.withAlpha(177));
     return SizedBox(
       width: _media.size.width * 0.2,
       height: _media.size.height * 0.1,
@@ -154,14 +156,21 @@ class _ServerPageState extends State<ServerPage>
             up,
             style: statusTextStyle,
             textAlign: TextAlign.center,
+            textScaleFactor: 1.0,
           ),
           const SizedBox(height: 3),
           Text(
             down + '\n',
             style: statusTextStyle,
             textAlign: TextAlign.center,
+            textScaleFactor: 1.0,
           ),
-          Text(title, textAlign: TextAlign.center)
+          Text(
+            title,
+            style: const TextStyle(fontSize: 12),
+            textAlign: TextAlign.center,
+            textScaleFactor: 1.0,
+          )
         ],
       ),
     );
@@ -188,12 +197,19 @@ class _ServerPageState extends State<ServerPage>
                   child: Text(
                     '${percent.toStringAsFixed(1)}%',
                     textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 11),
+                    textScaleFactor: 1.0,
                   ),
                 ),
               ),
             ],
           ),
-          Text(title, textAlign: TextAlign.center),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 12),
+            textAlign: TextAlign.center,
+            textScaleFactor: 1.0,
+          ),
         ],
       ),
     );

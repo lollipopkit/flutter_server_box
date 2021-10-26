@@ -53,23 +53,23 @@ class MyApp extends StatelessWidget {
             ),
             darkTheme: ThemeData.dark().copyWith(
                 primaryColor: primaryColor,
-              appBarTheme: AppBarTheme(backgroundColor: primaryColor),
-              floatingActionButtonTheme:
-                  FloatingActionButtonThemeData(backgroundColor: primaryColor),
-              iconTheme: IconThemeData(color: primaryColor),
-              primaryIconTheme: IconThemeData(color: primaryColor),
-              switchTheme: SwitchThemeData(
-                thumbColor: getMaterialStateColor(primaryColor),
-                trackColor:
-                    getMaterialStateColor(primaryColor.withOpacity(0.7)),
-              ),
-              buttonTheme: ButtonThemeData(splashColor: primaryColor),
-              inputDecorationTheme: InputDecorationTheme(
-                  labelStyle: textStyle,
-                  focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: primaryColor))),
-              radioTheme: RadioThemeData(
-                  fillColor: getMaterialStateColor(primaryColor))),
+                appBarTheme: AppBarTheme(backgroundColor: primaryColor),
+                floatingActionButtonTheme: FloatingActionButtonThemeData(
+                    backgroundColor: primaryColor),
+                iconTheme: IconThemeData(color: primaryColor),
+                primaryIconTheme: IconThemeData(color: primaryColor),
+                switchTheme: SwitchThemeData(
+                  thumbColor: getMaterialStateColor(primaryColor),
+                  trackColor:
+                      getMaterialStateColor(primaryColor.withOpacity(0.7)),
+                ),
+                buttonTheme: ButtonThemeData(splashColor: primaryColor),
+                inputDecorationTheme: InputDecorationTheme(
+                    labelStyle: textStyle,
+                    focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: primaryColor))),
+                radioTheme: RadioThemeData(
+                    fillColor: getMaterialStateColor(primaryColor))),
             home: MyHomePage(primaryColor: primaryColor),
           );
         });
