@@ -151,9 +151,12 @@ class _ServerPageState extends State<ServerPage>
       width: _media.size.width * 0.2,
       height: _media.size.height * 0.1,
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
+          const SizedBox(),
+          Column(
+            children: [
+              Text(
             up,
             style: statusTextStyle,
             textAlign: TextAlign.center,
@@ -165,6 +168,8 @@ class _ServerPageState extends State<ServerPage>
             style: statusTextStyle,
             textAlign: TextAlign.center,
             textScaleFactor: 1.0,
+          )
+            ],
           ),
           Text(
             title,
