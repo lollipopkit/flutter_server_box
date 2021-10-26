@@ -6,6 +6,21 @@ import 'package:toolbox/view/page/home.dart';
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
+  MaterialStateProperty<Color?> getMaterialStateColor(Color primaryColor) {
+    return MaterialStateProperty.resolveWith((states) {
+      const Set<MaterialState> interactiveStates = <MaterialState>{
+        MaterialState.pressed,
+        MaterialState.hovered,
+        MaterialState.focused,
+        MaterialState.selected
+      };
+      if (states.any(interactiveStates.contains)) {
+        return primaryColor;
+      }
+      return null;
+    });
+  }
+
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -13,6 +28,7 @@ class MyApp extends StatelessWidget {
         valueListenable: locator<SettingStore>().primaryColor.listenable(),
         builder: (_, value, __) {
           final primaryColor = Color(value);
+          final textStyle = TextStyle(color: primaryColor);
           return MaterialApp(
             title: 'ToolBox',
             theme: ThemeData(
@@ -22,8 +38,38 @@ class MyApp extends StatelessWidget {
                   FloatingActionButtonThemeData(backgroundColor: primaryColor),
               iconTheme: IconThemeData(color: primaryColor),
               primaryIconTheme: IconThemeData(color: primaryColor),
+              switchTheme: SwitchThemeData(
+                thumbColor: getMaterialStateColor(primaryColor),
+                trackColor:
+                    getMaterialStateColor(primaryColor.withOpacity(0.7)),
+              ),
+              buttonTheme: ButtonThemeData(splashColor: primaryColor),
+              inputDecorationTheme: InputDecorationTheme(
+                  labelStyle: textStyle,
+                  focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: primaryColor))),
+              radioTheme: RadioThemeData(
+                  fillColor: getMaterialStateColor(primaryColor)),
             ),
-            darkTheme: ThemeData.dark().copyWith(primaryColor: primaryColor),
+            darkTheme: ThemeData.dark().copyWith(
+                primaryColor: primaryColor,
+              appBarTheme: AppBarTheme(backgroundColor: primaryColor),
+              floatingActionButtonTheme:
+                  FloatingActionButtonThemeData(backgroundColor: primaryColor),
+              iconTheme: IconThemeData(color: primaryColor),
+              primaryIconTheme: IconThemeData(color: primaryColor),
+              switchTheme: SwitchThemeData(
+                thumbColor: getMaterialStateColor(primaryColor),
+                trackColor:
+                    getMaterialStateColor(primaryColor.withOpacity(0.7)),
+              ),
+              buttonTheme: ButtonThemeData(splashColor: primaryColor),
+              inputDecorationTheme: InputDecorationTheme(
+                  labelStyle: textStyle,
+                  focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: primaryColor))),
+              radioTheme: RadioThemeData(
+                  fillColor: getMaterialStateColor(primaryColor))),
             home: MyHomePage(primaryColor: primaryColor),
           );
         });

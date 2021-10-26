@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/provider/private_key.dart';
+import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/view/page/private_key/edit.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
@@ -13,6 +14,7 @@ class StoredPrivateKeysPage extends StatefulWidget {
 }
 
 class _PrivateKeyListState extends State<StoredPrivateKeysPage> {
+  final _textStyle = TextStyle(color: primaryColor);
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,7 +42,10 @@ class _PrivateKeyListState extends State<StoredPrivateKeysPage> {
                                     PrivateKeyEditPage(info: key.infos[idx]),
                                     'private key edit page')
                                 .go(context),
-                            child: const Text('Edit'))
+                            child: Text(
+                              'Edit',
+                              style: _textStyle,
+                            ))
                       ],
                     ));
                   })

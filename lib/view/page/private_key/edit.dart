@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:toolbox/data/model/private_key_info.dart';
 import 'package:toolbox/data/provider/private_key.dart';
 import 'package:toolbox/locator.dart';
+import 'package:toolbox/view/widget/input_decoration.dart';
 
 class PrivateKeyEditPage extends StatefulWidget {
   const PrivateKeyEditPage({Key? key, this.info}) : super(key: key);
@@ -46,7 +47,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
           TextField(
             controller: nameController,
             keyboardType: TextInputType.text,
-            decoration: _buildDecoration('Name', icon: Icons.info),
+            decoration: buildDecoration('Name', icon: Icons.info),
           ),
           TextField(
             controller: keyController,
@@ -54,14 +55,14 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
             minLines: 3,
             maxLines: 10,
             keyboardType: TextInputType.text,
-            decoration: _buildDecoration('Private Key', icon: Icons.vpn_key),
+            decoration: buildDecoration('Private Key', icon: Icons.vpn_key),
           ),
           TextField(
             controller: pwdController,
             autocorrect: false,
             keyboardType: TextInputType.text,
             obscureText: true,
-            decoration: _buildDecoration('Password', icon: Icons.password),
+            decoration: buildDecoration('Password', icon: Icons.password),
           ),
         ],
       ),
@@ -79,12 +80,6 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
         },
       ),
     );
-  }
-
-  InputDecoration _buildDecoration(String label,
-      {TextStyle? textStyle, IconData? icon}) {
-    return InputDecoration(
-        labelText: label, labelStyle: textStyle, icon: Icon(icon));
   }
 
   @override

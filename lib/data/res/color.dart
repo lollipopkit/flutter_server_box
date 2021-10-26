@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/utils.dart';
+import 'package:toolbox/data/store/setting.dart';
+import 'package:toolbox/locator.dart';
+
+Color primaryColor = Color(locator<SettingStore>().primaryColor.fetch()!);
 
 class DynamicColor {
   /// 白天模式显示的颜色

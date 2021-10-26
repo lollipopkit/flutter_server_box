@@ -102,18 +102,7 @@ class _MyHomePageState extends State<MyHomePage>
   Widget _buildIcon() {
     return ConstrainedBox(
       constraints: const BoxConstraints(maxHeight: 60, maxWidth: 60),
-      child: Stack(
-        children: [
-          Center(
-            child: Container(
-              color: Colors.white,
-              height: 37,
-              width: 37,
-            ),
-          ),
-          Image.asset('assets/app_icon.jpg'),
-        ],
-      ),
+      child: Image.asset('assets/app_icon.jpg'),
     );
   }
 

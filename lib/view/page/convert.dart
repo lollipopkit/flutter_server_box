@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:toolbox/data/res/color.dart';
 
 class ConvertPage extends StatefulWidget {
   const ConvertPage({Key? key}) : super(key: key);
@@ -103,6 +104,8 @@ class _ConvertPageState extends State<ConvertPage>
     return Card(
       child: ExpansionTile(
         leading: TextButton(
+          style: ButtonStyle(
+              foregroundColor: MaterialStateProperty.all(primaryColor)),
           child: SizedBox(
             width: _media.size.width * 0.3,
             child: Row(
@@ -115,11 +118,15 @@ class _ConvertPageState extends State<ConvertPage>
             _textEditingControllerResult.text = temp;
           },
         ),
-        title: SizedBox(
+        title: const SizedBox(),
+        trailing: SizedBox(
           width: _media.size.width * 0.4,
           child: Text(
             _typeOption[_typeOptionIndex],
-            style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.w500),
+            style: TextStyle(
+                fontSize: 16.0,
+                fontWeight: FontWeight.w500,
+                color: primaryColor),
           ),
         ),
         children: _typeOption

@@ -8,6 +8,7 @@ import 'package:toolbox/data/provider/private_key.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/private_key/edit.dart';
+import 'package:toolbox/view/widget/input_decoration.dart';
 
 class ServerEditPage extends StatefulWidget {
   const ServerEditPage({Key? key, this.spi}) : super(key: key);
@@ -61,25 +62,25 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             TextField(
               controller: nameController,
               keyboardType: TextInputType.text,
-              decoration: _buildDecoration('Name', icon: Icons.info),
+              decoration: buildDecoration('Name', icon: Icons.info),
             ),
             TextField(
               controller: ipController,
               keyboardType: TextInputType.text,
               autocorrect: false,
-              decoration: _buildDecoration('Host', icon: Icons.storage),
+              decoration: buildDecoration('Host', icon: Icons.storage),
             ),
             TextField(
               controller: portController,
               keyboardType: TextInputType.number,
               decoration:
-                  _buildDecoration('Port', icon: Icons.format_list_numbered),
+                  buildDecoration('Port', icon: Icons.format_list_numbered),
             ),
             TextField(
               controller: usernameController,
               keyboardType: TextInputType.text,
               autocorrect: false,
-              decoration: _buildDecoration('User', icon: Icons.account_box),
+              decoration: buildDecoration('User', icon: Icons.account_box),
             ),
             const SizedBox(height: 7),
             Row(
@@ -95,7 +96,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                     controller: passwordController,
                     obscureText: true,
                     keyboardType: TextInputType.text,
-                    decoration: _buildDecoration('Pwd', icon: Icons.password),
+                    decoration: buildDecoration('Pwd', icon: Icons.password),
                     onSubmitted: (_) => {},
                   )
                 : const SizedBox(),

@@ -111,7 +111,16 @@ class ServerProvider extends BusyProvider {
       final time2 = DateTime.now();
       logger.info(
           'Connected to [${info.name}] in [${time2.difference(time1).toString()}].');
+    } else {
+      try {
+        await client.execute('ls');
+      } catch (e) {
+        await client.connect();
+        logger.warning('[${info.name}] has error: $e \nTrying to reconnect.');
+        rethrow;
+      }
     }
+
     final cpu = await client.execute(
             "top -bn1 | grep load | awk '{printf \"%.2f\", \$(NF-2)}'") ??
         '0';
