@@ -177,12 +177,6 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     );
   }
 
-  InputDecoration _buildDecoration(String label,
-      {TextStyle? textStyle, IconData? icon}) {
-    return InputDecoration(
-        labelText: label, labelStyle: textStyle, icon: Icon(icon));
-  }
-
   @override
   void afterFirstLayout(BuildContext context) {
     if (widget.spi != null) {
