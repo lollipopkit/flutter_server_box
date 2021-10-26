@@ -6,10 +6,26 @@ A new Flutter project which provide a chart view to display server status data.
 <table>
   <tr>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/IMG_3294.PNG">
+	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/IMG_3327.PNG">
     </td>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/IMG_3295.PNG">
+	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/IMG_3328.PNG">
+    </td>
+    <td>
+	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/IMG_3329.PNG">
+    </td>
+  </tr>
+</table>
+<table>
+  <tr>
+    <td>
+	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/IMG_3330.PNG">
+    </td>
+    <td>
+	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/IMG_3331.PNG">
+    </td>
+    <td>
+	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/IMG_3332.PNG">
     </td>
   </tr>
 </table>
@@ -19,9 +35,9 @@ A new Flutter project which provide a chart view to display server status data.
 - [x] Server Info Store
 - [x] Status Chart View
 - [x] Base64/Url En/Decode
-- [ ] Private Key Store
+- [x] Private Key Store
 - [ ] Server Status Detail Page
-- [ ] Theme Switch
+- [x] Theme Switch
 - [ ] Custom Home Page
 
 ## License
