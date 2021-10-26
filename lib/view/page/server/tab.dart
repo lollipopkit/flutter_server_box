@@ -157,18 +157,18 @@ class _ServerPageState extends State<ServerPage>
           Column(
             children: [
               Text(
-            up,
-            style: statusTextStyle,
-            textAlign: TextAlign.center,
-            textScaleFactor: 1.0,
-          ),
-          const SizedBox(height: 3),
-          Text(
-            down + '\n',
-            style: statusTextStyle,
-            textAlign: TextAlign.center,
-            textScaleFactor: 1.0,
-          )
+                up,
+                style: statusTextStyle,
+                textAlign: TextAlign.center,
+                textScaleFactor: 1.0,
+              ),
+              const SizedBox(height: 3),
+              Text(
+                down + '\n',
+                style: statusTextStyle,
+                textAlign: TextAlign.center,
+                textScaleFactor: 1.0,
+              )
             ],
           ),
           Text(
