@@ -15,20 +15,20 @@ class SettingPage extends StatefulWidget {
 class _SettingPageState extends State<SettingPage> {
   late SettingStore _store;
   late int _selectedColorValue;
-  double _value = 0;
-  late Color _textColor;
+  double _intervalValue = 0;
+  late Color priColor;
 
-@override
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _textColor = Theme.of(context).textTheme.bodyText1!.color!;
+    priColor = primaryColor;
   }
 
   @override
   void initState() {
     super.initState();
     _store = locator<SettingStore>();
-    _value = _store.serverStatusUpdateInterval.fetch()!.toDouble();
+    _intervalValue = _store.serverStatusUpdateInterval.fetch()!.toDouble();
   }
 
   @override
@@ -45,36 +45,43 @@ class _SettingPageState extends State<SettingPage> {
             ExpansionTile(
               tilePadding: EdgeInsets.zero,
               childrenPadding: EdgeInsets.zero,
-              title: Text(
+              textColor: priColor,
+              title: const Text(
                 'Server status update interval',
-                style: TextStyle(fontSize: 14, color: _textColor),
+                style: TextStyle(fontSize: 14),
                 textAlign: TextAlign.start,
               ),
               subtitle: const Text(
                 'Will take effect the next time app launches.',
                 style: TextStyle(color: Colors.grey),
               ),
-              trailing: Text('${_value.toInt()} s'),
+              trailing: Text('${_intervalValue.toInt()} s'),
               children: [
                 Slider(
-                  thumbColor: primaryColor,
-                  activeColor: primaryColor.withOpacity(0.7),
+                  thumbColor: priColor,
+                  activeColor: priColor.withOpacity(0.7),
                   min: 0,
                   max: 10,
-                  value: _value,
+                  value: _intervalValue,
                   onChanged: (newValue) {
                     setState(() {
-                      _value = newValue;
+                      _intervalValue = newValue;
                     });
                   },
                   onChangeEnd: (val) =>
                       _store.serverStatusUpdateInterval.put(val.toInt()),
-                  label: '${_value.toInt()} seconds',
+                  label: '${_intervalValue.toInt()} seconds',
                   divisions: 10,
                 ),
-                const SizedBox(height: 3,),
-                _value == 0.0 ? const Text('You set to 0, will not update automatically.') : const SizedBox(),
-                const SizedBox(height: 13,)
+                const SizedBox(
+                  height: 3,
+                ),
+                _intervalValue == 0.0
+                    ? const Text('You set to 0, will not update automatically.')
+                    : const SizedBox(),
+                const SizedBox(
+                  height: 13,
+                )
               ],
             ),
           )
@@ -84,24 +91,24 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildAppColorPreview() {
-    final nowAppColor = _store.primaryColor.fetch()!;
     return ExpansionTile(
+        textColor: priColor,
         tilePadding: EdgeInsets.zero,
         childrenPadding: EdgeInsets.zero,
         children: [
-          _buildAppColorPicker(Color(nowAppColor)),
+          _buildAppColorPicker(priColor),
           _buildColorPickerConfirmBtn()
         ],
         trailing: ClipOval(
           child: Container(
-            color: Color(nowAppColor),
+            color: priColor,
             height: 27,
             width: 27,
           ),
         ),
-        title: Text(
+        title: const Text(
           'App primary color',
-          style: TextStyle(fontSize: 14, color: _textColor),
+          style: TextStyle(fontSize: 14),
         ));
   }
 
