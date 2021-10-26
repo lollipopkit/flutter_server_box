@@ -73,11 +73,10 @@ class ServerProvider extends BusyProvider {
   }
 
   Future<void> startAutoRefresh() async {
-    Timer.periodic(
-        Duration(
-            seconds: locator<SettingStore>()
-                .serverStatusUpdateInterval
-                .fetch()!), (_) async {
+    final duration =
+        locator<SettingStore>().serverStatusUpdateInterval.fetch()!;
+    if (duration == 0) return;
+    Timer.periodic(Duration(seconds: duration), (_) async {
       await refreshData();
     });
   }
@@ -86,12 +85,14 @@ class ServerProvider extends BusyProvider {
     _servers.add(genInfo(info));
     locator<ServerStore>().put(info);
     notifyListeners();
+    refreshData();
   }
 
   void delServer(ServerPrivateInfo info) {
     _servers.removeWhere((e) => e.info == info);
     locator<ServerStore>().delete(info);
     notifyListeners();
+    refreshData();
   }
 
   void updateServer(ServerPrivateInfo old, ServerPrivateInfo newInfo) {
@@ -100,6 +101,7 @@ class ServerProvider extends BusyProvider {
     _servers[idx].client = genClient(newInfo);
     locator<ServerStore>().update(old, newInfo);
     notifyListeners();
+    refreshData();
   }
 
   Future<ServerStatus> _getData(ServerPrivateInfo info, int idx) async {

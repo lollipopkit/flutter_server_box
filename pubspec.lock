@@ -45,6 +45,13 @@ packages:
       url: "https://github.com/LollipopKit/circle_chart"
     source: git
     version: "0.0.3"
+  clipboard:
+    dependency: "direct main"
+    description:
+      name: clipboard
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.3"
   clock:
     dependency: transitive
     description:

@@ -49,11 +49,10 @@ class MyApp extends StatelessWidget {
                   focusedBorder: UnderlineInputBorder(
                       borderSide: BorderSide(color: primaryColor))),
               radioTheme: RadioThemeData(
-                  fillColor: getMaterialStateColor(primaryColor)),
+                  fillColor: getMaterialStateColor(primaryColor),),
             ),
             darkTheme: ThemeData.dark().copyWith(
                 primaryColor: primaryColor,
-                appBarTheme: AppBarTheme(backgroundColor: primaryColor),
                 floatingActionButtonTheme: FloatingActionButtonThemeData(
                     backgroundColor: primaryColor),
                 iconTheme: IconThemeData(color: primaryColor),

@@ -121,7 +121,8 @@ class _ServerPageState extends State<ServerPage>
             Text(ss.uptime!,
                 textScaleFactor: 1.0,
                 style: TextStyle(
-                    color: _theme.textTheme.bodyText1!.color!.withAlpha(100), fontSize: 11))
+                    color: _theme.textTheme.bodyText1!.color!.withAlpha(100),
+                    fontSize: 11))
           ],
         ),
         const SizedBox(

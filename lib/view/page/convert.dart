@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:toolbox/data/res/color.dart';
@@ -109,7 +110,7 @@ class _ConvertPageState extends State<ConvertPage>
           child: SizedBox(
             width: _media.size.width * 0.3,
             child: Row(
-              children: const [Icon(Icons.change_circle), Text('Upside down')],
+              children: const [Icon(Icons.change_circle), Text(' Upside down')],
             ),
           ),
           onPressed: () {
@@ -147,7 +148,18 @@ class _ConvertPageState extends State<ConvertPage>
   Widget _buildResult() {
     return SizedBox(
       height: _media.size.height * 0.33,
-      child: _buildInput(_textEditingControllerResult),
+      child: Stack(
+        children: [
+          _buildInput(_textEditingControllerResult),
+          Positioned(
+              right: 7,
+              top: 7,
+              child: IconButton(
+                  onPressed: () =>
+                      FlutterClipboard.copy(_textEditingControllerResult.text),
+                  icon: const Icon(Icons.copy)))
+        ],
+      ),
     );
   }
 

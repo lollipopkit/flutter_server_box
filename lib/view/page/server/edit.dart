@@ -62,25 +62,30 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             TextField(
               controller: nameController,
               keyboardType: TextInputType.text,
-              decoration: buildDecoration('Name', icon: Icons.info),
+              decoration:
+                  buildDecoration('Name', icon: Icons.info, hint: 'Example'),
             ),
             TextField(
               controller: ipController,
               keyboardType: TextInputType.text,
               autocorrect: false,
-              decoration: buildDecoration('Host', icon: Icons.storage),
+              enableSuggestions: false,
+              decoration: buildDecoration('Host',
+                  icon: Icons.storage, hint: 'example.com'),
             ),
             TextField(
               controller: portController,
               keyboardType: TextInputType.number,
-              decoration:
-                  buildDecoration('Port', icon: Icons.format_list_numbered),
+              decoration: buildDecoration('Port',
+                  icon: Icons.format_list_numbered, hint: '22'),
             ),
             TextField(
               controller: usernameController,
               keyboardType: TextInputType.text,
               autocorrect: false,
-              decoration: buildDecoration('User', icon: Icons.account_box),
+              enableSuggestions: false,
+              decoration: buildDecoration('User',
+                  icon: Icons.account_box, hint: 'root'),
             ),
             const SizedBox(height: 7),
             Row(
@@ -96,7 +101,8 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                     controller: passwordController,
                     obscureText: true,
                     keyboardType: TextInputType.text,
-                    decoration: buildDecoration('Pwd', icon: Icons.password),
+                    decoration: buildDecoration('Pwd',
+                        icon: Icons.password, hint: 'Password'),
                     onSubmitted: (_) => {},
                   )
                 : const SizedBox(),
@@ -138,8 +144,23 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.send),
         onPressed: () {
+          if (ipController.text == '') {
+            showSnackBar(context, const Text('Please enter host.'));
+            return;
+          }
+          if (!usePublicKey && passwordController.text == '') {
+            showSnackBar(context, const Text('Please enter password.'));
+            return;
+          }
           if (usePublicKey && _typeOptionIndex == -1) {
             showSnackBar(context, const Text('Please select a private key.'));
+            return;
+          }
+          if (usernameController.text == '') {
+            usernameController.text = 'root';
+          }
+          if (portController.text == '') {
+            portController.text = '22';
           }
           final authorization = usePublicKey
               ? {"privateKey": _keyInfo[0], "passphrase": _keyInfo[1]}

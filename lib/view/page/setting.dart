@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
-import 'package:toolbox/core/utils.dart';
+import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
@@ -15,14 +15,20 @@ class SettingPage extends StatefulWidget {
 class _SettingPageState extends State<SettingPage> {
   late SettingStore _store;
   late int _selectedColorValue;
-  final TextEditingController _intervalController = TextEditingController();
+  double _value = 0;
+  late Color _textColor;
+
+@override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _textColor = Theme.of(context).textTheme.bodyText1!.color!;
+  }
 
   @override
   void initState() {
     super.initState();
     _store = locator<SettingStore>();
-    _intervalController.text =
-        _store.serverStatusUpdateInterval.fetch()!.toString();
+    _value = _store.serverStatusUpdateInterval.fetch()!.toDouble();
   }
 
   @override
@@ -36,28 +42,40 @@ class _SettingPageState extends State<SettingPage> {
         children: [
           RoundRectCard(_buildAppColorPreview()),
           RoundRectCard(
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text(
-                'Server status update interval (seconds)',
-                style: TextStyle(fontSize: 14),
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              childrenPadding: EdgeInsets.zero,
+              title: Text(
+                'Server status update interval',
+                style: TextStyle(fontSize: 14, color: _textColor),
                 textAlign: TextAlign.start,
               ),
-              trailing: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.1,
-                child: TextField(
-                  textAlign: TextAlign.center,
-                  controller: _intervalController,
-                  keyboardType: TextInputType.number,
-                  onSubmitted: (val) {
-                    _store.serverStatusUpdateInterval.put(int.parse(val));
-                    showSnackBar(
-                        context,
-                        const Text(
-                            'This setting will take effect \nthe next time app launch'));
-                  },
-                ),
+              subtitle: const Text(
+                'Will take effect the next time app launches.',
+                style: TextStyle(color: Colors.grey),
               ),
+              trailing: Text('${_value.toInt()} s'),
+              children: [
+                Slider(
+                  thumbColor: primaryColor,
+                  activeColor: primaryColor.withOpacity(0.7),
+                  min: 0,
+                  max: 10,
+                  value: _value,
+                  onChanged: (newValue) {
+                    setState(() {
+                      _value = newValue;
+                    });
+                  },
+                  onChangeEnd: (val) =>
+                      _store.serverStatusUpdateInterval.put(val.toInt()),
+                  label: '${_value.toInt()} seconds',
+                  divisions: 10,
+                ),
+                const SizedBox(height: 3,),
+                _value == 0.0 ? const Text('You set to 0, will not update automatically.') : const SizedBox(),
+                const SizedBox(height: 13,)
+              ],
             ),
           )
         ],
@@ -81,9 +99,9 @@ class _SettingPageState extends State<SettingPage> {
             width: 27,
           ),
         ),
-        title: const Text(
+        title: Text(
           'App primary color',
-          style: TextStyle(fontSize: 14),
+          style: TextStyle(fontSize: 14, color: _textColor),
         ));
   }
 

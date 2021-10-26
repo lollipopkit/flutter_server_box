@@ -55,6 +55,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
             minLines: 3,
             maxLines: 10,
             keyboardType: TextInputType.text,
+            enableSuggestions: false,
             decoration: buildDecoration('Private Key', icon: Icons.vpn_key),
           ),
           TextField(
