@@ -30,8 +30,8 @@ class _ConvertPageState extends State<ConvertPage>
   @override
   void initState() {
     super.initState();
-    _textEditingController = TextEditingController();
-    _textEditingControllerResult = TextEditingController();
+    _textEditingController = TextEditingController(text: '');
+    _textEditingControllerResult = TextEditingController(text: '');
   }
 
   @override
@@ -104,30 +104,51 @@ class _ConvertPageState extends State<ConvertPage>
   Widget _buildTypeOption() {
     return Card(
       child: ExpansionTile(
-        leading: TextButton(
-          style: ButtonStyle(
-              foregroundColor: MaterialStateProperty.all(primaryColor)),
-          child: SizedBox(
-            width: _media.size.width * 0.3,
-            child: Row(
-              children: const [Icon(Icons.change_circle), Text(' Upside down')],
+        tilePadding: const EdgeInsets.only(left: 7, right: 27),
+        childrenPadding: EdgeInsets.zero,
+        title: Row(
+          children: [
+            TextButton(
+              style: ButtonStyle(
+                  foregroundColor: MaterialStateProperty.all(primaryColor)),
+              child: const Icon(Icons.change_circle),
+              onPressed: () {
+                final temp = _textEditingController.text;
+                _textEditingController.text = _textEditingControllerResult.text;
+                _textEditingControllerResult.text = temp;
+              },
             ),
-          ),
-          onPressed: () {
-            final temp = _textEditingController.text;
-            _textEditingController.text = _textEditingControllerResult.text;
-            _textEditingControllerResult.text = temp;
-          },
+            TextButton(
+              style: ButtonStyle(
+                  foregroundColor: MaterialStateProperty.all(primaryColor)),
+              child: const Icon(Icons.copy),
+              onPressed: () => FlutterClipboard.copy(
+                  _textEditingControllerResult.text == ''
+                      ? ' '
+                      : _textEditingControllerResult.text),
+            )
+          ],
         ),
-        title: const SizedBox(),
-        trailing: SizedBox(
-          width: _media.size.width * 0.4,
-          child: Text(
-            _typeOption[_typeOptionIndex],
-            style: TextStyle(
-                fontSize: 16.0,
-                fontWeight: FontWeight.w500,
-                color: primaryColor),
+        trailing: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: _media.size.width * 0.35),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(_typeOption[_typeOptionIndex],
+                  textScaleFactor: 1.0,
+                  textAlign: TextAlign.left,
+                  style: TextStyle(
+                      fontSize: 16.0,
+                      fontWeight: FontWeight.w500,
+                      color: primaryColor)),
+              const Text(
+                'Current Mode',
+                textScaleFactor: 1.0,
+                textAlign: TextAlign.right,
+                style: TextStyle(fontSize: 9.0, color: Colors.grey),
+              )
+            ],
           ),
         ),
         children: _typeOption
@@ -148,18 +169,7 @@ class _ConvertPageState extends State<ConvertPage>
   Widget _buildResult() {
     return SizedBox(
       height: _media.size.height * 0.33,
-      child: Stack(
-        children: [
-          _buildInput(_textEditingControllerResult),
-          Positioned(
-              right: 7,
-              top: 7,
-              child: IconButton(
-                  onPressed: () =>
-                      FlutterClipboard.copy(_textEditingControllerResult.text),
-                  icon: const Icon(Icons.copy)))
-        ],
-      ),
+      child: _buildInput(_textEditingControllerResult),
     );
   }
 
