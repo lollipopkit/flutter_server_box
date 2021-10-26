@@ -55,7 +55,11 @@ class ServerProvider extends BusyProvider {
         passwordOrKey: spi.authorization);
   }
 
-  Future<void> refreshData() async {
+  Future<void> refreshData({int? idx}) async {
+    if (idx != null) {
+      _servers[idx].status = await _getData(_servers[idx].info, idx);
+      return;
+    }
     List<ServerStatus> _serversStatus = [];
     try {
       _serversStatus = await Future.wait(
@@ -85,14 +89,13 @@ class ServerProvider extends BusyProvider {
     _servers.add(genInfo(info));
     locator<ServerStore>().put(info);
     notifyListeners();
-    refreshData();
+    refreshData(idx: _servers.length - 1);
   }
 
   void delServer(ServerPrivateInfo info) {
     _servers.removeWhere((e) => e.info == info);
     locator<ServerStore>().delete(info);
     notifyListeners();
-    refreshData();
   }
 
   void updateServer(ServerPrivateInfo old, ServerPrivateInfo newInfo) {
@@ -101,7 +104,7 @@ class ServerProvider extends BusyProvider {
     _servers[idx].client = genClient(newInfo);
     locator<ServerStore>().update(old, newInfo);
     notifyListeners();
-    refreshData();
+    refreshData(idx: idx);
   }
 
   Future<ServerStatus> _getData(ServerPrivateInfo info, int idx) async {
