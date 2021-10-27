@@ -6,11 +6,13 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/route.dart';
-import 'package:toolbox/data/model/server_private_info.dart';
+import 'package:toolbox/data/model/server.dart';
+import 'package:toolbox/data/model/server_connection_state.dart';
 import 'package:toolbox/data/model/server_status.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/locator.dart';
+import 'package:toolbox/view/page/server/detail.dart';
 import 'package:toolbox/view/page/server/edit.dart';
 
 class ServerPage extends StatefulWidget {
@@ -61,8 +63,7 @@ class _ServerPageState extends State<ServerPage>
             ),
             children: [
               const SizedBox(height: 13),
-              ...pro.servers.map((e) => _buildEachServerCard(
-                  pro.servers[pro.servers.indexOf(e)].status, e.info))
+              ...pro.servers.map((e) => _buildEachServerCard(e))
             ],
           ));
         })),
@@ -78,32 +79,36 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  Widget _buildEachServerCard(ServerStatus ss, ServerPrivateInfo spi) {
+  Widget _buildEachServerCard(ServerInfo si) {
     return GestureDetector(
-        child: _buildEachCardContent(ss, spi),
+        child: _buildEachCardContent(si),
         onLongPress: () {
           AppRoute(
                   ServerEditPage(
-                    spi: spi,
+                    spi: si.info,
                   ),
                   'Edit server info page')
               .go(context);
         });
   }
 
-  Widget _buildEachCardContent(ServerStatus ss, ServerPrivateInfo spi) {
+  Widget _buildEachCardContent(ServerInfo si) {
     return Card(
       child: InkWell(
         child: Padding(
           padding: const EdgeInsets.all(13),
-          child: _buildRealServerCard(ss, spi.name ?? ''),
+          child: _buildRealServerCard(
+              si.status, si.info.name ?? '', si.connectionState),
         ),
-        onTap: () {},
+        onTap: () =>
+            AppRoute(ServerDetailPage(si.client.id!), 'server detail page')
+                .go(context),
       ),
     );
   }
 
-  Widget _buildRealServerCard(ServerStatus ss, String serverName) {
+  Widget _buildRealServerCard(
+      ServerStatus ss, String serverName, ServerConnectionState cs) {
     final rootDisk =
         ss.disk!.firstWhere((element) => element!.mountLocation == '/');
 
@@ -118,7 +123,7 @@ class _ServerPageState extends State<ServerPage>
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
               textScaleFactor: 1.0,
             ),
-            Text(ss.uptime!,
+            Text(getTopRightStr(cs, ss.uptime!),
                 textScaleFactor: 1.0,
                 style: TextStyle(
                     color: _theme.textTheme.bodyText1!.color!.withAlpha(100),
@@ -131,7 +136,7 @@ class _ServerPageState extends State<ServerPage>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildPercentCircle(ss.cpuPercent! + 0.01, 'CPU'),
+            _buildPercentCircle(ss.cpuPercent!, 'CPU'),
             _buildPercentCircle(
                 ss.memList![1]! / ss.memList![0]! * 100 + 0.01, 'Mem'),
             _buildIOData('Net', 'Conn:\n' + ss.tcp!.maxConn!.toString(),
@@ -142,6 +147,21 @@ class _ServerPageState extends State<ServerPage>
         ),
       ],
     );
+  }
+
+  String getTopRightStr(ServerConnectionState cs, String upTime) {
+    switch (cs) {
+      case ServerConnectionState.disconnected:
+        return 'Disconnected';
+      case ServerConnectionState.connected:
+        return upTime;
+      case ServerConnectionState.connecting:
+        return 'Connecting...';
+      case ServerConnectionState.failed:
+        return 'Failed';
+      default:
+        return 'Unknown State';
+    }
   }
 
   Widget _buildIOData(String title, String up, String down) {
@@ -183,6 +203,8 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildPercentCircle(double percent, String title) {
+    if (percent == 0.0) percent += 0.01;
+    if (percent == 100.0) percent -= 0.01;
     return SizedBox(
       width: _media.size.width * 0.2,
       height: _media.size.height * 0.1,
