@@ -136,7 +136,7 @@ class _ServerPageState extends State<ServerPage>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildPercentCircle(ss.cpuPercent!.first.calculateUsedPercent, 'CPU'),
+            _buildPercentCircle(ss.cpu2Status!.usedPercent(), 'CPU'),
             _buildPercentCircle(
                 ss.memList![1]! / ss.memList![0]! * 100 + 0.01, 'Mem'),
             _buildIOData('Net', 'Conn:\n' + ss.tcp!.maxConn!.toString(),

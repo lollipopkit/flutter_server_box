@@ -4,7 +4,8 @@ import 'package:logging/logging.dart';
 import 'package:ssh2/ssh2.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/provider_base.dart';
-import 'package:toolbox/data/model/cpu_percent.dart';
+import 'package:toolbox/data/model/cpu_2_status.dart';
+import 'package:toolbox/data/model/cpu_status.dart';
 import 'package:toolbox/data/model/server_connection_state.dart';
 import 'package:toolbox/data/model/disk_info.dart';
 import 'package:toolbox/data/model/server.dart';
@@ -21,11 +22,13 @@ class ServerProvider extends BusyProvider {
 
   final logger = Logger('ServerProvider');
 
-  List<CpuStatus> get emptyCpuPercent =>
-      [CpuStatus('cpu', 0, 0, 0, 0, 0, 0, 0)];
+  CpuStatus get emptyCpuStatus => CpuStatus('cpu', 0, 0, 0, 0, 0, 0, 0);
+
+  Cpu2Status get emptyCpu2Status =>
+      Cpu2Status([emptyCpuStatus], [emptyCpuStatus]);
 
   ServerStatus get emptyStatus => ServerStatus(
-      cpuPercent: emptyCpuPercent,
+      cpu2Status: emptyCpu2Status,
       memList: [100, 0],
       disk: [
         DiskInfo(
@@ -142,7 +145,7 @@ class ServerProvider extends BusyProvider {
     final tcp = await client.execute('cat /proc/net/snmp') ?? '';
 
     return ServerStatus(
-        cpuPercent: _getCPU(cpu),
+        cpu2Status: _getCPU(cpu, _servers[idx].status.cpu2Status!),
         memList: _getMem(mem),
         sysVer: sysVer.trim(),
         disk: _getDisk(disk),
@@ -150,7 +153,7 @@ class ServerProvider extends BusyProvider {
         tcp: _getTcp(tcp));
   }
 
-  List<CpuStatus> _getCPU(String raw) {
+  Cpu2Status _getCPU(String raw, Cpu2Status old) {
     final List<CpuStatus> cpus = [];
     for (var item in raw.split('\n')) {
       if (item == '') break;
@@ -158,18 +161,19 @@ class ServerProvider extends BusyProvider {
       final matches = item.replaceFirst(id, '').trim().split(' ');
       cpus.add(CpuStatus(
           id,
-          double.parse(matches[0]),
-          double.parse(matches[1]),
-          double.parse(matches[2]),
-          double.parse(matches[3]),
-          double.parse(matches[4]),
-          double.parse(matches[5]),
-          double.parse(matches[6])));
+          int.parse(matches[0]),
+          int.parse(matches[1]),
+          int.parse(matches[2]),
+          int.parse(matches[3]),
+          int.parse(matches[4]),
+          int.parse(matches[5]),
+          int.parse(matches[6])));
     }
     if (cpus.isEmpty) {
-      return emptyCpuPercent;
+      return emptyCpu2Status;
     }
-    return cpus;
+
+    return old.update(cpus);
   }
 
   String _getUpTime(String raw) {

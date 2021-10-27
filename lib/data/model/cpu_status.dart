@@ -15,13 +15,13 @@ class CpuStatus {
 } 
 */
   late String id;
-  late double user;
-  late double sys;
-  late double nice;
-  late double idle;
-  late double iowait;
-  late double irq;
-  late double softirq;
+  late int user;
+  late int sys;
+  late int nice;
+  late int idle;
+  late int iowait;
+  late int irq;
+  late int softirq;
 
   CpuStatus(
     this.id,
@@ -56,8 +56,5 @@ class CpuStatus {
     return data;
   }
 
-  double get calculateUsedPercent {
-    final used = idle / (user + sys + nice + iowait + irq + softirq + idle);
-    return used.isNaN ? 0 : used;
-  }
+  int get total => user + sys + nice + idle + iowait + irq + softirq;
 }

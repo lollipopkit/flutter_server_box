@@ -34,7 +34,7 @@ class _ServerDetailPageState extends State<ServerDetailPage> {
   }
 
   Widget _buildCPUView(ServerStatus ss) {
-    return Text(ss.cpuPercent!.toString());
+    return Text(ss.cpu2Status!.toString());
   }
 
   Widget _buildMemView(ServerStatus ss) {
