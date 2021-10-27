@@ -4,6 +4,7 @@ import 'package:logging/logging.dart';
 import 'package:ssh2/ssh2.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/provider_base.dart';
+import 'package:toolbox/data/model/server_connection_state.dart';
 import 'package:toolbox/data/model/disk_info.dart';
 import 'package:toolbox/data/model/server.dart';
 import 'package:toolbox/data/model/server_private_info.dart';
@@ -32,7 +33,7 @@ class ServerProvider extends BusyProvider {
             usedPercent: 0)
       ],
       sysVer: '',
-      uptime: 'Connecting...',
+      uptime: '',
       tcp: TcpStatus(maxConn: 0, active: 0, passive: 0, fail: 0));
 
   Future<void> loadLocalData() async {
@@ -44,7 +45,8 @@ class ServerProvider extends BusyProvider {
   }
 
   ServerInfo genInfo(ServerPrivateInfo spi) {
-    return ServerInfo(spi, emptyStatus, genClient(spi));
+    return ServerInfo(
+        spi, emptyStatus, genClient(spi), ServerConnectionState.disconnected);
   }
 
   SSHClient genClient(ServerPrivateInfo spi) {
@@ -57,22 +59,23 @@ class ServerProvider extends BusyProvider {
 
   Future<void> refreshData({int? idx}) async {
     if (idx != null) {
-      _servers[idx].status = await _getData(_servers[idx].info, idx);
+      final singleData = await _getData(_servers[idx].info, idx);
+      if (singleData != null) {
+        _servers[idx].status = singleData;
+      }
       return;
     }
-    List<ServerStatus> _serversStatus = [];
     try {
-      _serversStatus = await Future.wait(
-          _servers.map((s) => _getData(s.info, _servers.indexOf(s))));
+      await Future.wait(_servers.map((s) async {
+        final idx = _servers.indexOf(s);
+        final status = await _getData(s.info, idx);
+        if (status != null) {
+          _servers[idx].status = status;
+          notifyListeners();
+        }
+      }));
     } catch (e) {
       rethrow;
-    } finally {
-      int idx = 0;
-      for (var item in _serversStatus) {
-        _servers[idx].status = item;
-        idx++;
-      }
-      notifyListeners();
     }
   }
 
@@ -107,41 +110,57 @@ class ServerProvider extends BusyProvider {
     refreshData(idx: idx);
   }
 
-  Future<ServerStatus> _getData(ServerPrivateInfo info, int idx) async {
+  Future<ServerStatus?> _getData(ServerPrivateInfo info, int idx) async {
     final client = _servers[idx].client;
     final connected = await client.isConnected();
-    if (!connected) {
+    final state = _servers[idx].connectionState;
+    if (!connected || state != ServerConnectionState.connected) {
+      _servers[idx].connectionState = ServerConnectionState.connecting;
       final time1 = DateTime.now();
-      await client.connect();
-      final time2 = DateTime.now();
-      logger.info(
-          'Connected to [${info.name}] in [${time2.difference(time1).toString()}].');
-    } else {
       try {
-        await client.execute('ls');
-      } catch (e) {
         await client.connect();
-        logger.warning('[${info.name}] has error: $e \nTrying to reconnect.');
-        rethrow;
+        final time2 = DateTime.now();
+        logger.info(
+            'Connected to [${info.name}] in [${time2.difference(time1).toString()}].');
+        _servers[idx].connectionState = ServerConnectionState.connected;
+      } catch (e) {
+        _servers[idx].connectionState = ServerConnectionState.failed;
+        logger.warning(e);
       }
     }
 
-    final cpu = await client.execute(
-            "top -bn1 | grep load | awk '{printf \"%.2f\", \$(NF-2)}'") ??
-        '0';
-    final mem = await client.execute('free -m') ?? '';
-    final sysVer = await client.execute('cat /etc/issue.net') ?? 'Unkown';
-    final upTime = await client.execute('uptime') ?? 'Failed';
-    final disk = await client.execute('df -h') ?? 'Failed';
-    final tcp = await client.execute('cat /proc/net/snmp') ?? 'Failed';
+    try {
+      final cpu = await client.execute("top -bn1 | grep Cpu") ?? '0';
+      final mem = await client.execute('free -m') ?? '';
+      final sysVer = await client.execute('cat /etc/issue.net') ?? 'Unkown';
+      final upTime = await client.execute('uptime') ?? 'Failed';
+      final disk = await client.execute('df -h') ?? 'Failed';
+      final tcp = await client.execute('cat /proc/net/snmp') ?? 'Failed';
 
-    return ServerStatus(
-        cpuPercent: double.parse(cpu.trim()),
-        memList: _getMem(mem),
-        sysVer: sysVer.trim(),
-        disk: _getDisk(disk),
-        uptime: _getUpTime(upTime),
-        tcp: _getTcp(tcp));
+      return ServerStatus(
+          cpuPercent: _getCPU(cpu),
+          memList: _getMem(mem),
+          sysVer: sysVer.trim(),
+          disk: _getDisk(disk),
+          uptime: _getUpTime(upTime),
+          tcp: _getTcp(tcp));
+    } catch (e) {
+      _servers[idx].connectionState = ServerConnectionState.failed;
+      logger.warning(e);
+      return null;
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  double _getCPU(String raw) {
+    final match = RegExp('[0-9]*\\.[0-9] id,').firstMatch(raw);
+    if (match == null) {
+      return 0;
+    }
+    return 100 -
+        double.parse(
+            raw.substring(match.start, match.end).replaceAll(' id,', ''));
   }
 
   String _getUpTime(String raw) {
