@@ -154,7 +154,7 @@ class _ServerPageState extends State<ServerPage>
       case ServerConnectionState.disconnected:
         return 'Disconnected';
       case ServerConnectionState.connected:
-        return upTime;
+        return upTime == '' ? 'Loading...' : upTime;
       case ServerConnectionState.connecting:
         return 'Connecting...';
       case ServerConnectionState.failed:

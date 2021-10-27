@@ -62,6 +62,7 @@ class ServerProvider extends BusyProvider {
       final singleData = await _getData(_servers[idx].info, idx);
       if (singleData != null) {
         _servers[idx].status = singleData;
+        notifyListeners();
       }
       return;
     }
@@ -116,6 +117,7 @@ class ServerProvider extends BusyProvider {
     final state = _servers[idx].connectionState;
     if (!connected || state != ServerConnectionState.connected) {
       _servers[idx].connectionState = ServerConnectionState.connecting;
+      notifyListeners();
       final time1 = DateTime.now();
       try {
         await client.connect();
@@ -123,8 +125,10 @@ class ServerProvider extends BusyProvider {
         logger.info(
             'Connected to [${info.name}] in [${time2.difference(time1).toString()}].');
         _servers[idx].connectionState = ServerConnectionState.connected;
+        notifyListeners();
       } catch (e) {
         _servers[idx].connectionState = ServerConnectionState.failed;
+        notifyListeners();
         logger.warning(e);
       }
     }
@@ -146,10 +150,9 @@ class ServerProvider extends BusyProvider {
           tcp: _getTcp(tcp));
     } catch (e) {
       _servers[idx].connectionState = ServerConnectionState.failed;
+      notifyListeners();
       logger.warning(e);
       return null;
-    } finally {
-      notifyListeners();
     }
   }
 
