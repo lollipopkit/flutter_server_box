@@ -17,19 +17,19 @@ class _ServerDetailPageState extends State<ServerDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Consumer<ServerProvider>(builder: (_, provider, __) {
-      return _buildMainPage(provider.servers.firstWhere((e) => e.client.id == widget.id));
+      return _buildMainPage(
+          provider.servers.firstWhere((e) => e.client.id == widget.id));
     });
   }
 
   Widget _buildMainPage(ServerInfo si) {
     return Scaffold(
-      appBar: AppBar(title: Text(si.info.name ?? 'Server Detail'),),
+      appBar: AppBar(
+        title: Text(si.info.name ?? 'Server Detail'),
+      ),
       body: ListView(
-      children: [
-        _buildCPUView(si.status),
-        _buildMemView(si.status)
-      ],
-    ),
+        children: [_buildCPUView(si.status), _buildMemView(si.status)],
+      ),
     );
   }
 

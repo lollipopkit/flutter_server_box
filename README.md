@@ -9,7 +9,7 @@ A new Flutter project which provide a chart view to display server status data.
 	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/IMG_3327.PNG">
     </td>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/IMG_3328.PNG">
+	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/IMG_3347.PNG">
     </td>
     <td>
 	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/IMG_3329.PNG">
@@ -25,7 +25,7 @@ A new Flutter project which provide a chart view to display server status data.
 	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/IMG_3331.PNG">
     </td>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/IMG_3332.PNG">
+	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/IMG_3346.PNG">
     </td>
   </tr>
 </table>

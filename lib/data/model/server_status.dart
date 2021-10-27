@@ -1,3 +1,4 @@
+import 'package:toolbox/data/model/cpu_percent.dart';
 import 'package:toolbox/data/model/disk_info.dart';
 import 'package:toolbox/data/model/tcp_status.dart';
 
@@ -27,7 +28,7 @@ class ServerStatus {
 } 
 */
 
-  double? cpuPercent;
+  List<CpuStatus>? cpuPercent;
   List<int?>? memList;
   String? sysVer;
   String? uptime;
@@ -42,7 +43,10 @@ class ServerStatus {
       this.disk,
       this.tcp});
   ServerStatus.fromJson(Map<String, dynamic> json) {
-    cpuPercent = double.parse(json["cpuPercent"]);
+    cpuPercent = [];
+    for (var item in json["cpuPercent"]) {
+      cpuPercent!.add(CpuStatus.fromJson(item));
+    }
     if (json["memList"] != null) {
       final v = json["memList"];
       final arr0 = <int>[];

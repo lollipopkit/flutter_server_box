@@ -4,6 +4,7 @@ import 'package:logging/logging.dart';
 import 'package:ssh2/ssh2.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/provider_base.dart';
+import 'package:toolbox/data/model/cpu_percent.dart';
 import 'package:toolbox/data/model/server_connection_state.dart';
 import 'package:toolbox/data/model/disk_info.dart';
 import 'package:toolbox/data/model/server.dart';
@@ -20,8 +21,11 @@ class ServerProvider extends BusyProvider {
 
   final logger = Logger('ServerProvider');
 
+  List<CpuStatus> get emptyCpuPercent =>
+      [CpuStatus('cpu', 0, 0, 0, 0, 0, 0, 0)];
+
   ServerStatus get emptyStatus => ServerStatus(
-      cpuPercent: 0,
+      cpuPercent: emptyCpuPercent,
       memList: [100, 0],
       disk: [
         DiskInfo(
@@ -66,18 +70,15 @@ class ServerProvider extends BusyProvider {
       }
       return;
     }
-    try {
-      await Future.wait(_servers.map((s) async {
-        final idx = _servers.indexOf(s);
-        final status = await _getData(s.info, idx);
-        if (status != null) {
-          _servers[idx].status = status;
-          notifyListeners();
-        }
-      }));
-    } catch (e) {
-      rethrow;
-    }
+
+    await Future.wait(_servers.map((s) async {
+      final idx = _servers.indexOf(s);
+      final status = await _getData(s.info, idx);
+      if (status != null) {
+        _servers[idx].status = status;
+        notifyListeners();
+      }
+    }));
   }
 
   Future<void> startAutoRefresh() async {
@@ -133,37 +134,42 @@ class ServerProvider extends BusyProvider {
       }
     }
 
-    try {
-      final cpu = await client.execute("top -bn1 | grep Cpu") ?? '0';
-      final mem = await client.execute('free -m') ?? '';
-      final sysVer = await client.execute('cat /etc/issue.net') ?? 'Unkown';
-      final upTime = await client.execute('uptime') ?? 'Failed';
-      final disk = await client.execute('df -h') ?? 'Failed';
-      final tcp = await client.execute('cat /proc/net/snmp') ?? 'Failed';
+    final cpu = await client.execute("cat /proc/stat | grep cpu") ?? '';
+    final mem = await client.execute('free -m') ?? '';
+    final sysVer = await client.execute('cat /etc/issue.net') ?? '';
+    final upTime = await client.execute('uptime') ?? '';
+    final disk = await client.execute('df -h') ?? '';
+    final tcp = await client.execute('cat /proc/net/snmp') ?? '';
 
-      return ServerStatus(
-          cpuPercent: _getCPU(cpu),
-          memList: _getMem(mem),
-          sysVer: sysVer.trim(),
-          disk: _getDisk(disk),
-          uptime: _getUpTime(upTime),
-          tcp: _getTcp(tcp));
-    } catch (e) {
-      _servers[idx].connectionState = ServerConnectionState.failed;
-      notifyListeners();
-      logger.warning(e);
-      return null;
-    }
+    return ServerStatus(
+        cpuPercent: _getCPU(cpu),
+        memList: _getMem(mem),
+        sysVer: sysVer.trim(),
+        disk: _getDisk(disk),
+        uptime: _getUpTime(upTime),
+        tcp: _getTcp(tcp));
   }
 
-  double _getCPU(String raw) {
-    final match = RegExp('[0-9]*\\.[0-9] id,').firstMatch(raw);
-    if (match == null) {
-      return 0;
+  List<CpuStatus> _getCPU(String raw) {
+    final List<CpuStatus> cpus = [];
+    for (var item in raw.split('\n')) {
+      if (item == '') break;
+      final id = item.split(' ').first;
+      final matches = item.replaceFirst(id, '').trim().split(' ');
+      cpus.add(CpuStatus(
+          id,
+          double.parse(matches[0]),
+          double.parse(matches[1]),
+          double.parse(matches[2]),
+          double.parse(matches[3]),
+          double.parse(matches[4]),
+          double.parse(matches[5]),
+          double.parse(matches[6])));
     }
-    return 100 -
-        double.parse(
-            raw.substring(match.start, match.end).replaceAll(' id,', ''));
+    if (cpus.isEmpty) {
+      return emptyCpuPercent;
+    }
+    return cpus;
   }
 
   String _getUpTime(String raw) {
