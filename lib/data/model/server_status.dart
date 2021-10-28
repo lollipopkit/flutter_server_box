@@ -29,10 +29,10 @@ class ServerStatus {
 */
 
   late Cpu2Status cpu2Status;
-  late List<int?> memList;
+  late List<int> memList;
   late String sysVer;
   late String uptime;
-  late List<DiskInfo?> disk;
+  late List<DiskInfo> disk;
   late TcpStatus tcp;
 
   ServerStatus(this.cpu2Status, this.memList, this.sysVer, this.uptime,

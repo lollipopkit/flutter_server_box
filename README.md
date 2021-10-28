@@ -36,7 +36,7 @@ A new Flutter project which provide a chart view to display server status data.
 - [x] Status Chart View
 - [x] Base64/Url En/Decode
 - [x] Private Key Store
-- [ ] Server Status Detail Page
+- [x] Server Status Detail Page
 - [x] Theme Switch
 - [ ] Custom Home Page
 

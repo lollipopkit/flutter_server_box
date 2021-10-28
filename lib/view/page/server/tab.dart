@@ -110,7 +110,7 @@ class _ServerPageState extends State<ServerPage>
   Widget _buildRealServerCard(
       ServerStatus ss, String serverName, ServerConnectionState cs) {
     final rootDisk =
-        ss.disk.firstWhere((element) => element!.mountLocation == '/');
+        ss.disk.firstWhere((element) => element.mountLocation == '/');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -137,11 +137,10 @@ class _ServerPageState extends State<ServerPage>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _buildPercentCircle(ss.cpu2Status.usedPercent(), 'CPU'),
-            _buildPercentCircle(
-                ss.memList[1]! / ss.memList[0]! * 100 + 0.01, 'Mem'),
-            _buildIOData('Net', 'Conn:\n' + ss.tcp.maxConn!.toString(),
+            _buildPercentCircle(ss.memList[1] / ss.memList[0] * 100, 'Mem'),
+            _buildIOData('Net', 'Conn:\n' + ss.tcp.maxConn.toString(),
                 'Fail:\n' + ss.tcp.fail.toString()),
-            _buildIOData('Disk', 'Total:\n' + rootDisk!.size!,
+            _buildIOData('Disk', 'Total:\n' + rootDisk.size,
                 'Used:\n' + rootDisk.usedPercent.toString() + '%')
           ],
         ),
@@ -203,8 +202,8 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildPercentCircle(double percent, String title) {
-    if (percent == 0.0) percent += 0.01;
-    if (percent == 100.0) percent -= 0.01;
+    if (percent <= 0) percent = 0.01;
+    if (percent >= 100) percent = 99.9;
     return SizedBox(
       width: _media.size.width * 0.2,
       height: _media.size.height * 0.1,

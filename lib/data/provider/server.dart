@@ -32,16 +32,8 @@ class ServerProvider extends BusyProvider {
       [100, 0],
       '',
       '',
-      [
-        DiskInfo(
-            mountLocation: '/',
-            mountPath: '/',
-            used: '0',
-            size: '0',
-            avail: '0',
-            usedPercent: 0)
-      ],
-      TcpStatus(maxConn: 0, active: 0, passive: 0, fail: 0));
+      [DiskInfo('/', '/', 0, '0', '0', '0')],
+      TcpStatus(0, 0, 0, 0));
 
   Future<void> loadLocalData() async {
     setBusyState(true);
@@ -199,13 +191,13 @@ class ServerProvider extends BusyProvider {
       if (idx == 2) {
         final vals = item.split(RegExp(r'\s{1,}'));
         return TcpStatus(
-            maxConn: vals[5].i,
-            active: vals[6].i,
-            passive: vals[7].i,
-            fail: vals[8].i);
+            vals[5].i,
+            vals[6].i,
+            vals[7].i,
+            vals[8].i);
       }
     }
-    return TcpStatus(maxConn: 0, active: 0, passive: 0, fail: 0);
+    return TcpStatus(0, 0, 0, 0);
   }
 
   List<DiskInfo> _getDisk(String disk) {
@@ -216,13 +208,8 @@ class ServerProvider extends BusyProvider {
         continue;
       }
       final vals = item.split(RegExp(r'\s{1,}'));
-      list.add(DiskInfo(
-          mountPath: vals[1],
-          mountLocation: vals[5],
-          usedPercent: double.parse(vals[4].replaceFirst('%', '')),
-          used: vals[2],
-          size: vals[1],
-          avail: vals[3]));
+      list.add(DiskInfo(vals[0], vals[5],
+          int.parse(vals[4].replaceFirst('%', '')), vals[2], vals[1], vals[3]));
     }
     return list;
   }

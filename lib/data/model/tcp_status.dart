@@ -11,23 +11,25 @@ class TcpStatus {
 } 
 */
 
-  int? maxConn;
-  int? active;
-  int? passive;
-  int? fail;
+  late int maxConn;
+  late int active;
+  late int passive;
+  late int fail;
 
-  TcpStatus({
+  TcpStatus(
     this.maxConn,
     this.active,
     this.passive,
     this.fail,
-  });
+  );
+
   TcpStatus.fromJson(Map<String, dynamic> json) {
-    maxConn = json["maxConn"]?.toInt();
-    active = json["active"]?.toInt();
-    passive = json["passive"]?.toInt();
-    fail = json["fail"]?.toInt();
+    maxConn = json["maxConn"].toInt();
+    active = json["active"].toInt();
+    passive = json["passive"].toInt();
+    fail = json["fail"].toInt();
   }
+  
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data["maxConn"] = maxConn;
