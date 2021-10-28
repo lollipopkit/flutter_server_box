@@ -28,18 +28,18 @@ class ServerStatus {
 } 
 */
 
-  Cpu2Status? cpu2Status;
-  List<int?>? memList;
-  String? sysVer;
-  String? uptime;
-  List<DiskInfo?>? disk;
-  TcpStatus? tcp;
+  late Cpu2Status cpu2Status;
+  late List<int?> memList;
+  late String sysVer;
+  late String uptime;
+  late List<DiskInfo?> disk;
+  late TcpStatus tcp;
 
   ServerStatus(
-      {this.cpu2Status,
+      this.cpu2Status,
       this.memList,
       this.sysVer,
       this.uptime,
       this.disk,
-      this.tcp});
+      this.tcp);
 }

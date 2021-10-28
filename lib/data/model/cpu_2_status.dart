@@ -6,9 +6,10 @@ class Cpu2Status {
   Cpu2Status(this.pre, this.now);
 
   double usedPercent({int coreIdx = 0}) {
-    final used = (now[coreIdx].idle - pre[coreIdx].idle) /
-        (now[coreIdx].total - pre[coreIdx].total);
-    return used.isNaN ? 0 : used;
+    final idleDelta = now[coreIdx].idle - pre[coreIdx].idle;
+    final totalDelta = now[coreIdx].total - pre[coreIdx].total;
+    final used = idleDelta / totalDelta;
+    return used.isNaN ? 0 : 100 - used * 100;
   }
 
   Cpu2Status update(List<CpuStatus> newStatus) {

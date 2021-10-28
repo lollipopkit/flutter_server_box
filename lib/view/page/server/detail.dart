@@ -34,10 +34,15 @@ class _ServerDetailPageState extends State<ServerDetailPage> {
   }
 
   Widget _buildCPUView(ServerStatus ss) {
-    return Text(ss.cpu2Status!.toString());
+    return ListView.builder(
+      itemBuilder: (ctx, idx) {
+        return Text('$idx ${ss.cpu2Status.usedPercent(coreIdx: idx)}');
+      },
+      itemCount: ss.cpu2Status.now.length,
+    );
   }
 
   Widget _buildMemView(ServerStatus ss) {
-    return Text(ss.memList!.length.toString());
+    return Text(ss.memList.length.toString());
   }
 }

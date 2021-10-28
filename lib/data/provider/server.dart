@@ -28,9 +28,11 @@ class ServerProvider extends BusyProvider {
       Cpu2Status([emptyCpuStatus], [emptyCpuStatus]);
 
   ServerStatus get emptyStatus => ServerStatus(
-      cpu2Status: emptyCpu2Status,
-      memList: [100, 0],
-      disk: [
+      emptyCpu2Status,
+      [100, 0],
+      '',
+      '',
+      [
         DiskInfo(
             mountLocation: '/',
             mountPath: '/',
@@ -39,9 +41,7 @@ class ServerProvider extends BusyProvider {
             avail: '0',
             usedPercent: 0)
       ],
-      sysVer: '',
-      uptime: '',
-      tcp: TcpStatus(maxConn: 0, active: 0, passive: 0, fail: 0));
+      TcpStatus(maxConn: 0, active: 0, passive: 0, fail: 0));
 
   Future<void> loadLocalData() async {
     setBusyState(true);
@@ -145,12 +145,12 @@ class ServerProvider extends BusyProvider {
     final tcp = await client.execute('cat /proc/net/snmp') ?? '';
 
     return ServerStatus(
-        cpu2Status: _getCPU(cpu, _servers[idx].status.cpu2Status!),
-        memList: _getMem(mem),
-        sysVer: sysVer.trim(),
-        disk: _getDisk(disk),
-        uptime: _getUpTime(upTime),
-        tcp: _getTcp(tcp));
+        _getCPU(cpu, _servers[idx].status.cpu2Status),
+        _getMem(mem),
+        sysVer.trim(),
+        _getUpTime(upTime),
+        _getDisk(disk),
+        _getTcp(tcp));
   }
 
   Cpu2Status _getCPU(String raw, Cpu2Status old) {

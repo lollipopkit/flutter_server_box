@@ -110,7 +110,7 @@ class _ServerPageState extends State<ServerPage>
   Widget _buildRealServerCard(
       ServerStatus ss, String serverName, ServerConnectionState cs) {
     final rootDisk =
-        ss.disk!.firstWhere((element) => element!.mountLocation == '/');
+        ss.disk.firstWhere((element) => element!.mountLocation == '/');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,7 +123,7 @@ class _ServerPageState extends State<ServerPage>
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
               textScaleFactor: 1.0,
             ),
-            Text(getTopRightStr(cs, ss.uptime!),
+            Text(getTopRightStr(cs, ss.uptime),
                 textScaleFactor: 1.0,
                 style: TextStyle(
                     color: _theme.textTheme.bodyText1!.color!.withAlpha(100),
@@ -136,11 +136,11 @@ class _ServerPageState extends State<ServerPage>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildPercentCircle(ss.cpu2Status!.usedPercent(), 'CPU'),
+            _buildPercentCircle(ss.cpu2Status.usedPercent(), 'CPU'),
             _buildPercentCircle(
-                ss.memList![1]! / ss.memList![0]! * 100 + 0.01, 'Mem'),
-            _buildIOData('Net', 'Conn:\n' + ss.tcp!.maxConn!.toString(),
-                'Fail:\n' + ss.tcp!.fail.toString()),
+                ss.memList[1]! / ss.memList[0]! * 100 + 0.01, 'Mem'),
+            _buildIOData('Net', 'Conn:\n' + ss.tcp.maxConn!.toString(),
+                'Fail:\n' + ss.tcp.fail.toString()),
             _buildIOData('Disk', 'Total:\n' + rootDisk!.size!,
                 'Used:\n' + rootDisk.usedPercent.toString() + '%')
           ],
