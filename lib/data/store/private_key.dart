@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:toolbox/core/persistant_store.dart';
-import 'package:toolbox/data/model/private_key_info.dart';
+import 'package:toolbox/data/model/server/private_key_info.dart';
 
 class PrivateKeyStore extends PersistentStore {
   void put(PrivateKeyInfo info) {

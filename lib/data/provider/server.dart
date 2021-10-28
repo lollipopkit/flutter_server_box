@@ -4,14 +4,14 @@ import 'package:logging/logging.dart';
 import 'package:ssh2/ssh2.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/provider_base.dart';
-import 'package:toolbox/data/model/cpu_2_status.dart';
-import 'package:toolbox/data/model/cpu_status.dart';
-import 'package:toolbox/data/model/server_connection_state.dart';
-import 'package:toolbox/data/model/disk_info.dart';
-import 'package:toolbox/data/model/server.dart';
-import 'package:toolbox/data/model/server_private_info.dart';
-import 'package:toolbox/data/model/server_status.dart';
-import 'package:toolbox/data/model/tcp_status.dart';
+import 'package:toolbox/data/model/server/cpu_2_status.dart';
+import 'package:toolbox/data/model/server/cpu_status.dart';
+import 'package:toolbox/data/model/server/server_connection_state.dart';
+import 'package:toolbox/data/model/server/disk_info.dart';
+import 'package:toolbox/data/model/server/server.dart';
+import 'package:toolbox/data/model/server/server_private_info.dart';
+import 'package:toolbox/data/model/server/server_status.dart';
+import 'package:toolbox/data/model/server/tcp_status.dart';
 import 'package:toolbox/data/store/server.dart';
 import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/locator.dart';
@@ -25,7 +25,7 @@ class ServerProvider extends BusyProvider {
   CpuStatus get emptyCpuStatus => CpuStatus('cpu', 0, 0, 0, 0, 0, 0, 0);
 
   Cpu2Status get emptyCpu2Status =>
-      Cpu2Status([emptyCpuStatus], [emptyCpuStatus]);
+      Cpu2Status([emptyCpuStatus], [emptyCpuStatus], '');
 
   ServerStatus get emptyStatus => ServerStatus(
       emptyCpu2Status,
@@ -133,16 +133,20 @@ class ServerProvider extends BusyProvider {
     }
     try {
       final cpu = await client.execute("cat /proc/stat | grep cpu") ?? '';
+      final cpuTemp = await client.execute(
+              r"paste <(cat /sys/class/thermal/thermal_zone*/type) <(cat /sys/class/thermal/thermal_zone*/temp) | column -s $'\t' -t | sed 's/\(.\)..$/.\1°C/'") ??
+          '';
       final mem = await client.execute('free -m') ?? '';
-      final sysVer = await client.execute('cat /etc/issue.net') ?? '';
+      final sysVer =
+          await client.execute('cat /etc/os-release | grep PRETTY_NAME') ?? '';
       final upTime = await client.execute('uptime') ?? '';
       final disk = await client.execute('df -h') ?? '';
       final tcp = await client.execute('cat /proc/net/snmp') ?? '';
 
       return ServerStatus(
-          _getCPU(cpu, _servers[idx].status.cpu2Status),
+          _getCPU(cpu, _servers[idx].status.cpu2Status, cpuTemp),
           _getMem(mem),
-          sysVer.trim(),
+          _getSysVer(sysVer),
           _getUpTime(upTime),
           _getDisk(disk),
           _getTcp(tcp));
@@ -154,8 +158,27 @@ class ServerProvider extends BusyProvider {
     }
   }
 
-  Cpu2Status _getCPU(String raw, Cpu2Status old) {
+  String _getSysVer(String raw) {
+    final s = raw.split('=');
+    if (s.length == 2) {
+      return s[1].replaceAll('"', '').replaceFirst('\n', '');
+    }
+    return '';
+  }
+
+  String _getCPUTemp(String raw) {
+    final split = raw.split('\n');
+    for (var item in split) {
+      if (item.contains('x86_pkg_temp') || item.contains('cpu_thermal')) {
+        return item.split(' ').last;
+      }
+    }
+    return '';
+  }
+
+  Cpu2Status _getCPU(String raw, Cpu2Status old, String temp) {
     final List<CpuStatus> cpus = [];
+
     for (var item in raw.split('\n')) {
       if (item == '') break;
       final id = item.split(' ').first;
@@ -174,7 +197,7 @@ class ServerProvider extends BusyProvider {
       return emptyCpu2Status;
     }
 
-    return old.update(cpus);
+    return old.update(cpus, _getCPUTemp(temp));
   }
 
   String _getUpTime(String raw) {
@@ -190,11 +213,7 @@ class ServerProvider extends BusyProvider {
       }
       if (idx == 2) {
         final vals = item.split(RegExp(r'\s{1,}'));
-        return TcpStatus(
-            vals[5].i,
-            vals[6].i,
-            vals[7].i,
-            vals[8].i);
+        return TcpStatus(vals[5].i, vals[6].i, vals[7].i, vals[8].i);
       }
     }
     return TcpStatus(0, 0, 0, 0);

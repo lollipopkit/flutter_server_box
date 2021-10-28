@@ -38,7 +38,7 @@ A new Flutter project which provide a chart view to display server status data.
 - [x] Private Key Store
 - [x] Server Status Detail Page
 - [x] Theme Switch
-- [ ] Custom Home Page
+- [ ] Execute Snippet
 
 ## License
 `Apache License. LollipopKit 2021`

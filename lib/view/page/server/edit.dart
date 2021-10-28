@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/core/utils.dart';
-import 'package:toolbox/data/model/server_private_info.dart';
+import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/provider/private_key.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/color.dart';

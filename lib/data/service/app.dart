@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:toolbox/data/model/update.dart';
+import 'package:toolbox/data/model/app/update.dart';
 import 'package:toolbox/data/res/url.dart';
 
 class AppService {

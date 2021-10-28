@@ -1,9 +1,10 @@
-import 'package:toolbox/data/model/cpu_status.dart';
+import 'package:toolbox/data/model/server/cpu_status.dart';
 
 class Cpu2Status {
   List<CpuStatus> pre;
   List<CpuStatus> now;
-  Cpu2Status(this.pre, this.now);
+  String temp;
+  Cpu2Status(this.pre, this.now, this.temp);
 
   double usedPercent({int coreIdx = 0}) {
     if (now.length != pre.length) return 0;
@@ -13,8 +14,8 @@ class Cpu2Status {
     return used.isNaN ? 0 : 100 - used * 100;
   }
 
-  Cpu2Status update(List<CpuStatus> newStatus) {
-    return Cpu2Status(now, newStatus);
+  Cpu2Status update(List<CpuStatus> newStatus, String newTemp) {
+    return Cpu2Status(now, newStatus, newTemp);
   }
 
   int get coresCount => now.length;

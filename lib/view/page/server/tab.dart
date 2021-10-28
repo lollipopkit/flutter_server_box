@@ -6,9 +6,9 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/route.dart';
-import 'package:toolbox/data/model/server.dart';
-import 'package:toolbox/data/model/server_connection_state.dart';
-import 'package:toolbox/data/model/server_status.dart';
+import 'package:toolbox/data/model/server/server.dart';
+import 'package:toolbox/data/model/server/server_connection_state.dart';
+import 'package:toolbox/data/model/server/server_status.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/locator.dart';
@@ -123,7 +123,7 @@ class _ServerPageState extends State<ServerPage>
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
               textScaleFactor: 1.0,
             ),
-            Text(getTopRightStr(cs, ss.uptime),
+            Text(getTopRightStr(cs, ss.cpu2Status.temp, ss.uptime),
                 textScaleFactor: 1.0,
                 style: TextStyle(
                     color: _theme.textTheme.bodyText1!.color!.withAlpha(100),
@@ -148,12 +148,12 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  String getTopRightStr(ServerConnectionState cs, String upTime) {
+  String getTopRightStr(ServerConnectionState cs, String temp, String upTime) {
     switch (cs) {
       case ServerConnectionState.disconnected:
         return 'Disconnected';
       case ServerConnectionState.connected:
-        return upTime == '' ? 'Loading...' : upTime;
+        return temp == '' ? (upTime == '' ? 'Loading...' : upTime) : temp;
       case ServerConnectionState.connecting:
         return 'Connecting...';
       case ServerConnectionState.failed:

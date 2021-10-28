@@ -1,7 +1,7 @@
 import 'package:ssh2/ssh2.dart';
-import 'package:toolbox/data/model/server_connection_state.dart';
-import 'package:toolbox/data/model/server_private_info.dart';
-import 'package:toolbox/data/model/server_status.dart';
+import 'package:toolbox/data/model/server/server_connection_state.dart';
+import 'package:toolbox/data/model/server/server_private_info.dart';
+import 'package:toolbox/data/model/server/server_status.dart';
 
 class ServerInfo {
   ServerPrivateInfo info;

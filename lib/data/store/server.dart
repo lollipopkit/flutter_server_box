@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:toolbox/core/persistant_store.dart';
-import 'package:toolbox/data/model/server_private_info.dart';
+import 'package:toolbox/data/model/server/server_private_info.dart';
 
 class ServerStore extends PersistentStore {
   void put(ServerPrivateInfo info) {

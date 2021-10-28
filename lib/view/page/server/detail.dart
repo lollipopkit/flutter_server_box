@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/data/model/server.dart';
-import 'package:toolbox/data/model/server_status.dart';
+import 'package:toolbox/data/model/server/server.dart';
+import 'package:toolbox/data/model/server/server_status.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/linux_icons.dart';
@@ -54,7 +54,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildLinuxIcon(String sysVer) {
-    final iconPath = linuxIcons.search(sysVer.toLowerCase());
+    final iconPath = linuxIcons.search(sysVer);
     if (iconPath == null) return const SizedBox();
     return SizedBox(height: _media.size.height * 0.15, child: Image.asset(iconPath));
   }
@@ -260,5 +260,5 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     ));
   }
 
-  static const ignorePath = ['/run', '/sys', '/dev/shm', '/snap'];
+  static const ignorePath = ['/run', '/sys', '/dev/shm', '/snap', '/var/lib/docker'];
 }

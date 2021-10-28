@@ -1,5 +1,5 @@
 import 'package:toolbox/core/provider_base.dart';
-import 'package:toolbox/data/model/private_key_info.dart';
+import 'package:toolbox/data/model/server/private_key_info.dart';
 import 'package:toolbox/data/store/private_key.dart';
 import 'package:toolbox/locator.dart';
 

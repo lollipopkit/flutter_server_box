@@ -1,6 +1,6 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
-import 'package:toolbox/data/model/private_key_info.dart';
+import 'package:toolbox/data/model/server/private_key_info.dart';
 import 'package:toolbox/data/provider/private_key.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/widget/input_decoration.dart';
