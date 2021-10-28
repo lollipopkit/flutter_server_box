@@ -73,15 +73,18 @@ class ServerProvider extends BusyProvider {
       }
       return;
     }
-
-    await Future.wait(_servers.map((s) async {
-      final idx = _servers.indexOf(s);
-      final status = await _getData(s.info, idx);
-      if (status != null) {
-        _servers[idx].status = status;
-        notifyListeners();
-      }
-    }));
+    try {
+      await Future.wait(_servers.map((s) async {
+        final idx = _servers.indexOf(s);
+        final status = await _getData(s.info, idx);
+        if (status != null) {
+          _servers[idx].status = status;
+          notifyListeners();
+        }
+      }));
+    } catch (e) {
+      rethrow;
+    }
   }
 
   Future<void> startAutoRefresh() async {
@@ -136,21 +139,27 @@ class ServerProvider extends BusyProvider {
         logger.warning(e);
       }
     }
+    try {
+      final cpu = await client.execute("cat /proc/stat | grep cpu") ?? '';
+      final mem = await client.execute('free -m') ?? '';
+      final sysVer = await client.execute('cat /etc/issue.net') ?? '';
+      final upTime = await client.execute('uptime') ?? '';
+      final disk = await client.execute('df -h') ?? '';
+      final tcp = await client.execute('cat /proc/net/snmp') ?? '';
 
-    final cpu = await client.execute("cat /proc/stat | grep cpu") ?? '';
-    final mem = await client.execute('free -m') ?? '';
-    final sysVer = await client.execute('cat /etc/issue.net') ?? '';
-    final upTime = await client.execute('uptime') ?? '';
-    final disk = await client.execute('df -h') ?? '';
-    final tcp = await client.execute('cat /proc/net/snmp') ?? '';
-
-    return ServerStatus(
-        _getCPU(cpu, _servers[idx].status.cpu2Status),
-        _getMem(mem),
-        sysVer.trim(),
-        _getUpTime(upTime),
-        _getDisk(disk),
-        _getTcp(tcp));
+      return ServerStatus(
+          _getCPU(cpu, _servers[idx].status.cpu2Status),
+          _getMem(mem),
+          sysVer.trim(),
+          _getUpTime(upTime),
+          _getDisk(disk),
+          _getTcp(tcp));
+    } catch (e) {
+      _servers[idx].connectionState = ServerConnectionState.failed;
+      notifyListeners();
+      logger.warning(e);
+      return null;
+    }
   }
 
   Cpu2Status _getCPU(String raw, Cpu2Status old) {

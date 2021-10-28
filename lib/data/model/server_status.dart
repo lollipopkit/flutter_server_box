@@ -35,11 +35,6 @@ class ServerStatus {
   late List<DiskInfo?> disk;
   late TcpStatus tcp;
 
-  ServerStatus(
-      this.cpu2Status,
-      this.memList,
-      this.sysVer,
-      this.uptime,
-      this.disk,
-      this.tcp);
+  ServerStatus(this.cpu2Status, this.memList, this.sysVer, this.uptime,
+      this.disk, this.tcp);
 }

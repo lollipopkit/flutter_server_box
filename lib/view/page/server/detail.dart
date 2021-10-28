@@ -14,6 +14,14 @@ class ServerDetailPage extends StatefulWidget {
 }
 
 class _ServerDetailPageState extends State<ServerDetailPage> {
+  late MediaQueryData _media;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _media = MediaQuery.of(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ServerProvider>(builder: (_, provider, __) {
@@ -34,11 +42,14 @@ class _ServerDetailPageState extends State<ServerDetailPage> {
   }
 
   Widget _buildCPUView(ServerStatus ss) {
-    return ListView.builder(
-      itemBuilder: (ctx, idx) {
-        return Text('$idx ${ss.cpu2Status.usedPercent(coreIdx: idx)}');
-      },
-      itemCount: ss.cpu2Status.now.length,
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: _media.size.height * 0.3),
+      child: ListView.builder(
+        itemBuilder: (ctx, idx) {
+          return Text('$idx ${ss.cpu2Status.usedPercent(coreIdx: idx)}');
+        },
+        itemCount: ss.cpu2Status.now.length,
+      ),
     );
   }
 
