@@ -90,8 +90,8 @@ class _MyHomePageState extends State<MyHomePage>
             applicationIcon: _buildIcon(),
             aboutBoxChildren: const [
               UrlText(
-                  text: '''\nMade with ❤️ by https://github.com/LollipopKit .
-            \nAll rights reserved.''', replace: 'LollipopKit'),
+                  text: '\nMade with ❤️ by https://github.com/LollipopKit', replace: 'LollipopKit'),
+                  UrlText(text: '\nThanks https://github.com/RainSunMe for participating in the test.\n\nAll rights reserved.', replace: 'RainSunMe',),
             ],
           ),
         ],
