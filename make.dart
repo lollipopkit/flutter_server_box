@@ -96,6 +96,7 @@ Future<void> flutterBuild(String source, String target, bool isAndroid) async {
   } else {
     print(buildResult.stderr.toString());
     print('\nBuild failed with exit code $exitCode');
+    exit(exitCode);
   }
   final endTime = DateTime.now();
   print('Spent time: ${endTime.difference(startTime).toString()}');
