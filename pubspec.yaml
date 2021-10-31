@@ -37,7 +37,7 @@ dependencies:
   dio: ^4.0.0
   after_layout: ^1.1.0
   flutter_staggered_animations: ^1.0.0
-  extended_image: ^4.0.0
+  extended_image: ^5.1.3
   url_launcher: ^6.0.9
   countly_flutter:
     git: 
