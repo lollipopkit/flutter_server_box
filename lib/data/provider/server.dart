@@ -50,9 +50,9 @@ class ServerProvider extends BusyProvider {
 
   SSHClient genClient(ServerPrivateInfo spi) {
     return SSHClient(
-        host: spi.ip!,
-        port: spi.port!,
-        username: spi.user!,
+        host: spi.ip,
+        port: spi.port,
+        username: spi.user,
         passwordOrKey: spi.authorization);
   }
 

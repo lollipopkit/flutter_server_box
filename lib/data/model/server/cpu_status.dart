@@ -33,28 +33,6 @@ class CpuStatus {
     this.irq,
     this.softirq,
   );
-  CpuStatus.fromJson(Map<String, dynamic> json) {
-    id = json["id"];
-    user = json["user"]?.toInt();
-    sys = json["sys"]?.toInt();
-    nice = json["nice"]?.toInt();
-    idle = json["idle"]?.toInt();
-    iowait = json["iowait"]?.toInt();
-    irq = json["irq"]?.toInt();
-    softirq = json["softirq"]?.toInt();
-  }
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data["id"] = id;
-    data["user"] = user;
-    data["sys"] = sys;
-    data["nice"] = nice;
-    data["idle"] = idle;
-    data["iowait"] = iowait;
-    data["irq"] = irq;
-    data["softirq"] = softirq;
-    return data;
-  }
 
   int get total => user + sys + nice + idle + iowait + irq + softirq;
 }

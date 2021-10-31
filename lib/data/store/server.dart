@@ -12,7 +12,7 @@ class ServerStore extends PersistentStore {
 
   List<ServerPrivateInfo> fetch() {
     return getServerInfoList(
-        json.decode(box.get('servers', defaultValue: '[]')!))!;
+        json.decode(box.get('servers', defaultValue: '[]')!));
   }
 
   void delete(ServerPrivateInfo s) {

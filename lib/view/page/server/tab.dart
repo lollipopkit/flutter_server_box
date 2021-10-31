@@ -48,12 +48,20 @@ class _ServerPageState extends State<ServerPage>
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 7),
-        child: AnimationLimiter(
-            child: Consumer<ServerProvider>(builder: (_, pro, __) {
-          return Column(
-              children: AnimationConfiguration.toStaggeredList(
+      body: Consumer<ServerProvider>(builder: (_, pro, __) {
+        if (pro.servers.isEmpty) {
+          return const Center(
+            child: Text(
+              'There is not server.\nClick the fab to add one.',
+              textAlign: TextAlign.center,
+            ),
+          );
+        }
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 7),
+          child: AnimationLimiter(
+              child: Column(
+                  children: AnimationConfiguration.toStaggeredList(
             duration: const Duration(milliseconds: 377),
             childAnimationBuilder: (widget) => SlideAnimation(
               verticalOffset: 50.0,
@@ -65,9 +73,9 @@ class _ServerPageState extends State<ServerPage>
               const SizedBox(height: 13),
               ...pro.servers.map((e) => _buildEachServerCard(e))
             ],
-          ));
-        })),
-      ),
+          ))),
+        );
+      }),
       floatingActionButton: FloatingActionButton(
         onPressed: () =>
             AppRoute(const ServerEditPage(), 'Add server info page')

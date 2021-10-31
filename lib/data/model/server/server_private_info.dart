@@ -13,25 +13,27 @@ class ServerPrivateInfo {
 } 
 */
 
-  String? name;
-  String? ip;
-  int? port;
-  String? user;
-  Object? authorization;
+  late String name;
+  late String ip;
+  late int port;
+  late String user;
+  late Object authorization;
+  String? pubKeyId;
 
-  ServerPrivateInfo({
-    this.name,
-    this.ip,
-    this.port,
-    this.user,
-    this.authorization,
-  });
+  ServerPrivateInfo(
+      {required this.name,
+      required this.ip,
+      required this.port,
+      required this.user,
+      required this.authorization,
+      this.pubKeyId});
   ServerPrivateInfo.fromJson(Map<String, dynamic> json) {
-    name = json["name"]?.toString();
-    ip = json["ip"]?.toString();
-    port = json["port"]?.toInt();
-    user = json["user"]?.toString();
+    name = json["name"].toString();
+    ip = json["ip"].toString();
+    port = json["port"].toInt();
+    user = json["user"].toString();
     authorization = json["authorization"];
+    pubKeyId = json["pubKeyId"]?.toString();
   }
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
@@ -40,11 +42,12 @@ class ServerPrivateInfo {
     data["port"] = port;
     data["user"] = user;
     data["authorization"] = authorization;
+    data["pubKeyId"] = pubKeyId;
     return data;
   }
 }
 
-List<ServerPrivateInfo>? getServerInfoList(dynamic data) {
+List<ServerPrivateInfo> getServerInfoList(dynamic data) {
   List<ServerPrivateInfo> ss = [];
   if (data is String) {
     data = json.decode(data);
