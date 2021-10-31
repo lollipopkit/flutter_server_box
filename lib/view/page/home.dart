@@ -8,6 +8,8 @@ import 'package:toolbox/core/update.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/build_data.dart';
+import 'package:toolbox/data/res/icon/common.dart';
+import 'package:toolbox/data/res/url.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/convert.dart';
 import 'package:toolbox/view/page/debug.dart';
@@ -69,7 +71,7 @@ class _MyHomePageState extends State<MyHomePage>
         padding: EdgeInsets.zero,
         children: [
           UserAccountsDrawerHeader(
-            accountName: const Text('ToolBox'),
+            accountName: const Text(BuildData.name),
             accountEmail: Text(_buildVersionStr()),
             currentAccountPicture: _buildIcon(),
           ),
@@ -82,7 +84,7 @@ class _MyHomePageState extends State<MyHomePage>
             leading: const Icon(Icons.vpn_key),
             title: const Text('Private Key'),
             onTap: () =>
-                AppRoute(const StoredPrivateKeysPage(), 'Setting').go(context),
+                AppRoute(const StoredPrivateKeysPage(), 'private key list').go(context),
           ),
           AboutListTile(
             icon: const Icon(Icons.text_snippet),
@@ -92,11 +94,11 @@ class _MyHomePageState extends State<MyHomePage>
             applicationIcon: _buildIcon(),
             aboutBoxChildren: const [
               UrlText(
-                  text: '\nMade with ❤️ by https://github.com/LollipopKit',
+                  text: '\nMade with ❤️ by $myGithub',
                   replace: 'LollipopKit'),
               UrlText(
                 text:
-                    '\nThanks https://github.com/RainSunMe for participating in the test.\n\nAll rights reserved.',
+                    '\nThanks $rainSunMeGithub for participating in the test.\n\nAll rights reserved.',
                 replace: 'RainSunMe',
               ),
             ],
@@ -109,7 +111,7 @@ class _MyHomePageState extends State<MyHomePage>
   Widget _buildIcon() {
     return ConstrainedBox(
       constraints: const BoxConstraints(maxHeight: 60, maxWidth: 60),
-      child: Image.asset('assets/app_icon.png'),
+      child: appIcon,
     );
   }
 

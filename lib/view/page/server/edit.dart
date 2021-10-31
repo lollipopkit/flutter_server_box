@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/core/utils.dart';
+import 'package:toolbox/data/model/server/private_key_info.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/provider/private_key.dart';
 import 'package:toolbox/data/provider/server.dart';
@@ -32,8 +33,8 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
 
   bool usePublicKey = false;
 
-  int _typeOptionIndex = -1;
-  final List<String> _keyInfo = ['', ''];
+  int _pubKeyIndex = -1;
+  late PrivateKeyInfo _keyInfo;
 
   @override
   void initState() {
@@ -109,13 +110,17 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                 : const SizedBox(),
             usePublicKey
                 ? Consumer<PrivateKeyProvider>(builder: (_, key, __) {
+                    for (var item in key.infos) {
+                      if (item.id == widget.spi?.pubKeyId) {
+                        _pubKeyIndex = key.infos.indexOf(item);
+                      }
+                    }
                     final tiles = key.infos
                         .map(
                           (e) => ListTile(
                               contentPadding: EdgeInsets.zero,
                               title: Text(e.id, textAlign: TextAlign.start),
-                              trailing: _buildRadio(key.infos.indexOf(e),
-                                  e.privateKey, e.password)),
+                              trailing: _buildRadio(key.infos.indexOf(e), e)),
                         )
                         .toList();
                     tiles.add(ListTile(
@@ -155,7 +160,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             showSnackBar(context, const Text('Please enter password.'));
             return;
           }
-          if (usePublicKey && _typeOptionIndex == -1) {
+          if (usePublicKey && _pubKeyIndex == -1) {
             showSnackBar(context, const Text('Please select a private key.'));
             return;
           }
@@ -166,14 +171,18 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             portController.text = '22';
           }
           final authorization = usePublicKey
-              ? {"privateKey": _keyInfo[0], "passphrase": _keyInfo[1]}
+              ? {
+                  "privateKey": _keyInfo.privateKey,
+                  "passphrase": _keyInfo.password
+                }
               : passwordController.text;
           final spi = ServerPrivateInfo(
               name: nameController.text,
               ip: ipController.text,
               port: int.parse(portController.text),
               user: usernameController.text,
-              authorization: authorization);
+              authorization: authorization,
+              pubKeyId: usePublicKey ? _keyInfo.id : null);
 
           if (widget.spi == null) {
             _serverProvider.addServer(spi);
@@ -187,15 +196,14 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     );
   }
 
-  Radio _buildRadio(int index, String key, String pwd) {
+  Radio _buildRadio(int index, PrivateKeyInfo pki) {
     return Radio<int>(
       value: index,
-      groupValue: _typeOptionIndex,
+      groupValue: _pubKeyIndex,
       onChanged: (int? value) {
         setState(() {
-          _typeOptionIndex = value!;
-          _keyInfo[0] = key;
-          _keyInfo[1] = pwd;
+          _pubKeyIndex = value!;
+          _keyInfo = pki;
         });
       },
     );
@@ -214,10 +222,9 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         final auth = widget.spi?.authorization as Map;
         passwordController.text = auth['passphrase'];
         keyController.text = auth['privateKey'];
-        setState(() {
-          usePublicKey = true;
-        });
+        usePublicKey = true;
       }
+      setState(() {});
     }
   }
 }

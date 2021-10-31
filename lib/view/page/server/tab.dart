@@ -52,7 +52,7 @@ class _ServerPageState extends State<ServerPage>
         if (pro.servers.isEmpty) {
           return const Center(
             child: Text(
-              'There is not server.\nClick the fab to add one.',
+              'There is no server.\nClick the fab to add one.',
               textAlign: TextAlign.center,
             ),
           );
@@ -106,7 +106,7 @@ class _ServerPageState extends State<ServerPage>
         child: Padding(
           padding: const EdgeInsets.all(13),
           child: _buildRealServerCard(
-              si.status, si.info.name ?? '', si.connectionState),
+              si.status, si.info.name, si.connectionState),
         ),
         onTap: () =>
             AppRoute(ServerDetailPage(si.client.id!), 'server detail page')

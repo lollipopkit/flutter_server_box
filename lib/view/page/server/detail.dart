@@ -4,7 +4,7 @@ import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/server_status.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/color.dart';
-import 'package:toolbox/data/res/linux_icons.dart';
+import 'package:toolbox/data/res/icon/linux_icons.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
 class ServerDetailPage extends StatefulWidget {
@@ -37,7 +37,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   Widget _buildMainPage(ServerInfo si) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(si.info.name ?? 'Server Detail'),
+        title: Text(si.info.name),
       ),
       body: ListView(
         padding: const EdgeInsets.all(17),
@@ -194,7 +194,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               SizedBox(
                 width: width * (1 - used),
                 child: LinearProgressIndicator(
-                  value: ss.memList[4] / ss.memList[0],
+                  // length == 2: failed to get mem list, now mem list = [100,0] which is initial value.
+                  value: ss.memList.length == 2 ? 0 : ss.memList[4] / ss.memList[0],
                   backgroundColor: Colors.grey[100],
                   color: pColor.withAlpha(77),
                 ),
