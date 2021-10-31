@@ -30,7 +30,7 @@ class ServerProvider extends BusyProvider {
   ServerStatus get emptyStatus => ServerStatus(
       emptyCpu2Status,
       [100, 0],
-      '',
+      'Loading...',
       '',
       [DiskInfo('/', '/', 0, '0', '0', '0')],
       TcpStatus(0, 0, 0, 0));
@@ -114,7 +114,7 @@ class ServerProvider extends BusyProvider {
     final client = _servers[idx].client;
     final connected = await client.isConnected();
     final state = _servers[idx].connectionState;
-    if (!connected || state != ServerConnectionState.connected) {
+    if (!connected || state == ServerConnectionState.failed || state == ServerConnectionState.disconnected) {
       _servers[idx].connectionState = ServerConnectionState.connecting;
       notifyListeners();
       final time1 = DateTime.now();
