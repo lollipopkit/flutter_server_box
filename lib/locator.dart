@@ -7,6 +7,7 @@ import 'package:toolbox/data/service/app.dart';
 import 'package:toolbox/data/store/private_key.dart';
 import 'package:toolbox/data/store/server.dart';
 import 'package:toolbox/data/store/setting.dart';
+import 'package:toolbox/data/store/snippet.dart';
 
 GetIt locator = GetIt.instance;
 
@@ -33,6 +34,10 @@ Future<void> setupLocatorForStores() async {
   final key = PrivateKeyStore();
   await key.init(boxName: 'key');
   locator.registerSingleton(key);
+
+  final snippet = SnippetStore();
+  await snippet.init(boxName: 'snippet');
+  locator.registerSingleton(snippet);
 }
 
 Future<void> setupLocator() async {

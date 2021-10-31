@@ -1,6 +1,8 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:toolbox/core/analysis.dart';
+import 'package:toolbox/core/build_mode.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/core/update.dart';
 import 'package:toolbox/core/utils.dart';
@@ -90,8 +92,13 @@ class _MyHomePageState extends State<MyHomePage>
             applicationIcon: _buildIcon(),
             aboutBoxChildren: const [
               UrlText(
-                  text: '\nMade with ❤️ by https://github.com/LollipopKit', replace: 'LollipopKit'),
-                  UrlText(text: '\nThanks https://github.com/RainSunMe for participating in the test.\n\nAll rights reserved.', replace: 'RainSunMe',),
+                  text: '\nMade with ❤️ by https://github.com/LollipopKit',
+                  replace: 'LollipopKit'),
+              UrlText(
+                text:
+                    '\nThanks https://github.com/RainSunMe for participating in the test.\n\nAll rights reserved.',
+                replace: 'RainSunMe',
+              ),
             ],
           ),
         ],
@@ -118,5 +125,6 @@ class _MyHomePageState extends State<MyHomePage>
     await GetIt.I.allReady();
     await locator<ServerProvider>().loadLocalData();
     await doUpdate(context);
+    await Analysis.init(BuildMode.isDebug);
   }
 }

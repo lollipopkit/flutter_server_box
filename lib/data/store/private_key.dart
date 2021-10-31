@@ -12,7 +12,7 @@ class PrivateKeyStore extends PersistentStore {
 
   List<PrivateKeyInfo> fetch() {
     return getPrivateKeyInfoList(
-        json.decode(box.get('key', defaultValue: '[]')!))!;
+        json.decode(box.get('key', defaultValue: '[]')!));
   }
 
   void delete(PrivateKeyInfo s) {

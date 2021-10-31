@@ -35,7 +35,7 @@ class PrivateKeyInfo {
   }
 }
 
-List<PrivateKeyInfo>? getPrivateKeyInfoList(dynamic data) {
+List<PrivateKeyInfo> getPrivateKeyInfoList(dynamic data) {
   List<PrivateKeyInfo> ss = [];
   if (data is String) {
     data = json.decode(data);
