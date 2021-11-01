@@ -6,6 +6,7 @@ import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/provider_base.dart';
 import 'package:toolbox/data/model/server/cpu_2_status.dart';
 import 'package:toolbox/data/model/server/cpu_status.dart';
+import 'package:toolbox/data/model/server/net_speed.dart';
 import 'package:toolbox/data/model/server/server_connection_state.dart';
 import 'package:toolbox/data/model/server/disk_info.dart';
 import 'package:toolbox/data/model/server/server.dart';
@@ -22,6 +23,11 @@ class ServerProvider extends BusyProvider {
 
   final logger = Logger('ServerProvider');
 
+  NetSpeedPart get emptyNetSpeedPart => NetSpeedPart('', 0, 0, 0);
+
+  NetSpeed get emptyNetSpeed =>
+      NetSpeed([emptyNetSpeedPart], [emptyNetSpeedPart]);
+
   CpuStatus get emptyCpuStatus => CpuStatus('cpu', 0, 0, 0, 0, 0, 0, 0);
 
   Cpu2Status get emptyCpu2Status =>
@@ -33,7 +39,8 @@ class ServerProvider extends BusyProvider {
       'Loading...',
       '',
       [DiskInfo('/', '/', 0, '0', '0', '0')],
-      TcpStatus(0, 0, 0, 0));
+      TcpStatus(0, 0, 0, 0),
+      emptyNetSpeed);
 
   Future<void> loadLocalData() async {
     setBusyState(true);
@@ -144,6 +151,8 @@ class ServerProvider extends BusyProvider {
       final upTime = await client.execute('uptime') ?? '';
       final disk = await client.execute('df -h') ?? '';
       final tcp = await client.execute('cat /proc/net/snmp') ?? '';
+      final netSpeed =
+          await client.execute('cat /proc/net/dev && date +%s') ?? '';
 
       return ServerStatus(
           _getCPU(cpu, _servers[idx].status.cpu2Status, cpuTemp),
@@ -151,13 +160,38 @@ class ServerProvider extends BusyProvider {
           _getSysVer(sysVer),
           _getUpTime(upTime),
           _getDisk(disk),
-          _getTcp(tcp));
+          _getTcp(tcp),
+          _getNetSpeed(netSpeed, _servers[idx].status.netSpeed));
     } catch (e) {
       _servers[idx].connectionState = ServerConnectionState.failed;
       notifyListeners();
       logger.warning(e);
       return null;
     }
+  }
+
+  /// [raw] example:
+  /// Inter-|   Receive                                                |  Transmit
+  ///   face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
+  ///   lo: 45929941  269112    0    0    0     0          0         0 45929941  269112    0    0    0     0       0          0
+  ///   eth0: 48481023  505772    0    0    0     0          0         0 36002262  202307    0    0    0     0       0          0
+  /// 1635752901
+  NetSpeed _getNetSpeed(String raw, NetSpeed old) {
+    final split = raw.split('\n');
+    final deviceCount = split.length - 3;
+    if (deviceCount < 1) return emptyNetSpeed;
+    final time = int.parse(split[split.length - 2]);
+    final results = <NetSpeedPart>[];
+    for (int idx = 2; idx < deviceCount; idx++) {
+      final data = split[idx].trim().split(':');
+      final device = data.first;
+      final bytes = data.last.trim().split(' ');
+      bytes.removeWhere((element) => element == '');
+      final bytesIn = int.parse(bytes.first);
+      final bytesOut = int.parse(bytes[8]);
+      results.add(NetSpeedPart(device, bytesIn, bytesOut, time));
+    }
+    return old.update(results);
   }
 
   String _getSysVer(String raw) {

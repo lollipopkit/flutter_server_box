@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/data/model/server/net_speed.dart';
 import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/server_status.dart';
 import 'package:toolbox/data/provider/server.dart';
@@ -47,7 +48,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           _buildUpTimeAndSys(si.status),
           _buildCPUView(si.status),
           _buildDiskView(si.status),
-          _buildMemView(si.status)
+          _buildMemView(si.status),
+          _buildNetView(si.status.netSpeed)
         ],
       ),
     );
@@ -262,6 +264,10 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             );
           }),
     ));
+  }
+
+  Widget _buildNetView(NetSpeed ns) {
+    return Text(ns.speedIn() + '' + ns.speedOut());
   }
 
   static const ignorePath = [
