@@ -8,6 +8,9 @@ import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/icon/linux_icons.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
+const style11 = TextStyle(fontSize: 11);
+const style13 = TextStyle(fontSize: 13);
+
 class ServerDetailPage extends StatefulWidget {
   const ServerDetailPage(this.id, {Key? key}) : super(key: key);
 
@@ -158,8 +161,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(ss.sysVer),
-          Text(ss.uptime),
+          Text(ss.sysVer, style: style11, textScaleFactor: 1.0),
+          Text(
+            ss.uptime,
+            style: style11,
+            textScaleFactor: 1.0,
+          ),
         ],
       ),
     ));
@@ -221,7 +228,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           width: 11,
         ),
         const SizedBox(width: 4),
-        Text(type, style: const TextStyle(fontSize: 10), textScaleFactor: 1.0)
+        Text(type, style: style11, textScaleFactor: 1.0)
       ],
     );
   }
@@ -250,12 +257,10 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                     children: [
                       Text(
                         '${disk.usedPercent}% of ${disk.size}',
-                        style: const TextStyle(fontSize: 11),
+                        style: style11,
                         textScaleFactor: 1.0,
                       ),
-                      Text(disk.mountPath,
-                          style: const TextStyle(fontSize: 11),
-                          textScaleFactor: 1.0)
+                      Text(disk.mountPath, style: style11, textScaleFactor: 1.0)
                     ],
                   ),
                   _buildProgress(disk.usedPercent.toDouble())
@@ -267,7 +272,39 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildNetView(NetSpeed ns) {
-    return Text(ns.speedIn() + '' + ns.speedOut());
+    return RoundRectCard(Padding(
+      padding: const EdgeInsets.symmetric(vertical: 7),
+      child: Column(
+        children: ns.devices.map((e) => _buildNetSpeedItem(ns, e)).toList(),
+      ),
+    ));
+  }
+
+  Widget _buildNetSpeedItem(NetSpeed ns, String device) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          SizedBox(
+              width: _media.size.width / 4,
+              child: Text(device, style: style11, textScaleFactor: 1.0)),
+          SizedBox(
+            width: _media.size.width / 4,
+            child: Text(ns.speedIn(device: device),
+                style: style11,
+                textAlign: TextAlign.center,
+                textScaleFactor: 1.0),
+          ),
+          SizedBox(
+              width: _media.size.width / 4,
+              child: Text(ns.speedOut(device: device),
+                  style: style11,
+                  textAlign: TextAlign.right,
+                  textScaleFactor: 1.0))
+        ],
+      ),
+    );
   }
 
   static const ignorePath = [
