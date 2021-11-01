@@ -56,7 +56,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   Widget _buildLinuxIcon(String sysVer) {
     final iconPath = linuxIcons.search(sysVer);
     if (iconPath == null) return const SizedBox();
-    return SizedBox(height: _media.size.height * 0.15, child: Image.asset(iconPath));
+    return SizedBox(
+        height: _media.size.height * 0.15, child: Image.asset(iconPath));
   }
 
   Widget _buildCPUView(ServerStatus ss) {
@@ -144,7 +145,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     return LinearProgressIndicator(
       value: percentWithinOne,
       minHeight: 7,
-      backgroundColor: Colors.grey[100],
+      backgroundColor: progressColor.resolve(context),
       color: pColor.withOpacity(0.5 + percentWithinOne / 2),
     );
   }
@@ -177,7 +178,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             children: [
               _buildMemExplain('Used', pColor),
               _buildMemExplain('Cache', pColor.withAlpha(77)),
-              _buildMemExplain('Avail', Colors.grey.shade100)
+              _buildMemExplain('Avail', progressColor.resolve(context))
             ],
           ),
           const SizedBox(
@@ -195,8 +196,10 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                 width: width * (1 - used),
                 child: LinearProgressIndicator(
                   // length == 2: failed to get mem list, now mem list = [100,0] which is initial value.
-                  value: ss.memList.length == 2 ? 0 : ss.memList[4] / ss.memList[0],
-                  backgroundColor: Colors.grey[100],
+                  value: ss.memList.length == 2
+                      ? 0
+                      : ss.memList[4] / ss.memList[0],
+                  backgroundColor: progressColor.resolve(context),
                   color: pColor.withAlpha(77),
                 ),
               )
@@ -261,5 +264,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     ));
   }
 
-  static const ignorePath = ['/run', '/sys', '/dev/shm', '/snap', '/var/lib/docker'];
+  static const ignorePath = [
+    '/run',
+    '/sys',
+    '/dev/shm',
+    '/snap',
+    '/var/lib/docker',
+    '/dev/tty'
+  ];
 }

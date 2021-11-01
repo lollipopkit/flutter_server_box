@@ -11,8 +11,7 @@ class SnippetStore extends PersistentStore {
   }
 
   List<Snippet> fetch() {
-    return getSnippetList(
-        json.decode(box.get('snippet', defaultValue: '[]')!));
+    return getSnippetList(json.decode(box.get('snippet', defaultValue: '[]')!));
   }
 
   void delete(Snippet s) {

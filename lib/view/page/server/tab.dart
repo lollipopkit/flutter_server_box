@@ -105,8 +105,8 @@ class _ServerPageState extends State<ServerPage>
       child: InkWell(
         child: Padding(
           padding: const EdgeInsets.all(13),
-          child: _buildRealServerCard(
-              si.status, si.info.name, si.connectionState),
+          child:
+              _buildRealServerCard(si.status, si.info.name, si.connectionState),
         ),
         onTap: () =>
             AppRoute(ServerDetailPage(si.client.id!), 'server detail page')

@@ -84,7 +84,8 @@ class _MyHomePageState extends State<MyHomePage>
             leading: const Icon(Icons.vpn_key),
             title: const Text('Private Key'),
             onTap: () =>
-                AppRoute(const StoredPrivateKeysPage(), 'private key list').go(context),
+                AppRoute(const StoredPrivateKeysPage(), 'private key list')
+                    .go(context),
           ),
           AboutListTile(
             icon: const Icon(Icons.text_snippet),
@@ -94,8 +95,7 @@ class _MyHomePageState extends State<MyHomePage>
             applicationIcon: _buildIcon(),
             aboutBoxChildren: const [
               UrlText(
-                  text: '\nMade with ❤️ by $myGithub',
-                  replace: 'LollipopKit'),
+                  text: '\nMade with ❤️ by $myGithub', replace: 'LollipopKit'),
               UrlText(
                 text:
                     '\nThanks $rainSunMeGithub for participating in the test.\n\nAll rights reserved.',

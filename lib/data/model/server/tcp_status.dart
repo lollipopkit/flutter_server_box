@@ -29,7 +29,7 @@ class TcpStatus {
     passive = json["passive"].toInt();
     fail = json["fail"].toInt();
   }
-  
+
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data["maxConn"] = maxConn;
