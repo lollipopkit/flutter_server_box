@@ -23,11 +23,13 @@ class ServerDetailPage extends StatefulWidget {
 class _ServerDetailPageState extends State<ServerDetailPage>
     with SingleTickerProviderStateMixin {
   late MediaQueryData _media;
+  late ThemeData _theme;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
+    _theme = Theme.of(context);
   }
 
   @override
@@ -272,12 +274,28 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildNetView(NetSpeed ns) {
+    final children = <Widget>[_buildNetSpeedTop(), const Divider(height: 7,)];
+    children.addAll(ns.devices.map((e) => _buildNetSpeedItem(ns, e)));
     return RoundRectCard(Padding(
       padding: const EdgeInsets.symmetric(vertical: 7),
       child: Column(
-        children: ns.devices.map((e) => _buildNetSpeedItem(ns, e)).toList(),
+        children: children,
       ),
     ));
+  }
+
+  Widget _buildNetSpeedTop() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: const [
+          Icon(Icons.device_hub, size: 17,),
+          Icon(Icons.arrow_upward, size: 17),
+          Icon(Icons.arrow_downward, size: 17)
+        ],
+      ),
+    );
   }
 
   Widget _buildNetSpeedItem(NetSpeed ns, String device) {
