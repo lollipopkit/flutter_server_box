@@ -31,15 +31,16 @@ A new Flutter project which provide a chart view to display server status data.
 </table>
 
 ## Milestone
-- [x] SSH Connect
-- [x] Server Info Store
-- [x] Status Chart View
+- [x] SSH connect
+- [x] Server info store
+- [x] Status chart view
 - [x] Base64/Url En/Decode
-- [x] Private Key Store
-- [x] Server Status Detail Page
-- [x] Theme Switch
-- [ ] Execute Snippet
+- [x] Private key store
+- [x] Server status detail page
+- [x] Theme switch
+- [ ] Execute snippet
 - [ ] Migrate from `ssh2` to `dartssh2`
+- [ ] Desktop support.
 
 ## Build
 Please use `make.dart` to build.

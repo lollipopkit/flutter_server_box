@@ -2,7 +2,10 @@
     package="tech.lolli.toolbox">
    <application
         android:label="ServerBox"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="true"
+        android:hasFragileUserData="true"
+        android:restoreAnyVersion="true">
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"
