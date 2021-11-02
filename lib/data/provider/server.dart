@@ -6,6 +6,7 @@ import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/provider_base.dart';
 import 'package:toolbox/data/model/server/cpu_2_status.dart';
 import 'package:toolbox/data/model/server/cpu_status.dart';
+import 'package:toolbox/data/model/server/memory.dart';
 import 'package:toolbox/data/model/server/net_speed.dart';
 import 'package:toolbox/data/model/server/server_connection_state.dart';
 import 'package:toolbox/data/model/server/disk_info.dart';
@@ -23,6 +24,9 @@ class ServerProvider extends BusyProvider {
 
   final logger = Logger('ServerProvider');
 
+  Memory get emptyMemory =>
+      Memory(total: 1, used: 0, free: 1, shared: 0, cache: 0, avail: 1);
+
   NetSpeedPart get emptyNetSpeedPart => NetSpeedPart('', 0, 0, 0);
 
   NetSpeed get emptyNetSpeed =>
@@ -35,7 +39,7 @@ class ServerProvider extends BusyProvider {
 
   ServerStatus get emptyStatus => ServerStatus(
       emptyCpu2Status,
-      [100, 0],
+      emptyMemory,
       'Loading...',
       '',
       [DiskInfo('/', '/', 0, '0', '0', '0')],
@@ -269,15 +273,21 @@ class ServerProvider extends BusyProvider {
     return list;
   }
 
-  List<int> _getMem(String mem) {
+  Memory _getMem(String mem) {
     for (var item in mem.split('\n')) {
       if (item.contains('Mem:')) {
-        return RegExp(r'[1-9][0-9]*')
-            .allMatches(item)
-            .map((e) => int.parse(item.substring(e.start, e.end)))
-            .toList();
+        final split = item.replaceFirst('Mem:', '').split(' ');
+        split.removeWhere((e) => e == '');
+        final memList = split.map((e) => int.parse(e)).toList();
+        return Memory(
+            total: memList[0],
+            used: memList[1],
+            free: memList[2],
+            shared: memList[3],
+            cache: memList[4],
+            avail: memList[5]);
       }
     }
-    return [];
+    return emptyMemory;
   }
 }

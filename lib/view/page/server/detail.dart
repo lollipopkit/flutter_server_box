@@ -182,7 +182,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildMemView(ServerStatus ss) {
     final pColor = primaryColor;
-    final used = ss.memList[1] / ss.memList[0];
+    final used = ss.memory.used / ss.memory.total;
     final width = _media.size.width - 17 * 2 - 17 * 2;
     return RoundRectCard(SizedBox(
       height: 47,
@@ -212,10 +212,10 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               SizedBox(
                 width: width * (1 - used),
                 child: LinearProgressIndicator(
-                  // length == 2: failed to get mem list, now mem list = [100,0] which is initial value.
-                  value: ss.memList.length == 2
+                  // memory.total == 1: failed to get mem, now mem = [emptyMemory] which is initial value.
+                  value: ss.memory.total == 1
                       ? 0
-                      : ss.memList[4] / ss.memList[0],
+                      : ss.memory.cache / ss.memory.total,
                   backgroundColor: progressColor.resolve(context),
                   color: pColor.withAlpha(77),
                 ),

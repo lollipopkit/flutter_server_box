@@ -1,5 +1,6 @@
 import 'package:toolbox/data/model/server/cpu_2_status.dart';
 import 'package:toolbox/data/model/server/disk_info.dart';
+import 'package:toolbox/data/model/server/memory.dart';
 import 'package:toolbox/data/model/server/net_speed.dart';
 import 'package:toolbox/data/model/server/tcp_status.dart';
 
@@ -30,13 +31,13 @@ class ServerStatus {
 */
 
   Cpu2Status cpu2Status;
-  List<int> memList;
+  Memory memory;
   String sysVer;
   String uptime;
   List<DiskInfo> disk;
   TcpStatus tcp;
   NetSpeed netSpeed;
 
-  ServerStatus(this.cpu2Status, this.memList, this.sysVer, this.uptime,
+  ServerStatus(this.cpu2Status, this.memory, this.sysVer, this.uptime,
       this.disk, this.tcp, this.netSpeed);
 }

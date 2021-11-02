@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-class SnappetEditPage extends StatefulWidget {
-  const SnappetEditPage({Key? key}) : super(key: key);
+class SnippetEditPage extends StatefulWidget {
+  const SnippetEditPage({Key? key}) : super(key: key);
 
   @override
-  _SnappetEditPageState createState() => _SnappetEditPageState();
+  _SnippetEditPageState createState() => _SnippetEditPageState();
 }
 
-class _SnappetEditPageState extends State<SnappetEditPage> {
+class _SnippetEditPageState extends State<SnippetEditPage> {
   @override
   Widget build(BuildContext context) {
     return Container();

@@ -138,7 +138,7 @@ class _ServerPageState extends State<ServerPage>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _buildPercentCircle(ss.cpu2Status.usedPercent(), 'CPU'),
-            _buildPercentCircle(ss.memList[1] / ss.memList[0] * 100, 'Mem'),
+            _buildPercentCircle(ss.memory.used / ss.memory.total * 100, 'Mem'),
             _buildIOData('Net', 'Conn:\n' + ss.tcp.maxConn.toString(),
                 'Fail:\n' + ss.tcp.fail.toString()),
             _buildIOData('Disk', 'Total:\n' + rootDisk.size,

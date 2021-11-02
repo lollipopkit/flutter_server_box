@@ -16,6 +16,7 @@ import 'package:toolbox/view/page/debug.dart';
 import 'package:toolbox/view/page/private_key/stored.dart';
 import 'package:toolbox/view/page/server/tab.dart';
 import 'package:toolbox/view/page/setting.dart';
+import 'package:toolbox/view/page/snippet/list.dart';
 import 'package:toolbox/view/widget/url_text.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -85,6 +86,13 @@ class _MyHomePageState extends State<MyHomePage>
             title: const Text('Private Key'),
             onTap: () =>
                 AppRoute(const StoredPrivateKeysPage(), 'private key list')
+                    .go(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.snippet_folder),
+            title: const Text('Snippet'),
+            onTap: () =>
+                AppRoute(const SnippetListPage(), 'snippet list')
                     .go(context),
           ),
           AboutListTile(
