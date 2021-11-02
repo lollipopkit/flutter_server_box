@@ -21,6 +21,7 @@ class _SettingPageState extends State<SettingPage> {
   late int _selectedColorValue;
   double _intervalValue = 0;
   late Color priColor;
+  static const textStyle = TextStyle(fontSize: 14);
 
   @override
   void didChangeDependencies() {
@@ -57,15 +58,18 @@ class _SettingPageState extends State<SettingPage> {
       String display;
       if (app.newestBuild != null) {
         if (app.newestBuild! > BuildData.build) {
-          display = '发现新版本：${app.newestBuild}';
+          display = 'Found: v1.0.${app.newestBuild}, click to update';
         } else {
-          display = '当前版本：${BuildData.build}，已是最新';
+          display = 'Current: v1.0.${BuildData.build}，is up to date';
         }
       } else {
-        display = '当前版本：${BuildData.build}，点击检查更新';
+        display = 'Current: v1.0.${BuildData.build}';
       }
       return ListTile(
-          title: Text(display), onTap: () => doUpdate(context, force: true));
+        contentPadding: EdgeInsets.zero,
+        trailing: const Icon(Icons.keyboard_arrow_right),
+          title: Text(display, style: textStyle,
+        textAlign: TextAlign.start,), onTap: () => doUpdate(context, force: true));
     });
   }
 
@@ -76,7 +80,7 @@ class _SettingPageState extends State<SettingPage> {
       textColor: priColor,
       title: const Text(
         'Server status update interval',
-        style: TextStyle(fontSize: 14),
+        style: textStyle,
         textAlign: TextAlign.start,
       ),
       subtitle: const Text(
@@ -132,7 +136,7 @@ class _SettingPageState extends State<SettingPage> {
         ),
         title: const Text(
           'App primary color',
-          style: TextStyle(fontSize: 14),
+          style: textStyle,
         ));
   }
 
