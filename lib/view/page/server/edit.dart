@@ -49,8 +49,25 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         widget.spi != null
             ? IconButton(
                 onPressed: () {
-                  _serverProvider.delServer(widget.spi!);
-                  Navigator.of(context).pop();
+                  showRoundDialog(
+                      context,
+                      'Attention',
+                      Text(
+                          'Are you sure to delete server [${widget.spi!.name}]'),
+                      [
+                        TextButton(
+                            onPressed: () {
+                              _serverProvider.delServer(widget.spi!);
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text(
+                              'Yes',
+                              style: TextStyle(color: Colors.red),
+                            )),
+                        TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text('No'))
+                      ]);
                 },
                 icon: const Icon(Icons.delete))
             : const SizedBox()

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/model/server/net_speed.dart';
 import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/server_status.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/icon/linux_icons.dart';
+import 'package:toolbox/view/page/server/edit.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
 const style11 = TextStyle(fontSize: 11);
@@ -23,13 +25,11 @@ class ServerDetailPage extends StatefulWidget {
 class _ServerDetailPageState extends State<ServerDetailPage>
     with SingleTickerProviderStateMixin {
   late MediaQueryData _media;
-  late ThemeData _theme;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
-    _theme = Theme.of(context);
   }
 
   @override
@@ -44,6 +44,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     return Scaffold(
       appBar: AppBar(
         title: Text(si.info.name),
+        actions: [IconButton(onPressed: () => AppRoute(
+                  ServerEditPage(
+                    spi: si.info,
+                  ),
+                  'Edit server info page')
+              .go(context), icon: const Icon(Icons.edit))],
       ),
       body: ListView(
         padding: const EdgeInsets.all(17),
@@ -274,7 +280,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildNetView(NetSpeed ns) {
-    final children = <Widget>[_buildNetSpeedTop(), const Divider(height: 7,)];
+    final children = <Widget>[
+      _buildNetSpeedTop(),
+      const Divider(
+        height: 7,
+      )
+    ];
     children.addAll(ns.devices.map((e) => _buildNetSpeedItem(ns, e)));
     return RoundRectCard(Padding(
       padding: const EdgeInsets.symmetric(vertical: 7),
@@ -290,7 +301,10 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: const [
-          Icon(Icons.device_hub, size: 17,),
+          Icon(
+            Icons.device_hub,
+            size: 17,
+          ),
           Icon(Icons.arrow_upward, size: 17),
           Icon(Icons.arrow_downward, size: 17)
         ],

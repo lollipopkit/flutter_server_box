@@ -88,21 +88,14 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildEachServerCard(ServerInfo si) {
-    return GestureDetector(
-        child: _buildEachCardContent(si),
-        onLongPress: () {
-          AppRoute(
+    return Card(
+      child: InkWell(
+        onLongPress: () => AppRoute(
                   ServerEditPage(
                     spi: si.info,
                   ),
                   'Edit server info page')
-              .go(context);
-        });
-  }
-
-  Widget _buildEachCardContent(ServerInfo si) {
-    return Card(
-      child: InkWell(
+              .go(context),
         child: Padding(
           padding: const EdgeInsets.all(13),
           child:
