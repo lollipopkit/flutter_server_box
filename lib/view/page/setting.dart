@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
+import 'package:provider/provider.dart';
+import 'package:toolbox/core/update.dart';
+import 'package:toolbox/data/provider/app.dart';
+import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/locator.dart';
@@ -40,53 +44,73 @@ class _SettingPageState extends State<SettingPage> {
       body: ListView(
         padding: const EdgeInsets.all(17),
         children: [
-          RoundRectCard(_buildAppColorPreview()),
-          RoundRectCard(
-            ExpansionTile(
-              tilePadding: EdgeInsets.zero,
-              childrenPadding: EdgeInsets.zero,
-              textColor: priColor,
-              title: const Text(
-                'Server status update interval',
-                style: TextStyle(fontSize: 14),
-                textAlign: TextAlign.start,
-              ),
-              subtitle: const Text(
-                'Will take effect the next time app launches.',
-                style: TextStyle(color: Colors.grey),
-              ),
-              trailing: Text('${_intervalValue.toInt()} s'),
-              children: [
-                Slider(
-                  thumbColor: priColor,
-                  activeColor: priColor.withOpacity(0.7),
-                  min: 0,
-                  max: 10,
-                  value: _intervalValue,
-                  onChanged: (newValue) {
-                    setState(() {
-                      _intervalValue = newValue;
-                    });
-                  },
-                  onChangeEnd: (val) =>
-                      _store.serverStatusUpdateInterval.put(val.toInt()),
-                  label: '${_intervalValue.toInt()} seconds',
-                  divisions: 10,
-                ),
-                const SizedBox(
-                  height: 3,
-                ),
-                _intervalValue == 0.0
-                    ? const Text('You set to 0, will not update automatically.')
-                    : const SizedBox(),
-                const SizedBox(
-                  height: 13,
-                )
-              ],
-            ),
-          )
-        ],
+          _buildAppColorPreview(),
+          _buildUpdateInterval(),
+          _buildCheckUpdate()
+        ].map((e) => RoundRectCard(e)).toList(),
       ),
+    );
+  }
+
+  Widget _buildCheckUpdate() {
+    return Consumer<AppProvider>(builder: (_, app, __) {
+      String display;
+      if (app.newestBuild != null) {
+        if (app.newestBuild! > BuildData.build) {
+          display = '发现新版本：${app.newestBuild}';
+        } else {
+          display = '当前版本：${BuildData.build}，已是最新';
+        }
+      } else {
+        display = '当前版本：${BuildData.build}，点击检查更新';
+      }
+      return ListTile(
+          title: Text(display), onTap: () => doUpdate(context, force: true));
+    });
+  }
+
+  Widget _buildUpdateInterval() {
+    return ExpansionTile(
+      tilePadding: EdgeInsets.zero,
+      childrenPadding: EdgeInsets.zero,
+      textColor: priColor,
+      title: const Text(
+        'Server status update interval',
+        style: TextStyle(fontSize: 14),
+        textAlign: TextAlign.start,
+      ),
+      subtitle: const Text(
+        'Will take effect the next time app launches.',
+        style: TextStyle(color: Colors.grey),
+      ),
+      trailing: Text('${_intervalValue.toInt()} s'),
+      children: [
+        Slider(
+          thumbColor: priColor,
+          activeColor: priColor.withOpacity(0.7),
+          min: 0,
+          max: 10,
+          value: _intervalValue,
+          onChanged: (newValue) {
+            setState(() {
+              _intervalValue = newValue;
+            });
+          },
+          onChangeEnd: (val) =>
+              _store.serverStatusUpdateInterval.put(val.toInt()),
+          label: '${_intervalValue.toInt()} seconds',
+          divisions: 10,
+        ),
+        const SizedBox(
+          height: 3,
+        ),
+        _intervalValue == 0.0
+            ? const Text('You set to 0, will not update automatically.')
+            : const SizedBox(),
+        const SizedBox(
+          height: 13,
+        )
+      ],
     );
   }
 

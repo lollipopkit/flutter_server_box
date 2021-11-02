@@ -10,6 +10,6 @@ class SnippetListPage extends StatefulWidget {
 class _SnippetListPageState extends State<SnippetListPage> {
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return Scaffold(appBar: AppBar(title: const Text('Snippet List'),), body: const Center(child: Text('Developing'),),);
   }
 }

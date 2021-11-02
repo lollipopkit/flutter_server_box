@@ -10,6 +10,6 @@ class SnippetEditPage extends StatefulWidget {
 class _SnippetEditPageState extends State<SnippetEditPage> {
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return Scaffold(appBar: AppBar(title: const Text('Snippet Edit'),), body: const Center(child: Text('Developing'),),);
   }
 }
