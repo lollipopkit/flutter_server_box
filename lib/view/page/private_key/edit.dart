@@ -1,5 +1,6 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
+import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/model/server/private_key_info.dart';
 import 'package:toolbox/data/provider/private_key.dart';
 import 'package:toolbox/locator.dart';
@@ -70,8 +71,15 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.send),
         onPressed: () {
-          final info = PrivateKeyInfo(
-              nameController.text, keyController.text, pwdController.text);
+          final name = nameController.text;
+          final key = keyController.text;
+          final pwd = pwdController.text;
+          if (name.isEmpty || key.isEmpty || pwd.isEmpty) {
+            showSnackBar(
+                context, const Text('Three fields must not be empty.'));
+            return;
+          }
+          final info = PrivateKeyInfo(name, key, pwd);
           if (widget.info != null) {
             _provider.updateInfo(widget.info!, info);
           } else {

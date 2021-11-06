@@ -15,13 +15,13 @@ bool isDarkMode(BuildContext context) =>
 void showSnackBar(BuildContext context, Widget child) =>
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: child));
 
-void showSnackBarWithAction(
-    BuildContext context, String content, String action, Function onTap) {
+void showSnackBarWithAction(BuildContext context, String content, String action,
+    GestureTapCallback onTap) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
     content: Text(content),
     action: SnackBarAction(
       label: action,
-      onPressed: () => onTap,
+      onPressed: onTap,
     ),
   ));
 }

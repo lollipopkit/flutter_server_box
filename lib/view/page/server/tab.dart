@@ -91,11 +91,11 @@ class _ServerPageState extends State<ServerPage>
     return Card(
       child: InkWell(
         onLongPress: () => AppRoute(
-                  ServerEditPage(
-                    spi: si.info,
-                  ),
-                  'Edit server info page')
-              .go(context),
+                ServerEditPage(
+                  spi: si.info,
+                ),
+                'Edit server info page')
+            .go(context),
         child: Padding(
           padding: const EdgeInsets.all(13),
           child:

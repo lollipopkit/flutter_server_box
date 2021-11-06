@@ -66,10 +66,14 @@ class _SettingPageState extends State<SettingPage> {
         display = 'Current: v1.0.${BuildData.build}';
       }
       return ListTile(
-        contentPadding: EdgeInsets.zero,
-        trailing: const Icon(Icons.keyboard_arrow_right),
-          title: Text(display, style: textStyle,
-        textAlign: TextAlign.start,), onTap: () => doUpdate(context, force: true));
+          contentPadding: EdgeInsets.zero,
+          trailing: const Icon(Icons.keyboard_arrow_right),
+          title: Text(
+            display,
+            style: textStyle,
+            textAlign: TextAlign.start,
+          ),
+          onTap: () => doUpdate(context, force: true));
     });
   }
 

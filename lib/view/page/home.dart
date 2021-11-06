@@ -13,7 +13,7 @@ import 'package:toolbox/data/res/url.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/convert.dart';
 import 'package:toolbox/view/page/debug.dart';
-import 'package:toolbox/view/page/private_key/stored.dart';
+import 'package:toolbox/view/page/private_key/list.dart';
 import 'package:toolbox/view/page/server/tab.dart';
 import 'package:toolbox/view/page/setting.dart';
 import 'package:toolbox/view/page/snippet/list.dart';
@@ -92,8 +92,7 @@ class _MyHomePageState extends State<MyHomePage>
             leading: const Icon(Icons.snippet_folder),
             title: const Text('Snippet'),
             onTap: () =>
-                AppRoute(const SnippetListPage(), 'snippet list')
-                    .go(context),
+                AppRoute(const SnippetListPage(), 'snippet list').go(context),
           ),
           AboutListTile(
             icon: const Icon(Icons.text_snippet),

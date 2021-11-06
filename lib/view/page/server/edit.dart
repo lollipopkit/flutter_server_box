@@ -59,6 +59,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                             onPressed: () {
                               _serverProvider.delServer(widget.spi!);
                               Navigator.of(context).pop();
+                              Navigator.of(context).pop();
                             },
                             child: const Text(
                               'Yes',

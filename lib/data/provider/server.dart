@@ -13,6 +13,7 @@ import 'package:toolbox/data/model/server/disk_info.dart';
 import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/server_status.dart';
+import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/model/server/tcp_status.dart';
 import 'package:toolbox/data/store/server.dart';
 import 'package:toolbox/data/store/setting.dart';
@@ -289,5 +290,9 @@ class ServerProvider extends BusyProvider {
       }
     }
     return emptyMemory;
+  }
+
+  Future<String?> runSnippet(int idx, Snippet snippet) {
+    return _servers[idx].client.execute(snippet.script);
   }
 }
