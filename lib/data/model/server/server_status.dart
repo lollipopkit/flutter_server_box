@@ -37,7 +37,8 @@ class ServerStatus {
   List<DiskInfo> disk;
   TcpStatus tcp;
   NetSpeed netSpeed;
+  String? failedInfo;
 
   ServerStatus(this.cpu2Status, this.memory, this.sysVer, this.uptime,
-      this.disk, this.tcp, this.netSpeed);
+      this.disk, this.tcp, this.netSpeed, {this.failedInfo});
 }

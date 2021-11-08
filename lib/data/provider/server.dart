@@ -141,6 +141,7 @@ class ServerProvider extends BusyProvider {
         notifyListeners();
       } catch (e) {
         _servers[idx].connectionState = ServerConnectionState.failed;
+        _servers[idx].status.failedInfo = e.toString().split(', ')[1];
         notifyListeners();
         logger.warning(e);
       }

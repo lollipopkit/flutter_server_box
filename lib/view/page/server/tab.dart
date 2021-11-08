@@ -124,7 +124,7 @@ class _ServerPageState extends State<ServerPage>
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
               textScaleFactor: 1.0,
             ),
-            Text(getTopRightStr(cs, ss.cpu2Status.temp, ss.uptime),
+            Text(getTopRightStr(cs, ss.cpu2Status.temp, ss.uptime, ss.failedInfo),
                 textScaleFactor: 1.0,
                 style: TextStyle(
                     color: _theme.textTheme.bodyText1!.color!.withAlpha(100),
@@ -149,7 +149,7 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  String getTopRightStr(ServerConnectionState cs, String temp, String upTime) {
+  String getTopRightStr(ServerConnectionState cs, String temp, String upTime, String? failedInfo) {
     switch (cs) {
       case ServerConnectionState.disconnected:
         return 'Disconnected';
@@ -158,7 +158,7 @@ class _ServerPageState extends State<ServerPage>
       case ServerConnectionState.connecting:
         return 'Connecting...';
       case ServerConnectionState.failed:
-        return 'Failed';
+        return failedInfo ?? 'Failed';
       default:
         return 'Unknown State';
     }
