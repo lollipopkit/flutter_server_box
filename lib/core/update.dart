@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:r_upgrade/r_upgrade.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/provider/app.dart';
 import 'package:toolbox/data/res/build_data.dart';
@@ -41,6 +42,12 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
       update.min > BuildData.build
           ? 'Your version is too old. \nPlease update to v1.0.${update.newest}.'
           : 'Update: v1.0.${update.newest} available. \n${update.changelog}',
-      'Update',
-      () => openUrl(Platform.isAndroid ? update.android : update.ios));
+      'Update', () async {
+    if (Platform.isAndroid) {
+      await RUpgrade.upgrade(update.android,
+          fileName: update.android.split('/').last, isAutoRequestInstall: true);
+    } else if (Platform.isIOS) {
+      showSnackBar(context, const Text('Not support iOS now.'));
+    }
+  });
 }
