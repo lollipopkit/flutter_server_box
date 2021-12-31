@@ -3,6 +3,7 @@ import 'package:circle_chart/circle_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get_it/get_it.dart';
+import 'package:marquee/marquee.dart';
 import 'package:provider/provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:toolbox/core/route.dart';
@@ -128,6 +129,12 @@ class _ServerPageState extends State<ServerPage>
     final rootDisk =
         ss.disk.firstWhere((element) => element.mountLocation == '/');
 
+    final topRightStr =
+        getTopRightStr(cs, ss.cpu2Status.temp, ss.uptime, ss.failedInfo);
+    final hasError = cs == ServerConnectionState.failed;
+    final style = TextStyle(
+        color: _theme.textTheme.bodyText1!.color!.withAlpha(100), fontSize: 11);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -139,13 +146,18 @@ class _ServerPageState extends State<ServerPage>
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
               textScaleFactor: 1.0,
             ),
-            Text(
-                getTopRightStr(
-                    cs, ss.cpu2Status.temp, ss.uptime, ss.failedInfo),
-                textScaleFactor: 1.0,
-                style: TextStyle(
-                    color: _theme.textTheme.bodyText1!.color!.withAlpha(100),
-                    fontSize: 11))
+            hasError
+                ? ConstrainedBox(
+                    constraints: BoxConstraints(
+                        maxWidth: _media.size.width * 0.57, maxHeight: 17),
+                    child: Marquee(
+                        accelerationDuration: const Duration(seconds: 3),
+                        accelerationCurve: Curves.linear,
+                        decelerationDuration: const Duration(seconds: 3),
+                        decelerationCurve: Curves.linear,
+                        text: topRightStr, textScaleFactor: 1.0, style: style),
+                  )
+                : Text(topRightStr, style: style, textScaleFactor: 1.0),
           ],
         ),
         const SizedBox(
