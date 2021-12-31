@@ -67,9 +67,9 @@ class _ServerPageState extends State<ServerPage>
         child: AnimationLimiter(
             child: Column(
                 children: AnimationConfiguration.toStaggeredList(
-          duration: const Duration(milliseconds: 377),
+          duration: const Duration(milliseconds: 777),
           childAnimationBuilder: (widget) => SlideAnimation(
-            verticalOffset: 50.0,
+            verticalOffset: 77.0,
             child: FadeInAnimation(
               child: widget,
             ),

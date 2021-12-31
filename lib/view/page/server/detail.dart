@@ -184,6 +184,16 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     ));
   }
 
+  String convertMB(int mb) {
+    const suffix = ['MB', 'GB', 'TB'];
+    double value = mb.toDouble();
+    int squareTimes = 0;
+    for (; value / 1024 > 1 && squareTimes < 3; squareTimes++) {
+      value /= 1024;
+    }
+    return '${value.toStringAsFixed(1)} ${suffix[squareTimes]}';
+  }
+
   Widget _buildMemView(ServerStatus ss) {
     final pColor = primaryColor;
     final used = ss.memory.used / ss.memory.total;
@@ -197,9 +207,11 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildMemExplain('Used', pColor),
-              _buildMemExplain('Cache', pColor.withAlpha(77)),
-              _buildMemExplain('Avail', progressColor.resolve(context))
+              _buildMemExplain(convertMB(ss.memory.used), pColor),
+              _buildMemExplain(
+                  convertMB(ss.memory.cache), pColor.withAlpha(77)),
+              _buildMemExplain(
+                  convertMB(ss.memory.total - ss.memory.avail), progressColor.resolve(context))
             ],
           ),
           const SizedBox(
