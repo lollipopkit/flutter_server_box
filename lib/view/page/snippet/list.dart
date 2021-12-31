@@ -122,7 +122,8 @@ class _SnippetListPageState extends State<SnippetListPage> {
             final result = await locator<ServerProvider>()
                 .runSnippet(_selectedIndex, snippet);
             if (result != null) {
-              showRoundDialog(context, 'Result', Text(result, style: const TextStyle(fontSize: 13)), [
+              showRoundDialog(context, 'Result',
+                  Text(result, style: const TextStyle(fontSize: 13)), [
                 TextButton(
                     onPressed: () => Navigator.of(context).pop(),
                     child: const Text('Close'))

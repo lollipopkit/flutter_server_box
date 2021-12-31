@@ -113,7 +113,8 @@ class _SettingPageState extends State<SettingPage> {
           height: 3,
         ),
         _intervalValue == 0.0
-            ? const Text('You set to 0, will not update automatically.')
+            ? const Text('You set to 0, will not update automatically.\nYou can pull to refresh manually.',
+                style: TextStyle(color: Colors.grey), textAlign: TextAlign.center,)
             : const SizedBox(),
         const SizedBox(
           height: 13,

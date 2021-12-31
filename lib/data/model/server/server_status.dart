@@ -40,5 +40,6 @@ class ServerStatus {
   String? failedInfo;
 
   ServerStatus(this.cpu2Status, this.memory, this.sysVer, this.uptime,
-      this.disk, this.tcp, this.netSpeed, {this.failedInfo});
+      this.disk, this.tcp, this.netSpeed,
+      {this.failedInfo});
 }

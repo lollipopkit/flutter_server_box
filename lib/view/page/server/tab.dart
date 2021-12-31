@@ -1,15 +1,16 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:circle_chart/circle_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/server_connection_state.dart';
 import 'package:toolbox/data/model/server/server_status.dart';
 import 'package:toolbox/data/provider/server.dart';
+import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/server/detail.dart';
@@ -27,6 +28,7 @@ class _ServerPageState extends State<ServerPage>
   late MediaQueryData _media;
   late ThemeData _theme;
   late Color _primaryColor;
+  late RefreshController _refreshController;
 
   late ServerProvider _serverProvider;
 
@@ -34,6 +36,7 @@ class _ServerPageState extends State<ServerPage>
   void initState() {
     super.initState();
     _serverProvider = locator<ServerProvider>();
+    _refreshController = RefreshController();
   }
 
   @override
@@ -41,41 +44,53 @@ class _ServerPageState extends State<ServerPage>
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
     _theme = Theme.of(context);
-    _primaryColor = Color(locator<SettingStore>().primaryColor.fetch()!);
+    _primaryColor = primaryColor;
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Scaffold(
-      body: Consumer<ServerProvider>(builder: (_, pro, __) {
-        if (pro.servers.isEmpty) {
-          return const Center(
-            child: Text(
-              'There is no server.\nClick the fab to add one.',
-              textAlign: TextAlign.center,
-            ),
-          );
-        }
-        return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 7),
-          child: AnimationLimiter(
-              child: Column(
-                  children: AnimationConfiguration.toStaggeredList(
-            duration: const Duration(milliseconds: 377),
-            childAnimationBuilder: (widget) => SlideAnimation(
-              verticalOffset: 50.0,
-              child: FadeInAnimation(
-                child: widget,
-              ),
-            ),
-            children: [
-              const SizedBox(height: 13),
-              ...pro.servers.map((e) => _buildEachServerCard(e))
-            ],
-          ))),
+    final autoUpdate =
+        locator<SettingStore>().serverStatusUpdateInterval.fetch() != 0;
+    final child = Consumer<ServerProvider>(builder: (_, pro, __) {
+      if (pro.servers.isEmpty) {
+        return const Center(
+          child: Text(
+            'There is no server.\nClick the fab to add one.',
+            textAlign: TextAlign.center,
+          ),
         );
-      }),
+      }
+      return SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 7),
+        child: AnimationLimiter(
+            child: Column(
+                children: AnimationConfiguration.toStaggeredList(
+          duration: const Duration(milliseconds: 377),
+          childAnimationBuilder: (widget) => SlideAnimation(
+            verticalOffset: 50.0,
+            child: FadeInAnimation(
+              child: widget,
+            ),
+          ),
+          children: [
+            const SizedBox(height: 13),
+            ...pro.servers.map((e) => _buildEachServerCard(e))
+          ],
+        ))),
+      );
+    });
+    return Scaffold(
+      body: autoUpdate
+          ? child
+          : SmartRefresher(
+              controller: _refreshController,
+              child: child,
+              onRefresh: () async {
+                await _serverProvider.refreshData();
+                _refreshController.refreshCompleted();
+              },
+            ),
       floatingActionButton: FloatingActionButton(
         onPressed: () =>
             AppRoute(const ServerEditPage(), 'Add server info page')
@@ -124,7 +139,9 @@ class _ServerPageState extends State<ServerPage>
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
               textScaleFactor: 1.0,
             ),
-            Text(getTopRightStr(cs, ss.cpu2Status.temp, ss.uptime, ss.failedInfo),
+            Text(
+                getTopRightStr(
+                    cs, ss.cpu2Status.temp, ss.uptime, ss.failedInfo),
                 textScaleFactor: 1.0,
                 style: TextStyle(
                     color: _theme.textTheme.bodyText1!.color!.withAlpha(100),
@@ -149,7 +166,8 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  String getTopRightStr(ServerConnectionState cs, String temp, String upTime, String? failedInfo) {
+  String getTopRightStr(ServerConnectionState cs, String temp, String upTime,
+      String? failedInfo) {
     switch (cs) {
       case ServerConnectionState.disconnected:
         return 'Disconnected';
