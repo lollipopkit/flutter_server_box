@@ -191,7 +191,11 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     for (; value / 1024 > 1 && squareTimes < 3; squareTimes++) {
       value /= 1024;
     }
-    return '${value.toStringAsFixed(1)} ${suffix[squareTimes]}';
+    var finalValue = value.toStringAsFixed(1);
+    if (finalValue.endsWith('.0')) {
+      finalValue = finalValue.replaceFirst('.0', '');
+    }
+    return '$finalValue ${suffix[squareTimes]}';
   }
 
   Widget _buildMemView(ServerStatus ss) {
@@ -231,7 +235,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                   // memory.total == 1: failed to get mem, now mem = [emptyMemory] which is initial value.
                   value: ss.memory.total == 1
                       ? 0
-                      : ss.memory.cache / ss.memory.total,
+                      : ss.memory.cache / (ss.memory.total - ss.memory.used),
                   backgroundColor: progressColor.resolve(context),
                   color: pColor.withAlpha(77),
                 ),
