@@ -23,6 +23,8 @@ class ServerProvider extends BusyProvider {
   List<ServerInfo> _servers = [];
   List<ServerInfo> get servers => _servers;
 
+  Timer? _timer;
+
   final logger = Logger('ServerProvider');
 
   Memory get emptyMemory =>
@@ -95,9 +97,17 @@ class ServerProvider extends BusyProvider {
     final duration =
         locator<SettingStore>().serverStatusUpdateInterval.fetch()!;
     if (duration == 0) return;
-    Timer.periodic(Duration(seconds: duration), (_) async {
+    stopAutoRefresh();
+    _timer = Timer.periodic(Duration(seconds: duration), (_) async {
       await refreshData();
     });
+  }
+
+  void stopAutoRefresh() {
+    if (_timer != null) {
+      _timer!.cancel();
+      _timer = null;
+    }
   }
 
   void addServer(ServerPrivateInfo info) {

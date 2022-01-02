@@ -3,6 +3,7 @@ import 'package:flutter_material_color_picker/flutter_material_color_picker.dart
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/update.dart';
 import 'package:toolbox/data/provider/app.dart';
+import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/store/setting.dart';
@@ -22,6 +23,7 @@ class _SettingPageState extends State<SettingPage> {
   double _intervalValue = 0;
   late Color priColor;
   static const textStyle = TextStyle(fontSize: 14);
+  late final ServerProvider _serverProvider;
 
   @override
   void didChangeDependencies() {
@@ -32,6 +34,7 @@ class _SettingPageState extends State<SettingPage> {
   @override
   void initState() {
     super.initState();
+    _serverProvider = locator<ServerProvider>();
     _store = locator<SettingStore>();
     _intervalValue = _store.serverStatusUpdateInterval.fetch()!.toDouble();
   }
@@ -88,7 +91,7 @@ class _SettingPageState extends State<SettingPage> {
         textAlign: TextAlign.start,
       ),
       subtitle: const Text(
-        'Will take effect the next time app launches.',
+        'Will take effect immediately.',
         style: TextStyle(color: Colors.grey),
       ),
       trailing: Text('${_intervalValue.toInt()} s'),
@@ -104,8 +107,10 @@ class _SettingPageState extends State<SettingPage> {
               _intervalValue = newValue;
             });
           },
-          onChangeEnd: (val) =>
-              _store.serverStatusUpdateInterval.put(val.toInt()),
+          onChangeEnd: (val) {
+            _store.serverStatusUpdateInterval.put(val.toInt());
+            _serverProvider.startAutoRefresh();
+          },
           label: '${_intervalValue.toInt()} seconds',
           divisions: 10,
         ),

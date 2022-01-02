@@ -210,8 +210,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               _buildMemExplain(convertMB(ss.memory.used), pColor),
               _buildMemExplain(
                   convertMB(ss.memory.cache), pColor.withAlpha(77)),
-              _buildMemExplain(
-                  convertMB(ss.memory.total - ss.memory.avail), progressColor.resolve(context))
+              _buildMemExplain(convertMB(ss.memory.total - ss.memory.used),
+                  progressColor.resolve(context))
             ],
           ),
           const SizedBox(
@@ -243,7 +243,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     ));
   }
 
-  Widget _buildMemExplain(String type, Color color) {
+  Widget _buildMemExplain(String value, Color color) {
     return Row(
       children: [
         Container(
@@ -252,7 +252,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           width: 11,
         ),
         const SizedBox(width: 4),
-        Text(type, style: style11, textScaleFactor: 1.0)
+        Text(
+          value,
+          style: style11,
+          textScaleFactor: 1.0,
+          textAlign: TextAlign.center,
+        )
       ],
     );
   }

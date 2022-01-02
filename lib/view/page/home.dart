@@ -31,14 +31,35 @@ class _MyHomePageState extends State<MyHomePage>
     with
         AutomaticKeepAliveClientMixin,
         SingleTickerProviderStateMixin,
-        AfterLayoutMixin {
+        AfterLayoutMixin,
+        WidgetsBindingObserver {
   final List<String> _tabs = ['Servers', 'En/Decode'];
   late final TabController _tabController;
+  late final ServerProvider _serverProvider;
 
   @override
   void initState() {
     super.initState();
+    _serverProvider = locator<ServerProvider>();
+    WidgetsBinding.instance?.addObserver(this);
     _tabController = TabController(length: _tabs.length, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    WidgetsBinding.instance?.removeObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.paused) {
+      _serverProvider.stopAutoRefresh();
+    }
+    if (state == AppLifecycleState.resumed) {
+      _serverProvider.startAutoRefresh();
+    }
   }
 
   @override
