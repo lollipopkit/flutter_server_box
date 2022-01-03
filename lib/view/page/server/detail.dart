@@ -64,7 +64,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           _buildCPUView(si.status),
           _buildDiskView(si.status),
           _buildMemView(si.status),
-          _buildNetView(si.status.netSpeed)
+          _buildNetView(si.status.netSpeed),
+          SizedBox(height: _media.padding.bottom),
         ],
       ),
     );

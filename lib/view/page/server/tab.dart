@@ -67,7 +67,7 @@ class _ServerPageState extends State<ServerPage>
         child: AnimationLimiter(
             child: Column(
                 children: AnimationConfiguration.toStaggeredList(
-          duration: const Duration(milliseconds: 477),
+          duration: const Duration(milliseconds: 377),
           childAnimationBuilder: (widget) => SlideAnimation(
             verticalOffset: 77.0,
             child: FadeInAnimation(
@@ -76,7 +76,8 @@ class _ServerPageState extends State<ServerPage>
           ),
           children: [
             const SizedBox(height: 13),
-            ...pro.servers.map((e) => _buildEachServerCard(e))
+            ...pro.servers.map((e) => _buildEachServerCard(e)),
+            SizedBox(height: _media.padding.bottom),
           ],
         ))),
       );
@@ -131,7 +132,7 @@ class _ServerPageState extends State<ServerPage>
 
     final topRightStr =
         getTopRightStr(cs, ss.cpu2Status.temp, ss.uptime, ss.failedInfo);
-    final hasError = cs == ServerConnectionState.failed;
+    final hasError = cs == ServerConnectionState.failed && ss.failedInfo != null;
     final style = TextStyle(
         color: _theme.textTheme.bodyText1!.color!.withAlpha(100), fontSize: 11);
 
