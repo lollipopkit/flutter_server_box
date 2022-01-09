@@ -13,8 +13,12 @@ class AppUpdate {
 */
 
   late int newest;
+  late int iosbuild;
+  late int androidbuild;
+  late int macbuild;
   late String android;
   late String ios;
+  late String mac;
   late int min;
   late String changelog;
 
@@ -27,6 +31,9 @@ class AppUpdate {
   });
   AppUpdate.fromJson(Map<String, dynamic> json) {
     newest = json["newest"]?.toInt();
+    newest = json["macbuild"]?.toInt();
+    newest = json["iosbuild"]?.toInt();
+    newest = json["androidbuild"]?.toInt();
     android = json["android"].toString();
     ios = json["ios"].toString();
     min = json["min"].toInt();
@@ -35,6 +42,9 @@ class AppUpdate {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data["newest"] = newest;
+    data["macbuild"] = macbuild;
+    data["iosbuild"] = iosbuild;
+    data["androidbuild"] = androidbuild;
     data["android"] = android;
     data["ios"] = ios;
     data["min"] = min;

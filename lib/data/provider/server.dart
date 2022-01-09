@@ -1,7 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:dartssh2/dartssh2.dart';
 import 'package:logging/logging.dart';
-import 'package:ssh2/ssh2.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/provider_base.dart';
 import 'package:toolbox/data/model/server/cpu_2_status.dart';
@@ -59,15 +60,21 @@ class ServerProvider extends BusyProvider {
 
   ServerInfo genInfo(ServerPrivateInfo spi) {
     return ServerInfo(
-        spi, emptyStatus, genClient(spi), ServerConnectionState.disconnected);
+        spi, emptyStatus, null, ServerConnectionState.disconnected);
   }
 
-  SSHClient genClient(ServerPrivateInfo spi) {
-    return SSHClient(
-        host: spi.ip,
-        port: spi.port,
+  Future<SSHClient> genClient(ServerPrivateInfo spi) async {
+    final socket = await SSHSocket.connect(spi.ip, spi.port);
+    if (spi.authorization is String) {
+      return SSHClient(socket,
+          username: spi.user,
+          onPasswordRequest: () => spi.authorization as String);
+    }
+    final auth = spi.authorization as Map<String, dynamic>;
+    return SSHClient(socket,
         username: spi.user,
-        passwordOrKey: spi.authorization);
+        identities: SSHKeyPair.fromPem(auth['privateKey'],
+            auth['passphrase']));
   }
 
   Future<void> refreshData({int? idx}) async {
@@ -123,10 +130,11 @@ class ServerProvider extends BusyProvider {
     notifyListeners();
   }
 
-  void updateServer(ServerPrivateInfo old, ServerPrivateInfo newInfo) {
+  Future<void> updateServer(
+      ServerPrivateInfo old, ServerPrivateInfo newInfo) async {
     final idx = _servers.indexWhere((e) => e.info == old);
     _servers[idx].info = newInfo;
-    _servers[idx].client = genClient(newInfo);
+    _servers[idx].client = await genClient(newInfo);
     locator<ServerStore>().update(old, newInfo);
     notifyListeners();
     refreshData(idx: idx);
@@ -134,7 +142,7 @@ class ServerProvider extends BusyProvider {
 
   Future<ServerStatus?> _getData(ServerPrivateInfo info, int idx) async {
     final client = _servers[idx].client;
-    final connected = await client.isConnected();
+    final connected = client != null;
     final state = _servers[idx].connectionState;
     if (!connected ||
         state == ServerConnectionState.failed ||
@@ -143,7 +151,7 @@ class ServerProvider extends BusyProvider {
       notifyListeners();
       final time1 = DateTime.now();
       try {
-        await client.connect();
+        _servers[idx].client = await genClient(info);
         final time2 = DateTime.now();
         logger.info(
             'Connected to [${info.name}] in [${time2.difference(time1).toString()}].');
@@ -151,24 +159,24 @@ class ServerProvider extends BusyProvider {
         notifyListeners();
       } catch (e) {
         _servers[idx].connectionState = ServerConnectionState.failed;
-        _servers[idx].status.failedInfo = e.toString().split(', ')[1];
+        _servers[idx].status.failedInfo = e.toString();
         notifyListeners();
         logger.warning(e);
       }
     }
     try {
-      final cpu = await client.execute("cat /proc/stat | grep cpu") ?? '';
-      final cpuTemp = await client.execute(
-              r"paste <(cat /sys/class/thermal/thermal_zone*/type) <(cat /sys/class/thermal/thermal_zone*/temp) | column -s $'\t' -t | sed 's/\(.\)..$/.\1°C/'") ??
-          '';
-      final mem = await client.execute('free -m') ?? '';
-      final sysVer =
-          await client.execute('cat /etc/os-release | grep PRETTY_NAME') ?? '';
-      final upTime = await client.execute('uptime') ?? '';
-      final disk = await client.execute('df -h') ?? '';
-      final tcp = await client.execute('cat /proc/net/snmp') ?? '';
+      if (!connected) return null;
+      final cpu = utf8.decode(await client!.run("cat /proc/stat | grep cpu"));
+      final cpuTemp = utf8.decode(await client.run(
+          r"paste <(cat /sys/class/thermal/thermal_zone*/type) <(cat /sys/class/thermal/thermal_zone*/temp) | column -s $'\t' -t | sed 's/\(.\)..$/.\1°C/'"));
+      final mem = utf8.decode(await client.run('free -m'));
+      final sysVer = utf8
+          .decode(await client.run('cat /etc/os-release | grep PRETTY_NAME'));
+      final upTime = utf8.decode(await client.run('uptime'));
+      final disk = utf8.decode(await client.run('df -h'));
+      final tcp = utf8.decode(await client.run('cat /proc/net/snmp'));
       final netSpeed =
-          await client.execute('cat /proc/net/dev && date +%s') ?? '';
+          utf8.decode(await client.run('cat /proc/net/dev && date +%s'));
 
       return ServerStatus(
           _getCPU(cpu, _servers[idx].status.cpu2Status, cpuTemp),
@@ -303,7 +311,8 @@ class ServerProvider extends BusyProvider {
     return emptyMemory;
   }
 
-  Future<String?> runSnippet(int idx, Snippet snippet) {
-    return _servers[idx].client.execute(snippet.script);
+  Future<String?> runSnippet(int idx, Snippet snippet) async {
+    final result = await _servers[idx].client!.run(snippet.script);
+    return utf8.decode(result);
   }
 }

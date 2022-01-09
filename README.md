@@ -30,6 +30,12 @@ A new Flutter project which provide a chart view to display server status data.
   </tr>
 </table>
 
+# Support
+Status|Platform 
+--|--|
+Full Support|Android/iOS/macOS
+Support, but not tested|Windows/Linux
+
 ## Milestone
 - [x] SSH connect
 - [x] Server info store
@@ -39,8 +45,8 @@ A new Flutter project which provide a chart view to display server status data.
 - [x] Server status detail page
 - [x] Theme switch
 - [x] Execute snippet
-- [ ] Migrate from `ssh2` to `dartssh2`
-- [ ] Desktop support
+- [x] Migrate from `ssh2` to `dartssh2`
+- [x] Desktop support
 
 ## Build
 Please use `make.dart` to build.

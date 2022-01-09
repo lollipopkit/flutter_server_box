@@ -47,7 +47,9 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
       await RUpgrade.upgrade(update.android,
           fileName: update.android.split('/').last, isAutoRequestInstall: true);
     } else if (Platform.isIOS) {
-      showSnackBar(context, const Text('Not support iOS now.'));
+      await RUpgrade.upgradeFromAppStore('1586449703');
+    } else if (Platform.isMacOS) {
+      await RUpgrade.upgradeFromUrl(update.mac);
     }
   });
 }

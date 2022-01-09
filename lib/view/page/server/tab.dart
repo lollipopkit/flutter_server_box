@@ -119,7 +119,7 @@ class _ServerPageState extends State<ServerPage>
               _buildRealServerCard(si.status, si.info.name, si.connectionState),
         ),
         onTap: () =>
-            AppRoute(ServerDetailPage(si.client.id!), 'server detail page')
+            AppRoute(ServerDetailPage('${si.info.ip}:${si.info.port}'), 'server detail page')
                 .go(context),
       ),
     );

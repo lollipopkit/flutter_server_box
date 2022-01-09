@@ -2,51 +2,38 @@ PODS:
   - countly_flutter (20.11.4):
     - Flutter
   - Flutter (1.0.0)
-  - GZ-NMSSH (4.1.5)
-  - path_provider (0.0.1):
+  - path_provider_ios (0.0.1):
     - Flutter
   - r_upgrade (0.0.1):
     - Flutter
-  - ssh2 (2.2.3):
-    - Flutter
-    - GZ-NMSSH (~> 4.1.5)
-  - url_launcher (0.0.1):
+  - url_launcher_ios (0.0.1):
     - Flutter
 
 DEPENDENCIES:
   - countly_flutter (from `.symlinks/plugins/countly_flutter/ios`)
   - Flutter (from `Flutter`)
-  - path_provider (from `.symlinks/plugins/path_provider/ios`)
+  - path_provider_ios (from `.symlinks/plugins/path_provider_ios/ios`)
   - r_upgrade (from `.symlinks/plugins/r_upgrade/ios`)
-  - ssh2 (from `.symlinks/plugins/ssh2/ios`)
-  - url_launcher (from `.symlinks/plugins/url_launcher/ios`)
-
-SPEC REPOS:
-  trunk:
-    - GZ-NMSSH
+  - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
 
 EXTERNAL SOURCES:
   countly_flutter:
     :path: ".symlinks/plugins/countly_flutter/ios"
   Flutter:
     :path: Flutter
-  path_provider:
-    :path: ".symlinks/plugins/path_provider/ios"
+  path_provider_ios:
+    :path: ".symlinks/plugins/path_provider_ios/ios"
   r_upgrade:
     :path: ".symlinks/plugins/r_upgrade/ios"
-  ssh2:
-    :path: ".symlinks/plugins/ssh2/ios"
-  url_launcher:
-    :path: ".symlinks/plugins/url_launcher/ios"
+  url_launcher_ios:
+    :path: ".symlinks/plugins/url_launcher_ios/ios"
 
 SPEC CHECKSUMS:
   countly_flutter: 38419412e193a1faa5babeb5d28a63fda260687d
   Flutter: 50d75fe2f02b26cc09d224853bb45737f8b3214a
-  GZ-NMSSH: d749f8ae2fd0094b953cd1d5abd8e0cab3c93f8d
-  path_provider: d1e9807085df1f9cc9318206cd649dc0b76be3de
+  path_provider_ios: 7d7ce634493af4477d156294792024ec3485acd5
   r_upgrade: 44d715c61914cce3d01ea225abffe894fd51c114
-  ssh2: 74165efc99417a075ecafd52caf93edadfb5eb60
-  url_launcher: b6e016d912f04be9f5bf6e8e82dc599b7ba59649
+  url_launcher_ios: 02f1989d4e14e998335b02b67a7590fa34f971af
 
 PODFILE CHECKSUM: aafe91acc616949ddb318b77800a7f51bffa2a4c
 

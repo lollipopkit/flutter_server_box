@@ -36,7 +36,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   Widget build(BuildContext context) {
     return Consumer<ServerProvider>(builder: (_, provider, __) {
       return _buildMainPage(
-          provider.servers.firstWhere((e) => e.client.id == widget.id));
+          provider.servers.firstWhere((e) => '${e.info.ip}:${e.info.port}' == widget.id));
     });
   }
 
