@@ -118,9 +118,9 @@ class _ServerPageState extends State<ServerPage>
           child:
               _buildRealServerCard(si.status, si.info.name, si.connectionState),
         ),
-        onTap: () =>
-            AppRoute(ServerDetailPage('${si.info.ip}:${si.info.port}'), 'server detail page')
-                .go(context),
+        onTap: () => AppRoute(ServerDetailPage('${si.info.ip}:${si.info.port}'),
+                'server detail page')
+            .go(context),
       ),
     );
   }
@@ -132,7 +132,8 @@ class _ServerPageState extends State<ServerPage>
 
     final topRightStr =
         getTopRightStr(cs, ss.cpu2Status.temp, ss.uptime, ss.failedInfo);
-    final hasError = cs == ServerConnectionState.failed && ss.failedInfo != null;
+    final hasError =
+        cs == ServerConnectionState.failed && ss.failedInfo != null;
     final style = TextStyle(
         color: _theme.textTheme.bodyText1!.color!.withAlpha(100), fontSize: 11);
 
@@ -283,7 +284,6 @@ class _ServerPageState extends State<ServerPage>
   Future<void> afterFirstLayout(BuildContext context) async {
     await GetIt.I.allReady();
     await _serverProvider.loadLocalData();
-    await _serverProvider.refreshData();
-    await _serverProvider.startAutoRefresh();
+    _serverProvider.startAutoRefresh();
   }
 }

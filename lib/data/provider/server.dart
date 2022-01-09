@@ -73,8 +73,7 @@ class ServerProvider extends BusyProvider {
     final auth = spi.authorization as Map<String, dynamic>;
     return SSHClient(socket,
         username: spi.user,
-        identities: SSHKeyPair.fromPem(auth['privateKey'],
-            auth['passphrase']));
+        identities: SSHKeyPair.fromPem(auth['privateKey'], auth['passphrase']));
   }
 
   Future<void> refreshData({int? idx}) async {
@@ -105,6 +104,7 @@ class ServerProvider extends BusyProvider {
         locator<SettingStore>().serverStatusUpdateInterval.fetch()!;
     if (duration == 0) return;
     stopAutoRefresh();
+    Future.delayed(const Duration(milliseconds: 677), () => refreshData());
     _timer = Timer.periodic(Duration(seconds: duration), (_) async {
       await refreshData();
     });
