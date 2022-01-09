@@ -239,6 +239,9 @@ class _ServerPageState extends State<ServerPage>
   Widget _buildPercentCircle(double percent, String title) {
     if (percent <= 0) percent = 0.01;
     if (percent >= 100) percent = 99.9;
+    final height = _media.size.width / 5 < _media.size.height * 0.09
+        ? _media.size.height * 0.09
+        : _media.size.height * 0.06;
     return SizedBox(
       width: _media.size.width * 0.2,
       height: _media.size.height * 0.1,
@@ -252,7 +255,7 @@ class _ServerPageState extends State<ServerPage>
                 progressNumber: percent,
                 maxNumber: 100,
                 width: _media.size.width * 0.37,
-                height: _media.size.height * 0.09,
+                height: height,
               ),
               Positioned.fill(
                 child: Center(

@@ -31,6 +31,7 @@ class MyApp extends StatelessWidget {
           final textStyle = TextStyle(color: primaryColor);
           return MaterialApp(
             title: 'ToolBox',
+            debugShowCheckedModeBanner: false,
             theme: ThemeData(
               primaryColor: primaryColor,
               appBarTheme: AppBarTheme(backgroundColor: primaryColor),
