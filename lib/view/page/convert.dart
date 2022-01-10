@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/res/color.dart';
 
@@ -48,25 +47,13 @@ class _ConvertPageState extends State<ConvertPage>
     return Scaffold(
       body: GestureDetector(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 7),
-          child: AnimationLimiter(
-              child: Column(
-                  children: AnimationConfiguration.toStaggeredList(
-            duration: const Duration(milliseconds: 377),
-            childAnimationBuilder: (widget) => SlideAnimation(
-              verticalOffset: 50.0,
-              child: FadeInAnimation(
-                child: widget,
-              ),
-            ),
-            children: [
+            padding: const EdgeInsets.symmetric(horizontal: 7),
+            child: Column(children: [
               const SizedBox(height: 13),
               _buildInputTop(),
               _buildTypeOption(),
               _buildResult(),
-            ],
-          ))),
-        ),
+            ])),
         onTap: () => FocusScope.of(context).requestFocus(FocusNode()),
       ),
       floatingActionButton: FloatingActionButton(

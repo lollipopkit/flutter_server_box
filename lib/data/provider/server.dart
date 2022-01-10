@@ -21,7 +21,8 @@ import 'package:toolbox/data/store/server.dart';
 import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/locator.dart';
 
-/// Must put this func out of any Class
+/// Must put this func out of any Class.
+/// Because of this function is called by [compute] in [ServerProvider.genClient].
 /// https://stackoverflow.com/questions/51998995/invalid-arguments-illegal-argument-in-isolate-message-object-is-a-closure
 List<SSHKeyPair> loadIndentity(Map<String, dynamic> auth) {
   return SSHKeyPair.fromPem(auth['privateKey'], auth['passphrase']);
@@ -94,6 +95,7 @@ class ServerProvider extends BusyProvider {
     try {
       await Future.wait(_servers.map((s) async {
         final idx = _servers.indexOf(s);
+        if (idx == -1) return;
         final status = await _getData(s.info, idx);
         if (status != null) {
           _servers[idx].status = status;
@@ -101,7 +103,9 @@ class ServerProvider extends BusyProvider {
         }
       }));
     } catch (e) {
-      rethrow;
+      if (e is! RangeError) {
+        rethrow;
+      }
     }
   }
 
@@ -130,9 +134,11 @@ class ServerProvider extends BusyProvider {
   }
 
   void delServer(ServerPrivateInfo info) {
-    _servers.removeWhere((e) => e.info == info);
-    locator<ServerStore>().delete(info);
+    final idx = _servers.indexWhere((s) => s.info == info);
+    _servers[idx].client?.close();
+    _servers.removeAt(idx);
     notifyListeners();
+    locator<ServerStore>().delete(info);
   }
 
   Future<void> updateServer(

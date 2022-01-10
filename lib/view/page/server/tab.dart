@@ -1,7 +1,6 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:circle_chart/circle_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get_it/get_it.dart';
 import 'package:marquee/marquee.dart';
 import 'package:provider/provider.dart';
@@ -63,24 +62,14 @@ class _ServerPageState extends State<ServerPage>
         );
       }
       return SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 7),
-        child: AnimationLimiter(
-            child: Column(
-                children: AnimationConfiguration.toStaggeredList(
-          duration: const Duration(milliseconds: 377),
-          childAnimationBuilder: (widget) => SlideAnimation(
-            verticalOffset: 77.0,
-            child: FadeInAnimation(
-              child: widget,
-            ),
-          ),
-          children: [
-            const SizedBox(height: 13),
-            ...pro.servers.map((e) => _buildEachServerCard(e)),
-            SizedBox(height: _media.padding.bottom),
-          ],
-        ))),
-      );
+          padding: const EdgeInsets.symmetric(horizontal: 7),
+          child: Column(
+            children: [
+              const SizedBox(height: 13),
+              ...pro.servers.map((e) => _buildEachServerCard(e)),
+              SizedBox(height: _media.padding.bottom),
+            ],
+          ));
     });
     return Scaffold(
       body: autoUpdate
@@ -287,7 +276,7 @@ class _ServerPageState extends State<ServerPage>
   Future<void> afterFirstLayout(BuildContext context) async {
     await GetIt.I.allReady();
     await _serverProvider.loadLocalData();
-    _serverProvider.refreshData();
+    await _serverProvider.refreshData();
     _serverProvider.startAutoRefresh();
   }
 }
