@@ -35,8 +35,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   @override
   Widget build(BuildContext context) {
     return Consumer<ServerProvider>(builder: (_, provider, __) {
-      return _buildMainPage(
-          provider.servers.firstWhere((e) => '${e.info.ip}:${e.info.port}' == widget.id));
+      return _buildMainPage(provider.servers
+          .firstWhere((e) => '${e.info.ip}:${e.info.port}' == widget.id));
     });
   }
 
@@ -44,16 +44,6 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     return Scaffold(
       appBar: AppBar(
         title: Text(si.info.name),
-        actions: [
-          IconButton(
-              onPressed: () => AppRoute(
-                      ServerEditPage(
-                        spi: si.info,
-                      ),
-                      'Edit server info page')
-                  .go(context),
-              icon: const Icon(Icons.edit))
-        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(17),

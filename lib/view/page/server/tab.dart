@@ -115,8 +115,10 @@ class _ServerPageState extends State<ServerPage>
             .go(context),
         child: Padding(
           padding: const EdgeInsets.all(13),
-          child:
-              _buildRealServerCard(si.status, si.info.name, si.connectionState),
+          child: SizedBox(
+              height: _media.size.height * 0.147,
+              child: _buildRealServerCard(
+                  si.status, si.info.name, si.connectionState)),
         ),
         onTap: () => AppRoute(ServerDetailPage('${si.info.ip}:${si.info.port}'),
                 'server detail page')
@@ -239,7 +241,7 @@ class _ServerPageState extends State<ServerPage>
   Widget _buildPercentCircle(double percent, String title) {
     if (percent <= 0) percent = 0.01;
     if (percent >= 100) percent = 99.9;
-    var size = _media.size.height * 0.147;
+    var size = _media.size.height * 0.15;
     return SizedBox(
       width: _media.size.width * 0.2,
       height: _media.size.height * 0.1,
@@ -285,6 +287,7 @@ class _ServerPageState extends State<ServerPage>
   Future<void> afterFirstLayout(BuildContext context) async {
     await GetIt.I.allReady();
     await _serverProvider.loadLocalData();
+    _serverProvider.refreshData();
     _serverProvider.startAutoRefresh();
   }
 }

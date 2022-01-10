@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dartssh2/dartssh2.dart';
+import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/provider_base.dart';
@@ -19,6 +20,12 @@ import 'package:toolbox/data/model/server/tcp_status.dart';
 import 'package:toolbox/data/store/server.dart';
 import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/locator.dart';
+
+/// Must put this func out of any Class
+/// https://stackoverflow.com/questions/51998995/invalid-arguments-illegal-argument-in-isolate-message-object-is-a-closure
+List<SSHKeyPair> loadIndentity(Map<String, dynamic> auth) {
+  return SSHKeyPair.fromPem(auth['privateKey'], auth['passphrase']);
+}
 
 class ServerProvider extends BusyProvider {
   List<ServerInfo> _servers = [];
@@ -72,8 +79,7 @@ class ServerProvider extends BusyProvider {
     }
     final auth = spi.authorization as Map<String, dynamic>;
     return SSHClient(socket,
-        username: spi.user,
-        identities: SSHKeyPair.fromPem(auth['privateKey'], auth['passphrase']));
+        username: spi.user, identities: await compute(loadIndentity, auth));
   }
 
   Future<void> refreshData({int? idx}) async {
@@ -104,7 +110,6 @@ class ServerProvider extends BusyProvider {
         locator<SettingStore>().serverStatusUpdateInterval.fetch()!;
     if (duration == 0) return;
     stopAutoRefresh();
-    Future.delayed(const Duration(milliseconds: 677), () => refreshData());
     _timer = Timer.periodic(Duration(seconds: duration), (_) async {
       await refreshData();
     });

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/res/color.dart';
 
 class ConvertPage extends StatefulWidget {
@@ -70,7 +71,11 @@ class _ConvertPageState extends State<ConvertPage>
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          _textEditingControllerResult.text = doConvert();
+          try {
+            _textEditingControllerResult.text = doConvert();
+          } catch (e) {
+            showSnackBar(context, Text('Error: \n$e'));
+          }
         },
         tooltip: 'convert',
         child: const Icon(Icons.send),
@@ -79,7 +84,7 @@ class _ConvertPageState extends State<ConvertPage>
   }
 
   String doConvert() {
-    final text = _textEditingController.text;
+    final text = _textEditingController.text.trim();
     switch (_typeOptionIndex) {
       case 0:
         return utf8.decode(base64.decode(text));
