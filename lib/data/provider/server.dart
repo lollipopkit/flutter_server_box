@@ -26,7 +26,11 @@ import 'package:toolbox/locator.dart';
 /// Because of this function is called by [compute] in [ServerProvider.genClient].
 /// https://stackoverflow.com/questions/51998995/invalid-arguments-illegal-argument-in-isolate-message-object-is-a-closure
 List<SSHKeyPair> loadIndentity(String key) {
-  return SSHKeyPair.fromPem(key);
+  final watch = Stopwatch()..start();
+  final pem = SSHKeyPair.fromPem(key);
+  watch.stop();
+  print('loadIndentity: ${watch.elapsedMilliseconds}ms');
+  return pem;
 }
 
 class ServerProvider extends BusyProvider {
@@ -81,27 +85,20 @@ class ServerProvider extends BusyProvider {
     }
     final key = locator<PrivateKeyStore>().get(spi.pubKeyId!);
     return SSHClient(socket,
-        username: spi.user, identities: await compute(loadIndentity, key.privateKey));
+        username: spi.user,
+        identities: await compute(loadIndentity, key.privateKey));
   }
 
   Future<void> refreshData({int? idx}) async {
     if (idx != null) {
-      final singleData = await _getData(_servers[idx].info, idx);
-      if (singleData != null) {
-        _servers[idx].status = singleData;
-        notifyListeners();
-      }
+      _getData(idx);
       return;
     }
     try {
       await Future.wait(_servers.map((s) async {
         final idx = _servers.indexOf(s);
         if (idx == -1) return;
-        final status = await _getData(s.info, idx);
-        if (status != null) {
-          _servers[idx].status = status;
-          notifyListeners();
-        }
+        await _getData(idx);
       }));
     } catch (e) {
       if (e is! RangeError) {
@@ -152,8 +149,9 @@ class ServerProvider extends BusyProvider {
     refreshData(idx: idx);
   }
 
-  Future<ServerStatus?> _getData(ServerPrivateInfo info, int idx) async {
+  Future<void> _getData(int idx) async {
     final client = _servers[idx].client;
+    final info = _servers[idx].info;
     final connected = client != null;
     final state = _servers[idx].connectionState;
     if (!connected ||
@@ -177,32 +175,19 @@ class ServerProvider extends BusyProvider {
       }
     }
     try {
-      if (!connected) return null;
-      final cpu = utf8.decode(await client!.run("cat /proc/stat | grep cpu"));
-      final cpuTemp = utf8.decode(await client.run(
-          r"paste <(cat /sys/class/thermal/thermal_zone*/type) <(cat /sys/class/thermal/thermal_zone*/temp) | column -s $'\t' -t | sed 's/\(.\)..$/.\1°C/'"));
-      final mem = utf8.decode(await client.run('free -m'));
-      final sysVer = utf8
-          .decode(await client.run('cat /etc/os-release | grep PRETTY_NAME'));
-      final upTime = utf8.decode(await client.run('uptime'));
-      final disk = utf8.decode(await client.run('df -h'));
-      final tcp = utf8.decode(await client.run('cat /proc/net/snmp'));
-      final netSpeed =
-          utf8.decode(await client.run('cat /proc/net/dev && date +%s'));
-
-      return ServerStatus(
-          _getCPU(cpu, _servers[idx].status.cpu2Status, cpuTemp),
-          _getMem(mem),
-          _getSysVer(sysVer),
-          _getUpTime(upTime),
-          _getDisk(disk),
-          _getTcp(tcp),
-          _getNetSpeed(netSpeed, _servers[idx].status.netSpeed));
+      if (_servers[idx].client == null) return;
+      _getCPU(_servers[idx]);
+      _getMem(_servers[idx]);
+      _getSysVer(_servers[idx]);
+      _getUpTime(_servers[idx]);
+      _getDisk(_servers[idx]);
+      _getTcp(_servers[idx]);
+      _getNetSpeed(_servers[idx]);
     } catch (e) {
       _servers[idx].connectionState = ServerConnectionState.failed;
+      servers[idx].status.failedInfo = e.toString();
       notifyListeners();
       logger.warning(e);
-      return null;
     }
   }
 
@@ -212,10 +197,13 @@ class ServerProvider extends BusyProvider {
   ///   lo: 45929941  269112    0    0    0     0          0         0 45929941  269112    0    0    0     0       0          0
   ///   eth0: 48481023  505772    0    0    0     0          0         0 36002262  202307    0    0    0     0       0          0
   /// 1635752901
-  NetSpeed _getNetSpeed(String raw, NetSpeed old) {
+  Future<void> _getNetSpeed(ServerInfo info) async {
+    final idx = _servers.indexOf(info);
+    final client = _servers[idx].client!;
+    final raw = utf8.decode(await client.run('cat /proc/net/dev && date +%s'));
     final split = raw.split('\n');
     final deviceCount = split.length - 3;
-    if (deviceCount < 1) return emptyNetSpeed;
+    if (deviceCount < 1) return;
     final time = int.parse(split[split.length - 2]);
     final results = <NetSpeedPart>[];
     for (int idx = 2; idx < deviceCount; idx++) {
@@ -227,15 +215,23 @@ class ServerProvider extends BusyProvider {
       final bytesOut = int.parse(bytes[8]);
       results.add(NetSpeedPart(device, bytesIn, bytesOut, time));
     }
-    return old.update(results);
+    info.status.netSpeed = info.status.netSpeed.update(results);
+    notifyListeners();
   }
 
-  String _getSysVer(String raw) {
+  Future<void> _getSysVer(ServerInfo info) async {
+    final idx = _servers.indexOf(info);
+    final client = _servers[idx].client!;
+    final raw =
+        utf8.decode(await client.run('cat /etc/os-release | grep PRETTY_NAME'));
     final s = raw.split('=');
     if (s.length == 2) {
-      return s[1].replaceAll('"', '').replaceFirst('\n', '');
+      info.status.sysVer = s[1].replaceAll('"', '').replaceFirst('\n', '');
+    } else {
+      info.status.sysVer = '';
     }
-    return '';
+    
+    notifyListeners();
   }
 
   String _getCPUTemp(String raw) {
@@ -248,7 +244,12 @@ class ServerProvider extends BusyProvider {
     return '';
   }
 
-  Cpu2Status _getCPU(String raw, Cpu2Status old, String temp) {
+  Future<void> _getCPU(ServerInfo info) async {
+    final idx = _servers.indexOf(info);
+    final client = _servers[idx].client!;
+    final raw = utf8.decode(await client.run("cat /proc/stat | grep cpu"));
+    final temp = utf8.decode(await client.run(
+        r"paste <(cat /sys/class/thermal/thermal_zone*/type) <(cat /sys/class/thermal/thermal_zone*/temp) | column -s $'\t' -t | sed 's/\(.\)..$/.\1°C/'"));
     final List<CpuStatus> cpus = [];
 
     for (var item in raw.split('\n')) {
@@ -266,32 +267,44 @@ class ServerProvider extends BusyProvider {
           int.parse(matches[6])));
     }
     if (cpus.isEmpty) {
-      return emptyCpu2Status;
+      info.status.cpu2Status = emptyCpu2Status;
+    } else {
+
+    info.status.cpu2Status =
+        info.status.cpu2Status.update(cpus, _getCPUTemp(temp));
     }
 
-    return old.update(cpus, _getCPUTemp(temp));
+    notifyListeners();
   }
 
-  String _getUpTime(String raw) {
-    return raw.split('up ')[1].split(', ')[0];
+  Future<void> _getUpTime(ServerInfo info) async {
+    final idx = _servers.indexOf(info);
+    final client = _servers[idx].client!;
+    final raw = utf8.decode(await client.run('uptime'));
+    info.status.uptime = raw.split('up ')[1].split(', ')[0];
+    notifyListeners();
   }
 
-  TcpStatus _getTcp(String raw) {
+  Future<void> _getTcp(ServerInfo info) async {
+    final sidx = _servers.indexOf(info);
+    final client = _servers[sidx].client!;
+    final raw = utf8.decode(await client.run('cat /proc/net/snmp'));
     final lines = raw.split('\n');
-    int idx = 0;
-    for (var item in lines) {
-      if (item.contains('Tcp:')) {
-        idx++;
-      }
-      if (idx == 2) {
-        final vals = item.split(RegExp(r'\s{1,}'));
-        return TcpStatus(vals[5].i, vals[6].i, vals[7].i, vals[8].i);
-      }
+    final idx = lines.lastWhere((element) => element.startsWith('Tcp:'),
+        orElse: () => '');
+    if (idx != '') {
+      final vals = idx.split(RegExp(r'\s{1,}'));
+      info.status.tcp = TcpStatus(vals[5].i, vals[6].i, vals[7].i, vals[8].i);
+    } else {
+      info.status.tcp = TcpStatus(0, 0, 0, 0);
     }
-    return TcpStatus(0, 0, 0, 0);
+    notifyListeners();
   }
 
-  List<DiskInfo> _getDisk(String disk) {
+  Future<void> _getDisk(ServerInfo info) async {
+    final idx = _servers.indexOf(info);
+    final client = _servers[idx].client!;
+    final disk = utf8.decode(await client.run('df -h'));
     final list = <DiskInfo>[];
     final items = disk.split('\n');
     for (var item in items) {
@@ -302,16 +315,20 @@ class ServerProvider extends BusyProvider {
       list.add(DiskInfo(vals[0], vals[5],
           int.parse(vals[4].replaceFirst('%', '')), vals[2], vals[1], vals[3]));
     }
-    return list;
+    info.status.disk = list;
+    notifyListeners();
   }
 
-  Memory _getMem(String mem) {
+  Future<void> _getMem(ServerInfo info) async {
+    final idx = _servers.indexOf(info);
+    final client = _servers[idx].client!;
+    final mem = utf8.decode(await client.run('free -m'));
     for (var item in mem.split('\n')) {
       if (item.contains('Mem:')) {
         final split = item.replaceFirst('Mem:', '').split(' ');
         split.removeWhere((e) => e == '');
         final memList = split.map((e) => int.parse(e)).toList();
-        return Memory(
+        info.status.memory = Memory(
             total: memList[0],
             used: memList[1],
             free: memList[2],
@@ -320,7 +337,7 @@ class ServerProvider extends BusyProvider {
             avail: memList[5]);
       }
     }
-    return emptyMemory;
+    notifyListeners();
   }
 
   Future<String?> runSnippet(int idx, Snippet snippet) async {
