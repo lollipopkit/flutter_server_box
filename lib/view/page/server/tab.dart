@@ -183,7 +183,13 @@ class _ServerPageState extends State<ServerPage>
       case ServerConnectionState.connecting:
         return 'Connecting...';
       case ServerConnectionState.failed:
-        return failedInfo ?? 'Failed';
+        if (failedInfo == null) {
+          return 'Failed';
+        }
+        if (failedInfo.contains('encypted')) {
+          return 'Please "save" this private key again.';
+        }
+        return failedInfo;
       default:
         return 'Unknown State';
     }

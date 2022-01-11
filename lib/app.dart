@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/home.dart';
@@ -29,7 +30,7 @@ class MyApp extends StatelessWidget {
           final primaryColor = Color(value);
           final textStyle = TextStyle(color: primaryColor);
           return MaterialApp(
-            title: 'ToolBox',
+            title: BuildData.name,
             debugShowCheckedModeBanner: false,
             theme: ThemeData(
               primaryColor: primaryColor,

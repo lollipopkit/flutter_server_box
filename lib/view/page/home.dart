@@ -71,7 +71,7 @@ class _MyHomePageState extends State<MyHomePage>
         title: GestureDetector(
           onLongPress: () =>
               AppRoute(const DebugPage(), 'Debug Page').go(context),
-          child: const Text('ToolBox'),
+          child: const Text(BuildData.name),
         ),
         bottom: TabBar(
           indicatorColor: widget.primaryColor,

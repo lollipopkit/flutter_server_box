@@ -4,7 +4,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-const appName = 'ToolBox';
+const appName = 'ServerBox';
 
 Future<int> getGitCommitCount() async {
   final result = await Process.run('git', ['log', '--oneline']);
