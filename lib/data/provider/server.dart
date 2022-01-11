@@ -17,6 +17,7 @@ import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/server_status.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/model/server/tcp_status.dart';
+import 'package:toolbox/data/store/private_key.dart';
 import 'package:toolbox/data/store/server.dart';
 import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/locator.dart';
@@ -24,8 +25,8 @@ import 'package:toolbox/locator.dart';
 /// Must put this func out of any Class.
 /// Because of this function is called by [compute] in [ServerProvider.genClient].
 /// https://stackoverflow.com/questions/51998995/invalid-arguments-illegal-argument-in-isolate-message-object-is-a-closure
-List<SSHKeyPair> loadIndentity(Map<String, dynamic> auth) {
-  return SSHKeyPair.fromPem(auth['privateKey'], auth['passphrase']);
+List<SSHKeyPair> loadIndentity(String key) {
+  return SSHKeyPair.fromPem(key);
 }
 
 class ServerProvider extends BusyProvider {
@@ -73,14 +74,14 @@ class ServerProvider extends BusyProvider {
 
   Future<SSHClient> genClient(ServerPrivateInfo spi) async {
     final socket = await SSHSocket.connect(spi.ip, spi.port);
-    if (spi.authorization is String) {
+    if (spi.pubKeyId == null) {
       return SSHClient(socket,
           username: spi.user,
           onPasswordRequest: () => spi.authorization as String);
     }
-    final auth = spi.authorization as Map<String, dynamic>;
+    final key = locator<PrivateKeyStore>().get(spi.pubKeyId!);
     return SSHClient(socket,
-        username: spi.user, identities: await compute(loadIndentity, auth));
+        username: spi.user, identities: await compute(loadIndentity, key.privateKey));
   }
 
   Future<void> refreshData({int? idx}) async {

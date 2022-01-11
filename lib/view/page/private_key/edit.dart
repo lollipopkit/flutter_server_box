@@ -1,4 +1,6 @@
 import 'package:after_layout/after_layout.dart';
+import 'package:dartssh2/dartssh2.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/model/server/private_key_info.dart';
@@ -22,11 +24,13 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
   final pwdController = TextEditingController();
 
   late PrivateKeyProvider _provider;
+  late Widget loading;
 
   @override
   void initState() {
     super.initState();
     _provider = locator<PrivateKeyProvider>();
+    loading = const SizedBox();
   }
 
   @override
@@ -66,11 +70,13 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
             obscureText: true,
             decoration: buildDecoration('Password', icon: Icons.password),
           ),
+          SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+          loading
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.send),
-        onPressed: () {
+        child: const Icon(Icons.save),
+        onPressed: () async {
           final name = nameController.text;
           final key = keyController.text;
           final pwd = pwdController.text;
@@ -79,7 +85,28 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
                 context, const Text('Three fields must not be empty.'));
             return;
           }
+          FocusScope.of(context).unfocus();
+          setState(() {
+            loading = const SizedBox(
+              height: 50,
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          });
           final info = PrivateKeyInfo(name, key, pwd);
+          bool haveErr = false;
+          try {
+            info.privateKey = await compute(decyptPem, [key, pwd]);
+          } catch (e) {
+            showSnackBar(context, Text(e.toString()));
+            haveErr = true;
+          } finally {
+            setState(() {
+              loading = const SizedBox();
+            });
+          }
+          if (haveErr) return;
           if (widget.info != null) {
             _provider.updateInfo(widget.info!, info);
           } else {
@@ -99,4 +126,12 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
       pwdController.text = widget.info!.password;
     }
   }
+}
+
+/// [args] : [key, pwd]
+String decyptPem(List<String> args) {
+  /// skip when the key is not encrypted, or will throw exception
+  if (!SSHKeyPair.isEncryptedPem(args[0])) return args[0];
+  final sshKey = SSHKeyPair.fromPem(args[0], args[1]);
+  return sshKey.first.toPem();
 }
