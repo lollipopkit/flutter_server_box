@@ -103,12 +103,9 @@ class _ServerPageState extends State<ServerPage>
                 'Edit server info page')
             .go(context),
         child: Padding(
-          padding: const EdgeInsets.all(13),
-          child: SizedBox(
-              height: _media.size.height * 0.147,
-              child: _buildRealServerCard(
-                  si.status, si.info.name, si.connectionState)),
-        ),
+            padding: const EdgeInsets.all(13),
+            child: _buildRealServerCard(
+                si.status, si.info.name, si.connectionState)),
         onTap: () => AppRoute(ServerDetailPage('${si.info.ip}:${si.info.port}'),
                 'server detail page')
             .go(context),
@@ -142,7 +139,7 @@ class _ServerPageState extends State<ServerPage>
             hasError
                 ? ConstrainedBox(
                     constraints: BoxConstraints(
-                        maxWidth: _media.size.width * 0.57, maxHeight: 17),
+                        maxWidth: _media.size.width * 0.57, maxHeight: 15),
                     child: Marquee(
                         accelerationDuration: const Duration(seconds: 3),
                         accelerationCurve: Curves.linear,
@@ -159,17 +156,39 @@ class _ServerPageState extends State<ServerPage>
           height: 17,
         ),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildPercentCircle(ss.cpu2Status.usedPercent(), 'CPU'),
-            _buildPercentCircle(ss.memory.used / ss.memory.total * 100, 'Mem'),
-            _buildIOData('Net', 'Conn:\n' + ss.tcp.maxConn.toString(),
+            _buildPercentCircle(ss.cpu2Status.usedPercent()),
+            _buildPercentCircle(ss.memory.used / ss.memory.total * 100),
+            _buildIOData('Conn:\n' + ss.tcp.maxConn.toString(),
                 'Fail:\n' + ss.tcp.fail.toString()),
-            _buildIOData('Disk', 'Total:\n' + rootDisk.size,
+            _buildIOData('Total:\n' + rootDisk.size,
                 'Used:\n' + rootDisk.usedPercent.toString() + '%')
           ],
         ),
+        const SizedBox(height: 13),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildExplainText('CPU'),
+            _buildExplainText('Mem'),
+            _buildExplainText('Net'),
+            _buildExplainText('Disk'),
+          ],
+        )
       ],
+    );
+  }
+
+  Widget _buildExplainText(String text) {
+    return SizedBox(
+      width: _media.size.width * 0.2,
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 12),
+        textAlign: TextAlign.center,
+        textScaleFactor: 1.0,
+      ),
     );
   }
 
@@ -195,36 +214,24 @@ class _ServerPageState extends State<ServerPage>
     }
   }
 
-  Widget _buildIOData(String title, String up, String down) {
+  Widget _buildIOData(String up, String down) {
     final statusTextStyle = TextStyle(
         fontSize: 9, color: _theme.textTheme.bodyText1!.color!.withAlpha(177));
     return SizedBox(
       width: _media.size.width * 0.2,
-      height: _media.size.height * 0.1,
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const SizedBox(),
-          Column(
-            children: [
-              Text(
-                up,
-                style: statusTextStyle,
-                textAlign: TextAlign.center,
-                textScaleFactor: 1.0,
-              ),
-              const SizedBox(height: 3),
-              Text(
-                down + '\n',
-                style: statusTextStyle,
-                textAlign: TextAlign.center,
-                textScaleFactor: 1.0,
-              )
-            ],
-          ),
+          const SizedBox(height: 5),
           Text(
-            title,
-            style: const TextStyle(fontSize: 12),
+            up,
+            style: statusTextStyle,
+            textAlign: TextAlign.center,
+            textScaleFactor: 1.0,
+          ),
+          const SizedBox(height: 3),
+          Text(
+            down,
+            style: statusTextStyle,
             textAlign: TextAlign.center,
             textScaleFactor: 1.0,
           )
@@ -233,42 +240,31 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  Widget _buildPercentCircle(double percent, String title) {
+  Widget _buildPercentCircle(double percent) {
     if (percent <= 0) percent = 0.01;
     if (percent >= 100) percent = 99.9;
-    var size = _media.size.height * 0.15;
     return SizedBox(
       width: _media.size.width * 0.2,
-      height: _media.size.height * 0.1,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Stack(
         children: [
-          Stack(
-            children: [
-              CircleChart(
-                progressColor: _primaryColor,
-                progressNumber: percent,
-                maxNumber: 100,
-                width: size,
-                height: size / 1.5,
-              ),
-              Positioned.fill(
-                child: Center(
-                  child: Text(
-                    '${percent.toStringAsFixed(1)}%',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 11),
-                    textScaleFactor: 1.0,
-                  ),
-                ),
-              ),
-            ],
+          Center(
+            child: CircleChart(
+              progressColor: _primaryColor,
+              progressNumber: percent,
+              maxNumber: 100,
+              width: 53,
+              height: 53,
+            ),
           ),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 12),
-            textAlign: TextAlign.center,
-            textScaleFactor: 1.0,
+          Positioned.fill(
+            child: Center(
+              child: Text(
+                '${percent.toStringAsFixed(1)}%',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 11),
+                textScaleFactor: 1.0,
+              ),
+            ),
           ),
         ],
       ),

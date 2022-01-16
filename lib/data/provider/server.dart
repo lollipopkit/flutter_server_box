@@ -26,11 +26,7 @@ import 'package:toolbox/locator.dart';
 /// Because of this function is called by [compute] in [ServerProvider.genClient].
 /// https://stackoverflow.com/questions/51998995/invalid-arguments-illegal-argument-in-isolate-message-object-is-a-closure
 List<SSHKeyPair> loadIndentity(String key) {
-  final watch = Stopwatch()..start();
-  final pem = SSHKeyPair.fromPem(key);
-  watch.stop();
-  print('loadIndentity: ${watch.elapsedMilliseconds}ms');
-  return pem;
+  return SSHKeyPair.fromPem(key);
 }
 
 class ServerProvider extends BusyProvider {
@@ -150,11 +146,9 @@ class ServerProvider extends BusyProvider {
   }
 
   Future<void> _getData(int idx) async {
-    final client = _servers[idx].client;
     final info = _servers[idx].info;
-    final connected = client != null;
     final state = _servers[idx].connectionState;
-    if (!connected ||
+    if (_servers[idx].client == null ||
         state == ServerConnectionState.failed ||
         state == ServerConnectionState.disconnected) {
       _servers[idx].connectionState = ServerConnectionState.connecting;
@@ -169,7 +163,7 @@ class ServerProvider extends BusyProvider {
         notifyListeners();
       } catch (e) {
         _servers[idx].connectionState = ServerConnectionState.failed;
-        _servers[idx].status.failedInfo = e.toString();
+        _servers[idx].status.failedInfo = e.toString() + ' ## ';
         notifyListeners();
         logger.warning(e);
       }
@@ -230,7 +224,7 @@ class ServerProvider extends BusyProvider {
     } else {
       info.status.sysVer = '';
     }
-    
+
     notifyListeners();
   }
 
@@ -269,9 +263,8 @@ class ServerProvider extends BusyProvider {
     if (cpus.isEmpty) {
       info.status.cpu2Status = emptyCpu2Status;
     } else {
-
-    info.status.cpu2Status =
-        info.status.cpu2Status.update(cpus, _getCPUTemp(temp));
+      info.status.cpu2Status =
+          info.status.cpu2Status.update(cpus, _getCPUTemp(temp));
     }
 
     notifyListeners();

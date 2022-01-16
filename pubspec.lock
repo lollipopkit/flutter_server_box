@@ -60,11 +60,9 @@ packages:
   circle_chart:
     dependency: "direct main"
     description:
-      path: "."
-      ref: main
-      resolved-ref: "36a46aaa41690aac96fa808a6e75841464007a3b"
-      url: "https://github.com/LollipopKit/circle_chart"
-    source: git
+      path: "../circle_chart"
+      relative: true
+    source: path
     version: "0.0.3"
   clipboard:
     dependency: "direct main"
@@ -123,7 +121,7 @@ packages:
       name: dartssh2
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.3.0-pre"
+    version: "2.3.1-pre"
   dio:
     dependency: "direct main"
     description:
