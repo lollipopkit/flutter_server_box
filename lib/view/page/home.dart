@@ -9,10 +9,13 @@ import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/res/icon/common.dart';
+import 'package:toolbox/data/res/tab.dart';
 import 'package:toolbox/data/res/url.dart';
+import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/convert.dart';
 import 'package:toolbox/view/page/debug.dart';
+import 'package:toolbox/view/page/ping.dart';
 import 'package:toolbox/view/page/private_key/list.dart';
 import 'package:toolbox/view/page/server/tab.dart';
 import 'package:toolbox/view/page/setting.dart';
@@ -33,7 +36,6 @@ class _MyHomePageState extends State<MyHomePage>
         SingleTickerProviderStateMixin,
         AfterLayoutMixin,
         WidgetsBindingObserver {
-  final List<String> _tabs = ['Servers', 'En/Decode'];
   late final TabController _tabController;
   late final ServerProvider _serverProvider;
 
@@ -42,7 +44,7 @@ class _MyHomePageState extends State<MyHomePage>
     super.initState();
     _serverProvider = locator<ServerProvider>();
     WidgetsBinding.instance?.addObserver(this);
-    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController = TabController(initialIndex: locator<SettingStore>().launchPage.fetch()!, length: tabs.length, vsync: this);
   }
 
   @override
@@ -75,15 +77,14 @@ class _MyHomePageState extends State<MyHomePage>
         ),
         bottom: TabBar(
           indicatorColor: widget.primaryColor,
-          tabs: _tabs.map((e) => Tab(text: e)).toList(),
+          tabs: tabs.map((e) => Tab(text: e)).toList(),
           controller: _tabController,
         ),
       ),
       drawer: _buildDrawer(),
-      body: TabBarView(controller: _tabController, children: const [
-        ServerPage(),
-        ConvertPage(),
-      ]),
+      body: TabBarView(
+          controller: _tabController,
+          children: const [ServerPage(), ConvertPage(), PingPage()]),
     );
   }
 

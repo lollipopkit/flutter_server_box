@@ -60,9 +60,11 @@ packages:
   circle_chart:
     dependency: "direct main"
     description:
-      path: "../circle_chart"
-      relative: true
-    source: path
+      path: "."
+      ref: main
+      resolved-ref: "01eb9bcc7f1a1690381caeedb476ea98c5295d55"
+      url: "https://github.com/LollipopKit/circle_chart"
+    source: git
     version: "0.0.3"
   clipboard:
     dependency: "direct main"
@@ -112,6 +114,20 @@ packages:
     dependency: transitive
     description:
       name: dart_console
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.0"
+  dart_ping:
+    dependency: "direct main"
+    description:
+      name: dart_ping
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "6.1.1"
+  dart_ping_ios:
+    dependency: "direct main"
+    description:
+      name: dart_ping_ios
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.0"
@@ -176,6 +192,13 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_icmp_ping:
+    dependency: transitive
+    description:
+      name: flutter_icmp_ping
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "3.0.2"
   flutter_lints:
     dependency: "direct dev"
     description:

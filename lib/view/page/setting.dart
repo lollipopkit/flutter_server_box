@@ -6,6 +6,7 @@ import 'package:toolbox/data/provider/app.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/res/color.dart';
+import 'package:toolbox/data/res/tab.dart';
 import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
@@ -20,15 +21,20 @@ class SettingPage extends StatefulWidget {
 class _SettingPageState extends State<SettingPage> {
   late SettingStore _store;
   late int _selectedColorValue;
+  late int _launchPageIdx;
   double _intervalValue = 0;
   late Color priColor;
   static const textStyle = TextStyle(fontSize: 14);
   late final ServerProvider _serverProvider;
+  late MediaQueryData _media;
+  late ThemeData _theme;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     priColor = primaryColor;
+    _media = MediaQuery.of(context);
+    _theme = Theme.of(context);
   }
 
   @override
@@ -36,6 +42,7 @@ class _SettingPageState extends State<SettingPage> {
     super.initState();
     _serverProvider = locator<ServerProvider>();
     _store = locator<SettingStore>();
+    _launchPageIdx = _store.launchPage.fetch()!;
     _intervalValue = _store.serverStatusUpdateInterval.fetch()!.toDouble();
   }
 
@@ -50,7 +57,8 @@ class _SettingPageState extends State<SettingPage> {
         children: [
           _buildAppColorPreview(),
           _buildUpdateInterval(),
-          _buildCheckUpdate()
+          _buildCheckUpdate(),
+          _buildLaunchPage()
         ].map((e) => RoundRectCard(e)).toList(),
       ),
     );
@@ -169,6 +177,49 @@ class _SettingPageState extends State<SettingPage> {
         _store.primaryColor.put(_selectedColorValue);
         setState(() {});
       }),
+    );
+  }
+
+  Widget _buildLaunchPage() {
+    return ExpansionTile(
+      tilePadding: EdgeInsets.zero,
+      childrenPadding: EdgeInsets.zero,
+      title: const Text(
+        'Launch page',
+        style: textStyle,
+      ),
+      trailing: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: _media.size.width * 0.35),
+        child: Text(
+          tabs[_launchPageIdx],
+          textScaleFactor: 1.0,
+          textAlign: TextAlign.right,
+        ),
+      ),
+      children: tabs
+          .map((e) => ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  e,
+                  style: TextStyle(
+                      color: _theme.textTheme.bodyText2!.color!.withAlpha(177)),
+                ),
+                trailing: _buildRadio(tabs.indexOf(e)),
+              ))
+          .toList(),
+    );
+  }
+
+  Radio _buildRadio(int index) {
+    return Radio<int>(
+      value: index,
+      groupValue: _launchPageIdx,
+      onChanged: (int? value) {
+        setState(() {
+          _launchPageIdx = value!;
+          _store.launchPage.put(value);
+        });
+      },
     );
   }
 }
