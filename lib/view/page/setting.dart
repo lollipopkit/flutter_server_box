@@ -182,6 +182,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildLaunchPage() {
     return ExpansionTile(
+      textColor: priColor,
       tilePadding: EdgeInsets.zero,
       childrenPadding: EdgeInsets.zero,
       title: const Text(
@@ -192,6 +193,7 @@ class _SettingPageState extends State<SettingPage> {
         constraints: BoxConstraints(maxWidth: _media.size.width * 0.35),
         child: Text(
           tabs[_launchPageIdx],
+          style: textStyle,
           textScaleFactor: 1.0,
           textAlign: TextAlign.right,
         ),
@@ -202,6 +204,7 @@ class _SettingPageState extends State<SettingPage> {
                 title: Text(
                   e,
                   style: TextStyle(
+                    fontSize: 14,
                       color: _theme.textTheme.bodyText2!.color!.withAlpha(177)),
                 ),
                 trailing: _buildRadio(tabs.indexOf(e)),

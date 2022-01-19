@@ -2,6 +2,8 @@ PODS:
   - countly_flutter (20.11.4):
     - Flutter
   - Flutter (1.0.0)
+  - flutter_icmp_ping (0.0.1):
+    - Flutter
   - path_provider_ios (0.0.1):
     - Flutter
   - r_upgrade (0.0.1):
@@ -12,6 +14,7 @@ PODS:
 DEPENDENCIES:
   - countly_flutter (from `.symlinks/plugins/countly_flutter/ios`)
   - Flutter (from `Flutter`)
+  - flutter_icmp_ping (from `.symlinks/plugins/flutter_icmp_ping/ios`)
   - path_provider_ios (from `.symlinks/plugins/path_provider_ios/ios`)
   - r_upgrade (from `.symlinks/plugins/r_upgrade/ios`)
   - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
@@ -21,6 +24,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/countly_flutter/ios"
   Flutter:
     :path: Flutter
+  flutter_icmp_ping:
+    :path: ".symlinks/plugins/flutter_icmp_ping/ios"
   path_provider_ios:
     :path: ".symlinks/plugins/path_provider_ios/ios"
   r_upgrade:
@@ -31,6 +36,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   countly_flutter: 38419412e193a1faa5babeb5d28a63fda260687d
   Flutter: 50d75fe2f02b26cc09d224853bb45737f8b3214a
+  flutter_icmp_ping: 07e508847df7fa9262d050bb0b203de074bbe517
   path_provider_ios: 7d7ce634493af4477d156294792024ec3485acd5
   r_upgrade: 44d715c61914cce3d01ea225abffe894fd51c114
   url_launcher_ios: 02f1989d4e14e998335b02b67a7590fa34f971af

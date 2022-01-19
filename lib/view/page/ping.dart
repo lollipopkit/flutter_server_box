@@ -17,9 +17,8 @@ class _PingPageState extends State<PingPage>
     with AutomaticKeepAliveClientMixin {
   late TextEditingController _textEditingController;
   late TextEditingController _textEditingControllerResult;
-  late MediaQueryData _media;
   late String _result;
-  late Ping _ping;
+  Ping? _ping;
 
   @override
   void initState() {
@@ -34,7 +33,6 @@ class _PingPageState extends State<PingPage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _media = MediaQuery.of(context);
   }
 
   @override
@@ -58,7 +56,7 @@ class _PingPageState extends State<PingPage>
   void doPing() {
     _result = '';
     _ping = Ping(_textEditingController.text.trim());
-    _ping.stream.listen((event) {
+    _ping!.stream.listen((event) {
       final resp = event.response.toString();
       if (resp == 'null') return;
       _result += '$resp\n';
@@ -86,7 +84,7 @@ class _PingPageState extends State<PingPage>
                 ],
               ),
               onPressed: () {
-                _ping.stop();
+                if (_ping != null) _ping!.stop();
               },
             ),
             TextButton(
@@ -120,10 +118,7 @@ class _PingPageState extends State<PingPage>
   }
 
   Widget _buildResult() {
-    return SizedBox(
-      height: _media.size.height * 0.47,
-      child: _buildInput(_textEditingControllerResult, hint: 'Result here.'),
-    );
+    return _buildInput(_textEditingControllerResult, hint: 'Result here.');
   }
 
   Widget _buildInput(TextEditingController controller, {int maxLines = 20, String? hint}) {
