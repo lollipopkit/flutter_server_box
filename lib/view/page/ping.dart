@@ -5,6 +5,7 @@ import 'package:dart_ping_ios/dart_ping_ios.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/res/color.dart';
+import 'package:toolbox/view/widget/input_field.dart';
 
 class PingPage extends StatefulWidget {
   const PingPage({Key? key}) : super(key: key);
@@ -44,9 +45,10 @@ class _PingPageState extends State<PingPage>
             padding: const EdgeInsets.symmetric(horizontal: 7),
             child: Column(children: [
               const SizedBox(height: 13),
-              _buildInputTop(),
+              buildInput(context, _textEditingController,
+                  maxLines: 1, hint: 'Type here.'),
               _buildControl(),
-              _buildResult(),
+              buildInput(context, _textEditingControllerResult, hint: 'Result here.'),
             ])),
         onTap: () => FocusScope.of(context).requestFocus(FocusNode()),
       ),
@@ -68,7 +70,9 @@ class _PingPageState extends State<PingPage>
     return SizedBox(
       height: 57,
       child: Card(
-        child: Row(
+        child: InkWell(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             TextButton(
@@ -109,28 +113,7 @@ class _PingPageState extends State<PingPage>
             )
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildInputTop() {
-    return _buildInput(_textEditingController, maxLines: 1, hint: 'Type here.');
-  }
-
-  Widget _buildResult() {
-    return _buildInput(_textEditingControllerResult, hint: 'Result here.');
-  }
-
-  Widget _buildInput(TextEditingController controller, {int maxLines = 20, String? hint}) {
-    return Card(
-      child: TextField(
-        maxLines: maxLines,
-        decoration: InputDecoration(
-            fillColor: Theme.of(context).cardColor,
-            hintText: hint,
-            filled: true,
-            border: InputBorder.none),
-        controller: controller,
+        ),
       ),
     );
   }

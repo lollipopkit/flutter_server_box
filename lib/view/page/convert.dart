@@ -4,6 +4,7 @@ import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/res/color.dart';
+import 'package:toolbox/view/widget/input_field.dart';
 
 class ConvertPage extends StatefulWidget {
   const ConvertPage({Key? key}) : super(key: key);
@@ -82,14 +83,14 @@ class _ConvertPageState extends State<ConvertPage>
       case 3:
         return Uri.decodeFull(text);
       default:
-        return 'Unknown';
+        return 'Unknown Convert Method';
     }
   }
 
   Widget _buildInputTop() {
     return SizedBox(
       height: _media.size.height * 0.33,
-      child: _buildInput(_textEditingController),
+      child: buildInput(context, _textEditingController),
     );
   }
 
@@ -161,20 +162,7 @@ class _ConvertPageState extends State<ConvertPage>
   Widget _buildResult() {
     return SizedBox(
       height: _media.size.height * 0.33,
-      child: _buildInput(_textEditingControllerResult),
-    );
-  }
-
-  Widget _buildInput(TextEditingController controller) {
-    return Card(
-      child: TextField(
-        maxLines: 20,
-        decoration: InputDecoration(
-            fillColor: Theme.of(context).cardColor,
-            filled: true,
-            border: InputBorder.none),
-        controller: controller,
-      ),
+      child: buildInput(context, _textEditingControllerResult),
     );
   }
 

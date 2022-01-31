@@ -44,7 +44,15 @@ class _MyHomePageState extends State<MyHomePage>
     super.initState();
     _serverProvider = locator<ServerProvider>();
     WidgetsBinding.instance?.addObserver(this);
-    _tabController = TabController(initialIndex: locator<SettingStore>().launchPage.fetch()!, length: tabs.length, vsync: this);
+    _tabController = TabController(
+        initialIndex: locator<SettingStore>().launchPage.fetch()!,
+        length: tabs.length,
+        vsync: this);
+    _tabController.addListener(() {
+      if (_tabController.index == 0) {
+        FocusScope.of(context).unfocus();
+      }
+    });
   }
 
   @override

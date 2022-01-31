@@ -204,7 +204,7 @@ class _SettingPageState extends State<SettingPage> {
                 title: Text(
                   e,
                   style: TextStyle(
-                    fontSize: 14,
+                      fontSize: 14,
                       color: _theme.textTheme.bodyText2!.color!.withAlpha(177)),
                 ),
                 trailing: _buildRadio(tabs.indexOf(e)),
