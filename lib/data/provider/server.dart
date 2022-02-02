@@ -85,16 +85,14 @@ class ServerProvider extends BusyProvider {
         identities: await compute(loadIndentity, key.privateKey));
   }
 
-  Future<void> refreshData({int? idx}) async {
-    if (idx != null) {
-      _getData(idx);
+  Future<void> refreshData({ServerPrivateInfo? spi}) async {
+    if (spi != null) {
+      _getData(spi);
       return;
     }
     try {
       await Future.wait(_servers.map((s) async {
-        final idx = _servers.indexOf(s);
-        if (idx == -1) return;
-        await _getData(idx);
+        await _getData(s.info);
       }));
     } catch (e) {
       if (e is! RangeError) {
@@ -120,11 +118,17 @@ class ServerProvider extends BusyProvider {
     }
   }
 
-  void addServer(ServerPrivateInfo info) {
-    _servers.add(genInfo(info));
-    locator<ServerStore>().put(info);
+  void setDisconnected() {
+    for (var i = 0; i < _servers.length; i++) {
+      _servers[i].connectionState = ServerConnectionState.disconnected;
+    }
+  }
+
+  void addServer(ServerPrivateInfo spi) {
+    _servers.add(genInfo(spi));
+    locator<ServerStore>().put(spi);
     notifyListeners();
-    refreshData(idx: _servers.length - 1);
+    refreshData(spi: spi);
   }
 
   void delServer(ServerPrivateInfo info) {
@@ -136,17 +140,17 @@ class ServerProvider extends BusyProvider {
   }
 
   Future<void> updateServer(
-      ServerPrivateInfo old, ServerPrivateInfo newInfo) async {
+      ServerPrivateInfo old, ServerPrivateInfo newSpi) async {
     final idx = _servers.indexWhere((e) => e.info == old);
-    _servers[idx].info = newInfo;
-    _servers[idx].client = await genClient(newInfo);
-    locator<ServerStore>().update(old, newInfo);
+    _servers[idx].info = newSpi;
+    _servers[idx].client = await genClient(newSpi);
+    locator<ServerStore>().update(old, newSpi);
     notifyListeners();
-    refreshData(idx: idx);
+    refreshData(spi: newSpi);
   }
 
-  Future<void> _getData(int idx) async {
-    final info = _servers[idx].info;
+  Future<void> _getData(ServerPrivateInfo spi) async {
+    final idx = _servers.indexWhere((element) => element.info == spi);
     final state = _servers[idx].connectionState;
     if (_servers[idx].client == null ||
         state == ServerConnectionState.failed ||
@@ -155,10 +159,10 @@ class ServerProvider extends BusyProvider {
       notifyListeners();
       final time1 = DateTime.now();
       try {
-        _servers[idx].client = await genClient(info);
+        _servers[idx].client = await genClient(spi);
         final time2 = DateTime.now();
         logger.info(
-            'Connected to [${info.name}] in [${time2.difference(time1).toString()}].');
+            'Connected to [${spi.name}] in [${time2.difference(time1).toString()}].');
         _servers[idx].connectionState = ServerConnectionState.connected;
         notifyListeners();
       } catch (e) {
@@ -168,15 +172,19 @@ class ServerProvider extends BusyProvider {
         logger.warning(e);
       }
     }
+    final si = _servers[idx];
     try {
-      if (_servers[idx].client == null) return;
-      _getCPU(_servers[idx]);
-      _getMem(_servers[idx]);
-      _getSysVer(_servers[idx]);
-      _getUpTime(_servers[idx]);
-      _getDisk(_servers[idx]);
-      _getTcp(_servers[idx]);
-      _getNetSpeed(_servers[idx]);
+      if (si.client == null) return;
+      final raw = utf8.decode(await si.client!.run(
+          r"cat /proc/net/dev && date +%s && echo 'A====A' && cat /etc/os-release | grep PRETTY_NAME && echo 'A====A' && cat /proc/stat | grep cpu && echo 'A====A' && paste <(cat /sys/class/thermal/thermal_zone*/type) <(cat /sys/class/thermal/thermal_zone*/temp) | column -s $'\t' -t | sed 's/\(.\)..$/.\1°C/' && echo 'A====A' && uptime && echo 'A====A' && cat /proc/net/snmp && echo 'A====A' && df -h && echo 'A====A' && free -m"));
+      final lines = raw.split('A====A').map((e) => e.trim()).toList();
+      _getCPU(spi, lines[2], lines[3]);
+      _getMem(spi, lines[7]);
+      _getSysVer(spi, lines[1]);
+      _getUpTime(spi, lines[4]);
+      _getDisk(spi, lines[6]);
+      _getTcp(spi, lines[5]);
+      _getNetSpeed(spi, lines[0]);
     } catch (e) {
       _servers[idx].connectionState = ServerConnectionState.failed;
       servers[idx].status.failedInfo = e.toString();
@@ -191,14 +199,12 @@ class ServerProvider extends BusyProvider {
   ///   lo: 45929941  269112    0    0    0     0          0         0 45929941  269112    0    0    0     0       0          0
   ///   eth0: 48481023  505772    0    0    0     0          0         0 36002262  202307    0    0    0     0       0          0
   /// 1635752901
-  Future<void> _getNetSpeed(ServerInfo info) async {
-    final idx = _servers.indexOf(info);
-    final client = _servers[idx].client!;
-    final raw = utf8.decode(await client.run('cat /proc/net/dev && date +%s'));
+  Future<void> _getNetSpeed(ServerPrivateInfo spi, String raw) async {
+    final info = _servers.firstWhere((e) => e.info == spi);
     final split = raw.split('\n');
     final deviceCount = split.length - 3;
     if (deviceCount < 1) return;
-    final time = int.parse(split[split.length - 2]);
+    final time = int.parse(split[split.length - 1]);
     final results = <NetSpeedPart>[];
     for (int idx = 2; idx < deviceCount; idx++) {
       final data = split[idx].trim().split(':');
@@ -213,11 +219,8 @@ class ServerProvider extends BusyProvider {
     notifyListeners();
   }
 
-  Future<void> _getSysVer(ServerInfo info) async {
-    final idx = _servers.indexOf(info);
-    final client = _servers[idx].client!;
-    final raw =
-        utf8.decode(await client.run('cat /etc/os-release | grep PRETTY_NAME'));
+  Future<void> _getSysVer(ServerPrivateInfo spi, String raw) async {
+    final info = _servers.firstWhere((e) => e.info == spi);
     final s = raw.split('=');
     if (s.length == 2) {
       info.status.sysVer = s[1].replaceAll('"', '').replaceFirst('\n', '');
@@ -238,12 +241,8 @@ class ServerProvider extends BusyProvider {
     return '';
   }
 
-  Future<void> _getCPU(ServerInfo info) async {
-    final idx = _servers.indexOf(info);
-    final client = _servers[idx].client!;
-    final raw = utf8.decode(await client.run("cat /proc/stat | grep cpu"));
-    final temp = utf8.decode(await client.run(
-        r"paste <(cat /sys/class/thermal/thermal_zone*/type) <(cat /sys/class/thermal/thermal_zone*/temp) | column -s $'\t' -t | sed 's/\(.\)..$/.\1°C/'"));
+  Future<void> _getCPU(ServerPrivateInfo spi, String raw, String temp) async {
+    final info = _servers.firstWhere((e) => e.info == spi);
     final List<CpuStatus> cpus = [];
 
     for (var item in raw.split('\n')) {
@@ -270,18 +269,14 @@ class ServerProvider extends BusyProvider {
     notifyListeners();
   }
 
-  Future<void> _getUpTime(ServerInfo info) async {
-    final idx = _servers.indexOf(info);
-    final client = _servers[idx].client!;
-    final raw = utf8.decode(await client.run('uptime'));
-    info.status.uptime = raw.split('up ')[1].split(', ')[0];
+  Future<void> _getUpTime(ServerPrivateInfo spi, String raw) async {
+    _servers.firstWhere((e) => e.info == spi).status.uptime =
+        raw.split('up ')[1].split(', ')[0];
     notifyListeners();
   }
 
-  Future<void> _getTcp(ServerInfo info) async {
-    final sidx = _servers.indexOf(info);
-    final client = _servers[sidx].client!;
-    final raw = utf8.decode(await client.run('cat /proc/net/snmp'));
+  Future<void> _getTcp(ServerPrivateInfo spi, String raw) async {
+    final info = _servers.firstWhere((e) => e.info == spi);
     final lines = raw.split('\n');
     final idx = lines.lastWhere((element) => element.startsWith('Tcp:'),
         orElse: () => '');
@@ -294,12 +289,10 @@ class ServerProvider extends BusyProvider {
     notifyListeners();
   }
 
-  Future<void> _getDisk(ServerInfo info) async {
-    final idx = _servers.indexOf(info);
-    final client = _servers[idx].client!;
-    final disk = utf8.decode(await client.run('df -h'));
+  Future<void> _getDisk(ServerPrivateInfo spi, String raw) async {
+    final info = _servers.firstWhere((e) => e.info == spi);
     final list = <DiskInfo>[];
-    final items = disk.split('\n');
+    final items = raw.split('\n');
     for (var item in items) {
       if (items.indexOf(item) == 0 || item.isEmpty) {
         continue;
@@ -312,11 +305,9 @@ class ServerProvider extends BusyProvider {
     notifyListeners();
   }
 
-  Future<void> _getMem(ServerInfo info) async {
-    final idx = _servers.indexOf(info);
-    final client = _servers[idx].client!;
-    final mem = utf8.decode(await client.run('free -m'));
-    for (var item in mem.split('\n')) {
+  Future<void> _getMem(ServerPrivateInfo spi, String raw) async {
+    final info = _servers.firstWhere((e) => e.info == spi);
+    for (var item in raw.split('\n')) {
       if (item.contains('Mem:')) {
         final split = item.replaceFirst('Mem:', '').split(' ');
         split.removeWhere((e) => e == '');

@@ -67,6 +67,15 @@ Future<void> updateBuildData() async {
   await writeStaicConfigFile(data, 'BuildData', path);
 }
 
+void dartFormat() {
+  final result = Process.runSync('dart', ['format', './*.dart']);
+  print(result.stdout);
+  if (result.exitCode != 0) {
+    print(result.stderr);
+    exit(1);
+  }
+}
+
 void flutterRun(String? mode) {
   Process.start('flutter', ['run', mode == null ? '' : '--$mode'],
       mode: ProcessStartMode.inheritStdio, runInShell: true);
@@ -126,6 +135,7 @@ void main(List<String> args) async {
     case 'build':
       if (args.length > 1) {
         await updateBuildData();
+        dartFormat();
         if (args[1] == 'android' || args[1] == 'harmony') {
           return flutterBuildAndroid();
         } else if (args[1] == 'ios') {

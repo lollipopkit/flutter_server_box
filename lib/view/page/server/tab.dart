@@ -17,7 +17,8 @@ import 'package:toolbox/view/page/server/detail.dart';
 import 'package:toolbox/view/page/server/edit.dart';
 
 class ServerPage extends StatefulWidget {
-  const ServerPage({Key? key}) : super(key: key);
+  final TabController tabController;
+  const ServerPage(this.tabController, {Key? key}) : super(key: key);
 
   @override
   _ServerPageState createState() => _ServerPageState();
@@ -45,6 +46,9 @@ class _ServerPageState extends State<ServerPage>
     _media = MediaQuery.of(context);
     _theme = Theme.of(context);
     _primaryColor = primaryColor;
+    if (widget.tabController.index == 0) {
+        FocusScope.of(context).unfocus();
+      }
   }
 
   @override

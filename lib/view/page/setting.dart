@@ -194,7 +194,6 @@ class _SettingPageState extends State<SettingPage> {
         child: Text(
           tabs[_launchPageIdx],
           style: textStyle,
-          textScaleFactor: 1.0,
           textAlign: TextAlign.right,
         ),
       ),

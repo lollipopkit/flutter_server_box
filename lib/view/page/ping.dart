@@ -48,7 +48,8 @@ class _PingPageState extends State<PingPage>
               buildInput(context, _textEditingController,
                   maxLines: 1, hint: 'Type here.'),
               _buildControl(),
-              buildInput(context, _textEditingControllerResult, hint: 'Result here.'),
+              buildInput(context, _textEditingControllerResult,
+                  hint: 'Result here.'),
             ])),
         onTap: () => FocusScope.of(context).requestFocus(FocusNode()),
       ),
@@ -73,46 +74,46 @@ class _PingPageState extends State<PingPage>
         child: InkWell(
           onTap: () => FocusScope.of(context).unfocus(),
           child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            TextButton(
-              style: ButtonStyle(
-                  foregroundColor: MaterialStateProperty.all(primaryColor)),
-              child: Row(
-                children: const [
-                  Icon(Icons.stop),
-                  SizedBox(
-                    width: 7,
-                  ),
-                  Text('Stop')
-                ],
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              TextButton(
+                style: ButtonStyle(
+                    foregroundColor: MaterialStateProperty.all(primaryColor)),
+                child: Row(
+                  children: const [
+                    Icon(Icons.stop),
+                    SizedBox(
+                      width: 7,
+                    ),
+                    Text('Stop')
+                  ],
+                ),
+                onPressed: () {
+                  if (_ping != null) _ping!.stop();
+                },
               ),
-              onPressed: () {
-                if (_ping != null) _ping!.stop();
-              },
-            ),
-            TextButton(
-              style: ButtonStyle(
-                  foregroundColor: MaterialStateProperty.all(primaryColor)),
-              child: Row(
-                children: const [
-                  Icon(Icons.play_arrow),
-                  SizedBox(
-                    width: 7,
-                  ),
-                  Text('Start')
-                ],
-              ),
-              onPressed: () {
-                try {
-                  doPing();
-                } catch (e) {
-                  showSnackBar(context, Text('Error: \n$e'));
-                }
-              },
-            )
-          ],
-        ),
+              TextButton(
+                style: ButtonStyle(
+                    foregroundColor: MaterialStateProperty.all(primaryColor)),
+                child: Row(
+                  children: const [
+                    Icon(Icons.play_arrow),
+                    SizedBox(
+                      width: 7,
+                    ),
+                    Text('Start')
+                  ],
+                ),
+                onPressed: () {
+                  try {
+                    doPing();
+                  } catch (e) {
+                    showSnackBar(context, Text('Error: \n$e'));
+                  }
+                },
+              )
+            ],
+          ),
         ),
       ),
     );

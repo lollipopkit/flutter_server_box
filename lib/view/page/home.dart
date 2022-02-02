@@ -65,6 +65,7 @@ class _MyHomePageState extends State<MyHomePage>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.paused) {
+      _serverProvider.setDisconnected();
       _serverProvider.stopAutoRefresh();
     }
     if (state == AppLifecycleState.resumed) {
@@ -90,9 +91,11 @@ class _MyHomePageState extends State<MyHomePage>
         ),
       ),
       drawer: _buildDrawer(),
-      body: TabBarView(
-          controller: _tabController,
-          children: const [ServerPage(), ConvertPage(), PingPage()]),
+      body: TabBarView(controller: _tabController, children: [
+        ServerPage(_tabController),
+        const ConvertPage(),
+        const PingPage()
+      ]),
     );
   }
 
