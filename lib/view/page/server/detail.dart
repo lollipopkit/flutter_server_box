@@ -6,6 +6,7 @@ import 'package:toolbox/data/model/server/server_status.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/icon/linux_icons.dart';
+import 'package:toolbox/data/res/padding.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
 const style11 = TextStyle(fontSize: 11);
@@ -44,7 +45,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         title: Text(si.info.name),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(17),
+        padding: const EdgeInsets.all(13),
         children: [
           _buildLinuxIcon(si.status.sysVer),
           SizedBox(height: _media.size.height * 0.03),
@@ -68,7 +69,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildCPUView(ServerStatus ss) {
     return RoundRectCard(
-      SizedBox(
+      Padding(padding: roundRectCardPadding, child: SizedBox(
         height: 12 * ss.cpu2Status.coresCount + 67,
         child: Column(children: [
           SizedBox(
@@ -103,7 +104,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           ),
           _buildCPUProgress(ss)
         ]),
-      ),
+      ),),
     );
   }
 
@@ -158,7 +159,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildUpTimeAndSys(ServerStatus ss) {
     return RoundRectCard(Padding(
-      padding: const EdgeInsets.symmetric(vertical: 13),
+      padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 17),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -191,7 +192,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     final pColor = primaryColor;
     final used = ss.memory.used / ss.memory.total;
     final width = _media.size.width - 17 * 2 - 17 * 2;
-    return RoundRectCard(SizedBox(
+    return RoundRectCard(Padding(padding: roundRectCardPadding, child: SizedBox(
       height: 47,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -233,7 +234,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           )
         ],
       ),
-    ));
+    ),));
   }
 
   Widget _buildMemExplain(String value, Color color) {
@@ -265,7 +266,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     return RoundRectCard(SizedBox(
       height: 27 * clone.length + 25,
       child: ListView.builder(
-          padding: const EdgeInsets.symmetric(vertical: 13),
+          padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 17),
           physics: const NeverScrollableScrollPhysics(),
           itemCount: clone.length,
           itemBuilder: (_, idx) {
@@ -302,7 +303,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     ];
     children.addAll(ns.devices.map((e) => _buildNetSpeedItem(ns, e)));
     return RoundRectCard(Padding(
-      padding: const EdgeInsets.symmetric(vertical: 7),
+      padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
       child: Column(
         children: children,
       ),

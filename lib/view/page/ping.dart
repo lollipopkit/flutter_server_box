@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/view/widget/input_field.dart';
+import 'package:toolbox/view/widget/round_rect_card.dart';
 
 class PingPage extends StatefulWidget {
   const PingPage({Key? key}) : super(key: key);
@@ -46,10 +47,9 @@ class _PingPageState extends State<PingPage>
             child: Column(children: [
               const SizedBox(height: 13),
               buildInput(context, _textEditingController,
-                  maxLines: 1, hint: 'Type here.'),
+                  maxLines: 1),
               _buildControl(),
-              buildInput(context, _textEditingControllerResult,
-                  hint: 'Result here.'),
+              buildInput(context, _textEditingControllerResult),
             ])),
         onTap: () => FocusScope.of(context).requestFocus(FocusNode()),
       ),
@@ -70,8 +70,8 @@ class _PingPageState extends State<PingPage>
   Widget _buildControl() {
     return SizedBox(
       height: 57,
-      child: Card(
-        child: InkWell(
+      child: RoundRectCard(
+        InkWell(
           onTap: () => FocusScope.of(context).unfocus(),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,

@@ -9,6 +9,5 @@ class ServerInfo {
   SSHClient? client;
   ServerConnectionState connectionState;
 
-  ServerInfo(
-      this.info, this.status, this.client, this.connectionState);
+  ServerInfo(this.info, this.status, this.client, this.connectionState);
 }

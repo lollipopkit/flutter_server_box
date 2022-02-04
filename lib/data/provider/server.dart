@@ -324,8 +324,11 @@ class ServerProvider extends BusyProvider {
     notifyListeners();
   }
 
-  Future<String?> runSnippet(int idx, Snippet snippet) async {
-    final result = await _servers[idx].client!.run(snippet.script);
+  Future<String?> runSnippet(ServerPrivateInfo spi, Snippet snippet) async {
+    final result = await _servers
+        .firstWhere((element) => element.info == spi)
+        .client!
+        .run(snippet.script);
     return utf8.decode(result);
   }
 }

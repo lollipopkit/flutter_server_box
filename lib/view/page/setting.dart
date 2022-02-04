@@ -6,6 +6,7 @@ import 'package:toolbox/data/provider/app.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/res/color.dart';
+import 'package:toolbox/data/res/padding.dart';
 import 'package:toolbox/data/res/tab.dart';
 import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/locator.dart';
@@ -77,7 +78,7 @@ class _SettingPageState extends State<SettingPage> {
         display = 'Current: v1.0.${BuildData.build}';
       }
       return ListTile(
-          contentPadding: EdgeInsets.zero,
+          contentPadding: roundRectCardPadding,
           trailing: const Icon(Icons.keyboard_arrow_right),
           title: Text(
             display,
@@ -90,8 +91,8 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildUpdateInterval() {
     return ExpansionTile(
-      tilePadding: EdgeInsets.zero,
-      childrenPadding: EdgeInsets.zero,
+      tilePadding: roundRectCardPadding,
+      childrenPadding: roundRectCardPadding,
       textColor: priColor,
       title: const Text(
         'Server status update interval',
@@ -142,8 +143,8 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildAppColorPreview() {
     return ExpansionTile(
         textColor: priColor,
-        tilePadding: EdgeInsets.zero,
-        childrenPadding: EdgeInsets.zero,
+        tilePadding: roundRectCardPadding,
+        childrenPadding: roundRectCardPadding,
         children: [
           _buildAppColorPicker(priColor),
           _buildColorPickerConfirmBtn()
@@ -183,8 +184,8 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildLaunchPage() {
     return ExpansionTile(
       textColor: priColor,
-      tilePadding: EdgeInsets.zero,
-      childrenPadding: EdgeInsets.zero,
+      tilePadding: roundRectCardPadding,
+      childrenPadding: roundRectCardPadding,
       title: const Text(
         'Launch page',
         style: textStyle,

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/provider/private_key.dart';
 import 'package:toolbox/data/res/color.dart';
+import 'package:toolbox/data/res/padding.dart';
 import 'package:toolbox/view/page/private_key/edit.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
@@ -29,7 +30,7 @@ class _PrivateKeyListState extends State<StoredPrivateKeysPage> {
                   itemCount: key.infos.length,
                   itemExtent: 57,
                   itemBuilder: (context, idx) {
-                    return RoundRectCard(Row(
+                    return RoundRectCard(Padding(padding: roundRectCardPadding, child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -47,7 +48,7 @@ class _PrivateKeyListState extends State<StoredPrivateKeysPage> {
                               style: _textStyle,
                             ))
                       ],
-                    ));
+                    ),));
                   })
               : const Center(child: Text('No saved private keys.'));
         },

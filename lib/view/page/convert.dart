@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/view/widget/input_field.dart';
+import 'package:toolbox/view/widget/round_rect_card.dart';
 
 class ConvertPage extends StatefulWidget {
   const ConvertPage({Key? key}) : super(key: key);
@@ -95,8 +96,8 @@ class _ConvertPageState extends State<ConvertPage>
   }
 
   Widget _buildTypeOption() {
-    return Card(
-      child: ExpansionTile(
+    return RoundRectCard(
+      ExpansionTile(
         tilePadding: const EdgeInsets.only(left: 7, right: 27),
         childrenPadding: EdgeInsets.zero,
         title: Row(

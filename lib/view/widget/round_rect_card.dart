@@ -8,11 +8,8 @@ class RoundRectCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 17),
-        child: child,
-      ),
-      margin: const EdgeInsets.symmetric(vertical: 7),
+      child: child,
+      clipBehavior: Clip.antiAlias,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(17))),
     );
