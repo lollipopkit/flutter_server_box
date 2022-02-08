@@ -68,7 +68,7 @@ Future<void> updateBuildData() async {
 }
 
 void dartFormat() {
-  final result = Process.runSync('dart', ['format', './*.dart']);
+  final result = Process.runSync('dart', ['format', '.']);
   print(result.stdout);
   if (result.exitCode != 0) {
     print(result.stderr);

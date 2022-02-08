@@ -57,6 +57,7 @@ dependencies:
   dart_ping: ^6.1.1
   dart_ping_ios: ^1.0.0
   dropdown_button2: ^1.1.1
+  flutter_advanced_drawer: ^1.3.0
 
 
 dev_dependencies:

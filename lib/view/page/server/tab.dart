@@ -7,6 +7,7 @@ import 'package:marquee/marquee.dart';
 import 'package:provider/provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:toolbox/core/route.dart';
+import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/server_connection_state.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
@@ -21,8 +22,7 @@ import 'package:toolbox/view/page/snippet/list.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
 class ServerPage extends StatefulWidget {
-  final TabController tabController;
-  const ServerPage(this.tabController, {Key? key}) : super(key: key);
+  const ServerPage({Key? key}) : super(key: key);
 
   @override
   _ServerPageState createState() => _ServerPageState();
@@ -50,9 +50,6 @@ class _ServerPageState extends State<ServerPage>
     _media = MediaQuery.of(context);
     _theme = Theme.of(context);
     _primaryColor = primaryColor;
-    if (widget.tabController.index == 0) {
-      FocusScope.of(context).unfocus();
-    }
   }
 
   @override
@@ -207,11 +204,10 @@ class _ServerPageState extends State<ServerPage>
                       onChanged: (value) {
                         final item = value as MenuItem;
                         switch (item) {
-                          case MenuItems.sftp:
-                            //Do something
-                            break;
                           case MenuItems.apt:
-                            //Do something
+                          case MenuItems.sftp:
+                            showSnackBar(
+                                context, const Text('Now is not supported'));
                             break;
                           case MenuItems.snippet:
                             AppRoute(
@@ -404,7 +400,7 @@ class MenuItems {
   static const List<MenuItem> firstItems = [sftp, snippet, apt];
   static const List<MenuItem> secondItems = [edit];
 
-  static const sftp = MenuItem(text: 'SFTP', icon: Icons.hardware);
+  static const sftp = MenuItem(text: 'SFTP', icon: Icons.file_present);
   static const snippet = MenuItem(text: 'Snippet', icon: Icons.label);
   static const apt = MenuItem(text: 'Apt', icon: Icons.system_security_update);
   static const edit = MenuItem(text: 'Edit', icon: Icons.settings);

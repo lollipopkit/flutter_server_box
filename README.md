@@ -9,10 +9,10 @@ A new Flutter project which provide a chart view to display server status data a
 	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/server.jpg">
     </td>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/detail.jpg">
+	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/server_detail.jpg">
     </td>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/ping.jpg">
+	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/server_edit.jpg">
     </td>
   </tr>
 </table>
@@ -22,10 +22,17 @@ A new Flutter project which provide a chart view to display server status data a
 	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/convert.jpg">
     </td>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/drawer.jpg">
+	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/ping.jpg">
     </td>
     <td>
 	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/setting.jpg">
+    </td>
+  </tr>
+</table>
+<table>
+  <tr>
+    <td>
+	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/drawer.jpg">
     </td>
   </tr>
 </table>

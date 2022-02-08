@@ -14,7 +14,7 @@ class _DebugPageState extends State<DebugPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar:
-          AppBar(title: const Text('Terminal'), backgroundColor: Colors.black),
+          AppBar(title: const Text('App log'), backgroundColor: Colors.black),
       body: _buildTerminal(context),
       backgroundColor: Colors.black,
     );
