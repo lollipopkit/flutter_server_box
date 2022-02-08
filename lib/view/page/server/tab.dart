@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/core/utils.dart';
+import 'package:toolbox/data/model/app/menu_item.dart';
 import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/server_connection_state.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
@@ -383,39 +384,5 @@ class _ServerPageState extends State<ServerPage>
     await _serverProvider.loadLocalData();
     await _serverProvider.refreshData();
     _serverProvider.startAutoRefresh();
-  }
-}
-
-class MenuItem {
-  final String text;
-  final IconData icon;
-
-  const MenuItem({
-    required this.text,
-    required this.icon,
-  });
-}
-
-class MenuItems {
-  static const List<MenuItem> firstItems = [sftp, snippet, apt];
-  static const List<MenuItem> secondItems = [edit];
-
-  static const sftp = MenuItem(text: 'SFTP', icon: Icons.file_present);
-  static const snippet = MenuItem(text: 'Snippet', icon: Icons.label);
-  static const apt = MenuItem(text: 'Apt', icon: Icons.system_security_update);
-  static const edit = MenuItem(text: 'Edit', icon: Icons.settings);
-
-  static Widget buildItem(MenuItem item) {
-    return Row(
-      children: [
-        Icon(item.icon),
-        const SizedBox(
-          width: 10,
-        ),
-        Text(
-          item.text,
-        ),
-      ],
-    );
   }
 }
