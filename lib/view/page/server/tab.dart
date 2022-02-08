@@ -293,7 +293,19 @@ class _ServerPageState extends State<ServerPage>
       case ServerConnectionState.disconnected:
         return 'Disconnected';
       case ServerConnectionState.connected:
-        return temp == '' ? (upTime == '' ? 'Loading...' : upTime) : temp;
+        if (temp == '') {
+          if (upTime == '') {
+            return 'Loading...';
+          } else {
+            return upTime;
+          }
+        } else {
+          if (upTime == '') {
+            return temp;
+          } else {
+            return '$temp | $upTime';
+          }
+        }
       case ServerConnectionState.connecting:
         return 'Connecting...';
       case ServerConnectionState.failed:

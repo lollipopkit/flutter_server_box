@@ -8,6 +8,7 @@ import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/provider/private_key.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/color.dart';
+import 'package:toolbox/data/store/private_key.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/private_key/edit.dart';
 import 'package:toolbox/view/widget/input_decoration.dart';
@@ -34,7 +35,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   bool usePublicKey = false;
 
   int _pubKeyIndex = -1;
-  late PrivateKeyInfo _keyInfo;
+  PrivateKeyInfo? _keyInfo;
 
   @override
   void initState() {
@@ -188,10 +189,15 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
           if (portController.text == '') {
             portController.text = '22';
           }
+
+          if (widget.spi != null && widget.spi!.pubKeyId != null) {
+            _keyInfo ??= locator<PrivateKeyStore>().get(widget.spi!.pubKeyId!);
+          }
+
           final authorization = usePublicKey
               ? {
-                  "privateKey": _keyInfo.privateKey,
-                  "passphrase": _keyInfo.password
+                  "privateKey": _keyInfo!.privateKey,
+                  "passphrase": _keyInfo!.password
                 }
               : passwordController.text;
           final spi = ServerPrivateInfo(
@@ -200,7 +206,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
               port: int.parse(portController.text),
               user: usernameController.text,
               authorization: authorization,
-              pubKeyId: usePublicKey ? _keyInfo.id : null);
+              pubKeyId: usePublicKey ? _keyInfo!.id : null);
 
           if (widget.spi == null) {
             _serverProvider.addServer(spi);
