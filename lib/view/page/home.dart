@@ -83,6 +83,18 @@ class _MyHomePageState extends State<MyHomePage>
   Widget build(BuildContext context) {
     setTransparentNavigationBar(context);
     super.build(context);
+    return WillPopScope(
+        child: _buildMain(context),
+        onWillPop: () {
+          if (_advancedDrawerController.value.visible) {
+            _advancedDrawerController.hideDrawer();
+            return Future.value(false);
+          }
+          return Future.value(true);
+        });
+  }
+
+  Widget _buildMain(BuildContext context) {
     return AdvancedDrawer(
         controller: _advancedDrawerController,
         animationCurve: Curves.easeInOutCirc,
