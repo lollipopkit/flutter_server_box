@@ -23,7 +23,11 @@ class ServerStore extends PersistentStore {
 
   void update(ServerPrivateInfo old, ServerPrivateInfo newInfo) {
     final ss = fetch();
-    ss[index(old)] = newInfo;
+    final idx = index(old);
+    if (idx < 0) {
+      throw RangeError.index(idx, ss);
+    }
+    ss[idx] = newInfo;
     box.put('servers', json.encode(ss));
   }
 

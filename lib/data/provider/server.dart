@@ -142,6 +142,9 @@ class ServerProvider extends BusyProvider {
   Future<void> updateServer(
       ServerPrivateInfo old, ServerPrivateInfo newSpi) async {
     final idx = _servers.indexWhere((e) => e.info == old);
+    if (idx < 0) {
+      throw RangeError.index(idx, _servers);
+    }
     _servers[idx].info = newSpi;
     _servers[idx].client = await genClient(newSpi);
     locator<ServerStore>().update(old, newSpi);
@@ -199,7 +202,7 @@ class ServerProvider extends BusyProvider {
   ///   lo: 45929941  269112    0    0    0     0          0         0 45929941  269112    0    0    0     0       0          0
   ///   eth0: 48481023  505772    0    0    0     0          0         0 36002262  202307    0    0    0     0       0          0
   /// 1635752901
-  Future<void> _getNetSpeed(ServerPrivateInfo spi, String raw) async {
+  void _getNetSpeed(ServerPrivateInfo spi, String raw) {
     final info = _servers.firstWhere((e) => e.info == spi);
     final split = raw.split('\n');
     final deviceCount = split.length - 3;
@@ -219,13 +222,11 @@ class ServerProvider extends BusyProvider {
     notifyListeners();
   }
 
-  Future<void> _getSysVer(ServerPrivateInfo spi, String raw) async {
+  void _getSysVer(ServerPrivateInfo spi, String raw) {
     final info = _servers.firstWhere((e) => e.info == spi);
     final s = raw.split('=');
     if (s.length == 2) {
       info.status.sysVer = s[1].replaceAll('"', '').replaceFirst('\n', '');
-    } else {
-      info.status.sysVer = '';
     }
 
     notifyListeners();
@@ -241,7 +242,7 @@ class ServerProvider extends BusyProvider {
     return '';
   }
 
-  Future<void> _getCPU(ServerPrivateInfo spi, String raw, String temp) async {
+  void _getCPU(ServerPrivateInfo spi, String raw, String temp) {
     final info = _servers.firstWhere((e) => e.info == spi);
     final List<CpuStatus> cpus = [];
 
@@ -259,9 +260,7 @@ class ServerProvider extends BusyProvider {
           int.parse(matches[5]),
           int.parse(matches[6])));
     }
-    if (cpus.isEmpty) {
-      info.status.cpu2Status = emptyCpu2Status;
-    } else {
+    if (cpus.isNotEmpty) {
       info.status.cpu2Status =
           info.status.cpu2Status.update(cpus, _getCPUTemp(temp));
     }
@@ -269,13 +268,13 @@ class ServerProvider extends BusyProvider {
     notifyListeners();
   }
 
-  Future<void> _getUpTime(ServerPrivateInfo spi, String raw) async {
+  void _getUpTime(ServerPrivateInfo spi, String raw) {
     _servers.firstWhere((e) => e.info == spi).status.uptime =
         raw.split('up ')[1].split(', ')[0];
     notifyListeners();
   }
 
-  Future<void> _getTcp(ServerPrivateInfo spi, String raw) async {
+  void _getTcp(ServerPrivateInfo spi, String raw) {
     final info = _servers.firstWhere((e) => e.info == spi);
     final lines = raw.split('\n');
     final idx = lines.lastWhere((element) => element.startsWith('Tcp:'),
@@ -283,13 +282,11 @@ class ServerProvider extends BusyProvider {
     if (idx != '') {
       final vals = idx.split(RegExp(r'\s{1,}'));
       info.status.tcp = TcpStatus(vals[5].i, vals[6].i, vals[7].i, vals[8].i);
-    } else {
-      info.status.tcp = TcpStatus(0, 0, 0, 0);
     }
     notifyListeners();
   }
 
-  Future<void> _getDisk(ServerPrivateInfo spi, String raw) async {
+  void _getDisk(ServerPrivateInfo spi, String raw) {
     final info = _servers.firstWhere((e) => e.info == spi);
     final list = <DiskInfo>[];
     final items = raw.split('\n');
@@ -305,7 +302,7 @@ class ServerProvider extends BusyProvider {
     notifyListeners();
   }
 
-  Future<void> _getMem(ServerPrivateInfo spi, String raw) async {
+  void _getMem(ServerPrivateInfo spi, String raw) {
     final info = _servers.firstWhere((e) => e.info == spi);
     for (var item in raw.split('\n')) {
       if (item.contains('Mem:')) {

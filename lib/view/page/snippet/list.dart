@@ -48,40 +48,44 @@ class _SnippetListPageState extends State<SnippetListPage> {
                 itemCount: key.snippets.length,
                 itemExtent: 57,
                 itemBuilder: (context, idx) {
-                  return RoundRectCard(Padding(padding: roundRectCardPadding, child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        key.snippets[idx].name,
-                        textAlign: TextAlign.center,
-                      ),
-                      Row(children: [
-                        TextButton(
-                            onPressed: () => AppRoute(
-                                    SnippetEditPage(snippet: key.snippets[idx]),
-                                    'snippet edit page')
-                                .go(context),
-                            child: Text(
-                              'Edit',
-                              style: _textStyle,
-                            )),
-                        TextButton(
-                            onPressed: () {
-                              final snippet = key.snippets[idx];
-                              if (widget.spi == null) {
-                                _showRunDialog(snippet);
-                                return;
-                              }
-                              run(context, snippet);
-                            },
-                            child: Text(
-                              'Run',
-                              style: _textStyle,
-                            ))
-                      ])
-                    ],
-                  ),));
+                  return RoundRectCard(Padding(
+                    padding: roundRectCardPadding,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          key.snippets[idx].name,
+                          textAlign: TextAlign.center,
+                        ),
+                        Row(children: [
+                          TextButton(
+                              onPressed: () => AppRoute(
+                                      SnippetEditPage(
+                                          snippet: key.snippets[idx]),
+                                      'snippet edit page')
+                                  .go(context),
+                              child: Text(
+                                'Edit',
+                                style: _textStyle,
+                              )),
+                          TextButton(
+                              onPressed: () {
+                                final snippet = key.snippets[idx];
+                                if (widget.spi == null) {
+                                  _showRunDialog(snippet);
+                                  return;
+                                }
+                                run(context, snippet);
+                              },
+                              child: Text(
+                                'Run',
+                                style: _textStyle,
+                              ))
+                        ])
+                      ],
+                    ),
+                  ));
                 })
             : const Center(child: Text('No saved snippets.'));
       },

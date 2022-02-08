@@ -69,42 +69,45 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildCPUView(ServerStatus ss) {
     return RoundRectCard(
-      Padding(padding: roundRectCardPadding, child: SizedBox(
-        height: 12 * ss.cpu2Status.coresCount + 67,
-        child: Column(children: [
-          SizedBox(
-            height: _media.size.height * 0.02,
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '${ss.cpu2Status.usedPercent(coreIdx: 0).toInt()}%',
-                style: const TextStyle(fontSize: 27),
-                textScaleFactor: 1.0,
-              ),
-              Row(
-                children: [
-                  _buildCPUTimePercent(ss.cpu2Status.user, 'user'),
-                  SizedBox(
-                    width: _media.size.width * 0.03,
-                  ),
-                  _buildCPUTimePercent(ss.cpu2Status.sys, 'sys'),
-                  SizedBox(
-                    width: _media.size.width * 0.03,
-                  ),
-                  _buildCPUTimePercent(ss.cpu2Status.nice, 'nice'),
-                  SizedBox(
-                    width: _media.size.width * 0.03,
-                  ),
-                  _buildCPUTimePercent(ss.cpu2Status.idle, 'idle')
-                ],
-              )
-            ],
-          ),
-          _buildCPUProgress(ss)
-        ]),
-      ),),
+      Padding(
+        padding: roundRectCardPadding,
+        child: SizedBox(
+          height: 12 * ss.cpu2Status.coresCount + 67,
+          child: Column(children: [
+            SizedBox(
+              height: _media.size.height * 0.02,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${ss.cpu2Status.usedPercent(coreIdx: 0).toInt()}%',
+                  style: const TextStyle(fontSize: 27),
+                  textScaleFactor: 1.0,
+                ),
+                Row(
+                  children: [
+                    _buildCPUTimePercent(ss.cpu2Status.user, 'user'),
+                    SizedBox(
+                      width: _media.size.width * 0.03,
+                    ),
+                    _buildCPUTimePercent(ss.cpu2Status.sys, 'sys'),
+                    SizedBox(
+                      width: _media.size.width * 0.03,
+                    ),
+                    _buildCPUTimePercent(ss.cpu2Status.nice, 'nice'),
+                    SizedBox(
+                      width: _media.size.width * 0.03,
+                    ),
+                    _buildCPUTimePercent(ss.cpu2Status.idle, 'idle')
+                  ],
+                )
+              ],
+            ),
+            _buildCPUProgress(ss)
+          ]),
+        ),
+      ),
     );
   }
 
@@ -192,49 +195,52 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     final pColor = primaryColor;
     final used = ss.memory.used / ss.memory.total;
     final width = _media.size.width - 17 * 2 - 17 * 2;
-    return RoundRectCard(Padding(padding: roundRectCardPadding, child: SizedBox(
-      height: 47,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildMemExplain(convertMB(ss.memory.used), pColor),
-              _buildMemExplain(
-                  convertMB(ss.memory.cache), pColor.withAlpha(77)),
-              _buildMemExplain(convertMB(ss.memory.total - ss.memory.used),
-                  progressColor.resolve(context))
-            ],
-          ),
-          const SizedBox(
-            height: 7,
-          ),
-          Row(
-            children: [
-              SizedBox(
-                  width: width * used,
+    return RoundRectCard(Padding(
+      padding: roundRectCardPadding,
+      child: SizedBox(
+        height: 47,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildMemExplain(convertMB(ss.memory.used), pColor),
+                _buildMemExplain(
+                    convertMB(ss.memory.cache), pColor.withAlpha(77)),
+                _buildMemExplain(convertMB(ss.memory.total - ss.memory.used),
+                    progressColor.resolve(context))
+              ],
+            ),
+            const SizedBox(
+              height: 7,
+            ),
+            Row(
+              children: [
+                SizedBox(
+                    width: width * used,
+                    child: LinearProgressIndicator(
+                      value: 1,
+                      color: pColor,
+                    )),
+                SizedBox(
+                  width: width * (1 - used),
                   child: LinearProgressIndicator(
-                    value: 1,
-                    color: pColor,
-                  )),
-              SizedBox(
-                width: width * (1 - used),
-                child: LinearProgressIndicator(
-                  // memory.total == 1: failed to get mem, now mem = [emptyMemory] which is initial value.
-                  value: ss.memory.total == 1
-                      ? 0
-                      : ss.memory.cache / (ss.memory.total - ss.memory.used),
-                  backgroundColor: progressColor.resolve(context),
-                  color: pColor.withAlpha(77),
-                ),
-              )
-            ],
-          )
-        ],
+                    // memory.total == 1: failed to get mem, now mem = [emptyMemory] which is initial value.
+                    value: ss.memory.total == 1
+                        ? 0
+                        : ss.memory.cache / (ss.memory.total - ss.memory.used),
+                    backgroundColor: progressColor.resolve(context),
+                    color: pColor.withAlpha(77),
+                  ),
+                )
+              ],
+            )
+          ],
+        ),
       ),
-    ),));
+    ));
   }
 
   Widget _buildMemExplain(String value, Color color) {

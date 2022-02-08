@@ -141,7 +141,7 @@ class _ServerPageState extends State<ServerPage>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 11),
+          padding: const EdgeInsets.symmetric(horizontal: 7),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -177,14 +177,14 @@ class _ServerPageState extends State<ServerPage>
                               style: style),
                         )
                       : Text(topRightStr, style: style, textScaleFactor: 1.0),
-                  const SizedBox(
-                    width: 13,
-                  ),
                   DropdownButtonHideUnderline(
                     child: DropdownButton2(
-                      customButton: const Icon(
-                        Icons.list_alt,
-                        size: 19,
+                      customButton: const Padding(
+                        padding: EdgeInsets.only(left: 7),
+                        child: Icon(
+                          Icons.more_vert,
+                          size: 17,
+                        ),
                       ),
                       customItemsIndexes: const [3],
                       customItemsHeight: 8,

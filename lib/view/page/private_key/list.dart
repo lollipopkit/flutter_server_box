@@ -30,25 +30,28 @@ class _PrivateKeyListState extends State<StoredPrivateKeysPage> {
                   itemCount: key.infos.length,
                   itemExtent: 57,
                   itemBuilder: (context, idx) {
-                    return RoundRectCard(Padding(padding: roundRectCardPadding, child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          key.infos[idx].id,
-                          textAlign: TextAlign.center,
-                        ),
-                        TextButton(
-                            onPressed: () => AppRoute(
-                                    PrivateKeyEditPage(info: key.infos[idx]),
-                                    'private key edit page')
-                                .go(context),
-                            child: Text(
-                              'Edit',
-                              style: _textStyle,
-                            ))
-                      ],
-                    ),));
+                    return RoundRectCard(Padding(
+                      padding: roundRectCardPadding,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            key.infos[idx].id,
+                            textAlign: TextAlign.center,
+                          ),
+                          TextButton(
+                              onPressed: () => AppRoute(
+                                      PrivateKeyEditPage(info: key.infos[idx]),
+                                      'private key edit page')
+                                  .go(context),
+                              child: Text(
+                                'Edit',
+                                style: _textStyle,
+                              ))
+                        ],
+                      ),
+                    ));
                   })
               : const Center(child: Text('No saved private keys.'));
         },
