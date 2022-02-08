@@ -2,9 +2,8 @@
 
 class BuildData {
   static const String name = "ServerBox";
-  static const int build = 89;
-  static const String engine =
-      "Flutter 2.8.1 • channel stable • https://github.com/flutter/flutter.git\nFramework • revision 77d935af4d (7 weeks ago) • 2021-12-16 08:37:33 -0800\nEngine • revision 890a5fca2e\nTools • Dart 2.15.1\n";
-  static const String buildAt = "2022-02-04 18:52:49.141069";
-  static const int modifications = 0;
+  static const int build = 90;
+  static const String engine = "Flutter 2.10.0 • channel stable • https://github.com/flutter/flutter.git\nFramework • revision 5f105a6ca7 (6 days ago) • 2022-02-01 14:15:42 -0800\nEngine • revision 776efd2034\nTools • Dart 2.16.0 • DevTools 2.9.2\n";
+  static const String buildAt = "2022-02-08 16:48:52.440919";
+  static const int modifications = 5;
 }

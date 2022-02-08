@@ -392,7 +392,7 @@ class MenuItems {
   static const List<MenuItem> firstItems = [sftp, snippet, apt];
   static const List<MenuItem> secondItems = [edit];
 
-  static const sftp = MenuItem(text: 'SFTP', icon: Icons.home);
+  static const sftp = MenuItem(text: 'SFTP', icon: Icons.hardware);
   static const snippet = MenuItem(text: 'Snippet', icon: Icons.label);
   static const apt = MenuItem(text: 'Apt', icon: Icons.system_security_update);
   static const edit = MenuItem(text: 'Edit', icon: Icons.settings);
@@ -409,22 +409,5 @@ class MenuItems {
         ),
       ],
     );
-  }
-
-  static onChanged(BuildContext context, MenuItem item) {
-    switch (item) {
-      case MenuItems.sftp:
-        //Do something
-        break;
-      case MenuItems.apt:
-        //Do something
-        break;
-      case MenuItems.snippet:
-        //Do something
-        break;
-      case MenuItems.edit:
-        //Do something
-        break;
-    }
   }
 }
