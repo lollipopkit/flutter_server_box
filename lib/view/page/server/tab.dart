@@ -175,70 +175,7 @@ class _ServerPageState extends State<ServerPage>
                               style: style),
                         )
                       : Text(topRightStr, style: style, textScaleFactor: 1.0),
-                  DropdownButtonHideUnderline(
-                    child: DropdownButton2(
-                      customButton: const Padding(
-                        padding: EdgeInsets.only(left: 7),
-                        child: Icon(
-                          Icons.more_vert,
-                          size: 17,
-                        ),
-                      ),
-                      customItemsIndexes: const [3],
-                      customItemsHeight: 8,
-                      items: [
-                        ...MenuItems.firstItems.map(
-                          (item) => DropdownMenuItem<MenuItem>(
-                            value: item,
-                            child: MenuItems.buildItem(item),
-                          ),
-                        ),
-                        const DropdownMenuItem<Divider>(
-                            enabled: false, child: Divider()),
-                        ...MenuItems.secondItems.map(
-                          (item) => DropdownMenuItem<MenuItem>(
-                            value: item,
-                            child: MenuItems.buildItem(item),
-                          ),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        final item = value as MenuItem;
-                        switch (item) {
-                          case MenuItems.apt:
-                          case MenuItems.sftp:
-                            showSnackBar(
-                                context, const Text('Now is not supported'));
-                            break;
-                          case MenuItems.snippet:
-                            AppRoute(
-                                    SnippetListPage(
-                                      spi: spi,
-                                    ),
-                                    'snippet list')
-                                .go(context);
-                            break;
-                          case MenuItems.edit:
-                            AppRoute(
-                                    ServerEditPage(
-                                      spi: spi,
-                                    ),
-                                    'Edit server info page')
-                                .go(context);
-                            break;
-                        }
-                      },
-                      itemHeight: 37,
-                      itemPadding: const EdgeInsets.only(left: 17, right: 17),
-                      dropdownWidth: 160,
-                      dropdownPadding: const EdgeInsets.symmetric(vertical: 7),
-                      dropdownDecoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(7),
-                      ),
-                      dropdownElevation: 8,
-                      offset: const Offset(0, 8),
-                    ),
-                  ),
+                  _buildMoreBtn(spi),
                 ],
               )
             ],
@@ -269,6 +206,72 @@ class _ServerPageState extends State<ServerPage>
           ],
         )
       ],
+    );
+  }
+
+  Widget _buildMoreBtn(ServerPrivateInfo spi) {
+    return DropdownButtonHideUnderline(
+      child: DropdownButton2(
+        customButton: const Padding(
+          padding: EdgeInsets.only(left: 7),
+          child: Icon(
+            Icons.more_vert,
+            size: 17,
+          ),
+        ),
+        customItemsIndexes: [MenuItems.firstItems.length],
+        customItemsHeight: 8,
+        items: [
+          ...MenuItems.firstItems.map(
+            (item) => DropdownMenuItem<MenuItem>(
+              value: item,
+              child: MenuItems.buildItem(item),
+            ),
+          ),
+          const DropdownMenuItem<Divider>(enabled: false, child: Divider()),
+          ...MenuItems.secondItems.map(
+            (item) => DropdownMenuItem<MenuItem>(
+              value: item,
+              child: MenuItems.buildItem(item),
+            ),
+          ),
+        ],
+        onChanged: (value) {
+          final item = value as MenuItem;
+          switch (item) {
+            case MenuItems.ssh:
+            case MenuItems.apt:
+            case MenuItems.sftp:
+              showSnackBar(context, const Text('Now is not supported'));
+              break;
+            case MenuItems.snippet:
+              AppRoute(
+                      SnippetListPage(
+                        spi: spi,
+                      ),
+                      'snippet list')
+                  .go(context);
+              break;
+            case MenuItems.edit:
+              AppRoute(
+                      ServerEditPage(
+                        spi: spi,
+                      ),
+                      'Edit server info page')
+                  .go(context);
+              break;
+          }
+        },
+        itemHeight: 37,
+        itemPadding: const EdgeInsets.only(left: 17, right: 17),
+        dropdownWidth: 160,
+        dropdownPadding: const EdgeInsets.symmetric(vertical: 7),
+        dropdownDecoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(7),
+        ),
+        dropdownElevation: 8,
+        offset: const Offset(0, 8),
+      ),
     );
   }
 

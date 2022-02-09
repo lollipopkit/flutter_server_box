@@ -213,39 +213,48 @@ class _MyHomePageState extends State<MyHomePage>
           SizedBox(
             height: MediaQuery.of(context).size.height * 0.07,
           ),
-          ListTile(
-            leading: const Icon(Icons.settings),
-            title: const Text('Setting'),
-            onTap: () => AppRoute(const SettingPage(), 'Setting').go(context),
-          ),
-          ListTile(
-            leading: const Icon(Icons.vpn_key),
-            title: const Text('Private Key'),
-            onTap: () =>
-                AppRoute(const StoredPrivateKeysPage(), 'private key list')
-                    .go(context),
-          ),
-          ListTile(
-            leading: const Icon(Icons.snippet_folder),
-            title: const Text('Snippet'),
-            onTap: () =>
-                AppRoute(const SnippetListPage(), 'snippet list').go(context),
-          ),
-          AboutListTile(
-            icon: const Icon(Icons.text_snippet),
-            child: const Text('Licences'),
-            applicationName: BuildData.name,
-            applicationVersion: _buildVersionStr(),
-            applicationIcon: _buildIcon(),
-            aboutBoxChildren: const [
-              UrlText(
-                  text: '\nMade with ❤️ by $myGithub', replace: 'LollipopKit'),
-              UrlText(
-                text:
-                    '\nThanks $rainSunMeGithub for participating in the test.\n\nAll rights reserved.',
-                replace: 'RainSunMe',
-              ),
-            ],
+          Padding(
+            padding: const EdgeInsets.only(left: 29),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.settings),
+                  title: const Text('Setting'),
+                  onTap: () =>
+                      AppRoute(const SettingPage(), 'Setting').go(context),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.vpn_key),
+                  title: const Text('Private Key'),
+                  onTap: () => AppRoute(
+                          const StoredPrivateKeysPage(), 'private key list')
+                      .go(context),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.snippet_folder),
+                  title: const Text('Snippet'),
+                  onTap: () => AppRoute(const SnippetListPage(), 'snippet list')
+                      .go(context),
+                ),
+                AboutListTile(
+                  icon: const Icon(Icons.text_snippet),
+                  child: const Text('Licences'),
+                  applicationName: BuildData.name,
+                  applicationVersion: _buildVersionStr(),
+                  applicationIcon: _buildIcon(),
+                  aboutBoxChildren: const [
+                    UrlText(
+                        text: '\nMade with ❤️ by $myGithub',
+                        replace: 'LollipopKit'),
+                    UrlText(
+                      text:
+                          '\nThanks $rainSunMeGithub for participating in the test.\n\nAll rights reserved.',
+                      replace: 'RainSunMe',
+                    ),
+                  ],
+                )
+              ],
+            ),
           ),
         ],
       ),

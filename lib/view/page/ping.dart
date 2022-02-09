@@ -18,15 +18,13 @@ class PingPage extends StatefulWidget {
 class _PingPageState extends State<PingPage>
     with AutomaticKeepAliveClientMixin {
   late TextEditingController _textEditingController;
-  late TextEditingController _textEditingControllerResult;
-  late String _result;
+  String _result = '';
   Ping? _ping;
 
   @override
   void initState() {
     super.initState();
     _textEditingController = TextEditingController(text: '');
-    _textEditingControllerResult = TextEditingController(text: '');
     if (Platform.isIOS) {
       DartPingIOS.register();
     }
@@ -48,7 +46,12 @@ class _PingPageState extends State<PingPage>
               const SizedBox(height: 13),
               buildInput(context, _textEditingController, maxLines: 1),
               _buildControl(),
-              buildInput(context, _textEditingControllerResult),
+              RoundRectCard(
+                SizedBox(
+                  width: double.infinity,
+                  child: Padding(padding: const EdgeInsets.all(7), child: Text(_result)),
+                ),
+              ),
             ])),
         onTap: () => FocusScope.of(context).requestFocus(FocusNode()),
       ),
@@ -62,7 +65,7 @@ class _PingPageState extends State<PingPage>
       final resp = event.response.toString();
       if (resp == 'null') return;
       _result += '$resp\n';
-      _textEditingControllerResult.text = _result;
+      setState(() {});
     });
   }
 

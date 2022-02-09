@@ -44,12 +44,13 @@ Future<String> getFlutterVersion() async {
 }
 
 Future<Map<String, dynamic>> getBuildData() async {
+  final modifiedCount = await getGitModificationCount();
   final data = {
     'name': appName,
-    'build': await getGitCommitCount(),
+    'build': await getGitCommitCount() + (modifiedCount == 0 ? 0 : 1),
     'engine': await getFlutterVersion(),
     'buildAt': DateTime.now().toString(),
-    'modifications': await getGitModificationCount(),
+    'modifications': modifiedCount,
   };
   return data;
 }
@@ -69,7 +70,7 @@ Future<void> updateBuildData() async {
 
 void dartFormat() {
   final result = Process.runSync('dart', ['format', '.']);
-  print(result.stdout);
+  print('\n' + result.stdout);
   if (result.exitCode != 0) {
     print(result.stderr);
     exit(1);
@@ -83,7 +84,8 @@ void flutterRun(String? mode) {
 
 Future<void> flutterBuild(String source, String target, bool isAndroid) async {
   final startTime = DateTime.now();
-  final build = await getGitCommitCount();
+  final build = await getGitCommitCount() +
+      (await getGitModificationCount() == 0 ? 0 : 1);
 
   final args = [
     'build',
