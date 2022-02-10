@@ -44,13 +44,12 @@ Future<String> getFlutterVersion() async {
 }
 
 Future<Map<String, dynamic>> getBuildData() async {
-  final modifiedCount = await getGitModificationCount();
   final data = {
     'name': appName,
-    'build': await getGitCommitCount() + (modifiedCount == 0 ? 0 : 1),
+    'build': await getGitCommitCount(),
     'engine': await getFlutterVersion(),
     'buildAt': DateTime.now().toString(),
-    'modifications': modifiedCount,
+    'modifications': await getGitModificationCount(),
   };
   return data;
 }
@@ -84,8 +83,7 @@ void flutterRun(String? mode) {
 
 Future<void> flutterBuild(String source, String target, bool isAndroid) async {
   final startTime = DateTime.now();
-  final build = await getGitCommitCount() +
-      (await getGitModificationCount() == 0 ? 0 : 1);
+  final build = await getGitCommitCount();
 
   final args = [
     'build',

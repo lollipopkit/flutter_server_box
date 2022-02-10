@@ -101,7 +101,6 @@ class _MyHomePageState extends State<MyHomePage>
         animationDuration: const Duration(milliseconds: 300),
         animateChildDecoration: true,
         rtlOpening: false,
-        disabledGestures: true,
         childDecoration: const BoxDecoration(
           // NOTICE: Uncomment if you want to add shadow behind the page.
           // Keep in mind that it may cause animation jerks.

@@ -191,8 +191,9 @@ class ServerProvider extends BusyProvider {
     } catch (e) {
       _servers[idx].connectionState = ServerConnectionState.failed;
       servers[idx].status.failedInfo = e.toString();
-      notifyListeners();
       logger.warning(e);
+    } finally {
+      notifyListeners();
     }
   }
 
@@ -219,7 +220,6 @@ class ServerProvider extends BusyProvider {
       results.add(NetSpeedPart(device, bytesIn, bytesOut, time));
     }
     info.status.netSpeed = info.status.netSpeed.update(results);
-    notifyListeners();
   }
 
   void _getSysVer(ServerPrivateInfo spi, String raw) {
@@ -228,8 +228,6 @@ class ServerProvider extends BusyProvider {
     if (s.length == 2) {
       info.status.sysVer = s[1].replaceAll('"', '').replaceFirst('\n', '');
     }
-
-    notifyListeners();
   }
 
   String _getCPUTemp(String raw) {
@@ -264,14 +262,11 @@ class ServerProvider extends BusyProvider {
       info.status.cpu2Status =
           info.status.cpu2Status.update(cpus, _getCPUTemp(temp));
     }
-
-    notifyListeners();
   }
 
   void _getUpTime(ServerPrivateInfo spi, String raw) {
     _servers.firstWhere((e) => e.info == spi).status.uptime =
         raw.split('up ')[1].split(', ')[0];
-    notifyListeners();
   }
 
   void _getTcp(ServerPrivateInfo spi, String raw) {
@@ -283,7 +278,6 @@ class ServerProvider extends BusyProvider {
       final vals = idx.split(RegExp(r'\s{1,}'));
       info.status.tcp = TcpStatus(vals[5].i, vals[6].i, vals[7].i, vals[8].i);
     }
-    notifyListeners();
   }
 
   void _getDisk(ServerPrivateInfo spi, String raw) {
@@ -299,7 +293,6 @@ class ServerProvider extends BusyProvider {
           int.parse(vals[4].replaceFirst('%', '')), vals[2], vals[1], vals[3]));
     }
     info.status.disk = list;
-    notifyListeners();
   }
 
   void _getMem(ServerPrivateInfo spi, String raw) {
@@ -318,7 +311,6 @@ class ServerProvider extends BusyProvider {
             avail: memList[5]);
       }
     }
-    notifyListeners();
   }
 
   Future<String?> runSnippet(ServerPrivateInfo spi, Snippet snippet) async {

@@ -19,6 +19,7 @@ import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/server/detail.dart';
 import 'package:toolbox/view/page/server/edit.dart';
+import 'package:toolbox/view/page/sftp.dart';
 import 'package:toolbox/view/page/snippet/list.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
@@ -241,8 +242,15 @@ class _ServerPageState extends State<ServerPage>
           switch (item) {
             case MenuItems.ssh:
             case MenuItems.apt:
-            case MenuItems.sftp:
               showSnackBar(context, const Text('Now is not supported'));
+              break;
+            case MenuItems.sftp:
+              AppRoute(
+                      SFTPPage(
+                        spi: spi,
+                      ),
+                      'SFTP')
+                  .go(context);
               break;
             case MenuItems.snippet:
               AppRoute(

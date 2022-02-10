@@ -49,7 +49,8 @@ class _PingPageState extends State<PingPage>
               RoundRectCard(
                 SizedBox(
                   width: double.infinity,
-                  child: Padding(padding: const EdgeInsets.all(7), child: Text(_result)),
+                  child: Padding(
+                      padding: const EdgeInsets.all(7), child: Text(_result)),
                 ),
               ),
             ])),

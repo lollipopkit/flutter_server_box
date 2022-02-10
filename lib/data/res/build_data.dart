@@ -4,7 +4,7 @@ class BuildData {
   static const String name = "ServerBox";
   static const int build = 97;
   static const String engine =
-      "Flutter 2.10.0 • channel stable • https://github.com/flutter/flutter.git\nFramework • revision 5f105a6ca7 (7 days ago) • 2022-02-01 14:15:42 -0800\nEngine • revision 776efd2034\nTools • Dart 2.16.0 • DevTools 2.9.2\n";
-  static const String buildAt = "2022-02-09 10:58:45.586008";
-  static const int modifications = 8;
+      "Flutter 2.8.1 • channel stable • https://github.com/flutter/flutter.git\nFramework • revision 77d935af4d (8 weeks ago) • 2021-12-16 08:37:33 -0800\nEngine • revision 890a5fca2e\nTools • Dart 2.15.1\n";
+  static const String buildAt = "2022-02-10 19:30:23.388434";
+  static const int modifications = 9;
 }
