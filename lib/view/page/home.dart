@@ -97,7 +97,7 @@ class _MyHomePageState extends State<MyHomePage>
   Widget _buildMain(BuildContext context) {
     return AdvancedDrawer(
         controller: _advancedDrawerController,
-        animationCurve: Curves.easeInOutCirc,
+        animationCurve: Curves.easeInOut,
         animationDuration: const Duration(milliseconds: 300),
         animateChildDecoration: true,
         rtlOpening: false,

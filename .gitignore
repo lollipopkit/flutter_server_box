@@ -47,3 +47,4 @@ app.*.map.json
 
 /android/app/fjy.androidstudio.key
 /release
+test.dart

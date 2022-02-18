@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/model/server/server_connection_state.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
+import 'package:toolbox/data/model/sftp/absolute_path.dart';
+import 'package:toolbox/data/model/sftp/sftp_side_status.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/widget/fade_in.dart';
@@ -16,13 +18,7 @@ class SFTPPage extends StatefulWidget {
 }
 
 class _SFTPPageState extends State<SFTPPage> {
-  /// Whether the Left/Right Destination is selected.
-  final List<bool> _selectedDest = List<bool>.filled(2, false);
-  final List<ServerPrivateInfo?> _destSpi =
-      List<ServerPrivateInfo?>.filled(2, null);
-  final List<List<SftpName>?> _files = List<List<SftpName>?>.filled(2, null);
-  final List<String> _paths = List<String>.filled(2, '');
-  final List<SftpClient?> _clients = List<SftpClient?>.filled(2, null);
+  final SFTPSideViewStatus _status = SFTPSideViewStatus();
 
   final ScrollController _leftScrollController = ScrollController();
   final ScrollController _rightScrollController = ScrollController();
@@ -39,8 +35,8 @@ class _SFTPPageState extends State<SFTPPage> {
   void initState() {
     super.initState();
     if (widget.spi != null) {
-      _destSpi[0] = widget.spi;
-      _selectedDest[0] = true;
+      _status.setSpi(true, widget.spi!);
+      _status.setSelect(true, true);
     }
   }
 
@@ -49,7 +45,7 @@ class _SFTPPageState extends State<SFTPPage> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text(_titleText),
+        title: const Text('SFTP'),
       ),
       body: Row(
         children: [
@@ -63,31 +59,10 @@ class _SFTPPageState extends State<SFTPPage> {
     );
   }
 
-  String get _titleText {
-    List<String> titles = [
-      '',
-      '',
-    ];
-    if (_selectedDest[0]) {
-      titles[0] = _destSpi[0]?.name ?? '';
-    }
-    if (_selectedDest[1]) {
-      titles[1] = _destSpi[1]?.name ?? '';
-    }
-    return titles[0] == '' || titles[1] == '' ? 'SFTP' : titles.join(' - ');
-  }
-
   Widget _buildSingleColumn(bool left) {
-    Widget child;
-    if (!_selectedDest[left ? 0 : 1]) {
-      child = _buildDestSelector(left);
-    } else {
-      child = _buildFileView(left);
-    }
-
     return SizedBox(
       width: (_media.size.width - 2) / 2,
-      child: child,
+      child: _buildFileView(left),
     );
   }
 
@@ -103,7 +78,14 @@ class _SFTPPageState extends State<SFTPPage> {
       );
 
   Widget _buildFileView(bool left) {
-    final spi = _destSpi[left ? 0 : 1];
+    if (!_status.selected(left)) {
+      return ListView(
+        children: [
+          _buildDestSelector(left),
+        ],
+      );
+    }
+    final spi = _status.spi(left);
     final si =
         locator<ServerProvider>().servers.firstWhere((s) => s.info == spi);
     final client = si.client;
@@ -112,44 +94,45 @@ class _SFTPPageState extends State<SFTPPage> {
       return centerCircleLoading;
     }
 
-    if (_files[left ? 0 : 1] == null) {
-      updatePath('/', left);
-      listDir(client, '/', left);
+    if (_status.files(left) == null) {
+      _status.setPath(left, AbsolutePath('/'));
+      listDir('/', left, client: client);
       return centerCircleLoading;
     } else {
       return RefreshIndicator(
           child: FadeIn(
             child: ListView.builder(
-              itemCount: _files[left ? 0 : 1]!.length,
+              itemCount: _status.files(left)!.length + 1,
               controller: left ? _leftScrollController : _rightScrollController,
               itemBuilder: (context, index) {
-                final file = _files[left ? 0 : 1]![index];
+                if (index == 0) {
+                  return _buildDestSelector(left);
+                }
+                final file = _status.files(left)![index - 1];
                 final isDir = file.attr.mode?.isDirectory ?? true;
                 return ListTile(
-                    leading:
-                        Icon(isDir ? Icons.folder : Icons.insert_drive_file),
-                    title: Text(file.filename),
-                    subtitle: isDir
-                        ? null
-                        : Text((convertBytes(file.attr.size ?? 0))),
-                    onTap: () {
-                      if (isDir) {
-                        updatePath(file.filename, left);
-                        listDir(client, _paths[left ? 0 : 1], left);
-                      } else {
-                        // downloadFile(client, file.name);
-                      }
-                    },
-                    onLongPress: () => onItemLongPress(context, left, file));
+                  leading: Icon(isDir ? Icons.folder : Icons.insert_drive_file),
+                  title: Text(file.filename),
+                  subtitle:
+                      isDir ? null : Text((convertBytes(file.attr.size ?? 0))),
+                  onTap: () {
+                    if (isDir) {
+                      _status.path(left)?.update(file.filename);
+                      listDir(_status.path(left)?.path ?? '/', left);
+                    } else {
+                      onItemPress(context, left, file);
+                    }
+                  },
+                );
               },
             ),
-            key: Key(_paths[left ? 0 : 1]),
+            key: Key(_status.spi(left)!.name + _status.path(left)!.path),
           ),
-          onRefresh: () => listDir(client, _paths[left ? 0 : 1], left));
+          onRefresh: () => listDir(_status.path(left)?.path ?? '/', left));
     }
   }
 
-  void onItemLongPress(BuildContext context, bool left, SftpName file) {
+  void onItemPress(BuildContext context, bool left, SftpName file) {
     showRoundDialog(
         context,
         'Action',
@@ -226,8 +209,8 @@ class _SFTPPageState extends State<SFTPPage> {
                   ]);
                   return;
                 }
-                _clients[left ? 0 : 1]!
-                    .mkdir(_paths[left ? 0 : 1] + '/' + textController.text);
+                _status.client(left)!.mkdir(
+                    _status.path(left)!.path + '/' + textController.text);
               },
               child: const Text(
                 'Create',
@@ -262,7 +245,8 @@ class _SFTPPageState extends State<SFTPPage> {
                   ]);
                   return;
                 }
-                await _clients[left ? 0 : 1]!
+                await _status
+                    .client(left)!
                     .rename(file.filename, textController.text);
               },
               child: const Text(
@@ -286,40 +270,66 @@ class _SFTPPageState extends State<SFTPPage> {
     return '$finalValue ${suffix[squareTimes]}';
   }
 
-  void updatePath(String filename, bool left) {
-    if (filename == '..') {
-      _paths[left ? 0 : 1] = _paths[left ? 0 : 1]
-          .substring(0, _paths[left ? 0 : 1].lastIndexOf('/'));
-      if (_paths[left ? 0 : 1] == '') {
-        _paths[left ? 0 : 1] = '/';
-      }
-      return;
+  Future<void> listDir(String path, bool left, {SSHClient? client}) async {
+    if (client != null) {
+      final sftpc = await client.sftp();
+      _status.setClient(left, sftpc);
     }
-    _paths[left ? 0 : 1] = _paths[left ? 0 : 1] +
-        (_paths[left ? 0 : 1].endsWith('/') ? '' : '/') +
-        filename;
-  }
-
-  Future<void> listDir(SSHClient client, String path, bool left) async {
-    final sftpc = await client.sftp();
-    _clients[left ? 0 : 1] = sftpc;
-    final fs = await sftpc.listdir(path);
+    final fs = await _status.client(left)!.listdir(path);
     fs.sort((a, b) => a.filename.compareTo(b.filename));
     fs.removeAt(0);
     if (mounted) {
       setState(() {
-        _files[left ? 0 : 1] = fs;
+        _status.setFiles(left, fs);
       });
     }
   }
 
   Widget _buildDestSelector(bool left) {
-    return Column(
-      children: locator<ServerProvider>()
-          .servers
-          .map((e) => _buildDestSelectorItem(e.info, left))
-          .toList(),
-    );
+    final str = _status.path(left)?.path;
+    return ExpansionTile(
+        title: Text(_status.spi(left)?.name ?? 'Choose target'),
+        subtitle: _status.selected(left)
+            ? LayoutBuilder(builder: (context, size) {
+                bool exceeded = false;
+                int len = 0;
+                for (; !exceeded && len < str!.length; len++) {
+                  // Build the textspan
+                  var span = TextSpan(
+                    text: '...' + str.substring(str.length - len),
+                    style: TextStyle(
+                        fontSize:
+                            Theme.of(context).textTheme.bodyText1?.fontSize ??
+                                14),
+                  );
+
+                  // Use a textpainter to determine if it will exceed max lines
+                  var tp = TextPainter(
+                    maxLines: 1,
+                    textAlign: TextAlign.left,
+                    textDirection: TextDirection.ltr,
+                    text: span,
+                  );
+
+                  // trigger it to layout
+                  tp.layout(maxWidth: size.maxWidth);
+
+                  // whether the text overflowed or not
+                  exceeded = tp.didExceedMaxLines;
+                }
+
+                return Text(
+                  (exceeded ? '...' : '') + str!.substring(str.length - len),
+                  overflow: TextOverflow.clip,
+                  maxLines: 1,
+                  style: const TextStyle(color: Colors.grey),
+                );
+              })
+            : null,
+        children: locator<ServerProvider>()
+            .servers
+            .map((e) => _buildDestSelectorItem(e.info, left))
+            .toList());
   }
 
   Widget _buildDestSelectorItem(ServerPrivateInfo spi, bool left) {
@@ -327,10 +337,14 @@ class _SFTPPageState extends State<SFTPPage> {
       title: Text(spi.name),
       subtitle: Text('${spi.user}@${spi.ip}:${spi.port}'),
       onTap: () {
-        setState(() {
-          _destSpi[left ? 0 : 1] = spi;
-          _selectedDest[left ? 0 : 1] = true;
-        });
+        _status.setSpi(left, spi);
+        _status.setSelect(left, true);
+        _status.setPath(left, AbsolutePath('/'));
+        listDir('/', left,
+            client: locator<ServerProvider>()
+                .servers
+                .firstWhere((s) => s.info == spi)
+                .client);
       },
     );
   }
