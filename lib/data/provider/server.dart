@@ -296,22 +296,27 @@ class ServerProvider extends BusyProvider {
   }
 
   void _getMem(ServerPrivateInfo spi, String raw) {
+    const memPrefixies = ['Mem:', '内存：'];
     final info = _servers.firstWhere((e) => e.info == spi);
     for (var item in raw.split('\n')) {
-      if (item.contains('Mem:') || item.contains('内存：')) {
-        var split = item.replaceFirst('Mem:', '');
-        split = split.replaceFirst('内存：', '');
-        split = split.split(' ');
-        split.removeWhere((e) => e == '');
-        final memList = split.map((e) => int.parse(e)).toList();
-        info.status.memory = Memory(
-            total: memList[0],
-            used: memList[1],
-            free: memList[2],
-            shared: memList[3],
-            cache: memList[4],
-            avail: memList[5]);
+      var found = false;
+      for (var memPrefix in memPrefixies) {
+        if (item.contains(memPrefix)) {
+          found = true;
+          final split = item.replaceFirst(memPrefix, '').split(' ');
+          split.removeWhere((e) => e == '');
+          final memList = split.map((e) => int.parse(e)).toList();
+          info.status.memory = Memory(
+              total: memList[0],
+              used: memList[1],
+              free: memList[2],
+              shared: memList[3],
+              cache: memList[4],
+              avail: memList[5]);
+          break;
+        }
       }
+      if (found) break;
     }
   }
 

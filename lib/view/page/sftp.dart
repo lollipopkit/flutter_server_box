@@ -142,18 +142,7 @@ class _SFTPPageState extends State<SFTPPage> {
             ListTile(
               leading: const Icon(Icons.delete),
               title: const Text('Delete'),
-              onTap: () => showRoundDialog(context, 'Confirm',
-                  Text('Are you sure to delete ${file.filename}?'), [
-                TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel')),
-                TextButton(
-                    onPressed: () {},
-                    child: const Text(
-                      'Delete',
-                      style: TextStyle(color: Colors.red),
-                    )),
-              ]),
+              onTap: () => delete(context, left, file),
             ),
             ListTile(
                 leading: const Icon(Icons.folder),
@@ -162,7 +151,7 @@ class _SFTPPageState extends State<SFTPPage> {
             ListTile(
               leading: Icon(left ? Icons.arrow_forward : Icons.arrow_back),
               title: const Text('Copy'),
-              onTap: () {},
+              onTap: () => copy(context, left, file),
             ),
             ListTile(
               leading: const Icon(Icons.edit),
@@ -172,7 +161,7 @@ class _SFTPPageState extends State<SFTPPage> {
             ListTile(
               leading: const Icon(Icons.file_download),
               title: const Text('Download'),
-              onTap: () {},
+              onTap: () => download(context, left, file),
             ),
           ],
         ),
@@ -181,6 +170,25 @@ class _SFTPPageState extends State<SFTPPage> {
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Cancel'))
         ]);
+  }
+
+  void download(BuildContext context, bool left, SftpName file) {}
+
+  void copy(BuildContext context, bool left, SftpName file) {}
+
+  void delete(BuildContext context, bool left, SftpName file) {
+    showRoundDialog(
+        context, 'Confirm', Text('Are you sure to delete ${file.filename}?'), [
+      TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel')),
+      TextButton(
+          onPressed: () {},
+          child: const Text(
+            'Delete',
+            style: TextStyle(color: Colors.red),
+          )),
+    ]);
   }
 
   void mkdir(BuildContext context, bool left) {
@@ -320,7 +328,7 @@ class _SFTPPageState extends State<SFTPPage> {
 
                 return Text(
                   (exceeded ? '...' : '') + str!.substring(str.length - len),
-                  overflow: TextOverflow.clip,
+                  overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                   style: const TextStyle(color: Colors.grey),
                 );

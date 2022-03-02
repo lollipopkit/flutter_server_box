@@ -307,7 +307,17 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         height: 7,
       )
     ];
-    children.addAll(ns.devices.map((e) => _buildNetSpeedItem(ns, e)));
+    if (ns.devices.isEmpty) {
+      children.add(const Center(
+        child: Text(
+          'No interface.',
+          style: TextStyle(color: Colors.grey),
+        ),
+      ));
+    } else {
+      children.addAll(ns.devices.map((e) => _buildNetSpeedItem(ns, e)));
+    }
+
     return RoundRectCard(Padding(
       padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
       child: Column(
