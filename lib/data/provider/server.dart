@@ -298,8 +298,10 @@ class ServerProvider extends BusyProvider {
   void _getMem(ServerPrivateInfo spi, String raw) {
     final info = _servers.firstWhere((e) => e.info == spi);
     for (var item in raw.split('\n')) {
-      if (item.contains('Mem:')) {
-        final split = item.replaceFirst('Mem:', '').split(' ');
+      if (item.contains('Mem:') || item.contains('内存：')) {
+        var split = item.replaceFirst('Mem:', '');
+        split = split.replaceFirst('内存：', '');
+        split = split.split(' ');
         split.removeWhere((e) => e == '');
         final memList = split.map((e) => int.parse(e)).toList();
         info.status.memory = Memory(
