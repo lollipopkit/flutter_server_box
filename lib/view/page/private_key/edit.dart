@@ -80,9 +80,9 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
           final name = nameController.text;
           final key = keyController.text;
           final pwd = pwdController.text;
-          if (name.isEmpty || key.isEmpty || pwd.isEmpty) {
+          if (name.isEmpty || key.isEmpty) {
             showSnackBar(
-                context, const Text('Three fields must not be empty.'));
+                context, const Text('Name and Key must not be empty.'));
             return;
           }
           FocusScope.of(context).unfocus();
