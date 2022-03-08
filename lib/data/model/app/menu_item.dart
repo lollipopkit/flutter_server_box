@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:toolbox/data/res/color.dart';
 
 class MenuItem {
   final String text;
@@ -8,9 +9,21 @@ class MenuItem {
     required this.text,
     required this.icon,
   });
+
+  Widget get build => Row(
+        children: [
+          Icon(icon, color: primaryColor),
+          const SizedBox(
+            width: 10,
+          ),
+          Text(
+            text,
+          ),
+        ],
+      );
 }
 
-class MenuItems {
+class ServerTabMenuItems {
   static const List<MenuItem> firstItems = [sftp, snippet, apt, docker];
   static const List<MenuItem> secondItems = [edit];
 
@@ -19,18 +32,10 @@ class MenuItems {
   static const apt = MenuItem(text: 'Apt', icon: Icons.system_security_update);
   static const docker = MenuItem(text: 'Docker', icon: Icons.view_agenda);
   static const edit = MenuItem(text: 'Edit', icon: Icons.edit);
+}
 
-  static Widget buildItem(MenuItem item) {
-    return Row(
-      children: [
-        Icon(item.icon),
-        const SizedBox(
-          width: 10,
-        ),
-        Text(
-          item.text,
-        ),
-      ],
-    );
-  }
+class DockerMenuItems {
+  static const rm = MenuItem(text: 'Remove', icon: Icons.delete);
+  static const start = MenuItem(text: 'Start', icon: Icons.play_arrow);
+  static const stop = MenuItem(text: 'Stop', icon: Icons.stop);
 }

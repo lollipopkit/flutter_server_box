@@ -11,17 +11,21 @@ class DockerPsItem {
       this.status, this.ports, this.name);
 
   DockerPsItem.fromRawString(String rawString) {
-    final List<String> parts = rawString.split('   ');
+    List<String> parts = rawString.split('   ');
+    parts.removeWhere((element) => element.isEmpty);
+    parts = parts.map((e) => e.trim()).toList();
+    
     containerId = parts[0];
     image = parts[1];
-    command = parts[2];
+    command = parts[2].trim();
     created = parts[3];
     status = parts[4];
-    ports = parts[5];
-    if (running && parts.length == 9) {
-      name = parts[8];
-    } else {
+    if (running) {
+      ports = parts[5];
       name = parts[6];
+    } else {
+      ports = '';
+      name = parts[5];
     }
   }
 

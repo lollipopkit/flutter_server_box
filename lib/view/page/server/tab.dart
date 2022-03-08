@@ -7,7 +7,6 @@ import 'package:marquee/marquee.dart';
 import 'package:provider/provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:toolbox/core/route.dart';
-import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/model/app/menu_item.dart';
 import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/server_connection_state.dart';
@@ -222,30 +221,30 @@ class _ServerPageState extends State<ServerPage>
             size: 17,
           ),
         ),
-        customItemsIndexes: [MenuItems.firstItems.length],
+        customItemsIndexes: [ServerTabMenuItems.firstItems.length],
         customItemsHeight: 8,
         items: [
-          ...MenuItems.firstItems.map(
+          ...ServerTabMenuItems.firstItems.map(
             (item) => DropdownMenuItem<MenuItem>(
               value: item,
-              child: MenuItems.buildItem(item),
+              child: item.build,
             ),
           ),
           const DropdownMenuItem<Divider>(enabled: false, child: Divider()),
-          ...MenuItems.secondItems.map(
+          ...ServerTabMenuItems.secondItems.map(
             (item) => DropdownMenuItem<MenuItem>(
               value: item,
-              child: MenuItems.buildItem(item),
+              child: item.build,
             ),
           ),
         ],
         onChanged: (value) {
           final item = value as MenuItem;
           switch (item) {
-            case MenuItems.apt:
+            case ServerTabMenuItems.apt:
               AppRoute(AptManagePage(spi), 'apt manage page').go(context);
               break;
-            case MenuItems.sftp:
+            case ServerTabMenuItems.sftp:
               AppRoute(
                       SFTPPage(
                         spi: spi,
@@ -253,7 +252,7 @@ class _ServerPageState extends State<ServerPage>
                       'SFTP')
                   .go(context);
               break;
-            case MenuItems.snippet:
+            case ServerTabMenuItems.snippet:
               AppRoute(
                       SnippetListPage(
                         spi: spi,
@@ -261,7 +260,7 @@ class _ServerPageState extends State<ServerPage>
                       'snippet list')
                   .go(context);
               break;
-            case MenuItems.edit:
+            case ServerTabMenuItems.edit:
               AppRoute(
                       ServerEditPage(
                         spi: spi,
@@ -269,7 +268,7 @@ class _ServerPageState extends State<ServerPage>
                       'Edit server info page')
                   .go(context);
               break;
-            case MenuItems.docker:
+            case ServerTabMenuItems.docker:
               AppRoute(DockerManagePage(spi), 'Docker manage page').go(context);
               break;
           }

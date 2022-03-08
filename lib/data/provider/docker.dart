@@ -36,7 +36,7 @@ class DockerProvider extends BusyProvider {
       version = verSplit[1].split(' ').last;
       edition = verSplit[0].split(': ')[1];
     }
-    
+
     final raw = await client!.run('docker ps -a').string;
     if (raw.contains('command not found')) {
       error = 'docker not found';
@@ -50,14 +50,42 @@ class DockerProvider extends BusyProvider {
     notifyListeners();
   }
 
-  Future<void> stop(String id) async {
+  Future<bool> stop(String id) async {
+    setBusyState();
     if (client == null) {
       error = 'no client';
-      notifyListeners();
-      return;
+      setBusyState(false);
+      return false;
     }
     final result = await client!.run('docker stop $id').string;
     await refresh();
-    notifyListeners();
+    setBusyState(false);
+    return result.contains(id);
+  }
+
+  Future<bool> start(String id) async {
+    setBusyState();
+    if (client == null) {
+      error = 'no client';
+      setBusyState(false);
+      return false;
+    }
+    final result = await client!.run('docker start $id').string;
+    await refresh();
+    setBusyState(false);
+    return result.contains(id);
+  }
+
+  Future<bool> delete(String id) async {
+    setBusyState();
+    if (client == null) {
+      error = 'no client';
+      setBusyState(false);
+      return false;
+    }
+    final result = await client!.run('docker rm $id').string;
+    await refresh();
+    setBusyState(false);
+    return result.contains(id);
   }
 }

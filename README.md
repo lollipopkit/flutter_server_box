@@ -56,7 +56,6 @@ Support, but not tested|Windows/Linux
 - [ ] SFTP
 - [ ] Snippet market
 - [ ] Docker manager
-- [ ] SSH terminal
 
 ## Build
 Please use `make.dart` to build.

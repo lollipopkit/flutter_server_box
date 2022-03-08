@@ -8,6 +8,7 @@ import 'package:toolbox/data/provider/apt.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
+import 'package:toolbox/view/widget/two_line_text.dart';
 
 class AptManagePage extends StatefulWidget {
   const AptManagePage(this.spi, {Key? key}) : super(key: key);
@@ -53,7 +54,7 @@ class _AptManagePageState extends State<AptManagePage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Apt'),
+        title: TwoLineText(up: 'Apt', down: widget.spi.ip),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
