@@ -14,7 +14,7 @@ class DockerPsItem {
     List<String> parts = rawString.split('   ');
     parts.removeWhere((element) => element.isEmpty);
     parts = parts.map((e) => e.trim()).toList();
-    
+
     containerId = parts[0];
     image = parts[1];
     command = parts[2].trim();

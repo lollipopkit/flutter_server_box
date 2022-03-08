@@ -195,8 +195,8 @@ class _SFTPPageState extends State<SFTPPage> {
                   ]);
                   return;
                 }
-                _status.client!.mkdir(
-                    _status.path!.path + '/' + textController.text);
+                _status.client!
+                    .mkdir(_status.path!.path + '/' + textController.text);
                 Navigator.of(context).pop();
                 listDir();
               },
@@ -234,8 +234,7 @@ class _SFTPPageState extends State<SFTPPage> {
                   ]);
                   return;
                 }
-                await _status
-                    .client!
+                await _status.client!
                     .rename(file.filename, textController.text);
                 Navigator.of(context).pop();
                 listDir();
@@ -270,9 +269,8 @@ class _SFTPPageState extends State<SFTPPage> {
       final sftpc = await client.sftp();
       _status.client = sftpc;
     }
-    final fs = await _status
-        .client!
-        .listdir(path ?? (_status.path?.path ?? '/'));
+    final fs =
+        await _status.client!.listdir(path ?? (_status.path?.path ?? '/'));
     fs.sort((a, b) => a.filename.compareTo(b.filename));
     fs.removeAt(0);
     if (mounted) {
@@ -339,7 +337,7 @@ class _SFTPPageState extends State<SFTPPage> {
         _status.selected = true;
         _status.path = AbsolutePath('/');
         listDir(
-          client: locator<ServerProvider>()
+            client: locator<ServerProvider>()
                 .servers
                 .firstWhere((s) => s.info == spi)
                 .client,

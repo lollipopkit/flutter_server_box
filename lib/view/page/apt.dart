@@ -54,6 +54,7 @@ class _AptManagePageState extends State<AptManagePage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
         title: TwoLineText(up: 'Apt', down: widget.spi.ip),
         actions: [
           IconButton(

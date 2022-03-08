@@ -57,6 +57,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
         title: TwoLineText(up: 'Docker', down: widget.spi.ip),
       ),
       body: _buildMain(),
@@ -125,7 +126,9 @@ class _DockerManagePageState extends State<DockerManagePage> {
         return ListTile(
           title: Text(item.image),
           subtitle: Text(item.status),
-          trailing: docker.isBusy ? const CircularProgressIndicator() : _buildMoreBtn(item.running, item.containerId),
+          trailing: docker.isBusy
+              ? const CircularProgressIndicator()
+              : _buildMoreBtn(item.running, item.containerId),
         );
       }).toList(),
     );
