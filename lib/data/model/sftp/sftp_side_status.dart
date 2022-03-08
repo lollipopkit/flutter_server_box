@@ -13,6 +13,8 @@ class SFTPSideViewStatus {
   AbsolutePath? rightPath;
   SftpClient? leftClient;
   SftpClient? rightClient;
+  bool isBusyLeft = false;
+  bool isBusyRight = false;
 
   SFTPSideViewStatus();
 
@@ -36,4 +38,8 @@ class SFTPSideViewStatus {
   SftpClient? client(bool left) => left ? leftClient : rightClient;
   void setClient(bool left, SftpClient? nClient) =>
       left ? leftClient = nClient : rightClient = nClient;
+
+  bool isBusy(bool left) => left ? isBusyLeft : isBusyRight;
+  void setBusy(bool left, bool nBusy) =>
+      left ? isBusyLeft = nBusy : isBusyRight = nBusy;
 }

@@ -96,7 +96,7 @@ class _SFTPPageState extends State<SFTPPage> {
 
     if (_status.files(left) == null) {
       _status.setPath(left, AbsolutePath('/'));
-      listDir('/', left, client: client);
+      listDir(left, path: '/', client: client);
       return centerCircleLoading;
     } else {
       return RefreshIndicator(
@@ -114,21 +114,22 @@ class _SFTPPageState extends State<SFTPPage> {
                   leading: Icon(isDir ? Icons.folder : Icons.insert_drive_file),
                   title: Text(file.filename),
                   subtitle:
-                      isDir ? null : Text((convertBytes(file.attr.size ?? 0))),
+                      isDir ? null : Text(convertBytes(file.attr.size ?? 0)),
                   onTap: () {
                     if (isDir) {
                       _status.path(left)?.update(file.filename);
-                      listDir(_status.path(left)?.path ?? '/', left);
+                      listDir(left, path: _status.path(left)?.path);
                     } else {
                       onItemPress(context, left, file);
                     }
                   },
+                  onLongPress: () => onItemPress(context, left, file),
                 );
               },
             ),
             key: Key(_status.spi(left)!.name + _status.path(left)!.path),
           ),
-          onRefresh: () => listDir(_status.path(left)?.path ?? '/', left));
+          onRefresh: () => listDir(left, path: _status.path(left)?.path));
     }
   }
 
@@ -149,19 +150,9 @@ class _SFTPPageState extends State<SFTPPage> {
                 title: const Text('Create Folder'),
                 onTap: () => mkdir(context, left)),
             ListTile(
-              leading: Icon(left ? Icons.arrow_forward : Icons.arrow_back),
-              title: const Text('Copy'),
-              onTap: () => copy(context, left, file),
-            ),
-            ListTile(
               leading: const Icon(Icons.edit),
               title: const Text('Rename'),
               onTap: () => rename(context, left, file),
-            ),
-            ListTile(
-              leading: const Icon(Icons.file_download),
-              title: const Text('Download'),
-              onTap: () => download(context, left, file),
             ),
           ],
         ),
@@ -172,18 +163,19 @@ class _SFTPPageState extends State<SFTPPage> {
         ]);
   }
 
-  void download(BuildContext context, bool left, SftpName file) {}
-
-  void copy(BuildContext context, bool left, SftpName file) {}
-
   void delete(BuildContext context, bool left, SftpName file) {
+    Navigator.of(context).pop();
     showRoundDialog(
         context, 'Confirm', Text('Are you sure to delete ${file.filename}?'), [
       TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancel')),
       TextButton(
-          onPressed: () {},
+          onPressed: () {
+            _status.client(left)!.remove(file.filename);
+            Navigator.of(context).pop();
+            listDir(left);
+          },
           child: const Text(
             'Delete',
             style: TextStyle(color: Colors.red),
@@ -192,6 +184,7 @@ class _SFTPPageState extends State<SFTPPage> {
   }
 
   void mkdir(BuildContext context, bool left) {
+    Navigator.of(context).pop();
     final textController = TextEditingController();
     showRoundDialog(
         context,
@@ -219,6 +212,8 @@ class _SFTPPageState extends State<SFTPPage> {
                 }
                 _status.client(left)!.mkdir(
                     _status.path(left)!.path + '/' + textController.text);
+                Navigator.of(context).pop();
+                listDir(left);
               },
               child: const Text(
                 'Create',
@@ -228,10 +223,11 @@ class _SFTPPageState extends State<SFTPPage> {
   }
 
   void rename(BuildContext context, bool left, SftpName file) {
+    Navigator.of(context).pop();
     final textController = TextEditingController();
     showRoundDialog(
         context,
-        'Create Folder',
+        'Rename',
         TextField(
           controller: textController,
           decoration: const InputDecoration(
@@ -256,9 +252,11 @@ class _SFTPPageState extends State<SFTPPage> {
                 await _status
                     .client(left)!
                     .rename(file.filename, textController.text);
+                Navigator.of(context).pop();
+                listDir(left);
               },
               child: const Text(
-                'Create',
+                'Rename',
                 style: TextStyle(color: Colors.red),
               )),
         ]);
@@ -278,17 +276,24 @@ class _SFTPPageState extends State<SFTPPage> {
     return '$finalValue ${suffix[squareTimes]}';
   }
 
-  Future<void> listDir(String path, bool left, {SSHClient? client}) async {
+  Future<void> listDir(bool left, {String? path, SSHClient? client}) async {
+    if (_status.isBusy(left)) {
+      return;
+    }
+    _status.setBusy(left, true);
     if (client != null) {
       final sftpc = await client.sftp();
       _status.setClient(left, sftpc);
     }
-    final fs = await _status.client(left)!.listdir(path);
+    final fs = await _status
+        .client(left)!
+        .listdir(path ?? (_status.leftPath?.path ?? '/'));
     fs.sort((a, b) => a.filename.compareTo(b.filename));
     fs.removeAt(0);
     if (mounted) {
       setState(() {
         _status.setFiles(left, fs);
+        _status.setBusy(left, false);
       });
     }
   }
@@ -328,7 +333,7 @@ class _SFTPPageState extends State<SFTPPage> {
 
                 return Text(
                   (exceeded ? '...' : '') + str!.substring(str.length - len),
-                  overflow: TextOverflow.ellipsis,
+                  overflow: TextOverflow.clip,
                   maxLines: 1,
                   style: const TextStyle(color: Colors.grey),
                 );
@@ -348,11 +353,12 @@ class _SFTPPageState extends State<SFTPPage> {
         _status.setSpi(left, spi);
         _status.setSelect(left, true);
         _status.setPath(left, AbsolutePath('/'));
-        listDir('/', left,
+        listDir(left,
             client: locator<ServerProvider>()
                 .servers
                 .firstWhere((s) => s.info == spi)
-                .client);
+                .client,
+            path: '/');
       },
     );
   }

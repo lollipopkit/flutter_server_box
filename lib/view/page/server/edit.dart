@@ -111,7 +111,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             const SizedBox(height: 7),
             Row(
               children: [
-                const Text('Public Key Auth'),
+                const Text('Key Auth'),
                 Switch(
                     value: usePublicKey,
                     onChanged: (val) => setState(() => usePublicKey = val)),

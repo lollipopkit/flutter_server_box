@@ -17,6 +17,8 @@ import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/locator.dart';
+import 'package:toolbox/view/page/apt.dart';
+import 'package:toolbox/view/page/docker.dart';
 import 'package:toolbox/view/page/server/detail.dart';
 import 'package:toolbox/view/page/server/edit.dart';
 import 'package:toolbox/view/page/sftp.dart';
@@ -240,9 +242,8 @@ class _ServerPageState extends State<ServerPage>
         onChanged: (value) {
           final item = value as MenuItem;
           switch (item) {
-            case MenuItems.ssh:
             case MenuItems.apt:
-              showSnackBar(context, const Text('Now is not supported'));
+              AppRoute(AptManagePage(spi), 'apt manage page').go(context);
               break;
             case MenuItems.sftp:
               AppRoute(
@@ -267,6 +268,9 @@ class _ServerPageState extends State<ServerPage>
                       ),
                       'Edit server info page')
                   .go(context);
+              break;
+            case MenuItems.docker:
+              AppRoute(DockerManagePage(spi), 'Docker manage page').go(context);
               break;
           }
         },

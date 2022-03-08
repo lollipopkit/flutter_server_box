@@ -7,7 +7,9 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/app.dart';
 import 'package:toolbox/core/analysis.dart';
 import 'package:toolbox/data/provider/app.dart';
+import 'package:toolbox/data/provider/apt.dart';
 import 'package:toolbox/data/provider/debug.dart';
+import 'package:toolbox/data/provider/docker.dart';
 import 'package:toolbox/data/provider/private_key.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/provider/snippet.dart';
@@ -62,7 +64,9 @@ Future<void> main() async {
       MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (_) => locator<AppProvider>()),
+          ChangeNotifierProvider(create: (_) => locator<AptProvider>()),
           ChangeNotifierProvider(create: (_) => locator<DebugProvider>()),
+          ChangeNotifierProvider(create: (_) => locator<DockerProvider>()),
           ChangeNotifierProvider(create: (_) => locator<ServerProvider>()),
           ChangeNotifierProvider(create: (_) => locator<SnippetProvider>()),
           ChangeNotifierProvider(create: (_) => locator<PrivateKeyProvider>()),
