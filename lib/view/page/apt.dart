@@ -7,6 +7,7 @@ import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/provider/apt.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/locator.dart';
+import 'package:toolbox/view/widget/center_loading.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 import 'package:toolbox/view/widget/two_line_text.dart';
 
@@ -55,61 +56,75 @@ class _AptManagePageState extends State<AptManagePage>
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: TwoLineText(up: 'Apt', down: widget.spi.ip),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              locator<AptProvider>().refreshInstalled();
-            },
-          ),
-        ],
+        title: TwoLineText(up: 'Apt', down: widget.spi.name),
       ),
       body: Consumer<AptProvider>(builder: (_, apt, __) {
         if (apt.upgradeable == null) {
           apt.refreshInstalled();
+          return centerLoading;
+        }
+        if (!apt.isSU) {
+          return Center(
+            child: Text(
+              'Only supported as root. Not "${apt.whoami}".',
+              style: greyStyle,
+            ),
+          );
         }
         return ListView(
           padding: const EdgeInsets.all(13),
-          children: [_buildUpdatePanel(apt)],
+          children:
+              [_buildUpdatePanel(apt)].map((e) => RoundRectCard(e)).toList(),
         );
       }),
     );
   }
 
   Widget _buildUpdatePanel(AptProvider apt) {
+    if (apt.upgradeable!.isEmpty) {
+      return const ListTile(
+        title: Text(
+          'No update available',
+          textAlign: TextAlign.center,
+        ),
+        subtitle: Text('>_<', textAlign: TextAlign.center),
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        RoundRectCard(ExpansionTile(
-          title: Text(!apt.isReady
-              ? 'Loading...'
-              : 'Found ${apt.upgradeable!.length} update'),
-          subtitle: !apt.isReady
-              ? null
-              : Text(
-                  apt.upgradeable!.map((e) => e.package).join(', '),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: greyStyle,
-                ),
-          children: [
-            // TextButton(
-            //     child: Text('Update all'),
-            //     onPressed: () {
-            //       apt.upgrade();
-            //     }),
-            !apt.isReady
-                ? const SizedBox()
-                : SizedBox(
-                    height: _media.size.height * 0.23,
+        ExpansionTile(
+          title: Text('Found ${apt.upgradeable!.length} update'),
+          subtitle: Text(
+            apt.upgradeable!.map((e) => e.package).join(', '),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: greyStyle,
+          ),
+          children: apt.updateLog == null
+              ? [
+                  TextButton(
+                      child: const Text('Update all'),
+                      onPressed: () {
+                        apt.upgrade();
+                      }),
+                  SizedBox(
+                    height: _media.size.height * 0.73,
                     child: ListView(
                         children: apt.upgradeable!
                             .map((e) => _buildUpdateItem(e, apt))
                             .toList()),
                   )
-          ],
-        ))
+                ]
+              : [
+                  SizedBox(
+                      height: _media.size.height * 0.73,
+                      child: ListView(
+                        padding: const EdgeInsets.all(18),
+                        children: [Text(apt.updateLog!)],
+                      ))
+                ],
+        )
       ],
     );
   }

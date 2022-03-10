@@ -245,12 +245,7 @@ class _ServerPageState extends State<ServerPage>
               AppRoute(AptManagePage(spi), 'apt manage page').go(context);
               break;
             case ServerTabMenuItems.sftp:
-              AppRoute(
-                      SFTPPage(
-                        spi: spi,
-                      ),
-                      'SFTP')
-                  .go(context);
+              AppRoute(SFTPPage(spi), 'SFTP').go(context);
               break;
             case ServerTabMenuItems.snippet:
               AppRoute(

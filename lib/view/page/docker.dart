@@ -58,7 +58,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: TwoLineText(up: 'Docker', down: widget.spi.ip),
+        title: TwoLineText(up: 'Docker', down: widget.spi.name),
       ),
       body: _buildMain(),
     );
@@ -110,7 +110,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
 
   Widget _buildVersion(String edition, String version) {
     return Padding(
-      padding: const EdgeInsets.all(13),
+      padding: const EdgeInsets.all(17),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [Text(edition), Text(version)],
@@ -172,7 +172,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
         },
         itemHeight: 37,
         itemPadding: const EdgeInsets.only(left: 17, right: 17),
-        dropdownWidth: 160,
+        dropdownWidth: 133,
         dropdownDecoration: BoxDecoration(
           borderRadius: BorderRadius.circular(7),
         ),

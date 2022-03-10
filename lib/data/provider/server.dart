@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 import 'package:toolbox/core/extension/stringx.dart';
+import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/provider_base.dart';
 import 'package:toolbox/data/model/server/cpu_2_status.dart';
 import 'package:toolbox/data/model/server/cpu_status.dart';
@@ -178,8 +178,10 @@ class ServerProvider extends BusyProvider {
     final si = _servers[idx];
     try {
       if (si.client == null) return;
-      final raw = utf8.decode(await si.client!.run(
-          r"cat /proc/net/dev && date +%s && echo 'A====A' && cat /etc/os-release | grep PRETTY_NAME && echo 'A====A' && cat /proc/stat | grep cpu && echo 'A====A' && paste <(cat /sys/class/thermal/thermal_zone*/type) <(cat /sys/class/thermal/thermal_zone*/temp) | column -s $'\t' -t | sed 's/\(.\)..$/.\1°C/' && echo 'A====A' && uptime && echo 'A====A' && cat /proc/net/snmp && echo 'A====A' && df -h && echo 'A====A' && free -m"));
+      final raw = await si.client!
+          .run(
+              r"cat /proc/net/dev && date +%s && echo 'A====A' && cat /etc/os-release | grep PRETTY_NAME && echo 'A====A' && cat /proc/stat | grep cpu && echo 'A====A' && paste <(cat /sys/class/thermal/thermal_zone*/type) <(cat /sys/class/thermal/thermal_zone*/temp) | column -s $'\t' -t | sed 's/\(.\)..$/.\1°C/' && echo 'A====A' && uptime && echo 'A====A' && cat /proc/net/snmp && echo 'A====A' && df -h && echo 'A====A' && free -m")
+          .string;
       final lines = raw.split('A====A').map((e) => e.trim()).toList();
       _getCPU(spi, lines[2], lines[3]);
       _getMem(spi, lines[7]);
@@ -321,10 +323,10 @@ class ServerProvider extends BusyProvider {
   }
 
   Future<String?> runSnippet(ServerPrivateInfo spi, Snippet snippet) async {
-    final result = await _servers
+    return await _servers
         .firstWhere((element) => element.info == spi)
         .client!
-        .run(snippet.script);
-    return utf8.decode(result);
+        .run(snippet.script)
+        .string;
   }
 }

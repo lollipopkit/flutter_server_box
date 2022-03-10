@@ -33,8 +33,12 @@ class DockerProvider extends BusyProvider {
       error = 'invalid version';
       notifyListeners();
     } else {
-      version = verSplit[1].split(' ').last;
-      edition = verSplit[0].split(': ')[1];
+      try {
+        version = verSplit[1].split(' ').last;
+        edition = verSplit[0].split(': ')[1];
+      } catch (e) {
+        error = e.toString();
+      }
     }
 
     final raw = await client!.run('docker ps -a').string;
@@ -43,11 +47,17 @@ class DockerProvider extends BusyProvider {
       notifyListeners();
       return;
     }
-    final lines = raw.split('\n');
-    lines.removeAt(0);
-    lines.removeWhere((element) => element.isEmpty);
-    running = lines.map((e) => DockerPsItem.fromRawString(e)).toList();
-    notifyListeners();
+
+    try {
+      final lines = raw.split('\n');
+      lines.removeAt(0);
+      lines.removeWhere((element) => element.isEmpty);
+      running = lines.map((e) => DockerPsItem.fromRawString(e)).toList();
+    } catch (e) {
+      error = e.toString();
+    } finally {
+      notifyListeners();
+    }
   }
 
   Future<bool> stop(String id) async {

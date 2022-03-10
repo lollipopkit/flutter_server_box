@@ -11,8 +11,8 @@ import 'package:toolbox/view/widget/fade_in.dart';
 import 'package:toolbox/view/widget/two_line_text.dart';
 
 class SFTPPage extends StatefulWidget {
-  final ServerPrivateInfo? spi;
-  const SFTPPage({this.spi, Key? key}) : super(key: key);
+  final ServerPrivateInfo spi;
+  const SFTPPage(this.spi, {Key? key}) : super(key: key);
 
   @override
   _SFTPPageState createState() => _SFTPPageState();
@@ -34,10 +34,8 @@ class _SFTPPageState extends State<SFTPPage> {
   @override
   void initState() {
     super.initState();
-    if (widget.spi != null) {
-      _status.spi = widget.spi!;
-      _status.selected = true;
-    }
+    _status.spi = widget.spi;
+    _status.selected = true;
   }
 
   @override
@@ -45,7 +43,7 @@ class _SFTPPageState extends State<SFTPPage> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: TwoLineText(up: 'SFTP', down: _status.spi?.ip ?? '...'),
+        title: TwoLineText(up: 'SFTP', down: widget.spi.name),
       ),
       body: _buildFileView(),
     );
@@ -98,6 +96,13 @@ class _SFTPPageState extends State<SFTPPage> {
                 return ListTile(
                   leading: Icon(isDir ? Icons.folder : Icons.insert_drive_file),
                   title: Text(file.filename),
+                  trailing: Text(
+                    DateTime.fromMillisecondsSinceEpoch(
+                            (file.attr.modifyTime ?? 0) * 1000)
+                        .toString()
+                        .replaceFirst('.000', ''),
+                    style: const TextStyle(color: Colors.grey),
+                  ),
                   subtitle:
                       isDir ? null : Text(convertBytes(file.attr.size ?? 0)),
                   onTap: () {
