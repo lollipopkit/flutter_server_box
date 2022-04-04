@@ -18,8 +18,8 @@ class PingPage extends StatefulWidget {
 class _PingPageState extends State<PingPage>
     with AutomaticKeepAliveClientMixin {
   late TextEditingController _textEditingController;
-  String _result = '';
   Ping? _ping;
+  late MediaQueryData _media;
 
   @override
   void initState() {
@@ -33,6 +33,7 @@ class _PingPageState extends State<PingPage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _media = MediaQuery.of(context);
   }
 
   @override
@@ -46,13 +47,12 @@ class _PingPageState extends State<PingPage>
               const SizedBox(height: 13),
               buildInput(context, _textEditingController, maxLines: 1),
               _buildControl(),
-              RoundRectCard(
-                SizedBox(
-                  width: double.infinity,
-                  child: Padding(
-                      padding: const EdgeInsets.all(7), child: Text(_result)),
+              RoundRectCard(ConstrainedBox(
+                constraints: BoxConstraints(
+                  minWidth: double.infinity,
+                  minHeight: _media.size.height * 0.6,
                 ),
-              ),
+              )),
             ])),
         onTap: () => FocusScope.of(context).requestFocus(FocusNode()),
       ),
@@ -60,12 +60,10 @@ class _PingPageState extends State<PingPage>
   }
 
   void doPing() {
-    _result = '';
     _ping = Ping(_textEditingController.text.trim());
     _ping!.stream.listen((event) {
       final resp = event.response.toString();
       if (resp == 'null') return;
-      _result += '$resp\n';
       setState(() {});
     });
   }

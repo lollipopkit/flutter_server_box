@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/model/server/server_connection_state.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
@@ -7,6 +10,7 @@ import 'package:toolbox/data/model/sftp/absolute_path.dart';
 import 'package:toolbox/data/model/sftp/sftp_side_status.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/locator.dart';
+import 'package:toolbox/view/widget/center_loading.dart';
 import 'package:toolbox/view/widget/fade_in.dart';
 import 'package:toolbox/view/widget/two_line_text.dart';
 
@@ -144,6 +148,11 @@ class _SFTPPageState extends State<SFTPPage> {
               title: const Text('Rename'),
               onTap: () => rename(context, file),
             ),
+            ListTile(
+              leading: const Icon(Icons.download),
+              title: const Text('Download'),
+              onTap: () => download(context, file),
+            )
           ],
         ),
         [
@@ -151,6 +160,42 @@ class _SFTPPageState extends State<SFTPPage> {
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Cancel'))
         ]);
+  }
+
+  void download(BuildContext context, SftpName name) {
+    showRoundDialog(
+        context, 'Download', Text('Download ${name.filename} to local?'), [
+      TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel')),
+      TextButton(
+          onPressed: () async {
+            var result = '';
+            try {
+              Navigator.of(context).pop();
+              showRoundDialog(context, name.filename, centerSizedLoading, [],
+                  barrierDismiss: false);
+              final path = await getApplicationDocumentsDirectory();
+              final localFile = File('${path.path}/${name.filename}');
+              final remotePath = _status.path!.path + '/' + name.filename;
+              final file = await _status.client?.open(remotePath);
+              localFile.writeAsBytes(await file!.readBytes());
+              Navigator.of(context).pop();
+            } catch (e) {
+              result = e.toString();
+            } finally {
+              if (result.isEmpty) {
+                result = 'Donwloaded successfully.';
+              }
+              showRoundDialog(context, 'Result', Text(result), [
+                TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('OK'))
+              ]);
+            }
+          },
+          child: const Text('Download'))
+    ]);
   }
 
   void delete(BuildContext context, SftpName file) {
@@ -274,15 +319,26 @@ class _SFTPPageState extends State<SFTPPage> {
       final sftpc = await client.sftp();
       _status.client = sftpc;
     }
-    final fs =
-        await _status.client!.listdir(path ?? (_status.path?.path ?? '/'));
-    fs.sort((a, b) => a.filename.compareTo(b.filename));
-    fs.removeAt(0);
-    if (mounted) {
-      setState(() {
-        _status.files = fs;
-        _status.isBusy = false;
-      });
+    try {
+      final fs =
+          await _status.client!.listdir(path ?? (_status.path?.path ?? '/'));
+      fs.sort((a, b) => a.filename.compareTo(b.filename));
+      fs.removeAt(0);
+      if (mounted) {
+        setState(() {
+          _status.files = fs;
+          _status.isBusy = false;
+        });
+      }
+    } catch (e) {
+      await showRoundDialog(context, 'Error', Text(e.toString()), [
+        TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'))
+      ]);
+      if (_status.path!.undo()) {
+        await listDir();
+      }
     }
   }
 
