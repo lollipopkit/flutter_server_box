@@ -43,9 +43,9 @@ SPEC CHECKSUMS:
   Flutter: 50d75fe2f02b26cc09d224853bb45737f8b3214a
   flutter_icmp_ping: 07e508847df7fa9262d050bb0b203de074bbe517
   open_file: 02eb5cb6b21264bd3a696876f5afbfb7ca4f4b7d
-  path_provider_ios: 7d7ce634493af4477d156294792024ec3485acd5
+  path_provider_ios: 14f3d2fd28c4fdb42f44e0f751d12861c43cee02
   r_upgrade: 44d715c61914cce3d01ea225abffe894fd51c114
-  url_launcher_ios: 02f1989d4e14e998335b02b67a7590fa34f971af
+  url_launcher_ios: 839c58cdb4279282219f5e248c3321761ff3c4de
 
 PODFILE CHECKSUM: aafe91acc616949ddb318b77800a7f51bffa2a4c
 

@@ -1,4 +1,4 @@
-import 'dart:math';
+import 'package:toolbox/core/extension/numx.dart';
 
 class NetSpeedPart {
   String device;
@@ -27,45 +27,31 @@ class NetSpeed {
 
   String speedIn({String? device}) {
     if (old[0].device == '' || now[0].device == '') return '0kb/s';
-    int idx = 0;
-    if (device != null) {
-      for (var item in now) {
-        if (item.device == device) {
-          idx = now.indexOf(item);
-          break;
-        }
-      }
-    }
+    final idx = deviceIdx(device);
     final speedInBytesPerSecond =
         (now[idx].bytesIn - old[idx].bytesIn) / timeDiff;
-    int squareTimes = 0;
-    for (; speedInBytesPerSecond / pow(1024, squareTimes) > 1024;) {
-      if (squareTimes >= suffixs.length - 1) break;
-      squareTimes++;
-    }
-    return '${(speedInBytesPerSecond / pow(1024, squareTimes)).toStringAsFixed(1)} ${suffixs[squareTimes]}';
+    return buildStandardOutput(speedInBytesPerSecond);
   }
 
   String speedOut({String? device}) {
     if (old[0].device == '' || now[0].device == '') return '0kb/s';
-    int idx = 0;
+    final idx = deviceIdx(device);
+    final speedInBytesPerSecond =
+        (now[idx].bytesOut - old[idx].bytesOut) / timeDiff;
+    return buildStandardOutput(speedInBytesPerSecond);
+  }
+
+  int deviceIdx(String? device) {
     if (device != null) {
       for (var item in now) {
         if (item.device == device) {
-          idx = now.indexOf(item);
-          break;
+          return now.indexOf(item);
         }
       }
     }
-    final speedInBytesPerSecond =
-        (now[idx].bytesOut - old[idx].bytesOut) / timeDiff;
-    int squareTimes = 0;
-    for (; speedInBytesPerSecond / pow(1024, squareTimes) > 1024;) {
-      if (squareTimes >= suffixs.length - 1) break;
-      squareTimes++;
-    }
-    return '${(speedInBytesPerSecond / pow(1024, squareTimes)).toStringAsFixed(1)} ${suffixs[squareTimes]}';
+    return 0;
   }
-}
 
-const suffixs = ['b/s', 'kb/s', 'mb/s', 'gb/s'];
+  String buildStandardOutput(double speed) =>
+      '${speed.convertBytes.toLowerCase()}/s';
+}

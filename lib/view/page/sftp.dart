@@ -1,8 +1,6 @@
-import 'dart:io';
-
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:toolbox/core/extension/numx.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/model/server/server_connection_state.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
@@ -10,7 +8,6 @@ import 'package:toolbox/data/model/sftp/absolute_path.dart';
 import 'package:toolbox/data/model/sftp/sftp_side_status.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/locator.dart';
-import 'package:toolbox/view/widget/center_loading.dart';
 import 'package:toolbox/view/widget/fade_in.dart';
 import 'package:toolbox/view/widget/two_line_text.dart';
 
@@ -96,7 +93,7 @@ class _SFTPPageState extends State<SFTPPage> {
                   return _buildDestSelector();
                 }
                 final file = _status.files![index - 1];
-                final isDir = file.attr.mode?.isDirectory ?? true;
+                final isDir = file.attr.isDirectory;
                 return ListTile(
                   leading: Icon(isDir ? Icons.folder : Icons.insert_drive_file),
                   title: Text(file.filename),
@@ -108,7 +105,7 @@ class _SFTPPageState extends State<SFTPPage> {
                     style: const TextStyle(color: Colors.grey),
                   ),
                   subtitle:
-                      isDir ? null : Text(convertBytes(file.attr.size ?? 0)),
+                      isDir ? null : Text((file.attr.size ?? 0).convertBytes),
                   onTap: () {
                     if (isDir) {
                       _status.path?.update(file.filename);
@@ -148,11 +145,11 @@ class _SFTPPageState extends State<SFTPPage> {
               title: const Text('Rename'),
               onTap: () => rename(context, file),
             ),
-            ListTile(
-              leading: const Icon(Icons.download),
-              title: const Text('Download'),
-              onTap: () => download(context, file),
-            )
+            // ListTile(
+            //   leading: const Icon(Icons.download),
+            //   title: const Text('Download'),
+            //   onTap: () => download(context, file),
+            // )
           ],
         ),
         [
@@ -162,41 +159,63 @@ class _SFTPPageState extends State<SFTPPage> {
         ]);
   }
 
-  void download(BuildContext context, SftpName name) {
-    showRoundDialog(
-        context, 'Download', Text('Download ${name.filename} to local?'), [
-      TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel')),
-      TextButton(
-          onPressed: () async {
-            var result = '';
-            try {
-              Navigator.of(context).pop();
-              showRoundDialog(context, name.filename, centerSizedLoading, [],
-                  barrierDismiss: false);
-              final path = await getApplicationDocumentsDirectory();
-              final localFile = File('${path.path}/${name.filename}');
-              final remotePath = _status.path!.path + '/' + name.filename;
-              final file = await _status.client?.open(remotePath);
-              localFile.writeAsBytes(await file!.readBytes());
-              Navigator.of(context).pop();
-            } catch (e) {
-              result = e.toString();
-            } finally {
-              if (result.isEmpty) {
-                result = 'Donwloaded successfully.';
-              }
-              showRoundDialog(context, 'Result', Text(result), [
-                TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('OK'))
-              ]);
-            }
-          },
-          child: const Text('Download'))
-    ]);
-  }
+  // void download(BuildContext context, SftpName name) {
+  //   showRoundDialog(
+  //       context, 'Download', Text('Download ${name.filename} to local?'), [
+  //     TextButton(
+  //         onPressed: () => Navigator.of(context).pop(),
+  //         child: const Text('Cancel')),
+  //     TextButton(
+  //         onPressed: () async {
+  //           var result = '';
+  //           try {
+  //             Navigator.of(context).pop();
+  //             showRoundDialog(
+  //                 context,
+  //                 name.filename,
+  //                 const Text('Downloading...\nKepp this app in the foreground.',
+  //                     textAlign: TextAlign.center),
+  //                 [],
+  //                 barrierDismiss: false);
+  //             final path = await sftpDownloadDir;
+  //             final local = File('${path.path}/${name.filename}');
+  //             if (await local.exists()) {
+  //               await local.delete();
+  //             }
+
+  //             final localFile =
+  //                 await local.open(mode: FileMode.writeOnlyAppend);
+  //             final remotePath = _status.path!.path + '/' + name.filename;
+  //             final file = await _status.client!.open(remotePath);
+  //             final size = (await file.stat()).size;
+  //             if (size == null) {
+  //               throw Exception('can not get file size');
+  //             }
+
+  //             const chunkSize = 1024 * 128;
+  //             for (var i = 0; i < size; i += chunkSize) {
+  //               final data = file.read(length: chunkSize);
+  //               await for (var item in data) {
+  //                 localFile.writeFrom(item);
+  //               }
+  //             }
+  //           } catch (e) {
+  //             result = e.toString();
+  //           } finally {
+  //             Navigator.of(context).pop();
+  //             if (result.isEmpty) {
+  //               result = 'Donwloaded successfully.';
+  //             }
+  //             showRoundDialog(context, 'Result', Text(result), [
+  //               TextButton(
+  //                   onPressed: () => Navigator.of(context).pop(),
+  //                   child: const Text('OK'))
+  //             ]);
+  //           }
+  //         },
+  //         child: const Text('Download'))
+  //   ]);
+  // }
 
   void delete(BuildContext context, SftpName file) {
     Navigator.of(context).pop();
@@ -294,20 +313,6 @@ class _SFTPPageState extends State<SFTPPage> {
                 style: TextStyle(color: Colors.red),
               )),
         ]);
-  }
-
-  String convertBytes(int bytes) {
-    const suffix = ['B', 'KB', 'MB', 'GB', 'TB'];
-    double value = bytes.toDouble();
-    int squareTimes = 0;
-    for (; value / 1024 > 1 && squareTimes < 3; squareTimes++) {
-      value /= 1024;
-    }
-    var finalValue = value.toStringAsFixed(1);
-    if (finalValue.endsWith('.0')) {
-      finalValue = finalValue.replaceFirst('.0', '');
-    }
-    return '$finalValue ${suffix[squareTimes]}';
   }
 
   Future<void> listDir({String? path, SSHClient? client}) async {

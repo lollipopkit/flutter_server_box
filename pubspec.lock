@@ -14,7 +14,7 @@ packages:
       name: archive
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "3.1.11"
+    version: "3.3.0"
   args:
     dependency: transitive
     description:
@@ -99,7 +99,7 @@ packages:
     description:
       path: "."
       ref: master
-      resolved-ref: dcb1f6084242a7b4b8e4edd4b180a42ad7f595ca
+      resolved-ref: fb568d2e50714f65f85b822c343bb53f129b9f6f
       url: "https://github.com/Countly/countly-sdk-flutter-bridge.git"
     source: git
     version: "20.11.4"
@@ -123,7 +123,7 @@ packages:
       name: dart_ping
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "6.1.1"
+    version: "6.1.2"
   dart_ping_ios:
     dependency: "direct main"
     description:
@@ -137,21 +137,21 @@ packages:
       name: dartssh2
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.4.4"
+    version: "2.6.0"
   dio:
     dependency: "direct main"
     description:
       name: dio
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "4.0.4"
+    version: "4.0.6"
   dropdown_button2:
     dependency: "direct main"
     description:
       name: dropdown_button2
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.1.1"
+    version: "1.2.5"
   extended_image:
     dependency: "direct main"
     description:
@@ -165,7 +165,7 @@ packages:
       name: extended_image_library
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "3.1.2"
+    version: "3.1.4"
   fading_edge_scrollview:
     dependency: transitive
     description:
@@ -205,7 +205,7 @@ packages:
       name: flutter_advanced_drawer
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.3.0"
+    version: "1.3.2"
   flutter_icmp_ping:
     dependency: transitive
     description:
@@ -264,7 +264,7 @@ packages:
       name: hive
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.5"
+    version: "2.1.0"
   hive_flutter:
     dependency: "direct main"
     description:
@@ -299,7 +299,7 @@ packages:
       name: image
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "3.1.1"
+    version: "3.1.3"
   js:
     dependency: transitive
     description:
@@ -327,7 +327,7 @@ packages:
       name: marquee
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.2.0"
+    version: "2.2.1"
   matcher:
     dependency: transitive
     description:
@@ -383,14 +383,14 @@ packages:
       name: path_provider_android
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.11"
+    version: "2.0.12"
   path_provider_ios:
     dependency: transitive
     description:
       name: path_provider_ios
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.7"
+    version: "2.0.8"
   path_provider_linux:
     dependency: transitive
     description:
@@ -460,7 +460,7 @@ packages:
       name: pointycastle
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "3.5.0"
+    version: "3.5.2"
   process:
     dependency: transitive
     description:
@@ -488,7 +488,7 @@ packages:
       name: r_upgrade
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.3.7+2"
+    version: "0.3.7+3"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -556,35 +556,35 @@ packages:
       name: url_launcher
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "6.0.18"
+    version: "6.0.20"
   url_launcher_android:
     dependency: transitive
     description:
       name: url_launcher_android
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "6.0.14"
+    version: "6.0.15"
   url_launcher_ios:
     dependency: transitive
     description:
       name: url_launcher_ios
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "6.0.14"
+    version: "6.0.15"
   url_launcher_linux:
     dependency: transitive
     description:
       name: url_launcher_linux
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.3"
+    version: "3.0.0"
   url_launcher_macos:
     dependency: transitive
     description:
       name: url_launcher_macos
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.3"
+    version: "3.0.0"
   url_launcher_platform_interface:
     dependency: transitive
     description:
@@ -598,14 +598,14 @@ packages:
       name: url_launcher_web
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.6"
+    version: "2.0.9"
   url_launcher_windows:
     dependency: transitive
     description:
       name: url_launcher_windows
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.2"
+    version: "3.0.0"
   vector_math:
     dependency: transitive
     description:
@@ -619,7 +619,7 @@ packages:
       name: win32
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.3.11"
+    version: "2.5.1"
   xdg_directories:
     dependency: transitive
     description:
@@ -643,4 +643,4 @@ packages:
     version: "3.1.0"
 sdks:
   dart: ">=2.15.1 <3.0.0"
-  flutter: ">=2.5.0"
+  flutter: ">=2.10.0"

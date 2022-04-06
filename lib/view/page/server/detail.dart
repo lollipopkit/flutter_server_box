@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/core/extension/numx.dart';
 import 'package:toolbox/data/model/server/net_speed.dart';
 import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/server_status.dart';
@@ -177,24 +178,11 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     ));
   }
 
-  String convertMB(int mb) {
-    const suffix = ['MB', 'GB', 'TB'];
-    double value = mb.toDouble();
-    int squareTimes = 0;
-    for (; value / 1024 > 1 && squareTimes < 3; squareTimes++) {
-      value /= 1024;
-    }
-    var finalValue = value.toStringAsFixed(1);
-    if (finalValue.endsWith('.0')) {
-      finalValue = finalValue.replaceFirst('.0', '');
-    }
-    return '$finalValue ${suffix[squareTimes]}';
-  }
-
   Widget _buildMemView(ServerStatus ss) {
     final pColor = primaryColor;
     final used = ss.memory.used / ss.memory.total;
     final width = _media.size.width - 17 * 2 - 17 * 2;
+    const mb = 1024 * 1024;
     return RoundRectCard(Padding(
       padding: roundRectCardPadding,
       child: SizedBox(
@@ -206,10 +194,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildMemExplain(convertMB(ss.memory.used), pColor),
                 _buildMemExplain(
-                    convertMB(ss.memory.cache), pColor.withAlpha(77)),
-                _buildMemExplain(convertMB(ss.memory.total - ss.memory.used),
+                    (ss.memory.used * mb).convertBytes, pColor),
+                _buildMemExplain((ss.memory.cache * mb).convertBytes,
+                    pColor.withAlpha(77)),
+                _buildMemExplain(
+                    ((ss.memory.total - ss.memory.used) * mb).convertBytes,
                     progressColor.resolve(context))
               ],
             ),
