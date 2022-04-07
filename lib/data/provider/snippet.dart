@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:toolbox/core/provider_base.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/store/snippet.dart';
@@ -11,22 +13,34 @@ class SnippetProvider extends BusyProvider {
     _snippets = locator<SnippetStore>().fetch();
   }
 
-  void addInfo(Snippet snippet) {
+  void add(Snippet snippet) {
+    if (have(snippet)) return;
     _snippets.add(snippet);
     locator<SnippetStore>().put(snippet);
     notifyListeners();
   }
 
-  void delInfo(Snippet snippet) {
-    _snippets.removeWhere((e) => e.name == snippet.name);
+  void del(Snippet snippet) {
+    if (!have(snippet)) return;
+    _snippets.removeAt(index(snippet));
     locator<SnippetStore>().delete(snippet);
     notifyListeners();
   }
 
-  void updateInfo(Snippet old, Snippet newOne) {
-    final idx = _snippets.indexWhere((e) => e.name == old.name);
-    _snippets[idx] = newOne;
+  int index(Snippet snippet) {
+    return _snippets.indexWhere((e) => e.name == snippet.name);
+  }
+
+  bool have(Snippet snippet) {
+    return index(snippet) != -1;
+  }
+
+  void update(Snippet old, Snippet newOne) {
+    if (!have(old)) return;
+    _snippets[index(old)] = newOne;
     locator<SnippetStore>().update(old, newOne);
     notifyListeners();
   }
+
+  String get export => json.encode(snippets);
 }

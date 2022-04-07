@@ -35,7 +35,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
         widget.snippet != null
             ? IconButton(
                 onPressed: () {
-                  _provider.delInfo(widget.snippet!);
+                  _provider.del(widget.snippet!);
                   Navigator.of(context).pop();
                 },
                 icon: const Icon(Icons.delete))
@@ -71,9 +71,9 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           }
           final snippet = Snippet(name, script);
           if (widget.snippet != null) {
-            _provider.updateInfo(widget.snippet!, snippet);
+            _provider.update(widget.snippet!, snippet);
           } else {
-            _provider.addInfo(snippet);
+            _provider.add(snippet);
           }
           Navigator.of(context).pop();
         },
