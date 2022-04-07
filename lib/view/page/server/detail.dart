@@ -194,10 +194,9 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                _buildMemExplain((ss.memory.used * mb).convertBytes, pColor),
                 _buildMemExplain(
-                    (ss.memory.used * mb).convertBytes, pColor),
-                _buildMemExplain((ss.memory.cache * mb).convertBytes,
-                    pColor.withAlpha(77)),
+                    (ss.memory.cache * mb).convertBytes, pColor.withAlpha(77)),
                 _buildMemExplain(
                     ((ss.memory.total - ss.memory.used) * mb).convertBytes,
                     progressColor.resolve(context))

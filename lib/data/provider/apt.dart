@@ -8,7 +8,7 @@ class AptProvider extends BusyProvider {
   SSHClient? client;
   Distribution? dist;
   String? whoami;
-  List<AptUpgradePkgInfo>? upgradeable;
+  List<UpgradePkgInfo>? upgradeable;
   String? error;
   String? updateLog;
 
@@ -36,12 +36,10 @@ class AptProvider extends BusyProvider {
       error = 'No client';
       return;
     }
-    await update();
-    final result = await client!.run('apt list --upgradeable').string;
+
+    final result = await _update();
     try {
-      final list = result.split('\n').sublist(4);
-      list.removeWhere((element) => element.isEmpty);
-      upgradeable = list.map((e) => AptUpgradePkgInfo(e, dist!)).toList();
+      getUpgradeableList(result);
     } catch (e) {
       error = e.toString();
     } finally {
@@ -49,12 +47,34 @@ class AptProvider extends BusyProvider {
     }
   }
 
-  Future<void> update() async {
-    if (client == null) {
-      error = 'No client';
-      return;
+  void getUpgradeableList(String raw) {
+    switch (dist) {
+      case Distribution.rehl:
+        var list = raw.split('\n').sublist(2);
+        list.removeWhere((element) => element.isEmpty);
+        final endLine = list.lastIndexWhere(
+            (element) => element.contains('Obsoleting Packages'));
+        list = list.sublist(0, endLine);
+        upgradeable = list.map((e) => UpgradePkgInfo(e, dist!)).toList();
+        break;
+      case Distribution.debian:
+      case Distribution.unknown:
+      default:
+        final list = raw.split('\n').sublist(4);
+        list.removeWhere((element) => element.isEmpty);
+        upgradeable = list.map((e) => UpgradePkgInfo(e, dist!)).toList();
     }
-    await client!.run('apt update');
+  }
+
+  Future<String> _update() async {
+    switch (dist) {
+      case Distribution.rehl:
+        return await client!.run('yum check-update').string;
+      case Distribution.debian:
+      default:
+        await client!.run('apt update');
+        return await client!.run('apt list --upgradeable').string;
+    }
   }
 
   Future<void> upgrade() async {
@@ -64,11 +84,21 @@ class AptProvider extends BusyProvider {
     }
     updateLog = null;
 
-    final session = await client!.execute('apt upgrade -y');
+    final session = await client!.execute(upgradeCmd);
     session.stdout.listen((data) {
       updateLog = (updateLog ?? '') + data.string;
       notifyListeners();
     });
     refreshInstalled();
+  }
+
+  String get upgradeCmd {
+    switch (dist) {
+      case Distribution.rehl:
+        return 'yum upgrade -y';
+      case Distribution.debian:
+      default:
+        return 'apt upgrade -y';
+    }
   }
 }

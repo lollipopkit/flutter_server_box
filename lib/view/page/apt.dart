@@ -129,7 +129,7 @@ class _AptManagePageState extends State<AptManagePage>
     );
   }
 
-  Widget _buildUpdateItem(AptUpgradePkgInfo info, AptProvider apt) {
+  Widget _buildUpdateItem(UpgradePkgInfo info, AptProvider apt) {
     return ListTile(
       title: Text(info.package),
       subtitle: Text(

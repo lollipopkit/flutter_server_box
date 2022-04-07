@@ -52,10 +52,10 @@ Support, but not tested|Windows/Linux
 - [x] Theme switch
 - [x] Migrate from `ssh2` to `dartssh2`
 - [x] Desktop support
-- [ ] Apt manager
-- [ ] SFTP
+- [x] Apt manager
+- [x] SFTP
 - [ ] Snippet market
-- [ ] Docker manager
+- [x] Docker manager
 
 ## Build
 Please use `make.dart` to build.

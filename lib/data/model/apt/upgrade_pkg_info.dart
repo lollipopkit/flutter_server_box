@@ -1,6 +1,6 @@
 import 'package:toolbox/data/model/distribution.dart';
 
-class AptUpgradePkgInfo {
+class UpgradePkgInfo {
   final String _raw;
   final Distribution _dist;
 
@@ -9,7 +9,7 @@ class AptUpgradePkgInfo {
   late String newVersion;
   late String arch;
 
-  AptUpgradePkgInfo(this._raw, this._dist) {
+  UpgradePkgInfo(this._raw, this._dist) {
     switch (_dist) {
       case Distribution.debian:
       case Distribution.unknown:
@@ -29,5 +29,13 @@ class AptUpgradePkgInfo {
     nowVersion = split2[5].replaceFirst(']', '');
   }
 
-  void _parseYum() {}
+  void _parseYum() {
+    final result = RegExp(r'\S+').allMatches(_raw);
+    final pkgAndArch = result.elementAt(0).group(0) ?? '.';
+    final split1 = pkgAndArch.split('.');
+    package = split1[0];
+    arch = split1[1];
+    newVersion = result.elementAt(1).group(0) ?? 'Unknown';
+    nowVersion = '';
+  }
 }
