@@ -63,18 +63,18 @@ class _AptManagePageState extends State<AptManagePage>
           apt.refreshInstalled();
           return centerLoading;
         }
-        if (!apt.isSU) {
-          return Center(
-            child: Text(
-              'Only supported as root. Not "${apt.whoami}".',
-              style: greyStyle,
-            ),
-          );
-        }
         return ListView(
           padding: const EdgeInsets.all(13),
-          children:
-              [_buildUpdatePanel(apt)].map((e) => RoundRectCard(e)).toList(),
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(17),
+              child: Text(
+                'Experimental features.\nPlease report bugs on Github Issue.',
+                textAlign: TextAlign.center,
+              ),
+            ),
+            _buildUpdatePanel(apt)
+          ].map((e) => RoundRectCard(e)).toList(),
         );
       }),
     );

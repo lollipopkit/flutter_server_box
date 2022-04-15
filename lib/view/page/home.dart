@@ -104,12 +104,12 @@ class _MyHomePageState extends State<MyHomePage>
         childDecoration: const BoxDecoration(
           // NOTICE: Uncomment if you want to add shadow behind the page.
           // Keep in mind that it may cause animation jerks.
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 0.0,
-            ),
-          ],
+          // boxShadow: <BoxShadow>[
+          //   BoxShadow(
+          //     color: Colors.black12,
+          //     blurRadius: 0.0,
+          //   ),
+          // ],
           borderRadius: BorderRadius.all(Radius.circular(16)),
         ),
         drawer: _buildDrawer(),
@@ -278,7 +278,11 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   String _buildVersionStr() {
-    return 'Ver: 1.0.${BuildData.build}';
+    var mod = '';
+    if (BuildData.modifications != 0) {
+      mod = '(+${BuildData.modifications})';
+    }
+    return 'Ver: 1.0.${BuildData.build}$mod';
   }
 
   @override

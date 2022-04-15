@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 
 const appName = 'ServerBox';
+const skslFileSuffix = '.sksl.json';
 
 Future<int> getGitCommitCount() async {
   final result = await Process.run('git', ['log', '--oneline']);
@@ -90,7 +91,8 @@ Future<void> flutterBuild(String source, String target, bool isAndroid) async {
     isAndroid ? 'apk' : 'ipa',
     '--target-platform=android-arm64',
     '--build-number=$build',
-    '--build-name=1.0.$build'
+    '--build-name=1.0.$build',
+    '--bundle-sksl-path=${isAndroid ? 'android' : 'ios'}$skslFileSuffix',
   ];
   if (!isAndroid) args.removeAt(2);
   print('Building with args: ${args.join(' ')}');
@@ -100,7 +102,16 @@ Future<void> flutterBuild(String source, String target, bool isAndroid) async {
   if (exitCode == 0) {
     target = target.replaceFirst('build', build.toString());
     print('Copying from $source to $target');
-    await File(source).copy(target);
+    if (isAndroid) {
+      await File(source).copy(target);
+    } else {
+      final result = await Process.run('cp', ['-r', source, target]);
+      if (result.exitCode != 0) {
+        print(result.stderr);
+        exit(1);
+      }
+    }
+
     print('Done.');
   } else {
     print(buildResult.stderr.toString());
@@ -112,8 +123,8 @@ Future<void> flutterBuild(String source, String target, bool isAndroid) async {
 }
 
 Future<void> flutterBuildIOS() async {
-  await flutterBuild('./build/ios/iphoneos/ToastTiku.app',
-      './release/${appName}_build.app', false);
+  await flutterBuild('./build/ios/archive/Runner.xcarchive',
+      './release/${appName}_build.xcarchive', false);
 }
 
 Future<void> flutterBuildAndroid() async {
