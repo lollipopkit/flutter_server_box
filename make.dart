@@ -83,7 +83,6 @@ void flutterRun(String? mode) {
 }
 
 Future<void> flutterBuild(String source, String target, bool isAndroid) async {
-  final startTime = DateTime.now();
   final build = await getGitCommitCount();
 
   final args = [
@@ -112,14 +111,12 @@ Future<void> flutterBuild(String source, String target, bool isAndroid) async {
       }
     }
 
-    print('Done.');
+    print('Done.\n');
   } else {
     print(buildResult.stderr.toString());
     print('\nBuild failed with exit code $exitCode');
     exit(exitCode);
   }
-  final endTime = DateTime.now();
-  print('Spent time: ${endTime.difference(startTime).toString()}');
 }
 
 Future<void> flutterBuildIOS() async {
@@ -144,16 +141,28 @@ void main(List<String> args) async {
     case 'run':
       return flutterRun(args.length == 2 ? args[1] : null);
     case 'build':
+      final stopwatch = Stopwatch()..start();
+      final buildFunc = [flutterBuildIOS, flutterBuildAndroid];
+      await updateBuildData();
+      dartFormat();
       if (args.length > 1) {
-        await updateBuildData();
-        dartFormat();
-        if (args[1] == 'android' || args[1] == 'harmony') {
-          return flutterBuildAndroid();
-        } else if (args[1] == 'ios') {
-          return flutterBuildIOS();
+        final platform = args[1];
+        switch (platform) {
+          case 'ios':
+            buildFunc.remove(flutterBuildIOS);
+            break;
+          case 'android':
+            buildFunc.remove(flutterBuildAndroid);
+            break;
+          default:
+            print('Unknown platform: $platform');
+            exit(1);
         }
-        print('unkonwn build arg: ${args[1]}');
       }
+      for (final func in buildFunc) {
+        await func();
+      }
+      print('Build finished in ${stopwatch.elapsed}');
       return;
     default:
       print('Unsupported command: $command');
