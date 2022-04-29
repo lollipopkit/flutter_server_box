@@ -5,6 +5,9 @@ import 'dart:convert';
 import 'dart:io';
 
 const appName = 'ServerBox';
+const buildDataFilePath = 'lib/data/res/build_data.dart';
+const xcarchivePath = 'build/ios/archive/Runner.xcarchive';
+
 const skslFileSuffix = '.sksl.json';
 
 Future<int> getGitCommitCount() async {
@@ -64,8 +67,7 @@ Future<void> updateBuildData() async {
   print('Updating BuildData...');
   final data = await getBuildData();
   print(jsonEncodeWithIndent(data));
-  const path = 'lib/data/res/build_data.dart';
-  await writeStaicConfigFile(data, 'BuildData', path);
+  await writeStaicConfigFile(data, 'BuildData', buildDataFilePath);
 }
 
 void dartFormat() {
@@ -120,8 +122,8 @@ Future<void> flutterBuild(String source, String target, bool isAndroid) async {
 }
 
 Future<void> flutterBuildIOS() async {
-  await flutterBuild('./build/ios/archive/Runner.xcarchive',
-      './release/${appName}_build.xcarchive', false);
+  await flutterBuild(
+      xcarchivePath, './release/${appName}_build.xcarchive', false);
 }
 
 Future<void> flutterBuildAndroid() async {
@@ -149,10 +151,10 @@ void main(List<String> args) async {
         final platform = args[1];
         switch (platform) {
           case 'ios':
-            buildFunc.remove(flutterBuildIOS);
+            buildFunc.remove(flutterBuildAndroid);
             break;
           case 'android':
-            buildFunc.remove(flutterBuildAndroid);
+            buildFunc.remove(flutterBuildIOS);
             break;
           default:
             print('Unknown platform: $platform');

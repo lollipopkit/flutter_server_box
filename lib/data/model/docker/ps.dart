@@ -11,8 +11,7 @@ class DockerPsItem {
       this.status, this.ports, this.name);
 
   DockerPsItem.fromRawString(String rawString) {
-    List<String> parts = rawString.split('   ');
-    parts.removeWhere((element) => element.isEmpty);
+    List<String> parts = rawString.split(RegExp('  +'));
     parts = parts.map((e) => e.trim()).toList();
 
     containerId = parts[0];
@@ -20,7 +19,7 @@ class DockerPsItem {
     command = parts[2].trim();
     created = parts[3];
     status = parts[4];
-    if (running) {
+    if (running && parts.length > 6) {
       ports = parts[5];
       name = parts[6];
     } else {
@@ -30,4 +29,9 @@ class DockerPsItem {
   }
 
   bool get running => status.contains('Up ');
+
+  @override
+  String toString() {
+    return 'DockerPsItem<$containerId@$name>';
+  }
 }

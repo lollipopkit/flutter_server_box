@@ -66,7 +66,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
 
   Widget _buildMain() {
     return Consumer<DockerProvider>(builder: (_, docker, __) {
-      final running = docker.running;
+      final running = docker.items;
       if (docker.error != null && running == null) {
         return Center(
             child: Column(

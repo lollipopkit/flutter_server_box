@@ -3,9 +3,11 @@ import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/provider_base.dart';
 import 'package:toolbox/data/model/docker/ps.dart';
 
+final dockerNotFound = RegExp('(command not found | Unknown command)');
+
 class DockerProvider extends BusyProvider {
   SSHClient? client;
-  List<DockerPsItem>? running;
+  List<DockerPsItem>? items;
   String? version;
   String? edition;
   String? error;
@@ -15,7 +17,7 @@ class DockerProvider extends BusyProvider {
   void clear() {
     client = null;
     error = null;
-    running = null;
+    items = null;
     version = null;
     edition = null;
   }
@@ -28,6 +30,11 @@ class DockerProvider extends BusyProvider {
     }
 
     final verRaw = await client!.run('docker version').string;
+    if (verRaw.contains(dockerNotFound)) {
+      error = 'docker not found';
+      notifyListeners();
+      return;
+    }
     final verSplit = verRaw.split('\n');
     if (verSplit.length < 3) {
       error = 'invalid version';
@@ -42,19 +49,15 @@ class DockerProvider extends BusyProvider {
     }
 
     final raw = await client!.run('docker ps -a').string;
-    if (raw.contains('command not found')) {
-      error = 'docker not found';
-      notifyListeners();
-      return;
-    }
+    final lines = raw.split('\n');
+    lines.removeAt(0);
+    lines.removeWhere((element) => element.isEmpty);
 
     try {
-      final lines = raw.split('\n');
-      lines.removeAt(0);
-      lines.removeWhere((element) => element.isEmpty);
-      running = lines.map((e) => DockerPsItem.fromRawString(e)).toList();
+      items = lines.map((e) => DockerPsItem.fromRawString(e)).toList();
     } catch (e) {
       error = e.toString();
+      rethrow;
     } finally {
       notifyListeners();
     }

@@ -29,6 +29,18 @@ List<SSHKeyPair> loadIndentity(String key) {
   return SSHKeyPair.fromPem(key);
 }
 
+const shellCmd = "cat /proc/net/dev && date +%s \necho A====A \n "
+    "cat /etc/os-release | grep PRETTY_NAME \necho A====A \n"
+    "cat /proc/stat | grep cpu \necho A====A \n"
+    "uptime \necho A====A \n"
+    "cat /proc/net/snmp \necho A====A \n"
+    "df -h \necho A====A \n"
+    "free -m \necho A====A \n"
+    "cat /sys/class/thermal/thermal_zone*/type \necho A====A \n"
+    "cat /sys/class/thermal/thermal_zone*/temp";
+const shellPath = '.serverbox.sh';
+final cpuTempReg = RegExp('(x86_pkg_temp|cpu_thermal)');
+
 class ServerProvider extends BusyProvider {
   List<ServerInfo> _servers = [];
   List<ServerInfo> get servers => _servers;
@@ -90,15 +102,9 @@ class ServerProvider extends BusyProvider {
       _getData(spi);
       return;
     }
-    try {
-      await Future.wait(_servers.map((s) async {
-        await _getData(s.info);
-      }));
-    } catch (e) {
-      if (e is! RangeError) {
-        rethrow;
-      }
-    }
+    await Future.wait(_servers.map((s) async {
+      await _getData(s.info);
+    }));
   }
 
   Future<void> startAutoRefresh() async {
@@ -167,33 +173,37 @@ class ServerProvider extends BusyProvider {
         logger.info(
             'Connected to [${spi.name}] in [${time2.difference(time1).toString()}].');
         _servers[idx].connectionState = ServerConnectionState.connected;
-        notifyListeners();
+        _servers[idx]
+            .client!
+            .run("echo '$shellCmd' > $shellPath && chmod +x $shellPath");
       } catch (e) {
         _servers[idx].connectionState = ServerConnectionState.failed;
         _servers[idx].status.failedInfo = e.toString() + ' ## ';
-        notifyListeners();
         logger.warning(e);
+      } finally {
+        notifyListeners();
       }
     }
+
+    // if client is null, return
     final si = _servers[idx];
+    if (si.client == null) return;
+    final raw = await si.client!.run("sh $shellPath").string;
+    final lines = raw.split('A====A').map((e) => e.trim()).toList();
+
     try {
-      if (si.client == null) return;
-      final raw = await si.client!
-          .run(
-              r"cat /proc/net/dev && date +%s && echo 'A====A' && cat /etc/os-release | grep PRETTY_NAME && echo 'A====A' && cat /proc/stat | grep cpu && echo 'A====A' && paste <(cat /sys/class/thermal/thermal_zone*/type) <(cat /sys/class/thermal/thermal_zone*/temp) | column -s $'\t' -t | sed 's/\(.\)..$/.\1°C/' && echo 'A====A' && uptime && echo 'A====A' && cat /proc/net/snmp && echo 'A====A' && df -h && echo 'A====A' && free -m")
-          .string;
-      final lines = raw.split('A====A').map((e) => e.trim()).toList();
-      _getCPU(spi, lines[2], lines[3]);
-      _getMem(spi, lines[7]);
+      _getCPU(spi, lines[2], lines[7], lines[8]);
+      _getMem(spi, lines[6]);
       _getSysVer(spi, lines[1]);
-      _getUpTime(spi, lines[4]);
-      _getDisk(spi, lines[6]);
-      _getTcp(spi, lines[5]);
+      _getUpTime(spi, lines[3]);
+      _getDisk(spi, lines[5]);
+      _getTcp(spi, lines[4]);
       _getNetSpeed(spi, lines[0]);
     } catch (e) {
       _servers[idx].connectionState = ServerConnectionState.failed;
       servers[idx].status.failedInfo = e.toString();
       logger.warning(e);
+      rethrow;
     } finally {
       notifyListeners();
     }
@@ -232,17 +242,30 @@ class ServerProvider extends BusyProvider {
     }
   }
 
-  String _getCPUTemp(String raw) {
-    final split = raw.split('\n');
-    for (var item in split) {
-      if (item.contains('x86_pkg_temp') || item.contains('cpu_thermal')) {
-        return item.split(' ').last;
-      }
+  String _getCPUTemp(String type, String value) {
+    const noMatch = 'No such file or directory';
+    // Not support to get CPU temperature
+    if (value.contains(noMatch) ||
+        type.contains(noMatch) ||
+        value.isEmpty ||
+        type.isEmpty) {
+      return '';
     }
-    return '';
+    final split = type.split('\n');
+    int idx = 0;
+    for (var item in split) {
+      if (item.contains(cpuTempReg)) {
+        break;
+      }
+      idx++;
+    }
+    return (int.parse(value.split('\n')[idx].trim()) / 1000)
+            .toStringAsFixed(1) +
+        '°C';
   }
 
-  void _getCPU(ServerPrivateInfo spi, String raw, String temp) {
+  void _getCPU(
+      ServerPrivateInfo spi, String raw, String tempType, String tempValue) {
     final info = _servers.firstWhere((e) => e.info == spi);
     final List<CpuStatus> cpus = [];
 
@@ -262,7 +285,7 @@ class ServerProvider extends BusyProvider {
     }
     if (cpus.isNotEmpty) {
       info.status.cpu2Status =
-          info.status.cpu2Status.update(cpus, _getCPUTemp(temp));
+          info.status.cpu2Status.update(cpus, _getCPUTemp(tempType, tempValue));
     }
   }
 
