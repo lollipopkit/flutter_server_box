@@ -49,7 +49,11 @@ class _AptManagePageState extends State<AptManagePage>
       Navigator.of(context).pop();
       return;
     }
-    locator<AptProvider>().init(si.client!, si.status.sysVer.dist, () => scrollController.jumpTo(scrollController.position.maxScrollExtent));
+    locator<AptProvider>().init(
+        si.client!,
+        si.status.sysVer.dist,
+        () =>
+            scrollController.jumpTo(scrollController.position.maxScrollExtent));
   }
 
   @override
