@@ -7,8 +7,11 @@ import 'dart:io';
 const appName = 'ServerBox';
 const buildDataFilePath = 'lib/data/res/build_data.dart';
 const xcarchivePath = 'build/ios/archive/Runner.xcarchive';
-
+var regiOSProjectVer = RegExp(r'CURRENT_PROJECT_VERSION = .+;');
+var regiOSMarketVer = RegExp(r'MARKETING_VERSION = .+');
 const skslFileSuffix = '.sksl.json';
+
+int? build;
 
 Future<int> getGitCommitCount() async {
   final result = await Process.run('git', ['log', '--oneline']);
@@ -50,7 +53,7 @@ Future<String> getFlutterVersion() async {
 Future<Map<String, dynamic>> getBuildData() async {
   final data = {
     'name': appName,
-    'build': await getGitCommitCount(),
+    'build': build,
     'engine': await getFlutterVersion(),
     'buildAt': DateTime.now().toString(),
     'modifications': await getGitModificationCount(),
@@ -85,8 +88,6 @@ void flutterRun(String? mode) {
 }
 
 Future<void> flutterBuild(String source, String target, bool isAndroid) async {
-  final build = await getGitCommitCount();
-
   final args = [
     'build',
     isAndroid ? 'apk' : 'ipa',
@@ -122,6 +123,7 @@ Future<void> flutterBuild(String source, String target, bool isAndroid) async {
 }
 
 Future<void> flutterBuildIOS() async {
+  await changeiOSVersion();
   await flutterBuild(
       xcarchivePath, './release/${appName}_build.xcarchive', false);
 }
@@ -129,6 +131,15 @@ Future<void> flutterBuildIOS() async {
 Future<void> flutterBuildAndroid() async {
   await flutterBuild('./build/app/outputs/flutter-apk/app-release.apk',
       './release/${appName}_build_Arm64.apk', true);
+}
+
+Future<void> changeiOSVersion() async {
+  final file = File('ios/Runner.xcodeproj/project.pbxproj');
+  final contents = await file.readAsString();
+  final newContents = contents
+      .replaceAll(regiOSMarketVer, 'MARKETING_VERSION = 1.0.$build;')
+      .replaceAll(regiOSProjectVer, 'CURRENT_PROJECT_VERSION = $build;');
+  await file.writeAsString(newContents);
 }
 
 void main(List<String> args) async {
@@ -145,6 +156,7 @@ void main(List<String> args) async {
     case 'build':
       final stopwatch = Stopwatch()..start();
       final buildFunc = [flutterBuildIOS, flutterBuildAndroid];
+      build = await getGitCommitCount();
       await updateBuildData();
       dartFormat();
       if (args.length > 1) {
