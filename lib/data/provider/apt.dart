@@ -11,12 +11,15 @@ class AptProvider extends BusyProvider {
   List<UpgradePkgInfo>? upgradeable;
   String? error;
   String? updateLog;
+  Function()? onUpgrade;
 
   AptProvider();
 
-  Future<void> init(SSHClient client, Distribution dist) async {
+  Future<void> init(
+      SSHClient client, Distribution dist, Function() onUpgrade) async {
     this.client = client;
     this.dist = dist;
+    this.onUpgrade = onUpgrade;
     whoami = (await client.run('whoami').string).trim();
   }
 
@@ -88,6 +91,7 @@ class AptProvider extends BusyProvider {
     session.stdout.listen((data) {
       updateLog = (updateLog ?? '') + data.string;
       notifyListeners();
+      onUpgrade!();
     });
     refreshInstalled();
   }

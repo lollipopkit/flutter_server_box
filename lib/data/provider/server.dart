@@ -139,6 +139,7 @@ class ServerProvider extends BusyProvider {
 
   void delServer(ServerPrivateInfo info) {
     final idx = _servers.indexWhere((s) => s.info == info);
+    if (idx == -1) return;
     _servers[idx].client?.close();
     _servers.removeAt(idx);
     notifyListeners();

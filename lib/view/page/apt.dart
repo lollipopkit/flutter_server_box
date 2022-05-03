@@ -24,6 +24,7 @@ class _AptManagePageState extends State<AptManagePage>
     with SingleTickerProviderStateMixin {
   late MediaQueryData _media;
   final greyStyle = const TextStyle(color: Colors.grey);
+  final scrollController = ScrollController();
 
   @override
   void didChangeDependencies() {
@@ -48,7 +49,7 @@ class _AptManagePageState extends State<AptManagePage>
       Navigator.of(context).pop();
       return;
     }
-    locator<AptProvider>().init(si.client!, si.status.sysVer.dist);
+    locator<AptProvider>().init(si.client!, si.status.sysVer.dist, () => scrollController.jumpTo(scrollController.position.maxScrollExtent));
   }
 
   @override
@@ -118,9 +119,10 @@ class _AptManagePageState extends State<AptManagePage>
                 ]
               : [
                   SizedBox(
-                      height: _media.size.height * 0.73,
+                      height: _media.size.height * 0.7,
                       child: ListView(
                         padding: const EdgeInsets.all(18),
+                        controller: scrollController,
                         children: [Text(apt.updateLog!)],
                       ))
                 ],
