@@ -77,6 +77,9 @@ class _PingPageState extends State<PingPage>
 
   String _buildPingSummary(PingResult result) {
     final ip = result.ip ?? 'unkown';
+    if (result.results == null || result.results!.isEmpty) {
+      return '$ip - no results';
+    }
     final ttl = result.results?.first.ttl ?? 'unkown';
     final loss = result.statistic?.loss ?? 'unkown';
     final min = result.statistic?.min ?? 'unkown';
@@ -91,14 +94,15 @@ class _PingPageState extends State<PingPage>
       showSnackBar(context, const Text('Please input a target'));
       return;
     }
-    for (var si in locator<ServerProvider>().servers) {
-      if (si.client == null) {
-        continue;
+
+    await Future.wait(locator<ServerProvider>().servers.map((e) async {
+      if (e.client == null) {
+        return;
       }
-      final result = await si.client!.run('ping -c 3 $target').string;
-      _results.add(PingResult.parse(si.info.name, result));
+      final result = await e.client!.run('ping -c 3 $target').string;
+      _results.add(PingResult.parse(e.info.name, result));
       setState(() {});
-    }
+    }));
   }
 
   Widget _buildControl() {
@@ -115,7 +119,7 @@ class _PingPageState extends State<PingPage>
                     foregroundColor: MaterialStateProperty.all(primaryColor)),
                 child: Row(
                   children: const [
-                    Icon(Icons.stop),
+                    Icon(Icons.delete),
                     SizedBox(
                       width: 7,
                     ),
@@ -124,6 +128,7 @@ class _PingPageState extends State<PingPage>
                 ),
                 onPressed: () {
                   _results.clear();
+                  setState(() {});
                 },
               ),
               TextButton(
