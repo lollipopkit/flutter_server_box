@@ -17,4 +17,8 @@ extension StringX on String {
     }
     return Distribution.unknown;
   }
+
+  Uri get uri {
+    return Uri.parse(this);
+  }
 }

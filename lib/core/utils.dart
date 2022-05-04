@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/view/widget/card_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:toolbox/core/extension/stringx.dart';
 
 void unawaited(Future<void> future) {}
 
@@ -27,10 +28,11 @@ void showSnackBarWithAction(BuildContext context, String content, String action,
 }
 
 Future<bool> openUrl(String url) async {
-  if (!await canLaunch(url)) {
+  final uri = url.uri;
+  if (!await canLaunchUrl(uri)) {
     return false;
   }
-  final ok = await launch(url, forceSafariVC: false);
+  final ok = await launchUrl(uri);
   if (ok == true) {
     return true;
   }

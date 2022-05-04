@@ -109,7 +109,7 @@ packages:
       name: crypto
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "3.0.1"
+    version: "3.0.2"
   dart_console:
     dependency: transitive
     description:
@@ -123,7 +123,7 @@ packages:
       name: dartssh2
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.6.0"
+    version: "2.6.1"
   dio:
     dependency: "direct main"
     description:
@@ -137,14 +137,14 @@ packages:
       name: dropdown_button2
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.2.5"
+    version: "1.4.0"
   extended_image:
     dependency: "direct main"
     description:
       name: extended_image
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "5.1.3"
+    version: "6.0.3"
   extended_image_library:
     dependency: transitive
     description:
@@ -212,7 +212,7 @@ packages:
       name: flutter_native_splash
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.3.3"
+    version: "2.1.6"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -286,6 +286,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.6.3"
+  lint:
+    dependency: transitive
+    description:
+      name: lint
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.8.2"
   lints:
     dependency: transitive
     description:
@@ -355,7 +362,7 @@ packages:
       name: path_provider_android
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.12"
+    version: "2.0.13"
   path_provider_ios:
     dependency: transitive
     description:
@@ -411,7 +418,7 @@ packages:
       name: pinenacl
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.3.3"
+    version: "0.3.4"
   platform:
     dependency: transitive
     description:
@@ -432,7 +439,7 @@ packages:
       name: pointycastle
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "3.5.2"
+    version: "3.6.0"
   process:
     dependency: transitive
     description:
@@ -460,7 +467,7 @@ packages:
       name: r_upgrade
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.3.7+3"
+    version: "0.3.8+1"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -528,14 +535,14 @@ packages:
       name: url_launcher
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "6.0.20"
+    version: "6.1.0"
   url_launcher_android:
     dependency: transitive
     description:
       name: url_launcher_android
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "6.0.15"
+    version: "6.0.16"
   url_launcher_ios:
     dependency: transitive
     description:
@@ -591,7 +598,7 @@ packages:
       name: win32
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.5.1"
+    version: "2.5.2"
   xdg_directories:
     dependency: transitive
     description:

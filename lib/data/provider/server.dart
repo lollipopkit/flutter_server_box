@@ -244,7 +244,7 @@ class ServerProvider extends BusyProvider {
   }
 
   String _getCPUTemp(String type, String value) {
-    const noMatch = r"cat: '/sys/class/thermal/thermal_zone*/type'";
+    const noMatch = "/sys/class/thermal/thermal_zone*/type";
     // Not support to get CPU temperature
     if (value.contains(noMatch) ||
         type.contains(noMatch) ||
