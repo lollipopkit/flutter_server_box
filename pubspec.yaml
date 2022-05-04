@@ -147,7 +147,7 @@ flutter_native_splash:
   # parameters from above. If the image_dark parameter is specified, color_dark or 
   # background_image_dark must be specified.  color_dark and background_image_dark cannot both be
   # set.
-  color_dark: "#042a49"
+  color_dark: "#121212"
   #background_image_dark: "assets/dark-background.png"
   #image_dark: assets/splash-invert.png
 
