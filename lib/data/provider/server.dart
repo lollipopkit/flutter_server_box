@@ -29,14 +29,15 @@ List<SSHKeyPair> loadIndentity(String key) {
   return SSHKeyPair.fromPem(key);
 }
 
-const shellCmd = "cat /proc/net/dev && date +%s \necho A====A \n "
-    "cat /etc/os-release | grep PRETTY_NAME \necho A====A \n"
-    "cat /proc/stat | grep cpu \necho A====A \n"
-    "uptime \necho A====A \n"
-    "cat /proc/net/snmp \necho A====A \n"
-    "df -h \necho A====A \n"
-    "free -m \necho A====A \n"
-    "cat /sys/class/thermal/thermal_zone*/type \necho A====A \n"
+const seperator = 'A====A';
+const shellCmd = "cat /proc/net/dev && date +%s \necho $seperator \n "
+    "cat /etc/os-release | grep PRETTY_NAME \necho $seperator \n"
+    "cat /proc/stat | grep cpu \necho $seperator \n"
+    "uptime \necho $seperator \n"
+    "cat /proc/net/snmp \necho $seperator \n"
+    "df -h \necho $seperator \n"
+    "free -m \necho $seperator \n"
+    "cat /sys/class/thermal/thermal_zone*/type \necho $seperator \n"
     "cat /sys/class/thermal/thermal_zone*/temp";
 const shellPath = '.serverbox.sh';
 final cpuTempReg = RegExp('(x86_pkg_temp|cpu_thermal)');
@@ -190,7 +191,7 @@ class ServerProvider extends BusyProvider {
     final si = _servers[idx];
     if (si.client == null) return;
     final raw = await si.client!.run("sh $shellPath").string;
-    final lines = raw.split('A====A').map((e) => e.trim()).toList();
+    final lines = raw.split(seperator).map((e) => e.trim()).toList();
 
     try {
       _getCPU(spi, lines[2], lines[7], lines[8]);
@@ -232,7 +233,7 @@ class ServerProvider extends BusyProvider {
       final bytesOut = int.parse(bytes[8]);
       results.add(NetSpeedPart(device, bytesIn, bytesOut, time));
     }
-    info.status.netSpeed = info.status.netSpeed.update(results);
+    info.status.netSpeed.update(results);
   }
 
   void _getSysVer(ServerPrivateInfo spi, String raw) {
@@ -285,8 +286,7 @@ class ServerProvider extends BusyProvider {
           int.parse(matches[6])));
     }
     if (cpus.isNotEmpty) {
-      info.status.cpu2Status =
-          info.status.cpu2Status.update(cpus, _getCPUTemp(tempType, tempValue));
+      info.status.cpu2Status.update(cpus, _getCPUTemp(tempType, tempValue));
     }
   }
 

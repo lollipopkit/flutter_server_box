@@ -48,6 +48,7 @@ class _PingPageState extends State<PingPage>
                 width: double.infinity,
                 height: _media.size.height * 0.6,
                 child: ListView.builder(
+                    controller: ScrollController(),
                     itemCount: _results.length,
                     itemBuilder: (context, index) {
                       final result = _results[index];

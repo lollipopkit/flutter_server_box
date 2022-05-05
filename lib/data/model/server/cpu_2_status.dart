@@ -14,8 +14,10 @@ class Cpu2Status {
     return used.isNaN ? 0 : 100 - used * 100;
   }
 
-  Cpu2Status update(List<CpuStatus> newStatus, String newTemp) {
-    return Cpu2Status(now, newStatus, newTemp);
+  void update(List<CpuStatus> newStatus, String newTemp) {
+    pre = now;
+    now = newStatus;
+    temp = newTemp;
   }
 
   int get coresCount => now.length;

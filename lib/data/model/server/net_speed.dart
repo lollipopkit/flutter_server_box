@@ -21,7 +21,10 @@ class NetSpeed {
     return devices;
   }
 
-  NetSpeed update(List<NetSpeedPart> newOne) => NetSpeed(now, newOne);
+  void update(List<NetSpeedPart> newOne) {
+    old = now;
+    now = newOne;
+  }
 
   int get timeDiff => now[0].time - old[0].time;
 

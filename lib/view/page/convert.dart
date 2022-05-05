@@ -50,6 +50,7 @@ class _ConvertPageState extends State<ConvertPage>
       body: GestureDetector(
         child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 7),
+            controller: ScrollController(),
             child: Column(children: [
               const SizedBox(height: 13),
               _buildInputTop(),

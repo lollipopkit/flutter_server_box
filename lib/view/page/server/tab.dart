@@ -71,6 +71,7 @@ class _ServerPageState extends State<ServerPage>
       }
       return ListView.separated(
         padding: const EdgeInsets.all(7),
+        controller: ScrollController(),
         itemBuilder: (ctx, idx) {
           if (idx == pro.servers.length) {
             return SizedBox(height: _media.padding.bottom);
