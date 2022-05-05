@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/update.dart';
+import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/provider/app.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/res/color.dart';
+import 'package:toolbox/data/res/font_style.dart';
 import 'package:toolbox/data/res/padding.dart';
 import 'package:toolbox/data/res/tab.dart';
 import 'package:toolbox/data/store/setting.dart';
+import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
@@ -29,6 +32,7 @@ class _SettingPageState extends State<SettingPage> {
   late final ServerProvider _serverProvider;
   late MediaQueryData _media;
   late ThemeData _theme;
+  late S s;
 
   @override
   void didChangeDependencies() {
@@ -36,6 +40,7 @@ class _SettingPageState extends State<SettingPage> {
     priColor = primaryColor;
     _media = MediaQuery.of(context);
     _theme = Theme.of(context);
+    s = S.of(context);
   }
 
   @override
@@ -51,7 +56,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Setting'),
+        title: Text(s.setting, style: size18),
       ),
       body: ListView(
         padding: const EdgeInsets.all(17),
@@ -70,12 +75,12 @@ class _SettingPageState extends State<SettingPage> {
       String display;
       if (app.newestBuild != null) {
         if (app.newestBuild! > BuildData.build) {
-          display = 'Found: v1.0.${app.newestBuild}, click to update';
+          display = s.versionHaveUpdate(app.newestBuild!);
         } else {
-          display = 'Current: v1.0.${BuildData.build}，is up to date';
+          display = s.versionUpdated(BuildData.build);
         }
       } else {
-        display = 'Current: v1.0.${BuildData.build}';
+        display = s.versionUnknownUpdate(BuildData.build);
       }
       return ListTile(
           contentPadding: roundRectCardPadding,
@@ -94,16 +99,16 @@ class _SettingPageState extends State<SettingPage> {
       tilePadding: roundRectCardPadding,
       childrenPadding: roundRectCardPadding,
       textColor: priColor,
-      title: const Text(
-        'Server status update interval',
+      title: Text(
+        s.updateServerStatusInterval,
         style: textStyle,
         textAlign: TextAlign.start,
       ),
-      subtitle: const Text(
-        'Will take effect immediately.',
-        style: TextStyle(color: Colors.grey),
+      subtitle: Text(
+        s.willTakEeffectImmediately,
+        style: const TextStyle(color: Colors.grey, fontSize: 13),
       ),
-      trailing: Text('${_intervalValue.toInt()} s'),
+      trailing: Text('${_intervalValue.toInt()} ${s.second}'),
       children: [
         Slider(
           thumbColor: priColor,
@@ -120,16 +125,16 @@ class _SettingPageState extends State<SettingPage> {
             _store.serverStatusUpdateInterval.put(val.toInt());
             _serverProvider.startAutoRefresh();
           },
-          label: '${_intervalValue.toInt()} seconds',
+          label: '${_intervalValue.toInt()} ${s.second}',
           divisions: 10,
         ),
         const SizedBox(
           height: 3,
         ),
         _intervalValue == 0.0
-            ? const Text(
-                'You set to 0, will not update automatically.\nYou can pull to refresh manually.',
-                style: TextStyle(color: Colors.grey),
+            ? Text(
+                s.updateIntervalEqual0,
+                style: const TextStyle(color: Colors.grey, fontSize: 12),
                 textAlign: TextAlign.center,
               )
             : const SizedBox(),
@@ -156,8 +161,8 @@ class _SettingPageState extends State<SettingPage> {
             width: 27,
           ),
         ),
-        title: const Text(
-          'App primary color',
+        title: Text(
+          s.appPrimaryColor,
           style: textStyle,
         ));
   }
@@ -186,14 +191,14 @@ class _SettingPageState extends State<SettingPage> {
       textColor: priColor,
       tilePadding: roundRectCardPadding,
       childrenPadding: roundRectCardPadding,
-      title: const Text(
-        'Launch page',
+      title: Text(
+        s.launchPage,
         style: textStyle,
       ),
       trailing: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: _media.size.width * 0.35),
         child: Text(
-          tabs[_launchPageIdx],
+          tabTitleName(context, _launchPageIdx),
           style: textStyle,
           textAlign: TextAlign.right,
         ),
@@ -202,7 +207,7 @@ class _SettingPageState extends State<SettingPage> {
           .map((e) => ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(
-                  e,
+                  tabTitleName(context, tabs.indexOf(e)),
                   style: TextStyle(
                       fontSize: 14,
                       color: _theme.textTheme.bodyText2!.color!.withAlpha(177)),

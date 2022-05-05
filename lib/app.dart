@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/store/setting.dart';
+import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/home.dart';
 
@@ -30,6 +32,13 @@ class MyApp extends StatelessWidget {
           final primaryColor = Color(value);
           final textStyle = TextStyle(color: primaryColor);
           return MaterialApp(
+            localizationsDelegates: const [
+                S.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: S.delegate.supportedLocales,
             title: BuildData.name,
             debugShowCheckedModeBanner: false,
             theme: ThemeData(

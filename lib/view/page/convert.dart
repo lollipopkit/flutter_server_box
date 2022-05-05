@@ -4,6 +4,7 @@ import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/res/color.dart';
+import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
@@ -20,13 +21,8 @@ class _ConvertPageState extends State<ConvertPage>
   late TextEditingController _textEditingControllerResult;
   late MediaQueryData _media;
   late ThemeData _theme;
+  late S s;
 
-  static const List<String> _typeOption = [
-    'base64 decode',
-    'base64 encode',
-    'URL encode',
-    'URL decode'
-  ];
   int _typeOptionIndex = 0;
 
   @override
@@ -41,6 +37,7 @@ class _ConvertPageState extends State<ConvertPage>
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
     _theme = Theme.of(context);
+    s = S.of(context);
   }
 
   @override
@@ -67,7 +64,7 @@ class _ConvertPageState extends State<ConvertPage>
             showSnackBar(context, Text('Error: \n$e'));
           }
         },
-        tooltip: 'convert',
+        tooltip: s.convert,
         child: const Icon(Icons.send),
       ),
     );
@@ -85,7 +82,7 @@ class _ConvertPageState extends State<ConvertPage>
       case 3:
         return Uri.decodeFull(text);
       default:
-        return 'Unknown Convert Method';
+        return s.unkownConvertMode;
     }
   }
 
@@ -97,6 +94,14 @@ class _ConvertPageState extends State<ConvertPage>
   }
 
   Widget _buildTypeOption() {
+    final decode = s.decode;
+    final encode = s.encode;
+    final List<String> _typeOption = [
+      'Base64 $decode',
+      'Base64 $encode',
+      'URL $encode',
+      'URL $decode'
+    ];
     return RoundRectCard(
       ExpansionTile(
         tilePadding: const EdgeInsets.only(left: 7, right: 27),
@@ -106,7 +111,7 @@ class _ConvertPageState extends State<ConvertPage>
             TextButton(
               style: ButtonStyle(
                   foregroundColor: MaterialStateProperty.all(primaryColor)),
-              child: const Icon(Icons.change_circle),
+              child: Icon(Icons.change_circle, semanticLabel: s.upsideDown),
               onPressed: () {
                 final temp = _textEditingController.text;
                 _textEditingController.text = _textEditingControllerResult.text;
@@ -116,7 +121,7 @@ class _ConvertPageState extends State<ConvertPage>
             TextButton(
               style: ButtonStyle(
                   foregroundColor: MaterialStateProperty.all(primaryColor)),
-              child: const Icon(Icons.copy),
+              child: Icon(Icons.copy, semanticLabel: s.copy),
               onPressed: () => FlutterClipboard.copy(
                   _textEditingControllerResult.text == ''
                       ? ' '
@@ -137,11 +142,11 @@ class _ConvertPageState extends State<ConvertPage>
                       fontSize: 16.0,
                       fontWeight: FontWeight.w500,
                       color: primaryColor)),
-              const Text(
-                'Current Mode',
+              Text(
+                s.currentMode,
                 textScaleFactor: 1.0,
                 textAlign: TextAlign.right,
-                style: TextStyle(fontSize: 9.0, color: Colors.grey),
+                style: const TextStyle(fontSize: 9.0, color: Colors.grey),
               )
             ],
           ),

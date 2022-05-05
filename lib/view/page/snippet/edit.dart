@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/provider/snippet.dart';
+import 'package:toolbox/data/res/font_style.dart';
+import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/widget/input_decoration.dart';
 
@@ -21,23 +23,31 @@ class _SnippetEditPageState extends State<SnippetEditPage>
   final scriptController = TextEditingController();
 
   late SnippetProvider _provider;
+  late S s;
 
   @override
   void initState() {
     super.initState();
     _provider = locator<SnippetProvider>();
   }
+  
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    s = S.of(context);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit'), actions: [
+      appBar: AppBar(title: Text(s.edit, style: size18), actions: [
         widget.snippet != null
             ? IconButton(
                 onPressed: () {
                   _provider.del(widget.snippet!);
                   Navigator.of(context).pop();
                 },
+                tooltip: s.delete,
                 icon: const Icon(Icons.delete))
             : const SizedBox()
       ]),
@@ -47,7 +57,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           TextField(
             controller: nameController,
             keyboardType: TextInputType.text,
-            decoration: buildDecoration('Name', icon: Icons.info),
+            decoration: buildDecoration(s.name, icon: Icons.info),
           ),
           TextField(
             controller: scriptController,
@@ -56,7 +66,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
             maxLines: 10,
             keyboardType: TextInputType.text,
             enableSuggestions: false,
-            decoration: buildDecoration('Snippet', icon: Icons.code),
+            decoration: buildDecoration(s.snippet, icon: Icons.code),
           ),
         ],
       ),
@@ -66,7 +76,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           final name = nameController.text;
           final script = scriptController.text;
           if (name.isEmpty || script.isEmpty) {
-            showSnackBar(context, const Text('Two fields must not be empty.'));
+            showSnackBar(context, Text(s.fieldMustNotEmpty));
             return;
           }
           final snippet = Snippet(name, script);

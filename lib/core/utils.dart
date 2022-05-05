@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:toolbox/core/persistant_store.dart';
+import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/view/widget/card_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:toolbox/core/extension/stringx.dart';
@@ -80,5 +81,19 @@ void setTransparentNavigationBar(BuildContext context) {
       systemNavigationBarIconBrightness:
           isDarkMode(context) ? Brightness.light : Brightness.dark,
     ));
+  }
+}
+
+String tabTitleName(BuildContext context, int i) {
+  final s = S.of(context);
+  switch (i) {
+    case 0:
+      return s.server;
+    case 1:
+      return s.convert;
+    case 2:
+      return s.ping;
+    default:
+      return '';
   }
 }

@@ -11,10 +11,12 @@ import 'package:toolbox/data/model/app/navigation_item.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/res/color.dart';
+import 'package:toolbox/data/res/font_style.dart';
 import 'package:toolbox/data/res/icon/common.dart';
 import 'package:toolbox/data/res/tab.dart';
 import 'package:toolbox/data/res/url.dart';
 import 'package:toolbox/data/store/setting.dart';
+import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/convert.dart';
 import 'package:toolbox/view/page/debug.dart';
@@ -44,6 +46,7 @@ class _MyHomePageState extends State<MyHomePage>
   late final AdvancedDrawerController _advancedDrawerController;
   late int _selectIndex;
   late double _width;
+  late S s;
 
   @override
   void initState() {
@@ -58,6 +61,7 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    s = S.of(context);
     _width = MediaQuery.of(context).size.width;
   }
 
@@ -115,11 +119,11 @@ class _MyHomePageState extends State<MyHomePage>
         drawer: _buildDrawer(),
         child: Scaffold(
           appBar: AppBar(
-            title: Text(tabItems[_selectIndex].title),
+            title: Text(tabTitleName(context, _selectIndex), style: size18),
             actions: [
               IconButton(
                 icon: const Icon(Icons.developer_mode, size: 23),
-                tooltip: 'Debug',
+                tooltip: s.debug,
                 onPressed: () =>
                     AppRoute(const DebugPage(), 'Debug Page').go(context),
               ),
@@ -171,7 +175,7 @@ class _MyHomePageState extends State<MyHomePage>
           borderRadius: const BorderRadius.all(Radius.circular(50))),
       child: IconButton(
         icon: Icon(item.icon),
-        tooltip: item.title,
+        tooltip: tabTitleName(context, idx),
         splashRadius: width / 3.3,
         padding: const EdgeInsets.only(left: 17, right: 17),
         onPressed: () {
@@ -218,36 +222,35 @@ class _MyHomePageState extends State<MyHomePage>
               children: [
                 ListTile(
                   leading: const Icon(Icons.settings),
-                  title: const Text('Setting'),
+                  title: Text(s.setting),
                   onTap: () =>
                       AppRoute(const SettingPage(), 'Setting').go(context),
                 ),
                 ListTile(
                   leading: const Icon(Icons.vpn_key),
-                  title: const Text('Private Key'),
+                  title: Text(s.privateKey),
                   onTap: () => AppRoute(
                           const StoredPrivateKeysPage(), 'private key list')
                       .go(context),
                 ),
                 ListTile(
                   leading: const Icon(Icons.snippet_folder),
-                  title: const Text('Snippet'),
+                  title: Text(s.snippet),
                   onTap: () => AppRoute(const SnippetListPage(), 'snippet list')
                       .go(context),
                 ),
                 AboutListTile(
                   icon: const Icon(Icons.text_snippet),
-                  child: const Text('Licences'),
+                  child: Text(s.license),
                   applicationName: BuildData.name,
                   applicationVersion: _buildVersionStr(),
                   applicationIcon: _buildIcon(),
-                  aboutBoxChildren: const [
+                  aboutBoxChildren: [
                     UrlText(
-                        text: '\nMade with ❤️ by $myGithub',
+                        text: s.madeWithLove(myGithub),
                         replace: 'LollipopKit'),
                     UrlText(
-                      text:
-                          '\nThanks $rainSunMeGithub for participating in the test.\n\nAll rights reserved.',
+                      text: s.aboutThanks(rainSunMeGithub),
                       replace: 'RainSunMe',
                     ),
                   ],

@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/model/server/private_key_info.dart';
 import 'package:toolbox/data/provider/private_key.dart';
+import 'package:toolbox/data/res/font_style.dart';
+import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/widget/input_decoration.dart';
 
@@ -25,6 +27,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
 
   late PrivateKeyProvider _provider;
   late Widget loading;
+  late S s;
 
   @override
   void initState() {
@@ -34,11 +37,18 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    s = S.of(context);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit'), actions: [
+      appBar: AppBar(title: Text(s.edit, style: size18), actions: [
         widget.info != null
             ? IconButton(
+                tooltip: s.delete,
                 onPressed: () {
                   _provider.delInfo(widget.info!);
                   Navigator.of(context).pop();
@@ -52,7 +62,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
           TextField(
             controller: nameController,
             keyboardType: TextInputType.text,
-            decoration: buildDecoration('Name', icon: Icons.info),
+            decoration: buildDecoration(s.name, icon: Icons.info),
           ),
           TextField(
             controller: keyController,
@@ -61,14 +71,14 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
             maxLines: 10,
             keyboardType: TextInputType.text,
             enableSuggestions: false,
-            decoration: buildDecoration('Private Key', icon: Icons.vpn_key),
+            decoration: buildDecoration(s.privateKey, icon: Icons.vpn_key),
           ),
           TextField(
             controller: pwdController,
             autocorrect: false,
             keyboardType: TextInputType.text,
             obscureText: true,
-            decoration: buildDecoration('Password', icon: Icons.password),
+            decoration: buildDecoration(s.pwd, icon: Icons.password),
           ),
           SizedBox(height: MediaQuery.of(context).size.height * 0.1),
           loading
@@ -76,13 +86,14 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.save),
+        tooltip: s.save,
         onPressed: () async {
           final name = nameController.text;
           final key = keyController.text;
           final pwd = pwdController.text;
           if (name.isEmpty || key.isEmpty) {
             showSnackBar(
-                context, const Text('Name and Key must not be empty.'));
+                context, Text(s.fieldMustNotEmpty));
             return;
           }
           FocusScope.of(context).unfocus();

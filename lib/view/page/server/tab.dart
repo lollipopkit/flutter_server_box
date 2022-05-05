@@ -15,6 +15,7 @@ import 'package:toolbox/data/model/server/server_status.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/store/setting.dart';
+import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/apt.dart';
 import 'package:toolbox/view/page/docker.dart';
@@ -39,6 +40,7 @@ class _ServerPageState extends State<ServerPage>
   late RefreshController _refreshController;
 
   late ServerProvider _serverProvider;
+  late S s;
 
   @override
   void initState() {
@@ -53,6 +55,7 @@ class _ServerPageState extends State<ServerPage>
     _media = MediaQuery.of(context);
     _theme = Theme.of(context);
     _primaryColor = primaryColor;
+    s = S.of(context);
   }
 
   @override
@@ -62,9 +65,9 @@ class _ServerPageState extends State<ServerPage>
         locator<SettingStore>().serverStatusUpdateInterval.fetch() != 0;
     final child = Consumer<ServerProvider>(builder: (_, pro, __) {
       if (pro.servers.isEmpty) {
-        return const Center(
+        return Center(
           child: Text(
-            'There is no server.\nClick the fab to add one.',
+            s.serverTabEmpty,
             textAlign: TextAlign.center,
           ),
         );
@@ -99,7 +102,7 @@ class _ServerPageState extends State<ServerPage>
         onPressed: () =>
             AppRoute(const ServerEditPage(), 'Add server info page')
                 .go(context),
-        tooltip: 'add a server',
+        tooltip: s.addAServer,
         heroTag: 'server page fab',
         child: const Icon(Icons.add),
       ),
@@ -302,7 +305,7 @@ class _ServerPageState extends State<ServerPage>
       case ServerConnectionState.connected:
         if (temp == '') {
           if (upTime == '') {
-            return 'Loading...';
+            return s.serverTabLoading;
           } else {
             return upTime;
           }
@@ -314,17 +317,17 @@ class _ServerPageState extends State<ServerPage>
           }
         }
       case ServerConnectionState.connecting:
-        return 'Connecting...';
+        return s.serverTabConnecting;
       case ServerConnectionState.failed:
         if (failedInfo == null) {
-          return 'Failed';
+          return s.serverTabFailed;
         }
         if (failedInfo.contains('encypted')) {
-          return 'Please "save" this private key again.';
+          return s.serverTabPlzSave;
         }
         return failedInfo;
       default:
-        return 'Unknown State';
+        return s.serverTabUnkown;
     }
   }
 

@@ -6,6 +6,7 @@ import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/server_status.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/color.dart';
+import 'package:toolbox/data/res/font_style.dart';
 import 'package:toolbox/data/res/icon/linux_icons.dart';
 import 'package:toolbox/data/res/padding.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
@@ -43,7 +44,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   Widget _buildMainPage(ServerInfo si) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(si.info.name),
+        title: Text(si.info.name, style: size18),
       ),
       body: ListView(
         padding: const EdgeInsets.all(13),

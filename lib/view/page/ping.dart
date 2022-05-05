@@ -4,6 +4,7 @@ import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/model/server/ping_result.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/color.dart';
+import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
@@ -20,6 +21,10 @@ class _PingPageState extends State<PingPage>
   late TextEditingController _textEditingController;
   late MediaQueryData _media;
   final List<PingResult> _results = [];
+  late S s;
+  static const summaryTextStyle = TextStyle(
+    fontSize: 12,
+  );
 
   @override
   void initState() {
@@ -31,6 +36,7 @@ class _PingPageState extends State<PingPage>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
+    s = S.of(context);
   }
 
   @override
@@ -62,37 +68,39 @@ class _PingPageState extends State<PingPage>
   }
 
   Widget _buildResultItem(PingResult result) {
+    final unknown = s.unknown;
+    final ms = s.ms;
     return RoundRectCard(ListTile(
       contentPadding: const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
       title: Text(result.serverName,
           style: TextStyle(
               fontSize: 18, fontWeight: FontWeight.bold, color: primaryColor)),
-      subtitle: Text(_buildPingSummary(result)),
+      subtitle: Text(_buildPingSummary(result, unknown, ms), style: summaryTextStyle,),
       trailing: Text(
-          'Avg: ' +
-              (result.statistic?.avg?.toStringAsFixed(2) ?? 'unkown') +
-              ' ms',
+          s.pingAvg +
+              (result.statistic?.avg?.toStringAsFixed(2) ?? s.unknown) +
+              ' $ms',
           style: TextStyle(fontSize: 14, color: primaryColor)),
     ));
   }
 
-  String _buildPingSummary(PingResult result) {
-    final ip = result.ip ?? 'unkown';
+  String _buildPingSummary(PingResult result, String unknown, String ms) {
+    final ip = result.ip ?? unknown;
     if (result.results == null || result.results!.isEmpty) {
-      return '$ip - no results';
+      return '$ip - ${s.noResult}';
     }
-    final ttl = result.results?.first.ttl ?? 'unkown';
-    final loss = result.statistic?.loss ?? 'unkown';
-    final min = result.statistic?.min ?? 'unkown';
-    final max = result.statistic?.max ?? 'unkown';
-    return '$ip\nttl: $ttl, loss: $loss%\nmin: $min ms, max: $max ms';
+    final ttl = result.results?.first.ttl ?? unknown;
+    final loss = result.statistic?.loss ?? unknown;
+    final min = result.statistic?.min ?? unknown;
+    final max = result.statistic?.max ?? unknown;
+    return '$ip\n${s.ttl}: $ttl, ${s.loss}: $loss%\n${s.min}: $min $ms, ${s.max}: $max $ms';
   }
 
   Future<void> doPing() async {
     _results.clear();
     final target = _textEditingController.text.trim();
     if (target.isEmpty) {
-      showSnackBar(context, const Text('Please input a target'));
+      showSnackBar(context, Text(s.pingInputIP));
       return;
     }
 
@@ -119,12 +127,12 @@ class _PingPageState extends State<PingPage>
                 style: ButtonStyle(
                     foregroundColor: MaterialStateProperty.all(primaryColor)),
                 child: Row(
-                  children: const [
-                    Icon(Icons.delete),
-                    SizedBox(
+                  children: [
+                    const Icon(Icons.delete),
+                    const SizedBox(
                       width: 7,
                     ),
-                    Text('Clear')
+                    Text(s.clear)
                   ],
                 ),
                 onPressed: () {
@@ -136,12 +144,12 @@ class _PingPageState extends State<PingPage>
                 style: ButtonStyle(
                     foregroundColor: MaterialStateProperty.all(primaryColor)),
                 child: Row(
-                  children: const [
-                    Icon(Icons.play_arrow),
-                    SizedBox(
+                  children: [
+                    const Icon(Icons.play_arrow),
+                    const SizedBox(
                       width: 7,
                     ),
-                    Text('Start')
+                    Text(s.start)
                   ],
                 ),
                 onPressed: () {

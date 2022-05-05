@@ -8,7 +8,9 @@ import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/provider/snippet.dart';
 import 'package:toolbox/data/res/color.dart';
+import 'package:toolbox/data/res/font_style.dart';
 import 'package:toolbox/data/res/padding.dart';
+import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/snippet/edit.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
@@ -28,14 +30,24 @@ class _SnippetListPageState extends State<SnippetListPage> {
   final _exportFieldController = TextEditingController();
 
   final _textStyle = TextStyle(color: primaryColor);
+
+  late S s;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    s = S.of(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Snippet List'),
+        title: Text(s.snippet, style: size18),
         actions: [
           IconButton(
               onPressed: () => _showImportExport(),
+              tooltip: s.importAndExport,
               icon: const Icon(Icons.import_export)),
         ],
       ),
@@ -51,17 +63,17 @@ class _SnippetListPageState extends State<SnippetListPage> {
   Future<void> _showImportExport() async {
     await showRoundDialog(
         context,
-        'Choose',
+        s.choose,
         Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: const Text('Import'),
+              title: Text(s.import),
               leading: const Icon(Icons.download),
               onTap: () => _showImportDialog(),
             ),
             ListTile(
-              title: const Text('Export'),
+              title: Text(s.export),
               leading: const Icon(Icons.file_upload),
               onTap: () => _showExportDialog(),
             ),
@@ -75,7 +87,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
     _exportFieldController.text = locator<SnippetProvider>().export;
     await showRoundDialog(
         context,
-        'Export',
+        s.export,
         TextField(
           decoration: const InputDecoration(
             labelText: 'JSON',
@@ -85,7 +97,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
         ),
         [
           TextButton(
-            child: const Text('OK'),
+            child: Text(s.ok),
             onPressed: () => Navigator.pop(context),
           ),
         ]);
@@ -95,10 +107,10 @@ class _SnippetListPageState extends State<SnippetListPage> {
     Navigator.of(context).pop();
     await showRoundDialog(
         context,
-        'Import',
+        s.import,
         TextField(
-          decoration: const InputDecoration(
-            labelText: 'Url or JSON',
+          decoration: InputDecoration(
+            labelText: s.urlOrJson,
           ),
           maxLines: 2,
           controller: _importFieldController,
@@ -106,18 +118,18 @@ class _SnippetListPageState extends State<SnippetListPage> {
         [
           TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel')),
+              child: Text(s.cancel)),
           TextButton(
             onPressed: () async =>
                 await _import(_importFieldController.text.trim()),
-            child: const Text('GO'),
+            child: Text('GO'),
           )
         ]);
   }
 
   Future<void> _import(String text) async {
     if (text.isEmpty) {
-      showSnackBar(context, const Text('field can not be empty'));
+      showSnackBar(context, Text(s.fieldMustNotEmpty));
       return;
     }
     final snippetProvider = locator<SnippetProvider>();
@@ -125,7 +137,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
       final resp = await Dio().get(text);
       if (resp.statusCode != 200) {
         showSnackBar(
-            context, Text('request failed, status code: ${resp.statusCode}'));
+            context, Text(s.httpFailedWithCode(resp.statusCode ?? '-1')));
         return;
       }
       for (final snippet in getSnippetList(resp.data)) {
@@ -166,7 +178,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
                                       'snippet edit page')
                                   .go(context),
                               child: Text(
-                                'Edit',
+                                s.edit,
                                 style: _textStyle,
                               )),
                           TextButton(
@@ -179,7 +191,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
                                 run(context, snippet);
                               },
                               child: Text(
-                                'Run',
+                                s.run,
                                 style: _textStyle,
                               ))
                         ])
@@ -187,16 +199,16 @@ class _SnippetListPageState extends State<SnippetListPage> {
                     ),
                   ));
                 })
-            : const Center(child: Text('No saved snippets.'));
+            : Center(child: Text(s.noSavedSnippet));
       },
     );
   }
 
   void _showRunDialog(Snippet snippet) {
-    showRoundDialog(context, 'Choose destination',
+    showRoundDialog(context, s.chooseDestination,
         Consumer<ServerProvider>(builder: (_, provider, __) {
       if (provider.servers.isEmpty) {
-        return const Text('No server available');
+        return Text(s.noServerAvailable);
       }
       _selectedIndex = provider.servers.first.info;
       return SizedBox(
@@ -235,10 +247,10 @@ class _SnippetListPageState extends State<SnippetListPage> {
     }), [
       TextButton(
           onPressed: () async => run(context, snippet),
-          child: const Text('Run')),
+          child: Text(s.run)),
       TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel')),
+          child: Text(s.cancel)),
     ]);
   }
 
@@ -246,11 +258,11 @@ class _SnippetListPageState extends State<SnippetListPage> {
     final result = await locator<ServerProvider>()
         .runSnippet(widget.spi ?? _selectedIndex, snippet);
     if (result != null) {
-      showRoundDialog(context, 'Result',
+      showRoundDialog(context, s.result,
           Text(result, style: const TextStyle(fontSize: 13)), [
         TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'))
+            child: Text(s.close))
       ]);
     }
   }

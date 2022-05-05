@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/provider/private_key.dart';
 import 'package:toolbox/data/res/color.dart';
+import 'package:toolbox/data/res/font_style.dart';
 import 'package:toolbox/data/res/padding.dart';
+import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/view/page/private_key/edit.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
@@ -16,11 +18,19 @@ class StoredPrivateKeysPage extends StatefulWidget {
 
 class _PrivateKeyListState extends State<StoredPrivateKeysPage> {
   final _textStyle = TextStyle(color: primaryColor);
+  late S s;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    s = S.of(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Private Keys'),
+        title: Text(s.privateKey, style: size18),
       ),
       body: Consumer<PrivateKeyProvider>(
         builder: (_, key, __) {
@@ -46,14 +56,14 @@ class _PrivateKeyListState extends State<StoredPrivateKeysPage> {
                                       'private key edit page')
                                   .go(context),
                               child: Text(
-                                'Edit',
+                                s.edit,
                                 style: _textStyle,
                               ))
                         ],
                       ),
                     ));
                   })
-              : const Center(child: Text('No saved private keys.'));
+              : Center(child: Text(s.noSavedPrivateKey));
         },
       ),
       floatingActionButton: FloatingActionButton(

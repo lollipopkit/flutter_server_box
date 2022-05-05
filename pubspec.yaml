@@ -29,7 +29,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
+  flutter_localizations:
+    sdk: flutter
   provider: ^6.0.0
   get_it: ^7.2.0
   hive: ^2.0.0
@@ -39,14 +40,14 @@ dependencies:
   extended_image: ^6.0.3
   url_launcher: ^6.0.9
   countly_flutter:
-    git: 
+    git:
       url: https://github.com/Countly/countly-sdk-flutter-bridge.git
       ref: master
   dartssh2: ^2.3.1-pre
   logging: ^1.0.2
   flutter_material_color_picker: ^1.1.0+2
-  circle_chart: 
-    git: 
+  circle_chart:
+    git:
       url: https://github.com/LollipopKit/circle_chart
       ref: main
     # path: ../circle_chart
@@ -56,7 +57,6 @@ dependencies:
   marquee: ^2.2.0
   dropdown_button2: ^1.1.1
   flutter_advanced_drawer: ^1.3.0
-
 
 dev_dependencies:
   flutter_native_splash: ^2.1.6
@@ -72,7 +72,6 @@ dev_dependencies:
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
-
 # The following section is specific to Flutter.
 flutter:
 
@@ -93,13 +92,10 @@ flutter:
     - assets/linux/opensuse.png
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
-
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
-
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/assets-and-images/#from-packages
-
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a
   # "family" key with the font family name, and a "fonts" key with a
@@ -119,7 +115,6 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
-
 flutter_native_splash:
   # This package generates native code to customize Flutter's default white native splash screen
   # with background color and splash image.
@@ -127,17 +122,14 @@ flutter_native_splash:
   # flutter pub run flutter_native_splash:create
   # To restore Flutter's default white splash screen, run the following command in the terminal:
   # flutter pub run flutter_native_splash:remove
-
   # color or background_image is the only required parameter.  Use color to set the background
   # of your splash screen to a solid color.  Use background_image to set the background of your
   # splash screen to a png image.  This is useful for gradients. The image will be stretch to the
   # size of the app. Only one parameter can be used, color and background_image cannot both be set.
   color: "#ffffff"
   #background_image: "assets/background.png"
-  
   # Optional parameters are listed below.  To enable a parameter, uncomment the line by removing 
   # the leading # character.
-
   # The image parameter allows you to specify an image used in the splash screen.  It must be a 
   # png file and should be sized for 4x pixel density.
   image: assets/app_icon.png
@@ -150,13 +142,11 @@ flutter_native_splash:
   color_dark: "#121212"
   #background_image_dark: "assets/dark-background.png"
   #image_dark: assets/splash-invert.png
-
   # The android, ios and web parameters can be used to disable generating a splash screen on a given 
   # platform.
   #android: false
   #ios: false
   #web: false
-
   # The position of the splash image can be set with android_gravity, ios_content_mode, and
   # web_image_mode parameters.  All default to center.
   #
@@ -174,7 +164,6 @@ flutter_native_splash:
   #
   # web_image_mode can be one of the following modes: center, contain, stretch, and cover.
   #web_image_mode: center
-
   # To hide the notification bar, use the fullscreen parameter.  Has no affect in web since web 
   # has no notification bar.  Defaults to false.
   # NOTE: Unlike Android, iOS will not automatically show the notification bar when the app loads.
@@ -182,13 +171,13 @@ flutter_native_splash:
   #       WidgetsFlutterBinding.ensureInitialized();
   #       SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom, SystemUiOverlay.top]);
   #fullscreen: true
-  
   # If you have changed the name(s) of your info.plist file(s), you can specify the filename(s) 
   # with the info_plist_files parameter.  Remove only the # characters in the three lines below,
   # do not remove any spaces:
   #info_plist_files:
   #  - 'ios/Runner/Info-Debug.plist'
   #  - 'ios/Runner/Info-Release.plist'
-
   # To enable support for Android 12, set the following parameter to true.  Defaults to false.
   #android12: true
+flutter_intl:
+  enabled: true

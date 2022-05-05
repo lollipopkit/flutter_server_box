@@ -8,7 +8,9 @@ import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/provider/private_key.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/color.dart';
+import 'package:toolbox/data/res/font_style.dart';
 import 'package:toolbox/data/store/private_key.dart';
+import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/private_key/edit.dart';
 import 'package:toolbox/view/widget/input_decoration.dart';
@@ -32,6 +34,8 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
 
   late ServerProvider _serverProvider;
 
+  late S s;
+
   bool usePublicKey = false;
 
   int _pubKeyIndex = -1;
@@ -44,9 +48,15 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    s = S.of(context);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit'), actions: [
+      appBar: AppBar(title: Text(s.edit, style: size18), actions: [
         widget.spi != null
             ? IconButton(
                 onPressed: () {
@@ -54,7 +64,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                       context,
                       'Attention',
                       Text(
-                          'Are you sure to delete server [${widget.spi!.name}]'),
+                          s.sureToDeleteServer(widget.spi!.name)),
                       [
                         TextButton(
                             onPressed: () {
@@ -62,13 +72,13 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                               Navigator.of(context).pop();
                               Navigator.of(context).pop();
                             },
-                            child: const Text(
-                              'Yes',
-                              style: TextStyle(color: Colors.red),
+                            child: Text(
+                              s.ok,
+                              style: const TextStyle(color: Colors.red),
                             )),
                         TextButton(
                             onPressed: () => Navigator.of(context).pop(),
-                            child: const Text('No'))
+                            child: Text(s.cancel))
                       ]);
                 },
                 icon: const Icon(Icons.delete))
@@ -84,20 +94,20 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
               controller: nameController,
               keyboardType: TextInputType.text,
               decoration:
-                  buildDecoration('Name', icon: Icons.info, hint: 'Example'),
+                  buildDecoration(s.name, icon: Icons.info, hint: s.exampleName),
             ),
             TextField(
               controller: ipController,
               keyboardType: TextInputType.text,
               autocorrect: false,
               enableSuggestions: false,
-              decoration: buildDecoration('Host',
+              decoration: buildDecoration(s.host,
                   icon: Icons.storage, hint: 'example.com'),
             ),
             TextField(
               controller: portController,
               keyboardType: TextInputType.number,
-              decoration: buildDecoration('Port',
+              decoration: buildDecoration(s.port,
                   icon: Icons.format_list_numbered, hint: '22'),
             ),
             TextField(
@@ -105,13 +115,13 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
               keyboardType: TextInputType.text,
               autocorrect: false,
               enableSuggestions: false,
-              decoration: buildDecoration('User',
+              decoration: buildDecoration(s.user,
                   icon: Icons.account_box, hint: 'root'),
             ),
             const SizedBox(height: 7),
             Row(
               children: [
-                const Text('Key Auth'),
+                Text(s.keyAuth),
                 Switch(
                     value: usePublicKey,
                     onChanged: (val) => setState(() => usePublicKey = val)),
@@ -122,8 +132,8 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                     controller: passwordController,
                     obscureText: true,
                     keyboardType: TextInputType.text,
-                    decoration: buildDecoration('Pwd',
-                        icon: Icons.password, hint: 'Password'),
+                    decoration: buildDecoration(s.pwd,
+                        icon: Icons.password, hint: s.pwd),
                     onSubmitted: (_) => {},
                   )
                 : const SizedBox(),
@@ -143,7 +153,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                         )
                         .toList();
                     tiles.add(ListTile(
-                      title: const Text('Add a Private Key'),
+                      title: Text(s.addPrivateKey),
                       contentPadding: EdgeInsets.zero,
                       trailing: IconButton(
                         icon: const Icon(Icons.add),
@@ -157,9 +167,9 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                       iconColor: primaryColor,
                       tilePadding: EdgeInsets.zero,
                       childrenPadding: EdgeInsets.zero,
-                      title: const Text(
-                        'Choose Key',
-                        style: TextStyle(fontSize: 14),
+                      title: Text(
+                        s.choosePrivateKey,
+                        style: const TextStyle(fontSize: 14),
                       ),
                       children: tiles,
                     );
@@ -172,15 +182,15 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         child: const Icon(Icons.send),
         onPressed: () {
           if (ipController.text == '') {
-            showSnackBar(context, const Text('Please enter host.'));
+            showSnackBar(context, Text(s.plzEnterHost));
             return;
           }
           if (!usePublicKey && passwordController.text == '') {
-            showSnackBar(context, const Text('Please enter password.'));
+            showSnackBar(context, Text(s.plzEnterPwd));
             return;
           }
           if (usePublicKey && _pubKeyIndex == -1) {
-            showSnackBar(context, const Text('Please select a private key.'));
+            showSnackBar(context, Text(s.plzSelectKey));
             return;
           }
           if (usernameController.text == '') {
