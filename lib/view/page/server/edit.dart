@@ -60,26 +60,22 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         widget.spi != null
             ? IconButton(
                 onPressed: () {
-                  showRoundDialog(
-                      context,
-                      'Attention',
-                      Text(
-                          s.sureToDeleteServer(widget.spi!.name)),
-                      [
-                        TextButton(
-                            onPressed: () {
-                              _serverProvider.delServer(widget.spi!);
-                              Navigator.of(context).pop();
-                              Navigator.of(context).pop();
-                            },
-                            child: Text(
-                              s.ok,
-                              style: const TextStyle(color: Colors.red),
-                            )),
-                        TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: Text(s.cancel))
-                      ]);
+                  showRoundDialog(context, 'Attention',
+                      Text(s.sureToDeleteServer(widget.spi!.name)), [
+                    TextButton(
+                        onPressed: () {
+                          _serverProvider.delServer(widget.spi!);
+                          Navigator.of(context).pop();
+                          Navigator.of(context).pop();
+                        },
+                        child: Text(
+                          s.ok,
+                          style: const TextStyle(color: Colors.red),
+                        )),
+                    TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(s.cancel))
+                  ]);
                 },
                 icon: const Icon(Icons.delete))
             : const SizedBox()
@@ -93,8 +89,8 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             TextField(
               controller: nameController,
               keyboardType: TextInputType.text,
-              decoration:
-                  buildDecoration(s.name, icon: Icons.info, hint: s.exampleName),
+              decoration: buildDecoration(s.name,
+                  icon: Icons.info, hint: s.exampleName),
             ),
             TextField(
               controller: ipController,

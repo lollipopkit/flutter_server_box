@@ -122,7 +122,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
           TextButton(
             onPressed: () async =>
                 await _import(_importFieldController.text.trim()),
-            child: Text('GO'),
+            child: const Text('GO'),
           )
         ]);
   }
@@ -246,11 +246,9 @@ class _SnippetListPageState extends State<SnippetListPage> {
           ]));
     }), [
       TextButton(
-          onPressed: () async => run(context, snippet),
-          child: Text(s.run)),
+          onPressed: () async => run(context, snippet), child: Text(s.run)),
       TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(s.cancel)),
+          onPressed: () => Navigator.of(context).pop(), child: Text(s.cancel)),
     ]);
   }
 
@@ -261,8 +259,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
       showRoundDialog(context, s.result,
           Text(result, style: const TextStyle(fontSize: 13)), [
         TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(s.close))
+            onPressed: () => Navigator.of(context).pop(), child: Text(s.close))
       ]);
     }
   }

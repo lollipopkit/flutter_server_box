@@ -30,7 +30,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
     super.initState();
     _provider = locator<SnippetProvider>();
   }
-  
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();

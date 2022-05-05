@@ -92,8 +92,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
           final key = keyController.text;
           final pwd = pwdController.text;
           if (name.isEmpty || key.isEmpty) {
-            showSnackBar(
-                context, Text(s.fieldMustNotEmpty));
+            showSnackBar(context, Text(s.fieldMustNotEmpty));
             return;
           }
           FocusScope.of(context).unfocus();

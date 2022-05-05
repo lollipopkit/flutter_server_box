@@ -75,7 +75,10 @@ class _PingPageState extends State<PingPage>
       title: Text(result.serverName,
           style: TextStyle(
               fontSize: 18, fontWeight: FontWeight.bold, color: primaryColor)),
-      subtitle: Text(_buildPingSummary(result, unknown, ms), style: summaryTextStyle,),
+      subtitle: Text(
+        _buildPingSummary(result, unknown, ms),
+        style: summaryTextStyle,
+      ),
       trailing: Text(
           s.pingAvg +
               (result.statistic?.avg?.toStringAsFixed(2) ?? s.unknown) +

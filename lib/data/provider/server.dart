@@ -30,7 +30,8 @@ List<SSHKeyPair> loadIndentity(String key) {
 }
 
 const seperator = 'A====A';
-const shellCmd = "cat /proc/net/dev && date +%s \necho $seperator \n "
+const shellCmd = "export LANG=en_US.utf-8 \necho '$seperator' \n"
+    "cat /proc/net/dev && date +%s \necho $seperator \n "
     "cat /etc/os-release | grep PRETTY_NAME \necho $seperator \n"
     "cat /proc/stat | grep cpu \necho $seperator \n"
     "uptime \necho $seperator \n"
@@ -40,6 +41,7 @@ const shellCmd = "cat /proc/net/dev && date +%s \necho $seperator \n "
     "cat /sys/class/thermal/thermal_zone*/type \necho $seperator \n"
     "cat /sys/class/thermal/thermal_zone*/temp";
 const shellPath = '.serverbox.sh';
+const memPrefix = 'Mem:';
 final cpuTempReg = RegExp('(x86_pkg_temp|cpu_thermal)');
 
 class ServerProvider extends BusyProvider {
@@ -192,6 +194,7 @@ class ServerProvider extends BusyProvider {
     if (si.client == null) return;
     final raw = await si.client!.run("sh $shellPath").string;
     final lines = raw.split(seperator).map((e) => e.trim()).toList();
+    lines.removeAt(0);
 
     try {
       _getCPU(spi, lines[2], lines[7], lines[8]);
@@ -322,25 +325,22 @@ class ServerProvider extends BusyProvider {
   }
 
   void _getMem(ServerPrivateInfo spi, String raw) {
-    const memPrefixies = ['Mem:', '内存：'];
     final info = _servers.firstWhere((e) => e.info == spi);
     for (var item in raw.split('\n')) {
       var found = false;
-      for (var memPrefix in memPrefixies) {
-        if (item.contains(memPrefix)) {
-          found = true;
-          final split = item.replaceFirst(memPrefix, '').split(' ');
-          split.removeWhere((e) => e == '');
-          final memList = split.map((e) => int.parse(e)).toList();
-          info.status.memory = Memory(
-              total: memList[0],
-              used: memList[1],
-              free: memList[2],
-              shared: memList[3],
-              cache: memList[4],
-              avail: memList[5]);
-          break;
-        }
+      if (item.contains(memPrefix)) {
+        found = true;
+        final split = item.replaceFirst(memPrefix, '').split(' ');
+        split.removeWhere((e) => e == '');
+        final memList = split.map((e) => int.parse(e)).toList();
+        info.status.memory = Memory(
+            total: memList[0],
+            used: memList[1],
+            free: memList[2],
+            shared: memList[3],
+            cache: memList[4],
+            avail: memList[5]);
+        break;
       }
       if (found) break;
     }
