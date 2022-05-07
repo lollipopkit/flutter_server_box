@@ -7,6 +7,7 @@ import 'package:toolbox/data/model/docker/ps.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/provider/docker.dart';
 import 'package:toolbox/data/provider/server.dart';
+import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/widget/center_loading.dart';
 import 'package:toolbox/view/widget/two_line_text.dart';
@@ -25,6 +26,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   final _docker = locator<DockerProvider>();
   final greyTextStyle = const TextStyle(color: Colors.grey);
   late MediaQueryData _media;
+  late S s;
 
   @override
   void dispose() {
@@ -36,6 +38,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
+    s = S.of(context);
   }
 
   @override
@@ -46,7 +49,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
         .firstWhere((element) => element.info == widget.spi)
         .client;
     if (client == null) {
-      showSnackBar(context, const Text('No client found'));
+      showSnackBar(context, Text(s.noClient));
       Navigator.of(context).pop();
       return;
     }
@@ -87,7 +90,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
         padding: const EdgeInsets.all(7),
         children: [
           _buildVersion(
-              docker.edition ?? 'Unknown', docker.version ?? 'Unknown'),
+              docker.edition ?? s.unknown, docker.version ?? s.unknown),
           _buildPsItems(running, docker)
         ].map((e) => RoundRectCard(e)).toList(),
       );
@@ -97,14 +100,14 @@ class _DockerManagePageState extends State<DockerManagePage> {
   Widget _buildSolution(String err) {
     switch (err) {
       case 'docker not found':
-        return const UrlText(
-          text: 'Please https://docs.docker.com/engine/install docker first.',
-          replace: 'install',
+        return UrlText(
+          text: s.installDockerWithUrl,
+          replace: s.install,
         );
       case 'no client':
-        return const Text('Plz wait for the connection to be established.');
+        return Text(s.dockerWaitConnection);
       default:
-        return const Text('Unknown error');
+        return Text(s.unknownError);
     }
   }
 
@@ -120,7 +123,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
 
   Widget _buildPsItems(List<DockerPsItem> running, DockerProvider docker) {
     return ExpansionTile(
-      title: const Text('Container Status'),
+      title: Text(s.containerStatus),
       subtitle: Text(_buildSubtitle(running), style: greyTextStyle),
       children: running.map((item) {
         return ListTile(
@@ -186,8 +189,8 @@ class _DockerManagePageState extends State<DockerManagePage> {
     final runningCount = running.where((element) => element.running).length;
     final stoped = running.length - runningCount;
     if (stoped == 0) {
-      return '$runningCount container running.';
+      return s.dockerStatusRunningFmt(runningCount);
     }
-    return '$runningCount running, $stoped stoped.';
+    return s.dockerStatusRunningAndStoppedFmt(runningCount, stoped);
   }
 }

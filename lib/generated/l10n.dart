@@ -829,6 +829,277 @@ class S {
       args: [],
     );
   }
+
+  /// `Download`
+  String get download {
+    return Intl.message(
+      'Download',
+      name: 'download',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copy path`
+  String get copyPath {
+    return Intl.message(
+      'Copy path',
+      name: 'copyPath',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Keep app foreground!`
+  String get keepForeground {
+    return Intl.message(
+      'Keep app foreground!',
+      name: 'keepForeground',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Download finished`
+  String get downloadFinished {
+    return Intl.message(
+      'Download finished',
+      name: 'downloadFinished',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{percent}% of {size}`
+  String downloadStatus(Object percent, Object size) {
+    return Intl.message(
+      '$percent% of $size',
+      name: 'downloadStatus',
+      desc: '',
+      args: [percent, size],
+    );
+  }
+
+  /// `Preparing to connect...`
+  String get sftpDlPrepare {
+    return Intl.message(
+      'Preparing to connect...',
+      name: 'sftpDlPrepare',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `SFTP Connected`
+  String get sftpSSHConnected {
+    return Intl.message(
+      'SFTP Connected',
+      name: 'sftpSSHConnected',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Spent time: {time} seconds`
+  String spentTime(Object time) {
+    return Intl.message(
+      'Spent time: $time seconds',
+      name: 'spentTime',
+      desc: '',
+      args: [time],
+    );
+  }
+
+  /// `Back`
+  String get backDir {
+    return Intl.message(
+      'Back',
+      name: 'backDir',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Already in last directory.`
+  String get alreadyLastDir {
+    return Intl.message(
+      'Already in last directory.',
+      name: 'alreadyLastDir',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Open`
+  String get open {
+    return Intl.message(
+      'Open',
+      name: 'open',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Are you sure to delete [{name}]?`
+  String sureDelete(Object name) {
+    return Intl.message(
+      'Are you sure to delete [$name]?',
+      name: 'sureDelete',
+      desc: '',
+      args: [name],
+    );
+  }
+
+  /// `Container status`
+  String get containerStatus {
+    return Intl.message(
+      'Container status',
+      name: 'containerStatus',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No client`
+  String get noClient {
+    return Intl.message(
+      'No client',
+      name: 'noClient',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Please https://docs.docker.com/engine/install docker first.`
+  String get installDockerWithUrl {
+    return Intl.message(
+      'Please https://docs.docker.com/engine/install docker first.',
+      name: 'installDockerWithUrl',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Please wait for the connection to be established.`
+  String get dockerWaitConnection {
+    return Intl.message(
+      'Please wait for the connection to be established.',
+      name: 'dockerWaitConnection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unknown error`
+  String get unknownError {
+    return Intl.message(
+      'Unknown error',
+      name: 'unknownError',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{count} container running.`
+  String dockerStatusRunningFmt(Object count) {
+    return Intl.message(
+      '$count container running.',
+      name: 'dockerStatusRunningFmt',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `{runningCount} running, {stoppedCount} container stopped.`
+  String dockerStatusRunningAndStoppedFmt(
+      Object runningCount, Object stoppedCount) {
+    return Intl.message(
+      '$runningCount running, $stoppedCount container stopped.',
+      name: 'dockerStatusRunningAndStoppedFmt',
+      desc: '',
+      args: [runningCount, stoppedCount],
+    );
+  }
+
+  /// `install`
+  String get install {
+    return Intl.message(
+      'install',
+      name: 'install',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Loading files...`
+  String get loadingFiles {
+    return Intl.message(
+      'Loading files...',
+      name: 'loadingFiles',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No download task.`
+  String get sftpNoDownloadTask {
+    return Intl.message(
+      'No download task.',
+      name: 'sftpNoDownloadTask',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Go to SFTP download page?`
+  String get goSftpDlPage {
+    return Intl.message(
+      'Go to SFTP download page?',
+      name: 'goSftpDlPage',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Create folder`
+  String get createFolder {
+    return Intl.message(
+      'Create folder',
+      name: 'createFolder',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rename`
+  String get rename {
+    return Intl.message(
+      'Rename',
+      name: 'rename',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Download [{fileName}] to local?`
+  String dl2Local(Object fileName) {
+    return Intl.message(
+      'Download [$fileName] to local?',
+      name: 'dl2Local',
+      desc: '',
+      args: [fileName],
+    );
+  }
+
+  /// `Error`
+  String get error {
+    return Intl.message(
+      'Error',
+      name: 'error',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

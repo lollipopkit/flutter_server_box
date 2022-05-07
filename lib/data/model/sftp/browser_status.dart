@@ -2,7 +2,7 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/sftp/absolute_path.dart';
 
-class SFTPSideViewStatus {
+class SftpBrowserStatus {
   bool selected = false;
   ServerPrivateInfo? spi;
   List<SftpName>? files;
@@ -10,5 +10,5 @@ class SFTPSideViewStatus {
   SftpClient? client;
   bool isBusy = false;
 
-  SFTPSideViewStatus();
+  SftpBrowserStatus();
 }

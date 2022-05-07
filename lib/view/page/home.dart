@@ -24,6 +24,7 @@ import 'package:toolbox/view/page/ping.dart';
 import 'package:toolbox/view/page/private_key/list.dart';
 import 'package:toolbox/view/page/server/tab.dart';
 import 'package:toolbox/view/page/setting.dart';
+import 'package:toolbox/view/page/sftp/downloaded.dart';
 import 'package:toolbox/view/page/snippet/list.dart';
 import 'package:toolbox/view/widget/url_text.dart';
 
@@ -232,6 +233,13 @@ class _MyHomePageState extends State<MyHomePage>
                   onTap: () => AppRoute(
                           const StoredPrivateKeysPage(), 'private key list')
                       .go(context),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.download),
+                  title: Text(s.download),
+                  onTap: () =>
+                      AppRoute(const SFTPDownloadedPage(), 'snippet list')
+                          .go(context),
                 ),
                 ListTile(
                   leading: const Icon(Icons.snippet_folder),

@@ -1,13 +1,21 @@
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/numx.dart';
+import 'package:toolbox/core/extension/stringx.dart';
+import 'package:toolbox/core/route.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/model/server/server_connection_state.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/sftp/absolute_path.dart';
-import 'package:toolbox/data/model/sftp/sftp_side_status.dart';
+import 'package:toolbox/data/model/sftp/download_worker.dart';
+import 'package:toolbox/data/model/sftp/browser_status.dart';
 import 'package:toolbox/data/provider/server.dart';
+import 'package:toolbox/data/provider/sftp_download.dart';
+import 'package:toolbox/data/res/path.dart';
+import 'package:toolbox/data/store/private_key.dart';
+import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
+import 'package:toolbox/view/page/sftp/downloading.dart';
 import 'package:toolbox/view/widget/fade_in.dart';
 import 'package:toolbox/view/widget/two_line_text.dart';
 
@@ -20,16 +28,18 @@ class SFTPPage extends StatefulWidget {
 }
 
 class _SFTPPageState extends State<SFTPPage> {
-  final SFTPSideViewStatus _status = SFTPSideViewStatus();
+  final SftpBrowserStatus _status = SftpBrowserStatus();
 
   final ScrollController _scrollController = ScrollController();
 
   late MediaQueryData _media;
+  late S s;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
+    s = S.of(context);
   }
 
   @override
@@ -133,94 +143,66 @@ class _SFTPPageState extends State<SFTPPage> {
           children: [
             ListTile(
               leading: const Icon(Icons.delete),
-              title: const Text('Delete'),
+              title: Text(s.delete),
               onTap: () => delete(context, file),
             ),
             ListTile(
                 leading: const Icon(Icons.folder),
-                title: const Text('Create Folder'),
+                title: Text(s.createFolder),
                 onTap: () => mkdir(context)),
             ListTile(
               leading: const Icon(Icons.edit),
-              title: const Text('Rename'),
+              title: Text(s.rename),
               onTap: () => rename(context, file),
             ),
-            // ListTile(
-            //   leading: const Icon(Icons.download),
-            //   title: const Text('Download'),
-            //   onTap: () => download(context, file),
-            // )
+            ListTile(
+              leading: const Icon(Icons.download),
+              title: Text(s.download),
+              onTap: () => download(context, file),
+            )
           ],
         ),
         [
           TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'))
+              child: Text(s.cancel))
         ]);
   }
 
-  // void download(BuildContext context, SftpName name) {
-  //   showRoundDialog(
-  //       context, 'Download', Text('Download ${name.filename} to local?'), [
-  //     TextButton(
-  //         onPressed: () => Navigator.of(context).pop(),
-  //         child: const Text('Cancel')),
-  //     TextButton(
-  //         onPressed: () async {
-  //           var result = '';
-  //           try {
-  //             Navigator.of(context).pop();
-  //             showRoundDialog(
-  //                 context,
-  //                 name.filename,
-  //                 const Text('Downloading...\nKepp this app in the foreground.',
-  //                     textAlign: TextAlign.center),
-  //                 [],
-  //                 barrierDismiss: false);
-  //             final path = await sftpDownloadDir;
-  //             final local = File('${path.path}/${name.filename}');
-  //             if (await local.exists()) {
-  //               await local.delete();
-  //             }
-
-  //             final localFile =
-  //                 await local.open(mode: FileMode.writeOnlyAppend);
-  //             final remotePath = _status.path!.path + '/' + name.filename;
-  //             final file = await _status.client!.open(remotePath);
-  //             final size = (await file.stat()).size;
-  //             if (size == null) {
-  //               throw Exception('can not get file size');
-  //             }
-
-  //             const chunkSize = 1024 * 128;
-  //             for (var i = 0; i < size; i += chunkSize) {
-  //               final data = file.read(length: chunkSize);
-  //               await for (var item in data) {
-  //                 localFile.writeFrom(item);
-  //               }
-  //             }
-  //           } catch (e) {
-  //             result = e.toString();
-  //           } finally {
-  //             Navigator.of(context).pop();
-  //             if (result.isEmpty) {
-  //               result = 'Donwloaded successfully.';
-  //             }
-  //             showRoundDialog(context, 'Result', Text(result), [
-  //               TextButton(
-  //                   onPressed: () => Navigator.of(context).pop(),
-  //                   child: const Text('OK'))
-  //             ]);
-  //           }
-  //         },
-  //         child: const Text('Download'))
-  //   ]);
-  // }
+  void download(BuildContext context, SftpName name) {
+    showRoundDialog(
+        context, s.download, Text(s.dl2Local(name.filename)), [
+      TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(s.cancel)),
+      TextButton(
+          onPressed: () async {
+            Navigator.of(context).pop();
+            final prePath = _status.path!.path;
+            final remotePath =
+                prePath + (prePath.endsWith('/') ? '' : '/') + name.filename;
+            final local = '${(await sftpDownloadDir).path}$remotePath';
+            final pubKeyId = _status.spi!.pubKeyId;
+            locator<SftpDownloadProvider>().add(
+                DownloadItem(_status.spi!, remotePath, local),
+                key: pubKeyId == null
+                    ? null
+                    : locator<PrivateKeyStore>().get(pubKeyId).privateKey);
+            showRoundDialog(context, s.goSftpDlPage, const SizedBox(), [
+              TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(s.cancel)),
+              TextButton(onPressed: () => AppRoute(const SFTPDownloadingPage(), 'sftp downloading'), child: Text(s.ok))
+            ]);
+          },
+          child: Text(s.download))
+    ]);
+  }
 
   void delete(BuildContext context, SftpName file) {
     Navigator.of(context).pop();
     showRoundDialog(
-        context, 'Confirm', Text('Are you sure to delete ${file.filename}?'), [
+        context, s.attention, Text(s.sureDelete(file.filename)), [
       TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancel')),
@@ -230,9 +212,9 @@ class _SFTPPageState extends State<SFTPPage> {
             Navigator.of(context).pop();
             listDir();
           },
-          child: const Text(
-            'Delete',
-            style: TextStyle(color: Colors.red),
+          child: Text(
+            s.delete,
+            style: const TextStyle(color: Colors.red),
           )),
     ]);
   }
@@ -242,25 +224,25 @@ class _SFTPPageState extends State<SFTPPage> {
     final textController = TextEditingController();
     showRoundDialog(
         context,
-        'Create Folder',
+        s.createFolder,
         TextField(
           controller: textController,
-          decoration: const InputDecoration(
-            labelText: 'Folder Name',
+          decoration: InputDecoration(
+            labelText: s.name,
           ),
         ),
         [
           TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel')),
+              child: Text(s.cancel)),
           TextButton(
               onPressed: () {
                 if (textController.text == '') {
-                  showRoundDialog(context, 'Attention',
-                      const Text('You need input a name.'), [
+                  showRoundDialog(context, s.attention,
+                      Text(s.fieldMustNotEmpty), [
                     TextButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('OK')),
+                        child: Text(s.ok)),
                   ]);
                   return;
                 }
@@ -269,9 +251,9 @@ class _SFTPPageState extends State<SFTPPage> {
                 Navigator.of(context).pop();
                 listDir();
               },
-              child: const Text(
-                'Create',
-                style: TextStyle(color: Colors.red),
+              child: Text(
+                s.ok,
+                style: const TextStyle(color: Colors.red),
               )),
         ]);
   }
@@ -281,25 +263,25 @@ class _SFTPPageState extends State<SFTPPage> {
     final textController = TextEditingController();
     showRoundDialog(
         context,
-        'Rename',
+        s.rename,
         TextField(
           controller: textController,
-          decoration: const InputDecoration(
-            labelText: 'New Name',
+          decoration: InputDecoration(
+            labelText: s.name,
           ),
         ),
         [
           TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel')),
+              child: Text(s.cancel)),
           TextButton(
               onPressed: () async {
                 if (textController.text == '') {
-                  showRoundDialog(context, 'Attention',
-                      const Text('You need input a name.'), [
+                  showRoundDialog(context, s.attention,
+                      Text(s.fieldMustNotEmpty), [
                     TextButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('OK')),
+                        child: Text(s.ok)),
                   ]);
                   return;
                 }
@@ -308,9 +290,9 @@ class _SFTPPageState extends State<SFTPPage> {
                 Navigator.of(context).pop();
                 listDir();
               },
-              child: const Text(
-                'Rename',
-                style: TextStyle(color: Colors.red),
+              child: Text(
+                s.rename,
+                style: const TextStyle(color: Colors.red),
               )),
         ]);
   }
@@ -336,10 +318,10 @@ class _SFTPPageState extends State<SFTPPage> {
         });
       }
     } catch (e) {
-      await showRoundDialog(context, 'Error', Text(e.toString()), [
+      await showRoundDialog(context, s.error, Text(e.toString()), [
         TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'))
+            child: Text(s.ok))
       ]);
       if (_status.path!.undo()) {
         await listDir();
@@ -350,43 +332,9 @@ class _SFTPPageState extends State<SFTPPage> {
   Widget _buildDestSelector() {
     final str = _status.path?.path;
     return ExpansionTile(
-        title: Text(_status.spi?.name ?? 'Choose target'),
+        title: Text(_status.spi?.name ?? s.chooseDestination),
         subtitle: _status.selected
-            ? LayoutBuilder(builder: (context, size) {
-                bool exceeded = false;
-                int len = 0;
-                for (; !exceeded && len < str!.length; len++) {
-                  // Build the textspan
-                  var span = TextSpan(
-                    text: '...' + str.substring(str.length - len),
-                    style: TextStyle(
-                        fontSize:
-                            Theme.of(context).textTheme.bodyText1?.fontSize ??
-                                14),
-                  );
-
-                  // Use a textpainter to determine if it will exceed max lines
-                  var tp = TextPainter(
-                    maxLines: 1,
-                    textAlign: TextAlign.left,
-                    textDirection: TextDirection.ltr,
-                    text: span,
-                  );
-
-                  // trigger it to layout
-                  tp.layout(maxWidth: size.maxWidth);
-
-                  // whether the text overflowed or not
-                  exceeded = tp.didExceedMaxLines;
-                }
-
-                return Text(
-                  (exceeded ? '...' : '') + str!.substring(str.length - len),
-                  overflow: TextOverflow.clip,
-                  maxLines: 1,
-                  style: const TextStyle(color: Colors.grey),
-                );
-              })
+            ? str!.omitStartStr(style: const TextStyle(color: Colors.grey))
             : null,
         children: locator<ServerProvider>()
             .servers

@@ -12,6 +12,7 @@ import 'package:toolbox/data/provider/debug.dart';
 import 'package:toolbox/data/provider/docker.dart';
 import 'package:toolbox/data/provider/private_key.dart';
 import 'package:toolbox/data/provider/server.dart';
+import 'package:toolbox/data/provider/sftp_download.dart';
 import 'package:toolbox/data/provider/snippet.dart';
 import 'package:toolbox/locator.dart';
 
@@ -70,6 +71,8 @@ Future<void> main() async {
           ChangeNotifierProvider(create: (_) => locator<ServerProvider>()),
           ChangeNotifierProvider(create: (_) => locator<SnippetProvider>()),
           ChangeNotifierProvider(create: (_) => locator<PrivateKeyProvider>()),
+          ChangeNotifierProvider(
+              create: (_) => locator<SftpDownloadProvider>()),
         ],
         child: const MyApp(),
       ),

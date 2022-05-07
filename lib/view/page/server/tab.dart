@@ -21,7 +21,7 @@ import 'package:toolbox/view/page/apt.dart';
 import 'package:toolbox/view/page/docker.dart';
 import 'package:toolbox/view/page/server/detail.dart';
 import 'package:toolbox/view/page/server/edit.dart';
-import 'package:toolbox/view/page/sftp.dart';
+import 'package:toolbox/view/page/sftp/view.dart';
 import 'package:toolbox/view/page/snippet/list.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 

@@ -23,17 +23,30 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m0(rainSunMeGithub) =>
       "\nThanks ${rainSunMeGithub} for participating in the test.\n\nAll rights reserved.";
 
-  static String m1(code) => "request failed, status code: ${code}";
+  static String m1(fileName) => "Download [${fileName}] to local?";
 
-  static String m2(myGithub) => "\nMade with ❤️ by ${myGithub}";
+  static String m2(runningCount, stoppedCount) =>
+      "${runningCount} running, ${stoppedCount} container stopped.";
 
-  static String m3(server) => "Are you sure to delete server [${server}]?";
+  static String m3(count) => "${count} container running.";
 
-  static String m4(build) => "Found: v1.0.${build}, click to update";
+  static String m4(percent, size) => "${percent}% of ${size}";
 
-  static String m5(build) => "Current: v1.0.${build}";
+  static String m5(code) => "request failed, status code: ${code}";
 
-  static String m6(build) => "Current: v1.0.${build}, is up to date";
+  static String m6(myGithub) => "\nMade with ❤️ by ${myGithub}";
+
+  static String m7(time) => "Spent time: ${time} seconds";
+
+  static String m8(name) => "Are you sure to delete [${name}]?";
+
+  static String m9(server) => "Are you sure to delete server [${server}]?";
+
+  static String m10(build) => "Found: v1.0.${build}, click to update";
+
+  static String m11(build) => "Current: v1.0.${build}";
+
+  static String m12(build) => "Current: v1.0.${build}, is up to date";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -41,9 +54,12 @@ class MessageLookup extends MessageLookupByLibrary {
         "addAServer": MessageLookupByLibrary.simpleMessage("add a server"),
         "addPrivateKey":
             MessageLookupByLibrary.simpleMessage("Add private key"),
+        "alreadyLastDir":
+            MessageLookupByLibrary.simpleMessage("Already in last directory."),
         "appPrimaryColor":
             MessageLookupByLibrary.simpleMessage("App primary color"),
         "attention": MessageLookupByLibrary.simpleMessage("Attention"),
+        "backDir": MessageLookupByLibrary.simpleMessage("Back"),
         "cancel": MessageLookupByLibrary.simpleMessage("Cancel"),
         "choose": MessageLookupByLibrary.simpleMessage("Choose"),
         "chooseDestination":
@@ -52,33 +68,57 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Choose private key"),
         "clear": MessageLookupByLibrary.simpleMessage("Clear"),
         "close": MessageLookupByLibrary.simpleMessage("Close"),
+        "containerStatus":
+            MessageLookupByLibrary.simpleMessage("Container status"),
         "convert": MessageLookupByLibrary.simpleMessage("Convert"),
         "copy": MessageLookupByLibrary.simpleMessage("Copy"),
+        "copyPath": MessageLookupByLibrary.simpleMessage("Copy path"),
+        "createFolder": MessageLookupByLibrary.simpleMessage("Create folder"),
         "currentMode": MessageLookupByLibrary.simpleMessage("Current Mode"),
         "debug": MessageLookupByLibrary.simpleMessage("Debug"),
         "decode": MessageLookupByLibrary.simpleMessage("Decode"),
         "delete": MessageLookupByLibrary.simpleMessage("Delete"),
+        "dl2Local": m1,
+        "dockerStatusRunningAndStoppedFmt": m2,
+        "dockerStatusRunningFmt": m3,
+        "dockerWaitConnection": MessageLookupByLibrary.simpleMessage(
+            "Please wait for the connection to be established."),
+        "download": MessageLookupByLibrary.simpleMessage("Download"),
+        "downloadFinished":
+            MessageLookupByLibrary.simpleMessage("Download finished"),
+        "downloadStatus": m4,
         "edit": MessageLookupByLibrary.simpleMessage("Edit"),
         "encode": MessageLookupByLibrary.simpleMessage("Encode"),
+        "error": MessageLookupByLibrary.simpleMessage("Error"),
         "exampleName": MessageLookupByLibrary.simpleMessage("Example name"),
         "export": MessageLookupByLibrary.simpleMessage("Export"),
         "fieldMustNotEmpty": MessageLookupByLibrary.simpleMessage(
             "These fields must not be empty."),
         "go": MessageLookupByLibrary.simpleMessage("Go"),
+        "goSftpDlPage":
+            MessageLookupByLibrary.simpleMessage("Go to SFTP download page?"),
         "host": MessageLookupByLibrary.simpleMessage("Host"),
-        "httpFailedWithCode": m1,
+        "httpFailedWithCode": m5,
         "import": MessageLookupByLibrary.simpleMessage("Import"),
         "importAndExport":
             MessageLookupByLibrary.simpleMessage("Import and Export"),
+        "install": MessageLookupByLibrary.simpleMessage("install"),
+        "installDockerWithUrl": MessageLookupByLibrary.simpleMessage(
+            "Please https://docs.docker.com/engine/install docker first."),
+        "keepForeground":
+            MessageLookupByLibrary.simpleMessage("Keep app foreground!"),
         "keyAuth": MessageLookupByLibrary.simpleMessage("Key Auth"),
         "launchPage": MessageLookupByLibrary.simpleMessage("Launch page"),
         "license": MessageLookupByLibrary.simpleMessage("License"),
+        "loadingFiles":
+            MessageLookupByLibrary.simpleMessage("Loading files..."),
         "loss": MessageLookupByLibrary.simpleMessage("Loss"),
-        "madeWithLove": m2,
+        "madeWithLove": m6,
         "max": MessageLookupByLibrary.simpleMessage("max"),
         "min": MessageLookupByLibrary.simpleMessage("min"),
         "ms": MessageLookupByLibrary.simpleMessage("ms"),
         "name": MessageLookupByLibrary.simpleMessage("Name"),
+        "noClient": MessageLookupByLibrary.simpleMessage("No client"),
         "noResult": MessageLookupByLibrary.simpleMessage("No result"),
         "noSavedPrivateKey":
             MessageLookupByLibrary.simpleMessage("No saved private keys."),
@@ -87,6 +127,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "noServerAvailable":
             MessageLookupByLibrary.simpleMessage("No server available."),
         "ok": MessageLookupByLibrary.simpleMessage("OK"),
+        "open": MessageLookupByLibrary.simpleMessage("Open"),
         "ping": MessageLookupByLibrary.simpleMessage("Ping"),
         "pingAvg": MessageLookupByLibrary.simpleMessage("Avg:"),
         "pingInputIP": MessageLookupByLibrary.simpleMessage(
@@ -100,6 +141,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "port": MessageLookupByLibrary.simpleMessage("Port"),
         "privateKey": MessageLookupByLibrary.simpleMessage("Private Key"),
         "pwd": MessageLookupByLibrary.simpleMessage("Password"),
+        "rename": MessageLookupByLibrary.simpleMessage("Rename"),
         "result": MessageLookupByLibrary.simpleMessage("Result"),
         "run": MessageLookupByLibrary.simpleMessage("Run"),
         "save": MessageLookupByLibrary.simpleMessage("Save"),
@@ -116,12 +158,21 @@ class MessageLookup extends MessageLookupByLibrary {
         "serverTabUnkown":
             MessageLookupByLibrary.simpleMessage("Unknown state"),
         "setting": MessageLookupByLibrary.simpleMessage("Setting"),
+        "sftpDlPrepare":
+            MessageLookupByLibrary.simpleMessage("Preparing to connect..."),
+        "sftpNoDownloadTask":
+            MessageLookupByLibrary.simpleMessage("No download task."),
+        "sftpSSHConnected":
+            MessageLookupByLibrary.simpleMessage("SFTP Connected"),
         "snippet": MessageLookupByLibrary.simpleMessage("Snippet"),
+        "spentTime": m7,
         "start": MessageLookupByLibrary.simpleMessage("Start"),
         "stop": MessageLookupByLibrary.simpleMessage("Stop"),
-        "sureToDeleteServer": m3,
+        "sureDelete": m8,
+        "sureToDeleteServer": m9,
         "ttl": MessageLookupByLibrary.simpleMessage("TTL"),
         "unknown": MessageLookupByLibrary.simpleMessage("unknown"),
+        "unknownError": MessageLookupByLibrary.simpleMessage("Unknown error"),
         "unkownConvertMode":
             MessageLookupByLibrary.simpleMessage("Unknown convert mode"),
         "updateIntervalEqual0": MessageLookupByLibrary.simpleMessage(
@@ -131,9 +182,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "upsideDown": MessageLookupByLibrary.simpleMessage("Upside Down"),
         "urlOrJson": MessageLookupByLibrary.simpleMessage("URL or JSON"),
         "user": MessageLookupByLibrary.simpleMessage("User"),
-        "versionHaveUpdate": m4,
-        "versionUnknownUpdate": m5,
-        "versionUpdated": m6,
+        "versionHaveUpdate": m10,
+        "versionUnknownUpdate": m11,
+        "versionUpdated": m12,
         "willTakEeffectImmediately":
             MessageLookupByLibrary.simpleMessage("Will take effect immediately")
       };

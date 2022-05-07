@@ -5,6 +5,7 @@ import 'package:toolbox/data/provider/debug.dart';
 import 'package:toolbox/data/provider/docker.dart';
 import 'package:toolbox/data/provider/private_key.dart';
 import 'package:toolbox/data/provider/server.dart';
+import 'package:toolbox/data/provider/sftp_download.dart';
 import 'package:toolbox/data/provider/snippet.dart';
 import 'package:toolbox/data/service/app.dart';
 import 'package:toolbox/data/store/private_key.dart';
@@ -26,6 +27,7 @@ void setupLocatorForProviders() {
   locator.registerSingleton(ServerProvider());
   locator.registerSingleton(SnippetProvider());
   locator.registerSingleton(PrivateKeyProvider());
+  locator.registerSingleton(SftpDownloadProvider());
 }
 
 Future<void> setupLocatorForStores() async {

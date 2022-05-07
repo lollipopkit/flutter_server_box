@@ -29,8 +29,8 @@ class _MyFadeInState extends State<FadeIn> with SingleTickerProviderStateMixin {
 
   @override
   void dispose() {
-    super.dispose();
     _controller.dispose();
+    super.dispose();
   }
 
   @override

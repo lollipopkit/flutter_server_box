@@ -73,8 +73,8 @@ Future<void> updateBuildData() async {
   await writeStaicConfigFile(data, 'BuildData', buildDataFilePath);
 }
 
-void dartFormat() {
-  final result = Process.runSync('dart', ['format', '.']);
+Future<void> dartFormat() async {
+  final result = await Process.run('dart', ['format', '.']);
   print('\n' + result.stdout);
   if (result.exitCode != 0) {
     print(result.stderr);
@@ -83,7 +83,7 @@ void dartFormat() {
 }
 
 void flutterRun(String? mode) {
-  Process.start('flutter', ['run', mode == null ? '' : '--$mode'],
+  Process.start('flutter', mode == null ? ['run'] : ['run', '--$mode'],
       mode: ProcessStartMode.inheritStdio, runInShell: true);
 }
 
@@ -158,7 +158,7 @@ void main(List<String> args) async {
       final buildFunc = [flutterBuildIOS, flutterBuildAndroid];
       build = await getGitCommitCount();
       await updateBuildData();
-      dartFormat();
+      await dartFormat();
       if (args.length > 1) {
         final platform = args[1];
         switch (platform) {

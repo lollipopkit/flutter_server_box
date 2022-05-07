@@ -20,7 +20,7 @@ class AbsolutePath {
   }
 
   bool undo() {
-    if (_prePath == null) {
+    if (_prePath == null || _prePath == path) {
       return false;
     }
     path = _prePath!;
