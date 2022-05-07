@@ -211,13 +211,17 @@ class _SFTPPageState extends State<SFTPPage> {
                 key: pubKeyId == null
                     ? null
                     : locator<PrivateKeyStore>().get(pubKeyId).privateKey);
+            Navigator.of(context).pop();
             showRoundDialog(context, s.goSftpDlPage, const SizedBox(), [
               TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   child: Text(s.cancel)),
               TextButton(
-                  onPressed: () =>
-                      AppRoute(const SFTPDownloadingPage(), 'sftp downloading'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    AppRoute(const SFTPDownloadingPage(), 'sftp downloading')
+                        .go(context);
+                  },
                   child: Text(s.ok))
             ]);
           },

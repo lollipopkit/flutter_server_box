@@ -47,7 +47,7 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
         );
       }
       return ListView.builder(
-        padding: const EdgeInsets.all(13),
+        padding: const EdgeInsets.all(11),
         itemCount: pro.status.length,
         itemBuilder: (context, index) {
           final status = pro.status[index];
@@ -78,7 +78,7 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
     switch (status.status) {
       case SftpWorkerStatus.finished:
         return _wrapInCard(status,
-            '${s.downloadFinished}, ${s.spentTime(status.spentTime ?? s.unknown)}',
+            '${s.downloadFinished} ${s.spentTime(status.spentTime ?? s.unknown)}',
             trailing: IconButton(
                 onPressed: () => Share.shareFiles([status.item.localPath],
                     text: '${status.fileName} from ServerBox'),
@@ -91,9 +91,9 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
             trailing:
                 CircularProgressIndicator(value: (status.progress ?? 0) / 100));
       case SftpWorkerStatus.preparing:
-        return _wrapInCard(status, s.sftpDlPrepare, trailing: centerLoading);
+        return _wrapInCard(status, s.sftpDlPrepare, trailing: loadingIcon);
       case SftpWorkerStatus.sshConnectted:
-        return _wrapInCard(status, s.sftpSSHConnected, trailing: centerLoading);
+        return _wrapInCard(status, s.sftpSSHConnected, trailing: loadingIcon);
       default:
         return _wrapInCard(status, s.unknown,
             trailing: const Icon(

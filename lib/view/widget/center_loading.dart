@@ -9,3 +9,5 @@ const centerSizedLoading = SizedBox(
     child: CircularProgressIndicator(),
   ),
 );
+
+final loadingIcon = IconButton(onPressed: () {}, icon: centerLoading);

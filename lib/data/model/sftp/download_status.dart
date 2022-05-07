@@ -33,6 +33,9 @@ class SftpDownloadStatus {
     switch (event.runtimeType) {
       case SftpWorkerStatus:
         status = event;
+        if (status == SftpWorkerStatus.finished) {
+          worker.dispose();
+        }
         break;
       case double:
         progress = event;

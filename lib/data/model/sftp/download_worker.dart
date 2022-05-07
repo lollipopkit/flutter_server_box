@@ -24,6 +24,10 @@ class SftpDownloadWorker {
   final worker = Worker();
   final String? privateKey;
 
+  void dispose() {
+    worker.dispose();
+  }
+
   /// Initiate the worker (new thread) and start listen from messages between
   /// the threads
   Future<void> init() async {
