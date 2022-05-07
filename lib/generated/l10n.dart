@@ -1071,6 +1071,16 @@ class S {
     );
   }
 
+  /// `Create file`
+  String get createFile {
+    return Intl.message(
+      'Create file',
+      name: 'createFile',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Rename`
   String get rename {
     return Intl.message(

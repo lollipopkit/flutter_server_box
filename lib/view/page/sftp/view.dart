@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/numx.dart';
@@ -53,9 +55,34 @@ class _SFTPPageState extends State<SFTPPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        centerTitle: true,
-        title: TwoLineText(up: 'SFTP', down: widget.spi.name),
-      ),
+          centerTitle: true,
+          title: TwoLineText(up: 'SFTP', down: widget.spi.name),
+          actions: [
+            IconButton(
+              onPressed: (() => showRoundDialog(
+                      context,
+                      s.choose,
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ListTile(
+                              leading: const Icon(Icons.folder),
+                              title: Text(s.createFolder),
+                              onTap: () => mkdir(context)),
+                          ListTile(
+                              leading: const Icon(Icons.insert_drive_file),
+                              title: Text(s.createFile),
+                              onTap: () => newFile(context)),
+                        ],
+                      ),
+                      [
+                        TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: Text(s.close))
+                      ])),
+              icon: const Icon(Icons.add),
+            )
+          ]),
       body: _buildFileView(),
     );
   }
@@ -121,10 +148,10 @@ class _SFTPPageState extends State<SFTPPage> {
                       _status.path?.update(file.filename);
                       listDir(path: _status.path?.path);
                     } else {
-                      onItemPress(context, file);
+                      onItemPress(context, file, true);
                     }
                   },
-                  onLongPress: () => onItemPress(context, file),
+                  onLongPress: () => onItemPress(context, file, false),
                 );
               },
             ),
@@ -134,10 +161,10 @@ class _SFTPPageState extends State<SFTPPage> {
     }
   }
 
-  void onItemPress(BuildContext context, SftpName file) {
+  void onItemPress(BuildContext context, SftpName file, bool showDownload) {
     showRoundDialog(
         context,
-        'Action',
+        s.choose,
         Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -147,19 +174,17 @@ class _SFTPPageState extends State<SFTPPage> {
               onTap: () => delete(context, file),
             ),
             ListTile(
-                leading: const Icon(Icons.folder),
-                title: Text(s.createFolder),
-                onTap: () => mkdir(context)),
-            ListTile(
               leading: const Icon(Icons.edit),
               title: Text(s.rename),
               onTap: () => rename(context, file),
             ),
-            ListTile(
-              leading: const Icon(Icons.download),
-              title: Text(s.download),
-              onTap: () => download(context, file),
-            )
+            showDownload
+                ? ListTile(
+                    leading: const Icon(Icons.download),
+                    title: Text(s.download),
+                    onTap: () => download(context, file),
+                  )
+                : const SizedBox()
           ],
         ),
         [
@@ -170,11 +195,9 @@ class _SFTPPageState extends State<SFTPPage> {
   }
 
   void download(BuildContext context, SftpName name) {
-    showRoundDialog(
-        context, s.download, Text(s.dl2Local(name.filename)), [
+    showRoundDialog(context, s.download, Text(s.dl2Local(name.filename)), [
       TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(s.cancel)),
+          onPressed: () => Navigator.of(context).pop(), child: Text(s.cancel)),
       TextButton(
           onPressed: () async {
             Navigator.of(context).pop();
@@ -192,7 +215,10 @@ class _SFTPPageState extends State<SFTPPage> {
               TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   child: Text(s.cancel)),
-              TextButton(onPressed: () => AppRoute(const SFTPDownloadingPage(), 'sftp downloading'), child: Text(s.ok))
+              TextButton(
+                  onPressed: () =>
+                      AppRoute(const SFTPDownloadingPage(), 'sftp downloading'),
+                  child: Text(s.ok))
             ]);
           },
           child: Text(s.download))
@@ -201,8 +227,7 @@ class _SFTPPageState extends State<SFTPPage> {
 
   void delete(BuildContext context, SftpName file) {
     Navigator.of(context).pop();
-    showRoundDialog(
-        context, s.attention, Text(s.sureDelete(file.filename)), [
+    showRoundDialog(context, s.attention, Text(s.sureDelete(file.filename)), [
       TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancel')),
@@ -238,8 +263,8 @@ class _SFTPPageState extends State<SFTPPage> {
           TextButton(
               onPressed: () {
                 if (textController.text == '') {
-                  showRoundDialog(context, s.attention,
-                      Text(s.fieldMustNotEmpty), [
+                  showRoundDialog(
+                      context, s.attention, Text(s.fieldMustNotEmpty), [
                     TextButton(
                         onPressed: () => Navigator.of(context).pop(),
                         child: Text(s.ok)),
@@ -248,6 +273,46 @@ class _SFTPPageState extends State<SFTPPage> {
                 }
                 _status.client!
                     .mkdir(_status.path!.path + '/' + textController.text);
+                Navigator.of(context).pop();
+                listDir();
+              },
+              child: Text(
+                s.ok,
+                style: const TextStyle(color: Colors.red),
+              )),
+        ]);
+  }
+
+  void newFile(BuildContext context) {
+    Navigator.of(context).pop();
+    final textController = TextEditingController();
+    showRoundDialog(
+        context,
+        s.createFile,
+        TextField(
+          controller: textController,
+          decoration: InputDecoration(
+            labelText: s.name,
+          ),
+        ),
+        [
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(s.cancel)),
+          TextButton(
+              onPressed: () async {
+                if (textController.text == '') {
+                  showRoundDialog(
+                      context, s.attention, Text(s.fieldMustNotEmpty), [
+                    TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(s.ok)),
+                  ]);
+                  return;
+                }
+                (await _status.client!
+                        .open(_status.path!.path + '/' + textController.text))
+                    .writeBytes(Uint8List(0));
                 Navigator.of(context).pop();
                 listDir();
               },
@@ -277,8 +342,8 @@ class _SFTPPageState extends State<SFTPPage> {
           TextButton(
               onPressed: () async {
                 if (textController.text == '') {
-                  showRoundDialog(context, s.attention,
-                      Text(s.fieldMustNotEmpty), [
+                  showRoundDialog(
+                      context, s.attention, Text(s.fieldMustNotEmpty), [
                     TextButton(
                         onPressed: () => Navigator.of(context).pop(),
                         child: Text(s.ok)),
@@ -320,8 +385,7 @@ class _SFTPPageState extends State<SFTPPage> {
     } catch (e) {
       await showRoundDialog(context, s.error, Text(e.toString()), [
         TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(s.ok))
+            onPressed: () => Navigator.of(context).pop(), child: Text(s.ok))
       ]);
       if (_status.path!.undo()) {
         await listDir();

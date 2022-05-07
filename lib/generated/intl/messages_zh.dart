@@ -67,6 +67,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "convert": MessageLookupByLibrary.simpleMessage("转换"),
         "copy": MessageLookupByLibrary.simpleMessage("复制到剪切板"),
         "copyPath": MessageLookupByLibrary.simpleMessage("复制路径"),
+        "createFile": MessageLookupByLibrary.simpleMessage("创建文件"),
         "createFolder": MessageLookupByLibrary.simpleMessage("创建文件夹"),
         "currentMode": MessageLookupByLibrary.simpleMessage("当前模式"),
         "debug": MessageLookupByLibrary.simpleMessage("调试"),

@@ -73,6 +73,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "convert": MessageLookupByLibrary.simpleMessage("Convert"),
         "copy": MessageLookupByLibrary.simpleMessage("Copy"),
         "copyPath": MessageLookupByLibrary.simpleMessage("Copy path"),
+        "createFile": MessageLookupByLibrary.simpleMessage("Create file"),
         "createFolder": MessageLookupByLibrary.simpleMessage("Create folder"),
         "currentMode": MessageLookupByLibrary.simpleMessage("Current Mode"),
         "debug": MessageLookupByLibrary.simpleMessage("Debug"),

@@ -101,6 +101,7 @@
     "sftpNoDownloadTask": "没有下载任务",
     "goSftpDlPage": "前往下载页?",
     "createFolder": "创建文件夹",
+    "createFile": "创建文件",
     "rename": "重命名",
     "dl2Local": "下载 [{fileName}] 到本地？",
     "error": "出错了"
