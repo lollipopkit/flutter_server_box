@@ -92,7 +92,7 @@
     "containerStatus": "容器状态",
     "noClient": "没有SSH连接",
     "installDockerWithUrl": "请先 https://docs.docker.com/engine/install docker",
-    "dockerWaitConnection": "请等待连接建立",
+    "waitConnection": "请等待连接建立",
     "unknownError": "未知错误",
     "dockerStatusRunningFmt": "{count}个容器正在运行",
     "dockerStatusRunningAndStoppedFmt": "{runningCount}个正在运行, {stoppedCount}个已停止",
@@ -106,5 +106,10 @@
     "dl2Local": "下载 [{fileName}] 到本地？",
     "error": "出错了",
     "disconnected": "连接断开",
-    "files": "文件"
+    "files": "文件",
+    "experimentalFeature": "实验性功能",
+    "reportBugsOnGithubIssue": "请到 https://github.com/LollipopKit/flutter_server_box/issues 提交问题",
+    "noUpdateAvailable": "没有可用更新",
+    "foundNUpdate": "找到 {count} 个更新",
+    "updateAll": "更新全部"
 }

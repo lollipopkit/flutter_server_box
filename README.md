@@ -1,6 +1,16 @@
 # Server Monitor & Toolbox
-
 A new Flutter project which provide a chart view to display server status data and a manager toolbox.
+
+## Milestone
+- [x] Status chart view
+- [x] Base64/Url En/Decode
+- [x] Ping
+- [x] Desktop support
+- [x] Apt/Yum manager
+- [x] SFTP
+- [ ] Snippet market
+- [x] Docker manager
+- [x] i18n (English, Chinese)
 
 ## ScreenShots
 <table>
@@ -43,25 +53,12 @@ Status|Platform
 Full Support|Android/iOS/macOS
 Support, but not tested|Windows/Linux
 
-## Milestone
-- [x] SSH connect
-- [x] Server info store
-- [x] Status chart view
-- [x] Base64/Url En/Decode
-- [x] Server status detail page
-- [x] Theme switch
-- [x] Migrate from `ssh2` to `dartssh2`
-- [x] Desktop support
-- [x] Apt manager
-- [x] SFTP
-- [ ] Snippet market
-- [x] Docker manager
 
 ## Build
 Please use `make.dart` to build.
 ```shell
-# build android apk
-./make.dart build android
+# build android apk and ios archive
+./make.dart build
 # Run in release mode
 ./make.dart run release
 ```

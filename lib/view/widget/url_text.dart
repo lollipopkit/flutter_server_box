@@ -8,12 +8,14 @@ const regUrl =
 class UrlText extends StatelessWidget {
   final String text;
   final String? replace;
+  final TextAlign? textAlign;
   final TextStyle style;
 
   const UrlText(
       {Key? key,
       required this.text,
       this.replace,
+      this.textAlign,
       this.style = const TextStyle()})
       : super(key: key);
 
@@ -69,6 +71,7 @@ class UrlText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RichText(
+      textAlign: textAlign ?? TextAlign.start,
       text: TextSpan(children: _getTextSpans(isDarkMode(context))),
     );
   }

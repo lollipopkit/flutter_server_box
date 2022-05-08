@@ -981,10 +981,10 @@ class S {
   }
 
   /// `Please wait for the connection to be established.`
-  String get dockerWaitConnection {
+  String get waitConnection {
     return Intl.message(
       'Please wait for the connection to be established.',
-      name: 'dockerWaitConnection',
+      name: 'waitConnection',
       desc: '',
       args: [],
     );
@@ -1126,6 +1126,56 @@ class S {
     return Intl.message(
       'Files',
       name: 'files',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Experimental feature`
+  String get experimentalFeature {
+    return Intl.message(
+      'Experimental feature',
+      name: 'experimentalFeature',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Please report bugs on https://github.com/LollipopKit/flutter_server_box/issues`
+  String get reportBugsOnGithubIssue {
+    return Intl.message(
+      'Please report bugs on https://github.com/LollipopKit/flutter_server_box/issues',
+      name: 'reportBugsOnGithubIssue',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No update available`
+  String get noUpdateAvailable {
+    return Intl.message(
+      'No update available',
+      name: 'noUpdateAvailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Found {count} update`
+  String foundNUpdate(Object count) {
+    return Intl.message(
+      'Found $count update',
+      name: 'foundNUpdate',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `Update all`
+  String get updateAll {
+    return Intl.message(
+      'Update all',
+      name: 'updateAll',
       desc: '',
       args: [],
     );

@@ -105,7 +105,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
           replace: s.install,
         );
       case 'no client':
-        return Text(s.dockerWaitConnection);
+        return Text(s.waitConnection);
       default:
         return Text(s.unknownError);
     }

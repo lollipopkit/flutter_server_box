@@ -92,7 +92,7 @@
     "containerStatus": "Container status",
     "noClient": "No client",
     "installDockerWithUrl": "Please https://docs.docker.com/engine/install docker first.",
-    "dockerWaitConnection": "Please wait for the connection to be established.",
+    "waitConnection": "Please wait for the connection to be established.",
     "unknownError": "Unknown error",
     "dockerStatusRunningFmt": "{count} container running.",
     "dockerStatusRunningAndStoppedFmt": "{runningCount} running, {stoppedCount} container stopped.",
@@ -106,5 +106,10 @@
     "dl2Local": "Download [{fileName}] to local?",
     "error": "Error",
     "disconnected": "Disconnected",
-    "files": "Files"
+    "files": "Files",
+    "experimentalFeature": "Experimental feature",
+    "reportBugsOnGithubIssue": "Please report bugs on https://github.com/LollipopKit/flutter_server_box/issues",
+    "noUpdateAvailable": "No update available",
+    "foundNUpdate": "Found {count} update",
+    "updateAll": "Update all"
 }

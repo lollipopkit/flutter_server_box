@@ -6,10 +6,12 @@ import 'package:toolbox/data/model/apt/upgrade_pkg_info.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/provider/apt.dart';
 import 'package:toolbox/data/provider/server.dart';
+import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/widget/center_loading.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 import 'package:toolbox/view/widget/two_line_text.dart';
+import 'package:toolbox/view/widget/url_text.dart';
 
 class AptManagePage extends StatefulWidget {
   const AptManagePage(this.spi, {Key? key}) : super(key: key);
@@ -25,11 +27,13 @@ class _AptManagePageState extends State<AptManagePage>
   late MediaQueryData _media;
   final greyStyle = const TextStyle(color: Colors.grey);
   final scrollController = ScrollController();
+  late S s;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
+    s = S.of(context);
   }
 
   @override
@@ -45,7 +49,7 @@ class _AptManagePageState extends State<AptManagePage>
         .servers
         .firstWhere((e) => e.info == widget.spi);
     if (si.client == null) {
-      showSnackBar(context, const Text('Plz wait for ssh connection'));
+      showSnackBar(context, Text(s.waitConnection));
       Navigator.of(context).pop();
       return;
     }
@@ -71,10 +75,11 @@ class _AptManagePageState extends State<AptManagePage>
         return ListView(
           padding: const EdgeInsets.all(13),
           children: [
-            const Padding(
-              padding: EdgeInsets.all(17),
-              child: Text(
-                'Experimental features.\nPlease report bugs on Github Issue.',
+            Padding(
+              padding: const EdgeInsets.all(17),
+              child: UrlText(
+                text: '${s.experimentalFeature}\n${s.reportBugsOnGithubIssue}',
+                replace: 'Github Issue',
                 textAlign: TextAlign.center,
               ),
             ),
@@ -87,19 +92,19 @@ class _AptManagePageState extends State<AptManagePage>
 
   Widget _buildUpdatePanel(AptProvider apt) {
     if (apt.upgradeable!.isEmpty) {
-      return const ListTile(
+      return ListTile(
         title: Text(
-          'No update available',
+          s.noUpdateAvailable,
           textAlign: TextAlign.center,
         ),
-        subtitle: Text('>_<', textAlign: TextAlign.center),
+        subtitle: const Text('>_<', textAlign: TextAlign.center),
       );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ExpansionTile(
-          title: Text('Found ${apt.upgradeable!.length} update'),
+          title: Text(s.foundNUpdate(apt.upgradeable!.length)),
           subtitle: Text(
             apt.upgradeable!.map((e) => e.package).join(', '),
             maxLines: 1,
@@ -109,7 +114,7 @@ class _AptManagePageState extends State<AptManagePage>
           children: apt.updateLog == null
               ? [
                   TextButton(
-                      child: const Text('Update all'),
+                      child: Text(s.updateAll),
                       onPressed: () {
                         apt.upgrade();
                       }),

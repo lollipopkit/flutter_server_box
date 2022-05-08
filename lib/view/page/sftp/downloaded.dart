@@ -7,7 +7,6 @@ import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/model/app/path_with_prefix.dart';
-import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/font_style.dart';
 import 'package:toolbox/data/res/path.dart';
 import 'package:toolbox/generated/l10n.dart';
@@ -81,8 +80,9 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
   }
 
   Widget _buildPath() {
+    final color = _theme.scaffoldBackgroundColor;
     return Container(
-      color: _theme.appBarTheme.foregroundColor,
+      color: color,
       padding: const EdgeInsets.fromLTRB(11, 7, 11, 11),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -91,7 +91,7 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
           (_path?.path ?? s.loadingFiles).omitStartStr(
             style: TextStyle(
                 color:
-                    primaryColor.isBrightColor ? Colors.black : Colors.white),
+                    color.isBrightColor ? Colors.black : Colors.white),
           )
         ],
       ),

@@ -32,21 +32,23 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m4(percent, size) => "${percent}% of ${size}";
 
-  static String m5(code) => "request failed, status code: ${code}";
+  static String m5(count) => "Found ${count} update";
 
-  static String m6(myGithub) => "\nMade with ❤️ by ${myGithub}";
+  static String m6(code) => "request failed, status code: ${code}";
 
-  static String m7(time) => "Spent time: ${time}";
+  static String m7(myGithub) => "\nMade with ❤️ by ${myGithub}";
 
-  static String m8(name) => "Are you sure to delete [${name}]?";
+  static String m8(time) => "Spent time: ${time}";
 
-  static String m9(server) => "Are you sure to delete server [${server}]?";
+  static String m9(name) => "Are you sure to delete [${name}]?";
 
-  static String m10(build) => "Found: v1.0.${build}, click to update";
+  static String m10(server) => "Are you sure to delete server [${server}]?";
 
-  static String m11(build) => "Current: v1.0.${build}";
+  static String m11(build) => "Found: v1.0.${build}, click to update";
 
-  static String m12(build) => "Current: v1.0.${build}, is up to date";
+  static String m12(build) => "Current: v1.0.${build}";
+
+  static String m13(build) => "Current: v1.0.${build}, is up to date";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -83,8 +85,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "dl2Local": m1,
         "dockerStatusRunningAndStoppedFmt": m2,
         "dockerStatusRunningFmt": m3,
-        "dockerWaitConnection": MessageLookupByLibrary.simpleMessage(
-            "Please wait for the connection to be established."),
         "download": MessageLookupByLibrary.simpleMessage("Download"),
         "downloadFinished":
             MessageLookupByLibrary.simpleMessage("Download finished"),
@@ -93,15 +93,18 @@ class MessageLookup extends MessageLookupByLibrary {
         "encode": MessageLookupByLibrary.simpleMessage("Encode"),
         "error": MessageLookupByLibrary.simpleMessage("Error"),
         "exampleName": MessageLookupByLibrary.simpleMessage("Example name"),
+        "experimentalFeature":
+            MessageLookupByLibrary.simpleMessage("Experimental feature"),
         "export": MessageLookupByLibrary.simpleMessage("Export"),
         "fieldMustNotEmpty": MessageLookupByLibrary.simpleMessage(
             "These fields must not be empty."),
         "files": MessageLookupByLibrary.simpleMessage("Files"),
+        "foundNUpdate": m5,
         "go": MessageLookupByLibrary.simpleMessage("Go"),
         "goSftpDlPage":
             MessageLookupByLibrary.simpleMessage("Go to SFTP download page?"),
         "host": MessageLookupByLibrary.simpleMessage("Host"),
-        "httpFailedWithCode": m5,
+        "httpFailedWithCode": m6,
         "import": MessageLookupByLibrary.simpleMessage("Import"),
         "importAndExport":
             MessageLookupByLibrary.simpleMessage("Import and Export"),
@@ -116,7 +119,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "loadingFiles":
             MessageLookupByLibrary.simpleMessage("Loading files..."),
         "loss": MessageLookupByLibrary.simpleMessage("Loss"),
-        "madeWithLove": m6,
+        "madeWithLove": m7,
         "max": MessageLookupByLibrary.simpleMessage("max"),
         "min": MessageLookupByLibrary.simpleMessage("min"),
         "ms": MessageLookupByLibrary.simpleMessage("ms"),
@@ -129,6 +132,8 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("No saved snippets."),
         "noServerAvailable":
             MessageLookupByLibrary.simpleMessage("No server available."),
+        "noUpdateAvailable":
+            MessageLookupByLibrary.simpleMessage("No update available"),
         "ok": MessageLookupByLibrary.simpleMessage("OK"),
         "open": MessageLookupByLibrary.simpleMessage("Open"),
         "ping": MessageLookupByLibrary.simpleMessage("Ping"),
@@ -145,6 +150,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "privateKey": MessageLookupByLibrary.simpleMessage("Private Key"),
         "pwd": MessageLookupByLibrary.simpleMessage("Password"),
         "rename": MessageLookupByLibrary.simpleMessage("Rename"),
+        "reportBugsOnGithubIssue": MessageLookupByLibrary.simpleMessage(
+            "Please report bugs on https://github.com/LollipopKit/flutter_server_box/issues"),
         "result": MessageLookupByLibrary.simpleMessage("Result"),
         "run": MessageLookupByLibrary.simpleMessage("Run"),
         "save": MessageLookupByLibrary.simpleMessage("Save"),
@@ -168,16 +175,17 @@ class MessageLookup extends MessageLookupByLibrary {
         "sftpSSHConnected":
             MessageLookupByLibrary.simpleMessage("SFTP Connected"),
         "snippet": MessageLookupByLibrary.simpleMessage("Snippet"),
-        "spentTime": m7,
+        "spentTime": m8,
         "start": MessageLookupByLibrary.simpleMessage("Start"),
         "stop": MessageLookupByLibrary.simpleMessage("Stop"),
-        "sureDelete": m8,
-        "sureToDeleteServer": m9,
+        "sureDelete": m9,
+        "sureToDeleteServer": m10,
         "ttl": MessageLookupByLibrary.simpleMessage("TTL"),
         "unknown": MessageLookupByLibrary.simpleMessage("unknown"),
         "unknownError": MessageLookupByLibrary.simpleMessage("Unknown error"),
         "unkownConvertMode":
             MessageLookupByLibrary.simpleMessage("Unknown convert mode"),
+        "updateAll": MessageLookupByLibrary.simpleMessage("Update all"),
         "updateIntervalEqual0": MessageLookupByLibrary.simpleMessage(
             "You set to 0, will not update automatically.\nYou can pull to refresh manually."),
         "updateServerStatusInterval": MessageLookupByLibrary.simpleMessage(
@@ -185,9 +193,11 @@ class MessageLookup extends MessageLookupByLibrary {
         "upsideDown": MessageLookupByLibrary.simpleMessage("Upside Down"),
         "urlOrJson": MessageLookupByLibrary.simpleMessage("URL or JSON"),
         "user": MessageLookupByLibrary.simpleMessage("User"),
-        "versionHaveUpdate": m10,
-        "versionUnknownUpdate": m11,
-        "versionUpdated": m12,
+        "versionHaveUpdate": m11,
+        "versionUnknownUpdate": m12,
+        "versionUpdated": m13,
+        "waitConnection": MessageLookupByLibrary.simpleMessage(
+            "Please wait for the connection to be established."),
         "willTakEeffectImmediately":
             MessageLookupByLibrary.simpleMessage("Will take effect immediately")
       };
