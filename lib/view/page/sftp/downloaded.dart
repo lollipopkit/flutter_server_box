@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:toolbox/core/extension/colorx.dart';
 import 'package:toolbox/core/extension/numx.dart';
 import 'package:toolbox/core/extension/stringx.dart';
@@ -173,8 +172,7 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
                 leading: const Icon(Icons.open_in_new),
                 title: Text(s.open),
                 onTap: () {
-                  Share.shareFiles([file.absolute.path],
-                      text: '$fileName from ServerBox');
+                  shareFiles(context, [file.absolute.path]);
                 }),
           ],
         ),

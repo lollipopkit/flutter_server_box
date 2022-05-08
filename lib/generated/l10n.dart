@@ -900,10 +900,10 @@ class S {
     );
   }
 
-  /// `Spent time: {time} seconds`
+  /// `Spent time: {time}`
   String spentTime(Object time) {
     return Intl.message(
-      'Spent time: $time seconds',
+      'Spent time: $time',
       name: 'spentTime',
       desc: '',
       args: [time],
@@ -1106,6 +1106,26 @@ class S {
     return Intl.message(
       'Error',
       name: 'error',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Disconnected`
+  String get disconnected {
+    return Intl.message(
+      'Disconnected',
+      name: 'disconnected',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Files`
+  String get files {
+    return Intl.message(
+      'Files',
+      name: 'files',
       desc: '',
       args: [],
     );

@@ -301,7 +301,7 @@ class _ServerPageState extends State<ServerPage>
       String? failedInfo) {
     switch (cs) {
       case ServerConnectionState.disconnected:
-        return 'Disconnected';
+        return s.disconnected;
       case ServerConnectionState.connected:
         if (temp == '') {
           if (upTime == '') {

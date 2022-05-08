@@ -36,7 +36,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m6(myGithub) => "\n用❤️制作 by ${myGithub}";
 
-  static String m7(time) => "耗时: ${time} 秒";
+  static String m7(time) => "耗时: ${time}";
 
   static String m8(name) => "确定删除[${name}]？";
 
@@ -73,6 +73,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "debug": MessageLookupByLibrary.simpleMessage("调试"),
         "decode": MessageLookupByLibrary.simpleMessage("解码"),
         "delete": MessageLookupByLibrary.simpleMessage("删除"),
+        "disconnected": MessageLookupByLibrary.simpleMessage("连接断开"),
         "dl2Local": m1,
         "dockerStatusRunningAndStoppedFmt": m2,
         "dockerStatusRunningFmt": m3,
@@ -86,6 +87,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "exampleName": MessageLookupByLibrary.simpleMessage("名称示例"),
         "export": MessageLookupByLibrary.simpleMessage("导出"),
         "fieldMustNotEmpty": MessageLookupByLibrary.simpleMessage("这些输入框不能为空。"),
+        "files": MessageLookupByLibrary.simpleMessage("文件"),
         "go": MessageLookupByLibrary.simpleMessage("开始"),
         "goSftpDlPage": MessageLookupByLibrary.simpleMessage("前往下载页?"),
         "host": MessageLookupByLibrary.simpleMessage("主机"),

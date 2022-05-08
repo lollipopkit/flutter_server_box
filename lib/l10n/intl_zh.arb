@@ -84,7 +84,7 @@
     "downloadStatus": "{size} 的 {percent}%",
     "sftpDlPrepare": "准备连接至服务器...",
     "sftpSSHConnected": "SFTP 已连接，即将开始下载...",
-    "spentTime": "耗时: {time} 秒",
+    "spentTime": "耗时: {time}",
     "backDir": "返回上一级",
     "alreadyLastDir": "已经是最上层目录了",
     "open": "打开",
@@ -104,5 +104,7 @@
     "createFile": "创建文件",
     "rename": "重命名",
     "dl2Local": "下载 [{fileName}] 到本地？",
-    "error": "出错了"
+    "error": "出错了",
+    "disconnected": "连接断开",
+    "files": "文件"
 }

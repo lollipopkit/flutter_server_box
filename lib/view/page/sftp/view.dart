@@ -195,7 +195,8 @@ class _SFTPPageState extends State<SFTPPage> {
   }
 
   void download(BuildContext context, SftpName name) {
-    showRoundDialog(context, s.download, Text(s.dl2Local(name.filename)), [
+    showRoundDialog(context, s.download,
+        Text('${s.dl2Local(name.filename)}\n${s.keepForeground}'), [
       TextButton(
           onPressed: () => Navigator.of(context).pop(), child: Text(s.cancel)),
       TextButton(

@@ -84,7 +84,7 @@
     "downloadStatus": "{percent}% of {size}",
     "sftpDlPrepare": "Preparing to connect...",
     "sftpSSHConnected": "SFTP Connected",
-    "spentTime": "Spent time: {time} seconds",
+    "spentTime": "Spent time: {time}",
     "backDir": "Back",
     "alreadyLastDir": "Already in last directory.",
     "open": "Open",
@@ -104,5 +104,7 @@
     "createFile": "Create file",
     "rename": "Rename",
     "dl2Local": "Download [{fileName}] to local?",
-    "error": "Error"
+    "error": "Error",
+    "disconnected": "Disconnected",
+    "files": "Files"
 }

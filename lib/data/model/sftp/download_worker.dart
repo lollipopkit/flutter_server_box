@@ -82,7 +82,7 @@ class SftpDownloadWorker {
           mainSendPort.send(Exception('can not get file size'));
           return;
         }
-        const defaultChunkSize = 1024 * 512;
+        const defaultChunkSize = 1024 * 1024;
         final chunkSize = size > defaultChunkSize ? defaultChunkSize : size;
         mainSendPort.send(size);
         mainSendPort.send(SftpWorkerStatus.downloading);
@@ -93,9 +93,9 @@ class SftpDownloadWorker {
             mainSendPort.send((i + form.length) / size * 100);
           }
         }
-        mainSendPort.send(SftpWorkerStatus.finished);
         localFile.close();
         mainSendPort.send(watch.elapsed);
+        mainSendPort.send(SftpWorkerStatus.finished);
       } catch (e) {
         mainSendPort.send(e);
       }

@@ -36,7 +36,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m6(myGithub) => "\nMade with ❤️ by ${myGithub}";
 
-  static String m7(time) => "Spent time: ${time} seconds";
+  static String m7(time) => "Spent time: ${time}";
 
   static String m8(name) => "Are you sure to delete [${name}]?";
 
@@ -79,6 +79,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "debug": MessageLookupByLibrary.simpleMessage("Debug"),
         "decode": MessageLookupByLibrary.simpleMessage("Decode"),
         "delete": MessageLookupByLibrary.simpleMessage("Delete"),
+        "disconnected": MessageLookupByLibrary.simpleMessage("Disconnected"),
         "dl2Local": m1,
         "dockerStatusRunningAndStoppedFmt": m2,
         "dockerStatusRunningFmt": m3,
@@ -95,6 +96,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "export": MessageLookupByLibrary.simpleMessage("Export"),
         "fieldMustNotEmpty": MessageLookupByLibrary.simpleMessage(
             "These fields must not be empty."),
+        "files": MessageLookupByLibrary.simpleMessage("Files"),
         "go": MessageLookupByLibrary.simpleMessage("Go"),
         "goSftpDlPage":
             MessageLookupByLibrary.simpleMessage("Go to SFTP download page?"),

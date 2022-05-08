@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/view/widget/card_dialog.dart';
@@ -96,4 +97,20 @@ String tabTitleName(BuildContext context, int i) {
     default:
       return '';
   }
+}
+
+Future<bool> shareFiles(BuildContext context, List<String> filePaths) async {
+  for (final filePath in filePaths) {
+    if (!await File(filePath).exists()) {
+      return false;
+    }
+  }
+  var text = '';
+  if (filePaths.length == 1) {
+    text = filePaths.first.split('/').last;
+  } else {
+    text = '${filePaths.length} ${S.of(context).files}';
+  }
+  await Share.shareFiles(filePaths, text: 'ServerBox -> $text');
+  return filePaths.isNotEmpty;
 }

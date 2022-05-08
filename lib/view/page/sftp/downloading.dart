@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:toolbox/core/extension/numx.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/model/sftp/download_status.dart';
@@ -77,11 +76,11 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
     }
     switch (status.status) {
       case SftpWorkerStatus.finished:
+        final time = status.spentTime.toString();
         return _wrapInCard(status,
-            '${s.downloadFinished} ${s.spentTime(status.spentTime ?? s.unknown)}',
+            '${s.downloadFinished} ${s.spentTime(time == 'null' ? s.unknown : (time.substring(0, time.length - 7)))}',
             trailing: IconButton(
-                onPressed: () => Share.shareFiles([status.item.localPath],
-                    text: '${status.fileName} from ServerBox'),
+                onPressed: () => shareFiles(context, [status.item.localPath]),
                 icon: const Icon(Icons.open_in_new)));
       case SftpWorkerStatus.downloading:
         return _wrapInCard(
