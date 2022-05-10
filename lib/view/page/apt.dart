@@ -27,6 +27,8 @@ class _AptManagePageState extends State<AptManagePage>
   late MediaQueryData _media;
   final greyStyle = const TextStyle(color: Colors.grey);
   final scrollController = ScrollController();
+  final scrollControllerUpdate = ScrollController();
+  final _aptProvider = locator<AptProvider>();
   late S s;
 
   @override
@@ -34,6 +36,7 @@ class _AptManagePageState extends State<AptManagePage>
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
     s = S.of(context);
+    _aptProvider.refreshInstalled();
   }
 
   @override
@@ -53,11 +56,52 @@ class _AptManagePageState extends State<AptManagePage>
       Navigator.of(context).pop();
       return;
     }
-    locator<AptProvider>().init(
+
+    // ignore: prefer_function_declarations_over_variables
+    PwdRequestFunc onPwdRequest = (user) async {
+      final textController = TextEditingController();
+      await showRoundDialog(
+          context,
+          s.pwdForUser(user ?? s.unknown),
+          TextField(
+            controller: textController,
+            decoration: InputDecoration(
+              labelText: s.pwd,
+            ),
+          ),
+          [
+            TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(s.cancel)),
+            TextButton(
+                onPressed: () {
+                  if (textController.text == '') {
+                    showRoundDialog(
+                        context, s.attention, Text(s.fieldMustNotEmpty), [
+                      TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: Text(s.ok)),
+                    ]);
+                    return;
+                  }
+                  Navigator.of(context).pop();
+                },
+                child: Text(
+                  s.ok,
+                  style: const TextStyle(color: Colors.red),
+                )),
+          ]);
+      return textController.text.trim();
+    };
+
+    _aptProvider.init(
         si.client!,
         si.status.sysVer.dist,
         () =>
-            scrollController.jumpTo(scrollController.position.maxScrollExtent));
+            scrollController.jumpTo(scrollController.position.maxScrollExtent),
+        () => scrollControllerUpdate
+            .jumpTo(scrollControllerUpdate.position.maxScrollExtent),
+        onPwdRequest);
   }
 
   @override
@@ -68,9 +112,39 @@ class _AptManagePageState extends State<AptManagePage>
         title: TwoLineText(up: 'Apt', down: widget.spi.name),
       ),
       body: Consumer<AptProvider>(builder: (_, apt, __) {
-        if (apt.upgradeable == null) {
-          apt.refreshInstalled();
+        if (apt.error != null) {
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error,
+                color: Colors.redAccent,
+                size: 37,
+              ),
+              const SizedBox(
+                height: 37,
+              ),
+              Text(
+                apt.error!,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          );
+        }
+        if (apt.updateLog == null && apt.upgradeable == null) {
           return centerLoading;
+        }
+        if (apt.updateLog != null && apt.upgradeable == null) {
+          return SizedBox(
+              height: _media.size.height * 0.7,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints.expand(),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(18),
+                  controller: scrollControllerUpdate,
+                  child: Text(apt.updateLog!),
+                ),
+              ));
         }
         return ListView(
           padding: const EdgeInsets.all(13),
@@ -111,7 +185,7 @@ class _AptManagePageState extends State<AptManagePage>
             overflow: TextOverflow.ellipsis,
             style: greyStyle,
           ),
-          children: apt.updateLog == null
+          children: apt.upgradeLog == null
               ? [
                   TextButton(
                       child: Text(s.updateAll),
@@ -121,6 +195,7 @@ class _AptManagePageState extends State<AptManagePage>
                   SizedBox(
                     height: _media.size.height * 0.73,
                     child: ListView(
+                        controller: scrollController,
                         children: apt.upgradeable!
                             .map((e) => _buildUpdateItem(e, apt))
                             .toList()),
@@ -129,10 +204,13 @@ class _AptManagePageState extends State<AptManagePage>
               : [
                   SizedBox(
                       height: _media.size.height * 0.7,
-                      child: ListView(
-                        padding: const EdgeInsets.all(18),
-                        controller: scrollController,
-                        children: [Text(apt.updateLog!)],
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints.expand(),
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(18),
+                          controller: scrollController,
+                          child: Text(apt.upgradeLog!),
+                        ),
                       ))
                 ],
         )

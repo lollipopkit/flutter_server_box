@@ -38,17 +38,19 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m7(myGithub) => "\n用❤️制作 by ${myGithub}";
 
-  static String m8(time) => "耗时: ${time}";
+  static String m8(user) => "用户${user}的密码";
 
-  static String m9(name) => "确定删除[${name}]？";
+  static String m9(time) => "耗时: ${time}";
 
-  static String m10(server) => "你确定要删除服务器 [${server}] 吗？";
+  static String m10(name) => "确定删除[${name}]？";
 
-  static String m11(build) => "找到新版本：v1.0.${build}, 点击更新";
+  static String m11(server) => "你确定要删除服务器 [${server}] 吗？";
 
-  static String m12(build) => "当前：v1.0.${build}";
+  static String m12(build) => "找到新版本：v1.0.${build}, 点击更新";
 
-  static String m13(build) => "当前：v1.0.${build}, 已是最新版本";
+  static String m13(build) => "当前：v1.0.${build}";
+
+  static String m14(build) => "当前：v1.0.${build}, 已是最新版本";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -122,12 +124,15 @@ class MessageLookup extends MessageLookupByLibrary {
         "ping": MessageLookupByLibrary.simpleMessage("Ping"),
         "pingAvg": MessageLookupByLibrary.simpleMessage("平均:"),
         "pingInputIP": MessageLookupByLibrary.simpleMessage("请输入目标IP或域名"),
+        "platformNotSupportUpdate":
+            MessageLookupByLibrary.simpleMessage("当前平台不支持更新，请编译最新源码后手动安装"),
         "plzEnterHost": MessageLookupByLibrary.simpleMessage("请输入主机"),
         "plzEnterPwd": MessageLookupByLibrary.simpleMessage("请输入密码"),
         "plzSelectKey": MessageLookupByLibrary.simpleMessage("请选择私钥"),
         "port": MessageLookupByLibrary.simpleMessage("端口"),
         "privateKey": MessageLookupByLibrary.simpleMessage("私钥"),
         "pwd": MessageLookupByLibrary.simpleMessage("密码"),
+        "pwdForUser": m8,
         "rename": MessageLookupByLibrary.simpleMessage("重命名"),
         "reportBugsOnGithubIssue": MessageLookupByLibrary.simpleMessage(
             "请到 https://github.com/LollipopKit/flutter_server_box/issues 提交问题"),
@@ -149,11 +154,11 @@ class MessageLookup extends MessageLookupByLibrary {
         "sftpSSHConnected":
             MessageLookupByLibrary.simpleMessage("SFTP 已连接，即将开始下载..."),
         "snippet": MessageLookupByLibrary.simpleMessage("代码片段"),
-        "spentTime": m8,
+        "spentTime": m9,
         "start": MessageLookupByLibrary.simpleMessage("开始"),
         "stop": MessageLookupByLibrary.simpleMessage("停止"),
-        "sureDelete": m9,
-        "sureToDeleteServer": m10,
+        "sureDelete": m10,
+        "sureToDeleteServer": m11,
         "ttl": MessageLookupByLibrary.simpleMessage("缓存时间"),
         "unknown": MessageLookupByLibrary.simpleMessage("未知"),
         "unknownError": MessageLookupByLibrary.simpleMessage("未知错误"),
@@ -166,9 +171,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "upsideDown": MessageLookupByLibrary.simpleMessage("上下交换"),
         "urlOrJson": MessageLookupByLibrary.simpleMessage("链接或JSON"),
         "user": MessageLookupByLibrary.simpleMessage("用户"),
-        "versionHaveUpdate": m11,
-        "versionUnknownUpdate": m12,
-        "versionUpdated": m13,
+        "versionHaveUpdate": m12,
+        "versionUnknownUpdate": m13,
+        "versionUpdated": m14,
         "waitConnection": MessageLookupByLibrary.simpleMessage("请等待连接建立"),
         "willTakEeffectImmediately":
             MessageLookupByLibrary.simpleMessage("更改将会立即生效")

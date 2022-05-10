@@ -111,5 +111,7 @@
     "reportBugsOnGithubIssue": "请到 https://github.com/LollipopKit/flutter_server_box/issues 提交问题",
     "noUpdateAvailable": "没有可用更新",
     "foundNUpdate": "找到 {count} 个更新",
-    "updateAll": "更新全部"
+    "updateAll": "更新全部",
+    "pwdForUser": "用户{user}的密码",
+    "platformNotSupportUpdate": "当前平台不支持更新，请编译最新源码后手动安装"
 }

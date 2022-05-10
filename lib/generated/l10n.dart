@@ -1180,6 +1180,26 @@ class S {
       args: [],
     );
   }
+
+  /// `Password for {user}`
+  String pwdForUser(Object user) {
+    return Intl.message(
+      'Password for $user',
+      name: 'pwdForUser',
+      desc: '',
+      args: [user],
+    );
+  }
+
+  /// `Current platform does not support in app update.\nPlease build from source and install it.`
+  String get platformNotSupportUpdate {
+    return Intl.message(
+      'Current platform does not support in app update.\nPlease build from source and install it.',
+      name: 'platformNotSupportUpdate',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

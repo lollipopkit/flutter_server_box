@@ -111,5 +111,7 @@
     "reportBugsOnGithubIssue": "Please report bugs on https://github.com/LollipopKit/flutter_server_box/issues",
     "noUpdateAvailable": "No update available",
     "foundNUpdate": "Found {count} update",
-    "updateAll": "Update all"
+    "updateAll": "Update all",
+    "pwdForUser": "Password for {user}",
+    "platformNotSupportUpdate": "Current platform does not support in app update.\nPlease build from source and install it."
 }

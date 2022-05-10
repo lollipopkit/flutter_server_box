@@ -90,8 +90,7 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
           const Divider(),
           (_path?.path ?? s.loadingFiles).omitStartStr(
             style: TextStyle(
-                color:
-                    color.isBrightColor ? Colors.black : Colors.white),
+                color: color.isBrightColor ? Colors.black : Colors.white),
           )
         ],
       ),

@@ -327,9 +327,7 @@ class ServerProvider extends BusyProvider {
   void _getMem(ServerPrivateInfo spi, String raw) {
     final info = _servers.firstWhere((e) => e.info == spi);
     for (var item in raw.split('\n')) {
-      var found = false;
       if (item.contains(memPrefix)) {
-        found = true;
         final split = item.replaceFirst(memPrefix, '').split(' ');
         split.removeWhere((e) => e == '');
         final memList = split.map((e) => int.parse(e)).toList();
@@ -342,7 +340,6 @@ class ServerProvider extends BusyProvider {
             avail: memList[5]);
         break;
       }
-      if (found) break;
     }
   }
 

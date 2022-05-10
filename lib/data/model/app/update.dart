@@ -31,9 +31,9 @@ class AppUpdate {
   });
   AppUpdate.fromJson(Map<String, dynamic> json) {
     newest = json["newest"]?.toInt();
-    newest = json["macbuild"]?.toInt();
-    newest = json["iosbuild"]?.toInt();
-    newest = json["androidbuild"]?.toInt();
+    macbuild = json["macbuild"]?.toInt();
+    iosbuild = json["iosbuild"]?.toInt();
+    androidbuild = json["androidbuild"]?.toInt();
     android = json["android"].toString();
     ios = json["ios"].toString();
     min = json["min"].toInt();

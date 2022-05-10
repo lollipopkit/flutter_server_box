@@ -60,7 +60,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         widget.spi != null
             ? IconButton(
                 onPressed: () {
-                  showRoundDialog(context, 'Attention',
+                  showRoundDialog(context, s.attention,
                       Text(s.sureToDeleteServer(widget.spi!.name)), [
                     TextButton(
                         onPressed: () {

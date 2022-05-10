@@ -38,17 +38,19 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m7(myGithub) => "\nMade with ❤️ by ${myGithub}";
 
-  static String m8(time) => "Spent time: ${time}";
+  static String m8(user) => "Password for ${user}";
 
-  static String m9(name) => "Are you sure to delete [${name}]?";
+  static String m9(time) => "Spent time: ${time}";
 
-  static String m10(server) => "Are you sure to delete server [${server}]?";
+  static String m10(name) => "Are you sure to delete [${name}]?";
 
-  static String m11(build) => "Found: v1.0.${build}, click to update";
+  static String m11(server) => "Are you sure to delete server [${server}]?";
 
-  static String m12(build) => "Current: v1.0.${build}";
+  static String m12(build) => "Found: v1.0.${build}, click to update";
 
-  static String m13(build) => "Current: v1.0.${build}, is up to date";
+  static String m13(build) => "Current: v1.0.${build}";
+
+  static String m14(build) => "Current: v1.0.${build}, is up to date";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -140,6 +142,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "pingAvg": MessageLookupByLibrary.simpleMessage("Avg:"),
         "pingInputIP": MessageLookupByLibrary.simpleMessage(
             "Please input a target IP/domain."),
+        "platformNotSupportUpdate": MessageLookupByLibrary.simpleMessage(
+            "Current platform does not support in app update.\nPlease build from source and install it."),
         "plzEnterHost":
             MessageLookupByLibrary.simpleMessage("Please enter host."),
         "plzEnterPwd":
@@ -149,6 +153,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "port": MessageLookupByLibrary.simpleMessage("Port"),
         "privateKey": MessageLookupByLibrary.simpleMessage("Private Key"),
         "pwd": MessageLookupByLibrary.simpleMessage("Password"),
+        "pwdForUser": m8,
         "rename": MessageLookupByLibrary.simpleMessage("Rename"),
         "reportBugsOnGithubIssue": MessageLookupByLibrary.simpleMessage(
             "Please report bugs on https://github.com/LollipopKit/flutter_server_box/issues"),
@@ -175,11 +180,11 @@ class MessageLookup extends MessageLookupByLibrary {
         "sftpSSHConnected":
             MessageLookupByLibrary.simpleMessage("SFTP Connected"),
         "snippet": MessageLookupByLibrary.simpleMessage("Snippet"),
-        "spentTime": m8,
+        "spentTime": m9,
         "start": MessageLookupByLibrary.simpleMessage("Start"),
         "stop": MessageLookupByLibrary.simpleMessage("Stop"),
-        "sureDelete": m9,
-        "sureToDeleteServer": m10,
+        "sureDelete": m10,
+        "sureToDeleteServer": m11,
         "ttl": MessageLookupByLibrary.simpleMessage("TTL"),
         "unknown": MessageLookupByLibrary.simpleMessage("unknown"),
         "unknownError": MessageLookupByLibrary.simpleMessage("Unknown error"),
@@ -193,9 +198,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "upsideDown": MessageLookupByLibrary.simpleMessage("Upside Down"),
         "urlOrJson": MessageLookupByLibrary.simpleMessage("URL or JSON"),
         "user": MessageLookupByLibrary.simpleMessage("User"),
-        "versionHaveUpdate": m11,
-        "versionUnknownUpdate": m12,
-        "versionUpdated": m13,
+        "versionHaveUpdate": m12,
+        "versionUnknownUpdate": m13,
+        "versionUpdated": m14,
         "waitConnection": MessageLookupByLibrary.simpleMessage(
             "Please wait for the connection to be established."),
         "willTakEeffectImmediately":
