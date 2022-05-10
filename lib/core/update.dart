@@ -9,6 +9,7 @@ import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/provider/app.dart';
 import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/service/app.dart';
+import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 
 Future<bool> isFileAvailable(String url) async {
@@ -26,22 +27,35 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
 
   locator<AppProvider>().setNewestBuild(update.newest);
 
-  if (!force && update.newest <= BuildData.build) {
+  final newest = () {
+    if (Platform.isAndroid) {
+      return update.androidbuild;
+    } else if (Platform.isIOS) {
+      return update.iosbuild;
+    } else if (Platform.isMacOS) {
+      return update.macbuild;
+    }
+    return update.newest;
+  }();
+
+  if (!force && newest <= BuildData.build) {
     print('Update ignored due to current: ${BuildData.build}, '
-        'update: ${update.newest}');
+        'update: $newest');
     return;
   }
-  print('Update available: ${update.newest}');
+  print('Update available: $newest');
 
   if (Platform.isAndroid && !await isFileAvailable(update.android)) {
     return;
   }
 
+  final s = S.of(context);
+
   showSnackBarWithAction(
       context,
       update.min > BuildData.build
-          ? 'Your version is too old. \nPlease update to v1.0.${update.newest}.'
-          : 'Update: v1.0.${update.newest} available. \n${update.changelog}',
+          ? 'Your version is too old. \nPlease update to v1.0.$newest.'
+          : 'Update: v1.0.$newest available. \n${update.changelog}',
       'Update', () async {
     if (Platform.isAndroid) {
       await RUpgrade.upgrade(update.android,
@@ -51,5 +65,9 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
     } else if (Platform.isMacOS) {
       await RUpgrade.upgradeFromUrl(update.mac);
     }
+    showRoundDialog(context, s.attention, Text(s.platformNotSupportUpdate), [
+      TextButton(
+          onPressed: () => Navigator.of(context).pop(), child: Text(s.ok))
+    ]);
   });
 }
