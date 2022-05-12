@@ -6,6 +6,7 @@ import 'package:toolbox/data/model/apt/upgrade_pkg_info.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/provider/apt.dart';
 import 'package:toolbox/data/provider/server.dart';
+import 'package:toolbox/data/res/url.dart';
 import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/widget/center_loading.dart';
@@ -152,7 +153,7 @@ class _AptManagePageState extends State<AptManagePage>
             Padding(
               padding: const EdgeInsets.all(17),
               child: UrlText(
-                text: '${s.experimentalFeature}\n${s.reportBugsOnGithubIssue}',
+                text: '${s.experimentalFeature}\n${s.reportBugsOnGithubIssue(issueUrl)}',
                 replace: 'Github Issue',
                 textAlign: TextAlign.center,
               ),

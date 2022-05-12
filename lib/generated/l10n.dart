@@ -1141,13 +1141,13 @@ class S {
     );
   }
 
-  /// `Please report bugs on https://github.com/LollipopKit/flutter_server_box/issues`
-  String get reportBugsOnGithubIssue {
+  /// `Please report bugs on {url}`
+  String reportBugsOnGithubIssue(Object url) {
     return Intl.message(
-      'Please report bugs on https://github.com/LollipopKit/flutter_server_box/issues',
+      'Please report bugs on $url',
       name: 'reportBugsOnGithubIssue',
       desc: '',
-      args: [],
+      args: [url],
     );
   }
 
@@ -1196,6 +1196,26 @@ class S {
     return Intl.message(
       'Current platform does not support in app update.\nPlease build from source and install it.',
       name: 'platformNotSupportUpdate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Please make sure that docker is installed correctly, or that you are using a non-self-compiled version. If you don't have the above issues, please submit an issue on {url}.`
+  String invalidVersionHelp(Object url) {
+    return Intl.message(
+      'Please make sure that docker is installed correctly, or that you are using a non-self-compiled version. If you don\'t have the above issues, please submit an issue on $url.',
+      name: 'invalidVersionHelp',
+      desc: '',
+      args: [url],
+    );
+  }
+
+  /// `No interface`
+  String get noInterface {
+    return Intl.message(
+      'No interface',
+      name: 'noInterface',
       desc: '',
       args: [],
     );

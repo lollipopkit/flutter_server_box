@@ -58,4 +58,6 @@ extension StringX on String {
       );
     });
   }
+
+  String get withLangExport => 'export LANG=en_US.UTF-8 && $this';
 }

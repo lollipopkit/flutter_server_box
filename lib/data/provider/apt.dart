@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:logging/logging.dart';
+import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/provider_base.dart';
 import 'package:toolbox/data/model/apt/upgrade_pkg_info.dart';
@@ -101,7 +102,7 @@ class AptProvider extends BusyProvider {
           onUpdate!();
         });
         await session.done;
-        return await client!.run('apt list --upgradeable').string;
+        return await client!.run('apt list --upgradeable'.withLangExport).string;
     }
   }
 

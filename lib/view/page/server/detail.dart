@@ -9,6 +9,7 @@ import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/font_style.dart';
 import 'package:toolbox/data/res/icon/linux_icons.dart';
 import 'package:toolbox/data/res/padding.dart';
+import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
 const style11 = TextStyle(fontSize: 11);
@@ -26,11 +27,13 @@ class ServerDetailPage extends StatefulWidget {
 class _ServerDetailPageState extends State<ServerDetailPage>
     with SingleTickerProviderStateMixin {
   late MediaQueryData _media;
+  late S s;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
+    s = S.of(context);
   }
 
   @override
@@ -298,10 +301,10 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       )
     ];
     if (ns.devices.isEmpty) {
-      children.add(const Center(
+      children.add(Center(
         child: Text(
-          'No interface.',
-          style: TextStyle(color: Colors.grey),
+          s.noInterface,
+          style: const TextStyle(color: Colors.grey, fontSize: 13),
         ),
       ));
     } else {

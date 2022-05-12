@@ -1,9 +1,10 @@
 import 'package:dartssh2/dartssh2.dart';
+import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/provider_base.dart';
 import 'package:toolbox/data/model/docker/ps.dart';
 
-final dockerNotFound = RegExp('(command not found | Unknown command)');
+final dockerNotFound = RegExp(r'command not found|Unknown command');
 
 class DockerProvider extends BusyProvider {
   SSHClient? client;
@@ -29,7 +30,8 @@ class DockerProvider extends BusyProvider {
       return;
     }
 
-    final verRaw = await client!.run('docker version').string;
+    final verRaw = await client!.run('docker version'.withLangExport).string;
+    print(verRaw);
     if (verRaw.contains(dockerNotFound)) {
       error = 'docker not found';
       notifyListeners();
@@ -39,16 +41,18 @@ class DockerProvider extends BusyProvider {
     if (verSplit.length < 3) {
       error = 'invalid version';
       notifyListeners();
+      return;
     } else {
       try {
         version = verSplit[1].split(' ').last;
         edition = verSplit[0].split(': ')[1];
       } catch (e) {
         error = e.toString();
+        return;
       }
     }
 
-    final raw = await client!.run('docker ps -a').string;
+    final raw = await client!.run('docker ps -a'.withLangExport).string;
     final lines = raw.split('\n');
     lines.removeAt(0);
     lines.removeWhere((element) => element.isEmpty);

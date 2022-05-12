@@ -36,21 +36,26 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m6(code) => "请求失败, 状态码: ${code}";
 
-  static String m7(myGithub) => "\n用❤️制作 by ${myGithub}";
+  static String m7(url) =>
+      "请确保正确安装了docker，或者使用的非自编译版本。如果没有以上问题，请在 ${url} 提交问题。";
 
-  static String m8(user) => "用户${user}的密码";
+  static String m8(myGithub) => "\n用❤️制作 by ${myGithub}";
 
-  static String m9(time) => "耗时: ${time}";
+  static String m9(user) => "用户${user}的密码";
 
-  static String m10(name) => "确定删除[${name}]？";
+  static String m10(url) => "请到 ${url} 提交问题";
 
-  static String m11(server) => "你确定要删除服务器 [${server}] 吗？";
+  static String m11(time) => "耗时: ${time}";
 
-  static String m12(build) => "找到新版本：v1.0.${build}, 点击更新";
+  static String m12(name) => "确定删除[${name}]？";
 
-  static String m13(build) => "当前：v1.0.${build}";
+  static String m13(server) => "你确定要删除服务器 [${server}] 吗？";
 
-  static String m14(build) => "当前：v1.0.${build}, 已是最新版本";
+  static String m14(build) => "找到新版本：v1.0.${build}, 点击更新";
+
+  static String m15(build) => "当前：v1.0.${build}";
+
+  static String m16(build) => "当前：v1.0.${build}, 已是最新版本";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -102,18 +107,20 @@ class MessageLookup extends MessageLookupByLibrary {
         "install": MessageLookupByLibrary.simpleMessage("安装"),
         "installDockerWithUrl": MessageLookupByLibrary.simpleMessage(
             "请先 https://docs.docker.com/engine/install docker"),
+        "invalidVersionHelp": m7,
         "keepForeground": MessageLookupByLibrary.simpleMessage("请保持应用处于前台！"),
         "keyAuth": MessageLookupByLibrary.simpleMessage("公钥认证"),
         "launchPage": MessageLookupByLibrary.simpleMessage("启动页"),
         "license": MessageLookupByLibrary.simpleMessage("开源证书"),
         "loadingFiles": MessageLookupByLibrary.simpleMessage("正在加载目录。。。"),
         "loss": MessageLookupByLibrary.simpleMessage("丢包率"),
-        "madeWithLove": m7,
+        "madeWithLove": m8,
         "max": MessageLookupByLibrary.simpleMessage("最大"),
         "min": MessageLookupByLibrary.simpleMessage("最小"),
         "ms": MessageLookupByLibrary.simpleMessage("毫秒"),
         "name": MessageLookupByLibrary.simpleMessage("名称"),
         "noClient": MessageLookupByLibrary.simpleMessage("没有SSH连接"),
+        "noInterface": MessageLookupByLibrary.simpleMessage("没有可用的接口"),
         "noResult": MessageLookupByLibrary.simpleMessage("无结果"),
         "noSavedPrivateKey": MessageLookupByLibrary.simpleMessage("没有已保存的私钥。"),
         "noSavedSnippet": MessageLookupByLibrary.simpleMessage("没有已保存的代码片段。"),
@@ -132,10 +139,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "port": MessageLookupByLibrary.simpleMessage("端口"),
         "privateKey": MessageLookupByLibrary.simpleMessage("私钥"),
         "pwd": MessageLookupByLibrary.simpleMessage("密码"),
-        "pwdForUser": m8,
+        "pwdForUser": m9,
         "rename": MessageLookupByLibrary.simpleMessage("重命名"),
-        "reportBugsOnGithubIssue": MessageLookupByLibrary.simpleMessage(
-            "请到 https://github.com/LollipopKit/flutter_server_box/issues 提交问题"),
+        "reportBugsOnGithubIssue": m10,
         "result": MessageLookupByLibrary.simpleMessage("结果"),
         "run": MessageLookupByLibrary.simpleMessage("运行"),
         "save": MessageLookupByLibrary.simpleMessage("保存"),
@@ -154,11 +160,11 @@ class MessageLookup extends MessageLookupByLibrary {
         "sftpSSHConnected":
             MessageLookupByLibrary.simpleMessage("SFTP 已连接，即将开始下载..."),
         "snippet": MessageLookupByLibrary.simpleMessage("代码片段"),
-        "spentTime": m9,
+        "spentTime": m11,
         "start": MessageLookupByLibrary.simpleMessage("开始"),
         "stop": MessageLookupByLibrary.simpleMessage("停止"),
-        "sureDelete": m10,
-        "sureToDeleteServer": m11,
+        "sureDelete": m12,
+        "sureToDeleteServer": m13,
         "ttl": MessageLookupByLibrary.simpleMessage("缓存时间"),
         "unknown": MessageLookupByLibrary.simpleMessage("未知"),
         "unknownError": MessageLookupByLibrary.simpleMessage("未知错误"),
@@ -171,9 +177,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "upsideDown": MessageLookupByLibrary.simpleMessage("上下交换"),
         "urlOrJson": MessageLookupByLibrary.simpleMessage("链接或JSON"),
         "user": MessageLookupByLibrary.simpleMessage("用户"),
-        "versionHaveUpdate": m12,
-        "versionUnknownUpdate": m13,
-        "versionUpdated": m14,
+        "versionHaveUpdate": m14,
+        "versionUnknownUpdate": m15,
+        "versionUpdated": m16,
         "waitConnection": MessageLookupByLibrary.simpleMessage("请等待连接建立"),
         "willTakEeffectImmediately":
             MessageLookupByLibrary.simpleMessage("更改将会立即生效")

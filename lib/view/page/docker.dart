@@ -7,6 +7,7 @@ import 'package:toolbox/data/model/docker/ps.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/provider/docker.dart';
 import 'package:toolbox/data/provider/server.dart';
+import 'package:toolbox/data/res/url.dart';
 import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/widget/center_loading.dart';
@@ -71,16 +72,17 @@ class _DockerManagePageState extends State<DockerManagePage> {
     return Consumer<DockerProvider>(builder: (_, docker, __) {
       final running = docker.items;
       if (docker.error != null && running == null) {
-        return Center(
-            child: Column(
+        return SizedBox.expand(child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(
-              height: _media.size.height * 0.43,
-            ),
+            const Icon(Icons.error, size: 37,),
+            const SizedBox(height: 27),
             Text(docker.error!),
-            _buildSolution(docker.error!)
+            const SizedBox(height: 27),
+            Padding(padding: const EdgeInsets.all(17), child: _buildSolution(docker.error!),)
           ],
-        ));
+        ),);
       }
       if (running == null) {
         _docker.refresh();
@@ -106,6 +108,8 @@ class _DockerManagePageState extends State<DockerManagePage> {
         );
       case 'no client':
         return Text(s.waitConnection);
+      case 'invalid version':
+        return UrlText(text: s.invalidVersionHelp(issueUrl), replace: 'Github',);
       default:
         return Text(s.unknownError);
     }
