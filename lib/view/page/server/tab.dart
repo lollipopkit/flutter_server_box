@@ -195,10 +195,9 @@ class _ServerPageState extends State<ServerPage>
           children: [
             _buildPercentCircle(ss.cpu2Status.usedPercent()),
             _buildPercentCircle(ss.memory.used / ss.memory.total * 100),
-            _buildIOData('Conn:\n' + ss.tcp.maxConn.toString(),
-                'Fail:\n' + ss.tcp.fail.toString()),
-            _buildIOData('Total:\n' + rootDisk.size,
-                'Used:\n' + rootDisk.usedPercent.toString() + '%')
+            _buildIOData('Conn:\n${ss.tcp.maxConn}', 'Fail:\n${ss.tcp.fail}'),
+            _buildIOData(
+                'Total:\n${rootDisk.size}', 'Used:\n${rootDisk.usedPercent}%')
           ],
         ),
         const SizedBox(height: 13),
@@ -229,21 +228,21 @@ class _ServerPageState extends State<ServerPage>
         customItemsHeight: 8,
         items: [
           ...ServerTabMenuItems.firstItems.map(
-            (item) => DropdownMenuItem<MenuItem>(
+            (item) => DropdownMenuItem<DropdownBtnItem>(
               value: item,
               child: item.build,
             ),
           ),
           const DropdownMenuItem<Divider>(enabled: false, child: Divider()),
           ...ServerTabMenuItems.secondItems.map(
-            (item) => DropdownMenuItem<MenuItem>(
+            (item) => DropdownMenuItem<DropdownBtnItem>(
               value: item,
               child: item.build,
             ),
           ),
         ],
         onChanged: (value) {
-          final item = value as MenuItem;
+          final item = value as DropdownBtnItem;
           switch (item) {
             case ServerTabMenuItems.apt:
               AppRoute(AptManagePage(spi), 'apt manage page').go(context);

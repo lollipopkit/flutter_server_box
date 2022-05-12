@@ -60,12 +60,15 @@ class _AptManagePageState extends State<AptManagePage>
 
     // ignore: prefer_function_declarations_over_variables
     PwdRequestFunc onPwdRequest = (user) async {
+      if (!mounted) return '';
       final textController = TextEditingController();
       await showRoundDialog(
           context,
           s.pwdForUser(user ?? s.unknown),
           TextField(
             controller: textController,
+            keyboardType: TextInputType.visiblePassword,
+            obscureText: true,
             decoration: InputDecoration(
               labelText: s.pwd,
             ),
@@ -153,7 +156,8 @@ class _AptManagePageState extends State<AptManagePage>
             Padding(
               padding: const EdgeInsets.all(17),
               child: UrlText(
-                text: '${s.experimentalFeature}\n${s.reportBugsOnGithubIssue(issueUrl)}',
+                text:
+                    '${s.experimentalFeature}\n${s.reportBugsOnGithubIssue(issueUrl)}',
                 replace: 'Github Issue',
                 textAlign: TextAlign.center,
               ),

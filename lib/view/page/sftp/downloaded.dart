@@ -31,7 +31,7 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
     super.initState();
     sftpDownloadDir.then((dir) {
       _path = PathWithPrefix(dir.path);
-      _prefixPath = dir.path + '/';
+      _prefixPath = '${dir.path}/';
       setState(() {});
     });
   }
@@ -58,8 +58,8 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
         ],
       ),
       body: FadeIn(
-        child: _buildBody(),
         key: UniqueKey(),
+        child: _buildBody(),
       ),
       bottomNavigationBar: SafeArea(
         child: _buildPath(),

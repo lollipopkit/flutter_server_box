@@ -26,7 +26,6 @@ class DockerManagePage extends StatefulWidget {
 class _DockerManagePageState extends State<DockerManagePage> {
   final _docker = locator<DockerProvider>();
   final greyTextStyle = const TextStyle(color: Colors.grey);
-  late MediaQueryData _media;
   late S s;
 
   @override
@@ -38,7 +37,6 @@ class _DockerManagePageState extends State<DockerManagePage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _media = MediaQuery.of(context);
     s = S.of(context);
   }
 
@@ -72,17 +70,25 @@ class _DockerManagePageState extends State<DockerManagePage> {
     return Consumer<DockerProvider>(builder: (_, docker, __) {
       final running = docker.items;
       if (docker.error != null && running == null) {
-        return SizedBox.expand(child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const Icon(Icons.error, size: 37,),
-            const SizedBox(height: 27),
-            Text(docker.error!),
-            const SizedBox(height: 27),
-            Padding(padding: const EdgeInsets.all(17), child: _buildSolution(docker.error!),)
-          ],
-        ),);
+        return SizedBox.expand(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error,
+                size: 37,
+              ),
+              const SizedBox(height: 27),
+              Text(docker.error!),
+              const SizedBox(height: 27),
+              Padding(
+                padding: const EdgeInsets.all(17),
+                child: _buildSolution(docker.error!),
+              )
+            ],
+          ),
+        );
       }
       if (running == null) {
         _docker.refresh();
@@ -109,7 +115,10 @@ class _DockerManagePageState extends State<DockerManagePage> {
       case 'no client':
         return Text(s.waitConnection);
       case 'invalid version':
-        return UrlText(text: s.invalidVersionHelp(issueUrl), replace: 'Github',);
+        return UrlText(
+          text: s.invalidVersionHelp(issueUrl),
+          replace: 'Github',
+        );
       default:
         return Text(s.unknownError);
     }
@@ -154,17 +163,17 @@ class _DockerManagePageState extends State<DockerManagePage> {
         ),
         customItemsHeight: 8,
         items: [
-          DropdownMenuItem<MenuItem>(
+          DropdownMenuItem<DropdownBtnItem>(
             value: item,
             child: item.build,
           ),
-          DropdownMenuItem<MenuItem>(
+          DropdownMenuItem<DropdownBtnItem>(
             value: DockerMenuItems.rm,
             child: DockerMenuItems.rm.build,
           ),
         ],
         onChanged: (value) {
-          final item = value as MenuItem;
+          final item = value as DropdownBtnItem;
           switch (item) {
             case DockerMenuItems.rm:
               _docker.delete(containerId);

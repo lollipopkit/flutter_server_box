@@ -22,11 +22,11 @@ class UrlText extends StatelessWidget {
   List<InlineSpan> _getTextSpans(bool isDarkMode) {
     List<InlineSpan> widgets = <InlineSpan>[];
     final reg = RegExp(regUrl);
-    Iterable<Match> _matches = reg.allMatches(text);
+    Iterable<Match> matches = reg.allMatches(text);
     List<_ResultMatch> resultMatches = <_ResultMatch>[];
     int start = 0;
 
-    for (Match match in _matches) {
+    for (Match match in matches) {
       final group0 = match.group(0);
       if (group0 != null && group0.isNotEmpty) {
         if (start != match.start) {

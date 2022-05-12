@@ -150,10 +150,6 @@ class _SettingPageState extends State<SettingPage> {
         textColor: priColor,
         tilePadding: roundRectCardPadding,
         childrenPadding: roundRectCardPadding,
-        children: [
-          _buildAppColorPicker(priColor),
-          _buildColorPickerConfirmBtn()
-        ],
         trailing: ClipOval(
           child: Container(
             color: priColor,
@@ -164,7 +160,11 @@ class _SettingPageState extends State<SettingPage> {
         title: Text(
           s.appPrimaryColor,
           style: textStyle,
-        ));
+        ),
+        children: [
+          _buildAppColorPicker(priColor),
+          _buildColorPickerConfirmBtn()
+        ]);
   }
 
   Widget _buildAppColorPicker(Color selected) {

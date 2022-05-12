@@ -112,7 +112,7 @@
     "noUpdateAvailable": "没有可用更新",
     "foundNUpdate": "找到 {count} 个更新",
     "updateAll": "更新全部",
-    "pwdForUser": "用户{user}的密码",
+    "pwdForUser": "{user}的密码",
     "platformNotSupportUpdate": "当前平台不支持更新，请编译最新源码后手动安装",
     "invalidVersionHelp": "请确保正确安装了docker，或者使用的非自编译版本。如果没有以上问题，请在 {url} 提交问题。",
     "noInterface": "没有可用的接口"

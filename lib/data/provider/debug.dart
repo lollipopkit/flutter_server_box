@@ -34,8 +34,8 @@ class DebugProvider extends ChangeNotifier {
       ),
     );
     _addWidget(SingleChildScrollView(
-      child: widget,
       scrollDirection: Axis.horizontal,
+      child: widget,
     ));
   }
 

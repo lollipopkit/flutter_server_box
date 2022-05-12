@@ -215,6 +215,10 @@ class _SnippetListPageState extends State<SnippetListPage> {
           height: 111,
           child: Stack(children: [
             Positioned(
+              top: 36,
+              bottom: 36,
+              left: 0,
+              right: 0,
               child: Container(
                 height: 37,
                 decoration: const BoxDecoration(
@@ -222,10 +226,6 @@ class _SnippetListPageState extends State<SnippetListPage> {
                   color: Colors.black12,
                 ),
               ),
-              top: 36,
-              bottom: 36,
-              left: 0,
-              right: 0,
             ),
             ListWheelScrollView.useDelegate(
               itemExtent: 37,

@@ -92,17 +92,20 @@ class AptProvider extends BusyProvider {
   Future<String> _update() async {
     switch (dist) {
       case Distribution.rehl:
-        return await client!.run(_wrap('yum check-update')).string;
+        return await client?.run(_wrap('yum check-update')).string ?? '';
       default:
         final session = await client!.execute(_wrap('apt update'));
         session.stderr.listen((event) => _onPwd(event, session.stdin));
         session.stdout.listen((event) {
           updateLog = (updateLog ?? '') + event.string;
           notifyListeners();
-          onUpdate!();
+          onUpdate ?? () {}();
         });
         await session.done;
-        return await client!.run('apt list --upgradeable'.withLangExport).string;
+        return await client
+                ?.run('apt list --upgradeable'.withLangExport)
+                .string ??
+            '';
     }
   }
 
@@ -151,7 +154,7 @@ class AptProvider extends BusyProvider {
       if (pwd.isEmpty) {
         logger.info('sudo password request cancelled');
       }
-      stdin.add(Uint8List.fromList(utf8.encode(pwd + '\n')));
+      stdin.add(Uint8List.fromList(utf8.encode('$pwd\n')));
     }
   }
 

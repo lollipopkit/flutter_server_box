@@ -41,7 +41,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m8(myGithub) => "\n用❤️制作 by ${myGithub}";
 
-  static String m9(user) => "用户${user}的密码";
+  static String m9(user) => "${user}的密码";
 
   static String m10(url) => "请到 ${url} 提交问题";
 

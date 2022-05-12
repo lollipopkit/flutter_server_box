@@ -80,9 +80,7 @@ class _PingPageState extends State<PingPage>
         style: summaryTextStyle,
       ),
       trailing: Text(
-          s.pingAvg +
-              (result.statistic?.avg?.toStringAsFixed(2) ?? s.unknown) +
-              ' $ms',
+          '${s.pingAvg}${result.statistic?.avg?.toStringAsFixed(2) ?? s.unknown} $ms',
           style: TextStyle(fontSize: 14, color: primaryColor)),
     ));
   }

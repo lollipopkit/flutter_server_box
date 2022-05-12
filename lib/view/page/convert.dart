@@ -96,7 +96,7 @@ class _ConvertPageState extends State<ConvertPage>
   Widget _buildTypeOption() {
     final decode = s.decode;
     final encode = s.encode;
-    final List<String> _typeOption = [
+    final List<String> typeOption = [
       'Base64 $decode',
       'Base64 $encode',
       'URL $encode',
@@ -135,7 +135,7 @@ class _ConvertPageState extends State<ConvertPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(_typeOption[_typeOptionIndex],
+              Text(typeOption[_typeOptionIndex],
                   textScaleFactor: 1.0,
                   textAlign: TextAlign.left,
                   style: TextStyle(
@@ -151,7 +151,7 @@ class _ConvertPageState extends State<ConvertPage>
             ],
           ),
         ),
-        children: _typeOption
+        children: typeOption
             .map((e) => ListTile(
                   title: Text(
                     e,
@@ -159,7 +159,7 @@ class _ConvertPageState extends State<ConvertPage>
                         color:
                             _theme.textTheme.bodyText2!.color!.withAlpha(177)),
                   ),
-                  trailing: _buildRadio(_typeOption.indexOf(e)),
+                  trailing: _buildRadio(typeOption.indexOf(e)),
                 ))
             .toList(),
       ),

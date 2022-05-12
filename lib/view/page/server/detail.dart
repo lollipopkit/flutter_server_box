@@ -123,7 +123,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(
-          percent.toStringAsFixed(1) + '%',
+          '${percent.toStringAsFixed(1)}%',
           style: const TextStyle(fontSize: 13),
           textScaleFactor: 1.0,
         ),

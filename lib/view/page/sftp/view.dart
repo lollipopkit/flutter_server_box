@@ -122,6 +122,7 @@ class _SFTPPageState extends State<SFTPPage> {
     } else {
       return RefreshIndicator(
           child: FadeIn(
+            key: Key(_status.spi!.name + _status.path!.path),
             child: ListView.builder(
               itemCount: _status.files!.length + 1,
               controller: _scrollController,
@@ -155,7 +156,6 @@ class _SFTPPageState extends State<SFTPPage> {
                 );
               },
             ),
-            key: Key(_status.spi!.name + _status.path!.path),
           ),
           onRefresh: () => listDir(path: _status.path?.path));
     }
@@ -277,7 +277,7 @@ class _SFTPPageState extends State<SFTPPage> {
                   return;
                 }
                 _status.client!
-                    .mkdir(_status.path!.path + '/' + textController.text);
+                    .mkdir('${_status.path!.path}/${textController.text}');
                 Navigator.of(context).pop();
                 listDir();
               },
@@ -316,7 +316,7 @@ class _SFTPPageState extends State<SFTPPage> {
                   return;
                 }
                 (await _status.client!
-                        .open(_status.path!.path + '/' + textController.text))
+                        .open('${_status.path!.path}/${textController.text}'))
                     .writeBytes(Uint8List(0));
                 Navigator.of(context).pop();
                 listDir();

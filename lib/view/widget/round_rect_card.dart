@@ -8,10 +8,10 @@ class RoundRectCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: child,
       clipBehavior: Clip.antiAlias,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(17))),
+      child: child,
     );
   }
 }

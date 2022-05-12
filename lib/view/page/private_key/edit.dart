@@ -85,7 +85,6 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.save),
         tooltip: s.save,
         onPressed: () async {
           final name = nameController.text;
@@ -124,6 +123,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
           }
           Navigator.of(context).pop();
         },
+        child: const Icon(Icons.save),
       ),
     );
   }

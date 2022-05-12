@@ -31,7 +31,6 @@ class DockerProvider extends BusyProvider {
     }
 
     final verRaw = await client!.run('docker version'.withLangExport).string;
-    print(verRaw);
     if (verRaw.contains(dockerNotFound)) {
       error = 'docker not found';
       notifyListeners();

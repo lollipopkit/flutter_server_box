@@ -75,7 +75,7 @@ Future<void> updateBuildData() async {
 
 Future<void> dartFormat() async {
   final result = await Process.run('dart', ['format', '.']);
-  print('\n' + result.stdout);
+  print('\n${result.stdout}');
   if (result.exitCode != 0) {
     print(result.stderr);
     exit(1);

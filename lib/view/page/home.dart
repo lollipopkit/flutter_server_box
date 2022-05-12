@@ -53,7 +53,7 @@ class _MyHomePageState extends State<MyHomePage>
   void initState() {
     super.initState();
     _serverProvider = locator<ServerProvider>();
-    WidgetsBinding.instance?.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
     _selectIndex = locator<SettingStore>().launchPage.fetch()!;
     _pageController = PageController(initialPage: _selectIndex);
     _advancedDrawerController = AdvancedDrawerController();
@@ -69,7 +69,7 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void dispose() {
     super.dispose();
-    WidgetsBinding.instance?.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
   }
 
   @override
@@ -249,7 +249,6 @@ class _MyHomePageState extends State<MyHomePage>
                 ),
                 AboutListTile(
                   icon: const Icon(Icons.text_snippet),
-                  child: Text(s.license),
                   applicationName: BuildData.name,
                   applicationVersion: _buildVersionStr(),
                   applicationIcon: _buildIcon(),
@@ -261,6 +260,7 @@ class _MyHomePageState extends State<MyHomePage>
                       replace: 'RainSunMe',
                     ),
                   ],
+                  child: Text(s.license),
                 )
               ],
             ),

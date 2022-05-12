@@ -182,7 +182,7 @@ class ServerProvider extends BusyProvider {
             .run("echo '$shellCmd' > $shellPath && chmod +x $shellPath");
       } catch (e) {
         _servers[idx].connectionState = ServerConnectionState.failed;
-        _servers[idx].status.failedInfo = e.toString() + ' ## ';
+        _servers[idx].status.failedInfo = '$e ## ';
         logger.warning(e);
       } finally {
         notifyListeners();
@@ -264,9 +264,7 @@ class ServerProvider extends BusyProvider {
       }
       idx++;
     }
-    return (int.parse(value.split('\n')[idx].trim()) / 1000)
-            .toStringAsFixed(1) +
-        '°C';
+    return '${(int.parse(value.split('\n')[idx].trim()) / 1000).toStringAsFixed(1)}°C';
   }
 
   void _getCPU(
