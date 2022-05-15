@@ -22,7 +22,7 @@ class Analysis {
       await Countly.giveAllConsent();
     } else {
       Logger('COUNTLY')
-        .info('Unsupported platform ${Platform.operatingSystem}');
+          .info('Unsupported platform ${Platform.operatingSystem}');
     }
   }
 

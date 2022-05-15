@@ -10,7 +10,8 @@ import 'package:toolbox/core/provider_base.dart';
 import 'package:toolbox/data/model/apt/upgrade_pkg_info.dart';
 import 'package:toolbox/data/model/distribution.dart';
 
-typedef PwdRequestFunc = Future<String> Function(String? userName);
+typedef PwdRequestFunc = Future<String> Function(
+    bool lastTimes, String? userName);
 final pwdRequestWithUserReg = RegExp(r'\[sudo\] password for (.+):');
 
 class AptProvider extends BusyProvider {
@@ -27,7 +28,8 @@ class AptProvider extends BusyProvider {
   String? error;
   String? upgradeLog;
   String? updateLog;
-  String? savedPwd;
+  String lastLog = '';
+  int triedTimes = 0;
 
   AptProvider();
 
@@ -49,10 +51,10 @@ class AptProvider extends BusyProvider {
     error = null;
     upgradeLog = null;
     updateLog = whoami = null;
-    savedPwd = null;
     onUpgrade = null;
     onUpdate = null;
     onPasswordRequest = null;
+    triedTimes = 0;
   }
 
   Future<void> refreshInstalled() async {
@@ -128,7 +130,10 @@ class AptProvider extends BusyProvider {
     session.stderr.listen((e) => _onPwd(e, session.stdin));
 
     session.stdout.listen((data) async {
-      upgradeLog = (upgradeLog ?? '') + data.string;
+      final log = data.string;
+      if (lastLog == log.trim()) return;
+      upgradeLog = (upgradeLog ?? '') + log;
+      lastLog = log.trim();
       notifyListeners();
       onUpgrade!();
     });
@@ -143,16 +148,12 @@ class AptProvider extends BusyProvider {
     if (event.contains('[sudo] password for ')) {
       final user = pwdRequestWithUserReg.firstMatch(event)?.group(1);
       logger.info('sudo password request for $user');
-      final pwd = await () async {
-        if (savedPwd != null) return savedPwd!;
-        final inputPwd = await (onPasswordRequest ?? (_) async => '')(user);
-        if (inputPwd.isNotEmpty) {
-          savedPwd = inputPwd;
-        }
-        return inputPwd;
-      }();
+      triedTimes++;
+      final pwd =
+          await (onPasswordRequest ?? (_) async => '')(triedTimes == 3, user);
       if (pwd.isEmpty) {
         logger.info('sudo password request cancelled');
+        return;
       }
       stdin.add(Uint8List.fromList(utf8.encode('$pwd\n')));
     }

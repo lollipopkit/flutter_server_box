@@ -1181,16 +1181,6 @@ class S {
     );
   }
 
-  /// `Password for {user}`
-  String pwdForUser(Object user) {
-    return Intl.message(
-      'Password for $user',
-      name: 'pwdForUser',
-      desc: '',
-      args: [user],
-    );
-  }
-
   /// `Current platform does not support in app update.\nPlease build from source and install it.`
   String get platformNotSupportUpdate {
     return Intl.message(
@@ -1216,6 +1206,16 @@ class S {
     return Intl.message(
       'No interface',
       name: 'noInterface',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Last try!`
+  String get lastTry {
+    return Intl.message(
+      'Last try!',
+      name: 'lastTry',
       desc: '',
       args: [],
     );

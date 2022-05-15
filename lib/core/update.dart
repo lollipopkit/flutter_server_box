@@ -1,9 +1,8 @@
-// ignore_for_file: avoid_print
-
 import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
 import 'package:r_upgrade/r_upgrade.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/provider/app.dart';
@@ -12,12 +11,14 @@ import 'package:toolbox/data/service/app.dart';
 import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 
+final logger = Logger('UPDATE');
+
 Future<bool> isFileAvailable(String url) async {
   try {
     final resp = await Dio().head(url);
     return resp.statusCode == 200;
   } catch (e) {
-    print('update file not available: $e');
+    logger.warning('update file not available: $e');
     return false;
   }
 }
@@ -39,11 +40,11 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
   }();
 
   if (!force && newest <= BuildData.build) {
-    print('Update ignored due to current: ${BuildData.build}, '
+    logger.info('Update ignored due to current: ${BuildData.build}, '
         'update: $newest');
     return;
   }
-  print('Update available: $newest');
+  logger.info('Update available: $newest');
 
   if (Platform.isAndroid && !await isFileAvailable(update.android)) {
     return;

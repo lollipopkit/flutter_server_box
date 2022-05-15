@@ -209,7 +209,8 @@ class _ServerPageState extends State<ServerPage>
             _buildExplainText('Net'),
             _buildExplainText('Disk'),
           ],
-        )
+        ),
+        const SizedBox(height: 3),
       ],
     );
   }
@@ -218,7 +219,7 @@ class _ServerPageState extends State<ServerPage>
     return DropdownButtonHideUnderline(
       child: DropdownButton2(
         customButton: const Padding(
-          padding: EdgeInsets.only(left: 7),
+          padding: EdgeInsets.symmetric(horizontal: 5, vertical: 1.7),
           child: Icon(
             Icons.more_vert,
             size: 17,

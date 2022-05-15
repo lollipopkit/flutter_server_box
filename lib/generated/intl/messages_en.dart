@@ -41,21 +41,19 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m8(myGithub) => "\nMade with ❤️ by ${myGithub}";
 
-  static String m9(user) => "Password for ${user}";
+  static String m9(url) => "Please report bugs on ${url}";
 
-  static String m10(url) => "Please report bugs on ${url}";
+  static String m10(time) => "Spent time: ${time}";
 
-  static String m11(time) => "Spent time: ${time}";
+  static String m11(name) => "Are you sure to delete [${name}]?";
 
-  static String m12(name) => "Are you sure to delete [${name}]?";
+  static String m12(server) => "Are you sure to delete server [${server}]?";
 
-  static String m13(server) => "Are you sure to delete server [${server}]?";
+  static String m13(build) => "Found: v1.0.${build}, click to update";
 
-  static String m14(build) => "Found: v1.0.${build}, click to update";
+  static String m14(build) => "Current: v1.0.${build}";
 
-  static String m15(build) => "Current: v1.0.${build}";
-
-  static String m16(build) => "Current: v1.0.${build}, is up to date";
+  static String m15(build) => "Current: v1.0.${build}, is up to date";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -122,6 +120,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "keepForeground":
             MessageLookupByLibrary.simpleMessage("Keep app foreground!"),
         "keyAuth": MessageLookupByLibrary.simpleMessage("Key Auth"),
+        "lastTry": MessageLookupByLibrary.simpleMessage("Last try!"),
         "launchPage": MessageLookupByLibrary.simpleMessage("Launch page"),
         "license": MessageLookupByLibrary.simpleMessage("License"),
         "loadingFiles":
@@ -160,9 +159,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "port": MessageLookupByLibrary.simpleMessage("Port"),
         "privateKey": MessageLookupByLibrary.simpleMessage("Private Key"),
         "pwd": MessageLookupByLibrary.simpleMessage("Password"),
-        "pwdForUser": m9,
         "rename": MessageLookupByLibrary.simpleMessage("Rename"),
-        "reportBugsOnGithubIssue": m10,
+        "reportBugsOnGithubIssue": m9,
         "result": MessageLookupByLibrary.simpleMessage("Result"),
         "run": MessageLookupByLibrary.simpleMessage("Run"),
         "save": MessageLookupByLibrary.simpleMessage("Save"),
@@ -186,11 +184,11 @@ class MessageLookup extends MessageLookupByLibrary {
         "sftpSSHConnected":
             MessageLookupByLibrary.simpleMessage("SFTP Connected"),
         "snippet": MessageLookupByLibrary.simpleMessage("Snippet"),
-        "spentTime": m11,
+        "spentTime": m10,
         "start": MessageLookupByLibrary.simpleMessage("Start"),
         "stop": MessageLookupByLibrary.simpleMessage("Stop"),
-        "sureDelete": m12,
-        "sureToDeleteServer": m13,
+        "sureDelete": m11,
+        "sureToDeleteServer": m12,
         "ttl": MessageLookupByLibrary.simpleMessage("TTL"),
         "unknown": MessageLookupByLibrary.simpleMessage("unknown"),
         "unknownError": MessageLookupByLibrary.simpleMessage("Unknown error"),
@@ -204,9 +202,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "upsideDown": MessageLookupByLibrary.simpleMessage("Upside Down"),
         "urlOrJson": MessageLookupByLibrary.simpleMessage("URL or JSON"),
         "user": MessageLookupByLibrary.simpleMessage("User"),
-        "versionHaveUpdate": m14,
-        "versionUnknownUpdate": m15,
-        "versionUpdated": m16,
+        "versionHaveUpdate": m13,
+        "versionUnknownUpdate": m14,
+        "versionUpdated": m15,
         "waitConnection": MessageLookupByLibrary.simpleMessage(
             "Please wait for the connection to be established."),
         "willTakEeffectImmediately":

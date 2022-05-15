@@ -59,16 +59,17 @@ class _AptManagePageState extends State<AptManagePage>
     }
 
     // ignore: prefer_function_declarations_over_variables
-    PwdRequestFunc onPwdRequest = (user) async {
+    PwdRequestFunc onPwdRequest = (lastTime, user) async {
       if (!mounted) return '';
       final textController = TextEditingController();
       await showRoundDialog(
           context,
-          s.pwdForUser(user ?? s.unknown),
+          lastTime ? s.lastTry : (user ?? s.unknown),
           TextField(
             controller: textController,
             keyboardType: TextInputType.visiblePassword,
             obscureText: true,
+            onSubmitted: (_) => textController.text.trim(),
             decoration: InputDecoration(
               labelText: s.pwd,
             ),
