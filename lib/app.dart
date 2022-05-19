@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/generated/l10n.dart';
@@ -26,6 +27,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    setTransparentNavigationBar(context);
     return ValueListenableBuilder<int>(
         valueListenable: locator<SettingStore>().primaryColor.listenable(),
         builder: (_, value, __) {

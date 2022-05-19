@@ -86,7 +86,6 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   Widget build(BuildContext context) {
-    setTransparentNavigationBar(context);
     super.build(context);
     return WillPopScope(
         child: _buildMain(context),

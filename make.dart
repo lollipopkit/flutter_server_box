@@ -6,10 +6,20 @@ import 'dart:io';
 
 const appName = 'ServerBox';
 const buildDataFilePath = 'lib/data/res/build_data.dart';
+const apkPath = 'build/app/outputs/flutter-apk/app-release.apk';
 const xcarchivePath = 'build/ios/archive/Runner.xcarchive';
+const macosAppPath = 'build/macos/Build/Products/Release/$appName.app';
 var regiOSProjectVer = RegExp(r'CURRENT_PROJECT_VERSION = .+;');
 var regiOSMarketVer = RegExp(r'MARKETING_VERSION = .+');
+const iOSInfoPlistPath = 'ios/Runner.xcodeproj/project.pbxproj';
+const macOSInfoPlistPath = 'macos/Runner.xcodeproj/project.pbxproj';
 const skslFileSuffix = '.sksl.json';
+
+const buildFuncs = {
+  'ios': flutterBuildIOS,
+  'macos': flutterBuildMacOS,
+  'android': flutterBuildAndroid,
+};
 
 int? build;
 
@@ -87,16 +97,25 @@ void flutterRun(String? mode) {
       mode: ProcessStartMode.inheritStdio, runInShell: true);
 }
 
-Future<void> flutterBuild(String source, String target, bool isAndroid) async {
+Future<void> flutterBuild(
+    String source, String target, String buildType) async {
   final args = [
     'build',
-    isAndroid ? 'apk' : 'ipa',
-    '--target-platform=android-arm64',
-    '--build-number=$build',
-    '--build-name=1.0.$build',
-    '--bundle-sksl-path=${isAndroid ? 'android' : 'ios'}$skslFileSuffix',
+    buildType,
   ];
-  if (!isAndroid) args.removeAt(2);
+  // No sksl cache for macos
+  if ('macos' != buildType) {
+    args.add('--bundle-sksl-path=$buildType$skslFileSuffix');
+  }
+  final isAndroid = 'apk' == buildType;
+  // [--target-platform] only for Android
+  if (isAndroid) {
+    args.addAll([
+      '--target-platform=android-arm64',
+      '--build-number=$build',
+      '--build-name=1.0.$build',
+    ]);
+  }
   print('Building with args: ${args.join(' ')}');
   final buildResult = await Process.run('flutter', args, runInShell: true);
   final exitCode = buildResult.exitCode;
@@ -123,23 +142,30 @@ Future<void> flutterBuild(String source, String target, bool isAndroid) async {
 }
 
 Future<void> flutterBuildIOS() async {
-  await changeiOSVersion();
+  await changeInfoPlistVersion();
   await flutterBuild(
-      xcarchivePath, './release/${appName}_build.xcarchive', false);
+      xcarchivePath, './release/${appName}_ios_build.xcarchive', 'ipa');
+}
+
+Future<void> flutterBuildMacOS() async {
+  await changeInfoPlistVersion();
+  await flutterBuild(
+      macosAppPath, './release/${appName}_macos_build.app', 'macos');
 }
 
 Future<void> flutterBuildAndroid() async {
-  await flutterBuild('./build/app/outputs/flutter-apk/app-release.apk',
-      './release/${appName}_build_Arm64.apk', true);
+  await flutterBuild(apkPath, './release/${appName}_build_Arm64.apk', 'apk');
 }
 
-Future<void> changeiOSVersion() async {
-  final file = File('ios/Runner.xcodeproj/project.pbxproj');
-  final contents = await file.readAsString();
-  final newContents = contents
-      .replaceAll(regiOSMarketVer, 'MARKETING_VERSION = 1.0.$build;')
-      .replaceAll(regiOSProjectVer, 'CURRENT_PROJECT_VERSION = $build;');
-  await file.writeAsString(newContents);
+Future<void> changeInfoPlistVersion() async {
+  for (final path in [iOSInfoPlistPath, macOSInfoPlistPath]) {
+    final file = File(path);
+    final contents = await file.readAsString();
+    final newContents = contents
+        .replaceAll(regiOSMarketVer, 'MARKETING_VERSION = 1.0.$build;')
+        .replaceAll(regiOSProjectVer, 'CURRENT_PROJECT_VERSION = $build;');
+    await file.writeAsString(newContents);
+  }
 }
 
 void main(List<String> args) async {
@@ -155,25 +181,19 @@ void main(List<String> args) async {
       return flutterRun(args.length == 2 ? args[1] : null);
     case 'build':
       final stopwatch = Stopwatch()..start();
-      final buildFunc = [flutterBuildIOS, flutterBuildAndroid];
       build = await getGitCommitCount();
       await updateBuildData();
       await dartFormat();
       if (args.length > 1) {
         final platform = args[1];
-        switch (platform) {
-          case 'ios':
-            buildFunc.remove(flutterBuildAndroid);
-            break;
-          case 'android':
-            buildFunc.remove(flutterBuildIOS);
-            break;
-          default:
-            print('Unknown platform: $platform');
-            exit(1);
+        if (buildFuncs.keys.contains(platform)) {
+          await buildFuncs[platform]!();
+        } else {
+          print('Unknown platform: $platform');
         }
+        return;
       }
-      for (final func in buildFunc) {
+      for (final func in buildFuncs.values) {
         await func();
       }
       print('Build finished in ${stopwatch.elapsed}');

@@ -75,13 +75,9 @@ Widget buildSwitch(BuildContext context, StoreProperty<bool> prop,
 void setTransparentNavigationBar(BuildContext context) {
   if (Platform.isAndroid) {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      systemNavigationBarColor: Colors.transparent,
-      systemNavigationBarContrastEnforced: true,
-      systemNavigationBarIconBrightness:
-          isDarkMode(context) ? Brightness.light : Brightness.dark,
-    ));
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarContrastEnforced: true));
   }
 }
 
