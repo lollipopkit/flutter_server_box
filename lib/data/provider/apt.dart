@@ -30,6 +30,7 @@ class AptProvider extends BusyProvider {
   String? updateLog;
   String lastLog = '';
   int triedTimes = 0;
+  bool isRequestingPwd = false;
 
   AptProvider();
 
@@ -55,6 +56,7 @@ class AptProvider extends BusyProvider {
     onUpdate = null;
     onPasswordRequest = null;
     triedTimes = 0;
+    isRequestingPwd = false;
   }
 
   Future<void> refreshInstalled() async {
@@ -144,19 +146,22 @@ class AptProvider extends BusyProvider {
   }
 
   Future<void> _onPwd(Uint8List e, StreamSink<Uint8List> stdin) async {
+    if (isRequestingPwd) return;
+    isRequestingPwd = true;
     final event = e.string;
     if (event.contains('[sudo] password for ')) {
       final user = pwdRequestWithUserReg.firstMatch(event)?.group(1);
       logger.info('sudo password request for $user');
       triedTimes++;
-      final pwd =
-          await (onPasswordRequest ?? (_) async => '')(triedTimes == 3, user);
+      final pwd = await (onPasswordRequest ?? (_, __) async => '')(
+          triedTimes == 3, user);
       if (pwd.isEmpty) {
         logger.info('sudo password request cancelled');
         return;
       }
       stdin.add(Uint8List.fromList(utf8.encode('$pwd\n')));
     }
+    isRequestingPwd = false;
   }
 
   String _wrap(String cmd) =>

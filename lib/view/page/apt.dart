@@ -37,7 +37,6 @@ class _AptManagePageState extends State<AptManagePage>
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
     s = S.of(context);
-    _aptProvider.refreshInstalled();
   }
 
   @override
@@ -107,6 +106,7 @@ class _AptManagePageState extends State<AptManagePage>
         () => scrollControllerUpdate
             .jumpTo(scrollControllerUpdate.position.maxScrollExtent),
         onPwdRequest);
+    _aptProvider.refreshInstalled();
   }
 
   @override
@@ -141,7 +141,9 @@ class _AptManagePageState extends State<AptManagePage>
         }
         if (apt.updateLog != null && apt.upgradeable == null) {
           return SizedBox(
-              height: _media.size.height * 0.7,
+              height: _media.size.height -
+                  _media.padding.top -
+                  _media.padding.bottom,
               child: ConstrainedBox(
                 constraints: const BoxConstraints.expand(),
                 child: SingleChildScrollView(

@@ -65,10 +65,11 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
       await RUpgrade.upgradeFromAppStore('1586449703');
     } else if (Platform.isMacOS) {
       await RUpgrade.upgradeFromUrl(update.mac);
+    } else {
+      showRoundDialog(context, s.attention, Text(s.platformNotSupportUpdate), [
+        TextButton(
+            onPressed: () => Navigator.of(context).pop(), child: Text(s.ok))
+      ]);
     }
-    showRoundDialog(context, s.attention, Text(s.platformNotSupportUpdate), [
-      TextButton(
-          onPressed: () => Navigator.of(context).pop(), child: Text(s.ok))
-    ]);
   });
 }

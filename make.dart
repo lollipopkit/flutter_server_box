@@ -116,7 +116,7 @@ Future<void> flutterBuild(
       '--build-name=1.0.$build',
     ]);
   }
-  print('Building with args: ${args.join(' ')}');
+  print('[$buildType]\nBuilding with args: ${args.join(' ')}');
   final buildResult = await Process.run('flutter', args, runInShell: true);
   final exitCode = buildResult.exitCode;
 
