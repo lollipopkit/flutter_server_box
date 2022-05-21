@@ -21,6 +21,7 @@ class _PingPageState extends State<PingPage>
   late TextEditingController _textEditingController;
   late MediaQueryData _media;
   final List<PingResult> _results = [];
+  final _serverProvider = locator<ServerProvider>();
   late S s;
   static const summaryTextStyle = TextStyle(
     fontSize: 12,
@@ -106,7 +107,12 @@ class _PingPageState extends State<PingPage>
       return;
     }
 
-    await Future.wait(locator<ServerProvider>().servers.map((e) async {
+    if (_serverProvider.servers.isEmpty) {
+      showSnackBar(context, Text(s.pingNoServer));
+      return;
+    }
+
+    await Future.wait(_serverProvider.servers.map((e) async {
       if (e.client == null) {
         return;
       }

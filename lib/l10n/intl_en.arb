@@ -115,5 +115,6 @@
     "platformNotSupportUpdate": "Current platform does not support in app update.\nPlease build from source and install it.",
     "invalidVersionHelp": "Please make sure that docker is installed correctly, or that you are using a non-self-compiled version. If you don't have the above issues, please submit an issue on {url}.",
     "noInterface": "No interface",
-    "lastTry": "Last try!"
+    "lastTry": "Last try!",
+    "pingNoServer": "No server to ping.\nPlease add a server in server tab."
 }

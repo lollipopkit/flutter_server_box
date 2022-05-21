@@ -135,7 +135,8 @@ Future<void> flutterBuild(
 
     print('Done.\n');
   } else {
-    print(buildResult.stderr.toString());
+    print(buildResult.stdout);
+    print(buildResult.stderr);
     print('\nBuild failed with exit code $exitCode');
     exit(exitCode);
   }

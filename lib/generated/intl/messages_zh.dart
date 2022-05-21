@@ -130,6 +130,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "ping": MessageLookupByLibrary.simpleMessage("Ping"),
         "pingAvg": MessageLookupByLibrary.simpleMessage("平均:"),
         "pingInputIP": MessageLookupByLibrary.simpleMessage("请输入目标IP或域名"),
+        "pingNoServer": MessageLookupByLibrary.simpleMessage(
+            "没有服务器可用于Ping\n请在服务器tab添加服务器后再试"),
         "platformNotSupportUpdate":
             MessageLookupByLibrary.simpleMessage("当前平台不支持更新，请编译最新源码后手动安装"),
         "plzEnterHost": MessageLookupByLibrary.simpleMessage("请输入主机"),

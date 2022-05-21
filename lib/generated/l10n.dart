@@ -1220,6 +1220,16 @@ class S {
       args: [],
     );
   }
+
+  /// `No server to ping.\nPlease add a server in server tab.`
+  String get pingNoServer {
+    return Intl.message(
+      'No server to ping.\nPlease add a server in server tab.',
+      name: 'pingNoServer',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

@@ -100,7 +100,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                     SizedBox(
                       width: _media.size.width * 0.03,
                     ),
-                    _buildCPUTimePercent(ss.cpu2Status.nice, 'nice'),
+                    _buildCPUTimePercent(ss.cpu2Status.iowait, 'io'),
                     SizedBox(
                       width: _media.size.width * 0.03,
                     ),

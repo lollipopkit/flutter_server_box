@@ -45,5 +45,12 @@ class Cpu2Status {
     return used.isNaN ? 0 : used * 100;
   }
 
+  double get iowait {
+    if (now.length != pre.length) return 0;
+    final delta = now[0].iowait - pre[0].iowait;
+    final used = delta / totalDelta;
+    return used.isNaN ? 0 : used * 100;
+  }
+
   double get idle => 100 - usedPercent();
 }
