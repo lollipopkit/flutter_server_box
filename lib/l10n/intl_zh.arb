@@ -116,5 +116,11 @@
     "invalidVersionHelp": "请确保正确安装了docker，或者使用的非自编译版本。如果没有以上问题，请在 {url} 提交问题。",
     "noInterface": "没有可用的接口",
     "lastTry": "最后尝试",
-    "pingNoServer": "没有服务器可用于Ping\n请在服务器tab添加服务器后再试"
+    "pingNoServer": "没有服务器可用于Ping\n请在服务器tab添加服务器后再试",
+    "backupTip": "导出的数据仅进行了简单加密，请妥善保管。\n恢复的数据（除了设置）不会覆盖现有数据。",
+    "backup": "备份",
+    "restoreSureWithDate": "确定恢复 {date} 的备份吗？",
+    "backupVersionNotMatch": "备份版本不匹配，无法恢复",
+    "invalidJson": "无效的json，存在格式问题",
+    "restoreSuccess": "恢复成功，需要重启App来应用更改"
 }

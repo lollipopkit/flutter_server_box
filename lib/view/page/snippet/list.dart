@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/route.dart';
@@ -26,9 +25,6 @@ class SnippetListPage extends StatefulWidget {
 class _SnippetListPageState extends State<SnippetListPage> {
   late ServerPrivateInfo _selectedIndex;
 
-  final _importFieldController = TextEditingController();
-  final _exportFieldController = TextEditingController();
-
   final _textStyle = TextStyle(color: primaryColor);
 
   late S s;
@@ -44,12 +40,6 @@ class _SnippetListPageState extends State<SnippetListPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(s.snippet, style: size18),
-        actions: [
-          IconButton(
-              onPressed: () => _showImportExport(),
-              tooltip: s.importAndExport,
-              icon: const Icon(Icons.import_export)),
-        ],
       ),
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
@@ -58,97 +48,6 @@ class _SnippetListPageState extends State<SnippetListPage> {
             AppRoute(const SnippetEditPage(), 'snippet edit page').go(context),
       ),
     );
-  }
-
-  Future<void> _showImportExport() async {
-    await showRoundDialog(
-        context,
-        s.choose,
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: Text(s.import),
-              leading: const Icon(Icons.download),
-              onTap: () => _showImportDialog(),
-            ),
-            ListTile(
-              title: Text(s.export),
-              leading: const Icon(Icons.file_upload),
-              onTap: () => _showExportDialog(),
-            ),
-          ],
-        ),
-        []);
-  }
-
-  Future<void> _showExportDialog() async {
-    Navigator.of(context).pop();
-    _exportFieldController.text = locator<SnippetProvider>().export;
-    await showRoundDialog(
-        context,
-        s.export,
-        TextField(
-          decoration: const InputDecoration(
-            labelText: 'JSON',
-          ),
-          maxLines: 3,
-          controller: _exportFieldController,
-        ),
-        [
-          TextButton(
-            child: Text(s.ok),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ]);
-  }
-
-  Future<void> _showImportDialog() async {
-    Navigator.of(context).pop();
-    await showRoundDialog(
-        context,
-        s.import,
-        TextField(
-          decoration: InputDecoration(
-            labelText: s.urlOrJson,
-          ),
-          maxLines: 2,
-          controller: _importFieldController,
-        ),
-        [
-          TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(s.cancel)),
-          TextButton(
-            onPressed: () async =>
-                await _import(_importFieldController.text.trim()),
-            child: const Text('GO'),
-          )
-        ]);
-  }
-
-  Future<void> _import(String text) async {
-    if (text.isEmpty) {
-      showSnackBar(context, Text(s.fieldMustNotEmpty));
-      return;
-    }
-    final snippetProvider = locator<SnippetProvider>();
-    if (text.startsWith('http')) {
-      final resp = await Dio().get(text);
-      if (resp.statusCode != 200) {
-        showSnackBar(
-            context, Text(s.httpFailedWithCode(resp.statusCode ?? '-1')));
-        return;
-      }
-      for (final snippet in getSnippetList(resp.data)) {
-        snippetProvider.add(snippet);
-      }
-    } else {
-      for (final snippet in getSnippetList(text)) {
-        snippetProvider.add(snippet);
-      }
-    }
-    Navigator.of(context).pop();
   }
 
   Widget _buildBody() {

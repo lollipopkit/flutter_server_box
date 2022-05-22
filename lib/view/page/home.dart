@@ -18,6 +18,7 @@ import 'package:toolbox/data/res/url.dart';
 import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
+import 'package:toolbox/view/page/backup.dart';
 import 'package:toolbox/view/page/convert.dart';
 import 'package:toolbox/view/page/debug.dart';
 import 'package:toolbox/view/page/ping.dart';
@@ -239,6 +240,12 @@ class _MyHomePageState extends State<MyHomePage>
                   onTap: () =>
                       AppRoute(const SFTPDownloadedPage(), 'snippet list')
                           .go(context),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.import_export),
+                  title: Text(s.backup),
+                  onTap: () =>
+                      AppRoute(BackupPage(), 'backup page').go(context),
                 ),
                 ListTile(
                   leading: const Icon(Icons.snippet_folder),

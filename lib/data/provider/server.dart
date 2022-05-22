@@ -193,6 +193,12 @@ class ServerProvider extends BusyProvider {
     final si = _servers[idx];
     if (si.client == null) return;
     final raw = await si.client!.run("sh $shellPath").string;
+    if (raw.isEmpty) {
+      _servers[idx].connectionState = ServerConnectionState.failed;
+      _servers[idx].status.failedInfo = 'Empty output';
+      notifyListeners();
+      return;
+    }
     final lines = raw.split(seperator).map((e) => e.trim()).toList();
     lines.removeAt(0);
 

@@ -43,17 +43,19 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m9(url) => "Please report bugs on ${url}";
 
-  static String m10(time) => "Spent time: ${time}";
+  static String m10(date) => "Are you sure to restore from ${date} ?";
 
-  static String m11(name) => "Are you sure to delete [${name}]?";
+  static String m11(time) => "Spent time: ${time}";
 
-  static String m12(server) => "Are you sure to delete server [${server}]?";
+  static String m12(name) => "Are you sure to delete [${name}]?";
 
-  static String m13(build) => "Found: v1.0.${build}, click to update";
+  static String m13(server) => "Are you sure to delete server [${server}]?";
 
-  static String m14(build) => "Current: v1.0.${build}";
+  static String m14(build) => "Found: v1.0.${build}, click to update";
 
-  static String m15(build) => "Current: v1.0.${build}, is up to date";
+  static String m15(build) => "Current: v1.0.${build}";
+
+  static String m16(build) => "Current: v1.0.${build}, is up to date";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -67,6 +69,11 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("App primary color"),
         "attention": MessageLookupByLibrary.simpleMessage("Attention"),
         "backDir": MessageLookupByLibrary.simpleMessage("Back"),
+        "backup": MessageLookupByLibrary.simpleMessage("Backup"),
+        "backupTip": MessageLookupByLibrary.simpleMessage(
+            "The exported data is simply encrypted. \nPlease keep it safe.\nRestoring will not overwrite existing data (except setting)."),
+        "backupVersionNotMatch": MessageLookupByLibrary.simpleMessage(
+            "Backup version is not match."),
         "cancel": MessageLookupByLibrary.simpleMessage("Cancel"),
         "choose": MessageLookupByLibrary.simpleMessage("Choose"),
         "chooseDestination":
@@ -116,6 +123,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "install": MessageLookupByLibrary.simpleMessage("install"),
         "installDockerWithUrl": MessageLookupByLibrary.simpleMessage(
             "Please https://docs.docker.com/engine/install docker first."),
+        "invalidJson": MessageLookupByLibrary.simpleMessage("Invalid JSON"),
         "invalidVersionHelp": m7,
         "keepForeground":
             MessageLookupByLibrary.simpleMessage("Keep app foreground!"),
@@ -163,6 +171,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "pwd": MessageLookupByLibrary.simpleMessage("Password"),
         "rename": MessageLookupByLibrary.simpleMessage("Rename"),
         "reportBugsOnGithubIssue": m9,
+        "restoreSuccess": MessageLookupByLibrary.simpleMessage(
+            "Restore success. Restart app to apply."),
+        "restoreSureWithDate": m10,
         "result": MessageLookupByLibrary.simpleMessage("Result"),
         "run": MessageLookupByLibrary.simpleMessage("Run"),
         "save": MessageLookupByLibrary.simpleMessage("Save"),
@@ -186,11 +197,11 @@ class MessageLookup extends MessageLookupByLibrary {
         "sftpSSHConnected":
             MessageLookupByLibrary.simpleMessage("SFTP Connected"),
         "snippet": MessageLookupByLibrary.simpleMessage("Snippet"),
-        "spentTime": m10,
+        "spentTime": m11,
         "start": MessageLookupByLibrary.simpleMessage("Start"),
         "stop": MessageLookupByLibrary.simpleMessage("Stop"),
-        "sureDelete": m11,
-        "sureToDeleteServer": m12,
+        "sureDelete": m12,
+        "sureToDeleteServer": m13,
         "ttl": MessageLookupByLibrary.simpleMessage("TTL"),
         "unknown": MessageLookupByLibrary.simpleMessage("unknown"),
         "unknownError": MessageLookupByLibrary.simpleMessage("Unknown error"),
@@ -204,9 +215,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "upsideDown": MessageLookupByLibrary.simpleMessage("Upside Down"),
         "urlOrJson": MessageLookupByLibrary.simpleMessage("URL or JSON"),
         "user": MessageLookupByLibrary.simpleMessage("User"),
-        "versionHaveUpdate": m13,
-        "versionUnknownUpdate": m14,
-        "versionUpdated": m15,
+        "versionHaveUpdate": m14,
+        "versionUnknownUpdate": m15,
+        "versionUpdated": m16,
         "waitConnection": MessageLookupByLibrary.simpleMessage(
             "Please wait for the connection to be established."),
         "willTakEeffectImmediately":

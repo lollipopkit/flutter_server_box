@@ -43,17 +43,19 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m9(url) => "请到 ${url} 提交问题";
 
-  static String m10(time) => "耗时: ${time}";
+  static String m10(date) => "确定恢复 ${date} 的备份吗？";
 
-  static String m11(name) => "确定删除[${name}]？";
+  static String m11(time) => "耗时: ${time}";
 
-  static String m12(server) => "你确定要删除服务器 [${server}] 吗？";
+  static String m12(name) => "确定删除[${name}]？";
 
-  static String m13(build) => "找到新版本：v1.0.${build}, 点击更新";
+  static String m13(server) => "你确定要删除服务器 [${server}] 吗？";
 
-  static String m14(build) => "当前：v1.0.${build}";
+  static String m14(build) => "找到新版本：v1.0.${build}, 点击更新";
 
-  static String m15(build) => "当前：v1.0.${build}, 已是最新版本";
+  static String m15(build) => "当前：v1.0.${build}";
+
+  static String m16(build) => "当前：v1.0.${build}, 已是最新版本";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -64,6 +66,11 @@ class MessageLookup extends MessageLookupByLibrary {
         "appPrimaryColor": MessageLookupByLibrary.simpleMessage("App主要色"),
         "attention": MessageLookupByLibrary.simpleMessage("注意"),
         "backDir": MessageLookupByLibrary.simpleMessage("返回上一级"),
+        "backup": MessageLookupByLibrary.simpleMessage("备份"),
+        "backupTip": MessageLookupByLibrary.simpleMessage(
+            "导出的数据仅进行了简单加密，请妥善保管。\n恢复的数据（除了设置）不会覆盖现有数据。"),
+        "backupVersionNotMatch":
+            MessageLookupByLibrary.simpleMessage("备份版本不匹配，无法恢复"),
         "cancel": MessageLookupByLibrary.simpleMessage("取消"),
         "choose": MessageLookupByLibrary.simpleMessage("选择"),
         "chooseDestination": MessageLookupByLibrary.simpleMessage("选择目标"),
@@ -105,6 +112,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "install": MessageLookupByLibrary.simpleMessage("安装"),
         "installDockerWithUrl": MessageLookupByLibrary.simpleMessage(
             "请先 https://docs.docker.com/engine/install docker"),
+        "invalidJson": MessageLookupByLibrary.simpleMessage("无效的json，存在格式问题"),
         "invalidVersionHelp": m7,
         "keepForeground": MessageLookupByLibrary.simpleMessage("请保持应用处于前台！"),
         "keyAuth": MessageLookupByLibrary.simpleMessage("公钥认证"),
@@ -142,6 +150,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "pwd": MessageLookupByLibrary.simpleMessage("密码"),
         "rename": MessageLookupByLibrary.simpleMessage("重命名"),
         "reportBugsOnGithubIssue": m9,
+        "restoreSuccess":
+            MessageLookupByLibrary.simpleMessage("恢复成功，需要重启App来应用更改"),
+        "restoreSureWithDate": m10,
         "result": MessageLookupByLibrary.simpleMessage("结果"),
         "run": MessageLookupByLibrary.simpleMessage("运行"),
         "save": MessageLookupByLibrary.simpleMessage("保存"),
@@ -160,11 +171,11 @@ class MessageLookup extends MessageLookupByLibrary {
         "sftpSSHConnected":
             MessageLookupByLibrary.simpleMessage("SFTP 已连接，即将开始下载..."),
         "snippet": MessageLookupByLibrary.simpleMessage("代码片段"),
-        "spentTime": m10,
+        "spentTime": m11,
         "start": MessageLookupByLibrary.simpleMessage("开始"),
         "stop": MessageLookupByLibrary.simpleMessage("停止"),
-        "sureDelete": m11,
-        "sureToDeleteServer": m12,
+        "sureDelete": m12,
+        "sureToDeleteServer": m13,
         "ttl": MessageLookupByLibrary.simpleMessage("缓存时间"),
         "unknown": MessageLookupByLibrary.simpleMessage("未知"),
         "unknownError": MessageLookupByLibrary.simpleMessage("未知错误"),
@@ -177,9 +188,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "upsideDown": MessageLookupByLibrary.simpleMessage("上下交换"),
         "urlOrJson": MessageLookupByLibrary.simpleMessage("链接或JSON"),
         "user": MessageLookupByLibrary.simpleMessage("用户"),
-        "versionHaveUpdate": m13,
-        "versionUnknownUpdate": m14,
-        "versionUpdated": m15,
+        "versionHaveUpdate": m14,
+        "versionUnknownUpdate": m15,
+        "versionUpdated": m16,
         "waitConnection": MessageLookupByLibrary.simpleMessage("请等待连接建立"),
         "willTakEeffectImmediately":
             MessageLookupByLibrary.simpleMessage("更改将会立即生效")

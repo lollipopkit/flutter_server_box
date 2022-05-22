@@ -1230,6 +1230,66 @@ class S {
       args: [],
     );
   }
+
+  /// `The exported data is simply encrypted. \nPlease keep it safe.\nRestoring will not overwrite existing data (except setting).`
+  String get backupTip {
+    return Intl.message(
+      'The exported data is simply encrypted. \nPlease keep it safe.\nRestoring will not overwrite existing data (except setting).',
+      name: 'backupTip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Backup`
+  String get backup {
+    return Intl.message(
+      'Backup',
+      name: 'backup',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Are you sure to restore from {date} ?`
+  String restoreSureWithDate(Object date) {
+    return Intl.message(
+      'Are you sure to restore from $date ?',
+      name: 'restoreSureWithDate',
+      desc: '',
+      args: [date],
+    );
+  }
+
+  /// `Backup version is not match.`
+  String get backupVersionNotMatch {
+    return Intl.message(
+      'Backup version is not match.',
+      name: 'backupVersionNotMatch',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Invalid JSON`
+  String get invalidJson {
+    return Intl.message(
+      'Invalid JSON',
+      name: 'invalidJson',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Restore success. Restart app to apply.`
+  String get restoreSuccess {
+    return Intl.message(
+      'Restore success. Restart app to apply.',
+      name: 'restoreSuccess',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {
