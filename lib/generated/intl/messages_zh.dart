@@ -68,7 +68,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "backDir": MessageLookupByLibrary.simpleMessage("返回上一级"),
         "backup": MessageLookupByLibrary.simpleMessage("备份"),
         "backupTip": MessageLookupByLibrary.simpleMessage(
-            "导出的数据仅进行了简单加密，请妥善保管。\n恢复的数据（除了设置）不会覆盖现有数据。"),
+            "导出的数据仅进行了简单加密，请妥善保管。\n除了设置项，恢复的数据不会覆盖现有数据。"),
         "backupVersionNotMatch":
             MessageLookupByLibrary.simpleMessage("备份版本不匹配，无法恢复"),
         "cancel": MessageLookupByLibrary.simpleMessage("取消"),
@@ -150,6 +150,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "pwd": MessageLookupByLibrary.simpleMessage("密码"),
         "rename": MessageLookupByLibrary.simpleMessage("重命名"),
         "reportBugsOnGithubIssue": m9,
+        "restore": MessageLookupByLibrary.simpleMessage("恢复"),
         "restoreSuccess":
             MessageLookupByLibrary.simpleMessage("恢复成功，需要重启App来应用更改"),
         "restoreSureWithDate": m10,

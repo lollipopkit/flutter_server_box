@@ -171,6 +171,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "pwd": MessageLookupByLibrary.simpleMessage("Password"),
         "rename": MessageLookupByLibrary.simpleMessage("Rename"),
         "reportBugsOnGithubIssue": m9,
+        "restore": MessageLookupByLibrary.simpleMessage("Restore"),
         "restoreSuccess": MessageLookupByLibrary.simpleMessage(
             "Restore success. Restart app to apply."),
         "restoreSureWithDate": m10,

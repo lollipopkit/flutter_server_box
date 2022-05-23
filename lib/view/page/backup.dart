@@ -4,8 +4,10 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:toolbox/core/extension/colorx.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/model/app/backup.dart';
+import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/font_style.dart';
 import 'package:toolbox/data/store/private_key.dart';
 import 'package:toolbox/data/store/server.dart';
@@ -13,7 +15,6 @@ import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/data/store/snippet.dart';
 import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
-import 'package:toolbox/view/widget/round_rect_card.dart';
 
 const backupFormatVersion = 1;
 
@@ -46,11 +47,14 @@ class BackupPage extends StatelessWidget {
             ),
           ),
           const SizedBox(
-            height: 77,
+            height: 107,
           ),
-          _buildCard(s.import, Icons.download, media,
+          _buildCard(s.restore, Icons.download, media,
               () => _showImportDialog(context, s)),
-          _buildCard(s.export, Icons.file_upload, media,
+          const SizedBox(height: 7),
+          const Divider(),
+          const SizedBox(height: 7),
+          _buildCard(s.backup, Icons.file_upload, media,
               () => _showExportDialog(context, s))
         ],
       )),
@@ -59,20 +63,27 @@ class BackupPage extends StatelessWidget {
 
   Widget _buildCard(String text, IconData icon, MediaQueryData media,
       FutureOr Function() onTap) {
-    return RoundRectCard(InkWell(
-        onTap: onTap,
-        child: SizedBox(
-          width: media.size.width * 0.77,
-          height: media.size.height * 0.17,
-          child: Column(
+    final priColor = primaryColor;
+    final textColor = priColor.isBrightColor ? Colors.black : Colors.white;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(37),
+        color: priColor
+      ),
+      width: 87,
+      height: 37,
+      child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: media.size.height * 0.05),
-              const SizedBox(height: 10),
-              Text(text, style: TextStyle(fontSize: media.size.height * 0.02)),
+              Icon(icon, color: textColor,),
+              const SizedBox(width: 7),
+              Text(text, style: TextStyle(color: textColor)),
             ],
           ),
-        )));
+    ),
+    );
   }
 
   Future<void> _showExportDialog(BuildContext context, S s) async {

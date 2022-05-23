@@ -119,6 +119,7 @@
     "pingNoServer": "No server to ping.\nPlease add a server in server tab.",
     "backupTip": "The exported data is simply encrypted. \nPlease keep it safe.\nRestoring will not overwrite existing data (except setting).",
     "backup": "Backup",
+    "restore": "Restore",
     "restoreSureWithDate": "Are you sure to restore from {date} ?",
     "backupVersionNotMatch": "Backup version is not match.",
     "invalidJson": "Invalid JSON",

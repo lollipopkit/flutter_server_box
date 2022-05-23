@@ -165,8 +165,7 @@ class ServerProvider extends BusyProvider {
   Future<void> _getData(ServerPrivateInfo spi) async {
     final idx = _servers.indexWhere((element) => element.info == spi);
     final state = _servers[idx].connectionState;
-    if (_servers[idx].client == null ||
-        state == ServerConnectionState.failed ||
+    if (state == ServerConnectionState.failed ||
         state == ServerConnectionState.disconnected) {
       _servers[idx].connectionState = ServerConnectionState.connecting;
       notifyListeners();

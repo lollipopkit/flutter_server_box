@@ -1251,6 +1251,16 @@ class S {
     );
   }
 
+  /// `Restore`
+  String get restore {
+    return Intl.message(
+      'Restore',
+      name: 'restore',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Are you sure to restore from {date} ?`
   String restoreSureWithDate(Object date) {
     return Intl.message(
