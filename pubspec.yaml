@@ -43,7 +43,7 @@ dependencies:
     git:
       url: https://github.com/Countly/countly-sdk-flutter-bridge.git
       ref: master
-  dartssh2: ^2.3.1-pre
+  dartssh2: ^2.7.0
   logging: ^1.0.2
   flutter_material_color_picker: ^1.1.0+2
   circle_chart:
