@@ -31,6 +31,12 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
   final keyController = TextEditingController();
+  final nameFocus = FocusNode();
+  final ipFocus = FocusNode();
+  final portFocus = FocusNode();
+  final usernameFocus = FocusNode();
+
+  late FocusScopeNode focusScope;
 
   late ServerProvider _serverProvider;
 
@@ -51,6 +57,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   void didChangeDependencies() {
     super.didChangeDependencies();
     s = S.of(context);
+    focusScope = FocusScope.of(context);
   }
 
   @override
@@ -89,12 +96,16 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             TextField(
               controller: nameController,
               keyboardType: TextInputType.text,
+              focusNode: nameFocus,
+              onSubmitted: (_) => focusScope.requestFocus(ipFocus),
               decoration: buildDecoration(s.name,
                   icon: Icons.info, hint: s.exampleName),
             ),
             TextField(
               controller: ipController,
               keyboardType: TextInputType.text,
+              onSubmitted: (_) => focusScope.requestFocus(portFocus),
+              focusNode: ipFocus,
               autocorrect: false,
               enableSuggestions: false,
               decoration: buildDecoration(s.host,
@@ -103,12 +114,15 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             TextField(
               controller: portController,
               keyboardType: TextInputType.number,
+              focusNode: portFocus,
+              onSubmitted: (_) => focusScope.requestFocus(usernameFocus),
               decoration: buildDecoration(s.port,
                   icon: Icons.format_list_numbered, hint: '22'),
             ),
             TextField(
               controller: usernameController,
               keyboardType: TextInputType.text,
+              focusNode: usernameFocus,
               autocorrect: false,
               enableSuggestions: false,
               decoration: buildDecoration(s.user,

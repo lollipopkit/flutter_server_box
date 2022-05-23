@@ -24,6 +24,11 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
   final nameController = TextEditingController();
   final keyController = TextEditingController();
   final pwdController = TextEditingController();
+  final nameNode = FocusNode();
+  final keyNode = FocusNode();
+  final pwdNode = FocusNode();
+
+  late FocusScopeNode focusScope;
 
   late PrivateKeyProvider _provider;
   late Widget loading;
@@ -40,6 +45,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
   void didChangeDependencies() {
     super.didChangeDependencies();
     s = S.of(context);
+    focusScope = FocusScope.of(context);
   }
 
   @override
@@ -62,6 +68,8 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
           TextField(
             controller: nameController,
             keyboardType: TextInputType.text,
+            focusNode: nameNode,
+            onSubmitted: (_) => focusScope.requestFocus(keyNode),
             decoration: buildDecoration(s.name, icon: Icons.info),
           ),
           TextField(
@@ -70,6 +78,8 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
             minLines: 3,
             maxLines: 10,
             keyboardType: TextInputType.text,
+            focusNode: keyNode,
+            onSubmitted: (_) => focusScope.requestFocus(pwdNode),
             enableSuggestions: false,
             decoration: buildDecoration(s.privateKey, icon: Icons.vpn_key),
           ),
@@ -77,6 +87,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
             controller: pwdController,
             autocorrect: false,
             keyboardType: TextInputType.text,
+            focusNode: pwdNode,
             obscureText: true,
             decoration: buildDecoration(s.pwd, icon: Icons.password),
           ),

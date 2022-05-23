@@ -21,6 +21,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
     with AfterLayoutMixin {
   final nameController = TextEditingController();
   final scriptController = TextEditingController();
+  final scriptNode = FocusNode();
 
   late SnippetProvider _provider;
   late S s;
@@ -57,11 +58,13 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           TextField(
             controller: nameController,
             keyboardType: TextInputType.text,
+            onSubmitted: (_) => FocusScope.of(context).requestFocus(scriptNode),
             decoration: buildDecoration(s.name, icon: Icons.info),
           ),
           TextField(
             controller: scriptController,
             autocorrect: false,
+            focusNode: scriptNode,
             minLines: 3,
             maxLines: 10,
             keyboardType: TextInputType.text,

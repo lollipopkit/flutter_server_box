@@ -68,21 +68,22 @@ class BackupPage extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(37),
-        color: priColor
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(37), color: priColor),
+        width: 87,
+        height: 37,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: textColor,
+            ),
+            const SizedBox(width: 7),
+            Text(text, style: TextStyle(color: textColor)),
+          ],
+        ),
       ),
-      width: 87,
-      height: 37,
-      child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: textColor,),
-              const SizedBox(width: 7),
-              Text(text, style: TextStyle(color: textColor)),
-            ],
-          ),
-    ),
     );
   }
 

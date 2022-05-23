@@ -29,6 +29,7 @@ class _AptManagePageState extends State<AptManagePage>
   final greyStyle = const TextStyle(color: Colors.grey);
   final scrollController = ScrollController();
   final scrollControllerUpdate = ScrollController();
+  final textController = TextEditingController();
   final _aptProvider = locator<AptProvider>();
   late S s;
 
@@ -58,9 +59,20 @@ class _AptManagePageState extends State<AptManagePage>
     }
 
     // ignore: prefer_function_declarations_over_variables
+    Function onSubmitted = () {
+      if (textController.text == '') {
+        showRoundDialog(context, s.attention, Text(s.fieldMustNotEmpty), [
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(), child: Text(s.ok)),
+        ]);
+        return;
+      }
+      Navigator.of(context).pop();
+    };
+
+    // ignore: prefer_function_declarations_over_variables
     PwdRequestFunc onPwdRequest = (lastTime, user) async {
       if (!mounted) return '';
-      final textController = TextEditingController();
       await showRoundDialog(
           context,
           lastTime ? s.lastTry : (user ?? s.unknown),
@@ -68,7 +80,7 @@ class _AptManagePageState extends State<AptManagePage>
             controller: textController,
             keyboardType: TextInputType.visiblePassword,
             obscureText: true,
-            onSubmitted: (_) => textController.text.trim(),
+            onSubmitted: (_) => onSubmitted(),
             decoration: InputDecoration(
               labelText: s.pwd,
             ),
@@ -78,18 +90,7 @@ class _AptManagePageState extends State<AptManagePage>
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text(s.cancel)),
             TextButton(
-                onPressed: () {
-                  if (textController.text == '') {
-                    showRoundDialog(
-                        context, s.attention, Text(s.fieldMustNotEmpty), [
-                      TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: Text(s.ok)),
-                    ]);
-                    return;
-                  }
-                  Navigator.of(context).pop();
-                },
+                onPressed: () => onSubmitted(),
                 child: Text(
                   s.ok,
                   style: const TextStyle(color: Colors.red),
