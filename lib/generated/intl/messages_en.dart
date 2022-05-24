@@ -133,7 +133,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "license": MessageLookupByLibrary.simpleMessage("License"),
         "loadingFiles":
             MessageLookupByLibrary.simpleMessage("Loading files..."),
-        "loss": MessageLookupByLibrary.simpleMessage("Loss"),
+        "loss": MessageLookupByLibrary.simpleMessage("loss"),
         "madeWithLove": m8,
         "max": MessageLookupByLibrary.simpleMessage("max"),
         "min": MessageLookupByLibrary.simpleMessage("min"),
@@ -203,7 +203,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "stop": MessageLookupByLibrary.simpleMessage("Stop"),
         "sureDelete": m12,
         "sureToDeleteServer": m13,
-        "ttl": MessageLookupByLibrary.simpleMessage("TTL"),
+        "ttl": MessageLookupByLibrary.simpleMessage("ttl"),
         "unknown": MessageLookupByLibrary.simpleMessage("unknown"),
         "unknownError": MessageLookupByLibrary.simpleMessage("Unknown error"),
         "unkownConvertMode":

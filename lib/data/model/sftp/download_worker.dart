@@ -58,8 +58,7 @@ class SftpDownloadWorker {
         SSHClient client;
         if (spi.pubKeyId == null) {
           client = SSHClient(socket,
-              username: spi.user,
-              onPasswordRequest: () => spi.authorization as String);
+              username: spi.user, onPasswordRequest: () => spi.pwd);
         } else {
           client = SSHClient(socket,
               username: spi.user,

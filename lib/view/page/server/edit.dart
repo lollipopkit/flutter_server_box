@@ -214,18 +214,13 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             _keyInfo ??= locator<PrivateKeyStore>().get(widget.spi!.pubKeyId!);
           }
 
-          final authorization = usePublicKey
-              ? {
-                  "privateKey": _keyInfo!.privateKey,
-                  "passphrase": _keyInfo!.password
-                }
-              : passwordController.text;
+          final authorization = passwordController.text;
           final spi = ServerPrivateInfo(
               name: nameController.text,
               ip: ipController.text,
               port: int.parse(portController.text),
               user: usernameController.text,
-              authorization: authorization,
+              pwd: authorization,
               pubKeyId: usePublicKey ? _keyInfo!.id : null);
 
           if (widget.spi == null) {
@@ -260,10 +255,10 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       ipController.text = widget.spi?.ip ?? '';
       portController.text = (widget.spi?.port ?? 22).toString();
       usernameController.text = widget.spi?.user ?? '';
-      if (widget.spi?.authorization is String) {
-        passwordController.text = widget.spi?.authorization as String? ?? '';
+      if (widget.spi?.pwd is String) {
+        passwordController.text = widget.spi?.pwd ?? '';
       } else {
-        final auth = widget.spi?.authorization as Map;
+        final auth = widget.spi?.pwd as Map;
         passwordController.text = auth['passphrase'];
         keyController.text = auth['privateKey'];
         usePublicKey = true;

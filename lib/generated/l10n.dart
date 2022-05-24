@@ -330,20 +330,20 @@ class S {
     );
   }
 
-  /// `TTL`
+  /// `ttl`
   String get ttl {
     return Intl.message(
-      'TTL',
+      'ttl',
       name: 'ttl',
       desc: '',
       args: [],
     );
   }
 
-  /// `Loss`
+  /// `loss`
   String get loss {
     return Intl.message(
-      'Loss',
+      'loss',
       name: 'loss',
       desc: '',
       args: [],

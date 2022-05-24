@@ -43,6 +43,7 @@ const shellCmd = "export LANG=en_US.utf-8 \necho '$seperator' \n"
 const shellPath = '.serverbox.sh';
 const memPrefix = 'Mem:';
 final cpuTempReg = RegExp('(x86_pkg_temp|cpu_thermal)');
+final numReg = RegExp(r'\s{1,}');
 
 class ServerProvider extends BusyProvider {
   List<ServerInfo> _servers = [];
@@ -91,8 +92,7 @@ class ServerProvider extends BusyProvider {
     final socket = await SSHSocket.connect(spi.ip, spi.port);
     if (spi.pubKeyId == null) {
       return SSHClient(socket,
-          username: spi.user,
-          onPasswordRequest: () => spi.authorization as String);
+          username: spi.user, onPasswordRequest: () => spi.pwd);
     }
     final key = locator<PrivateKeyStore>().get(spi.pubKeyId!);
     return SSHClient(socket,
@@ -163,25 +163,23 @@ class ServerProvider extends BusyProvider {
   }
 
   Future<void> _getData(ServerPrivateInfo spi) async {
-    final idx = _servers.indexWhere((element) => element.info == spi);
-    final state = _servers[idx].connectionState;
+    final s = _servers.firstWhere((element) => element.info == spi);
+    final state = s.connectionState;
     if (state == ServerConnectionState.failed ||
         state == ServerConnectionState.disconnected) {
-      _servers[idx].connectionState = ServerConnectionState.connecting;
+      s.connectionState = ServerConnectionState.connecting;
       notifyListeners();
       final time1 = DateTime.now();
       try {
-        _servers[idx].client = await genClient(spi);
+        s.client = await genClient(spi);
         final time2 = DateTime.now();
         logger.info(
             'Connected to [${spi.name}] in [${time2.difference(time1).toString()}].');
-        _servers[idx].connectionState = ServerConnectionState.connected;
-        _servers[idx]
-            .client!
-            .run("echo '$shellCmd' > $shellPath && chmod +x $shellPath");
+        s.connectionState = ServerConnectionState.connected;
+        s.client!.run("echo '$shellCmd' > $shellPath && chmod +x $shellPath");
       } catch (e) {
-        _servers[idx].connectionState = ServerConnectionState.failed;
-        _servers[idx].status.failedInfo = '$e ## ';
+        s.connectionState = ServerConnectionState.failed;
+        s.status.failedInfo = '$e ## ';
         logger.warning(e);
       } finally {
         notifyListeners();
@@ -189,12 +187,11 @@ class ServerProvider extends BusyProvider {
     }
 
     // if client is null, return
-    final si = _servers[idx];
-    if (si.client == null) return;
-    final raw = await si.client!.run("sh $shellPath").string;
+    if (s.client == null) return;
+    final raw = await s.client!.run("sh $shellPath").string;
     if (raw.isEmpty) {
-      _servers[idx].connectionState = ServerConnectionState.failed;
-      _servers[idx].status.failedInfo = 'Empty output';
+      s.connectionState = ServerConnectionState.failed;
+      s.status.failedInfo = 'Empty output';
       notifyListeners();
       return;
     }
@@ -210,8 +207,8 @@ class ServerProvider extends BusyProvider {
       _getTcp(spi, lines[4]);
       _getNetSpeed(spi, lines[0]);
     } catch (e) {
-      _servers[idx].connectionState = ServerConnectionState.failed;
-      servers[idx].status.failedInfo = e.toString();
+      s.connectionState = ServerConnectionState.failed;
+      s.status.failedInfo = e.toString();
       logger.warning(e);
       rethrow;
     } finally {
@@ -307,7 +304,7 @@ class ServerProvider extends BusyProvider {
     final idx = lines.lastWhere((element) => element.startsWith('Tcp:'),
         orElse: () => '');
     if (idx != '') {
-      final vals = idx.split(RegExp(r'\s{1,}'));
+      final vals = idx.split(numReg);
       info.status.tcp = TcpStatus(vals[5].i, vals[6].i, vals[7].i, vals[8].i);
     }
   }
@@ -320,7 +317,7 @@ class ServerProvider extends BusyProvider {
       if (items.indexOf(item) == 0 || item.isEmpty) {
         continue;
       }
-      final vals = item.split(RegExp(r'\s{1,}'));
+      final vals = item.split(numReg);
       list.add(DiskInfo(vals[0], vals[5],
           int.parse(vals[4].replaceFirst('%', '')), vals[2], vals[1], vals[3]));
     }

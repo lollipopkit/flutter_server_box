@@ -71,11 +71,14 @@ class _AptManagePageState extends State<AptManagePage>
     };
 
     // ignore: prefer_function_declarations_over_variables
-    PwdRequestFunc onPwdRequest = (lastTime, user) async {
+    PwdRequestFunc onPwdRequest = (triedTimes, user) async {
       if (!mounted) return '';
+      if (triedTimes == 1) {
+        return widget.spi.pwd;
+      }
       await showRoundDialog(
           context,
-          lastTime ? s.lastTry : (user ?? s.unknown),
+          triedTimes == 3 ? s.lastTry : (user ?? s.unknown),
           TextField(
             controller: textController,
             keyboardType: TextInputType.visiblePassword,
@@ -105,7 +108,7 @@ class _AptManagePageState extends State<AptManagePage>
         () =>
             scrollController.jumpTo(scrollController.position.maxScrollExtent),
         () => scrollControllerUpdate
-            .jumpTo(scrollControllerUpdate.position.maxScrollExtent),
+            .jumpTo(scrollControllerUpdate.positions.last.maxScrollExtent),
         onPwdRequest);
     _aptProvider.refreshInstalled();
   }
@@ -130,9 +133,19 @@ class _AptManagePageState extends State<AptManagePage>
               const SizedBox(
                 height: 37,
               ),
-              Text(
-                apt.error!,
-                textAlign: TextAlign.center,
+              SizedBox(
+                height: _media.size.height * 0.4,
+                child: Padding(
+                  padding: EdgeInsets.all(17),
+                  child: RoundRectCard(
+                    SingleChildScrollView(
+                        padding: EdgeInsets.all(17),
+                        child: Text(
+                          apt.error!,
+                          textAlign: TextAlign.center,
+                        )),
+                  ),
+                ),
               ),
             ],
           );

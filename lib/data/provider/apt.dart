@@ -11,7 +11,7 @@ import 'package:toolbox/data/model/apt/upgrade_pkg_info.dart';
 import 'package:toolbox/data/model/distribution.dart';
 
 typedef PwdRequestFunc = Future<String> Function(
-    bool lastTimes, String? userName);
+    int triedTimes, String? userName);
 final pwdRequestWithUserReg = RegExp(r'\[sudo\] password for (.+):');
 
 class AptProvider extends BusyProvider {
@@ -87,7 +87,12 @@ class AptProvider extends BusyProvider {
         list = list.sublist(0, endLine);
         break;
       default:
-        list = list.sublist(4);
+        // avoid other outputs
+        // such as: [Could not chdir to home directory /home/test: No such file or directory, , WARNING: apt does not have a stable CLI interface. Use with caution in scripts., , Listing...]
+        final idx = list.indexWhere((element) => element.contains('[upgradable from:'));
+        if (idx != -1) {
+          list = list.sublist(idx);
+        }
         list.removeWhere((element) => element.isEmpty);
     }
     upgradeable = list.map((e) => UpgradePkgInfo(e, dist!)).toList();
@@ -153,8 +158,8 @@ class AptProvider extends BusyProvider {
       final user = pwdRequestWithUserReg.firstMatch(event)?.group(1);
       logger.info('sudo password request for $user');
       triedTimes++;
-      final pwd = await (onPasswordRequest ?? (_, __) async => '')(
-          triedTimes == 3, user);
+      final pwd =
+          await (onPasswordRequest ?? (_, __) async => '')(triedTimes, user);
       if (pwd.isEmpty) {
         logger.info('sudo password request cancelled');
         return;

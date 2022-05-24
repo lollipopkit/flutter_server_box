@@ -17,7 +17,7 @@ class ServerPrivateInfo {
   late String ip;
   late int port;
   late String user;
-  late Object authorization;
+  late String pwd;
   String? pubKeyId;
 
   ServerPrivateInfo(
@@ -25,14 +25,14 @@ class ServerPrivateInfo {
       required this.ip,
       required this.port,
       required this.user,
-      required this.authorization,
+      required this.pwd,
       this.pubKeyId});
   ServerPrivateInfo.fromJson(Map<String, dynamic> json) {
     name = json["name"].toString();
     ip = json["ip"].toString();
     port = json["port"].toInt();
     user = json["user"].toString();
-    authorization = json["authorization"];
+    pwd = json["authorization"].toString();
     pubKeyId = json["pubKeyId"]?.toString();
   }
   Map<String, dynamic> toJson() {
@@ -41,7 +41,7 @@ class ServerPrivateInfo {
     data["ip"] = ip;
     data["port"] = port;
     data["user"] = user;
-    data["authorization"] = authorization;
+    data["authorization"] = pwd;
     data["pubKeyId"] = pubKeyId;
     return data;
   }
