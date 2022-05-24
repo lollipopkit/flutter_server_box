@@ -89,7 +89,8 @@ class AptProvider extends BusyProvider {
       default:
         // avoid other outputs
         // such as: [Could not chdir to home directory /home/test: No such file or directory, , WARNING: apt does not have a stable CLI interface. Use with caution in scripts., , Listing...]
-        final idx = list.indexWhere((element) => element.contains('[upgradable from:'));
+        final idx =
+            list.indexWhere((element) => element.contains('[upgradable from:'));
         if (idx != -1) {
           list = list.sublist(idx);
         }

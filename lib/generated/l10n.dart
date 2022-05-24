@@ -1300,6 +1300,16 @@ class S {
       args: [],
     );
   }
+
+  /// `Click here`
+  String get clickSee {
+    return Intl.message(
+      'Click here',
+      name: 'clickSee',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

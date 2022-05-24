@@ -136,10 +136,10 @@ class _AptManagePageState extends State<AptManagePage>
               SizedBox(
                 height: _media.size.height * 0.4,
                 child: Padding(
-                  padding: EdgeInsets.all(17),
+                  padding: const EdgeInsets.all(17),
                   child: RoundRectCard(
                     SingleChildScrollView(
-                        padding: EdgeInsets.all(17),
+                        padding: const EdgeInsets.all(17),
                         child: Text(
                           apt.error!,
                           textAlign: TextAlign.center,

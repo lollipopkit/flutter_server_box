@@ -3,10 +3,10 @@ import 'package:circle_chart/circle_chart.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import 'package:marquee/marquee.dart';
 import 'package:provider/provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:toolbox/core/route.dart';
+import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/model/app/menu_item.dart';
 import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/server_connection_state.dart';
@@ -167,19 +167,10 @@ class _ServerPageState extends State<ServerPage>
               Row(
                 children: [
                   hasError
-                      ? ConstrainedBox(
-                          constraints: BoxConstraints(
-                              maxWidth: _media.size.width * 0.57,
-                              maxHeight: 15),
-                          child: Marquee(
-                              accelerationDuration: const Duration(seconds: 3),
-                              accelerationCurve: Curves.linear,
-                              decelerationDuration: const Duration(seconds: 3),
-                              decelerationCurve: Curves.linear,
-                              text: topRightStr,
-                              textScaleFactor: 1.0,
-                              style: style),
-                        )
+                      ? GestureDetector(
+                          onTap: () => showRoundDialog(
+                              context, s.error, Text(ss.failedInfo ?? ''), []),
+                          child: Text(s.clickSee, style: style))
                       : Text(topRightStr, style: style, textScaleFactor: 1.0),
                   _buildMoreBtn(spi),
                 ],

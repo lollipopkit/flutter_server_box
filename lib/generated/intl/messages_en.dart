@@ -81,6 +81,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "choosePrivateKey":
             MessageLookupByLibrary.simpleMessage("Choose private key"),
         "clear": MessageLookupByLibrary.simpleMessage("Clear"),
+        "clickSee": MessageLookupByLibrary.simpleMessage("Click here"),
         "close": MessageLookupByLibrary.simpleMessage("Close"),
         "containerStatus":
             MessageLookupByLibrary.simpleMessage("Container status"),

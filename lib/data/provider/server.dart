@@ -176,7 +176,12 @@ class ServerProvider extends BusyProvider {
         logger.info(
             'Connected to [${spi.name}] in [${time2.difference(time1).toString()}].');
         s.connectionState = ServerConnectionState.connected;
-        s.client!.run("echo '$shellCmd' > $shellPath && chmod +x $shellPath");
+        final writeResult = await s.client!
+            .run("echo '$shellCmd' > $shellPath && chmod +x $shellPath")
+            .string;
+        if (writeResult.isNotEmpty) {
+          throw Exception(writeResult);
+        }
       } catch (e) {
         s.connectionState = ServerConnectionState.failed;
         s.status.failedInfo = '$e ## ';
@@ -189,13 +194,15 @@ class ServerProvider extends BusyProvider {
     // if client is null, return
     if (s.client == null) return;
     final raw = await s.client!.run("sh $shellPath").string;
-    if (raw.isEmpty) {
+    final lines = raw.split(seperator).map((e) => e.trim()).toList();
+    if (raw.isEmpty || lines.length == 1) {
       s.connectionState = ServerConnectionState.failed;
-      s.status.failedInfo = 'Empty output';
+      if (s.status.failedInfo == null || s.status.failedInfo!.isEmpty) {
+        s.status.failedInfo = 'No data received';
+      }
       notifyListeners();
       return;
     }
-    final lines = raw.split(seperator).map((e) => e.trim()).toList();
     lines.removeAt(0);
 
     try {

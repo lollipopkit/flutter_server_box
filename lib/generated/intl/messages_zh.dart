@@ -76,6 +76,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "chooseDestination": MessageLookupByLibrary.simpleMessage("选择目标"),
         "choosePrivateKey": MessageLookupByLibrary.simpleMessage("选择私钥"),
         "clear": MessageLookupByLibrary.simpleMessage("清除"),
+        "clickSee": MessageLookupByLibrary.simpleMessage("点击查看"),
         "close": MessageLookupByLibrary.simpleMessage("关闭"),
         "containerStatus": MessageLookupByLibrary.simpleMessage("容器状态"),
         "convert": MessageLookupByLibrary.simpleMessage("转换"),
