@@ -109,6 +109,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "experimentalFeature":
             MessageLookupByLibrary.simpleMessage("Experimental feature"),
         "export": MessageLookupByLibrary.simpleMessage("Export"),
+        "feedback": MessageLookupByLibrary.simpleMessage("Feedback"),
+        "feedbackOnGithub": MessageLookupByLibrary.simpleMessage(
+            "If you have any questions, please feedback on Github."),
         "fieldMustNotEmpty": MessageLookupByLibrary.simpleMessage(
             "These fields must not be empty."),
         "files": MessageLookupByLibrary.simpleMessage("Files"),

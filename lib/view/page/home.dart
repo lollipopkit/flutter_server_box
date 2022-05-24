@@ -1,5 +1,6 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_advanced_drawer/flutter_advanced_drawer.dart';
 import 'package:get_it/get_it.dart';
 import 'package:toolbox/core/analysis.dart';
@@ -246,6 +247,23 @@ class _MyHomePageState extends State<MyHomePage>
                   title: Text(s.backup),
                   onTap: () =>
                       AppRoute(BackupPage(), 'backup page').go(context),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.info),
+                  title: Text(s.feedback),
+                  onTap: () => showRoundDialog(
+                      context, s.feedback, Text(s.feedbackOnGithub), [
+                    TextButton(
+                        onPressed: () => Clipboard.setData(
+                            const ClipboardData(text: issueUrl)),
+                        child: Text(s.copy)),
+                    TextButton(
+                        onPressed: () => openUrl(issueUrl),
+                        child: Text(s.feedback)),
+                    TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(s.close))
+                  ]),
                 ),
                 ListTile(
                   leading: const Icon(Icons.snippet_folder),

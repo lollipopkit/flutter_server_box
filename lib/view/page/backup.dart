@@ -70,18 +70,20 @@ class BackupPage extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(37), color: priColor),
-        width: 87,
-        height: 37,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: textColor,
-            ),
-            const SizedBox(width: 7),
-            Text(text, style: TextStyle(color: textColor)),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                color: textColor,
+              ),
+              const SizedBox(width: 7),
+              Text(text, style: TextStyle(color: textColor)),
+            ],
+          ),
         ),
       ),
     );

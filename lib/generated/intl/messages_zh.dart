@@ -101,6 +101,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "exampleName": MessageLookupByLibrary.simpleMessage("名称示例"),
         "experimentalFeature": MessageLookupByLibrary.simpleMessage("实验性功能"),
         "export": MessageLookupByLibrary.simpleMessage("导出"),
+        "feedback": MessageLookupByLibrary.simpleMessage("反馈"),
+        "feedbackOnGithub":
+            MessageLookupByLibrary.simpleMessage("如果你有任何问题，请在GitHub反馈"),
         "fieldMustNotEmpty": MessageLookupByLibrary.simpleMessage("这些输入框不能为空。"),
         "files": MessageLookupByLibrary.simpleMessage("文件"),
         "foundNUpdate": m5,

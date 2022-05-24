@@ -1310,6 +1310,26 @@ class S {
       args: [],
     );
   }
+
+  /// `Feedback`
+  String get feedback {
+    return Intl.message(
+      'Feedback',
+      name: 'feedback',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `If you have any questions, please feedback on Github.`
+  String get feedbackOnGithub {
+    return Intl.message(
+      'If you have any questions, please feedback on Github.',
+      name: 'feedbackOnGithub',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

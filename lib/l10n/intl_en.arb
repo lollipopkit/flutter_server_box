@@ -124,5 +124,7 @@
     "backupVersionNotMatch": "Backup version is not match.",
     "invalidJson": "Invalid JSON",
     "restoreSuccess": "Restore success. Restart app to apply.",
-    "clickSee": "Click here"
+    "clickSee": "Click here",
+    "feedback": "Feedback",
+    "feedbackOnGithub": "If you have any questions, please feedback on Github."
 }
