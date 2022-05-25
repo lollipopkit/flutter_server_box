@@ -73,9 +73,6 @@ class _AptManagePageState extends State<AptManagePage>
     // ignore: prefer_function_declarations_over_variables
     PwdRequestFunc onPwdRequest = (triedTimes, user) async {
       if (!mounted) return '';
-      if (triedTimes == 1) {
-        return widget.spi.pwd;
-      }
       await showRoundDialog(
           context,
           triedTimes == 3 ? s.lastTry : (user ?? s.unknown),

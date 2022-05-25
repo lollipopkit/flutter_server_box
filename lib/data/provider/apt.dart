@@ -66,9 +66,8 @@ class AptProvider extends BusyProvider {
     }
 
     final result = await _update();
-    try {
-      getUpgradeableList(result);
-    } catch (e) {
+    getUpgradeableList(result);
+    try {} catch (e) {
       error = '[Server Raw]:\n$result\n[App Error]:\n$e';
     } finally {
       notifyListeners();
@@ -91,9 +90,11 @@ class AptProvider extends BusyProvider {
         // such as: [Could not chdir to home directory /home/test: No such file or directory, , WARNING: apt does not have a stable CLI interface. Use with caution in scripts., , Listing...]
         final idx =
             list.indexWhere((element) => element.contains('[upgradable from:'));
-        if (idx != -1) {
-          list = list.sublist(idx);
+        if (idx == -1) {
+          upgradeable = [];
+          return;
         }
+        list = list.sublist(idx);
         list.removeWhere((element) => element.isEmpty);
     }
     upgradeable = list.map((e) => UpgradePkgInfo(e, dist!)).toList();

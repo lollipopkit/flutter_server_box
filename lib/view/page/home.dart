@@ -282,8 +282,14 @@ class _MyHomePageState extends State<MyHomePage>
                     UrlText(
                       text: s.aboutThanks,
                     ),
-                    const UrlText(text: rainSunMeGithub, replace: 'RainSunMe',),
-                    const UrlText(text: fectureGithub, replace: 'fecture',)
+                    const UrlText(
+                      text: rainSunMeGithub,
+                      replace: 'RainSunMe',
+                    ),
+                    const UrlText(
+                      text: fectureGithub,
+                      replace: 'fecture',
+                    )
                   ],
                   child: Text(s.license),
                 )
