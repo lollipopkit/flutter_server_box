@@ -87,7 +87,10 @@ class _AptManagePageState extends State<AptManagePage>
           ),
           [
             TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
+                },
                 child: Text(s.cancel)),
             TextButton(
                 onPressed: () => onSubmitted(),

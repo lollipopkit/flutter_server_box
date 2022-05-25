@@ -19,30 +19,36 @@ A new Flutter project which provide a chart view to display server status data a
 	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/server.jpg">
     </td>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/server_detail.jpg">
+	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/server_detail.png">
     </td>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/server_edit.jpg">
+	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/drawer.png">
     </td>
   </tr>
 </table>
 <table>
   <tr>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/convert.jpg">
+	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/convert.png">
     </td>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/ping.jpg">
+	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/ping.png">
+    </td>
+    <td>
+	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/apt.png">
+    </td>
+  </tr>
+</table>
+<table>
+  <tr>
+    <td>
+	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/docker.png">
     </td>
     <td>
 	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/setting.jpg">
     </td>
-  </tr>
-</table>
-<table>
-  <tr>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/drawer.jpg">
+	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/server_edit.jpg">
     </td>
   </tr>
 </table>

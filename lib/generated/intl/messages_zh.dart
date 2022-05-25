@@ -183,6 +183,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "unknown": MessageLookupByLibrary.simpleMessage("未知"),
         "unknownError": MessageLookupByLibrary.simpleMessage("未知错误"),
         "unkownConvertMode": MessageLookupByLibrary.simpleMessage("未知转换模式"),
+        "update": MessageLookupByLibrary.simpleMessage("更新"),
         "updateAll": MessageLookupByLibrary.simpleMessage("更新全部"),
         "updateIntervalEqual0": MessageLookupByLibrary.simpleMessage(
             "你设置为0，服务器状态不会自动刷新。\n你可以手动下拉刷新。"),

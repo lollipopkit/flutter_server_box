@@ -57,7 +57,7 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
       update.min > BuildData.build
           ? 'Your version is too old. \nPlease update to v1.0.$newest.'
           : 'Update: v1.0.$newest available. \n${update.changelog}',
-      'Update', () async {
+      s.update, () async {
     if (Platform.isAndroid) {
       await RUpgrade.upgrade(update.android,
           fileName: update.android.split('/').last, isAutoRequestInstall: true);

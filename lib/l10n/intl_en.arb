@@ -126,5 +126,6 @@
     "restoreSuccess": "Restore success. Restart app to apply.",
     "clickSee": "Click here",
     "feedback": "Feedback",
-    "feedbackOnGithub": "If you have any questions, please feedback on Github."
+    "feedbackOnGithub": "If you have any questions, please feedback on Github.",
+    "update": "Update"
 }

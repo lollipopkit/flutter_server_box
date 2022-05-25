@@ -126,5 +126,6 @@
     "restoreSuccess": "恢复成功，需要重启App来应用更改",
     "clickSee": "点击查看",
     "feedback": "反馈",
-    "feedbackOnGithub": "如果你有任何问题，请在GitHub反馈"
+    "feedbackOnGithub": "如果你有任何问题，请在GitHub反馈",
+    "update": "更新"
 }
