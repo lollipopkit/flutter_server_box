@@ -280,9 +280,10 @@ class _MyHomePageState extends State<MyHomePage>
                     UrlText(
                         text: s.madeWithLove(myGithub), replace: 'LollipopKit'),
                     UrlText(
-                      text: s.aboutThanks(rainSunMeGithub),
-                      replace: 'RainSunMe',
+                      text: s.aboutThanks,
                     ),
+                    const UrlText(text: rainSunMeGithub, replace: 'RainSunMe',),
+                    const UrlText(text: fectureGithub, replace: 'fecture',)
                   ],
                   child: Text(s.license),
                 )

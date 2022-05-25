@@ -150,13 +150,13 @@ class S {
     );
   }
 
-  /// `\nThanks {rainSunMeGithub} for participating in the test.\n\nAll rights reserved.`
-  String aboutThanks(Object rainSunMeGithub) {
+  /// `\nAll rights reserved.\n\nThanks to the following people who participated in the test.`
+  String get aboutThanks {
     return Intl.message(
-      '\nThanks $rainSunMeGithub for participating in the test.\n\nAll rights reserved.',
+      '\nAll rights reserved.\n\nThanks to the following people who participated in the test.',
       name: 'aboutThanks',
       desc: '',
-      args: [rainSunMeGithub],
+      args: [],
     );
   }
 

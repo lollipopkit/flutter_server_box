@@ -9,7 +9,7 @@
     "snippet": "Snippet",
     "privateKey": "Private Key",
     "madeWithLove": "\nMade with ❤️ by {myGithub}",
-    "aboutThanks": "\nThanks {rainSunMeGithub} for participating in the test.\n\nAll rights reserved.",
+    "aboutThanks": "\nAll rights reserved.\n\nThanks to the following people who participated in the test.",
     "serverTabEmpty": "There is no server.\nClick the fab to add one.",
     "serverTabLoading": "Loading...",
     "serverTabPlzSave": "Please 'save' this private key again.",

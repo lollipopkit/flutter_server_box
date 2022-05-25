@@ -20,46 +20,44 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'en';
 
-  static String m0(rainSunMeGithub) =>
-      "\nThanks ${rainSunMeGithub} for participating in the test.\n\nAll rights reserved.";
+  static String m0(fileName) => "Download [${fileName}] to local?";
 
-  static String m1(fileName) => "Download [${fileName}] to local?";
-
-  static String m2(runningCount, stoppedCount) =>
+  static String m1(runningCount, stoppedCount) =>
       "${runningCount} running, ${stoppedCount} container stopped.";
 
-  static String m3(count) => "${count} container running.";
+  static String m2(count) => "${count} container running.";
 
-  static String m4(percent, size) => "${percent}% of ${size}";
+  static String m3(percent, size) => "${percent}% of ${size}";
 
-  static String m5(count) => "Found ${count} update";
+  static String m4(count) => "Found ${count} update";
 
-  static String m6(code) => "request failed, status code: ${code}";
+  static String m5(code) => "request failed, status code: ${code}";
 
-  static String m7(url) =>
+  static String m6(url) =>
       "Please make sure that docker is installed correctly, or that you are using a non-self-compiled version. If you don\'t have the above issues, please submit an issue on ${url}.";
 
-  static String m8(myGithub) => "\nMade with ❤️ by ${myGithub}";
+  static String m7(myGithub) => "\nMade with ❤️ by ${myGithub}";
 
-  static String m9(url) => "Please report bugs on ${url}";
+  static String m8(url) => "Please report bugs on ${url}";
 
-  static String m10(date) => "Are you sure to restore from ${date} ?";
+  static String m9(date) => "Are you sure to restore from ${date} ?";
 
-  static String m11(time) => "Spent time: ${time}";
+  static String m10(time) => "Spent time: ${time}";
 
-  static String m12(name) => "Are you sure to delete [${name}]?";
+  static String m11(name) => "Are you sure to delete [${name}]?";
 
-  static String m13(server) => "Are you sure to delete server [${server}]?";
+  static String m12(server) => "Are you sure to delete server [${server}]?";
 
-  static String m14(build) => "Found: v1.0.${build}, click to update";
+  static String m13(build) => "Found: v1.0.${build}, click to update";
 
-  static String m15(build) => "Current: v1.0.${build}";
+  static String m14(build) => "Current: v1.0.${build}";
 
-  static String m16(build) => "Current: v1.0.${build}, is up to date";
+  static String m15(build) => "Current: v1.0.${build}, is up to date";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
-        "aboutThanks": m0,
+        "aboutThanks": MessageLookupByLibrary.simpleMessage(
+            "\nAll rights reserved.\n\nThanks to the following people who participated in the test."),
         "addAServer": MessageLookupByLibrary.simpleMessage("add a server"),
         "addPrivateKey":
             MessageLookupByLibrary.simpleMessage("Add private key"),
@@ -95,13 +93,13 @@ class MessageLookup extends MessageLookupByLibrary {
         "decode": MessageLookupByLibrary.simpleMessage("Decode"),
         "delete": MessageLookupByLibrary.simpleMessage("Delete"),
         "disconnected": MessageLookupByLibrary.simpleMessage("Disconnected"),
-        "dl2Local": m1,
-        "dockerStatusRunningAndStoppedFmt": m2,
-        "dockerStatusRunningFmt": m3,
+        "dl2Local": m0,
+        "dockerStatusRunningAndStoppedFmt": m1,
+        "dockerStatusRunningFmt": m2,
         "download": MessageLookupByLibrary.simpleMessage("Download"),
         "downloadFinished":
             MessageLookupByLibrary.simpleMessage("Download finished"),
-        "downloadStatus": m4,
+        "downloadStatus": m3,
         "edit": MessageLookupByLibrary.simpleMessage("Edit"),
         "encode": MessageLookupByLibrary.simpleMessage("Encode"),
         "error": MessageLookupByLibrary.simpleMessage("Error"),
@@ -115,12 +113,12 @@ class MessageLookup extends MessageLookupByLibrary {
         "fieldMustNotEmpty": MessageLookupByLibrary.simpleMessage(
             "These fields must not be empty."),
         "files": MessageLookupByLibrary.simpleMessage("Files"),
-        "foundNUpdate": m5,
+        "foundNUpdate": m4,
         "go": MessageLookupByLibrary.simpleMessage("Go"),
         "goSftpDlPage":
             MessageLookupByLibrary.simpleMessage("Go to SFTP download page?"),
         "host": MessageLookupByLibrary.simpleMessage("Host"),
-        "httpFailedWithCode": m6,
+        "httpFailedWithCode": m5,
         "import": MessageLookupByLibrary.simpleMessage("Import"),
         "importAndExport":
             MessageLookupByLibrary.simpleMessage("Import and Export"),
@@ -128,7 +126,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "installDockerWithUrl": MessageLookupByLibrary.simpleMessage(
             "Please https://docs.docker.com/engine/install docker first."),
         "invalidJson": MessageLookupByLibrary.simpleMessage("Invalid JSON"),
-        "invalidVersionHelp": m7,
+        "invalidVersionHelp": m6,
         "keepForeground":
             MessageLookupByLibrary.simpleMessage("Keep app foreground!"),
         "keyAuth": MessageLookupByLibrary.simpleMessage("Key Auth"),
@@ -138,7 +136,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "loadingFiles":
             MessageLookupByLibrary.simpleMessage("Loading files..."),
         "loss": MessageLookupByLibrary.simpleMessage("loss"),
-        "madeWithLove": m8,
+        "madeWithLove": m7,
         "max": MessageLookupByLibrary.simpleMessage("max"),
         "min": MessageLookupByLibrary.simpleMessage("min"),
         "ms": MessageLookupByLibrary.simpleMessage("ms"),
@@ -174,11 +172,11 @@ class MessageLookup extends MessageLookupByLibrary {
         "privateKey": MessageLookupByLibrary.simpleMessage("Private Key"),
         "pwd": MessageLookupByLibrary.simpleMessage("Password"),
         "rename": MessageLookupByLibrary.simpleMessage("Rename"),
-        "reportBugsOnGithubIssue": m9,
+        "reportBugsOnGithubIssue": m8,
         "restore": MessageLookupByLibrary.simpleMessage("Restore"),
         "restoreSuccess": MessageLookupByLibrary.simpleMessage(
             "Restore success. Restart app to apply."),
-        "restoreSureWithDate": m10,
+        "restoreSureWithDate": m9,
         "result": MessageLookupByLibrary.simpleMessage("Result"),
         "run": MessageLookupByLibrary.simpleMessage("Run"),
         "save": MessageLookupByLibrary.simpleMessage("Save"),
@@ -202,11 +200,11 @@ class MessageLookup extends MessageLookupByLibrary {
         "sftpSSHConnected":
             MessageLookupByLibrary.simpleMessage("SFTP Connected"),
         "snippet": MessageLookupByLibrary.simpleMessage("Snippet"),
-        "spentTime": m11,
+        "spentTime": m10,
         "start": MessageLookupByLibrary.simpleMessage("Start"),
         "stop": MessageLookupByLibrary.simpleMessage("Stop"),
-        "sureDelete": m12,
-        "sureToDeleteServer": m13,
+        "sureDelete": m11,
+        "sureToDeleteServer": m12,
         "ttl": MessageLookupByLibrary.simpleMessage("ttl"),
         "unknown": MessageLookupByLibrary.simpleMessage("unknown"),
         "unknownError": MessageLookupByLibrary.simpleMessage("Unknown error"),
@@ -220,9 +218,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "upsideDown": MessageLookupByLibrary.simpleMessage("Upside Down"),
         "urlOrJson": MessageLookupByLibrary.simpleMessage("URL or JSON"),
         "user": MessageLookupByLibrary.simpleMessage("User"),
-        "versionHaveUpdate": m14,
-        "versionUnknownUpdate": m15,
-        "versionUpdated": m16,
+        "versionHaveUpdate": m13,
+        "versionUnknownUpdate": m14,
+        "versionUpdated": m15,
         "waitConnection": MessageLookupByLibrary.simpleMessage(
             "Please wait for the connection to be established."),
         "willTakEeffectImmediately":

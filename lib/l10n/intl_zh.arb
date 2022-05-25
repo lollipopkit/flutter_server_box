@@ -9,7 +9,7 @@
     "snippet": "代码片段",
     "privateKey": "私钥",
     "madeWithLove": "\n用❤️制作 by {myGithub}",
-    "aboutThanks": "\n感谢 {rainSunMeGithub} 参与软件测试。\n\n保留所有权利。",
+    "aboutThanks": "\n保留所有权利。\n\n感谢以下参与软件测试的各位。",
     "serverTabEmpty": "现在没有服务器。\n点击右下方按钮来添加。",
     "serverTabLoading": "加载中...",
     "serverTabPlzSave": "请再次保存该私钥",

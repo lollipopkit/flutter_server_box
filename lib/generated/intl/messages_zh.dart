@@ -20,46 +20,44 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'zh';
 
-  static String m0(rainSunMeGithub) =>
-      "\n感谢 ${rainSunMeGithub} 参与软件测试。\n\n保留所有权利。";
+  static String m0(fileName) => "下载 [${fileName}] 到本地？";
 
-  static String m1(fileName) => "下载 [${fileName}] 到本地？";
-
-  static String m2(runningCount, stoppedCount) =>
+  static String m1(runningCount, stoppedCount) =>
       "${runningCount}个正在运行, ${stoppedCount}个已停止";
 
-  static String m3(count) => "${count}个容器正在运行";
+  static String m2(count) => "${count}个容器正在运行";
 
-  static String m4(percent, size) => "${size} 的 ${percent}%";
+  static String m3(percent, size) => "${size} 的 ${percent}%";
 
-  static String m5(count) => "找到 ${count} 个更新";
+  static String m4(count) => "找到 ${count} 个更新";
 
-  static String m6(code) => "请求失败, 状态码: ${code}";
+  static String m5(code) => "请求失败, 状态码: ${code}";
 
-  static String m7(url) =>
+  static String m6(url) =>
       "请确保正确安装了docker，或者使用的非自编译版本。如果没有以上问题，请在 ${url} 提交问题。";
 
-  static String m8(myGithub) => "\n用❤️制作 by ${myGithub}";
+  static String m7(myGithub) => "\n用❤️制作 by ${myGithub}";
 
-  static String m9(url) => "请到 ${url} 提交问题";
+  static String m8(url) => "请到 ${url} 提交问题";
 
-  static String m10(date) => "确定恢复 ${date} 的备份吗？";
+  static String m9(date) => "确定恢复 ${date} 的备份吗？";
 
-  static String m11(time) => "耗时: ${time}";
+  static String m10(time) => "耗时: ${time}";
 
-  static String m12(name) => "确定删除[${name}]？";
+  static String m11(name) => "确定删除[${name}]？";
 
-  static String m13(server) => "你确定要删除服务器 [${server}] 吗？";
+  static String m12(server) => "你确定要删除服务器 [${server}] 吗？";
 
-  static String m14(build) => "找到新版本：v1.0.${build}, 点击更新";
+  static String m13(build) => "找到新版本：v1.0.${build}, 点击更新";
 
-  static String m15(build) => "当前：v1.0.${build}";
+  static String m14(build) => "当前：v1.0.${build}";
 
-  static String m16(build) => "当前：v1.0.${build}, 已是最新版本";
+  static String m15(build) => "当前：v1.0.${build}, 已是最新版本";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
-        "aboutThanks": m0,
+        "aboutThanks":
+            MessageLookupByLibrary.simpleMessage("\n保留所有权利。\n\n感谢以下参与软件测试的各位。"),
         "addAServer": MessageLookupByLibrary.simpleMessage("添加服务器"),
         "addPrivateKey": MessageLookupByLibrary.simpleMessage("添加一个私钥"),
         "alreadyLastDir": MessageLookupByLibrary.simpleMessage("已经是最上层目录了"),
@@ -89,12 +87,12 @@ class MessageLookup extends MessageLookupByLibrary {
         "decode": MessageLookupByLibrary.simpleMessage("解码"),
         "delete": MessageLookupByLibrary.simpleMessage("删除"),
         "disconnected": MessageLookupByLibrary.simpleMessage("连接断开"),
-        "dl2Local": m1,
-        "dockerStatusRunningAndStoppedFmt": m2,
-        "dockerStatusRunningFmt": m3,
+        "dl2Local": m0,
+        "dockerStatusRunningAndStoppedFmt": m1,
+        "dockerStatusRunningFmt": m2,
         "download": MessageLookupByLibrary.simpleMessage("下载"),
         "downloadFinished": MessageLookupByLibrary.simpleMessage("下载完成！"),
-        "downloadStatus": m4,
+        "downloadStatus": m3,
         "edit": MessageLookupByLibrary.simpleMessage("编辑"),
         "encode": MessageLookupByLibrary.simpleMessage("编码"),
         "error": MessageLookupByLibrary.simpleMessage("出错了"),
@@ -106,18 +104,18 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("如果你有任何问题，请在GitHub反馈"),
         "fieldMustNotEmpty": MessageLookupByLibrary.simpleMessage("这些输入框不能为空。"),
         "files": MessageLookupByLibrary.simpleMessage("文件"),
-        "foundNUpdate": m5,
+        "foundNUpdate": m4,
         "go": MessageLookupByLibrary.simpleMessage("开始"),
         "goSftpDlPage": MessageLookupByLibrary.simpleMessage("前往下载页?"),
         "host": MessageLookupByLibrary.simpleMessage("主机"),
-        "httpFailedWithCode": m6,
+        "httpFailedWithCode": m5,
         "import": MessageLookupByLibrary.simpleMessage("导入"),
         "importAndExport": MessageLookupByLibrary.simpleMessage("导入或导出"),
         "install": MessageLookupByLibrary.simpleMessage("安装"),
         "installDockerWithUrl": MessageLookupByLibrary.simpleMessage(
             "请先 https://docs.docker.com/engine/install docker"),
         "invalidJson": MessageLookupByLibrary.simpleMessage("无效的json，存在格式问题"),
-        "invalidVersionHelp": m7,
+        "invalidVersionHelp": m6,
         "keepForeground": MessageLookupByLibrary.simpleMessage("请保持应用处于前台！"),
         "keyAuth": MessageLookupByLibrary.simpleMessage("公钥认证"),
         "lastTry": MessageLookupByLibrary.simpleMessage("最后尝试"),
@@ -125,7 +123,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "license": MessageLookupByLibrary.simpleMessage("开源证书"),
         "loadingFiles": MessageLookupByLibrary.simpleMessage("正在加载目录。。。"),
         "loss": MessageLookupByLibrary.simpleMessage("丢包率"),
-        "madeWithLove": m8,
+        "madeWithLove": m7,
         "max": MessageLookupByLibrary.simpleMessage("最大"),
         "min": MessageLookupByLibrary.simpleMessage("最小"),
         "ms": MessageLookupByLibrary.simpleMessage("毫秒"),
@@ -153,11 +151,11 @@ class MessageLookup extends MessageLookupByLibrary {
         "privateKey": MessageLookupByLibrary.simpleMessage("私钥"),
         "pwd": MessageLookupByLibrary.simpleMessage("密码"),
         "rename": MessageLookupByLibrary.simpleMessage("重命名"),
-        "reportBugsOnGithubIssue": m9,
+        "reportBugsOnGithubIssue": m8,
         "restore": MessageLookupByLibrary.simpleMessage("恢复"),
         "restoreSuccess":
             MessageLookupByLibrary.simpleMessage("恢复成功，需要重启App来应用更改"),
-        "restoreSureWithDate": m10,
+        "restoreSureWithDate": m9,
         "result": MessageLookupByLibrary.simpleMessage("结果"),
         "run": MessageLookupByLibrary.simpleMessage("运行"),
         "save": MessageLookupByLibrary.simpleMessage("保存"),
@@ -176,11 +174,11 @@ class MessageLookup extends MessageLookupByLibrary {
         "sftpSSHConnected":
             MessageLookupByLibrary.simpleMessage("SFTP 已连接，即将开始下载..."),
         "snippet": MessageLookupByLibrary.simpleMessage("代码片段"),
-        "spentTime": m11,
+        "spentTime": m10,
         "start": MessageLookupByLibrary.simpleMessage("开始"),
         "stop": MessageLookupByLibrary.simpleMessage("停止"),
-        "sureDelete": m12,
-        "sureToDeleteServer": m13,
+        "sureDelete": m11,
+        "sureToDeleteServer": m12,
         "ttl": MessageLookupByLibrary.simpleMessage("缓存时间"),
         "unknown": MessageLookupByLibrary.simpleMessage("未知"),
         "unknownError": MessageLookupByLibrary.simpleMessage("未知错误"),
@@ -193,9 +191,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "upsideDown": MessageLookupByLibrary.simpleMessage("上下交换"),
         "urlOrJson": MessageLookupByLibrary.simpleMessage("链接或JSON"),
         "user": MessageLookupByLibrary.simpleMessage("用户"),
-        "versionHaveUpdate": m14,
-        "versionUnknownUpdate": m15,
-        "versionUpdated": m16,
+        "versionHaveUpdate": m13,
+        "versionUnknownUpdate": m14,
+        "versionUpdated": m15,
         "waitConnection": MessageLookupByLibrary.simpleMessage("请等待连接建立"),
         "willTakEeffectImmediately":
             MessageLookupByLibrary.simpleMessage("更改将会立即生效")
