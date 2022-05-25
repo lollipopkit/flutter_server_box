@@ -6,7 +6,7 @@ enum _BuildMode {
   profile,
 }
 
-_BuildMode _buildMode = (() {
+final _buildMode = (() {
   if (const bool.fromEnvironment('dart.vm.product')) {
     return _BuildMode.release;
   }

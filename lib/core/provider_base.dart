@@ -9,11 +9,6 @@ class ProviderBase with ChangeNotifier {
   }
 }
 
-enum ProviderState {
-  idle,
-  busy,
-}
-
 class BusyProvider extends ProviderBase {
   bool _isBusy = false;
   bool get isBusy => _isBusy;

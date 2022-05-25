@@ -44,7 +44,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
 
   bool usePublicKey = false;
 
-  int _pubKeyIndex = -1;
+  int? _pubKeyIndex;
   PrivateKeyInfo? _keyInfo;
 
   @override
@@ -151,7 +151,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                 ? Consumer<PrivateKeyProvider>(builder: (_, key, __) {
                     for (var item in key.infos) {
                       if (item.id == widget.spi?.pubKeyId) {
-                        _pubKeyIndex = key.infos.indexOf(item);
+                        _pubKeyIndex ??= key.infos.indexOf(item);
                       }
                     }
                     final tiles = key.infos
@@ -255,12 +255,9 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       ipController.text = widget.spi?.ip ?? '';
       portController.text = (widget.spi?.port ?? 22).toString();
       usernameController.text = widget.spi?.user ?? '';
-      if (widget.spi?.pwd is String) {
+      if (widget.spi?.pubKeyId == null) {
         passwordController.text = widget.spi?.pwd ?? '';
       } else {
-        final auth = widget.spi?.pwd as Map;
-        passwordController.text = auth['passphrase'];
-        keyController.text = auth['privateKey'];
         usePublicKey = true;
       }
       setState(() {});

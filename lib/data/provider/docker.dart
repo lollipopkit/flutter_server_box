@@ -66,42 +66,22 @@ class DockerProvider extends BusyProvider {
     }
   }
 
-  Future<bool> stop(String id) async {
+  Future<bool> _do(String id, String cmd) async {
     setBusyState();
     if (client == null) {
       error = 'no client';
       setBusyState(false);
       return false;
     }
-    final result = await client!.run('docker stop $id').string;
+    final result = await client!.run(cmd).string;
     await refresh();
     setBusyState(false);
     return result.contains(id);
   }
 
-  Future<bool> start(String id) async {
-    setBusyState();
-    if (client == null) {
-      error = 'no client';
-      setBusyState(false);
-      return false;
-    }
-    final result = await client!.run('docker start $id').string;
-    await refresh();
-    setBusyState(false);
-    return result.contains(id);
-  }
+  Future<bool> stop(String id) async => await _do(id, 'docker stop $id');
 
-  Future<bool> delete(String id) async {
-    setBusyState();
-    if (client == null) {
-      error = 'no client';
-      setBusyState(false);
-      return false;
-    }
-    final result = await client!.run('docker rm $id').string;
-    await refresh();
-    setBusyState(false);
-    return result.contains(id);
-  }
+  Future<bool> start(String id) async => await _do(id, 'docker start $id');
+
+  Future<bool> delete(String id) async => await _do(id, 'docker rm $id');
 }
