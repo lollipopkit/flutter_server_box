@@ -190,14 +190,28 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.send),
-        onPressed: () {
+        onPressed: () async {
           if (ipController.text == '') {
             showSnackBar(context, Text(s.plzEnterHost));
             return;
           }
           if (!usePublicKey && passwordController.text == '') {
-            showSnackBar(context, Text(s.plzEnterPwd));
-            return;
+            final cancel = await showRoundDialog<bool>(
+                context,
+                s.attention,
+                Text(s.sureNoPwd),
+                [
+                  TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: Text(s.ok)),
+                  TextButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      child: Text(s.cancel))
+                ],
+                barrierDismiss: false);
+            if (cancel ?? true) {
+              return;
+            }
           }
           if (usePublicKey && _pubKeyIndex == -1) {
             showSnackBar(context, Text(s.plzSelectKey));

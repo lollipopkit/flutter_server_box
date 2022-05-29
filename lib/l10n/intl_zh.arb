@@ -73,7 +73,7 @@
     "addPrivateKey": "添加一个私钥",
     "choosePrivateKey": "选择私钥",
     "plzEnterHost": "请输入主机",
-    "plzEnterPwd": "请输入密码",
+    "sureNoPwd": "确认使用无密码？",
     "plzSelectKey": "请选择私钥",
     "exampleName": "名称示例",
     "stop": "停止",

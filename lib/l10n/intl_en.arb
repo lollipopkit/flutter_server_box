@@ -73,7 +73,7 @@
     "addPrivateKey": "Add private key",
     "choosePrivateKey": "Choose private key",
     "plzEnterHost": "Please enter host.",
-    "plzEnterPwd": "Please enter password.",
+    "sureNoPwd": "Are you sure to use no password?",
     "plzSelectKey": "Please select a key.",
     "exampleName": "Example name",
     "stop": "Stop",

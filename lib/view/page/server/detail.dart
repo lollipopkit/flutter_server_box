@@ -155,6 +155,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildProgress(double percent) {
+    if (percent > 100) percent = 100;
     final pColor = primaryColor;
     final percentWithinOne = percent / 100;
     return LinearProgressIndicator(
@@ -186,7 +187,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     final pColor = primaryColor;
     final used = ss.memory.used / ss.memory.total;
     final width = _media.size.width - 17 * 2 - 17 * 2;
-    const mb = 1024 * 1024;
+    const mb = 1024;
     return RoundRectCard(Padding(
       padding: roundRectCardPadding,
       child: SizedBox(
@@ -329,8 +330,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             Icons.device_hub,
             size: 17,
           ),
+          Icon(Icons.arrow_downward, size: 17),
           Icon(Icons.arrow_upward, size: 17),
-          Icon(Icons.arrow_downward, size: 17)
         ],
       ),
     );

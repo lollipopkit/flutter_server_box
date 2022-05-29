@@ -145,7 +145,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "platformNotSupportUpdate":
             MessageLookupByLibrary.simpleMessage("当前平台不支持更新，请编译最新源码后手动安装"),
         "plzEnterHost": MessageLookupByLibrary.simpleMessage("请输入主机"),
-        "plzEnterPwd": MessageLookupByLibrary.simpleMessage("请输入密码"),
         "plzSelectKey": MessageLookupByLibrary.simpleMessage("请选择私钥"),
         "port": MessageLookupByLibrary.simpleMessage("端口"),
         "privateKey": MessageLookupByLibrary.simpleMessage("私钥"),
@@ -178,6 +177,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "start": MessageLookupByLibrary.simpleMessage("开始"),
         "stop": MessageLookupByLibrary.simpleMessage("停止"),
         "sureDelete": m11,
+        "sureNoPwd": MessageLookupByLibrary.simpleMessage("确认使用无密码？"),
         "sureToDeleteServer": m12,
         "ttl": MessageLookupByLibrary.simpleMessage("缓存时间"),
         "unknown": MessageLookupByLibrary.simpleMessage("未知"),

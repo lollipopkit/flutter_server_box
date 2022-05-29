@@ -790,11 +790,11 @@ class S {
     );
   }
 
-  /// `Please enter password.`
-  String get plzEnterPwd {
+  /// `Are you sure to use no password?`
+  String get sureNoPwd {
     return Intl.message(
-      'Please enter password.',
-      name: 'plzEnterPwd',
+      'Are you sure to use no password?',
+      name: 'sureNoPwd',
       desc: '',
       args: [],
     );

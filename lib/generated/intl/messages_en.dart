@@ -164,8 +164,6 @@ class MessageLookup extends MessageLookupByLibrary {
             "Current platform does not support in app update.\nPlease build from source and install it."),
         "plzEnterHost":
             MessageLookupByLibrary.simpleMessage("Please enter host."),
-        "plzEnterPwd":
-            MessageLookupByLibrary.simpleMessage("Please enter password."),
         "plzSelectKey":
             MessageLookupByLibrary.simpleMessage("Please select a key."),
         "port": MessageLookupByLibrary.simpleMessage("Port"),
@@ -204,6 +202,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "start": MessageLookupByLibrary.simpleMessage("Start"),
         "stop": MessageLookupByLibrary.simpleMessage("Stop"),
         "sureDelete": m11,
+        "sureNoPwd": MessageLookupByLibrary.simpleMessage(
+            "Are you sure to use no password?"),
         "sureToDeleteServer": m12,
         "ttl": MessageLookupByLibrary.simpleMessage("ttl"),
         "unknown": MessageLookupByLibrary.simpleMessage("unknown"),

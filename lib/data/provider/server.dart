@@ -37,13 +37,14 @@ const shellCmd = "export LANG=en_US.utf-8 \necho '$seperator' \n"
     "uptime \necho $seperator \n"
     "cat /proc/net/snmp \necho $seperator \n"
     "df -h \necho $seperator \n"
-    "free -m \necho $seperator \n"
+    "cat /proc/meminfo \necho $seperator \n"
     "cat /sys/class/thermal/thermal_zone*/type \necho $seperator \n"
     "cat /sys/class/thermal/thermal_zone*/temp";
 const shellPath = '.serverbox.sh';
 const memPrefix = 'Mem:';
 final cpuTempReg = RegExp('(x86_pkg_temp|cpu_thermal)');
 final numReg = RegExp(r'\s{1,}');
+final memItemReg = RegExp(r'([A-Z].+:)\s+([0-9]+) kB');
 
 class ServerProvider extends BusyProvider {
   List<ServerInfo> _servers = [];
@@ -54,7 +55,7 @@ class ServerProvider extends BusyProvider {
   final logger = Logger('ServerProvider');
 
   Memory get emptyMemory =>
-      Memory(total: 1, used: 0, free: 1, shared: 0, cache: 0, avail: 1);
+      Memory(total: 1, used: 0, free: 1, cache: 0, avail: 1);
 
   NetSpeedPart get emptyNetSpeedPart => NetSpeedPart('', 0, 0, 0);
 
@@ -156,8 +157,8 @@ class ServerProvider extends BusyProvider {
       throw RangeError.index(idx, _servers);
     }
     _servers[idx].info = newSpi;
-    _servers[idx].client = await genClient(newSpi);
     locator<ServerStore>().update(old, newSpi);
+    _servers[idx].client = await genClient(newSpi);
     notifyListeners();
     refreshData(spi: newSpi);
   }
@@ -194,8 +195,8 @@ class ServerProvider extends BusyProvider {
     // if client is null, return
     if (s.client == null) return;
     final raw = await s.client!.run("sh $shellPath").string;
-    final lines = raw.split(seperator).map((e) => e.trim()).toList();
-    if (raw.isEmpty || lines.length == 1) {
+    final segments = raw.split(seperator).map((e) => e.trim()).toList();
+    if (raw.isEmpty || segments.length == 1) {
       s.connectionState = ServerConnectionState.failed;
       if (s.status.failedInfo == null || s.status.failedInfo!.isEmpty) {
         s.status.failedInfo = 'No data received';
@@ -203,16 +204,16 @@ class ServerProvider extends BusyProvider {
       notifyListeners();
       return;
     }
-    lines.removeAt(0);
+    segments.removeAt(0);
 
     try {
-      _getCPU(spi, lines[2], lines[7], lines[8]);
-      _getMem(spi, lines[6]);
-      _getSysVer(spi, lines[1]);
-      _getUpTime(spi, lines[3]);
-      _getDisk(spi, lines[5]);
-      _getTcp(spi, lines[4]);
-      _getNetSpeed(spi, lines[0]);
+      _getCPU(spi, segments[2], segments[7], segments[8]);
+      _getMem(spi, segments[6]);
+      _getSysVer(spi, segments[1]);
+      _getUpTime(spi, segments[3]);
+      _getDisk(spi, segments[5]);
+      _getTcp(spi, segments[4]);
+      _getNetSpeed(spi, segments[0]);
     } catch (e) {
       s.connectionState = ServerConnectionState.failed;
       s.status.failedInfo = e.toString();
@@ -333,21 +334,22 @@ class ServerProvider extends BusyProvider {
 
   void _getMem(ServerPrivateInfo spi, String raw) {
     final info = _servers.firstWhere((e) => e.info == spi);
-    for (var item in raw.split('\n')) {
-      if (item.contains(memPrefix)) {
-        final split = item.replaceFirst(memPrefix, '').split(' ');
-        split.removeWhere((e) => e == '');
-        final memList = split.map((e) => int.parse(e)).toList();
-        info.status.memory = Memory(
-            total: memList[0],
-            used: memList[1],
-            free: memList[2],
-            shared: memList[3],
-            cache: memList[4],
-            avail: memList[5]);
-        break;
-      }
-    }
+    final items = raw.split('\n').map((e) => memItemReg.firstMatch(e)).toList();
+    final total = int.parse(
+        items.firstWhere((e) => e?.group(1) == 'MemTotal:')?.group(2) ?? '1');
+    final free = int.parse(
+        items.firstWhere((e) => e?.group(1) == 'MemFree:')?.group(2) ?? '0');
+    final cached = int.parse(
+        items.firstWhere((e) => e?.group(1) == 'Cached:')?.group(2) ?? '0');
+    final available = int.parse(
+        items.firstWhere((e) => e?.group(1) == 'MemAvailable:')?.group(2) ??
+            '0');
+    info.status.memory = Memory(
+        total: total,
+        used: total - available,
+        free: free,
+        cache: cached,
+        avail: available);
   }
 
   Future<String?> runSnippet(ServerPrivateInfo spi, Snippet snippet) async {
