@@ -41,8 +41,7 @@ const shellCmd = "export LANG=en_US.utf-8 \necho '$seperator' \n"
     "cat /sys/class/thermal/thermal_zone*/type \necho $seperator \n"
     "cat /sys/class/thermal/thermal_zone*/temp";
 const shellPath = '.serverbox.sh';
-const memPrefix = 'Mem:';
-final cpuTempReg = RegExp('(x86_pkg_temp|cpu_thermal)');
+final cpuTempReg = RegExp(r'(x86_pkg_temp|cpu_thermal)');
 final numReg = RegExp(r'\s{1,}');
 final memItemReg = RegExp(r'([A-Z].+:)\s+([0-9]+) kB');
 
@@ -274,7 +273,11 @@ class ServerProvider extends BusyProvider {
       }
       idx++;
     }
-    return '${(int.parse(value.split('\n')[idx].trim()) / 1000).toStringAsFixed(1)}°C';
+    final valueSplited = value.split('\n');
+    if (idx >= valueSplited.length) return '';
+    final temp = int.tryParse(valueSplited[idx].trim());
+    if (temp == null) return '';
+    return '${(temp / 1000).toStringAsFixed(1)}°C';
   }
 
   void _getCPU(

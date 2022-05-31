@@ -4,7 +4,9 @@ import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/provider_base.dart';
 import 'package:toolbox/data/model/docker/ps.dart';
 
-final dockerNotFound = RegExp(r'command not found|Unknown command');
+final _dockerNotFound = RegExp(r'command not found|Unknown command');
+final _versionReg = RegExp(r'(Version:)\s+([0-9]+\.[0-9]+\.[0-9]+)');
+final _editionReg = RegExp(r'(Client:)\s+(.+-.+)');
 
 class DockerProvider extends BusyProvider {
   SSHClient? client;
@@ -31,32 +33,30 @@ class DockerProvider extends BusyProvider {
     }
 
     final verRaw = await client!.run('docker version'.withLangExport).string;
-    if (verRaw.contains(dockerNotFound)) {
+    if (verRaw.contains(_dockerNotFound)) {
       error = 'docker not found';
       notifyListeners();
       return;
     }
-    final verSplit = verRaw.split('\n');
-    if (verSplit.length < 3) {
-      error = 'invalid version';
-      notifyListeners();
-      return;
-    } else {
-      try {
-        version = verSplit[1].split(' ').last;
-        edition = verSplit[0].split(': ')[1];
-      } catch (e) {
-        error = e.toString();
-        return;
-      }
-    }
 
-    final raw = await client!.run('docker ps -a'.withLangExport).string;
-    final lines = raw.split('\n');
-    lines.removeAt(0);
-    lines.removeWhere((element) => element.isEmpty);
+    version = _versionReg.firstMatch(verRaw)?.group(2);
+    edition = _editionReg.firstMatch(verRaw)?.group(2);
 
     try {
+      final cmd = 'docker ps -a'.withLangExport;
+      final raw = await () async {
+        final raw = await client!.run(cmd).string;
+        if (raw.contains('permission denied')) {
+          return await client!
+              .run(
+                  'export DOCKER_HOST=unix:///run/user/1000/docker.sock && $cmd')
+              .string;
+        }
+        return raw;
+      }();
+      final lines = raw.split('\n');
+      lines.removeAt(0);
+      lines.removeWhere((element) => element.isEmpty);
       items = lines.map((e) => DockerPsItem.fromRawString(e)).toList();
     } catch (e) {
       error = e.toString();

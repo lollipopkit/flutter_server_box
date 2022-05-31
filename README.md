@@ -1,5 +1,5 @@
 # Server Monitor & Toolbox
-A new Flutter project which provide a chart view to display server status data and a manager toolbox.
+A new Flutter project which provide a chart view to display server status data and a manager toolbox. 
 
 ## Milestone
 - [x] Status chart view
@@ -71,3 +71,6 @@ Please use `make.dart` to build.
 
 ## License
 `LGPL License. LollipopKit 2021`
+
+## Thanks
+Especially thanks to [xuty](https://github.com/xtyxtyx) and dartssh2.
