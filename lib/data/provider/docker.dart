@@ -7,18 +7,24 @@ import 'package:toolbox/data/model/docker/ps.dart';
 final _dockerNotFound = RegExp(r'command not found|Unknown command');
 final _versionReg = RegExp(r'(Version:)\s+([0-9]+\.[0-9]+\.[0-9]+)');
 final _editionReg = RegExp(r'(Client:)\s+(.+-.+)');
+final _userIdReg = RegExp(r'.+:(\d+:\d+):.+');
 
 class DockerProvider extends BusyProvider {
   SSHClient? client;
+  String? userName;
   List<DockerPsItem>? items;
   String? version;
   String? edition;
   String? error;
 
-  void init(SSHClient client) => this.client = client;
+  void init(SSHClient client, String userName) {
+    this.client = client;
+    this.userName = userName;
+  }
 
   void clear() {
     client = null;
+    userName = null;
     error = null;
     items = null;
     version = null;
@@ -42,6 +48,9 @@ class DockerProvider extends BusyProvider {
     version = _versionReg.firstMatch(verRaw)?.group(2);
     edition = _editionReg.firstMatch(verRaw)?.group(2);
 
+    final passwd = await client!.run('cat /etc/passwd | grep $userName').string;
+    final userId = _userIdReg.firstMatch(passwd)?.group(1)?.split(':').first;
+
     try {
       final cmd = 'docker ps -a'.withLangExport;
       final raw = await () async {
@@ -49,7 +58,7 @@ class DockerProvider extends BusyProvider {
         if (raw.contains('permission denied')) {
           return await client!
               .run(
-                  'export DOCKER_HOST=unix:///run/user/1000/docker.sock && $cmd')
+                  'export DOCKER_HOST=unix:///run/user/${userId ?? 1000}/docker.sock && $cmd')
               .string;
         }
         return raw;

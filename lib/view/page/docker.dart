@@ -52,7 +52,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
       Navigator.of(context).pop();
       return;
     }
-    _docker.init(client);
+    _docker.init(client, widget.spi.user);
   }
 
   @override
