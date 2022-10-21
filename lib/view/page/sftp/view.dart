@@ -6,7 +6,7 @@ import 'package:toolbox/core/extension/numx.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/core/utils.dart';
-import 'package:toolbox/data/model/server/server_connection_state.dart';
+import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/sftp/absolute_path.dart';
 import 'package:toolbox/data/model/sftp/download_worker.dart';

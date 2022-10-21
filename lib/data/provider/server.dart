@@ -10,7 +10,6 @@ import 'package:toolbox/data/model/server/cpu_2_status.dart';
 import 'package:toolbox/data/model/server/cpu_status.dart';
 import 'package:toolbox/data/model/server/memory.dart';
 import 'package:toolbox/data/model/server/net_speed.dart';
-import 'package:toolbox/data/model/server/server_connection_state.dart';
 import 'package:toolbox/data/model/server/disk_info.dart';
 import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
@@ -229,23 +228,9 @@ class ServerProvider extends BusyProvider {
   ///   lo: 45929941  269112    0    0    0     0          0         0 45929941  269112    0    0    0     0       0          0
   ///   eth0: 48481023  505772    0    0    0     0          0         0 36002262  202307    0    0    0     0       0          0
   /// 1635752901
-  void _getNetSpeed(ServerPrivateInfo spi, String raw) {
+  Future<void> _getNetSpeed(ServerPrivateInfo spi, String raw) async {
     final info = _servers.firstWhere((e) => e.info == spi);
-    final split = raw.split('\n');
-    final deviceCount = split.length - 3;
-    if (deviceCount < 1) return;
-    final time = int.parse(split[split.length - 1]);
-    final results = <NetSpeedPart>[];
-    for (int idx = 2; idx < deviceCount; idx++) {
-      final data = split[idx].trim().split(':');
-      final device = data.first;
-      final bytes = data.last.trim().split(' ');
-      bytes.removeWhere((element) => element == '');
-      final bytesIn = int.parse(bytes.first);
-      final bytesOut = int.parse(bytes[8]);
-      results.add(NetSpeedPart(device, bytesIn, bytesOut, time));
-    }
-    info.status.netSpeed.update(results);
+    info.status.netSpeed.update(await compute(_parseNetSpeed, raw));
   }
 
   void _getSysVer(ServerPrivateInfo spi, String raw) {
@@ -256,51 +241,14 @@ class ServerProvider extends BusyProvider {
     }
   }
 
-  String _getCPUTemp(String type, String value) {
-    const noMatch = "/sys/class/thermal/thermal_zone*/type";
-    // Not support to get CPU temperature
-    if (value.contains(noMatch) ||
-        type.contains(noMatch) ||
-        value.isEmpty ||
-        type.isEmpty) {
-      return '';
-    }
-    final split = type.split('\n');
-    int idx = 0;
-    for (var item in split) {
-      if (item.contains(cpuTempReg)) {
-        break;
-      }
-      idx++;
-    }
-    final valueSplited = value.split('\n');
-    if (idx >= valueSplited.length) return '';
-    final temp = int.tryParse(valueSplited[idx].trim());
-    if (temp == null) return '';
-    return '${(temp / 1000).toStringAsFixed(1)}°C';
-  }
-
-  void _getCPU(
-      ServerPrivateInfo spi, String raw, String tempType, String tempValue) {
+  Future<void> _getCPU(ServerPrivateInfo spi, String raw, String tempType,
+      String tempValue) async {
     final info = _servers.firstWhere((e) => e.info == spi);
-    final List<CpuStatus> cpus = [];
+    final cpus = await compute(_parseCPU, raw);
 
-    for (var item in raw.split('\n')) {
-      if (item == '') break;
-      final id = item.split(' ').first;
-      final matches = item.replaceFirst(id, '').trim().split(' ');
-      cpus.add(CpuStatus(
-          id,
-          int.parse(matches[0]),
-          int.parse(matches[1]),
-          int.parse(matches[2]),
-          int.parse(matches[3]),
-          int.parse(matches[4]),
-          int.parse(matches[5]),
-          int.parse(matches[6])));
-    }
     if (cpus.isNotEmpty) {
-      info.status.cpu2Status.update(cpus, _getCPUTemp(tempType, tempValue));
+      info.status.cpu2Status
+          .update(cpus, await compute(_getCPUTemp, [tempType, tempValue]));
     }
   }
 
@@ -309,14 +257,11 @@ class ServerProvider extends BusyProvider {
         raw.split('up ')[1].split(', ')[0];
   }
 
-  void _getTcp(ServerPrivateInfo spi, String raw) {
+  Future<void> _getTcp(ServerPrivateInfo spi, String raw) async {
     final info = _servers.firstWhere((e) => e.info == spi);
-    final lines = raw.split('\n');
-    final idx = lines.lastWhere((element) => element.startsWith('Tcp:'),
-        orElse: () => '');
-    if (idx != '') {
-      final vals = idx.split(numReg);
-      info.status.tcp = TcpStatus(vals[5].i, vals[6].i, vals[7].i, vals[8].i);
+    final status = await compute(_parseTcp, raw);
+    if (status != null) {
+      info.status.tcp = status;
     }
   }
 
@@ -335,24 +280,10 @@ class ServerProvider extends BusyProvider {
     info.status.disk = list;
   }
 
-  void _getMem(ServerPrivateInfo spi, String raw) {
+  Future<void> _getMem(ServerPrivateInfo spi, String raw) async {
     final info = _servers.firstWhere((e) => e.info == spi);
-    final items = raw.split('\n').map((e) => memItemReg.firstMatch(e)).toList();
-    final total = int.parse(
-        items.firstWhere((e) => e?.group(1) == 'MemTotal:')?.group(2) ?? '1');
-    final free = int.parse(
-        items.firstWhere((e) => e?.group(1) == 'MemFree:')?.group(2) ?? '0');
-    final cached = int.parse(
-        items.firstWhere((e) => e?.group(1) == 'Cached:')?.group(2) ?? '0');
-    final available = int.parse(
-        items.firstWhere((e) => e?.group(1) == 'MemAvailable:')?.group(2) ??
-            '0');
-    info.status.memory = Memory(
-        total: total,
-        used: total - available,
-        free: free,
-        cache: cached,
-        avail: available);
+    final mem = await compute(_parseMem, raw);
+    info.status.memory = mem;
   }
 
   Future<String?> runSnippet(ServerPrivateInfo spi, Snippet snippet) async {
@@ -362,4 +293,97 @@ class ServerProvider extends BusyProvider {
         .run(snippet.script)
         .string;
   }
+}
+
+Memory _parseMem(String raw) {
+  final items = raw.split('\n').map((e) => memItemReg.firstMatch(e)).toList();
+  final total = int.parse(
+      items.firstWhere((e) => e?.group(1) == 'MemTotal:')?.group(2) ?? '1');
+  final free = int.parse(
+      items.firstWhere((e) => e?.group(1) == 'MemFree:')?.group(2) ?? '0');
+  final cached = int.parse(
+      items.firstWhere((e) => e?.group(1) == 'Cached:')?.group(2) ?? '0');
+  final available = int.parse(
+      items.firstWhere((e) => e?.group(1) == 'MemAvailable:')?.group(2) ?? '0');
+  return Memory(
+      total: total,
+      used: total - available,
+      free: free,
+      cache: cached,
+      avail: available);
+}
+
+TcpStatus? _parseTcp(String raw) {
+  final lines = raw.split('\n');
+  final idx = lines.lastWhere((element) => element.startsWith('Tcp:'),
+      orElse: () => '');
+  if (idx != '') {
+    final vals = idx.split(numReg);
+    return TcpStatus(vals[5].i, vals[6].i, vals[7].i, vals[8].i);
+  }
+  return null;
+}
+
+List<CpuStatus> _parseCPU(String raw) {
+  final List<CpuStatus> cpus = [];
+
+  for (var item in raw.split('\n')) {
+    if (item == '') break;
+    final id = item.split(' ').first;
+    final matches = item.replaceFirst(id, '').trim().split(' ');
+    cpus.add(CpuStatus(
+        id,
+        int.parse(matches[0]),
+        int.parse(matches[1]),
+        int.parse(matches[2]),
+        int.parse(matches[3]),
+        int.parse(matches[4]),
+        int.parse(matches[5]),
+        int.parse(matches[6])));
+  }
+  return cpus;
+}
+
+String _getCPUTemp(List<String> segments) {
+  const noMatch = "/sys/class/thermal/thermal_zone*/type";
+  final type = segments[0];
+  final value = segments[1];
+  // Not support to get CPU temperature
+  if (value.contains(noMatch) ||
+      type.contains(noMatch) ||
+      value.isEmpty ||
+      type.isEmpty) {
+    return '';
+  }
+  final split = type.split('\n');
+  int idx = 0;
+  for (var item in split) {
+    if (item.contains(cpuTempReg)) {
+      break;
+    }
+    idx++;
+  }
+  final valueSplited = value.split('\n');
+  if (idx >= valueSplited.length) return '';
+  final temp = int.tryParse(valueSplited[idx].trim());
+  if (temp == null) return '';
+  return '${(temp / 1000).toStringAsFixed(1)}°C';
+}
+
+List<NetSpeedPart> _parseNetSpeed(String raw) {
+  final split = raw.split('\n');
+  final deviceCount = split.length - 3;
+  if (deviceCount < 1) return [];
+  final time = int.parse(split[split.length - 1]);
+  final results = <NetSpeedPart>[];
+  for (int idx = 2; idx < deviceCount; idx++) {
+    final data = split[idx].trim().split(':');
+    final device = data.first;
+    final bytes = data.last.trim().split(' ');
+    bytes.removeWhere((element) => element == '');
+    final bytesIn = int.parse(bytes.first);
+    final bytesOut = int.parse(bytes[8]);
+    results.add(NetSpeedPart(device, bytesIn, bytesOut, time));
+  }
+  return results;
 }

@@ -48,3 +48,4 @@ app.*.map.json
 /android/app/fjy.androidstudio.key
 /release
 test.dart
+.fvm/flutter_sdk

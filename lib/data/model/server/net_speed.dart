@@ -39,9 +39,9 @@ class NetSpeed {
   String speedOut({String? device}) {
     if (old[0].device == '' || now[0].device == '') return '0kb/s';
     final idx = deviceIdx(device);
-    final speedInBytesPerSecond =
+    final speedOutBytesPerSecond =
         (now[idx].bytesOut - old[idx].bytesOut) / timeDiff;
-    return buildStandardOutput(speedInBytesPerSecond);
+    return buildStandardOutput(speedOutBytesPerSecond);
   }
 
   int deviceIdx(String? device) {

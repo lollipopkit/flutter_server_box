@@ -9,7 +9,6 @@ import 'package:toolbox/core/route.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/model/app/menu_item.dart';
 import 'package:toolbox/data/model/server/server.dart';
-import 'package:toolbox/data/model/server/server_connection_state.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/server_status.dart';
 import 'package:toolbox/data/provider/server.dart';

@@ -99,7 +99,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
         tooltip: s.save,
         onPressed: () async {
           final name = nameController.text;
-          final key = keyController.text;
+          final key = keyController.text.trim();
           final pwd = pwdController.text;
           if (name.isEmpty || key.isEmpty) {
             showSnackBar(context, Text(s.fieldMustNotEmpty));
