@@ -68,8 +68,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   Widget _buildLinuxIcon(String sysVer) {
     final iconPath = linuxIcons.search(sysVer);
     if (iconPath == null) return const SizedBox();
-    return SizedBox(
-        height: _media.size.height * 0.15, child: Image.asset(iconPath));
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+          maxHeight: _media.size.height * 0.12,
+          maxWidth: _media.size.width * 0.6),
+      child: Image.asset(iconPath),
+    );
   }
 
   Widget _buildCPUView(ServerStatus ss) {

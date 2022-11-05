@@ -7,4 +7,7 @@ class SettingStore extends PersistentStore {
   StoreProperty<int> get serverStatusUpdateInterval =>
       property('serverStatusUpdateInterval', defaultValue: 2);
   StoreProperty<int> get launchPage => property('launchPage', defaultValue: 0);
+
+  StoreProperty<int> get storeVersion =>
+      property('storeVersion', defaultValue: 0);
 }

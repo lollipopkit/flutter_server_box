@@ -1,38 +1,28 @@
-import 'dart:convert';
-
 import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/data/model/server/private_key_info.dart';
 
 class PrivateKeyStore extends PersistentStore {
   void put(PrivateKeyInfo info) {
-    final ss = fetch();
-    if (!have(info)) ss.add(info);
-    box.put('key', json.encode(ss));
+    box.put(info.id, info);
   }
 
   List<PrivateKeyInfo> fetch() {
-    return getPrivateKeyInfoList(
-        json.decode(box.get('key', defaultValue: '[]')!));
+    final keys = box.keys;
+    final ps = <PrivateKeyInfo>[];
+    for (final key in keys) {
+      final s = box.get(key);
+      if (s != null) {
+        ps.add(s);
+      }
+    }
+    return ps;
   }
 
   PrivateKeyInfo get(String id) {
-    final ss = fetch();
-    return ss.firstWhere((e) => e.id == id);
+    return box.get(id);
   }
 
   void delete(PrivateKeyInfo s) {
-    final ss = fetch();
-    ss.removeAt(index(s));
-    box.put('key', json.encode(ss));
+    box.delete(s.id);
   }
-
-  void update(PrivateKeyInfo old, PrivateKeyInfo newInfo) {
-    final ss = fetch();
-    ss[index(old)] = newInfo;
-    box.put('key', json.encode(ss));
-  }
-
-  int index(PrivateKeyInfo s) => fetch().indexWhere((e) => e.id == s.id);
-
-  bool have(PrivateKeyInfo s) => index(s) != -1;
 }

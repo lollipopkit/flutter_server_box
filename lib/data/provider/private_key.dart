@@ -26,7 +26,7 @@ class PrivateKeyProvider extends BusyProvider {
   void updateInfo(PrivateKeyInfo old, PrivateKeyInfo newInfo) {
     final idx = _infos.indexWhere((e) => e.id == old.id);
     _infos[idx] = newInfo;
-    locator<PrivateKeyStore>().update(old, newInfo);
+    locator<PrivateKeyStore>().put(newInfo);
     notifyListeners();
   }
 }

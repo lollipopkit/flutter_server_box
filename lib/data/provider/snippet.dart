@@ -38,7 +38,7 @@ class SnippetProvider extends BusyProvider {
   void update(Snippet old, Snippet newOne) {
     if (!have(old)) return;
     _snippets[index(old)] = newOne;
-    locator<SnippetStore>().update(old, newOne);
+    locator<SnippetStore>().put(newOne);
     notifyListeners();
   }
 

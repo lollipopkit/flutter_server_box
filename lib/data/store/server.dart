@@ -1,38 +1,33 @@
-import 'dart:convert';
-
 import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 
 class ServerStore extends PersistentStore {
   void put(ServerPrivateInfo info) {
-    final ss = fetch();
-    if (!have(info)) ss.add(info);
-    box.put('servers', json.encode(ss));
+    box.put(info.id, info);
   }
 
   List<ServerPrivateInfo> fetch() {
-    return getServerInfoList(
-        json.decode(box.get('servers', defaultValue: '[]')!));
+    final ids = box.keys;
+    final List<ServerPrivateInfo> ss = [];
+    for (final id in ids) {
+      final s = box.get(id);
+      if (s != null) {
+        ss.add(s);
+      }
+    }
+    return ss;
   }
 
   void delete(ServerPrivateInfo s) {
-    final ss = fetch();
-    ss.removeAt(index(s));
-    box.put('servers', json.encode(ss));
+    box.delete(s.id);
   }
 
   void update(ServerPrivateInfo old, ServerPrivateInfo newInfo) {
-    final ss = fetch();
-    final idx = index(old);
-    if (idx < 0) {
-      throw RangeError.index(idx, ss);
+    if (!have(old)) {
+      throw Exception('Old ServerPrivateInfo not found');
     }
-    ss[idx] = newInfo;
-    box.put('servers', json.encode(ss));
+    put(newInfo);
   }
 
-  int index(ServerPrivateInfo s) => fetch()
-      .indexWhere((e) => e.ip == s.ip && e.port == s.port && e.user == e.user);
-
-  bool have(ServerPrivateInfo s) => index(s) != -1;
+  bool have(ServerPrivateInfo s) => box.get(s.id) != null;
 }

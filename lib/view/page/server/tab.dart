@@ -4,7 +4,6 @@ import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
-import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/model/app/menu_item.dart';
@@ -36,16 +35,17 @@ class _ServerPageState extends State<ServerPage>
   late MediaQueryData _media;
   late ThemeData _theme;
   late Color _primaryColor;
-  late RefreshController _refreshController;
 
   late ServerProvider _serverProvider;
   late S s;
+  late bool autoUpdate;
 
   @override
   void initState() {
     super.initState();
     _serverProvider = locator<ServerProvider>();
-    _refreshController = RefreshController();
+    autoUpdate =
+        locator<SettingStore>().serverStatusUpdateInterval.fetch() != 0;
   }
 
   @override
@@ -60,8 +60,6 @@ class _ServerPageState extends State<ServerPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final autoUpdate =
-        locator<SettingStore>().serverStatusUpdateInterval.fetch() != 0;
     final child = Consumer<ServerProvider>(builder: (_, pro, __) {
       if (pro.servers.isEmpty) {
         return Center(
@@ -89,13 +87,9 @@ class _ServerPageState extends State<ServerPage>
     return Scaffold(
       body: autoUpdate
           ? child
-          : SmartRefresher(
-              controller: _refreshController,
+          : RefreshIndicator(
               child: child,
-              onRefresh: () async {
-                await _serverProvider.refreshData();
-                _refreshController.refreshCompleted();
-              },
+              onRefresh: () async => _serverProvider.refreshData(),
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: () =>

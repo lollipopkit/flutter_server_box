@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/generated/l10n.dart';
@@ -123,10 +123,12 @@ class _ConvertPageState extends State<ConvertPage>
               style: ButtonStyle(
                   foregroundColor: MaterialStateProperty.all(primaryColor)),
               child: Icon(Icons.copy, semanticLabel: s.copy),
-              onPressed: () => FlutterClipboard.copy(
-                  _textEditingControllerResult.text == ''
-                      ? ' '
-                      : _textEditingControllerResult.text),
+              onPressed: () => Clipboard.setData(
+                ClipboardData(
+                    text: _textEditingControllerResult.text == ''
+                        ? ' '
+                        : _textEditingControllerResult.text),
+              ),
             )
           ],
         ),
