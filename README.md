@@ -5,7 +5,7 @@
 
 <!-- Badges-->
 <p align="center">
-  <a href="https://apps.apple.com/app/serverbox-status-tools/id1586449703">
+  <a href="https://apps.apple.com/app/id1586449703">
     <img style="height: 37px" src="screenshots/appstore.svg">
   </a>
   <a href="https://github.com/LollipopKit/flutter_server_box/releases/latest">

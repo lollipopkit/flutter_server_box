@@ -9,8 +9,10 @@ const debianDistList = [
   'ubuntu',
   'linuxmint',
   'elementary',
-  'raspbian'
+  'raspbian',
+  'armbian'
 ];
+
 const rehlDistList = [
   'redhat',
   'fedora',

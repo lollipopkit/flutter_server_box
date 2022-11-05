@@ -9,46 +9,46 @@ class NetSpeedPart {
 }
 
 class NetSpeed {
-  List<NetSpeedPart> old;
-  List<NetSpeedPart> now;
-  NetSpeed(this.old, this.now);
+  List<NetSpeedPart> _old;
+  List<NetSpeedPart> _now;
+  NetSpeed(this._old, this._now);
 
   List<String> get devices {
     final devices = <String>[];
-    for (var item in now) {
+    for (var item in _now) {
       devices.add(item.device);
     }
     return devices;
   }
 
   void update(List<NetSpeedPart> newOne) {
-    old = now;
-    now = newOne;
+    _old = _now;
+    _now = newOne;
   }
 
-  int get timeDiff => now[0].time - old[0].time;
+  int get timeDiff => _now[0].time - _old[0].time;
 
   String speedIn({String? device}) {
-    if (old[0].device == '' || now[0].device == '') return '0kb/s';
+    if (_old[0].device == '' || _now[0].device == '') return '0kb/s';
     final idx = deviceIdx(device);
     final speedInBytesPerSecond =
-        (now[idx].bytesIn - old[idx].bytesIn) / timeDiff;
+        (_now[idx].bytesIn - _old[idx].bytesIn) / timeDiff;
     return buildStandardOutput(speedInBytesPerSecond);
   }
 
   String speedOut({String? device}) {
-    if (old[0].device == '' || now[0].device == '') return '0kb/s';
+    if (_old[0].device == '' || _now[0].device == '') return '0kb/s';
     final idx = deviceIdx(device);
     final speedOutBytesPerSecond =
-        (now[idx].bytesOut - old[idx].bytesOut) / timeDiff;
+        (_now[idx].bytesOut - _old[idx].bytesOut) / timeDiff;
     return buildStandardOutput(speedOutBytesPerSecond);
   }
 
   int deviceIdx(String? device) {
     if (device != null) {
-      for (var item in now) {
+      for (var item in _now) {
         if (item.device == device) {
-          return now.indexOf(item);
+          return _now.indexOf(item);
         }
       }
     }

@@ -11,14 +11,14 @@ import 'package:toolbox/data/service/app.dart';
 import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 
-final logger = Logger('UPDATE');
+final _logger = Logger('UPDATE');
 
 Future<bool> isFileAvailable(String url) async {
   try {
     final resp = await Dio().head(url);
     return resp.statusCode == 200;
   } catch (e) {
-    logger.warning('update file not available: $e');
+    _logger.warning('update file not available: $e');
     return false;
   }
 }
@@ -40,11 +40,11 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
   }();
 
   if (!force && newest <= BuildData.build) {
-    logger.info('Update ignored due to current: ${BuildData.build}, '
+    _logger.info('Update ignored due to current: ${BuildData.build}, '
         'update: $newest');
     return;
   }
-  logger.info('Update available: $newest');
+  _logger.info('Update available: $newest');
 
   if (Platform.isAndroid && !await isFileAvailable(update.android)) {
     return;
