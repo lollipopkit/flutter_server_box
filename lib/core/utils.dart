@@ -10,8 +10,6 @@ import 'package:toolbox/view/widget/card_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 
-void unawaited(Future<void> future) {}
-
 bool isDarkMode(BuildContext context) =>
     Theme.of(context).brightness == Brightness.dark;
 
@@ -109,4 +107,20 @@ Future<bool> shareFiles(BuildContext context, List<String> filePaths) async {
   }
   await Share.shareFiles(filePaths, text: 'ServerBox -> $text');
   return filePaths.isNotEmpty;
+}
+
+Widget buildPopuopMenu(
+    {required List<PopupMenuEntry> items,
+    required Function(dynamic) onSelected}) {
+  return PopupMenuButton(
+    itemBuilder: (_) => items,
+    onSelected: onSelected,
+    child: const Padding(
+      padding: EdgeInsets.only(left: 7),
+      child: Icon(
+        Icons.more_vert,
+        size: 23,
+      ),
+    ),
+  );
 }

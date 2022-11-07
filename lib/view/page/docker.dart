@@ -1,4 +1,3 @@
-import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/utils.dart';
@@ -152,49 +151,31 @@ class _DockerManagePageState extends State<DockerManagePage> {
 
   Widget _buildMoreBtn(bool running, String containerId) {
     final item = running ? DockerMenuItems.stop : DockerMenuItems.start;
-    return DropdownButtonHideUnderline(
-      child: DropdownButton2(
-        customButton: const Padding(
-          padding: EdgeInsets.only(left: 7),
-          child: Icon(
-            Icons.more_vert,
-            size: 17,
-          ),
+    return buildPopuopMenu(
+      items: [
+        PopupMenuItem<DropdownBtnItem>(
+          value: item,
+          child: item.build,
         ),
-        customItemsHeight: 8,
-        items: [
-          DropdownMenuItem<DropdownBtnItem>(
-            value: item,
-            child: item.build,
-          ),
-          DropdownMenuItem<DropdownBtnItem>(
-            value: DockerMenuItems.rm,
-            child: DockerMenuItems.rm.build,
-          ),
-        ],
-        onChanged: (value) {
-          final item = value as DropdownBtnItem;
-          switch (item) {
-            case DockerMenuItems.rm:
-              _docker.delete(containerId);
-              break;
-            case DockerMenuItems.start:
-              _docker.start(containerId);
-              break;
-            case DockerMenuItems.stop:
-              _docker.stop(containerId);
-              break;
-          }
-        },
-        itemHeight: 37,
-        itemPadding: const EdgeInsets.only(left: 17, right: 17),
-        dropdownWidth: 133,
-        dropdownDecoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(7),
+        PopupMenuItem<DropdownBtnItem>(
+          value: DockerMenuItems.rm,
+          child: DockerMenuItems.rm.build,
         ),
-        dropdownElevation: 8,
-        offset: const Offset(0, 8),
-      ),
+      ],
+      onSelected: (value) {
+        final item = value as DropdownBtnItem;
+        switch (item) {
+          case DockerMenuItems.rm:
+            _docker.delete(containerId);
+            break;
+          case DockerMenuItems.start:
+            _docker.start(containerId);
+            break;
+          case DockerMenuItems.stop:
+            _docker.stop(containerId);
+            break;
+        }
+      },
     );
   }
 

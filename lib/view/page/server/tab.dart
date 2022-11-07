@@ -1,6 +1,5 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:circle_chart/circle_chart.dart';
-import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
@@ -200,72 +199,42 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildMoreBtn(ServerPrivateInfo spi) {
-    return DropdownButtonHideUnderline(
-      child: DropdownButton2(
-        customButton: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 5, vertical: 1.7),
-          child: Icon(
-            Icons.more_vert,
-            size: 17,
+    return buildPopuopMenu(
+      items: <PopupMenuEntry>[
+        ...ServerTabMenuItems.firstItems.map(
+          (item) => PopupMenuItem<DropdownBtnItem>(
+            value: item,
+            child: item.build,
           ),
         ),
-        customItemsIndexes: [ServerTabMenuItems.firstItems.length],
-        customItemsHeight: 8,
-        items: [
-          ...ServerTabMenuItems.firstItems.map(
-            (item) => DropdownMenuItem<DropdownBtnItem>(
-              value: item,
-              child: item.build,
-            ),
+        const PopupMenuDivider(height: 1),
+        ...ServerTabMenuItems.secondItems.map(
+          (item) => PopupMenuItem<DropdownBtnItem>(
+            value: item,
+            child: item.build,
           ),
-          const DropdownMenuItem<Divider>(enabled: false, child: Divider()),
-          ...ServerTabMenuItems.secondItems.map(
-            (item) => DropdownMenuItem<DropdownBtnItem>(
-              value: item,
-              child: item.build,
-            ),
-          ),
-        ],
-        onChanged: (value) {
-          final item = value as DropdownBtnItem;
-          switch (item) {
-            case ServerTabMenuItems.apt:
-              AppRoute(AptManagePage(spi), 'apt manage page').go(context);
-              break;
-            case ServerTabMenuItems.sftp:
-              AppRoute(SFTPPage(spi), 'SFTP').go(context);
-              break;
-            case ServerTabMenuItems.snippet:
-              AppRoute(
-                      SnippetListPage(
-                        spi: spi,
-                      ),
-                      'snippet list')
-                  .go(context);
-              break;
-            case ServerTabMenuItems.edit:
-              AppRoute(
-                      ServerEditPage(
-                        spi: spi,
-                      ),
-                      'Edit server info page')
-                  .go(context);
-              break;
-            case ServerTabMenuItems.docker:
-              AppRoute(DockerManagePage(spi), 'Docker manage page').go(context);
-              break;
-          }
-        },
-        itemHeight: 37,
-        itemPadding: const EdgeInsets.only(left: 17, right: 17),
-        dropdownWidth: 160,
-        dropdownPadding: const EdgeInsets.symmetric(vertical: 7),
-        dropdownDecoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(7),
         ),
-        dropdownElevation: 8,
-        offset: const Offset(0, 8),
-      ),
+      ],
+      onSelected: (value) {
+        final item = value as DropdownBtnItem;
+        switch (item) {
+          case ServerTabMenuItems.apt:
+            AppRoute(AptManagePage(spi), 'apt manage').go(context);
+            break;
+          case ServerTabMenuItems.sftp:
+            AppRoute(SFTPPage(spi), 'SFTP').go(context);
+            break;
+          case ServerTabMenuItems.snippet:
+            AppRoute(SnippetListPage(spi: spi), 'snippet list').go(context);
+            break;
+          case ServerTabMenuItems.edit:
+            AppRoute(ServerEditPage(spi: spi), 'Edit server info').go(context);
+            break;
+          case ServerTabMenuItems.docker:
+            AppRoute(DockerManagePage(spi), 'Docker manage').go(context);
+            break;
+        }
+      },
     );
   }
 
