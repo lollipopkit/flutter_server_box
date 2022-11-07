@@ -262,13 +262,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_advanced_drawer:
-    dependency: "direct main"
-    description:
-      name: flutter_advanced_drawer
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.3.2"
   flutter_lints:
     dependency: "direct dev"
     description:

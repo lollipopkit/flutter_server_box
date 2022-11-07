@@ -44,14 +44,12 @@ class _PingPageState extends State<PingPage>
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      body: GestureDetector(
-        child: SingleChildScrollView(
+      body: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 7),
             child: Column(children: [
               const SizedBox(height: 13),
               buildInput(context, _textEditingController,
                   maxLines: 1, onSubmitted: (_) => doPing()),
-              _buildControl(),
               SizedBox(
                 width: double.infinity,
                 height: _media.size.height * 0.6,
@@ -64,7 +62,15 @@ class _PingPageState extends State<PingPage>
                     }),
               ),
             ])),
-        onTap: () => FocusScope.of(context).requestFocus(FocusNode()),
+      floatingActionButton: FloatingActionButton(
+        child: const Icon(Icons.play_arrow),
+        onPressed: () {
+          try {
+            doPing();
+          } catch (e) {
+            showSnackBar(context, Text('Error: \n$e'));
+          }
+        },
       ),
     );
   }
@@ -120,59 +126,6 @@ class _PingPageState extends State<PingPage>
       _results.add(PingResult.parse(e.info.name, result));
       setState(() {});
     }));
-  }
-
-  Widget _buildControl() {
-    return SizedBox(
-      height: 57,
-      child: RoundRectCard(
-        InkWell(
-          onTap: () => FocusScope.of(context).unfocus(),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              TextButton(
-                style: ButtonStyle(
-                    foregroundColor: MaterialStateProperty.all(primaryColor)),
-                child: Row(
-                  children: [
-                    const Icon(Icons.delete),
-                    const SizedBox(
-                      width: 7,
-                    ),
-                    Text(s.clear)
-                  ],
-                ),
-                onPressed: () {
-                  _results.clear();
-                  setState(() {});
-                },
-              ),
-              TextButton(
-                style: ButtonStyle(
-                    foregroundColor: MaterialStateProperty.all(primaryColor)),
-                child: Row(
-                  children: [
-                    const Icon(Icons.play_arrow),
-                    const SizedBox(
-                      width: 7,
-                    ),
-                    Text(s.start)
-                  ],
-                ),
-                onPressed: () {
-                  try {
-                    doPing();
-                  } catch (e) {
-                    showSnackBar(context, Text('Error: \n$e'));
-                  }
-                },
-              )
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   @override

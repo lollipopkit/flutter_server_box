@@ -115,11 +115,13 @@ Widget buildPopuopMenu(
   return PopupMenuButton(
     itemBuilder: (_) => items,
     onSelected: onSelected,
+    padding: EdgeInsets.zero,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     child: const Padding(
       padding: EdgeInsets.only(left: 7),
       child: Icon(
         Icons.more_vert,
-        size: 23,
+        size: 21,
       ),
     ),
   );

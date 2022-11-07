@@ -1,7 +1,6 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_advanced_drawer/flutter_advanced_drawer.dart';
 import 'package:get_it/get_it.dart';
 import 'package:toolbox/core/analysis.dart';
 import 'package:toolbox/core/build_mode.dart';
@@ -46,7 +45,6 @@ class _MyHomePageState extends State<MyHomePage>
         WidgetsBindingObserver {
   late final ServerProvider _serverProvider;
   late final PageController _pageController;
-  late final AdvancedDrawerController _advancedDrawerController;
   late int _selectIndex;
   late double _width;
   late S s;
@@ -58,7 +56,6 @@ class _MyHomePageState extends State<MyHomePage>
     WidgetsBinding.instance.addObserver(this);
     _selectIndex = locator<SettingStore>().launchPage.fetch()!;
     _pageController = PageController(initialPage: _selectIndex);
-    _advancedDrawerController = AdvancedDrawerController();
   }
 
   @override
@@ -92,8 +89,9 @@ class _MyHomePageState extends State<MyHomePage>
     return WillPopScope(
         child: _buildMain(context),
         onWillPop: () {
-          if (_advancedDrawerController.value.visible) {
-            _advancedDrawerController.hideDrawer();
+          final scaffold = Scaffold.of(context);
+          if (scaffold.isDrawerOpen) {
+            scaffold.closeDrawer();
             return Future.value(false);
           }
           return Future.value(true);
@@ -101,63 +99,31 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Widget _buildMain(BuildContext context) {
-    return AdvancedDrawer(
-        controller: _advancedDrawerController,
-        animationCurve: Curves.easeInOut,
-        animationDuration: const Duration(milliseconds: 300),
-        animateChildDecoration: true,
-        rtlOpening: false,
-        childDecoration: const BoxDecoration(
-          // NOTICE: Uncomment if you want to add shadow behind the page.
-          // Keep in mind that it may cause animation jerks.
-          // boxShadow: <BoxShadow>[
-          //   BoxShadow(
-          //     color: Colors.black12,
-          //     blurRadius: 0.0,
-          //   ),
-          // ],
-          borderRadius: BorderRadius.all(Radius.circular(16)),
-        ),
-        drawer: _buildDrawer(),
-        child: Scaffold(
-          appBar: AppBar(
-            title: Text(tabTitleName(context, _selectIndex), style: size18),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.developer_mode, size: 23),
-                tooltip: s.debug,
-                onPressed: () =>
-                    AppRoute(const DebugPage(), 'Debug Page').go(context),
-              ),
-            ],
-            leading: IconButton(
-              onPressed: () => _advancedDrawerController.showDrawer(),
-              icon: ValueListenableBuilder<AdvancedDrawerValue>(
-                valueListenable: _advancedDrawerController,
-                builder: (_, value, __) {
-                  return AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 250),
-                    child: Icon(
-                      value.visible ? Icons.clear : Icons.menu,
-                      key: ValueKey<bool>(value.visible),
-                    ),
-                  );
-                },
-              ),
-            ),
+    return Scaffold(
+      drawer: _buildDrawer(),
+      appBar: AppBar(
+        title: Text(tabTitleName(context, _selectIndex), style: size18),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.developer_mode, size: 23),
+            tooltip: s.debug,
+            onPressed: () =>
+                AppRoute(const DebugPage(), 'Debug Page').go(context),
           ),
-          body: PageView(
-            physics: const ClampingScrollPhysics(),
-            controller: _pageController,
-            onPageChanged: (i) {
-              FocusScope.of(context).unfocus();
-              _selectIndex = i;
-              setState(() {});
-            },
-            children: const [ServerPage(), ConvertPage(), PingPage()],
-          ),
-          bottomNavigationBar: _buildBottom(context),
-        ));
+        ],
+      ),
+      body: PageView(
+        physics: const ClampingScrollPhysics(),
+        controller: _pageController,
+        onPageChanged: (i) {
+          FocusScope.of(context).unfocus();
+          _selectIndex = i;
+          setState(() {});
+        },
+        children: const [ServerPage(), ConvertPage(), PingPage()],
+      ),
+      bottomNavigationBar: _buildBottom(context),
+    );
   }
 
   Widget _buildItem(int idx, NavigationItem item, bool isSelected) {
@@ -208,7 +174,7 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Widget _buildDrawer() {
-    return SafeArea(
+    return Drawer(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

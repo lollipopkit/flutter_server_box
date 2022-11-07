@@ -44,22 +44,20 @@ class _ConvertPageState extends State<ConvertPage>
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      body: GestureDetector(
-        child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 7),
-            controller: ScrollController(),
-            child: Column(children: [
-              const SizedBox(height: 13),
-              _buildInputTop(),
-              _buildTypeOption(),
-              _buildResult(),
-            ])),
-        onTap: () => FocusScope.of(context).requestFocus(FocusNode()),
-      ),
+      body: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 7),
+          controller: ScrollController(),
+          child: Column(children: [
+            const SizedBox(height: 13),
+            _buildInputTop(),
+            _buildTypeOption(),
+            _buildResult(),
+          ])),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           try {
             _textEditingControllerResult.text = doConvert();
+            FocusScope.of(context).requestFocus(FocusNode());
           } catch (e) {
             showSnackBar(context, Text('Error: \n$e'));
           }
@@ -89,8 +87,7 @@ class _ConvertPageState extends State<ConvertPage>
   Widget _buildInputTop() {
     return SizedBox(
       height: _media.size.height * 0.33,
-      child: buildInput(context, _textEditingController,
-          onSubmitted: (_) => _textEditingControllerResult.text = doConvert()),
+      child: buildInput(context, _textEditingController),
     );
   }
 
@@ -159,8 +156,8 @@ class _ConvertPageState extends State<ConvertPage>
                   title: Text(
                     e,
                     style: TextStyle(
-                        color:
-                            _theme.textTheme.bodyText2!.color!.withAlpha(177)),
+                      color: _theme.textTheme.bodyText2!.color!.withAlpha(177),
+                    ),
                   ),
                   trailing: _buildRadio(typeOption.indexOf(e)),
                 ))
