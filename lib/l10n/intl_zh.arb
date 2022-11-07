@@ -127,5 +127,6 @@
     "clickSee": "点击查看",
     "feedback": "反馈",
     "feedbackOnGithub": "如果你有任何问题，请在GitHub反馈",
-    "update": "更新"
+    "update": "更新",
+    "inputDomainHere": "在这里输入域名"
 }

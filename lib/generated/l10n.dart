@@ -1340,6 +1340,16 @@ class S {
       args: [],
     );
   }
+
+  /// `Input Domain here`
+  String get inputDomainHere {
+    return Intl.message(
+      'Input Domain here',
+      name: 'inputDomainHere',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

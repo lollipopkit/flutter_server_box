@@ -122,6 +122,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "import": MessageLookupByLibrary.simpleMessage("Import"),
         "importAndExport":
             MessageLookupByLibrary.simpleMessage("Import and Export"),
+        "inputDomainHere":
+            MessageLookupByLibrary.simpleMessage("Input Domain here"),
         "install": MessageLookupByLibrary.simpleMessage("install"),
         "installDockerWithUrl": MessageLookupByLibrary.simpleMessage(
             "Please https://docs.docker.com/engine/install docker first."),

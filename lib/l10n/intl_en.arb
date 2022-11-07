@@ -127,5 +127,6 @@
     "clickSee": "Click here",
     "feedback": "Feedback",
     "feedbackOnGithub": "If you have any questions, please feedback on Github.",
-    "update": "Update"
+    "update": "Update",
+    "inputDomainHere": "Input Domain here"
 }

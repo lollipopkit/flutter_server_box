@@ -104,8 +104,9 @@ Future<void> flutterBuild(
     buildType,
   ];
   // No sksl cache for macos
-  if ('macos' != buildType) {
-    args.add('--bundle-sksl-path=$buildType$skslFileSuffix');
+  final skslPath = '$buildType$skslFileSuffix';
+  if (await File(skslPath).exists()) {
+    args.add('--bundle-sksl-path=$skslPath');
   }
   final isAndroid = 'apk' == buildType;
   // [--target-platform] only for Android

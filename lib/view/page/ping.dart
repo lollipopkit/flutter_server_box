@@ -9,6 +9,12 @@ import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
+final doaminReg =
+    RegExp(r'^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$');
+final ipv4Reg =
+    RegExp(r'^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|$)){4}$');
+final ipv6Reg = RegExp(r'^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$');
+
 class PingPage extends StatefulWidget {
   const PingPage({Key? key}) : super(key: key);
 
@@ -45,23 +51,25 @@ class _PingPageState extends State<PingPage>
     super.build(context);
     return Scaffold(
       body: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 7),
-            child: Column(children: [
-              const SizedBox(height: 13),
-              buildInput(context, _textEditingController,
-                  maxLines: 1, onSubmitted: (_) => doPing()),
-              SizedBox(
-                width: double.infinity,
-                height: _media.size.height * 0.6,
-                child: ListView.builder(
-                    controller: ScrollController(),
-                    itemCount: _results.length,
-                    itemBuilder: (context, index) {
-                      final result = _results[index];
-                      return _buildResultItem(result);
-                    }),
-              ),
-            ])),
+          padding: const EdgeInsets.symmetric(horizontal: 7),
+          child: Column(children: [
+            const SizedBox(height: 13),
+            buildInput(context, _textEditingController,
+                hint: s.inputDomainHere,
+                maxLines: 1,
+                onSubmitted: (_) => doPing()),
+            SizedBox(
+              width: double.infinity,
+              height: _media.size.height * 0.6,
+              child: ListView.builder(
+                  controller: ScrollController(),
+                  itemCount: _results.length,
+                  itemBuilder: (context, index) {
+                    final result = _results[index];
+                    return _buildResultItem(result);
+                  }),
+            ),
+          ])),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.play_arrow),
         onPressed: () {
@@ -118,14 +126,25 @@ class _PingPageState extends State<PingPage>
       return;
     }
 
-    await Future.wait(_serverProvider.servers.map((e) async {
-      if (e.client == null) {
-        return;
-      }
-      final result = await e.client!.run('ping -c 3 $target').string;
-      _results.add(PingResult.parse(e.info.name, result));
-      setState(() {});
-    }));
+    if (!doaminReg.hasMatch(target) &&
+        !ipv4Reg.hasMatch(target) &&
+        !ipv6Reg.hasMatch(target)) {
+      showSnackBar(context, Text(s.pingInputIP));
+      return;
+    }
+
+    try {
+      await Future.wait(_serverProvider.servers.map((e) async {
+        if (e.client == null) {
+          return;
+        }
+        final result = await e.client!.run('ping -c 3 $target').string;
+        _results.add(PingResult.parse(e.info.name, result));
+        setState(() {});
+      }));
+    } catch (e) {
+      showSnackBar(context, Text(e.toString()));
+    }
   }
 
   @override

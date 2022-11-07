@@ -111,6 +111,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "httpFailedWithCode": m5,
         "import": MessageLookupByLibrary.simpleMessage("导入"),
         "importAndExport": MessageLookupByLibrary.simpleMessage("导入或导出"),
+        "inputDomainHere": MessageLookupByLibrary.simpleMessage("在这里输入域名"),
         "install": MessageLookupByLibrary.simpleMessage("安装"),
         "installDockerWithUrl": MessageLookupByLibrary.simpleMessage(
             "请先 https://docs.docker.com/engine/install docker"),
