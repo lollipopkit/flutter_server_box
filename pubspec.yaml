@@ -47,7 +47,7 @@ dependencies:
   flutter_material_color_picker: ^1.1.0+2
   circle_chart:
     git:
-      url: https://github.com/LollipopKit/circle_chart
+      url: https://github.com/lollipopkit/circle_chart
       ref: main
     # path: ../circle_chart
   r_upgrade: ^0.3.6

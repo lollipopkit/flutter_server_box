@@ -9,6 +9,8 @@ import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/view/widget/card_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:toolbox/core/extension/stringx.dart';
+// ignore: depend_on_referenced_packages
+import 'package:cross_file/cross_file.dart' show XFile;
 
 bool isDarkMode(BuildContext context) =>
     Theme.of(context).brightness == Brightness.dark;
@@ -105,7 +107,8 @@ Future<bool> shareFiles(BuildContext context, List<String> filePaths) async {
   } else {
     text = '${filePaths.length} ${S.of(context).files}';
   }
-  await Share.shareFiles(filePaths, text: 'ServerBox -> $text');
+  final xfiles = filePaths.map((e) => XFile(e)).toList();
+  await Share.shareXFiles(xfiles, text: 'ServerBox -> $text');
   return filePaths.isNotEmpty;
 }
 

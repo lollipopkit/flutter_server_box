@@ -244,7 +244,7 @@ class _MyHomePageState extends State<MyHomePage>
                   applicationIcon: _buildIcon(),
                   aboutBoxChildren: [
                     UrlText(
-                        text: s.madeWithLove(myGithub), replace: 'LollipopKit'),
+                        text: s.madeWithLove(myGithub), replace: 'lollipopkit'),
                     UrlText(
                       text: s.aboutThanks,
                     ),
