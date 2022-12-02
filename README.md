@@ -8,13 +8,13 @@
   <a href="https://apps.apple.com/app/id1586449703">
     <img style="height: 37px" src="screenshots/appstore.svg">
   </a>
-  <a href="https://github.com/LollipopKit/flutter_server_box/releases/latest">
+  <a href="https://github.com/lollipopkit/flutter_server_box/releases/latest">
     <img style="height: 37px" src="screenshots/dl-android.svg">
   </a>
 </p>
 
 <p align="center">
-A Flutter project which provide charts to display server status and tools to manage server. Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a>.
+A Flutter project which provide charts to display server status and tools to manage server.<br>Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a>.
 </p>
 
 
@@ -28,36 +28,36 @@ A Flutter project which provide charts to display server status and tools to man
 <table>
   <tr>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/server.jpg">
+	    <img width="200px" src="https://raw.githubusercontent.com/lollipopkit/flutter_server_monitor_toolbox/main/screenshots/server.jpg">
     </td>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/server_detail.png">
+	    <img width="200px" src="https://raw.githubusercontent.com/lollipopkit/flutter_server_monitor_toolbox/main/screenshots/server_detail.png">
     </td>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/convert.png">
+	    <img width="200px" src="https://raw.githubusercontent.com/lollipopkit/flutter_server_monitor_toolbox/main/screenshots/convert.png">
     </td>
   </tr>
 </table>
 <table>
   <tr>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/ping.png">
+	    <img width="200px" src="https://raw.githubusercontent.com/lollipopkit/flutter_server_monitor_toolbox/main/screenshots/ping.png">
     </td>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/apt.png">
+	    <img width="200px" src="https://raw.githubusercontent.com/lollipopkit/flutter_server_monitor_toolbox/main/screenshots/apt.png">
     </td>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/LollipopKit/flutter_server_monitor_toolbox/main/screenshots/docker.png">
+	    <img width="200px" src="https://raw.githubusercontent.com/lollipopkit/flutter_server_monitor_toolbox/main/screenshots/docker.png">
     </td>
   </tr>
 </table>
 
 ## 🖥 Platform
-Status|Platform 
---|--|
-Full Support|Android/iOS/macOS
-Support, but not tested|Windows/Linux
+| Status                  | Platform          |
+| ----------------------- | ----------------- |
+| Full Support            | Android/iOS/macOS |
+| Support, but not tested | Windows/Linux     |
 
 
 ## 📝 License
-`LGPL License. LollipopKit 2021`
+`LGPL License. lollipopkit 2021`

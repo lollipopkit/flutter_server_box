@@ -1,9 +1,9 @@
 {
-  "dart.flutterSdkPath": ".fvm/flutter_sdk",
-  "search.exclude": {
+  "dart.flutterSdkPath": ".fvm",
+  "files.watcherExclude": {
     "**/.fvm": true
   },
-  "files.watcherExclude": {
+  "search.exclude": {
     "**/.fvm": true
   }
 }

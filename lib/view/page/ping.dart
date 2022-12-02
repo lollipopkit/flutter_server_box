@@ -114,6 +114,7 @@ class _PingPageState extends State<PingPage>
   }
 
   Future<void> doPing() async {
+    FocusScope.of(context).requestFocus(FocusNode());
     _results.clear();
     final target = _textEditingController.text.trim();
     if (target.isEmpty) {
