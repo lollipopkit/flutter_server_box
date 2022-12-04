@@ -41,7 +41,7 @@
     "versionUnknownUpdate": "Current: v1.0.{build}",
     "versionHaveUpdate": "Found: v1.0.{build}, click to update",
     "second": "s",
-    "updateIntervalEqual0": "You set to 0, will not update automatically.\nYou can pull to refresh manually.",
+    "updateIntervalEqual0": "You set to 0, will not update automatically.",
     "edit": "Edit",
     "noSavedPrivateKey": "No saved private keys.",
     "name": "Name",

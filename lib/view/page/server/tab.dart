@@ -11,7 +11,6 @@ import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/server_status.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/color.dart';
-import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/apt.dart';
@@ -37,14 +36,11 @@ class _ServerPageState extends State<ServerPage>
 
   late ServerProvider _serverProvider;
   late S s;
-  late bool autoUpdate;
 
   @override
   void initState() {
     super.initState();
     _serverProvider = locator<ServerProvider>();
-    autoUpdate =
-        locator<SettingStore>().serverStatusUpdateInterval.fetch() != 0;
   }
 
   @override
@@ -84,12 +80,7 @@ class _ServerPageState extends State<ServerPage>
       );
     });
     return Scaffold(
-      body: autoUpdate
-          ? child
-          : RefreshIndicator(
-              child: child,
-              onRefresh: () async => _serverProvider.refreshData(),
-            ),
+      body: child,
       floatingActionButton: FloatingActionButton(
         onPressed: () =>
             AppRoute(const ServerEditPage(), 'Add server info page')

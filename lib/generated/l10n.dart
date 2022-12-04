@@ -470,10 +470,10 @@ class S {
     );
   }
 
-  /// `You set to 0, will not update automatically.\nYou can pull to refresh manually.`
+  /// `You set to 0, will not update automatically.`
   String get updateIntervalEqual0 {
     return Intl.message(
-      'You set to 0, will not update automatically.\nYou can pull to refresh manually.',
+      'You set to 0, will not update automatically.',
       name: 'updateIntervalEqual0',
       desc: '',
       args: [],

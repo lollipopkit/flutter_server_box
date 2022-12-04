@@ -186,8 +186,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "unkownConvertMode": MessageLookupByLibrary.simpleMessage("未知转换模式"),
         "update": MessageLookupByLibrary.simpleMessage("更新"),
         "updateAll": MessageLookupByLibrary.simpleMessage("更新全部"),
-        "updateIntervalEqual0": MessageLookupByLibrary.simpleMessage(
-            "你设置为0，服务器状态不会自动刷新。\n你可以手动下拉刷新。"),
+        "updateIntervalEqual0":
+            MessageLookupByLibrary.simpleMessage("你设置为0，服务器状态不会自动刷新。"),
         "updateServerStatusInterval":
             MessageLookupByLibrary.simpleMessage("服务器状态刷新间隔"),
         "upsideDown": MessageLookupByLibrary.simpleMessage("上下交换"),

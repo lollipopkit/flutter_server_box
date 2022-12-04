@@ -41,7 +41,7 @@
     "versionUnknownUpdate": "当前：v1.0.{build}",
     "versionHaveUpdate": "找到新版本：v1.0.{build}, 点击更新",
     "second": "秒",
-    "updateIntervalEqual0": "你设置为0，服务器状态不会自动刷新。\n你可以手动下拉刷新。",
+    "updateIntervalEqual0": "你设置为0，服务器状态不会自动刷新。",
     "edit": "编辑",
     "noSavedPrivateKey": "没有已保存的私钥。",
     "name": "名称",
