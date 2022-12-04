@@ -7,17 +7,18 @@ import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/home.dart';
 
+const Set<MaterialState> interactiveStates = <MaterialState>{
+  MaterialState.pressed,
+  MaterialState.hovered,
+  MaterialState.focused,
+  MaterialState.selected
+};
+
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
   MaterialStateProperty<Color?> getMaterialStateColor(Color primaryColor) {
     return MaterialStateProperty.resolveWith((states) {
-      const Set<MaterialState> interactiveStates = <MaterialState>{
-        MaterialState.pressed,
-        MaterialState.hovered,
-        MaterialState.focused,
-        MaterialState.selected
-      };
       if (states.any(interactiveStates.contains)) {
         return primaryColor;
       }
@@ -38,11 +39,9 @@ class MyApp extends StatelessWidget {
               S.delegate,
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
             ],
             supportedLocales: S.delegate.supportedLocales,
             title: BuildData.name,
-            debugShowCheckedModeBanner: false,
             theme: ThemeData(
               primaryColor: primaryColor,
               appBarTheme: AppBarTheme(backgroundColor: primaryColor),
@@ -52,36 +51,44 @@ class MyApp extends StatelessWidget {
               primaryIconTheme: IconThemeData(color: primaryColor),
               switchTheme: SwitchThemeData(
                 thumbColor: getMaterialStateColor(primaryColor),
-                trackColor:
-                    getMaterialStateColor(primaryColor.withOpacity(0.7)),
+                trackColor: getMaterialStateColor(
+                  primaryColor.withOpacity(0.7),
+                ),
               ),
               buttonTheme: ButtonThemeData(splashColor: primaryColor),
               inputDecorationTheme: InputDecorationTheme(
-                  labelStyle: textStyle,
-                  focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: primaryColor))),
+                labelStyle: textStyle,
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: primaryColor),
+                ),
+              ),
               radioTheme: RadioThemeData(
                 fillColor: getMaterialStateColor(primaryColor),
               ),
             ),
             darkTheme: ThemeData.dark().copyWith(
-                primaryColor: primaryColor,
-                floatingActionButtonTheme: FloatingActionButtonThemeData(
-                    backgroundColor: primaryColor),
-                iconTheme: IconThemeData(color: primaryColor),
-                primaryIconTheme: IconThemeData(color: primaryColor),
-                switchTheme: SwitchThemeData(
-                  thumbColor: getMaterialStateColor(primaryColor),
-                  trackColor:
-                      getMaterialStateColor(primaryColor.withOpacity(0.7)),
+              primaryColor: primaryColor,
+              floatingActionButtonTheme:
+                  FloatingActionButtonThemeData(backgroundColor: primaryColor),
+              iconTheme: IconThemeData(color: primaryColor),
+              primaryIconTheme: IconThemeData(color: primaryColor),
+              switchTheme: SwitchThemeData(
+                thumbColor: getMaterialStateColor(primaryColor),
+                trackColor: getMaterialStateColor(
+                  primaryColor.withOpacity(0.7),
                 ),
-                buttonTheme: ButtonThemeData(splashColor: primaryColor),
-                inputDecorationTheme: InputDecorationTheme(
-                    labelStyle: textStyle,
-                    focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: primaryColor))),
-                radioTheme: RadioThemeData(
-                    fillColor: getMaterialStateColor(primaryColor))),
+              ),
+              buttonTheme: ButtonThemeData(splashColor: primaryColor),
+              inputDecorationTheme: InputDecorationTheme(
+                labelStyle: textStyle,
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: primaryColor),
+                ),
+              ),
+              radioTheme: RadioThemeData(
+                fillColor: getMaterialStateColor(primaryColor),
+              ),
+            ),
             home: MyHomePage(primaryColor: primaryColor),
           );
         });

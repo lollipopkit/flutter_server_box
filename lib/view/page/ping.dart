@@ -71,7 +71,7 @@ class _PingPageState extends State<PingPage>
             ),
           ])),
       floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.play_arrow),
+        heroTag: 'ping fab',
         onPressed: () {
           try {
             doPing();
@@ -79,6 +79,7 @@ class _PingPageState extends State<PingPage>
             showSnackBar(context, Text('Error: \n$e'));
           }
         },
+        child: const Icon(Icons.play_arrow),
       ),
     );
   }

@@ -87,15 +87,16 @@ class _MyHomePageState extends State<MyHomePage>
   Widget build(BuildContext context) {
     super.build(context);
     return WillPopScope(
-        child: _buildMain(context),
-        onWillPop: () {
-          final scaffold = Scaffold.of(context);
-          if (scaffold.isDrawerOpen) {
-            scaffold.closeDrawer();
-            return Future.value(false);
-          }
-          return Future.value(true);
-        });
+      child: _buildMain(context),
+      onWillPop: () {
+        final scaffold = Scaffold.of(context);
+        if (scaffold.isDrawerOpen) {
+          scaffold.closeDrawer();
+          return Future.value(false);
+        }
+        return Future.value(true);
+      },
+    );
   }
 
   Widget _buildMain(BuildContext context) {
@@ -116,7 +117,7 @@ class _MyHomePageState extends State<MyHomePage>
         physics: const ClampingScrollPhysics(),
         controller: _pageController,
         onPageChanged: (i) {
-          FocusScope.of(context).unfocus();
+          FocusScope.of(context).requestFocus(FocusNode());
           _selectIndex = i;
           setState(() {});
         },
