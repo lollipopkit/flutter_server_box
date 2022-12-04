@@ -31,7 +31,7 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
       appBar: AppBar(
         title: Text(
           s.download,
-          style: size18,
+          style: textSize18,
         ),
       ),
       body: _buildBody(),

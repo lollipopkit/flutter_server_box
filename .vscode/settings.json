@@ -1,5 +1,4 @@
 {
-  "dart.flutterSdkPath": ".fvm",
   "files.watcherExclude": {
     "**/.fvm": true
   },

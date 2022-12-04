@@ -41,7 +41,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(s.edit, style: size18), actions: [
+      appBar: AppBar(title: Text(s.edit, style: textSize18), actions: [
         widget.snippet != null
             ? IconButton(
                 onPressed: () {

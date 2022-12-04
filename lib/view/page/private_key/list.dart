@@ -30,7 +30,7 @@ class _PrivateKeyListState extends State<StoredPrivateKeysPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(s.privateKey, style: size18),
+        title: Text(s.privateKey, style: textSize18),
       ),
       body: Consumer<PrivateKeyProvider>(
         builder: (_, key, __) {

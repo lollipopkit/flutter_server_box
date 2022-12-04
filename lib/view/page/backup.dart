@@ -32,7 +32,7 @@ class BackupPage extends StatelessWidget {
     final s = S.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(s.importAndExport, style: size18),
+        title: Text(s.importAndExport, style: textSize18),
       ),
       body: Center(
           child: Column(

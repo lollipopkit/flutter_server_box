@@ -8,16 +8,13 @@ const appName = 'ServerBox';
 const buildDataFilePath = 'lib/data/res/build_data.dart';
 const apkPath = 'build/app/outputs/flutter-apk/app-release.apk';
 const xcarchivePath = 'build/ios/archive/Runner.xcarchive';
-const macosAppPath = 'build/macos/Build/Products/Release/$appName.app';
 var regiOSProjectVer = RegExp(r'CURRENT_PROJECT_VERSION = .+;');
 var regiOSMarketVer = RegExp(r'MARKETING_VERSION = .+');
 const iOSInfoPlistPath = 'ios/Runner.xcodeproj/project.pbxproj';
-const macOSInfoPlistPath = 'macos/Runner.xcodeproj/project.pbxproj';
 const skslFileSuffix = '.sksl.json';
 
 const buildFuncs = {
   'ios': flutterBuildIOS,
-  'macos': flutterBuildMacOS,
   'android': flutterBuildAndroid,
 };
 
@@ -149,18 +146,12 @@ Future<void> flutterBuildIOS() async {
       xcarchivePath, './release/${appName}_ios_build.xcarchive', 'ipa');
 }
 
-Future<void> flutterBuildMacOS() async {
-  await changeInfoPlistVersion();
-  await flutterBuild(
-      macosAppPath, './release/${appName}_macos_build.app', 'macos');
-}
-
 Future<void> flutterBuildAndroid() async {
   await flutterBuild(apkPath, './release/${appName}_build_Arm64.apk', 'apk');
 }
 
 Future<void> changeInfoPlistVersion() async {
-  for (final path in [iOSInfoPlistPath, macOSInfoPlistPath]) {
+  for (final path in [iOSInfoPlistPath]) {
     final file = File(path);
     final contents = await file.readAsString();
     final newContents = contents

@@ -26,13 +26,13 @@ class _SettingPageState extends State<SettingPage> {
   late SettingStore _store;
   late int _selectedColorValue;
   late int _launchPageIdx;
-  double _intervalValue = 0;
   late Color priColor;
-  static const textStyle = TextStyle(fontSize: 14);
   late final ServerProvider _serverProvider;
   late MediaQueryData _media;
   late ThemeData _theme;
   late S s;
+
+  var _intervalValue = 0.0;
 
   @override
   void didChangeDependencies() {
@@ -56,7 +56,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(s.setting, style: size18),
+        title: Text(s.setting),
       ),
       body: ListView(
         padding: const EdgeInsets.all(17),
@@ -87,7 +87,7 @@ class _SettingPageState extends State<SettingPage> {
           trailing: const Icon(Icons.keyboard_arrow_right),
           title: Text(
             display,
-            style: textStyle,
+            style: textSize13,
             textAlign: TextAlign.start,
           ),
           onTap: () => doUpdate(context, force: true));
@@ -101,7 +101,7 @@ class _SettingPageState extends State<SettingPage> {
       textColor: priColor,
       title: Text(
         s.updateServerStatusInterval,
-        style: textStyle,
+        style: textSize13,
         textAlign: TextAlign.start,
       ),
       subtitle: Text(
@@ -159,7 +159,7 @@ class _SettingPageState extends State<SettingPage> {
         ),
         title: Text(
           s.appPrimaryColor,
-          style: textStyle,
+          style: textSize13,
         ),
         children: [
           _buildAppColorPicker(priColor),
@@ -193,13 +193,13 @@ class _SettingPageState extends State<SettingPage> {
       childrenPadding: roundRectCardPadding,
       title: Text(
         s.launchPage,
-        style: textStyle,
+        style: textSize13,
       ),
       trailing: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: _media.size.width * 0.35),
         child: Text(
           tabTitleName(context, _launchPageIdx),
-          style: textStyle,
+          style: textSize13,
           textAlign: TextAlign.right,
         ),
       ),

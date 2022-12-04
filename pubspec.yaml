@@ -33,15 +33,12 @@ dependencies:
     sdk: flutter
   provider: ^6.0.0
   get_it: ^7.2.0
-  hive_flutter: ^1.0.0
+  hive_flutter: ^1.1.0
   dio: ^4.0.0
   after_layout: ^1.1.0
   extended_image: ^6.0.3
-  url_launcher: ^6.0.9
-  countly_flutter:
-    git:
-      url: https://github.com/Countly/countly-sdk-flutter-bridge.git
-      ref: master
+  url_launcher: ^6.1.7
+  countly_flutter: ^22.2.0
   dartssh2: ^2.7.1
   logging: ^1.0.2
   flutter_material_color_picker: ^1.1.0+2

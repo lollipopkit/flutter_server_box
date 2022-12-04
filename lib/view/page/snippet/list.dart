@@ -39,7 +39,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(s.snippet, style: size18),
+        title: Text(s.snippet, style: textSize18),
       ),
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(

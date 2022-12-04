@@ -63,7 +63,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(s.edit, style: size18), actions: [
+      appBar: AppBar(title: Text(s.edit, style: textSize18), actions: [
         widget.spi != null
             ? IconButton(
                 onPressed: () {

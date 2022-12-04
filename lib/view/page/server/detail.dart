@@ -12,9 +12,6 @@ import 'package:toolbox/data/res/padding.dart';
 import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
-const style11 = TextStyle(fontSize: 11);
-const style13 = TextStyle(fontSize: 13);
-
 class ServerDetailPage extends StatefulWidget {
   const ServerDetailPage(this.id, {Key? key}) : super(key: key);
 
@@ -39,19 +36,22 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   @override
   Widget build(BuildContext context) {
     return Consumer<ServerProvider>(builder: (_, provider, __) {
-      return _buildMainPage(provider.servers
-          .firstWhere((e) => '${e.info.ip}:${e.info.port}' == widget.id));
+      return _buildMainPage(
+        provider.servers
+            .firstWhere((e) => '${e.info.ip}:${e.info.port}' == widget.id),
+      );
     });
   }
 
   Widget _buildMainPage(ServerInfo si) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(si.info.name, style: size18),
+        title: Text(si.info.name, style: textSize18),
       ),
       body: ListView(
         padding: const EdgeInsets.all(13),
         children: [
+          SizedBox(height: _media.size.height * 0.03),
           _buildLinuxIcon(si.status.sysVer),
           SizedBox(height: _media.size.height * 0.03),
           _buildUpTimeAndSys(si.status),
@@ -70,9 +70,13 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     if (iconPath == null) return const SizedBox();
     return ConstrainedBox(
       constraints: BoxConstraints(
-          maxHeight: _media.size.height * 0.12,
-          maxWidth: _media.size.width * 0.6),
-      child: Image.asset(iconPath),
+        maxHeight: _media.size.height * 0.13,
+        maxWidth: _media.size.width * 0.6,
+      ),
+      child: Image.asset(
+        iconPath,
+        fit: BoxFit.contain,
+      ),
     );
   }
 
@@ -176,10 +180,10 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(ss.sysVer, style: style11, textScaleFactor: 1.0),
+          Text(ss.sysVer, style: textSize11, textScaleFactor: 1.0),
           Text(
             ss.uptime,
-            style: style11,
+            style: textSize11,
             textScaleFactor: 1.0,
           ),
         ],
@@ -252,7 +256,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         const SizedBox(width: 4),
         Text(
           value,
-          style: style11,
+          style: textSize11,
           textScaleFactor: 1.0,
           textAlign: TextAlign.center,
         )
@@ -284,10 +288,11 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                     children: [
                       Text(
                         '${disk.usedPercent}% of ${disk.size}',
-                        style: style11,
+                        style: textSize11,
                         textScaleFactor: 1.0,
                       ),
-                      Text(disk.mountPath, style: style11, textScaleFactor: 1.0)
+                      Text(disk.mountPath,
+                          style: textSize11, textScaleFactor: 1.0)
                     ],
                   ),
                   _buildProgress(disk.usedPercent.toDouble())
@@ -349,18 +354,18 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         children: [
           SizedBox(
               width: _media.size.width / 4,
-              child: Text(device, style: style11, textScaleFactor: 1.0)),
+              child: Text(device, style: textSize11, textScaleFactor: 1.0)),
           SizedBox(
             width: _media.size.width / 4,
             child: Text(ns.speedIn(device: device),
-                style: style11,
+                style: textSize11,
                 textAlign: TextAlign.center,
                 textScaleFactor: 1.0),
           ),
           SizedBox(
               width: _media.size.width / 4,
               child: Text(ns.speedOut(device: device),
-                  style: style11,
+                  style: textSize11,
                   textAlign: TextAlign.right,
                   textScaleFactor: 1.0))
         ],

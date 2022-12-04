@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 import 'package:toolbox/core/analysis.dart';
-import 'package:toolbox/core/build_mode.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/core/update.dart';
 import 'package:toolbox/core/utils.dart';
@@ -40,7 +39,6 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage>
     with
         AutomaticKeepAliveClientMixin,
-        SingleTickerProviderStateMixin,
         AfterLayoutMixin,
         WidgetsBindingObserver {
   late final ServerProvider _serverProvider;
@@ -103,7 +101,7 @@ class _MyHomePageState extends State<MyHomePage>
     return Scaffold(
       drawer: _buildDrawer(),
       appBar: AppBar(
-        title: Text(tabTitleName(context, _selectIndex), style: size18),
+        title: Text(tabTitleName(context, _selectIndex), style: textSize18),
         actions: [
           IconButton(
             icon: const Icon(Icons.developer_mode, size: 23),
@@ -181,7 +179,7 @@ class _MyHomePageState extends State<MyHomePage>
         children: [
           _buildIcon(),
           const Text(BuildData.name),
-          Text(_buildVersionStr()),
+          Text(_versionStr),
           SizedBox(
             height: MediaQuery.of(context).size.height * 0.07,
           ),
@@ -241,7 +239,7 @@ class _MyHomePageState extends State<MyHomePage>
                 AboutListTile(
                   icon: const Icon(Icons.text_snippet),
                   applicationName: BuildData.name,
-                  applicationVersion: _buildVersionStr(),
+                  applicationVersion: _versionStr,
                   applicationIcon: _buildIcon(),
                   aboutBoxChildren: [
                     UrlText(
@@ -285,7 +283,7 @@ class _MyHomePageState extends State<MyHomePage>
     );
   }
 
-  String _buildVersionStr() {
+  String get _versionStr {
     var mod = '';
     if (BuildData.modifications != 0) {
       mod = '(+${BuildData.modifications})';
@@ -301,8 +299,6 @@ class _MyHomePageState extends State<MyHomePage>
     await GetIt.I.allReady();
     await locator<ServerProvider>().loadLocalData();
     await doUpdate(context);
-    if (BuildMode.isRelease) {
-      await Analysis.init(false);
-    }
+    await Analysis.init();
   }
 }
