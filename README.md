@@ -28,26 +28,26 @@ A Flutter project which provide charts to display server status and tools to man
 <table>
   <tr>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/lollipopkit/flutter_server_monitor_toolbox/main/screenshots/server.jpg">
+	    <img width="200px" src="screenshots/server.jpg">
     </td>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/lollipopkit/flutter_server_monitor_toolbox/main/screenshots/server_detail.png">
+	    <img width="200px" src="screenshots/server_detail.png">
     </td>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/lollipopkit/flutter_server_monitor_toolbox/main/screenshots/convert.png">
+	    <img width="200px" src="screenshots/convert.png">
     </td>
   </tr>
 </table>
 <table>
   <tr>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/lollipopkit/flutter_server_monitor_toolbox/main/screenshots/ping.png">
+	    <img width="200px" src="screenshots/ping.png">
     </td>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/lollipopkit/flutter_server_monitor_toolbox/main/screenshots/apt.png">
+	    <img width="200px" src="screenshots/apt.png">
     </td>
     <td>
-	    <img width="200px" src="https://raw.githubusercontent.com/lollipopkit/flutter_server_monitor_toolbox/main/screenshots/docker.png">
+	    <img width="200px" src="screenshots/docker.png">
     </td>
   </tr>
 </table>
