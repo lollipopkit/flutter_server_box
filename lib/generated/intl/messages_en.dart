@@ -81,6 +81,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "clear": MessageLookupByLibrary.simpleMessage("Clear"),
         "clickSee": MessageLookupByLibrary.simpleMessage("Click here"),
         "close": MessageLookupByLibrary.simpleMessage("Close"),
+        "cmd": MessageLookupByLibrary.simpleMessage("Command"),
         "containerStatus":
             MessageLookupByLibrary.simpleMessage("Container status"),
         "convert": MessageLookupByLibrary.simpleMessage("Convert"),
@@ -94,6 +95,14 @@ class MessageLookup extends MessageLookupByLibrary {
         "delete": MessageLookupByLibrary.simpleMessage("Delete"),
         "disconnected": MessageLookupByLibrary.simpleMessage("Disconnected"),
         "dl2Local": m0,
+        "dockerCmdPrefixErr": MessageLookupByLibrary.simpleMessage(
+            "Please make sure that the docker command prefix is correct."),
+        "dockerEditHost":
+            MessageLookupByLibrary.simpleMessage("Edit DOCKER_HOST"),
+        "dockerEmptyRunningItems": MessageLookupByLibrary.simpleMessage(
+            "No running container. \nIt may be that the env DOCKER_HOST is not read correctly. You can found it by running `echo \$DOCKER_HOST` in terminal."),
+        "dockerNotInstalled":
+            MessageLookupByLibrary.simpleMessage("Docker not installed"),
         "dockerStatusRunningAndStoppedFmt": m1,
         "dockerStatusRunningFmt": m2,
         "download": MessageLookupByLibrary.simpleMessage("Download"),
@@ -128,6 +137,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "installDockerWithUrl": MessageLookupByLibrary.simpleMessage(
             "Please https://docs.docker.com/engine/install docker first."),
         "invalidJson": MessageLookupByLibrary.simpleMessage("Invalid JSON"),
+        "invalidVersion":
+            MessageLookupByLibrary.simpleMessage("Invalid version"),
         "invalidVersionHelp": m6,
         "keepForeground":
             MessageLookupByLibrary.simpleMessage("Keep app foreground!"),

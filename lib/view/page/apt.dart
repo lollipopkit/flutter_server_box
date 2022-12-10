@@ -58,59 +58,58 @@ class _AptManagePageState extends State<AptManagePage>
       return;
     }
 
-    // ignore: prefer_function_declarations_over_variables
-    Function onSubmitted = () {
-      if (textController.text == '') {
-        showRoundDialog(context, s.attention, Text(s.fieldMustNotEmpty), [
-          TextButton(
-              onPressed: () => Navigator.of(context).pop(), child: Text(s.ok)),
-        ]);
-        return;
-      }
-      Navigator.of(context).pop();
-    };
-
-    // ignore: prefer_function_declarations_over_variables
-    PwdRequestFunc onPwdRequest = (triedTimes, user) async {
-      if (!mounted) return '';
-      await showRoundDialog(
-          context,
-          triedTimes == 3 ? s.lastTry : (user ?? s.unknown),
-          TextField(
-            controller: textController,
-            keyboardType: TextInputType.visiblePassword,
-            obscureText: true,
-            onSubmitted: (_) => onSubmitted(),
-            decoration: InputDecoration(
-              labelText: s.pwd,
-            ),
-          ),
-          [
-            TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  Navigator.of(context).pop();
-                },
-                child: Text(s.cancel)),
-            TextButton(
-                onPressed: () => onSubmitted(),
-                child: Text(
-                  s.ok,
-                  style: const TextStyle(color: Colors.red),
-                )),
-          ]);
-      return textController.text.trim();
-    };
-
     _aptProvider.init(
         si.client!,
         si.status.sysVer.dist,
         () =>
             scrollController.jumpTo(scrollController.position.maxScrollExtent),
         () => scrollControllerUpdate
-            .jumpTo(scrollControllerUpdate.positions.last.maxScrollExtent),
-        onPwdRequest);
+            .jumpTo(scrollController.position.maxScrollExtent),
+        onPwdRequest,
+        widget.spi.user);
     _aptProvider.refreshInstalled();
+  }
+
+  void onSubmitted() {
+    if (textController.text == '') {
+      showRoundDialog(context, s.attention, Text(s.fieldMustNotEmpty), [
+        TextButton(
+            onPressed: () => Navigator.of(context).pop(), child: Text(s.ok)),
+      ]);
+      return;
+    }
+    Navigator.of(context).pop();
+  }
+
+  Future<String> onPwdRequest() async {
+    if (!mounted) return '';
+    await showRoundDialog(
+        context,
+        widget.spi.user,
+        TextField(
+          controller: textController,
+          keyboardType: TextInputType.visiblePassword,
+          obscureText: true,
+          onSubmitted: (_) => onSubmitted(),
+          decoration: InputDecoration(
+            labelText: s.pwd,
+          ),
+        ),
+        [
+          TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pop();
+              },
+              child: Text(s.cancel)),
+          TextButton(
+              onPressed: () => onSubmitted(),
+              child: Text(
+                s.ok,
+                style: const TextStyle(color: Colors.red),
+              )),
+        ]);
+    return textController.text.trim();
   }
 
   @override

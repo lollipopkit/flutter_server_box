@@ -76,6 +76,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "clear": MessageLookupByLibrary.simpleMessage("清除"),
         "clickSee": MessageLookupByLibrary.simpleMessage("点击查看"),
         "close": MessageLookupByLibrary.simpleMessage("关闭"),
+        "cmd": MessageLookupByLibrary.simpleMessage("命令"),
         "containerStatus": MessageLookupByLibrary.simpleMessage("容器状态"),
         "convert": MessageLookupByLibrary.simpleMessage("转换"),
         "copy": MessageLookupByLibrary.simpleMessage("复制到剪切板"),
@@ -88,6 +89,13 @@ class MessageLookup extends MessageLookupByLibrary {
         "delete": MessageLookupByLibrary.simpleMessage("删除"),
         "disconnected": MessageLookupByLibrary.simpleMessage("连接断开"),
         "dl2Local": m0,
+        "dockerCmdPrefixErr":
+            MessageLookupByLibrary.simpleMessage("命令前缀错误，没有以 `docker` 开头"),
+        "dockerEditHost":
+            MessageLookupByLibrary.simpleMessage("编辑 DOCKER_HOST"),
+        "dockerEmptyRunningItems": MessageLookupByLibrary.simpleMessage(
+            "没有正在运行的容器。\n这可能是因为环境变量 DOCKER_HOST 没有被正确读取。你可以通过在终端内运行 `echo \$DOCKER_HOST` 来获取。"),
+        "dockerNotInstalled": MessageLookupByLibrary.simpleMessage("Docker未安装"),
         "dockerStatusRunningAndStoppedFmt": m1,
         "dockerStatusRunningFmt": m2,
         "download": MessageLookupByLibrary.simpleMessage("下载"),
@@ -116,6 +124,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "installDockerWithUrl": MessageLookupByLibrary.simpleMessage(
             "请先 https://docs.docker.com/engine/install docker"),
         "invalidJson": MessageLookupByLibrary.simpleMessage("无效的json，存在格式问题"),
+        "invalidVersion": MessageLookupByLibrary.simpleMessage("不支持的版本"),
         "invalidVersionHelp": m6,
         "keepForeground": MessageLookupByLibrary.simpleMessage("请保持应用处于前台！"),
         "keyAuth": MessageLookupByLibrary.simpleMessage("公钥认证"),

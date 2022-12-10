@@ -128,5 +128,11 @@
     "feedback": "反馈",
     "feedbackOnGithub": "如果你有任何问题，请在GitHub反馈",
     "update": "更新",
-    "inputDomainHere": "在这里输入域名"
+    "inputDomainHere": "在这里输入域名",
+    "dockerNotInstalled": "Docker未安装",
+    "invalidVersion": "不支持的版本",
+    "cmd": "命令",
+    "dockerEmptyRunningItems": "没有正在运行的容器。\n这可能是因为环境变量 DOCKER_HOST 没有被正确读取。你可以通过在终端内运行 `echo $DOCKER_HOST` 来获取。",
+    "dockerEditHost": "编辑 DOCKER_HOST",
+    "dockerCmdPrefixErr": "命令前缀错误，没有以 `docker` 开头"
 }

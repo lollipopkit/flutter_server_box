@@ -1350,6 +1350,66 @@ class S {
       args: [],
     );
   }
+
+  /// `Docker not installed`
+  String get dockerNotInstalled {
+    return Intl.message(
+      'Docker not installed',
+      name: 'dockerNotInstalled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Invalid version`
+  String get invalidVersion {
+    return Intl.message(
+      'Invalid version',
+      name: 'invalidVersion',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Command`
+  String get cmd {
+    return Intl.message(
+      'Command',
+      name: 'cmd',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No running container. \nIt may be that the env DOCKER_HOST is not read correctly. You can found it by running 'echo $DOCKER_HOST' in terminal.`
+  String get dockerEmptyRunningItems {
+    return Intl.message(
+      'No running container. \nIt may be that the env DOCKER_HOST is not read correctly. You can found it by running `echo \$DOCKER_HOST` in terminal.',
+      name: 'dockerEmptyRunningItems',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Edit DOCKER_HOST`
+  String get dockerEditHost {
+    return Intl.message(
+      'Edit DOCKER_HOST',
+      name: 'dockerEditHost',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Please make sure that the docker command prefix is correct.`
+  String get dockerCmdPrefixErr {
+    return Intl.message(
+      'Please make sure that the docker command prefix is correct.',
+      name: 'dockerCmdPrefixErr',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

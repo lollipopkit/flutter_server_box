@@ -128,5 +128,11 @@
     "feedback": "Feedback",
     "feedbackOnGithub": "If you have any questions, please feedback on Github.",
     "update": "Update",
-    "inputDomainHere": "Input Domain here"
+    "inputDomainHere": "Input Domain here",
+    "dockerNotInstalled": "Docker not installed",
+    "invalidVersion": "Invalid version",
+    "cmd": "Command",
+    "dockerEmptyRunningItems": "No running container. \nIt may be that the env DOCKER_HOST is not read correctly. You can found it by running `echo $DOCKER_HOST` in terminal.",
+    "dockerEditHost": "Edit DOCKER_HOST",
+    "dockerCmdPrefixErr": "Please make sure that the docker command prefix is correct."
 }

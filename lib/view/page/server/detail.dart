@@ -51,7 +51,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       body: ListView(
         padding: const EdgeInsets.all(13),
         children: [
-          SizedBox(height: _media.size.height * 0.03),
+          SizedBox(height: _media.size.height * 0.01),
           _buildLinuxIcon(si.status.sysVer),
           SizedBox(height: _media.size.height * 0.03),
           _buildUpTimeAndSys(si.status),

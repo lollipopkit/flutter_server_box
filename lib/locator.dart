@@ -8,6 +8,7 @@ import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/provider/sftp_download.dart';
 import 'package:toolbox/data/provider/snippet.dart';
 import 'package:toolbox/data/service/app.dart';
+import 'package:toolbox/data/store/docker.dart';
 import 'package:toolbox/data/store/private_key.dart';
 import 'package:toolbox/data/store/server.dart';
 import 'package:toolbox/data/store/setting.dart';
@@ -46,6 +47,10 @@ Future<void> setupLocatorForStores() async {
   final snippet = SnippetStore();
   await snippet.init(boxName: 'snippet');
   locator.registerSingleton(snippet);
+
+  final docker = DockerStore();
+  await docker.init(boxName: 'docker');
+  locator.registerSingleton(docker);
 }
 
 Future<void> setupLocator() async {

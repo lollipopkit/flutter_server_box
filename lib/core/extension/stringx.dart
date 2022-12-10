@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/data/model/distribution.dart';
 
@@ -60,4 +63,6 @@ extension StringX on String {
   }
 
   String get withLangExport => 'export LANG=en_US.UTF-8 && $this';
+
+  Uint8List get uint8List => Uint8List.fromList(utf8.encode(this));
 }

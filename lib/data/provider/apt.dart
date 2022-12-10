@@ -1,18 +1,14 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:logging/logging.dart';
+import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/provider_base.dart';
 import 'package:toolbox/data/model/apt/upgrade_pkg_info.dart';
 import 'package:toolbox/data/model/distribution.dart';
-
-typedef PwdRequestFunc = Future<String> Function(
-    int triedTimes, String? userName);
-final pwdRequestWithUserReg = RegExp(r'\[sudo\] password for (.+):');
 
 class AptProvider extends BusyProvider {
   final logger = Logger('AptProvider');
@@ -29,45 +25,37 @@ class AptProvider extends BusyProvider {
   String? upgradeLog;
   String? updateLog;
   String lastLog = '';
-  int triedTimes = 0;
   bool isRequestingPwd = false;
 
   AptProvider();
 
-  Future<void> init(SSHClient client, Distribution dist, Function() onUpgrade,
-      Function() onUpdate, PwdRequestFunc onPasswordRequest) async {
+  Future<void> init(
+      SSHClient client,
+      Distribution dist,
+      Function() onUpgrade,
+      Function() onUpdate,
+      PwdRequestFunc onPasswordRequest,
+      String user) async {
     this.client = client;
     this.dist = dist;
     this.onUpgrade = onUpgrade;
     this.onPasswordRequest = onPasswordRequest;
-    whoami = (await client.run('whoami').string).trim();
+    whoami = user;
   }
 
   bool get isSU => whoami == 'root';
 
   void clear() {
-    client = null;
-    dist = null;
-    upgradeable = null;
-    error = null;
-    upgradeLog = null;
-    updateLog = whoami = null;
-    onUpgrade = null;
-    onUpdate = null;
-    onPasswordRequest = null;
-    triedTimes = 0;
+    client = dist = updateLog = upgradeLog = upgradeable =
+        error = whoami = onUpdate = onUpgrade = onPasswordRequest = null;
     isRequestingPwd = false;
   }
 
   Future<void> refreshInstalled() async {
-    if (client == null) {
-      error = 'No client';
-      return;
-    }
-
     final result = await _update();
-    getUpgradeableList(result);
-    try {} catch (e) {
+    try {
+      getUpgradeableList(result);
+    } catch (e) {
       error = '[Server Raw]:\n$result\n[App Error]:\n$e';
     } finally {
       notifyListeners();
@@ -100,32 +88,27 @@ class AptProvider extends BusyProvider {
     upgradeable = list.map((e) => UpgradePkgInfo(e, dist!)).toList();
   }
 
-  Future<String> _update() async {
+  Future<String?> _update() async {
     switch (dist) {
       case Distribution.rehl:
-        return await client?.run(_wrap('yum check-update')).string ?? '';
+        return await client?.run(_wrap('yum check-update')).string;
       default:
-        final session = await client!.execute(_wrap('apt update'));
-        session.stderr.listen((event) => _onPwd(event, session.stdin));
-        session.stdout.listen((event) {
-          updateLog = (updateLog ?? '') + event.string;
-          notifyListeners();
-          onUpdate ?? () {}();
-        });
-        await session.done;
+        await client!.exec(
+          _wrap('apt update'),
+          onStderr: _onPwd,
+          onStdout: (data, sink) {
+            updateLog = (updateLog ?? '') + data;
+            notifyListeners();
+            onUpdate!();
+          },
+        );
         return await client
-                ?.run('apt list --upgradeable'.withLangExport)
-                .string ??
-            '';
+            ?.run('apt list --upgradeable'.withLangExport)
+            .string;
     }
   }
 
   Future<void> upgrade() async {
-    if (client == null) {
-      error = 'No client';
-      return;
-    }
-
     final upgradeCmd = () {
       switch (dist) {
         case Distribution.rehl:
@@ -135,38 +118,34 @@ class AptProvider extends BusyProvider {
       }
     }();
 
-    final session = await client!.execute(_wrap(upgradeCmd));
-    session.stderr.listen((e) => _onPwd(e, session.stdin));
-
-    session.stdout.listen((data) async {
-      final log = data.string;
-      if (lastLog == log.trim()) return;
-      upgradeLog = (upgradeLog ?? '') + log;
-      lastLog = log.trim();
-      notifyListeners();
-      onUpgrade!();
-    });
+    await client!.exec(
+      _wrap(upgradeCmd),
+      onStderr: (data, sink) => _onPwd(data, sink),
+      onStdout: (log, sink) {
+        if (lastLog == log.trim()) return;
+        upgradeLog = (upgradeLog ?? '') + log;
+        lastLog = log.trim();
+        notifyListeners();
+        onUpgrade!();
+      },
+    );
 
     upgradeLog = null;
-    await session.done;
     refreshInstalled();
   }
 
-  Future<void> _onPwd(Uint8List e, StreamSink<Uint8List> stdin) async {
+  Future<void> _onPwd(String event, StreamSink<Uint8List> stdin) async {
     if (isRequestingPwd) return;
     isRequestingPwd = true;
-    final event = e.string;
     if (event.contains('[sudo] password for ')) {
       final user = pwdRequestWithUserReg.firstMatch(event)?.group(1);
       logger.info('sudo password request for $user');
-      triedTimes++;
-      final pwd =
-          await (onPasswordRequest ?? (_, __) async => '')(triedTimes, user);
+      final pwd = await onPasswordRequest!();
       if (pwd.isEmpty) {
         logger.info('sudo password request cancelled');
         return;
       }
-      stdin.add(Uint8List.fromList(utf8.encode('$pwd\n')));
+      stdin.add('$pwd\n'.uint8List);
     }
     isRequestingPwd = false;
   }
