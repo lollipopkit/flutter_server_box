@@ -77,47 +77,103 @@ class _DockerManagePageState extends State<DockerManagePage> {
   }
 
   Widget _buildFAB(DockerProvider docker) {
-    final c = TextEditingController();
     return FloatingActionButton(
-      onPressed: () {
-        showRoundDialog(
-          context,
-          s.cmd,
+      onPressed: () async => await _showAddFAB(docker),
+      child: const Icon(Icons.add),
+    );
+  }
+
+  Future<void> _showAddFAB(DockerProvider docker) async {
+    final imageCtrl = TextEditingController();
+    final nameCtrl = TextEditingController();
+    final argsCtrl = TextEditingController();
+    await showRoundDialog(
+      context,
+      s.newContainer,
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
           TextField(
-            keyboardType: TextInputType.multiline,
-            maxLines: 7,
-            controller: c,
+            keyboardType: TextInputType.text,
+            decoration: InputDecoration(
+                labelText: s.dockerImage, hintText: 'ubuntu:22.10'),
+            controller: imageCtrl,
             autocorrect: false,
           ),
-          [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(s.cancel),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-                final result = await docker.run(c.text.trim());
-                if (result != null) {
-                  showSnackBar(
-                      context, Text(getErrMsg(result) ?? s.unknownError));
-                }
-              },
-              child: Text(s.run),
-            )
-          ],
-        );
-      },
-      child: const Icon(Icons.code),
+          TextField(
+            keyboardType: TextInputType.text,
+            controller: nameCtrl,
+            decoration: InputDecoration(
+                labelText: s.dockerContainerName, hintText: 'ubuntu22'),
+            autocorrect: false,
+          ),
+          TextField(
+            keyboardType: TextInputType.text,
+            controller: argsCtrl,
+            decoration: InputDecoration(
+                labelText: s.extraArgs, hintText: '-p 2222:22 -v ~/.xxx/:/xxx'),
+            autocorrect: false,
+          ),
+        ],
+      ),
+      [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(s.cancel),
+        ),
+        TextButton(
+          onPressed: () async {
+            Navigator.of(context).pop();
+            await _showAddCmdPreview(_buildAddCmd(imageCtrl.text.trim(),
+                nameCtrl.text.trim(), argsCtrl.text.trim()));
+          },
+          child: Text(s.ok),
+        )
+      ],
     );
+  }
+
+  Future<void> _showAddCmdPreview(String cmd) async {
+    await showRoundDialog(
+      context,
+      s.preview,
+      Text(cmd),
+      [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(s.cancel),
+        ),
+        TextButton(
+          onPressed: () async {
+            Navigator.of(context).pop();
+            final result = await _docker.run(cmd);
+            if (result != null) {
+              showSnackBar(context, Text(getErrMsg(result) ?? s.unknownError));
+            }
+          },
+          child: Text(s.run),
+        )
+      ],
+    );
+  }
+
+  String _buildAddCmd(String image, String name, String args) {
+    var suffix = '';
+    if (args.isEmpty) {
+      suffix = image;
+    } else {
+      suffix = '$args $image';
+    }
+    if (name.isEmpty) {
+      return 'docker run -d $suffix';
+    }
+    return 'docker run -d --name $name $suffix';
   }
 
   String? getErrMsg(DockerErr err) {
     switch (err.type) {
-      case DockerErrType.cmdNoPrefix:
-        return s.dockerCmdPrefixErr;
       default:
-        return null;
+        return err.message;
     }
   }
 
@@ -194,20 +250,36 @@ class _DockerManagePageState extends State<DockerManagePage> {
     return ListView(
       padding: const EdgeInsets.all(7),
       children: [
+        _buildLoading(docker),
         _buildVersion(docker.edition ?? s.unknown, docker.version ?? s.unknown),
         _buildPsItems(running, docker),
         _buildEditHost(running, docker),
-        _buildRunLog(docker),
       ].map((e) => RoundRectCard(e)).toList(),
     );
   }
 
-  Widget _buildRunLog(DockerProvider docker) {
-    if (docker.runLog == null) return const SizedBox();
-    return Padding(
-      padding: const EdgeInsets.all(17),
-      child: Text(docker.runLog!, maxLines: 1,),
-    );
+  Widget _buildLoading(DockerProvider docker) {
+    if (docker.isBusy) {
+      final runLog =
+          docker.runLog == null ? const SizedBox() : Text(docker.runLog!);
+      return Padding(
+        padding: const EdgeInsets.all(17),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            runLog,
+            SizedBox(
+              width: docker.runLog == null ? 0 : 17,
+            ),
+            const Center(
+              child: CircularProgressIndicator(),
+            ),
+          ],
+        ),
+      );
+    }
+    return const SizedBox();
   }
 
   Widget _buildEditHost(List<DockerPsItem> running, DockerProvider docker) {

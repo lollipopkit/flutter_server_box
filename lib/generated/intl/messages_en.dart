@@ -95,12 +95,13 @@ class MessageLookup extends MessageLookupByLibrary {
         "delete": MessageLookupByLibrary.simpleMessage("Delete"),
         "disconnected": MessageLookupByLibrary.simpleMessage("Disconnected"),
         "dl2Local": m0,
-        "dockerCmdPrefixErr": MessageLookupByLibrary.simpleMessage(
-            "Please make sure that the docker command prefix is correct."),
+        "dockerContainerName":
+            MessageLookupByLibrary.simpleMessage("Container name"),
         "dockerEditHost":
             MessageLookupByLibrary.simpleMessage("Edit DOCKER_HOST"),
         "dockerEmptyRunningItems": MessageLookupByLibrary.simpleMessage(
             "No running container. \nIt may be that the env DOCKER_HOST is not read correctly. You can found it by running `echo \$DOCKER_HOST` in terminal."),
+        "dockerImage": MessageLookupByLibrary.simpleMessage("Image"),
         "dockerNotInstalled":
             MessageLookupByLibrary.simpleMessage("Docker not installed"),
         "dockerStatusRunningAndStoppedFmt": m1,
@@ -116,6 +117,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "experimentalFeature":
             MessageLookupByLibrary.simpleMessage("Experimental feature"),
         "export": MessageLookupByLibrary.simpleMessage("Export"),
+        "extraArgs": MessageLookupByLibrary.simpleMessage("Extra args"),
         "feedback": MessageLookupByLibrary.simpleMessage("Feedback"),
         "feedbackOnGithub": MessageLookupByLibrary.simpleMessage(
             "If you have any questions, please feedback on Github."),
@@ -154,6 +156,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "min": MessageLookupByLibrary.simpleMessage("min"),
         "ms": MessageLookupByLibrary.simpleMessage("ms"),
         "name": MessageLookupByLibrary.simpleMessage("Name"),
+        "newContainer": MessageLookupByLibrary.simpleMessage("New container"),
         "noClient": MessageLookupByLibrary.simpleMessage("No client"),
         "noInterface": MessageLookupByLibrary.simpleMessage("No interface"),
         "noResult": MessageLookupByLibrary.simpleMessage("No result"),
@@ -180,6 +183,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "plzSelectKey":
             MessageLookupByLibrary.simpleMessage("Please select a key."),
         "port": MessageLookupByLibrary.simpleMessage("Port"),
+        "preview": MessageLookupByLibrary.simpleMessage("Preview"),
         "privateKey": MessageLookupByLibrary.simpleMessage("Private Key"),
         "pwd": MessageLookupByLibrary.simpleMessage("Password"),
         "rename": MessageLookupByLibrary.simpleMessage("Rename"),

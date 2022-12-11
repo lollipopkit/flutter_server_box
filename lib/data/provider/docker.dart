@@ -15,6 +15,7 @@ import 'package:toolbox/locator.dart';
 final _dockerNotFound = RegExp(r'command not found|Unknown command');
 final _versionReg = RegExp(r'(Version:)\s+([0-9]+\.[0-9]+\.[0-9]+)');
 final _editionReg = RegExp(r'(Client:)\s+(.+-.+)');
+final _dockerPrefixReg = RegExp(r'(sudo )?docker ');
 
 const _dockerPS = 'docker ps -a';
 
@@ -107,30 +108,22 @@ class DockerProvider extends BusyProvider {
     isRequestingPwd = false;
   }
 
-  Future<bool> _do(String id, String cmd) async {
-    setBusyState();
-    final result = await client!.run('$cmd $id').string;
-    await refresh();
-    setBusyState(false);
-    return result.contains(id);
-  }
+  Future<DockerErr?> stop(String id) async => await run('docker stop $id');
 
-  Future<bool> stop(String id) async => await _do(id, 'docker stop');
+  Future<DockerErr?> start(String id) async => await run('docker start $id');
 
-  Future<bool> start(String id) async => await _do(id, 'docker start');
-
-  Future<bool> delete(String id) async => await _do(id, 'docker rm');
+  Future<DockerErr?> delete(String id) async => await run('docker rm $id');
 
   Future<DockerErr?> run(String cmd) async {
-    if (!cmd.startsWith('docker ')) {
+    if (!cmd.startsWith(_dockerPrefixReg)) {
       return DockerErr(type: DockerErrType.cmdNoPrefix);
     }
     setBusyState();
 
     final errs = <String>[];
     final code = await client!.exec(
-      cmd,
-      onStderr: (data, _) => errs.add(data),
+      _wrapHost(cmd),
+      onStderr: _onPwd,
       onStdout: (data, _) {
         runLog = '$runLog$data';
         notifyListeners();
@@ -139,12 +132,20 @@ class DockerProvider extends BusyProvider {
 
     runLog = null;
 
-    if (errs.isNotEmpty || code != 0) {
+    if (code != 0) {
       setBusyState(false);
       return DockerErr(type: DockerErrType.unknown, message: errs.join('\n'));
     }
     await refresh();
     setBusyState(false);
     return null;
+  }
+
+  String _wrapHost(String cmd) {
+    final dockerHost = locator<DockerStore>().getDockerHost(hostId!);
+    if (dockerHost == null || dockerHost.isEmpty) {
+      return 'sudo $cmd';
+    }
+    return 'export DOCKER_HOST=$dockerHost && $cmd';
   }
 }

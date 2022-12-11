@@ -89,12 +89,12 @@ class MessageLookup extends MessageLookupByLibrary {
         "delete": MessageLookupByLibrary.simpleMessage("删除"),
         "disconnected": MessageLookupByLibrary.simpleMessage("连接断开"),
         "dl2Local": m0,
-        "dockerCmdPrefixErr":
-            MessageLookupByLibrary.simpleMessage("命令前缀错误，没有以 `docker` 开头"),
+        "dockerContainerName": MessageLookupByLibrary.simpleMessage("容器名"),
         "dockerEditHost":
             MessageLookupByLibrary.simpleMessage("编辑 DOCKER_HOST"),
         "dockerEmptyRunningItems": MessageLookupByLibrary.simpleMessage(
             "没有正在运行的容器。\n这可能是因为环境变量 DOCKER_HOST 没有被正确读取。你可以通过在终端内运行 `echo \$DOCKER_HOST` 来获取。"),
+        "dockerImage": MessageLookupByLibrary.simpleMessage("镜像"),
         "dockerNotInstalled": MessageLookupByLibrary.simpleMessage("Docker未安装"),
         "dockerStatusRunningAndStoppedFmt": m1,
         "dockerStatusRunningFmt": m2,
@@ -107,6 +107,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "exampleName": MessageLookupByLibrary.simpleMessage("名称示例"),
         "experimentalFeature": MessageLookupByLibrary.simpleMessage("实验性功能"),
         "export": MessageLookupByLibrary.simpleMessage("导出"),
+        "extraArgs": MessageLookupByLibrary.simpleMessage("额外参数"),
         "feedback": MessageLookupByLibrary.simpleMessage("反馈"),
         "feedbackOnGithub":
             MessageLookupByLibrary.simpleMessage("如果你有任何问题，请在GitHub反馈"),
@@ -138,6 +139,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "min": MessageLookupByLibrary.simpleMessage("最小"),
         "ms": MessageLookupByLibrary.simpleMessage("毫秒"),
         "name": MessageLookupByLibrary.simpleMessage("名称"),
+        "newContainer": MessageLookupByLibrary.simpleMessage("新建容器"),
         "noClient": MessageLookupByLibrary.simpleMessage("没有SSH连接"),
         "noInterface": MessageLookupByLibrary.simpleMessage("没有可用的接口"),
         "noResult": MessageLookupByLibrary.simpleMessage("无结果"),
@@ -157,6 +159,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "plzEnterHost": MessageLookupByLibrary.simpleMessage("请输入主机"),
         "plzSelectKey": MessageLookupByLibrary.simpleMessage("请选择私钥"),
         "port": MessageLookupByLibrary.simpleMessage("端口"),
+        "preview": MessageLookupByLibrary.simpleMessage("预览"),
         "privateKey": MessageLookupByLibrary.simpleMessage("私钥"),
         "pwd": MessageLookupByLibrary.simpleMessage("密码"),
         "rename": MessageLookupByLibrary.simpleMessage("重命名"),

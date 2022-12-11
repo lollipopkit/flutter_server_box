@@ -1401,11 +1401,51 @@ class S {
     );
   }
 
-  /// `Please make sure that the docker command prefix is correct.`
-  String get dockerCmdPrefixErr {
+  /// `New container`
+  String get newContainer {
     return Intl.message(
-      'Please make sure that the docker command prefix is correct.',
-      name: 'dockerCmdPrefixErr',
+      'New container',
+      name: 'newContainer',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Image`
+  String get dockerImage {
+    return Intl.message(
+      'Image',
+      name: 'dockerImage',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Container name`
+  String get dockerContainerName {
+    return Intl.message(
+      'Container name',
+      name: 'dockerContainerName',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Extra args`
+  String get extraArgs {
+    return Intl.message(
+      'Extra args',
+      name: 'extraArgs',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Preview`
+  String get preview {
+    return Intl.message(
+      'Preview',
+      name: 'preview',
       desc: '',
       args: [],
     );
