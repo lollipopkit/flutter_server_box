@@ -7,6 +7,7 @@ import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/provider_base.dart';
+import 'package:toolbox/data/model/docker/image.dart';
 import 'package:toolbox/data/model/docker/ps.dart';
 import 'package:toolbox/data/res/error.dart';
 import 'package:toolbox/data/store/docker.dart';
@@ -25,11 +26,13 @@ class DockerProvider extends BusyProvider {
   SSHClient? client;
   String? userName;
   List<DockerPsItem>? items;
+  List<DockerImage>? images;
   String? version;
   String? edition;
   DockerErr? error;
   PwdRequestFunc? onPwdReq;
   String? hostId;
+  String? runLog;
   bool isRequestingPwd = false;
 
   void init(SSHClient client, String userName, PwdRequestFunc onPwdReq,
@@ -43,7 +46,7 @@ class DockerProvider extends BusyProvider {
   void clear() {
     client = userName = error = items = version = edition = onPwdReq = null;
     isRequestingPwd = false;
-    hostId = null;
+    hostId = runLog = images = null;
   }
 
   Future<void> refresh() async {
@@ -62,14 +65,7 @@ class DockerProvider extends BusyProvider {
     }
 
     try {
-      // judge whether to use DOCKER_HOST / sudo
-      final dockerHost = locator<DockerStore>().getDockerHost(hostId!);
-      final cmd = () {
-        if (dockerHost == null || dockerHost.isEmpty) {
-          return 'sudo -S $_dockerPS'.withLangExport;
-        }
-        return 'export DOCKER_HOST=$dockerHost && $_dockerPS'.withLangExport;
-      }();
+      final cmd = _wrap(_dockerPS);
 
       // run docker ps
       var raw = '';
@@ -84,6 +80,19 @@ class DockerProvider extends BusyProvider {
       lines.removeAt(0);
       lines.removeWhere((element) => element.isEmpty);
       items = lines.map((e) => DockerPsItem.fromRawString(e)).toList();
+
+      final imageCmd = _wrap('docker image ls');
+      raw = '';
+      await client!.exec(
+        imageCmd,
+        onStderr: _onPwd,
+        onStdout: (data, _) => raw = '$raw$data',
+      );
+
+      final imageLines = raw.split('\n');
+      imageLines.removeAt(0);
+      imageLines.removeWhere((element) => element.isEmpty);
+      images = imageLines.map((e) => DockerImage.fromRawStr(e)).toList();
     } catch (e) {
       error = DockerErr(type: DockerErrType.unknown, message: e.toString());
       rethrow;
@@ -119,26 +128,36 @@ class DockerProvider extends BusyProvider {
     }
     setBusyState();
 
+    runLog = '';
     final errs = <String>[];
     final code = await client!.exec(
-      _wrapHost(cmd),
-      onStderr: _onPwd,
+      _wrap(cmd),
+      onStderr: (data, sink) {
+        _onPwd(data, sink);
+        errs.add(data);
+      },
+      onStdout: (data, _) {
+        runLog = '$runLog$data';
+        notifyListeners();
+      },
     );
+    runLog = null;
 
     if (code != 0) {
       setBusyState(false);
-      return DockerErr(type: DockerErrType.unknown, message: errs.join('\n'));
+      return DockerErr(type: DockerErrType.unknown, message: errs.join('\n').trim());
     }
     await refresh();
     setBusyState(false);
     return null;
   }
 
-  String _wrapHost(String cmd) {
+  // judge whether to use DOCKER_HOST / sudo
+  String _wrap(String cmd) {
     final dockerHost = locator<DockerStore>().getDockerHost(hostId!);
     if (dockerHost == null || dockerHost.isEmpty) {
-      return 'sudo $cmd';
+      return 'sudo $cmd'.withLangExport;
     }
-    return 'export DOCKER_HOST=$dockerHost && $cmd';
+    return 'export DOCKER_HOST=$dockerHost && $cmd'.withLangExport;
   }
 }

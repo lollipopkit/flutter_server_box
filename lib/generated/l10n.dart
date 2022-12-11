@@ -1460,6 +1460,26 @@ class S {
       args: [],
     );
   }
+
+  /// `Images list`
+  String get imagesList {
+    return Intl.message(
+      'Images list',
+      name: 'imagesList',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{count} images`
+  String dockerImagesFmt(Object count) {
+    return Intl.message(
+      '$count images',
+      name: 'dockerImagesFmt',
+      desc: '',
+      args: [count],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

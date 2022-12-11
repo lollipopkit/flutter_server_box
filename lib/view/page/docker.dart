@@ -165,9 +165,9 @@ class _DockerManagePageState extends State<DockerManagePage> {
       suffix = '$args $image';
     }
     if (name.isEmpty) {
-      return 'docker run -d $suffix';
+      return 'docker run -itd $suffix';
     }
-    return 'docker run -d --name $name $suffix';
+    return 'docker run -itd --name $name $suffix';
   }
 
   String? getErrMsg(DockerErr err) {
@@ -253,41 +253,76 @@ class _DockerManagePageState extends State<DockerManagePage> {
         _buildLoading(docker),
         _buildVersion(docker.edition ?? s.unknown, docker.version ?? s.unknown),
         _buildPsItems(running, docker),
+        _buildImages(docker),
         _buildEditHost(running, docker),
       ].map((e) => RoundRectCard(e)).toList(),
     );
   }
 
-  Widget _buildLoading(DockerProvider docker) {
-    if (docker.isBusy) {
-      return const Padding(
-        padding: EdgeInsets.all(17),
-        child: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+  Widget _buildImages(DockerProvider docker) {
+    if (docker.images == null) {
+      return const SizedBox();
     }
-    return const SizedBox();
+    return ExpansionTile(
+      title: Text(s.imagesList),
+      subtitle: Text(
+        s.dockerImagesFmt(docker.images!.length),
+        style: greyTextStyle,
+      ),
+      children: docker.images!
+          .map(
+            (e) => ListTile(
+              title: Text(e.repo),
+              subtitle: Text('${e.tag} - ${e.size}'),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: () async {
+                  final result = await _docker.run('docker rmi ${e.id} -f');
+                  if (result != null) {
+                    showSnackBar(
+                        context, Text(getErrMsg(result) ?? s.unknownError));
+                  }
+                },
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Widget _buildLoading(DockerProvider docker) {
+    if (!docker.isBusy) return const SizedBox();
+    final haveLog = docker.runLog != null;
+    return Padding(
+      padding: const EdgeInsets.all(17),
+      child: Column(
+        children: [
+          const Center(
+            child: CircularProgressIndicator(),
+          ),
+          haveLog ? const SizedBox(height: 17) : const SizedBox(),
+          haveLog ? Text(docker.runLog!) : const SizedBox()
+        ],
+      ),
+    );
   }
 
   Widget _buildEditHost(List<DockerPsItem> running, DockerProvider docker) {
-    if (running.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(17, 17, 17, 0),
-        child: Column(
-          children: [
-            Text(
-              s.dockerEmptyRunningItems,
-              textAlign: TextAlign.center,
-            ),
-            TextButton(
-                onPressed: () => _showEditHostDialog(docker),
-                child: Text(s.dockerEditHost))
-          ],
-        ),
-      );
-    }
-    return const SizedBox();
+    if (running.isNotEmpty) return const SizedBox();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(17, 17, 17, 0),
+      child: Column(
+        children: [
+          Text(
+            s.dockerEmptyRunningItems,
+            textAlign: TextAlign.center,
+          ),
+          TextButton(
+              onPressed: () => _showEditHostDialog(docker),
+              child: Text(s.dockerEditHost))
+        ],
+      ),
+    );
   }
 
   Future<void> _showEditHostDialog(DockerProvider docker) async {

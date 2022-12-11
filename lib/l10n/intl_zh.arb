@@ -139,5 +139,7 @@
     "dockerContainerName": "容器名",
     "extraArgs": "额外参数",
     "preview": "预览",
-    "isBusy": "当前正忙"
+    "isBusy": "当前正忙",
+    "imagesList": "镜像列表",
+    "dockerImagesFmt": "共 {count} 个镜像"
 }
