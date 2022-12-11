@@ -41,17 +41,20 @@ class _SnippetEditPageState extends State<SnippetEditPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(s.edit, style: textSize18), actions: [
-        widget.snippet != null
-            ? IconButton(
-                onPressed: () {
-                  _provider.del(widget.snippet!);
-                  Navigator.of(context).pop();
-                },
-                tooltip: s.delete,
-                icon: const Icon(Icons.delete))
-            : const SizedBox()
-      ]),
+      appBar: AppBar(
+        title: Text(s.edit, style: textSize18),
+        actions: [
+          widget.snippet != null
+              ? IconButton(
+                  onPressed: () {
+                    _provider.del(widget.snippet!);
+                    Navigator.of(context).pop();
+                  },
+                  tooltip: s.delete,
+                  icon: const Icon(Icons.delete))
+              : const SizedBox()
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(13),
         children: [

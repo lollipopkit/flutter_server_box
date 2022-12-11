@@ -53,7 +53,7 @@ class DockerProvider extends BusyProvider {
     final verRaw = await client!.run('docker version'.withLangExport).string;
     if (verRaw.contains(_dockerNotFound)) {
       error = DockerErr(type: DockerErrType.notInstalled);
-      notifyListeners();
+      setBusyState(false);
       return;
     }
 
@@ -65,6 +65,7 @@ class DockerProvider extends BusyProvider {
     }
 
     try {
+      setBusyState();
       final cmd = _wrap(_dockerPS);
 
       // run docker ps
@@ -97,7 +98,7 @@ class DockerProvider extends BusyProvider {
       error = DockerErr(type: DockerErrType.unknown, message: e.toString());
       rethrow;
     } finally {
-      notifyListeners();
+      setBusyState(false);
     }
   }
 
@@ -145,7 +146,8 @@ class DockerProvider extends BusyProvider {
 
     if (code != 0) {
       setBusyState(false);
-      return DockerErr(type: DockerErrType.unknown, message: errs.join('\n').trim());
+      return DockerErr(
+          type: DockerErrType.unknown, message: errs.join('\n').trim());
     }
     await refresh();
     setBusyState(false);

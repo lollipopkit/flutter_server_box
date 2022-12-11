@@ -59,107 +59,135 @@ class _SnippetListPageState extends State<SnippetListPage> {
                 itemCount: key.snippets.length,
                 itemExtent: 57,
                 itemBuilder: (context, idx) {
-                  return RoundRectCard(Padding(
-                    padding: roundRectCardPadding,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          key.snippets[idx].name,
-                          textAlign: TextAlign.center,
-                        ),
-                        Row(children: [
-                          TextButton(
-                              onPressed: () => AppRoute(
-                                      SnippetEditPage(
-                                          snippet: key.snippets[idx]),
-                                      'snippet edit page')
-                                  .go(context),
-                              child: Text(
-                                s.edit,
-                                style: _textStyle,
-                              )),
-                          TextButton(
-                              onPressed: () {
-                                final snippet = key.snippets[idx];
-                                if (widget.spi == null) {
-                                  _showRunDialog(snippet);
-                                  return;
-                                }
-                                run(context, snippet);
-                              },
-                              child: Text(
-                                s.run,
-                                style: _textStyle,
-                              ))
-                        ])
-                      ],
+                  return RoundRectCard(
+                    Padding(
+                      padding: roundRectCardPadding,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            key.snippets[idx].name,
+                            textAlign: TextAlign.center,
+                          ),
+                          Row(
+                            children: [
+                              TextButton(
+                                onPressed: () => AppRoute(
+                                        SnippetEditPage(
+                                            snippet: key.snippets[idx]),
+                                        'snippet edit page')
+                                    .go(context),
+                                child: Text(
+                                  s.edit,
+                                  style: _textStyle,
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  final snippet = key.snippets[idx];
+                                  if (widget.spi == null) {
+                                    _showRunDialog(snippet);
+                                    return;
+                                  }
+                                  run(context, snippet);
+                                },
+                                child: Text(
+                                  s.run,
+                                  style: _textStyle,
+                                ),
+                              )
+                            ],
+                          )
+                        ],
+                      ),
                     ),
-                  ));
-                })
-            : Center(child: Text(s.noSavedSnippet));
+                  );
+                },
+              )
+            : Center(
+                child: Text(s.noSavedSnippet),
+              );
       },
     );
   }
 
   void _showRunDialog(Snippet snippet) {
-    showRoundDialog(context, s.chooseDestination,
-        Consumer<ServerProvider>(builder: (_, provider, __) {
-      if (provider.servers.isEmpty) {
-        return Text(s.noServerAvailable);
-      }
-      _selectedIndex = provider.servers.first.info;
-      return SizedBox(
-          height: 111,
-          child: Stack(children: [
-            Positioned(
-              top: 36,
-              bottom: 36,
-              left: 0,
-              right: 0,
-              child: Container(
-                height: 37,
-                decoration: const BoxDecoration(
-                  borderRadius: BorderRadius.all(Radius.circular(7)),
-                  color: Colors.black12,
+    showRoundDialog(
+      context,
+      s.chooseDestination,
+      Consumer<ServerProvider>(
+        builder: (_, provider, __) {
+          if (provider.servers.isEmpty) {
+            return Text(s.noServerAvailable);
+          }
+          _selectedIndex = provider.servers.first.info;
+          return SizedBox(
+            height: 111,
+            child: Stack(
+              children: [
+                Positioned(
+                  top: 36,
+                  bottom: 36,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    height: 37,
+                    decoration: const BoxDecoration(
+                      borderRadius: BorderRadius.all(Radius.circular(7)),
+                      color: Colors.black12,
+                    ),
+                  ),
                 ),
-              ),
+                ListWheelScrollView.useDelegate(
+                  itemExtent: 37,
+                  diameterRatio: 1.2,
+                  controller: FixedExtentScrollController(initialItem: 0),
+                  onSelectedItemChanged: (idx) =>
+                      _selectedIndex = provider.servers[idx].info,
+                  physics: const FixedExtentScrollPhysics(),
+                  childDelegate: ListWheelChildBuilderDelegate(
+                      builder: (context, index) => Center(
+                            child: Text(
+                              provider.servers[index].info.name,
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                      childCount: provider.servers.length),
+                )
+              ],
             ),
-            ListWheelScrollView.useDelegate(
-              itemExtent: 37,
-              diameterRatio: 1.2,
-              controller: FixedExtentScrollController(initialItem: 0),
-              onSelectedItemChanged: (idx) =>
-                  _selectedIndex = provider.servers[idx].info,
-              physics: const FixedExtentScrollPhysics(),
-              childDelegate: ListWheelChildBuilderDelegate(
-                  builder: (context, index) => Center(
-                        child: Text(
-                          provider.servers[index].info.name,
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                  childCount: provider.servers.length),
-            )
-          ]));
-    }), [
-      TextButton(
-          onPressed: () async => run(context, snippet), child: Text(s.run)),
-      TextButton(
-          onPressed: () => Navigator.of(context).pop(), child: Text(s.cancel)),
-    ]);
+          );
+        },
+      ),
+      [
+        TextButton(
+          onPressed: () async => run(context, snippet),
+          child: Text(s.run),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(s.cancel),
+        ),
+      ],
+    );
   }
 
   Future<void> run(BuildContext context, Snippet snippet) async {
     final result = await locator<ServerProvider>()
         .runSnippet(widget.spi ?? _selectedIndex, snippet);
     if (result != null) {
-      showRoundDialog(context, s.result,
-          Text(result, style: const TextStyle(fontSize: 13)), [
-        TextButton(
-            onPressed: () => Navigator.of(context).pop(), child: Text(s.close))
-      ]);
+      showRoundDialog(
+        context,
+        s.result,
+        Text(result, style: const TextStyle(fontSize: 13)),
+        [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(s.close),
+          )
+        ],
+      );
     }
   }
 }

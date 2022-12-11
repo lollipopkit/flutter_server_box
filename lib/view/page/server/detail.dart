@@ -37,8 +37,9 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   Widget build(BuildContext context) {
     return Consumer<ServerProvider>(builder: (_, provider, __) {
       return _buildMainPage(
-        provider.servers
-            .firstWhere((e) => '${e.info.ip}:${e.info.port}' == widget.id),
+        provider.servers.firstWhere(
+          (e) => '${e.info.ip}:${e.info.port}' == widget.id,
+        ),
       );
     });
   }
@@ -211,8 +212,9 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                 _buildMemExplain(
                     (ss.memory.cache * mb).convertBytes, pColor.withAlpha(77)),
                 _buildMemExplain(
-                    ((ss.memory.total - ss.memory.used) * mb).convertBytes,
-                    progressColor.resolve(context))
+                  ((ss.memory.total - ss.memory.used) * mb).convertBytes,
+                  progressColor.resolve(context),
+                )
               ],
             ),
             const SizedBox(
@@ -363,11 +365,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                 textScaleFactor: 1.0),
           ),
           SizedBox(
-              width: _media.size.width / 4,
-              child: Text(ns.speedOut(device: device),
-                  style: textSize11,
-                  textAlign: TextAlign.right,
-                  textScaleFactor: 1.0))
+            width: _media.size.width / 4,
+            child: Text(ns.speedOut(device: device),
+                style: textSize11,
+                textAlign: TextAlign.right,
+                textScaleFactor: 1.0),
+          )
         ],
       ),
     );

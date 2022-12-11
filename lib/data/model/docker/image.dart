@@ -1,4 +1,5 @@
 final _dockerImageReg = RegExp(r'(\S+) +(\S+) +(\S+) +(.+) +(\S+)');
+
 class DockerImage {
   final String repo;
   final String tag;
@@ -44,4 +45,3 @@ class DockerImage {
     );
   }
 }
-

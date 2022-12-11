@@ -45,14 +45,17 @@ class _ConvertPageState extends State<ConvertPage>
     super.build(context);
     return Scaffold(
       body: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 7),
-          controller: ScrollController(),
-          child: Column(children: [
+        padding: const EdgeInsets.symmetric(horizontal: 7),
+        controller: ScrollController(),
+        child: Column(
+          children: [
             const SizedBox(height: 13),
             _buildInputTop(),
             _buildTypeOption(),
             _buildResult(),
-          ])),
+          ],
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           try {
@@ -119,7 +122,8 @@ class _ConvertPageState extends State<ConvertPage>
             ),
             TextButton(
               style: ButtonStyle(
-                  foregroundColor: MaterialStateProperty.all(primaryColor)),
+                foregroundColor: MaterialStateProperty.all(primaryColor),
+              ),
               child: Icon(Icons.copy, semanticLabel: s.copy),
               onPressed: () => Clipboard.setData(
                 ClipboardData(
@@ -136,13 +140,15 @@ class _ConvertPageState extends State<ConvertPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(typeOption[_typeOptionIndex],
-                  textScaleFactor: 1.0,
-                  textAlign: TextAlign.left,
-                  style: TextStyle(
-                      fontSize: 16.0,
-                      fontWeight: FontWeight.w500,
-                      color: primaryColor)),
+              Text(
+                typeOption[_typeOptionIndex],
+                textScaleFactor: 1.0,
+                textAlign: TextAlign.left,
+                style: TextStyle(
+                    fontSize: 16.0,
+                    fontWeight: FontWeight.w500,
+                    color: primaryColor),
+              ),
               Text(
                 s.currentMode,
                 textScaleFactor: 1.0,
@@ -153,15 +159,17 @@ class _ConvertPageState extends State<ConvertPage>
           ),
         ),
         children: typeOption
-            .map((e) => ListTile(
-                  title: Text(
-                    e,
-                    style: TextStyle(
-                      color: _theme.textTheme.bodyText2?.color?.withAlpha(177),
-                    ),
+            .map(
+              (e) => ListTile(
+                title: Text(
+                  e,
+                  style: TextStyle(
+                    color: _theme.textTheme.bodyText2?.color?.withAlpha(177),
                   ),
-                  trailing: _buildRadio(typeOption.indexOf(e)),
-                ))
+                ),
+                trailing: _buildRadio(typeOption.indexOf(e)),
+              ),
+            )
             .toList(),
       ),
     );

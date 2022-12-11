@@ -51,19 +51,22 @@ class _PrivateKeyListState extends State<StoredPrivateKeysPage> {
                             textAlign: TextAlign.center,
                           ),
                           TextButton(
-                              onPressed: () => AppRoute(
-                                      PrivateKeyEditPage(info: key.infos[idx]),
-                                      'private key edit page')
-                                  .go(context),
-                              child: Text(
-                                s.edit,
-                                style: _textStyle,
-                              ))
+                            onPressed: () => AppRoute(
+                                    PrivateKeyEditPage(info: key.infos[idx]),
+                                    'private key edit page')
+                                .go(context),
+                            child: Text(
+                              s.edit,
+                              style: _textStyle,
+                            ),
+                          )
                         ],
                       ),
                     ));
                   })
-              : Center(child: Text(s.noSavedPrivateKey));
+              : Center(
+                  child: Text(s.noSavedPrivateKey),
+                );
         },
       ),
       floatingActionButton: FloatingActionButton(

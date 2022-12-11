@@ -58,16 +58,18 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
 
   Widget _wrapInCard(SftpDownloadStatus status, String? subtitle,
       {Widget? trailing}) {
-    return RoundRectCard(ListTile(
-      title: Text(status.fileName),
-      subtitle: subtitle == null
-          ? null
-          : Text(
-              subtitle,
-              style: grey,
-            ),
-      trailing: trailing,
-    ));
+    return RoundRectCard(
+      ListTile(
+        title: Text(status.fileName),
+        subtitle: subtitle == null
+            ? null
+            : Text(
+                subtitle,
+                style: grey,
+              ),
+        trailing: trailing,
+      ),
+    );
   }
 
   Widget _buildItem(SftpDownloadStatus status) {
@@ -77,11 +79,14 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
     switch (status.status) {
       case SftpWorkerStatus.finished:
         final time = status.spentTime.toString();
-        return _wrapInCard(status,
-            '${s.downloadFinished} ${s.spentTime(time == 'null' ? s.unknown : (time.substring(0, time.length - 7)))}',
-            trailing: IconButton(
-                onPressed: () => shareFiles(context, [status.item.localPath]),
-                icon: const Icon(Icons.open_in_new)));
+        return _wrapInCard(
+          status,
+          '${s.downloadFinished} ${s.spentTime(time == 'null' ? s.unknown : (time.substring(0, time.length - 7)))}',
+          trailing: IconButton(
+            onPressed: () => shareFiles(context, [status.item.localPath]),
+            icon: const Icon(Icons.open_in_new),
+          ),
+        );
       case SftpWorkerStatus.downloading:
         return _wrapInCard(
             status,
@@ -94,11 +99,14 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
       case SftpWorkerStatus.sshConnectted:
         return _wrapInCard(status, s.sftpSSHConnected, trailing: loadingIcon);
       default:
-        return _wrapInCard(status, s.unknown,
-            trailing: const Icon(
-              Icons.error,
-              size: 40,
-            ));
+        return _wrapInCard(
+          status,
+          s.unknown,
+          trailing: const Icon(
+            Icons.error,
+            size: 40,
+          ),
+        );
     }
   }
 }

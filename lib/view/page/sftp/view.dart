@@ -55,34 +55,36 @@ class _SFTPPageState extends State<SFTPPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          centerTitle: true,
-          title: TwoLineText(up: 'SFTP', down: widget.spi.name),
-          actions: [
-            IconButton(
-              onPressed: (() => showRoundDialog(
-                      context,
-                      s.choose,
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ListTile(
-                              leading: const Icon(Icons.folder),
-                              title: Text(s.createFolder),
-                              onTap: () => mkdir(context)),
-                          ListTile(
-                              leading: const Icon(Icons.insert_drive_file),
-                              title: Text(s.createFile),
-                              onTap: () => newFile(context)),
-                        ],
-                      ),
-                      [
-                        TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: Text(s.close))
-                      ])),
-              icon: const Icon(Icons.add),
-            )
-          ]),
+        centerTitle: true,
+        title: TwoLineText(up: 'SFTP', down: widget.spi.name),
+        actions: [
+          IconButton(
+            onPressed: (() => showRoundDialog(
+                  context,
+                  s.choose,
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ListTile(
+                          leading: const Icon(Icons.folder),
+                          title: Text(s.createFolder),
+                          onTap: () => mkdir(context)),
+                      ListTile(
+                          leading: const Icon(Icons.insert_drive_file),
+                          title: Text(s.createFile),
+                          onTap: () => newFile(context)),
+                    ],
+                  ),
+                  [
+                    TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(s.close))
+                  ],
+                )),
+            icon: const Icon(Icons.add),
+          )
+        ],
+      ),
       body: _buildFileView(),
     );
   }
@@ -121,85 +123,90 @@ class _SFTPPageState extends State<SFTPPage> {
       return centerCircleLoading;
     } else {
       return RefreshIndicator(
-          child: FadeIn(
-            key: Key(_status.spi!.name + _status.path!.path),
-            child: ListView.builder(
-              itemCount: _status.files!.length + 1,
-              controller: _scrollController,
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  return _buildDestSelector();
-                }
-                final file = _status.files![index - 1];
-                final isDir = file.attr.isDirectory;
-                return ListTile(
-                  leading: Icon(isDir ? Icons.folder : Icons.insert_drive_file),
-                  title: Text(file.filename),
-                  trailing: Text(
-                    DateTime.fromMillisecondsSinceEpoch(
-                            (file.attr.modifyTime ?? 0) * 1000)
-                        .toString()
-                        .replaceFirst('.000', ''),
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                  subtitle:
-                      isDir ? null : Text((file.attr.size ?? 0).convertBytes),
-                  onTap: () {
-                    if (isDir) {
-                      _status.path?.update(file.filename);
-                      listDir(path: _status.path?.path);
-                    } else {
-                      onItemPress(context, file, true);
-                    }
-                  },
-                  onLongPress: () => onItemPress(context, file, false),
-                );
-              },
-            ),
+        child: FadeIn(
+          key: Key(_status.spi!.name + _status.path!.path),
+          child: ListView.builder(
+            itemCount: _status.files!.length + 1,
+            controller: _scrollController,
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return _buildDestSelector();
+              }
+              final file = _status.files![index - 1];
+              final isDir = file.attr.isDirectory;
+              return ListTile(
+                leading: Icon(isDir ? Icons.folder : Icons.insert_drive_file),
+                title: Text(file.filename),
+                trailing: Text(
+                  DateTime.fromMillisecondsSinceEpoch(
+                          (file.attr.modifyTime ?? 0) * 1000)
+                      .toString()
+                      .replaceFirst('.000', ''),
+                  style: const TextStyle(color: Colors.grey),
+                ),
+                subtitle:
+                    isDir ? null : Text((file.attr.size ?? 0).convertBytes),
+                onTap: () {
+                  if (isDir) {
+                    _status.path?.update(file.filename);
+                    listDir(path: _status.path?.path);
+                  } else {
+                    onItemPress(context, file, true);
+                  }
+                },
+                onLongPress: () => onItemPress(context, file, false),
+              );
+            },
           ),
-          onRefresh: () => listDir(path: _status.path?.path));
+        ),
+        onRefresh: () => listDir(path: _status.path?.path),
+      );
     }
   }
 
   void onItemPress(BuildContext context, SftpName file, bool showDownload) {
     showRoundDialog(
-        context,
-        s.choose,
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.delete),
-              title: Text(s.delete),
-              onTap: () => delete(context, file),
-            ),
-            ListTile(
-              leading: const Icon(Icons.edit),
-              title: Text(s.rename),
-              onTap: () => rename(context, file),
-            ),
-            showDownload
-                ? ListTile(
-                    leading: const Icon(Icons.download),
-                    title: Text(s.download),
-                    onTap: () => download(context, file),
-                  )
-                : const SizedBox()
-          ],
-        ),
-        [
-          TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(s.cancel))
-        ]);
+      context,
+      s.choose,
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.delete),
+            title: Text(s.delete),
+            onTap: () => delete(context, file),
+          ),
+          ListTile(
+            leading: const Icon(Icons.edit),
+            title: Text(s.rename),
+            onTap: () => rename(context, file),
+          ),
+          showDownload
+              ? ListTile(
+                  leading: const Icon(Icons.download),
+                  title: Text(s.download),
+                  onTap: () => download(context, file),
+                )
+              : const SizedBox()
+        ],
+      ),
+      [
+        TextButton(
+            onPressed: () => Navigator.of(context).pop(), child: Text(s.cancel))
+      ],
+    );
   }
 
   void download(BuildContext context, SftpName name) {
-    showRoundDialog(context, s.download,
-        Text('${s.dl2Local(name.filename)}\n${s.keepForeground}'), [
-      TextButton(
-          onPressed: () => Navigator.of(context).pop(), child: Text(s.cancel)),
-      TextButton(
+    showRoundDialog(
+      context,
+      s.download,
+      Text('${s.dl2Local(name.filename)}\n${s.keepForeground}'),
+      [
+        TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(s.cancel)),
+        TextButton(
           onPressed: () async {
             Navigator.of(context).pop();
             final prePath = _status.path!.path;
@@ -207,36 +214,56 @@ class _SFTPPageState extends State<SFTPPage> {
                 prePath + (prePath.endsWith('/') ? '' : '/') + name.filename;
             final local = '${(await sftpDownloadDir).path}$remotePath';
             final pubKeyId = _status.spi!.pubKeyId;
+
             locator<SftpDownloadProvider>().add(
-                DownloadItem(_status.spi!, remotePath, local),
-                key: pubKeyId == null
-                    ? null
-                    : locator<PrivateKeyStore>().get(pubKeyId).privateKey);
+              DownloadItem(
+                _status.spi!,
+                remotePath,
+                local,
+              ),
+              key: pubKeyId == null
+                  ? null
+                  : locator<PrivateKeyStore>().get(pubKeyId).privateKey,
+            );
+
             Navigator.of(context).pop();
-            showRoundDialog(context, s.goSftpDlPage, const SizedBox(), [
-              TextButton(
+            showRoundDialog(
+              context,
+              s.goSftpDlPage,
+              const SizedBox(),
+              [
+                TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: Text(s.cancel)),
-              TextButton(
+                  child: Text(s.cancel),
+                ),
+                TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
                     AppRoute(const SFTPDownloadingPage(), 'sftp downloading')
                         .go(context);
                   },
-                  child: Text(s.ok))
-            ]);
+                  child: Text(s.ok),
+                )
+              ],
+            );
           },
-          child: Text(s.download))
-    ]);
+          child: Text(s.download),
+        )
+      ],
+    );
   }
 
   void delete(BuildContext context, SftpName file) {
     Navigator.of(context).pop();
-    showRoundDialog(context, s.attention, Text(s.sureDelete(file.filename)), [
-      TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel')),
-      TextButton(
+    showRoundDialog(
+      context,
+      s.attention,
+      Text(s.sureDelete(file.filename)),
+      [
+        TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel')),
+        TextButton(
           onPressed: () {
             _status.client!.remove(file.filename);
             Navigator.of(context).pop();
@@ -245,126 +272,149 @@ class _SFTPPageState extends State<SFTPPage> {
           child: Text(
             s.delete,
             style: const TextStyle(color: Colors.red),
-          )),
-    ]);
+          ),
+        ),
+      ],
+    );
   }
 
   void mkdir(BuildContext context) {
     Navigator.of(context).pop();
     final textController = TextEditingController();
     showRoundDialog(
-        context,
-        s.createFolder,
-        TextField(
-          controller: textController,
-          decoration: InputDecoration(
-            labelText: s.name,
+      context,
+      s.createFolder,
+      TextField(
+        controller: textController,
+        decoration: InputDecoration(
+          labelText: s.name,
+        ),
+      ),
+      [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(s.cancel),
+        ),
+        TextButton(
+          onPressed: () {
+            if (textController.text == '') {
+              showRoundDialog(
+                context,
+                s.attention,
+                Text(s.fieldMustNotEmpty),
+                [
+                  TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(s.ok)),
+                ],
+              );
+              return;
+            }
+            _status.client!
+                .mkdir('${_status.path!.path}/${textController.text}');
+            Navigator.of(context).pop();
+            listDir();
+          },
+          child: Text(
+            s.ok,
+            style: const TextStyle(color: Colors.red),
           ),
         ),
-        [
-          TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(s.cancel)),
-          TextButton(
-              onPressed: () {
-                if (textController.text == '') {
-                  showRoundDialog(
-                      context, s.attention, Text(s.fieldMustNotEmpty), [
-                    TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: Text(s.ok)),
-                  ]);
-                  return;
-                }
-                _status.client!
-                    .mkdir('${_status.path!.path}/${textController.text}');
-                Navigator.of(context).pop();
-                listDir();
-              },
-              child: Text(
-                s.ok,
-                style: const TextStyle(color: Colors.red),
-              )),
-        ]);
+      ],
+    );
   }
 
   void newFile(BuildContext context) {
     Navigator.of(context).pop();
     final textController = TextEditingController();
     showRoundDialog(
-        context,
-        s.createFile,
-        TextField(
-          controller: textController,
-          decoration: InputDecoration(
-            labelText: s.name,
+      context,
+      s.createFile,
+      TextField(
+        controller: textController,
+        decoration: InputDecoration(
+          labelText: s.name,
+        ),
+      ),
+      [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(s.cancel),
+        ),
+        TextButton(
+          onPressed: () async {
+            if (textController.text == '') {
+              showRoundDialog(
+                context,
+                s.attention,
+                Text(s.fieldMustNotEmpty),
+                [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(s.ok),
+                  ),
+                ],
+              );
+              return;
+            }
+            (await _status.client!
+                    .open('${_status.path!.path}/${textController.text}'))
+                .writeBytes(Uint8List(0));
+            Navigator.of(context).pop();
+            listDir();
+          },
+          child: Text(
+            s.ok,
+            style: const TextStyle(color: Colors.red),
           ),
         ),
-        [
-          TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(s.cancel)),
-          TextButton(
-              onPressed: () async {
-                if (textController.text == '') {
-                  showRoundDialog(
-                      context, s.attention, Text(s.fieldMustNotEmpty), [
-                    TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: Text(s.ok)),
-                  ]);
-                  return;
-                }
-                (await _status.client!
-                        .open('${_status.path!.path}/${textController.text}'))
-                    .writeBytes(Uint8List(0));
-                Navigator.of(context).pop();
-                listDir();
-              },
-              child: Text(
-                s.ok,
-                style: const TextStyle(color: Colors.red),
-              )),
-        ]);
+      ],
+    );
   }
 
   void rename(BuildContext context, SftpName file) {
     Navigator.of(context).pop();
     final textController = TextEditingController();
     showRoundDialog(
-        context,
-        s.rename,
-        TextField(
-          controller: textController,
-          decoration: InputDecoration(
-            labelText: s.name,
+      context,
+      s.rename,
+      TextField(
+        controller: textController,
+        decoration: InputDecoration(
+          labelText: s.name,
+        ),
+      ),
+      [
+        TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(s.cancel)),
+        TextButton(
+          onPressed: () async {
+            if (textController.text == '') {
+              showRoundDialog(
+                context,
+                s.attention,
+                Text(s.fieldMustNotEmpty),
+                [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(s.ok),
+                  ),
+                ],
+              );
+              return;
+            }
+            await _status.client!.rename(file.filename, textController.text);
+            Navigator.of(context).pop();
+            listDir();
+          },
+          child: Text(
+            s.rename,
+            style: const TextStyle(color: Colors.red),
           ),
         ),
-        [
-          TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(s.cancel)),
-          TextButton(
-              onPressed: () async {
-                if (textController.text == '') {
-                  showRoundDialog(
-                      context, s.attention, Text(s.fieldMustNotEmpty), [
-                    TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: Text(s.ok)),
-                  ]);
-                  return;
-                }
-                await _status.client!
-                    .rename(file.filename, textController.text);
-                Navigator.of(context).pop();
-                listDir();
-              },
-              child: Text(
-                s.rename,
-                style: const TextStyle(color: Colors.red),
-              )),
-        ]);
+      ],
+    );
   }
 
   Future<void> listDir({String? path, SSHClient? client}) async {
@@ -388,10 +438,17 @@ class _SFTPPageState extends State<SFTPPage> {
         });
       }
     } catch (e) {
-      await showRoundDialog(context, s.error, Text(e.toString()), [
-        TextButton(
-            onPressed: () => Navigator.of(context).pop(), child: Text(s.ok))
-      ]);
+      await showRoundDialog(
+        context,
+        s.error,
+        Text(e.toString()),
+        [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(s.ok),
+          )
+        ],
+      );
       if (_status.path!.undo()) {
         await listDir();
       }
@@ -420,11 +477,12 @@ class _SFTPPageState extends State<SFTPPage> {
         _status.selected = true;
         _status.path = AbsolutePath('/');
         listDir(
-            client: locator<ServerProvider>()
-                .servers
-                .firstWhere((s) => s.info == spi)
-                .client,
-            path: '/');
+          client: locator<ServerProvider>()
+              .servers
+              .firstWhere((s) => s.info == spi)
+              .client,
+          path: '/',
+        );
       },
     );
   }

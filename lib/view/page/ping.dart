@@ -51,8 +51,9 @@ class _PingPageState extends State<PingPage>
     super.build(context);
     return Scaffold(
       body: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 7),
-          child: Column(children: [
+        padding: const EdgeInsets.symmetric(horizontal: 7),
+        child: Column(
+          children: [
             const SizedBox(height: 13),
             buildInput(context, _textEditingController,
                 hint: s.inputDomainHere,
@@ -69,7 +70,9 @@ class _PingPageState extends State<PingPage>
                     return _buildResultItem(result);
                   }),
             ),
-          ])),
+          ],
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         heroTag: 'ping fab',
         onPressed: () {
@@ -87,19 +90,30 @@ class _PingPageState extends State<PingPage>
   Widget _buildResultItem(PingResult result) {
     final unknown = s.unknown;
     final ms = s.ms;
-    return RoundRectCard(ListTile(
-      contentPadding: const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
-      title: Text(result.serverName,
+    return RoundRectCard(
+      ListTile(
+        contentPadding: const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
+        title: Text(
+          result.serverName,
           style: TextStyle(
-              fontSize: 18, fontWeight: FontWeight.bold, color: primaryColor)),
-      subtitle: Text(
-        _buildPingSummary(result, unknown, ms),
-        style: summaryTextStyle,
-      ),
-      trailing: Text(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: primaryColor,
+          ),
+        ),
+        subtitle: Text(
+          _buildPingSummary(result, unknown, ms),
+          style: summaryTextStyle,
+        ),
+        trailing: Text(
           '${s.pingAvg}${result.statistic?.avg?.toStringAsFixed(2) ?? s.unknown} $ms',
-          style: TextStyle(fontSize: 14, color: primaryColor)),
-    ));
+          style: TextStyle(
+            fontSize: 14,
+            color: primaryColor,
+          ),
+        ),
+      ),
+    );
   }
 
   String _buildPingSummary(PingResult result, String unknown, String ms) {

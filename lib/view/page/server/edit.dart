@@ -63,30 +63,40 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(s.edit, style: textSize18), actions: [
-        widget.spi != null
-            ? IconButton(
-                onPressed: () {
-                  showRoundDialog(context, s.attention,
-                      Text(s.sureToDeleteServer(widget.spi!.name)), [
-                    TextButton(
-                        onPressed: () {
-                          _serverProvider.delServer(widget.spi!);
-                          Navigator.of(context).pop();
-                          Navigator.of(context).pop();
-                        },
-                        child: Text(
-                          s.ok,
-                          style: const TextStyle(color: Colors.red),
-                        )),
-                    TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: Text(s.cancel))
-                  ]);
-                },
-                icon: const Icon(Icons.delete))
-            : const SizedBox()
-      ]),
+      appBar: AppBar(
+        title: Text(s.edit, style: textSize18),
+        actions: [
+          widget.spi != null
+              ? IconButton(
+                  onPressed: () {
+                    showRoundDialog(
+                      context,
+                      s.attention,
+                      Text(s.sureToDeleteServer(widget.spi!.name)),
+                      [
+                        TextButton(
+                          onPressed: () {
+                            _serverProvider.delServer(widget.spi!);
+                            Navigator.of(context).pop();
+                            Navigator.of(context).pop();
+                          },
+                          child: Text(
+                            s.ok,
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: Text(s.cancel),
+                        )
+                      ],
+                    );
+                  },
+                  icon: const Icon(Icons.delete),
+                )
+              : const SizedBox()
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(17),
         child: Column(
@@ -148,42 +158,47 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                   )
                 : const SizedBox(),
             usePublicKey
-                ? Consumer<PrivateKeyProvider>(builder: (_, key, __) {
-                    for (var item in key.infos) {
-                      if (item.id == widget.spi?.pubKeyId) {
-                        _pubKeyIndex ??= key.infos.indexOf(item);
+                ? Consumer<PrivateKeyProvider>(
+                    builder: (_, key, __) {
+                      for (var item in key.infos) {
+                        if (item.id == widget.spi?.pubKeyId) {
+                          _pubKeyIndex ??= key.infos.indexOf(item);
+                        }
                       }
-                    }
-                    final tiles = key.infos
-                        .map(
-                          (e) => ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              title: Text(e.id, textAlign: TextAlign.start),
-                              trailing: _buildRadio(key.infos.indexOf(e), e)),
-                        )
-                        .toList();
-                    tiles.add(ListTile(
-                      title: Text(s.addPrivateKey),
-                      contentPadding: EdgeInsets.zero,
-                      trailing: IconButton(
-                        icon: const Icon(Icons.add),
-                        onPressed: () => AppRoute(const PrivateKeyEditPage(),
-                                'private key edit page')
-                            .go(context),
-                      ),
-                    ));
-                    return ExpansionTile(
-                      textColor: primaryColor,
-                      iconColor: primaryColor,
-                      tilePadding: EdgeInsets.zero,
-                      childrenPadding: EdgeInsets.zero,
-                      title: Text(
-                        s.choosePrivateKey,
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                      children: tiles,
-                    );
-                  })
+                      final tiles = key.infos
+                          .map(
+                            (e) => ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                title: Text(e.id, textAlign: TextAlign.start),
+                                trailing: _buildRadio(key.infos.indexOf(e), e)),
+                          )
+                          .toList();
+                      tiles.add(
+                        ListTile(
+                          title: Text(s.addPrivateKey),
+                          contentPadding: EdgeInsets.zero,
+                          trailing: IconButton(
+                            icon: const Icon(Icons.add),
+                            onPressed: () => AppRoute(
+                                    const PrivateKeyEditPage(),
+                                    'private key edit page')
+                                .go(context),
+                          ),
+                        ),
+                      );
+                      return ExpansionTile(
+                        textColor: primaryColor,
+                        iconColor: primaryColor,
+                        tilePadding: EdgeInsets.zero,
+                        childrenPadding: EdgeInsets.zero,
+                        title: Text(
+                          s.choosePrivateKey,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        children: tiles,
+                      );
+                    },
+                  )
                 : const SizedBox()
           ],
         ),
@@ -197,18 +212,19 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
           }
           if (!usePublicKey && passwordController.text == '') {
             final cancel = await showRoundDialog<bool>(
-                context,
-                s.attention,
-                Text(s.sureNoPwd),
-                [
-                  TextButton(
-                      onPressed: () => Navigator.of(context).pop(false),
-                      child: Text(s.ok)),
-                  TextButton(
-                      onPressed: () => Navigator.of(context).pop(true),
-                      child: Text(s.cancel))
-                ],
-                barrierDismiss: false);
+              context,
+              s.attention,
+              Text(s.sureNoPwd),
+              [
+                TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: Text(s.ok)),
+                TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: Text(s.cancel))
+              ],
+              barrierDismiss: false,
+            );
             if (cancel ?? true) {
               return;
             }
@@ -230,12 +246,13 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
 
           final authorization = passwordController.text;
           final spi = ServerPrivateInfo(
-              name: nameController.text,
-              ip: ipController.text,
-              port: int.parse(portController.text),
-              user: usernameController.text,
-              pwd: authorization,
-              pubKeyId: usePublicKey ? _keyInfo!.id : null);
+            name: nameController.text,
+            ip: ipController.text,
+            port: int.parse(portController.text),
+            user: usernameController.text,
+            pwd: authorization,
+            pubKeyId: usePublicKey ? _keyInfo!.id : null,
+          );
 
           if (widget.spi == null) {
             _serverProvider.addServer(spi);

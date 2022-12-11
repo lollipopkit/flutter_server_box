@@ -71,18 +71,19 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildCheckUpdate() {
-    return Consumer<AppProvider>(builder: (_, app, __) {
-      String display;
-      if (app.newestBuild != null) {
-        if (app.newestBuild! > BuildData.build) {
-          display = s.versionHaveUpdate(app.newestBuild!);
+    return Consumer<AppProvider>(
+      builder: (_, app, __) {
+        String display;
+        if (app.newestBuild != null) {
+          if (app.newestBuild! > BuildData.build) {
+            display = s.versionHaveUpdate(app.newestBuild!);
+          } else {
+            display = s.versionUpdated(BuildData.build);
+          }
         } else {
-          display = s.versionUpdated(BuildData.build);
+          display = s.versionUnknownUpdate(BuildData.build);
         }
-      } else {
-        display = s.versionUnknownUpdate(BuildData.build);
-      }
-      return ListTile(
+        return ListTile(
           contentPadding: roundRectCardPadding,
           trailing: const Icon(Icons.keyboard_arrow_right),
           title: Text(
@@ -90,8 +91,10 @@ class _SettingPageState extends State<SettingPage> {
             style: textSize13,
             textAlign: TextAlign.start,
           ),
-          onTap: () => doUpdate(context, force: true));
-    });
+          onTap: () => doUpdate(context, force: true),
+        );
+      },
+    );
   }
 
   Widget _buildUpdateInterval() {
@@ -147,24 +150,22 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildAppColorPreview() {
     return ExpansionTile(
-        textColor: priColor,
-        tilePadding: roundRectCardPadding,
-        childrenPadding: roundRectCardPadding,
-        trailing: ClipOval(
-          child: Container(
-            color: priColor,
-            height: 27,
-            width: 27,
-          ),
+      textColor: priColor,
+      tilePadding: roundRectCardPadding,
+      childrenPadding: roundRectCardPadding,
+      trailing: ClipOval(
+        child: Container(
+          color: priColor,
+          height: 27,
+          width: 27,
         ),
-        title: Text(
-          s.appPrimaryColor,
-          style: textSize13,
-        ),
-        children: [
-          _buildAppColorPicker(priColor),
-          _buildColorPickerConfirmBtn()
-        ]);
+      ),
+      title: Text(
+        s.appPrimaryColor,
+        style: textSize13,
+      ),
+      children: [_buildAppColorPicker(priColor), _buildColorPickerConfirmBtn()],
+    );
   }
 
   Widget _buildAppColorPicker(Color selected) {
@@ -204,16 +205,18 @@ class _SettingPageState extends State<SettingPage> {
         ),
       ),
       children: tabs
-          .map((e) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(
-                  tabTitleName(context, tabs.indexOf(e)),
-                  style: TextStyle(
-                      fontSize: 14,
-                      color: _theme.textTheme.bodyText2!.color!.withAlpha(177)),
-                ),
-                trailing: _buildRadio(tabs.indexOf(e)),
-              ))
+          .map(
+            (e) => ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(
+                tabTitleName(context, tabs.indexOf(e)),
+                style: TextStyle(
+                    fontSize: 14,
+                    color: _theme.textTheme.bodyText2!.color!.withAlpha(177)),
+              ),
+              trailing: _buildRadio(tabs.indexOf(e)),
+            ),
+          )
           .toList(),
     );
   }

@@ -54,8 +54,12 @@ class BackupPage extends StatelessWidget {
           const SizedBox(height: 7),
           const Divider(),
           const SizedBox(height: 7),
-          _buildCard(s.backup, Icons.file_upload, media,
-              () => _showExportDialog(context, s))
+          _buildCard(
+            s.backup,
+            Icons.file_upload,
+            media,
+            () => _showExportDialog(context, s),
+          )
         ],
       )),
     );
@@ -91,60 +95,66 @@ class BackupPage extends StatelessWidget {
 
   Future<void> _showExportDialog(BuildContext context, S s) async {
     final exportFieldController = TextEditingController()
-      ..text = _diyEncrtpt(json.encode(Backup(
-        backupFormatVersion,
-        DateTime.now().toString().split('.').first,
-        server.fetch(),
-        snippet.fetch(),
-        privateKey.fetch(),
-        setting.primaryColor.fetch() ?? Colors.pinkAccent.value,
-        setting.serverStatusUpdateInterval.fetch() ?? 2,
-        setting.launchPage.fetch() ?? 0,
-      )));
-    await showRoundDialog(
-        context,
-        s.export,
-        TextField(
-          decoration: const InputDecoration(
-            labelText: 'JSON',
+      ..text = _diyEncrtpt(
+        json.encode(
+          Backup(
+            backupFormatVersion,
+            DateTime.now().toString().split('.').first,
+            server.fetch(),
+            snippet.fetch(),
+            privateKey.fetch(),
+            setting.primaryColor.fetch() ?? Colors.pinkAccent.value,
+            setting.serverStatusUpdateInterval.fetch() ?? 2,
+            setting.launchPage.fetch() ?? 0,
           ),
-          maxLines: 7,
-          controller: exportFieldController,
         ),
-        [
-          TextButton(
-            child: Text(s.copy),
-            onPressed: () {
-              Clipboard.setData(
-                  ClipboardData(text: exportFieldController.text));
-              Navigator.pop(context);
-            },
-          ),
-        ]);
+      );
+    await showRoundDialog(
+      context,
+      s.export,
+      TextField(
+        decoration: const InputDecoration(
+          labelText: 'JSON',
+        ),
+        maxLines: 7,
+        controller: exportFieldController,
+      ),
+      [
+        TextButton(
+          child: Text(s.copy),
+          onPressed: () {
+            Clipboard.setData(ClipboardData(text: exportFieldController.text));
+            Navigator.pop(context);
+          },
+        ),
+      ],
+    );
   }
 
   Future<void> _showImportDialog(BuildContext context, S s) async {
     final importFieldController = TextEditingController();
     await showRoundDialog(
-        context,
-        s.import,
-        TextField(
-          decoration: const InputDecoration(
-            labelText: 'JSON',
-          ),
-          maxLines: 3,
-          controller: importFieldController,
+      context,
+      s.import,
+      TextField(
+        decoration: const InputDecoration(
+          labelText: 'JSON',
         ),
-        [
-          TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(s.cancel)),
-          TextButton(
-            onPressed: () async =>
-                await _import(importFieldController.text.trim(), context, s),
-            child: const Text('GO'),
-          )
-        ]);
+        maxLines: 3,
+        controller: importFieldController,
+      ),
+      [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(s.cancel),
+        ),
+        TextButton(
+          onPressed: () async =>
+              await _import(importFieldController.text.trim(), context, s),
+          child: const Text('GO'),
+        )
+      ],
+    );
   }
 
   Future<void> _import(String text, BuildContext context, S s) async {
@@ -165,32 +175,36 @@ class BackupPage extends StatelessWidget {
       }
 
       await showRoundDialog(
-          context, s.attention, Text(s.restoreSureWithDate(backup.date)), [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(s.cancel),
-        ),
-        TextButton(
-          onPressed: () async {
-            for (final s in backup.snippets) {
-              snippet.put(s);
-            }
-            for (final s in backup.spis) {
-              server.put(s);
-            }
-            for (final s in backup.keys) {
-              privateKey.put(s);
-            }
-            setting.primaryColor.put(backup.primaryColor);
-            setting.serverStatusUpdateInterval
-                .put(backup.serverStatusUpdateInterval);
-            setting.launchPage.put(backup.launchPage);
-            Navigator.of(context).pop();
-            showSnackBar(context, Text(s.restoreSuccess));
-          },
-          child: Text(s.ok),
-        ),
-      ]);
+        context,
+        s.attention,
+        Text(s.restoreSureWithDate(backup.date)),
+        [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(s.cancel),
+          ),
+          TextButton(
+            onPressed: () async {
+              for (final s in backup.snippets) {
+                snippet.put(s);
+              }
+              for (final s in backup.spis) {
+                server.put(s);
+              }
+              for (final s in backup.keys) {
+                privateKey.put(s);
+              }
+              setting.primaryColor.put(backup.primaryColor);
+              setting.serverStatusUpdateInterval
+                  .put(backup.serverStatusUpdateInterval);
+              setting.launchPage.put(backup.launchPage);
+              Navigator.of(context).pop();
+              showSnackBar(context, Text(s.restoreSuccess));
+            },
+            child: Text(s.ok),
+          ),
+        ],
+      );
     } catch (e) {
       showSnackBar(context, Text(s.invalidJson));
       return;

@@ -55,30 +55,32 @@ class _ServerPageState extends State<ServerPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final child = Consumer<ServerProvider>(builder: (_, pro, __) {
-      if (pro.servers.isEmpty) {
-        return Center(
-          child: Text(
-            s.serverTabEmpty,
-            textAlign: TextAlign.center,
+    final child = Consumer<ServerProvider>(
+      builder: (_, pro, __) {
+        if (pro.servers.isEmpty) {
+          return Center(
+            child: Text(
+              s.serverTabEmpty,
+              textAlign: TextAlign.center,
+            ),
+          );
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.all(7),
+          controller: ScrollController(),
+          itemBuilder: (ctx, idx) {
+            if (idx == pro.servers.length) {
+              return SizedBox(height: _media.padding.bottom);
+            }
+            return _buildEachServerCard(pro.servers[idx]);
+          },
+          itemCount: pro.servers.length + 1,
+          separatorBuilder: (_, __) => const SizedBox(
+            height: 3,
           ),
         );
-      }
-      return ListView.separated(
-        padding: const EdgeInsets.all(7),
-        controller: ScrollController(),
-        itemBuilder: (ctx, idx) {
-          if (idx == pro.servers.length) {
-            return SizedBox(height: _media.padding.bottom);
-          }
-          return _buildEachServerCard(pro.servers[idx]);
-        },
-        itemCount: pro.servers.length + 1,
-        separatorBuilder: (_, __) => const SizedBox(
-          height: 3,
-        ),
-      );
-    });
+      },
+    );
     return Scaffold(
       body: child,
       floatingActionButton: FloatingActionButton(
@@ -102,9 +104,10 @@ class _ServerPageState extends State<ServerPage>
                 'Edit server info page')
             .go(context),
         child: Padding(
-            padding: const EdgeInsets.all(13),
-            child: _buildRealServerCard(
-                si.status, si.info.name, si.connectionState, si.info)),
+          padding: const EdgeInsets.all(13),
+          child: _buildRealServerCard(
+              si.status, si.info.name, si.connectionState, si.info),
+        ),
         onTap: () => AppRoute(ServerDetailPage('${si.info.ip}:${si.info.port}'),
                 'server detail page')
             .go(context),

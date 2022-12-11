@@ -59,23 +59,28 @@ class _AptManagePageState extends State<AptManagePage>
     }
 
     _aptProvider.init(
-        si.client!,
-        si.status.sysVer.dist,
-        () =>
-            scrollController.jumpTo(scrollController.position.maxScrollExtent),
-        () => scrollControllerUpdate
-            .jumpTo(scrollController.position.maxScrollExtent),
-        onPwdRequest,
-        widget.spi.user);
+      si.client!,
+      si.status.sysVer.dist,
+      () => scrollController.jumpTo(scrollController.position.maxScrollExtent),
+      () => scrollControllerUpdate
+          .jumpTo(scrollController.position.maxScrollExtent),
+      onPwdRequest,
+      widget.spi.user,
+    );
     _aptProvider.refreshInstalled();
   }
 
   void onSubmitted() {
     if (textController.text == '') {
-      showRoundDialog(context, s.attention, Text(s.fieldMustNotEmpty), [
-        TextButton(
-            onPressed: () => Navigator.of(context).pop(), child: Text(s.ok)),
-      ]);
+      showRoundDialog(
+        context,
+        s.attention,
+        Text(s.fieldMustNotEmpty),
+        [
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(), child: Text(s.ok)),
+        ],
+      );
       return;
     }
     Navigator.of(context).pop();
@@ -84,31 +89,32 @@ class _AptManagePageState extends State<AptManagePage>
   Future<String> onPwdRequest() async {
     if (!mounted) return '';
     await showRoundDialog(
-        context,
-        widget.spi.user,
-        TextField(
-          controller: textController,
-          keyboardType: TextInputType.visiblePassword,
-          obscureText: true,
-          onSubmitted: (_) => onSubmitted(),
-          decoration: InputDecoration(
-            labelText: s.pwd,
-          ),
+      context,
+      widget.spi.user,
+      TextField(
+        controller: textController,
+        keyboardType: TextInputType.visiblePassword,
+        obscureText: true,
+        onSubmitted: (_) => onSubmitted(),
+        decoration: InputDecoration(
+          labelText: s.pwd,
         ),
-        [
-          TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pop();
-              },
-              child: Text(s.cancel)),
-          TextButton(
-              onPressed: () => onSubmitted(),
-              child: Text(
-                s.ok,
-                style: const TextStyle(color: Colors.red),
-              )),
-        ]);
+      ),
+      [
+        TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).pop();
+            },
+            child: Text(s.cancel)),
+        TextButton(
+            onPressed: () => onSubmitted(),
+            child: Text(
+              s.ok,
+              style: const TextStyle(color: Colors.red),
+            )),
+      ],
+    );
     return textController.text.trim();
   }
 
@@ -138,11 +144,12 @@ class _AptManagePageState extends State<AptManagePage>
                   padding: const EdgeInsets.all(17),
                   child: RoundRectCard(
                     SingleChildScrollView(
-                        padding: const EdgeInsets.all(17),
-                        child: Text(
-                          apt.error!,
-                          textAlign: TextAlign.center,
-                        )),
+                      padding: const EdgeInsets.all(17),
+                      child: Text(
+                        apt.error!,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -154,17 +161,17 @@ class _AptManagePageState extends State<AptManagePage>
         }
         if (apt.updateLog != null && apt.upgradeable == null) {
           return SizedBox(
-              height: _media.size.height -
-                  _media.padding.top -
-                  _media.padding.bottom,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints.expand(),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(18),
-                  controller: scrollControllerUpdate,
-                  child: Text(apt.updateLog!),
-                ),
-              ));
+            height:
+                _media.size.height - _media.padding.top - _media.padding.bottom,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints.expand(),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(18),
+                controller: scrollControllerUpdate,
+                child: Text(apt.updateLog!),
+              ),
+            ),
+          );
         }
         return ListView(
           padding: const EdgeInsets.all(13),
@@ -216,23 +223,25 @@ class _AptManagePageState extends State<AptManagePage>
                   SizedBox(
                     height: _media.size.height * 0.73,
                     child: ListView(
-                        controller: scrollController,
-                        children: apt.upgradeable!
-                            .map((e) => _buildUpdateItem(e, apt))
-                            .toList()),
+                      controller: scrollController,
+                      children: apt.upgradeable!
+                          .map((e) => _buildUpdateItem(e, apt))
+                          .toList(),
+                    ),
                   )
                 ]
               : [
                   SizedBox(
-                      height: _media.size.height * 0.7,
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints.expand(),
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.all(18),
-                          controller: scrollController,
-                          child: Text(apt.upgradeLog!),
-                        ),
-                      ))
+                    height: _media.size.height * 0.7,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints.expand(),
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(18),
+                        controller: scrollController,
+                        child: Text(apt.upgradeLog!),
+                      ),
+                    ),
+                  )
                 ],
         )
       ],

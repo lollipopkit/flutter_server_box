@@ -13,8 +13,10 @@ class _DebugPageState extends State<DebugPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:
-          AppBar(title: const Text('App log'), backgroundColor: Colors.black),
+      appBar: AppBar(
+        title: const Text('App log'),
+        backgroundColor: Colors.black,
+      ),
       body: _buildTerminal(context),
       backgroundColor: Colors.black,
     );
@@ -31,12 +33,15 @@ class _DebugPageState extends State<DebugPage> {
           fontWeight: FontWeight.bold,
         ),
         child: SingleChildScrollView(
-          child: Consumer<DebugProvider>(builder: (_, debug, __) {
-            return Column(
+          child: Consumer<DebugProvider>(
+            builder: (_, debug, __) {
+              return Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: debug.widgets);
-          }),
+                children: debug.widgets,
+              );
+            },
+          ),
         ),
       ),
     );

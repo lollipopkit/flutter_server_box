@@ -141,18 +141,21 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
   void showFileActionDialog(FileSystemEntity file) {
     final fileName = file.path.split('/').last;
     showRoundDialog(
-        context,
-        s.choose,
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.delete),
-              title: Text(s.delete),
-              onTap: () {
-                Navigator.of(context).pop();
-                showRoundDialog(
-                    context, s.sureDelete(fileName), const SizedBox(), [
+      context,
+      s.choose,
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.delete),
+            title: Text(s.delete),
+            onTap: () {
+              Navigator.of(context).pop();
+              showRoundDialog(
+                context,
+                s.sureDelete(fileName),
+                const SizedBox(),
+                [
                   TextButton(
                       onPressed: () => Navigator.of(context).pop(),
                       child: Text(s.cancel)),
@@ -164,21 +167,24 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
                     },
                     child: Text(s.ok),
                   ),
-                ]);
-              },
-            ),
-            ListTile(
-                leading: const Icon(Icons.open_in_new),
-                title: Text(s.open),
-                onTap: () {
-                  shareFiles(context, [file.absolute.path]);
-                }),
-          ],
-        ),
-        [
-          TextButton(
-              onPressed: (() => Navigator.of(context).pop()),
-              child: Text(s.close))
-        ]);
+                ],
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.open_in_new),
+            title: Text(s.open),
+            onTap: () {
+              shareFiles(context, [file.absolute.path]);
+            },
+          ),
+        ],
+      ),
+      [
+        TextButton(
+            onPressed: (() => Navigator.of(context).pop()),
+            child: Text(s.close))
+      ],
+    );
   }
 }

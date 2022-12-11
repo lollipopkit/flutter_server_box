@@ -134,12 +134,15 @@ class _MyHomePageState extends State<MyHomePage>
       height: 50,
       width: isSelected ? width : width - 17,
       decoration: BoxDecoration(
-          color: isSelected
-              ? isDarkMode
-                  ? Colors.white12
-                  : Colors.black.withOpacity(0.07)
-              : Colors.transparent,
-          borderRadius: const BorderRadius.all(Radius.circular(50))),
+        color: isSelected
+            ? isDarkMode
+                ? Colors.white12
+                : Colors.black.withOpacity(0.07)
+            : Colors.transparent,
+        borderRadius: const BorderRadius.all(
+          Radius.circular(50),
+        ),
+      ),
       child: IconButton(
         icon: Icon(item.icon),
         tooltip: tabTitleName(context, idx),
@@ -158,18 +161,21 @@ class _MyHomePageState extends State<MyHomePage>
 
   Widget _buildBottom(BuildContext context) {
     return SafeArea(
-        child: Container(
-      height: 56,
-      padding: const EdgeInsets.only(left: 8, top: 4, bottom: 4, right: 8),
-      width: _width,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: tabItems.map((item) {
-          int itemIndex = tabItems.indexOf(item);
-          return _buildItem(itemIndex, item, _selectIndex == itemIndex);
-        }).toList(),
+      child: Container(
+        height: 56,
+        padding: const EdgeInsets.only(left: 8, top: 4, bottom: 4, right: 8),
+        width: _width,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: tabItems.map(
+            (item) {
+              int itemIndex = tabItems.indexOf(item);
+              return _buildItem(itemIndex, item, _selectIndex == itemIndex);
+            },
+          ).toList(),
+        ),
       ),
-    ));
+    );
   }
 
   Widget _buildDrawer() {
@@ -217,18 +223,25 @@ class _MyHomePageState extends State<MyHomePage>
                   leading: const Icon(Icons.info),
                   title: Text(s.feedback),
                   onTap: () => showRoundDialog(
-                      context, s.feedback, Text(s.feedbackOnGithub), [
-                    TextButton(
+                    context,
+                    s.feedback,
+                    Text(s.feedbackOnGithub),
+                    [
+                      TextButton(
                         onPressed: () => Clipboard.setData(
                             const ClipboardData(text: issueUrl)),
-                        child: Text(s.copy)),
-                    TextButton(
+                        child: Text(s.copy),
+                      ),
+                      TextButton(
                         onPressed: () => openUrl(issueUrl),
-                        child: Text(s.feedback)),
-                    TextButton(
+                        child: Text(s.feedback),
+                      ),
+                      TextButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        child: Text(s.close))
-                  ]),
+                        child: Text(s.close),
+                      )
+                    ],
+                  ),
                 ),
                 ListTile(
                   leading: const Icon(Icons.snippet_folder),
@@ -271,10 +284,11 @@ class _MyHomePageState extends State<MyHomePage>
       alignment: Alignment.center,
       children: [
         ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 53, maxWidth: 53),
-            child: Container(
-              color: primaryColor,
-            )),
+          constraints: const BoxConstraints(maxHeight: 53, maxWidth: 53),
+          child: Container(
+            color: primaryColor,
+          ),
+        ),
         ConstrainedBox(
           constraints: const BoxConstraints(maxHeight: 83, maxWidth: 83),
           child: appIcon,

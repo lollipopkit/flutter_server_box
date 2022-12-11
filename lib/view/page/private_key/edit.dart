@@ -51,17 +51,20 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(s.edit, style: textSize18), actions: [
-        widget.info != null
-            ? IconButton(
-                tooltip: s.delete,
-                onPressed: () {
-                  _provider.delInfo(widget.info!);
-                  Navigator.of(context).pop();
-                },
-                icon: const Icon(Icons.delete))
-            : const SizedBox()
-      ]),
+      appBar: AppBar(
+        title: Text(s.edit, style: textSize18),
+        actions: [
+          widget.info != null
+              ? IconButton(
+                  tooltip: s.delete,
+                  onPressed: () {
+                    _provider.delInfo(widget.info!);
+                    Navigator.of(context).pop();
+                  },
+                  icon: const Icon(Icons.delete))
+              : const SizedBox()
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(13),
         children: [
