@@ -1450,6 +1450,16 @@ class S {
       args: [],
     );
   }
+
+  /// `Is busy now`
+  String get isBusy {
+    return Intl.message(
+      'Is busy now',
+      name: 'isBusy',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

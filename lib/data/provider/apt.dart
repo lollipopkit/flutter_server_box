@@ -99,7 +99,7 @@ class AptProvider extends BusyProvider {
           onStdout: (data, sink) {
             updateLog = (updateLog ?? '') + data;
             notifyListeners();
-            onUpdate!();
+            if (onUpdate != null) onUpdate!();
           },
         );
         return await client
@@ -120,13 +120,13 @@ class AptProvider extends BusyProvider {
 
     await client!.exec(
       _wrap(upgradeCmd),
-      onStderr: (data, sink) => _onPwd(data, sink),
+      onStderr: _onPwd,
       onStdout: (log, sink) {
         if (lastLog == log.trim()) return;
         upgradeLog = (upgradeLog ?? '') + log;
         lastLog = log.trim();
         notifyListeners();
-        onUpgrade!();
+        if (onUpgrade != null) onUpgrade!();
       },
     );
 

@@ -260,22 +260,10 @@ class _DockerManagePageState extends State<DockerManagePage> {
 
   Widget _buildLoading(DockerProvider docker) {
     if (docker.isBusy) {
-      final runLog =
-          docker.runLog == null ? const SizedBox() : Text(docker.runLog!);
-      return Padding(
-        padding: const EdgeInsets.all(17),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            runLog,
-            SizedBox(
-              width: docker.runLog == null ? 0 : 17,
-            ),
-            const Center(
-              child: CircularProgressIndicator(),
-            ),
-          ],
+      return const Padding(
+        padding: EdgeInsets.all(17),
+        child: Center(
+          child: CircularProgressIndicator(),
         ),
       );
     }
@@ -380,15 +368,14 @@ class _DockerManagePageState extends State<DockerManagePage> {
         return ListTile(
           title: Text(item.image),
           subtitle: Text(item.status),
-          trailing: docker.isBusy
-              ? const CircularProgressIndicator()
-              : _buildMoreBtn(item.running, item.containerId),
+          trailing:
+              _buildMoreBtn(item.running, item.containerId, docker.isBusy),
         );
       }).toList(),
     );
   }
 
-  Widget _buildMoreBtn(bool running, String containerId) {
+  Widget _buildMoreBtn(bool running, String containerId, bool busy) {
     final item = running ? DockerMenuItems.stop : DockerMenuItems.start;
     return buildPopuopMenu(
       items: [
@@ -402,6 +389,10 @@ class _DockerManagePageState extends State<DockerManagePage> {
         ),
       ],
       onSelected: (value) {
+        if (busy) {
+          showSnackBar(context, Text(s.isBusy));
+          return;
+        }
         final item = value as DropdownBtnItem;
         switch (item) {
           case DockerMenuItems.rm:

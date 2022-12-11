@@ -127,6 +127,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "invalidJson": MessageLookupByLibrary.simpleMessage("无效的json，存在格式问题"),
         "invalidVersion": MessageLookupByLibrary.simpleMessage("不支持的版本"),
         "invalidVersionHelp": m6,
+        "isBusy": MessageLookupByLibrary.simpleMessage("当前正忙"),
         "keepForeground": MessageLookupByLibrary.simpleMessage("请保持应用处于前台！"),
         "keyAuth": MessageLookupByLibrary.simpleMessage("公钥认证"),
         "lastTry": MessageLookupByLibrary.simpleMessage("最后尝试"),

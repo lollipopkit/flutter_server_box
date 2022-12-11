@@ -142,6 +142,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "invalidVersion":
             MessageLookupByLibrary.simpleMessage("Invalid version"),
         "invalidVersionHelp": m6,
+        "isBusy": MessageLookupByLibrary.simpleMessage("Is busy now"),
         "keepForeground":
             MessageLookupByLibrary.simpleMessage("Keep app foreground!"),
         "keyAuth": MessageLookupByLibrary.simpleMessage("Key Auth"),

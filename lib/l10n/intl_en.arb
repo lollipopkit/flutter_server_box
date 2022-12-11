@@ -138,5 +138,6 @@
     "dockerImage": "Image",
     "dockerContainerName": "Container name",
     "extraArgs": "Extra args",
-    "preview": "Preview"
+    "preview": "Preview",
+    "isBusy": "Is busy now"
 }

@@ -15,19 +15,33 @@ extension SSHClientX on SSHClient {
       {OnStd? onStderr, OnStd? onStdout, OnStdin? stdin}) async {
     final session = await execute(cmd);
 
-    if (onStderr != null) {
-      await for (final data in session.stderr) {
-        onStderr(data.string, session.stdin);
-      }
-    }
+    final stdoutDone = Completer<void>();
+    final stderrDone = Completer<void>();
+
     if (onStdout != null) {
-      await for (final data in session.stdout) {
-        onStdout(data.string, session.stdin);
-      }
+      session.stdout.listen(
+        (e) => onStdout(e.string, session.stdin),
+        onDone: stdoutDone.complete,
+      );
+    } else {
+      stdoutDone.complete();
     }
+
+    if (onStderr != null) {
+      session.stderr.listen(
+        (e) => onStderr(e.string, session.stdin),
+        onDone: stderrDone.complete,
+      );
+    } else {
+      stderrDone.complete();
+    }
+
     if (stdin != null) {
       stdin(session.stdin);
     }
+
+    await stdoutDone.future;
+    await stderrDone.future;
 
     session.close();
     return session.exitCode;

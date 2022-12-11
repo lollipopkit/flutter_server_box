@@ -30,7 +30,6 @@ class DockerProvider extends BusyProvider {
   DockerErr? error;
   PwdRequestFunc? onPwdReq;
   String? hostId;
-  String? runLog;
   bool isRequestingPwd = false;
 
   void init(SSHClient client, String userName, PwdRequestFunc onPwdReq,
@@ -44,7 +43,7 @@ class DockerProvider extends BusyProvider {
   void clear() {
     client = userName = error = items = version = edition = onPwdReq = null;
     isRequestingPwd = false;
-    hostId = runLog = null;
+    hostId = null;
   }
 
   Future<void> refresh() async {
@@ -124,13 +123,7 @@ class DockerProvider extends BusyProvider {
     final code = await client!.exec(
       _wrapHost(cmd),
       onStderr: _onPwd,
-      onStdout: (data, _) {
-        runLog = '$runLog$data';
-        notifyListeners();
-      },
     );
-
-    runLog = null;
 
     if (code != 0) {
       setBusyState(false);
