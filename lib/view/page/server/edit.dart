@@ -25,25 +25,21 @@ class ServerEditPage extends StatefulWidget {
 }
 
 class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
-  final nameController = TextEditingController();
-  final ipController = TextEditingController();
-  final portController = TextEditingController();
-  final usernameController = TextEditingController();
-  final passwordController = TextEditingController();
-  final keyController = TextEditingController();
-  final nameFocus = FocusNode();
-  final ipFocus = FocusNode();
-  final portFocus = FocusNode();
-  final usernameFocus = FocusNode();
+  final _nameController = TextEditingController();
+  final _ipController = TextEditingController();
+  final _portController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _nameFocus = FocusNode();
+  final _ipFocus = FocusNode();
+  final _portFocus = FocusNode();
+  final _usernameFocus = FocusNode();
 
-  late FocusScopeNode focusScope;
-
+  late FocusScopeNode _focusScope;
   late ServerProvider _serverProvider;
-
-  late S s;
+  late S _s;
 
   bool usePublicKey = false;
-
   int? _pubKeyIndex;
   PrivateKeyInfo? _keyInfo;
 
@@ -56,23 +52,23 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    s = S.of(context);
-    focusScope = FocusScope.of(context);
+    _s = S.of(context);
+    _focusScope = FocusScope.of(context);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(s.edit, style: textSize18),
+        title: Text(_s.edit, style: textSize18),
         actions: [
           widget.spi != null
               ? IconButton(
                   onPressed: () {
                     showRoundDialog(
                       context,
-                      s.attention,
-                      Text(s.sureToDeleteServer(widget.spi!.name)),
+                      _s.attention,
+                      Text(_s.sureToDeleteServer(widget.spi!.name)),
                       [
                         TextButton(
                           onPressed: () {
@@ -81,13 +77,13 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                             Navigator.of(context).pop();
                           },
                           child: Text(
-                            s.ok,
+                            _s.ok,
                             style: const TextStyle(color: Colors.red),
                           ),
                         ),
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(),
-                          child: Text(s.cancel),
+                          child: Text(_s.cancel),
                         )
                       ],
                     );
@@ -104,44 +100,44 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextField(
-              controller: nameController,
+              controller: _nameController,
               keyboardType: TextInputType.text,
-              focusNode: nameFocus,
-              onSubmitted: (_) => focusScope.requestFocus(ipFocus),
-              decoration: buildDecoration(s.name,
-                  icon: Icons.info, hint: s.exampleName),
+              focusNode: _nameFocus,
+              onSubmitted: (_) => _focusScope.requestFocus(_ipFocus),
+              decoration: buildDecoration(_s.name,
+                  icon: Icons.info, hint: _s.exampleName),
             ),
             TextField(
-              controller: ipController,
+              controller: _ipController,
               keyboardType: TextInputType.text,
-              onSubmitted: (_) => focusScope.requestFocus(portFocus),
-              focusNode: ipFocus,
+              onSubmitted: (_) => _focusScope.requestFocus(_portFocus),
+              focusNode: _ipFocus,
               autocorrect: false,
               enableSuggestions: false,
-              decoration: buildDecoration(s.host,
+              decoration: buildDecoration(_s.host,
                   icon: Icons.storage, hint: 'example.com'),
             ),
             TextField(
-              controller: portController,
+              controller: _portController,
               keyboardType: TextInputType.number,
-              focusNode: portFocus,
-              onSubmitted: (_) => focusScope.requestFocus(usernameFocus),
-              decoration: buildDecoration(s.port,
+              focusNode: _portFocus,
+              onSubmitted: (_) => _focusScope.requestFocus(_usernameFocus),
+              decoration: buildDecoration(_s.port,
                   icon: Icons.format_list_numbered, hint: '22'),
             ),
             TextField(
-              controller: usernameController,
+              controller: _usernameController,
               keyboardType: TextInputType.text,
-              focusNode: usernameFocus,
+              focusNode: _usernameFocus,
               autocorrect: false,
               enableSuggestions: false,
-              decoration: buildDecoration(s.user,
+              decoration: buildDecoration(_s.user,
                   icon: Icons.account_box, hint: 'root'),
             ),
             const SizedBox(height: 7),
             Row(
               children: [
-                Text(s.keyAuth),
+                Text(_s.keyAuth),
                 Switch(
                     value: usePublicKey,
                     onChanged: (val) => setState(() => usePublicKey = val)),
@@ -149,11 +145,11 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             ),
             !usePublicKey
                 ? TextField(
-                    controller: passwordController,
+                    controller: _passwordController,
                     obscureText: true,
                     keyboardType: TextInputType.text,
-                    decoration: buildDecoration(s.pwd,
-                        icon: Icons.password, hint: s.pwd),
+                    decoration: buildDecoration(_s.pwd,
+                        icon: Icons.password, hint: _s.pwd),
                     onSubmitted: (_) => {},
                   )
                 : const SizedBox(),
@@ -175,7 +171,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                           .toList();
                       tiles.add(
                         ListTile(
-                          title: Text(s.addPrivateKey),
+                          title: Text(_s.addPrivateKey),
                           contentPadding: EdgeInsets.zero,
                           trailing: IconButton(
                             icon: const Icon(Icons.add),
@@ -192,7 +188,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                         tilePadding: EdgeInsets.zero,
                         childrenPadding: EdgeInsets.zero,
                         title: Text(
-                          s.choosePrivateKey,
+                          _s.choosePrivateKey,
                           style: const TextStyle(fontSize: 14),
                         ),
                         children: tiles,
@@ -206,22 +202,22 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.send),
         onPressed: () async {
-          if (ipController.text == '') {
-            showSnackBar(context, Text(s.plzEnterHost));
+          if (_ipController.text == '') {
+            showSnackBar(context, Text(_s.plzEnterHost));
             return;
           }
-          if (!usePublicKey && passwordController.text == '') {
+          if (!usePublicKey && _passwordController.text == '') {
             final cancel = await showRoundDialog<bool>(
               context,
-              s.attention,
-              Text(s.sureNoPwd),
+              _s.attention,
+              Text(_s.sureNoPwd),
               [
                 TextButton(
                     onPressed: () => Navigator.of(context).pop(false),
-                    child: Text(s.ok)),
+                    child: Text(_s.ok)),
                 TextButton(
                     onPressed: () => Navigator.of(context).pop(true),
-                    child: Text(s.cancel))
+                    child: Text(_s.cancel))
               ],
               barrierDismiss: false,
             );
@@ -230,26 +226,26 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             }
           }
           if (usePublicKey && _pubKeyIndex == -1) {
-            showSnackBar(context, Text(s.plzSelectKey));
+            showSnackBar(context, Text(_s.plzSelectKey));
             return;
           }
-          if (usernameController.text == '') {
-            usernameController.text = 'root';
+          if (_usernameController.text == '') {
+            _usernameController.text = 'root';
           }
-          if (portController.text == '') {
-            portController.text = '22';
+          if (_portController.text == '') {
+            _portController.text = '22';
           }
 
           if (widget.spi != null && widget.spi!.pubKeyId != null) {
             _keyInfo ??= locator<PrivateKeyStore>().get(widget.spi!.pubKeyId!);
           }
 
-          final authorization = passwordController.text;
+          final authorization = _passwordController.text;
           final spi = ServerPrivateInfo(
-            name: nameController.text,
-            ip: ipController.text,
-            port: int.parse(portController.text),
-            user: usernameController.text,
+            name: _nameController.text,
+            ip: _ipController.text,
+            port: int.parse(_portController.text),
+            user: _usernameController.text,
             pwd: authorization,
             pubKeyId: usePublicKey ? _keyInfo!.id : null,
           );
@@ -282,12 +278,12 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   @override
   void afterFirstLayout(BuildContext context) {
     if (widget.spi != null) {
-      nameController.text = widget.spi?.name ?? '';
-      ipController.text = widget.spi?.ip ?? '';
-      portController.text = (widget.spi?.port ?? 22).toString();
-      usernameController.text = widget.spi?.user ?? '';
+      _nameController.text = widget.spi?.name ?? '';
+      _ipController.text = widget.spi?.ip ?? '';
+      _portController.text = (widget.spi?.port ?? 22).toString();
+      _usernameController.text = widget.spi?.user ?? '';
       if (widget.spi?.pubKeyId == null) {
-        passwordController.text = widget.spi?.pwd ?? '';
+        _passwordController.text = widget.spi?.pwd ?? '';
       } else {
         usePublicKey = true;
       }

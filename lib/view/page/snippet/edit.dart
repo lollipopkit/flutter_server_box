@@ -19,12 +19,12 @@ class SnippetEditPage extends StatefulWidget {
 
 class _SnippetEditPageState extends State<SnippetEditPage>
     with AfterLayoutMixin {
-  final nameController = TextEditingController();
-  final scriptController = TextEditingController();
-  final scriptNode = FocusNode();
+  final _nameController = TextEditingController();
+  final _scriptController = TextEditingController();
+  final _scriptNode = FocusNode();
 
   late SnippetProvider _provider;
-  late S s;
+  late S _s;
 
   @override
   void initState() {
@@ -35,14 +35,14 @@ class _SnippetEditPageState extends State<SnippetEditPage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    s = S.of(context);
+    _s = S.of(context);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(s.edit, style: textSize18),
+        title: Text(_s.edit, style: textSize18),
         actions: [
           widget.snippet != null
               ? IconButton(
@@ -50,7 +50,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
                     _provider.del(widget.snippet!);
                     Navigator.of(context).pop();
                   },
-                  tooltip: s.delete,
+                  tooltip: _s.delete,
                   icon: const Icon(Icons.delete))
               : const SizedBox()
         ],
@@ -59,30 +59,31 @@ class _SnippetEditPageState extends State<SnippetEditPage>
         padding: const EdgeInsets.all(13),
         children: [
           TextField(
-            controller: nameController,
+            controller: _nameController,
             keyboardType: TextInputType.text,
-            onSubmitted: (_) => FocusScope.of(context).requestFocus(scriptNode),
-            decoration: buildDecoration(s.name, icon: Icons.info),
+            onSubmitted: (_) =>
+                FocusScope.of(context).requestFocus(_scriptNode),
+            decoration: buildDecoration(_s.name, icon: Icons.info),
           ),
           TextField(
-            controller: scriptController,
+            controller: _scriptController,
             autocorrect: false,
-            focusNode: scriptNode,
+            focusNode: _scriptNode,
             minLines: 3,
             maxLines: 10,
             keyboardType: TextInputType.text,
             enableSuggestions: false,
-            decoration: buildDecoration(s.snippet, icon: Icons.code),
+            decoration: buildDecoration(_s.snippet, icon: Icons.code),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.send),
         onPressed: () {
-          final name = nameController.text;
-          final script = scriptController.text;
+          final name = _nameController.text;
+          final script = _scriptController.text;
           if (name.isEmpty || script.isEmpty) {
-            showSnackBar(context, Text(s.fieldMustNotEmpty));
+            showSnackBar(context, Text(_s.fieldMustNotEmpty));
             return;
           }
           final snippet = Snippet(name, script);
@@ -100,8 +101,8 @@ class _SnippetEditPageState extends State<SnippetEditPage>
   @override
   void afterFirstLayout(BuildContext context) {
     if (widget.snippet != null) {
-      nameController.text = widget.snippet!.name;
-      scriptController.text = widget.snippet!.script;
+      _nameController.text = widget.snippet!.name;
+      _scriptController.text = widget.snippet!.script;
     }
   }
 }

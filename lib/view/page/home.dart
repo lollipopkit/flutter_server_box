@@ -45,7 +45,7 @@ class _MyHomePageState extends State<MyHomePage>
   late final PageController _pageController;
   late int _selectIndex;
   late double _width;
-  late S s;
+  late S _s;
 
   @override
   void initState() {
@@ -59,7 +59,7 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    s = S.of(context);
+    _s = S.of(context);
     _width = MediaQuery.of(context).size.width;
   }
 
@@ -84,20 +84,6 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return WillPopScope(
-      child: _buildMain(context),
-      onWillPop: () {
-        final scaffold = Scaffold.of(context);
-        if (scaffold.isDrawerOpen) {
-          scaffold.closeDrawer();
-          return Future.value(false);
-        }
-        return Future.value(true);
-      },
-    );
-  }
-
-  Widget _buildMain(BuildContext context) {
     return Scaffold(
       drawer: _buildDrawer(),
       appBar: AppBar(
@@ -105,7 +91,7 @@ class _MyHomePageState extends State<MyHomePage>
         actions: [
           IconButton(
             icon: const Icon(Icons.developer_mode, size: 23),
-            tooltip: s.debug,
+            tooltip: _s.debug,
             onPressed: () =>
                 AppRoute(const DebugPage(), 'Debug Page').go(context),
           ),
@@ -126,7 +112,6 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Widget _buildItem(int idx, NavigationItem item, bool isSelected) {
-    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final width = _width / tabItems.length;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 377),
@@ -135,7 +120,7 @@ class _MyHomePageState extends State<MyHomePage>
       width: isSelected ? width : width - 17,
       decoration: BoxDecoration(
         color: isSelected
-            ? isDarkMode
+            ? isDarkMode(context)
                 ? Colors.white12
                 : Colors.black.withOpacity(0.07)
             : Colors.transparent,
@@ -195,57 +180,57 @@ class _MyHomePageState extends State<MyHomePage>
               children: [
                 ListTile(
                   leading: const Icon(Icons.settings),
-                  title: Text(s.setting),
+                  title: Text(_s.setting),
                   onTap: () =>
                       AppRoute(const SettingPage(), 'Setting').go(context),
                 ),
                 ListTile(
                   leading: const Icon(Icons.vpn_key),
-                  title: Text(s.privateKey),
+                  title: Text(_s.privateKey),
                   onTap: () => AppRoute(
                           const StoredPrivateKeysPage(), 'private key list')
                       .go(context),
                 ),
                 ListTile(
                   leading: const Icon(Icons.download),
-                  title: Text(s.download),
+                  title: Text(_s.download),
                   onTap: () =>
                       AppRoute(const SFTPDownloadedPage(), 'snippet list')
                           .go(context),
                 ),
                 ListTile(
                   leading: const Icon(Icons.import_export),
-                  title: Text(s.backup),
+                  title: Text(_s.backup),
                   onTap: () =>
                       AppRoute(BackupPage(), 'backup page').go(context),
                 ),
                 ListTile(
                   leading: const Icon(Icons.info),
-                  title: Text(s.feedback),
+                  title: Text(_s.feedback),
                   onTap: () => showRoundDialog(
                     context,
-                    s.feedback,
-                    Text(s.feedbackOnGithub),
+                    _s.feedback,
+                    Text(_s.feedbackOnGithub),
                     [
                       TextButton(
                         onPressed: () => Clipboard.setData(
                             const ClipboardData(text: issueUrl)),
-                        child: Text(s.copy),
+                        child: Text(_s.copy),
                       ),
                       TextButton(
                         onPressed: () => openUrl(issueUrl),
-                        child: Text(s.feedback),
+                        child: Text(_s.feedback),
                       ),
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        child: Text(s.close),
+                        child: Text(_s.close),
                       )
                     ],
                   ),
                 ),
                 ListTile(
                   leading: const Icon(Icons.snippet_folder),
-                  title: Text(s.snippet),
+                  title: Text(_s.snippet),
                   onTap: () => AppRoute(const SnippetListPage(), 'snippet list')
                       .go(context),
                 ),
@@ -256,9 +241,10 @@ class _MyHomePageState extends State<MyHomePage>
                   applicationIcon: _buildIcon(),
                   aboutBoxChildren: [
                     UrlText(
-                        text: s.madeWithLove(myGithub), replace: 'lollipopkit'),
+                        text: _s.madeWithLove(myGithub),
+                        replace: 'lollipopkit'),
                     UrlText(
-                      text: s.aboutThanks,
+                      text: _s.aboutThanks,
                     ),
                     const UrlText(
                       text: rainSunMeGithub,
@@ -269,7 +255,7 @@ class _MyHomePageState extends State<MyHomePage>
                       replace: 'fecture',
                     )
                   ],
-                  child: Text(s.license),
+                  child: Text(_s.license),
                 )
               ],
             ),

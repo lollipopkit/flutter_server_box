@@ -17,12 +17,12 @@ class SFTPDownloadingPage extends StatefulWidget {
 }
 
 class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
-  late S s;
+  late S _s;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    s = S.of(context);
+    _s = S.of(context);
   }
 
   @override
@@ -30,7 +30,7 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          s.download,
+          _s.download,
           style: textSize18,
         ),
       ),
@@ -42,7 +42,7 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
     return Consumer<SftpDownloadProvider>(builder: (__, pro, _) {
       if (pro.status.isEmpty) {
         return Center(
-          child: Text(s.sftpNoDownloadTask),
+          child: Text(_s.sftpNoDownloadTask),
         );
       }
       return ListView.builder(
@@ -81,7 +81,7 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
         final time = status.spentTime.toString();
         return _wrapInCard(
           status,
-          '${s.downloadFinished} ${s.spentTime(time == 'null' ? s.unknown : (time.substring(0, time.length - 7)))}',
+          '${_s.downloadFinished} ${_s.spentTime(time == 'null' ? _s.unknown : (time.substring(0, time.length - 7)))}',
           trailing: IconButton(
             onPressed: () => shareFiles(context, [status.item.localPath]),
             icon: const Icon(Icons.open_in_new),
@@ -90,18 +90,18 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
       case SftpWorkerStatus.downloading:
         return _wrapInCard(
             status,
-            s.downloadStatus((status.progress ?? 0.0).toStringAsFixed(2),
+            _s.downloadStatus((status.progress ?? 0.0).toStringAsFixed(2),
                 (status.size ?? 0).convertBytes),
             trailing:
                 CircularProgressIndicator(value: (status.progress ?? 0) / 100));
       case SftpWorkerStatus.preparing:
-        return _wrapInCard(status, s.sftpDlPrepare, trailing: loadingIcon);
+        return _wrapInCard(status, _s.sftpDlPrepare, trailing: loadingIcon);
       case SftpWorkerStatus.sshConnectted:
-        return _wrapInCard(status, s.sftpSSHConnected, trailing: loadingIcon);
+        return _wrapInCard(status, _s.sftpSSHConnected, trailing: loadingIcon);
       default:
         return _wrapInCard(
           status,
-          s.unknown,
+          _s.unknown,
           trailing: const Icon(
             Icons.error,
             size: 40,

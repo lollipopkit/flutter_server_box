@@ -17,20 +17,19 @@ class StoredPrivateKeysPage extends StatefulWidget {
 }
 
 class _PrivateKeyListState extends State<StoredPrivateKeysPage> {
-  final _textStyle = TextStyle(color: primaryColor);
-  late S s;
+  late S _s;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    s = S.of(context);
+    _s = S.of(context);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(s.privateKey, style: textSize18),
+        title: Text(_s.privateKey, style: textSize18),
       ),
       body: Consumer<PrivateKeyProvider>(
         builder: (_, key, __) {
@@ -55,17 +54,14 @@ class _PrivateKeyListState extends State<StoredPrivateKeysPage> {
                                     PrivateKeyEditPage(info: key.infos[idx]),
                                     'private key edit page')
                                 .go(context),
-                            child: Text(
-                              s.edit,
-                              style: _textStyle,
-                            ),
+                            child: Text(_s.edit),
                           )
                         ],
                       ),
                     ));
                   })
               : Center(
-                  child: Text(s.noSavedPrivateKey),
+                  child: Text(_s.noSavedPrivateKey),
                 );
         },
       ),

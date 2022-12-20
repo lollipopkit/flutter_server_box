@@ -30,7 +30,7 @@ class _SettingPageState extends State<SettingPage> {
   late final ServerProvider _serverProvider;
   late MediaQueryData _media;
   late ThemeData _theme;
-  late S s;
+  late S _s;
 
   var _intervalValue = 0.0;
 
@@ -40,7 +40,7 @@ class _SettingPageState extends State<SettingPage> {
     priColor = primaryColor;
     _media = MediaQuery.of(context);
     _theme = Theme.of(context);
-    s = S.of(context);
+    _s = S.of(context);
   }
 
   @override
@@ -56,7 +56,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(s.setting),
+        title: Text(_s.setting),
       ),
       body: ListView(
         padding: const EdgeInsets.all(17),
@@ -76,12 +76,12 @@ class _SettingPageState extends State<SettingPage> {
         String display;
         if (app.newestBuild != null) {
           if (app.newestBuild! > BuildData.build) {
-            display = s.versionHaveUpdate(app.newestBuild!);
+            display = _s.versionHaveUpdate(app.newestBuild!);
           } else {
-            display = s.versionUpdated(BuildData.build);
+            display = _s.versionUpdated(BuildData.build);
           }
         } else {
-          display = s.versionUnknownUpdate(BuildData.build);
+          display = _s.versionUnknownUpdate(BuildData.build);
         }
         return ListTile(
           contentPadding: roundRectCardPadding,
@@ -103,15 +103,15 @@ class _SettingPageState extends State<SettingPage> {
       childrenPadding: roundRectCardPadding,
       textColor: priColor,
       title: Text(
-        s.updateServerStatusInterval,
+        _s.updateServerStatusInterval,
         style: textSize13,
         textAlign: TextAlign.start,
       ),
       subtitle: Text(
-        s.willTakEeffectImmediately,
+        _s.willTakEeffectImmediately,
         style: const TextStyle(color: Colors.grey, fontSize: 13),
       ),
-      trailing: Text('${_intervalValue.toInt()} ${s.second}'),
+      trailing: Text('${_intervalValue.toInt()} ${_s.second}'),
       children: [
         Slider(
           thumbColor: priColor,
@@ -128,7 +128,7 @@ class _SettingPageState extends State<SettingPage> {
             _store.serverStatusUpdateInterval.put(val.toInt());
             _serverProvider.startAutoRefresh();
           },
-          label: '${_intervalValue.toInt()} ${s.second}',
+          label: '${_intervalValue.toInt()} ${_s.second}',
           divisions: 10,
         ),
         const SizedBox(
@@ -136,7 +136,7 @@ class _SettingPageState extends State<SettingPage> {
         ),
         _intervalValue == 0.0
             ? Text(
-                s.updateIntervalEqual0,
+                _s.updateIntervalEqual0,
                 style: const TextStyle(color: Colors.grey, fontSize: 12),
                 textAlign: TextAlign.center,
               )
@@ -161,7 +161,7 @@ class _SettingPageState extends State<SettingPage> {
         ),
       ),
       title: Text(
-        s.appPrimaryColor,
+        _s.appPrimaryColor,
         style: textSize13,
       ),
       children: [_buildAppColorPicker(priColor), _buildColorPickerConfirmBtn()],
@@ -193,7 +193,7 @@ class _SettingPageState extends State<SettingPage> {
       tilePadding: roundRectCardPadding,
       childrenPadding: roundRectCardPadding,
       title: Text(
-        s.launchPage,
+        _s.launchPage,
         style: textSize13,
       ),
       trailing: ConstrainedBox(

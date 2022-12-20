@@ -4,6 +4,7 @@ import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/model/server/ping_result.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/color.dart';
+import 'package:toolbox/data/res/font_style.dart';
 import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/widget/input_field.dart';
@@ -29,9 +30,6 @@ class _PingPageState extends State<PingPage>
   final List<PingResult> _results = [];
   final _serverProvider = locator<ServerProvider>();
   late S s;
-  static const summaryTextStyle = TextStyle(
-    fontSize: 12,
-  );
 
   @override
   void initState() {
@@ -103,7 +101,7 @@ class _PingPageState extends State<PingPage>
         ),
         subtitle: Text(
           _buildPingSummary(result, unknown, ms),
-          style: summaryTextStyle,
+          style: textSize11,
         ),
         trailing: Text(
           '${s.pingAvg}${result.statistic?.avg?.toStringAsFixed(2) ?? s.unknown} $ms',

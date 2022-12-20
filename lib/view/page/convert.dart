@@ -21,7 +21,7 @@ class _ConvertPageState extends State<ConvertPage>
   late TextEditingController _textEditingControllerResult;
   late MediaQueryData _media;
   late ThemeData _theme;
-  late S s;
+  late S _s;
 
   int _typeOptionIndex = 0;
 
@@ -37,7 +37,7 @@ class _ConvertPageState extends State<ConvertPage>
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
     _theme = Theme.of(context);
-    s = S.of(context);
+    _s = S.of(context);
   }
 
   @override
@@ -65,7 +65,7 @@ class _ConvertPageState extends State<ConvertPage>
             showSnackBar(context, Text('Error: \n$e'));
           }
         },
-        tooltip: s.convert,
+        tooltip: _s.convert,
         heroTag: 'convert fab',
         child: const Icon(Icons.send),
       ),
@@ -84,7 +84,7 @@ class _ConvertPageState extends State<ConvertPage>
       case 3:
         return Uri.decodeFull(text);
       default:
-        return s.unkownConvertMode;
+        return _s.unkownConvertMode;
     }
   }
 
@@ -96,8 +96,8 @@ class _ConvertPageState extends State<ConvertPage>
   }
 
   Widget _buildTypeOption() {
-    final decode = s.decode;
-    final encode = s.encode;
+    final decode = _s.decode;
+    final encode = _s.encode;
     final List<String> typeOption = [
       'Base64 $decode',
       'Base64 $encode',
@@ -113,7 +113,7 @@ class _ConvertPageState extends State<ConvertPage>
             TextButton(
               style: ButtonStyle(
                   foregroundColor: MaterialStateProperty.all(primaryColor)),
-              child: Icon(Icons.change_circle, semanticLabel: s.upsideDown),
+              child: Icon(Icons.change_circle, semanticLabel: _s.upsideDown),
               onPressed: () {
                 final temp = _textEditingController.text;
                 _textEditingController.text = _textEditingControllerResult.text;
@@ -124,7 +124,7 @@ class _ConvertPageState extends State<ConvertPage>
               style: ButtonStyle(
                 foregroundColor: MaterialStateProperty.all(primaryColor),
               ),
-              child: Icon(Icons.copy, semanticLabel: s.copy),
+              child: Icon(Icons.copy, semanticLabel: _s.copy),
               onPressed: () => Clipboard.setData(
                 ClipboardData(
                     text: _textEditingControllerResult.text == ''
@@ -150,7 +150,7 @@ class _ConvertPageState extends State<ConvertPage>
                     color: primaryColor),
               ),
               Text(
-                s.currentMode,
+                _s.currentMode,
                 textScaleFactor: 1.0,
                 textAlign: TextAlign.right,
                 style: const TextStyle(fontSize: 9.0, color: Colors.grey),

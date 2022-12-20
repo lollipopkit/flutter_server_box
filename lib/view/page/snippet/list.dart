@@ -27,19 +27,19 @@ class _SnippetListPageState extends State<SnippetListPage> {
 
   final _textStyle = TextStyle(color: primaryColor);
 
-  late S s;
+  late S _s;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    s = S.of(context);
+    _s = S.of(context);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(s.snippet, style: textSize18),
+        title: Text(_s.snippet, style: textSize18),
       ),
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
@@ -79,7 +79,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
                                         'snippet edit page')
                                     .go(context),
                                 child: Text(
-                                  s.edit,
+                                  _s.edit,
                                   style: _textStyle,
                                 ),
                               ),
@@ -93,7 +93,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
                                   run(context, snippet);
                                 },
                                 child: Text(
-                                  s.run,
+                                  _s.run,
                                   style: _textStyle,
                                 ),
                               )
@@ -106,7 +106,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
                 },
               )
             : Center(
-                child: Text(s.noSavedSnippet),
+                child: Text(_s.noSavedSnippet),
               );
       },
     );
@@ -115,11 +115,11 @@ class _SnippetListPageState extends State<SnippetListPage> {
   void _showRunDialog(Snippet snippet) {
     showRoundDialog(
       context,
-      s.chooseDestination,
+      _s.chooseDestination,
       Consumer<ServerProvider>(
         builder: (_, provider, __) {
           if (provider.servers.isEmpty) {
-            return Text(s.noServerAvailable);
+            return Text(_s.noServerAvailable);
           }
           _selectedIndex = provider.servers.first.info;
           return SizedBox(
@@ -163,11 +163,11 @@ class _SnippetListPageState extends State<SnippetListPage> {
       [
         TextButton(
           onPressed: () async => run(context, snippet),
-          child: Text(s.run),
+          child: Text(_s.run),
         ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(s.cancel),
+          child: Text(_s.cancel),
         ),
       ],
     );
@@ -179,12 +179,12 @@ class _SnippetListPageState extends State<SnippetListPage> {
     if (result != null) {
       showRoundDialog(
         context,
-        s.result,
+        _s.result,
         Text(result, style: const TextStyle(fontSize: 13)),
         [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(s.close),
+            child: Text(_s.close),
           )
         ],
       );

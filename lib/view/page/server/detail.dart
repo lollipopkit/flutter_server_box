@@ -24,13 +24,13 @@ class ServerDetailPage extends StatefulWidget {
 class _ServerDetailPageState extends State<ServerDetailPage>
     with SingleTickerProviderStateMixin {
   late MediaQueryData _media;
-  late S s;
+  late S _s;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
-    s = S.of(context);
+    _s = S.of(context);
   }
 
   @override
@@ -315,7 +315,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     if (ns.devices.isEmpty) {
       children.add(Center(
         child: Text(
-          s.noInterface,
+          _s.noInterface,
           style: const TextStyle(color: Colors.grey, fontSize: 13),
         ),
       ));

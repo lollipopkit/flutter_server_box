@@ -21,10 +21,10 @@ const backupFormatVersion = 1;
 class BackupPage extends StatelessWidget {
   BackupPage({Key? key}) : super(key: key);
 
-  final setting = locator<SettingStore>();
-  final server = locator<ServerStore>();
-  final snippet = locator<SnippetStore>();
-  final privateKey = locator<PrivateKeyStore>();
+  final _setting = locator<SettingStore>();
+  final _server = locator<ServerStore>();
+  final _snippet = locator<SnippetStore>();
+  final _privateKey = locator<PrivateKeyStore>();
 
   @override
   Widget build(BuildContext context) {
@@ -100,12 +100,12 @@ class BackupPage extends StatelessWidget {
           Backup(
             backupFormatVersion,
             DateTime.now().toString().split('.').first,
-            server.fetch(),
-            snippet.fetch(),
-            privateKey.fetch(),
-            setting.primaryColor.fetch() ?? Colors.pinkAccent.value,
-            setting.serverStatusUpdateInterval.fetch() ?? 2,
-            setting.launchPage.fetch() ?? 0,
+            _server.fetch(),
+            _snippet.fetch(),
+            _privateKey.fetch(),
+            _setting.primaryColor.fetch() ?? Colors.pinkAccent.value,
+            _setting.serverStatusUpdateInterval.fetch() ?? 2,
+            _setting.launchPage.fetch() ?? 0,
           ),
         ),
       );
@@ -186,18 +186,18 @@ class BackupPage extends StatelessWidget {
           TextButton(
             onPressed: () async {
               for (final s in backup.snippets) {
-                snippet.put(s);
+                _snippet.put(s);
               }
               for (final s in backup.spis) {
-                server.put(s);
+                _server.put(s);
               }
               for (final s in backup.keys) {
-                privateKey.put(s);
+                _privateKey.put(s);
               }
-              setting.primaryColor.put(backup.primaryColor);
-              setting.serverStatusUpdateInterval
+              _setting.primaryColor.put(backup.primaryColor);
+              _setting.serverStatusUpdateInterval
                   .put(backup.serverStatusUpdateInterval);
-              setting.launchPage.put(backup.launchPage);
+              _setting.launchPage.put(backup.launchPage);
               Navigator.of(context).pop();
               showSnackBar(context, Text(s.restoreSuccess));
             },

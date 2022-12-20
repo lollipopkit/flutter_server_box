@@ -7,6 +7,7 @@ import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/provider/docker.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/error.dart';
+import 'package:toolbox/data/res/font_style.dart';
 import 'package:toolbox/data/res/url.dart';
 import 'package:toolbox/data/store/docker.dart';
 import 'package:toolbox/generated/l10n.dart';
@@ -26,9 +27,8 @@ class DockerManagePage extends StatefulWidget {
 
 class _DockerManagePageState extends State<DockerManagePage> {
   final _docker = locator<DockerProvider>();
-  final greyTextStyle = const TextStyle(color: Colors.grey);
-  final textController = TextEditingController();
-  late S s;
+  final _textController = TextEditingController();
+  late S _s;
 
   @override
   void dispose() {
@@ -39,7 +39,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    s = S.of(context);
+    _s = S.of(context);
   }
 
   @override
@@ -50,7 +50,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
         .firstWhere((element) => element.info == widget.spi)
         .client;
     if (client == null) {
-      showSnackBar(context, Text(s.noClient));
+      showSnackBar(context, Text(_s.noClient));
       Navigator.of(context).pop();
       return;
     }
@@ -90,14 +90,14 @@ class _DockerManagePageState extends State<DockerManagePage> {
     final argsCtrl = TextEditingController();
     await showRoundDialog(
       context,
-      s.newContainer,
+      _s.newContainer,
       Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
             keyboardType: TextInputType.text,
             decoration: InputDecoration(
-                labelText: s.dockerImage, hintText: 'ubuntu:22.10'),
+                labelText: _s.dockerImage, hintText: 'ubuntu:22.10'),
             controller: imageCtrl,
             autocorrect: false,
           ),
@@ -105,14 +105,15 @@ class _DockerManagePageState extends State<DockerManagePage> {
             keyboardType: TextInputType.text,
             controller: nameCtrl,
             decoration: InputDecoration(
-                labelText: s.dockerContainerName, hintText: 'ubuntu22'),
+                labelText: _s.dockerContainerName, hintText: 'ubuntu22'),
             autocorrect: false,
           ),
           TextField(
             keyboardType: TextInputType.text,
             controller: argsCtrl,
             decoration: InputDecoration(
-                labelText: s.extraArgs, hintText: '-p 2222:22 -v ~/.xxx/:/xxx'),
+                labelText: _s.extraArgs,
+                hintText: '-p 2222:22 -v ~/.xxx/:/xxx'),
             autocorrect: false,
           ),
         ],
@@ -120,7 +121,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
       [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(s.cancel),
+          child: Text(_s.cancel),
         ),
         TextButton(
           onPressed: () async {
@@ -133,7 +134,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
               ),
             );
           },
-          child: Text(s.ok),
+          child: Text(_s.ok),
         )
       ],
     );
@@ -142,22 +143,22 @@ class _DockerManagePageState extends State<DockerManagePage> {
   Future<void> _showAddCmdPreview(String cmd) async {
     await showRoundDialog(
       context,
-      s.preview,
+      _s.preview,
       Text(cmd),
       [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(s.cancel),
+          child: Text(_s.cancel),
         ),
         TextButton(
           onPressed: () async {
             Navigator.of(context).pop();
             final result = await _docker.run(cmd);
             if (result != null) {
-              showSnackBar(context, Text(getErrMsg(result) ?? s.unknownError));
+              showSnackBar(context, Text(getErrMsg(result) ?? _s.unknownError));
             }
           },
-          child: Text(s.run),
+          child: Text(_s.run),
         )
       ],
     );
@@ -184,10 +185,10 @@ class _DockerManagePageState extends State<DockerManagePage> {
   }
 
   void onSubmitted() {
-    if (textController.text == '') {
-      showRoundDialog(context, s.attention, Text(s.fieldMustNotEmpty), [
+    if (_textController.text == '') {
+      showRoundDialog(context, _s.attention, Text(_s.fieldMustNotEmpty), [
         TextButton(
-            onPressed: () => Navigator.of(context).pop(), child: Text(s.ok)),
+            onPressed: () => Navigator.of(context).pop(), child: Text(_s.ok)),
       ]);
       return;
     }
@@ -200,12 +201,12 @@ class _DockerManagePageState extends State<DockerManagePage> {
       context,
       widget.spi.user,
       TextField(
-        controller: textController,
+        controller: _textController,
         keyboardType: TextInputType.visiblePassword,
         obscureText: true,
         onSubmitted: (_) => onSubmitted(),
         decoration: InputDecoration(
-          labelText: s.pwd,
+          labelText: _s.pwd,
         ),
       ),
       [
@@ -214,18 +215,18 @@ class _DockerManagePageState extends State<DockerManagePage> {
             Navigator.of(context).pop();
             Navigator.of(context).pop();
           },
-          child: Text(s.cancel),
+          child: Text(_s.cancel),
         ),
         TextButton(
           onPressed: () => onSubmitted(),
           child: Text(
-            s.ok,
+            _s.ok,
             style: const TextStyle(color: Colors.red),
           ),
         ),
       ],
     );
-    return textController.text.trim();
+    return _textController.text.trim();
   }
 
   Widget _buildMain(DockerProvider docker) {
@@ -260,7 +261,8 @@ class _DockerManagePageState extends State<DockerManagePage> {
       padding: const EdgeInsets.all(7),
       children: [
         _buildLoading(docker),
-        _buildVersion(docker.edition ?? s.unknown, docker.version ?? s.unknown),
+        _buildVersion(
+            docker.edition ?? _s.unknown, docker.version ?? _s.unknown),
         _buildPsItems(running, docker),
         _buildImages(docker),
         _buildEditHost(running, docker),
@@ -273,10 +275,10 @@ class _DockerManagePageState extends State<DockerManagePage> {
       return const SizedBox();
     }
     return ExpansionTile(
-        title: Text(s.imagesList),
+        title: Text(_s.imagesList),
         subtitle: Text(
-          s.dockerImagesFmt(docker.images!.length),
-          style: greyTextStyle,
+          _s.dockerImagesFmt(docker.images!.length),
+          style: grey,
         ),
         children: docker.images!
             .map(
@@ -289,7 +291,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
                     final result = await _docker.run('docker rmi ${e.id} -f');
                     if (result != null) {
                       showSnackBar(
-                          context, Text(getErrMsg(result) ?? s.unknownError));
+                          context, Text(getErrMsg(result) ?? _s.unknownError));
                     }
                   },
                 ),
@@ -322,12 +324,12 @@ class _DockerManagePageState extends State<DockerManagePage> {
       child: Column(
         children: [
           Text(
-            s.dockerEmptyRunningItems,
+            _s.dockerEmptyRunningItems,
             textAlign: TextAlign.center,
           ),
           TextButton(
             onPressed: () => _showEditHostDialog(docker),
-            child: Text(s.dockerEditHost),
+            child: Text(_s.dockerEditHost),
           )
         ],
       ),
@@ -337,7 +339,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   Future<void> _showEditHostDialog(DockerProvider docker) async {
     await showRoundDialog(
       context,
-      s.dockerEditHost,
+      _s.dockerEditHost,
       TextField(
         maxLines: 1,
         autocorrect: false,
@@ -352,7 +354,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
       [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(s.cancel),
+          child: Text(_s.cancel),
         ),
       ],
     );
@@ -362,16 +364,16 @@ class _DockerManagePageState extends State<DockerManagePage> {
     var errStr = '';
     switch (err.type) {
       case DockerErrType.noClient:
-        errStr = s.noClient;
+        errStr = _s.noClient;
         break;
       case DockerErrType.notInstalled:
-        errStr = s.dockerNotInstalled;
+        errStr = _s.dockerNotInstalled;
         break;
       case DockerErrType.invalidVersion:
-        errStr = s.invalidVersion;
+        errStr = _s.invalidVersion;
         break;
       default:
-        errStr = err.message ?? s.unknown;
+        errStr = err.message ?? _s.unknown;
     }
     return Text(errStr);
   }
@@ -380,18 +382,18 @@ class _DockerManagePageState extends State<DockerManagePage> {
     switch (err.type) {
       case DockerErrType.notInstalled:
         return UrlText(
-          text: s.installDockerWithUrl,
-          replace: s.install,
+          text: _s.installDockerWithUrl,
+          replace: _s.install,
         );
       case DockerErrType.noClient:
-        return Text(s.waitConnection);
+        return Text(_s.waitConnection);
       case DockerErrType.invalidVersion:
         return UrlText(
-          text: s.invalidVersionHelp(issueUrl),
+          text: _s.invalidVersionHelp(issueUrl),
           replace: 'Github',
         );
       default:
-        return Text(s.unknownError);
+        return Text(_s.unknownError);
     }
   }
 
@@ -407,8 +409,8 @@ class _DockerManagePageState extends State<DockerManagePage> {
 
   Widget _buildPsItems(List<DockerPsItem> running, DockerProvider docker) {
     return ExpansionTile(
-      title: Text(s.containerStatus),
-      subtitle: Text(_buildSubtitle(running), style: greyTextStyle),
+      title: Text(_s.containerStatus),
+      subtitle: Text(_buildSubtitle(running), style: grey),
       children: running.map(
         (item) {
           return ListTile(
@@ -437,7 +439,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
       ],
       onSelected: (value) {
         if (busy) {
-          showSnackBar(context, Text(s.isBusy));
+          showSnackBar(context, Text(_s.isBusy));
           return;
         }
         final item = value as DropdownBtnItem;
@@ -460,8 +462,8 @@ class _DockerManagePageState extends State<DockerManagePage> {
     final runningCount = running.where((element) => element.running).length;
     final stoped = running.length - runningCount;
     if (stoped == 0) {
-      return s.dockerStatusRunningFmt(runningCount);
+      return _s.dockerStatusRunningFmt(runningCount);
     }
-    return s.dockerStatusRunningAndStoppedFmt(runningCount, stoped);
+    return _s.dockerStatusRunningAndStoppedFmt(runningCount, stoped);
   }
 }
