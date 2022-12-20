@@ -31,11 +31,13 @@ class SFTPPage extends StatefulWidget {
 
 class _SFTPPageState extends State<SFTPPage> {
   final SftpBrowserStatus _status = SftpBrowserStatus();
-
   final ScrollController _scrollController = ScrollController();
 
   late MediaQueryData _media;
   late S _s;
+
+  ServerInfo? _si;
+  SSHClient? _client;
 
   @override
   void didChangeDependencies() {
@@ -47,8 +49,9 @@ class _SFTPPageState extends State<SFTPPage> {
   @override
   void initState() {
     super.initState();
-    _status.spi = widget.spi;
-    _status.selected = true;
+    final serverProvider = locator<ServerProvider>();
+    _si = serverProvider.servers.firstWhere((s) => s.info == widget.spi);
+    _client = _si?.client;
   }
 
   @override
@@ -86,7 +89,71 @@ class _SFTPPageState extends State<SFTPPage> {
         ],
       ),
       body: _buildFileView(),
+      bottomNavigationBar: _buildPath(),
     );
+  }
+
+  Widget _buildPath() {
+    return SafeArea(
+        child: Container(
+      padding: const EdgeInsets.fromLTRB(11, 7, 11, 11),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Divider(),
+          (_status.path?.path ?? _s.loadingFiles).omitStartStr(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              IconButton(
+                padding: const EdgeInsets.all(0),
+                onPressed: () async {
+                  await backward();
+                },
+                icon: const Icon(Icons.arrow_back),
+              ),
+              IconButton(
+                padding: const EdgeInsets.all(0),
+                onPressed: () async {
+                  final p = await showRoundDialog<String?>(
+                    context,
+                    _s.goto,
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          decoration: InputDecoration(
+                            labelText: _s.path,
+                            hintText: '/',
+                          ),
+                          onSubmitted: (value) =>
+                              Navigator.of(context).pop(value),
+                        ),
+                      ],
+                    ),
+                    [
+                      TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: Text(_s.cancel))
+                    ],
+                  );
+
+                  if (p != null) {
+                    if (p.isEmpty) {
+                      showSnackBar(context, Text(_s.fieldMustNotEmpty));
+                      return;
+                    }
+                    _status.path?.update(p);
+                    listDir(path: p);
+                  }
+                },
+                icon: const Icon(Icons.gps_fixed),
+              )
+            ],
+          )
+        ],
+      ),
+    ));
   }
 
   Widget get centerCircleLoading => Center(
@@ -101,48 +168,36 @@ class _SFTPPageState extends State<SFTPPage> {
       );
 
   Widget _buildFileView() {
-    if (!_status.selected) {
-      return ListView(
-        children: [
-          _buildDestSelector(),
-        ],
-      );
+    if (_client == null ||
+        _si?.connectionState != ServerConnectionState.connected) {
+      return centerCircleLoading;
     }
-    final spi = _status.spi;
-    final si =
-        locator<ServerProvider>().servers.firstWhere((s) => s.info == spi);
-    final client = si.client;
-    if (client == null ||
-        si.connectionState != ServerConnectionState.connected) {
+
+    if (_status.isBusy) {
       return centerCircleLoading;
     }
 
     if (_status.files == null) {
       _status.path = AbsolutePath('/');
-      listDir(path: '/', client: client);
+      listDir(path: '/', client: _client);
       return centerCircleLoading;
     } else {
       return RefreshIndicator(
         child: FadeIn(
-          key: Key(_status.spi!.name + _status.path!.path),
+          key: Key(widget.spi.name + _status.path!.path),
           child: ListView.builder(
-            itemCount: _status.files!.length + 1,
+            itemCount: _status.files!.length,
             controller: _scrollController,
             itemBuilder: (context, index) {
-              if (index == 0) {
-                return _buildDestSelector();
-              }
-              final file = _status.files![index - 1];
+              final file = _status.files![index];
               final isDir = file.attr.isDirectory;
               return ListTile(
                 leading: Icon(isDir ? Icons.folder : Icons.insert_drive_file),
                 title: Text(file.filename),
                 trailing: Text(
-                  DateTime.fromMillisecondsSinceEpoch(
-                          (file.attr.modifyTime ?? 0) * 1000)
-                      .toString()
-                      .replaceFirst('.000', ''),
+                  '${getTime(file.attr.modifyTime)}\n${getMode(file.attr.mode)}',
                   style: const TextStyle(color: Colors.grey),
+                  textAlign: TextAlign.right,
                 ),
                 subtitle:
                     isDir ? null : Text((file.attr.size ?? 0).convertBytes),
@@ -162,6 +217,30 @@ class _SFTPPageState extends State<SFTPPage> {
         onRefresh: () => listDir(path: _status.path?.path),
       );
     }
+  }
+
+  String getTime(int? unixMill) {
+    return DateTime.fromMillisecondsSinceEpoch((unixMill ?? 0) * 1000)
+        .toString()
+        .replaceFirst('.000', '');
+  }
+
+  String getMode(SftpFileMode? mode) {
+    if (mode == null) {
+      return '---';
+    }
+
+    final user = getRoleMode(mode.userRead, mode.userWrite, mode.userExecute);
+    final group =
+        getRoleMode(mode.groupRead, mode.groupWrite, mode.groupExecute);
+    final other =
+        getRoleMode(mode.otherRead, mode.otherWrite, mode.otherExecute);
+
+    return '$user$group$other';
+  }
+
+  String getRoleMode(bool r, bool w, bool x) {
+    return '${r ? 'r' : '-'}${w ? 'w' : '-'}${x ? 'x' : '-'}';
   }
 
   void onItemPress(BuildContext context, SftpName file, bool showDownload) {
@@ -214,11 +293,11 @@ class _SFTPPageState extends State<SFTPPage> {
             final remotePath =
                 prePath + (prePath.endsWith('/') ? '' : '/') + name.filename;
             final local = '${(await sftpDownloadDir).path}$remotePath';
-            final pubKeyId = _status.spi!.pubKeyId;
+            final pubKeyId = widget.spi.pubKeyId;
 
             locator<SftpDownloadProvider>().add(
               DownloadItem(
-                _status.spi!,
+                widget.spi,
                 remotePath,
                 local,
               ),
@@ -429,7 +508,7 @@ class _SFTPPageState extends State<SFTPPage> {
     }
     try {
       final fs =
-          await _status.client!.listdir(path ?? (_status.path?.path ?? '/'));
+          await _status.client!.listdir(path ?? _status.path?.path ?? '/');
       fs.sort((a, b) => a.filename.compareTo(b.filename));
       fs.removeAt(0);
       if (mounted) {
@@ -450,41 +529,13 @@ class _SFTPPageState extends State<SFTPPage> {
           )
         ],
       );
-      if (_status.path!.undo()) {
-        await listDir();
-      }
+      await backward();
     }
   }
 
-  Widget _buildDestSelector() {
-    final str = _status.path?.path;
-    return ExpansionTile(
-        title: Text(_status.spi?.name ?? _s.chooseDestination),
-        subtitle: _status.selected
-            ? str!.omitStartStr(style: const TextStyle(color: Colors.grey))
-            : null,
-        children: locator<ServerProvider>()
-            .servers
-            .map((e) => _buildDestSelectorItem(e.info))
-            .toList());
-  }
-
-  Widget _buildDestSelectorItem(ServerPrivateInfo spi) {
-    return ListTile(
-      title: Text(spi.name),
-      subtitle: Text('${spi.user}@${spi.ip}:${spi.port}'),
-      onTap: () {
-        _status.spi = spi;
-        _status.selected = true;
-        _status.path = AbsolutePath('/');
-        listDir(
-          client: locator<ServerProvider>()
-              .servers
-              .firstWhere((s) => s.info == spi)
-              .client,
-          path: '/',
-        );
-      },
-    );
+  Future<void> backward() async {
+    if (_status.path!.undo()) {
+      await listDir();
+    }
   }
 }

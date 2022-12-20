@@ -141,5 +141,7 @@
     "preview": "预览",
     "isBusy": "当前正忙",
     "imagesList": "镜像列表",
-    "dockerImagesFmt": "共 {count} 个镜像"
+    "dockerImagesFmt": "共 {count} 个镜像",
+    "path": "路径",
+    "goto": "前往"
 }

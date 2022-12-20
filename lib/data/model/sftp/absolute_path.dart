@@ -1,29 +1,35 @@
 class AbsolutePath {
-  String path;
-  String? _prePath;
-  AbsolutePath(this.path);
+  String _path;
+  String get path => _path;
+  final List<String> _prePath;
+  
+  AbsolutePath(this._path) : _prePath = ['/'];
 
   void update(String newPath) {
-    _prePath = path;
+    _prePath.add(_path);
     if (newPath == '..') {
-      path = path.substring(0, path.lastIndexOf('/'));
-      if (path == '') {
-        path = '/';
+      _path = _path.substring(0, _path.lastIndexOf('/'));
+      if (_path == '') {
+        _path = '/';
       }
       return;
     }
     if (newPath == '/') {
-      path = '/';
+      _path = '/';
       return;
     }
-    path = path + (path.endsWith('/') ? '' : '/') + newPath;
+    if (newPath.startsWith('/')) {
+      _path = newPath;
+      return;
+    }
+    _path = _path + (_path.endsWith('/') ? '' : '/') + newPath;
   }
 
   bool undo() {
-    if (_prePath == null || _prePath == path) {
+    if (_prePath.isEmpty) {
       return false;
     }
-    path = _prePath!;
+    _path = _prePath.removeLast();
     return true;
   }
 }

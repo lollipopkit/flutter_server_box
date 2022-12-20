@@ -131,6 +131,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "go": MessageLookupByLibrary.simpleMessage("Go"),
         "goSftpDlPage":
             MessageLookupByLibrary.simpleMessage("Go to SFTP download page?"),
+        "goto": MessageLookupByLibrary.simpleMessage("Go to"),
         "host": MessageLookupByLibrary.simpleMessage("Host"),
         "httpFailedWithCode": m6,
         "imagesList": MessageLookupByLibrary.simpleMessage("Images list"),
@@ -175,6 +176,7 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("No update available"),
         "ok": MessageLookupByLibrary.simpleMessage("OK"),
         "open": MessageLookupByLibrary.simpleMessage("Open"),
+        "path": MessageLookupByLibrary.simpleMessage("Path"),
         "ping": MessageLookupByLibrary.simpleMessage("Ping"),
         "pingAvg": MessageLookupByLibrary.simpleMessage("Avg:"),
         "pingInputIP": MessageLookupByLibrary.simpleMessage(

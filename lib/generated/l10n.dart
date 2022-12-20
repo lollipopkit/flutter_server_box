@@ -1480,6 +1480,26 @@ class S {
       args: [count],
     );
   }
+
+  /// `Path`
+  String get path {
+    return Intl.message(
+      'Path',
+      name: 'path',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Go to`
+  String get goto {
+    return Intl.message(
+      'Go to',
+      name: 'goto',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

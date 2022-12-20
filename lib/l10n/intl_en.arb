@@ -141,5 +141,7 @@
     "preview": "Preview",
     "isBusy": "Is busy now",
     "imagesList": "Images list",
-    "dockerImagesFmt": "{count} images"
+    "dockerImagesFmt": "{count} images",
+    "path": "Path",
+    "goto": "Go to"
 }
