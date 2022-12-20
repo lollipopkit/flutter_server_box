@@ -41,7 +41,7 @@
     "versionUnknownUpdate": "Current: v1.0.{build}",
     "versionHaveUpdate": "Found: v1.0.{build}, click to update",
     "second": "s",
-    "updateIntervalEqual0": "You set to 0, will not update automatically.",
+    "updateIntervalEqual0": "You set to 0, will not update automatically.\nCan't calculate CPU status.",
     "edit": "Edit",
     "noSavedPrivateKey": "No saved private keys.",
     "name": "Name",

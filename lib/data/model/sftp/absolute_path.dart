@@ -2,7 +2,7 @@ class AbsolutePath {
   String _path;
   String get path => _path;
   final List<String> _prePath;
-  
+
   AbsolutePath(this._path) : _prePath = ['/'];
 
   void update(String newPath) {

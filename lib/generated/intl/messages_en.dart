@@ -237,7 +237,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "update": MessageLookupByLibrary.simpleMessage("Update"),
         "updateAll": MessageLookupByLibrary.simpleMessage("Update all"),
         "updateIntervalEqual0": MessageLookupByLibrary.simpleMessage(
-            "You set to 0, will not update automatically."),
+            "You set to 0, will not update automatically.\nCan\'t calculate CPU status."),
         "updateServerStatusInterval": MessageLookupByLibrary.simpleMessage(
             "Server status update interval"),
         "upsideDown": MessageLookupByLibrary.simpleMessage("Upside Down"),

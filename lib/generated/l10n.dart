@@ -470,10 +470,10 @@ class S {
     );
   }
 
-  /// `You set to 0, will not update automatically.`
+  /// `You set to 0, will not update automatically.\nCan't calculate CPU status.`
   String get updateIntervalEqual0 {
     return Intl.message(
-      'You set to 0, will not update automatically.',
+      'You set to 0, will not update automatically.\nCan\'t calculate CPU status.',
       name: 'updateIntervalEqual0',
       desc: '',
       args: [],
