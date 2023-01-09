@@ -2,6 +2,7 @@ import 'package:after_layout/after_layout.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/model/server/private_key_info.dart';
 import 'package:toolbox/data/provider/private_key.dart';
@@ -9,6 +10,8 @@ import 'package:toolbox/data/res/font_style.dart';
 import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/widget/input_decoration.dart';
+
+const _format = 'text/plain';
 
 class PrivateKeyEditPage extends StatefulWidget {
   const PrivateKeyEditPage({Key? key, this.info}) : super(key: key);
@@ -143,11 +146,16 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
   }
 
   @override
-  void afterFirstLayout(BuildContext context) {
+  Future<void> afterFirstLayout(BuildContext context) async {
     if (widget.info != null) {
       _nameController.text = widget.info!.id;
       _keyController.text = widget.info!.privateKey;
       _pwdController.text = widget.info!.password;
+    } else {
+      final clipdata = ((await Clipboard.getData(_format))?.text ?? '').trim();
+      if (clipdata.startsWith('-----BEGIN') && clipdata.endsWith('-----')) {
+        _keyController.text = clipdata;
+      }
     }
   }
 }

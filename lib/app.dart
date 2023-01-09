@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:toolbox/core/extension/colorx.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/store/setting.dart';
@@ -7,24 +8,8 @@ import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/home.dart';
 
-const Set<MaterialState> interactiveStates = <MaterialState>{
-  MaterialState.pressed,
-  MaterialState.hovered,
-  MaterialState.focused,
-  MaterialState.selected
-};
-
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
-
-  MaterialStateProperty<Color?> getMaterialStateColor(Color primaryColor) {
-    return MaterialStateProperty.resolveWith((states) {
-      if (states.any(interactiveStates.contains)) {
-        return primaryColor;
-      }
-      return null;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,11 +19,13 @@ class MyApp extends StatelessWidget {
         builder: (_, value, __) {
           final primaryColor = Color(value);
           final textStyle = TextStyle(color: primaryColor);
+          final materialColor = primaryColor.materialStateColor;
+          final materialColorAlpha =
+              primaryColor.withOpacity(0.7).materialStateColor;
           return MaterialApp(
             localizationsDelegates: const [
               S.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
             ],
             supportedLocales: S.delegate.supportedLocales,
             title: BuildData.name,
@@ -50,10 +37,8 @@ class MyApp extends StatelessWidget {
               iconTheme: IconThemeData(color: primaryColor),
               primaryIconTheme: IconThemeData(color: primaryColor),
               switchTheme: SwitchThemeData(
-                thumbColor: getMaterialStateColor(primaryColor),
-                trackColor: getMaterialStateColor(
-                  primaryColor.withOpacity(0.7),
-                ),
+                thumbColor: materialColor,
+                trackColor: materialColorAlpha,
               ),
               buttonTheme: ButtonThemeData(splashColor: primaryColor),
               inputDecorationTheme: InputDecorationTheme(
@@ -63,7 +48,7 @@ class MyApp extends StatelessWidget {
                 ),
               ),
               radioTheme: RadioThemeData(
-                fillColor: getMaterialStateColor(primaryColor),
+                fillColor: materialColor,
               ),
             ),
             darkTheme: ThemeData.dark().copyWith(
@@ -73,10 +58,8 @@ class MyApp extends StatelessWidget {
               iconTheme: IconThemeData(color: primaryColor),
               primaryIconTheme: IconThemeData(color: primaryColor),
               switchTheme: SwitchThemeData(
-                thumbColor: getMaterialStateColor(primaryColor),
-                trackColor: getMaterialStateColor(
-                  primaryColor.withOpacity(0.7),
-                ),
+                thumbColor: materialColor,
+                trackColor: materialColorAlpha,
               ),
               buttonTheme: ButtonThemeData(splashColor: primaryColor),
               inputDecorationTheme: InputDecorationTheme(
@@ -86,7 +69,7 @@ class MyApp extends StatelessWidget {
                 ),
               ),
               radioTheme: RadioThemeData(
-                fillColor: getMaterialStateColor(primaryColor),
+                fillColor: materialColor,
               ),
             ),
             home: MyHomePage(primaryColor: primaryColor),

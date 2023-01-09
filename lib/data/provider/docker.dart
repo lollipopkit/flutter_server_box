@@ -23,6 +23,8 @@ const _dockerPS = 'docker ps -a';
 final _logger = Logger('DockerProvider');
 
 class DockerProvider extends BusyProvider {
+  final dockerStore = locator<DockerStore>();
+
   SSHClient? client;
   String? userName;
   List<DockerPsItem>? items;
@@ -156,7 +158,7 @@ class DockerProvider extends BusyProvider {
 
   // judge whether to use DOCKER_HOST / sudo
   String _wrap(String cmd) {
-    final dockerHost = locator<DockerStore>().getDockerHost(hostId!);
+    final dockerHost = dockerStore.getDockerHost(hostId!);
     if (dockerHost == null || dockerHost.isEmpty) {
       return 'sudo $cmd'.withLangExport;
     }
