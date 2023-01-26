@@ -8,13 +8,16 @@ import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/provider_base.dart';
 import 'package:toolbox/data/model/apt/upgrade_pkg_info.dart';
-import 'package:toolbox/data/model/distribution.dart';
+import 'package:toolbox/data/model/server/dist.dart';
+
+enum _Type { apt, yum, dnf, zypper, pkg, pacman, opkg }
 
 class AptProvider extends BusyProvider {
   final logger = Logger('AptProvider');
 
   SSHClient? client;
-  Distribution? dist;
+  Dist? dist;
+  _Type? type;
   Function()? onUpgrade;
   Function()? onUpdate;
   PwdRequestFunc? onPasswordRequest;
@@ -31,7 +34,7 @@ class AptProvider extends BusyProvider {
 
   Future<void> init(
       SSHClient client,
-      Distribution dist,
+      Dist? dist,
       Function() onUpgrade,
       Function() onUpdate,
       PwdRequestFunc onPasswordRequest,
@@ -41,6 +44,37 @@ class AptProvider extends BusyProvider {
     this.onUpgrade = onUpgrade;
     this.onPasswordRequest = onPasswordRequest;
     whoami = user;
+
+    switch (dist) {
+      case Dist.centos:
+      case Dist.rocky:
+        type = _Type.yum;
+        break;
+      case Dist.debian:
+      case Dist.ubuntu:
+      case Dist.kali:
+      case Dist.armbian:
+        type = _Type.apt;
+        break;
+      case Dist.fedora:
+        type = _Type.dnf;
+        break;
+      case Dist.opensuse:
+        type = _Type.zypper;
+        break;
+      case Dist.freebsd:
+        type = _Type.pkg;
+        break;
+      case Dist.wrt:
+        type = _Type.opkg;
+        break;
+      case Dist.arch:
+        type = _Type.pacman;
+        break;
+      case null:
+        error = 'Unsupported dist: $dist';
+        break;
+    }
   }
 
   bool get isSU => whoami == 'root';
@@ -51,10 +85,10 @@ class AptProvider extends BusyProvider {
     isRequestingPwd = false;
   }
 
-  Future<void> refreshInstalled() async {
+  Future<void> refresh() async {
     final result = await _update();
     try {
-      getUpgradeableList(result);
+      _parse(result);
     } catch (e) {
       error = '[Server Raw]:\n$result\n[App Error]:\n$e';
     } finally {
@@ -62,18 +96,18 @@ class AptProvider extends BusyProvider {
     }
   }
 
-  void getUpgradeableList(String? raw) {
+  void _parse(String? raw) {
     if (raw == null) return;
     var list = raw.split('\n');
-    switch (dist) {
-      case Distribution.rehl:
+    switch (type) {
+      case _Type.yum:
         list = list.sublist(2);
         list.removeWhere((element) => element.isEmpty);
         final endLine = list.lastIndexWhere(
             (element) => element.contains('Obsoleting Packages'));
         list = list.sublist(0, endLine);
         break;
-      default:
+      case _Type.apt:
         // avoid other outputs
         // such as: [Could not chdir to home directory /home/test: No such file or directory, , WARNING: apt does not have a stable CLI interface. Use with caution in scripts., , Listing...]
         final idx =
@@ -84,15 +118,18 @@ class AptProvider extends BusyProvider {
         }
         list = list.sublist(idx);
         list.removeWhere((element) => element.isEmpty);
+        break;
+      default:
+        return;
     }
     upgradeable = list.map((e) => UpgradePkgInfo(e, dist!)).toList();
   }
 
   Future<String?> _update() async {
-    switch (dist) {
-      case Distribution.rehl:
+    switch (type) {
+      case _Type.yum:
         return await client?.run(_wrap('yum check-update')).string;
-      default:
+      case _Type.apt:
         await client!.exec(
           _wrap('apt update'),
           onStderr: _onPwd,
@@ -105,18 +142,28 @@ class AptProvider extends BusyProvider {
         return await client
             ?.run('apt list --upgradeable'.withLangExport)
             .string;
+      default:
+        error = 'Unsupported dist: $dist';
+        return null;
     }
   }
 
   Future<void> upgrade() async {
     final upgradeCmd = () {
-      switch (dist) {
-        case Distribution.rehl:
+      switch (type) {
+        case _Type.yum:
           return 'yum upgrade -y';
-        default:
+        case _Type.apt:
           return 'apt upgrade -y';
+        default:
+          return null;
       }
     }();
+
+    if (upgradeCmd == null) {
+      error = 'Unsupported dist: $dist';
+      return;
+    }
 
     await client!.exec(
       _wrap(upgradeCmd),
@@ -131,7 +178,7 @@ class AptProvider extends BusyProvider {
     );
 
     upgradeLog = null;
-    refreshInstalled();
+    refresh();
   }
 
   Future<void> _onPwd(String event, StreamSink<Uint8List> stdin) async {

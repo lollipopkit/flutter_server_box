@@ -11,7 +11,7 @@ import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/font_style.dart';
-import 'package:toolbox/data/res/icon/common.dart';
+import 'package:toolbox/data/res/icon.dart';
 import 'package:toolbox/data/res/tab.dart';
 import 'package:toolbox/data/res/url.dart';
 import 'package:toolbox/data/store/setting.dart';

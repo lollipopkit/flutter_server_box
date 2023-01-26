@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/numx.dart';
+import 'package:toolbox/data/model/server/dist.dart';
 import 'package:toolbox/data/model/server/net_speed.dart';
 import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/server_status.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/font_style.dart';
-import 'package:toolbox/data/res/icon/linux_icons.dart';
 import 'package:toolbox/data/res/padding.dart';
 import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
@@ -67,7 +67,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildLinuxIcon(String sysVer) {
-    final iconPath = linuxIcons.search(sysVer);
+    final iconPath = sysVer.dist?.iconPath;
     if (iconPath == null) return const SizedBox();
     return ConstrainedBox(
       constraints: BoxConstraints(

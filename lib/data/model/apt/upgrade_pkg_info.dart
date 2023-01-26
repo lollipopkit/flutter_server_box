@@ -1,8 +1,8 @@
-import 'package:toolbox/data/model/distribution.dart';
+import 'package:toolbox/data/model/server/dist.dart';
 
 class UpgradePkgInfo {
   final String _raw;
-  final Distribution _dist;
+  final Dist _dist;
 
   late String package;
   late String nowVersion;
@@ -11,12 +11,15 @@ class UpgradePkgInfo {
 
   UpgradePkgInfo(this._raw, this._dist) {
     switch (_dist) {
-      case Distribution.debian:
-      case Distribution.unknown:
+      case Dist.debian:
+      case Dist.ubuntu:
         _parseApt();
         break;
-      case Distribution.rehl:
+      case Dist.centos:
         _parseYum();
+        break;
+      default:
+        throw Exception('Unsupported dist: $_dist');
     }
   }
 

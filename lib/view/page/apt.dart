@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/model/apt/upgrade_pkg_info.dart';
+import 'package:toolbox/data/model/server/dist.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/provider/apt.dart';
 import 'package:toolbox/data/provider/server.dart';
@@ -68,7 +68,7 @@ class _AptManagePageState extends State<AptManagePage>
       onPwdRequest,
       widget.spi.user,
     );
-    _aptProvider.refreshInstalled();
+    _aptProvider.refresh();
   }
 
   void onSubmitted() {
