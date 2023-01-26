@@ -164,7 +164,7 @@ class _ConvertPageState extends State<ConvertPage>
                 title: Text(
                   e,
                   style: TextStyle(
-                    color: _theme.textTheme.bodyText2?.color?.withAlpha(177),
+                    color: _theme.textTheme.bodyMedium?.color?.withAlpha(177),
                   ),
                 ),
                 trailing: _buildRadio(typeOption.indexOf(e)),

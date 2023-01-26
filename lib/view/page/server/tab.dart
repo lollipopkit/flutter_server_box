@@ -124,7 +124,7 @@ class _ServerPageState extends State<ServerPage>
     final hasError =
         cs == ServerConnectionState.failed && ss.failedInfo != null;
     final style = TextStyle(
-        color: _theme.textTheme.bodyText1!.color!.withAlpha(100), fontSize: 11);
+        color: _theme.textTheme.bodyLarge!.color!.withAlpha(100), fontSize: 11);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -279,7 +279,7 @@ class _ServerPageState extends State<ServerPage>
 
   Widget _buildIOData(String up, String down) {
     final statusTextStyle = TextStyle(
-        fontSize: 9, color: _theme.textTheme.bodyText1!.color!.withAlpha(177));
+        fontSize: 9, color: _theme.textTheme.bodyLarge!.color!.withAlpha(177));
     return SizedBox(
       width: _media.size.width * 0.2,
       child: Column(

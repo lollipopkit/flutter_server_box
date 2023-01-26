@@ -35,7 +35,7 @@ extension StringX on String {
         // Build the textspan
         var span = TextSpan(
           text: 'A' * 7 + substring(length - len),
-          style: style ?? Theme.of(context).textTheme.bodyText2,
+          style: style ?? Theme.of(context).textTheme.bodyMedium,
         );
 
         // Use a textpainter to determine if it will exceed max lines
