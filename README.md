@@ -60,4 +60,4 @@ A Flutter project which provide charts to display server status and tools to man
 
 
 ## 📝 License
-`LGPL License. lollipopkit 2021`
+`GPL v3. lollipopkit 2021`
