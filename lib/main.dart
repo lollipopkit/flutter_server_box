@@ -11,7 +11,7 @@ import 'package:toolbox/data/model/server/private_key_info.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/provider/app.dart';
-import 'package:toolbox/data/provider/apt.dart';
+import 'package:toolbox/data/provider/pkg.dart';
 import 'package:toolbox/data/provider/debug.dart';
 import 'package:toolbox/data/provider/docker.dart';
 import 'package:toolbox/data/provider/private_key.dart';
@@ -96,7 +96,7 @@ Future<void> main() async {
       MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (_) => locator<AppProvider>()),
-          ChangeNotifierProvider(create: (_) => locator<AptProvider>()),
+          ChangeNotifierProvider(create: (_) => locator<PkgProvider>()),
           ChangeNotifierProvider(create: (_) => locator<DebugProvider>()),
           ChangeNotifierProvider(create: (_) => locator<DockerProvider>()),
           ChangeNotifierProvider(create: (_) => locator<ServerProvider>()),

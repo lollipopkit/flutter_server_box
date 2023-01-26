@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/utils.dart';
-import 'package:toolbox/data/model/apt/upgrade_pkg_info.dart';
+import 'package:toolbox/data/model/pkg/upgrade_info.dart';
 import 'package:toolbox/data/model/server/dist.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
-import 'package:toolbox/data/provider/apt.dart';
+import 'package:toolbox/data/provider/pkg.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/font_style.dart';
 import 'package:toolbox/data/res/url.dart';
@@ -15,22 +15,22 @@ import 'package:toolbox/view/widget/round_rect_card.dart';
 import 'package:toolbox/view/widget/two_line_text.dart';
 import 'package:toolbox/view/widget/url_text.dart';
 
-class AptManagePage extends StatefulWidget {
-  const AptManagePage(this.spi, {Key? key}) : super(key: key);
+class PkgManagePage extends StatefulWidget {
+  const PkgManagePage(this.spi, {Key? key}) : super(key: key);
 
   final ServerPrivateInfo spi;
 
   @override
-  _AptManagePageState createState() => _AptManagePageState();
+  _PkgManagePageState createState() => _PkgManagePageState();
 }
 
-class _AptManagePageState extends State<AptManagePage>
+class _PkgManagePageState extends State<PkgManagePage>
     with SingleTickerProviderStateMixin {
   late MediaQueryData _media;
   final _scrollController = ScrollController();
   final _scrollControllerUpdate = ScrollController();
   final _textController = TextEditingController();
-  final _aptProvider = locator<AptProvider>();
+  final _aptProvider = locator<PkgProvider>();
   late S _s;
 
   @override
@@ -43,7 +43,7 @@ class _AptManagePageState extends State<AptManagePage>
   @override
   void dispose() {
     super.dispose();
-    locator<AptProvider>().clear();
+    locator<PkgProvider>().clear();
   }
 
   @override
@@ -126,7 +126,7 @@ class _AptManagePageState extends State<AptManagePage>
         centerTitle: true,
         title: TwoLineText(up: 'Apt', down: widget.spi.name),
       ),
-      body: Consumer<AptProvider>(builder: (_, apt, __) {
+      body: Consumer<PkgProvider>(builder: (_, apt, __) {
         if (apt.error != null) {
           return Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -193,7 +193,7 @@ class _AptManagePageState extends State<AptManagePage>
     );
   }
 
-  Widget _buildUpdatePanel(AptProvider apt) {
+  Widget _buildUpdatePanel(PkgProvider apt) {
     if (apt.upgradeable!.isEmpty) {
       return ListTile(
         title: Text(
@@ -249,7 +249,7 @@ class _AptManagePageState extends State<AptManagePage>
     );
   }
 
-  Widget _buildUpdateItem(UpgradePkgInfo info, AptProvider apt) {
+  Widget _buildUpdateItem(UpgradePkgInfo info, PkgProvider apt) {
     return ListTile(
       title: Text(info.package),
       subtitle: Text(

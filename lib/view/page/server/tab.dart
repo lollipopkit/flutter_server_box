@@ -13,7 +13,7 @@ import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
-import 'package:toolbox/view/page/apt.dart';
+import 'package:toolbox/view/page/pkg.dart';
 import 'package:toolbox/view/page/docker.dart';
 import 'package:toolbox/view/page/server/detail.dart';
 import 'package:toolbox/view/page/server/edit.dart';
@@ -211,8 +211,8 @@ class _ServerPageState extends State<ServerPage>
       onSelected: (value) {
         final item = value as DropdownBtnItem;
         switch (item) {
-          case ServerTabMenuItems.apt:
-            AppRoute(AptManagePage(spi), 'apt manage').go(context);
+          case ServerTabMenuItems.pkg:
+            AppRoute(PkgManagePage(spi), 'pkg manage').go(context);
             break;
           case ServerTabMenuItems.sftp:
             AppRoute(SFTPPage(spi), 'SFTP').go(context);

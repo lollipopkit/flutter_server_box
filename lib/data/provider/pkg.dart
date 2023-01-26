@@ -7,13 +7,13 @@ import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/provider_base.dart';
-import 'package:toolbox/data/model/apt/upgrade_pkg_info.dart';
+import 'package:toolbox/data/model/pkg/upgrade_info.dart';
 import 'package:toolbox/data/model/server/dist.dart';
 
 enum _Type { apt, yum, dnf, zypper, pkg, pacman, opkg }
 
-class AptProvider extends BusyProvider {
-  final logger = Logger('AptProvider');
+class PkgProvider extends BusyProvider {
+  final logger = Logger('PkgProvider');
 
   SSHClient? client;
   Dist? dist;
@@ -30,7 +30,7 @@ class AptProvider extends BusyProvider {
   String lastLog = '';
   bool isRequestingPwd = false;
 
-  AptProvider();
+  PkgProvider();
 
   Future<void> init(
       SSHClient client,

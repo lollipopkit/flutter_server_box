@@ -1,6 +1,6 @@
 import 'package:get_it/get_it.dart';
 import 'package:toolbox/data/provider/app.dart';
-import 'package:toolbox/data/provider/apt.dart';
+import 'package:toolbox/data/provider/pkg.dart';
 import 'package:toolbox/data/provider/debug.dart';
 import 'package:toolbox/data/provider/docker.dart';
 import 'package:toolbox/data/provider/private_key.dart';
@@ -22,7 +22,7 @@ void setupLocatorForServices() {
 
 void setupLocatorForProviders() {
   locator.registerSingleton(AppProvider());
-  locator.registerSingleton(AptProvider());
+  locator.registerSingleton(PkgProvider());
   locator.registerSingleton(DebugProvider());
   locator.registerSingleton(DockerProvider());
   locator.registerSingleton(ServerProvider());
