@@ -145,5 +145,6 @@
     "path": "Path",
     "goto": "Go to",
     "showDistLogo": "Show distribution logo",
-    "onServerDetailPage": "On server detail page"
+    "onServerDetailPage": "On server detail page",
+    "addOne": "Add one"
 }

@@ -145,5 +145,6 @@
     "path": "路径",
     "goto": "前往",
     "showDistLogo": "显示发行版 Logo",
-    "onServerDetailPage": "在服务器详情页"
+    "onServerDetailPage": "在服务器详情页",
+    "addOne": "前去新增"
 }

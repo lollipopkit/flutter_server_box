@@ -61,6 +61,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "aboutThanks": MessageLookupByLibrary.simpleMessage(
             "\nAll rights reserved.\n\nThanks to the following people who participated in the test."),
         "addAServer": MessageLookupByLibrary.simpleMessage("add a server"),
+        "addOne": MessageLookupByLibrary.simpleMessage("Add one"),
         "addPrivateKey":
             MessageLookupByLibrary.simpleMessage("Add private key"),
         "alreadyLastDir":

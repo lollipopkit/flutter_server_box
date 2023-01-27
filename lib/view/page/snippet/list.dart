@@ -12,6 +12,7 @@ import 'package:toolbox/data/res/padding.dart';
 import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/snippet/edit.dart';
+import 'package:toolbox/view/widget/picker.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
 class SnippetListPage extends StatefulWidget {
@@ -23,7 +24,7 @@ class SnippetListPage extends StatefulWidget {
 }
 
 class _SnippetListPageState extends State<SnippetListPage> {
-  late ServerPrivateInfo _selectedIndex;
+  late ServerPrivateInfo _selectedSpi;
 
   final _textStyle = TextStyle(color: primaryColor);
 
@@ -121,48 +122,23 @@ class _SnippetListPageState extends State<SnippetListPage> {
           if (provider.servers.isEmpty) {
             return Text(_s.noServerAvailable);
           }
-          _selectedIndex = provider.servers.first.info;
-          return SizedBox(
-            height: 111,
-            child: Stack(
-              children: [
-                Positioned(
-                  top: 36,
-                  bottom: 36,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    height: 37,
-                    decoration: const BoxDecoration(
-                      borderRadius: BorderRadius.all(Radius.circular(7)),
-                      color: Colors.black12,
-                    ),
-                  ),
-                ),
-                ListWheelScrollView.useDelegate(
-                  itemExtent: 37,
-                  diameterRatio: 1.2,
-                  controller: FixedExtentScrollController(initialItem: 0),
-                  onSelectedItemChanged: (idx) =>
-                      _selectedIndex = provider.servers[idx].info,
-                  physics: const FixedExtentScrollPhysics(),
-                  childDelegate: ListWheelChildBuilderDelegate(
-                      builder: (context, index) => Center(
-                            child: Text(
-                              provider.servers[index].info.name,
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                      childCount: provider.servers.length),
-                )
-              ],
-            ),
-          );
+          _selectedSpi = provider.servers.first.info;
+          return buildPicker(
+              provider.servers
+                  .map((e) => Text(
+                        e.info.name,
+                        textAlign: TextAlign.center,
+                      ))
+                  .toList(),
+              (idx) => _selectedSpi = provider.servers[idx].info);
         },
       ),
       [
         TextButton(
-          onPressed: () async => run(context, snippet),
+          onPressed: () async {
+            Navigator.of(context).pop();
+            run(context, snippet);
+          },
           child: Text(_s.run),
         ),
         TextButton(
@@ -174,8 +150,8 @@ class _SnippetListPageState extends State<SnippetListPage> {
   }
 
   Future<void> run(BuildContext context, Snippet snippet) async {
-    final result = await locator<ServerProvider>()
-        .runSnippet(widget.spi ?? _selectedIndex, snippet);
+    final id = (widget.spi ?? _selectedSpi).id;
+    final result = await locator<ServerProvider>().runSnippet(id, snippet);
     if (result != null) {
       showRoundDialog(
         context,

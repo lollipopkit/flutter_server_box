@@ -301,12 +301,13 @@ class ServerProvider extends BusyProvider {
     info.status.memory = mem;
   }
 
-  Future<String?> runSnippet(ServerPrivateInfo spi, Snippet snippet) async {
-    return await _servers
-        .firstWhere((element) => element.info == spi)
-        .client!
-        .run(snippet.script)
-        .string;
+  Future<String?> runSnippet(String id, Snippet snippet) async {
+    final client =
+        _servers.firstWhere((element) => element.info.id == id).client;
+    if (client == null) {
+      return null;
+    }
+    return await client.run(snippet.script).string;
   }
 }
 

@@ -10,7 +10,9 @@ import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/server_status.dart';
 import 'package:toolbox/data/provider/server.dart';
+import 'package:toolbox/data/provider/snippet.dart';
 import 'package:toolbox/data/res/color.dart';
+import 'package:toolbox/data/res/font_style.dart';
 import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/pkg.dart';
@@ -18,7 +20,8 @@ import 'package:toolbox/view/page/docker.dart';
 import 'package:toolbox/view/page/server/detail.dart';
 import 'package:toolbox/view/page/server/edit.dart';
 import 'package:toolbox/view/page/sftp/view.dart';
-import 'package:toolbox/view/page/snippet/list.dart';
+import 'package:toolbox/view/page/snippet/edit.dart';
+import 'package:toolbox/view/widget/picker.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
 class ServerPage extends StatefulWidget {
@@ -157,6 +160,8 @@ class _ServerPageState extends State<ServerPage>
                               context, _s.error, Text(ss.failedInfo ?? ''), []),
                           child: Text(_s.clickSee, style: style))
                       : Text(topRightStr, style: style, textScaleFactor: 1.0),
+                  const SizedBox(width: 7),
+                  _buildSnippetBtn(spi),
                   _buildMoreBtn(spi),
                 ],
               )
@@ -191,6 +196,63 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
+  Widget _buildSnippetBtn(ServerPrivateInfo spi) {
+    return GestureDetector(
+      child: const Icon(Icons.play_arrow),
+      onTap: () {
+        final provider = locator<SnippetProvider>();
+        if (provider.snippets.isEmpty) {
+          showRoundDialog(
+            context,
+            _s.attention,
+            Text(_s.noSavedSnippet),
+            [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(_s.ok),
+              ),
+              TextButton(
+                onPressed: () =>
+                    AppRoute(const SnippetEditPage(), 'edit snippet')
+                        .go(context),
+                child: Text(_s.addOne),
+              )
+            ],
+          );
+          return;
+        }
+
+        var snippet = provider.snippets.first;
+        showRoundDialog(
+          context,
+          _s.choose,
+          buildPicker(provider.snippets.map((e) => Text(e.name)).toList(),
+              (idx) => snippet = provider.snippets[idx]),
+          [
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                final result =
+                    await locator<ServerProvider>().runSnippet(spi.id, snippet);
+                showRoundDialog(
+                  context,
+                  _s.result,
+                  Text(result ?? _s.error, style: textSize13),
+                  [
+                    TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(_s.ok))
+                  ],
+                );
+              },
+              child: Text(_s.run),
+            )
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildMoreBtn(ServerPrivateInfo spi) {
     return buildPopuopMenu(
       items: <PopupMenuEntry>[
@@ -216,9 +278,6 @@ class _ServerPageState extends State<ServerPage>
             break;
           case ServerTabMenuItems.sftp:
             AppRoute(SFTPPage(spi), 'SFTP').go(context);
-            break;
-          case ServerTabMenuItems.snippet:
-            AppRoute(SnippetListPage(spi: spi), 'snippet list').go(context);
             break;
           case ServerTabMenuItems.edit:
             AppRoute(ServerEditPage(spi: spi), 'Edit server info').go(context);

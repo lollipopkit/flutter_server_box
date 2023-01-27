@@ -61,6 +61,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "aboutThanks":
             MessageLookupByLibrary.simpleMessage("\n保留所有权利。\n\n感谢以下参与软件测试的各位。"),
         "addAServer": MessageLookupByLibrary.simpleMessage("添加服务器"),
+        "addOne": MessageLookupByLibrary.simpleMessage("前去新增"),
         "addPrivateKey": MessageLookupByLibrary.simpleMessage("添加一个私钥"),
         "alreadyLastDir": MessageLookupByLibrary.simpleMessage("已经是最上层目录了"),
         "appPrimaryColor": MessageLookupByLibrary.simpleMessage("App主要色"),

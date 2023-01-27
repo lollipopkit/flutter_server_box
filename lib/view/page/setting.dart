@@ -23,7 +23,7 @@ class SettingPage extends StatefulWidget {
 }
 
 class _SettingPageState extends State<SettingPage> {
-  late SettingStore _setting;
+  late final SettingStore _setting;
   late int _selectedColorValue;
   late int _launchPageIdx;
   late Color priColor;
@@ -32,7 +32,7 @@ class _SettingPageState extends State<SettingPage> {
   late ThemeData _theme;
   late S _s;
 
-  var _intervalValue = 0.0;
+  var _updateInterval = 5.0;
 
   @override
   void didChangeDependencies() {
@@ -49,7 +49,7 @@ class _SettingPageState extends State<SettingPage> {
     _serverProvider = locator<ServerProvider>();
     _setting = locator<SettingStore>();
     _launchPageIdx = _setting.launchPage.fetch()!;
-    _intervalValue = _setting.serverStatusUpdateInterval.fetch()!.toDouble();
+    _updateInterval = _setting.serverStatusUpdateInterval.fetch()!.toDouble();
   }
 
   @override
@@ -126,30 +126,30 @@ class _SettingPageState extends State<SettingPage> {
         _s.willTakEeffectImmediately,
         style: textSize13Grey,
       ),
-      trailing: Text('${_intervalValue.toInt()} ${_s.second}'),
+      trailing: Text('${_updateInterval.toInt()} ${_s.second}'),
       children: [
         Slider(
           thumbColor: priColor,
           activeColor: priColor.withOpacity(0.7),
           min: 0,
           max: 10,
-          value: _intervalValue,
+          value: _updateInterval,
           onChanged: (newValue) {
             setState(() {
-              _intervalValue = newValue;
+              _updateInterval = newValue;
             });
           },
           onChangeEnd: (val) {
             _setting.serverStatusUpdateInterval.put(val.toInt());
             _serverProvider.startAutoRefresh();
           },
-          label: '${_intervalValue.toInt()} ${_s.second}',
+          label: '${_updateInterval.toInt()} ${_s.second}',
           divisions: 10,
         ),
         const SizedBox(
           height: 3,
         ),
-        _intervalValue == 0.0
+        _updateInterval == 0.0
             ? Text(
                 _s.updateIntervalEqual0,
                 style: const TextStyle(color: Colors.grey, fontSize: 12),
