@@ -19,8 +19,9 @@ final _editionReg = RegExp(r'(Client:)\s+(.+-.+)');
 final _dockerPrefixReg = RegExp(r'(sudo )?docker ');
 
 const _dockerPS = 'docker ps -a';
+const _dockerImgs = 'docker images';
 
-final _logger = Logger('DockerProvider');
+final _logger = Logger('DOCKER');
 
 class DockerProvider extends BusyProvider {
   final dockerStore = locator<DockerStore>();
@@ -84,7 +85,7 @@ class DockerProvider extends BusyProvider {
       lines.removeWhere((element) => element.isEmpty);
       items = lines.map((e) => DockerPsItem.fromRawString(e)).toList();
 
-      final imageCmd = _wrap('docker image ls');
+      final imageCmd = _wrap(_dockerImgs);
       raw = '';
       await client!.exec(
         imageCmd,

@@ -1,10 +1,38 @@
 import 'package:flutter/material.dart';
 
+/// format: [NAME][LEVEL]: MESSAGE
+final _headReg = RegExp(r'(\[[A-Za-z]+\])(\[[A-Z]+\]): (.*)');
+const _level2Color = {
+  '[INFO]': Colors.blue,
+  '[WARNING]': Colors.yellow,
+};
+
 class DebugProvider extends ChangeNotifier {
   final widgets = <Widget>[];
 
   void addText(String text) {
-    _addText(text);
+    final match = _headReg.allMatches(text);
+
+    if (match.isNotEmpty) {
+      addWidget(Text.rich(TextSpan(
+        children: [
+          TextSpan(
+            text: match.first.group(1),
+            style: const TextStyle(color: Colors.cyan),
+          ),
+          TextSpan(
+            text: match.first.group(2),
+            style: TextStyle(color: _level2Color[match.first.group(2)]),
+          ),
+          TextSpan(
+            text: '\n${match.first.group(3)}',
+          )
+        ],
+      )));
+    } else {
+      _addText(text);
+    }
+
     notifyListeners();
   }
 
@@ -45,17 +73,8 @@ class DebugProvider extends ChangeNotifier {
   }
 
   void _addWidget(Widget widget) {
-    final outlined = Container(
-      margin: const EdgeInsets.symmetric(vertical: 2),
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.green,
-        ),
-      ),
-      child: widget,
-    );
-
-    widgets.add(outlined);
+    widgets.add(widget);
+    widgets.add(const SizedBox(height: 13));
   }
 
   void clear() {

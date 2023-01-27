@@ -67,6 +67,7 @@ class _MyHomePageState extends State<MyHomePage>
   void dispose() {
     super.dispose();
     WidgetsBinding.instance.removeObserver(this);
+    _serverProvider.closeServer();
   }
 
   @override

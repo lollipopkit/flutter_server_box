@@ -50,7 +50,7 @@ class ServerProvider extends BusyProvider {
 
   Timer? _timer;
 
-  final logger = Logger('ServerProvider');
+  final logger = Logger('SERVER');
 
   Memory get emptyMemory =>
       Memory(total: 1, used: 0, free: 1, cache: 0, avail: 1);
@@ -130,6 +130,21 @@ class ServerProvider extends BusyProvider {
     for (var i = 0; i < _servers.length; i++) {
       _servers[i].connectionState = ServerConnectionState.disconnected;
     }
+  }
+
+  void closeServer({ServerPrivateInfo? spi}) {
+    if (spi == null) {
+      for (var i = 0; i < _servers.length; i++) {
+        _servers[i].client?.close();
+        _servers[i].client = null;
+      }
+      return;
+    }
+    final idx = _servers.indexWhere((e) => e.info == spi);
+    if (idx < 0) {
+      throw RangeError.index(idx, _servers);
+    }
+    _servers[idx].client?.close();
   }
 
   void addServer(ServerPrivateInfo spi) {

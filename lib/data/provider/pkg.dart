@@ -13,7 +13,7 @@ import 'package:toolbox/data/model/server/dist.dart';
 enum _Type { apt, yum, dnf, zypper, pkg, pacman, opkg }
 
 class PkgProvider extends BusyProvider {
-  final logger = Logger('PkgProvider');
+  final logger = Logger('PKG');
 
   SSHClient? client;
   Dist? dist;
