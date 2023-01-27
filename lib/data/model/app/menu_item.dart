@@ -24,11 +24,12 @@ class DropdownBtnItem {
 }
 
 class ServerTabMenuItems {
-  static const List<DropdownBtnItem> firstItems = [sftp, pkg, docker];
+  static const List<DropdownBtnItem> firstItems = [sftp, snippet, pkg, docker];
   static const List<DropdownBtnItem> secondItems = [edit];
 
   static const sftp =
       DropdownBtnItem(text: 'SFTP', icon: Icons.insert_drive_file);
+  static const snippet = DropdownBtnItem(text: 'Snippet', icon: Icons.code);
   static const pkg =
       DropdownBtnItem(text: 'Pkg', icon: Icons.system_security_update);
   static const docker =

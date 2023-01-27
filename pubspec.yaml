@@ -53,6 +53,7 @@ dependencies:
   share_plus: ^6.3.0
   intl: ^0.17.0
   share_plus_web: ^3.1.0
+  xterm: ^3.4.1
 
 dev_dependencies:
   flutter_native_splash: ^2.1.6

@@ -14,13 +14,16 @@
 </p>
 
 <p align="center">
-A Flutter project which provide charts to display server status and tools to manage server.<br>Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a>.
+A Flutter project which provide charts to display server status and tools to manage server.
+<br>
+Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a> & <a href="https://github.com/TerminalStudio/xterm.dart">xterm.dart</a>.
 </p>
 
 
-## 🔖 Milestone
+## 🔖 Feature
 - [x] Status chart view
-- [x] Snippet ~~market~~, Ping, SFTP, Docker, Apt/Yum and etc.
+- [x] SSH terminal
+- [x] `Docker Manage`, `Pkg Manage`, `SFTP`, `Snippet` ~~market~~, `Ping` and etc.
 - [x] i18n (English, Chinese)
 - [x] Desktop support
 
