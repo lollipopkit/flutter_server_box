@@ -9,7 +9,9 @@ import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/font_style.dart';
 import 'package:toolbox/data/res/padding.dart';
+import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/generated/l10n.dart';
+import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
 class ServerDetailPage extends StatefulWidget {
@@ -25,12 +27,16 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     with SingleTickerProviderStateMixin {
   late MediaQueryData _media;
   late S _s;
+  late Color pColor;
+  bool _showDistLogo = true;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
     _s = S.of(context);
+    _showDistLogo = locator<SettingStore>().showDistLogo.fetch()!;
+    pColor = primaryColor;
   }
 
   @override
@@ -52,33 +58,37 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       body: ListView(
         padding: const EdgeInsets.all(13),
         children: [
-          SizedBox(height: _media.size.height * 0.01),
-          _buildLinuxIcon(si.status.sysVer),
-          SizedBox(height: _media.size.height * 0.03),
+          ...(_buildLinuxIcon(si.status.sysVer) ?? []),
           _buildUpTimeAndSys(si.status),
           _buildCPUView(si.status),
-          _buildDiskView(si.status),
           _buildMemView(si.status),
+          _buildDiskView(si.status),
           _buildNetView(si.status.netSpeed),
+          // avoid the hieght of navigation bar
           SizedBox(height: _media.padding.bottom),
         ],
       ),
     );
   }
 
-  Widget _buildLinuxIcon(String sysVer) {
+  List<Widget>? _buildLinuxIcon(String sysVer) {
+    if (!_showDistLogo) return null;
     final iconPath = sysVer.dist?.iconPath;
-    if (iconPath == null) return const SizedBox();
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: _media.size.height * 0.13,
-        maxWidth: _media.size.width * 0.6,
+    if (iconPath == null) return null;
+    return [
+      SizedBox(height: _media.size.height * 0.03),
+      ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: _media.size.height * 0.13,
+          maxWidth: _media.size.width * 0.6,
+        ),
+        child: Image.asset(
+          iconPath,
+          fit: BoxFit.contain,
+        ),
       ),
-      child: Image.asset(
-        iconPath,
-        fit: BoxFit.contain,
-      ),
-    );
+      SizedBox(height: _media.size.height * 0.03),
+    ];
   }
 
   Widget _buildCPUView(ServerStatus ss) {
@@ -86,7 +96,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       Padding(
         padding: roundRectCardPadding,
         child: SizedBox(
-          height: 12 * ss.cpu2Status.coresCount + 67,
+          height: 12 * ss.cpu2Status.coresCount + 63,
           child: Column(children: [
             SizedBox(
               height: _media.size.height * 0.02,
@@ -96,24 +106,24 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               children: [
                 Text(
                   '${ss.cpu2Status.usedPercent(coreIdx: 0).toInt()}%',
-                  style: const TextStyle(fontSize: 27),
+                  style: textSize27,
                   textScaleFactor: 1.0,
                 ),
                 Row(
                   children: [
-                    _buildCPUTimePercent(ss.cpu2Status.user, 'user'),
+                    _buildDetailPercent(ss.cpu2Status.user, 'user'),
                     SizedBox(
                       width: _media.size.width * 0.03,
                     ),
-                    _buildCPUTimePercent(ss.cpu2Status.sys, 'sys'),
+                    _buildDetailPercent(ss.cpu2Status.sys, 'sys'),
                     SizedBox(
                       width: _media.size.width * 0.03,
                     ),
-                    _buildCPUTimePercent(ss.cpu2Status.iowait, 'io'),
+                    _buildDetailPercent(ss.cpu2Status.iowait, 'io'),
                     SizedBox(
                       width: _media.size.width * 0.03,
                     ),
-                    _buildCPUTimePercent(ss.cpu2Status.idle, 'idle')
+                    _buildDetailPercent(ss.cpu2Status.idle, 'idle')
                   ],
                 )
               ],
@@ -125,7 +135,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildCPUTimePercent(double percent, String timeType) {
+  Widget _buildDetailPercent(double percent, String timeType) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -150,7 +160,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       height: 12.0 * ss.cpu2Status.coresCount,
       child: ListView.builder(
         physics: const NeverScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(vertical: 17),
+        padding: const EdgeInsets.only(top: 13),
         itemBuilder: (ctx, idx) {
           if (idx == 0) return const SizedBox();
           return Padding(
@@ -165,7 +175,6 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildProgress(double percent) {
     if (percent > 100) percent = 100;
-    final pColor = primaryColor;
     final percentWithinOne = percent / 100;
     return LinearProgressIndicator(
       value: percentWithinOne,
@@ -193,14 +202,14 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildMemView(ServerStatus ss) {
-    final pColor = primaryColor;
-    final used = ss.memory.used / ss.memory.total;
-    final width = _media.size.width - 17 * 2 - 17 * 2;
-    const mb = 1024;
+    final used = ss.memory.used / ss.memory.total * 100;
+    final free = ss.memory.free / ss.memory.total * 100;
+    final avail = ss.memory.avail / ss.memory.total * 100;
+
     return RoundRectCard(Padding(
       padding: roundRectCardPadding,
       child: SizedBox(
-        height: 47,
+        height: 70,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -208,62 +217,33 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildMemExplain((ss.memory.used * mb).convertBytes, pColor),
-                _buildMemExplain(
-                    (ss.memory.cache * mb).convertBytes, pColor.withAlpha(77)),
-                _buildMemExplain(
-                  ((ss.memory.total - ss.memory.used) * mb).convertBytes,
-                  progressColor.resolve(context),
-                )
+                Row(
+                  children: [
+                    Text('${used.toStringAsFixed(0)}%', style: textSize27),
+                    const SizedBox(width: 7),
+                    Text('of ${(ss.memory.total * 1024).convertBytes}',
+                        style: textSize13Grey)
+                  ],
+                ),
+                Row(
+                  children: [
+                    _buildDetailPercent(free, 'free'),
+                    SizedBox(
+                      width: _media.size.width * 0.03,
+                    ),
+                    _buildDetailPercent(avail, 'avail'),
+                  ],
+                ),
               ],
             ),
             const SizedBox(
-              height: 7,
+              height: 11,
             ),
-            Row(
-              children: [
-                SizedBox(
-                    width: width * used,
-                    child: LinearProgressIndicator(
-                      value: 1,
-                      color: pColor,
-                    )),
-                SizedBox(
-                  width: width * (1 - used),
-                  child: LinearProgressIndicator(
-                    // memory.total == 1: failed to get mem, now mem = [emptyMemory] which is initial value.
-                    value: ss.memory.total == 1
-                        ? 0
-                        : ss.memory.cache / (ss.memory.total - ss.memory.used),
-                    backgroundColor: progressColor.resolve(context),
-                    color: pColor.withAlpha(77),
-                  ),
-                )
-              ],
-            )
+            _buildProgress(used)
           ],
         ),
       ),
     ));
-  }
-
-  Widget _buildMemExplain(String value, Color color) {
-    return Row(
-      children: [
-        Container(
-          color: color,
-          height: 11,
-          width: 11,
-        ),
-        const SizedBox(width: 4),
-        Text(
-          value,
-          style: textSize11,
-          textScaleFactor: 1.0,
-          textAlign: TextAlign.center,
-        )
-      ],
-    );
   }
 
   Widget _buildDiskView(ServerStatus ss) {

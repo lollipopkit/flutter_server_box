@@ -175,6 +175,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "noUpdateAvailable":
             MessageLookupByLibrary.simpleMessage("No update available"),
         "ok": MessageLookupByLibrary.simpleMessage("OK"),
+        "onServerDetailPage":
+            MessageLookupByLibrary.simpleMessage("On server detail page"),
         "open": MessageLookupByLibrary.simpleMessage("Open"),
         "path": MessageLookupByLibrary.simpleMessage("Path"),
         "ping": MessageLookupByLibrary.simpleMessage("Ping"),
@@ -221,6 +223,8 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("No download task."),
         "sftpSSHConnected":
             MessageLookupByLibrary.simpleMessage("SFTP Connected"),
+        "showDistLogo":
+            MessageLookupByLibrary.simpleMessage("Show distribution logo"),
         "snippet": MessageLookupByLibrary.simpleMessage("Snippet"),
         "spentTime": m11,
         "start": MessageLookupByLibrary.simpleMessage("Start"),

@@ -18,4 +18,4 @@ class DynamicColor {
 }
 
 final mainColor = DynamicColor(Colors.black87, Colors.white70);
-final progressColor = DynamicColor(Colors.grey.shade100, Colors.grey);
+final progressColor = DynamicColor(Colors.grey.shade100, Colors.white10);

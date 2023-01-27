@@ -76,7 +76,7 @@ android {
         }
 
         profile {
-            applicationIdSuffix '.profile'
+            applicationIdSuffix '.debug'
         }
     }
 }

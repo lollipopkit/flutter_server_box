@@ -154,6 +154,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "noServerAvailable": MessageLookupByLibrary.simpleMessage("没有可用的服务器。"),
         "noUpdateAvailable": MessageLookupByLibrary.simpleMessage("没有可用更新"),
         "ok": MessageLookupByLibrary.simpleMessage("好"),
+        "onServerDetailPage": MessageLookupByLibrary.simpleMessage("在服务器详情页"),
         "open": MessageLookupByLibrary.simpleMessage("打开"),
         "path": MessageLookupByLibrary.simpleMessage("路径"),
         "ping": MessageLookupByLibrary.simpleMessage("Ping"),
@@ -192,6 +193,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "sftpNoDownloadTask": MessageLookupByLibrary.simpleMessage("没有下载任务"),
         "sftpSSHConnected":
             MessageLookupByLibrary.simpleMessage("SFTP 已连接，即将开始下载..."),
+        "showDistLogo": MessageLookupByLibrary.simpleMessage("显示发行版 Logo"),
         "snippet": MessageLookupByLibrary.simpleMessage("代码片段"),
         "spentTime": m11,
         "start": MessageLookupByLibrary.simpleMessage("开始"),

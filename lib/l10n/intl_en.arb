@@ -143,5 +143,7 @@
     "imagesList": "Images list",
     "dockerImagesFmt": "{count} images",
     "path": "Path",
-    "goto": "Go to"
+    "goto": "Go to",
+    "showDistLogo": "Show distribution logo",
+    "onServerDetailPage": "On server detail page"
 }

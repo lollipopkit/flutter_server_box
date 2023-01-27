@@ -143,5 +143,7 @@
     "imagesList": "镜像列表",
     "dockerImagesFmt": "共 {count} 个镜像",
     "path": "路径",
-    "goto": "前往"
+    "goto": "前往",
+    "showDistLogo": "显示发行版 Logo",
+    "onServerDetailPage": "在服务器详情页"
 }

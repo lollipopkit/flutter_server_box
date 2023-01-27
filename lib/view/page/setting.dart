@@ -23,7 +23,7 @@ class SettingPage extends StatefulWidget {
 }
 
 class _SettingPageState extends State<SettingPage> {
-  late SettingStore _store;
+  late SettingStore _setting;
   late int _selectedColorValue;
   late int _launchPageIdx;
   late Color priColor;
@@ -47,9 +47,9 @@ class _SettingPageState extends State<SettingPage> {
   void initState() {
     super.initState();
     _serverProvider = locator<ServerProvider>();
-    _store = locator<SettingStore>();
-    _launchPageIdx = _store.launchPage.fetch()!;
-    _intervalValue = _store.serverStatusUpdateInterval.fetch()!.toDouble();
+    _setting = locator<SettingStore>();
+    _launchPageIdx = _setting.launchPage.fetch()!;
+    _intervalValue = _setting.serverStatusUpdateInterval.fetch()!.toDouble();
   }
 
   @override
@@ -64,9 +64,24 @@ class _SettingPageState extends State<SettingPage> {
           _buildAppColorPreview(),
           _buildUpdateInterval(),
           _buildCheckUpdate(),
-          _buildLaunchPage()
+          _buildLaunchPage(),
+          _buildDistLogoSwitch(),
         ].map((e) => RoundRectCard(e)).toList(),
       ),
+    );
+  }
+
+  Widget _buildDistLogoSwitch() {
+    return ListTile(
+      title: Text(
+        _s.showDistLogo,
+        style: textSize13,
+      ),
+      subtitle: Text(
+        _s.onServerDetailPage,
+        style: textSize13Grey,
+      ),
+      trailing: buildSwitch(context, _setting.showDistLogo),
     );
   }
 
@@ -109,7 +124,7 @@ class _SettingPageState extends State<SettingPage> {
       ),
       subtitle: Text(
         _s.willTakEeffectImmediately,
-        style: const TextStyle(color: Colors.grey, fontSize: 13),
+        style: textSize13Grey,
       ),
       trailing: Text('${_intervalValue.toInt()} ${_s.second}'),
       children: [
@@ -125,7 +140,7 @@ class _SettingPageState extends State<SettingPage> {
             });
           },
           onChangeEnd: (val) {
-            _store.serverStatusUpdateInterval.put(val.toInt());
+            _setting.serverStatusUpdateInterval.put(val.toInt());
             _serverProvider.startAutoRefresh();
           },
           label: '${_intervalValue.toInt()} ${_s.second}',
@@ -181,7 +196,7 @@ class _SettingPageState extends State<SettingPage> {
     return IconButton(
       icon: const Icon(Icons.save),
       onPressed: (() {
-        _store.primaryColor.put(_selectedColorValue);
+        _setting.primaryColor.put(_selectedColorValue);
         setState(() {});
       }),
     );
@@ -228,7 +243,7 @@ class _SettingPageState extends State<SettingPage> {
       onChanged: (int? value) {
         setState(() {
           _launchPageIdx = value!;
-          _store.launchPage.put(value);
+          _setting.launchPage.put(value);
         });
       },
     );

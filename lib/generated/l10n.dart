@@ -1500,6 +1500,26 @@ class S {
       args: [],
     );
   }
+
+  /// `Show distribution logo`
+  String get showDistLogo {
+    return Intl.message(
+      'Show distribution logo',
+      name: 'showDistLogo',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `On server detail page`
+  String get onServerDetailPage {
+    return Intl.message(
+      'On server detail page',
+      name: 'onServerDetailPage',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

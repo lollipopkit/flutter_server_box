@@ -8,7 +8,6 @@ enum Dist {
   wrt,
   armbian,
   arch,
-  /// Rocky Linux
   rocky;
 
   String? get iconPath {
