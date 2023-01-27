@@ -7,17 +7,16 @@ import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/provider_base.dart';
+import 'package:toolbox/data/model/pkg/manager.dart';
 import 'package:toolbox/data/model/pkg/upgrade_info.dart';
 import 'package:toolbox/data/model/server/dist.dart';
-
-enum _Type { apt, yum, dnf, zypper, pkg, pacman, opkg }
 
 class PkgProvider extends BusyProvider {
   final logger = Logger('PKG');
 
   SSHClient? client;
   Dist? dist;
-  _Type? type;
+  PkgManager? type;
   Function()? onUpgrade;
   Function()? onUpdate;
   PwdRequestFunc? onPasswordRequest;
@@ -48,28 +47,23 @@ class PkgProvider extends BusyProvider {
     switch (dist) {
       case Dist.centos:
       case Dist.rocky:
-        type = _Type.yum;
+      case Dist.fedora:
+        type = PkgManager.yum;
         break;
       case Dist.debian:
       case Dist.ubuntu:
       case Dist.kali:
       case Dist.armbian:
-        type = _Type.apt;
-        break;
-      case Dist.fedora:
-        type = _Type.dnf;
+        type = PkgManager.apt;
         break;
       case Dist.opensuse:
-        type = _Type.zypper;
-        break;
-      case Dist.freebsd:
-        type = _Type.pkg;
+        type = PkgManager.zypper;
         break;
       case Dist.wrt:
-        type = _Type.opkg;
+        type = PkgManager.opkg;
         break;
       case Dist.arch:
-        type = _Type.pacman;
+        type = PkgManager.pacman;
         break;
       case null:
         error = 'Unsupported dist: $dist';
@@ -100,14 +94,14 @@ class PkgProvider extends BusyProvider {
     if (raw == null) return;
     var list = raw.split('\n');
     switch (type) {
-      case _Type.yum:
+      case PkgManager.yum:
         list = list.sublist(2);
         list.removeWhere((element) => element.isEmpty);
         final endLine = list.lastIndexWhere(
             (element) => element.contains('Obsoleting Packages'));
         list = list.sublist(0, endLine);
         break;
-      case _Type.apt:
+      case PkgManager.apt:
         // avoid other outputs
         // such as: [Could not chdir to home directory /home/test: No such file or directory, , WARNING: apt does not have a stable CLI interface. Use with caution in scripts., , Listing...]
         final idx =
@@ -119,17 +113,23 @@ class PkgProvider extends BusyProvider {
         list = list.sublist(idx);
         list.removeWhere((element) => element.isEmpty);
         break;
+      case PkgManager.zypper:
+        list = list.sublist(4);
+        break;
+      case PkgManager.pacman:
+      case PkgManager.opkg:
+        break;
       default:
         return;
     }
-    upgradeable = list.map((e) => UpgradePkgInfo(e, dist!)).toList();
+    upgradeable = list.map((e) => UpgradePkgInfo(e, type)).toList();
   }
 
   Future<String?> _update() async {
     switch (type) {
-      case _Type.yum:
+      case PkgManager.yum:
         return await client?.run(_wrap('yum check-update')).string;
-      case _Type.apt:
+      case PkgManager.apt:
         await client!.exec(
           _wrap('apt update'),
           onStderr: _onPwd,
@@ -142,6 +142,14 @@ class PkgProvider extends BusyProvider {
         return await client
             ?.run('apt list --upgradeable'.withLangExport)
             .string;
+      case PkgManager.zypper:
+        return await client?.run(_wrap('zypper lu')).string;
+      case PkgManager.pacman:
+        await client?.run('pacman -Sy');
+        return await client?.run(_wrap('pacman -Qu')).string;
+      case PkgManager.opkg:
+        await client?.run('opkg update');
+        return await client?.run(_wrap('opkg list-upgradable')).string;
       default:
         error = 'Unsupported dist: $dist';
         return null;
@@ -151,10 +159,16 @@ class PkgProvider extends BusyProvider {
   Future<void> upgrade() async {
     final upgradeCmd = () {
       switch (type) {
-        case _Type.yum:
+        case PkgManager.yum:
           return 'yum upgrade -y';
-        case _Type.apt:
+        case PkgManager.apt:
           return 'apt upgrade -y';
+        case PkgManager.zypper:
+          return 'zypper up -y';
+        case PkgManager.pacman:
+          return 'pacman -Syu --noconfirm';
+        case PkgManager.opkg:
+          return 'opkg upgrade ${upgradeable?.map((e) => e.package).join(" ")}';
         default:
           return null;
       }

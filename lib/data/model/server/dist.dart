@@ -8,7 +8,6 @@ enum Dist {
   wrt,
   armbian,
   arch,
-  freebsd,
   /// Rocky Linux
   rocky;
 
