@@ -1,4 +1,4 @@
-#!/usr/bin/env dart
+#!/usr/bin/env fvm dart
 // ignore_for_file: avoid_print
 
 import 'dart:convert';
@@ -19,6 +19,10 @@ const buildFuncs = {
 };
 
 int? build;
+
+Future<ProcessResult> fvmRun(List<String> args) async {
+  return await Process.run('fvm', args, runInShell: true);
+}
 
 Future<int> getGitCommitCount() async {
   final result = await Process.run('git', ['log', '--oneline']);
@@ -53,7 +57,7 @@ Future<int> getGitModificationCount() async {
 }
 
 Future<String> getFlutterVersion() async {
-  final result = await Process.run('flutter', ['--version'], runInShell: true);
+  final result = await fvmRun(['flutter', '--version']);
   return (result.stdout as String);
 }
 
@@ -81,7 +85,7 @@ Future<void> updateBuildData() async {
 }
 
 Future<void> dartFormat() async {
-  final result = await Process.run('dart', ['format', '.']);
+  final result = await fvmRun(['dart', 'format', '.']);
   print('\n${result.stdout}');
   if (result.exitCode != 0) {
     print(result.stderr);
@@ -90,7 +94,8 @@ Future<void> dartFormat() async {
 }
 
 void flutterRun(String? mode) {
-  Process.start('flutter', mode == null ? ['run'] : ['run', '--$mode'],
+  Process.start(
+      'fvm', mode == null ? ['flutter', 'run'] : ['flutter', 'run', '--$mode'],
       mode: ProcessStartMode.inheritStdio, runInShell: true);
 }
 
@@ -115,7 +120,7 @@ Future<void> flutterBuild(
     ]);
   }
   print('[$buildType]\nBuilding with args: ${args.join(' ')}');
-  final buildResult = await Process.run('flutter', args, runInShell: true);
+  final buildResult = await fvmRun(['flutter', ...args]);
   final exitCode = buildResult.exitCode;
 
   if (exitCode == 0) {
