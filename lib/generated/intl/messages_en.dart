@@ -133,8 +133,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "files": MessageLookupByLibrary.simpleMessage("Files"),
         "foundNUpdate": m5,
         "go": MessageLookupByLibrary.simpleMessage("Go"),
-        "goSftpDlPage":
-            MessageLookupByLibrary.simpleMessage("Go to SFTP download page?"),
         "goto": MessageLookupByLibrary.simpleMessage("Go to"),
         "host": MessageLookupByLibrary.simpleMessage("Host"),
         "httpFailedWithCode": m6,

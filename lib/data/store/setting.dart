@@ -6,7 +6,7 @@ class SettingStore extends PersistentStore {
       property('primaryColor', defaultValue: Colors.deepPurpleAccent.value);
 
   StoreProperty<int> get serverStatusUpdateInterval =>
-      property('serverStatusUpdateInterval', defaultValue: 5);
+      property('serverStatusUpdateInterval', defaultValue: 3);
 
   /// Lanch page idx
   StoreProperty<int> get launchPage => property('launchPage', defaultValue: 0);

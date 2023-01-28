@@ -1,6 +1,7 @@
 import 'package:toolbox/core/provider_base.dart';
-import 'package:toolbox/data/model/sftp/download_status.dart';
-import 'package:toolbox/data/model/sftp/download_worker.dart';
+
+import '../model/sftp/download_item.dart';
+import '../model/sftp/download_status.dart';
 
 class SftpDownloadProvider extends ProviderBase {
   final List<SftpDownloadStatus> _status = [];

@@ -121,7 +121,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "files": MessageLookupByLibrary.simpleMessage("文件"),
         "foundNUpdate": m5,
         "go": MessageLookupByLibrary.simpleMessage("开始"),
-        "goSftpDlPage": MessageLookupByLibrary.simpleMessage("前往下载页?"),
         "goto": MessageLookupByLibrary.simpleMessage("前往"),
         "host": MessageLookupByLibrary.simpleMessage("主机"),
         "httpFailedWithCode": m6,

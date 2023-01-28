@@ -23,6 +23,10 @@ class ServerDetailPage extends StatefulWidget {
   _ServerDetailPageState createState() => _ServerDetailPageState();
 }
 
+const width13 = SizedBox(
+  width: 13,
+);
+
 class _ServerDetailPageState extends State<ServerDetailPage>
     with SingleTickerProviderStateMixin {
   late MediaQueryData _media;
@@ -92,45 +96,44 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildCPUView(ServerStatus ss) {
+    final tempWidget = ss.cpu2Status.temp.isEmpty
+        ? const SizedBox()
+        : Text(
+            ss.cpu2Status.temp,
+            style: textSize13Grey,
+          );
     return RoundRectCard(
       Padding(
         padding: roundRectCardPadding,
-        child: SizedBox(
-          height: 12 * ss.cpu2Status.coresCount + 63,
-          child: Column(children: [
-            SizedBox(
-              height: _media.size.height * 0.02,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${ss.cpu2Status.usedPercent(coreIdx: 0).toInt()}%',
-                  style: textSize27,
-                  textScaleFactor: 1.0,
-                ),
-                Row(
-                  children: [
-                    _buildDetailPercent(ss.cpu2Status.user, 'user'),
-                    SizedBox(
-                      width: _media.size.width * 0.03,
-                    ),
-                    _buildDetailPercent(ss.cpu2Status.sys, 'sys'),
-                    SizedBox(
-                      width: _media.size.width * 0.03,
-                    ),
-                    _buildDetailPercent(ss.cpu2Status.iowait, 'io'),
-                    SizedBox(
-                      width: _media.size.width * 0.03,
-                    ),
-                    _buildDetailPercent(ss.cpu2Status.idle, 'idle')
-                  ],
-                )
-              ],
-            ),
-            _buildCPUProgress(ss)
-          ]),
-        ),
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    '${ss.cpu2Status.usedPercent(coreIdx: 0).toInt()}%',
+                    style: textSize27,
+                    textScaleFactor: 1.0,
+                  ),
+                  tempWidget
+                ],
+              ),
+              Row(
+                children: [
+                  _buildDetailPercent(ss.cpu2Status.user, 'user'),
+                  width13,
+                  _buildDetailPercent(ss.cpu2Status.sys, 'sys'),
+                  width13,
+                  _buildDetailPercent(ss.cpu2Status.iowait, 'io'),
+                  width13,
+                  _buildDetailPercent(ss.cpu2Status.idle, 'idle')
+                ],
+              )
+            ],
+          ),
+          _buildCPUProgress(ss)
+        ]),
       ),
     );
   }
@@ -180,13 +183,13 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       value: percentWithinOne,
       minHeight: 7,
       backgroundColor: progressColor.resolve(context),
-      color: pColor.withOpacity(0.5 + percentWithinOne / 2),
+      color: pColor,
     );
   }
 
   Widget _buildUpTimeAndSys(ServerStatus ss) {
     return RoundRectCard(Padding(
-      padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 17),
+      padding: roundRectCardPadding,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -208,40 +211,35 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
     return RoundRectCard(Padding(
       padding: roundRectCardPadding,
-      child: SizedBox(
-        height: 70,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Text('${used.toStringAsFixed(0)}%', style: textSize27),
-                    const SizedBox(width: 7),
-                    Text('of ${(ss.memory.total * 1024).convertBytes}',
-                        style: textSize13Grey)
-                  ],
-                ),
-                Row(
-                  children: [
-                    _buildDetailPercent(free, 'free'),
-                    SizedBox(
-                      width: _media.size.width * 0.03,
-                    ),
-                    _buildDetailPercent(avail, 'avail'),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(
-              height: 11,
-            ),
-            _buildProgress(used)
-          ],
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Text('${used.toStringAsFixed(0)}%', style: textSize27),
+                  const SizedBox(width: 7),
+                  Text('of ${(ss.memory.total * 1024).convertBytes}',
+                      style: textSize13Grey)
+                ],
+              ),
+              Row(
+                children: [
+                  _buildDetailPercent(free, 'free'),
+                  width13,
+                  _buildDetailPercent(avail, 'avail'),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(
+            height: 11,
+          ),
+          _buildProgress(used)
+        ],
       ),
     ));
   }
@@ -253,17 +251,11 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         clone.remove(item);
       }
     }
-    return RoundRectCard(SizedBox(
-      height: 27 * clone.length + 25,
-      child: ListView.builder(
-          padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 17),
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: clone.length,
-          itemBuilder: (_, idx) {
-            final disk = clone[idx];
-            return Padding(
+    final children = clone
+        .map((disk) => Padding(
               padding: const EdgeInsets.all(3),
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -280,8 +272,14 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                   _buildProgress(disk.usedPercent.toDouble())
                 ],
               ),
-            );
-          }),
+            ))
+        .toList();
+    return RoundRectCard(Padding(
+      padding: roundRectCardPadding,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: children,
+      ),
     ));
   }
 
@@ -304,7 +302,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     }
 
     return RoundRectCard(Padding(
-      padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
+      padding: roundRectCardPadding,
       child: Column(
         children: children,
       ),

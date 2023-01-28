@@ -2,24 +2,25 @@ import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
-import 'package:toolbox/core/extension/numx.dart';
-import 'package:toolbox/core/extension/stringx.dart';
-import 'package:toolbox/core/route.dart';
-import 'package:toolbox/core/utils.dart';
-import 'package:toolbox/data/model/server/server.dart';
-import 'package:toolbox/data/model/server/server_private_info.dart';
-import 'package:toolbox/data/model/sftp/absolute_path.dart';
-import 'package:toolbox/data/model/sftp/download_worker.dart';
-import 'package:toolbox/data/model/sftp/browser_status.dart';
-import 'package:toolbox/data/provider/server.dart';
-import 'package:toolbox/data/provider/sftp_download.dart';
-import 'package:toolbox/data/res/path.dart';
-import 'package:toolbox/data/store/private_key.dart';
-import 'package:toolbox/generated/l10n.dart';
-import 'package:toolbox/locator.dart';
-import 'package:toolbox/view/page/sftp/downloading.dart';
-import 'package:toolbox/view/widget/fade_in.dart';
-import 'package:toolbox/view/widget/two_line_text.dart';
+
+import '../../../core/extension/numx.dart';
+import '../../../core/extension/stringx.dart';
+import '../../../core/route.dart';
+import '../../../core/utils.dart';
+import '../../../data/model/server/server.dart';
+import '../../../data/model/server/server_private_info.dart';
+import '../../../data/model/sftp/absolute_path.dart';
+import '../../../data/model/sftp/browser_status.dart';
+import '../../../data/model/sftp/download_item.dart';
+import '../../../data/provider/server.dart';
+import '../../../data/provider/sftp_download.dart';
+import '../../../data/res/path.dart';
+import '../../../data/store/private_key.dart';
+import '../../../generated/l10n.dart';
+import '../../../locator.dart';
+import '../../widget/fade_in.dart';
+import '../../widget/two_line_text.dart';
+import 'downloading.dart';
 
 class SFTPPage extends StatefulWidget {
   final ServerPrivateInfo spi;
@@ -62,38 +63,19 @@ class _SFTPPageState extends State<SFTPPage> {
         title: TwoLineText(up: 'SFTP', down: widget.spi.name),
         actions: [
           IconButton(
-            onPressed: (() => showRoundDialog(
-                  context,
-                  _s.choose,
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ListTile(
-                          leading: const Icon(Icons.folder),
-                          title: Text(_s.createFolder),
-                          onTap: () => mkdir(context)),
-                      ListTile(
-                          leading: const Icon(Icons.insert_drive_file),
-                          title: Text(_s.createFile),
-                          onTap: () => newFile(context)),
-                    ],
-                  ),
-                  [
-                    TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: Text(_s.close))
-                  ],
-                )),
-            icon: const Icon(Icons.add),
-          )
+            icon: const Icon(Icons.downloading),
+            onPressed: () =>
+                AppRoute(const SFTPDownloadingPage(), 'sftp downloading')
+                    .go(context),
+          ),
         ],
       ),
       body: _buildFileView(),
-      bottomNavigationBar: _buildPath(),
+      bottomNavigationBar: _buildBottom(),
     );
   }
 
-  Widget _buildPath() {
+  Widget _buildBottom() {
     return SafeArea(
         child: Container(
       padding: const EdgeInsets.fromLTRB(11, 7, 11, 11),
@@ -111,6 +93,31 @@ class _SFTPPageState extends State<SFTPPage> {
                   await backward();
                 },
                 icon: const Icon(Icons.arrow_back),
+              ),
+              IconButton(
+                onPressed: (() => showRoundDialog(
+                      context,
+                      _s.choose,
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ListTile(
+                              leading: const Icon(Icons.folder),
+                              title: Text(_s.createFolder),
+                              onTap: () => mkdir(context)),
+                          ListTile(
+                              leading: const Icon(Icons.insert_drive_file),
+                              title: Text(_s.createFile),
+                              onTap: () => newFile(context)),
+                        ],
+                      ),
+                      [
+                        TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: Text(_s.close))
+                      ],
+                    )),
+                icon: const Icon(Icons.add),
               ),
               IconButton(
                 padding: const EdgeInsets.all(0),
@@ -307,25 +314,6 @@ class _SFTPPageState extends State<SFTPPage> {
             );
 
             Navigator.of(context).pop();
-            showRoundDialog(
-              context,
-              _s.goSftpDlPage,
-              const SizedBox(),
-              [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(_s.cancel),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    AppRoute(const SFTPDownloadingPage(), 'sftp downloading')
-                        .go(context);
-                  },
-                  child: Text(_s.ok),
-                )
-              ],
-            );
           },
           child: Text(_s.download),
         )

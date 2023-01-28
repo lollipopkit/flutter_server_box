@@ -99,7 +99,6 @@
     "install": "install",
     "loadingFiles": "Loading files...",
     "sftpNoDownloadTask": "No download task.",
-    "goSftpDlPage": "Go to SFTP download page?",
     "createFolder": "Create folder",
     "createFile": "Create file",
     "rename": "Rename",

@@ -1051,16 +1051,6 @@ class S {
     );
   }
 
-  /// `Go to SFTP download page?`
-  String get goSftpDlPage {
-    return Intl.message(
-      'Go to SFTP download page?',
-      name: 'goSftpDlPage',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Create folder`
   String get createFolder {
     return Intl.message(

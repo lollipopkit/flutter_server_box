@@ -75,6 +75,7 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
   Widget _buildItem(SftpDownloadStatus status) {
     if (status.error != null) {
       showSnackBar(context, Text(status.error.toString()));
+      status.error = null;
     }
     switch (status.status) {
       case SftpWorkerStatus.finished:

@@ -4,16 +4,9 @@ import 'dart:isolate';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:easy_isolate/easy_isolate.dart';
-import 'package:toolbox/data/model/server/server_private_info.dart';
-import 'package:toolbox/data/model/sftp/download_status.dart';
 
-class DownloadItem {
-  DownloadItem(this.spi, this.remotePath, this.localPath);
-
-  final ServerPrivateInfo spi;
-  final String remotePath;
-  final String localPath;
-}
+import 'download_item.dart';
+import 'download_status.dart';
 
 class SftpDownloadWorker {
   SftpDownloadWorker(
@@ -100,11 +93,4 @@ class SftpDownloadWorker {
       }
     }
   }
-}
-
-class DownloadItemEvent {
-  DownloadItemEvent(this.item, this.privateKey);
-
-  final DownloadItem item;
-  final String? privateKey;
 }

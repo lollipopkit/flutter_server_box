@@ -1,5 +1,7 @@
 import 'package:toolbox/data/model/sftp/download_worker.dart';
 
+import 'download_item.dart';
+
 class SftpDownloadStatus {
   final int id;
   final DownloadItem item;

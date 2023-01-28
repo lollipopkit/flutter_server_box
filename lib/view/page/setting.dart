@@ -8,7 +8,6 @@ import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/font_style.dart';
-import 'package:toolbox/data/res/padding.dart';
 import 'package:toolbox/data/res/tab.dart';
 import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/generated/l10n.dart';
@@ -99,7 +98,6 @@ class _SettingPageState extends State<SettingPage> {
           display = _s.versionUnknownUpdate(BuildData.build);
         }
         return ListTile(
-          contentPadding: roundRectCardPadding,
           trailing: const Icon(Icons.keyboard_arrow_right),
           title: Text(
             display,
@@ -114,8 +112,6 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildUpdateInterval() {
     return ExpansionTile(
-      tilePadding: roundRectCardPadding,
-      childrenPadding: roundRectCardPadding,
       textColor: priColor,
       title: Text(
         _s.updateServerStatusInterval,
@@ -166,8 +162,6 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildAppColorPreview() {
     return ExpansionTile(
       textColor: priColor,
-      tilePadding: roundRectCardPadding,
-      childrenPadding: roundRectCardPadding,
       trailing: ClipOval(
         child: Container(
           color: priColor,
@@ -205,8 +199,6 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildLaunchPage() {
     return ExpansionTile(
       textColor: priColor,
-      tilePadding: roundRectCardPadding,
-      childrenPadding: roundRectCardPadding,
       title: Text(
         _s.launchPage,
         style: textSize13,

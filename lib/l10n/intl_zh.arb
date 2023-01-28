@@ -99,7 +99,6 @@
     "install": "安装",
     "loadingFiles": "正在加载目录。。。",
     "sftpNoDownloadTask": "没有下载任务",
-    "goSftpDlPage": "前往下载页?",
     "createFolder": "创建文件夹",
     "createFile": "创建文件",
     "rename": "重命名",
