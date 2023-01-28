@@ -65,6 +65,7 @@ class _SettingPageState extends State<SettingPage> {
           _buildCheckUpdate(),
           _buildLaunchPage(),
           _buildDistLogoSwitch(),
+          _buildTermSize(),
         ].map((e) => RoundRectCard(e)).toList(),
       ),
     );
@@ -240,4 +241,43 @@ class _SettingPageState extends State<SettingPage> {
       },
     );
   }
+
+  Widget _buildTermSize() {
+    return const SizedBox();
+    // return ListTile(
+    //   title: Text(
+    //     _s.termSize,
+    //     style: textSize13,
+    //   ),
+    //   trailing: InkWell(
+    //     child: Text(
+    //       _setting.sshTermSize.fetch()!,
+    //       style: textSize13,
+    //       textAlign: TextAlign.right,
+    //     ),
+    //     onTap: () {
+    //       showRoundDialog(
+    //         context,
+    //         _s.termSize,
+    //         TextField(
+    //           decoration: InputDecoration(hintText: _s.wxh),
+    //           onSubmitted: (value) {
+    //             if (wxhReg.hasMatch(value)) {
+    //               _setting.sshTermSize.put(value);
+    //               Navigator.pop(context);
+    //             } else {
+    //               showSnackBar(context, Text(_s.termSizeFormatError));
+    //             }
+    //           },
+    //         ),
+    //         [],
+    //       );
+    //     },
+    //   ),
+    // );
+  }
 }
+
+/// RegExp for 'Width*Height', eg: 80x24
+/// 'Width' and 'Height' must both greater than 0, lesser than 1000
+final wxhReg = RegExp(r'^(\d{1,3})x(\d{1,3})$');

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/view/widget/two_line_text.dart';
 import 'package:xterm/xterm.dart';
 
@@ -61,6 +62,12 @@ class _SSHPageState extends State<SSHPage> {
     }
 
     terminal.write('Connected\r\n');
+
+    final wxh = locator<SettingStore>().sshTermSize.fetch()!;
+    final split = wxh.split('x');
+    final w = int.parse(split.first);
+    final h = int.parse(split.last);
+    terminal.resize(w, h);
 
     session = await client.shell(
       pty: SSHPtyConfig(
@@ -123,14 +130,10 @@ class _SSHPageState extends State<SSHPage> {
     return Column(
       children: [
         Row(
-          children: top
-              .map((e) => _buildVirtualKeyItem(e))
-              .toList(),
+          children: top.map((e) => _buildVirtualKeyItem(e)).toList(),
         ),
         Row(
-          children: bottom
-              .map((e) => _buildVirtualKeyItem(e))
-              .toList(),
+          children: bottom.map((e) => _buildVirtualKeyItem(e)).toList(),
         )
       ],
     );
@@ -150,8 +153,14 @@ class _SSHPageState extends State<SSHPage> {
     }
 
     final child = item.icon != null
-        ? Icon(item.icon, color: isDark ? Colors.white : Colors.black, size: 17,)
-        : Text(item.text, style: TextStyle(color: selected ? Colors.blue : null, fontSize: 15));
+        ? Icon(
+            item.icon,
+            color: isDark ? Colors.white : Colors.black,
+            size: 17,
+          )
+        : Text(item.text,
+            style:
+                TextStyle(color: selected ? Colors.blue : null, fontSize: 15));
 
     return InkWell(
       onTap: () {

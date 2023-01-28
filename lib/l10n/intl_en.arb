@@ -146,5 +146,8 @@
     "showDistLogo": "Show distribution logo",
     "onServerDetailPage": "On server detail page",
     "addOne": "Add one",
-    "sshTip": "This function is now in the experimental stage. \nPlease report bugs on {url} or join our development."
+    "sshTip": "This function is now in the experimental stage. \nPlease report bugs on {url} or join our development.",
+    "termSize": "SSH Terminal size",
+    "wxh": "Width*Height",
+    "termSizeFormatError": "Illegal format, please enter the format of width*height, such as 80*24"
 }

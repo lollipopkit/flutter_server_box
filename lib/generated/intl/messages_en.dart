@@ -236,6 +236,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "sureNoPwd": MessageLookupByLibrary.simpleMessage(
             "Are you sure to use no password?"),
         "sureToDeleteServer": m14,
+        "termSize": MessageLookupByLibrary.simpleMessage("SSH Terminal size"),
+        "termSizeFormatError": MessageLookupByLibrary.simpleMessage(
+            "Illegal format, please enter the format of width*height, such as 80*24"),
         "ttl": MessageLookupByLibrary.simpleMessage("ttl"),
         "unknown": MessageLookupByLibrary.simpleMessage("unknown"),
         "unknownError": MessageLookupByLibrary.simpleMessage("Unknown error"),
@@ -255,7 +258,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "versionUpdated": m17,
         "waitConnection": MessageLookupByLibrary.simpleMessage(
             "Please wait for the connection to be established."),
-        "willTakEeffectImmediately":
-            MessageLookupByLibrary.simpleMessage("Will take effect immediately")
+        "willTakEeffectImmediately": MessageLookupByLibrary.simpleMessage(
+            "Will take effect immediately"),
+        "wxh": MessageLookupByLibrary.simpleMessage("Width*Height")
       };
 }

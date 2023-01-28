@@ -14,6 +14,7 @@ import 'package:toolbox/data/provider/snippet.dart';
 import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/font_style.dart';
 import 'package:toolbox/data/res/url.dart';
+import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/pkg.dart';
@@ -41,12 +42,14 @@ class _ServerPageState extends State<ServerPage>
   late ThemeData _theme;
   late Color _primaryColor;
   late ServerProvider _serverProvider;
+  late SettingStore _settingStore;
   late S _s;
 
   @override
   void initState() {
     super.initState();
     _serverProvider = locator<ServerProvider>();
+    _settingStore = locator<SettingStore>();
   }
 
   @override
@@ -203,22 +206,30 @@ class _ServerPageState extends State<ServerPage>
         Icons.terminal,
         size: 21,
       ),
-      onTap: () => showRoundDialog(
-          context,
-          _s.attention,
-          UrlText(
-            text: _s.sshTip(issueUrl),
-            replace: 'Github Issue',
-          ),
-          [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                AppRoute(SSHPage(spi: spi), 'ssh page').go(context);
-              },
-              child: Text(_s.ok),
-            )
-          ]),
+      onTap: () async {
+        if (_settingStore.firstTimeUseSshTerm.fetch()!) {
+          await showRoundDialog(
+            context,
+            _s.attention,
+            UrlText(
+              text: _s.sshTip(issueUrl),
+              replace: 'Github Issue',
+            ),
+            [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  AppRoute(SSHPage(spi: spi), 'ssh page').go(context);
+                },
+                child: Text(_s.ok),
+              )
+            ],
+          );
+          _settingStore.firstTimeUseSshTerm.put(false);
+        } else {
+          AppRoute(SSHPage(spi: spi), 'ssh page').go(context);
+        }
+      },
     );
   }
 

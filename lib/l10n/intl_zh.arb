@@ -146,5 +146,8 @@
     "showDistLogo": "显示发行版 Logo",
     "onServerDetailPage": "在服务器详情页",
     "addOne": "前去新增",
-    "sshTip": "该功能目前处于测试阶段，请在 {url} 反馈问题，或者加入我们开发。"
+    "sshTip": "该功能目前处于测试阶段，请在 {url} 反馈问题，或者加入我们开发。",
+    "termSize": "SSH 终端大小",
+    "wxh": "宽度x高度",
+    "termSizeFormatError": "格式错误，请输入类似 80x24 的格式"
 }

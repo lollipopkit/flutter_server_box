@@ -1530,6 +1530,36 @@ class S {
       args: [url],
     );
   }
+
+  /// `SSH Terminal size`
+  String get termSize {
+    return Intl.message(
+      'SSH Terminal size',
+      name: 'termSize',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Width*Height`
+  String get wxh {
+    return Intl.message(
+      'Width*Height',
+      name: 'wxh',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Illegal format, please enter the format of width*height, such as 80*24`
+  String get termSizeFormatError {
+    return Intl.message(
+      'Illegal format, please enter the format of width*height, such as 80*24',
+      name: 'termSizeFormatError',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

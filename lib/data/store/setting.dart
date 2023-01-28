@@ -18,4 +18,12 @@ class SettingStore extends PersistentStore {
   /// Show logo on server detail page
   StoreProperty<bool> get showDistLogo =>
       property('showDistLogo', defaultValue: true);
+
+  /// SSH term size
+  StoreProperty<String> get sshTermSize =>
+      property('sshTermSize', defaultValue: '80x24');
+
+  /// First time to use SSH term
+  StoreProperty<bool> get firstTimeUseSshTerm =>
+      property('firstTimeUseSshTerm', defaultValue: true);
 }
