@@ -51,7 +51,7 @@ class _PkgManagePageState extends State<PkgManagePage>
     super.initState();
     final si = locator<ServerProvider>()
         .servers
-        .firstWhere((e) => e.info == widget.spi);
+        .firstWhere((e) => e.spi == widget.spi);
     if (si.client == null) {
       showSnackBar(context, Text(_s.waitConnection));
       Navigator.of(context).pop();

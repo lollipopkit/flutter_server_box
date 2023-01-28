@@ -100,22 +100,20 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  Widget _buildEachServerCard(ServerInfo si) {
+  Widget _buildEachServerCard(Server si) {
     return RoundRectCard(
       InkWell(
         onLongPress: () => AppRoute(
                 ServerEditPage(
-                  spi: si.info,
+                  spi: si.spi,
                 ),
                 'Edit server info page')
             .go(context),
         child: Padding(
           padding: const EdgeInsets.all(13),
-          child: _buildRealServerCard(
-              si.status, si.info.name, si.connectionState, si.info),
+          child: _buildRealServerCard(si.status, si.spi.name, si.cs, si.spi),
         ),
-        onTap: () => AppRoute(ServerDetailPage('${si.info.ip}:${si.info.port}'),
-                'server detail page')
+        onTap: () => AppRoute(ServerDetailPage(si.spi.id), 'server detail page')
             .go(context),
       ),
     );
@@ -123,11 +121,10 @@ class _ServerPageState extends State<ServerPage>
 
   Widget _buildRealServerCard(ServerStatus ss, String serverName,
       ServerConnectionState cs, ServerPrivateInfo spi) {
-    final rootDisk =
-        ss.disk.firstWhere((element) => element.mountLocation == '/');
+    final rootDisk = ss.disk.firstWhere((element) => element.loc == '/');
 
     final topRightStr =
-        getTopRightStr(cs, ss.cpu2Status.temp, ss.uptime, ss.failedInfo);
+        getTopRightStr(cs, ss.cpu.temp, ss.uptime, ss.failedInfo);
     final hasError =
         cs == ServerConnectionState.failed && ss.failedInfo != null;
     final style = TextStyle(
@@ -178,8 +175,8 @@ class _ServerPageState extends State<ServerPage>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildPercentCircle(ss.cpu2Status.usedPercent()),
-            _buildPercentCircle(ss.memory.used / ss.memory.total * 100),
+            _buildPercentCircle(ss.cpu.usedPercent()),
+            _buildPercentCircle(ss.mem.used / ss.mem.total * 100),
             _buildIOData('Conn:\n${ss.tcp.maxConn}', 'Fail:\n${ss.tcp.fail}'),
             _buildIOData(
                 'Total:\n${rootDisk.size}', 'Used:\n${rootDisk.usedPercent}%')

@@ -10,16 +10,16 @@ class DiskInfo {
 } 
 */
 
-  late String mountPath;
-  late String mountLocation;
+  late String path;
+  late String loc;
   late int usedPercent;
   late String used;
   late String size;
   late String avail;
 
   DiskInfo(
-    this.mountPath,
-    this.mountLocation,
+    this.path,
+    this.loc,
     this.usedPercent,
     this.used,
     this.size,

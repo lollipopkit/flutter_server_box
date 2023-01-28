@@ -188,9 +188,9 @@ class _MyHomePageState extends State<MyHomePage>
                 ListTile(
                   leading: const Icon(Icons.vpn_key),
                   title: Text(_s.privateKey),
-                  onTap: () => AppRoute(
-                          const StoredPrivateKeysPage(), 'private key list')
-                      .go(context),
+                  onTap: () =>
+                      AppRoute(const PrivateKeysListPage(), 'private key list')
+                          .go(context),
                 ),
                 ListTile(
                   leading: const Icon(Icons.download),

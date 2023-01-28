@@ -37,7 +37,7 @@ class _SFTPPageState extends State<SFTPPage> {
   late MediaQueryData _media;
   late S _s;
 
-  ServerInfo? _si;
+  Server? _si;
   SSHClient? _client;
 
   @override
@@ -51,7 +51,7 @@ class _SFTPPageState extends State<SFTPPage> {
   void initState() {
     super.initState();
     final serverProvider = locator<ServerProvider>();
-    _si = serverProvider.servers.firstWhere((s) => s.info == widget.spi);
+    _si = serverProvider.servers.firstWhere((s) => s.spi == widget.spi);
     _client = _si?.client;
   }
 
@@ -175,8 +175,7 @@ class _SFTPPageState extends State<SFTPPage> {
       );
 
   Widget _buildFileView() {
-    if (_client == null ||
-        _si?.connectionState != ServerConnectionState.connected) {
+    if (_client == null || _si?.cs != ServerConnectionState.connected) {
       return centerCircleLoading;
     }
 

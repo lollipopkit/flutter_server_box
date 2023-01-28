@@ -6,7 +6,6 @@ import 'package:logging/logging.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/provider_base.dart';
-import 'package:toolbox/data/model/server/cpu_2_status.dart';
 import 'package:toolbox/data/model/server/cpu_status.dart';
 import 'package:toolbox/data/model/server/memory.dart';
 import 'package:toolbox/data/model/server/net_speed.dart';
@@ -45,34 +44,12 @@ final numReg = RegExp(r'\s{1,}');
 final memItemReg = RegExp(r'([A-Z].+:)\s+([0-9]+) kB');
 
 class ServerProvider extends BusyProvider {
-  List<ServerInfo> _servers = [];
-  List<ServerInfo> get servers => _servers;
+  List<Server> _servers = [];
+  List<Server> get servers => _servers;
 
   Timer? _timer;
 
   final logger = Logger('SERVER');
-
-  Memory get emptyMemory =>
-      Memory(total: 1, used: 0, free: 1, cache: 0, avail: 1);
-
-  NetSpeedPart get emptyNetSpeedPart => NetSpeedPart('', 0, 0, 0);
-
-  NetSpeed get emptyNetSpeed =>
-      NetSpeed([emptyNetSpeedPart], [emptyNetSpeedPart]);
-
-  CpuStatus get emptyCpuStatus => CpuStatus('cpu', 0, 0, 0, 0, 0, 0, 0);
-
-  Cpu2Status get emptyCpu2Status =>
-      Cpu2Status([emptyCpuStatus], [emptyCpuStatus], '');
-
-  ServerStatus get emptyStatus => ServerStatus(
-      emptyCpu2Status,
-      emptyMemory,
-      'Loading...',
-      '',
-      [DiskInfo('/', '/', 0, '0', '0', '0')],
-      TcpStatus(0, 0, 0, 0),
-      emptyNetSpeed);
 
   Future<void> loadLocalData() async {
     setBusyState(true);
@@ -82,9 +59,8 @@ class ServerProvider extends BusyProvider {
     notifyListeners();
   }
 
-  ServerInfo genInfo(ServerPrivateInfo spi) {
-    return ServerInfo(
-        spi, emptyStatus, null, ServerConnectionState.disconnected);
+  Server genInfo(ServerPrivateInfo spi) {
+    return Server(spi, initStatus, null, ServerConnectionState.disconnected);
   }
 
   Future<SSHClient> genClient(ServerPrivateInfo spi) async {
@@ -105,7 +81,7 @@ class ServerProvider extends BusyProvider {
       return;
     }
     await Future.wait(_servers.map((s) async {
-      await _getData(s.info);
+      await _getData(s.spi);
     }));
   }
 
@@ -128,7 +104,7 @@ class ServerProvider extends BusyProvider {
 
   void setDisconnected() {
     for (var i = 0; i < _servers.length; i++) {
-      _servers[i].connectionState = ServerConnectionState.disconnected;
+      _servers[i].cs = ServerConnectionState.disconnected;
     }
   }
 
@@ -140,7 +116,7 @@ class ServerProvider extends BusyProvider {
       }
       return;
     }
-    final idx = _servers.indexWhere((e) => e.info == spi);
+    final idx = _servers.indexWhere((e) => e.spi == spi);
     if (idx < 0) {
       throw RangeError.index(idx, _servers);
     }
@@ -155,7 +131,7 @@ class ServerProvider extends BusyProvider {
   }
 
   void delServer(ServerPrivateInfo info) {
-    final idx = _servers.indexWhere((s) => s.info == info);
+    final idx = _servers.indexWhere((s) => s.spi == info);
     if (idx == -1) return;
     _servers[idx].client?.close();
     _servers.removeAt(idx);
@@ -165,11 +141,11 @@ class ServerProvider extends BusyProvider {
 
   Future<void> updateServer(
       ServerPrivateInfo old, ServerPrivateInfo newSpi) async {
-    final idx = _servers.indexWhere((e) => e.info == old);
+    final idx = _servers.indexWhere((e) => e.spi == old);
     if (idx < 0) {
       throw RangeError.index(idx, _servers);
     }
-    _servers[idx].info = newSpi;
+    _servers[idx].spi = newSpi;
     locator<ServerStore>().update(old, newSpi);
     _servers[idx].client = await genClient(newSpi);
     notifyListeners();
@@ -177,11 +153,11 @@ class ServerProvider extends BusyProvider {
   }
 
   Future<void> _getData(ServerPrivateInfo spi) async {
-    final s = _servers.firstWhere((element) => element.info == spi);
-    final state = s.connectionState;
+    final s = _servers.firstWhere((element) => element.spi == spi);
+    final state = s.cs;
     if (state == ServerConnectionState.failed ||
         state == ServerConnectionState.disconnected) {
-      s.connectionState = ServerConnectionState.connecting;
+      s.cs = ServerConnectionState.connecting;
       notifyListeners();
       final time1 = DateTime.now();
       try {
@@ -189,7 +165,7 @@ class ServerProvider extends BusyProvider {
         final time2 = DateTime.now();
         logger.info(
             'Connected to [${spi.name}] in [${time2.difference(time1).toString()}].');
-        s.connectionState = ServerConnectionState.connected;
+        s.cs = ServerConnectionState.connected;
         final writeResult = await s.client!
             .run("echo '$shellCmd' > $shellPath && chmod +x $shellPath")
             .string;
@@ -197,7 +173,7 @@ class ServerProvider extends BusyProvider {
           throw Exception(writeResult);
         }
       } catch (e) {
-        s.connectionState = ServerConnectionState.failed;
+        s.cs = ServerConnectionState.failed;
         s.status.failedInfo = '$e ## ';
         logger.warning(e);
       } finally {
@@ -210,7 +186,7 @@ class ServerProvider extends BusyProvider {
     final raw = await s.client!.run("sh $shellPath").string;
     final segments = raw.split(seperator).map((e) => e.trim()).toList();
     if (raw.isEmpty || segments.length == 1) {
-      s.connectionState = ServerConnectionState.failed;
+      s.cs = ServerConnectionState.failed;
       if (s.status.failedInfo == null || s.status.failedInfo!.isEmpty) {
         s.status.failedInfo = 'No data received';
       }
@@ -228,7 +204,7 @@ class ServerProvider extends BusyProvider {
       _getTcp(spi, segments[4]);
       _getNetSpeed(spi, segments[0]);
     } catch (e) {
-      s.connectionState = ServerConnectionState.failed;
+      s.cs = ServerConnectionState.failed;
       s.status.failedInfo = e.toString();
       logger.warning(e);
       rethrow;
@@ -244,12 +220,12 @@ class ServerProvider extends BusyProvider {
   ///   eth0: 48481023  505772    0    0    0     0          0         0 36002262  202307    0    0    0     0       0          0
   /// 1635752901
   Future<void> _getNetSpeed(ServerPrivateInfo spi, String raw) async {
-    final info = _servers.firstWhere((e) => e.info == spi);
+    final info = _servers.firstWhere((e) => e.spi == spi);
     info.status.netSpeed.update(await compute(_parseNetSpeed, raw));
   }
 
   void _getSysVer(ServerPrivateInfo spi, String raw) {
-    final info = _servers.firstWhere((e) => e.info == spi);
+    final info = _servers.firstWhere((e) => e.spi == spi);
     final s = raw.split('=');
     if (s.length == 2) {
       info.status.sysVer = s[1].replaceAll('"', '').replaceFirst('\n', '');
@@ -258,22 +234,22 @@ class ServerProvider extends BusyProvider {
 
   Future<void> _getCPU(ServerPrivateInfo spi, String raw, String tempType,
       String tempValue) async {
-    final info = _servers.firstWhere((e) => e.info == spi);
+    final info = _servers.firstWhere((e) => e.spi == spi);
     final cpus = await compute(_parseCPU, raw);
 
     if (cpus.isNotEmpty) {
-      info.status.cpu2Status
+      info.status.cpu
           .update(cpus, await compute(_getCPUTemp, [tempType, tempValue]));
     }
   }
 
   void _getUpTime(ServerPrivateInfo spi, String raw) {
-    _servers.firstWhere((e) => e.info == spi).status.uptime =
+    _servers.firstWhere((e) => e.spi == spi).status.uptime =
         raw.split('up ')[1].split(', ')[0];
   }
 
   Future<void> _getTcp(ServerPrivateInfo spi, String raw) async {
-    final info = _servers.firstWhere((e) => e.info == spi);
+    final info = _servers.firstWhere((e) => e.spi == spi);
     final status = await compute(_parseTcp, raw);
     if (status != null) {
       info.status.tcp = status;
@@ -281,7 +257,7 @@ class ServerProvider extends BusyProvider {
   }
 
   void _getDisk(ServerPrivateInfo spi, String raw) {
-    final info = _servers.firstWhere((e) => e.info == spi);
+    final info = _servers.firstWhere((e) => e.spi == spi);
     final list = <DiskInfo>[];
     final items = raw.split('\n');
     for (var item in items) {
@@ -296,14 +272,14 @@ class ServerProvider extends BusyProvider {
   }
 
   Future<void> _getMem(ServerPrivateInfo spi, String raw) async {
-    final info = _servers.firstWhere((e) => e.info == spi);
+    final info = _servers.firstWhere((e) => e.spi == spi);
     final mem = await compute(_parseMem, raw);
-    info.status.memory = mem;
+    info.status.mem = mem;
   }
 
   Future<String?> runSnippet(String id, Snippet snippet) async {
     final client =
-        _servers.firstWhere((element) => element.info.id == id).client;
+        _servers.firstWhere((element) => element.spi.id == id).client;
     if (client == null) {
       return null;
     }
@@ -340,14 +316,14 @@ TcpStatus? _parseTcp(String raw) {
   return null;
 }
 
-List<CpuStatus> _parseCPU(String raw) {
-  final List<CpuStatus> cpus = [];
+List<OneTimeCpuStatus> _parseCPU(String raw) {
+  final List<OneTimeCpuStatus> cpus = [];
 
   for (var item in raw.split('\n')) {
     if (item == '') break;
     final id = item.split(' ').first;
     final matches = item.replaceFirst(id, '').trim().split(' ');
-    cpus.add(CpuStatus(
+    cpus.add(OneTimeCpuStatus(
         id,
         int.parse(matches[0]),
         int.parse(matches[1]),

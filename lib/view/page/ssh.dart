@@ -52,7 +52,7 @@ class _SSHPageState extends State<SSHPage> {
 
     final client = locator<ServerProvider>()
         .servers
-        .where((e) => e.info.id == widget.spi.id)
+        .where((e) => e.spi.id == widget.spi.id)
         .first
         .client;
     if (client == null) {

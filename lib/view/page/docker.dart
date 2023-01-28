@@ -47,7 +47,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
     super.initState();
     final client = locator<ServerProvider>()
         .servers
-        .firstWhere((element) => element.info == widget.spi)
+        .firstWhere((element) => element.spi == widget.spi)
         .client;
     if (client == null) {
       showSnackBar(context, Text(_s.noClient));

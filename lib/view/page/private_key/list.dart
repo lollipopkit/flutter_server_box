@@ -7,14 +7,14 @@ import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/view/page/private_key/edit.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
-class StoredPrivateKeysPage extends StatefulWidget {
-  const StoredPrivateKeysPage({Key? key}) : super(key: key);
+class PrivateKeysListPage extends StatefulWidget {
+  const PrivateKeysListPage({Key? key}) : super(key: key);
 
   @override
   _PrivateKeyListState createState() => _PrivateKeyListState();
 }
 
-class _PrivateKeyListState extends State<StoredPrivateKeysPage> {
+class _PrivateKeyListState extends State<PrivateKeysListPage> {
   late S _s;
 
   @override

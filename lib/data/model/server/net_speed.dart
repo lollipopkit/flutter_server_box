@@ -1,5 +1,16 @@
 import 'package:toolbox/core/extension/numx.dart';
 
+get initNetSpeedPart => NetSpeedPart(
+      '',
+      0,
+      0,
+      0,
+    );
+get initNetSpeed => NetSpeed(
+      [initNetSpeedPart],
+      [initNetSpeedPart],
+    );
+
 class NetSpeedPart {
   String device;
   int bytesIn;

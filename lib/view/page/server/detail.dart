@@ -14,6 +14,8 @@ import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
+import '../../../data/res/sizedbox.dart';
+
 class ServerDetailPage extends StatefulWidget {
   const ServerDetailPage(this.id, {Key? key}) : super(key: key);
 
@@ -22,10 +24,6 @@ class ServerDetailPage extends StatefulWidget {
   @override
   _ServerDetailPageState createState() => _ServerDetailPageState();
 }
-
-const width13 = SizedBox(
-  width: 13,
-);
 
 class _ServerDetailPageState extends State<ServerDetailPage>
     with SingleTickerProviderStateMixin {
@@ -48,16 +46,16 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     return Consumer<ServerProvider>(builder: (_, provider, __) {
       return _buildMainPage(
         provider.servers.firstWhere(
-          (e) => '${e.info.ip}:${e.info.port}' == widget.id,
+          (e) => e.spi.id == widget.id,
         ),
       );
     });
   }
 
-  Widget _buildMainPage(ServerInfo si) {
+  Widget _buildMainPage(Server si) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(si.info.name, style: textSize18),
+        title: Text(si.spi.name, style: textSize18),
       ),
       body: ListView(
         padding: const EdgeInsets.all(13),
@@ -96,10 +94,10 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildCPUView(ServerStatus ss) {
-    final tempWidget = ss.cpu2Status.temp.isEmpty
+    final tempWidget = ss.cpu.temp.isEmpty
         ? const SizedBox()
         : Text(
-            ss.cpu2Status.temp,
+            ss.cpu.temp,
             style: textSize13Grey,
           );
     return RoundRectCard(
@@ -112,7 +110,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               Row(
                 children: [
                   Text(
-                    '${ss.cpu2Status.usedPercent(coreIdx: 0).toInt()}%',
+                    '${ss.cpu.usedPercent(coreIdx: 0).toInt()}%',
                     style: textSize27,
                     textScaleFactor: 1.0,
                   ),
@@ -121,17 +119,18 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               ),
               Row(
                 children: [
-                  _buildDetailPercent(ss.cpu2Status.user, 'user'),
+                  _buildDetailPercent(ss.cpu.user, 'user'),
                   width13,
-                  _buildDetailPercent(ss.cpu2Status.sys, 'sys'),
+                  _buildDetailPercent(ss.cpu.sys, 'sys'),
                   width13,
-                  _buildDetailPercent(ss.cpu2Status.iowait, 'io'),
+                  _buildDetailPercent(ss.cpu.iowait, 'io'),
                   width13,
-                  _buildDetailPercent(ss.cpu2Status.idle, 'idle')
+                  _buildDetailPercent(ss.cpu.idle, 'idle')
                 ],
               )
             ],
           ),
+          height13,
           _buildCPUProgress(ss)
         ]),
       ),
@@ -159,21 +158,17 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildCPUProgress(ServerStatus ss) {
-    return SizedBox(
-      height: 12.0 * ss.cpu2Status.coresCount,
-      child: ListView.builder(
-        physics: const NeverScrollableScrollPhysics(),
-        padding: const EdgeInsets.only(top: 13),
-        itemBuilder: (ctx, idx) {
-          if (idx == 0) return const SizedBox();
-          return Padding(
-            padding: const EdgeInsets.all(2),
-            child: _buildProgress(ss.cpu2Status.usedPercent(coreIdx: idx)),
-          );
-        },
-        itemCount: ss.cpu2Status.coresCount,
-      ),
-    );
+    final children = <Widget>[];
+    for (var i = 0; i < ss.cpu.coresCount; i++) {
+      if (i == 0) continue;
+      children.add(
+        Padding(
+          padding: const EdgeInsets.all(2),
+          child: _buildProgress(ss.cpu.usedPercent(coreIdx: i)),
+        ),
+      );
+    }
+    return Column(children: children);
   }
 
   Widget _buildProgress(double percent) {
@@ -188,72 +183,76 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildUpTimeAndSys(ServerStatus ss) {
-    return RoundRectCard(Padding(
-      padding: roundRectCardPadding,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(ss.sysVer, style: textSize11, textScaleFactor: 1.0),
-          Text(
-            ss.uptime,
-            style: textSize11,
-            textScaleFactor: 1.0,
-          ),
-        ],
+    return RoundRectCard(
+      Padding(
+        padding: roundRectCardPadding,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(ss.sysVer, style: textSize11, textScaleFactor: 1.0),
+            Text(
+              ss.uptime,
+              style: textSize11,
+              textScaleFactor: 1.0,
+            ),
+          ],
+        ),
       ),
-    ));
+    );
   }
 
   Widget _buildMemView(ServerStatus ss) {
-    final used = ss.memory.used / ss.memory.total * 100;
-    final free = ss.memory.free / ss.memory.total * 100;
-    final avail = ss.memory.avail / ss.memory.total * 100;
+    final used = ss.mem.used / ss.mem.total * 100;
+    final free = ss.mem.free / ss.mem.total * 100;
+    final avail = ss.mem.avail / ss.mem.total * 100;
 
-    return RoundRectCard(Padding(
-      padding: roundRectCardPadding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Text('${used.toStringAsFixed(0)}%', style: textSize27),
-                  const SizedBox(width: 7),
-                  Text('of ${(ss.memory.total * 1024).convertBytes}',
-                      style: textSize13Grey)
-                ],
-              ),
-              Row(
-                children: [
-                  _buildDetailPercent(free, 'free'),
-                  width13,
-                  _buildDetailPercent(avail, 'avail'),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(
-            height: 11,
-          ),
-          _buildProgress(used)
-        ],
+    return RoundRectCard(
+      Padding(
+        padding: roundRectCardPadding,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Text('${used.toStringAsFixed(0)}%', style: textSize27),
+                    const SizedBox(width: 7),
+                    Text('of ${(ss.mem.total * 1024).convertBytes}',
+                        style: textSize13Grey)
+                  ],
+                ),
+                Row(
+                  children: [
+                    _buildDetailPercent(free, 'free'),
+                    width13,
+                    _buildDetailPercent(avail, 'avail'),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(
+              height: 11,
+            ),
+            _buildProgress(used)
+          ],
+        ),
       ),
-    ));
+    );
   }
 
   Widget _buildDiskView(ServerStatus ss) {
     final clone = ss.disk.toList();
     for (var item in ss.disk) {
-      if (ignorePath.any((ele) => item.mountLocation.contains(ele))) {
+      if (ignorePath.any((ele) => item.loc.contains(ele))) {
         clone.remove(item);
       }
     }
     final children = clone
         .map((disk) => Padding(
-              padding: const EdgeInsets.all(3),
+              padding: const EdgeInsets.symmetric(vertical: 3),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -265,8 +264,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                         style: textSize11,
                         textScaleFactor: 1.0,
                       ),
-                      Text(disk.mountPath,
-                          style: textSize11, textScaleFactor: 1.0)
+                      Text(disk.path, style: textSize11, textScaleFactor: 1.0)
                     ],
                   ),
                   _buildProgress(disk.usedPercent.toDouble())
@@ -274,13 +272,15 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               ),
             ))
         .toList();
-    return RoundRectCard(Padding(
-      padding: roundRectCardPadding,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: children,
+    return RoundRectCard(
+      Padding(
+        padding: roundRectCardPadding,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: children,
+        ),
       ),
-    ));
+    );
   }
 
   Widget _buildNetView(NetSpeed ns) {
@@ -301,17 +301,19 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       children.addAll(ns.devices.map((e) => _buildNetSpeedItem(ns, e)));
     }
 
-    return RoundRectCard(Padding(
-      padding: roundRectCardPadding,
-      child: Column(
-        children: children,
+    return RoundRectCard(
+      Padding(
+        padding: roundRectCardPadding,
+        child: Column(
+          children: children,
+        ),
       ),
-    ));
+    );
   }
 
   Widget _buildNetSpeedTop() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
+      padding: const EdgeInsets.only(bottom: 3),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: const [
