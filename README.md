@@ -21,11 +21,11 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 
 
 ## 🔖 Feature
-- [x] Status chart view
-- [x] SSH terminal
-- [x] `Docker Manage`, `Pkg Manage`, `SFTP`, `Snippet` ~~market~~, `Ping` and etc.
-- [x] i18n (English, Chinese)
-- [x] Desktop support
+- [x] 📊 Status chart view
+- [x] ⌨️ `SSH` terminal
+- [x] ⚙️ `Docker & Pkg` Manager, `SFTP`, `Snippet` ~~market~~, `Ping` and etc.
+- [x] 📚 i18n (English, Chinese), **welcome contribution** :)
+- [x] 🖥️ Desktop support
 
 ## 📱 ScreenShots
 <table>
@@ -37,7 +37,7 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 	    <img width="200px" src="screenshots/server_detail.png">
     </td>
     <td>
-	    <img width="200px" src="screenshots/convert.png">
+	    <img width="200px" src="screenshots/ssh.jpg">
     </td>
   </tr>
 </table>
@@ -47,20 +47,20 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 	    <img width="200px" src="screenshots/ping.png">
     </td>
     <td>
-	    <img width="200px" src="screenshots/apt.png">
+	    <img width="200px" src="screenshots/sftp.jpg">
     </td>
     <td>
-	    <img width="200px" src="screenshots/docker.png">
+	    <img width="200px" src="screenshots/docker.jpg">
     </td>
   </tr>
 </table>
 
 ## 🖥 Platform
-| Status                  | Platform          |
-| ----------------------- | ----------------- |
-| Full Support            | Android/iOS/macOS |
-| Support, but not tested | Windows/Linux     |
+Status|Platform          
+--- | ---
+Full Support|Android/iOS
+Support, but not tested|macOS/Windows/Linux
 
 
 ## 📝 License
-`GPL v3. lollipopkit 2021`
+`GPL v3. lollipopkit 2023`
