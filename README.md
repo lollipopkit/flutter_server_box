@@ -34,10 +34,13 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 	    <img width="200px" src="screenshots/server.jpg">
     </td>
     <td>
-	    <img width="200px" src="screenshots/server_detail.png">
+	    <img width="200px" src="screenshots/detail.jpg">
     </td>
     <td>
 	    <img width="200px" src="screenshots/ssh.jpg">
+    </td>
+    <td>
+	    <img width="200px" src="screenshots/apt.png">
     </td>
   </tr>
 </table>
@@ -51,6 +54,9 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
     </td>
     <td>
 	    <img width="200px" src="screenshots/docker.jpg">
+    </td>
+    <td>
+	    <img width="200px" src="screenshots/convert.png">
     </td>
   </tr>
 </table>

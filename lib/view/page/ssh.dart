@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dartssh2/dartssh2.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:toolbox/data/store/setting.dart';
@@ -11,6 +12,7 @@ import '../../core/utils.dart';
 import '../../data/model/server/server_private_info.dart';
 import '../../data/provider/server.dart';
 import '../../data/res/terminal_theme.dart';
+import '../../data/store/private_key.dart';
 import '../../locator.dart';
 
 class SSHPage extends StatefulWidget {
@@ -23,7 +25,7 @@ class SSHPage extends StatefulWidget {
 
 class _SSHPageState extends State<SSHPage> {
   late final terminal = Terminal(inputHandler: keyboard);
-  late final SSHSession session;
+  late final SSHClient client;
   final keyboard = VirtualKeyboard(defaultInputHandler);
   late double _screenWidth;
 
@@ -44,23 +46,14 @@ class _SSHPageState extends State<SSHPage> {
 
   @override
   void dispose() {
-    session.close();
+    client.close();
     super.dispose();
   }
 
   Future<void> initTerminal() async {
     terminal.write('Connecting...\r\n');
 
-    final client = locator<ServerProvider>()
-        .servers
-        .where((e) => e.spi.id == widget.spi.id)
-        .first
-        .client;
-    if (client == null) {
-      terminal.write('Failed to connect\r\n');
-      return;
-    }
-
+    client = await genClient(widget.spi);
     terminal.write('Connected\r\n');
 
     final wxh = locator<SettingStore>().sshTermSize.fetch()!;
@@ -69,7 +62,7 @@ class _SSHPageState extends State<SSHPage> {
     final h = int.parse(split.last);
     terminal.resize(w, h);
 
-    session = await client.shell(
+    final session = await client.shell(
       pty: SSHPtyConfig(
         width: terminal.viewWidth,
         height: terminal.viewHeight,
@@ -189,6 +182,23 @@ class _SSHPageState extends State<SSHPage> {
       ),
     );
   }
+}
+
+Future<SSHClient> genClient(ServerPrivateInfo spi) async {
+  final socket = await SSHSocket.connect(spi.ip, spi.port);
+  if (spi.pubKeyId == null) {
+    return SSHClient(
+      socket,
+      username: spi.user,
+      onPasswordRequest: () => spi.pwd,
+    );
+  }
+  final key = locator<PrivateKeyStore>().get(spi.pubKeyId!);
+  return SSHClient(
+    socket,
+    username: spi.user,
+    identities: await compute(loadIndentity, key.privateKey),
+  );
 }
 
 class VirtualKey {

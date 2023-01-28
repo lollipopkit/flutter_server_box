@@ -177,15 +177,6 @@ class _PkgManagePageState extends State<PkgManagePage>
         return ListView(
           padding: const EdgeInsets.all(13),
           children: [
-            Padding(
-              padding: const EdgeInsets.all(17),
-              child: UrlText(
-                text:
-                    '${_s.experimentalFeature}\n${_s.reportBugsOnGithubIssue(issueUrl)}',
-                replace: 'Github Issue',
-                textAlign: TextAlign.center,
-              ),
-            ),
             _buildUpdatePanel(apt)
           ].map((e) => RoundRectCard(e)).toList(),
         );
@@ -203,10 +194,7 @@ class _PkgManagePageState extends State<PkgManagePage>
         subtitle: const Text('>_<', textAlign: TextAlign.center),
       );
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ExpansionTile(
+    return ExpansionTile(
           title: Text(_s.foundNUpdate(apt.upgradeable!.length)),
           subtitle: Text(
             apt.upgradeable!.map((e) => e.package).join(', '),
@@ -221,32 +209,18 @@ class _PkgManagePageState extends State<PkgManagePage>
                       onPressed: () {
                         apt.upgrade();
                       }),
-                  SizedBox(
-                    height: _media.size.height * 0.73,
-                    child: ListView(
-                      controller: _scrollController,
-                      children: apt.upgradeable!
+                  ...apt.upgradeable!
                           .map((e) => _buildUpdateItem(e, apt))
-                          .toList(),
-                    ),
-                  )
+                          .toList()
                 ]
               : [
-                  SizedBox(
-                    height: _media.size.height * 0.7,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints.expand(),
-                      child: SingleChildScrollView(
+                  SingleChildScrollView(
                         padding: const EdgeInsets.all(18),
                         controller: _scrollController,
                         child: Text(apt.upgradeLog!),
-                      ),
-                    ),
-                  )
+                      )
                 ],
-        )
-      ],
-    );
+        );
   }
 
   Widget _buildUpdateItem(UpgradePkgInfo info, PkgProvider apt) {
