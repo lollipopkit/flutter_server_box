@@ -1530,6 +1530,16 @@ class S {
       args: [],
     );
   }
+
+  /// `This function is now in the experimental stage. \nPlease report bugs on {url} or join our development.`
+  String sshTip(Object url) {
+    return Intl.message(
+      'This function is now in the experimental stage. \nPlease report bugs on $url or join our development.',
+      name: 'sshTip',
+      desc: '',
+      args: [url],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

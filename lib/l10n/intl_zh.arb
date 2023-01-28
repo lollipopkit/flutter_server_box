@@ -146,5 +146,6 @@
     "goto": "前往",
     "showDistLogo": "显示发行版 Logo",
     "onServerDetailPage": "在服务器详情页",
-    "addOne": "前去新增"
+    "addOne": "前去新增",
+    "sshTip": "该功能目前处于测试阶段，请在 {url} 反馈问题，或者加入我们开发。"
 }

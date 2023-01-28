@@ -46,15 +46,17 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m11(time) => "耗时: ${time}";
 
-  static String m12(name) => "确定删除[${name}]？";
+  static String m12(url) => "该功能目前处于测试阶段，请在 ${url} 反馈问题，或者加入我们开发。";
 
-  static String m13(server) => "你确定要删除服务器 [${server}] 吗？";
+  static String m13(name) => "确定删除[${name}]？";
 
-  static String m14(build) => "找到新版本：v1.0.${build}, 点击更新";
+  static String m14(server) => "你确定要删除服务器 [${server}] 吗？";
 
-  static String m15(build) => "当前：v1.0.${build}";
+  static String m15(build) => "找到新版本：v1.0.${build}, 点击更新";
 
-  static String m16(build) => "当前：v1.0.${build}, 已是最新版本";
+  static String m16(build) => "当前：v1.0.${build}";
+
+  static String m17(build) => "当前：v1.0.${build}, 已是最新版本";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -197,11 +199,12 @@ class MessageLookup extends MessageLookupByLibrary {
         "showDistLogo": MessageLookupByLibrary.simpleMessage("显示发行版 Logo"),
         "snippet": MessageLookupByLibrary.simpleMessage("代码片段"),
         "spentTime": m11,
+        "sshTip": m12,
         "start": MessageLookupByLibrary.simpleMessage("开始"),
         "stop": MessageLookupByLibrary.simpleMessage("停止"),
-        "sureDelete": m12,
+        "sureDelete": m13,
         "sureNoPwd": MessageLookupByLibrary.simpleMessage("确认使用无密码？"),
-        "sureToDeleteServer": m13,
+        "sureToDeleteServer": m14,
         "ttl": MessageLookupByLibrary.simpleMessage("缓存时间"),
         "unknown": MessageLookupByLibrary.simpleMessage("未知"),
         "unknownError": MessageLookupByLibrary.simpleMessage("未知错误"),
@@ -215,9 +218,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "upsideDown": MessageLookupByLibrary.simpleMessage("上下交换"),
         "urlOrJson": MessageLookupByLibrary.simpleMessage("链接或JSON"),
         "user": MessageLookupByLibrary.simpleMessage("用户"),
-        "versionHaveUpdate": m14,
-        "versionUnknownUpdate": m15,
-        "versionUpdated": m16,
+        "versionHaveUpdate": m15,
+        "versionUnknownUpdate": m16,
+        "versionUpdated": m17,
         "waitConnection": MessageLookupByLibrary.simpleMessage("请等待连接建立"),
         "willTakEeffectImmediately":
             MessageLookupByLibrary.simpleMessage("更改将会立即生效")

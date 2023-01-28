@@ -11,4 +11,4 @@ PRODUCT_NAME = server_box
 PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.serverBox
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2022 com.lollipopkit. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2023 com.lollipopkit. All rights reserved.

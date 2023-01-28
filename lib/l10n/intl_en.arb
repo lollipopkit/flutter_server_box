@@ -146,5 +146,6 @@
     "goto": "Go to",
     "showDistLogo": "Show distribution logo",
     "onServerDetailPage": "On server detail page",
-    "addOne": "Add one"
+    "addOne": "Add one",
+    "sshTip": "This function is now in the experimental stage. \nPlease report bugs on {url} or join our development."
 }

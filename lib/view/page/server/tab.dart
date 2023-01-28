@@ -13,6 +13,7 @@ import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/provider/snippet.dart';
 import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/font_style.dart';
+import 'package:toolbox/data/res/url.dart';
 import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/pkg.dart';
@@ -24,6 +25,8 @@ import 'package:toolbox/view/page/snippet/edit.dart';
 import 'package:toolbox/view/page/ssh.dart';
 import 'package:toolbox/view/widget/picker.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
+
+import '../../widget/url_text.dart';
 
 class ServerPage extends StatefulWidget {
   const ServerPage({Key? key}) : super(key: key);
@@ -203,7 +206,22 @@ class _ServerPageState extends State<ServerPage>
         Icons.terminal,
         size: 21,
       ),
-      onTap: () => AppRoute(SSHPage(spi: spi), 'ssh page').go(context),
+      onTap: () => showRoundDialog(
+          context,
+          _s.attention,
+          UrlText(
+            text: _s.sshTip(issueUrl),
+            replace: 'Github Issue',
+          ),
+          [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                AppRoute(SSHPage(spi: spi), 'ssh page').go(context);
+              },
+              child: Text(_s.ok),
+            )
+          ]),
     );
   }
 

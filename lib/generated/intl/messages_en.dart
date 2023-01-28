@@ -46,15 +46,18 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m11(time) => "Spent time: ${time}";
 
-  static String m12(name) => "Are you sure to delete [${name}]?";
+  static String m12(url) =>
+      "This function is now in the experimental stage. \nPlease report bugs on ${url} or join our development.";
 
-  static String m13(server) => "Are you sure to delete server [${server}]?";
+  static String m13(name) => "Are you sure to delete [${name}]?";
 
-  static String m14(build) => "Found: v1.0.${build}, click to update";
+  static String m14(server) => "Are you sure to delete server [${server}]?";
 
-  static String m15(build) => "Current: v1.0.${build}";
+  static String m15(build) => "Found: v1.0.${build}, click to update";
 
-  static String m16(build) => "Current: v1.0.${build}, is up to date";
+  static String m16(build) => "Current: v1.0.${build}";
+
+  static String m17(build) => "Current: v1.0.${build}, is up to date";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -228,12 +231,13 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Show distribution logo"),
         "snippet": MessageLookupByLibrary.simpleMessage("Snippet"),
         "spentTime": m11,
+        "sshTip": m12,
         "start": MessageLookupByLibrary.simpleMessage("Start"),
         "stop": MessageLookupByLibrary.simpleMessage("Stop"),
-        "sureDelete": m12,
+        "sureDelete": m13,
         "sureNoPwd": MessageLookupByLibrary.simpleMessage(
             "Are you sure to use no password?"),
-        "sureToDeleteServer": m13,
+        "sureToDeleteServer": m14,
         "ttl": MessageLookupByLibrary.simpleMessage("ttl"),
         "unknown": MessageLookupByLibrary.simpleMessage("unknown"),
         "unknownError": MessageLookupByLibrary.simpleMessage("Unknown error"),
@@ -248,9 +252,9 @@ class MessageLookup extends MessageLookupByLibrary {
         "upsideDown": MessageLookupByLibrary.simpleMessage("Upside Down"),
         "urlOrJson": MessageLookupByLibrary.simpleMessage("URL or JSON"),
         "user": MessageLookupByLibrary.simpleMessage("User"),
-        "versionHaveUpdate": m14,
-        "versionUnknownUpdate": m15,
-        "versionUpdated": m16,
+        "versionHaveUpdate": m15,
+        "versionUnknownUpdate": m16,
+        "versionUpdated": m17,
         "waitConnection": MessageLookupByLibrary.simpleMessage(
             "Please wait for the connection to be established."),
         "willTakEeffectImmediately":
