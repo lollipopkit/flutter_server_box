@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/data/res/color.dart';
 import 'package:xterm/xterm.dart';
 
 import '../../core/utils.dart';
@@ -12,6 +13,7 @@ import '../../data/model/server/server_private_info.dart';
 import '../../data/model/ssh/virtual_key.dart';
 import '../../data/provider/virtual_keyboard.dart';
 import '../../data/res/terminal_theme.dart';
+import '../../data/res/virtual_key.dart';
 import '../../data/store/private_key.dart';
 import '../../locator.dart';
 
@@ -27,7 +29,8 @@ class _SSHPageState extends State<SSHPage> {
   late final terminal = Terminal(inputHandler: keyboard);
   late final SSHClient client;
   final keyboard = locator<VirtualKeyboard>();
-  late double _screenWidth;
+  late MediaQueryData _media;
+  final _virtualKeyboardHeight = 57.0;
 
   var isDark = false;
 
@@ -41,7 +44,7 @@ class _SSHPageState extends State<SSHPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     isDark = isDarkMode(context);
-    _screenWidth = MediaQuery.of(context).size.width;
+    _media = MediaQuery.of(context);
   }
 
   @override
@@ -66,10 +69,6 @@ class _SSHPageState extends State<SSHPage> {
     terminal.buffer.clear();
     terminal.buffer.setCursor(0, 0);
 
-    terminal.onResize = (width, height, pixelWidth, pixelHeight) {
-      session.resizeTerminal(width, height, pixelWidth, pixelHeight);
-    };
-
     terminal.onOutput = (data) {
       session.write(utf8.encode(data) as Uint8List);
     };
@@ -83,6 +82,11 @@ class _SSHPageState extends State<SSHPage> {
         .cast<List<int>>()
         .transform(const Utf8Decoder())
         .listen(terminal.write);
+
+    await session.done;
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
   }
 
   @override
@@ -90,20 +94,28 @@ class _SSHPageState extends State<SSHPage> {
     final termTheme = isDark ? termDarkTheme : termLightTheme;
     return Scaffold(
       backgroundColor: termTheme.background,
-      body: Column(
-        children: [
-          Expanded(
-            child: TerminalView(
-              terminal,
-              keyboardType: TextInputType.visiblePassword,
-              theme: termTheme,
-              onSecondaryTapUp: (p0, p1) {},
-              keyboardAppearance: isDark ? Brightness.dark : Brightness.light,
-            ),
+      body: SizedBox(
+        height: _media.size.height -
+            _virtualKeyboardHeight -
+            _media.padding.bottom -
+            _media.padding.top,
+        child: TerminalView(
+          terminal,
+          keyboardType: TextInputType.visiblePassword,
+          theme: termTheme,
+          keyboardAppearance: isDark ? Brightness.dark : Brightness.light,
+        ),
+      ),
+      bottomNavigationBar: AnimatedPadding(
+        padding: _media.viewInsets,
+        duration: const Duration(milliseconds: 23),
+        curve: Curves.fastOutSlowIn,
+        child: SizedBox(
+          height: _virtualKeyboardHeight,
+          child: Consumer<VirtualKeyboard>(
+            builder: (_, __, ___) => _buildVirtualKey(),
           ),
-          Consumer<VirtualKeyboard>(
-              builder: (_, __, ___) => _buildVirtualKey()),
-        ],
+        ),
       ),
     );
   }
@@ -113,6 +125,7 @@ class _SSHPageState extends State<SSHPage> {
     final top = virtualKeys.sublist(0, half);
     final bottom = virtualKeys.sublist(half);
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           children: top.map((e) => _buildVirtualKeyItem(e)).toList(),
@@ -143,12 +156,27 @@ class _SSHPageState extends State<SSHPage> {
             color: isDark ? Colors.white : Colors.black,
             size: 17,
           )
-        : Text(item.text,
-            style:
-                TextStyle(color: selected ? Colors.blue : null, fontSize: 15));
+        : Text(
+            item.text,
+            style: TextStyle(
+              color: selected ? primaryColor : null,
+              fontSize: 15,
+            ),
+          );
 
     return InkWell(
       onTap: () {
+        if (item.extFunc != null) {
+          switch (item.extFunc!) {
+            case VirtualKeyType.toggleIME:
+              FocusScope.of(context).requestFocus(FocusNode());
+              break;
+            case VirtualKeyType.backspace:
+              terminal.keyInput(TerminalKey.backspace);
+              break;
+          }
+          return;
+        }
         switch (item.key) {
           case TerminalKey.control:
             keyboard.ctrl = !keyboard.ctrl;
@@ -164,12 +192,10 @@ class _SSHPageState extends State<SSHPage> {
         }
       },
       child: SizedBox(
-        width: _screenWidth / (virtualKeys.length / 2),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5.7),
-          child: Center(
-            child: child,
-          ),
+        width: _media.size.width / (virtualKeys.length / 2),
+        height: _virtualKeyboardHeight / 2,
+        child: Center(
+          child: child,
         ),
       ),
     );

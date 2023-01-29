@@ -441,7 +441,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
         (item) {
           return ListTile(
             title: Text(item.name),
-            subtitle: Text('${item.image}\n${item.status}'),
+            subtitle: Text('${item.image} - ${item.status}'),
             trailing: _buildMoreBtn(item, docker.isBusy),
           );
         },
