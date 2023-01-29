@@ -21,11 +21,16 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 
 
 ## 🔖 Feature
-- [x] 📊 Status chart view
-- [x] ⌨️ `SSH` terminal
-- [x] ⚙️ `Docker & Pkg` Manager, `SFTP`, `Snippet` ~~market~~, `Ping` and etc.
-- [x] 📚 i18n (English, Chinese), **welcome contribution** :)
-- [x] 🖥️ Desktop support
+- [x] Functions
+  - [x] `SSH` Terminal
+  - [x] `Docker & Pkg` Manager
+  - [x] `SFTP`
+  - [x] `Snippet`
+  - [x] `Ping`
+  - [x] Status charts
+  - [x] etc.
+- [x] i18n (English, Chinese), **welcome contribution** :)
+- [x] Desktop support
 
 ## 📱 ScreenShots
 <table>

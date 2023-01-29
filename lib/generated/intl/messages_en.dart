@@ -47,7 +47,7 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m11(time) => "Spent time: ${time}";
 
   static String m12(url) =>
-      "This function is now in the experimental stage. \nPlease report bugs on ${url} or join our development.";
+      "This function is now in the experimental stage.\n\nSuch as Backspace on IME not working on iOS. Please use virtual keys above IME.\n\nPlease report bugs on ${url} or join our development.";
 
   static String m13(name) => "Are you sure to delete [${name}]?";
 

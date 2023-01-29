@@ -1321,10 +1321,10 @@ class S {
     );
   }
 
-  /// `This function is now in the experimental stage. \nPlease report bugs on {url} or join our development.`
+  /// `This function is now in the experimental stage.\n\nSuch as Backspace on IME not working on iOS. Please use virtual keys above IME.\n\nPlease report bugs on {url} or join our development.`
   String sshTip(Object url) {
     return Intl.message(
-      'This function is now in the experimental stage. \nPlease report bugs on $url or join our development.',
+      'This function is now in the experimental stage.\n\nSuch as Backspace on IME not working on iOS. Please use virtual keys above IME.\n\nPlease report bugs on $url or join our development.',
       name: 'sshTip',
       desc: '',
       args: [url],

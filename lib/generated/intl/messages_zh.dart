@@ -46,7 +46,8 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m11(time) => "耗时: ${time}";
 
-  static String m12(url) => "该功能目前处于测试阶段，请在 ${url} 反馈问题，或者加入我们开发。";
+  static String m12(url) =>
+      "该功能目前处于测试阶段。\n\n例如：iOS上输入法无法退格。请使用输入法上方的虚拟键。\n\n请在 ${url} 反馈问题，或者加入我们开发。";
 
   static String m13(name) => "确定删除[${name}]？";
 
