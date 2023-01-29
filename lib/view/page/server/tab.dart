@@ -5,7 +5,6 @@ import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/core/utils.dart';
-import 'package:toolbox/data/model/app/menu_item.dart';
 import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/server_status.dart';
@@ -27,6 +26,8 @@ import 'package:toolbox/view/page/ssh.dart';
 import 'package:toolbox/view/widget/picker.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
+import '../../../data/res/menu.dart';
+import '../../widget/dropdown_menu.dart';
 import '../../widget/url_text.dart';
 
 class ServerPage extends StatefulWidget {
@@ -239,14 +240,14 @@ class _ServerPageState extends State<ServerPage>
         ...ServerTabMenuItems.firstItems.map(
           (item) => PopupMenuItem<DropdownBtnItem>(
             value: item,
-            child: item.build,
+            child: item.build(_s),
           ),
         ),
         const PopupMenuDivider(height: 1),
         ...ServerTabMenuItems.secondItems.map(
           (item) => PopupMenuItem<DropdownBtnItem>(
             value: item,
-            child: item.build,
+            child: item.build(_s),
           ),
         ),
       ],

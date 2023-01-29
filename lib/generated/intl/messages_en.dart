@@ -192,6 +192,7 @@ class MessageLookup extends MessageLookupByLibrary {
             "Please input a target IP/domain."),
         "pingNoServer": MessageLookupByLibrary.simpleMessage(
             "No server to ping.\nPlease add a server in server tab."),
+        "pkgManager": MessageLookupByLibrary.simpleMessage("Pkg mgr"),
         "platformNotSupportUpdate": MessageLookupByLibrary.simpleMessage(
             "Current platform does not support in app update.\nPlease build from source and install it."),
         "plzEnterHost":

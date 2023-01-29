@@ -6,12 +6,12 @@ import '../model/server/server_status.dart';
 import '../model/server/tcp_status.dart';
 
 get _initMemory => Memory(
-  total: 1,
-  used: 0,
-  free: 1,
-  cache: 0,
-  avail: 1,
-);
+      total: 1,
+      used: 0,
+      free: 1,
+      cache: 0,
+      avail: 1,
+    );
 get _initOneTimeCpuStatus => OneTimeCpuStatus(
       'cpu',
       0,

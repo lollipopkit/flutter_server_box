@@ -1,27 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:toolbox/data/res/color.dart';
 
-class DropdownBtnItem {
-  final String text;
-  final IconData icon;
-
-  const DropdownBtnItem({
-    required this.text,
-    required this.icon,
-  });
-
-  Widget get build => Row(
-        children: [
-          Icon(icon, color: primaryColor),
-          const SizedBox(
-            width: 10,
-          ),
-          Text(
-            text,
-          ),
-        ],
-      );
-}
+import '../../generated/l10n.dart';
+import '../../view/widget/dropdown_menu.dart';
 
 class ServerTabMenuItems {
   static const List<DropdownBtnItem> firstItems = [sftp, snippet, pkg, docker];
@@ -41,4 +21,23 @@ class DockerMenuItems {
   static const rm = DropdownBtnItem(text: 'Remove', icon: Icons.delete);
   static const start = DropdownBtnItem(text: 'Start', icon: Icons.play_arrow);
   static const stop = DropdownBtnItem(text: 'Stop', icon: Icons.stop);
+}
+
+String getDropdownBtnText(S s, String text) {
+  switch (text) {
+    case 'Snippet':
+      return s.snippet;
+    case 'Pkg':
+      return s.pkgManage;
+    case 'Remove':
+      return s.delete;
+    case 'Start':
+      return s.start;
+    case 'Stop':
+      return s.stop;
+    case 'Edit':
+      return s.edit;
+    default:
+      return text;
+  }
 }

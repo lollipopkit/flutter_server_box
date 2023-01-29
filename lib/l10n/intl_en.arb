@@ -148,5 +148,6 @@
     "addOne": "Add one",
     "sshTip": "This function is now in the experimental stage. \nPlease report bugs on {url} or join our development.",
     "updateTip": "Update: v1.0.{newest}",
-    "updateTipTooLow": "Current version is too low, please update to v1.0.{newest}"
+    "updateTipTooLow": "Current version is too low, please update to v1.0.{newest}",
+    "pkgManager": "Pkg mgr"
 }

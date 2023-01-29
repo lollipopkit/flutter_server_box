@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/utils.dart';
-import 'package:toolbox/data/model/app/menu_item.dart';
 import 'package:toolbox/data/model/docker/ps.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/provider/docker.dart';
@@ -16,6 +15,9 @@ import 'package:toolbox/view/widget/center_loading.dart';
 import 'package:toolbox/view/widget/two_line_text.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 import 'package:toolbox/view/widget/url_text.dart';
+
+import '../../data/res/menu.dart';
+import '../widget/dropdown_menu.dart';
 
 class DockerManagePage extends StatefulWidget {
   final ServerPrivateInfo spi;
@@ -288,11 +290,35 @@ class _DockerManagePageState extends State<DockerManagePage> {
                 trailing: IconButton(
                   icon: const Icon(Icons.delete),
                   onPressed: () async {
-                    final result = await _docker.run('docker rmi ${e.id} -f');
-                    if (result != null) {
-                      showSnackBar(
-                          context, Text(getErrMsg(result) ?? _s.unknownError));
-                    }
+                    showRoundDialog(
+                      context,
+                      _s.attention,
+                      Text(_s.sureDelete(e.repo)),
+                      [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: Text(_s.cancel),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            Navigator.of(context).pop();
+                            final result = await _docker.run(
+                              'docker rmi ${e.id} -f',
+                            );
+                            if (result != null) {
+                              showSnackBar(
+                                context,
+                                Text(getErrMsg(result) ?? _s.unknownError),
+                              );
+                            }
+                          },
+                          child: Text(
+                            _s.ok,
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      ],
+                    );
                   },
                 ),
               ),
@@ -414,27 +440,26 @@ class _DockerManagePageState extends State<DockerManagePage> {
       children: running.map(
         (item) {
           return ListTile(
-            title: Text(item.image),
-            subtitle: Text(item.status),
-            trailing:
-                _buildMoreBtn(item.running, item.containerId, docker.isBusy),
+            title: Text(item.name),
+            subtitle: Text('${item.image} ${item.status}'),
+            trailing: _buildMoreBtn(item, docker.isBusy),
           );
         },
       ).toList(),
     );
   }
 
-  Widget _buildMoreBtn(bool running, String containerId, bool busy) {
-    final item = running ? DockerMenuItems.stop : DockerMenuItems.start;
+  Widget _buildMoreBtn(DockerPsItem dItem, bool busy) {
+    final item = dItem.running ? DockerMenuItems.stop : DockerMenuItems.start;
     return buildPopuopMenu(
       items: [
         PopupMenuItem<DropdownBtnItem>(
           value: item,
-          child: item.build,
+          child: item.build(_s),
         ),
         PopupMenuItem<DropdownBtnItem>(
           value: DockerMenuItems.rm,
-          child: DockerMenuItems.rm.build,
+          child: DockerMenuItems.rm.build(_s),
         ),
       ],
       onSelected: (value) {
@@ -445,13 +470,19 @@ class _DockerManagePageState extends State<DockerManagePage> {
         final item = value as DropdownBtnItem;
         switch (item) {
           case DockerMenuItems.rm:
-            _docker.delete(containerId);
+            showRoundDialog(
+              context,
+              _s.attention,
+              Text(_s.sureDelete(dItem.name)),
+              [],
+            );
+            _docker.delete(dItem.containerId);
             break;
           case DockerMenuItems.start:
-            _docker.start(containerId);
+            _docker.start(dItem.containerId);
             break;
           case DockerMenuItems.stop:
-            _docker.stop(containerId);
+            _docker.stop(dItem.containerId);
             break;
         }
       },

@@ -1550,6 +1550,16 @@ class S {
       args: [newest],
     );
   }
+
+  /// `Pkg mgr`
+  String get pkgManager {
+    return Intl.message(
+      'Pkg mgr',
+      name: 'pkgManager',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {
