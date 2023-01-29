@@ -28,7 +28,7 @@ String getDropdownBtnText(S s, String text) {
     case 'Snippet':
       return s.snippet;
     case 'Pkg':
-      return s.pkgManage;
+      return s.pkg;
     case 'Remove':
       return s.delete;
     case 'Start':

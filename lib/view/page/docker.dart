@@ -441,7 +441,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
         (item) {
           return ListTile(
             title: Text(item.name),
-            subtitle: Text('${item.image} ${item.status}'),
+            subtitle: Text('${item.image}\n${item.status}'),
             trailing: _buildMoreBtn(item, docker.isBusy),
           );
         },
@@ -474,9 +474,16 @@ class _DockerManagePageState extends State<DockerManagePage> {
               context,
               _s.attention,
               Text(_s.sureDelete(dItem.name)),
-              [],
+              [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _docker.delete(dItem.containerId);
+                  },
+                  child: Text(_s.ok),
+                )
+              ],
             );
-            _docker.delete(dItem.containerId);
             break;
           case DockerMenuItems.start:
             _docker.start(dItem.containerId);
