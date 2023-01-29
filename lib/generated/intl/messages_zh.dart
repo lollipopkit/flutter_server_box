@@ -204,9 +204,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "sureDelete": m13,
         "sureNoPwd": MessageLookupByLibrary.simpleMessage("确认使用无密码？"),
         "sureToDeleteServer": m14,
-        "termSize": MessageLookupByLibrary.simpleMessage("SSH 终端大小"),
-        "termSizeFormatError":
-            MessageLookupByLibrary.simpleMessage("格式错误，请输入类似 80x24 的格式"),
         "ttl": MessageLookupByLibrary.simpleMessage("缓存时间"),
         "unknown": MessageLookupByLibrary.simpleMessage("未知"),
         "unknownError": MessageLookupByLibrary.simpleMessage("未知错误"),
@@ -225,7 +222,6 @@ class MessageLookup extends MessageLookupByLibrary {
         "versionUpdated": m17,
         "waitConnection": MessageLookupByLibrary.simpleMessage("请等待连接建立"),
         "willTakEeffectImmediately":
-            MessageLookupByLibrary.simpleMessage("更改将会立即生效"),
-        "wxh": MessageLookupByLibrary.simpleMessage("宽度x高度")
+            MessageLookupByLibrary.simpleMessage("更改将会立即生效")
       };
 }

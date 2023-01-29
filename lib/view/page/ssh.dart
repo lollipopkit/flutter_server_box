@@ -4,8 +4,6 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:toolbox/data/store/setting.dart';
-import 'package:toolbox/view/widget/two_line_text.dart';
 import 'package:xterm/xterm.dart';
 
 import '../../core/utils.dart';
@@ -56,12 +54,6 @@ class _SSHPageState extends State<SSHPage> {
     client = await genClient(widget.spi);
     terminal.write('Connected\r\n');
 
-    final wxh = locator<SettingStore>().sshTermSize.fetch()!;
-    final split = wxh.split('x');
-    final w = int.parse(split.first);
-    final h = int.parse(split.last);
-    terminal.resize(w, h);
-
     final session = await client.shell(
       pty: SSHPtyConfig(
         width: terminal.viewWidth,
@@ -96,10 +88,6 @@ class _SSHPageState extends State<SSHPage> {
     final termTheme = isDark ? termDarkTheme : termLightTheme;
     return Scaffold(
       backgroundColor: termTheme.background,
-      appBar: AppBar(
-        centerTitle: true,
-        title: TwoLineText(up: 'SSH', down: widget.spi.name),
-      ),
       body: Column(
         children: [
           Expanded(

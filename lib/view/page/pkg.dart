@@ -7,13 +7,11 @@ import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/provider/pkg.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/font_style.dart';
-import 'package:toolbox/data/res/url.dart';
 import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/widget/center_loading.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 import 'package:toolbox/view/widget/two_line_text.dart';
-import 'package:toolbox/view/widget/url_text.dart';
 
 class PkgManagePage extends StatefulWidget {
   const PkgManagePage(this.spi, {Key? key}) : super(key: key);
