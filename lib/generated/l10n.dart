@@ -1530,6 +1530,26 @@ class S {
       args: [url],
     );
   }
+
+  /// `Update: v1.0.{newest}`
+  String updateTip(Object newest) {
+    return Intl.message(
+      'Update: v1.0.$newest',
+      name: 'updateTip',
+      desc: '',
+      args: [newest],
+    );
+  }
+
+  /// `Current version is too low, please update to v1.0.{newest}`
+  String updateTipTooLow(Object newest) {
+    return Intl.message(
+      'Current version is too low, please update to v1.0.$newest',
+      name: 'updateTipTooLow',
+      desc: '',
+      args: [newest],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

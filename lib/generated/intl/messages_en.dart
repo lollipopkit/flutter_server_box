@@ -53,11 +53,16 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m14(server) => "Are you sure to delete server [${server}]?";
 
-  static String m15(build) => "Found: v1.0.${build}, click to update";
+  static String m15(newest) => "Update: v1.0.${newest}";
 
-  static String m16(build) => "Current: v1.0.${build}";
+  static String m16(newest) =>
+      "Current version is too low, please update to v1.0.${newest}";
 
-  static String m17(build) => "Current: v1.0.${build}, is up to date";
+  static String m17(build) => "Found: v1.0.${build}, click to update";
+
+  static String m18(build) => "Current: v1.0.${build}";
+
+  static String m19(build) => "Current: v1.0.${build}, is up to date";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -247,12 +252,14 @@ class MessageLookup extends MessageLookupByLibrary {
             "You set to 0, will not update automatically.\nCan\'t calculate CPU status."),
         "updateServerStatusInterval": MessageLookupByLibrary.simpleMessage(
             "Server status update interval"),
+        "updateTip": m15,
+        "updateTipTooLow": m16,
         "upsideDown": MessageLookupByLibrary.simpleMessage("Upside Down"),
         "urlOrJson": MessageLookupByLibrary.simpleMessage("URL or JSON"),
         "user": MessageLookupByLibrary.simpleMessage("User"),
-        "versionHaveUpdate": m15,
-        "versionUnknownUpdate": m16,
-        "versionUpdated": m17,
+        "versionHaveUpdate": m17,
+        "versionUnknownUpdate": m18,
+        "versionUpdated": m19,
         "waitConnection": MessageLookupByLibrary.simpleMessage(
             "Please wait for the connection to be established."),
         "willTakEeffectImmediately":

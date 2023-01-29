@@ -4,12 +4,14 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:r_upgrade/r_upgrade.dart';
-import 'package:toolbox/core/utils.dart';
-import 'package:toolbox/data/provider/app.dart';
-import 'package:toolbox/data/res/build_data.dart';
-import 'package:toolbox/data/service/app.dart';
-import 'package:toolbox/generated/l10n.dart';
-import 'package:toolbox/locator.dart';
+
+import '../data/model/app/update.dart';
+import '../data/provider/app.dart';
+import '../data/res/build_data.dart';
+import '../data/service/app.dart';
+import '../generated/l10n.dart';
+import '../locator.dart';
+import 'utils.dart';
 
 final _logger = Logger('UPDATE');
 
@@ -47,29 +49,38 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
   _logger.info('Update available: $newest');
 
   if (Platform.isAndroid && !await isFileAvailable(update.android)) {
+    _logger.warning('Android update file not available');
     return;
   }
 
   final s = S.of(context);
 
+  if (update.min > BuildData.build) {
+    showRoundDialog(context, s.attention, Text(s.updateTipTooLow(newest)), [
+      TextButton(
+          onPressed: () => _doUpdate(update, context, s), child: Text(s.ok))
+    ]);
+    return;
+  }
+
   showSnackBarWithAction(
-      context,
-      update.min > BuildData.build
-          ? 'Your version is too old. \nPlease update to v1.0.$newest.'
-          : 'Update: v1.0.$newest available. \n${update.changelog}',
-      s.update, () async {
-    if (Platform.isAndroid) {
-      await RUpgrade.upgrade(update.android,
-          fileName: update.android.split('/').last, isAutoRequestInstall: true);
-    } else if (Platform.isIOS) {
-      await RUpgrade.upgradeFromAppStore('1586449703');
-    } else if (Platform.isMacOS) {
-      await RUpgrade.upgradeFromUrl(update.mac);
-    } else {
-      showRoundDialog(context, s.attention, Text(s.platformNotSupportUpdate), [
-        TextButton(
-            onPressed: () => Navigator.of(context).pop(), child: Text(s.ok))
-      ]);
-    }
-  });
+    context,
+    '${s.updateTip(newest)} \n${update.changelog}',
+    s.update,
+    () => _doUpdate(update, context, s),
+  );
+}
+
+Future<void> _doUpdate(AppUpdate update, BuildContext context, S s) async {
+  if (Platform.isAndroid) {
+    await RUpgrade.upgrade(update.android,
+        fileName: update.android.split('/').last);
+  } else if (Platform.isIOS) {
+    await RUpgrade.upgradeFromAppStore('1586449703');
+  } else {
+    showRoundDialog(context, s.attention, Text(s.platformNotSupportUpdate), [
+      TextButton(
+          onPressed: () => Navigator.of(context).pop(), child: Text(s.ok))
+    ]);
+  }
 }

@@ -174,9 +174,8 @@ class _PkgManagePageState extends State<PkgManagePage>
         }
         return ListView(
           padding: const EdgeInsets.all(13),
-          children: [
-            _buildUpdatePanel(apt)
-          ].map((e) => RoundRectCard(e)).toList(),
+          children:
+              [_buildUpdatePanel(apt)].map((e) => RoundRectCard(e)).toList(),
         );
       }),
     );
@@ -193,32 +192,30 @@ class _PkgManagePageState extends State<PkgManagePage>
       );
     }
     return ExpansionTile(
-          title: Text(_s.foundNUpdate(apt.upgradeable!.length)),
-          subtitle: Text(
-            apt.upgradeable!.map((e) => e.package).join(', '),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: grey,
-          ),
-          children: apt.upgradeLog == null
-              ? [
-                  TextButton(
-                      child: Text(_s.updateAll),
-                      onPressed: () {
-                        apt.upgrade();
-                      }),
-                  ...apt.upgradeable!
-                          .map((e) => _buildUpdateItem(e, apt))
-                          .toList()
-                ]
-              : [
-                  SingleChildScrollView(
-                        padding: const EdgeInsets.all(18),
-                        controller: _scrollController,
-                        child: Text(apt.upgradeLog!),
-                      )
-                ],
-        );
+      title: Text(_s.foundNUpdate(apt.upgradeable!.length)),
+      subtitle: Text(
+        apt.upgradeable!.map((e) => e.package).join(', '),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: grey,
+      ),
+      children: apt.upgradeLog == null
+          ? [
+              TextButton(
+                  child: Text(_s.updateAll),
+                  onPressed: () {
+                    apt.upgrade();
+                  }),
+              ...apt.upgradeable!.map((e) => _buildUpdateItem(e, apt)).toList()
+            ]
+          : [
+              SingleChildScrollView(
+                padding: const EdgeInsets.all(18),
+                controller: _scrollController,
+                child: Text(apt.upgradeLog!),
+              )
+            ],
+    );
   }
 
   Widget _buildUpdateItem(UpgradePkgInfo info, PkgProvider apt) {

@@ -52,11 +52,15 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m14(server) => "你确定要删除服务器 [${server}] 吗？";
 
-  static String m15(build) => "找到新版本：v1.0.${build}, 点击更新";
+  static String m15(newest) => "新版本: v1.0.${newest}";
 
-  static String m16(build) => "当前：v1.0.${build}";
+  static String m16(newest) => "当前版本过低，请升级至 v1.0.${newest}";
 
-  static String m17(build) => "当前：v1.0.${build}, 已是最新版本";
+  static String m17(build) => "找到新版本：v1.0.${build}, 点击更新";
+
+  static String m18(build) => "当前：v1.0.${build}";
+
+  static String m19(build) => "当前：v1.0.${build}, 已是最新版本";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -214,12 +218,14 @@ class MessageLookup extends MessageLookupByLibrary {
             "你设置为0，服务器状态不会自动刷新。\n且不能计算CPU使用情况。"),
         "updateServerStatusInterval":
             MessageLookupByLibrary.simpleMessage("服务器状态刷新间隔"),
+        "updateTip": m15,
+        "updateTipTooLow": m16,
         "upsideDown": MessageLookupByLibrary.simpleMessage("上下交换"),
         "urlOrJson": MessageLookupByLibrary.simpleMessage("链接或JSON"),
         "user": MessageLookupByLibrary.simpleMessage("用户"),
-        "versionHaveUpdate": m15,
-        "versionUnknownUpdate": m16,
-        "versionUpdated": m17,
+        "versionHaveUpdate": m17,
+        "versionUnknownUpdate": m18,
+        "versionUpdated": m19,
         "waitConnection": MessageLookupByLibrary.simpleMessage("请等待连接建立"),
         "willTakEeffectImmediately":
             MessageLookupByLibrary.simpleMessage("更改将会立即生效")

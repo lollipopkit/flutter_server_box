@@ -95,6 +95,7 @@ class _SSHPageState extends State<SSHPage> {
               terminal,
               keyboardType: TextInputType.visiblePassword,
               theme: termTheme,
+              onSecondaryTapUp: (p0, p1) {},
               keyboardAppearance: isDark ? Brightness.dark : Brightness.light,
             ),
           ),
