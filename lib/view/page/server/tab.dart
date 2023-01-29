@@ -388,8 +388,10 @@ class _ServerPageState extends State<ServerPage>
             child: Text(_s.ok),
           ),
           TextButton(
-            onPressed: () =>
-                AppRoute(const SnippetEditPage(), 'edit snippet').go(context),
+            onPressed: () {
+              Navigator.of(context).pop();
+              AppRoute(const SnippetEditPage(), 'edit snippet').go(context);
+            },
             child: Text(_s.addOne),
           )
         ],

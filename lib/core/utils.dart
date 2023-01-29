@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
@@ -9,6 +10,13 @@ import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/view/widget/card_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:toolbox/core/extension/stringx.dart';
+
+/// Must put this func out of any Class.
+/// Because of this function is called by [compute] in [ServerProvider.genClient].
+/// https://stackoverflow.com/questions/51998995/invalid-arguments-illegal-argument-in-isolate-message-object-is-a-closure
+List<SSHKeyPair> loadIndentity(String key) {
+  return SSHKeyPair.fromPem(key);
+}
 
 bool isDarkMode(BuildContext context) =>
     Theme.of(context).brightness == Brightness.dark;

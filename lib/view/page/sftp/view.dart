@@ -71,7 +71,7 @@ class _SFTPPageState extends State<SFTPPage> {
         ],
       ),
       body: _buildFileView(),
-      bottomNavigationBar: _buildBottom(),
+      bottomNavigationBar: SafeArea(child: _buildBottom()),
     );
   }
 

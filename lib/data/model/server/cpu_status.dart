@@ -1,19 +1,3 @@
-get initOneTimeCpuStatus => OneTimeCpuStatus(
-      'cpu',
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-    );
-get initCpuStatus => CpuStatus(
-      [initOneTimeCpuStatus],
-      [initOneTimeCpuStatus],
-      '',
-    );
-
 class CpuStatus {
   List<OneTimeCpuStatus> _pre;
   List<OneTimeCpuStatus> _now;
@@ -106,4 +90,52 @@ class OneTimeCpuStatus {
   );
 
   int get total => user + sys + nice + idle + iowait + irq + softirq;
+}
+
+List<OneTimeCpuStatus> parseCPU(String raw) {
+  final List<OneTimeCpuStatus> cpus = [];
+
+  for (var item in raw.split('\n')) {
+    if (item == '') break;
+    final id = item.split(' ').first;
+    final matches = item.replaceFirst(id, '').trim().split(' ');
+    cpus.add(OneTimeCpuStatus(
+        id,
+        int.parse(matches[0]),
+        int.parse(matches[1]),
+        int.parse(matches[2]),
+        int.parse(matches[3]),
+        int.parse(matches[4]),
+        int.parse(matches[5]),
+        int.parse(matches[6])));
+  }
+  return cpus;
+}
+
+final cpuTempReg = RegExp(r'(x86_pkg_temp|cpu_thermal)');
+
+String parseCPUTemp(List<String> segments) {
+  const noMatch = "/sys/class/thermal/thermal_zone*/type";
+  final type = segments[0];
+  final value = segments[1];
+  // Not support to get CPU temperature
+  if (value.contains(noMatch) ||
+      type.contains(noMatch) ||
+      value.isEmpty ||
+      type.isEmpty) {
+    return '';
+  }
+  final split = type.split('\n');
+  int idx = 0;
+  for (var item in split) {
+    if (item.contains(cpuTempReg)) {
+      break;
+    }
+    idx++;
+  }
+  final valueSplited = value.split('\n');
+  if (idx >= valueSplited.length) return '';
+  final temp = int.tryParse(valueSplited[idx].trim());
+  if (temp == null) return '';
+  return '${(temp / 1000).toStringAsFixed(1)}°C';
 }

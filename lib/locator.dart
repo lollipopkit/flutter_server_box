@@ -14,6 +14,8 @@ import 'package:toolbox/data/store/server.dart';
 import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/data/store/snippet.dart';
 
+import 'data/provider/virtual_keyboard.dart';
+
 GetIt locator = GetIt.instance;
 
 void setupLocatorForServices() {
@@ -26,6 +28,7 @@ void setupLocatorForProviders() {
   locator.registerSingleton(DebugProvider());
   locator.registerSingleton(DockerProvider());
   locator.registerSingleton(ServerProvider());
+  locator.registerSingleton(VirtualKeyboard());
   locator.registerSingleton(SnippetProvider());
   locator.registerSingleton(PrivateKeyProvider());
   locator.registerSingleton(SftpDownloadProvider());

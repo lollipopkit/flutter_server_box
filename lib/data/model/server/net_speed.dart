@@ -1,16 +1,5 @@
 import 'package:toolbox/core/extension/numx.dart';
 
-get initNetSpeedPart => NetSpeedPart(
-      '',
-      0,
-      0,
-      0,
-    );
-get initNetSpeed => NetSpeed(
-      [initNetSpeedPart],
-      [initNetSpeedPart],
-    );
-
 class NetSpeedPart {
   String device;
   int bytesIn;
@@ -68,4 +57,24 @@ class NetSpeed {
 
   String buildStandardOutput(double speed) =>
       '${speed.convertBytes.toLowerCase()}/s';
+}
+
+List<NetSpeedPart> parseNetSpeed(String raw) {
+  final split = raw.split('\n');
+  if (split.length < 4) {
+    return [];
+  }
+
+  final time = int.parse(split[split.length - 1]);
+  final results = <NetSpeedPart>[];
+  for (final item in split.sublist(2, split.length - 1)) {
+    final data = item.trim().split(':');
+    final device = data.first;
+    final bytes = data.last.trim().split(' ');
+    bytes.removeWhere((element) => element == '');
+    final bytesIn = int.parse(bytes.first);
+    final bytesOut = int.parse(bytes[8]);
+    results.add(NetSpeedPart(device, bytesIn, bytesOut, time));
+  }
+  return results;
 }

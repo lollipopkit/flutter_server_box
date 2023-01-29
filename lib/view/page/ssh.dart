@@ -4,11 +4,13 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:xterm/xterm.dart';
 
 import '../../core/utils.dart';
 import '../../data/model/server/server_private_info.dart';
-import '../../data/provider/server.dart';
+import '../../data/model/ssh/virtual_key.dart';
+import '../../data/provider/virtual_keyboard.dart';
 import '../../data/res/terminal_theme.dart';
 import '../../data/store/private_key.dart';
 import '../../locator.dart';
@@ -24,7 +26,7 @@ class SSHPage extends StatefulWidget {
 class _SSHPageState extends State<SSHPage> {
   late final terminal = Terminal(inputHandler: keyboard);
   late final SSHClient client;
-  final keyboard = VirtualKeyboard(defaultInputHandler);
+  final keyboard = locator<VirtualKeyboard>();
   late double _screenWidth;
 
   var isDark = false;
@@ -99,7 +101,8 @@ class _SSHPageState extends State<SSHPage> {
               keyboardAppearance: isDark ? Brightness.dark : Brightness.light,
             ),
           ),
-          _buildVirtualKey(),
+          Consumer<VirtualKeyboard>(
+              builder: (_, __, ___) => _buildVirtualKey()),
         ],
       ),
     );
@@ -188,45 +191,4 @@ Future<SSHClient> genClient(ServerPrivateInfo spi) async {
     username: spi.user,
     identities: await compute(loadIndentity, key.privateKey),
   );
-}
-
-class VirtualKey {
-  final TerminalKey key;
-  final String text;
-  final bool toggleable;
-  final IconData? icon;
-
-  VirtualKey(this.key, this.text, {this.toggleable = false, this.icon});
-}
-
-var virtualKeys = [
-  VirtualKey(TerminalKey.escape, 'Esc'),
-  VirtualKey(TerminalKey.alt, 'Alt', toggleable: true),
-  VirtualKey(TerminalKey.pageUp, 'PgUp'),
-  VirtualKey(TerminalKey.arrowUp, 'Up', icon: Icons.arrow_upward),
-  VirtualKey(TerminalKey.pageDown, 'PgDn'),
-  VirtualKey(TerminalKey.end, 'End'),
-  VirtualKey(TerminalKey.tab, 'Tab'),
-  VirtualKey(TerminalKey.control, 'Ctrl', toggleable: true),
-  VirtualKey(TerminalKey.arrowLeft, 'Left', icon: Icons.arrow_back),
-  VirtualKey(TerminalKey.arrowDown, 'Down', icon: Icons.arrow_downward),
-  VirtualKey(TerminalKey.arrowRight, 'Right', icon: Icons.arrow_forward),
-  VirtualKey(TerminalKey.home, 'Home'),
-];
-
-class VirtualKeyboard extends TerminalInputHandler with ChangeNotifier {
-  final TerminalInputHandler inputHandler;
-
-  VirtualKeyboard(this.inputHandler);
-
-  bool ctrl = false;
-  bool alt = false;
-
-  @override
-  String? call(TerminalKeyboardEvent event) {
-    return inputHandler.call(event.copyWith(
-      ctrl: event.ctrl || ctrl,
-      alt: event.alt || alt,
-    ));
-  }
 }
