@@ -27,7 +27,7 @@ class SSHPage extends StatefulWidget {
 
 class _SSHPageState extends State<SSHPage> {
   late final terminal = Terminal(inputHandler: keyboard);
-  late final SSHClient client;
+  SSHClient? client;
   final keyboard = locator<VirtualKeyboard>();
   late MediaQueryData _media;
   final _virtualKeyboardHeight = 57.0;
@@ -49,7 +49,7 @@ class _SSHPageState extends State<SSHPage> {
 
   @override
   void dispose() {
-    client.close();
+    client?.close();
     super.dispose();
   }
 
@@ -59,7 +59,7 @@ class _SSHPageState extends State<SSHPage> {
     client = await genClient(widget.spi);
     terminal.write('Connected\r\n');
 
-    final session = await client.shell(
+    final session = await client!.shell(
       pty: SSHPtyConfig(
         width: terminal.viewWidth,
         height: terminal.viewHeight,

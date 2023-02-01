@@ -162,7 +162,7 @@ class _ServerPageState extends State<ServerPage>
                       ? GestureDetector(
                           onTap: () => showRoundDialog(
                               context, _s.error, Text(ss.failedInfo ?? ''), []),
-                          child: Text(_s.clickSee, style: style))
+                          child: Text(_s.clickSee, style: style, textScaleFactor: 1.0,))
                       : Text(topRightStr, style: style, textScaleFactor: 1.0),
                   const SizedBox(width: 9),
                   _buildSSHBtn(spi),

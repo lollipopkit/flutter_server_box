@@ -15,7 +15,11 @@ List<SSHKeyPair> loadIndentity(String key) {
 }
 
 Future<SSHClient> genClient(ServerPrivateInfo spi) async {
-  final socket = await SSHSocket.connect(spi.ip, spi.port);
+  final socket = await SSHSocket.connect(
+    spi.ip,
+    spi.port,
+    timeout: const Duration(seconds: 5),
+  );
   if (spi.pubKeyId == null) {
     return SSHClient(
       socket,

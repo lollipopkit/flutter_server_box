@@ -1,0 +1,1 @@
+const serverMaxTryTimes = 7;

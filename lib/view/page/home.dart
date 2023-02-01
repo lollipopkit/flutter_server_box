@@ -174,7 +174,7 @@ class _MyHomePageState extends State<MyHomePage>
             onPressed: () => showRoundDialog(
               context,
               _versionStr,
-              const Text('${BuildData.buildAt}\n\n${BuildData.engine}'),
+              const Text(BuildData.buildAt),
               [],
             ),
             child: Text(

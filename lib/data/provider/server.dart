@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
+import 'package:toolbox/data/res/misc.dart';
 
 import '../../core/extension/uint8list.dart';
 import '../../core/provider_base.dart';
@@ -23,6 +24,7 @@ import '../store/setting.dart';
 class ServerProvider extends BusyProvider {
   List<Server> _servers = [];
   List<Server> get servers => _servers;
+  final _TryLimiter _limiter = _TryLimiter();
 
   Timer? _timer;
 
@@ -31,18 +33,18 @@ class ServerProvider extends BusyProvider {
   Future<void> loadLocalData() async {
     setBusyState(true);
     final infos = locator<ServerStore>().fetch();
-    _servers = List.generate(infos.length, (index) => genInfo(infos[index]));
+    _servers = List.generate(infos.length, (index) => genServer(infos[index]));
     setBusyState(false);
     notifyListeners();
   }
 
-  Server genInfo(ServerPrivateInfo spi) {
+  Server genServer(ServerPrivateInfo spi) {
     return Server(spi, initStatus, null, ServerConnectionState.disconnected);
   }
 
   Future<void> refreshData({ServerPrivateInfo? spi}) async {
     if (spi != null) {
-      _getData(spi);
+      await _getData(spi);
       return;
     }
     await Future.wait(_servers.map((s) async {
@@ -89,7 +91,7 @@ class ServerProvider extends BusyProvider {
   }
 
   void addServer(ServerPrivateInfo spi) {
-    _servers.add(genInfo(spi));
+    _servers.add(genServer(spi));
     locator<ServerStore>().put(spi);
     notifyListeners();
     refreshData(spi: spi);
@@ -122,6 +124,11 @@ class ServerProvider extends BusyProvider {
     final state = s.cs;
     if (state == ServerConnectionState.failed ||
         state == ServerConnectionState.disconnected) {
+      if (!_limiter.shouldTry(spi.id)) {
+        s.cs = ServerConnectionState.failed;
+        notifyListeners();
+        return;
+      }
       s.cs = ServerConnectionState.connecting;
       notifyListeners();
       final time1 = DateTime.now();
@@ -137,6 +144,7 @@ class ServerProvider extends BusyProvider {
         if (writeResult.isNotEmpty) {
           throw Exception(writeResult);
         }
+        _limiter.resetTryTimes(spi.id);
       } catch (e) {
         s.cs = ServerConnectionState.failed;
         s.status.failedInfo = '$e ## ';
@@ -249,5 +257,22 @@ class ServerProvider extends BusyProvider {
       return null;
     }
     return await client.run(snippet.script).string;
+  }
+}
+
+class _TryLimiter {
+  final Map<String, int> _triedTimes = {};
+
+  bool shouldTry(String id) {
+    final times = _triedTimes[id] ?? 0;
+    if (times >= serverMaxTryTimes) {
+      return false;
+    }
+    _triedTimes[id] = times + 1;
+    return true;
+  }
+
+  void resetTryTimes(String id) {
+    _triedTimes[id] = 0;
   }
 }

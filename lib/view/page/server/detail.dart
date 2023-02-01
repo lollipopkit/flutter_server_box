@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../../core/extension/numx.dart';
 import '../../../data/model/server/dist.dart';
-
 import '../../../data/model/server/net_speed.dart';
 import '../../../data/model/server/server.dart';
 import '../../../data/model/server/server_status.dart';
