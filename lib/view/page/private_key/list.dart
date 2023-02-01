@@ -47,9 +47,9 @@ class _PrivateKeyListState extends State<PrivateKeysListPage> {
                   ),
                   trailing: TextButton(
                     onPressed: () => AppRoute(
-                            PrivateKeyEditPage(info: key.infos[idx]),
-                            'private key edit page')
-                        .go(context),
+                      PrivateKeyEditPage(info: key.infos[idx]),
+                      'private key edit page',
+                    ).go(context),
                     child: Text(_s.edit),
                   ),
                 ),

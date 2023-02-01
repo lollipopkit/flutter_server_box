@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'primary_color.dart';
+import '../../data/res/color.dart';
 
 InputDecoration buildDecoration(String label,
     {TextStyle? textStyle, IconData? icon, String? hint}) {
@@ -8,11 +8,9 @@ InputDecoration buildDecoration(String label,
     labelText: label,
     labelStyle: textStyle,
     hintText: hint,
-    icon: PrimaryColor(builder: (context, primaryColor) {
-      return Icon(
-        icon,
-        color: primaryColor,
-      );
-    }),
+    icon: Icon(
+      icon,
+      color: primaryColor,
+    ),
   );
 }

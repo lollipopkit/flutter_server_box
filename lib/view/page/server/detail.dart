@@ -14,7 +14,6 @@ import '../../../data/res/sizedbox.dart';
 import '../../../data/store/setting.dart';
 import '../../../generated/l10n.dart';
 import '../../../locator.dart';
-import '../../widget/primary_color.dart';
 import '../../widget/round_rect_card.dart';
 
 class ServerDetailPage extends StatefulWidget {
@@ -174,14 +173,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   Widget _buildProgress(double percent) {
     if (percent > 100) percent = 100;
     final percentWithinOne = percent / 100;
-    return PrimaryColor(builder: (context, primaryColor) {
-      return LinearProgressIndicator(
-        value: percentWithinOne,
-        minHeight: 7,
-        backgroundColor: progressColor.resolve(context),
-        color: primaryColor,
-      );
-    });
+    return LinearProgressIndicator(
+      value: percentWithinOne,
+      minHeight: 7,
+      backgroundColor: progressColor.resolve(context),
+      color: primaryColor,
+    );
   }
 
   Widget _buildUpTimeAndSys(ServerStatus ss) {

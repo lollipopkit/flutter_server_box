@@ -78,7 +78,9 @@ class _PkgManagePageState extends State<PkgManagePage>
         Text(_s.fieldMustNotEmpty),
         [
           TextButton(
-              onPressed: () => Navigator.of(context).pop(), child: Text(_s.ok)),
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(_s.ok),
+          ),
         ],
       );
       return;
@@ -108,11 +110,12 @@ class _PkgManagePageState extends State<PkgManagePage>
             },
             child: Text(_s.cancel)),
         TextButton(
-            onPressed: () => onSubmitted(),
-            child: Text(
-              _s.ok,
-              style: const TextStyle(color: Colors.red),
-            )),
+          onPressed: () => onSubmitted(),
+          child: Text(
+            _s.ok,
+            style: const TextStyle(color: Colors.red),
+          ),
+        ),
       ],
     );
     return _textController.text.trim();
@@ -203,10 +206,11 @@ class _PkgManagePageState extends State<PkgManagePage>
       children: apt.upgradeLog == null
           ? [
               TextButton(
-                  child: Text(_s.updateAll),
-                  onPressed: () {
-                    apt.upgrade();
-                  }),
+                child: Text(_s.updateAll),
+                onPressed: () {
+                  apt.upgrade();
+                },
+              ),
               ...apt.upgradeable!.map((e) => _buildUpdateItem(e, apt)).toList()
             ]
           : [

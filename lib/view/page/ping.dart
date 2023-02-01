@@ -1,14 +1,17 @@
+import 'dart:async';
+
+import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/extension/uint8list.dart';
 import '../../core/utils/ui.dart';
 import '../../data/model/server/ping_result.dart';
 import '../../data/provider/server.dart';
+import '../../data/res/color.dart';
 import '../../data/res/font_style.dart';
 import '../../generated/l10n.dart';
 import '../../locator.dart';
 import '../widget/input_field.dart';
-import '../widget/primary_color.dart';
 import '../widget/round_rect_card.dart';
 
 final doaminReg =
@@ -25,7 +28,7 @@ class PingPage extends StatefulWidget {
 }
 
 class _PingPageState extends State<PingPage>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
   late TextEditingController _textEditingController;
   late MediaQueryData _media;
   final List<PingResult> _results = [];
@@ -54,20 +57,24 @@ class _PingPageState extends State<PingPage>
         child: Column(
           children: [
             const SizedBox(height: 13),
-            buildInput(context, _textEditingController,
-                hint: s.inputDomainHere,
-                maxLines: 1,
-                onSubmitted: (_) => doPing()),
+            buildInput(
+              context,
+              _textEditingController,
+              hint: s.inputDomainHere,
+              maxLines: 1,
+              onSubmitted: (_) => doPing(),
+            ),
             SizedBox(
               width: double.infinity,
               height: _media.size.height * 0.6,
               child: ListView.builder(
-                  controller: ScrollController(),
-                  itemCount: _results.length,
-                  itemBuilder: (context, index) {
-                    final result = _results[index];
-                    return _buildResultItem(result);
-                  }),
+                controller: ScrollController(),
+                itemCount: _results.length,
+                itemBuilder: (context, index) {
+                  final result = _results[index];
+                  return _buildResultItem(result);
+                },
+              ),
             ),
           ],
         ),
@@ -89,34 +96,29 @@ class _PingPageState extends State<PingPage>
   Widget _buildResultItem(PingResult result) {
     final unknown = s.unknown;
     final ms = s.ms;
-    return PrimaryColor(
-      builder: ((context, primaryColor) {
-        return RoundRectCard(
-          ListTile(
-            contentPadding:
-                const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
-            title: Text(
-              result.serverName,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: primaryColor,
-              ),
-            ),
-            subtitle: Text(
-              _buildPingSummary(result, unknown, ms),
-              style: textSize11,
-            ),
-            trailing: Text(
-              '${s.pingAvg}${result.statistic?.avg?.toStringAsFixed(2) ?? s.unknown} $ms',
-              style: TextStyle(
-                fontSize: 14,
-                color: primaryColor,
-              ),
-            ),
+    return RoundRectCard(
+      ListTile(
+        contentPadding: const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
+        title: Text(
+          result.serverName,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: primaryColor,
           ),
-        );
-      }),
+        ),
+        subtitle: Text(
+          _buildPingSummary(result, unknown, ms),
+          style: textSize11,
+        ),
+        trailing: Text(
+          '${s.pingAvg}${result.statistic?.avg?.toStringAsFixed(2) ?? s.unknown} $ms',
+          style: TextStyle(
+            fontSize: 14,
+            color: primaryColor,
+          ),
+        ),
+      ),
     );
   }
 
@@ -169,4 +171,10 @@ class _PingPageState extends State<PingPage>
 
   @override
   bool get wantKeepAlive => true;
+
+  @override
+  Future<FutureOr<void>> afterFirstLayout(BuildContext context) async {
+    await _serverProvider.loadLocalData();
+    await _serverProvider.refreshData();
+  }
 }

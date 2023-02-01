@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/utils/ui.dart';
+import '../../data/res/color.dart';
 import '../../generated/l10n.dart';
 import '../widget/input_field.dart';
-import '../widget/primary_color.dart';
 import '../widget/round_rect_card.dart';
 
 class ConvertPage extends StatefulWidget {
@@ -105,78 +105,72 @@ class _ConvertPageState extends State<ConvertPage>
       'URL $encode',
       'URL $decode'
     ];
-    return PrimaryColor(builder: (context, primaryColor) {
-      return RoundRectCard(
-        ExpansionTile(
-          tilePadding: const EdgeInsets.only(left: 7, right: 27),
-          childrenPadding: EdgeInsets.zero,
-          title: Row(
-            children: [
-              TextButton(
-                style: ButtonStyle(
-                    foregroundColor: MaterialStateProperty.all(primaryColor)),
-                child: Icon(Icons.change_circle, semanticLabel: _s.upsideDown),
-                onPressed: () {
-                  final temp = _textEditingController.text;
-                  _textEditingController.text =
-                      _textEditingControllerResult.text;
-                  _textEditingControllerResult.text = temp;
-                },
+    return RoundRectCard(
+      ExpansionTile(
+        tilePadding: const EdgeInsets.only(left: 7, right: 27),
+        childrenPadding: EdgeInsets.zero,
+        title: Row(
+          children: [
+            TextButton(
+              child: Icon(Icons.change_circle, semanticLabel: _s.upsideDown),
+              onPressed: () {
+                final temp = _textEditingController.text;
+                _textEditingController.text = _textEditingControllerResult.text;
+                _textEditingControllerResult.text = temp;
+              },
+            ),
+            TextButton(
+              child: Icon(Icons.copy, semanticLabel: _s.copy),
+              onPressed: () => Clipboard.setData(
+                ClipboardData(
+                  text: _textEditingControllerResult.text == ''
+                      ? ' '
+                      : _textEditingControllerResult.text,
+                ),
               ),
-              TextButton(
-                style: ButtonStyle(
-                  foregroundColor: MaterialStateProperty.all(primaryColor),
+            )
+          ],
+        ),
+        trailing: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: _media.size.width * 0.35),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                typeOption[_typeOptionIndex],
+                textScaleFactor: 1.0,
+                textAlign: TextAlign.left,
+                style: TextStyle(
+                  fontSize: 16.0,
+                  fontWeight: FontWeight.w500,
+                  color: primaryColor,
                 ),
-                child: Icon(Icons.copy, semanticLabel: _s.copy),
-                onPressed: () => Clipboard.setData(
-                  ClipboardData(
-                      text: _textEditingControllerResult.text == ''
-                          ? ' '
-                          : _textEditingControllerResult.text),
-                ),
+              ),
+              Text(
+                _s.currentMode,
+                textScaleFactor: 1.0,
+                textAlign: TextAlign.right,
+                style: const TextStyle(fontSize: 9.0, color: Colors.grey),
               )
             ],
           ),
-          trailing: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: _media.size.width * 0.35),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  typeOption[_typeOptionIndex],
-                  textScaleFactor: 1.0,
-                  textAlign: TextAlign.left,
-                  style: TextStyle(
-                      fontSize: 16.0,
-                      fontWeight: FontWeight.w500,
-                      color: primaryColor),
-                ),
-                Text(
-                  _s.currentMode,
-                  textScaleFactor: 1.0,
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(fontSize: 9.0, color: Colors.grey),
-                )
-              ],
-            ),
-          ),
-          children: typeOption
-              .map(
-                (e) => ListTile(
-                  title: Text(
-                    e,
-                    style: TextStyle(
-                      color: _theme.textTheme.bodyMedium?.color?.withAlpha(177),
-                    ),
-                  ),
-                  trailing: _buildRadio(typeOption.indexOf(e)),
-                ),
-              )
-              .toList(),
         ),
-      );
-    });
+        children: typeOption
+            .map(
+              (e) => ListTile(
+                title: Text(
+                  e,
+                  style: TextStyle(
+                    color: _theme.textTheme.bodyMedium?.color?.withAlpha(177),
+                  ),
+                ),
+                trailing: _buildRadio(typeOption.indexOf(e)),
+              ),
+            )
+            .toList(),
+      ),
+    );
   }
 
   Widget _buildResult() {

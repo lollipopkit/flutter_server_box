@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:toolbox/data/res/color.dart';
 
 import '../../core/extension/colorx.dart';
 import '../../core/utils/ui.dart';
@@ -15,7 +16,6 @@ import '../../data/store/setting.dart';
 import '../../data/store/snippet.dart';
 import '../../generated/l10n.dart';
 import '../../locator.dart';
-import '../widget/primary_color.dart';
 
 const backupFormatVersion = 1;
 
@@ -68,32 +68,28 @@ class BackupPage extends StatelessWidget {
 
   Widget _buildCard(String text, IconData icon, MediaQueryData media,
       FutureOr Function() onTap) {
-    return PrimaryColor(
-      builder: ((context, pColor) {
-        final textColor = pColor.isBrightColor ? Colors.black : Colors.white;
-        return GestureDetector(
-          onTap: onTap,
-          child: Container(
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(37), color: pColor),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    icon,
-                    color: textColor,
-                  ),
-                  const SizedBox(width: 7),
-                  Text(text, style: TextStyle(color: textColor)),
-                ],
+    final textColor = primaryColor.isBrightColor ? Colors.black : Colors.white;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(37), color: primaryColor),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                color: textColor,
               ),
-            ),
+              const SizedBox(width: 7),
+              Text(text, style: TextStyle(color: textColor)),
+            ],
           ),
-        );
-      }),
+        ),
+      ),
     );
   }
 

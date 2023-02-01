@@ -1,18 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:toolbox/data/store/setting.dart';
+import 'package:toolbox/locator.dart';
 
-import '../../core/utils/ui.dart';
+import '../model/app/dynamic_color.dart';
 
-class DynamicColor {
-  /// 白天模式显示的颜色
-  Color light;
+Color primaryColor = Color(locator<SettingStore>().primaryColor.fetch()!);
 
-  /// 暗黑模式显示的颜色
-  Color dark;
-
-  DynamicColor(this.light, this.dark);
-
-  resolve(BuildContext context) => isDarkMode(context) ? dark : light;
-}
-
-final mainColor = DynamicColor(Colors.black87, Colors.white70);
+final contentColor = DynamicColor(Colors.black87, Colors.white70);
+final bgColor = DynamicColor(Colors.white, Colors.black);
 final progressColor = DynamicColor(Colors.grey.shade100, Colors.white10);

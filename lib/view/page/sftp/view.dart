@@ -113,8 +113,9 @@ class _SFTPPageState extends State<SFTPPage> {
                       ),
                       [
                         TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: Text(_s.close))
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: Text(_s.close),
+                        )
                       ],
                     )),
                 icon: const Icon(Icons.add),
@@ -140,8 +141,9 @@ class _SFTPPageState extends State<SFTPPage> {
                     ),
                     [
                       TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: Text(_s.cancel))
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(_s.cancel),
+                      )
                     ],
                   );
 
@@ -277,8 +279,9 @@ class _SFTPPageState extends State<SFTPPage> {
       ),
       [
         TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(_s.cancel))
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(_s.cancel),
+        )
       ],
     );
   }
@@ -290,8 +293,9 @@ class _SFTPPageState extends State<SFTPPage> {
       Text('${_s.dl2Local(name.filename)}\n${_s.keepForeground}'),
       [
         TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(_s.cancel)),
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(_s.cancel),
+        ),
         TextButton(
           onPressed: () async {
             Navigator.of(context).pop();
@@ -328,8 +332,9 @@ class _SFTPPageState extends State<SFTPPage> {
       Text(_s.sureDelete(file.filename)),
       [
         TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel')),
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
         TextButton(
           onPressed: () {
             _status.client!.remove(file.filename);
@@ -371,8 +376,9 @@ class _SFTPPageState extends State<SFTPPage> {
                 Text(_s.fieldMustNotEmpty),
                 [
                   TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text(_s.ok)),
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(_s.ok),
+                  ),
                 ],
               );
               return;

@@ -56,10 +56,17 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
   final s = S.of(context);
 
   if (update.min > BuildData.build) {
-    showRoundDialog(context, s.attention, Text(s.updateTipTooLow(newest)), [
-      TextButton(
-          onPressed: () => _doUpdate(update, context, s), child: Text(s.ok))
-    ]);
+    showRoundDialog(
+      context,
+      s.attention,
+      Text(s.updateTipTooLow(newest)),
+      [
+        TextButton(
+          onPressed: () => _doUpdate(update, context, s),
+          child: Text(s.ok),
+        )
+      ],
+    );
     return;
   }
 
@@ -73,14 +80,19 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
 
 Future<void> _doUpdate(AppUpdate update, BuildContext context, S s) async {
   if (Platform.isAndroid) {
-    await RUpgrade.upgrade(update.android,
-        fileName: update.android.split('/').last, isAutoRequestInstall: true);
+    await RUpgrade.upgrade(
+      update.android,
+      fileName: update.android.split('/').last,
+      isAutoRequestInstall: true,
+    );
   } else if (Platform.isIOS) {
     await RUpgrade.upgradeFromAppStore('1586449703');
   } else {
     showRoundDialog(context, s.attention, Text(s.platformNotSupportUpdate), [
       TextButton(
-          onPressed: () => Navigator.of(context).pop(), child: Text(s.ok))
+        onPressed: () => Navigator.of(context).pop(),
+        child: Text(s.ok),
+      )
     ]);
   }
 }

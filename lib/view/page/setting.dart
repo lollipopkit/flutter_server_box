@@ -7,12 +7,12 @@ import '../../core/utils/ui.dart';
 import '../../data/provider/app.dart';
 import '../../data/provider/server.dart';
 import '../../data/res/build_data.dart';
+import '../../data/res/color.dart';
 import '../../data/res/font_style.dart';
 import '../../data/res/tab.dart';
 import '../../data/store/setting.dart';
 import '../../generated/l10n.dart';
 import '../../locator.dart';
-import '../widget/primary_color.dart';
 import '../widget/round_rect_card.dart';
 
 class SettingPage extends StatefulWidget {
@@ -56,19 +56,15 @@ class _SettingPageState extends State<SettingPage> {
       appBar: AppBar(
         title: Text(_s.setting),
       ),
-      body: PrimaryColor(
-        builder: (context, primaryColor) {
-          return ListView(
-            padding: const EdgeInsets.all(17),
-            children: [
-              _buildAppColorPreview(primaryColor),
-              _buildUpdateInterval(primaryColor),
-              _buildCheckUpdate(),
-              _buildLaunchPage(primaryColor),
-              _buildDistLogoSwitch(),
-            ].map((e) => RoundRectCard(e)).toList(),
-          );
-        },
+      body: ListView(
+        padding: const EdgeInsets.all(17),
+        children: [
+          _buildAppColorPreview(),
+          _buildUpdateInterval(),
+          _buildCheckUpdate(),
+          _buildLaunchPage(),
+          _buildDistLogoSwitch(),
+        ].map((e) => RoundRectCard(e)).toList(),
       ),
     );
   }
@@ -113,9 +109,9 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  Widget _buildUpdateInterval(Color priColor) {
+  Widget _buildUpdateInterval() {
     return ExpansionTile(
-      textColor: priColor,
+      textColor: primaryColor,
       title: Text(
         _s.updateServerStatusInterval,
         style: textSize13,
@@ -128,8 +124,8 @@ class _SettingPageState extends State<SettingPage> {
       trailing: Text('${_updateInterval.toInt()} ${_s.second}'),
       children: [
         Slider(
-          thumbColor: priColor,
-          activeColor: priColor.withOpacity(0.7),
+          thumbColor: primaryColor,
+          activeColor: primaryColor.withOpacity(0.7),
           min: 0,
           max: 10,
           value: _updateInterval,
@@ -162,12 +158,12 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  Widget _buildAppColorPreview(Color priColor) {
+  Widget _buildAppColorPreview() {
     return ExpansionTile(
-      textColor: priColor,
+      textColor: primaryColor,
       trailing: ClipOval(
         child: Container(
-          color: priColor,
+          color: primaryColor,
           height: 27,
           width: 27,
         ),
@@ -176,17 +172,18 @@ class _SettingPageState extends State<SettingPage> {
         _s.appPrimaryColor,
         style: textSize13,
       ),
-      children: [_buildAppColorPicker(priColor), _buildColorPickerConfirmBtn()],
+      children: [_buildAppColorPicker(), _buildColorPickerConfirmBtn()],
     );
   }
 
-  Widget _buildAppColorPicker(Color selected) {
+  Widget _buildAppColorPicker() {
     return MaterialColorPicker(
-        shrinkWrap: true,
-        onColorChange: (Color color) {
-          _selectedColorValue = color.value;
-        },
-        selectedColor: selected);
+      shrinkWrap: true,
+      onColorChange: (Color color) {
+        _selectedColorValue = color.value;
+      },
+      selectedColor: primaryColor,
+    );
   }
 
   Widget _buildColorPickerConfirmBtn() {
@@ -199,9 +196,10 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  Widget _buildLaunchPage(Color priColor) {
+  Widget _buildLaunchPage() {
     return ExpansionTile(
-      textColor: priColor,
+      childrenPadding: const EdgeInsets.only(left: 17, right: 7),
+      textColor: primaryColor,
       title: Text(
         _s.launchPage,
         style: textSize13,
@@ -222,7 +220,7 @@ class _SettingPageState extends State<SettingPage> {
                 tabTitleName(context, tabs.indexOf(e)),
                 style: TextStyle(
                     fontSize: 14,
-                    color: _theme.textTheme.bodyMedium!.color!.withAlpha(177)),
+                    color: _theme.textTheme.bodyMedium!.color!.withAlpha(177),),
               ),
               trailing: _buildRadio(tabs.indexOf(e)),
             ),

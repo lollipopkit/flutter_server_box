@@ -151,8 +151,9 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
                 const SizedBox(),
                 [
                   TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text(_s.cancel)),
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(_s.cancel),
+                  ),
                   TextButton(
                     onPressed: () {
                       file.deleteSync();
@@ -176,8 +177,9 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
       ),
       [
         TextButton(
-            onPressed: (() => Navigator.of(context).pop()),
-            child: Text(_s.close))
+          onPressed: (() => Navigator.of(context).pop()),
+          child: Text(_s.close),
+        )
       ],
     );
   }

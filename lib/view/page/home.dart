@@ -7,6 +7,7 @@ import '../../core/analysis.dart';
 import '../../core/route.dart';
 import '../../core/update.dart';
 import '../../core/utils/ui.dart';
+import '../../data/model/app/dynamic_color.dart';
 import '../../data/model/app/navigation_item.dart';
 import '../../data/provider/server.dart';
 import '../../data/res/build_data.dart';
@@ -27,6 +28,9 @@ import 'server/tab.dart';
 import 'setting.dart';
 import 'sftp/downloaded.dart';
 import 'snippet/list.dart';
+
+final _bottomItemOverlayColor =
+    DynamicColor(Colors.black.withOpacity(0.07), Colors.white12);
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key, required this.primaryColor}) : super(key: key);
@@ -112,7 +116,7 @@ class _MyHomePageState extends State<MyHomePage>
     );
   }
 
-  Widget _buildItem(int idx, NavigationItem item, bool isSelected) {
+  Widget _buildBottomItem(int idx, NavigationItem item, bool isSelected) {
     final width = _width / tabItems.length;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 377),
@@ -121,9 +125,7 @@ class _MyHomePageState extends State<MyHomePage>
       width: isSelected ? width : width - 17,
       decoration: BoxDecoration(
         color: isSelected
-            ? isDarkMode(context)
-                ? Colors.white12
-                : Colors.black.withOpacity(0.07)
+            ? _bottomItemOverlayColor.resolve(context)
             : Colors.transparent,
         borderRadius: const BorderRadius.all(
           Radius.circular(50),
@@ -156,7 +158,8 @@ class _MyHomePageState extends State<MyHomePage>
           children: tabItems.map(
             (item) {
               int itemIndex = tabItems.indexOf(item);
-              return _buildItem(itemIndex, item, _selectIndex == itemIndex);
+              return _buildBottomItem(
+                  itemIndex, item, _selectIndex == itemIndex,);
             },
           ).toList(),
         ),
@@ -179,7 +182,6 @@ class _MyHomePageState extends State<MyHomePage>
             ),
             child: Text(
               '${BuildData.name}\n$_versionStr',
-              style: TextStyle(color: widget.primaryColor),
               textAlign: TextAlign.center,
             ),
           ),
@@ -225,11 +227,6 @@ class _MyHomePageState extends State<MyHomePage>
                     _s.feedback,
                     Text(_s.feedbackOnGithub),
                     [
-                      TextButton(
-                        onPressed: () => Clipboard.setData(
-                            const ClipboardData(text: issueUrl)),
-                        child: Text(_s.copy),
-                      ),
                       TextButton(
                         onPressed: () => openUrl(issueUrl),
                         child: Text(_s.feedback),

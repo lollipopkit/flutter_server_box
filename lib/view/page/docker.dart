@@ -190,7 +190,9 @@ class _DockerManagePageState extends State<DockerManagePage> {
     if (_textController.text == '') {
       showRoundDialog(context, _s.attention, Text(_s.fieldMustNotEmpty), [
         TextButton(
-            onPressed: () => Navigator.of(context).pop(), child: Text(_s.ok)),
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(_s.ok),
+        ),
       ]);
       return;
     }

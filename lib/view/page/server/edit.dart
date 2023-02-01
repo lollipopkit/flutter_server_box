@@ -8,12 +8,12 @@ import '../../../data/model/server/private_key_info.dart';
 import '../../../data/model/server/server_private_info.dart';
 import '../../../data/provider/private_key.dart';
 import '../../../data/provider/server.dart';
+import '../../../data/res/color.dart';
 import '../../../data/res/font_style.dart';
 import '../../../data/store/private_key.dart';
 import '../../../generated/l10n.dart';
 import '../../../locator.dart';
 import '../../widget/input_decoration.dart';
-import '../../widget/primary_color.dart';
 import '../private_key/edit.dart';
 
 class ServerEditPage extends StatefulWidget {
@@ -200,19 +200,17 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                           ),
                         ),
                       );
-                      return PrimaryColor(builder: ((context, primaryColor) {
-                        return ExpansionTile(
-                          textColor: primaryColor,
-                          iconColor: primaryColor,
-                          tilePadding: EdgeInsets.zero,
-                          childrenPadding: EdgeInsets.zero,
-                          title: Text(
-                            _s.choosePrivateKey,
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                          children: tiles,
-                        );
-                      }));
+                      return ExpansionTile(
+                        textColor: primaryColor,
+                        iconColor: primaryColor,
+                        tilePadding: EdgeInsets.zero,
+                        childrenPadding: EdgeInsets.zero,
+                        title: Text(
+                          _s.choosePrivateKey,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        children: tiles,
+                      );
                     },
                   )
                 : const SizedBox()
@@ -233,11 +231,13 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
               Text(_s.sureNoPwd),
               [
                 TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    child: Text(_s.ok)),
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text(_s.ok),
+                ),
                 TextButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    child: Text(_s.cancel))
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text(_s.cancel),
+                )
               ],
               barrierDismiss: false,
             );

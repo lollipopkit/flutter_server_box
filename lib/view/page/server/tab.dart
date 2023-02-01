@@ -11,6 +11,7 @@ import '../../../data/model/server/server_private_info.dart';
 import '../../../data/model/server/server_status.dart';
 import '../../../data/provider/server.dart';
 import '../../../data/provider/snippet.dart';
+import '../../../data/res/color.dart';
 import '../../../data/res/font_style.dart';
 import '../../../data/res/menu.dart';
 import '../../../data/res/url.dart';
@@ -19,7 +20,6 @@ import '../../../generated/l10n.dart';
 import '../../../locator.dart';
 import '../../widget/dropdown_menu.dart';
 import '../../widget/picker.dart';
-import '../../widget/primary_color.dart';
 import '../../widget/round_rect_card.dart';
 import '../../widget/url_text.dart';
 import '../docker.dart';
@@ -162,7 +162,11 @@ class _ServerPageState extends State<ServerPage>
                       ? GestureDetector(
                           onTap: () => showRoundDialog(
                               context, _s.error, Text(ss.failedInfo ?? ''), []),
-                          child: Text(_s.clickSee, style: style, textScaleFactor: 1.0,))
+                          child: Text(
+                            _s.clickSee,
+                            style: style,
+                            textScaleFactor: 1.0,
+                          ))
                       : Text(topRightStr, style: style, textScaleFactor: 1.0),
                   const SizedBox(width: 9),
                   _buildSSHBtn(spi),
@@ -352,16 +356,12 @@ class _ServerPageState extends State<ServerPage>
       child: Stack(
         children: [
           Center(
-            child: PrimaryColor(
-              builder: (context, primaryColor) {
-                return CircleChart(
-                  progressColor: primaryColor,
-                  progressNumber: percent,
-                  maxNumber: 100,
-                  width: 53,
-                  height: 53,
-                );
-              },
+            child: CircleChart(
+              progressColor: primaryColor,
+              progressNumber: percent,
+              maxNumber: 100,
+              width: 53,
+              height: 53,
             ),
           ),
           Positioned.fill(
@@ -415,8 +415,7 @@ class _ServerPageState extends State<ServerPage>
         TextButton(
           onPressed: () async {
             Navigator.of(context).pop();
-            final result =
-                await locator<ServerProvider>().runSnippet(id, snippet);
+            final result = await _serverProvider.runSnippet(id, snippet);
             showRoundDialog(
               context,
               _s.result,
