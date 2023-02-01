@@ -1,11 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/data/res/color.dart';
 import 'package:xterm/xterm.dart';
 
 import '../../core/utils/ui.dart';
@@ -13,6 +13,7 @@ import '../../core/utils/server.dart';
 import '../../data/model/server/server_private_info.dart';
 import '../../data/model/ssh/virtual_key.dart';
 import '../../data/provider/virtual_keyboard.dart';
+import '../../data/res/color.dart';
 import '../../data/res/terminal_theme.dart';
 import '../../data/res/virtual_key.dart';
 import '../../locator.dart';
@@ -26,11 +27,12 @@ class SSHPage extends StatefulWidget {
 }
 
 class _SSHPageState extends State<SSHPage> {
-  late final terminal = Terminal(inputHandler: keyboard);
-  SSHClient? client;
-  final keyboard = locator<VirtualKeyboard>();
+  late final _terminal = Terminal(inputHandler: _keyboard);
+  SSHClient? _client;
+  final _keyboard = locator<VirtualKeyboard>();
   late MediaQueryData _media;
   final _virtualKeyboardHeight = 57.0;
+  final TerminalController _terminalController = TerminalController();
 
   var isDark = false;
 
@@ -49,39 +51,39 @@ class _SSHPageState extends State<SSHPage> {
 
   @override
   void dispose() {
-    client?.close();
+    _client?.close();
     super.dispose();
   }
 
   Future<void> initTerminal() async {
-    terminal.write('Connecting...\r\n');
+    _terminal.write('Connecting...\r\n');
 
-    client = await genClient(widget.spi);
-    terminal.write('Connected\r\n');
+    _client = await genClient(widget.spi);
+    _terminal.write('Connected\r\n');
 
-    final session = await client!.shell(
+    final session = await _client!.shell(
       pty: SSHPtyConfig(
-        width: terminal.viewWidth,
-        height: terminal.viewHeight,
+        width: _terminal.viewWidth,
+        height: _terminal.viewHeight,
       ),
     );
 
-    terminal.buffer.clear();
-    terminal.buffer.setCursor(0, 0);
+    _terminal.buffer.clear();
+    _terminal.buffer.setCursor(0, 0);
 
-    terminal.onOutput = (data) {
+    _terminal.onOutput = (data) {
       session.write(utf8.encode(data) as Uint8List);
     };
 
     session.stdout
         .cast<List<int>>()
         .transform(const Utf8Decoder())
-        .listen(terminal.write);
+        .listen(_terminal.write);
 
     session.stderr
         .cast<List<int>>()
         .transform(const Utf8Decoder())
-        .listen(terminal.write);
+        .listen(_terminal.write);
 
     await session.done;
     if (mounted) {
@@ -100,11 +102,14 @@ class _SSHPageState extends State<SSHPage> {
             _media.padding.bottom -
             _media.padding.top,
         child: TerminalView(
-          terminal,
-          keyboardType: TextInputType.visiblePassword,
-          theme: termTheme,
-          keyboardAppearance: isDark ? Brightness.dark : Brightness.light,
-        ),
+            _terminal,
+            controller: _terminalController,
+            keyboardType: TextInputType.visiblePassword,
+            theme: termTheme,
+            deleteDetection: Platform.isIOS,
+            autofocus: true,
+            keyboardAppearance: isDark ? Brightness.dark : Brightness.light,
+          ),
       ),
       bottomNavigationBar: AnimatedPadding(
         padding: _media.viewInsets,
@@ -141,10 +146,10 @@ class _SSHPageState extends State<SSHPage> {
     var selected = false;
     switch (item.key) {
       case TerminalKey.control:
-        selected = keyboard.ctrl;
+        selected = _keyboard.ctrl;
         break;
       case TerminalKey.alt:
-        selected = keyboard.alt;
+        selected = _keyboard.alt;
         break;
       default:
         break;
@@ -165,32 +170,7 @@ class _SSHPageState extends State<SSHPage> {
           );
 
     return InkWell(
-      onTap: () {
-        if (item.extFunc != null) {
-          switch (item.extFunc!) {
-            case VirtualKeyType.toggleIME:
-              FocusScope.of(context).requestFocus(FocusNode());
-              break;
-            case VirtualKeyType.backspace:
-              terminal.keyInput(TerminalKey.backspace);
-              break;
-          }
-          return;
-        }
-        switch (item.key) {
-          case TerminalKey.control:
-            keyboard.ctrl = !keyboard.ctrl;
-            setState(() {});
-            break;
-          case TerminalKey.alt:
-            keyboard.alt = !keyboard.alt;
-            setState(() {});
-            break;
-          default:
-            terminal.keyInput(item.key);
-            break;
-        }
-      },
+      onTap: () => _doVirtualKey(item),
       child: SizedBox(
         width: _media.size.width / (virtualKeys.length / 2),
         height: _virtualKeyboardHeight / 2,
@@ -199,5 +179,54 @@ class _SSHPageState extends State<SSHPage> {
         ),
       ),
     );
+  }
+
+  void _doVirtualKey(VirtualKey item) {
+    if (item.func != null) {
+      _doVirtualKeyFunc(item.func!);
+      return;
+    }
+    if (item.key != null) {
+      _doVirtualKeyInput(item.key!);
+    }
+  }
+
+  void _doVirtualKeyInput(TerminalKey key) {
+    switch (key) {
+      case TerminalKey.control:
+        _keyboard.ctrl = !_keyboard.ctrl;
+        setState(() {});
+        break;
+      case TerminalKey.alt:
+        _keyboard.alt = !_keyboard.alt;
+        setState(() {});
+        break;
+      default:
+        _terminal.keyInput(key);
+        break;
+    }
+  }
+
+  void _doVirtualKeyFunc(VirtualKeyFunc type) {
+    switch (type) {
+      case VirtualKeyFunc.toggleIME:
+        FocusScope.of(context).requestFocus(FocusNode());
+        break;
+      case VirtualKeyFunc.backspace:
+        _terminal.keyInput(TerminalKey.backspace);
+        break;
+      case VirtualKeyFunc.paste:
+        Clipboard.getData(Clipboard.kTextPlain).then((value) {
+          if (value != null) {
+            _terminal.textInput(value.text!);
+          }
+        });
+        break;
+      case VirtualKeyFunc.copy:
+        final range = _terminalController.selection;
+        final text = _terminal.buffer.getText(range);
+        Clipboard.setData(ClipboardData(text: text));
+        break;
+    }
   }
 }

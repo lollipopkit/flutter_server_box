@@ -143,9 +143,8 @@ class _PkgManagePageState extends State<PkgManagePage>
               ),
               ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxHeight: _media.size.height * 0.3,
-                  minWidth: _media.size.width
-                ),
+                    maxHeight: _media.size.height * 0.3,
+                    minWidth: _media.size.width),
                 child: Padding(
                   padding: const EdgeInsets.all(17),
                   child: RoundRectCard(
