@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/utils/ui.dart';
-import '../../data/res/color.dart';
 import '../../generated/l10n.dart';
 import '../widget/input_field.dart';
+import '../widget/primary_color.dart';
 import '../widget/round_rect_card.dart';
 
 class ConvertPage extends StatefulWidget {

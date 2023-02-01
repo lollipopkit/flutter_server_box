@@ -8,12 +8,12 @@ import '../../../data/model/server/private_key_info.dart';
 import '../../../data/model/server/server_private_info.dart';
 import '../../../data/provider/private_key.dart';
 import '../../../data/provider/server.dart';
-import '../../../data/res/color.dart';
 import '../../../data/res/font_style.dart';
 import '../../../data/store/private_key.dart';
 import '../../../generated/l10n.dart';
 import '../../../locator.dart';
 import '../../widget/input_decoration.dart';
+import '../../widget/primary_color.dart';
 import '../private_key/edit.dart';
 
 class ServerEditPage extends StatefulWidget {

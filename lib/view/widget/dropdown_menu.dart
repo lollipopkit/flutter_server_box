@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:toolbox/data/res/color.dart';
-import 'package:toolbox/data/res/menu.dart';
-import 'package:toolbox/generated/l10n.dart';
+
+import '../../data/res/menu.dart';
+import '../../generated/l10n.dart';
+import 'primary_color.dart';
 
 class DropdownBtnItem {
   final String text;

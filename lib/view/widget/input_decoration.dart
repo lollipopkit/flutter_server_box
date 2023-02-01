@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:toolbox/data/res/color.dart';
+
+import 'primary_color.dart';
 
 InputDecoration buildDecoration(String label,
     {TextStyle? textStyle, IconData? icon, String? hint}) {

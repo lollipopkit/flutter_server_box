@@ -8,7 +8,6 @@ import 'package:flutter/services.dart';
 import '../../core/extension/colorx.dart';
 import '../../core/utils/ui.dart';
 import '../../data/model/app/backup.dart';
-import '../../data/res/color.dart';
 import '../../data/res/font_style.dart';
 import '../../data/store/private_key.dart';
 import '../../data/store/server.dart';
@@ -16,6 +15,7 @@ import '../../data/store/setting.dart';
 import '../../data/store/snippet.dart';
 import '../../generated/l10n.dart';
 import '../../locator.dart';
+import '../widget/primary_color.dart';
 
 const backupFormatVersion = 1;
 

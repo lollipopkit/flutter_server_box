@@ -7,12 +7,12 @@ import '../../core/utils/ui.dart';
 import '../../data/provider/app.dart';
 import '../../data/provider/server.dart';
 import '../../data/res/build_data.dart';
-import '../../data/res/color.dart';
 import '../../data/res/font_style.dart';
 import '../../data/res/tab.dart';
 import '../../data/store/setting.dart';
 import '../../generated/l10n.dart';
 import '../../locator.dart';
+import '../widget/primary_color.dart';
 import '../widget/round_rect_card.dart';
 
 class SettingPage extends StatefulWidget {

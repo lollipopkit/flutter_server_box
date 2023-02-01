@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/extension/numx.dart';
-import 'package:toolbox/data/model/server/dist.dart';
-import 'package:toolbox/data/model/server/net_speed.dart';
-import 'package:toolbox/data/model/server/server.dart';
-import 'package:toolbox/data/model/server/server_status.dart';
-import 'package:toolbox/data/provider/server.dart';
-import 'package:toolbox/data/res/color.dart';
-import 'package:toolbox/data/res/font_style.dart';
-import 'package:toolbox/data/res/padding.dart';
-import 'package:toolbox/data/store/setting.dart';
-import 'package:toolbox/generated/l10n.dart';
-import 'package:toolbox/locator.dart';
-import 'package:toolbox/view/widget/round_rect_card.dart';
+import '../../../core/extension/numx.dart';
+import '../../../data/model/server/dist.dart';
 
+import '../../../data/model/server/net_speed.dart';
+import '../../../data/model/server/server.dart';
+import '../../../data/model/server/server_status.dart';
+import '../../../data/provider/server.dart';
+import '../../../data/res/color.dart';
+import '../../../data/res/font_style.dart';
+import '../../../data/res/padding.dart';
 import '../../../data/res/sizedbox.dart';
+import '../../../data/store/setting.dart';
+import '../../../generated/l10n.dart';
+import '../../../locator.dart';
+import '../../widget/primary_color.dart';
+import '../../widget/round_rect_card.dart';
 
 class ServerDetailPage extends StatefulWidget {
   const ServerDetailPage(this.id, {Key? key}) : super(key: key);
