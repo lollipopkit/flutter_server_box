@@ -170,8 +170,19 @@ class _MyHomePageState extends State<MyHomePage>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _buildIcon(),
-          const Text(BuildData.name),
-          Text(_versionStr),
+          TextButton(
+            onPressed: () => showRoundDialog(
+              context,
+              _versionStr,
+              const Text('${BuildData.buildAt}\n\n${BuildData.engine}'),
+              [],
+            ),
+            child: Text(
+              '${BuildData.name}\n$_versionStr',
+              style: TextStyle(color: widget.primaryColor),
+              textAlign: TextAlign.center,
+            ),
+          ),
           SizedBox(
             height: MediaQuery.of(context).size.height * 0.07,
           ),
@@ -188,9 +199,10 @@ class _MyHomePageState extends State<MyHomePage>
                 ListTile(
                   leading: const Icon(Icons.vpn_key),
                   title: Text(_s.privateKey),
-                  onTap: () =>
-                      AppRoute(const PrivateKeysListPage(), 'private key list')
-                          .go(context),
+                  onTap: () => AppRoute(
+                    const PrivateKeysListPage(),
+                    'private key list',
+                  ).go(context),
                 ),
                 ListTile(
                   leading: const Icon(Icons.download),
@@ -273,7 +285,7 @@ class _MyHomePageState extends State<MyHomePage>
         ConstrainedBox(
           constraints: const BoxConstraints(maxHeight: 53, maxWidth: 53),
           child: Container(
-            color: primaryColor,
+            color: widget.primaryColor,
           ),
         ),
         ConstrainedBox(

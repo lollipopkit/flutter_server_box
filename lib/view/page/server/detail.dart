@@ -114,6 +114,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                     style: textSize27,
                     textScaleFactor: 1.0,
                   ),
+                  width7,
                   tempWidget
                 ],
               ),
@@ -219,7 +220,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                 Row(
                   children: [
                     Text('${used.toStringAsFixed(0)}%', style: textSize27),
-                    const SizedBox(width: 7),
+                    width7,
                     Text('of ${(ss.mem.total * 1024).convertBytes}',
                         style: textSize13Grey)
                   ],
