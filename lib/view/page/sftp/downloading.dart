@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/extension/numx.dart';
-import 'package:toolbox/core/utils.dart';
-import 'package:toolbox/data/model/sftp/download_status.dart';
-import 'package:toolbox/data/provider/sftp_download.dart';
-import 'package:toolbox/data/res/font_style.dart';
-import 'package:toolbox/generated/l10n.dart';
-import 'package:toolbox/view/widget/center_loading.dart';
-import 'package:toolbox/view/widget/round_rect_card.dart';
+
+import '../../../core/extension/numx.dart';
+import '../../../core/utils/misc.dart';
+import '../../../core/utils/ui.dart';
+import '../../../data/model/sftp/download_status.dart';
+import '../../../data/provider/sftp_download.dart';
+import '../../../data/res/font_style.dart';
+import '../../../generated/l10n.dart';
+import '../../widget/center_loading.dart';
+import '../../widget/round_rect_card.dart';
 
 class SFTPDownloadingPage extends StatefulWidget {
   const SFTPDownloadingPage({Key? key}) : super(key: key);

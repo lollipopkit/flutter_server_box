@@ -14,7 +14,12 @@ class DropdownBtnItem {
 
   Widget build(S s) => Row(
         children: [
-          Icon(icon, color: primaryColor),
+          PrimaryColor(builder: (context, primaryColor) {
+            return Icon(
+              icon,
+              color: primaryColor,
+            );
+          }),
           const SizedBox(
             width: 10,
           ),

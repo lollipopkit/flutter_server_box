@@ -2,11 +2,12 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:toolbox/core/utils.dart';
-import 'package:toolbox/data/res/color.dart';
-import 'package:toolbox/generated/l10n.dart';
-import 'package:toolbox/view/widget/input_field.dart';
-import 'package:toolbox/view/widget/round_rect_card.dart';
+
+import '../../core/utils/ui.dart';
+import '../../data/res/color.dart';
+import '../../generated/l10n.dart';
+import '../widget/input_field.dart';
+import '../widget/round_rect_card.dart';
 
 class ConvertPage extends StatefulWidget {
   const ConvertPage({Key? key}) : super(key: key);
@@ -104,75 +105,78 @@ class _ConvertPageState extends State<ConvertPage>
       'URL $encode',
       'URL $decode'
     ];
-    return RoundRectCard(
-      ExpansionTile(
-        tilePadding: const EdgeInsets.only(left: 7, right: 27),
-        childrenPadding: EdgeInsets.zero,
-        title: Row(
-          children: [
-            TextButton(
-              style: ButtonStyle(
-                  foregroundColor: MaterialStateProperty.all(primaryColor)),
-              child: Icon(Icons.change_circle, semanticLabel: _s.upsideDown),
-              onPressed: () {
-                final temp = _textEditingController.text;
-                _textEditingController.text = _textEditingControllerResult.text;
-                _textEditingControllerResult.text = temp;
-              },
-            ),
-            TextButton(
-              style: ButtonStyle(
-                foregroundColor: MaterialStateProperty.all(primaryColor),
-              ),
-              child: Icon(Icons.copy, semanticLabel: _s.copy),
-              onPressed: () => Clipboard.setData(
-                ClipboardData(
-                    text: _textEditingControllerResult.text == ''
-                        ? ' '
-                        : _textEditingControllerResult.text),
-              ),
-            )
-          ],
-        ),
-        trailing: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: _media.size.width * 0.35),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
+    return PrimaryColor(builder: (context, primaryColor) {
+      return RoundRectCard(
+        ExpansionTile(
+          tilePadding: const EdgeInsets.only(left: 7, right: 27),
+          childrenPadding: EdgeInsets.zero,
+          title: Row(
             children: [
-              Text(
-                typeOption[_typeOptionIndex],
-                textScaleFactor: 1.0,
-                textAlign: TextAlign.left,
-                style: TextStyle(
-                    fontSize: 16.0,
-                    fontWeight: FontWeight.w500,
-                    color: primaryColor),
+              TextButton(
+                style: ButtonStyle(
+                    foregroundColor: MaterialStateProperty.all(primaryColor)),
+                child: Icon(Icons.change_circle, semanticLabel: _s.upsideDown),
+                onPressed: () {
+                  final temp = _textEditingController.text;
+                  _textEditingController.text =
+                      _textEditingControllerResult.text;
+                  _textEditingControllerResult.text = temp;
+                },
               ),
-              Text(
-                _s.currentMode,
-                textScaleFactor: 1.0,
-                textAlign: TextAlign.right,
-                style: const TextStyle(fontSize: 9.0, color: Colors.grey),
+              TextButton(
+                style: ButtonStyle(
+                  foregroundColor: MaterialStateProperty.all(primaryColor),
+                ),
+                child: Icon(Icons.copy, semanticLabel: _s.copy),
+                onPressed: () => Clipboard.setData(
+                  ClipboardData(
+                      text: _textEditingControllerResult.text == ''
+                          ? ' '
+                          : _textEditingControllerResult.text),
+                ),
               )
             ],
           ),
-        ),
-        children: typeOption
-            .map(
-              (e) => ListTile(
-                title: Text(
-                  e,
+          trailing: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: _media.size.width * 0.35),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  typeOption[_typeOptionIndex],
+                  textScaleFactor: 1.0,
+                  textAlign: TextAlign.left,
                   style: TextStyle(
-                    color: _theme.textTheme.bodyMedium?.color?.withAlpha(177),
-                  ),
+                      fontSize: 16.0,
+                      fontWeight: FontWeight.w500,
+                      color: primaryColor),
                 ),
-                trailing: _buildRadio(typeOption.indexOf(e)),
-              ),
-            )
-            .toList(),
-      ),
-    );
+                Text(
+                  _s.currentMode,
+                  textScaleFactor: 1.0,
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(fontSize: 9.0, color: Colors.grey),
+                )
+              ],
+            ),
+          ),
+          children: typeOption
+              .map(
+                (e) => ListTile(
+                  title: Text(
+                    e,
+                    style: TextStyle(
+                      color: _theme.textTheme.bodyMedium?.color?.withAlpha(177),
+                    ),
+                  ),
+                  trailing: _buildRadio(typeOption.indexOf(e)),
+                ),
+              )
+              .toList(),
+        ),
+      );
+    });
   }
 
   Widget _buildResult() {

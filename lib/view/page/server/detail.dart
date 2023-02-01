@@ -29,7 +29,6 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     with SingleTickerProviderStateMixin {
   late MediaQueryData _media;
   late S _s;
-  late Color pColor;
   bool _showDistLogo = true;
 
   @override
@@ -38,7 +37,6 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     _media = MediaQuery.of(context);
     _s = S.of(context);
     _showDistLogo = locator<SettingStore>().showDistLogo.fetch()!;
-    pColor = primaryColor;
   }
 
   @override
@@ -175,12 +173,14 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   Widget _buildProgress(double percent) {
     if (percent > 100) percent = 100;
     final percentWithinOne = percent / 100;
-    return LinearProgressIndicator(
-      value: percentWithinOne,
-      minHeight: 7,
-      backgroundColor: progressColor.resolve(context),
-      color: pColor,
-    );
+    return PrimaryColor(builder: (context, primaryColor) {
+      return LinearProgressIndicator(
+        value: percentWithinOne,
+        minHeight: 7,
+        backgroundColor: progressColor.resolve(context),
+        color: primaryColor,
+      );
+    });
   }
 
   Widget _buildUpTimeAndSys(ServerStatus ss) {

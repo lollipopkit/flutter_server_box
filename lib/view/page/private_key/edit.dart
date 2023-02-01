@@ -3,13 +3,14 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:toolbox/core/utils.dart';
-import 'package:toolbox/data/model/server/private_key_info.dart';
-import 'package:toolbox/data/provider/private_key.dart';
-import 'package:toolbox/data/res/font_style.dart';
-import 'package:toolbox/generated/l10n.dart';
-import 'package:toolbox/locator.dart';
-import 'package:toolbox/view/widget/input_decoration.dart';
+
+import '../../../core/utils/ui.dart';
+import '../../../data/model/server/private_key_info.dart';
+import '../../../data/provider/private_key.dart';
+import '../../../data/res/font_style.dart';
+import '../../../generated/l10n.dart';
+import '../../../locator.dart';
+import '../../widget/input_decoration.dart';
 
 const _format = 'text/plain';
 

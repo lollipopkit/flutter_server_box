@@ -1,16 +1,18 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:toolbox/core/extension/numx.dart';
-import 'package:toolbox/core/extension/stringx.dart';
-import 'package:toolbox/core/route.dart';
-import 'package:toolbox/core/utils.dart';
-import 'package:toolbox/data/model/app/path_with_prefix.dart';
-import 'package:toolbox/data/res/font_style.dart';
-import 'package:toolbox/data/res/path.dart';
-import 'package:toolbox/generated/l10n.dart';
-import 'package:toolbox/view/page/sftp/downloading.dart';
-import 'package:toolbox/view/widget/fade_in.dart';
+
+import '../../../core/extension/numx.dart';
+import '../../../core/extension/stringx.dart';
+import '../../../core/route.dart';
+import '../../../core/utils/misc.dart';
+import '../../../core/utils/ui.dart';
+import '../../../data/model/app/path_with_prefix.dart';
+import '../../../data/res/font_style.dart';
+import '../../../data/res/path.dart';
+import '../../../generated/l10n.dart';
+import '../../widget/fade_in.dart';
+import 'downloading.dart';
 
 class SFTPDownloadedPage extends StatefulWidget {
   const SFTPDownloadedPage({Key? key}) : super(key: key);

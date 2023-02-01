@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/update.dart';
-import 'package:toolbox/core/utils.dart';
-import 'package:toolbox/data/provider/app.dart';
-import 'package:toolbox/data/provider/server.dart';
-import 'package:toolbox/data/res/build_data.dart';
-import 'package:toolbox/data/res/color.dart';
-import 'package:toolbox/data/res/font_style.dart';
-import 'package:toolbox/data/res/tab.dart';
-import 'package:toolbox/data/store/setting.dart';
-import 'package:toolbox/generated/l10n.dart';
-import 'package:toolbox/locator.dart';
-import 'package:toolbox/view/widget/round_rect_card.dart';
+
+import '../../core/update.dart';
+import '../../core/utils/ui.dart';
+import '../../data/provider/app.dart';
+import '../../data/provider/server.dart';
+import '../../data/res/build_data.dart';
+import '../../data/res/color.dart';
+import '../../data/res/font_style.dart';
+import '../../data/res/tab.dart';
+import '../../data/store/setting.dart';
+import '../../generated/l10n.dart';
+import '../../locator.dart';
+import '../widget/round_rect_card.dart';
 
 class SettingPage extends StatefulWidget {
   const SettingPage({Key? key}) : super(key: key);
@@ -25,7 +26,6 @@ class _SettingPageState extends State<SettingPage> {
   late final SettingStore _setting;
   late int _selectedColorValue;
   late int _launchPageIdx;
-  late Color priColor;
   late final ServerProvider _serverProvider;
   late MediaQueryData _media;
   late ThemeData _theme;
@@ -36,7 +36,6 @@ class _SettingPageState extends State<SettingPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    priColor = primaryColor;
     _media = MediaQuery.of(context);
     _theme = Theme.of(context);
     _s = S.of(context);
@@ -57,15 +56,19 @@ class _SettingPageState extends State<SettingPage> {
       appBar: AppBar(
         title: Text(_s.setting),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(17),
-        children: [
-          _buildAppColorPreview(),
-          _buildUpdateInterval(),
-          _buildCheckUpdate(),
-          _buildLaunchPage(),
-          _buildDistLogoSwitch(),
-        ].map((e) => RoundRectCard(e)).toList(),
+      body: PrimaryColor(
+        builder: (context, primaryColor) {
+          return ListView(
+            padding: const EdgeInsets.all(17),
+            children: [
+              _buildAppColorPreview(primaryColor),
+              _buildUpdateInterval(primaryColor),
+              _buildCheckUpdate(),
+              _buildLaunchPage(primaryColor),
+              _buildDistLogoSwitch(),
+            ].map((e) => RoundRectCard(e)).toList(),
+          );
+        },
       ),
     );
   }
@@ -110,7 +113,7 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  Widget _buildUpdateInterval() {
+  Widget _buildUpdateInterval(Color priColor) {
     return ExpansionTile(
       textColor: priColor,
       title: Text(
@@ -159,7 +162,7 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  Widget _buildAppColorPreview() {
+  Widget _buildAppColorPreview(Color priColor) {
     return ExpansionTile(
       textColor: priColor,
       trailing: ClipOval(
@@ -196,7 +199,7 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  Widget _buildLaunchPage() {
+  Widget _buildLaunchPage(Color priColor) {
     return ExpansionTile(
       textColor: priColor,
       title: Text(

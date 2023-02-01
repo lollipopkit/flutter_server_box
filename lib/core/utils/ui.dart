@@ -1,22 +1,13 @@
-import 'dart:async';
 import 'dart:io';
 
-import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:toolbox/core/persistant_store.dart';
-import 'package:toolbox/generated/l10n.dart';
-import 'package:toolbox/view/widget/card_dialog.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:toolbox/core/extension/stringx.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-/// Must put this func out of any Class.
-/// Because of this function is called by [compute] in [ServerProvider.genClient].
-/// https://stackoverflow.com/questions/51998995/invalid-arguments-illegal-argument-in-isolate-message-object-is-a-closure
-List<SSHKeyPair> loadIndentity(String key) {
-  return SSHKeyPair.fromPem(key);
-}
+import '../../generated/l10n.dart';
+import '../../view/widget/card_dialog.dart';
+import '../persistant_store.dart';
 
 bool isDarkMode(BuildContext context) =>
     Theme.of(context).brightness == Brightness.dark;
@@ -79,37 +70,6 @@ void setTransparentNavigationBar(BuildContext context) {
   }
 }
 
-String tabTitleName(BuildContext context, int i) {
-  final s = S.of(context);
-  switch (i) {
-    case 0:
-      return s.server;
-    case 1:
-      return s.convert;
-    case 2:
-      return s.ping;
-    default:
-      return '';
-  }
-}
-
-Future<bool> shareFiles(BuildContext context, List<String> filePaths) async {
-  for (final filePath in filePaths) {
-    if (!await File(filePath).exists()) {
-      return false;
-    }
-  }
-  var text = '';
-  if (filePaths.length == 1) {
-    text = filePaths.first.split('/').last;
-  } else {
-    text = '${filePaths.length} ${S.of(context).files}';
-  }
-  final xfiles = filePaths.map((e) => XFile(e)).toList();
-  await Share.shareXFiles(xfiles, text: 'ServerBox -> $text');
-  return filePaths.isNotEmpty;
-}
-
 Widget buildPopuopMenu(
     {required List<PopupMenuEntry> items,
     required Function(dynamic) onSelected}) {
@@ -126,4 +86,18 @@ Widget buildPopuopMenu(
       ),
     ),
   );
+}
+
+String tabTitleName(BuildContext context, int i) {
+  final s = S.of(context);
+  switch (i) {
+    case 0:
+      return s.server;
+    case 1:
+      return s.convert;
+    case 2:
+      return s.ping;
+    default:
+      return '';
+  }
 }

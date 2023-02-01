@@ -5,16 +5,16 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/data/res/color.dart';
 import 'package:xterm/xterm.dart';
 
-import '../../core/utils.dart';
+import '../../core/utils/ui.dart';
+import '../../core/utils/server.dart';
 import '../../data/model/server/server_private_info.dart';
 import '../../data/model/ssh/virtual_key.dart';
 import '../../data/provider/virtual_keyboard.dart';
+import '../../data/res/color.dart';
 import '../../data/res/terminal_theme.dart';
 import '../../data/res/virtual_key.dart';
-import '../../data/store/private_key.dart';
 import '../../locator.dart';
 
 class SSHPage extends StatefulWidget {
@@ -156,13 +156,15 @@ class _SSHPageState extends State<SSHPage> {
             color: isDark ? Colors.white : Colors.black,
             size: 17,
           )
-        : Text(
-            item.text,
-            style: TextStyle(
-              color: selected ? primaryColor : null,
-              fontSize: 15,
-            ),
-          );
+        : PrimaryColor(builder: (context, color) {
+            return Text(
+              item.text,
+              style: TextStyle(
+                color: selected ? color : Colors.black,
+                fontSize: 17,
+              ),
+            );
+          });
 
     return InkWell(
       onTap: () {
@@ -200,21 +202,4 @@ class _SSHPageState extends State<SSHPage> {
       ),
     );
   }
-}
-
-Future<SSHClient> genClient(ServerPrivateInfo spi) async {
-  final socket = await SSHSocket.connect(spi.ip, spi.port);
-  if (spi.pubKeyId == null) {
-    return SSHClient(
-      socket,
-      username: spi.user,
-      onPasswordRequest: () => spi.pwd,
-    );
-  }
-  final key = locator<PrivateKeyStore>().get(spi.pubKeyId!);
-  return SSHClient(
-    socket,
-    username: spi.user,
-    identities: await compute(loadIndentity, key.privateKey),
-  );
 }

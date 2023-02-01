@@ -1,12 +1,13 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
-import 'package:toolbox/core/utils.dart';
-import 'package:toolbox/data/model/server/snippet.dart';
-import 'package:toolbox/data/provider/snippet.dart';
-import 'package:toolbox/data/res/font_style.dart';
-import 'package:toolbox/generated/l10n.dart';
-import 'package:toolbox/locator.dart';
-import 'package:toolbox/view/widget/input_decoration.dart';
+
+import '../../../core/utils/ui.dart';
+import '../../../data/model/server/snippet.dart';
+import '../../../data/provider/snippet.dart';
+import '../../../data/res/font_style.dart';
+import '../../../generated/l10n.dart';
+import '../../../locator.dart';
+import '../../widget/input_decoration.dart';
 
 class SnippetEditPage extends StatefulWidget {
   const SnippetEditPage({Key? key, this.snippet}) : super(key: key);

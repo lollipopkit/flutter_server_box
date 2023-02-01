@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:toolbox/core/extension/uint8list.dart';
-import 'package:toolbox/core/utils.dart';
-import 'package:toolbox/data/model/server/ping_result.dart';
-import 'package:toolbox/data/provider/server.dart';
-import 'package:toolbox/data/res/color.dart';
-import 'package:toolbox/data/res/font_style.dart';
-import 'package:toolbox/generated/l10n.dart';
-import 'package:toolbox/locator.dart';
-import 'package:toolbox/view/widget/input_field.dart';
-import 'package:toolbox/view/widget/round_rect_card.dart';
+
+import '../../core/extension/uint8list.dart';
+import '../../core/utils/ui.dart';
+import '../../data/model/server/ping_result.dart';
+import '../../data/provider/server.dart';
+import '../../data/res/color.dart';
+import '../../data/res/font_style.dart';
+import '../../generated/l10n.dart';
+import '../../locator.dart';
+import '../widget/input_field.dart';
+import '../widget/round_rect_card.dart';
 
 final doaminReg =
     RegExp(r'^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$');
@@ -88,29 +89,34 @@ class _PingPageState extends State<PingPage>
   Widget _buildResultItem(PingResult result) {
     final unknown = s.unknown;
     final ms = s.ms;
-    return RoundRectCard(
-      ListTile(
-        contentPadding: const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
-        title: Text(
-          result.serverName,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: primaryColor,
+    return PrimaryColor(
+      builder: ((context, primaryColor) {
+        return RoundRectCard(
+          ListTile(
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
+            title: Text(
+              result.serverName,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: primaryColor,
+              ),
+            ),
+            subtitle: Text(
+              _buildPingSummary(result, unknown, ms),
+              style: textSize11,
+            ),
+            trailing: Text(
+              '${s.pingAvg}${result.statistic?.avg?.toStringAsFixed(2) ?? s.unknown} $ms',
+              style: TextStyle(
+                fontSize: 14,
+                color: primaryColor,
+              ),
+            ),
           ),
-        ),
-        subtitle: Text(
-          _buildPingSummary(result, unknown, ms),
-          style: textSize11,
-        ),
-        trailing: Text(
-          '${s.pingAvg}${result.statistic?.avg?.toStringAsFixed(2) ?? s.unknown} $ms',
-          style: TextStyle(
-            fontSize: 14,
-            color: primaryColor,
-          ),
-        ),
-      ),
+        );
+      }),
     );
   }
 

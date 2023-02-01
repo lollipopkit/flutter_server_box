@@ -11,7 +11,7 @@ import '../data/res/build_data.dart';
 import '../data/service/app.dart';
 import '../generated/l10n.dart';
 import '../locator.dart';
-import 'utils.dart';
+import 'utils/ui.dart';
 
 final _logger = Logger('UPDATE');
 
@@ -74,7 +74,7 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
 Future<void> _doUpdate(AppUpdate update, BuildContext context, S s) async {
   if (Platform.isAndroid) {
     await RUpgrade.upgrade(update.android,
-        fileName: update.android.split('/').last);
+        fileName: update.android.split('/').last, isAutoRequestInstall: true);
   } else if (Platform.isIOS) {
     await RUpgrade.upgradeFromAppStore('1586449703');
   } else {

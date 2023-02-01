@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/utils.dart';
-import 'package:toolbox/data/model/docker/ps.dart';
-import 'package:toolbox/data/model/server/server_private_info.dart';
-import 'package:toolbox/data/provider/docker.dart';
-import 'package:toolbox/data/provider/server.dart';
-import 'package:toolbox/data/res/error.dart';
-import 'package:toolbox/data/res/font_style.dart';
-import 'package:toolbox/data/res/url.dart';
-import 'package:toolbox/data/store/docker.dart';
-import 'package:toolbox/generated/l10n.dart';
-import 'package:toolbox/locator.dart';
-import 'package:toolbox/view/widget/center_loading.dart';
-import 'package:toolbox/view/widget/two_line_text.dart';
-import 'package:toolbox/view/widget/round_rect_card.dart';
-import 'package:toolbox/view/widget/url_text.dart';
 
+import '../../core/utils/ui.dart';
+import '../../data/model/docker/ps.dart';
+import '../../data/model/server/server_private_info.dart';
+import '../../data/provider/docker.dart';
+import '../../data/provider/server.dart';
+import '../../data/res/error.dart';
+import '../../data/res/font_style.dart';
 import '../../data/res/menu.dart';
+import '../../data/res/url.dart';
+import '../../data/store/docker.dart';
+import '../../generated/l10n.dart';
+import '../../locator.dart';
+import '../widget/center_loading.dart';
 import '../widget/dropdown_menu.dart';
+import '../widget/round_rect_card.dart';
+import '../widget/two_line_text.dart';
+import '../widget/url_text.dart';
 
 class DockerManagePage extends StatefulWidget {
   final ServerPrivateInfo spi;

@@ -3,32 +3,32 @@ import 'package:circle_chart/circle_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/route.dart';
-import 'package:toolbox/core/utils.dart';
-import 'package:toolbox/data/model/server/server.dart';
-import 'package:toolbox/data/model/server/server_private_info.dart';
-import 'package:toolbox/data/model/server/server_status.dart';
-import 'package:toolbox/data/provider/server.dart';
-import 'package:toolbox/data/provider/snippet.dart';
-import 'package:toolbox/data/res/color.dart';
-import 'package:toolbox/data/res/font_style.dart';
-import 'package:toolbox/data/res/url.dart';
-import 'package:toolbox/data/store/setting.dart';
-import 'package:toolbox/generated/l10n.dart';
-import 'package:toolbox/locator.dart';
-import 'package:toolbox/view/page/pkg.dart';
-import 'package:toolbox/view/page/docker.dart';
-import 'package:toolbox/view/page/server/detail.dart';
-import 'package:toolbox/view/page/server/edit.dart';
-import 'package:toolbox/view/page/sftp/view.dart';
-import 'package:toolbox/view/page/snippet/edit.dart';
-import 'package:toolbox/view/page/ssh.dart';
-import 'package:toolbox/view/widget/picker.dart';
-import 'package:toolbox/view/widget/round_rect_card.dart';
 
+import '../../../core/route.dart';
+import '../../../core/utils/ui.dart';
+import '../../../data/model/server/server.dart';
+import '../../../data/model/server/server_private_info.dart';
+import '../../../data/model/server/server_status.dart';
+import '../../../data/provider/server.dart';
+import '../../../data/provider/snippet.dart';
+import '../../../data/res/color.dart';
+import '../../../data/res/font_style.dart';
 import '../../../data/res/menu.dart';
+import '../../../data/res/url.dart';
+import '../../../data/store/setting.dart';
+import '../../../generated/l10n.dart';
+import '../../../locator.dart';
 import '../../widget/dropdown_menu.dart';
+import '../../widget/picker.dart';
+import '../../widget/round_rect_card.dart';
 import '../../widget/url_text.dart';
+import '../docker.dart';
+import '../pkg.dart';
+import '../sftp/view.dart';
+import '../snippet/edit.dart';
+import '../ssh.dart';
+import 'detail.dart';
+import 'edit.dart';
 
 class ServerPage extends StatefulWidget {
   const ServerPage({Key? key}) : super(key: key);
@@ -41,7 +41,6 @@ class _ServerPageState extends State<ServerPage>
     with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
   late MediaQueryData _media;
   late ThemeData _theme;
-  late Color _primaryColor;
   late ServerProvider _serverProvider;
   late SettingStore _settingStore;
   late S _s;
@@ -58,7 +57,6 @@ class _ServerPageState extends State<ServerPage>
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
     _theme = Theme.of(context);
-    _primaryColor = primaryColor;
     _s = S.of(context);
   }
 
@@ -94,9 +92,10 @@ class _ServerPageState extends State<ServerPage>
     return Scaffold(
       body: child,
       floatingActionButton: FloatingActionButton(
-        onPressed: () =>
-            AppRoute(const ServerEditPage(), 'Add server info page')
-                .go(context),
+        onPressed: () => AppRoute(
+          const ServerEditPage(),
+          'Add server info page',
+        ).go(context),
         tooltip: _s.addAServer,
         heroTag: 'server page fab',
         child: const Icon(Icons.add),
@@ -353,12 +352,16 @@ class _ServerPageState extends State<ServerPage>
       child: Stack(
         children: [
           Center(
-            child: CircleChart(
-              progressColor: _primaryColor,
-              progressNumber: percent,
-              maxNumber: 100,
-              width: 53,
-              height: 53,
+            child: PrimaryColor(
+              builder: (context, primaryColor) {
+                return CircleChart(
+                  progressColor: primaryColor,
+                  progressNumber: percent,
+                  maxNumber: 100,
+                  width: 53,
+                  height: 53,
+                );
+              },
             ),
           ),
           Positioned.fill(
@@ -404,8 +407,10 @@ class _ServerPageState extends State<ServerPage>
     showRoundDialog(
       context,
       _s.choose,
-      buildPicker(provider.snippets.map((e) => Text(e.name)).toList(),
-          (idx) => snippet = provider.snippets[idx]),
+      buildPicker(
+        provider.snippets.map((e) => Text(e.name)).toList(),
+        (idx) => snippet = provider.snippets[idx],
+      ),
       [
         TextButton(
           onPressed: () async {
@@ -418,8 +423,9 @@ class _ServerPageState extends State<ServerPage>
               Text(result ?? _s.error, style: textSize13),
               [
                 TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Text(_s.ok))
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(_s.ok),
+                )
               ],
             );
           },

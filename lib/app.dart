@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:toolbox/core/extension/colorx.dart';
-import 'package:toolbox/core/utils.dart';
 import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/generated/l10n.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/home.dart';
+
+import 'core/utils/ui.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);

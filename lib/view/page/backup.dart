@@ -4,17 +4,18 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:toolbox/core/extension/colorx.dart';
-import 'package:toolbox/core/utils.dart';
-import 'package:toolbox/data/model/app/backup.dart';
-import 'package:toolbox/data/res/color.dart';
-import 'package:toolbox/data/res/font_style.dart';
-import 'package:toolbox/data/store/private_key.dart';
-import 'package:toolbox/data/store/server.dart';
-import 'package:toolbox/data/store/setting.dart';
-import 'package:toolbox/data/store/snippet.dart';
-import 'package:toolbox/generated/l10n.dart';
-import 'package:toolbox/locator.dart';
+
+import '../../core/extension/colorx.dart';
+import '../../core/utils/ui.dart';
+import '../../data/model/app/backup.dart';
+import '../../data/res/color.dart';
+import '../../data/res/font_style.dart';
+import '../../data/store/private_key.dart';
+import '../../data/store/server.dart';
+import '../../data/store/setting.dart';
+import '../../data/store/snippet.dart';
+import '../../generated/l10n.dart';
+import '../../locator.dart';
 
 const backupFormatVersion = 1;
 
@@ -67,29 +68,32 @@ class BackupPage extends StatelessWidget {
 
   Widget _buildCard(String text, IconData icon, MediaQueryData media,
       FutureOr Function() onTap) {
-    final priColor = primaryColor;
-    final textColor = priColor.isBrightColor ? Colors.black : Colors.white;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(37), color: priColor),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                color: textColor,
+    return PrimaryColor(
+      builder: ((context, pColor) {
+        final textColor = pColor.isBrightColor ? Colors.black : Colors.white;
+        return GestureDetector(
+          onTap: onTap,
+          child: Container(
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(37), color: pColor),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    icon,
+                    color: textColor,
+                  ),
+                  const SizedBox(width: 7),
+                  Text(text, style: TextStyle(color: textColor)),
+                ],
               ),
-              const SizedBox(width: 7),
-              Text(text, style: TextStyle(color: textColor)),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      }),
     );
   }
 

@@ -1,19 +1,20 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/route.dart';
-import 'package:toolbox/core/utils.dart';
-import 'package:toolbox/data/model/server/private_key_info.dart';
-import 'package:toolbox/data/model/server/server_private_info.dart';
-import 'package:toolbox/data/provider/private_key.dart';
-import 'package:toolbox/data/provider/server.dart';
-import 'package:toolbox/data/res/color.dart';
-import 'package:toolbox/data/res/font_style.dart';
-import 'package:toolbox/data/store/private_key.dart';
-import 'package:toolbox/generated/l10n.dart';
-import 'package:toolbox/locator.dart';
-import 'package:toolbox/view/page/private_key/edit.dart';
-import 'package:toolbox/view/widget/input_decoration.dart';
+
+import '../../../core/route.dart';
+import '../../../core/utils/ui.dart';
+import '../../../data/model/server/private_key_info.dart';
+import '../../../data/model/server/server_private_info.dart';
+import '../../../data/provider/private_key.dart';
+import '../../../data/provider/server.dart';
+import '../../../data/res/color.dart';
+import '../../../data/res/font_style.dart';
+import '../../../data/store/private_key.dart';
+import '../../../generated/l10n.dart';
+import '../../../locator.dart';
+import '../../widget/input_decoration.dart';
+import '../private_key/edit.dart';
 
 class ServerEditPage extends StatefulWidget {
   const ServerEditPage({Key? key, this.spi}) : super(key: key);
@@ -104,8 +105,11 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
               keyboardType: TextInputType.text,
               focusNode: _nameFocus,
               onSubmitted: (_) => _focusScope.requestFocus(_ipFocus),
-              decoration: buildDecoration(_s.name,
-                  icon: Icons.info, hint: _s.exampleName),
+              decoration: buildDecoration(
+                _s.name,
+                icon: Icons.info,
+                hint: _s.exampleName,
+              ),
             ),
             TextField(
               controller: _ipController,
@@ -114,16 +118,22 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
               focusNode: _ipFocus,
               autocorrect: false,
               enableSuggestions: false,
-              decoration: buildDecoration(_s.host,
-                  icon: Icons.storage, hint: 'example.com'),
+              decoration: buildDecoration(
+                _s.host,
+                icon: Icons.storage,
+                hint: 'example.com',
+              ),
             ),
             TextField(
               controller: _portController,
               keyboardType: TextInputType.number,
               focusNode: _portFocus,
               onSubmitted: (_) => _focusScope.requestFocus(_usernameFocus),
-              decoration: buildDecoration(_s.port,
-                  icon: Icons.format_list_numbered, hint: '22'),
+              decoration: buildDecoration(
+                _s.port,
+                icon: Icons.format_list_numbered,
+                hint: '22',
+              ),
             ),
             TextField(
               controller: _usernameController,
@@ -131,16 +141,20 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
               focusNode: _usernameFocus,
               autocorrect: false,
               enableSuggestions: false,
-              decoration: buildDecoration(_s.user,
-                  icon: Icons.account_box, hint: 'root'),
+              decoration: buildDecoration(
+                _s.user,
+                icon: Icons.account_box,
+                hint: 'root',
+              ),
             ),
             const SizedBox(height: 7),
             Row(
               children: [
                 Text(_s.keyAuth),
                 Switch(
-                    value: usePublicKey,
-                    onChanged: (val) => setState(() => usePublicKey = val)),
+                  value: usePublicKey,
+                  onChanged: (val) => setState(() => usePublicKey = val),
+                ),
               ],
             ),
             !usePublicKey
@@ -148,8 +162,11 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                     controller: _passwordController,
                     obscureText: true,
                     keyboardType: TextInputType.text,
-                    decoration: buildDecoration(_s.pwd,
-                        icon: Icons.password, hint: _s.pwd),
+                    decoration: buildDecoration(
+                      _s.pwd,
+                      icon: Icons.password,
+                      hint: _s.pwd,
+                    ),
                     onSubmitted: (_) => {},
                   )
                 : const SizedBox(),
@@ -164,9 +181,10 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                       final tiles = key.infos
                           .map(
                             (e) => ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                title: Text(e.id, textAlign: TextAlign.start),
-                                trailing: _buildRadio(key.infos.indexOf(e), e)),
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(e.id, textAlign: TextAlign.start),
+                              trailing: _buildRadio(key.infos.indexOf(e), e),
+                            ),
                           )
                           .toList();
                       tiles.add(
@@ -176,23 +194,25 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                           trailing: IconButton(
                             icon: const Icon(Icons.add),
                             onPressed: () => AppRoute(
-                                    const PrivateKeyEditPage(),
-                                    'private key edit page')
-                                .go(context),
+                              const PrivateKeyEditPage(),
+                              'private key edit page',
+                            ).go(context),
                           ),
                         ),
                       );
-                      return ExpansionTile(
-                        textColor: primaryColor,
-                        iconColor: primaryColor,
-                        tilePadding: EdgeInsets.zero,
-                        childrenPadding: EdgeInsets.zero,
-                        title: Text(
-                          _s.choosePrivateKey,
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        children: tiles,
-                      );
+                      return PrimaryColor(builder: ((context, primaryColor) {
+                        return ExpansionTile(
+                          textColor: primaryColor,
+                          iconColor: primaryColor,
+                          tilePadding: EdgeInsets.zero,
+                          childrenPadding: EdgeInsets.zero,
+                          title: Text(
+                            _s.choosePrivateKey,
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          children: tiles,
+                        );
+                      }));
                     },
                   )
                 : const SizedBox()
