@@ -33,6 +33,8 @@ class _SSHPageState extends State<SSHPage> {
   late MediaQueryData _media;
   final _virtualKeyboardHeight = 57.0;
   final TerminalController _terminalController = TerminalController();
+  final ContextMenuController _menuController = ContextMenuController();
+  late TextStyle _menuTextStyle;
 
   var isDark = false;
 
@@ -47,6 +49,7 @@ class _SSHPageState extends State<SSHPage> {
     super.didChangeDependencies();
     isDark = isDarkMode(context);
     _media = MediaQuery.of(context);
+    _menuTextStyle = TextStyle(color: contentColor.resolve(context));
   }
 
   @override
@@ -96,30 +99,39 @@ class _SSHPageState extends State<SSHPage> {
     final termTheme = isDark ? termDarkTheme : termLightTheme;
     return Scaffold(
       backgroundColor: termTheme.background,
-      body: SizedBox(
-        height: _media.size.height -
-            _virtualKeyboardHeight -
-            _media.padding.bottom -
-            _media.padding.top,
-        child: TerminalView(
-            _terminal,
-            controller: _terminalController,
-            keyboardType: TextInputType.visiblePassword,
-            theme: termTheme,
-            deleteDetection: Platform.isIOS,
-            autofocus: true,
-            keyboardAppearance: isDark ? Brightness.dark : Brightness.light,
-          ),
+      body: _buildBody(termTheme),
+      bottomNavigationBar: _buildBottom(),
+    );
+  }
+
+  Widget _buildBody(TerminalTheme termTheme) {
+    return SizedBox(
+      height: _media.size.height -
+          _virtualKeyboardHeight -
+          _media.padding.bottom -
+          _media.padding.top,
+      child: TerminalView(
+        _terminal,
+        controller: _terminalController,
+        keyboardType: TextInputType.visiblePassword,
+        theme: termTheme,
+        deleteDetection: Platform.isIOS,
+        onTapUp: _onTapUp,
+        autofocus: true,
+        keyboardAppearance: isDark ? Brightness.dark : Brightness.light,
       ),
-      bottomNavigationBar: AnimatedPadding(
-        padding: _media.viewInsets,
-        duration: const Duration(milliseconds: 23),
-        curve: Curves.fastOutSlowIn,
-        child: SizedBox(
-          height: _virtualKeyboardHeight,
-          child: Consumer<VirtualKeyboard>(
-            builder: (_, __, ___) => _buildVirtualKey(),
-          ),
+    );
+  }
+
+  Widget _buildBottom() {
+    return AnimatedPadding(
+      padding: _media.viewInsets,
+      duration: const Duration(milliseconds: 23),
+      curve: Curves.fastOutSlowIn,
+      child: SizedBox(
+        height: _virtualKeyboardHeight,
+        child: Consumer<VirtualKeyboard>(
+          builder: (_, __, ___) => _buildVirtualKey(),
         ),
       ),
     );
@@ -216,17 +228,87 @@ class _SSHPageState extends State<SSHPage> {
         _terminal.keyInput(TerminalKey.backspace);
         break;
       case VirtualKeyFunc.paste:
-        Clipboard.getData(Clipboard.kTextPlain).then((value) {
-          if (value != null) {
-            _terminal.textInput(value.text!);
-          }
-        });
+        _paste();
         break;
       case VirtualKeyFunc.copy:
-        final range = _terminalController.selection;
-        final text = _terminal.buffer.getText(range);
-        Clipboard.setData(ClipboardData(text: text));
+        _copy(terminalSelected);
         break;
+    }
+  }
+
+  void _paste() {
+    Clipboard.getData(Clipboard.kTextPlain).then((value) {
+      if (value != null) {
+        _terminal.textInput(value.text!);
+      }
+    });
+  }
+
+  String get terminalSelected {
+    final range = _terminalController.selection;
+    if (range == null) {
+      return '';
+    }
+    return _terminal.buffer.getText(range);
+  }
+
+  void _copy(String text) {
+    Clipboard.setData(ClipboardData(text: text));
+  }
+
+  void _onTapUp(TapUpDetails details, CellOffset offset) {
+    {
+      if (_menuController.isShown) {
+        _menuController.remove();
+        return;
+      }
+      final selected = terminalSelected;
+      if (selected.trim().isEmpty) {
+        // _menuController.show(
+        //   context: context,
+        //   contextMenuBuilder: (context) {
+        //     return TextSelectionToolbar(
+        //       anchorAbove: detail.globalPosition,
+        //       anchorBelow: detail.globalPosition,
+        //       children: [
+        //         TextButton(
+        //           child: Text(
+        //             'Paste',
+        //             style: _menuTextStyle,
+        //           ),
+        //           onPressed: () async {
+        //             _paste();
+        //             _menuController.remove();
+        //           },
+        //         )
+        //       ],
+        //     );
+        //   },
+        // );
+        return;
+      }
+      _menuController.show(
+        context: context,
+        contextMenuBuilder: (context) {
+          return TextSelectionToolbar(
+            anchorAbove: details.globalPosition,
+            anchorBelow: details.globalPosition,
+            children: [
+              TextButton(
+                child: Text(
+                  'Copy',
+                  style: _menuTextStyle,
+                ),
+                onPressed: () {
+                  _terminalController.setSelection(null);
+                  _copy(selected);
+                  _menuController.remove();
+                },
+              ),
+            ],
+          );
+        },
+      );
     }
   }
 }

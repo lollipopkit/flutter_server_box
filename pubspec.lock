@@ -998,10 +998,9 @@ packages:
   xterm:
     dependency: "direct main"
     description:
-      name: xterm
-      sha256: f65619cb24d03507812e346ddb8386cad9e16a01a481a8f5c8a2eba55b4edada
-      url: "https://pub.dev"
-    source: hosted
+      path: "../xterm.dart"
+      relative: true
+    source: path
     version: "3.4.1"
   yaml:
     dependency: transitive
