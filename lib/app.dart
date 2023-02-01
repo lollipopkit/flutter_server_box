@@ -42,10 +42,6 @@ class MyApp extends StatelessWidget {
         final radioTheme = RadioThemeData(
           fillColor: materialColor,
         );
-        final iconBtnTheme = IconButtonThemeData(
-            style: ButtonStyle(
-          iconColor: primaryColor.materialStateColor,
-        ));
 
         return MaterialApp(
           localizationsDelegates: const [
@@ -61,7 +57,6 @@ class MyApp extends StatelessWidget {
             appBarTheme: appBarTheme,
             floatingActionButtonTheme: fabTheme,
             iconTheme: iconTheme,
-            iconButtonTheme: iconBtnTheme,
             primaryIconTheme: iconTheme,
             switchTheme: switchTheme,
             inputDecorationTheme: inputDecorationTheme,
@@ -71,7 +66,6 @@ class MyApp extends StatelessWidget {
             useMaterial3: false,
             floatingActionButtonTheme: fabTheme,
             iconTheme: iconTheme,
-            iconButtonTheme: iconBtnTheme,
             primaryIconTheme: iconTheme,
             switchTheme: switchTheme,
             inputDecorationTheme: inputDecorationTheme,

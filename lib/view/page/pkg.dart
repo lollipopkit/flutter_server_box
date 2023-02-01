@@ -126,7 +126,7 @@ class _PkgManagePageState extends State<PkgManagePage>
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: TwoLineText(up: 'Apt', down: widget.spi.name),
+        title: TwoLineText(up: _s.pkg, down: widget.spi.name),
       ),
       body: Consumer<PkgProvider>(builder: (_, apt, __) {
         if (apt.error != null) {
@@ -141,8 +141,11 @@ class _PkgManagePageState extends State<PkgManagePage>
               const SizedBox(
                 height: 37,
               ),
-              SizedBox(
-                height: _media.size.height * 0.4,
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: _media.size.height * 0.3,
+                  minWidth: _media.size.width
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(17),
                   child: RoundRectCard(
@@ -150,7 +153,6 @@ class _PkgManagePageState extends State<PkgManagePage>
                       padding: const EdgeInsets.all(17),
                       child: Text(
                         apt.error!,
-                        textAlign: TextAlign.center,
                       ),
                     ),
                   ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../data/res/color.dart';
 import '../../data/res/menu.dart';
 import '../../generated/l10n.dart';
 
@@ -15,10 +14,7 @@ class DropdownBtnItem {
 
   Widget build(S s) => Row(
         children: [
-          Icon(
-            icon,
-            color: primaryColor,
-          ),
+          Icon(icon),
           const SizedBox(
             width: 10,
           ),

@@ -53,6 +53,7 @@ class DockerProvider extends BusyProvider {
   }
 
   Future<void> refresh() async {
+    if (isBusy) return;
     final verRaw = await client!.run('docker version'.withLangExport).string;
     if (verRaw.contains(_dockerNotFound)) {
       error = DockerErr(type: DockerErrType.notInstalled);
