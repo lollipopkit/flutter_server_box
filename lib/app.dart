@@ -42,6 +42,10 @@ class MyApp extends StatelessWidget {
         final radioTheme = RadioThemeData(
           fillColor: materialColor,
         );
+        final iconBtnTheme = IconButtonThemeData(
+            style: ButtonStyle(
+          iconColor: primaryColor.materialStateColor,
+        ));
 
         return MaterialApp(
           localizationsDelegates: const [
@@ -57,6 +61,7 @@ class MyApp extends StatelessWidget {
             appBarTheme: appBarTheme,
             floatingActionButtonTheme: fabTheme,
             iconTheme: iconTheme,
+            iconButtonTheme: iconBtnTheme,
             primaryIconTheme: iconTheme,
             switchTheme: switchTheme,
             inputDecorationTheme: inputDecorationTheme,
@@ -64,15 +69,20 @@ class MyApp extends StatelessWidget {
           ),
           darkTheme: ThemeData.dark().copyWith(
             useMaterial3: false,
-            primaryColor: primaryColor,
             floatingActionButtonTheme: fabTheme,
             iconTheme: iconTheme,
+            iconButtonTheme: iconBtnTheme,
             primaryIconTheme: iconTheme,
             switchTheme: switchTheme,
             inputDecorationTheme: inputDecorationTheme,
             radioTheme: radioTheme,
+            colorScheme: ColorScheme.fromSwatch(
+              primarySwatch: primaryColor.materialColor,
+              brightness: Brightness.dark,
+              accentColor: primaryColor
+            )
           ),
-          home: MyHomePage(primaryColor: primaryColor),
+          home: const MyHomePage(),
         );
       },
     );

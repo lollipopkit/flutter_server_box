@@ -1,6 +1,5 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../core/analysis.dart';
@@ -11,6 +10,7 @@ import '../../data/model/app/dynamic_color.dart';
 import '../../data/model/app/navigation_item.dart';
 import '../../data/provider/server.dart';
 import '../../data/res/build_data.dart';
+import '../../data/res/color.dart';
 import '../../data/res/font_style.dart';
 import '../../data/res/icon.dart';
 import '../../data/res/tab.dart';
@@ -33,8 +33,7 @@ final _bottomItemOverlayColor =
     DynamicColor(Colors.black.withOpacity(0.07), Colors.white12);
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.primaryColor}) : super(key: key);
-  final Color primaryColor;
+  const MyHomePage({Key? key}) : super(key: key);
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -159,7 +158,10 @@ class _MyHomePageState extends State<MyHomePage>
             (item) {
               int itemIndex = tabItems.indexOf(item);
               return _buildBottomItem(
-                  itemIndex, item, _selectIndex == itemIndex,);
+                itemIndex,
+                item,
+                _selectIndex == itemIndex,
+              );
             },
           ).toList(),
         ),
@@ -282,7 +284,7 @@ class _MyHomePageState extends State<MyHomePage>
         ConstrainedBox(
           constraints: const BoxConstraints(maxHeight: 53, maxWidth: 53),
           child: Container(
-            color: widget.primaryColor,
+            color: primaryColor,
           ),
         ),
         ConstrainedBox(

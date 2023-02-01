@@ -52,7 +52,7 @@ class _ConvertPageState extends State<ConvertPage>
           children: [
             const SizedBox(height: 13),
             _buildInputTop(),
-            _buildTypeOption(),
+            _buildMiddleBtns(),
             _buildResult(),
           ],
         ),
@@ -96,7 +96,7 @@ class _ConvertPageState extends State<ConvertPage>
     );
   }
 
-  Widget _buildTypeOption() {
+  Widget _buildMiddleBtns() {
     final decode = _s.decode;
     final encode = _s.encode;
     final List<String> typeOption = [
