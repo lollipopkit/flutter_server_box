@@ -29,9 +29,9 @@ get initCpuStatus => CpuStatus(
     );
 get _initNetSpeedPart => NetSpeedPart(
       '',
-      0,
-      0,
-      0,
+      BigInt.zero,
+      BigInt.zero,
+      BigInt.zero,
     );
 get initNetSpeed => NetSpeed(
       [_initNetSpeedPart],

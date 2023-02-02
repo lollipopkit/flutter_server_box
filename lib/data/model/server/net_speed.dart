@@ -2,9 +2,9 @@ import 'package:toolbox/core/extension/numx.dart';
 
 class NetSpeedPart {
   String device;
-  int bytesIn;
-  int bytesOut;
-  int time;
+  BigInt bytesIn;
+  BigInt bytesOut;
+  BigInt time;
   NetSpeedPart(this.device, this.bytesIn, this.bytesOut, this.time);
 }
 
@@ -26,7 +26,7 @@ class NetSpeed {
     _now = newOne;
   }
 
-  int get timeDiff => _now[0].time - _old[0].time;
+  BigInt get timeDiff => _now[0].time - _old[0].time;
 
   String speedIn({String? device}) {
     if (_old[0].device == '' || _now[0].device == '') return '0kb/s';
@@ -65,15 +65,15 @@ List<NetSpeedPart> parseNetSpeed(String raw) {
     return [];
   }
 
-  final time = int.parse(split[split.length - 1]);
+  final time = BigInt.parse(split[split.length - 1]);
   final results = <NetSpeedPart>[];
   for (final item in split.sublist(2, split.length - 1)) {
     final data = item.trim().split(':');
     final device = data.first;
     final bytes = data.last.trim().split(' ');
     bytes.removeWhere((element) => element == '');
-    final bytesIn = int.parse(bytes.first);
-    final bytesOut = int.parse(bytes[8]);
+    final bytesIn = BigInt.parse(bytes.first);
+    final bytesOut = BigInt.parse(bytes[8]);
     results.add(NetSpeedPart(device, bytesIn, bytesOut, time));
   }
   return results;
