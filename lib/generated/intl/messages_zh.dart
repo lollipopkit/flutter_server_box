@@ -89,7 +89,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "cmd": MessageLookupByLibrary.simpleMessage("命令"),
         "containerStatus": MessageLookupByLibrary.simpleMessage("容器状态"),
         "convert": MessageLookupByLibrary.simpleMessage("转换"),
-        "copy": MessageLookupByLibrary.simpleMessage("复制到剪切板"),
+        "copy": MessageLookupByLibrary.simpleMessage("复制"),
         "copyPath": MessageLookupByLibrary.simpleMessage("复制路径"),
         "createFile": MessageLookupByLibrary.simpleMessage("创建文件"),
         "createFolder": MessageLookupByLibrary.simpleMessage("创建文件夹"),

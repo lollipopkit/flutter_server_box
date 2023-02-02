@@ -186,12 +186,6 @@ class ServerProvider extends BusyProvider {
     }
   }
 
-  /// [raw] example:
-  /// Inter-|   Receive                                                |  Transmit
-  ///   face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
-  ///   lo: 45929941  269112    0    0    0     0          0         0 45929941  269112    0    0    0     0       0          0
-  ///   eth0: 48481023  505772    0    0    0     0          0         0 36002262  202307    0    0    0     0       0          0
-  /// 1635752901
   Future<void> _getNetSpeed(ServerPrivateInfo spi, String raw) async {
     final info = _servers.firstWhere((e) => e.spi == spi);
     info.status.netSpeed.update(await compute(parseNetSpeed, raw));
@@ -211,8 +205,10 @@ class ServerProvider extends BusyProvider {
     final cpus = await compute(parseCPU, raw);
 
     if (cpus.isNotEmpty) {
-      info.status.cpu
-          .update(cpus, await compute(parseCPUTemp, [tempType, tempValue]));
+      info.status.cpu.update(
+        cpus,
+        await compute(parseCPUTemp, [tempType, tempValue]),
+      );
     }
   }
 
@@ -229,25 +225,14 @@ class ServerProvider extends BusyProvider {
     }
   }
 
-  void _getDisk(ServerPrivateInfo spi, String raw) {
+  Future<void> _getDisk(ServerPrivateInfo spi, String raw) async {
     final info = _servers.firstWhere((e) => e.spi == spi);
-    final list = <DiskInfo>[];
-    final items = raw.split('\n');
-    for (var item in items) {
-      if (items.indexOf(item) == 0 || item.isEmpty) {
-        continue;
-      }
-      final vals = item.split(numReg);
-      list.add(DiskInfo(vals[0], vals[5],
-          int.parse(vals[4].replaceFirst('%', '')), vals[2], vals[1], vals[3]));
-    }
-    info.status.disk = list;
+    info.status.disk = await compute(parseDisk, raw);
   }
 
   Future<void> _getMem(ServerPrivateInfo spi, String raw) async {
     final info = _servers.firstWhere((e) => e.spi == spi);
-    final mem = await compute(parseMem, raw);
-    info.status.mem = mem;
+    info.status.mem = await compute(parseMem, raw);
   }
 
   Future<String?> runSnippet(String id, Snippet snippet) async {

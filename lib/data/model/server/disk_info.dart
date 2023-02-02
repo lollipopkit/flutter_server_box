@@ -1,3 +1,5 @@
+import '../../res/misc.dart';
+
 class DiskInfo {
 /*
 {
@@ -25,4 +27,25 @@ class DiskInfo {
     this.size,
     this.avail,
   );
+}
+
+List<DiskInfo> parseDisk(String raw) {
+  final list = <DiskInfo>[];
+  final items = raw.split('\n');
+  items.removeAt(0);
+  for (var item in items) {
+    if (item.isEmpty) {
+      continue;
+    }
+    final vals = item.split(numReg);
+    list.add(DiskInfo(
+      vals[0],
+      vals[5],
+      int.parse(vals[4].replaceFirst('%', '')),
+      vals[2],
+      vals[1],
+      vals[3],
+    ));
+  }
+  return list;
 }

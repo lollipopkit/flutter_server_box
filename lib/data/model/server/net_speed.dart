@@ -36,12 +36,26 @@ class NetSpeed {
     return buildStandardOutput(speedInBytesPerSecond);
   }
 
+  String totalIn({String? device}) {
+    if (_old[0].device == '' || _now[0].device == '') return '0kb';
+    final idx = deviceIdx(device);
+    final totalInBytes = _now[idx].bytesIn;
+    return totalInBytes.toInt().convertBytes;
+  }
+
   String speedOut({String? device}) {
     if (_old[0].device == '' || _now[0].device == '') return '0kb/s';
     final idx = deviceIdx(device);
     final speedOutBytesPerSecond =
         (_now[idx].bytesOut - _old[idx].bytesOut) / timeDiff;
     return buildStandardOutput(speedOutBytesPerSecond);
+  }
+
+  String totalOut({String? device}) {
+    if (_old[0].device == '' || _now[0].device == '') return '0kb';
+    final idx = deviceIdx(device);
+    final totalOutBytes = _now[idx].bytesOut;
+    return totalOutBytes.toInt().convertBytes;
   }
 
   int deviceIdx(String? device) {
@@ -55,10 +69,15 @@ class NetSpeed {
     return 0;
   }
 
-  String buildStandardOutput(double speed) =>
-      '${speed.convertBytes.toLowerCase()}/s';
+  String buildStandardOutput(double speed) => '${speed.convertBytes}/s';
 }
 
+/// [raw] example:
+/// Inter-|   Receive                                                |  Transmit
+///   face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
+///   lo: 45929941  269112    0    0    0     0          0         0 45929941  269112    0    0    0     0       0          0
+///   eth0: 48481023  505772    0    0    0     0          0         0 36002262  202307    0    0    0     0       0          0
+/// 1635752901
 List<NetSpeedPart> parseNetSpeed(String raw) {
   final split = raw.split('\n');
   if (split.length < 4) {

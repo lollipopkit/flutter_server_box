@@ -245,7 +245,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   Widget _buildDiskView(ServerStatus ss) {
     final clone = ss.disk.toList();
     for (var item in ss.disk) {
-      if (ignorePath.any((ele) => item.loc.contains(ele))) {
+      if (_ignorePath.any((ele) => item.path.startsWith(ele))) {
         clone.remove(item);
       }
     }
@@ -316,10 +316,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: const [
-          Icon(
-            Icons.device_hub,
-            size: 17,
-          ),
+          Icon(Icons.device_hub, size: 17),
           Icon(Icons.arrow_downward, size: 17),
           Icon(Icons.arrow_upward, size: 17),
         ],
@@ -328,39 +325,42 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildNetSpeedItem(NetSpeed ns, String device) {
+    final width = (_media.size.width - 34 - 34) / 3;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           SizedBox(
-              width: _media.size.width / 4,
-              child: Text(device, style: textSize11, textScaleFactor: 1.0)),
-          SizedBox(
-            width: _media.size.width / 4,
-            child: Text(ns.speedIn(device: device),
-                style: textSize11,
-                textAlign: TextAlign.center,
-                textScaleFactor: 1.0),
+            width: width,
+            child: Text(
+              device,
+              style: textSize11,
+              textScaleFactor: 1.0,
+            ),
           ),
           SizedBox(
-            width: _media.size.width / 4,
-            child: Text(ns.speedOut(device: device),
-                style: textSize11,
-                textAlign: TextAlign.right,
-                textScaleFactor: 1.0),
+            width: width,
+            child: Text(
+              '${ns.speedIn(device: device)}\n${ns.totalIn(device: device)}',
+              style: textSize11,
+              textAlign: TextAlign.center,
+              textScaleFactor: 0.87,
+            ),
+          ),
+          SizedBox(
+            width: width,
+            child: Text(
+              '${ns.speedOut(device: device)}\n${ns.totalOut(device: device)}',
+              style: textSize11,
+              textAlign: TextAlign.right,
+              textScaleFactor: 0.87,
+            ),
           )
         ],
       ),
     );
   }
 
-  static const ignorePath = [
-    '/run',
-    '/sys',
-    '/dev/shm',
-    '/snap',
-    '/var/lib/docker',
-    '/dev/tty'
-  ];
+  static const _ignorePath = ['udev', 'tmpfs', 'devtmpfs'];
 }

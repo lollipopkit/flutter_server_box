@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/generated/l10n.dart';
 import 'package:xterm/xterm.dart';
 
 import '../../core/utils/ui.dart';
@@ -35,8 +36,9 @@ class _SSHPageState extends State<SSHPage> {
   final TerminalController _terminalController = TerminalController();
   final ContextMenuController _menuController = ContextMenuController();
   late TextStyle _menuTextStyle;
+  late S _s;
 
-  var isDark = false;
+  var _isDark = false;
 
   @override
   void initState() {
@@ -47,9 +49,10 @@ class _SSHPageState extends State<SSHPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    isDark = isDarkMode(context);
+    _isDark = isDarkMode(context);
     _media = MediaQuery.of(context);
     _menuTextStyle = TextStyle(color: contentColor.resolve(context));
+    _s = S.of(context);
   }
 
   @override
@@ -78,15 +81,8 @@ class _SSHPageState extends State<SSHPage> {
       session.write(utf8.encode(data) as Uint8List);
     };
 
-    session.stdout
-        .cast<List<int>>()
-        .transform(const Utf8Decoder())
-        .listen(_terminal.write);
-
-    session.stderr
-        .cast<List<int>>()
-        .transform(const Utf8Decoder())
-        .listen(_terminal.write);
+    _listen(session.stdout);
+    _listen(session.stderr);
 
     await session.done;
     if (mounted) {
@@ -94,9 +90,16 @@ class _SSHPageState extends State<SSHPage> {
     }
   }
 
+  void _listen(Stream<Uint8List> stream) {
+    stream
+        .cast<List<int>>()
+        .transform(const Utf8Decoder())
+        .listen(_terminal.write);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final termTheme = isDark ? termDarkTheme : termLightTheme;
+    final termTheme = _isDark ? termDarkTheme : termLightTheme;
     return Scaffold(
       backgroundColor: termTheme.background,
       body: _buildBody(termTheme),
@@ -118,7 +121,7 @@ class _SSHPageState extends State<SSHPage> {
         deleteDetection: Platform.isIOS,
         onTapUp: _onTapUp,
         autofocus: true,
-        keyboardAppearance: isDark ? Brightness.dark : Brightness.light,
+        keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,
       ),
     );
   }
@@ -170,7 +173,7 @@ class _SSHPageState extends State<SSHPage> {
     final child = item.icon != null
         ? Icon(
             item.icon,
-            color: isDark ? Colors.white : Colors.black,
+            color: _isDark ? Colors.white : Colors.black,
             size: 17,
           )
         : Text(
@@ -296,7 +299,7 @@ class _SSHPageState extends State<SSHPage> {
             children: [
               TextButton(
                 child: Text(
-                  'Copy',
+                  _s.copy,
                   style: _menuTextStyle,
                 ),
                 onPressed: () {
