@@ -258,7 +258,7 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  List<Widget> _buildTermThemeRadioList() { 
+  List<Widget> _buildTermThemeRadioList() {
     return TerminalColorsPlatform.values
         .map(
           (e) => ListTile(

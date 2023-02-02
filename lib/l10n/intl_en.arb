@@ -126,7 +126,7 @@
   "showDistLogo": "Show distribution logo",
   "snippet": "Snippet",
   "spentTime": "Spent time: {time}",
-  "sshTip": "This function is now in the experimental stage.\n\nSuch as Backspace on IME not working on iOS. Please use virtual keys above IME.\n\nPlease report bugs on {url} or join our development.",
+  "sshTip": "This function is now in the experimental stage.\n\nPlease report bugs on {url} or join our development.",
   "start": "Start",
   "stop": "Stop",
   "sureDelete": "Are you sure to delete [{name}]?",

@@ -44,6 +44,7 @@ class MyApp extends StatelessWidget {
         );
 
         return MaterialApp(
+          debugShowCheckedModeBanner: false,
           localizationsDelegates: const [
             S.delegate,
             ...GlobalMaterialLocalizations.delegates,

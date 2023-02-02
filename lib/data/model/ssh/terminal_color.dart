@@ -42,7 +42,7 @@ class TerminalUITheme {
       brightBlue: termColor.brightBlue,
       brightMagenta: termColor.brightMagenta,
       brightCyan: termColor.brightCyan,
-      brightWhite: termColor.brightWhite, 
+      brightWhite: termColor.brightWhite,
       searchHitBackground: searchHitBackground,
       searchHitBackgroundCurrent: searchHitBackgroundCurrent,
       searchHitForeground: searchHitForeground,
@@ -113,7 +113,7 @@ enum TerminalColorsPlatform {
       case TerminalColorsPlatform.putty:
         return 'PuTTY';
       case TerminalColorsPlatform.xterm:
-        return 'xterm';
+        return 'XTerm';
       case TerminalColorsPlatform.ubuntu:
         return 'Ubuntu';
       default:

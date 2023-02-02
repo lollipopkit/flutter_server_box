@@ -46,7 +46,8 @@ class _SSHPageState extends State<SSHPage> {
   @override
   void initState() {
     super.initState();
-    _termColors = TerminalColorsPlatform.values[locator<SettingStore>().termColorIdx.fetch()!].colors;
+    final termColorIdx = locator<SettingStore>().termColorIdx.fetch()!;
+    _termColors = TerminalColorsPlatform.values[termColorIdx].colors;
     initTerminal();
   }
 
@@ -104,10 +105,13 @@ class _SSHPageState extends State<SSHPage> {
   @override
   Widget build(BuildContext context) {
     final termTheme = _isDark ? termDarkTheme : termLightTheme;
-    return Scaffold(
-      backgroundColor: termTheme.background,
-      body: _buildBody(termTheme.toTerminalTheme(_termColors)),
-      bottomNavigationBar: _buildBottom(),
+    return AnnotatedRegion(
+      value: _isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        backgroundColor: termTheme.background,
+        body: _buildBody(termTheme.toTerminalTheme(_termColors)),
+        bottomNavigationBar: _buildBottom(termTheme.background),
+      ),
     );
   }
 
@@ -130,15 +134,18 @@ class _SSHPageState extends State<SSHPage> {
     );
   }
 
-  Widget _buildBottom() {
-    return AnimatedPadding(
-      padding: _media.viewInsets,
-      duration: const Duration(milliseconds: 23),
-      curve: Curves.fastOutSlowIn,
-      child: SizedBox(
-        height: _virtualKeyboardHeight,
-        child: Consumer<VirtualKeyboard>(
-          builder: (_, __, ___) => _buildVirtualKey(),
+  Widget _buildBottom(Color bgColor) {
+    return SafeArea(
+      child: AnimatedPadding(
+        padding: _media.viewInsets,
+        duration: const Duration(milliseconds: 23),
+        curve: Curves.fastOutSlowIn,
+        child: Container(
+          color: bgColor,
+          height: _virtualKeyboardHeight,
+          child: Consumer<VirtualKeyboard>(
+            builder: (_, __, ___) => _buildVirtualKey(),
+          ),
         ),
       ),
     );
