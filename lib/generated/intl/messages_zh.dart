@@ -66,7 +66,7 @@ class MessageLookup extends MessageLookupByLibrary {
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
         "aboutThanks":
-            MessageLookupByLibrary.simpleMessage("\n保留所有权利。\n\n感谢以下参与软件测试的各位。"),
+            MessageLookupByLibrary.simpleMessage("\n\n感谢以下参与软件测试的各位。"),
         "addAServer": MessageLookupByLibrary.simpleMessage("添加服务器"),
         "addOne": MessageLookupByLibrary.simpleMessage("前去新增"),
         "addPrivateKey": MessageLookupByLibrary.simpleMessage("添加一个私钥"),
@@ -210,6 +210,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "sureDelete": m13,
         "sureNoPwd": MessageLookupByLibrary.simpleMessage("确认使用无密码？"),
         "sureToDeleteServer": m14,
+        "termTheme": MessageLookupByLibrary.simpleMessage("终端主题"),
         "ttl": MessageLookupByLibrary.simpleMessage("缓存时间"),
         "unknown": MessageLookupByLibrary.simpleMessage("未知"),
         "unknownError": MessageLookupByLibrary.simpleMessage("未知错误"),

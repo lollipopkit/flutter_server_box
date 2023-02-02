@@ -1,5 +1,5 @@
 {
-  "aboutThanks": "\nAll rights reserved.\n\nThanks to the following people who participated in the test.",
+  "aboutThanks": "\n\nThanks to the following people who participated in the test.",
   "addAServer": "add a server",
   "addOne": "Add one",
   "addPrivateKey": "Add private key",
@@ -132,6 +132,7 @@
   "sureDelete": "Are you sure to delete [{name}]?",
   "sureNoPwd": "Are you sure to use no password?",
   "sureToDeleteServer": "Are you sure to delete server [{server}]?",
+  "termTheme": "Terminal theme",
   "ttl": "ttl",
   "unknown": "unknown",
   "unknownError": "Unknown error",

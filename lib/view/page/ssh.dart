@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/data/model/ssh/terminal_color.dart';
 import 'package:toolbox/generated/l10n.dart';
 import 'package:xterm/xterm.dart';
 
@@ -17,6 +18,7 @@ import '../../data/provider/virtual_keyboard.dart';
 import '../../data/res/color.dart';
 import '../../data/res/terminal_theme.dart';
 import '../../data/res/virtual_key.dart';
+import '../../data/store/setting.dart';
 import '../../locator.dart';
 
 class SSHPage extends StatefulWidget {
@@ -36,6 +38,7 @@ class _SSHPageState extends State<SSHPage> {
   final TerminalController _terminalController = TerminalController();
   final ContextMenuController _menuController = ContextMenuController();
   late TextStyle _menuTextStyle;
+  late TerminalColors _termColors;
   late S _s;
 
   var _isDark = false;
@@ -43,6 +46,7 @@ class _SSHPageState extends State<SSHPage> {
   @override
   void initState() {
     super.initState();
+    _termColors = TerminalColorsPlatform.values[locator<SettingStore>().termColorIdx.fetch()!].colors;
     initTerminal();
   }
 
@@ -102,7 +106,7 @@ class _SSHPageState extends State<SSHPage> {
     final termTheme = _isDark ? termDarkTheme : termLightTheme;
     return Scaffold(
       backgroundColor: termTheme.background,
-      body: _buildBody(termTheme),
+      body: _buildBody(termTheme.toTerminalTheme(_termColors)),
       bottomNavigationBar: _buildBottom(),
     );
   }

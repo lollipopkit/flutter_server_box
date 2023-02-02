@@ -1,5 +1,5 @@
 {
-  "aboutThanks": "\n保留所有权利。\n\n感谢以下参与软件测试的各位。",
+  "aboutThanks": "\n\n感谢以下参与软件测试的各位。",
   "addAServer": "添加服务器",
   "addOne": "前去新增",
   "addPrivateKey": "添加一个私钥",
@@ -132,6 +132,7 @@
   "sureDelete": "确定删除[{name}]？",
   "sureNoPwd": "确认使用无密码？",
   "sureToDeleteServer": "你确定要删除服务器 [{server}] 吗？",
+  "termTheme": "终端主题",
   "ttl": "缓存时间",
   "unknown": "未知",
   "unknownError": "未知错误",

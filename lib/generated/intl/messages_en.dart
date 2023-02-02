@@ -67,7 +67,7 @@ class MessageLookup extends MessageLookupByLibrary {
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
         "aboutThanks": MessageLookupByLibrary.simpleMessage(
-            "\nAll rights reserved.\n\nThanks to the following people who participated in the test."),
+            "\n\nThanks to the following people who participated in the test."),
         "addAServer": MessageLookupByLibrary.simpleMessage("add a server"),
         "addOne": MessageLookupByLibrary.simpleMessage("Add one"),
         "addPrivateKey":
@@ -242,6 +242,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "sureNoPwd": MessageLookupByLibrary.simpleMessage(
             "Are you sure to use no password?"),
         "sureToDeleteServer": m14,
+        "termTheme": MessageLookupByLibrary.simpleMessage("Terminal theme"),
         "ttl": MessageLookupByLibrary.simpleMessage("ttl"),
         "unknown": MessageLookupByLibrary.simpleMessage("unknown"),
         "unknownError": MessageLookupByLibrary.simpleMessage("Unknown error"),

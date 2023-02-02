@@ -22,4 +22,6 @@ class SettingStore extends PersistentStore {
   /// First time to use SSH term
   StoreProperty<bool> get firstTimeUseSshTerm =>
       property('firstTimeUseSshTerm', defaultValue: true);
+  
+  StoreProperty<int> get termColorIdx => property('termColorIdx', defaultValue: 0);
 }

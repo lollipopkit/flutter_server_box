@@ -50,10 +50,10 @@ class S {
     return Localizations.of<S>(context, S);
   }
 
-  /// `\nAll rights reserved.\n\nThanks to the following people who participated in the test.`
+  /// `\n\nThanks to the following people who participated in the test.`
   String get aboutThanks {
     return Intl.message(
-      '\nAll rights reserved.\n\nThanks to the following people who participated in the test.',
+      '\n\nThanks to the following people who participated in the test.',
       name: 'aboutThanks',
       desc: '',
       args: [],
@@ -1378,6 +1378,16 @@ class S {
       name: 'sureToDeleteServer',
       desc: '',
       args: [server],
+    );
+  }
+
+  /// `Terminal theme`
+  String get termTheme {
+    return Intl.message(
+      'Terminal theme',
+      name: 'termTheme',
+      desc: '',
+      args: [],
     );
   }
 

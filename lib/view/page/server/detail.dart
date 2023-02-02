@@ -342,7 +342,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           SizedBox(
             width: width,
             child: Text(
-              '${ns.speedIn(device: device)}\n${ns.totalIn(device: device)}',
+              '${ns.speedIn(device: device)} | ${ns.totalIn(device: device)}',
               style: textSize11,
               textAlign: TextAlign.center,
               textScaleFactor: 0.87,
@@ -351,7 +351,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           SizedBox(
             width: width,
             child: Text(
-              '${ns.speedOut(device: device)}\n${ns.totalOut(device: device)}',
+              '${ns.speedOut(device: device)} | ${ns.totalOut(device: device)}',
               style: textSize11,
               textAlign: TextAlign.right,
               textScaleFactor: 0.87,
