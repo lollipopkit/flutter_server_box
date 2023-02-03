@@ -177,7 +177,7 @@ class _SFTPPageState extends State<SFTPPage> {
       );
 
   Widget _buildFileView() {
-    if (_client == null || _si?.cs != ServerConnectionState.connected) {
+    if (_client == null || _si?.cs != ServerState.connected) {
       return centerCircleLoading;
     }
 

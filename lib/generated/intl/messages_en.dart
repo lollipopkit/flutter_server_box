@@ -166,6 +166,10 @@ class MessageLookup extends MessageLookupByLibrary {
         "loss": MessageLookupByLibrary.simpleMessage("loss"),
         "madeWithLove": m8,
         "max": MessageLookupByLibrary.simpleMessage("max"),
+        "maxRetryCount": MessageLookupByLibrary.simpleMessage(
+            "Number of server reconnection"),
+        "maxRetryCountEqual0":
+            MessageLookupByLibrary.simpleMessage("Will retry again and again."),
         "min": MessageLookupByLibrary.simpleMessage("min"),
         "ms": MessageLookupByLibrary.simpleMessage("ms"),
         "name": MessageLookupByLibrary.simpleMessage("Name"),
@@ -243,6 +247,7 @@ class MessageLookup extends MessageLookupByLibrary {
             "Are you sure to use no password?"),
         "sureToDeleteServer": m14,
         "termTheme": MessageLookupByLibrary.simpleMessage("Terminal theme"),
+        "times": MessageLookupByLibrary.simpleMessage("Times"),
         "ttl": MessageLookupByLibrary.simpleMessage("ttl"),
         "unknown": MessageLookupByLibrary.simpleMessage("unknown"),
         "unknownError": MessageLookupByLibrary.simpleMessage("Unknown error"),

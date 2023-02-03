@@ -6,9 +6,17 @@ class Server {
   ServerPrivateInfo spi;
   ServerStatus status;
   SSHClient? client;
-  ServerConnectionState cs;
+  ServerState cs;
 
   Server(this.spi, this.status, this.client, this.cs);
 }
 
-enum ServerConnectionState { disconnected, connecting, connected, failed }
+enum ServerState {
+  disconnected,
+  connecting,
+  connected,
+  failed;
+
+  bool get shouldConnect =>
+      this == ServerState.disconnected || this == ServerState.failed;
+}

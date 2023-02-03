@@ -31,15 +31,17 @@ class ServerPrivateInfo {
   @HiveField(5)
   String? pubKeyId;
 
-  String get id => '$user@$ip:$port';
+  late String id;
 
-  ServerPrivateInfo(
-      {required this.name,
-      required this.ip,
-      required this.port,
-      required this.user,
-      required this.pwd,
-      this.pubKeyId});
+  ServerPrivateInfo({
+    required this.name,
+    required this.ip,
+    required this.port,
+    required this.user,
+    required this.pwd,
+    this.pubKeyId,
+  }) : id = '$user@$ip:$port';
+
   ServerPrivateInfo.fromJson(Map<String, dynamic> json) {
     name = json["name"].toString();
     ip = json["ip"].toString();
@@ -47,7 +49,9 @@ class ServerPrivateInfo {
     user = json["user"].toString();
     pwd = json["authorization"].toString();
     pubKeyId = json["pubKeyId"]?.toString();
+    id = '$user@$ip:$port';
   }
+
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data["name"] = name;

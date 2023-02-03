@@ -32,6 +32,7 @@ class _SettingPageState extends State<SettingPage> {
   late int _selectedColorValue;
   late int _launchPageIdx;
   late int _termThemeIdx;
+  late double _maxRetryCount;
   late double _updateInterval;
 
   @override
@@ -49,6 +50,7 @@ class _SettingPageState extends State<SettingPage> {
     _launchPageIdx = _setting.launchPage.fetch()!;
     _termThemeIdx = _setting.termColorIdx.fetch()!;
     _updateInterval = _setting.serverStatusUpdateInterval.fetch()!.toDouble();
+    _maxRetryCount = _setting.maxRetryCount.fetch()!.toDouble();
   }
 
   @override
@@ -66,6 +68,7 @@ class _SettingPageState extends State<SettingPage> {
           _buildLaunchPage(),
           _buildDistLogoSwitch(),
           _buildTermTheme(),
+          _buildMaxRetry(),
         ].map((e) => RoundRectCard(e)).toList(),
       ),
     );
@@ -284,6 +287,50 @@ class _SettingPageState extends State<SettingPage> {
           _setting.termColorIdx.put(value!);
         });
       },
+    );
+  }
+
+  Widget _buildMaxRetry() {
+    return ExpansionTile(
+      textColor: primaryColor,
+      title: Text(
+        _s.maxRetryCount,
+        style: textSize13,
+        textAlign: TextAlign.start,
+      ),
+      trailing: Text('${_maxRetryCount.toInt()} ${_s.times}'),
+      children: [
+        Slider(
+          thumbColor: primaryColor,
+          activeColor: primaryColor.withOpacity(0.7),
+          min: 0,
+          max: 10,
+          value: _maxRetryCount,
+          onChanged: (newValue) {
+            setState(() {
+              _maxRetryCount = newValue;
+            });
+          },
+          onChangeEnd: (val) {
+            _setting.maxRetryCount.put(val.toInt());
+          },
+          label: '${_maxRetryCount.toInt()} ${_s.times}',
+          divisions: 10,
+        ),
+        const SizedBox(
+          height: 3,
+        ),
+        _maxRetryCount == 0.0
+            ? Text(
+                _s.maxRetryCountEqual0,
+                style: const TextStyle(color: Colors.grey, fontSize: 12),
+                textAlign: TextAlign.center,
+              )
+            : const SizedBox(),
+        const SizedBox(
+          height: 13,
+        )
+      ],
     );
   }
 }

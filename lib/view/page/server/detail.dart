@@ -345,7 +345,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               '${ns.speedIn(device: device)} | ${ns.totalIn(device: device)}',
               style: textSize11,
               textAlign: TextAlign.center,
-              textScaleFactor: 0.87,
+              textScaleFactor: 0.9,
             ),
           ),
           SizedBox(
@@ -354,7 +354,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               '${ns.speedOut(device: device)} | ${ns.totalOut(device: device)}',
               style: textSize11,
               textAlign: TextAlign.right,
-              textScaleFactor: 0.87,
+              textScaleFactor: 0.9,
             ),
           )
         ],

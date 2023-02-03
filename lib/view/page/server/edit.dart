@@ -73,7 +73,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                       [
                         TextButton(
                           onPressed: () {
-                            _serverProvider.delServer(widget.spi!);
+                            _serverProvider.delServer(widget.spi!.id);
                             Navigator.of(context).pop();
                             Navigator.of(context).pop();
                           },

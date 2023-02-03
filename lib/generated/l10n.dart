@@ -821,6 +821,26 @@ class S {
     );
   }
 
+  /// `Number of server reconnection`
+  String get maxRetryCount {
+    return Intl.message(
+      'Number of server reconnection',
+      name: 'maxRetryCount',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Will retry again and again.`
+  String get maxRetryCountEqual0 {
+    return Intl.message(
+      'Will retry again and again.',
+      name: 'maxRetryCountEqual0',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `min`
   String get min {
     return Intl.message(
@@ -1386,6 +1406,16 @@ class S {
     return Intl.message(
       'Terminal theme',
       name: 'termTheme',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Times`
+  String get times {
+    return Intl.message(
+      'Times',
+      name: 'times',
       desc: '',
       args: [],
     );

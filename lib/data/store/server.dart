@@ -18,14 +18,15 @@ class ServerStore extends PersistentStore {
     return ss;
   }
 
-  void delete(ServerPrivateInfo s) {
-    box.delete(s.id);
+  void delete(String id) {
+    box.delete(id);
   }
 
   void update(ServerPrivateInfo old, ServerPrivateInfo newInfo) {
     if (!have(old)) {
       throw Exception('Old ServerPrivateInfo not found');
     }
+    delete(old.id);
     put(newInfo);
   }
 

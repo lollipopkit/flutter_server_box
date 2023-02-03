@@ -105,14 +105,18 @@ class _SSHPageState extends State<SSHPage> {
   @override
   Widget build(BuildContext context) {
     final termTheme = _isDark ? termDarkTheme : termLightTheme;
-    return AnnotatedRegion(
-      value: _isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-      child: Scaffold(
-        backgroundColor: termTheme.background,
-        body: _buildBody(termTheme.toTerminalTheme(_termColors)),
-        bottomNavigationBar: _buildBottom(termTheme.background),
-      ),
+    Widget child = Scaffold(
+      backgroundColor: termTheme.background,
+      body: _buildBody(termTheme.toTerminalTheme(_termColors)),
+      bottomNavigationBar: _buildBottom(termTheme.background),
     );
+    if (Platform.isIOS) {
+      child = AnnotatedRegion(
+        value: _isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+        child: child,
+      );
+    }
+    return child;
   }
 
   Widget _buildBody(TerminalTheme termTheme) {

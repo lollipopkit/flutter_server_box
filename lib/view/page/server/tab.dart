@@ -123,13 +123,12 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildRealServerCard(ServerStatus ss, String serverName,
-      ServerConnectionState cs, ServerPrivateInfo spi) {
+      ServerState cs, ServerPrivateInfo spi) {
     final rootDisk = ss.disk.firstWhere((element) => element.loc == '/');
 
     final topRightStr =
         getTopRightStr(cs, ss.cpu.temp, ss.uptime, ss.failedInfo);
-    final hasError =
-        cs == ServerConnectionState.failed && ss.failedInfo != null;
+    final hasError = cs == ServerState.failed && ss.failedInfo != null;
     final style = TextStyle(
         color: _theme.textTheme.bodyLarge!.color!.withAlpha(100), fontSize: 11);
 
@@ -288,12 +287,12 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  String getTopRightStr(ServerConnectionState cs, String temp, String upTime,
-      String? failedInfo) {
+  String getTopRightStr(
+      ServerState cs, String temp, String upTime, String? failedInfo) {
     switch (cs) {
-      case ServerConnectionState.disconnected:
+      case ServerState.disconnected:
         return _s.disconnected;
-      case ServerConnectionState.connected:
+      case ServerState.connected:
         if (temp == '') {
           if (upTime == '') {
             return _s.serverTabLoading;
@@ -307,9 +306,9 @@ class _ServerPageState extends State<ServerPage>
             return '$temp | $upTime';
           }
         }
-      case ServerConnectionState.connecting:
+      case ServerState.connecting:
         return _s.serverTabConnecting;
-      case ServerConnectionState.failed:
+      case ServerState.failed:
         if (failedInfo == null) {
           return _s.serverTabFailed;
         }
