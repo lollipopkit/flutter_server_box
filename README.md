@@ -14,6 +14,12 @@
 </p>
 
 <p align="center">
+  <a href="https://count.ly/f/badge" rel="nofollow">
+    <img style="height: 37px" src="https://count.ly/badges/light.svg">
+  </a>
+</p>
+
+<p align="center">
 A Flutter project which provide charts to display server status and tools to manage server.
 <br>
 Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a> & <a href="https://github.com/TerminalStudio/xterm.dart">xterm.dart</a>.

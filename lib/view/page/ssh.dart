@@ -6,10 +6,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/data/model/ssh/terminal_color.dart';
-import 'package:toolbox/generated/l10n.dart';
-import 'package:xterm/xterm.dart';
+import 'package:xterm/xterm.dart' hide TerminalColors;
 
+import '../../data/model/ssh/terminal_color.dart';
+import '../../generated/l10n.dart';
+import '../../core/utils/misc.dart';
 import '../../core/utils/ui.dart';
 import '../../core/utils/server.dart';
 import '../../data/model/server/server_private_info.dart';
@@ -132,7 +133,7 @@ class _SSHPageState extends State<SSHPage> {
         theme: termTheme,
         deleteDetection: Platform.isIOS,
         onTapUp: _onTapUp,
-        autofocus: true,
+        autoFocus: true,
         keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,
       ),
     );
@@ -249,7 +250,7 @@ class _SSHPageState extends State<SSHPage> {
         _paste();
         break;
       case VirtualKeyFunc.copy:
-        _copy(terminalSelected);
+        copy(terminalSelected);
         break;
     }
   }
@@ -268,10 +269,6 @@ class _SSHPageState extends State<SSHPage> {
       return '';
     }
     return _terminal.buffer.getText(range);
-  }
-
-  void _copy(String text) {
-    Clipboard.setData(ClipboardData(text: text));
   }
 
   void _onTapUp(TapUpDetails details, CellOffset offset) {
@@ -319,7 +316,7 @@ class _SSHPageState extends State<SSHPage> {
                 ),
                 onPressed: () {
                   _terminalController.setSelection(null);
-                  _copy(selected);
+                  copy(selected);
                   _menuController.remove();
                 },
               ),

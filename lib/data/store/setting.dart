@@ -27,5 +27,6 @@ class SettingStore extends PersistentStore {
       property('termColorIdx', defaultValue: 0);
 
   /// Max retry count when connect to server
-  StoreProperty<int> get maxRetryCount => property('maxRetryCount', defaultValue: 7);
+  StoreProperty<int> get maxRetryCount =>
+      property('maxRetryCount', defaultValue: 7);
 }

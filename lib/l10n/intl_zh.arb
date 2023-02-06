@@ -76,7 +76,7 @@
   "loss": "丢包率",
   "madeWithLove": "\n用❤️制作 by {myGithub}",
   "max": "最大",
-  "maxRetryCount": "连接服务器重试次数",
+  "maxRetryCount": "服务器尝试重连次数",
   "maxRetryCountEqual0": "会无限重试",
   "min": "最小",
   "ms": "毫秒",

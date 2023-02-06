@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -23,15 +23,6 @@ Future<bool> shareFiles(BuildContext context, List<String> filePaths) async {
   return filePaths.isNotEmpty;
 }
 
-bool get longPressEnabled {
-  switch (defaultTargetPlatform) {
-    case TargetPlatform.android:
-    case TargetPlatform.iOS:
-      return true;
-    case TargetPlatform.macOS:
-    case TargetPlatform.fuchsia:
-    case TargetPlatform.linux:
-    case TargetPlatform.windows:
-      return false;
-  }
+void copy(String text) {
+  Clipboard.setData(ClipboardData(text: text));
 }

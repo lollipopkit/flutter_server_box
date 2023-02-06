@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/data/model/ssh/terminal_color.dart';
 
+import '../../data/model/ssh/terminal_color.dart';
 import '../../core/update.dart';
 import '../../core/utils/ui.dart';
 import '../../data/provider/app.dart';
@@ -60,17 +60,49 @@ class _SettingPageState extends State<SettingPage> {
         title: Text(_s.setting),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(17),
+        padding: const EdgeInsets.symmetric(horizontal: 17),
         children: [
-          _buildAppColorPreview(),
-          _buildUpdateInterval(),
-          _buildCheckUpdate(),
-          _buildLaunchPage(),
-          _buildDistLogoSwitch(),
-          _buildTermTheme(),
-          _buildMaxRetry(),
-        ].map((e) => RoundRectCard(e)).toList(),
+          // App
+          _buildTitle('App'),
+          _buildApp(),
+          // Server
+          _buildTitle(_s.server),
+          _buildServer(),
+        ],
       ),
+    );
+  }
+
+  Widget _buildTitle(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 23, bottom: 17),
+      child: Center(
+        child: Text(
+          text,
+          style: textSize13,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildApp() {
+    return Column(
+      children: [
+        _buildAppColorPreview(),
+        _buildLaunchPage(),
+        _buildCheckUpdate(),
+      ].map((e) => RoundRectCard(e)).toList(),
+    );
+  }
+
+  Widget _buildServer() {
+    return Column(
+      children: [
+        _buildDistLogoSwitch(),
+        _buildUpdateInterval(),
+        _buildTermTheme(),
+        _buildMaxRetry(),
+      ].map((e) => RoundRectCard(e)).toList(),
     );
   }
 
@@ -126,7 +158,10 @@ class _SettingPageState extends State<SettingPage> {
         _s.willTakEeffectImmediately,
         style: textSize13Grey,
       ),
-      trailing: Text('${_updateInterval.toInt()} ${_s.second}'),
+      trailing: Text(
+        '${_updateInterval.toInt()} ${_s.second}',
+        style: textSize13,
+      ),
       children: [
         Slider(
           thumbColor: primaryColor,
@@ -298,7 +333,10 @@ class _SettingPageState extends State<SettingPage> {
         style: textSize13,
         textAlign: TextAlign.start,
       ),
-      trailing: Text('${_maxRetryCount.toInt()} ${_s.times}'),
+      trailing: Text(
+        '${_maxRetryCount.toInt()} ${_s.times}',
+        style: textSize13,
+      ),
       children: [
         Slider(
           thumbColor: primaryColor,

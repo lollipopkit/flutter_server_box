@@ -148,7 +148,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "loss": MessageLookupByLibrary.simpleMessage("丢包率"),
         "madeWithLove": m8,
         "max": MessageLookupByLibrary.simpleMessage("最大"),
-        "maxRetryCount": MessageLookupByLibrary.simpleMessage("连接服务器重试次数"),
+        "maxRetryCount": MessageLookupByLibrary.simpleMessage("服务器尝试重连次数"),
         "maxRetryCountEqual0": MessageLookupByLibrary.simpleMessage("会无限重试"),
         "min": MessageLookupByLibrary.simpleMessage("最小"),
         "ms": MessageLookupByLibrary.simpleMessage("毫秒"),
