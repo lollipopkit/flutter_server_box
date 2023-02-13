@@ -112,9 +112,9 @@ class ServerProvider extends BusyProvider {
       throw RangeError.index(idx, _servers);
     }
     _servers[idx].spi = newSpi;
+    locator<ServerStore>().update(old, newSpi);
     _servers[idx].client = await genClient(newSpi);
     notifyListeners();
-    locator<ServerStore>().update(old, newSpi);
     refreshData(spi: newSpi);
   }
 

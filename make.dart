@@ -6,16 +6,20 @@ import 'dart:io';
 
 const appName = 'ServerBox';
 const buildDataFilePath = 'lib/data/res/build_data.dart';
+
 const apkPath = 'build/app/outputs/flutter-apk/app-release.apk';
+
 const xcarchivePath = 'build/ios/archive/Runner.xcarchive';
-var regiOSProjectVer = RegExp(r'CURRENT_PROJECT_VERSION = .+;');
-var regiOSMarketVer = RegExp(r'MARKETING_VERSION = .+');
-const iOSInfoPlistPath = 'ios/Runner.xcodeproj/project.pbxproj';
+const appleXCConfigPath = '/Runner.xcodeproj/project.pbxproj';
+var regAppleProjectVer = RegExp(r'CURRENT_PROJECT_VERSION = .+;');
+var regAppleMarketVer = RegExp(r'MARKETING_VERSION = .+');
+
 const skslFileSuffix = '.sksl.json';
 
 const buildFuncs = {
   'ios': flutterBuildIOS,
   'android': flutterBuildAndroid,
+  'macos': flutterBuildMacOS,
 };
 
 int? build;
@@ -146,22 +150,26 @@ Future<void> flutterBuild(
 }
 
 Future<void> flutterBuildIOS() async {
-  await changeInfoPlistVersion();
   await flutterBuild(
       xcarchivePath, './release/${appName}_ios_build.xcarchive', 'ipa');
+}
+
+Future<void> flutterBuildMacOS() async {
+  await flutterBuild(
+      xcarchivePath, './release/${appName}_macos_build.xcarchive', 'macos');
 }
 
 Future<void> flutterBuildAndroid() async {
   await flutterBuild(apkPath, './release/${appName}_build_Arm64.apk', 'apk');
 }
 
-Future<void> changeInfoPlistVersion() async {
-  for (final path in [iOSInfoPlistPath]) {
-    final file = File(path);
+Future<void> changeAppleVersion() async {
+  for (final path in ['ios', 'macos']) {
+    final file = File(path + appleXCConfigPath);
     final contents = await file.readAsString();
     final newContents = contents
-        .replaceAll(regiOSMarketVer, 'MARKETING_VERSION = 1.0.$build;')
-        .replaceAll(regiOSProjectVer, 'CURRENT_PROJECT_VERSION = $build;');
+        .replaceAll(regAppleMarketVer, 'MARKETING_VERSION = 1.0.$build;')
+        .replaceAll(regAppleProjectVer, 'CURRENT_PROJECT_VERSION = $build;');
     await file.writeAsString(newContents);
   }
 }
@@ -175,17 +183,19 @@ void main(List<String> args) async {
   final command = args[0];
 
   switch (command) {
-    case 'run':
-      return flutterRun(args.length == 2 ? args[1] : null);
     case 'build':
       final stopwatch = Stopwatch()..start();
       build = await getGitCommitCount();
       await updateBuildData();
       await dartFormat();
+      await changeAppleVersion();
       if (args.length > 1) {
         final platform = args[1];
         if (buildFuncs.keys.contains(platform)) {
           await buildFuncs[platform]!();
+          print('Build finished in ${stopwatch.elapsed}');
+          stopwatch.reset();
+          stopwatch.start();
         } else {
           print('Unknown platform: $platform');
         }
