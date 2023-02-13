@@ -174,7 +174,9 @@ class _PingPageState extends State<PingPage>
 
   @override
   Future<FutureOr<void>> afterFirstLayout(BuildContext context) async {
-    await _serverProvider.loadLocalData();
-    await _serverProvider.refreshData();
+    if (_serverProvider.servers.isEmpty) {
+      await _serverProvider.loadLocalData();
+      await _serverProvider.refreshData();
+    }
   }
 }

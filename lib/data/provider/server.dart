@@ -176,7 +176,7 @@ class ServerProvider extends BusyProvider {
     if (raw.isEmpty || segments.length == 1) {
       s.cs = ServerState.failed;
       if (s.status.failedInfo == null || s.status.failedInfo!.isEmpty) {
-        s.status.failedInfo = 'No data received';
+        s.status.failedInfo = 'Seperate segments failed, raw:\n$raw';
       }
       notifyListeners();
       return;
