@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:after_layout/after_layout.dart';
 import 'package:dartssh2/dartssh2.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -89,6 +92,29 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
             onSubmitted: (_) => _focusScope.requestFocus(_pwdNode),
             enableSuggestions: false,
             decoration: buildDecoration(_s.privateKey, icon: Icons.vpn_key),
+          ),
+          TextButton(
+            onPressed: () async {
+              final result = await FilePicker.platform.pickFiles();
+              if (result == null) {
+                return;
+              }
+
+              final path = result.files.single.path;
+              if (path == null) {
+                showSnackBar(context, const Text('path is null'));
+                return;
+              }
+
+              final file = File(path);
+              if (!file.existsSync()) {
+                showSnackBar(context, Text(_s.fileNotExist(path)));
+                return;
+              }
+
+              _keyController.text = await file.readAsString();
+            },
+            child: Text(_s.pickFile),
           ),
           TextField(
             controller: _pwdController,

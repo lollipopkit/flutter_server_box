@@ -571,6 +571,16 @@ class S {
     );
   }
 
+  /// `{file} not exist`
+  String fileNotExist(Object file) {
+    return Intl.message(
+      '$file not exist',
+      name: 'fileNotExist',
+      desc: '',
+      args: [file],
+    );
+  }
+
   /// `Files`
   String get files {
     return Intl.message(
@@ -986,6 +996,16 @@ class S {
     return Intl.message(
       'Path',
       name: 'path',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Pick file`
+  String get pickFile {
+    return Intl.message(
+      'Pick file',
+      name: 'pickFile',
       desc: '',
       args: [],
     );

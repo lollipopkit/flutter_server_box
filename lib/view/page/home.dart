@@ -249,7 +249,7 @@ class _MyHomePageState extends State<MyHomePage>
                 ),
                 AboutListTile(
                   icon: const Icon(Icons.text_snippet),
-                  applicationName: BuildData.name,
+                  applicationName: '\n${BuildData.name}',
                   applicationVersion: _versionStr,
                   applicationIcon: _buildIcon(),
                   aboutBoxChildren: [
@@ -259,13 +259,12 @@ class _MyHomePageState extends State<MyHomePage>
                     UrlText(
                       text: _s.aboutThanks,
                     ),
-                    const UrlText(
-                      text: rainSunMeGithub,
-                      replace: 'RainSunMe',
-                    ),
-                    const UrlText(
-                      text: fectureGithub,
-                      replace: 'fecture',
+                    // Thanks
+                    ...thanksMap.keys.map(
+                      (key) => UrlText(
+                        text: thanksMap[key] ?? '',
+                        replace: key,
+                      ),
                     )
                   ],
                   child: Text(_s.license),

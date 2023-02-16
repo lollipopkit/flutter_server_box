@@ -31,38 +31,40 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m4(percent, size) => "${percent}% of ${size}";
 
-  static String m5(count) => "Found ${count} update";
+  static String m5(file) => "${file} not exist";
 
-  static String m6(code) => "request failed, status code: ${code}";
+  static String m6(count) => "Found ${count} update";
 
-  static String m7(url) =>
+  static String m7(code) => "request failed, status code: ${code}";
+
+  static String m8(url) =>
       "Please make sure that docker is installed correctly, or that you are using a non-self-compiled version. If you don\'t have the above issues, please submit an issue on ${url}.";
 
-  static String m8(myGithub) => "\nMade with ❤️ by ${myGithub}";
+  static String m9(myGithub) => "\nMade with ❤️ by ${myGithub}";
 
-  static String m9(url) => "Please report bugs on ${url}";
+  static String m10(url) => "Please report bugs on ${url}";
 
-  static String m10(date) => "Are you sure to restore from ${date} ?";
+  static String m11(date) => "Are you sure to restore from ${date} ?";
 
-  static String m11(time) => "Spent time: ${time}";
+  static String m12(time) => "Spent time: ${time}";
 
-  static String m12(url) =>
+  static String m13(url) =>
       "This function is now in the experimental stage.\n\nPlease report bugs on ${url} or join our development.";
 
-  static String m13(name) => "Are you sure to delete [${name}]?";
+  static String m14(name) => "Are you sure to delete [${name}]?";
 
-  static String m14(server) => "Are you sure to delete server [${server}]?";
+  static String m15(server) => "Are you sure to delete server [${server}]?";
 
-  static String m15(newest) => "Update: v1.0.${newest}";
+  static String m16(newest) => "Update: v1.0.${newest}";
 
-  static String m16(newest) =>
+  static String m17(newest) =>
       "Current version is too low, please update to v1.0.${newest}";
 
-  static String m17(build) => "Found: v1.0.${build}, click to update";
+  static String m18(build) => "Found: v1.0.${build}, click to update";
 
-  static String m18(build) => "Current: v1.0.${build}";
+  static String m19(build) => "Current: v1.0.${build}";
 
-  static String m19(build) => "Current: v1.0.${build}, is up to date";
+  static String m20(build) => "Current: v1.0.${build}, is up to date";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -135,12 +137,13 @@ class MessageLookup extends MessageLookupByLibrary {
             "If you have any questions, please feedback on Github."),
         "fieldMustNotEmpty": MessageLookupByLibrary.simpleMessage(
             "These fields must not be empty."),
+        "fileNotExist": m5,
         "files": MessageLookupByLibrary.simpleMessage("Files"),
-        "foundNUpdate": m5,
+        "foundNUpdate": m6,
         "go": MessageLookupByLibrary.simpleMessage("Go"),
         "goto": MessageLookupByLibrary.simpleMessage("Go to"),
         "host": MessageLookupByLibrary.simpleMessage("Host"),
-        "httpFailedWithCode": m6,
+        "httpFailedWithCode": m7,
         "imagesList": MessageLookupByLibrary.simpleMessage("Images list"),
         "import": MessageLookupByLibrary.simpleMessage("Import"),
         "importAndExport":
@@ -153,7 +156,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "invalidJson": MessageLookupByLibrary.simpleMessage("Invalid JSON"),
         "invalidVersion":
             MessageLookupByLibrary.simpleMessage("Invalid version"),
-        "invalidVersionHelp": m7,
+        "invalidVersionHelp": m8,
         "isBusy": MessageLookupByLibrary.simpleMessage("Is busy now"),
         "keepForeground":
             MessageLookupByLibrary.simpleMessage("Keep app foreground!"),
@@ -164,7 +167,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "loadingFiles":
             MessageLookupByLibrary.simpleMessage("Loading files..."),
         "loss": MessageLookupByLibrary.simpleMessage("loss"),
-        "madeWithLove": m8,
+        "madeWithLove": m9,
         "max": MessageLookupByLibrary.simpleMessage("max"),
         "maxRetryCount": MessageLookupByLibrary.simpleMessage(
             "Number of server reconnection"),
@@ -190,6 +193,7 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("On server detail page"),
         "open": MessageLookupByLibrary.simpleMessage("Open"),
         "path": MessageLookupByLibrary.simpleMessage("Path"),
+        "pickFile": MessageLookupByLibrary.simpleMessage("Pick file"),
         "ping": MessageLookupByLibrary.simpleMessage("Ping"),
         "pingAvg": MessageLookupByLibrary.simpleMessage("Avg:"),
         "pingInputIP": MessageLookupByLibrary.simpleMessage(
@@ -208,11 +212,11 @@ class MessageLookup extends MessageLookupByLibrary {
         "privateKey": MessageLookupByLibrary.simpleMessage("Private Key"),
         "pwd": MessageLookupByLibrary.simpleMessage("Password"),
         "rename": MessageLookupByLibrary.simpleMessage("Rename"),
-        "reportBugsOnGithubIssue": m9,
+        "reportBugsOnGithubIssue": m10,
         "restore": MessageLookupByLibrary.simpleMessage("Restore"),
         "restoreSuccess": MessageLookupByLibrary.simpleMessage(
             "Restore success. Restart app to apply."),
-        "restoreSureWithDate": m10,
+        "restoreSureWithDate": m11,
         "result": MessageLookupByLibrary.simpleMessage("Result"),
         "run": MessageLookupByLibrary.simpleMessage("Run"),
         "save": MessageLookupByLibrary.simpleMessage("Save"),
@@ -238,14 +242,14 @@ class MessageLookup extends MessageLookupByLibrary {
         "showDistLogo":
             MessageLookupByLibrary.simpleMessage("Show distribution logo"),
         "snippet": MessageLookupByLibrary.simpleMessage("Snippet"),
-        "spentTime": m11,
-        "sshTip": m12,
+        "spentTime": m12,
+        "sshTip": m13,
         "start": MessageLookupByLibrary.simpleMessage("Start"),
         "stop": MessageLookupByLibrary.simpleMessage("Stop"),
-        "sureDelete": m13,
+        "sureDelete": m14,
         "sureNoPwd": MessageLookupByLibrary.simpleMessage(
             "Are you sure to use no password?"),
-        "sureToDeleteServer": m14,
+        "sureToDeleteServer": m15,
         "termTheme": MessageLookupByLibrary.simpleMessage("Terminal theme"),
         "times": MessageLookupByLibrary.simpleMessage("Times"),
         "ttl": MessageLookupByLibrary.simpleMessage("ttl"),
@@ -259,14 +263,14 @@ class MessageLookup extends MessageLookupByLibrary {
             "You set to 0, will not update automatically.\nCan\'t calculate CPU status."),
         "updateServerStatusInterval": MessageLookupByLibrary.simpleMessage(
             "Server status update interval"),
-        "updateTip": m15,
-        "updateTipTooLow": m16,
+        "updateTip": m16,
+        "updateTipTooLow": m17,
         "upsideDown": MessageLookupByLibrary.simpleMessage("Upside Down"),
         "urlOrJson": MessageLookupByLibrary.simpleMessage("URL or JSON"),
         "user": MessageLookupByLibrary.simpleMessage("User"),
-        "versionHaveUpdate": m17,
-        "versionUnknownUpdate": m18,
-        "versionUpdated": m19,
+        "versionHaveUpdate": m18,
+        "versionUnknownUpdate": m19,
+        "versionUpdated": m20,
         "waitConnection": MessageLookupByLibrary.simpleMessage(
             "Please wait for the connection to be established."),
         "willTakEeffectImmediately":

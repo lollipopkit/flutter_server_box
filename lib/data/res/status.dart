@@ -44,12 +44,12 @@ get _initSwap => Swap(
       cached: 0,
     );
 get initStatus => ServerStatus(
-    cpu: initCpuStatus,
-    mem: _initMemory,
-    sysVer: 'Loading...',
-    uptime: '',
-    disk: [DiskInfo('/', '/', 0, '0', '0', '0')],
-    tcp: TcpStatus(0, 0, 0, 0),
-    netSpeed: initNetSpeed,
-    swap: _initSwap,
-  );
+      cpu: initCpuStatus,
+      mem: _initMemory,
+      sysVer: 'Loading...',
+      uptime: '',
+      disk: [DiskInfo('/', '/', 0, '0', '0', '0')],
+      tcp: TcpStatus(0, 0, 0, 0),
+      netSpeed: initNetSpeed,
+      swap: _initSwap,
+    );
