@@ -298,6 +298,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "6.1.4"
+  file_picker:
+    dependency: "direct main"
+    description:
+      name: file_picker
+      sha256: d090ae03df98b0247b82e5928f44d1b959867049d18d73635e2e0bc3f49542b9
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "5.2.5"
   fixnum:
     dependency: transitive
     description:

@@ -32,6 +32,7 @@ class ServerStatus {
 
   CpuStatus cpu;
   Memory mem;
+  Swap swap;
   String sysVer;
   String uptime;
   List<DiskInfo> disk;
@@ -39,7 +40,15 @@ class ServerStatus {
   NetSpeed netSpeed;
   String? failedInfo;
 
-  ServerStatus(this.cpu, this.mem, this.sysVer, this.uptime, this.disk,
-      this.tcp, this.netSpeed,
-      {this.failedInfo});
+  ServerStatus({
+    required this.cpu,
+    required this.mem,
+    required this.sysVer,
+    required this.uptime,
+    required this.disk,
+    required this.tcp,
+    required this.netSpeed,
+    required this.swap,
+    this.failedInfo,
+  });
 }

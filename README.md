@@ -35,7 +35,9 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
   - [x] `Ping`
   - [x] Status charts
   - [x] etc.
-- [x] i18n (English, Chinese), **welcome contribution** :)
+- [x] i18n (English, Chinese)
+  - **Welcome contribution** :)
+  - [How to contribute?](#i18n-guide)
 - [x] Desktop support
 
 ## 📱 ScreenShots
@@ -78,6 +80,13 @@ Status|Platform
 Full Support|Android/iOS
 Support, but not tested|macOS/Windows/Linux
 
+## i18n guide
+1. Fork this repo and clone it to your local machine.
+2. Create `arb` file in `lib/l10n/` directory
+   - File name should be `intl_XX.arb`, where `XX` is the language code. Such as `intl_en.arb` for English and `intl_zh.arb` for Chinese.
+3. Add content to the file. You can refer to `intl_en.arb` and `intl_zh.arb` for the format.
+4. Pull commit to your forked repo.
+5. Request a pull request on my repo.
 
 ## 📝 License
 `GPL v3. lollipopkit 2023`

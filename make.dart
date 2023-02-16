@@ -123,7 +123,7 @@ Future<void> flutterBuild(
       '--build-name=1.0.$build',
     ]);
   }
-  print('[$buildType]\nBuilding with args: ${args.join(' ')}');
+  print('\n[$buildType]\nBuilding with args: ${args.join(' ')}');
   final buildResult = await fvmRun(['flutter', ...args]);
   final exitCode = buildResult.exitCode;
 
@@ -139,8 +139,6 @@ Future<void> flutterBuild(
         exit(1);
       }
     }
-
-    print('Done.\n');
   } else {
     print(buildResult.stdout);
     print(buildResult.stderr);
@@ -186,25 +184,28 @@ void main(List<String> args) async {
     case 'build':
       final stopwatch = Stopwatch()..start();
       build = await getGitCommitCount();
-      await updateBuildData();
       await dartFormat();
+      await updateBuildData();
       await changeAppleVersion();
       if (args.length > 1) {
-        final platform = args[1];
-        if (buildFuncs.keys.contains(platform)) {
-          await buildFuncs[platform]!();
-          print('Build finished in ${stopwatch.elapsed}');
-          stopwatch.reset();
-          stopwatch.start();
-        } else {
-          print('Unknown platform: $platform');
+        final platforms = args[1];
+        for (final platform in platforms.split(',')) {
+          if (buildFuncs.keys.contains(platform)) {
+            await buildFuncs[platform]!();
+            print('Build finished in ${stopwatch.elapsed}');
+            stopwatch.reset();
+            stopwatch.start();
+          } else {
+            print('Unknown platform: $platform');
+          }
         }
+
         return;
       }
       for (final func in buildFuncs.values) {
         await func();
       }
-      print('Build finished in ${stopwatch.elapsed}');
+      print('Build finished in ${stopwatch.elapsed}\n');
       return;
     default:
       print('Unsupported command: $command');

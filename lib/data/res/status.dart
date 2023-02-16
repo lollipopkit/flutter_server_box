@@ -37,12 +37,19 @@ get initNetSpeed => NetSpeed(
       [_initNetSpeedPart],
       [_initNetSpeedPart],
     );
-get initStatus => ServerStatus(
-      initCpuStatus,
-      _initMemory,
-      'Loading...',
-      '',
-      [DiskInfo('/', '/', 0, '0', '0', '0')],
-      TcpStatus(0, 0, 0, 0),
-      initNetSpeed,
+get _initSwap => Swap(
+      total: 1,
+      used: 0,
+      free: 1,
+      cached: 0,
     );
+get initStatus => ServerStatus(
+    cpu: initCpuStatus,
+    mem: _initMemory,
+    sysVer: 'Loading...',
+    uptime: '',
+    disk: [DiskInfo('/', '/', 0, '0', '0', '0')],
+    tcp: TcpStatus(0, 0, 0, 0),
+    netSpeed: initNetSpeed,
+    swap: _initSwap,
+  );

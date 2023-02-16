@@ -185,6 +185,7 @@ class _MyHomePageState extends State<MyHomePage>
             child: Text(
               '${BuildData.name}\n$_versionStr',
               textAlign: TextAlign.center,
+              style: textSize13,
             ),
           ),
           SizedBox(

@@ -241,7 +241,9 @@ class ServerProvider extends BusyProvider {
   }
 
   Future<void> _getMem(String id, String raw) async {
-    getServer(id).status.mem = await compute(parseMem, raw);
+    final s = getServer(id);
+    s.status.mem = await compute(parseMem, raw);
+    s.status.swap = await compute(parseSwap, raw);
   }
 
   Future<String?> runSnippet(String id, Snippet snippet) async {

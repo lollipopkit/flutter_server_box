@@ -62,6 +62,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           _buildUpTimeAndSys(si.status),
           _buildCPUView(si.status),
           _buildMemView(si.status),
+          _buildSwapView(si.status),
           _buildDiskView(si.status),
           _buildNetView(si.status.netSpeed),
           // avoid the hieght of navigation bar
@@ -219,7 +220,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                   children: [
                     Text('${used.toStringAsFixed(0)}%', style: textSize27),
                     width7,
-                    Text('of ${(ss.mem.total * 1024).convertBytes}',
+                    Text('of ${(ss.mem.total * 1024).convertBytes} Mem',
                         style: textSize13Grey)
                   ],
                 ),
@@ -228,6 +229,48 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                     _buildDetailPercent(free, 'free'),
                     width13,
                     _buildDetailPercent(avail, 'avail'),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(
+              height: 11,
+            ),
+            _buildProgress(used)
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSwapView(ServerStatus ss) {
+    if (ss.swap.total == 0) return const SizedBox();
+    final used = ss.swap.used / ss.swap.total * 100;
+    final free = ss.swap.free / ss.swap.total * 100;
+    final cached = ss.swap.cached / ss.swap.total * 100;
+    return RoundRectCard(
+      Padding(
+        padding: roundRectCardPadding,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Text('${used.toStringAsFixed(0)}%', style: textSize27),
+                    width7,
+                    Text('of ${(ss.swap.total * 1024).convertBytes} Swap',
+                        style: textSize13Grey)
+                  ],
+                ),
+                Row(
+                  children: [
+                    _buildDetailPercent(free, 'free'),
+                    width13,
+                    _buildDetailPercent(cached, 'cached')
                   ],
                 ),
               ],

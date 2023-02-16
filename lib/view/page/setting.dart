@@ -79,7 +79,7 @@ class _SettingPageState extends State<SettingPage> {
       child: Center(
         child: Text(
           text,
-          style: TextStyle(color: primaryColor),
+          style: textSize13,
         ),
       ),
     );
