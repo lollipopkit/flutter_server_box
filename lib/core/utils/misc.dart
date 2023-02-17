@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:share_plus/share_plus.dart';
@@ -25,4 +26,9 @@ Future<bool> shareFiles(BuildContext context, List<String> filePaths) async {
 
 void copy(String text) {
   Clipboard.setData(ClipboardData(text: text));
+}
+
+Future<String?> pickOneFile() async {
+  final result = await FilePicker.platform.pickFiles(type: FileType.any);
+  return result?.files.single.path;
 }

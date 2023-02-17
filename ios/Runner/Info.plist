@@ -47,8 +47,16 @@
 		    <string>zh</string>
 		</array>
 		<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
-	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
-</dict>
+		<true/>
+		<key>UIApplicationSupportsIndirectInputEvents</key>
+		<true/>
+		<key>UIBackgroundModes</key>
+		<array>
+		   <string>fetch</string>
+		</array>
+		<key>LSSupportsOpeningDocumentsInPlace</key>
+		<true/>
+		<key>ITSAppUsesNonExemptEncryption</key>
+		<false/>
+	</dict>
 </plist>

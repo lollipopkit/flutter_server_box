@@ -2,11 +2,11 @@ import 'dart:io';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:dartssh2/dartssh2.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:toolbox/core/extension/numx.dart';
+import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/data/res/misc.dart';
 
 import '../../../core/utils/ui.dart';
@@ -97,12 +97,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
           ),
           TextButton(
             onPressed: () async {
-              final result = await FilePicker.platform.pickFiles();
-              if (result == null) {
-                return;
-              }
-
-              final path = result.files.single.path;
+              final path = await pickOneFile();
               if (path == null) {
                 showSnackBar(context, const Text('path is null'));
                 return;
