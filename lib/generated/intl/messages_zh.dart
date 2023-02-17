@@ -33,36 +33,39 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m5(file) => "${file} 不存在";
 
-  static String m6(count) => "找到 ${count} 个更新";
+  static String m6(file, size, sizeMax) =>
+      "文件 \'${file}\' 过大 \'${size}\'，超过了 ${sizeMax}";
 
-  static String m7(code) => "请求失败, 状态码: ${code}";
+  static String m7(count) => "找到 ${count} 个更新";
 
-  static String m8(url) =>
+  static String m8(code) => "请求失败, 状态码: ${code}";
+
+  static String m9(url) =>
       "请确保正确安装了docker，或者使用的非自编译版本。如果没有以上问题，请在 ${url} 提交问题。";
 
-  static String m9(myGithub) => "\n用❤️制作 by ${myGithub}";
+  static String m10(myGithub) => "\n用❤️制作 by ${myGithub}";
 
-  static String m10(url) => "请到 ${url} 提交问题";
+  static String m11(url) => "请到 ${url} 提交问题";
 
-  static String m11(date) => "确定恢复 ${date} 的备份吗？";
+  static String m12(date) => "确定恢复 ${date} 的备份吗？";
 
-  static String m12(time) => "耗时: ${time}";
+  static String m13(time) => "耗时: ${time}";
 
-  static String m13(url) => "该功能目前处于测试阶段。\n\n请在 ${url} 反馈问题，或者加入我们开发。";
+  static String m14(url) => "该功能目前处于测试阶段。\n\n请在 ${url} 反馈问题，或者加入我们开发。";
 
-  static String m14(name) => "确定删除[${name}]？";
+  static String m15(name) => "确定删除[${name}]？";
 
-  static String m15(server) => "你确定要删除服务器 [${server}] 吗？";
+  static String m16(server) => "你确定要删除服务器 [${server}] 吗？";
 
-  static String m16(newest) => "新版本: v1.0.${newest}";
+  static String m17(newest) => "新版本: v1.0.${newest}";
 
-  static String m17(newest) => "当前版本过低，请升级至 v1.0.${newest}";
+  static String m18(newest) => "当前版本过低，请升级至 v1.0.${newest}";
 
-  static String m18(build) => "找到新版本：v1.0.${build}, 点击更新";
+  static String m19(build) => "找到新版本：v1.0.${build}, 点击更新";
 
-  static String m19(build) => "当前：v1.0.${build}";
+  static String m20(build) => "当前：v1.0.${build}";
 
-  static String m20(build) => "当前：v1.0.${build}, 已是最新版本";
+  static String m21(build) => "当前：v1.0.${build}, 已是最新版本";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -126,12 +129,13 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("如果你有任何问题，请在GitHub反馈"),
         "fieldMustNotEmpty": MessageLookupByLibrary.simpleMessage("这些输入框不能为空。"),
         "fileNotExist": m5,
+        "fileTooLarge": m6,
         "files": MessageLookupByLibrary.simpleMessage("文件"),
-        "foundNUpdate": m6,
+        "foundNUpdate": m7,
         "go": MessageLookupByLibrary.simpleMessage("开始"),
         "goto": MessageLookupByLibrary.simpleMessage("前往"),
         "host": MessageLookupByLibrary.simpleMessage("主机"),
-        "httpFailedWithCode": m7,
+        "httpFailedWithCode": m8,
         "imagesList": MessageLookupByLibrary.simpleMessage("镜像列表"),
         "import": MessageLookupByLibrary.simpleMessage("导入"),
         "importAndExport": MessageLookupByLibrary.simpleMessage("导入或导出"),
@@ -141,7 +145,7 @@ class MessageLookup extends MessageLookupByLibrary {
             "请先 https://docs.docker.com/engine/install docker"),
         "invalidJson": MessageLookupByLibrary.simpleMessage("无效的json，存在格式问题"),
         "invalidVersion": MessageLookupByLibrary.simpleMessage("不支持的版本"),
-        "invalidVersionHelp": m8,
+        "invalidVersionHelp": m9,
         "isBusy": MessageLookupByLibrary.simpleMessage("当前正忙"),
         "keepForeground": MessageLookupByLibrary.simpleMessage("请保持应用处于前台！"),
         "keyAuth": MessageLookupByLibrary.simpleMessage("公钥认证"),
@@ -150,7 +154,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "license": MessageLookupByLibrary.simpleMessage("开源证书"),
         "loadingFiles": MessageLookupByLibrary.simpleMessage("正在加载目录。。。"),
         "loss": MessageLookupByLibrary.simpleMessage("丢包率"),
-        "madeWithLove": m9,
+        "madeWithLove": m10,
         "max": MessageLookupByLibrary.simpleMessage("最大"),
         "maxRetryCount": MessageLookupByLibrary.simpleMessage("服务器尝试重连次数"),
         "maxRetryCountEqual0": MessageLookupByLibrary.simpleMessage("会无限重试"),
@@ -185,11 +189,11 @@ class MessageLookup extends MessageLookupByLibrary {
         "privateKey": MessageLookupByLibrary.simpleMessage("私钥"),
         "pwd": MessageLookupByLibrary.simpleMessage("密码"),
         "rename": MessageLookupByLibrary.simpleMessage("重命名"),
-        "reportBugsOnGithubIssue": m10,
+        "reportBugsOnGithubIssue": m11,
         "restore": MessageLookupByLibrary.simpleMessage("恢复"),
         "restoreSuccess":
             MessageLookupByLibrary.simpleMessage("恢复成功，需要重启App来应用更改"),
-        "restoreSureWithDate": m11,
+        "restoreSureWithDate": m12,
         "result": MessageLookupByLibrary.simpleMessage("结果"),
         "run": MessageLookupByLibrary.simpleMessage("运行"),
         "save": MessageLookupByLibrary.simpleMessage("保存"),
@@ -209,13 +213,13 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("SFTP 已连接，即将开始下载..."),
         "showDistLogo": MessageLookupByLibrary.simpleMessage("显示发行版 Logo"),
         "snippet": MessageLookupByLibrary.simpleMessage("代码片段"),
-        "spentTime": m12,
-        "sshTip": m13,
+        "spentTime": m13,
+        "sshTip": m14,
         "start": MessageLookupByLibrary.simpleMessage("开始"),
         "stop": MessageLookupByLibrary.simpleMessage("停止"),
-        "sureDelete": m14,
+        "sureDelete": m15,
         "sureNoPwd": MessageLookupByLibrary.simpleMessage("确认使用无密码？"),
-        "sureToDeleteServer": m15,
+        "sureToDeleteServer": m16,
         "termTheme": MessageLookupByLibrary.simpleMessage("终端主题"),
         "times": MessageLookupByLibrary.simpleMessage("次"),
         "ttl": MessageLookupByLibrary.simpleMessage("缓存时间"),
@@ -228,14 +232,14 @@ class MessageLookup extends MessageLookupByLibrary {
             "你设置为0，服务器状态不会自动刷新。\n且不能计算CPU使用情况。"),
         "updateServerStatusInterval":
             MessageLookupByLibrary.simpleMessage("服务器状态刷新间隔"),
-        "updateTip": m16,
-        "updateTipTooLow": m17,
+        "updateTip": m17,
+        "updateTipTooLow": m18,
         "upsideDown": MessageLookupByLibrary.simpleMessage("上下交换"),
         "urlOrJson": MessageLookupByLibrary.simpleMessage("链接或JSON"),
         "user": MessageLookupByLibrary.simpleMessage("用户"),
-        "versionHaveUpdate": m18,
-        "versionUnknownUpdate": m19,
-        "versionUpdated": m20,
+        "versionHaveUpdate": m19,
+        "versionUnknownUpdate": m20,
+        "versionUpdated": m21,
         "waitConnection": MessageLookupByLibrary.simpleMessage("请等待连接建立"),
         "willTakEeffectImmediately":
             MessageLookupByLibrary.simpleMessage("更改将会立即生效")

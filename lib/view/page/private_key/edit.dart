@@ -6,6 +6,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:toolbox/core/extension/numx.dart';
+import 'package:toolbox/data/res/misc.dart';
 
 import '../../../core/utils/ui.dart';
 import '../../../data/model/server/private_key_info.dart';
@@ -109,6 +111,20 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
               final file = File(path);
               if (!file.existsSync()) {
                 showSnackBar(context, Text(_s.fileNotExist(path)));
+                return;
+              }
+              final size = (await file.stat()).size;
+              if (size > privateKeyMaxSize) {
+                showSnackBar(
+                  context,
+                  Text(
+                    _s.fileTooLarge(
+                      path,
+                      size.convertBytes,
+                      privateKeyMaxSize.convertBytes,
+                    ),
+                  ),
+                );
                 return;
               }
 

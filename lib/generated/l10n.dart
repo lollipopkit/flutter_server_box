@@ -591,6 +591,16 @@ class S {
     );
   }
 
+  /// `File '{file}' too large {size}, max {sizeMax}`
+  String fileTooLarge(Object file, Object size, Object sizeMax) {
+    return Intl.message(
+      'File \'$file\' too large $size, max $sizeMax',
+      name: 'fileTooLarge',
+      desc: '',
+      args: [file, size, sizeMax],
+    );
+  }
+
   /// `Files`
   String get files {
     return Intl.message(

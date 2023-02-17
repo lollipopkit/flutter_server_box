@@ -53,6 +53,7 @@
   "feedbackOnGithub": "如果你有任何问题，请在GitHub反馈",
   "fieldMustNotEmpty": "这些输入框不能为空。",
   "fileNotExist": "{file} 不存在",
+  "fileTooLarge": "文件 '{file}' 过大 '{size}'，超过了 {sizeMax}",
   "files": "文件",
   "foundNUpdate": "找到 {count} 个更新",
   "go": "开始",

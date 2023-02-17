@@ -63,35 +63,38 @@ class _ServerPageState extends State<ServerPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final child = Consumer<ServerProvider>(
-      builder: (_, pro, __) {
-        if (pro.servers.isEmpty) {
-          return Center(
-            child: Text(
-              _s.serverTabEmpty,
-              textAlign: TextAlign.center,
-            ),
-          );
-        }
-        return ListView.separated(
-          padding: const EdgeInsets.all(7),
-          controller: ScrollController(),
-          physics: const AlwaysScrollableScrollPhysics(),
-          itemBuilder: (ctx, idx) {
-            if (idx == pro.servers.length) {
-              return SizedBox(height: _media.padding.bottom);
-            }
-            return _buildEachServerCard(pro.servers[idx]);
-          },
-          itemCount: pro.servers.length + 1,
-          separatorBuilder: (_, __) => const SizedBox(
-            height: 3,
-          ),
-        );
-      },
-    );
     return Scaffold(
-      body: RefreshIndicator(child: child, onRefresh: () async => await _serverProvider.refreshData(onlyFailed: true)),
+      body: RefreshIndicator(
+        onRefresh: () async =>
+            await _serverProvider.refreshData(onlyFailed: true),
+        child: Consumer<ServerProvider>(
+          builder: (_, pro, __) {
+            if (pro.servers.isEmpty) {
+              return Center(
+                child: Text(
+                  _s.serverTabEmpty,
+                  textAlign: TextAlign.center,
+                ),
+              );
+            }
+            return ListView.separated(
+              padding: const EdgeInsets.all(7),
+              controller: ScrollController(),
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemBuilder: (ctx, idx) {
+                if (idx == pro.servers.length) {
+                  return SizedBox(height: _media.padding.bottom);
+                }
+                return _buildEachServerCard(pro.servers[idx]);
+              },
+              itemCount: pro.servers.length + 1,
+              separatorBuilder: (_, __) => const SizedBox(
+                height: 3,
+              ),
+            );
+          },
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => AppRoute(
           const ServerEditPage(),

@@ -52,7 +52,6 @@ class ServerProvider extends BusyProvider {
         if (s.cs != ServerState.failed) return;
         _limiter.resetTryTimes(s.spi.id);
       }
-      if (onlyFailed && s.cs != ServerState.failed) return;
       await _getData(s.spi);
     }));
   }
