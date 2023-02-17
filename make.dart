@@ -90,7 +90,7 @@ Future<void> updateBuildData() async {
 
 Future<void> dartFormat() async {
   final result = await fvmRun(['dart', 'format', '.']);
-  print('\n${result.stdout}');
+  print(result.stdout);
   if (result.exitCode != 0) {
     print(result.stderr);
     exit(1);
@@ -183,8 +183,8 @@ void main(List<String> args) async {
   switch (command) {
     case 'build':
       final stopwatch = Stopwatch()..start();
-      build = await getGitCommitCount();
       await dartFormat();
+      build = await getGitCommitCount();
       await updateBuildData();
       await changeAppleVersion();
       if (args.length > 1) {
@@ -192,7 +192,7 @@ void main(List<String> args) async {
         for (final platform in platforms.split(',')) {
           if (buildFuncs.keys.contains(platform)) {
             await buildFuncs[platform]!();
-            print('Build finished in ${stopwatch.elapsed}');
+            print('Build finished in [${stopwatch.elapsed}]');
             stopwatch.reset();
             stopwatch.start();
           } else {

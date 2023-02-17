@@ -50,6 +50,16 @@ class S {
     return Localizations.of<S>(context, S);
   }
 
+  /// `About`
+  String get about {
+    return Intl.message(
+      'About',
+      name: 'about',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `\n\nThanks to the following people who participated in the test.`
   String get aboutThanks {
     return Intl.message(

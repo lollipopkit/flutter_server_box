@@ -76,6 +76,7 @@ class _ServerPageState extends State<ServerPage>
         return ListView.separated(
           padding: const EdgeInsets.all(7),
           controller: ScrollController(),
+          physics: const AlwaysScrollableScrollPhysics(),
           itemBuilder: (ctx, idx) {
             if (idx == pro.servers.length) {
               return SizedBox(height: _media.padding.bottom);
@@ -90,7 +91,7 @@ class _ServerPageState extends State<ServerPage>
       },
     );
     return Scaffold(
-      body: child,
+      body: RefreshIndicator(child: child, onRefresh: () async => await _serverProvider.refreshData(onlyFailed: true)),
       floatingActionButton: FloatingActionButton(
         onPressed: () => AppRoute(
           const ServerEditPage(),

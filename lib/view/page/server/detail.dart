@@ -220,7 +220,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                   children: [
                     Text('${used.toStringAsFixed(0)}%', style: textSize27),
                     width7,
-                    Text('of ${(ss.mem.total * 1024).convertBytes} Mem',
+                    Text('of ${(ss.mem.total * 1024).convertBytes}',
                         style: textSize13Grey)
                   ],
                 ),
@@ -233,9 +233,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                 ),
               ],
             ),
-            const SizedBox(
-              height: 11,
-            ),
+            height13,
             _buildProgress(used)
           ],
         ),
@@ -262,7 +260,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                   children: [
                     Text('${used.toStringAsFixed(0)}%', style: textSize27),
                     width7,
-                    Text('of ${(ss.swap.total * 1024).convertBytes} Swap',
+                    Text('of ${(ss.swap.total * 1024).convertBytes} ',
                         style: textSize13Grey)
                   ],
                 ),
@@ -275,9 +273,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                 ),
               ],
             ),
-            const SizedBox(
-              height: 11,
-            ),
+            height13,
             _buildProgress(used)
           ],
         ),

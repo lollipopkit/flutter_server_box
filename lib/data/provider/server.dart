@@ -41,12 +41,18 @@ class ServerProvider extends BusyProvider {
     return Server(spi, initStatus, null, ServerState.disconnected);
   }
 
-  Future<void> refreshData({ServerPrivateInfo? spi}) async {
+  Future<void> refreshData(
+      {ServerPrivateInfo? spi, bool onlyFailed = false}) async {
     if (spi != null) {
       await _getData(spi);
       return;
     }
     await Future.wait(_servers.map((s) async {
+      if (onlyFailed) {
+        if (s.cs != ServerState.failed) return;
+        _limiter.resetTryTimes(s.spi.id);
+      }
+      if (onlyFailed && s.cs != ServerState.failed) return;
       await _getData(s.spi);
     }));
   }
@@ -72,6 +78,7 @@ class ServerProvider extends BusyProvider {
     for (var i = 0; i < _servers.length; i++) {
       _servers[i].cs = ServerState.disconnected;
     }
+    _limiter.clear();
     notifyListeners();
   }
 
@@ -273,5 +280,9 @@ class _TryLimiter {
 
   void resetTryTimes(String id) {
     _triedTimes[id] = 0;
+  }
+
+  void clear() {
+    _triedTimes.clear();
   }
 }

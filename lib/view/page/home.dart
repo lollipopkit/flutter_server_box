@@ -267,7 +267,7 @@ class _MyHomePageState extends State<MyHomePage>
                       ),
                     )
                   ],
-                  child: Text(_s.license),
+                  child: Text(_s.about),
                 )
               ],
             ),
