@@ -10,7 +10,6 @@ import '../../data/model/app/dynamic_color.dart';
 import '../../data/model/app/navigation_item.dart';
 import '../../data/provider/server.dart';
 import '../../data/res/build_data.dart';
-import '../../data/res/color.dart';
 import '../../data/res/font_style.dart';
 import '../../data/res/icon.dart';
 import '../../data/res/tab.dart';
@@ -284,7 +283,7 @@ class _MyHomePageState extends State<MyHomePage>
         ConstrainedBox(
           constraints: const BoxConstraints(maxHeight: 53, maxWidth: 53),
           child: Container(
-            color: primaryColor,
+            color: Colors.white,
           ),
         ),
         ConstrainedBox(

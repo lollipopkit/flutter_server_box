@@ -67,8 +67,8 @@ void runInZone(dynamic Function() body) {
 void onError(Object obj, StackTrace stack) {
   Analysis.recordException(obj);
   final debugProvider = locator<DebugProvider>();
-  debugProvider.addError(obj);
-  debugProvider.addError(stack);
+  debugProvider.addMultiline(obj, Colors.red);
+  debugProvider.addMultiline(stack, Colors.white);
 }
 
 Future<void> main() async {

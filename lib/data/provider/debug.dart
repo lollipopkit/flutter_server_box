@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../data/res/misc.dart';
+
 /// format: [NAME][LEVEL]: MESSAGE
 final _headReg = RegExp(r'(\[[A-Za-z]+\])(\[[A-Z]+\]): (.*)');
 const _level2Color = {
@@ -14,7 +16,7 @@ class DebugProvider extends ChangeNotifier {
     final match = _headReg.allMatches(text);
 
     if (match.isNotEmpty) {
-      addWidget(Text.rich(TextSpan(
+      _addWidget(Text.rich(TextSpan(
         children: [
           TextSpan(
             text: match.first.group(1),
@@ -30,31 +32,11 @@ class DebugProvider extends ChangeNotifier {
         ],
       )));
     } else {
-      _addText(text);
+      _addWidget(Text(text));
     }
-
-    notifyListeners();
-  }
-
-  void _addText(String text) {
-    _addWidget(Text(text));
-  }
-
-  void addError(Object error) {
-    _addError(error);
-    notifyListeners();
-  }
-
-  void _addError(Object error) {
-    _addMultiline(error, Colors.red);
   }
 
   void addMultiline(Object data, [Color color = Colors.blue]) {
-    _addMultiline(data, color);
-    notifyListeners();
-  }
-
-  void _addMultiline(Object data, [Color color = Colors.blue]) {
     final widget = Text(
       '$data',
       style: TextStyle(
@@ -67,14 +49,13 @@ class DebugProvider extends ChangeNotifier {
     ));
   }
 
-  void addWidget(Widget widget) {
-    _addWidget(widget);
-    notifyListeners();
-  }
-
   void _addWidget(Widget widget) {
     widgets.add(widget);
     widgets.add(const SizedBox(height: 13));
+    if (widgets.length > maxDebugLogLines) {
+      widgets.removeRange(0, widgets.length - maxDebugLogLines);
+    }
+    notifyListeners();
   }
 
   void clear() {

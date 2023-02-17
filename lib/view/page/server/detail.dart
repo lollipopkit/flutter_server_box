@@ -244,7 +244,6 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   Widget _buildSwapView(ServerStatus ss) {
     if (ss.swap.total == 0) return const SizedBox();
     final used = ss.swap.used / ss.swap.total * 100;
-    final free = ss.swap.free / ss.swap.total * 100;
     final cached = ss.swap.cached / ss.swap.total * 100;
     return RoundRectCard(
       Padding(
@@ -264,13 +263,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                         style: textSize13Grey)
                   ],
                 ),
-                Row(
-                  children: [
-                    _buildDetailPercent(free, 'free'),
-                    width13,
-                    _buildDetailPercent(cached, 'cached')
-                  ],
-                ),
+                _buildDetailPercent(cached, 'cached'),
               ],
             ),
             height13,

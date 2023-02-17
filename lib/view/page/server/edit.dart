@@ -205,6 +205,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                         iconColor: primaryColor,
                         tilePadding: EdgeInsets.zero,
                         childrenPadding: EdgeInsets.zero,
+                        initiallyExpanded: true,
                         title: Text(
                           _s.choosePrivateKey,
                           style: const TextStyle(fontSize: 14),
