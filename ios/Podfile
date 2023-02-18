@@ -30,7 +30,6 @@ flutter_ios_podfile_setup
 # Used for flutter lib "file_picker"
 Pod::PICKER_MEDIA = false
 Pod::PICKER_AUDIO = false
-Pod::PICKER_DOCUMENT = false
 
 target 'Runner' do
   use_frameworks!
