@@ -21,10 +21,13 @@ import 'data/provider/snippet.dart';
 import 'data/provider/virtual_keyboard.dart';
 import 'locator.dart';
 
+late final DebugProvider _debug;
+
 Future<void> initApp() async {
   await initHive();
   await setupLocator();
 
+  _debug = locator<DebugProvider>();
   locator<SnippetProvider>().loadData();
   locator<PrivateKeyProvider>().loadData();
 
@@ -51,8 +54,7 @@ void runInZone(dynamic Function() body) {
       // `setState() or markNeedsBuild() called during build`
       // error.
       Future.delayed(const Duration(milliseconds: 1), () {
-        final debugProvider = locator<DebugProvider>();
-        debugProvider.addText(line);
+        _debug.addText(line);
       });
     },
   );
@@ -66,14 +68,13 @@ void runInZone(dynamic Function() body) {
 
 void onError(Object obj, StackTrace stack) {
   Analysis.recordException(obj);
-  final debugProvider = locator<DebugProvider>();
-  debugProvider.addMultiline(obj, Colors.red);
-  debugProvider.addMultiline(stack, Colors.white);
+  _debug.addMultiline(obj, Colors.red);
+  _debug.addMultiline(stack, Colors.white);
 }
 
 Future<void> main() async {
-  await initApp();
   runInZone(() async {
+    await initApp();
     runApp(
       MultiProvider(
         providers: [
