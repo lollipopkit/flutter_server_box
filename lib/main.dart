@@ -72,8 +72,8 @@ void onError(Object obj, StackTrace stack) {
 }
 
 Future<void> main() async {
+  await initApp();
   runInZone(() async {
-    await initApp();
     runApp(
       MultiProvider(
         providers: [

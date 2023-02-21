@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:after_layout/after_layout.dart';
-import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +8,7 @@ import 'package:toolbox/core/extension/numx.dart';
 import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/data/res/misc.dart';
 
+import '../../../core/utils/server.dart';
 import '../../../core/utils/ui.dart';
 import '../../../data/model/server/private_key_info.dart';
 import '../../../data/provider/private_key.dart';
@@ -158,7 +158,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
               ),
             );
           });
-          final info = PrivateKeyInfo(name, key, pwd);
+          final info = PrivateKeyInfo(name, key, '');
           bool haveErr = false;
           try {
             info.privateKey = await compute(decyptPem, [key, pwd]);
@@ -196,12 +196,4 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
       }
     }
   }
-}
-
-/// [args] : [key, pwd]
-String decyptPem(List<String> args) {
-  /// skip when the key is not encrypted, or will throw exception
-  if (!SSHKeyPair.isEncryptedPem(args[0])) return args[0];
-  final sshKey = SSHKeyPair.fromPem(args[0], args[1]);
-  return sshKey.first.toPem();
 }

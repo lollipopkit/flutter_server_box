@@ -28,9 +28,9 @@ Future<ProcessResult> fvmRun(List<String> args) async {
   return await Process.run('fvm', args, runInShell: true);
 }
 
-Future<int> getGitCommitCount() async {
+Future<void> getGitCommitCount() async {
   final result = await Process.run('git', ['log', '--oneline']);
-  return (result.stdout as String)
+  build = (result.stdout as String)
       .split('\n')
       .where((line) => line.isNotEmpty)
       .length;
@@ -184,9 +184,9 @@ void main(List<String> args) async {
     case 'build':
       final stopwatch = Stopwatch()..start();
       await dartFormat();
-      build = await getGitCommitCount();
-      await updateBuildData();
+      await getGitCommitCount();
       await changeAppleVersion();
+      await updateBuildData();
       if (args.length > 1) {
         final platforms = args[1];
         for (final platform in platforms.split(',')) {
