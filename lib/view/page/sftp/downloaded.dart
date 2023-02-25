@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/l10n.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/extension/stringx.dart';
@@ -10,7 +11,6 @@ import '../../../core/utils/ui.dart';
 import '../../../data/model/app/path_with_prefix.dart';
 import '../../../data/res/font_style.dart';
 import '../../../data/res/path.dart';
-import '../../../generated/l10n.dart';
 import '../../widget/fade_in.dart';
 import 'downloading.dart';
 
@@ -39,7 +39,7 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _s = S.of(context);
+    _s = S.of(context)!;
   }
 
   @override

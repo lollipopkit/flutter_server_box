@@ -8,9 +8,9 @@ import '../../data/store/private_key.dart';
 import '../../locator.dart';
 
 /// Must put this func out of any Class.
-/// 
+///
 /// Because of this function is called by [compute] in [ServerProvider.genClient].
-/// 
+///
 /// https://stackoverflow.com/questions/51998995/invalid-arguments-illegal-argument-in-isolate-message-object-is-a-closure
 List<SSHKeyPair> loadIndentity(String key) {
   return SSHKeyPair.fromPem(key);

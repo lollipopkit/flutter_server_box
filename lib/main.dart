@@ -89,7 +89,7 @@ Future<void> main() async {
           ChangeNotifierProvider(
               create: (_) => locator<SftpDownloadProvider>()),
         ],
-        child: const MyApp(),
+        child: MyApp(),
       ),
     );
   });

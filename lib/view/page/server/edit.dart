@@ -1,5 +1,6 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/route.dart';
@@ -11,7 +12,6 @@ import '../../../data/provider/server.dart';
 import '../../../data/res/color.dart';
 import '../../../data/res/font_style.dart';
 import '../../../data/store/private_key.dart';
-import '../../../generated/l10n.dart';
 import '../../../locator.dart';
 import '../../widget/input_decoration.dart';
 import '../private_key/edit.dart';
@@ -53,7 +53,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _s = S.of(context);
+    _s = S.of(context)!;
     _focusScope = FocusScope.of(context);
   }
 

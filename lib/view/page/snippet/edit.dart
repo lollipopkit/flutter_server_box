@@ -1,11 +1,11 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/l10n.dart';
 
 import '../../../core/utils/ui.dart';
 import '../../../data/model/server/snippet.dart';
 import '../../../data/provider/snippet.dart';
 import '../../../data/res/font_style.dart';
-import '../../../generated/l10n.dart';
 import '../../../locator.dart';
 import '../../widget/input_decoration.dart';
 
@@ -36,7 +36,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _s = S.of(context);
+    _s = S.of(context)!;
   }
 
   @override

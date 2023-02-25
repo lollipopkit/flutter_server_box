@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/l10n.dart';
 
 import '../../core/extension/uint8list.dart';
 import '../../core/utils/ui.dart';
@@ -9,7 +10,6 @@ import '../../data/model/server/ping_result.dart';
 import '../../data/provider/server.dart';
 import '../../data/res/color.dart';
 import '../../data/res/font_style.dart';
-import '../../generated/l10n.dart';
 import '../../locator.dart';
 import '../widget/input_field.dart';
 import '../widget/round_rect_card.dart';
@@ -45,7 +45,7 @@ class _PingPageState extends State<PingPage>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
-    s = S.of(context);
+    s = S.of(context)!;
   }
 
   @override

@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/data/res/color.dart';
 
 import '../../core/extension/colorx.dart';
@@ -14,7 +15,6 @@ import '../../data/store/private_key.dart';
 import '../../data/store/server.dart';
 import '../../data/store/setting.dart';
 import '../../data/store/snippet.dart';
-import '../../generated/l10n.dart';
 import '../../locator.dart';
 
 const backupFormatVersion = 1;
@@ -30,7 +30,7 @@ class BackupPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
-    final s = S.of(context);
+    final s = S.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: Text(s.importAndExport, style: textSize18),

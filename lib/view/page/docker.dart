@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/utils/ui.dart';
@@ -11,7 +12,6 @@ import '../../data/res/font_style.dart';
 import '../../data/res/menu.dart';
 import '../../data/res/url.dart';
 import '../../data/store/docker.dart';
-import '../../generated/l10n.dart';
 import '../../locator.dart';
 import '../widget/center_loading.dart';
 import '../widget/dropdown_menu.dart';
@@ -41,7 +41,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _s = S.of(context);
+    _s = S.of(context)!;
   }
 
   @override

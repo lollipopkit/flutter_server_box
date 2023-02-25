@@ -1,6 +1,7 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:circle_chart/circle_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 
@@ -16,7 +17,6 @@ import '../../../data/res/font_style.dart';
 import '../../../data/res/menu.dart';
 import '../../../data/res/url.dart';
 import '../../../data/store/setting.dart';
-import '../../../generated/l10n.dart';
 import '../../../locator.dart';
 import '../../widget/dropdown_menu.dart';
 import '../../widget/picker.dart';
@@ -57,7 +57,7 @@ class _ServerPageState extends State<ServerPage>
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
     _theme = Theme.of(context);
-    _s = S.of(context);
+    _s = S.of(context)!;
   }
 
   @override

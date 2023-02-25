@@ -2,10 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_gen/gen_l10n/l10n.dart';
 
 import '../../core/utils/ui.dart';
 import '../../data/res/color.dart';
-import '../../generated/l10n.dart';
 import '../widget/input_field.dart';
 import '../widget/round_rect_card.dart';
 
@@ -38,7 +38,7 @@ class _ConvertPageState extends State<ConvertPage>
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
     _theme = Theme.of(context);
-    _s = S.of(context);
+    _s = S.of(context)!;
   }
 
   @override

@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../generated/l10n.dart';
 import '../../view/widget/card_dialog.dart';
 import '../persistant_store.dart';
 
@@ -89,7 +89,7 @@ Widget buildPopuopMenu(
 }
 
 String tabTitleName(BuildContext context, int i) {
-  final s = S.of(context);
+  final s = S.of(context)!;
   switch (i) {
     case 0:
       return s.server;

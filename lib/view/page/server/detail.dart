@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/extension/numx.dart';
@@ -12,7 +13,6 @@ import '../../../data/res/font_style.dart';
 import '../../../data/res/padding.dart';
 import '../../../data/res/sizedbox.dart';
 import '../../../data/store/setting.dart';
-import '../../../generated/l10n.dart';
 import '../../../locator.dart';
 import '../../widget/round_rect_card.dart';
 
@@ -35,7 +35,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
-    _s = S.of(context);
+    _s = S.of(context)!;
     _showDistLogo = locator<SettingStore>().showDistLogo.fetch()!;
   }
 

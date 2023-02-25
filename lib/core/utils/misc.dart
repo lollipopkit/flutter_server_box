@@ -3,9 +3,8 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:share_plus/share_plus.dart';
-
-import '../../generated/l10n.dart';
 
 Future<bool> shareFiles(BuildContext context, List<String> filePaths) async {
   for (final filePath in filePaths) {
@@ -17,7 +16,7 @@ Future<bool> shareFiles(BuildContext context, List<String> filePaths) async {
   if (filePaths.length == 1) {
     text = filePaths.first.split('/').last;
   } else {
-    text = '${filePaths.length} ${S.of(context).files}';
+    text = '${filePaths.length} ${S.of(context)!.files}';
   }
   final xfiles = filePaths.map((e) => XFile(e)).toList();
   await Share.shareXFiles(xfiles, text: 'ServerBox -> $text');

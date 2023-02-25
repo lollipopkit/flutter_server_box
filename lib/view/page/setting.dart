@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -12,7 +13,6 @@ import '../../data/res/color.dart';
 import '../../data/res/font_style.dart';
 import '../../data/res/tab.dart';
 import '../../data/store/setting.dart';
-import '../../generated/l10n.dart';
 import '../../locator.dart';
 import '../widget/round_rect_card.dart';
 
@@ -32,6 +32,7 @@ class _SettingPageState extends State<SettingPage> {
   late int _selectedColorValue;
   late int _launchPageIdx;
   late int _termThemeIdx;
+  late int _nightMode;
   late double _maxRetryCount;
   late double _updateInterval;
 
@@ -39,7 +40,7 @@ class _SettingPageState extends State<SettingPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
-    _s = S.of(context);
+    _s = S.of(context)!;
   }
 
   @override
@@ -49,6 +50,7 @@ class _SettingPageState extends State<SettingPage> {
     _setting = locator<SettingStore>();
     _launchPageIdx = _setting.launchPage.fetch()!;
     _termThemeIdx = _setting.termColorIdx.fetch()!;
+    _nightMode = _setting.nightMode.fetch()!;
     _updateInterval = _setting.serverStatusUpdateInterval.fetch()!.toDouble();
     _maxRetryCount = _setting.maxRetryCount.fetch()!.toDouble();
   }
@@ -88,6 +90,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildApp() {
     return Column(
       children: [
+        _buildNightMode(),
         _buildAppColorPreview(),
         _buildLaunchPage(),
         _buildCheckUpdate(),
@@ -370,5 +373,50 @@ class _SettingPageState extends State<SettingPage> {
         )
       ],
     );
+  }
+
+  Widget _buildNightMode() {
+    return ExpansionTile(
+      textColor: primaryColor,
+      title: Text(
+        _s.themeMode,
+        style: textSize13,
+        textAlign: TextAlign.start,
+      ),
+      trailing: Text(
+        _buildNightModeStr(_nightMode),
+        style: textSize13,
+      ),
+      children: [
+        Slider(
+          thumbColor: primaryColor,
+          activeColor: primaryColor.withOpacity(0.7),
+          min: 0,
+          max: 2,
+          value: _nightMode.toDouble(),
+          onChanged: (newValue) {
+            setState(() {
+              _nightMode = newValue.toInt();
+            });
+          },
+          onChangeEnd: (val) {
+            _setting.nightMode.put(val.toInt());
+          },
+          label: _buildNightModeStr(_nightMode),
+          divisions: 2,
+        ),
+      ],
+    );
+  }
+
+  String _buildNightModeStr(int n) {
+    switch (n) {
+      case 1:
+        return _s.light;
+      case 2:
+        return _s.dark;
+      default:
+        return _s.auto;
+    }
   }
 }

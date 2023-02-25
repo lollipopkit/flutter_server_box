@@ -1,5 +1,6 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../core/analysis.dart';
@@ -15,7 +16,6 @@ import '../../data/res/icon.dart';
 import '../../data/res/tab.dart';
 import '../../data/res/url.dart';
 import '../../data/store/setting.dart';
-import '../../generated/l10n.dart';
 import '../../locator.dart';
 import '../widget/url_text.dart';
 import 'backup.dart';
@@ -61,7 +61,7 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _s = S.of(context);
+    _s = S.of(context)!;
     _width = MediaQuery.of(context).size.width;
   }
 

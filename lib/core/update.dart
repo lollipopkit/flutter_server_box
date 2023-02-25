@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:logging/logging.dart';
 import 'package:r_upgrade/r_upgrade.dart';
 
@@ -9,7 +10,6 @@ import '../data/model/app/update.dart';
 import '../data/provider/app.dart';
 import '../data/res/build_data.dart';
 import '../data/service/app.dart';
-import '../generated/l10n.dart';
 import '../locator.dart';
 import 'utils/ui.dart';
 
@@ -53,7 +53,7 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
     return;
   }
 
-  final s = S.of(context);
+  final s = S.of(context)!;
 
   if (update.min > BuildData.build) {
     showRoundDialog(

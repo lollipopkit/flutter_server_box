@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/route.dart';
-import 'package:toolbox/data/provider/snippet.dart';
-import 'package:toolbox/data/res/font_style.dart';
-import 'package:toolbox/generated/l10n.dart';
-import 'package:toolbox/view/page/snippet/edit.dart';
-import 'package:toolbox/view/widget/round_rect_card.dart';
+
+import '/core/route.dart';
+import '/data/provider/snippet.dart';
+import '/data/res/font_style.dart';
+import 'edit.dart';
+import '/view/widget/round_rect_card.dart';
 
 class SnippetListPage extends StatefulWidget {
   const SnippetListPage({Key? key}) : super(key: key);
@@ -20,7 +21,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _s = S.of(context);
+    _s = S.of(context)!;
   }
 
   @override

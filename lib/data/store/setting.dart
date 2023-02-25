@@ -29,4 +29,8 @@ class SettingStore extends PersistentStore {
   /// Max retry count when connect to server
   StoreProperty<int> get maxRetryCount =>
       property('maxRetryCount', defaultValue: 7);
+
+  /// Night mode: 0 -> auto, 1 -> light, 2 -> dark
+  StoreProperty<int> get nightMode =>
+      property('nightMode', defaultValue: ThemeMode.system.index);
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/extension/numx.dart';
@@ -7,7 +8,6 @@ import '../../../core/utils/ui.dart';
 import '../../../data/model/sftp/download_status.dart';
 import '../../../data/provider/sftp_download.dart';
 import '../../../data/res/font_style.dart';
-import '../../../generated/l10n.dart';
 import '../../widget/center_loading.dart';
 import '../../widget/round_rect_card.dart';
 
@@ -24,7 +24,7 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _s = S.of(context);
+    _s = S.of(context)!;
   }
 
   @override

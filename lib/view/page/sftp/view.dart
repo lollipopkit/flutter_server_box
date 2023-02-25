@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/l10n.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/extension/stringx.dart';
@@ -16,7 +17,6 @@ import '../../../data/provider/server.dart';
 import '../../../data/provider/sftp_download.dart';
 import '../../../data/res/path.dart';
 import '../../../data/store/private_key.dart';
-import '../../../generated/l10n.dart';
 import '../../../locator.dart';
 import '../../widget/fade_in.dart';
 import '../../widget/two_line_text.dart';
@@ -44,7 +44,7 @@ class _SFTPPageState extends State<SFTPPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
-    _s = S.of(context);
+    _s = S.of(context)!;
   }
 
   @override

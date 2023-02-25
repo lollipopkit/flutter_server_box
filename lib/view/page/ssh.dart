@@ -5,11 +5,11 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:xterm/xterm.dart' hide TerminalColors;
 
 import '../../data/model/ssh/terminal_color.dart';
-import '../../generated/l10n.dart';
 import '../../core/utils/misc.dart';
 import '../../core/utils/ui.dart';
 import '../../core/utils/server.dart';
@@ -58,7 +58,7 @@ class _SSHPageState extends State<SSHPage> {
     _isDark = isDarkMode(context);
     _media = MediaQuery.of(context);
     _menuTextStyle = TextStyle(color: contentColor.resolve(context));
-    _s = S.of(context);
+    _s = S.of(context)!;
   }
 
   @override
