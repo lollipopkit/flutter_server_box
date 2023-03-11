@@ -31,10 +31,10 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
   - [x] `SSH` Terminal, `SFTP`
   - [x] `Docker & Pkg` Manager
   - [x] Status charts
-  - [x] etc.
+  - [x] `Ping` and etc.
 - [x] i18n (English, Chinese)
   - **Welcome contribution** :)
-  - [How to contribute?](#i18n-guide)
+  - [How to contribute?](#l10n-guide)
 - [x] Desktop support
 
 ## 📱 ScreenShots
@@ -77,13 +77,14 @@ Status|Platform
 Full Support|Android/iOS
 Support, but not tested|macOS/Windows/Linux
 
-## i18n guide
+## l10n guide
 1. Fork this repo and clone it to your local machine.
 2. Create `arb` file in `lib/l10n/` directory
    - File name should be `intl_XX.arb`, where `XX` is the language code. Such as `intl_en.arb` for English and `intl_zh.arb` for Chinese.
 3. Add content to the file. You can refer to `intl_en.arb` and `intl_zh.arb` for the format.
-4. Pull commit to your forked repo.
-5. Request a pull request on my repo.
+4. Run `flutter gen-l10n` to generate files.
+5. Pull commit to your forked repo.
+6. Request a pull request on my repo.
 
 ## 📝 License
 `GPL v3. lollipopkit 2023`
