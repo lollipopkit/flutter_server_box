@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
       builder: (_, colorValue, __) {
         primaryColor = Color(colorValue);
         return ValueListenableBuilder<int>(
-          valueListenable: _setting.nightMode.listenable(),
+          valueListenable: _setting.themeMode.listenable(),
           builder: (_, mode, __) => _buildApp(mode),
         );
       },

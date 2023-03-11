@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:xterm/ui.dart';
-import '../../res/terminal_color.dart';
+import '../../res/terminal.dart';
 
 class TerminalUITheme {
   final Color cursor;

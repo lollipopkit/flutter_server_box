@@ -17,7 +17,7 @@ import '../../data/model/server/server_private_info.dart';
 import '../../data/model/ssh/virtual_key.dart';
 import '../../data/provider/virtual_keyboard.dart';
 import '../../data/res/color.dart';
-import '../../data/res/terminal_theme.dart';
+import '../../data/res/terminal.dart';
 import '../../data/res/virtual_key.dart';
 import '../../data/store/setting.dart';
 import '../../locator.dart';
@@ -272,58 +272,56 @@ class _SSHPageState extends State<SSHPage> {
   }
 
   void _onTapUp(TapUpDetails details, CellOffset offset) {
-    {
-      if (_menuController.isShown) {
-        _menuController.remove();
-        return;
-      }
-      final selected = terminalSelected;
-      if (selected.trim().isEmpty) {
-        // _menuController.show(
-        //   context: context,
-        //   contextMenuBuilder: (context) {
-        //     return TextSelectionToolbar(
-        //       anchorAbove: detail.globalPosition,
-        //       anchorBelow: detail.globalPosition,
-        //       children: [
-        //         TextButton(
-        //           child: Text(
-        //             'Paste',
-        //             style: _menuTextStyle,
-        //           ),
-        //           onPressed: () async {
-        //             _paste();
-        //             _menuController.remove();
-        //           },
-        //         )
-        //       ],
-        //     );
-        //   },
-        // );
-        return;
-      }
-      _menuController.show(
-        context: context,
-        contextMenuBuilder: (context) {
-          return TextSelectionToolbar(
-            anchorAbove: details.globalPosition,
-            anchorBelow: details.globalPosition,
-            children: [
-              TextButton(
-                child: Text(
-                  _s.copy,
-                  style: _menuTextStyle,
-                ),
-                onPressed: () {
-                  _terminalController.setSelection(null);
-                  copy(selected);
-                  _menuController.remove();
-                },
-              ),
-            ],
-          );
-        },
-      );
+    if (_menuController.isShown) {
+      _menuController.remove();
+      return;
     }
+    final selected = terminalSelected;
+    if (selected.trim().isEmpty) {
+      // _menuController.show(
+      //   context: context,
+      //   contextMenuBuilder: (context) {
+      //     return TextSelectionToolbar(
+      //       anchorAbove: detail.globalPosition,
+      //       anchorBelow: detail.globalPosition,
+      //       children: [
+      //         TextButton(
+      //           child: Text(
+      //             'Paste',
+      //             style: _menuTextStyle,
+      //           ),
+      //           onPressed: () async {
+      //             _paste();
+      //             _menuController.remove();
+      //           },
+      //         )
+      //       ],
+      //     );
+      //   },
+      // );
+      return;
+    }
+    _menuController.show(
+      context: context,
+      contextMenuBuilder: (context) {
+        return TextSelectionToolbar(
+          anchorAbove: details.globalPosition,
+          anchorBelow: details.globalPosition,
+          children: [
+            TextButton(
+              child: Text(
+                _s.copy,
+                style: _menuTextStyle,
+              ),
+              onPressed: () {
+                _terminalController.setSelection(null);
+                copy(selected);
+                _menuController.remove();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 }

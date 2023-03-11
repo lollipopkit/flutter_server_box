@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/route.dart';
 import '../../../data/provider/private_key.dart';
-import '../../../data/res/font_style.dart';
+import '../../../data/res/ui.dart';
 import 'edit.dart';
 import '../../../view/widget/round_rect_card.dart';
 

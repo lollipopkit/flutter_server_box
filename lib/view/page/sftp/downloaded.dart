@@ -9,8 +9,8 @@ import '../../../core/route.dart';
 import '../../../core/utils/misc.dart';
 import '../../../core/utils/ui.dart';
 import '../../../data/model/app/path_with_prefix.dart';
-import '../../../data/res/font_style.dart';
 import '../../../data/res/path.dart';
+import '../../../data/res/ui.dart';
 import '../../widget/fade_in.dart';
 import 'downloading.dart';
 

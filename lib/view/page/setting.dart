@@ -10,8 +10,8 @@ import '../../data/provider/app.dart';
 import '../../data/provider/server.dart';
 import '../../data/res/build_data.dart';
 import '../../data/res/color.dart';
-import '../../data/res/font_style.dart';
 import '../../data/res/tab.dart';
+import '../../data/res/ui.dart';
 import '../../data/store/setting.dart';
 import '../../locator.dart';
 import '../widget/round_rect_card.dart';
@@ -50,7 +50,7 @@ class _SettingPageState extends State<SettingPage> {
     _setting = locator<SettingStore>();
     _launchPageIdx = _setting.launchPage.fetch()!;
     _termThemeIdx = _setting.termColorIdx.fetch()!;
-    _nightMode = _setting.nightMode.fetch()!;
+    _nightMode = _setting.themeMode.fetch()!;
     _updateInterval = _setting.serverStatusUpdateInterval.fetch()!.toDouble();
     _maxRetryCount = _setting.maxRetryCount.fetch()!.toDouble();
   }
@@ -400,7 +400,7 @@ class _SettingPageState extends State<SettingPage> {
             });
           },
           onChangeEnd: (val) {
-            _setting.nightMode.put(val.toInt());
+            _setting.themeMode.put(val.toInt());
           },
           label: _buildNightModeStr(_nightMode),
           divisions: 2,

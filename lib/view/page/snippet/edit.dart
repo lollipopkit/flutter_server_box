@@ -5,7 +5,7 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import '../../../core/utils/ui.dart';
 import '../../../data/model/server/snippet.dart';
 import '../../../data/provider/snippet.dart';
-import '../../../data/res/font_style.dart';
+import '../../../data/res/ui.dart';
 import '../../../locator.dart';
 import '../../widget/input_decoration.dart';
 

@@ -9,7 +9,7 @@ import '../../core/utils/ui.dart';
 import '../../data/model/server/ping_result.dart';
 import '../../data/provider/server.dart';
 import '../../data/res/color.dart';
-import '../../data/res/font_style.dart';
+import '../../data/res/ui.dart';
 import '../../locator.dart';
 import '../widget/input_field.dart';
 import '../widget/round_rect_card.dart';

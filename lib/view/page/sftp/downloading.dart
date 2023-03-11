@@ -7,7 +7,7 @@ import '../../../core/utils/misc.dart';
 import '../../../core/utils/ui.dart';
 import '../../../data/model/sftp/download_status.dart';
 import '../../../data/provider/sftp_download.dart';
-import '../../../data/res/font_style.dart';
+import '../../../data/res/ui.dart';
 import '../../widget/center_loading.dart';
 import '../../widget/round_rect_card.dart';
 

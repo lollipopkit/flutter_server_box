@@ -10,7 +10,7 @@ import 'package:toolbox/data/res/color.dart';
 import '../../core/extension/colorx.dart';
 import '../../core/utils/ui.dart';
 import '../../data/model/app/backup.dart';
-import '../../data/res/font_style.dart';
+import '../../data/res/ui.dart';
 import '../../data/store/private_key.dart';
 import '../../data/store/server.dart';
 import '../../data/store/setting.dart';

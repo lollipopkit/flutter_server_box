@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 
+import '../../../data/res/ui.dart';
 import '/core/route.dart';
 import '/data/provider/snippet.dart';
-import '/data/res/font_style.dart';
 import 'edit.dart';
 import '/view/widget/round_rect_card.dart';
 

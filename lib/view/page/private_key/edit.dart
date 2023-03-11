@@ -13,7 +13,7 @@ import '../../../core/utils/server.dart';
 import '../../../core/utils/ui.dart';
 import '../../../data/model/server/private_key_info.dart';
 import '../../../data/provider/private_key.dart';
-import '../../../data/res/font_style.dart';
+import '../../../data/res/ui.dart';
 import '../../../locator.dart';
 import '../../widget/input_decoration.dart';
 

@@ -28,11 +28,8 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 
 ## 🔖 Feature
 - [x] Functions
-  - [x] `SSH` Terminal
+  - [x] `SSH` Terminal, `SFTP`
   - [x] `Docker & Pkg` Manager
-  - [x] `SFTP`
-  - [x] `Snippet`
-  - [x] `Ping`
   - [x] Status charts
   - [x] etc.
 - [x] i18n (English, Chinese)
