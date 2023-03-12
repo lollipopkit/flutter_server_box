@@ -646,6 +646,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.5.1"
+  plain_notification_token:
+    dependency: "direct main"
+    description:
+      name: plain_notification_token
+      sha256: "32481c1c6ad76613ed38822ffe819ea5d5534f9e07e8ff1d44aafe069f45ea24"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.4"
   platform:
     dependency: transitive
     description:

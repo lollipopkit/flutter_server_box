@@ -198,6 +198,9 @@ class SZh extends S {
   }
 
   @override
+  String get getPushTokenFailed => '未能获取到推送token';
+
+  @override
   String get go => '开始';
 
   @override
@@ -361,6 +364,9 @@ class SZh extends S {
 
   @override
   String get privateKey => '私钥';
+
+  @override
+  String get pushToken => '消息推送 Token';
 
   @override
   String get pwd => '密码';

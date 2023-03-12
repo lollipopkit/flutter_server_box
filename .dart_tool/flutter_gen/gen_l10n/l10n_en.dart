@@ -198,6 +198,9 @@ class SEn extends S {
   }
 
   @override
+  String get getPushTokenFailed => 'Can\'t fetch push token';
+
+  @override
   String get go => 'Go';
 
   @override
@@ -361,6 +364,9 @@ class SEn extends S {
 
   @override
   String get privateKey => 'Private Key';
+
+  @override
+  String get pushToken => 'Push token';
 
   @override
   String get pwd => 'Password';

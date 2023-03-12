@@ -447,6 +447,12 @@ abstract class S {
   /// **'Found {count} update'**
   String foundNUpdate(Object count);
 
+  /// No description provided for @getPushTokenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t fetch push token'**
+  String get getPushTokenFailed;
+
   /// No description provided for @go.
   ///
   /// In en, this message translates to:
@@ -764,6 +770,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Private Key'**
   String get privateKey;
+
+  /// No description provided for @pushToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Push token'**
+  String get pushToken;
 
   /// No description provided for @pwd.
   ///

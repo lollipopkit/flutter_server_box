@@ -9,6 +9,8 @@ PODS:
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
+  - plain_notification_token (0.0.1):
+    - Flutter
   - r_upgrade (0.0.1):
     - Flutter
   - share_plus (0.0.1):
@@ -22,6 +24,7 @@ DEPENDENCIES:
   - Flutter (from `Flutter`)
   - flutter_native_splash (from `.symlinks/plugins/flutter_native_splash/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/ios`)
+  - plain_notification_token (from `.symlinks/plugins/plain_notification_token/ios`)
   - r_upgrade (from `.symlinks/plugins/r_upgrade/ios`)
   - share_plus (from `.symlinks/plugins/share_plus/ios`)
   - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
@@ -37,6 +40,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_native_splash/ios"
   path_provider_foundation:
     :path: ".symlinks/plugins/path_provider_foundation/ios"
+  plain_notification_token:
+    :path: ".symlinks/plugins/plain_notification_token/ios"
   r_upgrade:
     :path: ".symlinks/plugins/r_upgrade/ios"
   share_plus:
@@ -50,6 +55,7 @@ SPEC CHECKSUMS:
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
   flutter_native_splash: 52501b97d1c0a5f898d687f1646226c1f93c56ef
   path_provider_foundation: c68054786f1b4f3343858c1e1d0caaded73f0be9
+  plain_notification_token: b36467dc91939a7b6754267c701bbaca14996ee1
   r_upgrade: 44d715c61914cce3d01ea225abffe894fd51c114
   share_plus: 056a1e8ac890df3e33cb503afffaf1e9b4fbae68
   url_launcher_ios: 08a3dfac5fb39e8759aeb0abbd5d9480f30fc8b4

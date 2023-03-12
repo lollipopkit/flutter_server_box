@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/core/utils/misc.dart';
 
 import '../../data/model/ssh/terminal_color.dart';
 import '../../core/update.dart';
@@ -35,6 +36,8 @@ class _SettingPageState extends State<SettingPage> {
   late int _nightMode;
   late double _maxRetryCount;
   late double _updateInterval;
+
+  String? _pushToken;
 
   @override
   void didChangeDependencies() {
@@ -70,6 +73,7 @@ class _SettingPageState extends State<SettingPage> {
           // Server
           _buildTitle(_s.server),
           _buildServer(),
+          const SizedBox(height: 37),
         ],
       ),
     );
@@ -81,7 +85,6 @@ class _SettingPageState extends State<SettingPage> {
       child: Center(
         child: Text(
           text,
-          style: textSize13,
         ),
       ),
     );
@@ -90,10 +93,11 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildApp() {
     return Column(
       children: [
-        _buildNightMode(),
+        _buildThemeMode(),
         _buildAppColorPreview(),
         _buildLaunchPage(),
         _buildCheckUpdate(),
+        _buildPushToken(),
       ].map((e) => RoundRectCard(e)).toList(),
     );
   }
@@ -113,11 +117,10 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       title: Text(
         _s.showDistLogo,
-        style: textSize13,
       ),
       subtitle: Text(
         _s.onServerDetailPage,
-        style: textSize13Grey,
+        style: grey,
       ),
       trailing: buildSwitch(context, _setting.showDistLogo),
     );
@@ -140,8 +143,6 @@ class _SettingPageState extends State<SettingPage> {
           trailing: const Icon(Icons.keyboard_arrow_right),
           title: Text(
             display,
-            style: textSize13,
-            textAlign: TextAlign.start,
           ),
           onTap: () => doUpdate(context, force: true),
         );
@@ -154,16 +155,13 @@ class _SettingPageState extends State<SettingPage> {
       textColor: primaryColor,
       title: Text(
         _s.updateServerStatusInterval,
-        style: textSize13,
-        textAlign: TextAlign.start,
       ),
       subtitle: Text(
         _s.willTakEeffectImmediately,
-        style: textSize13Grey,
+        style: grey,
       ),
       trailing: Text(
         '${_updateInterval.toInt()} ${_s.second}',
-        style: textSize13,
       ),
       children: [
         Slider(
@@ -190,7 +188,7 @@ class _SettingPageState extends State<SettingPage> {
         _updateInterval == 0.0
             ? Text(
                 _s.updateIntervalEqual0,
-                style: const TextStyle(color: Colors.grey, fontSize: 12),
+                style: grey,
                 textAlign: TextAlign.center,
               )
             : const SizedBox(),
@@ -213,7 +211,6 @@ class _SettingPageState extends State<SettingPage> {
       ),
       title: Text(
         _s.appPrimaryColor,
-        style: textSize13,
       ),
       children: [_buildAppColorPicker(), _buildColorPickerConfirmBtn()],
     );
@@ -245,13 +242,11 @@ class _SettingPageState extends State<SettingPage> {
       textColor: primaryColor,
       title: Text(
         _s.launchPage,
-        style: textSize13,
       ),
       trailing: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: _media.size.width * 0.35),
         child: Text(
           tabTitleName(context, _launchPageIdx),
-          style: textSize13,
           textAlign: TextAlign.right,
         ),
       ),
@@ -261,7 +256,6 @@ class _SettingPageState extends State<SettingPage> {
               contentPadding: EdgeInsets.zero,
               title: Text(
                 tabTitleName(context, tabs.indexOf(e)),
-                style: textSize13,
               ),
               trailing: _buildRadio(tabs.indexOf(e)),
             ),
@@ -289,11 +283,9 @@ class _SettingPageState extends State<SettingPage> {
       childrenPadding: const EdgeInsets.only(left: 17),
       title: Text(
         _s.termTheme,
-        style: textSize13,
       ),
       trailing: Text(
         TerminalColorsPlatform.values[_termThemeIdx].name,
-        style: textSize13,
       ),
       children: _buildTermThemeRadioList(),
     );
@@ -306,7 +298,6 @@ class _SettingPageState extends State<SettingPage> {
             contentPadding: EdgeInsets.zero,
             title: Text(
               e.name,
-              style: textSize13,
             ),
             trailing: _buildTermThemeRadio(e),
           ),
@@ -333,12 +324,10 @@ class _SettingPageState extends State<SettingPage> {
       textColor: primaryColor,
       title: Text(
         _s.maxRetryCount,
-        style: textSize13,
         textAlign: TextAlign.start,
       ),
       trailing: Text(
         '${_maxRetryCount.toInt()} ${_s.times}',
-        style: textSize13,
       ),
       children: [
         Slider(
@@ -364,7 +353,7 @@ class _SettingPageState extends State<SettingPage> {
         _maxRetryCount == 0.0
             ? Text(
                 _s.maxRetryCountEqual0,
-                style: const TextStyle(color: Colors.grey, fontSize: 12),
+                style: grey,
                 textAlign: TextAlign.center,
               )
             : const SizedBox(),
@@ -375,17 +364,14 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  Widget _buildNightMode() {
+  Widget _buildThemeMode() {
     return ExpansionTile(
       textColor: primaryColor,
       title: Text(
         _s.themeMode,
-        style: textSize13,
-        textAlign: TextAlign.start,
       ),
       trailing: Text(
         _buildNightModeStr(_nightMode),
-        style: textSize13,
       ),
       children: [
         Slider(
@@ -418,5 +404,37 @@ class _SettingPageState extends State<SettingPage> {
       default:
         return _s.auto;
     }
+  }
+
+  Widget _buildPushToken() {
+    return ListTile(
+      title: Text(
+        _s.pushToken,
+      ),
+      trailing: TextButton(
+        child: Text(_s.copy),
+        onPressed: () {
+          if (_pushToken != null) {
+            copy(_pushToken!);
+          } else {
+            showSnackBar(context, Text(_s.getPushTokenFailed));
+          }
+        },
+      ),
+      subtitle: FutureBuilder<String?>(
+        future: getToken(),
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            _pushToken = snapshot.data;
+          }
+          return Text(
+            _pushToken ?? 'Getting Token...',
+            style: grey,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          );
+        },
+      ),
+    );
   }
 }
