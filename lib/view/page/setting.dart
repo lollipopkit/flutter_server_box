@@ -416,6 +416,7 @@ class _SettingPageState extends State<SettingPage> {
         onPressed: () {
           if (_pushToken != null) {
             copy(_pushToken!);
+            showSnackBar(context, Text(_s.success));
           } else {
             showSnackBar(context, Text(_s.getPushTokenFailed));
           }
@@ -424,15 +425,26 @@ class _SettingPageState extends State<SettingPage> {
       subtitle: FutureBuilder<String?>(
         future: getToken(),
         builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            _pushToken = snapshot.data;
+          switch (snapshot.connectionState) {
+            case ConnectionState.none:
+            case ConnectionState.waiting:
+              return const Text('Getting Token...');
+            default:
+              var text = _pushToken;
+              if (snapshot.hasError) {
+                text = 'Error: ${snapshot.error}';
+              }
+              _pushToken = snapshot.data;
+              if (_pushToken == null) {
+                text = 'Null token';
+              }
+              return Text(
+                text!,
+                style: grey,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              );
           }
-          return Text(
-            _pushToken ?? 'Getting Token...',
-            style: grey,
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          );
         },
       ),
     );

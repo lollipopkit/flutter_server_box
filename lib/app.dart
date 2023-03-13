@@ -21,72 +21,70 @@ class MyApp extends StatelessWidget {
       valueListenable: _setting.primaryColor.listenable(),
       builder: (_, colorValue, __) {
         primaryColor = Color(colorValue);
+
+        final textStyle = TextStyle(color: primaryColor);
+        final materialColor = primaryColor.materialStateColor;
+        final materialColorAlpha =
+            primaryColor.withOpacity(0.7).materialStateColor;
+        final fabTheme =
+            FloatingActionButtonThemeData(backgroundColor: primaryColor);
+        final switchTheme = SwitchThemeData(
+          thumbColor: materialColor,
+          trackColor: materialColorAlpha,
+        );
+        final appBarTheme = AppBarTheme(backgroundColor: primaryColor);
+        final iconTheme = IconThemeData(color: primaryColor);
+        final inputDecorationTheme = InputDecorationTheme(
+          labelStyle: textStyle,
+          focusedBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: primaryColor),
+          ),
+        );
+        final radioTheme = RadioThemeData(
+          fillColor: materialColor,
+        );
         return ValueListenableBuilder<int>(
           valueListenable: _setting.themeMode.listenable(),
-          builder: (_, mode, __) => _buildApp(mode),
+          builder: (_, tMode, __) {
+            final ok = tMode >= 0 && tMode <= ThemeMode.values.length - 1;
+            final themeMode = ok ? ThemeMode.values[tMode] : ThemeMode.system;
+            return MaterialApp(
+              debugShowCheckedModeBanner: false,
+              localizationsDelegates: S.localizationsDelegates,
+              supportedLocales: S.supportedLocales,
+              title: BuildData.name,
+              themeMode: themeMode,
+              theme: ThemeData(
+                useMaterial3: false,
+                primaryColor: primaryColor,
+                primarySwatch: primaryColor.materialColor,
+                appBarTheme: appBarTheme,
+                floatingActionButtonTheme: fabTheme,
+                iconTheme: iconTheme,
+                primaryIconTheme: iconTheme,
+                switchTheme: switchTheme,
+                inputDecorationTheme: inputDecorationTheme,
+                radioTheme: radioTheme,
+              ),
+              darkTheme: ThemeData.dark().copyWith(
+                useMaterial3: false,
+                floatingActionButtonTheme: fabTheme,
+                iconTheme: iconTheme,
+                primaryIconTheme: iconTheme,
+                switchTheme: switchTheme,
+                inputDecorationTheme: inputDecorationTheme,
+                radioTheme: radioTheme,
+                colorScheme: ColorScheme.fromSwatch(
+                  primarySwatch: primaryColor.materialColor,
+                  brightness: Brightness.dark,
+                  accentColor: primaryColor,
+                ),
+              ),
+              home: const MyHomePage(),
+            );
+          },
         );
       },
-    );
-  }
-
-  Widget _buildApp(int nightMode) {
-    final textStyle = TextStyle(color: primaryColor);
-    final materialColor = primaryColor.materialStateColor;
-    final materialColorAlpha = primaryColor.withOpacity(0.7).materialStateColor;
-    final fabTheme =
-        FloatingActionButtonThemeData(backgroundColor: primaryColor);
-    final switchTheme = SwitchThemeData(
-      thumbColor: materialColor,
-      trackColor: materialColorAlpha,
-    );
-    final appBarTheme = AppBarTheme(backgroundColor: primaryColor);
-    final iconTheme = IconThemeData(color: primaryColor);
-    final inputDecorationTheme = InputDecorationTheme(
-      labelStyle: textStyle,
-      focusedBorder: UnderlineInputBorder(
-        borderSide: BorderSide(color: primaryColor),
-      ),
-    );
-    final radioTheme = RadioThemeData(
-      fillColor: materialColor,
-    );
-    final ok = nightMode >= 0 && nightMode <= ThemeMode.values.length - 1;
-    final themeMode = ok ? ThemeMode.values[nightMode] : ThemeMode.system;
-
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      localizationsDelegates: S.localizationsDelegates,
-      supportedLocales: S.supportedLocales,
-      title: BuildData.name,
-      themeMode: themeMode,
-      theme: ThemeData(
-        useMaterial3: false,
-        primaryColor: primaryColor,
-        primarySwatch: primaryColor.materialColor,
-        appBarTheme: appBarTheme,
-        floatingActionButtonTheme: fabTheme,
-        iconTheme: iconTheme,
-        primaryIconTheme: iconTheme,
-        switchTheme: switchTheme,
-        inputDecorationTheme: inputDecorationTheme,
-        radioTheme: radioTheme,
-      ),
-      darkTheme: ThemeData.dark().copyWith(
-        useMaterial3: false,
-        floatingActionButtonTheme: fabTheme,
-        iconTheme: iconTheme,
-        primaryIconTheme: iconTheme,
-        switchTheme: switchTheme,
-        inputDecorationTheme: inputDecorationTheme,
-        radioTheme: radioTheme,
-        colorScheme: ColorScheme.fromSwatch(
-          primarySwatch: primaryColor.materialColor,
-          brightness: Brightness.dark,
-          accentColor: primaryColor,
-        ),
-      ),
-      themeAnimationDuration: const Duration(milliseconds: 237),
-      home: const MyHomePage(),
     );
   }
 }

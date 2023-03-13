@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
@@ -11,6 +9,7 @@ import '../data/provider/app.dart';
 import '../data/res/build_data.dart';
 import '../data/service/app.dart';
 import '../locator.dart';
+import 'utils/platform.dart';
 import 'utils/ui.dart';
 
 final _logger = Logger('UPDATE');
@@ -31,11 +30,11 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
   locator<AppProvider>().setNewestBuild(update.newest);
 
   final newest = () {
-    if (Platform.isAndroid) {
+    if (isAndroid) {
       return update.androidbuild;
-    } else if (Platform.isIOS) {
+    } else if (isIOS) {
       return update.iosbuild;
-    } else if (Platform.isMacOS) {
+    } else if (isMacOS) {
       return update.macbuild;
     }
     return update.newest;
@@ -48,7 +47,7 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
   }
   _logger.info('Update available: $newest');
 
-  if (Platform.isAndroid && !await isFileAvailable(update.android)) {
+  if (isAndroid && !await isFileAvailable(update.android)) {
     _logger.warning('Android update file not available');
     return;
   }
@@ -79,13 +78,13 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
 }
 
 Future<void> _doUpdate(AppUpdate update, BuildContext context, S s) async {
-  if (Platform.isAndroid) {
+  if (isAndroid) {
     await RUpgrade.upgrade(
       update.android,
       fileName: update.android.split('/').last,
       isAutoRequestInstall: true,
     );
-  } else if (Platform.isIOS) {
+  } else if (isIOS) {
     await RUpgrade.upgradeFromAppStore('1586449703');
   } else {
     showRoundDialog(context, s.attention, Text(s.platformNotSupportUpdate), [

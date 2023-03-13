@@ -458,6 +458,9 @@ class SEn extends S {
   String get stop => 'Stop';
 
   @override
+  String get success => 'Success';
+
+  @override
   String sureDelete(Object name) {
     return 'Are you sure to delete [$name]?';
   }

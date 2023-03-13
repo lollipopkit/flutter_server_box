@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/foundation.dart';
@@ -9,6 +8,7 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:xterm/xterm.dart' hide TerminalColors;
 
+import '../../core/utils/platform.dart';
 import '../../data/model/ssh/terminal_color.dart';
 import '../../core/utils/misc.dart';
 import '../../core/utils/ui.dart';
@@ -111,7 +111,7 @@ class _SSHPageState extends State<SSHPage> {
       body: _buildBody(termTheme.toTerminalTheme(_termColors)),
       bottomNavigationBar: _buildBottom(termTheme.background),
     );
-    if (Platform.isIOS) {
+    if (isIOS) {
       child = AnnotatedRegion(
         value: _isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
         child: child,
@@ -131,7 +131,7 @@ class _SSHPageState extends State<SSHPage> {
         controller: _terminalController,
         keyboardType: TextInputType.visiblePassword,
         theme: termTheme,
-        deleteDetection: Platform.isIOS,
+        deleteDetection: isIOS,
         onTapUp: _onTapUp,
         autoFocus: true,
         keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,

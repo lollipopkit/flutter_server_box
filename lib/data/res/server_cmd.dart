@@ -1,12 +1,29 @@
-const seperator = 'A====A';
-const shellCmd = "export LANG=en_US.utf-8 \necho '$seperator' \n"
-    "cat /proc/net/dev && date +%s \necho $seperator \n"
-    "cat /etc/os-release | grep PRETTY_NAME \necho $seperator \n"
-    "cat /proc/stat | grep cpu \necho $seperator \n"
-    "uptime \necho $seperator \n"
-    "cat /proc/net/snmp \necho $seperator \n"
-    "df -h \necho $seperator \n"
-    "cat /proc/meminfo \necho $seperator \n"
-    "cat /sys/class/thermal/thermal_zone*/type \necho $seperator \n"
-    "cat /sys/class/thermal/thermal_zone*/temp";
+import 'build_data.dart';
+
+const seperator = 'SrvBox';
 const shellPath = '.serverbox.sh';
+
+const shellCmd = """
+# Script for app `${BuildData.name}`
+# Delete this file while app is running will cause app crash
+
+export LANG=en_US.utf-8
+echo $seperator
+cat /proc/net/dev && date +%s
+echo $seperator
+cat /etc/os-release | grep PRETTY_NAME
+echo $seperator
+cat /proc/stat | grep cpu
+echo $seperator
+uptime
+echo $seperator
+cat /proc/net/snmp
+echo $seperator
+df -h
+echo $seperator
+cat /proc/meminfo
+echo $seperator
+cat /sys/class/thermal/thermal_zone*/type
+echo $seperator
+cat /sys/class/thermal/thermal_zone*/temp
+""";

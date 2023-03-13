@@ -140,6 +140,7 @@
   "sshTip": "This function is now in the experimental stage.\n\nPlease report bugs on {url} or join our development.",
   "start": "Start",
   "stop": "Stop",
+  "success": "Success",
   "sureDelete": "Are you sure to delete [{name}]?",
   "sureNoPwd": "Are you sure to use no password?",
   "sureToDeleteServer": "Are you sure to delete server [{server}]?",

@@ -7,6 +7,8 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:plain_notification_token/plain_notification_token.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'platform.dart';
+
 Future<bool> shareFiles(BuildContext context, List<String> filePaths) async {
   for (final filePath in filePaths) {
     if (!await File(filePath).exists()) {
@@ -34,14 +36,14 @@ Future<String?> pickOneFile() async {
 }
 
 Future<String?> getToken() async {
-  final plainNotificationToken = PlainNotificationToken();
-  if (Platform.isIOS) {
+  if (isIOS) {
+    final plainNotificationToken = PlainNotificationToken();
     plainNotificationToken.requestPermission();
 
     // If you want to wait until Permission dialog close,
     // you need wait changing setting registered.
     await plainNotificationToken.onIosSettingsRegistered.first;
+    return await plainNotificationToken.getToken();
   }
-
-  return await plainNotificationToken.getToken();
+  return null;
 }

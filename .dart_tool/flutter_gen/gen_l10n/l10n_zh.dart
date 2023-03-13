@@ -458,6 +458,9 @@ class SZh extends S {
   String get stop => '停止';
 
   @override
+  String get success => '成功';
+
+  @override
   String sureDelete(Object name) {
     return '确定删除[$name]？';
   }

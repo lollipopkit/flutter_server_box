@@ -939,6 +939,12 @@ abstract class S {
   /// **'Stop'**
   String get stop;
 
+  /// No description provided for @success.
+  ///
+  /// In en, this message translates to:
+  /// **'Success'**
+  String get success;
+
   /// No description provided for @sureDelete.
   ///
   /// In en, this message translates to:

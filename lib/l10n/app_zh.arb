@@ -140,6 +140,7 @@
   "sshTip": "该功能目前处于测试阶段。\n\n请在 {url} 反馈问题，或者加入我们开发。",
   "start": "开始",
   "stop": "停止",
+  "success": "成功",
   "sureDelete": "确定删除[{name}]？",
   "sureNoPwd": "确认使用无密码？",
   "sureToDeleteServer": "你确定要删除服务器 [{server}] 吗？",

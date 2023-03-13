@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
@@ -8,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../view/widget/card_dialog.dart';
 import '../persistant_store.dart';
+import 'platform.dart';
 
 bool isDarkMode(BuildContext context) =>
     Theme.of(context).brightness == Brightness.dark;
@@ -62,7 +61,7 @@ Widget buildSwitch(BuildContext context, StoreProperty<bool> prop,
 }
 
 void setTransparentNavigationBar(BuildContext context) {
-  if (Platform.isAndroid) {
+  if (isAndroid) {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
         systemNavigationBarColor: Colors.transparent,

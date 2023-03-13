@@ -6,6 +6,8 @@ import 'package:countly_flutter/countly_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:toolbox/core/build_mode.dart';
 
+import 'utils/platform.dart';
+
 class Analysis {
   static const _url = 'https://countly.xuty.cc';
   static const _key = '80372a2a66424b32d0ac8991bfa1ef058bd36b1f';
@@ -16,7 +18,7 @@ class Analysis {
     if (!BuildMode.isRelease) {
       return;
     }
-    if (Platform.isAndroid || Platform.isIOS) {
+    if (isAndroid || isIOS) {
       _enabled = true;
       final config = CountlyConfig(_url, _key)
           .setLoggingEnabled(false)
