@@ -41,4 +41,3 @@ bool get isLinux => _p == PlatformType.linux;
 bool get isMacOS => _p == PlatformType.macos;
 bool get isWindows => _p == PlatformType.windows;
 bool get isWeb => _p == PlatformType.web;
-

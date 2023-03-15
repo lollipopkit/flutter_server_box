@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/utils/misc.dart';
 
+import '../../core/utils/misc.dart';
+import '../../core/utils/platform.dart';
 import '../../data/model/ssh/terminal_color.dart';
 import '../../core/update.dart';
 import '../../core/utils/ui.dart';
@@ -15,6 +16,7 @@ import '../../data/res/tab.dart';
 import '../../data/res/ui.dart';
 import '../../data/store/setting.dart';
 import '../../locator.dart';
+import '../widget/future_widget.dart';
 import '../widget/round_rect_card.dart';
 
 class SettingPage extends StatefulWidget {
@@ -85,6 +87,7 @@ class _SettingPageState extends State<SettingPage> {
       child: Center(
         child: Text(
           text,
+          style: grey,
         ),
       ),
     );
@@ -371,7 +374,7 @@ class _SettingPageState extends State<SettingPage> {
         _s.themeMode,
       ),
       trailing: Text(
-        _buildNightModeStr(_nightMode),
+        _buildThemeModeStr(_nightMode),
       ),
       children: [
         Slider(
@@ -388,14 +391,14 @@ class _SettingPageState extends State<SettingPage> {
           onChangeEnd: (val) {
             _setting.themeMode.put(val.toInt());
           },
-          label: _buildNightModeStr(_nightMode),
+          label: _buildThemeModeStr(_nightMode),
           divisions: 2,
         ),
       ],
     );
   }
 
-  String _buildNightModeStr(int n) {
+  String _buildThemeModeStr(int n) {
     switch (n) {
       case 1:
         return _s.light;
@@ -422,29 +425,24 @@ class _SettingPageState extends State<SettingPage> {
           }
         },
       ),
-      subtitle: FutureBuilder<String?>(
+      subtitle: FutureWidget<String?>(
         future: getToken(),
-        builder: (context, snapshot) {
-          switch (snapshot.connectionState) {
-            case ConnectionState.none:
-            case ConnectionState.waiting:
-              return const Text('Getting Token...');
-            default:
-              var text = _pushToken;
-              if (snapshot.hasError) {
-                text = 'Error: ${snapshot.error}';
-              }
-              _pushToken = snapshot.data;
-              if (_pushToken == null) {
-                text = 'Null token';
-              }
-              return Text(
-                text!,
-                style: grey,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              );
+        loading: Text(_s.gettingToken),
+        error: (error, trace) => Text('${_s.error}: $error'),
+        noData: Text(_s.nullToken),
+        success: (text) {
+          if (_pushToken == null) {
+            text = _s.nullToken;
           }
+          if (!isIOS) {
+            text = _s.onlyIOS;
+          }
+          return Text(
+            text!,
+            style: grey,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          );
         },
       ),
     );

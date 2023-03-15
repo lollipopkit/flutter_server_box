@@ -201,6 +201,9 @@ class SZh extends S {
   String get getPushTokenFailed => '未能获取到推送token';
 
   @override
+  String get gettingToken => '正在获取Token...';
+
+  @override
   String get go => '开始';
 
   @override
@@ -318,10 +321,16 @@ class SZh extends S {
   String get noUpdateAvailable => '没有可用更新';
 
   @override
+  String get nullToken => '无Token';
+
+  @override
   String get ok => '好';
 
   @override
   String get onServerDetailPage => '在服务器详情页';
+
+  @override
+  String get onlyIOS => '仅在iOS上有效';
 
   @override
   String get open => '打开';

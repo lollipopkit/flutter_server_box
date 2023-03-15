@@ -39,7 +39,7 @@ dependencies:
   extended_image: ^6.0.3
   url_launcher: ^6.1.8
   countly_flutter: ^22.2.0
-  dartssh2: ^2.7.1
+  dartssh2: ^2.8.2
   logging: ^1.0.2
   flutter_material_color_picker: ^1.1.0+2
   circle_chart:

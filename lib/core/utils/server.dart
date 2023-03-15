@@ -24,13 +24,23 @@ String decyptPem(List<String> args) {
   return sshKey.first.toPem();
 }
 
-Future<SSHClient> genClient(ServerPrivateInfo spi) async {
+enum GenSSHClientStatus {
+  socket,
+  key,
+  pwd,
+}
+
+Future<SSHClient> genClient(ServerPrivateInfo spi,
+    {void Function(GenSSHClientStatus)? onStatus}) async {
+  final onStatus_ = onStatus ?? (_) {};
+  onStatus_(GenSSHClientStatus.socket);
   final socket = await SSHSocket.connect(
     spi.ip,
     spi.port,
     timeout: const Duration(seconds: 5),
   );
   if (spi.pubKeyId == null) {
+    onStatus_(GenSSHClientStatus.pwd);
     return SSHClient(
       socket,
       username: spi.user,
@@ -38,6 +48,7 @@ Future<SSHClient> genClient(ServerPrivateInfo spi) async {
     );
   }
   final key = locator<PrivateKeyStore>().get(spi.pubKeyId!);
+  onStatus_(GenSSHClientStatus.key);
   return SSHClient(
     socket,
     username: spi.user,

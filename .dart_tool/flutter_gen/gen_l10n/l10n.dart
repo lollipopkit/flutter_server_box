@@ -453,6 +453,12 @@ abstract class S {
   /// **'Can\'t fetch push token'**
   String get getPushTokenFailed;
 
+  /// No description provided for @gettingToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Getting token...'**
+  String get gettingToken;
+
   /// No description provided for @go.
   ///
   /// In en, this message translates to:
@@ -675,6 +681,12 @@ abstract class S {
   /// **'No update available'**
   String get noUpdateAvailable;
 
+  /// No description provided for @nullToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Null token'**
+  String get nullToken;
+
   /// No description provided for @ok.
   ///
   /// In en, this message translates to:
@@ -686,6 +698,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'On server detail page'**
   String get onServerDetailPage;
+
+  /// No description provided for @onlyIOS.
+  ///
+  /// In en, this message translates to:
+  /// **'Only valid on iOS'**
+  String get onlyIOS;
 
   /// No description provided for @open.
   ///

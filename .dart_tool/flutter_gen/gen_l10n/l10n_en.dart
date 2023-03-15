@@ -201,6 +201,9 @@ class SEn extends S {
   String get getPushTokenFailed => 'Can\'t fetch push token';
 
   @override
+  String get gettingToken => 'Getting token...';
+
+  @override
   String get go => 'Go';
 
   @override
@@ -318,10 +321,16 @@ class SEn extends S {
   String get noUpdateAvailable => 'No update available';
 
   @override
+  String get nullToken => 'Null token';
+
+  @override
   String get ok => 'OK';
 
   @override
   String get onServerDetailPage => 'On server detail page';
+
+  @override
+  String get onlyIOS => 'Only valid on iOS';
 
   @override
   String get open => 'Open';

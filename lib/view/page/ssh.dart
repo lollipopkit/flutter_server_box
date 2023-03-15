@@ -67,11 +67,30 @@ class _SSHPageState extends State<SSHPage> {
     super.dispose();
   }
 
-  Future<void> initTerminal() async {
-    _terminal.write('Connecting...\r\n');
+  void _write(String p0) {
+    _terminal.write('$p0\r\n');
+  }
 
-    _client = await genClient(widget.spi);
-    _terminal.write('Connected\r\n');
+  Future<void> initTerminal() async {
+    _write('Connecting...\r\n');
+
+    _client = await genClient(
+      widget.spi,
+      onStatus: (p0) {
+        switch (p0) {
+          case GenSSHClientStatus.socket:
+            _write('Destination: ${widget.spi.id}');
+            return _write('Establishing socket...');
+          case GenSSHClientStatus.key:
+            return _write('Using private key to connect...');
+          case GenSSHClientStatus.pwd:
+            return _write('Sending password to auth...');
+        }
+      },
+    );
+    _write('Connected\r\n');
+    _write('Terminal size: ${_terminal.viewWidth}x${_terminal.viewHeight}\r\n');
+    _write('Starting shell...\r\n');
 
     final session = await _client!.shell(
       pty: SSHPtyConfig(
