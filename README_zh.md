@@ -1,4 +1,4 @@
-English | [简体中文](README_zh.md)
+简体中文 | [English](README.md)
 <!-- Title-->
 <p align="center">
   <h1 align="center">Server Box</h1>
@@ -21,24 +21,24 @@ English | [简体中文](README_zh.md)
 </p>
 
 <p align="center">
-A Flutter project which provide charts to display server status and tools to manage server.
+使用Flutter开发的服务器工具箱，提供服务器状态图表和管理工具。
 <br>
-Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a> & <a href="https://github.com/TerminalStudio/xterm.dart">xterm.dart</a>.
+特别感谢 <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a> & <a href="https://github.com/TerminalStudio/xterm.dart">xterm.dart</a>.
 </p>
 
 
-## 🔖 Feature
-- [x] Functions
-  - [x] `SSH` Terminal, `SFTP`
-  - [x] `Docker & Pkg` Manager
-  - [x] Status charts
-  - [x] `Ping` and etc.
-- [x] i18n (English, Chinese)
-  - **Welcome contribution** :)
-  - [How to contribute?](#l10n-guide)
-- [x] Desktop support
+## 🔖 特点
+- [x] 功能
+  - [x] `SSH` 终端, `SFTP`
+  - [x] `Docker & 包` 管理器
+  - [x] 状态图表
+  - [x] `Ping` 和 更多
+- [x] 本地化 (英语, 中文)
+  - **欢迎贡献** :)
+  - [怎么贡献?](#l10n)
+- [x] 桌面端支持
 
-## 📱 ScreenShots
+## 📱 截屏
 <table>
   <tr>
     <td>
@@ -72,20 +72,20 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
   </tr>
 </table>
 
-## 🖥 Platform
-Status|Platform          
+## 🖥 平台
+状态|平台         
 --- | ---
-Full Support|Android/iOS
-Support, but not tested|macOS/Windows/Linux
+完整支持|Android/iOS
+可能支持，未测试|macOS/Windows/Linux
 
-## l10n guide
-1. Fork this repo and clone it to your local machine.
-2. Create `arb` file in `lib/l10n/` directory
-   - File name should be `intl_XX.arb`, where `XX` is the language code. Such as `intl_en.arb` for English and `intl_zh.arb` for Chinese.
-3. Add content to the file. You can refer to `intl_en.arb` and `intl_zh.arb` for the format.
-4. Run `flutter gen-l10n` to generate files.
-5. Pull commit to your forked repo.
-6. Request a pull request on my repo.
+## l10n
+1. Fork本项目，并Clone你Fork的项目至你的电脑
+2. 在 `lib/l10n/` 文件夹内创建 `.arb` 本地化文件
+   - 文件名应该类似 `intl_XX.arb`,  `XX` 是语言标识码。 例如 `intl_en.arb` 是给英语的， `intl_zh.arb` 是给中文的
+3. 向 `.arb` 本地化文件添加内容。 你可以查看 `intl_en.arb` 和 `intl_zh.arb` 的内容，并理解其含义，来创建新的本地化文件
+4. 运行 `flutter gen-l10n` 来生成所需文件
+5. Commit 变更到你的 Fork 的 Repo
+6. 在我的项目中发起 Pull Request.
 
 ## 📝 License
 `GPL v3. lollipopkit 2023`
