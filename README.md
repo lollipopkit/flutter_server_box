@@ -38,6 +38,12 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
   - [How to contribute?](#l10n-guide)
 - [x] Desktop support
 
+
+## 📩 Push
+You need to install [ServerBoxMonitor](https://github.com/lollipopkit/server_box_monitor) on your servers.
+And config iOS / Webhook to push server status to your portable device without using ServerBox app.
+
+
 ## 📱 ScreenShots
 <table>
   <tr>
@@ -72,11 +78,13 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
   </tr>
 </table>
 
+
 ## 🖥 Platform
 Status|Platform          
 --- | ---
 Full Support|Android/iOS
 Support, but not tested|macOS/Windows/Linux
+
 
 ## l10n guide
 1. Fork this repo and clone it to your local machine.
@@ -86,6 +94,7 @@ Support, but not tested|macOS/Windows/Linux
 4. Run `flutter gen-l10n` to generate files.
 5. Pull commit to your forked repo.
 6. Request a pull request on my repo.
+
 
 ## 📝 License
 `GPL v3. lollipopkit 2023`

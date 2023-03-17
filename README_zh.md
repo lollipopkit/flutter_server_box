@@ -38,6 +38,11 @@
   - [怎么贡献?](#l10n)
 - [x] 桌面端支持
 
+
+## 📩 推送
+你需要在你的服务器上安装 [ServerBoxMonitor](https://github.com/lollipopkit/server_box_monitor)。  
+并且配置 iOS / Webhook 推送服务，这样，你可以在不使用 ServerBox app 时获取服务器状态。
+
 ## 📱 截屏
 <table>
   <tr>
@@ -72,11 +77,13 @@
   </tr>
 </table>
 
+
 ## 🖥 平台
 状态|平台         
 --- | ---
 完整支持|Android/iOS
 可能支持，未测试|macOS/Windows/Linux
+
 
 ## l10n
 1. Fork本项目，并Clone你Fork的项目至你的电脑
@@ -86,6 +93,7 @@
 4. 运行 `flutter gen-l10n` 来生成所需文件
 5. Commit 变更到你的 Fork 的 Repo
 6. 在我的项目中发起 Pull Request.
+
 
 ## 📝 License
 `GPL v3. lollipopkit 2023`
