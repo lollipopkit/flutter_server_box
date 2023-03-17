@@ -158,7 +158,7 @@ class ServerProvider extends BusyProvider {
         // after connected
         s.cs = ServerState.connected;
         final writeResult = await s.client!
-            .run("echo '$shellCmd' > $shellPath && chmod +x $shellPath")
+            .run(installShellCmd)
             .string;
 
         // if write failed

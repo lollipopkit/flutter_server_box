@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:plain_notification_token/plain_notification_token.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:toolbox/core/extension/uint8list.dart';
 
 import 'platform.dart';
 
@@ -46,4 +47,10 @@ Future<String?> getToken() async {
     return await plainNotificationToken.getToken();
   }
   return null;
+}
+
+Future<void> loadFontFile(String localPath, String name) async {
+  var fontLoader = FontLoader(name);
+  fontLoader.addFont(File(localPath).readAsBytes().byteData);
+  await fontLoader.load();
 }

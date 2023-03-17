@@ -9,7 +9,6 @@ import '../../../data/model/server/server.dart';
 import '../../../data/model/server/server_status.dart';
 import '../../../data/provider/server.dart';
 import '../../../data/res/color.dart';
-import '../../../data/res/sizedbox.dart';
 import '../../../data/res/ui.dart';
 import '../../../data/store/setting.dart';
 import '../../../locator.dart';

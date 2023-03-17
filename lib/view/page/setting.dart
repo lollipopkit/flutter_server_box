@@ -431,6 +431,7 @@ class _SettingPageState extends State<SettingPage> {
         error: (error, trace) => Text('${_s.error}: $error'),
         noData: Text(_s.nullToken),
         success: (text) {
+          _pushToken = text;
           if (_pushToken == null) {
             text = _s.nullToken;
           }

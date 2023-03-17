@@ -102,7 +102,7 @@ abstract class S {
   /// No description provided for @aboutThanks.
   ///
   /// In en, this message translates to:
-  /// **'\n\nThanks to the following people who participated in the test.'**
+  /// **'\nThanks to the following people who participated in the test.'**
   String get aboutThanks;
 
   /// No description provided for @addAServer.

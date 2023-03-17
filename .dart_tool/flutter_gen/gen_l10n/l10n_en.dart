@@ -8,7 +8,7 @@ class SEn extends S {
   String get about => 'About';
 
   @override
-  String get aboutThanks => '\n\nThanks to the following people who participated in the test.';
+  String get aboutThanks => '\nThanks to the following people who participated in the test.';
 
   @override
   String get addAServer => 'add a server';

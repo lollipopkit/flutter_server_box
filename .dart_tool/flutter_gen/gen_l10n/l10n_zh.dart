@@ -8,7 +8,7 @@ class SZh extends S {
   String get about => '关于';
 
   @override
-  String get aboutThanks => '\n\n感谢以下参与软件测试的各位。';
+  String get aboutThanks => '\n感谢以下参与软件测试的各位。';
 
   @override
   String get addAServer => '添加服务器';

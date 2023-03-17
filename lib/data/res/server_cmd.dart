@@ -1,7 +1,10 @@
 import 'build_data.dart';
 
 const seperator = 'SrvBox';
-const shellPath = '.serverbox.sh';
+const serverBoxDir = r'$HOME/.config/server_box';
+const shellPath = '$serverBoxDir/mobile_app.sh';
+const installShellCmd =
+    "mkdir -p $serverBoxDir && echo '$shellCmd' > $shellPath && chmod +x $shellPath";
 
 const shellCmd = """
 # Script for app `${BuildData.name}`
