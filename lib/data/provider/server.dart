@@ -157,9 +157,7 @@ class ServerProvider extends BusyProvider {
 
         // after connected
         s.cs = ServerState.connected;
-        final writeResult = await s.client!
-            .run(installShellCmd)
-            .string;
+        final writeResult = await s.client!.run(installShellCmd).string;
 
         // if write failed
         if (writeResult.isNotEmpty) {

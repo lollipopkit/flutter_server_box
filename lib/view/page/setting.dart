@@ -94,14 +94,17 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildApp() {
+    final children = [
+      _buildThemeMode(),
+      _buildAppColorPreview(),
+      _buildLaunchPage(),
+      _buildCheckUpdate(),
+    ];
+    if (isIOS) {
+      children.add(_buildPushToken());
+    }
     return Column(
-      children: [
-        _buildThemeMode(),
-        _buildAppColorPreview(),
-        _buildLaunchPage(),
-        _buildCheckUpdate(),
-        _buildPushToken(),
-      ].map((e) => RoundRectCard(e)).toList(),
+      children: children.map((e) => RoundRectCard(e)).toList(),
     );
   }
 
@@ -432,14 +435,8 @@ class _SettingPageState extends State<SettingPage> {
         noData: Text(_s.nullToken),
         success: (text) {
           _pushToken = text;
-          if (_pushToken == null) {
-            text = _s.nullToken;
-          }
-          if (!isIOS) {
-            text = _s.onlyIOS;
-          }
           return Text(
-            text!,
+            text ?? _s.nullToken,
             style: grey,
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
