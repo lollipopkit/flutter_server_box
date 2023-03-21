@@ -308,6 +308,8 @@ class _MyHomePageState extends State<MyHomePage>
     await GetIt.I.allReady();
     await locator<ServerProvider>().loadLocalData();
     await doUpdate(context);
-    await Analysis.init();
+    if (!Analysis.enabled) {
+      await Analysis.init();
+    }
   }
 }

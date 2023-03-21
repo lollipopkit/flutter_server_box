@@ -12,14 +12,14 @@ class Analysis {
   static const _url = 'https://countly.xuty.cc';
   static const _key = '80372a2a66424b32d0ac8991bfa1ef058bd36b1f';
 
-  static bool _enabled = false;
+  static bool enabled = false;
 
   static Future<void> init() async {
     if (!BuildMode.isRelease) {
       return;
     }
     if (isAndroid || isIOS) {
-      _enabled = true;
+      enabled = true;
       final config = CountlyConfig(_url, _key)
           .setLoggingEnabled(false)
           .enableCrashReporting();
@@ -33,13 +33,13 @@ class Analysis {
   }
 
   static void recordView(String view) {
-    if (_enabled) {
+    if (enabled) {
       Countly.recordView(view);
     }
   }
 
   static void recordException(Object exception, [bool fatal = false]) {
-    if (_enabled) {
+    if (enabled) {
       Countly.logException(exception.toString(), !fatal, null);
     }
   }
