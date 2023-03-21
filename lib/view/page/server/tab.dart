@@ -445,8 +445,7 @@ class _ServerPageState extends State<ServerPage>
     await GetIt.I.allReady();
     if (_serverProvider.servers.isEmpty) {
       await _serverProvider.loadLocalData();
-      await _serverProvider.refreshData();
-      _serverProvider.startAutoRefresh();
     }
+    _serverProvider.startAutoRefresh();
   }
 }

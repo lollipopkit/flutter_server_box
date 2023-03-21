@@ -241,7 +241,7 @@ class _SettingPageState extends State<SettingPage> {
       icon: const Icon(Icons.save),
       onPressed: (() {
         _setting.primaryColor.put(_selectedColorValue);
-        setState(() {});
+        _showRestartSnackbar();
       }),
     );
   }
@@ -459,18 +459,13 @@ class _SettingPageState extends State<SettingPage> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             TextButton(
-              onPressed: () async => pickFontFile(),
+              onPressed: () async => _pickFontFile(),
               child: Text(_s.pickFile),
             ),
             TextButton(
               onPressed: () => setState(() {
                 _setting.fontPath.delete();
-                showSnackBarWithAction(
-                  context,
-                  '${_s.success}\n${_s.needRestart}',
-                  _s.restart,
-                  () => rebuildAll(context),
-                );
+                _showRestartSnackbar();
               }),
               child: Text(_s.clear),
             )
@@ -480,7 +475,7 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  Future<void> pickFontFile() async {
+  Future<void> _pickFontFile() async {
     final path = await pickOneFile();
     if (path != null) {
       final fontDir_ = await fontDir;
@@ -489,14 +484,18 @@ class _SettingPageState extends State<SettingPage> {
       await fontFile.copy(newPath);
       _setting.fontPath.put(newPath);
       setState(() {});
-      showSnackBarWithAction(
-        context,
-        '${_s.success}\n${_s.needRestart}',
-        _s.restart,
-        () => rebuildAll(context),
-      );
+      _showRestartSnackbar();
       return;
     }
     showSnackBar(context, Text(_s.failed));
+  }
+
+  void _showRestartSnackbar() {
+    showSnackBarWithAction(
+      context,
+      '${_s.success}\n${_s.needRestart}',
+      _s.restart,
+      () => rebuildAll(context),
+    );
   }
 }
