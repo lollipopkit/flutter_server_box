@@ -1,12 +1,16 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:toolbox/core/extension/stringx.dart';
+import 'package:toolbox/core/utils/misc.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../view/widget/card_dialog.dart';
 import '../persistant_store.dart';
 import 'platform.dart';
+import '../extension/stringx.dart';
+import '../extension/uint8list.dart';
 
 bool isDarkMode(BuildContext context) =>
     Theme.of(context).brightness == Brightness.dark;
@@ -99,4 +103,12 @@ String tabTitleName(BuildContext context, int i) {
     default:
       return '';
   }
+}
+
+Future<void> loadFontFile(String? localPath) async {
+  if (localPath == null) return;
+  final name = getFileName(localPath)!;
+  var fontLoader = FontLoader(name);
+  fontLoader.addFont(File(localPath).readAsBytes().byteData);
+  await fontLoader.load();
 }

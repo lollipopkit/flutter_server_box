@@ -41,9 +41,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   Widget build(BuildContext context) {
     return Consumer<ServerProvider>(builder: (_, provider, __) {
       return _buildMainPage(
-        provider.servers.firstWhere(
-          (e) => e.spi.id == widget.id,
-        ),
+        provider.getServer(widget.id),
       );
     });
   }

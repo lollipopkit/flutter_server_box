@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:toolbox/core/utils/misc.dart';
 
 import '/core/extension/colorx.dart';
 import 'core/utils/ui.dart';
@@ -17,6 +18,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     setTransparentNavigationBar(context);
+    final fontName = getFileName(_setting.fontPath.fetch());
     return ValueListenableBuilder<int>(
       valueListenable: _setting.primaryColor.listenable(),
       builder: (_, colorValue, __) {
@@ -48,32 +50,29 @@ class MyApp extends StatelessWidget {
           builder: (_, tMode, __) {
             final ok = tMode >= 0 && tMode <= ThemeMode.values.length - 1;
             final themeMode = ok ? ThemeMode.values[tMode] : ThemeMode.system;
+
+            final theme = ThemeData(
+              useMaterial3: false,
+              fontFamily: fontName,
+              primaryColor: primaryColor,
+              primarySwatch: primaryColor.materialColor,
+              appBarTheme: appBarTheme,
+              floatingActionButtonTheme: fabTheme,
+              iconTheme: iconTheme,
+              primaryIconTheme: iconTheme,
+              switchTheme: switchTheme,
+              inputDecorationTheme: inputDecorationTheme,
+              radioTheme: radioTheme,
+            );
+
             return MaterialApp(
               debugShowCheckedModeBanner: false,
               localizationsDelegates: S.localizationsDelegates,
               supportedLocales: S.supportedLocales,
               title: BuildData.name,
               themeMode: themeMode,
-              theme: ThemeData(
-                useMaterial3: false,
-                primaryColor: primaryColor,
-                primarySwatch: primaryColor.materialColor,
-                appBarTheme: appBarTheme,
-                floatingActionButtonTheme: fabTheme,
-                iconTheme: iconTheme,
-                primaryIconTheme: iconTheme,
-                switchTheme: switchTheme,
-                inputDecorationTheme: inputDecorationTheme,
-                radioTheme: radioTheme,
-              ),
-              darkTheme: ThemeData.dark().copyWith(
-                useMaterial3: false,
-                floatingActionButtonTheme: fabTheme,
-                iconTheme: iconTheme,
-                primaryIconTheme: iconTheme,
-                switchTheme: switchTheme,
-                inputDecorationTheme: inputDecorationTheme,
-                radioTheme: radioTheme,
+              theme: theme,
+              darkTheme: theme.copyWith(
                 colorScheme: ColorScheme.fromSwatch(
                   primarySwatch: primaryColor.materialColor,
                   brightness: Brightness.dark,

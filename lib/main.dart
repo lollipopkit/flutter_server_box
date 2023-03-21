@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/core/utils/ui.dart';
+import 'package:toolbox/data/store/setting.dart';
 
 import 'app.dart';
 import 'core/analysis.dart';
@@ -30,6 +32,9 @@ Future<void> initApp() async {
   _debug = locator<DebugProvider>();
   locator<SnippetProvider>().loadData();
   locator<PrivateKeyProvider>().loadData();
+
+  final settings = locator<SettingStore>();
+  await loadFontFile(settings.fontPath.fetch());
 
   ///设置Logger
   Logger.root.level = Level.ALL; // defaults to Level.INFO

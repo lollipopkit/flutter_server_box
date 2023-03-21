@@ -47,10 +47,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   @override
   void initState() {
     super.initState();
-    final client = locator<ServerProvider>()
-        .servers
-        .firstWhere((element) => element.spi == widget.spi)
-        .client;
+    final client = locator<ServerProvider>().getServer(widget.spi.id).client;
     if (client == null) {
       showSnackBar(context, Text(_s.noClient));
       Navigator.of(context).pop();

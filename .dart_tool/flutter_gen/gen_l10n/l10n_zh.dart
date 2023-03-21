@@ -53,6 +53,9 @@ class SZh extends S {
   String get chooseDestination => '选择目标';
 
   @override
+  String get chooseFontFile => '选择字体文件';
+
+  @override
   String get choosePrivateKey => '选择私钥';
 
   @override
@@ -554,4 +557,7 @@ class SZh extends S {
 
   @override
   String get willTakEeffectImmediately => '更改将会立即生效';
+
+  @override
+  String get notSelected => '未选择';
 }

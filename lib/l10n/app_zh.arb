@@ -15,6 +15,7 @@
   "cancel": "取消",
   "choose": "选择",
   "chooseDestination": "选择目标",
+  "chooseFontFile": "选择字体文件",
   "choosePrivateKey": "选择私钥",
   "clear": "清除",
   "clickSee": "点击查看",
@@ -167,5 +168,6 @@
   "versionUnknownUpdate": "当前：v1.0.{build}",
   "versionUpdated": "当前：v1.0.{build}, 已是最新版本",
   "waitConnection": "请等待连接建立",
-  "willTakEeffectImmediately": "更改将会立即生效"
+  "willTakEeffectImmediately": "更改将会立即生效",
+  "notSelected": "未选择"
 }

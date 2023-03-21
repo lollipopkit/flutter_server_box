@@ -48,9 +48,7 @@ class _PkgManagePageState extends State<PkgManagePage>
   @override
   void initState() {
     super.initState();
-    final si = locator<ServerProvider>()
-        .servers
-        .firstWhere((e) => e.spi == widget.spi);
+    final si = locator<ServerProvider>().getServer(widget.spi.id);
     if (si.client == null) {
       showSnackBar(context, Text(_s.waitConnection));
       Navigator.of(context).pop();
@@ -179,8 +177,9 @@ class _PkgManagePageState extends State<PkgManagePage>
         }
         return ListView(
           padding: const EdgeInsets.all(13),
-          children:
-              [_buildUpdatePanel(apt)].map((e) => RoundRectCard(e)).toList(),
+          children: [
+            _buildUpdatePanel(apt),
+          ].map((e) => RoundRectCard(e)).toList(),
         );
       }),
     );

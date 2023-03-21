@@ -53,6 +53,9 @@ class SEn extends S {
   String get chooseDestination => 'Choose destination';
 
   @override
+  String get chooseFontFile => 'Choose a font file';
+
+  @override
   String get choosePrivateKey => 'Choose private key';
 
   @override
@@ -554,4 +557,7 @@ class SEn extends S {
 
   @override
   String get willTakEeffectImmediately => 'Will take effect immediately';
+
+  @override
+  String get notSelected => 'Not selected';
 }

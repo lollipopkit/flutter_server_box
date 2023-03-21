@@ -99,6 +99,7 @@ class _SettingPageState extends State<SettingPage> {
       _buildAppColorPreview(),
       _buildLaunchPage(),
       _buildCheckUpdate(),
+      _buildFont(),
     ];
     if (isIOS) {
       children.add(_buildPushToken());
@@ -443,6 +444,22 @@ class _SettingPageState extends State<SettingPage> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildFont() {
+    return ListTile(
+      title: Text(_s.chooseFontFile),
+      subtitle: Text(getFileName(_setting.fontPath.fetch()) ?? _s.notSelected),
+      trailing: TextButton(
+          onPressed: () async {
+            final path = await pickOneFile();
+            if (path != null) {
+              _setting.fontPath.put(path);
+              setState(() {});
+            }
+          },
+          child: Text(_s.pickFile)),
     );
   }
 }

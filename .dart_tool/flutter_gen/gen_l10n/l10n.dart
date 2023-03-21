@@ -189,6 +189,12 @@ abstract class S {
   /// **'Choose destination'**
   String get chooseDestination;
 
+  /// No description provided for @chooseFontFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a font file'**
+  String get chooseFontFile;
+
   /// No description provided for @choosePrivateKey.
   ///
   /// In en, this message translates to:
@@ -1106,6 +1112,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Will take effect immediately'**
   String get willTakEeffectImmediately;
+
+  /// No description provided for @notSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not selected'**
+  String get notSelected;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

@@ -15,6 +15,7 @@
   "cancel": "Cancel",
   "choose": "Choose",
   "chooseDestination": "Choose destination",
+  "chooseFontFile": "Choose a font file",
   "choosePrivateKey": "Choose private key",
   "clear": "Clear",
   "clickSee": "Click here",
@@ -167,5 +168,6 @@
   "versionUnknownUpdate": "Current: v1.0.{build}",
   "versionUpdated": "Current: v1.0.{build}, is up to date",
   "waitConnection": "Please wait for the connection to be established.",
-  "willTakEeffectImmediately": "Will take effect immediately"
+  "willTakEeffectImmediately": "Will take effect immediately",
+  "notSelected": "Not selected"
 }
