@@ -82,20 +82,19 @@ Future<void> main() async {
   runInZone(() async {
     await initApp();
     runApp(
-      RebuildWidget(
-        child: MultiProvider(
-          providers: [
-            ChangeNotifierProvider(create: (_) => locator<AppProvider>()),
-            ChangeNotifierProvider(create: (_) => locator<PkgProvider>()),
-            ChangeNotifierProvider(create: (_) => locator<DebugProvider>()),
-            ChangeNotifierProvider(create: (_) => locator<DockerProvider>()),
-            ChangeNotifierProvider(create: (_) => locator<ServerProvider>()),
-            ChangeNotifierProvider(create: (_) => locator<SnippetProvider>()),
-            ChangeNotifierProvider(create: (_) => locator<VirtualKeyboard>()),
-            ChangeNotifierProvider(
-                create: (_) => locator<PrivateKeyProvider>()),
-            ChangeNotifierProvider(create: (_) => locator<SftpProvider>()),
-          ],
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => locator<AppProvider>()),
+          ChangeNotifierProvider(create: (_) => locator<PkgProvider>()),
+          ChangeNotifierProvider(create: (_) => locator<DebugProvider>()),
+          ChangeNotifierProvider(create: (_) => locator<DockerProvider>()),
+          ChangeNotifierProvider(create: (_) => locator<ServerProvider>()),
+          ChangeNotifierProvider(create: (_) => locator<SnippetProvider>()),
+          ChangeNotifierProvider(create: (_) => locator<VirtualKeyboard>()),
+          ChangeNotifierProvider(create: (_) => locator<PrivateKeyProvider>()),
+          ChangeNotifierProvider(create: (_) => locator<SftpProvider>()),
+        ],
+        child: RebuildWidget(
           child: MyApp(),
         ),
       ),

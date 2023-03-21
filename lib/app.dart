@@ -41,6 +41,8 @@ class MyApp extends StatelessWidget {
     final radioTheme = RadioThemeData(
       fillColor: materialColor,
     );
+    final primarySwatch = primaryColor.materialColor;
+
     return ValueListenableBuilder<int>(
       valueListenable: _setting.themeMode.listenable(),
       builder: (_, tMode, __) {
@@ -51,7 +53,7 @@ class MyApp extends StatelessWidget {
           useMaterial3: false,
           fontFamily: fontName,
           primaryColor: primaryColor,
-          primarySwatch: primaryColor.materialColor,
+          primarySwatch: primarySwatch,
           appBarTheme: appBarTheme,
           floatingActionButtonTheme: fabTheme,
           iconTheme: iconTheme,
@@ -59,6 +61,24 @@ class MyApp extends StatelessWidget {
           switchTheme: switchTheme,
           inputDecorationTheme: inputDecorationTheme,
           radioTheme: radioTheme,
+        );
+        final darkTheme = ThemeData(
+          useMaterial3: false,
+          fontFamily: fontName,
+          primaryColor: primaryColor,
+          primarySwatch: primarySwatch,
+          floatingActionButtonTheme: fabTheme,
+          iconTheme: iconTheme,
+          primaryIconTheme: iconTheme,
+          switchTheme: switchTheme,
+          inputDecorationTheme: inputDecorationTheme,
+          radioTheme: radioTheme,
+          brightness: Brightness.dark,
+          colorScheme: ColorScheme.fromSwatch(
+            primarySwatch: primaryColor.materialColor,
+            brightness: Brightness.dark,
+            accentColor: primaryColor,
+          ),
         );
 
         return MaterialApp(
@@ -68,13 +88,7 @@ class MyApp extends StatelessWidget {
           title: BuildData.name,
           themeMode: themeMode,
           theme: theme,
-          darkTheme: theme.copyWith(
-            colorScheme: ColorScheme.fromSwatch(
-              primarySwatch: primaryColor.materialColor,
-              brightness: Brightness.dark,
-              accentColor: primaryColor,
-            ),
-          ),
+          darkTheme: darkTheme,
           home: const MyHomePage(),
         );
       },

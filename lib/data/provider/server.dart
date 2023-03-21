@@ -87,13 +87,11 @@ class ServerProvider extends BusyProvider {
         _servers[i].client?.close();
         _servers[i].client = null;
       }
-      notifyListeners();
       return;
     }
     final idx = getServerIdx(spi.id);
     _servers[idx].client?.close();
     _servers[idx].client = null;
-    notifyListeners();
   }
 
   void addServer(ServerPrivateInfo spi) {
