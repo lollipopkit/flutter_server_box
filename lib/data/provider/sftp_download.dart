@@ -3,7 +3,7 @@ import 'package:toolbox/core/provider_base.dart';
 import '../model/sftp/download_item.dart';
 import '../model/sftp/download_status.dart';
 
-class SftpDownloadProvider extends ProviderBase {
+class SftpProvider extends ProviderBase {
   final List<SftpDownloadStatus> _status = [];
   List<SftpDownloadStatus> get status => _status;
 

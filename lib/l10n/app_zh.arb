@@ -52,6 +52,7 @@
   "experimentalFeature": "实验性功能",
   "export": "导出",
   "extraArgs": "额外参数",
+  "failed": "失败",
   "feedback": "反馈",
   "feedbackOnGithub": "如果你有任何问题，请在GitHub反馈",
   "fieldMustNotEmpty": "这些输入框不能为空。",
@@ -90,6 +91,7 @@
   "min": "最小",
   "ms": "毫秒",
   "name": "名称",
+  "needRestart": "需要重启 App",
   "newContainer": "新建容器",
   "noClient": "没有SSH连接",
   "noInterface": "没有可用的接口",
@@ -98,6 +100,7 @@
   "noSavedSnippet": "没有已保存的代码片段。",
   "noServerAvailable": "没有可用的服务器。",
   "noUpdateAvailable": "没有可用更新",
+  "notSelected": "未选择",
   "nullToken": "无Token",
   "ok": "好",
   "onServerDetailPage": "在服务器详情页",
@@ -120,6 +123,7 @@
   "pwd": "密码",
   "rename": "重命名",
   "reportBugsOnGithubIssue": "请到 {url} 提交问题",
+  "restart": "重启",
   "restore": "恢复",
   "restoreSuccess": "恢复成功，需要重启App来应用更改",
   "restoreSureWithDate": "确定恢复 {date} 的备份吗？",
@@ -168,6 +172,5 @@
   "versionUnknownUpdate": "当前：v1.0.{build}",
   "versionUpdated": "当前：v1.0.{build}, 已是最新版本",
   "waitConnection": "请等待连接建立",
-  "willTakEeffectImmediately": "更改将会立即生效",
-  "notSelected": "未选择"
+  "willTakEeffectImmediately": "更改将会立即生效"
 }

@@ -34,5 +34,5 @@ class SettingStore extends PersistentStore {
   StoreProperty<int> get themeMode => property('themeMode', defaultValue: 0);
 
   /// Font file path
-  StoreProperty<String> get fontPath => property('fontPath');
+  StoreProperty<String> get fontPath => property('fontPath2');
 }

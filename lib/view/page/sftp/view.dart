@@ -305,7 +305,7 @@ class _SFTPPageState extends State<SFTPPage> {
             final local = '${(await sftpDownloadDir).path}$remotePath';
             final pubKeyId = widget.spi.pubKeyId;
 
-            locator<SftpDownloadProvider>().add(
+            locator<SftpProvider>().add(
               DownloadItem(
                 widget.spi,
                 remotePath,

@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/data/res/path.dart';
 
 import '../../core/utils/misc.dart';
 import '../../core/utils/platform.dart';
@@ -448,18 +451,52 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildFont() {
-    return ListTile(
+    return ExpansionTile(
       title: Text(_s.chooseFontFile),
-      subtitle: Text(getFileName(_setting.fontPath.fetch()) ?? _s.notSelected),
-      trailing: TextButton(
-          onPressed: () async {
-            final path = await pickOneFile();
-            if (path != null) {
-              _setting.fontPath.put(path);
-              setState(() {});
-            }
-          },
-          child: Text(_s.pickFile)),
+      trailing: Text(getFileName(_setting.fontPath.fetch()) ?? _s.notSelected),
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            TextButton(
+              onPressed: () async => pickFontFile(),
+              child: Text(_s.pickFile),
+            ),
+            TextButton(
+              onPressed: () => setState(() {
+                _setting.fontPath.delete();
+                showSnackBarWithAction(
+                  context,
+                  '${_s.success}\n${_s.needRestart}',
+                  _s.restart,
+                  () => rebuildAll(context),
+                );
+              }),
+              child: Text(_s.clear),
+            )
+          ],
+        )
+      ],
     );
+  }
+
+  Future<void> pickFontFile() async {
+    final path = await pickOneFile();
+    if (path != null) {
+      final fontDir_ = await fontDir;
+      final fontFile = File(path);
+      final newPath = '${fontDir_.path}/${path.split('/').last}';
+      await fontFile.copy(newPath);
+      _setting.fontPath.put(newPath);
+      setState(() {});
+      showSnackBarWithAction(
+        context,
+        '${_s.success}\n${_s.needRestart}',
+        _s.restart,
+        () => rebuildAll(context),
+      );
+      return;
+    }
+    showSnackBar(context, Text(_s.failed));
   }
 }

@@ -7,6 +7,7 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:plain_notification_token/plain_notification_token.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../view/widget/rebuild.dart';
 import 'platform.dart';
 
 Future<bool> shareFiles(BuildContext context, List<String> filePaths) async {
@@ -53,4 +54,8 @@ String? getFileName(String? path) {
     return null;
   }
   return path.split('/').last;
+}
+
+void rebuildAll(BuildContext context) {
+  RebuildWidget.restartApp(context);
 }

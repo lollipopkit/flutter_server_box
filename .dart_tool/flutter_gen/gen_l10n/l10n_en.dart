@@ -174,6 +174,9 @@ class SEn extends S {
   String get extraArgs => 'Extra args';
 
   @override
+  String get failed => 'Failed';
+
+  @override
   String get feedback => 'Feedback';
 
   @override
@@ -300,6 +303,9 @@ class SEn extends S {
   String get name => 'Name';
 
   @override
+  String get needRestart => 'Need to restart app';
+
+  @override
   String get newContainer => 'New container';
 
   @override
@@ -322,6 +328,9 @@ class SEn extends S {
 
   @override
   String get noUpdateAvailable => 'No update available';
+
+  @override
+  String get notSelected => 'Not selected';
 
   @override
   String get nullToken => 'Null token';
@@ -390,6 +399,9 @@ class SEn extends S {
   String reportBugsOnGithubIssue(Object url) {
     return 'Please report bugs on $url';
   }
+
+  @override
+  String get restart => 'Restart';
 
   @override
   String get restore => 'Restore';
@@ -557,7 +569,4 @@ class SEn extends S {
 
   @override
   String get willTakEeffectImmediately => 'Will take effect immediately';
-
-  @override
-  String get notSelected => 'Not selected';
 }

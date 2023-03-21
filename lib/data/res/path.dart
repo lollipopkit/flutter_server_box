@@ -8,3 +8,8 @@ Future<Directory> get sftpDownloadDir async {
   final dir = Directory('${(await docDir).path}/sftp');
   return dir.create(recursive: true);
 }
+
+Future<Directory> get fontDir async {
+  final dir = Directory('${(await docDir).path}/font');
+  return dir.create(recursive: true);
+}

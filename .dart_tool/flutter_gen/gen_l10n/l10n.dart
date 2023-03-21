@@ -411,6 +411,12 @@ abstract class S {
   /// **'Extra args'**
   String get extraArgs;
 
+  /// No description provided for @failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get failed;
+
   /// No description provided for @feedback.
   ///
   /// In en, this message translates to:
@@ -639,6 +645,12 @@ abstract class S {
   /// **'Name'**
   String get name;
 
+  /// No description provided for @needRestart.
+  ///
+  /// In en, this message translates to:
+  /// **'Need to restart app'**
+  String get needRestart;
+
   /// No description provided for @newContainer.
   ///
   /// In en, this message translates to:
@@ -686,6 +698,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'No update available'**
   String get noUpdateAvailable;
+
+  /// No description provided for @notSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not selected'**
+  String get notSelected;
 
   /// No description provided for @nullToken.
   ///
@@ -818,6 +836,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Please report bugs on {url}'**
   String reportBugsOnGithubIssue(Object url);
+
+  /// No description provided for @restart.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart'**
+  String get restart;
 
   /// No description provided for @restore.
   ///
@@ -1112,12 +1136,6 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Will take effect immediately'**
   String get willTakEeffectImmediately;
-
-  /// No description provided for @notSelected.
-  ///
-  /// In en, this message translates to:
-  /// **'Not selected'**
-  String get notSelected;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

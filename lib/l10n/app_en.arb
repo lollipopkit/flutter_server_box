@@ -52,6 +52,7 @@
   "experimentalFeature": "Experimental feature",
   "export": "Export",
   "extraArgs": "Extra args",
+  "failed": "Failed",
   "feedback": "Feedback",
   "feedbackOnGithub": "If you have any questions, please feedback on Github.",
   "fieldMustNotEmpty": "These fields must not be empty.",
@@ -90,6 +91,7 @@
   "min": "min",
   "ms": "ms",
   "name": "Name",
+  "needRestart": "Need to restart app",
   "newContainer": "New container",
   "noClient": "No client",
   "noInterface": "No interface",
@@ -98,6 +100,7 @@
   "noSavedSnippet": "No saved snippets.",
   "noServerAvailable": "No server available.",
   "noUpdateAvailable": "No update available",
+  "notSelected": "Not selected",
   "nullToken": "Null token",
   "ok": "OK",
   "onServerDetailPage": "On server detail page",
@@ -120,6 +123,7 @@
   "pwd": "Password",
   "rename": "Rename",
   "reportBugsOnGithubIssue": "Please report bugs on {url}",
+  "restart": "Restart",
   "restore": "Restore",
   "restoreSuccess": "Restore success. Restart app to apply.",
   "restoreSureWithDate": "Are you sure to restore from {date} ?",
@@ -168,6 +172,5 @@
   "versionUnknownUpdate": "Current: v1.0.{build}",
   "versionUpdated": "Current: v1.0.{build}, is up to date",
   "waitConnection": "Please wait for the connection to be established.",
-  "willTakEeffectImmediately": "Will take effect immediately",
-  "notSelected": "Not selected"
+  "willTakEeffectImmediately": "Will take effect immediately"
 }

@@ -34,6 +34,7 @@ class _SSHPageState extends State<SSHPage> {
   late final _terminal = Terminal(inputHandler: _keyboard);
   SSHClient? _client;
   final _keyboard = locator<VirtualKeyboard>();
+  final _setting = locator<SettingStore>();
   late MediaQueryData _media;
   final _virtualKeyboardHeight = 57.0;
   final TerminalController _terminalController = TerminalController();
@@ -47,7 +48,7 @@ class _SSHPageState extends State<SSHPage> {
   @override
   void initState() {
     super.initState();
-    final termColorIdx = locator<SettingStore>().termColorIdx.fetch()!;
+    final termColorIdx = _setting.termColorIdx.fetch()!;
     _termColors = TerminalColorsPlatform.values[termColorIdx].colors;
     initTerminal();
   }
@@ -149,6 +150,8 @@ class _SSHPageState extends State<SSHPage> {
         _terminal,
         controller: _terminalController,
         keyboardType: TextInputType.visiblePassword,
+        textStyle: TerminalStyle.fromTextStyle(
+            TextStyle(fontFamily: getFileName(_setting.fontPath.fetch()))),
         theme: termTheme,
         deleteDetection: isIOS,
         onTapUp: _onTapUp,

@@ -174,6 +174,9 @@ class SZh extends S {
   String get extraArgs => '额外参数';
 
   @override
+  String get failed => '失败';
+
+  @override
   String get feedback => '反馈';
 
   @override
@@ -300,6 +303,9 @@ class SZh extends S {
   String get name => '名称';
 
   @override
+  String get needRestart => '需要重启 App';
+
+  @override
   String get newContainer => '新建容器';
 
   @override
@@ -322,6 +328,9 @@ class SZh extends S {
 
   @override
   String get noUpdateAvailable => '没有可用更新';
+
+  @override
+  String get notSelected => '未选择';
 
   @override
   String get nullToken => '无Token';
@@ -390,6 +399,9 @@ class SZh extends S {
   String reportBugsOnGithubIssue(Object url) {
     return '请到 $url 提交问题';
   }
+
+  @override
+  String get restart => '重启';
 
   @override
   String get restore => '恢复';
@@ -557,7 +569,4 @@ class SZh extends S {
 
   @override
   String get willTakEeffectImmediately => '更改将会立即生效';
-
-  @override
-  String get notSelected => '未选择';
 }

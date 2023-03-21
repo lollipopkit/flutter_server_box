@@ -443,8 +443,10 @@ class _ServerPageState extends State<ServerPage>
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
     await GetIt.I.allReady();
-    await _serverProvider.loadLocalData();
-    await _serverProvider.refreshData();
-    _serverProvider.startAutoRefresh();
+    if (_serverProvider.servers.isEmpty) {
+      await _serverProvider.loadLocalData();
+      await _serverProvider.refreshData();
+      _serverProvider.startAutoRefresh();
+    }
   }
 }

@@ -41,7 +41,7 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
   }
 
   Widget _buildBody() {
-    return Consumer<SftpDownloadProvider>(builder: (__, pro, _) {
+    return Consumer<SftpProvider>(builder: (__, pro, _) {
       if (pro.status.isEmpty) {
         return Center(
           child: Text(_s.sftpNoDownloadTask),

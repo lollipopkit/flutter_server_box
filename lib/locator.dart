@@ -31,7 +31,7 @@ void setupLocatorForProviders() {
   locator.registerSingleton(VirtualKeyboard());
   locator.registerSingleton(SnippetProvider());
   locator.registerSingleton(PrivateKeyProvider());
-  locator.registerSingleton(SftpDownloadProvider());
+  locator.registerSingleton(SftpProvider());
 }
 
 Future<void> setupLocatorForStores() async {
