@@ -159,6 +159,7 @@ Future<void> flutterBuildMacOS() async {
 
 Future<void> flutterBuildAndroid() async {
   await flutterBuild(apkPath, './release/${appName}_build_Arm64.apk', 'apk');
+  await killJava();
 }
 
 Future<void> changeAppleVersion() async {
@@ -169,6 +170,18 @@ Future<void> changeAppleVersion() async {
         .replaceAll(regAppleMarketVer, 'MARKETING_VERSION = 1.0.$build;')
         .replaceAll(regAppleProjectVer, 'CURRENT_PROJECT_VERSION = $build;');
     await file.writeAsString(newContents);
+  }
+}
+
+Future<void> killJava() async {
+  final result = await Process.run('ps', ['-A']);
+  final lines = (result.stdout as String).split('\n');
+  for (final line in lines) {
+    if (line.contains('java')) {
+      final pid = line.split(' ')[0];
+      print('Killing java process: $pid');
+      await Process.run('kill', [pid]);
+    }
   }
 }
 
