@@ -107,7 +107,8 @@ String tabTitleName(BuildContext context, int i) {
 
 Future<void> loadFontFile(String? localPath) async {
   if (localPath == null) return;
-  final name = getFileName(localPath)!;
+  final name = getFileName(localPath);
+  if (name == null) return;
   var fontLoader = FontLoader(name);
   fontLoader.addFont(File(localPath).readAsBytes().byteData);
   await fontLoader.load();
