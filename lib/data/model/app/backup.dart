@@ -9,9 +9,7 @@ class Backup {
   final List<ServerPrivateInfo> spis;
   final List<Snippet> snippets;
   final List<PrivateKeyInfo> keys;
-  final int primaryColor;
-  final int serverStatusUpdateInterval;
-  final int launchPage;
+  final Map<String, String> dockerHosts;
 
   Backup(
     this.version,
@@ -19,9 +17,7 @@ class Backup {
     this.spis,
     this.snippets,
     this.keys,
-    this.primaryColor,
-    this.serverStatusUpdateInterval,
-    this.launchPage,
+    this.dockerHosts,
   );
 
   Backup.fromJson(Map<String, dynamic> json)
@@ -35,9 +31,7 @@ class Backup {
         keys = (json['keys'] as List)
             .map((e) => PrivateKeyInfo.fromJson(e))
             .toList(),
-        primaryColor = json['primaryColor'],
-        serverStatusUpdateInterval = json['serverStatusUpdateInterval'],
-        launchPage = json['launchPage'];
+        dockerHosts = json['dockerHosts'];
 
   Map<String, dynamic> toJson() => {
         'version': version,
@@ -45,8 +39,5 @@ class Backup {
         'spis': spis,
         'snippets': snippets,
         'keys': keys,
-        'primaryColor': primaryColor,
-        'serverStatusUpdateInterval': serverStatusUpdateInterval,
-        'launchPage': launchPage,
       };
 }

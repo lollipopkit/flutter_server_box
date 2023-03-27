@@ -8,4 +8,8 @@ class DockerStore extends PersistentStore {
   void setDockerHost(String id, String host) {
     box.put(id, host);
   }
+
+  Map<String, String> fetch() {
+    return box.toMap().cast<String, String>();
+  }
 }

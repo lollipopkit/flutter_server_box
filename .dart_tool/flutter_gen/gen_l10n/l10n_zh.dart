@@ -38,7 +38,10 @@ class SZh extends S {
   String get backup => '备份';
 
   @override
-  String get backupTip => '导出的数据仅进行了简单加密，请妥善保管。\n除了设置项，恢复的数据不会覆盖现有数据。';
+  String get backupAndRestore => '备份和恢复';
+
+  @override
+  String get backupTip => '导出的数据仅进行了简单加密，请妥善保管。\n恢复的数据不会覆盖现有数据。';
 
   @override
   String get backupVersionNotMatch => '备份版本不匹配，无法恢复';
@@ -228,9 +231,6 @@ class SZh extends S {
 
   @override
   String get import => '导入';
-
-  @override
-  String get importAndExport => '导入或导出';
 
   @override
   String get inputDomainHere => '在这里输入域名';

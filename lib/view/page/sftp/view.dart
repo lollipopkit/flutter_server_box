@@ -302,7 +302,7 @@ class _SFTPPageState extends State<SFTPPage> {
             final prePath = _status.path!.path;
             final remotePath =
                 prePath + (prePath.endsWith('/') ? '' : '/') + name.filename;
-            final local = '${(await sftpDownloadDir).path}$remotePath';
+            final local = '${(await sftpDir).path}$remotePath';
             final pubKeyId = widget.spi.pubKeyId;
 
             locator<SftpProvider>().add(

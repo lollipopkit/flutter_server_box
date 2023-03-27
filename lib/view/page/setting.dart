@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/data/res/path.dart';
 
 import '../../core/utils/misc.dart';
 import '../../core/utils/platform.dart';
@@ -15,6 +14,7 @@ import '../../data/provider/app.dart';
 import '../../data/provider/server.dart';
 import '../../data/res/build_data.dart';
 import '../../data/res/color.dart';
+import '../../data/res/path.dart';
 import '../../data/res/tab.dart';
 import '../../data/res/ui.dart';
 import '../../data/store/setting.dart';
@@ -61,6 +61,7 @@ class _SettingPageState extends State<SettingPage> {
     _nightMode = _setting.themeMode.fetch()!;
     _updateInterval = _setting.serverStatusUpdateInterval.fetch()!.toDouble();
     _maxRetryCount = _setting.maxRetryCount.fetch()!.toDouble();
+    _selectedColorValue = _setting.primaryColor.fetch()!;
   }
 
   @override
@@ -101,8 +102,8 @@ class _SettingPageState extends State<SettingPage> {
       _buildThemeMode(),
       _buildAppColorPreview(),
       _buildLaunchPage(),
-      _buildCheckUpdate(),
       _buildFont(),
+      _buildCheckUpdate(),
     ];
     if (isIOS) {
       children.add(_buildPushToken());

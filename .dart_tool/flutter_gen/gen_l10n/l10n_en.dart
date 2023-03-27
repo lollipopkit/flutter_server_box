@@ -38,7 +38,10 @@ class SEn extends S {
   String get backup => 'Backup';
 
   @override
-  String get backupTip => 'The exported data is simply encrypted. \nPlease keep it safe.\nRestoring will not overwrite existing data (except setting).';
+  String get backupAndRestore => 'Backup and Restore';
+
+  @override
+  String get backupTip => 'The exported data is simply encrypted. \nPlease keep it safe.\nRestoring will not overwrite existing data.';
 
   @override
   String get backupVersionNotMatch => 'Backup version is not match.';
@@ -228,9 +231,6 @@ class SEn extends S {
 
   @override
   String get import => 'Import';
-
-  @override
-  String get importAndExport => 'Import and Export';
 
   @override
   String get inputDomainHere => 'Input Domain here';

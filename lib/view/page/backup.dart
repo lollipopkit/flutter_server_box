@@ -11,9 +11,9 @@ import '../../core/extension/colorx.dart';
 import '../../core/utils/ui.dart';
 import '../../data/model/app/backup.dart';
 import '../../data/res/ui.dart';
+import '../../data/store/docker.dart';
 import '../../data/store/private_key.dart';
 import '../../data/store/server.dart';
-import '../../data/store/setting.dart';
 import '../../data/store/snippet.dart';
 import '../../locator.dart';
 
@@ -22,10 +22,10 @@ const backupFormatVersion = 1;
 class BackupPage extends StatelessWidget {
   BackupPage({Key? key}) : super(key: key);
 
-  final _setting = locator<SettingStore>();
   final _server = locator<ServerStore>();
   final _snippet = locator<SnippetStore>();
   final _privateKey = locator<PrivateKeyStore>();
+  final _dockerHosts = locator<DockerStore>();
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +33,7 @@ class BackupPage extends StatelessWidget {
     final s = S.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: Text(s.importAndExport, style: textSize18),
+        title: Text(s.backupAndRestore, style: textSize18),
       ),
       body: Center(
           child: Column(
@@ -103,9 +103,7 @@ class BackupPage extends StatelessWidget {
             _server.fetch(),
             _snippet.fetch(),
             _privateKey.fetch(),
-            _setting.primaryColor.fetch() ?? Colors.pinkAccent.value,
-            _setting.serverStatusUpdateInterval.fetch() ?? 2,
-            _setting.launchPage.fetch() ?? 0,
+            _dockerHosts.fetch(),
           ),
         ),
       );
@@ -194,10 +192,9 @@ class BackupPage extends StatelessWidget {
               for (final s in backup.keys) {
                 _privateKey.put(s);
               }
-              _setting.primaryColor.put(backup.primaryColor);
-              _setting.serverStatusUpdateInterval
-                  .put(backup.serverStatusUpdateInterval);
-              _setting.launchPage.put(backup.launchPage);
+              for (final k in backup.dockerHosts.keys) {
+                _dockerHosts.setDockerHost(k, backup.dockerHosts[k]!);
+              }
               Navigator.of(context).pop();
               showSnackBar(context, Text(s.restoreSuccess));
             },

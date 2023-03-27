@@ -29,7 +29,7 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
   @override
   void initState() {
     super.initState();
-    sftpDownloadDir.then((dir) {
+    sftpDir.then((dir) {
       _path = PathWithPrefix(dir.path);
       _prefixPath = '${dir.path}/';
       setState(() {});

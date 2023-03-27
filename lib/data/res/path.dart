@@ -7,14 +7,14 @@ Future<Directory> get docDir async {
   if (isAndroid) {
     final dir = await getExternalStorageDirectory();
     if (dir != null) {
-      return Directory('${dir.path}/server_box');
+      return dir;
     }
     // fallthrough to getApplicationDocumentsDirectory
   }
   return await getApplicationDocumentsDirectory();
 }
 
-Future<Directory> get sftpDownloadDir async {
+Future<Directory> get sftpDir async {
   final dir = Directory('${(await docDir).path}/sftp');
   return dir.create(recursive: true);
 }

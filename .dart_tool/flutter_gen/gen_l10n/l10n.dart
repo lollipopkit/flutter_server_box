@@ -159,10 +159,16 @@ abstract class S {
   /// **'Backup'**
   String get backup;
 
+  /// No description provided for @backupAndRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup and Restore'**
+  String get backupAndRestore;
+
   /// No description provided for @backupTip.
   ///
   /// In en, this message translates to:
-  /// **'The exported data is simply encrypted. \nPlease keep it safe.\nRestoring will not overwrite existing data (except setting).'**
+  /// **'The exported data is simply encrypted. \nPlease keep it safe.\nRestoring will not overwrite existing data.'**
   String get backupTip;
 
   /// No description provided for @backupVersionNotMatch.
@@ -506,12 +512,6 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Import'**
   String get import;
-
-  /// No description provided for @importAndExport.
-  ///
-  /// In en, this message translates to:
-  /// **'Import and Export'**
-  String get importAndExport;
 
   /// No description provided for @inputDomainHere.
   ///
