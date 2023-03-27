@@ -5,11 +5,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:toolbox/data/res/color.dart';
 
 import '../../core/extension/colorx.dart';
 import '../../core/utils/ui.dart';
 import '../../data/model/app/backup.dart';
+import '../../data/res/color.dart';
 import '../../data/res/ui.dart';
 import '../../data/store/docker.dart';
 import '../../data/store/private_key.dart';
