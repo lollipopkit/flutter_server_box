@@ -39,12 +39,12 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 
 
 ## 📩 Push
-You need to install [ServerBoxMonitor](https://github.com/lollipopkit/server_box_monitor) on your servers.
+You need to install [ServerBoxMonitor](https://github.com/lollipopkit/server_box_monitor) on your servers.  
 And config `iOS / Webhook / ServerChan` to push server status to your portable device without using ServerBox app.
 
 
 ## 🆘 Help
-If you have any question or feature request, please open a [discussion](https://github.com/lollipopkit/flutter_server_box/discussions/new/choose).
+If you have any question or feature request, please open a [discussion](https://github.com/lollipopkit/flutter_server_box/discussions/new/choose).  
 If ServerBox app has any bug, please open an [issue](https://github.com/lollipopkit/flutter_server_box/issues/new).
 
 
