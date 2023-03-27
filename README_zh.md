@@ -33,15 +33,20 @@
   - [x] `Docker & 包` 管理器
   - [x] 状态图表
   - [x] `Ping` 和 更多
-- [x] 本地化 (英语, 中文)
-  - **欢迎贡献** :)
-  - [怎么贡献?](#l10n)
+- [x] 本地化 ( 英语, 中文 )
+  - 欢迎贡献 :)，[怎么贡献?](#l10n)
 - [x] 桌面端支持
 
 
 ## 📩 推送
 你需要在你的服务器上安装 [ServerBoxMonitor](https://github.com/lollipopkit/server_box_monitor)。  
-并且配置 iOS / Webhook 推送服务，这样，你可以在不使用 ServerBox app 时获取服务器状态。
+并且配置 `iOS / Webhook / Server酱` 推送服务，这样，你可以在不使用 ServerBox app 时获取服务器状态。
+
+
+## 🆘 帮助
+如果你有任何问题或者功能请求，请在 [讨论](https://github.com/lollipopkit/flutter_server_box/discussions/new/choose) 中交流。
+如果 ServerBox app 有任何 bug，请在 [问题](https://github.com/lollipopkit/flutter_server_box/issues/new) 中反馈。
+
 
 ## 📱 截屏
 <table>
