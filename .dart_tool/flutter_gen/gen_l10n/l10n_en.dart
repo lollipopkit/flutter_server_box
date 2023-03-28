@@ -47,6 +47,9 @@ class SEn extends S {
   String get backupVersionNotMatch => 'Backup version is not match.';
 
   @override
+  String get bgRun => 'Run in backgroud';
+
+  @override
   String get cancel => 'Cancel';
 
   @override

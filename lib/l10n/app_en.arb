@@ -13,6 +13,7 @@
   "backupAndRestore": "Backup and Restore",
   "backupTip": "The exported data is simply encrypted. \nPlease keep it safe.\nRestoring will not overwrite existing data.",
   "backupVersionNotMatch": "Backup version is not match.",
+  "bgRun": "Run in backgroud",
   "cancel": "Cancel",
   "choose": "Choose",
   "chooseDestination": "Choose destination",

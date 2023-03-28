@@ -1,8 +1,8 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
+import 'package:toolbox/data/res/misc.dart';
 
 import '../../core/analysis.dart';
 import '../../core/route.dart';
@@ -49,7 +49,6 @@ class _MyHomePageState extends State<MyHomePage>
   late int _selectIndex;
   late double _width;
   late S _s;
-  final _channel = const MethodChannel('tech.lolli.toolbox/app_retain');
 
   @override
   void initState() {
@@ -77,16 +76,25 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.paused) {
-      if (isAndroid) {
-        _channel.invokeMethod('sendToBackground');
-      } else {
-        _serverProvider.setDisconnected();
-        _serverProvider.stopAutoRefresh();
-      }
-    }
-    if (state == AppLifecycleState.resumed) {
-      _serverProvider.startAutoRefresh();
+    if (isDesktop) return;
+
+    switch (state) {
+      case AppLifecycleState.resumed:
+        if (isIOS) {
+          _serverProvider.startAutoRefresh();
+        }
+        break;
+      case AppLifecycleState.paused:
+        if (isAndroid) {
+          // Keep running in background on Android device
+          bgRunChannel.invokeMethod('sendToBackground');
+        } else {
+          _serverProvider.setDisconnected();
+          _serverProvider.stopAutoRefresh();
+        }
+        break;
+      default:
+        break;
     }
   }
 

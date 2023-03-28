@@ -177,6 +177,12 @@ abstract class S {
   /// **'Backup version is not match.'**
   String get backupVersionNotMatch;
 
+  /// No description provided for @bgRun.
+  ///
+  /// In en, this message translates to:
+  /// **'Run in backgroud'**
+  String get bgRun;
+
   /// No description provided for @cancel.
   ///
   /// In en, this message translates to:

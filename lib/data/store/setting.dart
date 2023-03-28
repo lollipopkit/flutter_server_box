@@ -35,4 +35,7 @@ class SettingStore extends PersistentStore {
 
   /// Font file path
   StoreProperty<String> get fontPath => property('fontPath');
+
+  /// Backgroud running (Android)
+  StoreProperty<bool> get bgRun => property('bgRun', defaultValue: true);
 }

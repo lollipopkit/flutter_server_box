@@ -47,6 +47,9 @@ class SZh extends S {
   String get backupVersionNotMatch => '备份版本不匹配，无法恢复';
 
   @override
+  String get bgRun => '后台运行';
+
+  @override
   String get cancel => '取消';
 
   @override

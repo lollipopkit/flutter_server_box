@@ -108,6 +108,9 @@ class _SettingPageState extends State<SettingPage> {
     if (isIOS) {
       children.add(_buildPushToken());
     }
+    if (isAndroid) {
+      children.add(_buildBgRun());
+    }
     return Column(
       children: children.map((e) => RoundRectCard(e)).toList(),
     );
@@ -497,6 +500,13 @@ class _SettingPageState extends State<SettingPage> {
       '${_s.success}\n${_s.needRestart}',
       _s.restart,
       () => rebuildAll(context),
+    );
+  }
+
+  Widget _buildBgRun() {
+    return ListTile(
+      title: Text(_s.bgRun),
+      trailing: buildSwitch(context, _setting.bgRun),
     );
   }
 }

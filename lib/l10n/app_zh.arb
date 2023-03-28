@@ -13,6 +13,7 @@
   "backupAndRestore": "备份和恢复",
   "backupTip": "导出的数据仅进行了简单加密，请妥善保管。\n恢复的数据不会覆盖现有数据。",
   "backupVersionNotMatch": "备份版本不匹配，无法恢复",
+  "bgRun": "后台运行",
   "cancel": "取消",
   "choose": "选择",
   "chooseDestination": "选择目标",
