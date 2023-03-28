@@ -1,11 +1,13 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../core/analysis.dart';
 import '../../core/route.dart';
 import '../../core/update.dart';
+import '../../core/utils/platform.dart';
 import '../../core/utils/ui.dart';
 import '../../data/model/app/dynamic_color.dart';
 import '../../data/model/app/navigation_item.dart';
@@ -47,6 +49,7 @@ class _MyHomePageState extends State<MyHomePage>
   late int _selectIndex;
   late double _width;
   late S _s;
+  final _channel = const MethodChannel('tech.lolli.toolbox/app_retain');
 
   @override
   void initState() {
@@ -75,8 +78,12 @@ class _MyHomePageState extends State<MyHomePage>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.paused) {
-      _serverProvider.setDisconnected();
-      _serverProvider.stopAutoRefresh();
+      if (isAndroid) {
+        _channel.invokeMethod('sendToBackground');
+      } else {
+        _serverProvider.setDisconnected();
+        _serverProvider.stopAutoRefresh();
+      }
     }
     if (state == AppLifecycleState.resumed) {
       _serverProvider.startAutoRefresh();
