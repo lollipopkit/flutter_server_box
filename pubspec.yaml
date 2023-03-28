@@ -54,8 +54,11 @@ dependencies:
   intl: ^0.17.0
   share_plus_web: ^3.1.0
   # xterm: ^3.4.1
-  xterm: 
-    path: ../xterm.dart
+  xterm:
+    # path: ../xterm.dart
+    git:
+      ref: master
+      url: https://github.com/lollipopkit/xterm.dart
   file_picker: ^5.2.5
   plain_notification_token: ^0.0.4
 
