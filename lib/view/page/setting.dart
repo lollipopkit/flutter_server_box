@@ -79,6 +79,9 @@ class _SettingPageState extends State<SettingPage> {
           // Server
           _buildTitle(_s.server),
           _buildServer(),
+          // SSH
+          _buildTitle('SSH'),
+          _buildSSH(),
           const SizedBox(height: 37),
         ],
       ),
@@ -102,7 +105,6 @@ class _SettingPageState extends State<SettingPage> {
       _buildThemeMode(),
       _buildAppColorPreview(),
       _buildLaunchPage(),
-      _buildFont(),
       _buildCheckUpdate(),
     ];
     if (isIOS) {
@@ -121,8 +123,16 @@ class _SettingPageState extends State<SettingPage> {
       children: [
         _buildDistLogoSwitch(),
         _buildUpdateInterval(),
-        _buildTermTheme(),
         _buildMaxRetry(),
+      ].map((e) => RoundRectCard(e)).toList(),
+    );
+  }
+
+  Widget _buildSSH() {
+    return Column(
+      children: [
+        _buildTermTheme(),
+        _buildFont(),
       ].map((e) => RoundRectCard(e)).toList(),
     );
   }
@@ -482,11 +492,17 @@ class _SettingPageState extends State<SettingPage> {
   Future<void> _pickFontFile() async {
     final path = await pickOneFile();
     if (path != null) {
-      final fontDir_ = await fontDir;
-      final fontFile = File(path);
-      final newPath = '${fontDir_.path}/${path.split('/').last}';
-      await fontFile.copy(newPath);
-      _setting.fontPath.put(newPath);
+      // iOS can't copy file to app dir, so we need to use the original path
+      if (isIOS) {
+        _setting.fontPath.put(path);
+      } else {
+        final fontDir_ = await fontDir;
+        final fontFile = File(path);
+        final newPath = '${fontDir_.path}/${path.split('/').last}';
+        await fontFile.copy(newPath);
+        _setting.fontPath.put(newPath);
+      }
+
       setState(() {});
       _showRestartSnackbar();
       return;

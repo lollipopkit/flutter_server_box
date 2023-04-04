@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:toolbox/core/utils/misc.dart';
 
 import '/core/extension/colorx.dart';
 import 'core/utils/ui.dart';
@@ -18,7 +17,6 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     setTransparentNavigationBar(context);
-    final fontName = getFileName(_setting.fontPath.fetch());
     primaryColor = Color(_setting.primaryColor.fetch()!);
 
     final textStyle = TextStyle(color: primaryColor);
@@ -51,7 +49,6 @@ class MyApp extends StatelessWidget {
 
         final theme = ThemeData(
           useMaterial3: false,
-          fontFamily: fontName,
           primaryColor: primaryColor,
           primarySwatch: primarySwatch,
           appBarTheme: appBarTheme,
@@ -64,7 +61,6 @@ class MyApp extends StatelessWidget {
         );
         final darkTheme = ThemeData(
           useMaterial3: false,
-          fontFamily: fontName,
           primaryColor: primaryColor,
           primarySwatch: primarySwatch,
           floatingActionButtonTheme: fabTheme,
