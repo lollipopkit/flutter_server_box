@@ -44,8 +44,11 @@ class _MyHomePageState extends State<MyHomePage>
         AutomaticKeepAliveClientMixin,
         AfterLayoutMixin,
         WidgetsBindingObserver {
-  late final ServerProvider _serverProvider;
+  final _serverProvider = locator<ServerProvider>();
+  final _setting = locator<SettingStore>();
+
   late final PageController _pageController;
+
   late int _selectIndex;
   late double _width;
   late S _s;
@@ -53,9 +56,8 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void initState() {
     super.initState();
-    _serverProvider = locator<ServerProvider>();
     WidgetsBinding.instance.addObserver(this);
-    _selectIndex = locator<SettingStore>().launchPage.fetch()!;
+    _selectIndex = _setting.launchPage.fetch()!;
     _pageController = PageController(initialPage: _selectIndex);
   }
 
@@ -85,7 +87,7 @@ class _MyHomePageState extends State<MyHomePage>
         }
         break;
       case AppLifecycleState.paused:
-        if (isAndroid) {
+        if (isAndroid && _setting.bgRun.fetch()!) {
           // Keep running in background on Android device
           bgRunChannel.invokeMethod('sendToBackground');
         } else {

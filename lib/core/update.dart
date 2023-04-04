@@ -27,8 +27,6 @@ Future<bool> isFileAvailable(String url) async {
 Future<void> doUpdate(BuildContext context, {bool force = false}) async {
   final update = await locator<AppService>().getUpdate();
 
-  locator<AppProvider>().setNewestBuild(update.newest);
-
   final newest = () {
     if (isAndroid) {
       return update.androidbuild;
@@ -39,6 +37,8 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
     }
     return update.newest;
   }();
+
+  locator<AppProvider>().setNewestBuild(newest);
 
   if (!force && newest <= BuildData.build) {
     _logger.info('Update ignored due to current: ${BuildData.build}, '

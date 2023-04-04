@@ -9,7 +9,7 @@ import '../../locator.dart';
 
 /// Must put this func out of any Class.
 ///
-/// Because of this function is called by [compute] in [ServerProvider.genClient].
+/// Because of this function is called by [compute].
 ///
 /// https://stackoverflow.com/questions/51998995/invalid-arguments-illegal-argument-in-isolate-message-object-is-a-closure
 List<SSHKeyPair> loadIndentity(String key) {
