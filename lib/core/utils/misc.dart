@@ -6,6 +6,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:plain_notification_token/plain_notification_token.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:toolbox/data/provider/app.dart';
+import 'package:toolbox/locator.dart';
 
 import '../../view/widget/rebuild.dart';
 import 'platform.dart';
@@ -32,7 +34,10 @@ void copy(String text) {
 }
 
 Future<String?> pickOneFile() async {
+  final app = locator<AppProvider>();
+  app.setMoveBg(false);
   final result = await FilePicker.platform.pickFiles(type: FileType.any);
+  app.setMoveBg(true);
   return result?.files.single.path;
 }
 

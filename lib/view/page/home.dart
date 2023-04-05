@@ -2,6 +2,7 @@ import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
+import 'package:toolbox/data/provider/app.dart';
 import 'package:toolbox/data/res/misc.dart';
 
 import '../../core/analysis.dart';
@@ -87,9 +88,11 @@ class _MyHomePageState extends State<MyHomePage>
         }
         break;
       case AppLifecycleState.paused:
+        // Keep running in background on Android device
         if (isAndroid && _setting.bgRun.fetch()!) {
-          // Keep running in background on Android device
-          bgRunChannel.invokeMethod('sendToBackground');
+          if (locator<AppProvider>().moveBg) {
+            bgRunChannel.invokeMethod('sendToBackground');
+          }
         } else {
           _serverProvider.setDisconnected();
           _serverProvider.stopAutoRefresh();
