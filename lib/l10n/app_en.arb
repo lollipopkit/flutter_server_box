@@ -152,6 +152,7 @@
   "stop": "Stop",
   "success": "Success",
   "sureDelete": "Are you sure to delete [{name}]?",
+  "sureDirEmpty": "Make sure dir is empty.",
   "sureNoPwd": "Are you sure to use no password?",
   "sureToDeleteServer": "Are you sure to delete server [{server}]?",
   "termTheme": "Terminal theme",

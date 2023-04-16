@@ -496,6 +496,9 @@ class SZh extends S {
   }
 
   @override
+  String get sureDirEmpty => '请确保文件夹为空';
+
+  @override
   String get sureNoPwd => '确认使用无密码？';
 
   @override

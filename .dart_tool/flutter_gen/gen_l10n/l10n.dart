@@ -1011,6 +1011,12 @@ abstract class S {
   /// **'Are you sure to delete [{name}]?'**
   String sureDelete(Object name);
 
+  /// No description provided for @sureDirEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Make sure dir is empty.'**
+  String get sureDirEmpty;
+
   /// No description provided for @sureNoPwd.
   ///
   /// In en, this message translates to:

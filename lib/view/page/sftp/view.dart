@@ -326,18 +326,23 @@ class _SFTPPageState extends State<SFTPPage> {
 
   void delete(BuildContext context, SftpName file) {
     Navigator.of(context).pop();
+    final isDir = file.attr.isDirectory;
     showRoundDialog(
       context,
       _s.attention,
-      Text(_s.sureDelete(file.filename)),
+      Text('${_s.sureDelete(file.filename)}\n${isDir ? _s.sureDirEmpty : ''}'),
       [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(_s.cancel),
         ),
         TextButton(
-          onPressed: () {
-            _status.client!.remove(file.filename);
+          onPressed: () async {
+            if (file.attr.isDirectory) {
+              await _status.client!.rmdir(file.filename);
+            } else {
+              await _status.client!.remove(file.filename);
+            }
             Navigator.of(context).pop();
             listDir();
           },

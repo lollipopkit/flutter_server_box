@@ -496,6 +496,9 @@ class SEn extends S {
   }
 
   @override
+  String get sureDirEmpty => 'Make sure dir is empty.';
+
+  @override
   String get sureNoPwd => 'Are you sure to use no password?';
 
   @override
