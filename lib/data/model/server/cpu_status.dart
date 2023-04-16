@@ -114,10 +114,8 @@ List<OneTimeCpuStatus> parseCPU(String raw) {
 
 final cpuTempReg = RegExp(r'(x86_pkg_temp|cpu_thermal)');
 
-String parseCPUTemp(List<String> segments) {
+String parseCPUTemp(String type, String value) {
   const noMatch = "/sys/class/thermal/thermal_zone*/type";
-  final type = segments[0];
-  final value = segments[1];
   // Not support to get CPU temperature
   if (value.contains(noMatch) ||
       type.contains(noMatch) ||

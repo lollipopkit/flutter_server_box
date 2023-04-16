@@ -115,7 +115,7 @@ class _ServerPageState extends State<ServerPage>
             .go(context),
         child: Padding(
           padding: const EdgeInsets.all(13),
-          child: _buildRealServerCard(si.status, si.spi.name, si.cs, si.spi),
+          child: _buildRealServerCard(si.status, si.spi.name, si.state, si.spi),
         ),
         onTap: () => AppRoute(ServerDetailPage(si.spi.id), 'server detail page')
             .go(context),

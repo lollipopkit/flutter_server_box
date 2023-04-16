@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
+import 'package:toolbox/data/model/server/server_status.dart';
 
 import '../../core/extension/uint8list.dart';
 import '../../core/provider_base.dart';
@@ -49,7 +50,7 @@ class ServerProvider extends BusyProvider {
     }
     await Future.wait(_servers.map((s) async {
       if (onlyFailed) {
-        if (s.cs != ServerState.failed) return;
+        if (s.state != ServerState.failed) return;
         _limiter.resetTryTimes(s.spi.id);
       }
       await _getData(s.spi);
@@ -75,7 +76,7 @@ class ServerProvider extends BusyProvider {
 
   void setDisconnected() {
     for (var i = 0; i < _servers.length; i++) {
-      _servers[i].cs = ServerState.disconnected;
+      _servers[i].state = ServerState.disconnected;
     }
     _limiter.clear();
     notifyListeners();
@@ -135,14 +136,14 @@ class ServerProvider extends BusyProvider {
   Future<void> _getData(ServerPrivateInfo spi) async {
     final sid = spi.id;
     final s = getServer(sid);
-    final state = s.cs;
+    final state = s.state;
     if (state.shouldConnect) {
       if (!_limiter.shouldTry(sid)) {
-        s.cs = ServerState.failed;
+        s.state = ServerState.failed;
         notifyListeners();
         return;
       }
-      s.cs = ServerState.connecting;
+      s.state = ServerState.connecting;
       notifyListeners();
 
       try {
@@ -154,7 +155,7 @@ class ServerProvider extends BusyProvider {
         _logger.info('Connected to [$sid] in $spentTime ms.');
 
         // after connected
-        s.cs = ServerState.connected;
+        s.state = ServerState.connected;
         final writeResult = await s.client!.run(installShellCmd).string;
 
         // if write failed
@@ -163,8 +164,8 @@ class ServerProvider extends BusyProvider {
         }
         _limiter.resetTryTimes(sid);
       } catch (e) {
-        s.cs = ServerState.failed;
-        s.status.failedInfo = '$e';
+        s.state = ServerState.failed;
+        s.status.failedInfo = e.toString();
         _logger.warning(e);
       } finally {
         notifyListeners();
@@ -176,7 +177,7 @@ class ServerProvider extends BusyProvider {
     final raw = await s.client!.run("sh $shellPath").string;
     final segments = raw.split(seperator).map((e) => e.trim()).toList();
     if (raw.isEmpty || segments.length == 1) {
-      s.cs = ServerState.failed;
+      s.state = ServerState.failed;
       if (s.status.failedInfo == null || s.status.failedInfo!.isEmpty) {
         s.status.failedInfo = 'Seperate segments failed, raw:\n$raw';
       }
@@ -184,68 +185,20 @@ class ServerProvider extends BusyProvider {
       return;
     }
     // remove first empty segment
+    // for `export xxx` in shell script
     segments.removeAt(0);
 
     try {
-      _getCPU(sid, segments[2], segments[7], segments[8]);
-      _getMem(sid, segments[6]);
-      _getSysVer(sid, segments[1]);
-      _getUpTime(sid, segments[3]);
-      _getDisk(sid, segments[5]);
-      _getTcp(sid, segments[4]);
-      _getNetSpeed(sid, segments[0]);
+      final req = ServerStatusUpdateReq(s.status, segments);
+      s.status = await compute(_getStatus, req);
     } catch (e) {
-      s.cs = ServerState.failed;
+      s.state = ServerState.failed;
       s.status.failedInfo = e.toString();
       _logger.warning(e);
       rethrow;
     } finally {
       notifyListeners();
     }
-  }
-
-  Future<void> _getNetSpeed(String id, String raw) async {
-    final net = await compute(parseNetSpeed, raw);
-    getServer(id).status.netSpeed.update(net);
-  }
-
-  void _getSysVer(String id, String raw) {
-    final s = raw.split('=');
-    if (s.length == 2) {
-      final ver = s[1].replaceAll('"', '').replaceFirst('\n', '');
-      getServer(id).status.sysVer = ver;
-    }
-  }
-
-  Future<void> _getCPU(
-      String id, String raw, String tempType, String tempValue) async {
-    final cpus = await compute(parseCPU, raw);
-    final temp = await compute(parseCPUTemp, [tempType, tempValue]);
-
-    if (cpus.isNotEmpty) {
-      getServer(id).status.cpu.update(cpus, temp);
-    }
-  }
-
-  void _getUpTime(String id, String raw) {
-    getServer(id).status.uptime = raw.split('up ')[1].split(', ')[0];
-  }
-
-  Future<void> _getTcp(String id, String raw) async {
-    final status = await compute(parseTcp, raw);
-    if (status != null) {
-      getServer(id).status.tcp = status;
-    }
-  }
-
-  Future<void> _getDisk(String id, String raw) async {
-    getServer(id).status.disk = await compute(parseDisk, raw);
-  }
-
-  Future<void> _getMem(String id, String raw) async {
-    final s = getServer(id);
-    s.status.mem = await compute(parseMem, raw);
-    s.status.swap = await compute(parseSwap, raw);
   }
 
   Future<String?> runSnippet(String id, Snippet snippet) async {
@@ -280,4 +233,56 @@ class _TryLimiter {
   void clear() {
     _triedTimes.clear();
   }
+}
+
+class ServerStatusUpdateReq {
+  final ServerStatus ss;
+  final List<String> segments;
+
+  const ServerStatusUpdateReq(this.ss, this.segments);
+}
+
+Future<ServerStatus> _getStatus(ServerStatusUpdateReq req) async {
+  final net = parseNetSpeed(req.segments[0]);
+  req.ss.netSpeed.update(net);
+  final sys = parseSysVer(req.segments[1]);
+  if (sys != null) {
+    req.ss.sysVer = sys;
+  }
+  final cpus = parseCPU(req.segments[2]);
+  final cpuTemp = parseCPUTemp(req.segments[7], req.segments[8]);
+  req.ss.cpu.update(cpus, cpuTemp);
+  final tcp = parseTcp(req.segments[4]);
+  if (tcp != null) {
+    req.ss.tcp = tcp;
+  }
+  req.ss.disk = parseDisk(req.segments[5]);
+  req.ss.mem = parseMem(req.segments[6]);
+  final uptime = parseUpTime(req.segments[3]);
+  if (uptime != null) {
+    req.ss.uptime = uptime;
+  }
+  req.ss.swap = parseSwap(req.segments[6]);
+  return req.ss;
+}
+
+// raw:
+//  19:39:15 up 61 days, 18:16,  1 user,  load average: 0.00, 0.00, 0.00
+String? parseUpTime(String raw) {
+  final splitedUp = raw.split('up ');
+  if (splitedUp.length == 2) {
+    final splitedComma = splitedUp[1].split(', ');
+    if (splitedComma.length >= 2) {
+      return splitedComma[0];
+    }
+  }
+  return null;
+}
+
+String? parseSysVer(String raw) {
+  final s = raw.split('=');
+  if (s.length == 2) {
+    return s[1].replaceAll('"', '').replaceFirst('\n', '');
+  }
+  return null;
 }

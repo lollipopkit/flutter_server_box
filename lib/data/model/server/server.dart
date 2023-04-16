@@ -6,9 +6,9 @@ class Server {
   ServerPrivateInfo spi;
   ServerStatus status;
   SSHClient? client;
-  ServerState cs;
+  ServerState state;
 
-  Server(this.spi, this.status, this.client, this.cs);
+  Server(this.spi, this.status, this.client, this.state);
 }
 
 enum ServerState {
