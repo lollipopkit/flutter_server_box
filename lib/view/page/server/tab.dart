@@ -11,7 +11,6 @@ import '../../../data/model/server/server.dart';
 import '../../../data/model/server/server_private_info.dart';
 import '../../../data/model/server/server_status.dart';
 import '../../../data/provider/server.dart';
-import '../../../data/provider/snippet.dart';
 import '../../../data/res/color.dart';
 import '../../../data/res/menu.dart';
 import '../../../data/res/ui.dart';
@@ -19,13 +18,11 @@ import '../../../data/res/url.dart';
 import '../../../data/store/setting.dart';
 import '../../../locator.dart';
 import '../../widget/dropdown_menu.dart';
-import '../../widget/picker.dart';
 import '../../widget/round_rect_card.dart';
 import '../../widget/url_text.dart';
 import '../docker.dart';
 import '../pkg.dart';
 import '../sftp/view.dart';
-import '../snippet/edit.dart';
 import '../ssh.dart';
 import 'detail.dart';
 import 'edit.dart';
@@ -266,7 +263,21 @@ class _ServerPageState extends State<ServerPage>
             AppRoute(SFTPPage(spi), 'SFTP').go(context);
             break;
           case ServerTabMenuItems.snippet:
-            _showSnippetDialog(spi.id);
+            showSnippetDialog(context, _s, (s) async {
+              final result =
+                  await locator<ServerProvider>().runSnippet(spi.id, s);
+              showRoundDialog(
+                context,
+                _s.result,
+                Text(result ?? _s.error, style: textSize13),
+                [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(_s.ok),
+                  )
+                ],
+              );
+            });
             break;
           case ServerTabMenuItems.edit:
             AppRoute(ServerEditPage(spi: spi), 'Edit server info').go(context);
@@ -379,61 +390,6 @@ class _ServerPageState extends State<ServerPage>
           ),
         ],
       ),
-    );
-  }
-
-  void _showSnippetDialog(String id) {
-    final provider = locator<SnippetProvider>();
-    if (provider.snippets.isEmpty) {
-      showRoundDialog(
-        context,
-        _s.attention,
-        Text(_s.noSavedSnippet),
-        [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(_s.ok),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              AppRoute(const SnippetEditPage(), 'edit snippet').go(context);
-            },
-            child: Text(_s.addOne),
-          )
-        ],
-      );
-      return;
-    }
-
-    var snippet = provider.snippets.first;
-    showRoundDialog(
-      context,
-      _s.choose,
-      buildPicker(
-        provider.snippets.map((e) => Text(e.name)).toList(),
-        (idx) => snippet = provider.snippets[idx],
-      ),
-      [
-        TextButton(
-          onPressed: () async {
-            Navigator.of(context).pop();
-            final result = await _serverProvider.runSnippet(id, snippet);
-            showRoundDialog(
-              context,
-              _s.result,
-              Text(result ?? _s.error, style: textSize13),
-              [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(_s.ok),
-                )
-              ],
-            );
-          },
-          child: Text(_s.run),
-        )
-      ],
     );
   }
 

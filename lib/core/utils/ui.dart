@@ -3,11 +3,17 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:toolbox/core/utils/misc.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../data/model/server/snippet.dart';
+import '../../data/provider/snippet.dart';
+import '../../locator.dart';
+import '../../view/page/snippet/edit.dart';
 import '../../view/widget/card_dialog.dart';
+import '../../view/widget/picker.dart';
 import '../persistant_store.dart';
+import '../route.dart';
+import 'misc.dart';
 import 'platform.dart';
 import '../extension/stringx.dart';
 import '../extension/uint8list.dart';
@@ -112,4 +118,49 @@ Future<void> loadFontFile(String? localPath) async {
   var fontLoader = FontLoader(name);
   fontLoader.addFont(File(localPath).readAsBytes().byteData);
   await fontLoader.load();
+}
+
+void showSnippetDialog(
+    BuildContext context, S s, Function(Snippet s) onSelected) {
+  final provider = locator<SnippetProvider>();
+  if (provider.snippets.isEmpty) {
+    showRoundDialog(
+      context,
+      s.attention,
+      Text(s.noSavedSnippet),
+      [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(s.ok),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+            AppRoute(const SnippetEditPage(), 'edit snippet').go(context);
+          },
+          child: Text(s.addOne),
+        )
+      ],
+    );
+    return;
+  }
+
+  var snippet = provider.snippets.first;
+  showRoundDialog(
+    context,
+    s.choose,
+    buildPicker(
+      provider.snippets.map((e) => Text(e.name)).toList(),
+      (idx) => snippet = provider.snippets[idx],
+    ),
+    [
+      TextButton(
+        onPressed: () async {
+          Navigator.of(context).pop();
+          onSelected(snippet);
+        },
+        child: Text(s.ok),
+      )
+    ],
+  );
 }

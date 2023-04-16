@@ -275,8 +275,10 @@ class _SSHPageState extends State<SSHPage> {
         copy(terminalSelected);
         break;
       case VirtualKeyFunc.snippet:
-        // TODO: Handle this case.
-        // _showSnippet();
+        showSnippetDialog(context, _s, (s) {
+          _terminal.textInput(s.script);
+          _terminal.keyInput(TerminalKey.enter);
+        });
         break;
     }
   }
