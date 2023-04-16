@@ -274,6 +274,10 @@ class _SSHPageState extends State<SSHPage> {
       case VirtualKeyFunc.copy:
         copy(terminalSelected);
         break;
+      case VirtualKeyFunc.snippet:
+        // TODO: Handle this case.
+        // _showSnippet();
+        break;
     }
   }
 
@@ -300,27 +304,27 @@ class _SSHPageState extends State<SSHPage> {
     }
     final selected = terminalSelected;
     if (selected.trim().isEmpty) {
-      // _menuController.show(
-      //   context: context,
-      //   contextMenuBuilder: (context) {
-      //     return TextSelectionToolbar(
-      //       anchorAbove: detail.globalPosition,
-      //       anchorBelow: detail.globalPosition,
-      //       children: [
-      //         TextButton(
-      //           child: Text(
-      //             'Paste',
-      //             style: _menuTextStyle,
-      //           ),
-      //           onPressed: () async {
-      //             _paste();
-      //             _menuController.remove();
-      //           },
-      //         )
-      //       ],
-      //     );
-      //   },
-      // );
+      _menuController.show(
+        context: context,
+        contextMenuBuilder: (context) {
+          return TextSelectionToolbar(
+            anchorAbove: details.globalPosition,
+            anchorBelow: details.globalPosition,
+            children: [
+              TextButton(
+                child: Text(
+                  _s.paste,
+                  style: _menuTextStyle,
+                ),
+                onPressed: () async {
+                  _paste();
+                  _menuController.remove();
+                },
+              )
+            ],
+          );
+        },
+      );
       return;
     }
     _menuController.show(

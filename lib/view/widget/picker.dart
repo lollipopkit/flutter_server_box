@@ -25,10 +25,11 @@ Widget buildPicker(List<Widget> items, Function(int idx) onSelected) {
           onSelectedItemChanged: (idx) => onSelected(idx),
           physics: const FixedExtentScrollPhysics(),
           childDelegate: ListWheelChildBuilderDelegate(
-              builder: (context, index) => Center(
-                    child: items[index],
-                  ),
-              childCount: items.length),
+            builder: (context, index) => Center(
+              child: items[index],
+            ),
+            childCount: items.length,
+          ),
         )
       ],
     ),

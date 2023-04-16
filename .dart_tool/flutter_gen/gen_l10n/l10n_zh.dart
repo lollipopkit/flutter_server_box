@@ -351,6 +351,9 @@ class SZh extends S {
   String get open => '打开';
 
   @override
+  String get paste => '粘贴';
+
+  @override
   String get path => '路径';
 
   @override

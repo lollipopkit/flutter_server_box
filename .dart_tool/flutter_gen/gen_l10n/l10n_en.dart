@@ -351,6 +351,9 @@ class SEn extends S {
   String get open => 'Open';
 
   @override
+  String get paste => 'Paste';
+
+  @override
   String get path => 'Path';
 
   @override

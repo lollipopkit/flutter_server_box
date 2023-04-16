@@ -31,7 +31,7 @@ class Backup {
         keys = (json['keys'] as List)
             .map((e) => PrivateKeyInfo.fromJson(e))
             .toList(),
-        dockerHosts = json['dockerHosts'];
+        dockerHosts = json['dockerHosts'] ?? {};
 
   Map<String, dynamic> toJson() => {
         'version': version,

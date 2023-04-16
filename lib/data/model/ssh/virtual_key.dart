@@ -12,4 +12,4 @@ class VirtualKey {
       {this.key, this.toggleable = false, this.icon, this.func});
 }
 
-enum VirtualKeyFunc { toggleIME, backspace, copy, paste }
+enum VirtualKeyFunc { toggleIME, backspace, copy, paste, snippet }

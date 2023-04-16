@@ -741,6 +741,12 @@ abstract class S {
   /// **'Open'**
   String get open;
 
+  /// No description provided for @paste.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste'**
+  String get paste;
+
   /// No description provided for @path.
   ///
   /// In en, this message translates to:
