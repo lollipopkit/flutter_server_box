@@ -42,6 +42,9 @@ class _SSHPageState extends State<SSHPage> {
   late TextStyle _menuTextStyle;
   late TerminalColors _termColors;
   late S _s;
+  late TerminalStyle _terminalStyle;
+  late TerminalUITheme _termUITheme;
+  late TerminalTheme _terminalTheme;
 
   var _isDark = false;
 
@@ -50,6 +53,8 @@ class _SSHPageState extends State<SSHPage> {
     super.initState();
     final termColorIdx = _setting.termColorIdx.fetch()!;
     _termColors = TerminalColorsPlatform.values[termColorIdx].colors;
+    final ts = TextStyle(fontFamily: getFileName(_setting.fontPath.fetch()));
+    _terminalStyle = TerminalStyle.fromTextStyle(ts);
     initTerminal();
   }
 
@@ -60,6 +65,8 @@ class _SSHPageState extends State<SSHPage> {
     _media = MediaQuery.of(context);
     _menuTextStyle = TextStyle(color: contentColor.resolve(context));
     _s = S.of(context)!;
+    _termUITheme = _isDark ? termDarkTheme : termLightTheme;
+    _terminalTheme = _termUITheme.toTerminalTheme(_termColors);
   }
 
   @override
@@ -125,11 +132,10 @@ class _SSHPageState extends State<SSHPage> {
 
   @override
   Widget build(BuildContext context) {
-    final termTheme = _isDark ? termDarkTheme : termLightTheme;
     Widget child = Scaffold(
-      backgroundColor: termTheme.background,
-      body: _buildBody(termTheme.toTerminalTheme(_termColors)),
-      bottomNavigationBar: _buildBottom(termTheme.background),
+      backgroundColor: _termUITheme.background,
+      body: _buildBody(),
+      bottomNavigationBar: _buildBottom(),
     );
     if (isIOS) {
       child = AnnotatedRegion(
@@ -140,7 +146,7 @@ class _SSHPageState extends State<SSHPage> {
     return child;
   }
 
-  Widget _buildBody(TerminalTheme termTheme) {
+  Widget _buildBody() {
     return SizedBox(
       height: _media.size.height -
           _virtualKeyboardHeight -
@@ -150,9 +156,8 @@ class _SSHPageState extends State<SSHPage> {
         _terminal,
         controller: _terminalController,
         keyboardType: TextInputType.visiblePassword,
-        textStyle: TerminalStyle.fromTextStyle(
-            TextStyle(fontFamily: getFileName(_setting.fontPath.fetch()))),
-        theme: termTheme,
+        textStyle: _terminalStyle,
+        theme: _terminalTheme,
         deleteDetection: isIOS,
         onTapUp: _onTapUp,
         autoFocus: true,
@@ -161,14 +166,14 @@ class _SSHPageState extends State<SSHPage> {
     );
   }
 
-  Widget _buildBottom(Color bgColor) {
+  Widget _buildBottom() {
     return SafeArea(
       child: AnimatedPadding(
         padding: _media.viewInsets,
         duration: const Duration(milliseconds: 23),
         curve: Curves.fastOutSlowIn,
         child: Container(
-          color: bgColor,
+          color: _termUITheme.background,
           height: _virtualKeyboardHeight,
           child: Consumer<VirtualKeyboard>(
             builder: (_, __, ___) => _buildVirtualKey(),
@@ -218,7 +223,7 @@ class _SSHPageState extends State<SSHPage> {
             item.text,
             style: TextStyle(
               color: selected ? primaryColor : null,
-              fontSize: 17,
+              fontSize: 15,
             ),
           );
 
@@ -306,27 +311,27 @@ class _SSHPageState extends State<SSHPage> {
     }
     final selected = terminalSelected;
     if (selected.trim().isEmpty) {
-      _menuController.show(
-        context: context,
-        contextMenuBuilder: (context) {
-          return TextSelectionToolbar(
-            anchorAbove: details.globalPosition,
-            anchorBelow: details.globalPosition,
-            children: [
-              TextButton(
-                child: Text(
-                  _s.paste,
-                  style: _menuTextStyle,
-                ),
-                onPressed: () async {
-                  _paste();
-                  _menuController.remove();
-                },
-              )
-            ],
-          );
-        },
-      );
+      // _menuController.show(
+      //   context: context,
+      //   contextMenuBuilder: (context) {
+      //     return TextSelectionToolbar(
+      //       anchorAbove: details.globalPosition,
+      //       anchorBelow: details.globalPosition,
+      //       children: [
+      //         TextButton(
+      //           child: Text(
+      //             _s.paste,
+      //             style: _menuTextStyle,
+      //           ),
+      //           onPressed: () async {
+      //             _paste();
+      //             _menuController.remove();
+      //           },
+      //         )
+      //       ],
+      //     );
+      //   },
+      // );
       return;
     }
     _menuController.show(

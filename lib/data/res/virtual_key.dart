@@ -9,17 +9,18 @@ var virtualKeys = [
   VirtualKey('Home', key: TerminalKey.home),
   VirtualKey('Up', key: TerminalKey.arrowUp, icon: Icons.arrow_upward),
   VirtualKey('End', key: TerminalKey.end),
-  // VirtualKey(
-  //   'Del',
-  //   key: TerminalKey.delete,
-  // ),
-  //VirtualKey('Paste', func: VirtualKeyFunc.paste, icon: Icons.paste),
+  VirtualKey(
+    'Del',
+    key: TerminalKey.delete,
+    icon: Icons.backspace,
+  ),
   VirtualKey('Snippet', func: VirtualKeyFunc.snippet, icon: Icons.code),
   VirtualKey('Tab', key: TerminalKey.tab),
   VirtualKey('Ctrl', key: TerminalKey.control, toggleable: true),
   VirtualKey('Left', key: TerminalKey.arrowLeft, icon: Icons.arrow_back),
   VirtualKey('Down', key: TerminalKey.arrowDown, icon: Icons.arrow_downward),
   VirtualKey('Right', key: TerminalKey.arrowRight, icon: Icons.arrow_forward),
+  VirtualKey('Paste', func: VirtualKeyFunc.paste, icon: Icons.paste),
   VirtualKey(
     'IME',
     func: VirtualKeyFunc.toggleIME,
