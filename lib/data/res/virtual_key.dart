@@ -3,7 +3,7 @@ import 'package:xterm/core.dart';
 
 import '../model/ssh/virtual_key.dart';
 
-var virtualKeys = [
+final virtualKeys = [
   VirtualKey('Esc', key: TerminalKey.escape),
   VirtualKey('Alt', key: TerminalKey.alt, toggleable: true),
   VirtualKey('Home', key: TerminalKey.home),

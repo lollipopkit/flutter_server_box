@@ -4,7 +4,6 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:logging/logging.dart';
 import 'package:r_upgrade/r_upgrade.dart';
 
-import '../data/model/app/update.dart';
 import '../data/provider/app.dart';
 import '../data/res/build_data.dart';
 import '../data/service/app.dart';
@@ -27,16 +26,11 @@ Future<bool> isFileAvailable(String url) async {
 Future<void> doUpdate(BuildContext context, {bool force = false}) async {
   final update = await locator<AppService>().getUpdate();
 
-  final newest = () {
-    if (isAndroid) {
-      return update.androidbuild;
-    } else if (isIOS) {
-      return update.iosbuild;
-    } else if (isMacOS) {
-      return update.macbuild;
-    }
-    return update.newest;
-  }();
+  final newest = update.build.last.current;
+  if (newest == null) {
+    _logger.warning('Update not available on $platform');
+    return;
+  }
 
   locator<AppProvider>().setNewestBuild(newest);
 
@@ -47,21 +41,23 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
   }
   _logger.info('Update available: $newest');
 
-  if (isAndroid && !await isFileAvailable(update.android)) {
+  final url = update.url.current!;
+
+  if (isAndroid && !await isFileAvailable(url)) {
     _logger.warning('Android update file not available');
     return;
   }
 
   final s = S.of(context)!;
 
-  if (update.min > BuildData.build) {
+  if (update.build.min.current! > BuildData.build) {
     showRoundDialog(
       context,
       s.attention,
       Text(s.updateTipTooLow(newest)),
       [
         TextButton(
-          onPressed: () => _doUpdate(update, context, s),
+          onPressed: () => _doUpdate(url, context, s),
           child: Text(s.ok),
         )
       ],
@@ -73,15 +69,15 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
     context,
     '${s.updateTip(newest)} \n${update.changelog}',
     s.update,
-    () => _doUpdate(update, context, s),
+    () => _doUpdate(url, context, s),
   );
 }
 
-Future<void> _doUpdate(AppUpdate update, BuildContext context, S s) async {
+Future<void> _doUpdate(String url, BuildContext context, S s) async {
   if (isAndroid) {
     await RUpgrade.upgrade(
-      update.android,
-      fileName: update.android.split('/').last,
+      url,
+      fileName: url.split('/').last,
       isAutoRequestInstall: true,
     );
   } else if (isIOS) {
