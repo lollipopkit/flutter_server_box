@@ -5,16 +5,14 @@ import 'dart:convert';
 import 'dart:io';
 
 const appName = 'ServerBox';
+
 const buildDataFilePath = 'lib/data/res/build_data.dart';
-
 const apkPath = 'build/app/outputs/flutter-apk/app-release.apk';
-
 const xcarchivePath = 'build/ios/archive/Runner.xcarchive';
-const appleXCConfigPath = '/Runner.xcodeproj/project.pbxproj';
+const appleXCConfigPath = 'Runner.xcodeproj/project.pbxproj';
+
 var regAppleProjectVer = RegExp(r'CURRENT_PROJECT_VERSION = .+;');
 var regAppleMarketVer = RegExp(r'MARKETING_VERSION = .+');
-
-const skslFileSuffix = '.sksl.json';
 
 const buildFuncs = {
   'ios': flutterBuildIOS,
@@ -62,7 +60,8 @@ Future<int> getGitModificationCount() async {
 
 Future<String> getFlutterVersion() async {
   final result = await fvmRun(['flutter', '--version']);
-  return (result.stdout as String);
+  final stdout = result.stdout as String;
+  return stdout.split('\n')[0].split('•')[0].split(' ')[1].trim();
 }
 
 Future<Map<String, dynamic>> getBuildData() async {
@@ -109,8 +108,7 @@ Future<void> flutterBuild(
     'build',
     buildType,
   ];
-  // No sksl cache for macos
-  final skslPath = '$buildType$skslFileSuffix';
+  final skslPath = '$buildType.sksl.json';
   if (await File(skslPath).exists()) {
     args.add('--bundle-sksl-path=$skslPath');
   }
@@ -164,7 +162,7 @@ Future<void> flutterBuildAndroid() async {
 
 Future<void> changeAppleVersion() async {
   for (final path in ['ios', 'macos']) {
-    final file = File(path + appleXCConfigPath);
+    final file = File('$path/$appleXCConfigPath');
     final contents = await file.readAsString();
     final newContents = contents
         .replaceAll(regAppleMarketVer, 'MARKETING_VERSION = 1.0.$build;')
