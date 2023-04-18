@@ -284,7 +284,7 @@ class SZh extends S {
 
   @override
   String madeWithLove(Object myGithub) {
-    return '\n用❤️制作 by $myGithub';
+    return '用❤️制作 by $myGithub';
   }
 
   @override

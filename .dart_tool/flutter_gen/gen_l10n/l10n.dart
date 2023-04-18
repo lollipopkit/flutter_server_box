@@ -612,7 +612,7 @@ abstract class S {
   /// No description provided for @madeWithLove.
   ///
   /// In en, this message translates to:
-  /// **'\nMade with ❤️ by {myGithub}'**
+  /// **'Made with ❤️ by {myGithub}'**
   String madeWithLove(Object myGithub);
 
   /// No description provided for @max.

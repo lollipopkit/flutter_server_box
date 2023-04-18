@@ -284,7 +284,7 @@ class SEn extends S {
 
   @override
   String madeWithLove(Object myGithub) {
-    return '\nMade with ❤️ by $myGithub';
+    return 'Made with ❤️ by $myGithub';
   }
 
   @override

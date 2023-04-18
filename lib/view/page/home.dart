@@ -265,27 +265,44 @@ class _MyHomePageState extends State<MyHomePage>
                   onTap: () => AppRoute(const SnippetListPage(), 'snippet list')
                       .go(context),
                 ),
-                AboutListTile(
-                  icon: const Icon(Icons.text_snippet),
-                  applicationName: '\n${BuildData.name}',
-                  applicationVersion: _versionStr,
-                  applicationIcon: _buildIcon(),
-                  aboutBoxChildren: [
-                    UrlText(
-                        text: _s.madeWithLove(myGithub),
-                        replace: 'lollipopkit'),
-                    UrlText(
-                      text: _s.aboutThanks,
-                    ),
-                    // Thanks
-                    ...thanksMap.keys.map(
-                      (key) => UrlText(
-                        text: thanksMap[key] ?? '',
-                        replace: key,
+                ListTile(
+                  leading: const Icon(Icons.text_snippet),
+                  title: Text(_s.about),
+                  onTap: () {
+                    showRoundDialog(
+                      context,
+                      _s.about,
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          UrlText(
+                              text: _s.madeWithLove(myGithub),
+                              replace: 'lollipopkit'),
+                          UrlText(
+                            text: _s.aboutThanks,
+                          ),
+                          // Thanks
+                          ...thanksMap.keys.map(
+                            (key) => UrlText(
+                              text: thanksMap[key] ?? '',
+                              replace: key,
+                            ),
+                          )
+                        ],
                       ),
-                    )
-                  ],
-                  child: Text(_s.about),
+                      [
+                        TextButton(
+                          onPressed: () => showLicensePage(context: context),
+                          child: Text(_s.license),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: Text(_s.close),
+                        )
+                      ],
+                    );
+                  },
                 )
               ],
             ),

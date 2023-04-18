@@ -85,7 +85,7 @@
   "light": "Light",
   "loadingFiles": "Loading files...",
   "loss": "loss",
-  "madeWithLove": "\nMade with ❤️ by {myGithub}",
+  "madeWithLove": "Made with ❤️ by {myGithub}",
   "max": "max",
   "maxRetryCount": "Number of server reconnection",
   "maxRetryCountEqual0": "Will retry again and again.",

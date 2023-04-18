@@ -85,7 +85,7 @@
   "light": "亮",
   "loadingFiles": "正在加载目录。。。",
   "loss": "丢包率",
-  "madeWithLove": "\n用❤️制作 by {myGithub}",
+  "madeWithLove": "用❤️制作 by {myGithub}",
   "max": "最大",
   "maxRetryCount": "服务器尝试重连次数",
   "maxRetryCountEqual0": "会无限重试",
