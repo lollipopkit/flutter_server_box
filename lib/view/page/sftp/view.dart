@@ -18,6 +18,7 @@ import '../../../data/provider/sftp_download.dart';
 import '../../../data/res/path.dart';
 import '../../../data/store/private_key.dart';
 import '../../../locator.dart';
+import '../../widget/center_loading.dart';
 import '../../widget/fade_in.dart';
 import '../../widget/two_line_text.dart';
 import 'downloading.dart';
@@ -299,9 +300,7 @@ class _SFTPPageState extends State<SFTPPage> {
         TextButton(
           onPressed: () async {
             Navigator.of(context).pop();
-            final prePath = _status.path!.path;
-            final remotePath =
-                prePath + (prePath.endsWith('/') ? '' : '/') + name.filename;
+            final remotePath = _getRemotePath(name);
             final local = '${(await sftpDir).path}$remotePath';
             final pubKeyId = widget.spi.pubKeyId;
 
@@ -330,7 +329,8 @@ class _SFTPPageState extends State<SFTPPage> {
     showRoundDialog(
       context,
       _s.attention,
-      Text('${_s.sureDelete(file.filename)}\n${isDir ? _s.sureDirEmpty : ''}'),
+      Text(
+          '${_s.sureDelete(file.filename)}${isDir ? '\n${_s.sureDirEmpty}' : ''}'),
       [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
@@ -338,12 +338,32 @@ class _SFTPPageState extends State<SFTPPage> {
         ),
         TextButton(
           onPressed: () async {
-            if (file.attr.isDirectory) {
-              await _status.client!.rmdir(file.filename);
-            } else {
-              await _status.client!.remove(file.filename);
-            }
             Navigator.of(context).pop();
+            showRoundDialog(context, 'Waiting...', centerSizedLoading, [],
+                barrierDismiss: false);
+            final remotePath = _getRemotePath(file);
+            try {
+              if (file.attr.isDirectory) {
+                await _status.client!.rmdir(remotePath);
+              } else {
+                await _status.client!.remove(remotePath);
+              }
+              Navigator.of(context).pop();
+            } catch (e) {
+              Navigator.of(context).pop();
+              showRoundDialog(
+                context,
+                _s.attention,
+                Text(e.toString()),
+                [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(_s.ok),
+                  )
+                ],
+              );
+              return;
+            }
             listDir();
           },
           child: Text(
@@ -493,6 +513,11 @@ class _SFTPPageState extends State<SFTPPage> {
         ),
       ],
     );
+  }
+
+  String _getRemotePath(SftpName name) {
+    final prePath = _status.path!.path;
+    return prePath + (prePath.endsWith('/') ? '' : '/') + name.filename;
   }
 
   Future<void> listDir({String? path, SSHClient? client}) async {
