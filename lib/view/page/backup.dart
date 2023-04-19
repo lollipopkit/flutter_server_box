@@ -1,13 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:toolbox/core/utils/misc.dart';
+import 'package:toolbox/data/res/path.dart';
 
 import '../../core/extension/colorx.dart';
+import '../../core/utils/misc.dart';
 import '../../core/utils/ui.dart';
 import '../../data/model/app/backup.dart';
 import '../../data/res/color.dart';
@@ -51,8 +52,20 @@ class BackupPage extends StatelessWidget {
           const SizedBox(
             height: 107,
           ),
-          _buildCard(s.restore, Icons.download, media,
-              () => _showImportDialog(context, s)),
+          _buildCard(s.restore, Icons.download, media, () async {
+            final path = await pickOneFile();
+            if (path == null) {
+              showSnackBar(context, Text(s.notSelected));
+              return;
+            }
+            final file = File(path);
+            if (!file.existsSync()) {
+              showSnackBar(context, Text(s.fileNotExist(path)));
+              return;
+            }
+            final text = await file.readAsString();
+            _import(text, context, s);
+          }),
           const SizedBox(height: 7),
           const Divider(),
           const SizedBox(height: 7),
@@ -60,7 +73,23 @@ class BackupPage extends StatelessWidget {
             s.backup,
             Icons.file_upload,
             media,
-            () => _showExportDialog(context, s),
+            () async {
+              final result = _diyEncrtpt(
+                json.encode(
+                  Backup(
+                    backupFormatVersion,
+                    DateTime.now().toString().split('.').first,
+                    _server.fetch(),
+                    _snippet.fetch(),
+                    _privateKey.fetch(),
+                    _dockerHosts.fetch(),
+                  ),
+                ),
+              );
+              final path = '${(await docDir).path}/srvbox_bak.json';
+              await File(path).writeAsString(result);
+              await shareFiles(context, [path]);
+            },
           )
         ],
       )),
@@ -91,68 +120,6 @@ class BackupPage extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-
-  Future<void> _showExportDialog(BuildContext context, S s) async {
-    final exportFieldController = TextEditingController()
-      ..text = _diyEncrtpt(
-        json.encode(
-          Backup(
-            backupFormatVersion,
-            DateTime.now().toString().split('.').first,
-            _server.fetch(),
-            _snippet.fetch(),
-            _privateKey.fetch(),
-            _dockerHosts.fetch(),
-          ),
-        ),
-      );
-    await showRoundDialog(
-      context,
-      s.export,
-      TextField(
-        decoration: const InputDecoration(
-          labelText: 'JSON',
-        ),
-        maxLines: 7,
-        controller: exportFieldController,
-      ),
-      [
-        TextButton(
-          child: Text(s.copy),
-          onPressed: () {
-            Clipboard.setData(ClipboardData(text: exportFieldController.text));
-            Navigator.pop(context);
-          },
-        ),
-      ],
-    );
-  }
-
-  Future<void> _showImportDialog(BuildContext context, S s) async {
-    final importFieldController = TextEditingController();
-    await showRoundDialog(
-      context,
-      s.import,
-      TextField(
-        decoration: const InputDecoration(
-          labelText: 'JSON',
-        ),
-        maxLines: 3,
-        controller: importFieldController,
-      ),
-      [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(s.cancel),
-        ),
-        TextButton(
-          onPressed: () async =>
-              await _import(importFieldController.text.trim(), context, s),
-          child: const Text('GO'),
-        )
-      ],
     );
   }
 

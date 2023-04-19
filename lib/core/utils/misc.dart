@@ -24,9 +24,14 @@ Future<bool> shareFiles(BuildContext context, List<String> filePaths) async {
   } else {
     text = '${filePaths.length} ${S.of(context)!.files}';
   }
-  final xfiles = filePaths.map((e) => XFile(e)).toList();
-  await Share.shareXFiles(xfiles, text: 'ServerBox -> $text');
+  // ignore: deprecated_member_use
+  await Share.shareFiles(filePaths, text: 'ServerBox -> $text');
   return filePaths.isNotEmpty;
+}
+
+Future<bool> shareText(String text) async {
+  final result = await Share.shareWithResult(text, subject: 'ServerBox backup');
+  return result.status == ShareResultStatus.success;
 }
 
 void copy(String text) {
