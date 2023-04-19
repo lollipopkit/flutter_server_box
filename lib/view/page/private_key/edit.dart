@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/numx.dart';
 import 'package:toolbox/core/utils/misc.dart';
+import 'package:toolbox/core/utils/navigator.dart';
 import 'package:toolbox/data/res/misc.dart';
 
 import '../../../core/utils/server.dart';
@@ -68,7 +69,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
                   tooltip: _s.delete,
                   onPressed: () {
                     _provider.delInfo(widget.info!);
-                    Navigator.of(context).pop();
+                    context.pop();
                   },
                   icon: const Icon(Icons.delete))
               : const SizedBox()
@@ -176,7 +177,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
           } else {
             _provider.addInfo(info);
           }
-          Navigator.of(context).pop();
+          context.pop();
         },
         child: const Icon(Icons.save),
       ),

@@ -2,6 +2,7 @@ import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/core/utils/navigator.dart';
 
 import '../../../core/route.dart';
 import '../../../core/utils/ui.dart';
@@ -74,8 +75,8 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                         TextButton(
                           onPressed: () {
                             _serverProvider.delServer(widget.spi!.id);
-                            Navigator.of(context).pop();
-                            Navigator.of(context).pop();
+                            context.pop();
+                            context.pop();
                           },
                           child: Text(
                             _s.ok,
@@ -83,7 +84,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                           ),
                         ),
                         TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
+                          onPressed: () => context.pop(),
                           child: Text(_s.cancel),
                         )
                       ],
@@ -232,11 +233,11 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
               Text(_s.sureNoPwd),
               [
                 TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
+                  onPressed: () => context.pop(false),
                   child: Text(_s.ok),
                 ),
                 TextButton(
-                  onPressed: () => Navigator.of(context).pop(true),
+                  onPressed: () => context.pop(true),
                   child: Text(_s.cancel),
                 )
               ],
@@ -277,7 +278,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             _serverProvider.updateServer(widget.spi!, spi);
           }
 
-          Navigator.of(context).pop();
+          context.pop();
         },
       ),
     );

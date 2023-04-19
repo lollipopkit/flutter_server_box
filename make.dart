@@ -196,6 +196,8 @@ void main(List<String> args) async {
       final stopwatch = Stopwatch()..start();
       await dartFormat();
       await getGitCommitCount();
+      // always change version to avoid dismatch version between different 
+      // platforms
       await changeAppleVersion();
       await updateBuildData();
       if (args.length > 1) {

@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:toolbox/core/utils/navigator.dart';
 import 'package:toolbox/data/res/path.dart';
 
 import '../../core/extension/colorx.dart';
@@ -145,7 +146,7 @@ class BackupPage extends StatelessWidget {
         Text(s.restoreSureWithDate(backup.date)),
         [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => context.pop(),
             child: Text(s.cancel),
           ),
           TextButton(
@@ -162,6 +163,7 @@ class BackupPage extends StatelessWidget {
               for (final k in backup.dockerHosts.keys) {
                 _dockerHosts.setDockerHost(k, backup.dockerHosts[k]!);
               }
+              context.pop();
               showRoundDialog(
                 context,
                 s.attention,
@@ -172,7 +174,7 @@ class BackupPage extends StatelessWidget {
                     child: Text(s.restart),
                   ),
                   TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () => context.pop(),
                     child: Text(s.cancel),
                   ),
                 ],

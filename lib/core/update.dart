@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:logging/logging.dart';
 import 'package:r_upgrade/r_upgrade.dart';
+import 'package:toolbox/core/utils/navigator.dart';
 
 import '../data/provider/app.dart';
 import '../data/res/build_data.dart';
@@ -85,7 +86,7 @@ Future<void> _doUpdate(String url, BuildContext context, S s) async {
   } else {
     showRoundDialog(context, s.attention, Text(s.platformNotSupportUpdate), [
       TextButton(
-        onPressed: () => Navigator.of(context).pop(),
+        onPressed: () => context.pop(),
         child: Text(s.ok),
       )
     ]);

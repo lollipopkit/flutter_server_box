@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/core/utils/navigator.dart';
 
 import '../../../core/route.dart';
 import '../../../core/utils/ui.dart';
@@ -222,7 +223,7 @@ class _ServerPageState extends State<ServerPage>
             [
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).pop();
+                  context.pop();
                   AppRoute(SSHPage(spi: spi), 'ssh page').go(context);
                 },
                 child: Text(_s.ok),
@@ -272,7 +273,7 @@ class _ServerPageState extends State<ServerPage>
                 Text(result ?? _s.error, style: textSize13),
                 [
                   TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () => context.pop(),
                     child: Text(_s.ok),
                   )
                 ],

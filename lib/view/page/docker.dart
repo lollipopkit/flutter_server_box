@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/core/utils/navigator.dart';
 
 import '../../core/utils/ui.dart';
 import '../../data/model/docker/ps.dart';
@@ -50,7 +51,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
     final client = locator<ServerProvider>().getServer(widget.spi.id).client;
     if (client == null) {
       showSnackBar(context, Text(_s.noClient));
-      Navigator.of(context).pop();
+      context.pop();
       return;
     }
     _docker.init(client, widget.spi.user, onPwdRequest, widget.spi.id);
@@ -119,12 +120,12 @@ class _DockerManagePageState extends State<DockerManagePage> {
       ),
       [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
           child: Text(_s.cancel),
         ),
         TextButton(
           onPressed: () async {
-            Navigator.of(context).pop();
+            context.pop();
             await _showAddCmdPreview(
               _buildAddCmd(
                 imageCtrl.text.trim(),
@@ -146,12 +147,12 @@ class _DockerManagePageState extends State<DockerManagePage> {
       Text(cmd),
       [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
           child: Text(_s.cancel),
         ),
         TextButton(
           onPressed: () async {
-            Navigator.of(context).pop();
+            context.pop();
             final result = await _docker.run(cmd);
             if (result != null) {
               showSnackBar(context, Text(getErrMsg(result) ?? _s.unknownError));
@@ -187,13 +188,13 @@ class _DockerManagePageState extends State<DockerManagePage> {
     if (_textController.text == '') {
       showRoundDialog(context, _s.attention, Text(_s.fieldMustNotEmpty), [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
           child: Text(_s.ok),
         ),
       ]);
       return;
     }
-    Navigator.of(context).pop();
+    context.pop();
   }
 
   Future<String> onPwdRequest() async {
@@ -213,8 +214,8 @@ class _DockerManagePageState extends State<DockerManagePage> {
       [
         TextButton(
           onPressed: () {
-            Navigator.of(context).pop();
-            Navigator.of(context).pop();
+            context.pop();
+            context.pop();
           },
           child: Text(_s.cancel),
         ),
@@ -294,12 +295,12 @@ class _DockerManagePageState extends State<DockerManagePage> {
                     Text(_s.sureDelete(e.repo)),
                     [
                       TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () => context.pop(),
                         child: Text(_s.cancel),
                       ),
                       TextButton(
                         onPressed: () async {
-                          Navigator.of(context).pop();
+                          context.pop();
                           final result = await _docker.run(
                             'docker rmi ${e.id} -f',
                           );
@@ -375,12 +376,12 @@ class _DockerManagePageState extends State<DockerManagePage> {
         onSubmitted: (value) {
           locator<DockerStore>().setDockerHost(widget.spi.id, value.trim());
           _docker.refresh();
-          Navigator.of(context).pop();
+          context.pop();
         },
       ),
       [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
           child: Text(_s.cancel),
         ),
       ],
@@ -478,7 +479,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
               [
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context).pop();
+                    context.pop();
                     _docker.delete(dItem.containerId);
                   },
                   child: Text(_s.ok),

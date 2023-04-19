@@ -1,6 +1,7 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:toolbox/core/utils/navigator.dart';
 
 import '../../../core/utils/ui.dart';
 import '../../../data/model/server/snippet.dart';
@@ -49,7 +50,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
               ? IconButton(
                   onPressed: () {
                     _provider.del(widget.snippet!);
-                    Navigator.of(context).pop();
+                    context.pop();
                   },
                   tooltip: _s.delete,
                   icon: const Icon(Icons.delete))
@@ -93,7 +94,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           } else {
             _provider.add(snippet);
           }
-          Navigator.of(context).pop();
+          context.pop();
         },
       ),
     );

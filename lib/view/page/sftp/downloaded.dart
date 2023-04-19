@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:toolbox/core/utils/navigator.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/extension/stringx.dart';
@@ -144,21 +145,21 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
             leading: const Icon(Icons.delete),
             title: Text(_s.delete),
             onTap: () {
-              Navigator.of(context).pop();
+              context.pop();
               showRoundDialog(
                 context,
                 _s.sureDelete(fileName),
                 const SizedBox(),
                 [
                   TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () => context.pop(),
                     child: Text(_s.cancel),
                   ),
                   TextButton(
                     onPressed: () {
                       file.deleteSync();
                       setState(() {});
-                      Navigator.of(context).pop();
+                      context.pop();
                     },
                     child: Text(_s.ok),
                   ),
@@ -177,7 +178,7 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
       ),
       [
         TextButton(
-          onPressed: (() => Navigator.of(context).pop()),
+          onPressed: (() => context.pop()),
           child: Text(_s.close),
         )
       ],

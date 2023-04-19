@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/core/utils/navigator.dart';
 
 import '../../data/model/pkg/upgrade_info.dart';
 import '../../data/model/server/dist.dart';
@@ -51,7 +52,7 @@ class _PkgManagePageState extends State<PkgManagePage>
     final si = locator<ServerProvider>().getServer(widget.spi.id);
     if (si.client == null) {
       showSnackBar(context, Text(_s.waitConnection));
-      Navigator.of(context).pop();
+      context.pop();
       return;
     }
 
@@ -76,14 +77,14 @@ class _PkgManagePageState extends State<PkgManagePage>
         Text(_s.fieldMustNotEmpty),
         [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => context.pop(),
             child: Text(_s.ok),
           ),
         ],
       );
       return;
     }
-    Navigator.of(context).pop();
+    context.pop();
   }
 
   Future<String> onPwdRequest() async {
@@ -103,8 +104,8 @@ class _PkgManagePageState extends State<PkgManagePage>
       [
         TextButton(
             onPressed: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).pop();
+              context.pop();
+              context.pop();
             },
             child: Text(_s.cancel)),
         TextButton(

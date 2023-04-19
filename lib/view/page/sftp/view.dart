@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:toolbox/core/utils/navigator.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/extension/stringx.dart';
@@ -114,7 +115,7 @@ class _SFTPPageState extends State<SFTPPage> {
                       ),
                       [
                         TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
+                          onPressed: () => context.pop(),
                           child: Text(_s.close),
                         )
                       ],
@@ -135,14 +136,13 @@ class _SFTPPageState extends State<SFTPPage> {
                             labelText: _s.path,
                             hintText: '/',
                           ),
-                          onSubmitted: (value) =>
-                              Navigator.of(context).pop(value),
+                          onSubmitted: (value) => context.pop(value),
                         ),
                       ],
                     ),
                     [
                       TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () => context.pop(),
                         child: Text(_s.cancel),
                       )
                     ],
@@ -280,7 +280,7 @@ class _SFTPPageState extends State<SFTPPage> {
       ),
       [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
           child: Text(_s.cancel),
         )
       ],
@@ -294,12 +294,12 @@ class _SFTPPageState extends State<SFTPPage> {
       Text('${_s.dl2Local(name.filename)}\n${_s.keepForeground}'),
       [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
           child: Text(_s.cancel),
         ),
         TextButton(
           onPressed: () async {
-            Navigator.of(context).pop();
+            context.pop();
             final remotePath = _getRemotePath(name);
             final local = '${(await sftpDir).path}$remotePath';
             final pubKeyId = widget.spi.pubKeyId;
@@ -315,7 +315,7 @@ class _SFTPPageState extends State<SFTPPage> {
                   : locator<PrivateKeyStore>().get(pubKeyId).privateKey,
             );
 
-            Navigator.of(context).pop();
+            context.pop();
           },
           child: Text(_s.download),
         )
@@ -324,7 +324,7 @@ class _SFTPPageState extends State<SFTPPage> {
   }
 
   void delete(BuildContext context, SftpName file) {
-    Navigator.of(context).pop();
+    context.pop();
     final isDir = file.attr.isDirectory;
     showRoundDialog(
       context,
@@ -333,12 +333,12 @@ class _SFTPPageState extends State<SFTPPage> {
           '${_s.sureDelete(file.filename)}${isDir ? '\n${_s.sureDirEmpty}' : ''}'),
       [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
           child: Text(_s.cancel),
         ),
         TextButton(
           onPressed: () async {
-            Navigator.of(context).pop();
+            context.pop();
             showRoundDialog(context, 'Waiting...', centerSizedLoading, [],
                 barrierDismiss: false);
             final remotePath = _getRemotePath(file);
@@ -348,16 +348,16 @@ class _SFTPPageState extends State<SFTPPage> {
               } else {
                 await _status.client!.remove(remotePath);
               }
-              Navigator.of(context).pop();
+              context.pop();
             } catch (e) {
-              Navigator.of(context).pop();
+              context.pop();
               showRoundDialog(
                 context,
                 _s.attention,
                 Text(e.toString()),
                 [
                   TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () => context.pop(),
                     child: Text(_s.ok),
                   )
                 ],
@@ -376,7 +376,7 @@ class _SFTPPageState extends State<SFTPPage> {
   }
 
   void mkdir(BuildContext context) {
-    Navigator.of(context).pop();
+    context.pop();
     final textController = TextEditingController();
     showRoundDialog(
       context,
@@ -389,7 +389,7 @@ class _SFTPPageState extends State<SFTPPage> {
       ),
       [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
           child: Text(_s.cancel),
         ),
         TextButton(
@@ -401,7 +401,7 @@ class _SFTPPageState extends State<SFTPPage> {
                 Text(_s.fieldMustNotEmpty),
                 [
                   TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () => context.pop(),
                     child: Text(_s.ok),
                   ),
                 ],
@@ -410,7 +410,7 @@ class _SFTPPageState extends State<SFTPPage> {
             }
             _status.client!
                 .mkdir('${_status.path!.path}/${textController.text}');
-            Navigator.of(context).pop();
+            context.pop();
             listDir();
           },
           child: Text(
@@ -423,7 +423,7 @@ class _SFTPPageState extends State<SFTPPage> {
   }
 
   void newFile(BuildContext context) {
-    Navigator.of(context).pop();
+    context.pop();
     final textController = TextEditingController();
     showRoundDialog(
       context,
@@ -436,7 +436,7 @@ class _SFTPPageState extends State<SFTPPage> {
       ),
       [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
           child: Text(_s.cancel),
         ),
         TextButton(
@@ -448,7 +448,7 @@ class _SFTPPageState extends State<SFTPPage> {
                 Text(_s.fieldMustNotEmpty),
                 [
                   TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () => context.pop(),
                     child: Text(_s.ok),
                   ),
                 ],
@@ -458,7 +458,7 @@ class _SFTPPageState extends State<SFTPPage> {
             (await _status.client!
                     .open('${_status.path!.path}/${textController.text}'))
                 .writeBytes(Uint8List(0));
-            Navigator.of(context).pop();
+            context.pop();
             listDir();
           },
           child: Text(
@@ -471,7 +471,7 @@ class _SFTPPageState extends State<SFTPPage> {
   }
 
   void rename(BuildContext context, SftpName file) {
-    Navigator.of(context).pop();
+    context.pop();
     final textController = TextEditingController();
     showRoundDialog(
       context,
@@ -483,9 +483,7 @@ class _SFTPPageState extends State<SFTPPage> {
         ),
       ),
       [
-        TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(_s.cancel)),
+        TextButton(onPressed: () => context.pop(), child: Text(_s.cancel)),
         TextButton(
           onPressed: () async {
             if (textController.text == '') {
@@ -495,7 +493,7 @@ class _SFTPPageState extends State<SFTPPage> {
                 Text(_s.fieldMustNotEmpty),
                 [
                   TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () => context.pop(),
                     child: Text(_s.ok),
                   ),
                 ],
@@ -503,7 +501,7 @@ class _SFTPPageState extends State<SFTPPage> {
               return;
             }
             await _status.client!.rename(file.filename, textController.text);
-            Navigator.of(context).pop();
+            context.pop();
             listDir();
           },
           child: Text(
@@ -547,7 +545,7 @@ class _SFTPPageState extends State<SFTPPage> {
         Text(e.toString()),
         [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => context.pop(),
             child: Text(_s.ok),
           )
         ],
