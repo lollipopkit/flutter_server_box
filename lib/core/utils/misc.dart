@@ -12,6 +12,8 @@ import 'package:toolbox/locator.dart';
 import '../../view/widget/rebuild.dart';
 import 'platform.dart';
 
+final _app = locator<AppProvider>();
+
 Future<bool> shareFiles(BuildContext context, List<String> filePaths) async {
   for (final filePath in filePaths) {
     if (!await File(filePath).exists()) {
@@ -24,14 +26,11 @@ Future<bool> shareFiles(BuildContext context, List<String> filePaths) async {
   } else {
     text = '${filePaths.length} ${S.of(context)!.files}';
   }
+  _app.setMoveBg(false);
   // ignore: deprecated_member_use
   await Share.shareFiles(filePaths, text: 'ServerBox -> $text');
+  _app.setMoveBg(true);
   return filePaths.isNotEmpty;
-}
-
-Future<bool> shareText(String text) async {
-  final result = await Share.shareWithResult(text, subject: 'ServerBox backup');
-  return result.status == ShareResultStatus.success;
 }
 
 void copy(String text) {
@@ -39,10 +38,9 @@ void copy(String text) {
 }
 
 Future<String?> pickOneFile() async {
-  final app = locator<AppProvider>();
-  app.setMoveBg(false);
+  _app.setMoveBg(false);
   final result = await FilePicker.platform.pickFiles(type: FileType.any);
-  app.setMoveBg(true);
+  _app.setMoveBg(true);
   return result?.files.single.path;
 }
 
