@@ -41,7 +41,7 @@ class SZh extends S {
   String get backupAndRestore => '备份和恢复';
 
   @override
-  String get backupTip => '导出的数据仅进行了简单加密，请妥善保管。\n恢复的数据不会覆盖现有数据。';
+  String get backupTip => '导出的数据仅进行了简单加密，请妥善保管。';
 
   @override
   String get backupVersionNotMatch => '备份版本不匹配，无法恢复';

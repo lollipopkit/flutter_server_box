@@ -168,7 +168,7 @@ abstract class S {
   /// No description provided for @backupTip.
   ///
   /// In en, this message translates to:
-  /// **'The exported data is simply encrypted. \nPlease keep it safe.\nRestoring will not overwrite existing data.'**
+  /// **'The exported data is simply encrypted. \nPlease keep it safe.'**
   String get backupTip;
 
   /// No description provided for @backupVersionNotMatch.

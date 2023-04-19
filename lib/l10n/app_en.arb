@@ -11,7 +11,7 @@
   "backDir": "Back",
   "backup": "Backup",
   "backupAndRestore": "Backup and Restore",
-  "backupTip": "The exported data is simply encrypted. \nPlease keep it safe.\nRestoring will not overwrite existing data.",
+  "backupTip": "The exported data is simply encrypted. \nPlease keep it safe.",
   "backupVersionNotMatch": "Backup version is not match.",
   "bgRun": "Run in backgroud",
   "cancel": "Cancel",

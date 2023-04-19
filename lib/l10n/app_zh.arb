@@ -11,7 +11,7 @@
   "backDir": "返回上一级",
   "backup": "备份",
   "backupAndRestore": "备份和恢复",
-  "backupTip": "导出的数据仅进行了简单加密，请妥善保管。\n恢复的数据不会覆盖现有数据。",
+  "backupTip": "导出的数据仅进行了简单加密，请妥善保管。",
   "backupVersionNotMatch": "备份版本不匹配，无法恢复",
   "bgRun": "后台运行",
   "cancel": "取消",

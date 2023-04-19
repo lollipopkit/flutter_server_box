@@ -67,7 +67,7 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
 
   showSnackBarWithAction(
     context,
-    '${s.updateTip(newest)} \n${update.changelog}',
+    '${s.updateTip(newest)} \n${update.changelog.current}',
     s.update,
     () => _doUpdate(url, context, s),
   );

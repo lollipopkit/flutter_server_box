@@ -6,9 +6,9 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:plain_notification_token/plain_notification_token.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:toolbox/data/provider/app.dart';
-import 'package:toolbox/locator.dart';
 
+import '../../data/provider/app.dart';
+import '../../locator.dart';
 import '../../view/widget/rebuild.dart';
 import 'platform.dart';
 

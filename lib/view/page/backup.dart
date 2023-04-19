@@ -128,8 +128,7 @@ class BackupPage extends StatelessWidget {
       showSnackBar(context, Text(s.fieldMustNotEmpty));
       return;
     }
-    _importBackup(text, context, s);
-    Navigator.of(context).pop();
+    await _importBackup(text, context, s);
   }
 
   Future<void> _importBackup(String raw, BuildContext context, S s) async {
@@ -163,12 +162,20 @@ class BackupPage extends StatelessWidget {
               for (final k in backup.dockerHosts.keys) {
                 _dockerHosts.setDockerHost(k, backup.dockerHosts[k]!);
               }
-              Navigator.of(context).pop();
-              showSnackBarWithAction(
+              showRoundDialog(
                 context,
-                s.restoreSuccess,
-                s.restart,
-                () => rebuildAll(context),
+                s.attention,
+                Text(s.restoreSuccess),
+                [
+                  TextButton(
+                    onPressed: () => rebuildAll(context),
+                    child: Text(s.restart),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(s.cancel),
+                  ),
+                ],
               );
             },
             child: Text(s.ok),
