@@ -1,22 +1,17 @@
 简体中文 | [English](README.md)
 <!-- Title-->
-<p align="center">
-  <h1 align="center">Server Box</h1>
-</p>
+![flutter_server_box](https://socialify.git.ci/lollipopkit/flutter_server_box/image?description=1&descriptionEditable=%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%8A%B6%E6%80%81%20%26%20%E5%B7%A5%E5%85%B7%E7%AE%B1%E5%BA%94%E7%94%A8%EF%BC%8C%E4%BD%BF%E7%94%A8%20Flutter&font=Jost&forks=1&issues=1&logo=https%3A%2F%2Fraw.githubusercontent.com%2Flollipopkit%2Fflutter_server_box%2Fmain%2Fassets%2Fapp_icon.png&name=1&owner=1&pattern=Plus&pulls=1&stargazers=1&theme=Auto)
 
 <!-- Badges-->
 <p align="center">
   <a href="https://apps.apple.com/app/id1586449703">
     <img style="height: 37px" src="screenshots/appstore.svg">
   </a>
-  <a href="https://github.com/lollipopkit/flutter_server_box/releases/latest">
-    <img style="height: 37px" src="screenshots/dl-android.svg">
-  </a>
-</p>
-
-<p align="center">
   <a href="https://count.ly/f/badge" rel="nofollow">
     <img style="height: 37px" src="https://count.ly/badges/light.svg">
+  </a>
+  <a href="https://github.com/lollipopkit/flutter_server_box/releases/latest">
+    <img style="height: 37px" src="screenshots/dl-android.svg">
   </a>
 </p>
 
