@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
-import 'package:toolbox/core/build_mode.dart';
 
+import '../../core/build_mode.dart';
 import '../../core/extension/uint8list.dart';
 import '../../core/provider_base.dart';
 import '../../core/utils/server.dart';
@@ -18,9 +18,11 @@ import '../res/status.dart';
 import '../store/server.dart';
 import '../store/setting.dart';
 
+typedef ServersMap = Map<String, Server>;
+
 class ServerProvider extends BusyProvider {
-  List<Server> _servers = [];
-  List<Server> get servers => _servers;
+  final ServersMap _servers = {};
+  ServersMap get servers => _servers;
   final _limiter = TryLimiter();
 
   Timer? _timer;
@@ -30,7 +32,9 @@ class ServerProvider extends BusyProvider {
   Future<void> loadLocalData() async {
     setBusyState(true);
     final infos = locator<ServerStore>().fetch();
-    _servers = List.generate(infos.length, (index) => genServer(infos[index]));
+    for (final info in infos) {
+      _servers[info.id] = genServer(info);
+    }
     setBusyState(false);
     notifyListeners();
   }
@@ -45,13 +49,14 @@ class ServerProvider extends BusyProvider {
       await _getData(spi);
       return;
     }
-    await Future.wait(_servers.map((s) async {
+    final futures = _servers.values.map((s) async {
       if (onlyFailed) {
         if (s.state != ServerState.failed) return;
         _limiter.resetTryTimes(s.spi.id);
       }
-      await _getData(s.spi);
-    }));
+      return await _getData(s.spi);
+    });
+    await Future.wait(futures);
   }
 
   Future<void> startAutoRefresh() async {
@@ -71,102 +76,91 @@ class ServerProvider extends BusyProvider {
     }
   }
 
+  bool get isAutoRefreshOn => _timer != null;
+
   void setDisconnected() {
-    for (var i = 0; i < _servers.length; i++) {
-      _servers[i].state = ServerState.disconnected;
+    for (final s in _servers.values) {
+      s.state = ServerState.disconnected;
     }
     _limiter.clear();
     notifyListeners();
   }
 
-  void closeServer({ServerPrivateInfo? spi}) {
-    if (spi == null) {
-      for (var i = 0; i < _servers.length; i++) {
-        _servers[i].client?.close();
-        _servers[i].client = null;
+  void closeServer({String? id}) {
+    if (id == null) {
+      for (final s in _servers.values) {
+        _closeOneServer(s.spi.id);
       }
       return;
     }
-    final idx = getServerIdx(spi.id);
-    _servers[idx].client?.close();
-    _servers[idx].client = null;
+    _closeOneServer(id);
+  }
+
+  void _closeOneServer(String id) {
+    _servers[id]?.client?.close();
+    _servers[id]?.client = null;
   }
 
   void addServer(ServerPrivateInfo spi) {
-    _servers.add(genServer(spi));
+    _servers[spi.id] = genServer(spi);
     notifyListeners();
     locator<ServerStore>().put(spi);
     refreshData(spi: spi);
   }
 
   void delServer(String id) {
-    final idx = getServerIdx(id);
-    _servers[idx].client?.close();
-    _servers.removeAt(idx);
+    _servers.remove(id);
     notifyListeners();
     locator<ServerStore>().delete(id);
   }
 
   Future<void> updateServer(
       ServerPrivateInfo old, ServerPrivateInfo newSpi) async {
-    final idx = _servers.indexWhere((e) => e.spi.id == old.id);
-    if (idx < 0) {
-      throw RangeError.index(idx, _servers);
-    }
-    _servers[idx].spi = newSpi;
+    _servers.remove(old.id);
     locator<ServerStore>().update(old, newSpi);
-    _servers[idx].client = await genClient(newSpi);
+    _servers[newSpi.id] = genServer(newSpi);
+    _servers[newSpi.id]?.client = await genClient(newSpi);
     notifyListeners();
     refreshData(spi: newSpi);
   }
 
-  int getServerIdx(String id) {
-    final idx = _servers.indexWhere((s) => s.spi.id == id);
-    if (idx < 0) {
-      throw Exception('Server not found: $id');
-    }
-    return idx;
-  }
-
-  Server getServer(String id) => _servers[getServerIdx(id)];
-
   Future<void> _getData(ServerPrivateInfo spi) async {
     final sid = spi.id;
-    final s = getServer(sid);
-    final state = s.state;
-    if (!state.shouldConnect) {
-      return;
-    }
-    if (!_limiter.shouldTry(sid)) {
-      s.state = ServerState.failed;
-      notifyListeners();
-      return;
-    }
-    s.state = ServerState.connecting;
-    notifyListeners();
+    final s = _servers[sid];
+    if (s == null) return;
 
     try {
-      // try to connect
-      final time1 = DateTime.now();
-      s.client = await genClient(spi);
-      final time2 = DateTime.now();
-      final spentTime = time2.difference(time1).inMilliseconds;
-      _logger.info('Connected to [$sid] in $spentTime ms.');
+      final state = s.state;
+      if (state.shouldConnect) {
+        if (!_limiter.shouldTry(sid)) {
+          s.state = ServerState.failed;
+          notifyListeners();
+          return;
+        }
+        s.state = ServerState.connecting;
+        notifyListeners();
 
-      // after connected
-      s.state = ServerState.connected;
-      notifyListeners();
+        // try to connect
+        final time1 = DateTime.now();
+        s.client = await genClient(spi);
+        final time2 = DateTime.now();
+        final spentTime = time2.difference(time1).inMilliseconds;
+        _logger.info('Connected to [$sid] in $spentTime ms.');
 
-      // write script to server
-      final writeResult = await s.client!.run(installShellCmd).string;
+        // after connected
+        s.state = ServerState.connected;
+        notifyListeners();
+        // write script to server
+        final writeResult = await s.client!.run(installShellCmd).string;
 
-      // if write failed
-      if (writeResult.isNotEmpty) {
-        throw Exception(writeResult);
+        // if write failed
+        if (writeResult.isNotEmpty) {
+          throw Exception(writeResult);
+        }
+        // reset try times if connected successfully
+        _limiter.resetTryTimes(sid);
       }
 
-      // reset try times if connected successfully
-      _limiter.resetTryTimes(sid);
       if (s.client == null) return;
       // run script to get server status
       final raw = await s.client!.run("sh $shellPath").string;
@@ -181,6 +175,7 @@ class ServerProvider extends BusyProvider {
       // remove first empty segment
       // for `export xxx` in shell script
       segments.removeAt(0);
+
       final req = ServerStatusUpdateReq(s.status, segments);
       s.status = await compute(getStatus, req);
     } catch (e) {
@@ -196,7 +191,7 @@ class ServerProvider extends BusyProvider {
   }
 
   Future<String?> runSnippet(String id, Snippet snippet) async {
-    final client = getServer(id).client;
+    final client = _servers[id]?.client;
     if (client == null) {
       return null;
     }

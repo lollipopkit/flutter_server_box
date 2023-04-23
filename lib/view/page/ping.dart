@@ -156,7 +156,7 @@ class _PingPageState extends State<PingPage>
     }
 
     try {
-      await Future.wait(_serverProvider.servers.map((e) async {
+      await Future.wait(_serverProvider.servers.values.map((e) async {
         if (e.client == null) {
           return;
         }

@@ -49,8 +49,8 @@ class _PkgManagePageState extends State<PkgManagePage>
   @override
   void initState() {
     super.initState();
-    final si = locator<ServerProvider>().getServer(widget.spi.id);
-    if (si.client == null) {
+    final si = locator<ServerProvider>().servers[widget.spi.id];
+    if (si == null || si.client == null) {
       showSnackBar(context, Text(_s.waitConnection));
       context.pop();
       return;

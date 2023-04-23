@@ -53,7 +53,7 @@ class _SFTPPageState extends State<SFTPPage> {
   void initState() {
     super.initState();
     final serverProvider = locator<ServerProvider>();
-    _si = serverProvider.getServer(widget.spi.id);
+    _si = serverProvider.servers[widget.spi.id];
     _client = _si?.client;
   }
 

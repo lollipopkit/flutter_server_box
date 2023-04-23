@@ -84,7 +84,7 @@ class _MyHomePageState extends State<MyHomePage>
 
     switch (state) {
       case AppLifecycleState.resumed:
-        if (isIOS) {
+        if (!_serverProvider.isAutoRefreshOn) {
           _serverProvider.startAutoRefresh();
         }
         break;

@@ -40,9 +40,15 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   @override
   Widget build(BuildContext context) {
     return Consumer<ServerProvider>(builder: (_, provider, __) {
-      return _buildMainPage(
-        provider.getServer(widget.id),
-      );
+      final s = provider.servers[widget.id];
+      if (s == null) {
+        return Scaffold(
+          body: Center(
+            child: Text(_s.noClient),
+          ),
+        );
+      }
+      return _buildMainPage(s);
     });
   }
 

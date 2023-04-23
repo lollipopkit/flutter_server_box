@@ -75,6 +75,7 @@ class _ServerPageState extends State<ServerPage>
                 ),
               );
             }
+            final keys = pro.servers.keys.toList();
             return ListView.separated(
               padding: const EdgeInsets.all(7),
               controller: ScrollController(),
@@ -83,9 +84,9 @@ class _ServerPageState extends State<ServerPage>
                 if (idx == pro.servers.length) {
                   return SizedBox(height: _media.padding.bottom);
                 }
-                return _buildEachServerCard(pro.servers[idx]);
+                return _buildEachServerCard(pro.servers[keys[idx]]);
               },
-              itemCount: pro.servers.length + 1,
+              itemCount: pro.servers.length,
               separatorBuilder: (_, __) => const SizedBox(
                 height: 3,
               ),
@@ -105,7 +106,10 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  Widget _buildEachServerCard(Server si) {
+  Widget _buildEachServerCard(Server? si) {
+    if (si == null) {
+      return const SizedBox();
+    }
     return RoundRectCard(
       InkWell(
         onLongPress: () => AppRoute(
