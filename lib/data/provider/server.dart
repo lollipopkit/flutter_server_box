@@ -2,20 +2,17 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
-import 'package:toolbox/data/model/server/server_status.dart';
+import 'package:toolbox/core/build_mode.dart';
 
 import '../../core/extension/uint8list.dart';
 import '../../core/provider_base.dart';
 import '../../core/utils/server.dart';
 import '../../locator.dart';
-import '../model/server/cpu_status.dart';
-import '../model/server/disk_info.dart';
-import '../model/server/memory.dart';
-import '../model/server/net_speed.dart';
 import '../model/server/server.dart';
 import '../model/server/server_private_info.dart';
+import '../model/server/server_status_update_req.dart';
 import '../model/server/snippet.dart';
-import '../model/server/tcp_status.dart';
+import '../model/server/try_limiter.dart';
 import '../res/server_cmd.dart';
 import '../res/status.dart';
 import '../store/server.dart';
@@ -24,7 +21,7 @@ import '../store/setting.dart';
 class ServerProvider extends BusyProvider {
   List<Server> _servers = [];
   List<Server> get servers => _servers;
-  final _TryLimiter _limiter = _TryLimiter();
+  final _limiter = TryLimiter();
 
   Timer? _timer;
 
@@ -137,65 +134,62 @@ class ServerProvider extends BusyProvider {
     final sid = spi.id;
     final s = getServer(sid);
     final state = s.state;
-    if (state.shouldConnect) {
-      if (!_limiter.shouldTry(sid)) {
-        s.state = ServerState.failed;
-        notifyListeners();
-        return;
-      }
-      s.state = ServerState.connecting;
-      notifyListeners();
-
-      try {
-        // try to connect
-        final time1 = DateTime.now();
-        s.client = await genClient(spi);
-        final time2 = DateTime.now();
-        final spentTime = time2.difference(time1).inMilliseconds;
-        _logger.info('Connected to [$sid] in $spentTime ms.');
-
-        // after connected
-        s.state = ServerState.connected;
-        final writeResult = await s.client!.run(installShellCmd).string;
-
-        // if write failed
-        if (writeResult.isNotEmpty) {
-          throw Exception(writeResult);
-        }
-        _limiter.resetTryTimes(sid);
-      } catch (e) {
-        s.state = ServerState.failed;
-        s.status.failedInfo = e.toString();
-        _logger.warning(e);
-      } finally {
-        notifyListeners();
-      }
+    if (!state.shouldConnect) {
+      return;
     }
-
-    if (s.client == null) return;
-    // run script to get server status
-    final raw = await s.client!.run("sh $shellPath").string;
-    final segments = raw.split(seperator).map((e) => e.trim()).toList();
-    if (raw.isEmpty || segments.length == 1) {
+    if (!_limiter.shouldTry(sid)) {
       s.state = ServerState.failed;
-      if (s.status.failedInfo == null || s.status.failedInfo!.isEmpty) {
-        s.status.failedInfo = 'Seperate segments failed, raw:\n$raw';
-      }
       notifyListeners();
       return;
     }
-    // remove first empty segment
-    // for `export xxx` in shell script
-    segments.removeAt(0);
+    s.state = ServerState.connecting;
+    notifyListeners();
 
     try {
+      // try to connect
+      final time1 = DateTime.now();
+      s.client = await genClient(spi);
+      final time2 = DateTime.now();
+      final spentTime = time2.difference(time1).inMilliseconds;
+      _logger.info('Connected to [$sid] in $spentTime ms.');
+
+      // after connected
+      s.state = ServerState.connected;
+      notifyListeners();
+
+      // write script to server
+      final writeResult = await s.client!.run(installShellCmd).string;
+
+      // if write failed
+      if (writeResult.isNotEmpty) {
+        throw Exception(writeResult);
+      }
+
+      // reset try times if connected successfully
+      _limiter.resetTryTimes(sid);
+      if (s.client == null) return;
+      // run script to get server status
+      final raw = await s.client!.run("sh $shellPath").string;
+      final segments = raw.split(seperator).map((e) => e.trim()).toList();
+      if (raw.isEmpty || segments.length == 1) {
+        s.state = ServerState.failed;
+        if (s.status.failedInfo == null || s.status.failedInfo!.isEmpty) {
+          s.status.failedInfo = 'Seperate segments failed, raw:\n$raw';
+        }
+        return;
+      }
+      // remove first empty segment
+      // for `export xxx` in shell script
+      segments.removeAt(0);
       final req = ServerStatusUpdateReq(s.status, segments);
-      s.status = await compute(_getStatus, req);
+      s.status = await compute(getStatus, req);
     } catch (e) {
       s.state = ServerState.failed;
       s.status.failedInfo = e.toString();
       _logger.warning(e);
-      rethrow;
+      if (BuildMode.isDebug) {
+        rethrow;
+      }
     } finally {
       notifyListeners();
     }
@@ -208,81 +202,4 @@ class ServerProvider extends BusyProvider {
     }
     return await client.run(snippet.script).string;
   }
-}
-
-class _TryLimiter {
-  final Map<String, int> _triedTimes = {};
-
-  bool shouldTry(String id) {
-    final maxCount = locator<SettingStore>().maxRetryCount.fetch()!;
-    if (maxCount <= 0) {
-      return true;
-    }
-    final times = _triedTimes[id] ?? 0;
-    if (times >= maxCount) {
-      return false;
-    }
-    _triedTimes[id] = times + 1;
-    return true;
-  }
-
-  void resetTryTimes(String id) {
-    _triedTimes[id] = 0;
-  }
-
-  void clear() {
-    _triedTimes.clear();
-  }
-}
-
-class ServerStatusUpdateReq {
-  final ServerStatus ss;
-  final List<String> segments;
-
-  const ServerStatusUpdateReq(this.ss, this.segments);
-}
-
-Future<ServerStatus> _getStatus(ServerStatusUpdateReq req) async {
-  final net = parseNetSpeed(req.segments[0]);
-  req.ss.netSpeed.update(net);
-  final sys = parseSysVer(req.segments[1]);
-  if (sys != null) {
-    req.ss.sysVer = sys;
-  }
-  final cpus = parseCPU(req.segments[2]);
-  final cpuTemp = parseCPUTemp(req.segments[7], req.segments[8]);
-  req.ss.cpu.update(cpus, cpuTemp);
-  final tcp = parseTcp(req.segments[4]);
-  if (tcp != null) {
-    req.ss.tcp = tcp;
-  }
-  req.ss.disk = parseDisk(req.segments[5]);
-  req.ss.mem = parseMem(req.segments[6]);
-  final uptime = parseUpTime(req.segments[3]);
-  if (uptime != null) {
-    req.ss.uptime = uptime;
-  }
-  req.ss.swap = parseSwap(req.segments[6]);
-  return req.ss;
-}
-
-// raw:
-//  19:39:15 up 61 days, 18:16,  1 user,  load average: 0.00, 0.00, 0.00
-String? parseUpTime(String raw) {
-  final splitedUp = raw.split('up ');
-  if (splitedUp.length == 2) {
-    final splitedComma = splitedUp[1].split(', ');
-    if (splitedComma.length >= 2) {
-      return splitedComma[0];
-    }
-  }
-  return null;
-}
-
-String? parseSysVer(String raw) {
-  final s = raw.split('=');
-  if (s.length == 2) {
-    return s[1].replaceAll('"', '').replaceFirst('\n', '');
-  }
-  return null;
 }
