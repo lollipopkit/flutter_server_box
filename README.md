@@ -1,17 +1,19 @@
 English | [简体中文](README_zh.md)
 <!-- Title-->
-![flutter_server_box](https://socialify.git.ci/lollipopkit/flutter_server_box/image?description=1&font=Jost&forks=1&issues=1&logo=https%3A%2F%2Fraw.githubusercontent.com%2Flollipopkit%2Fflutter_server_box%2Fmain%2Fassets%2Fapp_icon.png&name=1&owner=1&pattern=Plus&pulls=1&stargazers=1&theme=Auto)
+<p align="center">
+  <img src="imgs/flutter_server_box.svg">
+</p>
 
 <!-- Badges-->
 <p align="center">
   <a href="https://apps.apple.com/app/id1586449703">
-    <img style="height: 37px" src="screenshots/appstore.svg">
+    <img style="height: 37px" src="imgs/appstore.svg">
   </a>
   <a href="https://count.ly/f/badge" rel="nofollow">
-    <img style="height: 37px" src="https://count.ly/badges/light.svg">
+    <img style="height: 37px" src="https://count.ly/badges/dark.svg">
   </a>
   <a href="https://github.com/lollipopkit/flutter_server_box/releases/latest">
-    <img style="height: 37px" src="screenshots/dl-android.svg">
+    <img style="height: 37px" src="imgs/dl-android.svg">
   </a>
 </p>
 
@@ -47,32 +49,32 @@ If ServerBox app has any bug, please open an [issue](https://github.com/lollipop
 <table>
   <tr>
     <td>
-	    <img width="200px" src="screenshots/server.jpg">
+	    <img width="200px" src="imgs/server.jpg">
     </td>
     <td>
-	    <img width="200px" src="screenshots/detail.jpg">
+	    <img width="200px" src="imgs/detail.jpg">
     </td>
     <td>
-	    <img width="200px" src="screenshots/ssh.jpg">
+	    <img width="200px" src="imgs/ssh.jpg">
     </td>
     <td>
-	    <img width="200px" src="screenshots/apt.png">
+	    <img width="200px" src="imgs/apt.png">
     </td>
   </tr>
 </table>
 <table>
   <tr>
     <td>
-	    <img width="200px" src="screenshots/ping.png">
+	    <img width="200px" src="imgs/ping.png">
     </td>
     <td>
-	    <img width="200px" src="screenshots/sftp.jpg">
+	    <img width="200px" src="imgs/sftp.jpg">
     </td>
     <td>
-	    <img width="200px" src="screenshots/docker.jpg">
+	    <img width="200px" src="imgs/docker.jpg">
     </td>
     <td>
-	    <img width="200px" src="screenshots/convert.png">
+	    <img width="200px" src="imgs/convert.png">
     </td>
   </tr>
 </table>
