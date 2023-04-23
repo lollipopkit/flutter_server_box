@@ -36,8 +36,7 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 
 
 ## 📩 Push
-You need to install [ServerBoxMonitor](https://github.com/lollipopkit/server_box_monitor) on your servers.  
-And config `iOS / Webhook / ServerChan` to push server status to your portable device without using ServerBox app.
+In order to push  server status to your portable device without opening ServerBox app, you need to install [ServerBoxMonitor](https://github.com/lollipopkit/server_box_monitor) on your servers, and config `iOS / Webhook / ServerChan`.
 
 
 ## 🆘 Help

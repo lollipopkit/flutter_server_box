@@ -36,8 +36,7 @@
 
 
 ## 📩 推送
-你需要在你的服务器上安装 [ServerBoxMonitor](https://github.com/lollipopkit/server_box_monitor)。    
-并且配置 `iOS / Webhook / Server酱` 推送服务，这样，你可以在不使用 ServerBox app 时获取服务器状态。
+为了可以在不使用 ServerBox app 时获取服务器状态，你需要在你的服务器上安装 [ServerBoxMonitor](https://github.com/lollipopkit/server_box_monitor)，并且配置 `iOS / Webhook / Server酱` 推送服务。
 
 
 ## 🆘 帮助
@@ -88,7 +87,7 @@
 
 
 ## l10n
-1. Fork本项目，并Clone你Fork的项目至你的电脑
+1. Fork 本项目，并 Clone 你 Fork 的项目至你的电脑
 2. 在 `lib/l10n/` 文件夹内创建 `.arb` 本地化文件
    - 文件名应该类似 `intl_XX.arb`,  `XX` 是语言标识码。 例如 `intl_en.arb` 是给英语的， `intl_zh.arb` 是给中文的
 3. 向 `.arb` 本地化文件添加内容。 你可以查看 `intl_en.arb` 和 `intl_zh.arb` 的内容，并理解其含义，来创建新的本地化文件
