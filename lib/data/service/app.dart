@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:toolbox/data/model/app/update.dart';
-import 'package:toolbox/data/res/url.dart';
+
+import '../model/app/update.dart';
+import '../res/url.dart';
 
 class AppService {
   Future<AppUpdate> getUpdate() async {

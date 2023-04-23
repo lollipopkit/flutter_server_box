@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:logging/logging.dart';
 import 'package:r_upgrade/r_upgrade.dart';
-import 'package:toolbox/core/utils/navigator.dart';
 
 import '../data/provider/app.dart';
 import '../data/res/build_data.dart';
 import '../data/service/app.dart';
 import '../locator.dart';
+import 'utils/navigator.dart';
 import 'utils/platform.dart';
 import 'utils/ui.dart';
 
