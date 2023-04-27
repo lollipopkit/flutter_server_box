@@ -15,7 +15,7 @@ class ServerStatusUpdateReq {
 Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
   final net = parseNetSpeed(req.segments[0]);
   req.ss.netSpeed.update(net);
-  final sys = _parseSysVer(req.segments[1]);
+  final sys = _parseSysVer(req.segments[1], req.segments[9]);
   if (sys != null) {
     req.ss.sysVer = sys;
   }
@@ -49,10 +49,11 @@ String? _parseUpTime(String raw) {
   return null;
 }
 
-String? _parseSysVer(String raw) {
+String? _parseSysVer(String raw, String hostname) {
   final s = raw.split('=');
   if (s.length == 2) {
     return s[1].replaceAll('"', '').replaceFirst('\n', '');
   }
+  if (hostname.isNotEmpty) return hostname;
   return null;
 }
