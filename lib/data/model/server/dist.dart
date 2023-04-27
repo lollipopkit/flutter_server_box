@@ -8,6 +8,7 @@ enum Dist {
   wrt,
   armbian,
   arch,
+  alpine,
   rocky;
 
   String? get iconPath {
