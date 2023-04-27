@@ -33,11 +33,20 @@ List<DiskInfo> parseDisk(String raw) {
   final list = <DiskInfo>[];
   final items = raw.split('\n');
   items.removeAt(0);
+  var pathCache = '';
   for (var item in items) {
     if (item.isEmpty) {
       continue;
     }
     final vals = item.split(numReg);
+    if (vals.length == 1) {
+      pathCache = vals[0];
+      continue;
+    }
+    if (pathCache != '') {
+      vals[0] = pathCache;
+      pathCache = '';
+    }
     list.add(DiskInfo(
       vals[0],
       vals[5],
