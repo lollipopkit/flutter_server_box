@@ -29,4 +29,6 @@ echo $seperator
 cat /sys/class/thermal/thermal_zone*/type
 echo $seperator
 cat /sys/class/thermal/thermal_zone*/temp
+echo $seperator
+hostname
 """;

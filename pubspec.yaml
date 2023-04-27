@@ -100,6 +100,8 @@ flutter:
     - assets/linux/opensuse.png
     - assets/linux/wrt.png
     - assets/linux/armbian.png
+    - assets/linux/alpine.png
+    - assets/linux/rocky.png
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
   # An image asset can refer to one or more resolution-specific "variants", see
