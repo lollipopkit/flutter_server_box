@@ -25,6 +25,9 @@ class UpgradePkgInfo {
       case PkgManager.opkg:
         _parseOpkg(raw);
         break;
+      case PkgManager.apk:
+        _parseApk(raw);
+        break;
       default:
         throw Exception('Unsupported pkg type: $_mgr');
     }
@@ -71,5 +74,16 @@ class UpgradePkgInfo {
     nowVersion = parts[1];
     newVersion = parts[2];
     arch = '';
+  }
+
+  // libcrypto3-3.0.8-r4 x86_64 {openssl} (Apache-2.0) [upgradable from: libcrypto3-3.0.8-r3]
+  void _parseApk(String raw) {
+    final parts = raw.split(' ');
+    final len = parts.length;
+    newVersion = parts[len - 1];
+    nowVersion = parts[0];
+    newVersion = newVersion.substring(0, newVersion.length - 1);
+    package = nowVersion;
+    arch = parts[1];
   }
 }

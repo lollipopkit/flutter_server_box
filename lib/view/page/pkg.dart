@@ -204,6 +204,7 @@ class _PkgManagePageState extends State<PkgManagePage>
         overflow: TextOverflow.ellipsis,
         style: grey,
       ),
+      initiallyExpanded: true,
       children: apt.upgradeLog == null
           ? [
               TextButton(
@@ -225,11 +226,17 @@ class _PkgManagePageState extends State<PkgManagePage>
   }
 
   Widget _buildUpdateItem(UpgradePkgInfo info, PkgProvider apt) {
+    final t = () {
+      if (info.nowVersion.isNotEmpty && info.newVersion.isNotEmpty) {
+        return '${info.nowVersion} -> ${info.newVersion}';
+      }
+      return info.newVersion;
+    }();
     return ListTile(
       title: Text(info.package),
       subtitle: Text(
-        '${info.nowVersion} -> ${info.newVersion}',
-        style: grey,
+        t,
+        style: grey
       ),
     );
   }
