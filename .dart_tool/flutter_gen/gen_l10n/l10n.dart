@@ -183,6 +183,12 @@ abstract class S {
   /// **'Run in backgroud'**
   String get bgRun;
 
+  /// No description provided for @canPullRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'You can pull to refresh.'**
+  String get canPullRefresh;
+
   /// No description provided for @cancel.
   ///
   /// In en, this message translates to:

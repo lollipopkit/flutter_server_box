@@ -14,6 +14,7 @@
   "backupTip": "导出的数据仅进行了简单加密，请妥善保管。",
   "backupVersionNotMatch": "备份版本不匹配，无法恢复",
   "bgRun": "后台运行",
+  "canPullRefresh": "可以下拉刷新",
   "cancel": "取消",
   "choose": "选择",
   "chooseDestination": "选择目标",

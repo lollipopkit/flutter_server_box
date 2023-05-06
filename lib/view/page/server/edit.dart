@@ -68,10 +68,9 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
               ? IconButton(
                   onPressed: () {
                     showRoundDialog(
-                      context,
-                      _s.attention,
-                      Text(_s.sureToDeleteServer(widget.spi!.name)),
-                      [
+                      context: context,
+                      child: Text(_s.sureToDeleteServer(widget.spi!.name)),
+                      actions: [
                         TextButton(
                           onPressed: () {
                             _serverProvider.delServer(widget.spi!.id);
@@ -148,10 +147,11 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                 hint: 'root',
               ),
             ),
-            const SizedBox(height: 7),
+            width7,
             Row(
               children: [
                 Text(_s.keyAuth),
+                width13,
                 Switch(
                   value: usePublicKey,
                   onChanged: (val) => setState(() => usePublicKey = val),
@@ -228,10 +228,9 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
           }
           if (!usePublicKey && _passwordController.text == '') {
             final cancel = await showRoundDialog<bool>(
-              context,
-              _s.attention,
-              Text(_s.sureNoPwd),
-              [
+              context: context,
+              child: Text(_s.sureNoPwd),
+              actions: [
                 TextButton(
                   onPressed: () => context.pop(false),
                   child: Text(_s.ok),

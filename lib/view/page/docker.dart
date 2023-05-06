@@ -89,9 +89,9 @@ class _DockerManagePageState extends State<DockerManagePage> {
     final nameCtrl = TextEditingController();
     final argsCtrl = TextEditingController();
     await showRoundDialog(
-      context,
-      _s.newContainer,
-      Column(
+      context: context,
+      title: Text(_s.newContainer),
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
@@ -118,7 +118,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
           ),
         ],
       ),
-      [
+      actions: [
         TextButton(
           onPressed: () => context.pop(),
           child: Text(_s.cancel),
@@ -142,10 +142,10 @@ class _DockerManagePageState extends State<DockerManagePage> {
 
   Future<void> _showAddCmdPreview(String cmd) async {
     await showRoundDialog(
-      context,
-      _s.preview,
-      Text(cmd),
-      [
+      context: context,
+      title: Text(_s.preview),
+      child: Text(cmd),
+      actions: [
         TextButton(
           onPressed: () => context.pop(),
           child: Text(_s.cancel),
@@ -186,12 +186,16 @@ class _DockerManagePageState extends State<DockerManagePage> {
 
   void onSubmitted() {
     if (_textController.text == '') {
-      showRoundDialog(context, _s.attention, Text(_s.fieldMustNotEmpty), [
-        TextButton(
-          onPressed: () => context.pop(),
-          child: Text(_s.ok),
-        ),
-      ]);
+      showRoundDialog(
+        context: context,
+        child: Text(_s.fieldMustNotEmpty),
+        actions: [
+          TextButton(
+            onPressed: () => context.pop(),
+            child: Text(_s.ok),
+          ),
+        ],
+      );
       return;
     }
     context.pop();
@@ -200,9 +204,9 @@ class _DockerManagePageState extends State<DockerManagePage> {
   Future<String> onPwdRequest() async {
     if (!mounted) return '';
     await showRoundDialog(
-      context,
-      widget.spi.user,
-      TextField(
+      context: context,
+      title: Text(widget.spi.user),
+      child: TextField(
         controller: _textController,
         keyboardType: TextInputType.visiblePassword,
         obscureText: true,
@@ -211,7 +215,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
           labelText: _s.pwd,
         ),
       ),
-      [
+      actions: [
         TextButton(
           onPressed: () {
             context.pop();
@@ -290,10 +294,9 @@ class _DockerManagePageState extends State<DockerManagePage> {
                 icon: const Icon(Icons.delete),
                 onPressed: () async {
                   showRoundDialog(
-                    context,
-                    _s.attention,
-                    Text(_s.sureDelete(e.repo)),
-                    [
+                    context: context,
+                    child: Text(_s.sureDelete(e.repo)),
+                    actions: [
                       TextButton(
                         onPressed: () => context.pop(),
                         child: Text(_s.cancel),
@@ -366,9 +369,9 @@ class _DockerManagePageState extends State<DockerManagePage> {
 
   Future<void> _showEditHostDialog() async {
     await showRoundDialog(
-      context,
-      _s.dockerEditHost,
-      TextField(
+      context: context,
+      title: Text(_s.dockerEditHost),
+      child: TextField(
         maxLines: 1,
         autocorrect: false,
         controller:
@@ -379,7 +382,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
           context.pop();
         },
       ),
-      [
+      actions: [
         TextButton(
           onPressed: () => context.pop(),
           child: Text(_s.cancel),
@@ -473,10 +476,9 @@ class _DockerManagePageState extends State<DockerManagePage> {
         switch (item) {
           case DockerMenuItems.rm:
             showRoundDialog(
-              context,
-              _s.attention,
-              Text(_s.sureDelete(dItem.name)),
-              [
+              context: context,
+              child: Text(_s.sureDelete(dItem.name)),
+              actions: [
                 TextButton(
                   onPressed: () {
                     context.pop();

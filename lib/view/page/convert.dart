@@ -124,7 +124,7 @@ class _ConvertPageState extends State<ConvertPage>
               onPressed: () => Clipboard.setData(
                 ClipboardData(
                   text: _textEditingControllerResult.text == ''
-                      ? ' '
+                      ? ''
                       : _textEditingControllerResult.text,
                 ),
               ),

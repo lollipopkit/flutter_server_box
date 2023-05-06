@@ -50,6 +50,9 @@ class SZh extends S {
   String get bgRun => '后台运行';
 
   @override
+  String get canPullRefresh => '可以下拉刷新';
+
+  @override
   String get cancel => '取消';
 
   @override

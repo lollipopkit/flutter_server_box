@@ -72,10 +72,9 @@ class _PkgManagePageState extends State<PkgManagePage>
   void onSubmitted() {
     if (_textController.text == '') {
       showRoundDialog(
-        context,
-        _s.attention,
-        Text(_s.fieldMustNotEmpty),
-        [
+        context: context,
+        child: Text(_s.fieldMustNotEmpty),
+        actions: [
           TextButton(
             onPressed: () => context.pop(),
             child: Text(_s.ok),
@@ -90,9 +89,9 @@ class _PkgManagePageState extends State<PkgManagePage>
   Future<String> onPwdRequest() async {
     if (!mounted) return '';
     await showRoundDialog(
-      context,
-      widget.spi.user,
-      TextField(
+      context: context,
+      title: Text(widget.spi.user),
+      child: TextField(
         controller: _textController,
         keyboardType: TextInputType.visiblePassword,
         obscureText: true,
@@ -101,7 +100,7 @@ class _PkgManagePageState extends State<PkgManagePage>
           labelText: _s.pwd,
         ),
       ),
-      [
+      actions: [
         TextButton(
             onPressed: () {
               context.pop();
@@ -234,10 +233,7 @@ class _PkgManagePageState extends State<PkgManagePage>
     }();
     return ListTile(
       title: Text(info.package),
-      subtitle: Text(
-        t,
-        style: grey
-      ),
+      subtitle: Text(t, style: grey),
     );
   }
 }

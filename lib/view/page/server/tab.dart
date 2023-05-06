@@ -166,12 +166,16 @@ class _ServerPageState extends State<ServerPage>
                   hasError
                       ? GestureDetector(
                           onTap: () => showRoundDialog(
-                              context, _s.error, Text(ss.failedInfo ?? ''), []),
+                            context: context,
+                            title: Text(_s.error),
+                            child: Text(ss.failedInfo ?? ''),
+                          ),
                           child: Text(
                             _s.clickSee,
                             style: style,
                             textScaleFactor: 1.0,
-                          ))
+                          ),
+                        )
                       : Text(topRightStr, style: style, textScaleFactor: 1.0),
                   const SizedBox(width: 9),
                   _buildSSHBtn(spi),
@@ -218,15 +222,15 @@ class _ServerPageState extends State<ServerPage>
       onTap: () async {
         if (_settingStore.firstTimeUseSshTerm.fetch()!) {
           await showRoundDialog(
-            context,
-            _s.attention,
-            UrlText(
+            context: context,
+            child: UrlText(
               text: _s.sshTip(issueUrl),
               replace: 'Github Issue',
             ),
-            [
+            actions: [
               TextButton(
                 onPressed: () {
+                  _settingStore.firstTimeUseSshTerm.put(false);
                   context.pop();
                   AppRoute(SSHPage(spi: spi), 'ssh page').go(context);
                 },
@@ -234,7 +238,6 @@ class _ServerPageState extends State<ServerPage>
               )
             ],
           );
-          _settingStore.firstTimeUseSshTerm.put(false);
         } else {
           AppRoute(SSHPage(spi: spi), 'ssh page').go(context);
         }
@@ -269,13 +272,11 @@ class _ServerPageState extends State<ServerPage>
             break;
           case ServerTabMenuItems.snippet:
             showSnippetDialog(context, _s, (s) async {
-              final result =
-                  await locator<ServerProvider>().runSnippet(spi.id, s);
+              final result = await _serverProvider.runSnippet(spi.id, s);
               showRoundDialog(
-                context,
-                _s.result,
-                Text(result ?? _s.error, style: textSize13),
-                [
+                context: context,
+                child: Text(result ?? _s.error, style: textSize13),
+                actions: [
                   TextButton(
                     onPressed: () => context.pop(),
                     child: Text(_s.ok),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/utils/navigator.dart';
+import 'package:toolbox/data/res/ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/model/server/snippet.dart';
@@ -25,8 +26,12 @@ bool isDarkMode(BuildContext context) =>
 void showSnackBar(BuildContext context, Widget child) =>
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: child));
 
-void showSnackBarWithAction(BuildContext context, String content, String action,
-    GestureTapCallback onTap) {
+void showSnackBarWithAction(
+  BuildContext context,
+  String content,
+  String action,
+  GestureTapCallback onTap,
+) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
     content: Text(content),
     behavior: SnackBarBehavior.floating,
@@ -41,24 +46,33 @@ Future<bool> openUrl(String url) async {
   return await launchUrl(url.uri, mode: LaunchMode.externalApplication);
 }
 
-Future<T?>? showRoundDialog<T>(
-    BuildContext context, String title, Widget child, List<Widget> actions,
-    {EdgeInsets? padding, bool barrierDismiss = true}) {
+Future<T?>? showRoundDialog<T>({
+  required BuildContext context,
+  Widget? child,
+  List<Widget>? actions,
+  Widget? title,
+  EdgeInsets? padding,
+  bool barrierDismiss = true,
+}) {
   return showDialog<T>(
-      context: context,
-      barrierDismissible: barrierDismiss,
-      builder: (ctx) {
-        return CardDialog(
-          title: Text(title),
-          content: child,
-          actions: actions,
-          padding: padding,
-        );
-      });
+    context: context,
+    barrierDismissible: barrierDismiss,
+    builder: (ctx) {
+      return CardDialog(
+        title: title,
+        content: child,
+        actions: actions,
+        padding: padding,
+      );
+    },
+  );
 }
 
-Widget buildSwitch(BuildContext context, StoreProperty<bool> prop,
-    {Function(bool)? func}) {
+Widget buildSwitch(
+  BuildContext context,
+  StoreProperty<bool> prop, {
+  Function(bool)? func,
+}) {
   return ValueListenableBuilder(
     valueListenable: prop.listenable(),
     builder: (context, bool value, widget) {
@@ -75,27 +89,26 @@ Widget buildSwitch(BuildContext context, StoreProperty<bool> prop,
 void setTransparentNavigationBar(BuildContext context) {
   if (isAndroid) {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-        systemNavigationBarColor: Colors.transparent,
-        systemNavigationBarContrastEnforced: true));
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+          systemNavigationBarColor: Colors.transparent,
+          systemNavigationBarContrastEnforced: true),
+    );
   }
 }
 
-Widget buildPopuopMenu(
-    {required List<PopupMenuEntry> items,
-    required Function(dynamic) onSelected}) {
-  return PopupMenuButton(
+Widget buildPopuopMenu<T>({
+  required List<PopupMenuEntry<T>> items,
+  required void Function(T) onSelected,
+  Widget child = popMenuChild,
+  EdgeInsetsGeometry? padding,
+}) {
+  return PopupMenuButton<T>(
     itemBuilder: (_) => items,
     onSelected: onSelected,
-    padding: EdgeInsets.zero,
+    padding: padding ?? EdgeInsets.zero,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-    child: const Padding(
-      padding: EdgeInsets.only(left: 7),
-      child: Icon(
-        Icons.more_vert,
-        size: 21,
-      ),
-    ),
+    child: child,
   );
 }
 
@@ -123,14 +136,16 @@ Future<void> loadFontFile(String? localPath) async {
 }
 
 void showSnippetDialog(
-    BuildContext context, S s, Function(Snippet s) onSelected) {
+  BuildContext context,
+  S s,
+  Function(Snippet s) onSelected,
+) {
   final provider = locator<SnippetProvider>();
   if (provider.snippets.isEmpty) {
     showRoundDialog(
-      context,
-      s.attention,
-      Text(s.noSavedSnippet),
-      [
+      context: context,
+      child: Text(s.noSavedSnippet),
+      actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: Text(s.ok),
@@ -149,13 +164,13 @@ void showSnippetDialog(
 
   var snippet = provider.snippets.first;
   showRoundDialog(
-    context,
-    s.choose,
-    buildPicker(
+    context: context,
+    title: Text(s.chooseDestination),
+    child: buildPicker(
       provider.snippets.map((e) => Text(e.name)).toList(),
       (idx) => snippet = provider.snippets[idx],
     ),
-    [
+    actions: [
       TextButton(
         onPressed: () async {
           context.pop();

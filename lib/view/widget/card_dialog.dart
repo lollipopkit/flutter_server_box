@@ -13,7 +13,8 @@ class CardDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      contentPadding: padding ?? const EdgeInsets.fromLTRB(24, 17, 24, 7),
+      contentPadding: padding,
+      actionsPadding: const EdgeInsets.all(7),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(20.0)),
       ),

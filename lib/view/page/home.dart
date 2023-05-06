@@ -5,17 +5,15 @@ import 'package:get_it/get_it.dart';
 import 'package:toolbox/core/utils/navigator.dart';
 import 'package:toolbox/data/provider/app.dart';
 import 'package:toolbox/data/res/misc.dart';
+import 'package:toolbox/view/widget/round_rect_card.dart';
 
 import '../../core/analysis.dart';
 import '../../core/route.dart';
 import '../../core/update.dart';
 import '../../core/utils/platform.dart';
 import '../../core/utils/ui.dart';
-import '../../data/model/app/dynamic_color.dart';
-import '../../data/model/app/navigation_item.dart';
 import '../../data/provider/server.dart';
 import '../../data/res/build_data.dart';
-import '../../data/res/tab.dart';
 import '../../data/res/ui.dart';
 import '../../data/res/url.dart';
 import '../../data/store/setting.dart';
@@ -30,9 +28,6 @@ import 'server/tab.dart';
 import 'setting.dart';
 import 'sftp/downloaded.dart';
 import 'snippet/list.dart';
-
-final _bottomItemOverlayColor =
-    DynamicColor(Colors.black.withOpacity(0.07), Colors.white12);
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
@@ -52,7 +47,6 @@ class _MyHomePageState extends State<MyHomePage>
   late final PageController _pageController;
 
   late int _selectIndex;
-  late double _width;
   late S _s;
 
   @override
@@ -67,7 +61,6 @@ class _MyHomePageState extends State<MyHomePage>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _s = S.of(context)!;
-    _width = MediaQuery.of(context).size.width;
   }
 
   @override
@@ -135,33 +128,35 @@ class _MyHomePageState extends State<MyHomePage>
     );
   }
 
-  Widget _buildBottomBar(BuildContext context){
+  Widget _buildBottomBar(BuildContext context) {
     return NavigationBar(
       selectedIndex: _selectIndex,
       animationDuration: const Duration(milliseconds: 250),
       onDestinationSelected: (int index) {
         setState(() {
           _selectIndex = index;
-          _pageController.animateToPage(index,
-              duration: const Duration(milliseconds: 677),
-              curve: Curves.fastLinearToSlowEaseIn);
+          _pageController.animateToPage(
+            index,
+            duration: const Duration(milliseconds: 677),
+            curve: Curves.fastLinearToSlowEaseIn,
+          );
         });
       },
+      elevation: 0.47,
       labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-      destinations: const [
+      destinations: [
         NavigationDestination(
-          icon: Icon(Icons.cloud_outlined),
-          label: 'Server',
-          selectedIcon: Icon(Icons.cloud),
+          icon: const Icon(Icons.cloud_outlined),
+          label: _s.server,
+          selectedIcon: const Icon(Icons.cloud),
         ),
         NavigationDestination(
-          icon: Icon(Icons.code),
-          label: 'Convert',
+          icon: const Icon(Icons.code),
+          label: _s.convert,
         ),
         NavigationDestination(
-          icon: Icon(Icons.leak_add),
-          label: 'Ping',
-          selectedIcon: Icon(Icons.leak_add_outlined),
+          icon: const Icon(Icons.leak_add),
+          label: _s.ping,
         ),
       ],
     );
@@ -169,16 +164,16 @@ class _MyHomePageState extends State<MyHomePage>
 
   Widget _buildDrawer() {
     return Drawer(
+      surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _buildIcon(),
           TextButton(
             onPressed: () => showRoundDialog(
-              context,
-              _versionStr,
-              const Text(BuildData.buildAt),
-              [],
+              context: context,
+              title: Text(_versionStr),
+              child: const Text(BuildData.buildAt),
             ),
             child: Text(
               '${BuildData.name}\n$_versionStr',
@@ -190,7 +185,7 @@ class _MyHomePageState extends State<MyHomePage>
             height: MediaQuery.of(context).size.height * 0.07,
           ),
           Padding(
-            padding: const EdgeInsets.only(left: 29),
+            padding: const EdgeInsets.symmetric(horizontal: 13),
             child: Column(
               children: [
                 ListTile(
@@ -224,10 +219,9 @@ class _MyHomePageState extends State<MyHomePage>
                   leading: const Icon(Icons.info),
                   title: Text(_s.feedback),
                   onTap: () => showRoundDialog(
-                    context,
-                    _s.feedback,
-                    Text(_s.feedbackOnGithub),
-                    [
+                    context: context,
+                    child: Text(_s.feedbackOnGithub),
+                    actions: [
                       TextButton(
                         onPressed: () => openUrl(issueUrl),
                         child: Text(_s.feedback),
@@ -250,9 +244,9 @@ class _MyHomePageState extends State<MyHomePage>
                   title: Text(_s.about),
                   onTap: () {
                     showRoundDialog(
-                      context,
-                      _s.about,
-                      Column(
+                      context: context,
+                      title: Text(_s.about),
+                      child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -271,7 +265,7 @@ class _MyHomePageState extends State<MyHomePage>
                           )
                         ],
                       ),
-                      [
+                      actions: [
                         TextButton(
                           onPressed: () => showLicensePage(context: context),
                           child: Text(_s.license),
@@ -284,7 +278,7 @@ class _MyHomePageState extends State<MyHomePage>
                     );
                   },
                 )
-              ],
+              ].map((e) => RoundRectCard(e)).toList(),
             ),
           ),
         ],

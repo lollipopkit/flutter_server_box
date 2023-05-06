@@ -141,10 +141,9 @@ class BackupPage extends StatelessWidget {
       }
 
       await showRoundDialog(
-        context,
-        s.attention,
-        Text(s.restoreSureWithDate(backup.date)),
-        [
+        context: context,
+        child: Text(s.restoreSureWithDate(backup.date)),
+        actions: [
           TextButton(
             onPressed: () => context.pop(),
             child: Text(s.cancel),
@@ -165,10 +164,9 @@ class BackupPage extends StatelessWidget {
               }
               context.pop();
               showRoundDialog(
-                context,
-                s.attention,
-                Text(s.restoreSuccess),
-                [
+                context: context,
+                child: Text(s.restoreSuccess),
+                actions: [
                   TextButton(
                     onPressed: () => rebuildAll(context),
                     child: Text(s.restart),

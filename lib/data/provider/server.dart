@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 
-import '../../core/build_mode.dart';
 import '../../core/extension/uint8list.dart';
 import '../../core/provider_base.dart';
 import '../../core/utils/server.dart';
@@ -182,9 +181,6 @@ class ServerProvider extends BusyProvider {
       s.state = ServerState.failed;
       s.status.failedInfo = e.toString();
       _logger.warning(e);
-      if (BuildMode.isDebug) {
-        rethrow;
-      }
     } finally {
       notifyListeners();
     }

@@ -50,6 +50,9 @@ class SEn extends S {
   String get bgRun => 'Run in backgroud';
 
   @override
+  String get canPullRefresh => 'You can pull to refresh.';
+
+  @override
   String get cancel => 'Cancel';
 
   @override

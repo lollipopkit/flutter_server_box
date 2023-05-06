@@ -58,10 +58,9 @@ class PkgProvider extends BusyProvider {
   }
 
   Future<void> refresh() async {
-    final result = await _update();_parse(result);
-    try {
-      
-    } catch (e) {
+    final result = await _update();
+    _parse(result);
+    try {} catch (e) {
       error = '[Server Raw]:\n$result\n[App Error]:\n$e';
     } finally {
       notifyListeners();
@@ -70,11 +69,8 @@ class PkgProvider extends BusyProvider {
 
   void _parse(String? raw) {
     if (raw == null) return;
-    final list = type
-        ?.updateListRemoveUnused(raw.split('\n'));
-    upgradeable = list
-        ?.map((e) => UpgradePkgInfo(e, type))
-        .toList();
+    final list = type?.updateListRemoveUnused(raw.split('\n'));
+    upgradeable = list?.map((e) => UpgradePkgInfo(e, type)).toList();
   }
 
   Future<String?> _update() async {

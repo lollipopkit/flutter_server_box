@@ -53,10 +53,9 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
 
   if (update.build.min.current! > BuildData.build) {
     showRoundDialog(
-      context,
-      s.attention,
-      Text(s.updateTipTooLow(newest)),
-      [
+      context: context,
+      child: Text(s.updateTipTooLow(newest)),
+      actions: [
         TextButton(
           onPressed: () => _doUpdate(url, context, s),
           child: Text(s.ok),
@@ -84,11 +83,15 @@ Future<void> _doUpdate(String url, BuildContext context, S s) async {
   } else if (isIOS) {
     await RUpgrade.upgradeFromAppStore('1586449703');
   } else {
-    showRoundDialog(context, s.attention, Text(s.platformNotSupportUpdate), [
-      TextButton(
-        onPressed: () => context.pop(),
-        child: Text(s.ok),
-      )
-    ]);
+    showRoundDialog(
+      context: context,
+      child: Text(s.platformNotSupportUpdate),
+      actions: [
+        TextButton(
+          onPressed: () => context.pop(),
+          child: Text(s.ok),
+        )
+      ],
+    );
   }
 }

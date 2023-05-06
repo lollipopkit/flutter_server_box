@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 
-import '/core/extension/colorx.dart';
 import 'core/utils/ui.dart';
 import 'data/res/build_data.dart';
 import 'data/res/color.dart';

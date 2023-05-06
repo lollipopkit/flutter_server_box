@@ -23,3 +23,11 @@ const roundRectCardPadding = EdgeInsets.symmetric(horizontal: 17, vertical: 13);
 const height13 = SizedBox(height: 13);
 const width13 = SizedBox(width: 13);
 const width7 = SizedBox(width: 7);
+
+const popMenuChild = Padding(
+  padding: EdgeInsets.only(left: 7),
+  child: Icon(
+    Icons.more_vert,
+    size: 21,
+  ),
+);

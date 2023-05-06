@@ -98,9 +98,8 @@ class _SFTPPageState extends State<SFTPPage> {
               ),
               IconButton(
                 onPressed: (() => showRoundDialog(
-                      context,
-                      _s.choose,
-                      Column(
+                      context: context,
+                      child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           ListTile(
@@ -113,7 +112,7 @@ class _SFTPPageState extends State<SFTPPage> {
                               onTap: () => newFile(context)),
                         ],
                       ),
-                      [
+                      actions: [
                         TextButton(
                           onPressed: () => context.pop(),
                           child: Text(_s.close),
@@ -126,9 +125,9 @@ class _SFTPPageState extends State<SFTPPage> {
                 padding: const EdgeInsets.all(0),
                 onPressed: () async {
                   final p = await showRoundDialog<String?>(
-                    context,
-                    _s.goto,
-                    Column(
+                    context: context,
+                    title: Text(_s.goto),
+                    child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         TextField(
@@ -140,7 +139,7 @@ class _SFTPPageState extends State<SFTPPage> {
                         ),
                       ],
                     ),
-                    [
+                    actions: [
                       TextButton(
                         onPressed: () => context.pop(),
                         child: Text(_s.cancel),
@@ -254,9 +253,8 @@ class _SFTPPageState extends State<SFTPPage> {
 
   void onItemPress(BuildContext context, SftpName file, bool showDownload) {
     showRoundDialog(
-      context,
-      _s.choose,
-      Column(
+      context: context,
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
@@ -278,7 +276,7 @@ class _SFTPPageState extends State<SFTPPage> {
               : const SizedBox()
         ],
       ),
-      [
+      actions: [
         TextButton(
           onPressed: () => context.pop(),
           child: Text(_s.cancel),
@@ -289,10 +287,9 @@ class _SFTPPageState extends State<SFTPPage> {
 
   void download(BuildContext context, SftpName name) {
     showRoundDialog(
-      context,
-      _s.download,
-      Text('${_s.dl2Local(name.filename)}\n${_s.keepForeground}'),
-      [
+      context: context,
+      child: Text('${_s.dl2Local(name.filename)}\n${_s.keepForeground}'),
+      actions: [
         TextButton(
           onPressed: () => context.pop(),
           child: Text(_s.cancel),
@@ -326,12 +323,13 @@ class _SFTPPageState extends State<SFTPPage> {
   void delete(BuildContext context, SftpName file) {
     context.pop();
     final isDir = file.attr.isDirectory;
+    final dirText = isDir ? '\n${_s.sureDirEmpty}' : '';
+    final text = '${_s.sureDelete(file.filename)}$dirText';
+    final child = Text(text);
     showRoundDialog(
-      context,
-      _s.attention,
-      Text(
-          '${_s.sureDelete(file.filename)}${isDir ? '\n${_s.sureDirEmpty}' : ''}'),
-      [
+      context: context,
+      child: child,
+      actions: [
         TextButton(
           onPressed: () => context.pop(),
           child: Text(_s.cancel),
@@ -339,8 +337,11 @@ class _SFTPPageState extends State<SFTPPage> {
         TextButton(
           onPressed: () async {
             context.pop();
-            showRoundDialog(context, 'Waiting...', centerSizedLoading, [],
-                barrierDismiss: false);
+            showRoundDialog(
+              context: context,
+              child: centerSizedLoading,
+              barrierDismiss: false,
+            );
             final remotePath = _getRemotePath(file);
             try {
               if (file.attr.isDirectory) {
@@ -352,10 +353,10 @@ class _SFTPPageState extends State<SFTPPage> {
             } catch (e) {
               context.pop();
               showRoundDialog(
-                context,
-                _s.attention,
-                Text(e.toString()),
-                [
+                context: context,
+                title: Text(_s.error),
+                child: Text(e.toString()),
+                actions: [
                   TextButton(
                     onPressed: () => context.pop(),
                     child: Text(_s.ok),
@@ -379,15 +380,15 @@ class _SFTPPageState extends State<SFTPPage> {
     context.pop();
     final textController = TextEditingController();
     showRoundDialog(
-      context,
-      _s.createFolder,
-      TextField(
+      context: context,
+      title: Text(_s.createFolder),
+      child: TextField(
         controller: textController,
         decoration: InputDecoration(
           labelText: _s.name,
         ),
       ),
-      [
+      actions: [
         TextButton(
           onPressed: () => context.pop(),
           child: Text(_s.cancel),
@@ -396,10 +397,9 @@ class _SFTPPageState extends State<SFTPPage> {
           onPressed: () {
             if (textController.text == '') {
               showRoundDialog(
-                context,
-                _s.attention,
-                Text(_s.fieldMustNotEmpty),
-                [
+                context: context,
+                child: Text(_s.fieldMustNotEmpty),
+                actions: [
                   TextButton(
                     onPressed: () => context.pop(),
                     child: Text(_s.ok),
@@ -426,15 +426,15 @@ class _SFTPPageState extends State<SFTPPage> {
     context.pop();
     final textController = TextEditingController();
     showRoundDialog(
-      context,
-      _s.createFile,
-      TextField(
+      context: context,
+      title: Text(_s.createFile),
+      child: TextField(
         controller: textController,
         decoration: InputDecoration(
           labelText: _s.name,
         ),
       ),
-      [
+      actions: [
         TextButton(
           onPressed: () => context.pop(),
           child: Text(_s.cancel),
@@ -443,10 +443,9 @@ class _SFTPPageState extends State<SFTPPage> {
           onPressed: () async {
             if (textController.text == '') {
               showRoundDialog(
-                context,
-                _s.attention,
-                Text(_s.fieldMustNotEmpty),
-                [
+                context: context,
+                child: Text(_s.fieldMustNotEmpty),
+                actions: [
                   TextButton(
                     onPressed: () => context.pop(),
                     child: Text(_s.ok),
@@ -474,24 +473,23 @@ class _SFTPPageState extends State<SFTPPage> {
     context.pop();
     final textController = TextEditingController();
     showRoundDialog(
-      context,
-      _s.rename,
-      TextField(
+      context: context,
+      title: Text(_s.rename),
+      child: TextField(
         controller: textController,
         decoration: InputDecoration(
           labelText: _s.name,
         ),
       ),
-      [
+      actions: [
         TextButton(onPressed: () => context.pop(), child: Text(_s.cancel)),
         TextButton(
           onPressed: () async {
             if (textController.text == '') {
               showRoundDialog(
-                context,
-                _s.attention,
-                Text(_s.fieldMustNotEmpty),
-                [
+                context: context,
+                child: Text(_s.fieldMustNotEmpty),
+                actions: [
                   TextButton(
                     onPressed: () => context.pop(),
                     child: Text(_s.ok),
@@ -540,10 +538,10 @@ class _SFTPPageState extends State<SFTPPage> {
       }
     } catch (e) {
       await showRoundDialog(
-        context,
-        _s.error,
-        Text(e.toString()),
-        [
+        context: context,
+        title: Text(_s.error),
+        child: Text(e.toString()),
+        actions: [
           TextButton(
             onPressed: () => context.pop(),
             child: Text(_s.ok),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/data/model/app/tab.dart';
 
 import '../../core/utils/misc.dart';
 import '../../core/utils/platform.dart';
@@ -15,7 +16,6 @@ import '../../data/provider/server.dart';
 import '../../data/res/build_data.dart';
 import '../../data/res/color.dart';
 import '../../data/res/path.dart';
-import '../../data/res/tab.dart';
 import '../../data/res/ui.dart';
 import '../../data/store/setting.dart';
 import '../../locator.dart';
@@ -39,8 +39,8 @@ class _SettingPageState extends State<SettingPage> {
   late int _launchPageIdx;
   late int _termThemeIdx;
   late int _nightMode;
-  late double _maxRetryCount;
-  late double _updateInterval;
+  late int _maxRetryCount;
+  late int _updateInterval;
 
   String? _pushToken;
 
@@ -59,8 +59,8 @@ class _SettingPageState extends State<SettingPage> {
     _launchPageIdx = _setting.launchPage.fetch()!;
     _termThemeIdx = _setting.termColorIdx.fetch()!;
     _nightMode = _setting.themeMode.fetch()!;
-    _updateInterval = _setting.serverStatusUpdateInterval.fetch()!.toDouble();
-    _maxRetryCount = _setting.maxRetryCount.fetch()!.toDouble();
+    _updateInterval = _setting.serverStatusUpdateInterval.fetch()!;
+    _maxRetryCount = _setting.maxRetryCount.fetch()!;
     _selectedColorValue = _setting.primaryColor.fetch()!;
   }
 
@@ -175,8 +175,15 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildUpdateInterval() {
-    return ExpansionTile(
-      textColor: primaryColor,
+    final items = List.generate(
+      10,
+      (index) => PopupMenuItem(
+        value: index,
+        child: Text('$index ${_s.second}'),
+      ),
+      growable: false,
+    ).toList();
+    return ListTile(
       title: Text(
         _s.updateServerStatusInterval,
       ),
@@ -184,48 +191,27 @@ class _SettingPageState extends State<SettingPage> {
         _s.willTakEeffectImmediately,
         style: grey,
       ),
-      trailing: Text(
-        '${_updateInterval.toInt()} ${_s.second}',
+      trailing: buildPopuopMenu<int>(
+        items: items,
+        onSelected: (val) {
+          setState(() {
+            _updateInterval = val;
+          });
+          _setting.serverStatusUpdateInterval.put(_updateInterval.toInt());
+          _serverProvider.startAutoRefresh();
+          if (val == 0) {
+            showSnackBar(context, Text(_s.updateIntervalEqual0));
+          }
+        },
+        child: Text(
+          '${_updateInterval.toInt()} ${_s.second}',
+        ),
       ),
-      children: [
-        Slider(
-          thumbColor: primaryColor,
-          activeColor: primaryColor.withOpacity(0.7),
-          min: 0,
-          max: 10,
-          value: _updateInterval,
-          onChanged: (newValue) {
-            setState(() {
-              _updateInterval = newValue;
-            });
-          },
-          onChangeEnd: (val) {
-            _setting.serverStatusUpdateInterval.put(val.toInt());
-            _serverProvider.startAutoRefresh();
-          },
-          label: '${_updateInterval.toInt()} ${_s.second}',
-          divisions: 10,
-        ),
-        const SizedBox(
-          height: 3,
-        ),
-        _updateInterval == 0.0
-            ? Text(
-                _s.updateIntervalEqual0,
-                style: grey,
-                textAlign: TextAlign.center,
-              )
-            : const SizedBox(),
-        const SizedBox(
-          height: 13,
-        )
-      ],
     );
   }
 
   Widget _buildAppColorPreview() {
-    return ExpansionTile(
-      textColor: primaryColor,
+    return ListTile(
       trailing: ClipOval(
         child: Container(
           color: primaryColor,
@@ -236,188 +222,146 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(
         _s.appPrimaryColor,
       ),
-      children: [_buildAppColorPicker(), _buildColorPickerConfirmBtn()],
-    );
-  }
-
-  Widget _buildAppColorPicker() {
-    return MaterialColorPicker(
-      shrinkWrap: true,
-      allowShades: false,
-      onMainColorChange: (ColorSwatch<dynamic>? color)  {
-        if(color == null) return;
-        _selectedColorValue = color.value;
+      onTap: () async {
+        await showRoundDialog(
+          context: context,
+          child: MaterialColorPicker(
+            shrinkWrap: true,
+            allowShades: true,
+            onColorChange: (color) {
+              _selectedColorValue = color.value;
+            },
+            selectedColor: primaryColor,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                _setting.primaryColor.put(_selectedColorValue);
+                Navigator.pop(context);
+                _showRestartSnackbar();
+              },
+              child: Text(_s.ok),
+            )
+          ],
+        );
       },
-      selectedColor: primaryColor,
-    );
-  }
-
-  Widget _buildColorPickerConfirmBtn() {
-    return IconButton(
-      icon: const Icon(Icons.save),
-      onPressed: (() {
-        _setting.primaryColor.put(_selectedColorValue);
-        _showRestartSnackbar();
-      }),
     );
   }
 
   Widget _buildLaunchPage() {
-    return ExpansionTile(
-      childrenPadding: const EdgeInsets.only(left: 17, right: 7),
-      textColor: primaryColor,
+    final items = AppTab.values
+        .map(
+          (e) => PopupMenuItem(
+            value: e.index,
+            child: Text(tabTitleName(context, e.index)),
+          ),
+        )
+        .toList();
+    return ListTile(
       title: Text(
         _s.launchPage,
       ),
-      trailing: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: _media.size.width * 0.35),
-        child: Text(
-          tabTitleName(context, _launchPageIdx),
-          textAlign: TextAlign.right,
+      trailing: buildPopuopMenu<int>(
+        items: items,
+        onSelected: (idx) {
+          setState(() {
+            _launchPageIdx = idx;
+          });
+          _setting.launchPage.put(_launchPageIdx);
+        },
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: _media.size.width * 0.35),
+          child: Text(
+            tabTitleName(context, _launchPageIdx),
+            textAlign: TextAlign.right,
+          ),
         ),
       ),
-      children: tabs
-          .map(
-            (e) => ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                tabTitleName(context, tabs.indexOf(e)),
-              ),
-              trailing: _buildRadio(tabs.indexOf(e)),
-            ),
-          )
-          .toList(),
-    );
-  }
-
-  Radio _buildRadio(int index) {
-    return Radio<int>(
-      value: index,
-      groupValue: _launchPageIdx,
-      onChanged: (int? value) {
-        setState(() {
-          _launchPageIdx = value!;
-          _setting.launchPage.put(value);
-        });
-      },
     );
   }
 
   Widget _buildTermTheme() {
-    return ExpansionTile(
-      textColor: primaryColor,
-      childrenPadding: const EdgeInsets.only(left: 17),
-      title: Text(
-        _s.termTheme,
-      ),
-      trailing: Text(
-        TerminalColorsPlatform.values[_termThemeIdx].name,
-      ),
-      children: _buildTermThemeRadioList(),
-    );
-  }
-
-  List<Widget> _buildTermThemeRadioList() {
-    return TerminalColorsPlatform.values
+    final items = TerminalColorsPlatform.values
         .map(
-          (e) => ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(
-              e.name,
-            ),
-            trailing: _buildTermThemeRadio(e),
+          (e) => PopupMenuItem<int>(
+            value: e.index,
+            child: Text(e.name),
           ),
         )
         .toList();
-  }
-
-  Radio _buildTermThemeRadio(TerminalColorsPlatform platform) {
-    return Radio<int>(
-      value: platform.index,
-      groupValue: _termThemeIdx,
-      onChanged: (int? value) {
-        setState(() {
-          value ??= 0;
-          _termThemeIdx = value!;
-          _setting.termColorIdx.put(value!);
-        });
-      },
+    return ListTile(
+      title: Text(
+        _s.termTheme,
+      ),
+      trailing: buildPopuopMenu<int>(
+        items: items,
+        onSelected: (idx) {
+          setState(() {
+            _termThemeIdx = idx;
+          });
+          _setting.termColorIdx.put(idx);
+        },
+        child: Text(
+          TerminalColorsPlatform.values[_termThemeIdx].name,
+        ),
+      ),
     );
   }
 
   Widget _buildMaxRetry() {
-    return ExpansionTile(
-      textColor: primaryColor,
+    final items = List.generate(
+      10,
+      (index) => PopupMenuItem(
+        value: index,
+        child: Text('$index ${_s.times}'),
+      ),
+      growable: false,
+    ).toList();
+    final help =
+        _maxRetryCount == 0 ? _s.maxRetryCountEqual0 : _s.canPullRefresh;
+    return ListTile(
       title: Text(
         _s.maxRetryCount,
         textAlign: TextAlign.start,
       ),
-      trailing: Text(
-        '${_maxRetryCount.toInt()} ${_s.times}',
+      trailing: buildPopuopMenu<int>(
+        items: items,
+        onSelected: (val) {
+          setState(() {
+            _maxRetryCount = val;
+          });
+          _setting.maxRetryCount.put(_maxRetryCount);
+        },
+        child: Text(
+          '${_maxRetryCount.toInt()} ${_s.times}',
+        ),
       ),
-      children: [
-        Slider(
-          thumbColor: primaryColor,
-          activeColor: primaryColor.withOpacity(0.7),
-          min: 0,
-          max: 10,
-          value: _maxRetryCount,
-          onChanged: (newValue) {
-            setState(() {
-              _maxRetryCount = newValue;
-            });
-          },
-          onChangeEnd: (val) {
-            _setting.maxRetryCount.put(val.toInt());
-          },
-          label: '${_maxRetryCount.toInt()} ${_s.times}',
-          divisions: 10,
-        ),
-        const SizedBox(
-          height: 3,
-        ),
-        _maxRetryCount == 0.0
-            ? Text(
-                _s.maxRetryCountEqual0,
-                style: grey,
-                textAlign: TextAlign.center,
-              )
-            : const SizedBox(),
-        const SizedBox(
-          height: 13,
-        )
-      ],
+      subtitle: Text(help, style: grey),
     );
   }
 
   Widget _buildThemeMode() {
-    return ExpansionTile(
-      textColor: primaryColor,
+    final items = ThemeMode.values.map(
+      (e) {
+        final str = _buildThemeModeStr(e.index);
+        return PopupMenuItem(
+          value: e.index,
+          child: Text(str),
+        );
+      },
+    ).toList();
+    return ListTile(
       title: Text(
         _s.themeMode,
       ),
-      trailing: Text(
-        _buildThemeModeStr(_nightMode),
+      trailing: buildPopuopMenu<int>(
+        items: items,
+        onSelected: (idx) {
+          _nightMode = idx;
+          _setting.themeMode.put(_nightMode);
+        },
+        child: Text(_buildThemeModeStr(_nightMode)),
       ),
-      children: [
-        Slider(
-          thumbColor: primaryColor,
-          activeColor: primaryColor.withOpacity(0.7),
-          min: 0,
-          max: 2,
-          value: _nightMode.toDouble(),
-          onChanged: (newValue) {
-            setState(() {
-              _nightMode = newValue.toInt();
-            });
-          },
-          onChangeEnd: (val) {
-            _setting.themeMode.put(val.toInt());
-          },
-          label: _buildThemeModeStr(_nightMode),
-          divisions: 2,
-        ),
-      ],
     );
   }
 
@@ -467,27 +411,30 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildFont() {
-    return ExpansionTile(
+    return ListTile(
       title: Text(_s.chooseFontFile),
       trailing: Text(getFileName(_setting.fontPath.fetch()) ?? _s.notSelected),
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            TextButton(
-              onPressed: () async => _pickFontFile(),
-              child: Text(_s.pickFile),
-            ),
-            TextButton(
-              onPressed: () => setState(() {
-                _setting.fontPath.delete();
-                _showRestartSnackbar();
-              }),
-              child: Text(_s.clear),
-            )
-          ],
-        )
-      ],
+      onTap: () {
+        showRoundDialog(
+          context: context,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              TextButton(
+                onPressed: () async => await _pickFontFile(),
+                child: Text(_s.pickFile),
+              ),
+              TextButton(
+                onPressed: () => setState(() {
+                  _setting.fontPath.delete();
+                  _showRestartSnackbar();
+                }),
+                child: Text(_s.clear),
+              )
+            ],
+          ),
+        );
+      },
     );
   }
 

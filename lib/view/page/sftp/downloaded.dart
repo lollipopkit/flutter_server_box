@@ -136,9 +136,8 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
   void showFileActionDialog(FileSystemEntity file) {
     final fileName = file.path.split('/').last;
     showRoundDialog(
-      context,
-      _s.choose,
-      Column(
+      context: context,
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
@@ -147,10 +146,9 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
             onTap: () {
               context.pop();
               showRoundDialog(
-                context,
-                _s.sureDelete(fileName),
-                const SizedBox(),
-                [
+                context: context,
+                child: Text(_s.sureDelete(fileName)),
+                actions: [
                   TextButton(
                     onPressed: () => context.pop(),
                     child: Text(_s.cancel),
@@ -176,7 +174,7 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
           ),
         ],
       ),
-      [
+      actions: [
         TextButton(
           onPressed: (() => context.pop()),
           child: Text(_s.close),

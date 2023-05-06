@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 
-Widget buildPicker(List<Widget> items, Function(int idx) onSelected) {
+Widget buildPicker(
+  List<Widget> items,
+  Function(int idx) onSelected, {
+  double height = 157,
+}) {
+  final pad = (height - 37) / 2;
   return SizedBox(
-    height: 111,
+    height: height,
     child: Stack(
       children: [
         Positioned(
-          top: 36,
-          bottom: 36,
+          top: pad,
+          bottom: pad,
           left: 0,
           right: 0,
           child: Container(
@@ -20,7 +25,7 @@ Widget buildPicker(List<Widget> items, Function(int idx) onSelected) {
         ),
         ListWheelScrollView.useDelegate(
           itemExtent: 37,
-          diameterRatio: 1.2,
+          diameterRatio: 2.7,
           controller: FixedExtentScrollController(initialItem: 0),
           onSelectedItemChanged: (idx) => onSelected(idx),
           physics: const FixedExtentScrollPhysics(),
