@@ -19,8 +19,6 @@ class MyApp extends StatelessWidget {
     setTransparentNavigationBar(context);
     primaryColor = Color(_setting.primaryColor.fetch()!);
 
-    final primarySwatch = primaryColor.materialColor;
-
     return ValueListenableBuilder<int>(
       valueListenable: _setting.themeMode.listenable(),
       builder: (_, tMode, __) {
@@ -33,19 +31,14 @@ class MyApp extends StatelessWidget {
           supportedLocales: S.supportedLocales,
           title: BuildData.name,
           themeMode: themeMode,
-          theme: ThemeData.light(useMaterial3: true).copyWith(
-            colorScheme: ColorScheme.fromSwatch(
-              primarySwatch: primarySwatch,
-              accentColor: primaryColor,
-            ),
-            switchTheme: ThemeData.light(useMaterial3: true).switchTheme,
+          theme: ThemeData(
+            useMaterial3: true,
+            colorSchemeSeed: primaryColor,
           ),
-          darkTheme: ThemeData.dark(useMaterial3: true).copyWith(
-            colorScheme: ColorScheme.fromSwatch(
-              brightness: Brightness.dark,
-              primarySwatch: primarySwatch,
-              accentColor: primaryColor,
-            ),
+          darkTheme: ThemeData(
+            useMaterial3: true,
+            brightness: Brightness.dark,
+            colorSchemeSeed: primaryColor,
           ),
           home: const MyHomePage(),
         );
