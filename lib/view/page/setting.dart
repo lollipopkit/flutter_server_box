@@ -243,7 +243,9 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildAppColorPicker() {
     return MaterialColorPicker(
       shrinkWrap: true,
-      onColorChange: (Color color) {
+      allowShades: false,
+      onMainColorChange: (ColorSwatch<dynamic>? color)  {
+        if(color == null) return;
         _selectedColorValue = color.value;
       },
       selectedColor: primaryColor,

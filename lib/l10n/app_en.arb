@@ -140,7 +140,7 @@
   "serverTabLoading": "Loading...",
   "serverTabPlzSave": "Please 'save' this private key again.",
   "serverTabUnkown": "Unknown state",
-  "setting": "Setting",
+  "setting": "Settings",
   "sftpDlPrepare": "Preparing to connect...",
   "sftpNoDownloadTask": "No download task.",
   "sftpSSHConnected": "SFTP Connected",

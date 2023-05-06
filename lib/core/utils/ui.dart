@@ -29,6 +29,7 @@ void showSnackBarWithAction(BuildContext context, String content, String action,
     GestureTapCallback onTap) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
     content: Text(content),
+    behavior: SnackBarBehavior.floating,
     action: SnackBarAction(
       label: action,
       onPressed: onTap,

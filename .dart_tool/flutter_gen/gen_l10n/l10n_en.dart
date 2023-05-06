@@ -454,7 +454,7 @@ class SEn extends S {
   String get serverTabUnkown => 'Unknown state';
 
   @override
-  String get setting => 'Setting';
+  String get setting => 'Settings';
 
   @override
   String get sftpDlPrepare => 'Preparing to connect...';
