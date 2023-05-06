@@ -110,7 +110,7 @@ class _MyHomePageState extends State<MyHomePage>
     return Scaffold(
       drawer: _buildDrawer(),
       appBar: AppBar(
-        title: Text(tabTitleName(context, _selectIndex), style: textSize18),
+        title: Text(tabTitleName(context, _selectIndex)),
         actions: [
           IconButton(
             icon: const Icon(Icons.developer_mode, size: 23),
@@ -123,68 +123,47 @@ class _MyHomePageState extends State<MyHomePage>
       body: PageView(
         physics: const ClampingScrollPhysics(),
         controller: _pageController,
-        onPageChanged: (i) {
-          FocusScope.of(context).requestFocus(FocusNode());
-          _selectIndex = i;
-          setState(() {});
+        onPageChanged: (index) {
+          setState(() {
+            _selectIndex = index;
+            FocusScope.of(context).requestFocus(FocusNode());
+          });
         },
         children: const [ServerPage(), ConvertPage(), PingPage()],
       ),
-      bottomNavigationBar: _buildBottom(context),
+      bottomNavigationBar: _buildBottomBar(context),
     );
   }
 
-  Widget _buildBottomItem(int idx, NavigationItem item, bool isSelected) {
-    final width = _width / tabItems.length;
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 377),
-      curve: Curves.fastOutSlowIn,
-      height: 50,
-      width: isSelected ? width : width - 17,
-      decoration: BoxDecoration(
-        color: isSelected
-            ? _bottomItemOverlayColor.resolve(context)
-            : Colors.transparent,
-        borderRadius: const BorderRadius.all(
-          Radius.circular(50),
+  Widget _buildBottomBar(BuildContext context){
+    return NavigationBar(
+      selectedIndex: _selectIndex,
+      animationDuration: const Duration(milliseconds: 250),
+      onDestinationSelected: (int index) {
+        setState(() {
+          _selectIndex = index;
+          _pageController.animateToPage(index,
+              duration: const Duration(milliseconds: 677),
+              curve: Curves.fastLinearToSlowEaseIn);
+        });
+      },
+      labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+      destinations: const [
+        NavigationDestination(
+          icon: Icon(Icons.cloud_outlined),
+          label: 'Server',
+          selectedIcon: Icon(Icons.cloud),
         ),
-      ),
-      child: IconButton(
-        icon: Icon(item.icon),
-        tooltip: tabTitleName(context, idx),
-        splashRadius: width / 3.3,
-        padding: const EdgeInsets.only(left: 17, right: 17),
-        onPressed: () {
-          setState(() {
-            _pageController.animateToPage(idx,
-                duration: const Duration(milliseconds: 677),
-                curve: Curves.fastLinearToSlowEaseIn);
-          });
-        },
-      ),
-    );
-  }
-
-  Widget _buildBottom(BuildContext context) {
-    return SafeArea(
-      child: Container(
-        height: 56,
-        padding: const EdgeInsets.only(left: 8, top: 4, bottom: 4, right: 8),
-        width: _width,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: tabItems.map(
-            (item) {
-              int itemIndex = tabItems.indexOf(item);
-              return _buildBottomItem(
-                itemIndex,
-                item,
-                _selectIndex == itemIndex,
-              );
-            },
-          ).toList(),
+        NavigationDestination(
+          icon: Icon(Icons.code),
+          label: 'Convert',
         ),
-      ),
+        NavigationDestination(
+          icon: Icon(Icons.leak_add),
+          label: 'Ping',
+          selectedIcon: Icon(Icons.leak_add_outlined),
+        ),
+      ],
     );
   }
 

@@ -77,7 +77,7 @@ class _ServerPageState extends State<ServerPage>
             }
             final keys = pro.servers.keys.toList();
             return ListView.separated(
-              padding: const EdgeInsets.all(7),
+              padding: const EdgeInsets.fromLTRB(7, 10, 7, 7),
               controller: ScrollController(),
               physics: const AlwaysScrollableScrollPhysics(),
               itemBuilder: (ctx, idx) {

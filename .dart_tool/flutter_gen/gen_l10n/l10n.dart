@@ -942,7 +942,7 @@ abstract class S {
   /// No description provided for @setting.
   ///
   /// In en, this message translates to:
-  /// **'Setting'**
+  /// **'Settings'**
   String get setting;
 
   /// No description provided for @sftpDlPrepare.
