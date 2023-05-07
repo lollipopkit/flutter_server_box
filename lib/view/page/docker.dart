@@ -271,6 +271,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
         _buildPsItems(),
         _buildImages(),
         _buildEditHost(),
+        const SizedBox(height: 37),
       ].map((e) => RoundRectCard(e)).toList(),
     );
   }
@@ -279,59 +280,64 @@ class _DockerManagePageState extends State<DockerManagePage> {
     if (_docker.images == null) {
       return const SizedBox();
     }
-    return ExpansionTile(
-      title: Text(_s.imagesList),
-      subtitle: Text(
-        _s.dockerImagesFmt(_docker.images!.length),
-        style: grey,
-      ),
-      children: _docker.images!
-          .map(
-            (e) => ListTile(
-              title: Text(e.repo),
-              subtitle: Text('${e.tag} - ${e.size}'),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete),
-                onPressed: () async {
-                  showRoundDialog(
-                    context: context,
-                    child: Text(_s.sureDelete(e.repo)),
-                    actions: [
-                      TextButton(
-                        onPressed: () => context.pop(),
-                        child: Text(_s.cancel),
-                      ),
-                      TextButton(
-                        onPressed: () async {
-                          context.pop();
-                          final result = await _docker.run(
-                            'docker rmi ${e.id} -f',
+    final items = _docker.images!
+        .map(
+          (e) => ListTile(
+            title: Text(e.repo),
+            subtitle: Text('${e.tag} - ${e.size}', style: grey),
+            trailing: IconButton(
+              padding: EdgeInsets.zero,
+              alignment: Alignment.centerRight,
+              icon: const Icon(Icons.delete),
+              onPressed: () async {
+                showRoundDialog(
+                  context: context,
+                  child: Text(_s.sureDelete(e.repo)),
+                  actions: [
+                    TextButton(
+                      onPressed: () => context.pop(),
+                      child: Text(_s.cancel),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        context.pop();
+                        final result = await _docker.run(
+                          'docker rmi ${e.id} -f',
+                        );
+                        if (result != null) {
+                          showSnackBar(
+                            context,
+                            Text(getErrMsg(result) ?? _s.unknownError),
                           );
-                          if (result != null) {
-                            showSnackBar(
-                              context,
-                              Text(getErrMsg(result) ?? _s.unknownError),
-                            );
-                          }
-                        },
-                        child: Text(
-                          _s.ok,
-                          style: const TextStyle(color: Colors.red),
-                        ),
+                        }
+                      },
+                      child: Text(
+                        _s.ok,
+                        style: const TextStyle(color: Colors.red),
                       ),
-                    ],
-                  );
-                },
-              ),
+                    ),
+                  ],
+                );
+              },
             ),
-          )
-          .toList(),
+          ),
+        )
+        .toList();
+    items.insert(
+      0,
+      ListTile(
+        title: Text(_s.imagesList),
+        subtitle: Text(
+          _s.dockerImagesFmt(_docker.images!.length),
+          style: grey,
+        ),
+      ),
     );
+    return Column(children: items);
   }
 
   Widget _buildLoading() {
     if (!_docker.isBusy) return const SizedBox();
-    final haveLog = _docker.runLog != null;
     return Padding(
       padding: const EdgeInsets.all(17),
       child: Column(
@@ -339,8 +345,8 @@ class _DockerManagePageState extends State<DockerManagePage> {
           const Center(
             child: CircularProgressIndicator(),
           ),
-          haveLog ? const SizedBox(height: 17) : const SizedBox(),
-          haveLog ? Text(_docker.runLog!) : const SizedBox()
+          const SizedBox(height: 17),
+          Text(_docker.runLog ?? '...'),
         ],
       ),
     );
@@ -439,18 +445,25 @@ class _DockerManagePageState extends State<DockerManagePage> {
   }
 
   Widget _buildPsItems() {
-    return ExpansionTile(
-      title: Text(_s.containerStatus),
-      subtitle: Text(_buildSubtitle(_docker.items!), style: grey),
-      children: _docker.items!.map(
-        (item) {
-          return ListTile(
-            title: Text(item.name),
-            subtitle: Text('${item.image} - ${item.status}'),
-            trailing: _buildMoreBtn(item, _docker.isBusy),
-          );
-        },
-      ).toList(),
+    final items = _docker.items!.map(
+      (item) {
+        return ListTile(
+          title: Text(item.name),
+          subtitle: Text('${item.image} - ${item.status}',
+              style: grey.copyWith(fontSize: 11)),
+          trailing: _buildMoreBtn(item, _docker.isBusy),
+        );
+      },
+    ).toList();
+    items.insert(
+      0,
+      ListTile(
+        title: Text(_s.containerStatus),
+        subtitle: Text(_buildSubtitle(_docker.items!), style: grey),
+      ),
+    );
+    return Column(
+      children: items,
     );
   }
 

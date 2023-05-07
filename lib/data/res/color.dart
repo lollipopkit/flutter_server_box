@@ -8,4 +8,4 @@ Color primaryColor = Color(locator<SettingStore>().primaryColor.fetch()!);
 
 final contentColor = DynamicColor(Colors.black87, Colors.white70);
 final bgColor = DynamicColor(Colors.white, Colors.black);
-final progressColor = DynamicColor(Colors.grey.shade100, Colors.white10);
+final progressColor = DynamicColor(Colors.black12, Colors.white10);

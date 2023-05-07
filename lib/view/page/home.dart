@@ -185,7 +185,7 @@ class _MyHomePageState extends State<MyHomePage>
             height: MediaQuery.of(context).size.height * 0.07,
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 13),
+            padding: const EdgeInsets.symmetric(horizontal: 17),
             child: Column(
               children: [
                 ListTile(
@@ -216,24 +216,6 @@ class _MyHomePageState extends State<MyHomePage>
                       AppRoute(BackupPage(), 'backup page').go(context),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.info),
-                  title: Text(_s.feedback),
-                  onTap: () => showRoundDialog(
-                    context: context,
-                    child: Text(_s.feedbackOnGithub),
-                    actions: [
-                      TextButton(
-                        onPressed: () => openUrl(issueUrl),
-                        child: Text(_s.feedback),
-                      ),
-                      TextButton(
-                        onPressed: () => context.pop(),
-                        child: Text(_s.close),
-                      )
-                    ],
-                  ),
-                ),
-                ListTile(
                   leading: const Icon(Icons.snippet_folder),
                   title: Text(_s.snippet),
                   onTap: () => AppRoute(const SnippetListPage(), 'snippet list')
@@ -241,7 +223,7 @@ class _MyHomePageState extends State<MyHomePage>
                 ),
                 ListTile(
                   leading: const Icon(Icons.text_snippet),
-                  title: Text(_s.about),
+                  title: Text('${_s.about} & ${_s.feedback}'),
                   onTap: () {
                     showRoundDialog(
                       context: context,
@@ -266,6 +248,10 @@ class _MyHomePageState extends State<MyHomePage>
                         ],
                       ),
                       actions: [
+                        TextButton(
+                          onPressed: () => openUrl(issueUrl),
+                          child: Text(_s.feedback),
+                        ),
                         TextButton(
                           onPressed: () => showLicensePage(context: context),
                           child: Text(_s.license),

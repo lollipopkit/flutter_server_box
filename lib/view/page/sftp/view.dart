@@ -36,7 +36,6 @@ class _SFTPPageState extends State<SFTPPage> {
   final SftpBrowserStatus _status = SftpBrowserStatus();
   final ScrollController _scrollController = ScrollController();
 
-  late MediaQueryData _media;
   late S _s;
 
   Server? _si;
@@ -45,7 +44,6 @@ class _SFTPPageState extends State<SFTPPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _media = MediaQuery.of(context);
     _s = S.of(context)!;
   }
 
@@ -121,43 +119,7 @@ class _SFTPPageState extends State<SFTPPage> {
                     )),
                 icon: const Icon(Icons.add),
               ),
-              IconButton(
-                padding: const EdgeInsets.all(0),
-                onPressed: () async {
-                  final p = await showRoundDialog<String?>(
-                    context: context,
-                    title: Text(_s.goto),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextField(
-                          decoration: InputDecoration(
-                            labelText: _s.path,
-                            hintText: '/',
-                          ),
-                          onSubmitted: (value) => context.pop(value),
-                        ),
-                      ],
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => context.pop(),
-                        child: Text(_s.cancel),
-                      )
-                    ],
-                  );
-
-                  if (p != null) {
-                    if (p.isEmpty) {
-                      showSnackBar(context, Text(_s.fieldMustNotEmpty));
-                      return;
-                    }
-                    _status.path?.update(p);
-                    listDir(path: p);
-                  }
-                },
-                icon: const Icon(Icons.gps_fixed),
-              )
+              _buildGotoBtn(),
             ],
           )
         ],
@@ -165,30 +127,59 @@ class _SFTPPageState extends State<SFTPPage> {
     ));
   }
 
-  Widget get centerCircleLoading => Center(
-        child: Column(
-          children: [
-            SizedBox(
-              height: _media.size.height * 0.4,
-            ),
-            const CircularProgressIndicator(),
+  Widget _buildGotoBtn() {
+    return IconButton(
+      padding: const EdgeInsets.all(0),
+      onPressed: () async {
+        final p = await showRoundDialog<String?>(
+          context: context,
+          title: Text(_s.goto),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                decoration: InputDecoration(
+                  labelText: _s.path,
+                  hintText: '/',
+                ),
+                onSubmitted: (value) => context.pop(value),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => context.pop(),
+              child: Text(_s.cancel),
+            )
           ],
-        ),
-      );
+        );
+
+        if (p != null) {
+          if (p.isEmpty) {
+            showSnackBar(context, Text(_s.fieldMustNotEmpty));
+            return;
+          }
+          _status.path?.update(p);
+          listDir(path: p);
+        }
+      },
+      icon: const Icon(Icons.gps_fixed),
+    );
+  }
 
   Widget _buildFileView() {
     if (_client == null || _si?.state != ServerState.connected) {
-      return centerCircleLoading;
+      return centerLoading;
     }
 
     if (_status.isBusy) {
-      return centerCircleLoading;
+      return centerLoading;
     }
 
     if (_status.files == null) {
       _status.path = AbsolutePath('/');
       listDir(path: '/', client: _client);
-      return centerCircleLoading;
+      return centerLoading;
     } else {
       return RefreshIndicator(
         child: FadeIn(

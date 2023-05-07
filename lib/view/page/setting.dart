@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/core/utils/navigator.dart';
 import 'package:toolbox/data/model/app/tab.dart';
 
 import '../../core/utils/misc.dart';
@@ -427,6 +428,7 @@ class _SettingPageState extends State<SettingPage> {
               TextButton(
                 onPressed: () => setState(() {
                   _setting.fontPath.delete();
+                  context.pop();
                   _showRestartSnackbar();
                 }),
                 child: Text(_s.clear),
@@ -452,6 +454,7 @@ class _SettingPageState extends State<SettingPage> {
         _setting.fontPath.put(newPath);
       }
 
+      context.pop();
       setState(() {});
       _showRestartSnackbar();
       return;

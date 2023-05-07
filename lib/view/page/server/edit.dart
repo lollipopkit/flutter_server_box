@@ -240,7 +240,6 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                   child: Text(_s.cancel),
                 )
               ],
-              barrierDismiss: false,
             );
             if (cancel ?? true) {
               return;
@@ -250,10 +249,10 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             showSnackBar(context, Text(_s.plzSelectKey));
             return;
           }
-          if (_usernameController.text == '') {
+          if (_usernameController.text.isEmpty) {
             _usernameController.text = 'root';
           }
-          if (_portController.text == '') {
+          if (_portController.text.isEmpty) {
             _portController.text = '22';
           }
 

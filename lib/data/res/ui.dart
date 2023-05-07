@@ -24,6 +24,8 @@ const height13 = SizedBox(height: 13);
 const width13 = SizedBox(width: 13);
 const width7 = SizedBox(width: 7);
 
+/// Misc
+
 const popMenuChild = Padding(
   padding: EdgeInsets.only(left: 7),
   child: Icon(

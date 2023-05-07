@@ -48,7 +48,7 @@ If ServerBox app has any bug, please open an [issue](https://github.com/lollipop
 <table>
   <tr>
     <td>
-	    <img width="200px" src="imgs/server.jpg">
+	    <img width="200px" src="imgs/server.jpeg">
     </td>
     <td>
 	    <img width="200px" src="imgs/detail.jpg">
@@ -67,10 +67,10 @@ If ServerBox app has any bug, please open an [issue](https://github.com/lollipop
 	    <img width="200px" src="imgs/ping.png">
     </td>
     <td>
-	    <img width="200px" src="imgs/sftp.jpg">
+	    <img width="200px" src="imgs/sftp.jpeg">
     </td>
     <td>
-	    <img width="200px" src="imgs/docker.jpg">
+	    <img width="200px" src="imgs/docker.jpeg">
     </td>
     <td>
 	    <img width="200px" src="imgs/convert.png">

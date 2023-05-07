@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 
 import '../../core/utils/ui.dart';
-import '../../data/res/color.dart';
 import '../widget/input_field.dart';
 import '../widget/round_rect_card.dart';
 
@@ -21,7 +20,6 @@ class _ConvertPageState extends State<ConvertPage>
   late TextEditingController _textEditingController;
   late TextEditingController _textEditingControllerResult;
   late MediaQueryData _media;
-  late ThemeData _theme;
   late S _s;
 
   int _typeOptionIndex = 0;
@@ -37,7 +35,6 @@ class _ConvertPageState extends State<ConvertPage>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
-    _theme = Theme.of(context);
     _s = S.of(context)!;
   }
 
@@ -105,10 +102,14 @@ class _ConvertPageState extends State<ConvertPage>
       'URL $encode',
       'URL $decode'
     ];
+    final items = typeOption
+        .map(
+          (e) => PopupMenuItem(value: typeOption.indexOf(e), child: Text(e)),
+        )
+        .toList();
     return RoundRectCard(
-      ExpansionTile(
-        tilePadding: const EdgeInsets.only(left: 7, right: 27),
-        childrenPadding: EdgeInsets.zero,
+      ListTile(
+        contentPadding: const EdgeInsets.only(right: 17),
         title: Row(
           children: [
             TextButton(
@@ -133,42 +134,30 @@ class _ConvertPageState extends State<ConvertPage>
         ),
         trailing: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: _media.size.width * 0.35),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                typeOption[_typeOptionIndex],
-                textScaleFactor: 1.0,
-                textAlign: TextAlign.left,
-                style: TextStyle(
-                  fontSize: 16.0,
-                  fontWeight: FontWeight.w500,
-                  color: primaryColor,
-                ),
-              ),
-              Text(
-                _s.currentMode,
-                textScaleFactor: 1.0,
-                textAlign: TextAlign.right,
-                style: const TextStyle(fontSize: 9.0, color: Colors.grey),
-              )
-            ],
-          ),
-        ),
-        children: typeOption
-            .map(
-              (e) => ListTile(
-                title: Text(
-                  e,
-                  style: TextStyle(
-                    color: _theme.textTheme.bodyMedium?.color?.withAlpha(177),
+          child: buildPopuopMenu<int>(
+            items: items,
+            onSelected: (p0) {
+              setState(() {
+                _typeOptionIndex = p0;
+              });
+            },
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  typeOption[_typeOptionIndex],
+                  textScaleFactor: 1.0,
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey
                   ),
                 ),
-                trailing: _buildRadio(typeOption.indexOf(e)),
-              ),
-            )
-            .toList(),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -177,18 +166,6 @@ class _ConvertPageState extends State<ConvertPage>
     return SizedBox(
       height: _media.size.height * 0.33,
       child: buildInput(context, _textEditingControllerResult),
-    );
-  }
-
-  Radio _buildRadio(int index) {
-    return Radio<int>(
-      value: index,
-      groupValue: _typeOptionIndex,
-      onChanged: (int? value) {
-        setState(() {
-          _typeOptionIndex = value ?? 0;
-        });
-      },
     );
   }
 
