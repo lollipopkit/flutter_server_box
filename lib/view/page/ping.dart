@@ -58,8 +58,7 @@ class _PingPageState extends State<PingPage>
           children: [
             const SizedBox(height: 13),
             buildInput(
-              context,
-              _textEditingController,
+              controller: _textEditingController,
               hint: s.inputDomainHere,
               maxLines: 1,
               onSubmitted: (_) => doPing(),

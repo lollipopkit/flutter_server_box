@@ -89,7 +89,7 @@ class _ConvertPageState extends State<ConvertPage>
   Widget _buildInputTop() {
     return SizedBox(
       height: _media.size.height * 0.33,
-      child: buildInput(context, _textEditingController),
+      child: buildInput(controller: _textEditingController),
     );
   }
 
@@ -150,9 +150,7 @@ class _ConvertPageState extends State<ConvertPage>
                   textScaleFactor: 1.0,
                   textAlign: TextAlign.right,
                   style: const TextStyle(
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey
-                  ),
+                      fontWeight: FontWeight.w500, color: Colors.grey),
                 ),
               ],
             ),
@@ -165,7 +163,7 @@ class _ConvertPageState extends State<ConvertPage>
   Widget _buildResult() {
     return SizedBox(
       height: _media.size.height * 0.33,
-      child: buildInput(context, _textEditingControllerResult),
+      child: buildInput(controller: _textEditingControllerResult),
     );
   }
 

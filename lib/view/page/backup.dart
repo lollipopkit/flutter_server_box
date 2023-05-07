@@ -67,9 +67,12 @@ class BackupPage extends StatelessWidget {
             final text = await file.readAsString();
             _import(text, context, s);
           }),
-          const SizedBox(height: 7),
-          const Divider(),
-          const SizedBox(height: 7),
+          const SizedBox(height: 17),
+          const SizedBox(
+            width: 37,
+            child: Divider(),
+          ),
+          const SizedBox(height: 17),
           _buildCard(
             s.backup,
             Icons.file_upload,

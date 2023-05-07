@@ -9,6 +9,7 @@ import 'package:toolbox/core/extension/numx.dart';
 import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/core/utils/navigator.dart';
 import 'package:toolbox/data/res/misc.dart';
+import 'package:toolbox/view/widget/input_field.dart';
 
 import '../../../core/utils/server.dart';
 import '../../../core/utils/ui.dart';
@@ -16,7 +17,6 @@ import '../../../data/model/server/private_key_info.dart';
 import '../../../data/provider/private_key.dart';
 import '../../../data/res/ui.dart';
 import '../../../locator.dart';
-import '../../widget/input_decoration.dart';
 
 const _format = 'text/plain';
 
@@ -78,23 +78,24 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
       body: ListView(
         padding: const EdgeInsets.all(13),
         children: [
-          TextField(
+          buildInput(
             controller: _nameController,
-            keyboardType: TextInputType.text,
-            focusNode: _nameNode,
+            type: TextInputType.text,
+            node: _nameNode,
             onSubmitted: (_) => _focusScope.requestFocus(_keyNode),
-            decoration: buildDecoration(_s.name, icon: Icons.info),
+            label: _s.name,
+            icon: Icons.info,
           ),
-          TextField(
+          buildInput(
             controller: _keyController,
-            autocorrect: false,
+            autoCorrect: false,
             minLines: 3,
             maxLines: 10,
-            keyboardType: TextInputType.text,
-            focusNode: _keyNode,
+            type: TextInputType.text,
+            node: _keyNode,
             onSubmitted: (_) => _focusScope.requestFocus(_pwdNode),
-            enableSuggestions: false,
-            decoration: buildDecoration(_s.privateKey, icon: Icons.vpn_key),
+            label: _s.privateKey,
+            icon: Icons.vpn_key,
           ),
           TextButton(
             onPressed: () async {
@@ -128,13 +129,14 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
             },
             child: Text(_s.pickFile),
           ),
-          TextField(
+          buildInput(
             controller: _pwdController,
-            autocorrect: false,
-            keyboardType: TextInputType.text,
-            focusNode: _pwdNode,
+            autoCorrect: false,
+            type: TextInputType.text,
+            node: _pwdNode,
             obscureText: true,
-            decoration: buildDecoration(_s.pwd, icon: Icons.password),
+            label: _s.pwd,
+            icon: Icons.password,
           ),
           SizedBox(height: MediaQuery.of(context).size.height * 0.1),
           _loading

@@ -1062,7 +1062,7 @@ abstract class S {
   /// No description provided for @unknown.
   ///
   /// In en, this message translates to:
-  /// **'unknown'**
+  /// **'Unknown'**
   String get unknown;
 
   /// No description provided for @unknownError.

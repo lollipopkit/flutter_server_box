@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/utils/navigator.dart';
+import 'package:toolbox/view/widget/input_field.dart';
 
 import '../../core/utils/ui.dart';
 import '../../data/model/docker/ps.dart';
@@ -94,27 +95,26 @@ class _DockerManagePageState extends State<DockerManagePage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          TextField(
-            keyboardType: TextInputType.text,
-            decoration: InputDecoration(
-                labelText: _s.dockerImage, hintText: 'ubuntu:22.10'),
+          buildInput(
+            type: TextInputType.text,
+            label: _s.dockerImage, 
+            hint: 'xxx:1.1',
             controller: imageCtrl,
-            autocorrect: false,
+            autoCorrect: false,
           ),
-          TextField(
-            keyboardType: TextInputType.text,
+          buildInput(
+            type: TextInputType.text,
             controller: nameCtrl,
-            decoration: InputDecoration(
-                labelText: _s.dockerContainerName, hintText: 'ubuntu22'),
-            autocorrect: false,
+            label: _s.dockerContainerName, 
+            hint: 'xxx',
+            autoCorrect: false,
           ),
-          TextField(
-            keyboardType: TextInputType.text,
+          buildInput(
+            type: TextInputType.text,
             controller: argsCtrl,
-            decoration: InputDecoration(
-                labelText: _s.extraArgs,
-                hintText: '-p 2222:22 -v ~/.xxx/:/xxx'),
-            autocorrect: false,
+            label: _s.extraArgs,
+            hint: '-p 2222:22 -v ~/.xxx/:/xxx',
+            autoCorrect: false,
           ),
         ],
       ),
@@ -206,14 +206,12 @@ class _DockerManagePageState extends State<DockerManagePage> {
     await showRoundDialog(
       context: context,
       title: Text(widget.spi.user),
-      child: TextField(
+      child: buildInput(
         controller: _textController,
-        keyboardType: TextInputType.visiblePassword,
+        type: TextInputType.visiblePassword,
         obscureText: true,
         onSubmitted: (_) => onSubmitted(),
-        decoration: InputDecoration(
-          labelText: _s.pwd,
-        ),
+        label: _s.pwd,
       ),
       actions: [
         TextButton(
@@ -262,17 +260,21 @@ class _DockerManagePageState extends State<DockerManagePage> {
       return centerLoading;
     }
 
+    final items = <Widget>[];
+    items.addAll([
+      _buildLoading(),
+      _buildVersion(
+        _docker.edition ?? _s.unknown,
+        _docker.version ?? _s.unknown,
+      ),
+      _buildPsItems(),
+      _buildImages(),
+      _buildEditHost(),
+    ].map((e) => RoundRectCard(e)));
+    items.add(const SizedBox(height: 37));
     return ListView(
       padding: const EdgeInsets.all(7),
-      children: [
-        _buildLoading(),
-        _buildVersion(
-            _docker.edition ?? _s.unknown, _docker.version ?? _s.unknown),
-        _buildPsItems(),
-        _buildImages(),
-        _buildEditHost(),
-        const SizedBox(height: 37),
-      ].map((e) => RoundRectCard(e)).toList(),
+      children: items,
     );
   }
 
@@ -377,9 +379,9 @@ class _DockerManagePageState extends State<DockerManagePage> {
     await showRoundDialog(
       context: context,
       title: Text(_s.dockerEditHost),
-      child: TextField(
+      child: buildInput(
         maxLines: 1,
-        autocorrect: false,
+        autoCorrect: false,
         controller:
             TextEditingController(text: 'unix:///run/user/1000/docker.sock'),
         onSubmitted: (value) {

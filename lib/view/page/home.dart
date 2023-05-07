@@ -191,8 +191,10 @@ class _MyHomePageState extends State<MyHomePage>
                 ListTile(
                   leading: const Icon(Icons.settings),
                   title: Text(_s.setting),
-                  onTap: () =>
-                      AppRoute(const SettingPage(), 'Setting').go(context),
+                  onTap: () => AppRoute(
+                    const SettingPage(),
+                    'Setting',
+                  ).go(context),
                 ),
                 ListTile(
                   leading: const Icon(Icons.vpn_key),
@@ -205,21 +207,26 @@ class _MyHomePageState extends State<MyHomePage>
                 ListTile(
                   leading: const Icon(Icons.download),
                   title: Text(_s.download),
-                  onTap: () =>
-                      AppRoute(const SFTPDownloadedPage(), 'snippet list')
-                          .go(context),
+                  onTap: () => AppRoute(
+                    const SFTPDownloadedPage(),
+                    'snippet list',
+                  ).go(context),
                 ),
                 ListTile(
                   leading: const Icon(Icons.import_export),
                   title: Text(_s.backup),
-                  onTap: () =>
-                      AppRoute(BackupPage(), 'backup page').go(context),
+                  onTap: () => AppRoute(
+                    BackupPage(),
+                    'backup page',
+                  ).go(context),
                 ),
                 ListTile(
                   leading: const Icon(Icons.snippet_folder),
                   title: Text(_s.snippet),
-                  onTap: () => AppRoute(const SnippetListPage(), 'snippet list')
-                      .go(context),
+                  onTap: () => AppRoute(
+                    const SnippetListPage(),
+                    'snippet list',
+                  ).go(context),
                 ),
                 ListTile(
                   leading: const Icon(Icons.text_snippet),

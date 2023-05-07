@@ -522,7 +522,7 @@ class SEn extends S {
   String get ttl => 'ttl';
 
   @override
-  String get unknown => 'unknown';
+  String get unknown => 'Unknown';
 
   @override
   String get unknownError => 'Unknown error';

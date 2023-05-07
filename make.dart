@@ -10,6 +10,7 @@ const buildDataFilePath = 'lib/data/res/build_data.dart';
 const apkPath = 'build/app/outputs/flutter-apk/app-release.apk';
 const xcarchivePath = 'build/ios/archive/Runner.xcarchive';
 const appleXCConfigPath = 'Runner.xcodeproj/project.pbxproj';
+const releaseDirPath = '/Volumes/pm981/flutter_releases';
 
 var regAppleProjectVer = RegExp(r'CURRENT_PROJECT_VERSION = .+;');
 var regAppleMarketVer = RegExp(r'MARKETING_VERSION = .+');
@@ -127,6 +128,7 @@ Future<void> flutterBuild(
 
   if (exitCode == 0) {
     target = target.replaceFirst('build', build.toString());
+    target = '$releaseDirPath/$target';
     print('Copying from $source to $target');
     if (isAndroid) {
       await File(source).copy(target);
@@ -146,17 +148,16 @@ Future<void> flutterBuild(
 }
 
 Future<void> flutterBuildIOS() async {
-  await flutterBuild(
-      xcarchivePath, './release/${appName}_ios_build.xcarchive', 'ipa');
+  await flutterBuild(xcarchivePath, '${appName}_ios_build.xcarchive', 'ipa');
 }
 
 Future<void> flutterBuildMacOS() async {
   await flutterBuild(
-      xcarchivePath, './release/${appName}_macos_build.xcarchive', 'macos');
+      xcarchivePath, '${appName}_macos_build.xcarchive', 'macos');
 }
 
 Future<void> flutterBuildAndroid() async {
-  await flutterBuild(apkPath, './release/${appName}_build_Arm64.apk', 'apk');
+  await flutterBuild(apkPath, '${appName}_build_Arm64.apk', 'apk');
   await killJava();
 }
 

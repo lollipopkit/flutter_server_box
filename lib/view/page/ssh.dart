@@ -156,7 +156,6 @@ class _SSHPageState extends State<SSHPage> {
       child: TerminalView(
         _terminal,
         controller: _terminalController,
-        keyboardType: TextInputType.visiblePassword,
         textStyle: _terminalStyle,
         theme: _terminalTheme,
         deleteDetection: isIOS,

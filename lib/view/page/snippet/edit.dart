@@ -2,13 +2,13 @@ import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/utils/navigator.dart';
+import 'package:toolbox/view/widget/input_field.dart';
 
 import '../../../core/utils/ui.dart';
 import '../../../data/model/server/snippet.dart';
 import '../../../data/provider/snippet.dart';
 import '../../../data/res/ui.dart';
 import '../../../locator.dart';
-import '../../widget/input_decoration.dart';
 
 class SnippetEditPage extends StatefulWidget {
   const SnippetEditPage({Key? key, this.snippet}) : super(key: key);
@@ -60,22 +60,23 @@ class _SnippetEditPageState extends State<SnippetEditPage>
       body: ListView(
         padding: const EdgeInsets.all(13),
         children: [
-          TextField(
+          buildInput(
             controller: _nameController,
-            keyboardType: TextInputType.text,
+            type: TextInputType.text,
             onSubmitted: (_) =>
                 FocusScope.of(context).requestFocus(_scriptNode),
-            decoration: buildDecoration(_s.name, icon: Icons.info),
+            label: _s.name,
+            icon: Icons.info,
           ),
-          TextField(
+          buildInput(
             controller: _scriptController,
-            autocorrect: false,
-            focusNode: _scriptNode,
+            autoCorrect: false,
+            node: _scriptNode,
             minLines: 3,
             maxLines: 10,
-            keyboardType: TextInputType.text,
-            enableSuggestions: false,
-            decoration: buildDecoration(_s.snippet, icon: Icons.code),
+            type: TextInputType.text,
+            label: _s.snippet,
+            icon: Icons.code,
           ),
         ],
       ),

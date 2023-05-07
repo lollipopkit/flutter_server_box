@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/utils/navigator.dart';
+import 'package:toolbox/view/widget/input_field.dart';
 
 import '../../data/model/pkg/upgrade_info.dart';
 import '../../data/model/server/dist.dart';
@@ -91,14 +92,12 @@ class _PkgManagePageState extends State<PkgManagePage>
     await showRoundDialog(
       context: context,
       title: Text(widget.spi.user),
-      child: TextField(
+      child: buildInput(
         controller: _textController,
-        keyboardType: TextInputType.visiblePassword,
+        type: TextInputType.visiblePassword,
         obscureText: true,
         onSubmitted: (_) => onSubmitted(),
-        decoration: InputDecoration(
-          labelText: _s.pwd,
-        ),
+        label: _s.pwd,
       ),
       actions: [
         TextButton(

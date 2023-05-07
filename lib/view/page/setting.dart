@@ -147,6 +147,7 @@ class _SettingPageState extends State<SettingPage> {
         _s.onServerDetailPage,
         style: grey,
       ),
+      contentPadding: const EdgeInsets.only(left: 17, right: 11),
       trailing: buildSwitch(context, _setting.showDistLogo),
     );
   }
@@ -382,8 +383,10 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(
         _s.pushToken,
       ),
-      trailing: TextButton(
-        child: Text(_s.copy),
+      trailing: IconButton(
+        icon: const Icon(Icons.copy),
+        alignment: Alignment.centerRight,
+        padding: EdgeInsets.zero,
         onPressed: () {
           if (_pushToken != null) {
             copy(_pushToken!);

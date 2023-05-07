@@ -1,27 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
-Widget buildInput(
-  BuildContext context,
-  TextEditingController controller, {
-  int maxLines = 20,
+Widget buildInput({
+  TextEditingController? controller,
+  int maxLines = 1,
+  int? minLines,
   String? hint,
+  String? label,
   Function(String)? onSubmitted,
   bool obscureText = false,
   IconData? icon,
+  TextInputType? type,
+  FocusNode? node,
+  bool autoCorrect = true,
 }) {
   return RoundRectCard(
-    TextField(
-      maxLines: maxLines,
-      onSubmitted: onSubmitted,
-      decoration: InputDecoration(
-        hintText: hint,
-        icon: icon != null ? Icon(icon) : null,
-        border: InputBorder.none,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7)
+    Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 17),
+      child: TextField(
+        maxLines: maxLines,
+        minLines: minLines,
+        onSubmitted: onSubmitted,
+        keyboardType: type,
+        focusNode: node,
+        autocorrect: autoCorrect,
+        decoration: InputDecoration(
+          label: label != null ? Text(label) : null,
+          hintText: hint,
+          icon: icon != null ? Icon(icon) : null,
+          border: InputBorder.none,
+        ),
+        controller: controller,
+        obscureText: obscureText,
       ),
-      controller: controller,
-      obscureText: obscureText,
     ),
   );
 }

@@ -4,6 +4,7 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/utils/navigator.dart';
+import 'package:toolbox/view/widget/input_field.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/extension/stringx.dart';
@@ -64,67 +65,73 @@ class _SFTPPageState extends State<SFTPPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.downloading),
-            onPressed: () =>
-                AppRoute(const SFTPDownloadingPage(), 'sftp downloading')
-                    .go(context),
+            onPressed: () => AppRoute(
+              const SFTPDownloadingPage(),
+              'sftp downloading',
+            ).go(context),
           ),
         ],
       ),
       body: _buildFileView(),
-      bottomNavigationBar: SafeArea(child: _buildBottom()),
+      bottomNavigationBar: _buildBottom(),
     );
   }
 
   Widget _buildBottom() {
     return SafeArea(
-        child: Container(
-      padding: const EdgeInsets.fromLTRB(11, 7, 11, 11),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Divider(),
-          (_status.path?.path ?? _s.loadingFiles).omitStartStr(),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              IconButton(
-                padding: const EdgeInsets.all(0),
-                onPressed: () async {
-                  await backward();
-                },
-                icon: const Icon(Icons.arrow_back),
-              ),
-              IconButton(
-                onPressed: (() => showRoundDialog(
-                      context: context,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ListTile(
-                              leading: const Icon(Icons.folder),
-                              title: Text(_s.createFolder),
-                              onTap: () => mkdir(context)),
-                          ListTile(
-                              leading: const Icon(Icons.insert_drive_file),
-                              title: Text(_s.createFile),
-                              onTap: () => newFile(context)),
-                        ],
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => context.pop(),
-                          child: Text(_s.close),
-                        )
-                      ],
-                    )),
-                icon: const Icon(Icons.add),
-              ),
-              _buildGotoBtn(),
-            ],
-          )
-        ],
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(11, 7, 11, 11),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Divider(),
+            (_status.path?.path ?? _s.loadingFiles).omitStartStr(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                IconButton(
+                  padding: const EdgeInsets.all(0),
+                  onPressed: () async {
+                    await backward();
+                  },
+                  icon: const Icon(Icons.arrow_back),
+                ),
+                _buildAddBtn(),
+                _buildGotoBtn(),
+              ],
+            )
+          ],
+        ),
       ),
-    ));
+    );
+  }
+
+  Widget _buildAddBtn() {
+    return IconButton(
+      onPressed: (() => showRoundDialog(
+            context: context,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                    leading: const Icon(Icons.folder),
+                    title: Text(_s.createFolder),
+                    onTap: () => mkdir(context)),
+                ListTile(
+                    leading: const Icon(Icons.insert_drive_file),
+                    title: Text(_s.createFile),
+                    onTap: () => newFile(context)),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => context.pop(),
+                child: Text(_s.close),
+              )
+            ],
+          )),
+      icon: const Icon(Icons.add),
+    );
   }
 
   Widget _buildGotoBtn() {
@@ -137,11 +144,9 @@ class _SFTPPageState extends State<SFTPPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(
-                decoration: InputDecoration(
-                  labelText: _s.path,
-                  hintText: '/',
-                ),
+              buildInput(
+                label: _s.path,
+                hint: '/',
                 onSubmitted: (value) => context.pop(value),
               ),
             ],
@@ -179,7 +184,7 @@ class _SFTPPageState extends State<SFTPPage> {
     if (_status.files == null) {
       _status.path = AbsolutePath('/');
       listDir(path: '/', client: _client);
-      return centerLoading;
+      return centerSizedLoading;
     } else {
       return RefreshIndicator(
         child: FadeIn(
@@ -373,11 +378,9 @@ class _SFTPPageState extends State<SFTPPage> {
     showRoundDialog(
       context: context,
       title: Text(_s.createFolder),
-      child: TextField(
+      child: buildInput(
         controller: textController,
-        decoration: InputDecoration(
-          labelText: _s.name,
-        ),
+        label: _s.name,
       ),
       actions: [
         TextButton(
@@ -419,11 +422,9 @@ class _SFTPPageState extends State<SFTPPage> {
     showRoundDialog(
       context: context,
       title: Text(_s.createFile),
-      child: TextField(
+      child: buildInput(
         controller: textController,
-        decoration: InputDecoration(
-          labelText: _s.name,
-        ),
+        label: _s.name,
       ),
       actions: [
         TextButton(
@@ -466,11 +467,9 @@ class _SFTPPageState extends State<SFTPPage> {
     showRoundDialog(
       context: context,
       title: Text(_s.rename),
-      child: TextField(
+      child: buildInput(
         controller: textController,
-        decoration: InputDecoration(
-          labelText: _s.name,
-        ),
+        label: _s.name,
       ),
       actions: [
         TextButton(onPressed: () => context.pop(), child: Text(_s.cancel)),
