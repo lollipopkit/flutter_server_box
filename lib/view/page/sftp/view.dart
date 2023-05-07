@@ -184,7 +184,7 @@ class _SFTPPageState extends State<SFTPPage> {
     if (_status.files == null) {
       _status.path = AbsolutePath('/');
       listDir(path: '/', client: _client);
-      return centerSizedLoading;
+      return centerLoading;
     } else {
       return RefreshIndicator(
         child: FadeIn(

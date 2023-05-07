@@ -97,7 +97,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
         children: [
           buildInput(
             type: TextInputType.text,
-            label: _s.dockerImage, 
+            label: _s.dockerImage,
             hint: 'xxx:1.1',
             controller: imageCtrl,
             autoCorrect: false,
@@ -105,7 +105,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
           buildInput(
             type: TextInputType.text,
             controller: nameCtrl,
-            label: _s.dockerContainerName, 
+            label: _s.dockerContainerName,
             hint: 'xxx',
             autoCorrect: false,
           ),

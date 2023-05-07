@@ -120,107 +120,111 @@ class _PkgManagePageState extends State<PkgManagePage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: TwoLineText(up: _s.pkg, down: widget.spi.name),
-      ),
-      body: Consumer<PkgProvider>(builder: (_, apt, __) {
-        if (apt.error != null) {
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.error,
-                color: Colors.redAccent,
-                size: 37,
-              ),
-              const SizedBox(
-                height: 37,
-              ),
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                    maxHeight: _media.size.height * 0.3,
-                    minWidth: _media.size.width),
-                child: Padding(
-                  padding: const EdgeInsets.all(17),
-                  child: RoundRectCard(
-                    SingleChildScrollView(
-                      padding: const EdgeInsets.all(17),
-                      child: Text(
-                        apt.error!,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        }
-        if (apt.updateLog == null && apt.upgradeable == null) {
-          return centerLoading;
-        }
-        if (apt.updateLog != null && apt.upgradeable == null) {
-          return SizedBox(
-            height:
-                _media.size.height - _media.padding.top - _media.padding.bottom,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints.expand(),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(18),
-                controller: _scrollControllerUpdate,
-                child: Text(apt.updateLog!),
-              ),
-            ),
-          );
-        }
-        return ListView(
-          padding: const EdgeInsets.all(13),
-          children: [
-            _buildUpdatePanel(apt),
-          ].map((e) => RoundRectCard(e)).toList(),
-        );
-      }),
+    return Consumer<PkgProvider>(builder: (_, pkg, __) {
+      return Scaffold(
+        appBar: AppBar(
+          centerTitle: true,
+          title: TwoLineText(up: _s.pkg, down: widget.spi.name),
+        ),
+        body: _buildBody(pkg),
+        floatingActionButton: _buildFAB(pkg),
+      );
+    });
+  }
+
+  Widget _buildFAB(PkgProvider pkg) {
+    if (pkg.isBusy || (pkg.upgradeable?.isEmpty ?? true)) {
+      return const SizedBox();
+    }
+    return FloatingActionButton(
+      onPressed: () {
+        pkg.upgrade();
+      },
+      child: const Icon(Icons.upgrade),
     );
   }
 
-  Widget _buildUpdatePanel(PkgProvider apt) {
+  Widget _buildBody(PkgProvider pkg) {
+    if (pkg.error != null) {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.error,
+            color: Colors.redAccent,
+            size: 37,
+          ),
+          const SizedBox(
+            height: 37,
+          ),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+                maxHeight: _media.size.height * 0.3,
+                minWidth: _media.size.width),
+            child: Padding(
+              padding: const EdgeInsets.all(17),
+              child: RoundRectCard(
+                SingleChildScrollView(
+                  padding: const EdgeInsets.all(17),
+                  child: Text(
+                    pkg.error!,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+    if (pkg.upgradeable == null) {
+      if (pkg.updateLog == null) {
+        return centerLoading;
+      }
+      return SizedBox(
+        height: _media.size.height - _media.padding.top - _media.padding.bottom,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints.expand(),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(18),
+            controller: _scrollControllerUpdate,
+            child: Text(pkg.updateLog!),
+          ),
+        ),
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(13),
+      children: _buildUpdatePanel(pkg).map((e) => RoundRectCard(e)).toList(),
+    );
+  }
+
+  List<Widget> _buildUpdatePanel(PkgProvider apt) {
+    final children = <Widget>[];
     if (apt.upgradeable!.isEmpty) {
-      return ListTile(
+      children.add(ListTile(
         title: Text(
           _s.noUpdateAvailable,
           textAlign: TextAlign.center,
         ),
         subtitle: const Text('>_<', textAlign: TextAlign.center),
-      );
+      ));
+      return children;
     }
-    return ExpansionTile(
-      title: Text(_s.foundNUpdate(apt.upgradeable!.length)),
-      subtitle: Text(
-        apt.upgradeable!.map((e) => e.package).join(', '),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: grey,
-      ),
-      initiallyExpanded: true,
-      children: apt.upgradeLog == null
-          ? [
-              TextButton(
-                child: Text(_s.updateAll),
-                onPressed: () {
-                  apt.upgrade();
-                },
-              ),
-              ...apt.upgradeable!.map((e) => _buildUpdateItem(e, apt)).toList()
-            ]
-          : [
-              SingleChildScrollView(
-                padding: const EdgeInsets.all(18),
-                controller: _scrollController,
-                child: Text(apt.upgradeLog!),
-              )
-            ],
-    );
+
+    if (apt.upgradeLog == null) {
+      children.addAll(
+        apt.upgradeable?.map((e) => _buildUpdateItem(e, apt)).toList() ?? [],
+      );
+    } else {
+      children.add(SingleChildScrollView(
+        padding: const EdgeInsets.all(18),
+        controller: _scrollController,
+        child: Text(apt.upgradeLog ?? ''),
+      ));
+    }
+
+    return children;
   }
 
   Widget _buildUpdateItem(UpgradePkgInfo info, PkgProvider apt) {
