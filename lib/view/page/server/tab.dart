@@ -62,38 +62,7 @@ class _ServerPageState extends State<ServerPage>
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      body: RefreshIndicator(
-        onRefresh: () async =>
-            await _serverProvider.refreshData(onlyFailed: true),
-        child: Consumer<ServerProvider>(
-          builder: (_, pro, __) {
-            if (pro.servers.isEmpty) {
-              return Center(
-                child: Text(
-                  _s.serverTabEmpty,
-                  textAlign: TextAlign.center,
-                ),
-              );
-            }
-            final keys = pro.servers.keys.toList();
-            return ListView.separated(
-              padding: const EdgeInsets.fromLTRB(7, 10, 7, 7),
-              controller: ScrollController(),
-              physics: const AlwaysScrollableScrollPhysics(),
-              itemBuilder: (ctx, idx) {
-                if (idx == pro.servers.length) {
-                  return SizedBox(height: _media.padding.bottom);
-                }
-                return _buildEachServerCard(pro.servers[keys[idx]]);
-              },
-              itemCount: pro.servers.length,
-              separatorBuilder: (_, __) => const SizedBox(
-                height: 3,
-              ),
-            );
-          },
-        ),
-      ),
+      body: _buildBody(),
       floatingActionButton: FloatingActionButton(
         onPressed: () => AppRoute(
           const ServerEditPage(),
@@ -102,6 +71,41 @@ class _ServerPageState extends State<ServerPage>
         tooltip: _s.addAServer,
         heroTag: 'server page fab',
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    return RefreshIndicator(
+      onRefresh: () async =>
+          await _serverProvider.refreshData(onlyFailed: true),
+      child: Consumer<ServerProvider>(
+        builder: (_, pro, __) {
+          if (pro.servers.isEmpty) {
+            return Center(
+              child: Text(
+                _s.serverTabEmpty,
+                textAlign: TextAlign.center,
+              ),
+            );
+          }
+          final keys = pro.servers.keys.toList();
+          return ListView.separated(
+            padding: const EdgeInsets.fromLTRB(7, 10, 7, 7),
+            controller: ScrollController(),
+            physics: const AlwaysScrollableScrollPhysics(),
+            itemBuilder: (ctx, idx) {
+              if (idx == pro.servers.length) {
+                return SizedBox(height: _media.padding.bottom);
+              }
+              return _buildEachServerCard(pro.servers[keys[idx]]);
+            },
+            itemCount: pro.servers.length,
+            separatorBuilder: (_, __) => const SizedBox(
+              height: 3,
+            ),
+          );
+        },
       ),
     );
   }

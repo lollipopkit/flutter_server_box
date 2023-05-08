@@ -89,7 +89,7 @@ class _ConvertPageState extends State<ConvertPage>
   Widget _buildInputTop() {
     return SizedBox(
       height: _media.size.height * 0.33,
-      child: buildInput(controller: _textEditingController),
+      child: Input(controller: _textEditingController),
     );
   }
 
@@ -163,7 +163,7 @@ class _ConvertPageState extends State<ConvertPage>
   Widget _buildResult() {
     return SizedBox(
       height: _media.size.height * 0.33,
-      child: buildInput(controller: _textEditingControllerResult),
+      child: Input(controller: _textEditingControllerResult),
     );
   }
 

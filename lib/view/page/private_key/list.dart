@@ -30,41 +30,44 @@ class _PrivateKeyListState extends State<PrivateKeysListPage> {
       appBar: AppBar(
         title: Text(_s.privateKey, style: textSize18),
       ),
-      body: Consumer<PrivateKeyProvider>(
-        builder: (_, key, __) {
-          if (key.infos.isEmpty) {
-            return Center(
-              child: Text(_s.noSavedPrivateKey),
-            );
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.all(13),
-            itemCount: key.infos.length,
-            itemBuilder: (context, idx) {
-              return RoundRectCard(
-                ListTile(
-                  title: Text(
-                    key.infos[idx].id,
-                  ),
-                  trailing: TextButton(
-                    onPressed: () => AppRoute(
-                      PrivateKeyEditPage(info: key.infos[idx]),
-                      'private key edit page',
-                    ).go(context),
-                    child: Text(_s.edit),
-                  ),
-                ),
-              );
-            },
-          );
-        },
-      ),
+      body: _buildBody(),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
-        onPressed: () =>
-            AppRoute(const PrivateKeyEditPage(), 'private key edit page')
-                .go(context),
+        onPressed: () => AppRoute(
+          const PrivateKeyEditPage(),
+          'private key edit page',
+        ).go(context),
       ),
+    );
+  }
+
+  Widget _buildBody() {
+    return Consumer<PrivateKeyProvider>(
+      builder: (_, key, __) {
+        if (key.infos.isEmpty) {
+          return Center(
+            child: Text(_s.noSavedPrivateKey),
+          );
+        }
+        return ListView.builder(
+          padding: const EdgeInsets.all(13),
+          itemCount: key.infos.length,
+          itemBuilder: (context, idx) {
+            return RoundRectCard(
+              ListTile(
+                title: Text(key.infos[idx].id),
+                trailing: TextButton(
+                  onPressed: () => AppRoute(
+                    PrivateKeyEditPage(info: key.infos[idx]),
+                    'private key edit page',
+                  ).go(context),
+                  child: Text(_s.edit),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

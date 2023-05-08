@@ -57,47 +57,53 @@ class _SnippetEditPageState extends State<SnippetEditPage>
               : const SizedBox()
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(13),
-        children: [
-          buildInput(
-            controller: _nameController,
-            type: TextInputType.text,
-            onSubmitted: (_) =>
-                FocusScope.of(context).requestFocus(_scriptNode),
-            label: _s.name,
-            icon: Icons.info,
-          ),
-          buildInput(
-            controller: _scriptController,
-            autoCorrect: false,
-            node: _scriptNode,
-            minLines: 3,
-            maxLines: 10,
-            type: TextInputType.text,
-            label: _s.snippet,
-            icon: Icons.code,
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.send),
-        onPressed: () {
-          final name = _nameController.text;
-          final script = _scriptController.text;
-          if (name.isEmpty || script.isEmpty) {
-            showSnackBar(context, Text(_s.fieldMustNotEmpty));
-            return;
-          }
-          final snippet = Snippet(name, script);
-          if (widget.snippet != null) {
-            _provider.update(widget.snippet!, snippet);
-          } else {
-            _provider.add(snippet);
-          }
-          context.pop();
-        },
-      ),
+      body: _buildBody(),
+      floatingActionButton: _buildFAB(),
+    );
+  }
+
+  Widget _buildFAB() {
+    return FloatingActionButton(
+      child: const Icon(Icons.send),
+      onPressed: () {
+        final name = _nameController.text;
+        final script = _scriptController.text;
+        if (name.isEmpty || script.isEmpty) {
+          showSnackBar(context, Text(_s.fieldMustNotEmpty));
+          return;
+        }
+        final snippet = Snippet(name, script);
+        if (widget.snippet != null) {
+          _provider.update(widget.snippet!, snippet);
+        } else {
+          _provider.add(snippet);
+        }
+        context.pop();
+      },
+    );
+  }
+
+  Widget _buildBody() {
+    return ListView(
+      padding: const EdgeInsets.all(13),
+      children: [
+        Input(
+          controller: _nameController,
+          type: TextInputType.text,
+          onSubmitted: (_) => FocusScope.of(context).requestFocus(_scriptNode),
+          label: _s.name,
+          icon: Icons.info,
+        ),
+        Input(
+          controller: _scriptController,
+          node: _scriptNode,
+          minLines: 3,
+          maxLines: 10,
+          type: TextInputType.text,
+          label: _s.snippet,
+          icon: Icons.code,
+        ),
+      ],
     );
   }
 

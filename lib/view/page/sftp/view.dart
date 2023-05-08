@@ -18,9 +18,9 @@ import '../../../data/model/sftp/download_item.dart';
 import '../../../data/provider/server.dart';
 import '../../../data/provider/sftp_download.dart';
 import '../../../data/res/path.dart';
+import '../../../data/res/ui.dart';
 import '../../../data/store/private_key.dart';
 import '../../../locator.dart';
-import '../../widget/center_loading.dart';
 import '../../widget/fade_in.dart';
 import '../../widget/two_line_text.dart';
 import 'downloading.dart';
@@ -144,7 +144,7 @@ class _SFTPPageState extends State<SFTPPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              buildInput(
+              Input(
                 label: _s.path,
                 hint: '/',
                 onSubmitted: (value) => context.pop(value),
@@ -378,7 +378,7 @@ class _SFTPPageState extends State<SFTPPage> {
     showRoundDialog(
       context: context,
       title: Text(_s.createFolder),
-      child: buildInput(
+      child: Input(
         controller: textController,
         label: _s.name,
       ),
@@ -422,7 +422,7 @@ class _SFTPPageState extends State<SFTPPage> {
     showRoundDialog(
       context: context,
       title: Text(_s.createFile),
-      child: buildInput(
+      child: Input(
         controller: textController,
         label: _s.name,
       ),
@@ -467,7 +467,7 @@ class _SFTPPageState extends State<SFTPPage> {
     showRoundDialog(
       context: context,
       title: Text(_s.rename),
-      child: buildInput(
+      child: Input(
         controller: textController,
         label: _s.name,
       ),

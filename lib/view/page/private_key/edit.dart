@@ -61,128 +61,138 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_s.edit, style: textSize18),
-        actions: [
-          widget.info != null
-              ? IconButton(
-                  tooltip: _s.delete,
-                  onPressed: () {
-                    _provider.delInfo(widget.info!);
-                    context.pop();
-                  },
-                  icon: const Icon(Icons.delete))
-              : const SizedBox()
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(13),
-        children: [
-          buildInput(
-            controller: _nameController,
-            type: TextInputType.text,
-            node: _nameNode,
-            onSubmitted: (_) => _focusScope.requestFocus(_keyNode),
-            label: _s.name,
-            icon: Icons.info,
-          ),
-          buildInput(
-            controller: _keyController,
-            autoCorrect: false,
-            minLines: 3,
-            maxLines: 10,
-            type: TextInputType.text,
-            node: _keyNode,
-            onSubmitted: (_) => _focusScope.requestFocus(_pwdNode),
-            label: _s.privateKey,
-            icon: Icons.vpn_key,
-          ),
-          TextButton(
-            onPressed: () async {
-              final path = await pickOneFile();
-              if (path == null) {
-                showSnackBar(context, const Text('path is null'));
-                return;
-              }
+      appBar: _buildAppBar(),
+      body: _buildBody(),
+      floatingActionButton: _buildFAB(),
+    );
+  }
 
-              final file = File(path);
-              if (!file.existsSync()) {
-                showSnackBar(context, Text(_s.fileNotExist(path)));
-                return;
-              }
-              final size = (await file.stat()).size;
-              if (size > privateKeyMaxSize) {
-                showSnackBar(
-                  context,
-                  Text(
-                    _s.fileTooLarge(
-                      path,
-                      size.convertBytes,
-                      privateKeyMaxSize.convertBytes,
-                    ),
-                  ),
-                );
-                return;
-              }
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      title: Text(_s.edit, style: textSize18),
+      actions: [
+        widget.info != null
+            ? IconButton(
+                tooltip: _s.delete,
+                onPressed: () {
+                  _provider.delInfo(widget.info!);
+                  context.pop();
+                },
+                icon: const Icon(Icons.delete))
+            : const SizedBox()
+      ],
+    );
+  }
 
-              _keyController.text = await file.readAsString();
-            },
-            child: Text(_s.pickFile),
-          ),
-          buildInput(
-            controller: _pwdController,
-            autoCorrect: false,
-            type: TextInputType.text,
-            node: _pwdNode,
-            obscureText: true,
-            label: _s.pwd,
-            icon: Icons.password,
-          ),
-          SizedBox(height: MediaQuery.of(context).size.height * 0.1),
-          _loading
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        tooltip: _s.save,
-        onPressed: () async {
-          final name = _nameController.text;
-          final key = _keyController.text.trim();
-          final pwd = _pwdController.text;
-          if (name.isEmpty || key.isEmpty) {
-            showSnackBar(context, Text(_s.fieldMustNotEmpty));
-            return;
-          }
-          FocusScope.of(context).unfocus();
+  Widget _buildFAB() {
+    return FloatingActionButton(
+      tooltip: _s.save,
+      onPressed: () async {
+        final name = _nameController.text;
+        final key = _keyController.text.trim();
+        final pwd = _pwdController.text;
+        if (name.isEmpty || key.isEmpty) {
+          showSnackBar(context, Text(_s.fieldMustNotEmpty));
+          return;
+        }
+        FocusScope.of(context).unfocus();
+        setState(() {
+          _loading = const SizedBox(
+            height: 50,
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        });
+        final info = PrivateKeyInfo(name, key, '');
+        bool haveErr = false;
+        try {
+          info.privateKey = await compute(decyptPem, [key, pwd]);
+        } catch (e) {
+          showSnackBar(context, Text(e.toString()));
+          haveErr = true;
+        } finally {
           setState(() {
-            _loading = const SizedBox(
-              height: 50,
-              child: Center(
-                child: CircularProgressIndicator(),
-              ),
-            );
+            _loading = const SizedBox();
           });
-          final info = PrivateKeyInfo(name, key, '');
-          bool haveErr = false;
-          try {
-            info.privateKey = await compute(decyptPem, [key, pwd]);
-          } catch (e) {
-            showSnackBar(context, Text(e.toString()));
-            haveErr = true;
-          } finally {
-            setState(() {
-              _loading = const SizedBox();
-            });
-          }
-          if (haveErr) return;
-          if (widget.info != null) {
-            _provider.updateInfo(widget.info!, info);
-          } else {
-            _provider.addInfo(info);
-          }
-          context.pop();
-        },
-        child: const Icon(Icons.save),
-      ),
+        }
+        if (haveErr) return;
+        if (widget.info != null) {
+          _provider.updateInfo(widget.info!, info);
+        } else {
+          _provider.addInfo(info);
+        }
+        context.pop();
+      },
+      child: const Icon(Icons.save),
+    );
+  }
+
+  Widget _buildBody() {
+    return ListView(
+      padding: const EdgeInsets.all(13),
+      children: [
+        Input(
+          controller: _nameController,
+          type: TextInputType.text,
+          node: _nameNode,
+          onSubmitted: (_) => _focusScope.requestFocus(_keyNode),
+          label: _s.name,
+          icon: Icons.info,
+        ),
+        Input(
+          controller: _keyController,
+          minLines: 3,
+          maxLines: 10,
+          type: TextInputType.text,
+          node: _keyNode,
+          onSubmitted: (_) => _focusScope.requestFocus(_pwdNode),
+          label: _s.privateKey,
+          icon: Icons.vpn_key,
+        ),
+        TextButton(
+          onPressed: () async {
+            final path = await pickOneFile();
+            if (path == null) {
+              showSnackBar(context, const Text('path is null'));
+              return;
+            }
+
+            final file = File(path);
+            if (!file.existsSync()) {
+              showSnackBar(context, Text(_s.fileNotExist(path)));
+              return;
+            }
+            final size = (await file.stat()).size;
+            if (size > privateKeyMaxSize) {
+              showSnackBar(
+                context,
+                Text(
+                  _s.fileTooLarge(
+                    path,
+                    size.convertBytes,
+                    privateKeyMaxSize.convertBytes,
+                  ),
+                ),
+              );
+              return;
+            }
+
+            _keyController.text = await file.readAsString();
+          },
+          child: Text(_s.pickFile),
+        ),
+        Input(
+          controller: _pwdController,
+          type: TextInputType.text,
+          node: _pwdNode,
+          obscureText: true,
+          label: _s.pwd,
+          icon: Icons.password,
+        ),
+        SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+        _loading
+      ],
     );
   }
 

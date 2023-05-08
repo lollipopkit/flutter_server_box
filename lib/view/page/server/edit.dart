@@ -108,7 +108,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          buildInput(
+          Input(
             controller: _nameController,
             type: TextInputType.text,
             node: _nameFocus,
@@ -117,17 +117,16 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             label: _s.name,
             icon: Icons.info,
           ),
-          buildInput(
+          Input(
             controller: _ipController,
             type: TextInputType.text,
             onSubmitted: (_) => _focusScope.requestFocus(_portFocus),
             node: _ipFocus,
-            autoCorrect: false,
             label: _s.host,
             icon: Icons.storage,
             hint: 'example.com',
           ),
-          buildInput(
+          Input(
             controller: _portController,
             type: TextInputType.number,
             node: _portFocus,
@@ -136,11 +135,10 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             icon: Icons.format_list_numbered,
             hint: '22',
           ),
-          buildInput(
+          Input(
             controller: _usernameController,
             type: TextInputType.text,
             node: _usernameFocus,
-            autoCorrect: false,
             label: _s.user,
             icon: Icons.account_box,
             hint: 'root',
@@ -158,7 +156,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             ],
           ),
           !usePublicKey
-              ? buildInput(
+              ? Input(
                   controller: _passwordController,
                   obscureText: true,
                   type: TextInputType.text,

@@ -57,7 +57,7 @@ class _PingPageState extends State<PingPage>
         child: Column(
           children: [
             const SizedBox(height: 13),
-            buildInput(
+            Input(
               controller: _textEditingController,
               hint: s.inputDomainHere,
               maxLines: 1,

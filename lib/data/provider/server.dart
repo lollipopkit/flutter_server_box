@@ -22,15 +22,18 @@ typedef ServersMap = Map<String, Server>;
 class ServerProvider extends BusyProvider {
   final ServersMap _servers = {};
   ServersMap get servers => _servers;
+
   final _limiter = TryLimiter();
 
   Timer? _timer;
 
   final _logger = Logger('SERVER');
 
+  final _store = locator<ServerStore>();
+
   Future<void> loadLocalData() async {
     setBusyState(true);
-    final infos = locator<ServerStore>().fetch();
+    final infos = _store.fetch();
     for (final info in infos) {
       _servers[info.id] = genServer(info);
     }
@@ -103,20 +106,20 @@ class ServerProvider extends BusyProvider {
   void addServer(ServerPrivateInfo spi) {
     _servers[spi.id] = genServer(spi);
     notifyListeners();
-    locator<ServerStore>().put(spi);
+    _store.put(spi);
     refreshData(spi: spi);
   }
 
   void delServer(String id) {
     _servers.remove(id);
     notifyListeners();
-    locator<ServerStore>().delete(id);
+    _store.delete(id);
   }
 
   Future<void> updateServer(
       ServerPrivateInfo old, ServerPrivateInfo newSpi) async {
     _servers.remove(old.id);
-    locator<ServerStore>().update(old, newSpi);
+    _store.update(old, newSpi);
     _servers[newSpi.id] = genServer(newSpi);
     _servers[newSpi.id]?.client = await genClient(newSpi);
     notifyListeners();

@@ -76,61 +76,6 @@ class _SSHPageState extends State<SSHPage> {
     super.dispose();
   }
 
-  void _write(String p0) {
-    _terminal.write('$p0\r\n');
-  }
-
-  Future<void> initTerminal() async {
-    _write('Connecting...\r\n');
-
-    _client = await genClient(
-      widget.spi,
-      onStatus: (p0) {
-        switch (p0) {
-          case GenSSHClientStatus.socket:
-            _write('Destination: ${widget.spi.id}');
-            return _write('Establishing socket...');
-          case GenSSHClientStatus.key:
-            return _write('Using private key to connect...');
-          case GenSSHClientStatus.pwd:
-            return _write('Sending password to auth...');
-        }
-      },
-    );
-    _write('Connected\r\n');
-    _write('Terminal size: ${_terminal.viewWidth}x${_terminal.viewHeight}\r\n');
-    _write('Starting shell...\r\n');
-
-    final session = await _client!.shell(
-      pty: SSHPtyConfig(
-        width: _terminal.viewWidth,
-        height: _terminal.viewHeight,
-      ),
-    );
-
-    _terminal.buffer.clear();
-    _terminal.buffer.setCursor(0, 0);
-
-    _terminal.onOutput = (data) {
-      session.write(utf8.encode(data) as Uint8List);
-    };
-
-    _listen(session.stdout);
-    _listen(session.stderr);
-
-    await session.done;
-    if (mounted) {
-      context.pop();
-    }
-  }
-
-  void _listen(Stream<Uint8List> stream) {
-    stream
-        .cast<List<int>>()
-        .transform(const Utf8Decoder())
-        .listen(_terminal.write);
-  }
-
   @override
   Widget build(BuildContext context) {
     Widget child = Scaffold(
@@ -356,5 +301,60 @@ class _SSHPageState extends State<SSHPage> {
         );
       },
     );
+  }
+
+  void _write(String p0) {
+    _terminal.write('$p0\r\n');
+  }
+
+  Future<void> initTerminal() async {
+    _write('Connecting...\r\n');
+
+    _client = await genClient(
+      widget.spi,
+      onStatus: (p0) {
+        switch (p0) {
+          case GenSSHClientStatus.socket:
+            _write('Destination: ${widget.spi.id}');
+            return _write('Establishing socket...');
+          case GenSSHClientStatus.key:
+            return _write('Using private key to connect...');
+          case GenSSHClientStatus.pwd:
+            return _write('Sending password to auth...');
+        }
+      },
+    );
+    _write('Connected\r\n');
+    _write('Terminal size: ${_terminal.viewWidth}x${_terminal.viewHeight}\r\n');
+    _write('Starting shell...\r\n');
+
+    final session = await _client!.shell(
+      pty: SSHPtyConfig(
+        width: _terminal.viewWidth,
+        height: _terminal.viewHeight,
+      ),
+    );
+
+    _terminal.buffer.clear();
+    _terminal.buffer.setCursor(0, 0);
+
+    _terminal.onOutput = (data) {
+      session.write(utf8.encode(data) as Uint8List);
+    };
+
+    _listen(session.stdout);
+    _listen(session.stderr);
+
+    await session.done;
+    if (mounted) {
+      context.pop();
+    }
+  }
+
+  void _listen(Stream<Uint8List> stream) {
+    stream
+        .cast<List<int>>()
+        .transform(const Utf8Decoder())
+        .listen(_terminal.write);
   }
 }

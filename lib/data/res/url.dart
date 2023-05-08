@@ -6,6 +6,7 @@ const issueUrl = '$myGithub/flutter_server_box/issues';
 
 // Thanks
 const thanksMap = {
+  'its-tom': 'https://github.com/its-tom',
   'RainSunMe': 'https://github.com/RainSunMe',
   'fecture': 'https://github.com/fecture',
   'Tao173': 'https://github.com/Tao173',

@@ -12,7 +12,6 @@ import '../../data/provider/pkg.dart';
 import '../../data/provider/server.dart';
 import '../../data/res/ui.dart';
 import '../../locator.dart';
-import '../widget/center_loading.dart';
 import '../widget/round_rect_card.dart';
 import '../widget/two_line_text.dart';
 
@@ -31,7 +30,7 @@ class _PkgManagePageState extends State<PkgManagePage>
   final _scrollController = ScrollController();
   final _scrollControllerUpdate = ScrollController();
   final _textController = TextEditingController();
-  final _aptProvider = locator<PkgProvider>();
+  final _pkgProvider = locator<PkgProvider>();
   late S _s;
 
   @override
@@ -44,7 +43,7 @@ class _PkgManagePageState extends State<PkgManagePage>
   @override
   void dispose() {
     super.dispose();
-    locator<PkgProvider>().clear();
+    _pkgProvider.clear();
   }
 
   @override
@@ -57,7 +56,7 @@ class _PkgManagePageState extends State<PkgManagePage>
       return;
     }
 
-    _aptProvider.init(
+    _pkgProvider.init(
       si.client!,
       si.status.sysVer.dist,
       () =>
@@ -67,7 +66,21 @@ class _PkgManagePageState extends State<PkgManagePage>
       onPwdRequest,
       widget.spi.user,
     );
-    _aptProvider.refresh();
+    _pkgProvider.refresh();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<PkgProvider>(builder: (_, pkg, __) {
+      return Scaffold(
+        appBar: AppBar(
+          centerTitle: true,
+          title: TwoLineText(up: _s.pkg, down: widget.spi.name),
+        ),
+        body: _buildBody(pkg),
+        floatingActionButton: _buildFAB(pkg),
+      );
+    });
   }
 
   void onSubmitted() {
@@ -92,7 +105,7 @@ class _PkgManagePageState extends State<PkgManagePage>
     await showRoundDialog(
       context: context,
       title: Text(widget.spi.user),
-      child: buildInput(
+      child: Input(
         controller: _textController,
         type: TextInputType.visiblePassword,
         obscureText: true,
@@ -116,20 +129,6 @@ class _PkgManagePageState extends State<PkgManagePage>
       ],
     );
     return _textController.text.trim();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<PkgProvider>(builder: (_, pkg, __) {
-      return Scaffold(
-        appBar: AppBar(
-          centerTitle: true,
-          title: TwoLineText(up: _s.pkg, down: widget.spi.name),
-        ),
-        body: _buildBody(pkg),
-        floatingActionButton: _buildFAB(pkg),
-      );
-    });
   }
 
   Widget _buildFAB(PkgProvider pkg) {

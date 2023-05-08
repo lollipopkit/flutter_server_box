@@ -32,72 +32,76 @@ class BackupPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final media = MediaQuery.of(context);
     final s = S.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: Text(s.backupAndRestore, style: textSize18),
       ),
-      body: Center(
-          child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(37),
-            child: Text(
-              s.backupTip,
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(
-            height: 107,
-          ),
-          _buildCard(s.restore, Icons.download, media, () async {
-            final path = await pickOneFile();
-            if (path == null) {
-              showSnackBar(context, Text(s.notSelected));
-              return;
-            }
-            final file = File(path);
-            if (!file.existsSync()) {
-              showSnackBar(context, Text(s.fileNotExist(path)));
-              return;
-            }
-            final text = await file.readAsString();
-            _import(text, context, s);
-          }),
-          const SizedBox(height: 17),
-          const SizedBox(
-            width: 37,
-            child: Divider(),
-          ),
-          const SizedBox(height: 17),
-          _buildCard(
-            s.backup,
-            Icons.file_upload,
-            media,
-            () async {
-              final result = _diyEncrtpt(
-                json.encode(
-                  Backup(
-                    backupFormatVersion,
-                    DateTime.now().toString().split('.').first,
-                    _server.fetch(),
-                    _snippet.fetch(),
-                    _privateKey.fetch(),
-                    _dockerHosts.fetch(),
-                  ),
-                ),
-              );
-              final path = '${(await docDir).path}/srvbox_bak.json';
-              await File(path).writeAsString(result);
-              await shareFiles(context, [path]);
-            },
-          )
-        ],
-      )),
+      body: _buildBody(context, s),
     );
+  }
+
+  Widget _buildBody(BuildContext context, S s) {
+    final media = MediaQuery.of(context);
+    return Center(
+        child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(37),
+          child: Text(
+            s.backupTip,
+            textAlign: TextAlign.center,
+          ),
+        ),
+        const SizedBox(
+          height: 107,
+        ),
+        _buildCard(s.restore, Icons.download, media, () async {
+          final path = await pickOneFile();
+          if (path == null) {
+            showSnackBar(context, Text(s.notSelected));
+            return;
+          }
+          final file = File(path);
+          if (!file.existsSync()) {
+            showSnackBar(context, Text(s.fileNotExist(path)));
+            return;
+          }
+          final text = await file.readAsString();
+          _import(text, context, s);
+        }),
+        const SizedBox(height: 17),
+        const SizedBox(
+          width: 37,
+          child: Divider(),
+        ),
+        const SizedBox(height: 17),
+        _buildCard(
+          s.backup,
+          Icons.file_upload,
+          media,
+          () async {
+            final result = _diyEncrtpt(
+              json.encode(
+                Backup(
+                  backupFormatVersion,
+                  DateTime.now().toString().split('.').first,
+                  _server.fetch(),
+                  _snippet.fetch(),
+                  _privateKey.fetch(),
+                  _dockerHosts.fetch(),
+                ),
+              ),
+            );
+            final path = '${(await docDir).path}/srvbox_bak.json';
+            await File(path).writeAsString(result);
+            await shareFiles(context, [path]);
+          },
+        )
+      ],
+    ));
   }
 
   Widget _buildCard(String text, IconData icon, MediaQueryData media,

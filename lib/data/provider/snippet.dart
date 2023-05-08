@@ -7,23 +7,24 @@ import 'package:toolbox/locator.dart';
 
 class SnippetProvider extends BusyProvider {
   List<Snippet> get snippets => _snippets;
+  final _store = locator<SnippetStore>();
   late List<Snippet> _snippets;
 
   void loadData() {
-    _snippets = locator<SnippetStore>().fetch();
+    _snippets = _store.fetch();
   }
 
   void add(Snippet snippet) {
     if (have(snippet)) return;
     _snippets.add(snippet);
-    locator<SnippetStore>().put(snippet);
+    _store.put(snippet);
     notifyListeners();
   }
 
   void del(Snippet snippet) {
     if (!have(snippet)) return;
     _snippets.removeAt(index(snippet));
-    locator<SnippetStore>().delete(snippet);
+    _store.delete(snippet);
     notifyListeners();
   }
 
@@ -38,7 +39,7 @@ class SnippetProvider extends BusyProvider {
   void update(Snippet old, Snippet newOne) {
     if (!have(old)) return;
     _snippets[index(old)] = newOne;
-    locator<SnippetStore>().put(newOne);
+    _store.put(newOne);
     notifyListeners();
   }
 

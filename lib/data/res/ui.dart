@@ -33,3 +33,15 @@ const popMenuChild = Padding(
     size: 21,
   ),
 );
+
+const centerLoading = Center(child: CircularProgressIndicator());
+
+const centerSizedLoading = SizedBox(
+  width: 77,
+  height: 77,
+  child: Center(
+    child: CircularProgressIndicator(),
+  ),
+);
+
+const loadingIcon = IconButton(onPressed: null, icon: centerLoading);

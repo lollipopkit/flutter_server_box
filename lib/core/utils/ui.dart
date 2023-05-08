@@ -166,9 +166,9 @@ void showSnippetDialog(
   showRoundDialog(
     context: context,
     title: Text(s.chooseDestination),
-    child: buildPicker(
-      provider.snippets.map((e) => Text(e.name)).toList(),
-      (idx) => snippet = provider.snippets[idx],
+    child: Picker(
+      items: provider.snippets.map((e) => Text(e.name)).toList(),
+      onSelected: (idx) => snippet = provider.snippets[idx],
     ),
     actions: [
       TextButton(

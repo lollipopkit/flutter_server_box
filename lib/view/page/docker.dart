@@ -15,7 +15,6 @@ import '../../data/res/ui.dart';
 import '../../data/res/url.dart';
 import '../../data/store/docker.dart';
 import '../../locator.dart';
-import '../widget/center_loading.dart';
 import '../widget/dropdown_menu.dart';
 import '../widget/round_rect_card.dart';
 import '../widget/two_line_text.dart';
@@ -95,26 +94,23 @@ class _DockerManagePageState extends State<DockerManagePage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          buildInput(
+          Input(
             type: TextInputType.text,
             label: _s.dockerImage,
             hint: 'xxx:1.1',
             controller: imageCtrl,
-            autoCorrect: false,
           ),
-          buildInput(
+          Input(
             type: TextInputType.text,
             controller: nameCtrl,
             label: _s.dockerContainerName,
             hint: 'xxx',
-            autoCorrect: false,
           ),
-          buildInput(
+          Input(
             type: TextInputType.text,
             controller: argsCtrl,
             label: _s.extraArgs,
             hint: '-p 2222:22 -v ~/.xxx/:/xxx',
-            autoCorrect: false,
           ),
         ],
       ),
@@ -206,7 +202,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
     await showRoundDialog(
       context: context,
       title: Text(widget.spi.user),
-      child: buildInput(
+      child: Input(
         controller: _textController,
         type: TextInputType.visiblePassword,
         obscureText: true,
@@ -379,9 +375,8 @@ class _DockerManagePageState extends State<DockerManagePage> {
     await showRoundDialog(
       context: context,
       title: Text(_s.dockerEditHost),
-      child: buildInput(
+      child: Input(
         maxLines: 1,
-        autoCorrect: false,
         controller:
             TextEditingController(text: 'unix:///run/user/1000/docker.sock'),
         onSubmitted: (value) {
