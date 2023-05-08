@@ -1,9 +1,10 @@
+import '../../res/server_cmd.dart';
 import 'cpu_status.dart';
 import 'disk_info.dart';
 import 'memory.dart';
 import 'net_speed.dart';
 import 'server_status.dart';
-import 'tcp_status.dart';
+import 'conn_status.dart';
 
 class ServerStatusUpdateReq {
   final ServerStatus ss;
@@ -12,27 +13,42 @@ class ServerStatusUpdateReq {
   const ServerStatusUpdateReq(this.ss, this.segments);
 }
 
+extension _SegmentsExt on List<String> {
+  String at(CmdType t) {
+    final index = t.index;
+    if (index >= length) return '';
+    return this[index];
+  }
+}
+
 Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
-  final net = parseNetSpeed(req.segments[0]);
+  final net = parseNetSpeed(req.segments.at(CmdType.net));
   req.ss.netSpeed.update(net);
-  final sys = _parseSysVer(req.segments[1], req.segments[9]);
+  final sys = _parseSysVer(
+    req.segments.at(CmdType.sys),
+    req.segments.at(CmdType.host),
+    req.segments.at(CmdType.sysRhel),
+  );
   if (sys != null) {
     req.ss.sysVer = sys;
   }
-  final cpus = parseCPU(req.segments[2]);
-  final cpuTemp = parseCPUTemp(req.segments[7], req.segments[8]);
+  final cpus = parseCPU(req.segments.at(CmdType.cpu));
+  final cpuTemp = parseCPUTemp(
+    req.segments.at(CmdType.tempType),
+    req.segments.at(CmdType.tempVal),
+  );
   req.ss.cpu.update(cpus, cpuTemp);
-  final tcp = parseTcp(req.segments[4]);
+  final tcp = parseConn(req.segments.at(CmdType.conn));
   if (tcp != null) {
     req.ss.tcp = tcp;
   }
-  req.ss.disk = parseDisk(req.segments[5]);
-  req.ss.mem = parseMem(req.segments[6]);
-  final uptime = _parseUpTime(req.segments[3]);
+  req.ss.disk = parseDisk(req.segments.at(CmdType.disk));
+  req.ss.mem = parseMem(req.segments.at(CmdType.mem));
+  final uptime = _parseUpTime(req.segments.at(CmdType.uptime));
   if (uptime != null) {
     req.ss.uptime = uptime;
   }
-  req.ss.swap = parseSwap(req.segments[6]);
+  req.ss.swap = parseSwap(req.segments.at(CmdType.mem));
   return req.ss;
 }
 
@@ -49,7 +65,10 @@ String? _parseUpTime(String raw) {
   return null;
 }
 
-String? _parseSysVer(String raw, String hostname) {
+String? _parseSysVer(String raw, String hostname, String rawRhel) {
+  if (!rawRhel.contains('No such file')) {
+    return rawRhel;
+  }
   final s = raw.split('=');
   if (s.length == 2) {
     return s[1].replaceAll('"', '').replaceFirst('\n', '');

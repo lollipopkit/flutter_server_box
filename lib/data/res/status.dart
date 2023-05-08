@@ -3,7 +3,7 @@ import '../model/server/disk_info.dart';
 import '../model/server/memory.dart';
 import '../model/server/net_speed.dart';
 import '../model/server/server_status.dart';
-import '../model/server/tcp_status.dart';
+import '../model/server/conn_status.dart';
 
 Memory get _initMemory => Memory(
       total: 1,
@@ -49,7 +49,7 @@ ServerStatus get initStatus => ServerStatus(
       sysVer: 'Loading...',
       uptime: '',
       disk: [DiskInfo('/', '/', 0, '0', '0', '0')],
-      tcp: TcpStatus(0, 0, 0, 0),
+      tcp: ConnStatus(0, 0, 0, 0),
       netSpeed: initNetSpeed,
       swap: _initSwap,
     );

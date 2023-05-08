@@ -131,6 +131,7 @@ class ServerProvider extends BusyProvider {
     final s = _servers[sid];
     if (s == null) return;
 
+    var raw = '';
     try {
       final state = s.state;
       if (state.shouldConnect) {
@@ -165,24 +166,23 @@ class ServerProvider extends BusyProvider {
 
       if (s.client == null) return;
       // run script to get server status
-      final raw = await s.client!.run("sh $shellPath").string;
+      raw = await s.client!.run("sh $shellPath").string;
       final segments = raw.split(seperator).map((e) => e.trim()).toList();
-      if (raw.isEmpty || segments.length == 1) {
+      if (raw.isEmpty || segments.length != CmdType.values.length) {
         s.state = ServerState.failed;
         if (s.status.failedInfo == null || s.status.failedInfo!.isEmpty) {
           s.status.failedInfo = 'Seperate segments failed, raw:\n$raw';
         }
         return;
       }
-      // remove first empty segment
-      // for `export xxx` in shell script
-      segments.removeAt(0);
 
       final req = ServerStatusUpdateReq(s.status, segments);
       s.status = await compute(getStatus, req);
+      // Comment for debug
+      // s.status = await getStatus(req);
     } catch (e) {
       s.state = ServerState.failed;
-      s.status.failedInfo = e.toString();
+      s.status.failedInfo = '$e\n$raw';
       _logger.warning(e);
     } finally {
       notifyListeners();
