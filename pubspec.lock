@@ -746,10 +746,10 @@ packages:
     dependency: "direct main"
     description:
       name: share_plus
-      sha256: b1f15232d41e9701ab2f04181f21610c36c83a12ae426b79b4bd011c567934b1
+      sha256: "692261968a494e47323dcc8bc66d8d52e81bc27cb4b808e4e8d7e8079d4cc01a"
       url: "https://pub.dev"
     source: hosted
-    version: "6.3.4"
+    version: "6.3.2"
   share_plus_platform_interface:
     dependency: transitive
     description:

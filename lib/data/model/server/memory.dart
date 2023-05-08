@@ -4,12 +4,13 @@ class Memory {
   int free;
   int cache;
   int avail;
-  Memory(
-      {required this.total,
-      required this.used,
-      required this.free,
-      required this.cache,
-      required this.avail});
+  Memory({
+    required this.total,
+    required this.used,
+    required this.free,
+    required this.cache,
+    required this.avail,
+  });
 }
 
 final memItemReg = RegExp(r'([A-Z].+:)\s+([0-9]+) kB');

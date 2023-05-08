@@ -1,8 +1,8 @@
-import 'package:toolbox/data/model/server/cpu_status.dart';
-import 'package:toolbox/data/model/server/disk_info.dart';
-import 'package:toolbox/data/model/server/memory.dart';
-import 'package:toolbox/data/model/server/net_speed.dart';
-import 'package:toolbox/data/model/server/conn_status.dart';
+import 'cpu_status.dart';
+import 'disk_info.dart';
+import 'memory.dart';
+import 'net_speed.dart';
+import 'conn_status.dart';
 
 class ServerStatus {
   CpuStatus cpu;

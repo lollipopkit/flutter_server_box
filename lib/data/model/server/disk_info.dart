@@ -1,17 +1,6 @@
 import '../../res/misc.dart';
 
 class DiskInfo {
-/*
-{
-  "mountPath": "",
-  "mountLocation": "",
-  "usedPercent": 0,
-  "used": "",
-  "size": "",
-  "avail": ""
-} 
-*/
-
   late String path;
   late String loc;
   late int usedPercent;
