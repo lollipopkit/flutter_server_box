@@ -45,20 +45,21 @@ class ServerProvider extends BusyProvider {
     return Server(spi, initStatus, null, ServerState.disconnected);
   }
 
-  Future<void> refreshData(
-      {ServerPrivateInfo? spi, bool onlyFailed = false}) async {
+  Future<void> refreshData({
+    ServerPrivateInfo? spi,
+    bool onlyFailed = false,
+  }) async {
     if (spi != null) {
       await _getData(spi);
       return;
     }
-    final futures = _servers.values.map((s) async {
+    await Future.wait(_servers.values.map((s) async {
       if (onlyFailed) {
         if (s.state != ServerState.failed) return;
         _limiter.resetTryTimes(s.spi.id);
       }
       return await _getData(s.spi);
-    });
-    await Future.wait(futures);
+    }));
   }
 
   Future<void> startAutoRefresh() async {
@@ -117,13 +118,14 @@ class ServerProvider extends BusyProvider {
   }
 
   Future<void> updateServer(
-      ServerPrivateInfo old, ServerPrivateInfo newSpi) async {
+    ServerPrivateInfo old,
+    ServerPrivateInfo newSpi,
+  ) async {
     _servers.remove(old.id);
     _store.update(old, newSpi);
     _servers[newSpi.id] = genServer(newSpi);
     _servers[newSpi.id]?.client = await genClient(newSpi);
-    notifyListeners();
-    refreshData(spi: newSpi);
+    await refreshData(spi: newSpi);
   }
 
   Future<void> _getData(ServerPrivateInfo spi) async {
@@ -132,6 +134,8 @@ class ServerProvider extends BusyProvider {
     if (s == null) return;
 
     var raw = '';
+    var segments = <String>[];
+
     try {
       final state = s.state;
       if (state.shouldConnect) {
@@ -167,23 +171,31 @@ class ServerProvider extends BusyProvider {
       if (s.client == null) return;
       // run script to get server status
       raw = await s.client!.run("sh $shellPath").string;
-      final segments = raw.split(seperator).map((e) => e.trim()).toList();
+      segments = raw.split(seperator).map((e) => e.trim()).toList();
       if (raw.isEmpty || segments.length != CmdType.values.length) {
         s.state = ServerState.failed;
-        if (s.status.failedInfo == null || s.status.failedInfo!.isEmpty) {
+        if (s.status.failedInfo?.isEmpty ?? true) {
           s.status.failedInfo = 'Seperate segments failed, raw:\n$raw';
         }
         return;
       }
+    } catch (e) {
+      s.state = ServerState.failed;
+      s.status.failedInfo = e.toString();
+      rethrow;
+    } finally {
+      notifyListeners();
+    }
 
+    try {
       final req = ServerStatusUpdateReq(s.status, segments);
       s.status = await compute(getStatus, req);
       // Comment for debug
       // s.status = await getStatus(req);
     } catch (e) {
       s.state = ServerState.failed;
-      s.status.failedInfo = '$e\n$raw';
-      _logger.warning(e);
+      s.status.failedInfo = 'Parse failed: $e\n\n$raw';
+      rethrow;
     } finally {
       notifyListeners();
     }

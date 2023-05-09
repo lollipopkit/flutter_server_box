@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/utils/navigator.dart';
+import 'package:toolbox/core/extension/navigator.dart';
+import 'package:toolbox/core/utils/misc.dart';
 
 import '../../../core/route.dart';
 import '../../../core/utils/ui.dart';
@@ -114,21 +115,21 @@ class _ServerPageState extends State<ServerPage>
     if (si == null) {
       return const SizedBox();
     }
-    return RoundRectCard(
-      InkWell(
-        onLongPress: () => AppRoute(
-                ServerEditPage(
-                  spi: si.spi,
-                ),
-                'Edit server info page')
-            .go(context),
-        child: Padding(
+    return GestureDetector(
+      onLongPress: () => AppRoute(
+        ServerEditPage(spi: si.spi),
+        'Edit server info page',
+      ).go(context),
+      child: RoundRectCard(
+        Padding(
           padding: const EdgeInsets.all(13),
           child: _buildRealServerCard(si.status, si.spi.name, si.state, si.spi),
         ),
-        onTap: () => AppRoute(ServerDetailPage(si.spi.id), 'server detail page')
-            .go(context),
       ),
+      onTap: () => AppRoute(
+        ServerDetailPage(si.spi.id),
+        'server detail page',
+      ).go(context),
     );
   }
 
@@ -172,7 +173,14 @@ class _ServerPageState extends State<ServerPage>
                           onTap: () => showRoundDialog(
                             context: context,
                             title: Text(_s.error),
-                            child: Text(ss.failedInfo ?? ''),
+                            child: Text(ss.failedInfo ?? _s.unknownError),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    copy(ss.failedInfo ?? _s.unknownError),
+                                child: Text(_s.copy),
+                              )
+                            ],
                           ),
                           child: Text(
                             _s.clickSee,

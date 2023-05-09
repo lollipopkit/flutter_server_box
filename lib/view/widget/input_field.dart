@@ -8,7 +8,7 @@ class Input extends StatelessWidget {
   final int? minLines;
   final String? hint;
   final String? label;
-  final Function(String)? onSubmitted;
+  final void Function(String)? onSubmitted;
   final bool obscureText;
   final IconData? icon;
   final TextInputType? type;

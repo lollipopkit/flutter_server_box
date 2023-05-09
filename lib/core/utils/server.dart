@@ -30,8 +30,10 @@ enum GenSSHClientStatus {
   pwd,
 }
 
-Future<SSHClient> genClient(ServerPrivateInfo spi,
-    {void Function(GenSSHClientStatus)? onStatus}) async {
+Future<SSHClient> genClient(
+  ServerPrivateInfo spi, {
+  void Function(GenSSHClientStatus)? onStatus,
+}) async {
   final onStatus_ = onStatus ?? (_) {};
   onStatus_(GenSSHClientStatus.socket);
   final socket = await SSHSocket.connect(

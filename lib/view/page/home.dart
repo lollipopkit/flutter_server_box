@@ -2,7 +2,7 @@ import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
-import 'package:toolbox/core/utils/navigator.dart';
+import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/data/provider/app.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';

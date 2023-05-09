@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/utils/navigator.dart';
+import 'package:toolbox/core/extension/navigator.dart';
 import 'package:xterm/xterm.dart' hide TerminalColors;
 
 import '../../core/utils/platform.dart';

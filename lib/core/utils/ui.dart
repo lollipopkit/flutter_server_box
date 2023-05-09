@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:toolbox/core/utils/navigator.dart';
+import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/data/res/ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -46,18 +46,18 @@ Future<bool> openUrl(String url) async {
   return await launchUrl(url.uri, mode: LaunchMode.externalApplication);
 }
 
-Future<T?>? showRoundDialog<T>({
+Future<T?> showRoundDialog<T>({
   required BuildContext context,
   Widget? child,
   List<Widget>? actions,
   Widget? title,
   EdgeInsets? padding,
   bool barrierDismiss = true,
-}) {
-  return showDialog<T>(
+}) async {
+  return await showDialog<T>(
     context: context,
     barrierDismissible: barrierDismiss,
-    builder: (ctx) {
+    builder: (_) {
       return CardDialog(
         title: title,
         content: child,

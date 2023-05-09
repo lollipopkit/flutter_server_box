@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/utils/navigator.dart';
+import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 
 import '../../core/utils/ui.dart';

@@ -3,8 +3,7 @@ import 'dart:typed_data';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:toolbox/core/utils/navigator.dart';
-import 'package:toolbox/view/widget/input_field.dart';
+import 'package:toolbox/core/extension/navigator.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/extension/stringx.dart';
@@ -22,6 +21,7 @@ import '../../../data/res/ui.dart';
 import '../../../data/store/private_key.dart';
 import '../../../locator.dart';
 import '../../widget/fade_in.dart';
+import '../../widget/input_field.dart';
 import '../../widget/two_line_text.dart';
 import 'downloading.dart';
 
@@ -138,7 +138,7 @@ class _SFTPPageState extends State<SFTPPage> {
     return IconButton(
       padding: const EdgeInsets.all(0),
       onPressed: () async {
-        final p = await showRoundDialog<String?>(
+        final p = await showRoundDialog<String>(
           context: context,
           title: Text(_s.goto),
           child: Column(
@@ -146,7 +146,6 @@ class _SFTPPageState extends State<SFTPPage> {
             children: [
               Input(
                 label: _s.path,
-                hint: '/',
                 onSubmitted: (value) => context.pop(value),
               ),
             ],
@@ -154,19 +153,17 @@ class _SFTPPageState extends State<SFTPPage> {
           actions: [
             TextButton(
               onPressed: () => context.pop(),
-              child: Text(_s.cancel),
+              child: Text(_s.close),
             )
           ],
         );
 
-        if (p != null) {
-          if (p.isEmpty) {
-            showSnackBar(context, Text(_s.fieldMustNotEmpty));
-            return;
-          }
-          _status.path?.update(p);
-          listDir(path: p);
+        // p == null || p.isEmpty
+        if (p?.isEmpty ?? true) {
+          return;
         }
+        _status.path?.update(p!);
+        listDir(path: p);
       },
       icon: const Icon(Icons.gps_fixed),
     );

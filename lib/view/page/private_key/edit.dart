@@ -5,9 +5,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/extension/numx.dart';
 import 'package:toolbox/core/utils/misc.dart';
-import 'package:toolbox/core/utils/navigator.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 
