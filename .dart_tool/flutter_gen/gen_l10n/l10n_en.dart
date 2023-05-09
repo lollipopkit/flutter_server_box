@@ -32,9 +32,6 @@ class SEn extends S {
   String get auto => 'Auto';
 
   @override
-  String get backDir => 'Back';
-
-  @override
   String get backup => 'Backup';
 
   @override
@@ -59,9 +56,6 @@ class SEn extends S {
   String get choose => 'Choose';
 
   @override
-  String get chooseDestination => 'Choose destination';
-
-  @override
   String get chooseFontFile => 'Choose a font file';
 
   @override
@@ -78,6 +72,9 @@ class SEn extends S {
 
   @override
   String get cmd => 'Command';
+
+  @override
+  String get containerName => 'Container name';
 
   @override
   String get containerStatus => 'Container status';
@@ -98,9 +95,6 @@ class SEn extends S {
   String get createFolder => 'Create folder';
 
   @override
-  String get currentMode => 'Current Mode';
-
-  @override
   String get dark => 'Dark';
 
   @override
@@ -117,20 +111,14 @@ class SEn extends S {
 
   @override
   String dl2Local(Object fileName) {
-    return 'Download [$fileName] to local?';
+    return 'Download $fileName to local?';
   }
-
-  @override
-  String get dockerContainerName => 'Container name';
 
   @override
   String get dockerEditHost => 'Edit DOCKER_HOST';
 
   @override
   String get dockerEmptyRunningItems => 'No running container. \nIt may be that the env DOCKER_HOST is not read correctly. You can found it by running `echo \$DOCKER_HOST` in terminal.';
-
-  @override
-  String get dockerImage => 'Image';
 
   @override
   String dockerImagesFmt(Object count) {
@@ -219,9 +207,6 @@ class SEn extends S {
   String get gettingToken => 'Getting token...';
 
   @override
-  String get go => 'Go';
-
-  @override
   String get goto => 'Go to';
 
   @override
@@ -231,6 +216,9 @@ class SEn extends S {
   String httpFailedWithCode(Object code) {
     return 'request failed, status code: $code';
   }
+
+  @override
+  String get image => 'Image';
 
   @override
   String get imagesList => 'Images list';
@@ -268,7 +256,7 @@ class SEn extends S {
   String get keyAuth => 'Key Auth';
 
   @override
-  String get lastTry => 'Last try!';
+  String get lastTry => 'Last try';
 
   @override
   String get launchPage => 'Launch page';
@@ -348,9 +336,6 @@ class SEn extends S {
   String get onServerDetailPage => 'On server detail page';
 
   @override
-  String get onlyIOS => 'Only valid on iOS';
-
-  @override
   String get open => 'Open';
 
   @override
@@ -363,13 +348,10 @@ class SEn extends S {
   String get pickFile => 'Pick file';
 
   @override
-  String get ping => 'Ping';
-
-  @override
   String get pingAvg => 'Avg:';
 
   @override
-  String get pingInputIP => 'Please input a target IP/domain.';
+  String get pingInputIP => 'Please input a target IP / domain.';
 
   @override
   String get pingNoServer => 'No server to ping.\nPlease add a server in server tab.';

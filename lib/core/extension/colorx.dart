@@ -25,16 +25,19 @@ extension ColorX on Color {
     });
   }
 
-  MaterialColor get materialColor => MaterialColor(value, {
-        50: withOpacity(0.05),
-        100: withOpacity(0.1),
-        200: withOpacity(0.2),
-        300: withOpacity(0.3),
-        400: withOpacity(0.4),
-        500: withOpacity(0.5),
-        600: withOpacity(0.6),
-        700: withOpacity(0.7),
-        800: withOpacity(0.8),
-        900: withOpacity(0.9),
-      });
+  MaterialColor get materialColor => MaterialColor(
+        value,
+        {
+          50: withOpacity(0.05),
+          100: withOpacity(0.1),
+          200: withOpacity(0.2),
+          300: withOpacity(0.3),
+          400: withOpacity(0.4),
+          500: withOpacity(0.5),
+          600: withOpacity(0.6),
+          700: withOpacity(0.7),
+          800: withOpacity(0.8),
+          900: withOpacity(0.9),
+        },
+      );
 }

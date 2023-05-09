@@ -6,6 +6,7 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 
 import '../../core/utils/ui.dart';
 import '../widget/input_field.dart';
+import '../widget/popup_menu.dart';
 import '../widget/round_rect_card.dart';
 
 class ConvertPage extends StatefulWidget {
@@ -132,28 +133,30 @@ class _ConvertPageState extends State<ConvertPage>
             )
           ],
         ),
-        trailing: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: _media.size.width * 0.35),
-          child: buildPopuopMenu<int>(
-            items: items,
-            onSelected: (p0) {
-              setState(() {
-                _typeOptionIndex = p0;
-              });
-            },
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Text(
-                  typeOption[_typeOptionIndex],
-                  textScaleFactor: 1.0,
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w500, color: Colors.grey),
+        trailing: PopupMenu<int>(
+          items: items,
+          initialValue: _typeOptionIndex,
+          onSelected: (p0) {
+            setState(() {
+              _typeOptionIndex = p0;
+            });
+          },
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                typeOption[_typeOptionIndex],
+                textScaleFactor: 1.0,
+                textAlign: TextAlign.right,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey,
                 ),
-              ],
-            ),
+              ),
+              const Icon(Icons.keyboard_arrow_down, color: Colors.grey)
+            ],
           ),
         ),
       ),

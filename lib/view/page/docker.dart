@@ -16,6 +16,7 @@ import '../../data/res/url.dart';
 import '../../data/store/docker.dart';
 import '../../locator.dart';
 import '../widget/dropdown_menu.dart';
+import '../widget/popup_menu.dart';
 import '../widget/round_rect_card.dart';
 import '../widget/two_line_text.dart';
 import '../widget/url_text.dart';
@@ -96,14 +97,14 @@ class _DockerManagePageState extends State<DockerManagePage> {
         children: [
           Input(
             type: TextInputType.text,
-            label: _s.dockerImage,
+            label: _s.image,
             hint: 'xxx:1.1',
             controller: imageCtrl,
           ),
           Input(
             type: TextInputType.text,
             controller: nameCtrl,
-            label: _s.dockerContainerName,
+            label: _s.containerName,
             hint: 'xxx',
           ),
           Input(
@@ -466,7 +467,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
 
   Widget _buildMoreBtn(DockerPsItem dItem, bool busy) {
     final item = dItem.running ? DockerMenuItems.stop : DockerMenuItems.start;
-    return buildPopuopMenu(
+    return PopupMenu(
       items: [
         PopupMenuItem<DropdownBtnItem>(
           value: item,

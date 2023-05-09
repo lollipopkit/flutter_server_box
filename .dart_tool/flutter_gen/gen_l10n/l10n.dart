@@ -147,12 +147,6 @@ abstract class S {
   /// **'Auto'**
   String get auto;
 
-  /// No description provided for @backDir.
-  ///
-  /// In en, this message translates to:
-  /// **'Back'**
-  String get backDir;
-
   /// No description provided for @backup.
   ///
   /// In en, this message translates to:
@@ -201,12 +195,6 @@ abstract class S {
   /// **'Choose'**
   String get choose;
 
-  /// No description provided for @chooseDestination.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose destination'**
-  String get chooseDestination;
-
   /// No description provided for @chooseFontFile.
   ///
   /// In en, this message translates to:
@@ -242,6 +230,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Command'**
   String get cmd;
+
+  /// No description provided for @containerName.
+  ///
+  /// In en, this message translates to:
+  /// **'Container name'**
+  String get containerName;
 
   /// No description provided for @containerStatus.
   ///
@@ -279,12 +273,6 @@ abstract class S {
   /// **'Create folder'**
   String get createFolder;
 
-  /// No description provided for @currentMode.
-  ///
-  /// In en, this message translates to:
-  /// **'Current Mode'**
-  String get currentMode;
-
   /// No description provided for @dark.
   ///
   /// In en, this message translates to:
@@ -318,14 +306,8 @@ abstract class S {
   /// No description provided for @dl2Local.
   ///
   /// In en, this message translates to:
-  /// **'Download [{fileName}] to local?'**
+  /// **'Download {fileName} to local?'**
   String dl2Local(Object fileName);
-
-  /// No description provided for @dockerContainerName.
-  ///
-  /// In en, this message translates to:
-  /// **'Container name'**
-  String get dockerContainerName;
 
   /// No description provided for @dockerEditHost.
   ///
@@ -338,12 +320,6 @@ abstract class S {
   /// In en, this message translates to:
   /// **'No running container. \nIt may be that the env DOCKER_HOST is not read correctly. You can found it by running `echo \$DOCKER_HOST` in terminal.'**
   String get dockerEmptyRunningItems;
-
-  /// No description provided for @dockerImage.
-  ///
-  /// In en, this message translates to:
-  /// **'Image'**
-  String get dockerImage;
 
   /// No description provided for @dockerImagesFmt.
   ///
@@ -489,12 +465,6 @@ abstract class S {
   /// **'Getting token...'**
   String get gettingToken;
 
-  /// No description provided for @go.
-  ///
-  /// In en, this message translates to:
-  /// **'Go'**
-  String get go;
-
   /// No description provided for @goto.
   ///
   /// In en, this message translates to:
@@ -512,6 +482,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'request failed, status code: {code}'**
   String httpFailedWithCode(Object code);
+
+  /// No description provided for @image.
+  ///
+  /// In en, this message translates to:
+  /// **'Image'**
+  String get image;
 
   /// No description provided for @imagesList.
   ///
@@ -582,7 +558,7 @@ abstract class S {
   /// No description provided for @lastTry.
   ///
   /// In en, this message translates to:
-  /// **'Last try!'**
+  /// **'Last try'**
   String get lastTry;
 
   /// No description provided for @launchPage.
@@ -735,12 +711,6 @@ abstract class S {
   /// **'On server detail page'**
   String get onServerDetailPage;
 
-  /// No description provided for @onlyIOS.
-  ///
-  /// In en, this message translates to:
-  /// **'Only valid on iOS'**
-  String get onlyIOS;
-
   /// No description provided for @open.
   ///
   /// In en, this message translates to:
@@ -765,12 +735,6 @@ abstract class S {
   /// **'Pick file'**
   String get pickFile;
 
-  /// No description provided for @ping.
-  ///
-  /// In en, this message translates to:
-  /// **'Ping'**
-  String get ping;
-
   /// No description provided for @pingAvg.
   ///
   /// In en, this message translates to:
@@ -780,7 +744,7 @@ abstract class S {
   /// No description provided for @pingInputIP.
   ///
   /// In en, this message translates to:
-  /// **'Please input a target IP/domain.'**
+  /// **'Please input a target IP / domain.'**
   String get pingInputIP;
 
   /// No description provided for @pingNoServer.

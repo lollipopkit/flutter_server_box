@@ -21,6 +21,7 @@ import '../../data/res/ui.dart';
 import '../../data/store/setting.dart';
 import '../../locator.dart';
 import '../widget/future_widget.dart';
+import '../widget/popup_menu.dart';
 import '../widget/round_rect_card.dart';
 
 class SettingPage extends StatefulWidget {
@@ -193,8 +194,9 @@ class _SettingPageState extends State<SettingPage> {
         _s.willTakEeffectImmediately,
         style: grey,
       ),
-      trailing: buildPopuopMenu<int>(
+      trailing: PopupMenu<int>(
         items: items,
+        initialValue: _updateInterval,
         onSelected: (val) {
           setState(() {
             _updateInterval = val;
@@ -263,8 +265,9 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(
         _s.launchPage,
       ),
-      trailing: buildPopuopMenu<int>(
+      trailing: PopupMenu<int>(
         items: items,
+        initialValue: _launchPageIdx,
         onSelected: (idx) {
           setState(() {
             _launchPageIdx = idx;
@@ -295,8 +298,9 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(
         _s.termTheme,
       ),
-      trailing: buildPopuopMenu<int>(
+      trailing: PopupMenu<int>(
         items: items,
+        initialValue: _termThemeIdx,
         onSelected: (idx) {
           setState(() {
             _termThemeIdx = idx;
@@ -326,8 +330,9 @@ class _SettingPageState extends State<SettingPage> {
         _s.maxRetryCount,
         textAlign: TextAlign.start,
       ),
-      trailing: buildPopuopMenu<int>(
+      trailing: PopupMenu<int>(
         items: items,
+        initialValue: _maxRetryCount,
         onSelected: (val) {
           setState(() {
             _maxRetryCount = val;
@@ -356,8 +361,9 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(
         _s.themeMode,
       ),
-      trailing: buildPopuopMenu<int>(
+      trailing: PopupMenu<int>(
         items: items,
+        initialValue: _nightMode,
         onSelected: (idx) {
           _nightMode = idx;
           _setting.themeMode.put(_nightMode);

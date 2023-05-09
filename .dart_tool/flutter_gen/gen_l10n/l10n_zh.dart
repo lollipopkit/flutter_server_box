@@ -32,9 +32,6 @@ class SZh extends S {
   String get auto => '自动';
 
   @override
-  String get backDir => '返回上一级';
-
-  @override
   String get backup => '备份';
 
   @override
@@ -59,9 +56,6 @@ class SZh extends S {
   String get choose => '选择';
 
   @override
-  String get chooseDestination => '选择目标';
-
-  @override
   String get chooseFontFile => '选择字体文件';
 
   @override
@@ -78,6 +72,9 @@ class SZh extends S {
 
   @override
   String get cmd => '命令';
+
+  @override
+  String get containerName => '容器名';
 
   @override
   String get containerStatus => '容器状态';
@@ -98,9 +95,6 @@ class SZh extends S {
   String get createFolder => '创建文件夹';
 
   @override
-  String get currentMode => '当前模式';
-
-  @override
   String get dark => '暗';
 
   @override
@@ -117,11 +111,8 @@ class SZh extends S {
 
   @override
   String dl2Local(Object fileName) {
-    return '下载 [$fileName] 到本地？';
+    return '下载 $fileName 到本地？';
   }
-
-  @override
-  String get dockerContainerName => '容器名';
 
   @override
   String get dockerEditHost => '编辑 DOCKER_HOST';
@@ -130,15 +121,12 @@ class SZh extends S {
   String get dockerEmptyRunningItems => '没有正在运行的容器。\n这可能是因为环境变量 DOCKER_HOST 没有被正确读取。你可以通过在终端内运行 `echo \$DOCKER_HOST` 来获取。';
 
   @override
-  String get dockerImage => '镜像';
-
-  @override
   String dockerImagesFmt(Object count) {
     return '共 $count 个镜像';
   }
 
   @override
-  String get dockerNotInstalled => 'Docker未安装';
+  String get dockerNotInstalled => 'Docker 未安装';
 
   @override
   String dockerStatusRunningAndStoppedFmt(Object runningCount, Object stoppedCount) {
@@ -154,7 +142,7 @@ class SZh extends S {
   String get download => '下载';
 
   @override
-  String get downloadFinished => '下载完成！';
+  String get downloadFinished => '下载完成';
 
   @override
   String downloadStatus(Object percent, Object size) {
@@ -168,7 +156,7 @@ class SZh extends S {
   String get encode => '编码';
 
   @override
-  String get error => '出错了';
+  String get error => '错误';
 
   @override
   String get exampleName => '名称示例';
@@ -219,9 +207,6 @@ class SZh extends S {
   String get gettingToken => '正在获取Token...';
 
   @override
-  String get go => '开始';
-
-  @override
   String get goto => '前往';
 
   @override
@@ -231,6 +216,9 @@ class SZh extends S {
   String httpFailedWithCode(Object code) {
     return '请求失败, 状态码: $code';
   }
+
+  @override
+  String get image => '镜像';
 
   @override
   String get imagesList => '镜像列表';
@@ -248,7 +236,7 @@ class SZh extends S {
   String get installDockerWithUrl => '请先 https://docs.docker.com/engine/install docker';
 
   @override
-  String get invalidJson => '无效的json，存在格式问题';
+  String get invalidJson => '无效的 JSON';
 
   @override
   String get invalidVersion => '不支持的版本';
@@ -265,7 +253,7 @@ class SZh extends S {
   String get keepForeground => '请保持应用处于前台！';
 
   @override
-  String get keyAuth => '公钥认证';
+  String get keyAuth => '密钥认证';
 
   @override
   String get lastTry => '最后尝试';
@@ -348,9 +336,6 @@ class SZh extends S {
   String get onServerDetailPage => '在服务器详情页';
 
   @override
-  String get onlyIOS => '仅在iOS上有效';
-
-  @override
   String get open => '打开';
 
   @override
@@ -361,9 +346,6 @@ class SZh extends S {
 
   @override
   String get pickFile => '选择文件';
-
-  @override
-  String get ping => 'Ping';
 
   @override
   String get pingAvg => '平均:';

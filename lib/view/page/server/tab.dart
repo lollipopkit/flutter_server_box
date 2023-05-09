@@ -20,6 +20,7 @@ import '../../../data/res/url.dart';
 import '../../../data/store/setting.dart';
 import '../../../locator.dart';
 import '../../widget/dropdown_menu.dart';
+import '../../widget/popup_menu.dart';
 import '../../widget/round_rect_card.dart';
 import '../../widget/url_text.dart';
 import '../docker.dart';
@@ -258,7 +259,7 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildMoreBtn(ServerPrivateInfo spi) {
-    return buildPopuopMenu(
+    return PopupMenu(
       items: <PopupMenuEntry>[
         ...ServerTabMenuItems.firstItems.map(
           (item) => PopupMenuItem<DropdownBtnItem>(

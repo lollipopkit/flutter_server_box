@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/navigator.dart';
-import 'package:toolbox/data/res/ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/model/server/snippet.dart';
@@ -97,21 +96,6 @@ void setTransparentNavigationBar(BuildContext context) {
   }
 }
 
-Widget buildPopuopMenu<T>({
-  required List<PopupMenuEntry<T>> items,
-  required void Function(T) onSelected,
-  Widget child = popMenuChild,
-  EdgeInsetsGeometry? padding,
-}) {
-  return PopupMenuButton<T>(
-    itemBuilder: (_) => items,
-    onSelected: onSelected,
-    padding: padding ?? EdgeInsets.zero,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-    child: child,
-  );
-}
-
 String tabTitleName(BuildContext context, int i) {
   final s = S.of(context)!;
   switch (i) {
@@ -120,7 +104,7 @@ String tabTitleName(BuildContext context, int i) {
     case 1:
       return s.convert;
     case 2:
-      return s.ping;
+      return 'Ping';
     default:
       return '';
   }
@@ -165,7 +149,7 @@ void showSnippetDialog(
   var snippet = provider.snippets.first;
   showRoundDialog(
     context: context,
-    title: Text(s.chooseDestination),
+    title: Text(s.choose),
     child: Picker(
       items: provider.snippets.map((e) => Text(e.name)).toList(),
       onSelected: (idx) => snippet = provider.snippets[idx],

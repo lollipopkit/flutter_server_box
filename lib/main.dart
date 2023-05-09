@@ -37,8 +37,7 @@ Future<void> initApp() async {
   final settings = locator<SettingStore>();
   await loadFontFile(settings.fontPath.fetch());
 
-  ///设置Logger
-  Logger.root.level = Level.ALL; // defaults to Level.INFO
+  Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
     // ignore: avoid_print
     print('[${record.loggerName}][${record.level.name}]: ${record.message}');

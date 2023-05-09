@@ -154,9 +154,9 @@ class _MyHomePageState extends State<MyHomePage>
           icon: const Icon(Icons.code),
           label: _s.convert,
         ),
-        NavigationDestination(
-          icon: const Icon(Icons.leak_add),
-          label: _s.ping,
+        const NavigationDestination(
+          icon: Icon(Icons.leak_add),
+          label: 'Ping',
         ),
       ],
     );
