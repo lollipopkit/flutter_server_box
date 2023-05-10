@@ -191,7 +191,7 @@ class BackupPage extends StatelessWidget {
       );
     } catch (e) {
       showSnackBar(context, Text(e.toString()));
-      return;
+      rethrow;
     }
   }
 }

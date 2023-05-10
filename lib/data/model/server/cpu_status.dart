@@ -102,13 +102,11 @@ final cpuTempReg = RegExp(r'(x86_pkg_temp|cpu_thermal)');
 String parseCPUTemp(String type, String value) {
   const noMatch = "/sys/class/thermal/thermal_zone*/type";
   // Not support to get CPU temperature
-  if (value.contains(noMatch) ||
-      type.contains(noMatch) ||
-      value.isEmpty ||
-      type.isEmpty) {
+  if (type.contains(noMatch) || value.isEmpty || type.isEmpty) {
     return '';
   }
   final split = type.split('\n');
+  // if no match, use idx 0
   int idx = 0;
   for (var item in split) {
     if (item.contains(cpuTempReg)) {

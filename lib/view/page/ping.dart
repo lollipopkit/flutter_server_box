@@ -85,6 +85,7 @@ class _PingPageState extends State<PingPage>
             doPing();
           } catch (e) {
             showSnackBar(context, Text('Error: \n$e'));
+            rethrow;
           }
         },
         child: const Icon(Icons.play_arrow),
@@ -154,18 +155,14 @@ class _PingPageState extends State<PingPage>
       return;
     }
 
-    try {
-      await Future.wait(_serverProvider.servers.values.map((e) async {
-        if (e.client == null) {
-          return;
-        }
-        final result = await e.client!.run('ping -c 3 $target').string;
-        _results.add(PingResult.parse(e.spi.name, result));
-        setState(() {});
-      }));
-    } catch (e) {
-      showSnackBar(context, Text(e.toString()));
-    }
+    await Future.wait(_serverProvider.servers.values.map((e) async {
+      if (e.client == null) {
+        return;
+      }
+      final result = await e.client!.run('ping -c 3 $target').string;
+      _results.add(PingResult.parse(e.spi.name, result));
+      setState(() {});
+    }));
   }
 
   @override

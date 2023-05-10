@@ -1,16 +1,24 @@
 class Memory {
   int total;
-  int used;
   int free;
   int cache;
   int avail;
+
   Memory({
     required this.total,
-    required this.used,
     required this.free,
     required this.cache,
     required this.avail,
   });
+
+  double get availPercent {
+    if (avail == 0) {
+      return free / total;
+    }
+    return avail / total;
+  }
+
+  double get usedPercent => 1 - availPercent;
 }
 
 final memItemReg = RegExp(r'([A-Z].+:)\s+([0-9]+) kB');
@@ -18,22 +26,49 @@ final memItemReg = RegExp(r'([A-Z].+:)\s+([0-9]+) kB');
 Memory parseMem(String raw) {
   final items = raw.split('\n').map((e) => memItemReg.firstMatch(e)).toList();
 
-  final total = int.parse(
-    items.firstWhere((e) => e?.group(1) == 'MemTotal:')?.group(2) ?? '1',
-  );
-  final free = int.parse(
-    items.firstWhere((e) => e?.group(1) == 'MemFree:')?.group(2) ?? '0',
-  );
-  final cached = int.parse(
-    items.firstWhere((e) => e?.group(1) == 'Cached:')?.group(2) ?? '0',
-  );
-  final available = int.parse(
-    items.firstWhere((e) => e?.group(1) == 'MemAvailable:')?.group(2) ?? '0',
-  );
+  final total = int.tryParse(
+        items
+                .firstWhere(
+                  (e) => e?.group(1) == 'MemTotal:',
+                  orElse: () => null,
+                )
+                ?.group(2) ??
+            '1',
+      ) ??
+      1;
+  final free = int.tryParse(
+        items
+                .firstWhere(
+                  (e) => e?.group(1) == 'MemFree:',
+                  orElse: () => null,
+                )
+                ?.group(2) ??
+            '0',
+      ) ??
+      0;
+  final cached = int.tryParse(
+        items
+                .firstWhere(
+                  (e) => e?.group(1) == 'Cached:',
+                  orElse: () => null,
+                )
+                ?.group(2) ??
+            '0',
+      ) ??
+      0;
+  final available = int.tryParse(
+        items
+                .firstWhere(
+                  (e) => e?.group(1) == 'MemAvailable:',
+                  orElse: () => null,
+                )
+                ?.group(2) ??
+            '0',
+      ) ??
+      0;
 
   return Memory(
     total: total,
-    used: total - available,
     free: free,
     cache: cached,
     avail: available,
@@ -42,39 +77,61 @@ Memory parseMem(String raw) {
 
 class Swap {
   final int total;
-  final int used;
   final int free;
   final int cached;
 
   Swap({
     required this.total,
-    required this.used,
     required this.free,
     required this.cached,
   });
 
+  double get usedPercent => 1 - free / total;
+
+  double get freePercent => free / total;
+
   @override
   String toString() {
-    return 'Swap{total: $total, used: $used, free: $free, cached: $cached}';
+    return 'Swap{total: $total, free: $free, cached: $cached}';
   }
 }
 
 Swap parseSwap(String raw) {
   final items = raw.split('\n').map((e) => memItemReg.firstMatch(e)).toList();
 
-  final total = int.parse(
-    items.firstWhere((e) => e?.group(1) == 'SwapTotal:')?.group(2) ?? '1',
-  );
-  final free = int.parse(
-    items.firstWhere((e) => e?.group(1) == 'SwapFree:')?.group(2) ?? '0',
-  );
-  final cached = int.parse(
-    items.firstWhere((e) => e?.group(1) == 'SwapCached:')?.group(2) ?? '0',
-  );
+  final total = int.tryParse(
+        items
+                .firstWhere(
+                  (e) => e?.group(1) == 'SwapTotal:',
+                  orElse: () => null,
+                )
+                ?.group(2) ??
+            '1',
+      ) ??
+      1;
+  final free = int.tryParse(
+        items
+                .firstWhere(
+                  (e) => e?.group(1) == 'SwapFree:',
+                  orElse: () => null,
+                )
+                ?.group(2) ??
+            '1',
+      ) ??
+      1;
+  final cached = int.tryParse(
+        items
+                .firstWhere(
+                  (e) => e?.group(1) == 'SwapCached:',
+                  orElse: () => null,
+                )
+                ?.group(2) ??
+            '0',
+      ) ??
+      0;
 
   return Swap(
     total: total,
-    used: total - free,
     free: free,
     cached: cached,
   );

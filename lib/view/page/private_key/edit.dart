@@ -105,18 +105,16 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
           );
         });
         final info = PrivateKeyInfo(name, key, '');
-        bool haveErr = false;
         try {
           info.privateKey = await compute(decyptPem, [key, pwd]);
         } catch (e) {
           showSnackBar(context, Text(e.toString()));
-          haveErr = true;
+          rethrow;
         } finally {
           setState(() {
             _loading = const SizedBox();
           });
         }
-        if (haveErr) return;
         if (widget.info != null) {
           _provider.updateInfo(widget.info!, info);
         } else {

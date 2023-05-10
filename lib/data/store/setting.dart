@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/persistant_store.dart';
+import 'package:toolbox/core/utils/platform.dart';
 
 class SettingStore extends PersistentStore {
   StoreProperty<int> get primaryColor =>
-      property('primaryColor', defaultValue: Colors.deepPurpleAccent.value);
+      property('primaryColor', defaultValue: Colors.pink.value);
 
   StoreProperty<int> get serverStatusUpdateInterval =>
       property('serverStatusUpdateInterval', defaultValue: 3);
@@ -37,5 +38,5 @@ class SettingStore extends PersistentStore {
   StoreProperty<String> get fontPath => property('fontPath');
 
   /// Backgroud running (Android)
-  StoreProperty<bool> get bgRun => property('bgRun', defaultValue: true);
+  StoreProperty<bool> get bgRun => property('bgRun', defaultValue: isAndroid);
 }

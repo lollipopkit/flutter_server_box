@@ -59,9 +59,11 @@ class PkgProvider extends BusyProvider {
 
   Future<void> refresh() async {
     final result = await _update();
-    _parse(result);
-    try {} catch (e) {
+    try {
+      _parse(result);
+    } catch (e) {
       error = '[Server Raw]:\n$result\n[App Error]:\n$e';
+      rethrow;
     } finally {
       notifyListeners();
     }

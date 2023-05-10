@@ -204,9 +204,9 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildMemView(ServerStatus ss) {
-    final used = ss.mem.used / ss.mem.total * 100;
     final free = ss.mem.free / ss.mem.total * 100;
-    final avail = ss.mem.avail / ss.mem.total * 100;
+    final avail = ss.mem.availPercent * 100;
+    final used = ss.mem.usedPercent * 100;
 
     return RoundRectCard(
       Padding(
@@ -245,7 +245,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildSwapView(ServerStatus ss) {
     if (ss.swap.total == 0) return const SizedBox();
-    final used = ss.swap.used / ss.swap.total * 100;
+    final used = ss.swap.usedPercent * 100;
     final cached = ss.swap.cached / ss.swap.total * 100;
     return RoundRectCard(
       Padding(

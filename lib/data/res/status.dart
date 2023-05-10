@@ -7,7 +7,6 @@ import '../model/server/conn_status.dart';
 
 Memory get _initMemory => Memory(
       total: 1,
-      used: 0,
       free: 1,
       cache: 0,
       avail: 1,
@@ -39,7 +38,6 @@ NetSpeed get initNetSpeed => NetSpeed(
     );
 Swap get _initSwap => Swap(
       total: 1,
-      used: 0,
       free: 1,
       cached: 0,
     );
