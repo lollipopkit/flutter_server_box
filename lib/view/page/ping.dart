@@ -14,11 +14,8 @@ import '../../locator.dart';
 import '../widget/input_field.dart';
 import '../widget/round_rect_card.dart';
 
-final doaminReg =
-    RegExp(r'^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$');
-final ipv4Reg =
-    RegExp(r'^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|$)){4}$');
-final ipv6Reg = RegExp(r'^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$');
+/// Only permit ipv4 / ipv6 / domain chars
+final targetReg = RegExp(r'[a-zA-Z0-9\.-_:]+');
 
 class PingPage extends StatefulWidget {
   const PingPage({Key? key}) : super(key: key);
@@ -148,9 +145,8 @@ class _PingPageState extends State<PingPage>
       return;
     }
 
-    if (!doaminReg.hasMatch(target) &&
-        !ipv4Reg.hasMatch(target) &&
-        !ipv6Reg.hasMatch(target)) {
+    /// avoid ping command injection
+    if (!targetReg.hasMatch(target)) {
       showSnackBar(context, Text(s.pingInputIP));
       return;
     }

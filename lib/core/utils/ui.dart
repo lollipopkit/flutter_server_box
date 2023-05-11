@@ -23,7 +23,10 @@ bool isDarkMode(BuildContext context) =>
     Theme.of(context).brightness == Brightness.dark;
 
 void showSnackBar(BuildContext context, Widget child) =>
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: child));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: child,
+      behavior: SnackBarBehavior.floating,
+    ));
 
 void showSnackBarWithAction(
   BuildContext context,
