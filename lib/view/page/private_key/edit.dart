@@ -152,7 +152,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
           onPressed: () async {
             final path = await pickOneFile();
             if (path == null) {
-              showSnackBar(context, const Text('path is null'));
+              showSnackBar(context, Text(_s.fieldMustNotEmpty));
               return;
             }
 

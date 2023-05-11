@@ -1,9 +1,10 @@
 final parseFailed = Exception('Parse failed');
-final seqReg = RegExp(r'icmp_seq=(.+) ttl=(.+) time=(.+) ms');
+final seqReg = RegExp(r'seq=(.+) ttl=(.+) time=(.+) ms');
 final packetReg =
     RegExp(r'(.+) packets transmitted, (.+) received, (.+)% packet loss');
 final timeReg = RegExp(r'min/avg/max/mdev = (.+)/(.+)/(.+)/(.+) ms');
-final ipReg = RegExp(r' \((\S+)\) ');
+final timeAlpineReg = RegExp(r'round-trip min/avg/max = (.+)/(.+)/(.+) ms');
+final ipReg = RegExp(r' \((\S+)\)');
 
 class PingResult {
   String serverName;
@@ -65,15 +66,22 @@ class PingStatistics {
     }
     final packetMatched = packetReg.firstMatch(lines[0]);
     final timeMatched = timeReg.firstMatch(lines[1]);
-    if (packetMatched == null || timeMatched == null) {
+    final timeAlpineMatched = timeAlpineReg.firstMatch(lines[1]);
+    if (packetMatched == null) {
       return;
     }
     total = int.tryParse(packetMatched.group(1)!);
     received = int.tryParse(packetMatched.group(2)!);
     loss = double.tryParse(packetMatched.group(3)!);
-    min = double.tryParse(timeMatched.group(1)!);
-    avg = double.tryParse(timeMatched.group(2)!);
-    max = double.tryParse(timeMatched.group(3)!);
-    stddev = double.tryParse(timeMatched.group(4)!);
+    if (timeMatched != null) {
+      min = double.tryParse(timeMatched.group(1)!);
+      avg = double.tryParse(timeMatched.group(2)!);
+      max = double.tryParse(timeMatched.group(3)!);
+      stddev = double.tryParse(timeMatched.group(4)!);
+    } else if (timeAlpineMatched != null) {
+      min = double.tryParse(timeAlpineMatched.group(1)!);
+      avg = double.tryParse(timeAlpineMatched.group(2)!);
+      max = double.tryParse(timeAlpineMatched.group(3)!);
+    }
   }
 }

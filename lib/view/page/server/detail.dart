@@ -345,11 +345,11 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildNetSpeedTop() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 3),
+    return const Padding(
+      padding: EdgeInsets.only(bottom: 3),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: const [
+        children: [
           Icon(Icons.device_hub, size: 17),
           Icon(Icons.arrow_downward, size: 17),
           Icon(Icons.arrow_upward, size: 17),
