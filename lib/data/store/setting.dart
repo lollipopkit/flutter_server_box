@@ -39,4 +39,8 @@ class SettingStore extends PersistentStore {
 
   /// Backgroud running (Android)
   StoreProperty<bool> get bgRun => property('bgRun', defaultValue: isAndroid);
+
+  // Server order
+  StoreProperty<List<String>> get serverOrder =>
+      property('serverOrder', defaultValue: null);
 }

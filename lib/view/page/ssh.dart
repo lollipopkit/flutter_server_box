@@ -222,7 +222,10 @@ class _SSHPageState extends State<SSHPage> {
         _paste();
         break;
       case VirtualKeyFunc.copy:
-        copy(terminalSelected);
+        final selected = terminalSelected;
+        if (selected != null) {
+          copy2Clipboard(selected);
+        }
         break;
       case VirtualKeyFunc.snippet:
         showSnippetDialog(context, _s, (s) {
@@ -241,10 +244,10 @@ class _SSHPageState extends State<SSHPage> {
     });
   }
 
-  String get terminalSelected {
+  String? get terminalSelected {
     final range = _terminalController.selection;
     if (range == null) {
-      return '';
+      return null;
     }
     return _terminal.buffer.getText(range);
   }
@@ -255,29 +258,30 @@ class _SSHPageState extends State<SSHPage> {
       return;
     }
     final selected = terminalSelected;
-    if (selected.trim().isEmpty) {
-      // _menuController.show(
-      //   context: context,
-      //   contextMenuBuilder: (context) {
-      //     return TextSelectionToolbar(
-      //       anchorAbove: details.globalPosition,
-      //       anchorBelow: details.globalPosition,
-      //       children: [
-      //         TextButton(
-      //           child: Text(
-      //             _s.paste,
-      //             style: _menuTextStyle,
-      //           ),
-      //           onPressed: () async {
-      //             _paste();
-      //             _menuController.remove();
-      //           },
-      //         )
-      //       ],
-      //     );
-      //   },
-      // );
-      return;
+    final children = <Widget>[
+        TextButton(
+          onPressed: () {
+            _paste();
+          },
+          child: Text(_s.paste),
+        ),
+    ];
+    if (selected?.trim().isNotEmpty ?? false) {
+      children.add(
+      TextButton(
+        child: Text(
+          _s.copy,
+          style: _menuTextStyle,
+        ),
+        onPressed: () {
+          _terminalController.setSelection(null);
+          if (selected != null) {
+            copy2Clipboard(selected);
+          }
+          _menuController.remove();
+        },
+      ),
+      );
     }
     _menuController.show(
       context: context,
@@ -285,19 +289,7 @@ class _SSHPageState extends State<SSHPage> {
         return TextSelectionToolbar(
           anchorAbove: details.globalPosition,
           anchorBelow: details.globalPosition,
-          children: [
-            TextButton(
-              child: Text(
-                _s.copy,
-                style: _menuTextStyle,
-              ),
-              onPressed: () {
-                _terminalController.setSelection(null);
-                copy(selected);
-                _menuController.remove();
-              },
-            ),
-          ],
+          children: children,
         );
       },
     );

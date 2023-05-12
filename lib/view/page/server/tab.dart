@@ -83,7 +83,7 @@ class _ServerPageState extends State<ServerPage>
           await _serverProvider.refreshData(onlyFailed: true),
       child: Consumer<ServerProvider>(
         builder: (_, pro, __) {
-          if (pro.servers.isEmpty) {
+          if (pro.serverOrder.isEmpty) {
             return Center(
               child: Text(
                 _s.serverTabEmpty,
@@ -91,21 +91,16 @@ class _ServerPageState extends State<ServerPage>
               ),
             );
           }
-          final keys = pro.servers.keys.toList();
-          return ListView.separated(
+          return ReorderableListView(
             padding: const EdgeInsets.fromLTRB(7, 10, 7, 7),
-            controller: ScrollController(),
             physics: const AlwaysScrollableScrollPhysics(),
-            itemBuilder: (ctx, idx) {
-              if (idx == pro.servers.length) {
-                return SizedBox(height: _media.padding.bottom);
-              }
-              return _buildEachServerCard(pro.servers[keys[idx]]);
-            },
-            itemCount: pro.servers.length,
-            separatorBuilder: (_, __) => const SizedBox(
-              height: 3,
-            ),
+            onReorder: (oldIndex, newIndex) => setState(() {
+              pro.serverOrder.move(oldIndex, newIndex);
+            }),
+            children: pro.serverOrder
+                .where((e) => pro.servers.containsKey(e))
+                .map((e) => _buildEachServerCard(pro.servers[e]))
+                .toList(),
           );
         },
       ),
@@ -116,21 +111,18 @@ class _ServerPageState extends State<ServerPage>
     if (si == null) {
       return const SizedBox();
     }
-    return GestureDetector(
-      onLongPress: () => AppRoute(
-        ServerEditPage(spi: si.spi),
-        'Edit server info page',
-      ).go(context),
-      child: RoundRectCard(
-        Padding(
+    return RoundRectCard(
+      GestureDetector(
+        child: Padding(
           padding: const EdgeInsets.all(13),
           child: _buildRealServerCard(si.status, si.spi.name, si.state, si.spi),
         ),
+        onTap: () => AppRoute(
+          ServerDetailPage(si.spi.id),
+          'server detail page',
+        ).go(context),
       ),
-      onTap: () => AppRoute(
-        ServerDetailPage(si.spi.id),
-        'server detail page',
-      ).go(context),
+      key: Key(si.spi.id),
     );
   }
 
@@ -177,8 +169,8 @@ class _ServerPageState extends State<ServerPage>
                             child: Text(ss.failedInfo ?? _s.unknownError),
                             actions: [
                               TextButton(
-                                onPressed: () =>
-                                    copy(ss.failedInfo ?? _s.unknownError),
+                                onPressed: () => copy2Clipboard(
+                                    ss.failedInfo ?? _s.unknownError),
                                 child: Text(_s.copy),
                               )
                             ],
