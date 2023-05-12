@@ -18,10 +18,31 @@ import '../store/server.dart';
 import '../store/setting.dart';
 
 typedef ServersMap = Map<String, Server>;
+typedef ServerOrder = List<String>;
+
+extension ServerOrderX on ServerOrder {
+  void move(int oldIndex, int newIndex) {
+    if (oldIndex == newIndex) return;
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    final item = this[oldIndex];
+    removeAt(oldIndex);
+    insert(newIndex, item);
+    locator<SettingStore>().serverOrder.put(this);
+  }
+
+  void update(String id, String newId) {
+    final index = indexOf(id);
+    if (index == -1) return;
+    this[index] = newId;
+  }
+}
 
 class ServerProvider extends BusyProvider {
   final ServersMap _servers = {};
   ServersMap get servers => _servers;
+  final ServerOrder serverOrder = [];
 
   final _limiter = TryLimiter();
 
@@ -29,13 +50,20 @@ class ServerProvider extends BusyProvider {
 
   final _logger = Logger('SERVER');
 
-  final _store = locator<ServerStore>();
+  final _serverStore = locator<ServerStore>();
+  final _settingStore = locator<SettingStore>();
 
   Future<void> loadLocalData() async {
     setBusyState(true);
-    final infos = _store.fetch();
+    final infos = _serverStore.fetch();
     for (final info in infos) {
       _servers[info.id] = genServer(info);
+    }
+    final serverOrder_ = _settingStore.serverOrder.fetch();
+    if (serverOrder_ != null) {
+      serverOrder.addAll(serverOrder_);
+    } else {
+      serverOrder.addAll(_servers.keys);
     }
     setBusyState(false);
     notifyListeners();
@@ -107,14 +135,18 @@ class ServerProvider extends BusyProvider {
   void addServer(ServerPrivateInfo spi) {
     _servers[spi.id] = genServer(spi);
     notifyListeners();
-    _store.put(spi);
+    _serverStore.put(spi);
+    serverOrder.add(spi.id);
+    _settingStore.serverOrder.put(serverOrder);
     refreshData(spi: spi);
   }
 
   void delServer(String id) {
     _servers.remove(id);
+    serverOrder.remove(id);
+    _settingStore.serverOrder.put(serverOrder);
     notifyListeners();
-    _store.delete(id);
+    _serverStore.delete(id);
   }
 
   Future<void> updateServer(
@@ -122,9 +154,11 @@ class ServerProvider extends BusyProvider {
     ServerPrivateInfo newSpi,
   ) async {
     _servers.remove(old.id);
-    _store.update(old, newSpi);
+    _serverStore.update(old, newSpi);
     _servers[newSpi.id] = genServer(newSpi);
     _servers[newSpi.id]?.client = await genClient(newSpi);
+    serverOrder.update(old.id, newSpi.id);
+    _settingStore.serverOrder.put(serverOrder);
     await refreshData(spi: newSpi);
   }
 
