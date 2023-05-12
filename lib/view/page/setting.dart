@@ -395,7 +395,7 @@ class _SettingPageState extends State<SettingPage> {
         padding: EdgeInsets.zero,
         onPressed: () {
           if (_pushToken != null) {
-            copy(_pushToken!);
+            copy2Clipboard(_pushToken!);
             showSnackBar(context, Text(_s.success));
           } else {
             showSnackBar(context, Text(_s.getPushTokenFailed));
@@ -421,9 +421,10 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildFont() {
+    final fontName = getFileName(_setting.fontPath.fetch());
     return ListTile(
-      title: Text(_s.chooseFontFile),
-      trailing: Text(getFileName(_setting.fontPath.fetch()) ?? _s.notSelected),
+      title: Text(_s.choose),
+      trailing: Text(fontName ?? _s.notSelected),
       onTap: () {
         showRoundDialog(
           context: context,

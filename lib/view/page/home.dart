@@ -103,7 +103,7 @@ class _MyHomePageState extends State<MyHomePage>
     return Scaffold(
       drawer: _buildDrawer(),
       appBar: AppBar(
-        title: Text(tabTitleName(context, _selectIndex)),
+        title: const Text(BuildData.name),
         actions: [
           IconButton(
             icon: const Icon(Icons.developer_mode, size: 23),

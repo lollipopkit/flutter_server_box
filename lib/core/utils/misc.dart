@@ -26,21 +26,21 @@ Future<bool> shareFiles(BuildContext context, List<String> filePaths) async {
   } else {
     text = '${filePaths.length} ${S.of(context)!.files}';
   }
-  _app.setMoveBg(false);
+  _app.setCanMoveBg(false);
   // ignore: deprecated_member_use
   await Share.shareFiles(filePaths, text: 'ServerBox -> $text');
-  _app.setMoveBg(true);
+  _app.setCanMoveBg(true);
   return filePaths.isNotEmpty;
 }
 
-void copy(String text) {
+void copy2Clipboard(String text) {
   Clipboard.setData(ClipboardData(text: text));
 }
 
 Future<String?> pickOneFile() async {
-  _app.setMoveBg(false);
+  _app.setCanMoveBg(false);
   final result = await FilePicker.platform.pickFiles(type: FileType.any);
-  _app.setMoveBg(true);
+  _app.setCanMoveBg(true);
   return result?.files.single.path;
 }
 

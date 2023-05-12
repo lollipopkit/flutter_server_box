@@ -98,6 +98,7 @@ class _ServerPageState extends State<ServerPage>
               pro.serverOrder.move(oldIndex, newIndex);
             }),
             children: pro.serverOrder
+                .where((e) => pro.servers.containsKey(e))
                 .map((e) => _buildEachServerCard(pro.servers[e]))
                 .toList(),
           );
@@ -168,8 +169,8 @@ class _ServerPageState extends State<ServerPage>
                             child: Text(ss.failedInfo ?? _s.unknownError),
                             actions: [
                               TextButton(
-                                onPressed: () =>
-                                    copy(ss.failedInfo ?? _s.unknownError),
+                                onPressed: () => copy2Clipboard(
+                                    ss.failedInfo ?? _s.unknownError),
                                 child: Text(_s.copy),
                               )
                             ],

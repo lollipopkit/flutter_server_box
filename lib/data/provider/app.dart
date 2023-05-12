@@ -12,7 +12,7 @@ class AppProvider extends BusyProvider {
     notifyListeners();
   }
 
-  void setMoveBg(bool moveBg) {
+  void setCanMoveBg(bool moveBg) {
     _moveBg = moveBg;
   }
 }
