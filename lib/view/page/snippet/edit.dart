@@ -99,7 +99,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           node: _scriptNode,
           minLines: 3,
           maxLines: 10,
-          type: TextInputType.text,
+          type: TextInputType.multiline,
           label: _s.snippet,
           icon: Icons.code,
         ),
