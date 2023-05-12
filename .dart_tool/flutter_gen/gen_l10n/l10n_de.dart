@@ -315,7 +315,7 @@ class SDe extends S {
   String get noSavedPrivateKey => 'Keine gespeicherten Private Keys';
 
   @override
-  String get noSavedSnippet => 'Keine gespeicherten snippets.';
+  String get noSavedSnippet => 'Keine gespeicherten Snippets.';
 
   @override
   String get noServerAvailable => 'Kein Server verfügbar.';

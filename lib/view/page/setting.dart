@@ -32,6 +32,12 @@ class SettingPage extends StatefulWidget {
 }
 
 class _SettingPageState extends State<SettingPage> {
+  final themeKey = GlobalKey<PopupMenuButtonState<int>>();
+  final startPageKey = GlobalKey<PopupMenuButtonState<int>>();
+  final updateIntervalKey = GlobalKey<PopupMenuButtonState<int>>();
+  final termThemeKey = GlobalKey<PopupMenuButtonState<int>>();
+  final maxRetryKey = GlobalKey<PopupMenuButtonState<int>>();
+
   late final SettingStore _setting;
   late final ServerProvider _serverProvider;
   late MediaQueryData _media;
@@ -148,7 +154,6 @@ class _SettingPageState extends State<SettingPage> {
         _s.onServerDetailPage,
         style: grey,
       ),
-      contentPadding: const EdgeInsets.only(left: 17, right: 11),
       trailing: buildSwitch(context, _setting.showDistLogo),
     );
   }
@@ -186,6 +191,7 @@ class _SettingPageState extends State<SettingPage> {
       ),
       growable: false,
     ).toList();
+
     return ListTile(
       title: Text(
         _s.updateServerStatusInterval,
@@ -194,10 +200,14 @@ class _SettingPageState extends State<SettingPage> {
         _s.willTakEeffectImmediately,
         style: grey,
       ),
-      trailing: PopupMenu<int>(
-        items: items,
+      onTap: () {
+        updateIntervalKey.currentState?.showButtonMenu();
+      },
+      trailing: PopupMenuButton(
+        key: updateIntervalKey,
+        itemBuilder: (BuildContext context) => items,
         initialValue: _updateInterval,
-        onSelected: (val) {
+        onSelected: (int val) {
           setState(() {
             _updateInterval = val;
           });
@@ -261,14 +271,19 @@ class _SettingPageState extends State<SettingPage> {
           ),
         )
         .toList();
+
     return ListTile(
       title: Text(
         _s.launchPage,
       ),
-      trailing: PopupMenu<int>(
-        items: items,
+      onTap: () {
+        startPageKey.currentState?.showButtonMenu();
+      },
+      trailing: PopupMenuButton(
+        key: startPageKey,
+        itemBuilder: (BuildContext context) => items,
         initialValue: _launchPageIdx,
-        onSelected: (idx) {
+        onSelected: (int idx) {
           setState(() {
             _launchPageIdx = idx;
           });
@@ -298,10 +313,14 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(
         _s.termTheme,
       ),
-      trailing: PopupMenu<int>(
-        items: items,
+      onTap: () {
+        termThemeKey.currentState?.showButtonMenu();
+      },
+      trailing: PopupMenuButton(
+        key: termThemeKey,
+        itemBuilder: (BuildContext context) => items,
         initialValue: _termThemeIdx,
-        onSelected: (idx) {
+        onSelected: (int idx) {
           setState(() {
             _termThemeIdx = idx;
           });
@@ -325,15 +344,21 @@ class _SettingPageState extends State<SettingPage> {
     ).toList();
     final help =
         _maxRetryCount == 0 ? _s.maxRetryCountEqual0 : _s.canPullRefresh;
+
     return ListTile(
       title: Text(
         _s.maxRetryCount,
         textAlign: TextAlign.start,
       ),
-      trailing: PopupMenu<int>(
-        items: items,
+      subtitle: Text(help, style: grey),
+      onTap: () {
+        maxRetryKey.currentState?.showButtonMenu();
+      },
+      trailing: PopupMenuButton(
+        key: maxRetryKey,
+        itemBuilder: (BuildContext context) => items,
         initialValue: _maxRetryCount,
-        onSelected: (val) {
+        onSelected: (int val) {
           setState(() {
             _maxRetryCount = val;
           });
@@ -343,7 +368,6 @@ class _SettingPageState extends State<SettingPage> {
           '${_maxRetryCount.toInt()} ${_s.times}',
         ),
       ),
-      subtitle: Text(help, style: grey),
     );
   }
 
@@ -357,15 +381,22 @@ class _SettingPageState extends State<SettingPage> {
         );
       },
     ).toList();
+
     return ListTile(
       title: Text(
         _s.themeMode,
       ),
-      trailing: PopupMenu<int>(
-        items: items,
+      onTap: () {
+        themeKey.currentState?.showButtonMenu();
+      },
+      trailing: PopupMenuButton(
+        key: themeKey,
+        itemBuilder: (BuildContext context) => items,
         initialValue: _nightMode,
-        onSelected: (idx) {
-          _nightMode = idx;
+        onSelected: (int idx) {
+          setState(() {
+            _nightMode = idx;
+          });
           _setting.themeMode.put(_nightMode);
         },
         child: Text(_buildThemeModeStr(_nightMode)),
