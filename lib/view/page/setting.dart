@@ -154,7 +154,6 @@ class _SettingPageState extends State<SettingPage> {
         _s.onServerDetailPage,
         style: grey,
       ),
-      contentPadding: const EdgeInsets.only(left: 17, right: 11),
       trailing: buildSwitch(context, _setting.showDistLogo),
     );
   }
