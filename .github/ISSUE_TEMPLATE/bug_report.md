@@ -17,16 +17,19 @@ Steps to reproduce the behavior:
 3. Scroll down to '....'
 4. See error
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+**Desired Results**
+A clear description of the result you expected.
+
+**Actual Results**
+A clear description of the actual result.
 
 **Screenshots**
 If applicable, add screenshots(both bug screen and logs
 screen) to help explain your problem.
 
-**Device (please complete the following information):**
- - OS: [e.g. iOS16 or Android13]
- - Version [e.g. 1.0.302]
+**Device**
+- OS: e.g. iOS16 or Android13
+- App Version: e.g. 1.0.302
 
 **Additional context**
 Add any other context about the problem here.
