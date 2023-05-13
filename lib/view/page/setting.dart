@@ -21,7 +21,6 @@ import '../../data/res/ui.dart';
 import '../../data/store/setting.dart';
 import '../../locator.dart';
 import '../widget/future_widget.dart';
-import '../widget/popup_menu.dart';
 import '../widget/round_rect_card.dart';
 
 class SettingPage extends StatefulWidget {
@@ -205,7 +204,7 @@ class _SettingPageState extends State<SettingPage> {
       },
       trailing: PopupMenuButton(
         key: updateIntervalKey,
-        itemBuilder: (BuildContext context) => items,
+        itemBuilder: (_) => items,
         initialValue: _updateInterval,
         onSelected: (int val) {
           setState(() {
@@ -219,6 +218,7 @@ class _SettingPageState extends State<SettingPage> {
         },
         child: Text(
           '${_updateInterval.toInt()} ${_s.second}',
+          style: textSize15,
         ),
       ),
     );
@@ -294,6 +294,7 @@ class _SettingPageState extends State<SettingPage> {
           child: Text(
             tabTitleName(context, _launchPageIdx),
             textAlign: TextAlign.right,
+            style: textSize15,
           ),
         ),
       ),
@@ -328,6 +329,7 @@ class _SettingPageState extends State<SettingPage> {
         },
         child: Text(
           TerminalColorsPlatform.values[_termThemeIdx].name,
+          style: textSize15,
         ),
       ),
     );
@@ -366,6 +368,7 @@ class _SettingPageState extends State<SettingPage> {
         },
         child: Text(
           '${_maxRetryCount.toInt()} ${_s.times}',
+          style: textSize15,
         ),
       ),
     );
@@ -399,7 +402,10 @@ class _SettingPageState extends State<SettingPage> {
           });
           _setting.themeMode.put(_nightMode);
         },
-        child: Text(_buildThemeModeStr(_nightMode)),
+        child: Text(
+          _buildThemeModeStr(_nightMode),
+          style: textSize15,
+        ),
       ),
     );
   }
@@ -455,7 +461,10 @@ class _SettingPageState extends State<SettingPage> {
     final fontName = getFileName(_setting.fontPath.fetch());
     return ListTile(
       title: Text(_s.choose),
-      trailing: Text(fontName ?? _s.notSelected),
+      trailing: Text(
+        fontName ?? _s.notSelected,
+        style: textSize15,
+      ),
       onTap: () {
         showRoundDialog(
           context: context,

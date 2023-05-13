@@ -54,8 +54,9 @@ class _SSHPageState extends State<SSHPage> {
     super.initState();
     final termColorIdx = _setting.termColorIdx.fetch()!;
     _termColors = TerminalColorsPlatform.values[termColorIdx].colors;
-    final ts = TextStyle(fontFamily: getFileName(_setting.fontPath.fetch()));
-    _terminalStyle = TerminalStyle.fromTextStyle(ts);
+    final fontFamilly = getFileName(_setting.fontPath.fetch());
+    final textStyle = TextStyle(fontFamily: fontFamilly);
+    _terminalStyle = TerminalStyle.fromTextStyle(textStyle);
     initTerminal();
   }
 
@@ -259,28 +260,28 @@ class _SSHPageState extends State<SSHPage> {
     }
     final selected = terminalSelected;
     final children = <Widget>[
-        TextButton(
-          onPressed: () {
-            _paste();
-          },
-          child: Text(_s.paste),
-        ),
+      TextButton(
+        onPressed: () {
+          _paste();
+        },
+        child: Text(_s.paste),
+      ),
     ];
     if (selected?.trim().isNotEmpty ?? false) {
       children.add(
-      TextButton(
-        child: Text(
-          _s.copy,
-          style: _menuTextStyle,
+        TextButton(
+          child: Text(
+            _s.copy,
+            style: _menuTextStyle,
+          ),
+          onPressed: () {
+            _terminalController.setSelection(null);
+            if (selected != null) {
+              copy2Clipboard(selected);
+            }
+            _menuController.remove();
+          },
         ),
-        onPressed: () {
-          _terminalController.setSelection(null);
-          if (selected != null) {
-            copy2Clipboard(selected);
-          }
-          _menuController.remove();
-        },
-      ),
       );
     }
     _menuController.show(
