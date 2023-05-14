@@ -10,7 +10,7 @@ const buildDataFilePath = 'lib/data/res/build_data.dart';
 const apkPath = 'build/app/outputs/flutter-apk/app-release.apk';
 const xcarchivePath = 'build/ios/archive/Runner.xcarchive';
 const appleXCConfigPath = 'Runner.xcodeproj/project.pbxproj';
-const releaseDirPath = '/Volumes/pm981/flutter_releases';
+const releaseDirPath = './release';
 
 var regAppleProjectVer = RegExp(r'CURRENT_PROJECT_VERSION = .+;');
 var regAppleMarketVer = RegExp(r'MARKETING_VERSION = .+');

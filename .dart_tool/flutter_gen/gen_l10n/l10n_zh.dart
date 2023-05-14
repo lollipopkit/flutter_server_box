@@ -8,7 +8,7 @@ class SZh extends S {
   String get about => '关于';
 
   @override
-  String get aboutThanks => '\n感谢以下参与软件测试的各位。';
+  String get aboutThanks => '感谢以下参与的各位。';
 
   @override
   String get addAServer => '添加服务器';
@@ -63,9 +63,6 @@ class SZh extends S {
 
   @override
   String get clear => '清除';
-
-  @override
-  String get clickSee => '点击查看';
 
   @override
   String get close => '关闭';
@@ -557,6 +554,9 @@ class SZh extends S {
   String versionUpdated(Object build) {
     return '当前：v1.0.$build, 已是最新版本';
   }
+
+  @override
+  String get viewErr => '查看错误';
 
   @override
   String get waitConnection => '请等待连接建立';

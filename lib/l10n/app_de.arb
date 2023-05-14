@@ -1,6 +1,6 @@
 {
   "about": "Über",
-  "aboutThanks": "\nVielen Dank an die folgenden Personen, die zu dieser App beigetragen haben.\n",
+  "aboutThanks": "Vielen Dank an die folgenden Personen, die daran teilgenommen haben.\n",
   "addAServer": "Server hinzufügen",
   "addOne": "Hinzufügen",
   "addPrivateKey": "Private key hinzufügen",
@@ -19,7 +19,6 @@
   "chooseFontFile": "Schriftart auswählen",
   "choosePrivateKey": "Private key auswählen",
   "clear": "Entfernen",
-  "clickSee": "Hier klicken",
   "close": "Schließen",
   "cmd": "Command",
   "containerName": "Container Name",
@@ -169,6 +168,7 @@
   "versionHaveUpdate": "Gefunden: v1.0.{build}, klicke zum Aktualisieren",
   "versionUnknownUpdate": "Aktuell: v1.0.{build}",
   "versionUpdated": "v1.0.{build} ist bereits die neueste Version",
+  "viewErr": "Fehler anzeigen",
   "waitConnection": "Bitte warte, bis die Verbindung hergestellt wurde.",
   "willTakEeffectImmediately": "Wird sofort angewendet"
 }

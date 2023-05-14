@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 /// Font style
 
 const textSize11 = TextStyle(fontSize: 11);
+const textSize12Grey = TextStyle(color: Colors.grey, fontSize: 11);
 const textSize13 = TextStyle(fontSize: 13);
 const textSize13Grey = TextStyle(color: Colors.grey, fontSize: 13);
 const textSize15 = TextStyle(fontSize: 15);

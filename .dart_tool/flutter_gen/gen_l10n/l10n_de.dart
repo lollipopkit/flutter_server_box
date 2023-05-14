@@ -8,7 +8,7 @@ class SDe extends S {
   String get about => 'Über';
 
   @override
-  String get aboutThanks => '\nVielen Dank an die folgenden Personen, die zu dieser App beigetragen haben.\n';
+  String get aboutThanks => 'Vielen Dank an die folgenden Personen, die daran teilgenommen haben.\n';
 
   @override
   String get addAServer => 'Server hinzufügen';
@@ -63,9 +63,6 @@ class SDe extends S {
 
   @override
   String get clear => 'Entfernen';
-
-  @override
-  String get clickSee => 'Hier klicken';
 
   @override
   String get close => 'Schließen';
@@ -557,6 +554,9 @@ class SDe extends S {
   String versionUpdated(Object build) {
     return 'v1.0.$build ist bereits die neueste Version';
   }
+
+  @override
+  String get viewErr => 'Fehler anzeigen';
 
   @override
   String get waitConnection => 'Bitte warte, bis die Verbindung hergestellt wurde.';

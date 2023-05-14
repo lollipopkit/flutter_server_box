@@ -115,7 +115,7 @@ class _ServerPageState extends State<ServerPage>
       GestureDetector(
         child: Padding(
           padding: const EdgeInsets.all(13),
-          child: _buildRealServerCard(si.status, si.spi.name, si.state, si.spi),
+          child: _buildRealServerCard(si.status, si.state, si.spi),
         ),
         onTap: () => AppRoute(
           ServerDetailPage(si.spi.id),
@@ -126,70 +126,17 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  Widget _buildRealServerCard(ServerStatus ss, String serverName,
-      ServerState cs, ServerPrivateInfo spi) {
+  Widget _buildRealServerCard(
+    ServerStatus ss,
+    ServerState cs,
+    ServerPrivateInfo spi,
+  ) {
     final rootDisk = ss.disk.firstWhere((element) => element.loc == '/');
-
-    final topRightStr =
-        getTopRightStr(cs, ss.cpu.temp, ss.uptime, ss.failedInfo);
-    final hasError = cs == ServerState.failed && ss.failedInfo != null;
-    final style = TextStyle(
-        color: _theme.textTheme.bodyLarge!.color!.withAlpha(100), fontSize: 11);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 7),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    serverName,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 12),
-                    textScaleFactor: 1.0,
-                  ),
-                  const Icon(
-                    Icons.keyboard_arrow_right,
-                    size: 17,
-                    color: Colors.grey,
-                  )
-                ],
-              ),
-              Row(
-                children: [
-                  hasError
-                      ? GestureDetector(
-                          onTap: () => showRoundDialog(
-                            context: context,
-                            title: Text(_s.error),
-                            child: Text(ss.failedInfo ?? _s.unknownError),
-                            actions: [
-                              TextButton(
-                                onPressed: () => copy2Clipboard(
-                                    ss.failedInfo ?? _s.unknownError),
-                                child: Text(_s.copy),
-                              )
-                            ],
-                          ),
-                          child: Text(
-                            _s.clickSee,
-                            style: style,
-                            textScaleFactor: 1.0,
-                          ),
-                        )
-                      : Text(topRightStr, style: style, textScaleFactor: 1.0),
-                  const SizedBox(width: 9),
-                  _buildSSHBtn(spi),
-                  _buildMoreBtn(spi),
-                ],
-              )
-            ],
-          ),
-        ),
+        _buildServerCardTitle(ss, cs, spi),
         const SizedBox(
           height: 17,
         ),
@@ -215,6 +162,71 @@ class _ServerPageState extends State<ServerPage>
         ),
         const SizedBox(height: 3),
       ],
+    );
+  }
+
+  Widget _buildServerCardTitle(
+    ServerStatus ss,
+    ServerState cs,
+    ServerPrivateInfo spi,
+  ) {
+    final topRightStr =
+        getTopRightStr(cs, ss.cpu.temp, ss.uptime, ss.failedInfo);
+    final hasError = cs == ServerState.failed && ss.failedInfo != null;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 7),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Text(
+                spi.name,
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                textScaleFactor: 1.0,
+              ),
+              const Icon(
+                Icons.keyboard_arrow_right,
+                size: 17,
+                color: Colors.grey,
+              )
+            ],
+          ),
+          Row(
+            children: [
+              hasError
+                  ? GestureDetector(
+                      onTap: () => showRoundDialog(
+                        context: context,
+                        title: Text(_s.error),
+                        child: Text(ss.failedInfo ?? _s.unknownError),
+                        actions: [
+                          TextButton(
+                            onPressed: () => copy2Clipboard(
+                                ss.failedInfo ?? _s.unknownError),
+                            child: Text(_s.copy),
+                          )
+                        ],
+                      ),
+                      child: Text(
+                        _s.viewErr,
+                        style: textSize12Grey,
+                        textScaleFactor: 1.0,
+                      ),
+                    )
+                  : Text(
+                      topRightStr,
+                      style: textSize12Grey,
+                      textScaleFactor: 1.0,
+                    ),
+              const SizedBox(width: 9),
+              _buildSSHBtn(spi),
+              _buildMoreBtn(spi),
+            ],
+          )
+        ],
+      ),
     );
   }
 

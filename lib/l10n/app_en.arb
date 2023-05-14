@@ -1,6 +1,6 @@
 {
   "about": "About",
-  "aboutThanks": "\nThanks to the following people who participated in the test.",
+  "aboutThanks": "Thanks to the following people who participated in.",
   "addAServer": "add a server",
   "addOne": "Add one",
   "addPrivateKey": "Add private key",
@@ -19,7 +19,6 @@
   "chooseFontFile": "Choose a font file",
   "choosePrivateKey": "Choose private key",
   "clear": "Clear",
-  "clickSee": "Click here",
   "close": "Close",
   "cmd": "Command",
   "containerName": "Container name",
@@ -169,6 +168,7 @@
   "versionHaveUpdate": "Found: v1.0.{build}, click to update",
   "versionUnknownUpdate": "Current: v1.0.{build}",
   "versionUpdated": "Current: v1.0.{build}, is up to date",
+  "viewErr": "See error",
   "waitConnection": "Please wait for the connection to be established.",
   "willTakEeffectImmediately": "Will take effect immediately"
 }

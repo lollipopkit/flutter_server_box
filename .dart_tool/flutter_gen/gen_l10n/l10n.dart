@@ -104,7 +104,7 @@ abstract class S {
   /// No description provided for @aboutThanks.
   ///
   /// In en, this message translates to:
-  /// **'\nThanks to the following people who participated in the test.'**
+  /// **'Thanks to the following people who participated in.'**
   String get aboutThanks;
 
   /// No description provided for @addAServer.
@@ -214,12 +214,6 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Clear'**
   String get clear;
-
-  /// No description provided for @clickSee.
-  ///
-  /// In en, this message translates to:
-  /// **'Click here'**
-  String get clickSee;
 
   /// No description provided for @close.
   ///
@@ -1114,6 +1108,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Current: v1.0.{build}, is up to date'**
   String versionUpdated(Object build);
+
+  /// No description provided for @viewErr.
+  ///
+  /// In en, this message translates to:
+  /// **'See error'**
+  String get viewErr;
 
   /// No description provided for @waitConnection.
   ///

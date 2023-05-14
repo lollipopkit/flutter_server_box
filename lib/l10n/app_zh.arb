@@ -1,6 +1,6 @@
 {
   "about": "关于",
-  "aboutThanks": "\n感谢以下参与软件测试的各位。",
+  "aboutThanks": "感谢以下参与的各位。",
   "addAServer": "添加服务器",
   "addOne": "前去新增",
   "addPrivateKey": "添加一个私钥",
@@ -19,7 +19,6 @@
   "chooseFontFile": "选择字体文件",
   "choosePrivateKey": "选择私钥",
   "clear": "清除",
-  "clickSee": "点击查看",
   "close": "关闭",
   "cmd": "命令",
   "containerName": "容器名",
@@ -169,6 +168,7 @@
   "versionHaveUpdate": "找到新版本：v1.0.{build}, 点击更新",
   "versionUnknownUpdate": "当前：v1.0.{build}",
   "versionUpdated": "当前：v1.0.{build}, 已是最新版本",
+  "viewErr": "查看错误",
   "waitConnection": "请等待连接建立",
   "willTakEeffectImmediately": "更改将会立即生效"
 }

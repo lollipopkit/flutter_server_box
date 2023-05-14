@@ -8,7 +8,7 @@ class SEn extends S {
   String get about => 'About';
 
   @override
-  String get aboutThanks => '\nThanks to the following people who participated in the test.';
+  String get aboutThanks => 'Thanks to the following people who participated in.';
 
   @override
   String get addAServer => 'add a server';
@@ -63,9 +63,6 @@ class SEn extends S {
 
   @override
   String get clear => 'Clear';
-
-  @override
-  String get clickSee => 'Click here';
 
   @override
   String get close => 'Close';
@@ -557,6 +554,9 @@ class SEn extends S {
   String versionUpdated(Object build) {
     return 'Current: v1.0.$build, is up to date';
   }
+
+  @override
+  String get viewErr => 'See error';
 
   @override
   String get waitConnection => 'Please wait for the connection to be established.';
