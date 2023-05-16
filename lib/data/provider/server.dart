@@ -61,7 +61,14 @@ class ServerProvider extends BusyProvider {
     }
     final serverOrder_ = _settingStore.serverOrder.fetch();
     if (serverOrder_ != null) {
-      serverOrder.addAll(serverOrder_);
+      serverOrder.addAll(serverOrder_.toSet());
+      if (serverOrder.length != infos.length) {
+        final missed = infos
+            .where((e) => !serverOrder.contains(e.id))
+            .map((e) => e.id)
+            .toList();
+        serverOrder.addAll(missed);
+      }
     } else {
       serverOrder.addAll(_servers.keys);
     }
