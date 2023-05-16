@@ -21,6 +21,8 @@ class DockerMenuItems {
   static const rm = DropdownBtnItem(text: 'Remove', icon: Icons.delete);
   static const start = DropdownBtnItem(text: 'Start', icon: Icons.play_arrow);
   static const stop = DropdownBtnItem(text: 'Stop', icon: Icons.stop);
+  static const restart =
+      DropdownBtnItem(text: 'Restart', icon: Icons.restart_alt);
 }
 
 String getDropdownBtnText(S s, String text) {

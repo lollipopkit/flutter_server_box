@@ -127,6 +127,9 @@ class DockerProvider extends BusyProvider {
 
   Future<DockerErr?> delete(String id) async => await run('docker rm $id');
 
+  Future<DockerErr?> restart(String id) async =>
+      await run('docker restart $id');
+
   Future<DockerErr?> run(String cmd) async {
     if (!cmd.startsWith(_dockerPrefixReg)) {
       return DockerErr(type: DockerErrType.cmdNoPrefix);
@@ -151,7 +154,9 @@ class DockerProvider extends BusyProvider {
     if (code != 0) {
       setBusyState(false);
       return DockerErr(
-          type: DockerErrType.unknown, message: errs.join('\n').trim());
+        type: DockerErrType.unknown,
+        message: errs.join('\n').trim(),
+      );
     }
     await refresh();
     setBusyState(false);

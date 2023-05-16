@@ -447,8 +447,11 @@ class _DockerManagePageState extends State<DockerManagePage> {
       (item) {
         return ListTile(
           title: Text(item.name),
-          subtitle: Text('${item.image} - ${item.status}',
-              style: grey.copyWith(fontSize: 11)),
+          isThreeLine: true,
+          subtitle: Text(
+            '${item.image}\n${item.status}',
+            style: textSize13Grey,
+          ),
           trailing: _buildMoreBtn(item, _docker.isBusy),
         );
       },
@@ -476,6 +479,10 @@ class _DockerManagePageState extends State<DockerManagePage> {
         PopupMenuItem<DropdownBtnItem>(
           value: DockerMenuItems.rm,
           child: DockerMenuItems.rm.build(_s),
+        ),
+        PopupMenuItem<DropdownBtnItem>(
+          value: DockerMenuItems.restart,
+          child: DockerMenuItems.restart.build(_s),
         ),
       ],
       onSelected: (value) {
