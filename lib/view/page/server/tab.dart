@@ -19,7 +19,6 @@ import '../../../data/res/ui.dart';
 import '../../../data/res/url.dart';
 import '../../../data/store/setting.dart';
 import '../../../locator.dart';
-import '../../widget/dropdown_menu.dart';
 import '../../widget/popup_menu.dart';
 import '../../widget/round_rect_card.dart';
 import '../../widget/url_text.dart';
@@ -264,30 +263,16 @@ class _ServerPageState extends State<ServerPage>
 
   Widget _buildMoreBtn(ServerPrivateInfo spi) {
     return PopupMenu(
-      items: <PopupMenuEntry>[
-        ...ServerTabMenuItems.firstItems.map(
-          (item) => PopupMenuItem<DropdownBtnItem>(
-            value: item,
-            child: item.build(_s),
-          ),
-        ),
-        const PopupMenuDivider(height: 1),
-        ...ServerTabMenuItems.secondItems.map(
-          (item) => PopupMenuItem<DropdownBtnItem>(
-            value: item,
-            child: item.build(_s),
-          ),
-        ),
-      ],
-      onSelected: (value) {
-        switch (value as DropdownBtnItem) {
-          case ServerTabMenuItems.pkg:
+      items: ServerTabMenuType.values.map((e) => e.build(_s)).toList(),
+      onSelected: (ServerTabMenuType value) {
+        switch (value) {
+          case ServerTabMenuType.pkg:
             AppRoute(PkgManagePage(spi), 'pkg manage').go(context);
             break;
-          case ServerTabMenuItems.sftp:
+          case ServerTabMenuType.sftp:
             AppRoute(SFTPPage(spi), 'SFTP').go(context);
             break;
-          case ServerTabMenuItems.snippet:
+          case ServerTabMenuType.snippet:
             showSnippetDialog(context, _s, (s) async {
               final result = await _serverProvider.runSnippet(spi.id, s);
               showRoundDialog(
@@ -302,10 +287,10 @@ class _ServerPageState extends State<ServerPage>
               );
             });
             break;
-          case ServerTabMenuItems.edit:
+          case ServerTabMenuType.edit:
             AppRoute(ServerEditPage(spi: spi), 'Edit server info').go(context);
             break;
-          case ServerTabMenuItems.docker:
+          case ServerTabMenuType.docker:
             AppRoute(DockerManagePage(spi), 'Docker manage').go(context);
             break;
         }

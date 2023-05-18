@@ -163,6 +163,14 @@ class DockerProvider extends BusyProvider {
     return null;
   }
 
+  Future<String> logs(String id) async {
+    setBusyState();
+    final cmd = _wrap('docker logs $id');
+    final result = await client!.run(cmd);
+    setBusyState(false);
+    return result.string;
+  }
+
   // judge whether to use DOCKER_HOST / sudo
   String _wrap(String cmd) {
     final dockerHost = dockerStore.getDockerHost(hostId!);

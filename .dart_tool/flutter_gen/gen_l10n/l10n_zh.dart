@@ -268,6 +268,9 @@ class SZh extends S {
   String get loadingFiles => '正在加载目录。。。';
 
   @override
+  String get log => '日志';
+
+  @override
   String get loss => '丢包率';
 
   @override

@@ -64,14 +64,16 @@ class ServerProvider extends BusyProvider {
       serverOrder.addAll(serverOrder_.toSet());
       if (serverOrder.length != infos.length) {
         final missed = infos
-            .where((e) => !serverOrder.contains(e.id))
-            .map((e) => e.id)
-            .toList();
+            .where(
+              (e) => !serverOrder.contains(e.id),
+            )
+            .map((e) => e.id);
         serverOrder.addAll(missed);
       }
     } else {
       serverOrder.addAll(_servers.keys);
     }
+    _settingStore.serverOrder.put(serverOrder);
     setBusyState(false);
     notifyListeners();
   }

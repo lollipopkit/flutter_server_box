@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/navigator.dart';
+import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 
 import '../../core/utils/ui.dart';
@@ -15,7 +16,6 @@ import '../../data/res/ui.dart';
 import '../../data/res/url.dart';
 import '../../data/store/docker.dart';
 import '../../locator.dart';
-import '../widget/dropdown_menu.dart';
 import '../widget/popup_menu.dart';
 import '../widget/round_rect_card.dart';
 import '../widget/two_line_text.dart';
@@ -469,30 +469,16 @@ class _DockerManagePageState extends State<DockerManagePage> {
   }
 
   Widget _buildMoreBtn(DockerPsItem dItem, bool busy) {
-    final item = dItem.running ? DockerMenuItems.stop : DockerMenuItems.start;
     return PopupMenu(
-      items: [
-        PopupMenuItem<DropdownBtnItem>(
-          value: item,
-          child: item.build(_s),
-        ),
-        PopupMenuItem<DropdownBtnItem>(
-          value: DockerMenuItems.rm,
-          child: DockerMenuItems.rm.build(_s),
-        ),
-        PopupMenuItem<DropdownBtnItem>(
-          value: DockerMenuItems.restart,
-          child: DockerMenuItems.restart.build(_s),
-        ),
-      ],
-      onSelected: (value) {
+      items:
+          DockerMenuType.items(dItem.running).map((e) => e.build(_s)).toList(),
+      onSelected: (DockerMenuType item) async {
         if (busy) {
           showSnackBar(context, Text(_s.isBusy));
           return;
         }
-        final item = value as DropdownBtnItem;
         switch (item) {
-          case DockerMenuItems.rm:
+          case DockerMenuType.rm:
             showRoundDialog(
               context: context,
               child: Text(_s.sureDelete(dItem.name)),
@@ -507,11 +493,29 @@ class _DockerManagePageState extends State<DockerManagePage> {
               ],
             );
             break;
-          case DockerMenuItems.start:
+          case DockerMenuType.start:
             _docker.start(dItem.containerId);
             break;
-          case DockerMenuItems.stop:
+          case DockerMenuType.stop:
             _docker.stop(dItem.containerId);
+            break;
+          case DockerMenuType.logs:
+            final logs = await _docker.logs(dItem.containerId);
+            showRoundDialog(
+              context: context,
+              child: SingleChildScrollView(
+                child: Text(logs),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => copy2Clipboard(logs),
+                  child: Text(_s.copy),
+                )
+              ],
+            );
+            break;
+          case DockerMenuType.restart:
+            _docker.restart(dItem.containerId);
             break;
         }
       },

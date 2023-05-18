@@ -268,6 +268,9 @@ class SEn extends S {
   String get loadingFiles => 'Loading files...';
 
   @override
+  String get log => 'Log';
+
+  @override
   String get loss => 'loss';
 
   @override

@@ -268,6 +268,9 @@ class SDe extends S {
   String get loadingFiles => 'Lädt Dateien...';
 
   @override
+  String get log => 'Log';
+
+  @override
   String get loss => 'loss';
 
   @override

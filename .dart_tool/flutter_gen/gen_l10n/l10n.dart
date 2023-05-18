@@ -581,6 +581,12 @@ abstract class S {
   /// **'Loading files...'**
   String get loadingFiles;
 
+  /// No description provided for @log.
+  ///
+  /// In en, this message translates to:
+  /// **'Log'**
+  String get log;
+
   /// No description provided for @loss.
   ///
   /// In en, this message translates to:
