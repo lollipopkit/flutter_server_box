@@ -1,3 +1,5 @@
+import 'package:toolbox/data/model/server/temp.dart';
+
 import '../model/server/cpu_status.dart';
 import '../model/server/disk_info.dart';
 import '../model/server/memory.dart';
@@ -24,7 +26,6 @@ OneTimeCpuStatus get _initOneTimeCpuStatus => OneTimeCpuStatus(
 CpuStatus get initCpuStatus => CpuStatus(
       [_initOneTimeCpuStatus],
       [_initOneTimeCpuStatus],
-      '',
     );
 NetSpeedPart get _initNetSpeedPart => NetSpeedPart(
       '',
@@ -50,4 +51,5 @@ ServerStatus get initStatus => ServerStatus(
       tcp: ConnStatus(0, 0, 0, 0),
       netSpeed: initNetSpeed,
       swap: _initSwap,
+      temps: Temperatures(),
     );

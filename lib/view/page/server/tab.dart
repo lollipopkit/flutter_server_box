@@ -108,20 +108,20 @@ class _ServerPageState extends State<ServerPage>
 
   Widget _buildEachServerCard(Server? si) {
     if (si == null) {
-      return const SizedBox();
+      return placeholder;
     }
-    return RoundRectCard(
-      GestureDetector(
-        child: Padding(
+    return GestureDetector(
+      key: Key(si.spi.id),
+      onTap: () => AppRoute(
+        ServerDetailPage(si.spi.id),
+        'server detail page',
+      ).go(context),
+      child: RoundRectCard(
+        Padding(
           padding: const EdgeInsets.all(13),
           child: _buildRealServerCard(si.status, si.state, si.spi),
         ),
-        onTap: () => AppRoute(
-          ServerDetailPage(si.spi.id),
-          'server detail page',
-        ).go(context),
       ),
-      key: Key(si.spi.id),
     );
   }
 
@@ -136,9 +136,7 @@ class _ServerPageState extends State<ServerPage>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildServerCardTitle(ss, cs, spi),
-        const SizedBox(
-          height: 17,
-        ),
+        height13,
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
@@ -149,7 +147,7 @@ class _ServerPageState extends State<ServerPage>
                 'Total:\n${rootDisk.size}', 'Used:\n${rootDisk.usedPercent}%')
           ],
         ),
-        const SizedBox(height: 13),
+        height13,
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
@@ -169,9 +167,6 @@ class _ServerPageState extends State<ServerPage>
     ServerState cs,
     ServerPrivateInfo spi,
   ) {
-    final topRightStr =
-        getTopRightStr(cs, ss.cpu.temp, ss.uptime, ss.failedInfo);
-    final hasError = cs == ServerState.failed && ss.failedInfo != null;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 7),
       child: Row(
@@ -194,32 +189,8 @@ class _ServerPageState extends State<ServerPage>
           ),
           Row(
             children: [
-              hasError
-                  ? GestureDetector(
-                      onTap: () => showRoundDialog(
-                        context: context,
-                        title: Text(_s.error),
-                        child: Text(ss.failedInfo ?? _s.unknownError),
-                        actions: [
-                          TextButton(
-                            onPressed: () => copy2Clipboard(
-                                ss.failedInfo ?? _s.unknownError),
-                            child: Text(_s.copy),
-                          )
-                        ],
-                      ),
-                      child: Text(
-                        _s.viewErr,
-                        style: textSize12Grey,
-                        textScaleFactor: 1.0,
-                      ),
-                    )
-                  : Text(
-                      topRightStr,
-                      style: textSize12Grey,
-                      textScaleFactor: 1.0,
-                    ),
-              const SizedBox(width: 9),
+              _buildTopRightText(ss, cs),
+              width7,
               _buildSSHBtn(spi),
               _buildMoreBtn(spi),
             ],
@@ -227,6 +198,41 @@ class _ServerPageState extends State<ServerPage>
         ],
       ),
     );
+  }
+
+  Widget _buildTopRightText(ServerStatus ss, ServerState cs) {
+    final topRightStr = getTopRightStr(
+      cs,
+      ss.temps.first,
+      ss.uptime,
+      ss.failedInfo,
+    );
+    final hasError = cs == ServerState.failed && ss.failedInfo != null;
+    return hasError
+        ? GestureDetector(
+            onTap: () => showRoundDialog(
+              context: context,
+              title: Text(_s.error),
+              child: Text(ss.failedInfo ?? _s.unknownError),
+              actions: [
+                TextButton(
+                  onPressed: () =>
+                      copy2Clipboard(ss.failedInfo ?? _s.unknownError),
+                  child: Text(_s.copy),
+                )
+              ],
+            ),
+            child: Text(
+              _s.viewErr,
+              style: textSize12Grey,
+              textScaleFactor: 1.0,
+            ),
+          )
+        : Text(
+            topRightStr,
+            style: textSize12Grey,
+            textScaleFactor: 1.0,
+          );
   }
 
   Widget _buildSSHBtn(ServerPrivateInfo spi) {
@@ -311,24 +317,18 @@ class _ServerPageState extends State<ServerPage>
   }
 
   String getTopRightStr(
-      ServerState cs, String temp, String upTime, String? failedInfo) {
+    ServerState cs,
+    double? temp,
+    String upTime,
+    String? failedInfo,
+  ) {
     switch (cs) {
       case ServerState.disconnected:
         return _s.disconnected;
       case ServerState.connected:
-        if (temp == '') {
-          if (upTime == '') {
-            return _s.serverTabLoading;
-          } else {
-            return upTime;
-          }
-        } else {
-          if (upTime == '') {
-            return temp;
-          } else {
-            return '$temp | $upTime';
-          }
-        }
+        final tempStr = temp == null ? '' : '${temp.toStringAsFixed(1)}°C';
+        final items = [tempStr, upTime];
+        return items.where((element) => element.isNotEmpty).join(' | ');
       case ServerState.connecting:
         return _s.serverTabConnecting;
       case ServerState.failed:

@@ -193,6 +193,9 @@ class SDe extends S {
   String get files => 'Dateien';
 
   @override
+  String get font => 'Schriftarten';
+
+  @override
   String get fontSize => 'Schriftgröße';
 
   @override
@@ -495,7 +498,7 @@ class SDe extends S {
   }
 
   @override
-  String get termTheme => 'Farbschema des Terminals';
+  String get theme => 'Themen';
 
   @override
   String get themeMode => 'Thememodus';

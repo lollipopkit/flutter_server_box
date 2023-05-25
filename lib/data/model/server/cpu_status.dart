@@ -1,8 +1,7 @@
 class CpuStatus {
   List<OneTimeCpuStatus> _pre;
   List<OneTimeCpuStatus> _now;
-  String temp;
-  CpuStatus(this._pre, this._now, this.temp);
+  CpuStatus(this._pre, this._now);
 
   double usedPercent({int coreIdx = 0}) {
     if (_now.length != _pre.length) return 0;
@@ -12,10 +11,9 @@ class CpuStatus {
     return used.isNaN ? 0 : 100 - used * 100;
   }
 
-  void update(List<OneTimeCpuStatus> newStatus, String newTemp) {
+  void update(List<OneTimeCpuStatus> newStatus) {
     _pre = _now;
     _now = newStatus;
-    temp = newTemp;
   }
 
   int get coresCount => _now.length;
@@ -95,28 +93,4 @@ List<OneTimeCpuStatus> parseCPU(String raw) {
         int.parse(matches[6])));
   }
   return cpus;
-}
-
-final cpuTempReg = RegExp(r'(x86_pkg_temp|cpu_thermal)');
-
-String parseCPUTemp(String type, String value) {
-  const noMatch = "/sys/class/thermal/thermal_zone*/type";
-  // Not support to get CPU temperature
-  if (type.contains(noMatch) || value.isEmpty || type.isEmpty) {
-    return '';
-  }
-  final split = type.split('\n');
-  // if no match, use idx 0
-  int idx = 0;
-  for (var item in split) {
-    if (item.contains(cpuTempReg)) {
-      break;
-    }
-    idx++;
-  }
-  final valueSplited = value.split('\n');
-  if (idx >= valueSplited.length) return '';
-  final temp = int.tryParse(valueSplited[idx].trim());
-  if (temp == null) return '';
-  return '${(temp / 1000).toStringAsFixed(1)}°C';
 }

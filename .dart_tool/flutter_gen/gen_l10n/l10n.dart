@@ -443,6 +443,12 @@ abstract class S {
   /// **'Files'**
   String get files;
 
+  /// No description provided for @font.
+  ///
+  /// In en, this message translates to:
+  /// **'Font'**
+  String get font;
+
   /// No description provided for @fontSize.
   ///
   /// In en, this message translates to:
@@ -1007,11 +1013,11 @@ abstract class S {
   /// **'Are you sure to delete server [{server}]?'**
   String sureToDeleteServer(Object server);
 
-  /// No description provided for @termTheme.
+  /// No description provided for @theme.
   ///
   /// In en, this message translates to:
-  /// **'Terminal theme'**
-  String get termTheme;
+  /// **'Theme'**
+  String get theme;
 
   /// No description provided for @themeMode.
   ///

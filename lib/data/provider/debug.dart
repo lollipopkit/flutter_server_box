@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:toolbox/data/res/ui.dart';
 
 import '../../data/res/misc.dart';
 
@@ -51,7 +52,7 @@ class DebugProvider extends ChangeNotifier {
 
   void _addWidget(Widget widget) {
     widgets.add(widget);
-    widgets.add(const SizedBox(height: 13));
+    widgets.add(height13);
     if (widgets.length > maxDebugLogLines) {
       widgets.removeRange(0, widgets.length - maxDebugLogLines);
     }

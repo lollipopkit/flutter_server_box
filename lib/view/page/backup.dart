@@ -55,9 +55,7 @@ class BackupPage extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ),
-        const SizedBox(
-          height: 107,
-        ),
+        const SizedBox(height: 107),
         _buildCard(s.restore, Icons.download, media, () async {
           final path = await pickOneFile();
           if (path == null) {
@@ -72,12 +70,12 @@ class BackupPage extends StatelessWidget {
           final text = await file.readAsString();
           _import(text, context, s);
         }),
-        const SizedBox(height: 17),
+        height13,
         const SizedBox(
           width: 37,
           child: Divider(),
         ),
-        const SizedBox(height: 17),
+        height13,
         _buildCard(
           s.backup,
           Icons.file_upload,
@@ -122,7 +120,7 @@ class BackupPage extends StatelessWidget {
                 icon,
                 color: textColor,
               ),
-              const SizedBox(width: 7),
+              width7,
               Text(text, style: TextStyle(color: textColor)),
             ],
           ),

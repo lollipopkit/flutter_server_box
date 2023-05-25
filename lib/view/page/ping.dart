@@ -53,7 +53,7 @@ class _PingPageState extends State<PingPage>
         padding: const EdgeInsets.symmetric(horizontal: 7),
         child: Column(
           children: [
-            const SizedBox(height: 13),
+            height13,
             Input(
               controller: _textEditingController,
               hint: s.inputDomainHere,

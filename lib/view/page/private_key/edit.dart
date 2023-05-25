@@ -42,13 +42,13 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
   late PrivateKeyProvider _provider;
   late S _s;
 
-  Widget _loading = const SizedBox();
+  Widget _loading = placeholder;
 
   @override
   void initState() {
     super.initState();
     _provider = locator<PrivateKeyProvider>();
-    _loading = const SizedBox();
+    _loading = placeholder;
   }
 
   @override
@@ -79,7 +79,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
                   context.pop();
                 },
                 icon: const Icon(Icons.delete))
-            : const SizedBox()
+            : placeholder
       ],
     );
   }
@@ -112,7 +112,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
           rethrow;
         } finally {
           setState(() {
-            _loading = const SizedBox();
+            _loading = placeholder;
           });
         }
         if (widget.info != null) {

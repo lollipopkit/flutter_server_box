@@ -193,6 +193,9 @@ class SEn extends S {
   String get files => 'Files';
 
   @override
+  String get font => 'Font';
+
+  @override
   String get fontSize => 'Font size';
 
   @override
@@ -495,7 +498,7 @@ class SEn extends S {
   }
 
   @override
-  String get termTheme => 'Terminal theme';
+  String get theme => 'Theme';
 
   @override
   String get themeMode => 'Theme mode';

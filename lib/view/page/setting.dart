@@ -317,7 +317,7 @@ class _SettingPageState extends State<SettingPage> {
         .toList();
     return ListTile(
       title: Text(
-        _s.termTheme,
+        _s.theme,
       ),
       onTap: () {
         termThemeKey.currentState?.showButtonMenu();
@@ -465,7 +465,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildFont() {
     final fontName = getFileName(_setting.fontPath.fetch());
     return ListTile(
-      title: Text(_s.choose),
+      title: Text(_s.font),
       trailing: Text(
         fontName ?? _s.notSelected,
         style: textSize15,

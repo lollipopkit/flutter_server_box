@@ -133,7 +133,7 @@ class _PkgManagePageState extends State<PkgManagePage>
 
   Widget _buildFAB(PkgProvider pkg) {
     if (pkg.isBusy || (pkg.upgradeable?.isEmpty ?? true)) {
-      return const SizedBox();
+      return placeholder;
     }
     return FloatingActionButton(
       onPressed: () {

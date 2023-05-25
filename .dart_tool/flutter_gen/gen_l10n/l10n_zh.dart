@@ -193,6 +193,9 @@ class SZh extends S {
   String get files => '文件';
 
   @override
+  String get font => '字体';
+
+  @override
   String get fontSize => '字体大小';
 
   @override
@@ -495,7 +498,7 @@ class SZh extends S {
   }
 
   @override
-  String get termTheme => '终端主题';
+  String get theme => '主题';
 
   @override
   String get themeMode => '主题模式';

@@ -54,7 +54,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
                   },
                   tooltip: _s.delete,
                   icon: const Icon(Icons.delete))
-              : const SizedBox()
+              : placeholder
         ],
       ),
       body: _buildBody(),

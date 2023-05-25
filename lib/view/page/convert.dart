@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:toolbox/data/res/ui.dart';
 
 import '../../core/utils/ui.dart';
 import '../widget/input_field.dart';
@@ -48,7 +49,7 @@ class _ConvertPageState extends State<ConvertPage>
         controller: ScrollController(),
         child: Column(
           children: [
-            const SizedBox(height: 13),
+            height13,
             _buildInputTop(),
             _buildMiddleBtns(),
             _buildResult(),

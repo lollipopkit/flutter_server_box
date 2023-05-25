@@ -266,7 +266,7 @@ class _SFTPPageState extends State<SFTPPage> {
                   title: Text(_s.download),
                   onTap: () => download(context, file),
                 )
-              : const SizedBox()
+              : placeholder
         ],
       ),
       actions: [

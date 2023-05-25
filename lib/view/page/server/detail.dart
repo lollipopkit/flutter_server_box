@@ -60,47 +60,38 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       body: ListView(
         padding: const EdgeInsets.all(13),
         children: [
-          ...(_buildLinuxIcon(si.status.sysVer) ?? []),
+          _buildLinuxIcon(si.status.sysVer),
           _buildUpTimeAndSys(si.status),
           _buildCPUView(si.status),
           _buildMemView(si.status),
           _buildSwapView(si.status),
           _buildDiskView(si.status),
           _buildNetView(si.status.netSpeed),
-          // avoid the hieght of navigation bar
+          _buildTemperature(si.status),
+          // height of navigation bar
           SizedBox(height: _media.padding.bottom),
         ],
       ),
     );
   }
 
-  List<Widget>? _buildLinuxIcon(String sysVer) {
-    if (!_showDistLogo) return null;
+  Widget _buildLinuxIcon(String sysVer) {
+    if (!_showDistLogo) return placeholder;
     final iconPath = sysVer.dist?.iconPath;
-    if (iconPath == null) return null;
-    return [
-      SizedBox(height: _media.size.height * 0.03),
-      ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: _media.size.height * 0.13,
-          maxWidth: _media.size.width * 0.6,
-        ),
-        child: Image.asset(
-          iconPath,
-          fit: BoxFit.contain,
-        ),
+    if (iconPath == null) return placeholder;
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: _media.size.height * 0.13,
+        maxWidth: _media.size.width * 0.6,
       ),
-      SizedBox(height: _media.size.height * 0.03),
-    ];
+      child: Image.asset(
+        iconPath,
+        fit: BoxFit.contain,
+      ),
+    );
   }
 
   Widget _buildCPUView(ServerStatus ss) {
-    final tempWidget = ss.cpu.temp.isEmpty
-        ? const SizedBox()
-        : Text(
-            ss.cpu.temp,
-            style: textSize13Grey,
-          );
     return RoundRectCard(
       Padding(
         padding: roundRectCardPadding,
@@ -108,16 +99,10 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Text(
-                    '${ss.cpu.usedPercent(coreIdx: 0).toInt()}%',
-                    style: textSize27,
-                    textScaleFactor: 1.0,
-                  ),
-                  width7,
-                  tempWidget
-                ],
+              Text(
+                '${ss.cpu.usedPercent(coreIdx: 0).toInt()}%',
+                style: textSize27,
+                textScaleFactor: 1.0,
               ),
               Row(
                 children: [
@@ -244,7 +229,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildSwapView(ServerStatus ss) {
-    if (ss.swap.total == 0) return const SizedBox();
+    if (ss.swap.total == 0) return placeholder;
     final used = ss.swap.usedPercent * 100;
     final cached = ss.swap.cached / ss.swap.total * 100;
     return RoundRectCard(
@@ -394,6 +379,41 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         ],
       ),
     );
+  }
+
+  Widget _buildTemperature(ServerStatus ss) {
+    if (ss.temps.isEmpty) {
+      return placeholder;
+    }
+    final List<Widget> children = [
+      const Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Icon(Icons.device_hub, size: 17),
+          Icon(Icons.arrow_downward, size: 17),
+        ],
+      ),
+      const Padding(padding: EdgeInsets.symmetric(vertical: 3), child: Divider(height: 7),),
+    ];
+    children.addAll(ss.temps.devices.map((key) => Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              key,
+              style: textSize11,
+              textScaleFactor: 1.0,
+            ),
+            Text(
+              '${ss.temps.get(key)}°C',
+              style: textSize11,
+              textScaleFactor: 1.0,
+            ),
+          ],
+        )));
+    return RoundRectCard(Padding(
+      padding: roundRectCardPadding,
+      child: Column(children: children),
+    ));
   }
 
   static const _ignorePath = ['udev', 'tmpfs', 'devtmpfs'];

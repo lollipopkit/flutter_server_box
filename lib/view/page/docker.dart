@@ -277,7 +277,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
 
   Widget _buildImages() {
     if (_docker.images == null) {
-      return const SizedBox();
+      return placeholder;
     }
     final items = _docker.images!
         .map(
@@ -336,7 +336,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   }
 
   Widget _buildLoading() {
-    if (!_docker.isBusy) return const SizedBox();
+    if (!_docker.isBusy) return placeholder;
     return Padding(
       padding: const EdgeInsets.all(17),
       child: Column(
@@ -344,7 +344,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
           const Center(
             child: CircularProgressIndicator(),
           ),
-          const SizedBox(height: 17),
+          height13,
           Text(_docker.runLog ?? '...'),
         ],
       ),
@@ -353,7 +353,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
 
   Widget _buildEditHost() {
     if (_docker.items!.isNotEmpty || _docker.images!.isNotEmpty) {
-      return const SizedBox();
+      return placeholder;
     }
     return Padding(
       padding: const EdgeInsets.fromLTRB(17, 17, 17, 0),

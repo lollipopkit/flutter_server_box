@@ -96,7 +96,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     return AppBar(
       title: Text(_s.edit, style: textSize18),
       actions: [
-        widget.spi != null ? delBtn : const SizedBox(),
+        widget.spi != null ? delBtn : placeholder,
       ],
     );
   }
@@ -165,8 +165,8 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
                   hint: _s.pwd,
                   onSubmitted: (_) => {},
                 )
-              : const SizedBox(),
-          usePublicKey ? _buildKeyAuth() : const SizedBox()
+              : placeholder,
+          usePublicKey ? _buildKeyAuth() : placeholder
         ],
       ),
     );

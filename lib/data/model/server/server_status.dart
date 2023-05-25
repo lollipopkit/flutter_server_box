@@ -1,3 +1,5 @@
+import 'package:toolbox/data/model/server/temp.dart';
+
 import 'cpu_status.dart';
 import 'disk_info.dart';
 import 'memory.dart';
@@ -13,6 +15,7 @@ class ServerStatus {
   List<DiskInfo> disk;
   ConnStatus tcp;
   NetSpeed netSpeed;
+  Temperatures temps;
   String? failedInfo;
 
   ServerStatus({
@@ -24,6 +27,7 @@ class ServerStatus {
     required this.tcp,
     required this.netSpeed,
     required this.swap,
+    required this.temps,
     this.failedInfo,
   });
 }

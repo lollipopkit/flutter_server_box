@@ -24,6 +24,7 @@ extension _SegmentsExt on List<String> {
 Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
   final net = parseNetSpeed(req.segments.at(CmdType.net));
   req.ss.netSpeed.update(net);
+
   final sys = _parseSysVer(
     req.segments.at(CmdType.sys),
     req.segments.at(CmdType.host),
@@ -32,22 +33,29 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
   if (sys != null) {
     req.ss.sysVer = sys;
   }
+
   final cpus = parseCPU(req.segments.at(CmdType.cpu));
-  final cpuTemp = parseCPUTemp(
+  req.ss.cpu.update(cpus);
+
+  req.ss.temps.parse(
     req.segments.at(CmdType.tempType),
     req.segments.at(CmdType.tempVal),
   );
-  req.ss.cpu.update(cpus, cpuTemp);
+
   final tcp = parseConn(req.segments.at(CmdType.conn));
   if (tcp != null) {
     req.ss.tcp = tcp;
   }
+
   req.ss.disk = parseDisk(req.segments.at(CmdType.disk));
+
   req.ss.mem = parseMem(req.segments.at(CmdType.mem));
+
   final uptime = _parseUpTime(req.segments.at(CmdType.uptime));
   if (uptime != null) {
     req.ss.uptime = uptime;
   }
+
   req.ss.swap = parseSwap(req.segments.at(CmdType.mem));
   return req.ss;
 }
