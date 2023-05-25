@@ -43,4 +43,8 @@ class SettingStore extends PersistentStore {
   // Server order
   StoreProperty<List<String>> get serverOrder =>
       property('serverOrder', defaultValue: null);
+
+  // SSH term font size
+  StoreProperty<double> get termFontSize =>
+      property('termFontSize', defaultValue: 13);
 }

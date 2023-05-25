@@ -193,6 +193,9 @@ class SZh extends S {
   String get files => '文件';
 
   @override
+  String get fontSize => '字体大小';
+
+  @override
   String foundNUpdate(Object count) {
     return '找到 $count 个更新';
   }

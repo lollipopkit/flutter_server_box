@@ -57,6 +57,7 @@
   "fileNotExist": "{file} existiert nicht",
   "fileTooLarge": "Datei '{file}' ist zu groß {size}, max {sizeMax}",
   "files": "Dateien",
+  "fontSize": "Schriftgröße",
   "foundNUpdate": "Update {count} gefunden",
   "getPushTokenFailed": "Push-Token kann nicht abgerufen werden",
   "gettingToken": "Getting token...",

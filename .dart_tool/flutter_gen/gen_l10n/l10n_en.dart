@@ -193,6 +193,9 @@ class SEn extends S {
   String get files => 'Files';
 
   @override
+  String get fontSize => 'Font size';
+
+  @override
   String foundNUpdate(Object count) {
     return 'Found $count update';
   }

@@ -55,7 +55,10 @@ class _SSHPageState extends State<SSHPage> {
     final termColorIdx = _setting.termColorIdx.fetch()!;
     _termColors = TerminalColorsPlatform.values[termColorIdx].colors;
     final fontFamilly = getFileName(_setting.fontPath.fetch());
-    final textStyle = TextStyle(fontFamily: fontFamilly);
+    final textStyle = TextStyle(
+      fontFamily: fontFamilly,
+      fontSize: _setting.termFontSize.fetch()!,
+    );
     _terminalStyle = TerminalStyle.fromTextStyle(textStyle);
     initTerminal();
   }

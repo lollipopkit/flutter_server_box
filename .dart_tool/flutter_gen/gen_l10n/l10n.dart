@@ -443,6 +443,12 @@ abstract class S {
   /// **'Files'**
   String get files;
 
+  /// No description provided for @fontSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Font size'**
+  String get fontSize;
+
   /// No description provided for @foundNUpdate.
   ///
   /// In en, this message translates to:

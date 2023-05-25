@@ -6,6 +6,7 @@ import 'package:flutter_material_color_picker/flutter_material_color_picker.dart
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/data/model/app/tab.dart';
+import 'package:toolbox/view/widget/input_field.dart';
 
 import '../../core/utils/misc.dart';
 import '../../core/utils/platform.dart';
@@ -36,6 +37,7 @@ class _SettingPageState extends State<SettingPage> {
   final updateIntervalKey = GlobalKey<PopupMenuButtonState<int>>();
   final termThemeKey = GlobalKey<PopupMenuButtonState<int>>();
   final maxRetryKey = GlobalKey<PopupMenuButtonState<int>>();
+  final fontSizeKey = GlobalKey<PopupMenuButtonState<double>>();
 
   late final SettingStore _setting;
   late final ServerProvider _serverProvider;
@@ -48,6 +50,7 @@ class _SettingPageState extends State<SettingPage> {
   late int _nightMode;
   late int _maxRetryCount;
   late int _updateInterval;
+  late double _fontSize;
 
   String? _pushToken;
 
@@ -69,6 +72,7 @@ class _SettingPageState extends State<SettingPage> {
     _updateInterval = _setting.serverStatusUpdateInterval.fetch()!;
     _maxRetryCount = _setting.maxRetryCount.fetch()!;
     _selectedColorValue = _setting.primaryColor.fetch()!;
+    _fontSize = _setting.termFontSize.fetch()!;
   }
 
   @override
@@ -140,6 +144,7 @@ class _SettingPageState extends State<SettingPage> {
       children: [
         _buildTermTheme(),
         _buildFont(),
+        _buildTermFontSize(),
       ].map((e) => RoundRectCard(e)).toList(),
     );
   }
@@ -525,6 +530,42 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       title: Text(_s.bgRun),
       trailing: buildSwitch(context, _setting.bgRun),
+    );
+  }
+
+  Widget _buildTermFontSize() {
+    return ListTile(
+      title: Text(_s.fontSize),
+      trailing: Text(
+        _fontSize.toString(),
+        style: textSize15,
+      ),
+      onTap: () {
+        final ctrller = TextEditingController(text: _fontSize.toString());
+        showRoundDialog(
+          context: context,
+          title: Text(_s.fontSize),
+          child: Input(
+            controller: ctrller,
+            type: TextInputType.number,
+            icon: Icons.font_download,
+          ),
+          actions: [
+            TextButton(
+                onPressed: () {
+                  context.pop();
+                  final fontSize = double.tryParse(ctrller.text);
+                  if (fontSize == null) {
+                    showRoundDialog(context: context, child: Text(_s.failed));
+                    return;
+                  }
+                  _fontSize = fontSize;
+                  _setting.termFontSize.put(_fontSize);
+                },
+                child: Text(_s.ok)),
+          ],
+        );
+      },
     );
   }
 }

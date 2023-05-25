@@ -193,6 +193,9 @@ class SDe extends S {
   String get files => 'Dateien';
 
   @override
+  String get fontSize => 'Schriftgröße';
+
+  @override
   String foundNUpdate(Object count) {
     return 'Update $count gefunden';
   }

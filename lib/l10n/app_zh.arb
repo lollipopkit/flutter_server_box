@@ -57,6 +57,7 @@
   "fileNotExist": "{file} 不存在",
   "fileTooLarge": "文件 '{file}' 过大 '{size}'，超过了 {sizeMax}",
   "files": "文件",
+  "fontSize": "字体大小",
   "foundNUpdate": "找到 {count} 个更新",
   "getPushTokenFailed": "未能获取到推送token",
   "gettingToken": "正在获取Token...",
