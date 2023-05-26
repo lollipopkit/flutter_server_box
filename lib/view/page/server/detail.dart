@@ -33,7 +33,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     with SingleTickerProviderStateMixin {
   late MediaQueryData _media;
   late S _s;
-  late List<String> _cardsOrder;
+  final StringOrder _cardsOrder = [];
   final _setting = locator<SettingStore>();
 
   @override
@@ -46,7 +46,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   @override
   void initState() {
     super.initState();
-    _cardsOrder = _setting.detailCardOrder.fetch()!;
+    _cardsOrder.addAll(_setting.detailCardOrder.fetch()!);
   }
 
   @override
