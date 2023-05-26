@@ -18,7 +18,7 @@ English | [简体中文](README_zh.md)
 </p>
 
 <p align="center">
-A Flutter project which provide charts to display Linux[](../../issues/43) server status and tools to manage server.
+A Flutter project which provide charts to display <a href="../../issues/43">Linux</a> server status and tools to manage server.
 <br>
 Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a> & <a href="https://github.com/TerminalStudio/xterm.dart">xterm.dart</a>.
 </p>

@@ -575,25 +575,27 @@ class _SettingPageState extends State<SettingPage> {
     final paths = _setting.diskIgnorePath.fetch()!;
     return ListTile(
       title: Text(_s.diskIgnorePath),
-      trailing: Text(_s.edit, style: textSize15,),
-        onTap: () {
-          showRoundDialog(context: context, child: Input(
-            controller: TextEditingController(text: json.encode(paths)),
-            label: 'JSON',
-            type: TextInputType.visiblePassword,
-            maxLines: 3,
-            onSubmitted: (p0) {
-              try {
-                final list = List<String>.from(json.decode(p0));
-                _setting.diskIgnorePath.put(list);
-                context.pop();
-                showSnackBar(context, Text(_s.success));
-              } catch (e) {
-                showSnackBar(context, Text(e.toString()));
-              }
-            },
-          ));
-        },
+      trailing: Text(_s.edit, style: textSize15),
+      onTap: () {
+        showRoundDialog(
+            context: context,
+            child: Input(
+              controller: TextEditingController(text: json.encode(paths)),
+              label: 'JSON',
+              type: TextInputType.visiblePassword,
+              maxLines: 3,
+              onSubmitted: (p0) {
+                try {
+                  final list = List<String>.from(json.decode(p0));
+                  _setting.diskIgnorePath.put(list);
+                  context.pop();
+                  showSnackBar(context, Text(_s.success));
+                } catch (e) {
+                  showSnackBar(context, Text(e.toString()));
+                }
+              },
+            ));
+      },
     );
   }
 }
