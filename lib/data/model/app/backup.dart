@@ -11,14 +11,14 @@ class Backup {
   final List<PrivateKeyInfo> keys;
   final Map<String, String> dockerHosts;
 
-  Backup(
-    this.version,
-    this.date,
-    this.spis,
-    this.snippets,
-    this.keys,
-    this.dockerHosts,
-  );
+  Backup({
+    required this.version,
+    required this.date,
+    required this.spis,
+    required this.snippets,
+    required this.keys,
+    required this.dockerHosts,
+  });
 
   Backup.fromJson(Map<String, dynamic> json)
       : version = json['version'] as int,

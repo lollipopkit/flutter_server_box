@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:hive_flutter/hive_flutter.dart';
 
 part 'server_private_info.g.dart';
@@ -50,16 +48,4 @@ class ServerPrivateInfo {
     data["pubKeyId"] = pubKeyId;
     return data;
   }
-}
-
-List<ServerPrivateInfo> getServerInfoList(dynamic data) {
-  List<ServerPrivateInfo> ss = [];
-  if (data is String) {
-    data = json.decode(data);
-  }
-  for (var t in data) {
-    ss.add(ServerPrivateInfo.fromJson(t));
-  }
-
-  return ss;
 }

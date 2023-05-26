@@ -4,6 +4,7 @@ enum ErrFrom {
   docker,
   sftp,
   ssh,
+  status;
 }
 
 abstract class Err<T> {
@@ -25,4 +26,9 @@ enum DockerErrType {
 class DockerErr extends Err<DockerErrType> {
   DockerErr({required DockerErrType type, String? message})
       : super(from: ErrFrom.docker, type: type, message: message);
+
+  @override
+  String toString() {
+    return 'DockerErr<$type>: $message';
+  }
 }

@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:hive_flutter/hive_flutter.dart';
 
 part 'private_key_info.g.dart';
@@ -30,16 +28,4 @@ class PrivateKeyInfo {
     data["password"] = password;
     return data;
   }
-}
-
-List<PrivateKeyInfo> getPrivateKeyInfoList(dynamic data) {
-  List<PrivateKeyInfo> ss = [];
-  if (data is String) {
-    data = json.decode(data);
-  }
-  for (var t in data) {
-    ss.add(PrivateKeyInfo.fromJson(t));
-  }
-
-  return ss;
 }

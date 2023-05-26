@@ -9,7 +9,7 @@ import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/provider_base.dart';
 import 'package:toolbox/data/model/docker/image.dart';
 import 'package:toolbox/data/model/docker/ps.dart';
-import 'package:toolbox/data/res/error.dart';
+import 'package:toolbox/data/model/app/error.dart';
 import 'package:toolbox/data/store/docker.dart';
 import 'package:toolbox/locator.dart';
 

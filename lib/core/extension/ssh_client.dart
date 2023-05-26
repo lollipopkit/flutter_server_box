@@ -11,8 +11,12 @@ typedef PwdRequestFunc = Future<String> Function();
 final pwdRequestWithUserReg = RegExp(r'\[sudo\] password for (.+):');
 
 extension SSHClientX on SSHClient {
-  Future<int?> exec(String cmd,
-      {OnStd? onStderr, OnStd? onStdout, OnStdin? stdin}) async {
+  Future<int?> exec(
+    String cmd, {
+    OnStd? onStderr,
+    OnStd? onStdout,
+    OnStdin? stdin,
+  }) async {
     final session = await execute(cmd);
 
     final stdoutDone = Completer<void>();

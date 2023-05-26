@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:toolbox/data/res/ui.dart';
 
 class TwoLineText extends StatelessWidget {
   const TwoLineText({Key? key, required this.up, required this.down})
@@ -12,11 +13,11 @@ class TwoLineText extends StatelessWidget {
       children: [
         Text(
           up,
-          style: const TextStyle(fontSize: 15),
+          style: textSize15,
         ),
         Text(
           down,
-          style: const TextStyle(fontSize: 11),
+          style: textSize11,
         )
       ],
     );

@@ -1,16 +1,10 @@
 class PathWithPrefix {
-  late String _prefixPath;
+  final String _prefixPath;
   String _path = '/';
   String? _prePath;
   String get path => _prefixPath + _path;
 
-  PathWithPrefix(String prefixPath) {
-    if (prefixPath.endsWith('/')) {
-      _prefixPath = prefixPath.substring(0, prefixPath.length - 1);
-    } else {
-      _prefixPath = prefixPath;
-    }
-  }
+  PathWithPrefix(String prefixPath) : _prefixPath = _trimSuffix(prefixPath);
 
   void update(String newPath) {
     _prePath = _path;
@@ -35,4 +29,11 @@ class PathWithPrefix {
     _path = _prePath!;
     return true;
   }
+}
+
+String _trimSuffix(String prefixPath) {
+  if (prefixPath.endsWith('/')) {
+    return prefixPath.substring(0, prefixPath.length - 1);
+  }
+  return prefixPath;
 }

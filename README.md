@@ -30,7 +30,7 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
   - [x] `Docker & Pkg` Manager
   - [x] Status charts
   - [x] `Ping` and etc.
-- [x] i18n (English, Chinese)
+- [x] i18n (English, 简体中文, Deutsch)
   - Welcome contribution :), [How to contribute?](#l10n-guide)
 - [x] Desktop support
 

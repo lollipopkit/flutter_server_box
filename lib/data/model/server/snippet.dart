@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:hive_flutter/hive_flutter.dart';
 
 part 'snippet.g.dart';
@@ -22,16 +20,4 @@ class Snippet {
     data['script'] = script;
     return data;
   }
-}
-
-List<Snippet> getSnippetList(dynamic data) {
-  List<Snippet> ss = [];
-  if (data is String) {
-    data = json.decode(data);
-  }
-  for (var t in data) {
-    ss.add(Snippet.fromJson(t));
-  }
-
-  return ss;
 }

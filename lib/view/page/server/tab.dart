@@ -14,7 +14,7 @@ import '../../../data/model/server/server_private_info.dart';
 import '../../../data/model/server/server_status.dart';
 import '../../../data/provider/server.dart';
 import '../../../data/res/color.dart';
-import '../../../data/res/menu.dart';
+import '../../../data/model/app/menu.dart';
 import '../../../data/res/ui.dart';
 import '../../../data/res/url.dart';
 import '../../../data/store/setting.dart';

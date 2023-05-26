@@ -10,8 +10,11 @@ extension StringX on String {
     return Uri.parse(this);
   }
 
-  Widget omitStartStr(
-      {TextStyle? style, TextOverflow? overflow, int? maxLines}) {
+  Widget omitStartStr({
+    TextStyle? style,
+    TextOverflow? overflow,
+    int? maxLines,
+  }) {
     return LayoutBuilder(builder: (context, size) {
       bool exceeded = false;
       int len = 0;

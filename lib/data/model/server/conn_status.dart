@@ -2,26 +2,17 @@ import '../../../core/extension/stringx.dart';
 import '../../res/misc.dart';
 
 class ConnStatus {
-/*
-{
-  "maxConn": 0,
-  "active": 1,
-  "passive": 2,
-  "fail": 3
-} 
-*/
+  final int maxConn;
+  final int active;
+  final int passive;
+  final int fail;
 
-  late int maxConn;
-  late int active;
-  late int passive;
-  late int fail;
-
-  ConnStatus(
-    this.maxConn,
-    this.active,
-    this.passive,
-    this.fail,
-  );
+  ConnStatus({
+    required this.maxConn,
+    required this.active,
+    required this.passive,
+    required this.fail,
+  });
 }
 
 ConnStatus? parseConn(String raw) {
@@ -30,7 +21,12 @@ ConnStatus? parseConn(String raw) {
       orElse: () => '');
   if (idx != '') {
     final vals = idx.split(numReg);
-    return ConnStatus(vals[5].i, vals[6].i, vals[7].i, vals[8].i);
+    return ConnStatus(
+      maxConn: vals[5].i,
+      active: vals[6].i,
+      passive: vals[7].i,
+      fail: vals[8].i,
+    );
   }
   return null;
 }

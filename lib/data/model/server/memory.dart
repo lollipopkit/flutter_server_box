@@ -1,8 +1,8 @@
 class Memory {
-  int total;
-  int free;
-  int cache;
-  int avail;
+  final int total;
+  final int free;
+  final int cache;
+  final int avail;
 
   Memory({
     required this.total,

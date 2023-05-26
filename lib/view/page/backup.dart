@@ -84,12 +84,12 @@ class BackupPage extends StatelessWidget {
             final result = _diyEncrtpt(
               json.encode(
                 Backup(
-                  backupFormatVersion,
-                  DateTime.now().toString().split('.').first,
-                  _server.fetch(),
-                  _snippet.fetch(),
-                  _privateKey.fetch(),
-                  _dockerHosts.fetch(),
+                  version: backupFormatVersion,
+                  date: DateTime.now().toString().split('.').first,
+                  spis: _server.fetch(),
+                  snippets: _snippet.fetch(),
+                  keys: _privateKey.fetch(),
+                  dockerHosts: _dockerHosts.fetch(),
                 ),
               ),
             );

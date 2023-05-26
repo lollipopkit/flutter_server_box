@@ -389,7 +389,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Icon(Icons.device_hub, size: 17),
-          Icon(Icons.arrow_downward, size: 17),
+          Icon(Icons.ac_unit, size: 17),
         ],
       ),
       const Padding(

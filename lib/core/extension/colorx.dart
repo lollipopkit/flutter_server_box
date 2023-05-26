@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const Set<MaterialState> interactiveStates = <MaterialState>{
+const _interactiveStates = <MaterialState>{
   MaterialState.pressed,
   MaterialState.hovered,
   MaterialState.focused,
@@ -18,7 +18,7 @@ extension ColorX on Color {
 
   MaterialStateProperty<Color?> get materialStateColor {
     return MaterialStateProperty.resolveWith((states) {
-      if (states.any(interactiveStates.contains)) {
+      if (states.any(_interactiveStates.contains)) {
         return this;
       }
       return null;

@@ -263,12 +263,12 @@ class _SSHPageState extends State<SSHPage> {
     }
     final selected = terminalSelected;
     final children = <Widget>[
-      TextButton(
-        onPressed: () {
-          _paste();
-        },
-        child: Text(_s.paste),
-      ),
+      // TextButton(
+      //   onPressed: () {
+      //     _paste();
+      //   },
+      //   child: Text(_s.paste),
+      // ),
     ];
     if (selected?.trim().isNotEmpty ?? false) {
       children.add(

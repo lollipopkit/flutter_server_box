@@ -47,8 +47,17 @@ ServerStatus get initStatus => ServerStatus(
       mem: _initMemory,
       sysVer: 'Loading...',
       uptime: '',
-      disk: [DiskInfo('/', '/', 0, '0', '0', '0')],
-      tcp: ConnStatus(0, 0, 0, 0),
+      disk: [
+        DiskInfo(
+          path: '/',
+          loc: '/',
+          usedPercent: 0,
+          used: '0',
+          size: '0',
+          avail: '0',
+        )
+      ],
+      tcp: ConnStatus(maxConn: 0, active: 0, passive: 0, fail: 0),
       netSpeed: initNetSpeed,
       swap: _initSwap,
       temps: Temperatures(),
