@@ -107,6 +107,9 @@ class SEn extends S {
   String get disconnected => 'Disconnected';
 
   @override
+  String get diskIgnorePath => 'Ignore path for disk';
+
+  @override
   String dl2Local(Object fileName) {
     return 'Download $fileName to local?';
   }

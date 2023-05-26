@@ -11,7 +11,7 @@ enum Dist {
   alpine,
   rocky;
 
-  String? get iconPath {
+  String get iconPath {
     return 'assets/linux/$name.png';
   }
 }

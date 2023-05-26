@@ -299,6 +299,12 @@ abstract class S {
   /// **'Disconnected'**
   String get disconnected;
 
+  /// No description provided for @diskIgnorePath.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignore path for disk'**
+  String get diskIgnorePath;
+
   /// No description provided for @dl2Local.
   ///
   /// In en, this message translates to:

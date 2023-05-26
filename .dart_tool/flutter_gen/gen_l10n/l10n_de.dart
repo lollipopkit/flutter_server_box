@@ -107,6 +107,9 @@ class SDe extends S {
   String get disconnected => 'Disconnected';
 
   @override
+  String get diskIgnorePath => 'Pfad für Platte ignorieren';
+
+  @override
   String dl2Local(Object fileName) {
     return 'Datei \"$fileName\" herunterladen?';
   }

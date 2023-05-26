@@ -3,8 +3,10 @@ import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/core/utils/platform.dart';
 
 class SettingStore extends PersistentStore {
-  StoreProperty<int> get primaryColor =>
-      property('primaryColor', defaultValue: Colors.pink.value);
+  StoreProperty<int> get primaryColor => property(
+        'primaryColor',
+        defaultValue: const Color.fromARGB(255, 145, 58, 31).value,
+      );
 
   StoreProperty<int> get serverStatusUpdateInterval =>
       property('serverStatusUpdateInterval', defaultValue: 3);
@@ -47,4 +49,15 @@ class SettingStore extends PersistentStore {
   // SSH term font size
   StoreProperty<double> get termFontSize =>
       property('termFontSize', defaultValue: 13);
+
+  /// Server detail disk ignore path
+  StoreProperty<List<String>> get diskIgnorePath =>
+      property('diskIgnorePath', defaultValue: [
+        'udev',
+        'tmpfs',
+        'devtmpfs',
+        'overlay',
+        'run',
+        'none',
+      ]);
 }

@@ -107,6 +107,9 @@ class SZh extends S {
   String get disconnected => '连接断开';
 
   @override
+  String get diskIgnorePath => '忽略的磁盘路径';
+
+  @override
   String dl2Local(Object fileName) {
     return '下载 $fileName 到本地？';
   }

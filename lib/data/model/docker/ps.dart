@@ -1,3 +1,5 @@
+final _seperator = RegExp('  +');
+
 class DockerPsItem {
   late String containerId;
   late String image;
@@ -7,11 +9,18 @@ class DockerPsItem {
   late String ports;
   late String name;
 
-  DockerPsItem(this.containerId, this.image, this.command, this.created,
-      this.status, this.ports, this.name);
+  DockerPsItem(
+    this.containerId,
+    this.image,
+    this.command,
+    this.created,
+    this.status,
+    this.ports,
+    this.name,
+  );
 
   DockerPsItem.fromRawString(String rawString) {
-    List<String> parts = rawString.split(RegExp('  +'));
+    List<String> parts = rawString.split(_seperator);
     parts = parts.map((e) => e.trim()).toList();
 
     containerId = parts[0];

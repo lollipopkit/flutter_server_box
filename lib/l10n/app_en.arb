@@ -33,6 +33,7 @@
   "decode": "Decode",
   "delete": "Delete",
   "disconnected": "Disconnected",
+  "diskIgnorePath": "Ignore path for disk",
   "dl2Local": "Download {fileName} to local?",
   "dockerEditHost": "Edit DOCKER_HOST",
   "dockerEmptyRunningItems": "No running container. \nIt may be that the env DOCKER_HOST is not read correctly. You can found it by running `echo $DOCKER_HOST` in terminal.",

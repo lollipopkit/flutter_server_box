@@ -33,6 +33,7 @@
   "decode": "Decode",
   "delete": "Löschen",
   "disconnected": "Disconnected",
+  "diskIgnorePath": "Pfad für Platte ignorieren",
   "dl2Local": "Datei \"{fileName}\" herunterladen?",
   "dockerEditHost": "DOCKER_HOST bearbeiten",
   "dockerEmptyRunningItems": "Keine aktiven Container.\n\nWomöglich wird die Umgebungsvariable DOCKER_HOST nicht richtig erkannt. Du kannst sie finden, indem du `echo $DOCKER_HOST` im Terminal ausführst.",

@@ -33,6 +33,7 @@
   "decode": "解码",
   "delete": "删除",
   "disconnected": "连接断开",
+  "diskIgnorePath": "忽略的磁盘路径",
   "dl2Local": "下载 {fileName} 到本地？",
   "dockerEditHost": "编辑 DOCKER_HOST",
   "dockerEmptyRunningItems": "没有正在运行的容器。\n这可能是因为环境变量 DOCKER_HOST 没有被正确读取。你可以通过在终端内运行 `echo $DOCKER_HOST` 来获取。",
