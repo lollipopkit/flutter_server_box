@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 
+import '../../core/extension/order.dart';
 import '../../core/extension/uint8list.dart';
 import '../../core/provider_base.dart';
 import '../../core/utils/server.dart';
@@ -18,31 +19,11 @@ import '../store/server.dart';
 import '../store/setting.dart';
 
 typedef ServersMap = Map<String, Server>;
-typedef ServerOrder = List<String>;
-
-extension ServerOrderX on ServerOrder {
-  void move(int oldIndex, int newIndex) {
-    if (oldIndex == newIndex) return;
-    if (oldIndex < newIndex) {
-      newIndex -= 1;
-    }
-    final item = this[oldIndex];
-    removeAt(oldIndex);
-    insert(newIndex, item);
-    locator<SettingStore>().serverOrder.put(this);
-  }
-
-  void update(String id, String newId) {
-    final index = indexOf(id);
-    if (index == -1) return;
-    this[index] = newId;
-  }
-}
 
 class ServerProvider extends BusyProvider {
   final ServersMap _servers = {};
   ServersMap get servers => _servers;
-  final ServerOrder serverOrder = [];
+  final StringOrder serverOrder = [];
 
   final _limiter = TryLimiter();
 

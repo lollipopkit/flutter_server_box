@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/core/utils/platform.dart';
+import 'package:toolbox/data/res/misc.dart';
 
 class SettingStore extends PersistentStore {
   StoreProperty<int> get primaryColor => property(
@@ -42,11 +43,15 @@ class SettingStore extends PersistentStore {
   /// Backgroud running (Android)
   StoreProperty<bool> get bgRun => property('bgRun', defaultValue: isAndroid);
 
-  // Server order
+  /// Server order
   StoreProperty<List<String>> get serverOrder =>
       property('serverOrder', defaultValue: null);
 
-  // SSH term font size
+  /// Server details page cards order
+  StoreProperty<List<String>> get detailCardOrder =>
+      property('detailCardPrder', defaultValue: defaultDetailCardOrder);
+
+  /// SSH term font size
   StoreProperty<double> get termFontSize =>
       property('termFontSize', defaultValue: 13);
 

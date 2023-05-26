@@ -5,6 +5,7 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/navigator.dart';
+import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/core/utils/misc.dart';
 
 import '../../../core/route.dart';
@@ -94,7 +95,11 @@ class _ServerPageState extends State<ServerPage>
             padding: const EdgeInsets.fromLTRB(7, 10, 7, 7),
             physics: const AlwaysScrollableScrollPhysics(),
             onReorder: (oldIndex, newIndex) => setState(() {
-              pro.serverOrder.move(oldIndex, newIndex);
+              pro.serverOrder.move(
+                oldIndex,
+                newIndex,
+                _settingStore.serverOrder,
+              );
             }),
             children: pro.serverOrder
                 .where((e) => pro.servers.containsKey(e))

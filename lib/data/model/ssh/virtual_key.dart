@@ -8,8 +8,13 @@ class VirtualKey {
   final IconData? icon;
   final VirtualKeyFunc? func;
 
-  VirtualKey(this.text,
-      {this.key, this.toggleable = false, this.icon, this.func,});
+  VirtualKey(
+    this.text, {
+    this.key,
+    this.toggleable = false,
+    this.icon,
+    this.func,
+  });
 }
 
 enum VirtualKeyFunc { toggleIME, backspace, copy, paste, snippet }

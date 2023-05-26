@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/core/extension/order.dart';
+import 'package:toolbox/data/model/server/cpu_status.dart';
+import 'package:toolbox/data/model/server/disk_info.dart';
+import 'package:toolbox/data/model/server/dist.dart';
+import 'package:toolbox/data/model/server/memory.dart';
+import 'package:toolbox/data/model/server/temp.dart';
+import 'package:toolbox/data/res/misc.dart';
 
 import '../../../core/extension/numx.dart';
-import '../../../data/model/server/dist.dart';
 import '../../../data/model/server/net_speed.dart';
 import '../../../data/model/server/server.dart';
 import '../../../data/model/server/server_status.dart';
@@ -27,6 +33,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     with SingleTickerProviderStateMixin {
   late MediaQueryData _media;
   late S _s;
+  late List<String> _cardsOrder;
   final _setting = locator<SettingStore>();
 
   @override
@@ -34,6 +41,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
     _s = S.of(context)!;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _cardsOrder = _setting.detailCardOrder.fetch()!;
   }
 
   @override
@@ -56,22 +69,37 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       appBar: AppBar(
         title: Text(si.spi.name, style: textSize18),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(13),
-        children: [
-          _buildLinuxIcon(si.status.sysVer),
-          _buildUpTimeAndSys(si.status),
-          _buildCPUView(si.status),
-          _buildMemView(si.status),
-          _buildSwapView(si.status),
-          _buildDiskView(si.status),
-          _buildNetView(si.status.netSpeed),
-          _buildTemperature(si.status),
-          // height of navigation bar
-          SizedBox(height: _media.padding.bottom),
-        ],
+      body: ReorderableListView(
+        padding: EdgeInsets.only(
+            left: 13, right: 13, top: 13, bottom: _media.padding.bottom),
+        onReorder: (int oldIndex, int newIndex) {
+          setState(() {
+            _cardsOrder.move(oldIndex, newIndex, _setting.detailCardOrder);
+          });
+        },
+        header: _buildLinuxIcon(si.status.sysVer),
+        footer: height13,
+        children: _buildMainList(si.status),
       ),
     );
+  }
+
+  List<Widget> _buildMainList(ServerStatus ss) {
+    final map = Map.fromIterables(
+      defaultDetailCardOrder,
+      [
+        _buildUpTimeAndSys(ss.sysVer, ss.uptime),
+        _buildCPUView(ss.cpu),
+        _buildMemView(ss.mem),
+        _buildSwapView(ss.swap),
+        _buildDiskView(ss.disk),
+        _buildNetView(ss.netSpeed),
+        _buildTemperature(ss.temps),
+      ],
+    );
+    return _cardsOrder
+        .map((e) => SizedBox(key: ValueKey(e), child: map[e]))
+        .toList();
   }
 
   Widget _buildLinuxIcon(String sysVer) {
@@ -90,7 +118,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildCPUView(ServerStatus ss) {
+  Widget _buildCPUView(CpuStatus cs) {
     return RoundRectCard(
       Padding(
         padding: roundRectCardPadding,
@@ -99,25 +127,25 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '${ss.cpu.usedPercent(coreIdx: 0).toInt()}%',
+                '${cs.usedPercent(coreIdx: 0).toInt()}%',
                 style: textSize27,
                 textScaleFactor: 1.0,
               ),
               Row(
                 children: [
-                  _buildDetailPercent(ss.cpu.user, 'user'),
+                  _buildDetailPercent(cs.user, 'user'),
                   width13,
-                  _buildDetailPercent(ss.cpu.sys, 'sys'),
+                  _buildDetailPercent(cs.sys, 'sys'),
                   width13,
-                  _buildDetailPercent(ss.cpu.iowait, 'io'),
+                  _buildDetailPercent(cs.iowait, 'io'),
                   width13,
-                  _buildDetailPercent(ss.cpu.idle, 'idle')
+                  _buildDetailPercent(cs.idle, 'idle')
                 ],
               )
             ],
           ),
           height13,
-          _buildCPUProgress(ss)
+          _buildCPUProgress(cs)
         ]),
       ),
     );
@@ -143,14 +171,14 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildCPUProgress(ServerStatus ss) {
+  Widget _buildCPUProgress(CpuStatus cs) {
     final children = <Widget>[];
-    for (var i = 0; i < ss.cpu.coresCount; i++) {
+    for (var i = 0; i < cs.coresCount; i++) {
       if (i == 0) continue;
       children.add(
         Padding(
           padding: const EdgeInsets.all(2),
-          child: _buildProgress(ss.cpu.usedPercent(coreIdx: i)),
+          child: _buildProgress(cs.usedPercent(coreIdx: i)),
         ),
       );
     }
@@ -168,16 +196,16 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildUpTimeAndSys(ServerStatus ss) {
+  Widget _buildUpTimeAndSys(String sysVer, String uptime) {
     return RoundRectCard(
       Padding(
         padding: roundRectCardPadding,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(ss.sysVer, style: textSize11, textScaleFactor: 1.0),
+            Text(sysVer, style: textSize11, textScaleFactor: 1.0),
             Text(
-              ss.uptime,
+              uptime,
               style: textSize11,
               textScaleFactor: 1.0,
             ),
@@ -187,10 +215,10 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildMemView(ServerStatus ss) {
-    final free = ss.mem.free / ss.mem.total * 100;
-    final avail = ss.mem.availPercent * 100;
-    final used = ss.mem.usedPercent * 100;
+  Widget _buildMemView(Memory mem) {
+    final free = mem.free / mem.total * 100;
+    final avail = mem.availPercent * 100;
+    final used = mem.usedPercent * 100;
 
     return RoundRectCard(
       Padding(
@@ -206,7 +234,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                   children: [
                     Text('${used.toStringAsFixed(0)}%', style: textSize27),
                     width7,
-                    Text('of ${(ss.mem.total * 1024).convertBytes}',
+                    Text('of ${(mem.total * 1024).convertBytes}',
                         style: textSize13Grey)
                   ],
                 ),
@@ -227,10 +255,10 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildSwapView(ServerStatus ss) {
-    if (ss.swap.total == 0) return placeholder;
-    final used = ss.swap.usedPercent * 100;
-    final cached = ss.swap.cached / ss.swap.total * 100;
+  Widget _buildSwapView(Swap swap) {
+    if (swap.total == 0) return placeholder;
+    final used = swap.usedPercent * 100;
+    final cached = swap.cached / swap.total * 100;
     return RoundRectCard(
       Padding(
         padding: roundRectCardPadding,
@@ -245,7 +273,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                   children: [
                     Text('${used.toStringAsFixed(0)}%', style: textSize27),
                     width7,
-                    Text('of ${(ss.swap.total * 1024).convertBytes} ',
+                    Text('of ${(swap.total * 1024).convertBytes} ',
                         style: textSize13Grey)
                   ],
                 ),
@@ -260,14 +288,14 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildDiskView(ServerStatus ss) {
-    ss.disk.removeWhere((e) {
+  Widget _buildDiskView(List<DiskInfo> disk) {
+    disk.removeWhere((e) {
       for (final ingorePath in _setting.diskIgnorePath.fetch()!) {
         if (e.path.startsWith(ingorePath)) return true;
       }
       return false;
     });
-    final children = ss.disk
+    final children = disk
         .map((disk) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 3),
               child: Column(
@@ -380,8 +408,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildTemperature(ServerStatus ss) {
-    if (ss.temps.isEmpty) {
+  Widget _buildTemperature(Temperatures temps) {
+    if (temps.isEmpty) {
       return placeholder;
     }
     final List<Widget> children = [
@@ -397,7 +425,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         child: Divider(height: 7),
       ),
     ];
-    children.addAll(ss.temps.devices.map((key) => Row(
+    children.addAll(temps.devices.map((key) => Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
@@ -406,7 +434,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               textScaleFactor: 1.0,
             ),
             Text(
-              '${ss.temps.get(key)}°C',
+              '${temps.get(key)}°C',
               style: textSize11,
               textScaleFactor: 1.0,
             ),
