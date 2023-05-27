@@ -149,6 +149,7 @@
   "snippet": "Snippet",
   "spentTime": "Benötigte Zeit: {time}",
   "sshTip": "Diese Funktion befindet sich jetzt in der Experimentierphase.\n\nBitte melde Bugs auf {url} oder mach mit bei der Entwicklung.",
+  "sshVirtualKeyAutoOff": "Automatische Umschaltung der virtuellen Tasten",
   "start": "Start",
   "stop": "Stop",
   "success": "Erfolgreich",

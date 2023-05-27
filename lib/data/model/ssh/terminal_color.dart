@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:xterm/ui.dart';
-import '../../res/terminal.dart';
+import 'package:xterm/ui.dart' hide TerminalColors;
 
 class TerminalUITheme {
   final Color cursor;
@@ -50,16 +49,13 @@ class TerminalUITheme {
   }
 }
 
-abstract class TerminalColors {
-  final TerminalColorsPlatform platform;
-  final Color black = Colors.black;
+class TerminalColors {
+  final Color black;
   final Color red;
   final Color green;
   final Color yellow;
   final Color blue;
-  // 品红
   final Color magenta;
-  // 青
   final Color cyan;
   final Color white;
 
@@ -73,8 +69,7 @@ abstract class TerminalColors {
   final Color brightCyan;
   final Color brightWhite;
 
-  TerminalColors(
-    this.platform,
+  const TerminalColors(
     this.red,
     this.green,
     this.yellow,
@@ -89,54 +84,7 @@ abstract class TerminalColors {
     this.brightBlue,
     this.brightMagenta,
     this.brightCyan, {
-    this.brightWhite = Colors.white,
+    this.black = const Color(0x00000000),
+    this.brightWhite = const Color(0xFFFFFFFF),
   });
-}
-
-enum TerminalColorsPlatform {
-  macOS,
-  vga,
-  cmd,
-  putty,
-  xterm,
-  ubuntu,
-  ;
-
-  String get name {
-    switch (this) {
-      case TerminalColorsPlatform.vga:
-        return 'VGA';
-      case TerminalColorsPlatform.cmd:
-        return 'CMD';
-      case TerminalColorsPlatform.macOS:
-        return 'macOS';
-      case TerminalColorsPlatform.putty:
-        return 'PuTTY';
-      case TerminalColorsPlatform.xterm:
-        return 'XTerm';
-      case TerminalColorsPlatform.ubuntu:
-        return 'Ubuntu';
-      default:
-        return 'Unknown';
-    }
-  }
-
-  TerminalColors get colors {
-    switch (this) {
-      case TerminalColorsPlatform.vga:
-        return VGATerminalColor();
-      case TerminalColorsPlatform.cmd:
-        return CMDTerminalColor();
-      case TerminalColorsPlatform.macOS:
-        return MacOSTerminalColor();
-      case TerminalColorsPlatform.putty:
-        return PuttyTerminalColor();
-      case TerminalColorsPlatform.xterm:
-        return XTermTerminalColor();
-      case TerminalColorsPlatform.ubuntu:
-        return UbuntuTerminalColor();
-      default:
-        return MacOSTerminalColor();
-    }
-  }
 }

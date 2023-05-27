@@ -12,7 +12,6 @@ import 'package:toolbox/view/widget/input_field.dart';
 
 import '../../core/utils/misc.dart';
 import '../../core/utils/platform.dart';
-import '../../data/model/ssh/terminal_color.dart';
 import '../../core/update.dart';
 import '../../core/utils/ui.dart';
 import '../../data/provider/app.dart';
@@ -37,7 +36,6 @@ class _SettingPageState extends State<SettingPage> {
   final themeKey = GlobalKey<PopupMenuButtonState<int>>();
   final startPageKey = GlobalKey<PopupMenuButtonState<int>>();
   final updateIntervalKey = GlobalKey<PopupMenuButtonState<int>>();
-  final termThemeKey = GlobalKey<PopupMenuButtonState<int>>();
   final maxRetryKey = GlobalKey<PopupMenuButtonState<int>>();
   final fontSizeKey = GlobalKey<PopupMenuButtonState<double>>();
   final localeKey = GlobalKey<PopupMenuButtonState<String>>();
@@ -49,7 +47,6 @@ class _SettingPageState extends State<SettingPage> {
 
   late int _selectedColorValue;
   late int _launchPageIdx;
-  late int _termThemeIdx;
   late int _nightMode;
   late int _maxRetryCount;
   late int _updateInterval;
@@ -72,7 +69,6 @@ class _SettingPageState extends State<SettingPage> {
     _serverProvider = locator<ServerProvider>();
     _setting = locator<SettingStore>();
     _launchPageIdx = _setting.launchPage.fetch()!;
-    _termThemeIdx = _setting.termColorIdx.fetch()!;
     _nightMode = _setting.themeMode.fetch()!;
     _updateInterval = _setting.serverStatusUpdateInterval.fetch()!;
     _maxRetryCount = _setting.maxRetryCount.fetch()!;
@@ -149,9 +145,9 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildSSH() {
     return Column(
       children: [
-        _buildTermTheme(),
         _buildFont(),
         _buildTermFontSize(),
+        _buildSSHVirtualKeyAutoOff(),
       ].map((e) => RoundRectCard(e)).toList(),
     );
   }
@@ -308,40 +304,6 @@ class _SettingPageState extends State<SettingPage> {
             textAlign: TextAlign.right,
             style: textSize15,
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTermTheme() {
-    final items = TerminalColorsPlatform.values
-        .map(
-          (e) => PopupMenuItem<int>(
-            value: e.index,
-            child: Text(e.name),
-          ),
-        )
-        .toList();
-    return ListTile(
-      title: Text(
-        _s.theme,
-      ),
-      onTap: () {
-        termThemeKey.currentState?.showButtonMenu();
-      },
-      trailing: PopupMenuButton(
-        key: termThemeKey,
-        itemBuilder: (BuildContext context) => items,
-        initialValue: _termThemeIdx,
-        onSelected: (int idx) {
-          setState(() {
-            _termThemeIdx = idx;
-          });
-          _setting.termColorIdx.put(idx);
-        },
-        child: Text(
-          TerminalColorsPlatform.values[_termThemeIdx].name,
-          style: textSize15,
         ),
       ),
     );
@@ -634,6 +596,14 @@ class _SettingPageState extends State<SettingPage> {
           style: textSize15,
         ),
       ),
+    );
+  }
+
+  Widget _buildSSHVirtualKeyAutoOff() {
+    return ListTile(
+      title: Text(_s.sshVirtualKeyAutoOff),
+      subtitle: const Text('Ctrl & Alt', style: grey),
+      trailing: buildSwitch(context, _setting.sshVirtualKeyAutoOff),
     );
   }
 }

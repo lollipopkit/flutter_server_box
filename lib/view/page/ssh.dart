@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/navigator.dart';
-import 'package:xterm/xterm.dart' hide TerminalColors;
+import 'package:xterm/xterm.dart';
 
 import '../../core/utils/platform.dart';
 import '../../data/model/ssh/terminal_color.dart';
@@ -42,7 +42,6 @@ class _SSHPageState extends State<SSHPage> {
   final TerminalController _terminalController = TerminalController();
   final ContextMenuController _menuController = ContextMenuController();
   late TextStyle _menuTextStyle;
-  late TerminalColors _termColors;
   late S _s;
   late TerminalStyle _terminalStyle;
   late TerminalUITheme _termUITheme;
@@ -53,8 +52,6 @@ class _SSHPageState extends State<SSHPage> {
   @override
   void initState() {
     super.initState();
-    final termColorIdx = _setting.termColorIdx.fetch()!;
-    _termColors = TerminalColorsPlatform.values[termColorIdx].colors;
     final fontFamilly = getFileName(_setting.fontPath.fetch());
     final textStyle = TextStyle(
       fontFamily: fontFamilly,
@@ -72,7 +69,7 @@ class _SSHPageState extends State<SSHPage> {
     _menuTextStyle = TextStyle(color: contentColor.resolve(context));
     _s = S.of(context)!;
     _termUITheme = _isDark ? termDarkTheme : termLightTheme;
-    _terminalTheme = _termUITheme.toTerminalTheme(_termColors);
+    _terminalTheme = _termUITheme.toTerminalTheme(MacOSTerminalColor());
   }
 
   @override
@@ -164,11 +161,7 @@ class _SSHPageState extends State<SSHPage> {
     }
 
     final child = item.icon != null
-        ? Icon(
-            item.icon,
-            color: _isDark ? Colors.white : Colors.black,
-            size: 17,
-          )
+        ? Icon(item.icon, size: 17)
         : Text(
             item.text,
             style: TextStyle(

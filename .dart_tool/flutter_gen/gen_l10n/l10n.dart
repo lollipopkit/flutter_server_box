@@ -990,6 +990,12 @@ abstract class S {
   /// **'This function is now in the experimental stage.\n\nPlease report bugs on {url} or join our development.'**
   String sshTip(Object url);
 
+  /// No description provided for @sshVirtualKeyAutoOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto switching of virtual keys'**
+  String get sshVirtualKeyAutoOff;
+
   /// No description provided for @start.
   ///
   /// In en, this message translates to:

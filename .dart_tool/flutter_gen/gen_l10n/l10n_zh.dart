@@ -482,6 +482,9 @@ class SZh extends S {
   }
 
   @override
+  String get sshVirtualKeyAutoOff => '虚拟按键自动切换';
+
+  @override
   String get start => '开始';
 
   @override
@@ -1066,6 +1069,9 @@ class SZhTw extends SZh {
   String sshTip(Object url) {
     return '該功能目前處於測試階段。\n\n請在 $url 反饋問題，或者加入我們開發。';
   }
+
+  @override
+  String get sshVirtualKeyAutoOff => '虛擬按鍵自動切換';
 
   @override
   String get start => '開始';

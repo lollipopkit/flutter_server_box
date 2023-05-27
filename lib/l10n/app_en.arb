@@ -149,6 +149,7 @@
   "snippet": "Snippet",
   "spentTime": "Spent time: {time}",
   "sshTip": "This function is now in the experimental stage.\n\nPlease report bugs on {url} or join our development.",
+  "sshVirtualKeyAutoOff": "Auto switching of virtual keys",
   "start": "Start",
   "stop": "Stop",
   "success": "Success",
