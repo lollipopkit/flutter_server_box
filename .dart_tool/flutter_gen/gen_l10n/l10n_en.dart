@@ -262,6 +262,12 @@ class SEn extends S {
   String get keyAuth => 'Key Auth';
 
   @override
+  String get language => 'Language';
+
+  @override
+  String get languageName => 'English';
+
+  @override
   String get lastTry => 'Last try';
 
   @override

@@ -79,6 +79,8 @@
   "isBusy": "當前正忙",
   "keepForeground": "請保持應用處於前台！",
   "keyAuth": "密鑰認證",
+  "language": "語言",
+  "languageName": "繁體中文",
   "lastTry": "最後嘗試",
   "launchPage": "啓動頁",
   "license": "開源證書",

@@ -262,6 +262,12 @@ class SZh extends S {
   String get keyAuth => '密钥认证';
 
   @override
+  String get language => '语言';
+
+  @override
+  String get languageName => '简体中文';
+
+  @override
   String get lastTry => '最后尝试';
 
   @override
@@ -840,6 +846,12 @@ class SZhTw extends SZh {
 
   @override
   String get keyAuth => '密鑰認證';
+
+  @override
+  String get language => '語言';
+
+  @override
+  String get languageName => '繁體中文';
 
   @override
   String get lastTry => '最後嘗試';

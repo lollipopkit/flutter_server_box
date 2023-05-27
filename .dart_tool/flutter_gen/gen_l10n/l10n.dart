@@ -570,6 +570,18 @@ abstract class S {
   /// **'Key Auth'**
   String get keyAuth;
 
+  /// No description provided for @language.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get language;
+
+  /// No description provided for @languageName.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get languageName;
+
   /// No description provided for @lastTry.
   ///
   /// In en, this message translates to:

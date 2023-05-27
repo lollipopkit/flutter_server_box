@@ -79,6 +79,8 @@
   "isBusy": "Is busy now",
   "keepForeground": "Keep app foreground!",
   "keyAuth": "Key Auth",
+  "language": "Language",
+  "languageName": "English",
   "lastTry": "Last try",
   "launchPage": "Launch page",
   "license": "License",

@@ -262,6 +262,12 @@ class SDe extends S {
   String get keyAuth => 'Schlüsselauthentifzierung';
 
   @override
+  String get language => 'Sprache';
+
+  @override
+  String get languageName => 'Deutsch';
+
+  @override
   String get lastTry => 'Letzter Versuch';
 
   @override

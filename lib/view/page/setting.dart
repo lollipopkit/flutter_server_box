@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/core/extension/locale.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/data/model/app/tab.dart';
 import 'package:toolbox/view/widget/input_field.dart';
@@ -39,6 +40,7 @@ class _SettingPageState extends State<SettingPage> {
   final termThemeKey = GlobalKey<PopupMenuButtonState<int>>();
   final maxRetryKey = GlobalKey<PopupMenuButtonState<int>>();
   final fontSizeKey = GlobalKey<PopupMenuButtonState<double>>();
+  final localeKey = GlobalKey<PopupMenuButtonState<String>>();
 
   late final SettingStore _setting;
   late final ServerProvider _serverProvider;
@@ -52,6 +54,7 @@ class _SettingPageState extends State<SettingPage> {
   late int _maxRetryCount;
   late int _updateInterval;
   late double _fontSize;
+  late String _localeCode;
 
   String? _pushToken;
 
@@ -60,6 +63,7 @@ class _SettingPageState extends State<SettingPage> {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
     _s = S.of(context)!;
+    _localeCode = _setting.locale.fetch() ?? _s.localeName;
   }
 
   @override
@@ -114,6 +118,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildApp() {
     final children = [
+      _buildLocale(),
       _buildThemeMode(),
       _buildAppColorPreview(),
       _buildLaunchPage(),
@@ -596,6 +601,39 @@ class _SettingPageState extends State<SettingPage> {
               },
             ));
       },
+    );
+  }
+
+  Widget _buildLocale() {
+    final items = S.supportedLocales
+        .map(
+          (e) => PopupMenuItem<String>(
+            value: e.name,
+            child: Text(e.name),
+          ),
+        )
+        .toList();
+    return ListTile(
+      title: Text(_s.language),
+      onTap: () {
+        localeKey.currentState?.showButtonMenu();
+      },
+      trailing: PopupMenuButton(
+        key: localeKey,
+        itemBuilder: (BuildContext context) => items,
+        initialValue: _localeCode,
+        onSelected: (String idx) {
+          setState(() {
+            _localeCode = idx;
+          });
+          _setting.locale.put(idx);
+          _showRestartSnackbar();
+        },
+        child: Text(
+          _s.languageName,
+          style: textSize15,
+        ),
+      ),
     );
   }
 }

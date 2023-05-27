@@ -65,4 +65,7 @@ class SettingStore extends PersistentStore {
         'run',
         'none',
       ]);
+
+  /// Locale
+  StoreProperty<String> get locale => property('locale', defaultValue: null);
 }

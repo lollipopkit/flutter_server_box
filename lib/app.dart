@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:toolbox/core/extension/locale.dart';
 
 import 'core/utils/ui.dart';
 import 'data/res/build_data.dart';
@@ -23,9 +24,12 @@ class MyApp extends StatelessWidget {
       builder: (_, tMode, __) {
         final ok = tMode >= 0 && tMode <= ThemeMode.values.length - 1;
         final themeMode = ok ? ThemeMode.values[tMode] : ThemeMode.system;
+        final localeStr = _setting.locale.fetch();
+        final locale = localeStr?.toLocale;
 
         return MaterialApp(
           debugShowCheckedModeBanner: false,
+          locale: locale,
           localizationsDelegates: S.localizationsDelegates,
           supportedLocales: S.supportedLocales,
           title: BuildData.name,
