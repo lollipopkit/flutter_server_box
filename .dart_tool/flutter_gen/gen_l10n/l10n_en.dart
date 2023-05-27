@@ -501,6 +501,9 @@ class SEn extends S {
   }
 
   @override
+  String get terminal => 'Terminal';
+
+  @override
   String get theme => 'Theme';
 
   @override

@@ -501,6 +501,9 @@ class SZh extends S {
   }
 
   @override
+  String get terminal => '终端';
+
+  @override
   String get theme => '主题';
 
   @override

@@ -153,6 +153,7 @@
   "sureDirEmpty": "Make sure dir is empty.",
   "sureNoPwd": "Are you sure to use no password?",
   "sureToDeleteServer": "Are you sure to delete server [{server}]?",
+  "terminal": "Terminal",
   "theme": "Theme",
   "themeMode": "Theme mode",
   "times": "Times",

@@ -153,6 +153,7 @@
   "sureDirEmpty": "请确保文件夹为空",
   "sureNoPwd": "确认使用无密码？",
   "sureToDeleteServer": "你确定要删除服务器 [{server}] 吗？",
+  "terminal": "终端",
   "theme": "主题",
   "themeMode": "主题模式",
   "times": "次",

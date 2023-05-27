@@ -46,7 +46,8 @@ enum DockerMenuType {
   stop,
   restart,
   rm,
-  logs;
+  logs,
+  terminal;
 
   static List<DockerMenuType> items(bool running) {
     if (running) {
@@ -68,6 +69,8 @@ enum DockerMenuType {
         return Icons.delete;
       case DockerMenuType.logs:
         return Icons.logo_dev;
+      case DockerMenuType.terminal:
+        return Icons.terminal;
     }
   }
 
@@ -83,6 +86,8 @@ enum DockerMenuType {
         return s.delete;
       case DockerMenuType.logs:
         return s.log;
+      case DockerMenuType.terminal:
+        return s.terminal;
     }
   }
 

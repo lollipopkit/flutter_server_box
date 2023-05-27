@@ -501,6 +501,9 @@ class SDe extends S {
   }
 
   @override
+  String get terminal => 'Terminal';
+
+  @override
   String get theme => 'Themen';
 
   @override

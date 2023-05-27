@@ -25,7 +25,8 @@ import '../../locator.dart';
 
 class SSHPage extends StatefulWidget {
   final ServerPrivateInfo spi;
-  const SSHPage({Key? key, required this.spi}) : super(key: key);
+  final String? initCmd;
+  const SSHPage({Key? key, required this.spi, this.initCmd}) : super(key: key);
 
   @override
   _SSHPageState createState() => _SSHPageState();
@@ -340,6 +341,11 @@ class _SSHPageState extends State<SSHPage> {
 
     _listen(session.stdout);
     _listen(session.stderr);
+
+    if (widget.initCmd != null) {
+      _terminal.write(widget.initCmd!);
+      _terminal.keyInput(TerminalKey.enter);
+    }
 
     await session.done;
     if (mounted) {

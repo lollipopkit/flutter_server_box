@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/navigator.dart';
+import 'package:toolbox/core/route.dart';
 import 'package:toolbox/core/utils/misc.dart';
+import 'package:toolbox/view/page/ssh.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 
 import '../../core/utils/ui.dart';
@@ -499,6 +501,9 @@ class _DockerManagePageState extends State<DockerManagePage> {
           case DockerMenuType.stop:
             _docker.stop(dItem.containerId);
             break;
+          case DockerMenuType.restart:
+            _docker.restart(dItem.containerId);
+            break;
           case DockerMenuType.logs:
             final logs = await _docker.logs(dItem.containerId);
             showRoundDialog(
@@ -514,9 +519,14 @@ class _DockerManagePageState extends State<DockerManagePage> {
               ],
             );
             break;
-          case DockerMenuType.restart:
-            _docker.restart(dItem.containerId);
-            break;
+          case DockerMenuType.terminal:
+            AppRoute(
+              SSHPage(
+                spi: widget.spi,
+                initCmd: 'docker exec -it ${dItem.containerId} /bin/sh',
+              ),
+              'Docker terminal',
+            ).go(context);
         }
       },
     );

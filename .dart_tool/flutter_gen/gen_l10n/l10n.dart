@@ -1019,6 +1019,12 @@ abstract class S {
   /// **'Are you sure to delete server [{server}]?'**
   String sureToDeleteServer(Object server);
 
+  /// No description provided for @terminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal'**
+  String get terminal;
+
   /// No description provided for @theme.
   ///
   /// In en, this message translates to:
