@@ -92,7 +92,8 @@ abstract class S {
   static const List<Locale> supportedLocales = <Locale>[
     Locale('de'),
     Locale('en'),
-    Locale('zh')
+    Locale('zh'),
+    Locale('zh', 'TW')
   ];
 
   /// No description provided for @about.
@@ -1175,6 +1176,15 @@ class _SDelegate extends LocalizationsDelegate<S> {
 
 S lookupS(Locale locale) {
 
+  // Lookup logic when language+country codes are specified.
+  switch (locale.languageCode) {
+    case 'zh': {
+  switch (locale.countryCode) {
+    case 'TW': return SZhTw();
+   }
+  break;
+   }
+  }
 
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {

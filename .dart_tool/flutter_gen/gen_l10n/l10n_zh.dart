@@ -579,3 +579,583 @@ class SZh extends S {
   @override
   String get willTakEeffectImmediately => '更改将会立即生效';
 }
+
+/// The translations for Chinese, as used in Taiwan (`zh_TW`).
+class SZhTw extends SZh {
+  SZhTw(): super('zh_TW');
+
+  @override
+  String get about => '關於';
+
+  @override
+  String get aboutThanks => '感謝以下參與的各位。';
+
+  @override
+  String get addAServer => '新增服務器';
+
+  @override
+  String get addOne => '前去新增';
+
+  @override
+  String get addPrivateKey => '新增一個私鑰';
+
+  @override
+  String get alreadyLastDir => '已經是最上層目錄了';
+
+  @override
+  String get appPrimaryColor => '主要色調';
+
+  @override
+  String get attention => '注意';
+
+  @override
+  String get auto => '自動';
+
+  @override
+  String get backup => '備份';
+
+  @override
+  String get backupAndRestore => '備份和還原';
+
+  @override
+  String get backupTip => '導出的數據僅進行了簡單加密，請妥善保管。';
+
+  @override
+  String get backupVersionNotMatch => '備份版本不匹配，無法還原';
+
+  @override
+  String get bgRun => '背景運行';
+
+  @override
+  String get canPullRefresh => '可以下拉更新';
+
+  @override
+  String get cancel => '取消';
+
+  @override
+  String get choose => '選擇';
+
+  @override
+  String get chooseFontFile => '選擇字體文件';
+
+  @override
+  String get choosePrivateKey => '選擇私鑰';
+
+  @override
+  String get clear => '清除';
+
+  @override
+  String get close => '關閉';
+
+  @override
+  String get cmd => '命令';
+
+  @override
+  String get containerName => '容器名稱';
+
+  @override
+  String get containerStatus => '容器狀態';
+
+  @override
+  String get convert => '轉換';
+
+  @override
+  String get copy => '複製';
+
+  @override
+  String get copyPath => '複製路徑';
+
+  @override
+  String get createFile => '創建文件';
+
+  @override
+  String get createFolder => '創建文件夾';
+
+  @override
+  String get dark => '暗';
+
+  @override
+  String get debug => '調試';
+
+  @override
+  String get decode => '解碼';
+
+  @override
+  String get delete => '刪除';
+
+  @override
+  String get disconnected => '連接斷開';
+
+  @override
+  String get diskIgnorePath => '忽略的磁盤路徑';
+
+  @override
+  String dl2Local(Object fileName) {
+    return '下載 $fileName 到本地？';
+  }
+
+  @override
+  String get dockerEditHost => '編輯 DOCKER_HOST';
+
+  @override
+  String get dockerEmptyRunningItems => '沒有正在運行的容器。\n這可能是因為環境變量 DOCKER_HOST 沒有被正確讀取。你可以通過在終端內運行 `echo \$DOCKER_HOST` 來獲取。';
+
+  @override
+  String dockerImagesFmt(Object count) {
+    return '共 $count 個鏡像';
+  }
+
+  @override
+  String get dockerNotInstalled => 'Docker 未安裝';
+
+  @override
+  String dockerStatusRunningAndStoppedFmt(Object runningCount, Object stoppedCount) {
+    return '$runningCount個正在運行, $stoppedCount個已停止';
+  }
+
+  @override
+  String dockerStatusRunningFmt(Object count) {
+    return '$count個容器正在運行';
+  }
+
+  @override
+  String get download => '下載';
+
+  @override
+  String get downloadFinished => '下載完成';
+
+  @override
+  String downloadStatus(Object percent, Object size) {
+    return '$size 的 $percent%';
+  }
+
+  @override
+  String get edit => '編輯';
+
+  @override
+  String get encode => '編碼';
+
+  @override
+  String get error => '錯誤';
+
+  @override
+  String get exampleName => '名稱範例';
+
+  @override
+  String get experimentalFeature => '實驗性功能';
+
+  @override
+  String get export => '導出';
+
+  @override
+  String get extraArgs => '額外參數';
+
+  @override
+  String get failed => '失敗';
+
+  @override
+  String get feedback => '反饋';
+
+  @override
+  String get feedbackOnGithub => '如果你有任何問題，請在GitHub反饋';
+
+  @override
+  String get fieldMustNotEmpty => '這些輸入框不能為空。';
+
+  @override
+  String fileNotExist(Object file) {
+    return '$file 不存在';
+  }
+
+  @override
+  String fileTooLarge(Object file, Object size, Object sizeMax) {
+    return '文件 \'$file\' 過大 \'$size\'，超過了 $sizeMax';
+  }
+
+  @override
+  String get files => '文件';
+
+  @override
+  String get font => '字體';
+
+  @override
+  String get fontSize => '字體大小';
+
+  @override
+  String foundNUpdate(Object count) {
+    return '找到 $count 個更新';
+  }
+
+  @override
+  String get getPushTokenFailed => '未能獲取到推送token';
+
+  @override
+  String get gettingToken => '正在獲取Token...';
+
+  @override
+  String get goto => '前往';
+
+  @override
+  String get host => '主機';
+
+  @override
+  String httpFailedWithCode(Object code) {
+    return '請求失敗, 狀態碼: $code';
+  }
+
+  @override
+  String get image => '鏡像';
+
+  @override
+  String get imagesList => '鏡像列表';
+
+  @override
+  String get import => '導入';
+
+  @override
+  String get inputDomainHere => '在這裡輸入域名';
+
+  @override
+  String get install => '安裝';
+
+  @override
+  String get installDockerWithUrl => '請先 https://docs.docker.com/engine/install docker';
+
+  @override
+  String get invalidJson => '無效的 JSON';
+
+  @override
+  String get invalidVersion => '不支持的版本';
+
+  @override
+  String invalidVersionHelp(Object url) {
+    return '請確保正確安裝了docker，或者使用的非自編譯版本。如果沒有以上問題，請在 $url 提交問題。';
+  }
+
+  @override
+  String get isBusy => '當前正忙';
+
+  @override
+  String get keepForeground => '請保持應用處於前台！';
+
+  @override
+  String get keyAuth => '密鑰認證';
+
+  @override
+  String get lastTry => '最後嘗試';
+
+  @override
+  String get launchPage => '啓動頁';
+
+  @override
+  String get license => '開源證書';
+
+  @override
+  String get light => '亮';
+
+  @override
+  String get loadingFiles => '正在加載目錄。。。';
+
+  @override
+  String get log => '日誌';
+
+  @override
+  String get loss => '丟包率';
+
+  @override
+  String madeWithLove(Object myGithub) {
+    return '用❤️製作 by $myGithub';
+  }
+
+  @override
+  String get max => '最大';
+
+  @override
+  String get maxRetryCount => '服務器嘗試重連次數';
+
+  @override
+  String get maxRetryCountEqual0 => '會無限重試';
+
+  @override
+  String get min => '最小';
+
+  @override
+  String get ms => '毫秒';
+
+  @override
+  String get name => '名稱';
+
+  @override
+  String get needRestart => '需要重啓 App';
+
+  @override
+  String get newContainer => '新建容器';
+
+  @override
+  String get noClient => '沒有SSH連接';
+
+  @override
+  String get noInterface => '沒有可用的接口';
+
+  @override
+  String get noResult => '無結果';
+
+  @override
+  String get noSavedPrivateKey => '沒有已保存的私鑰。';
+
+  @override
+  String get noSavedSnippet => '沒有已保存的程式片段。';
+
+  @override
+  String get noServerAvailable => '沒有可用的服務器。';
+
+  @override
+  String get noUpdateAvailable => '沒有可用更新';
+
+  @override
+  String get notSelected => '未選擇';
+
+  @override
+  String get nullToken => '無Token';
+
+  @override
+  String get ok => '好';
+
+  @override
+  String get onServerDetailPage => '在服務器詳情頁';
+
+  @override
+  String get open => '打開';
+
+  @override
+  String get paste => '貼上';
+
+  @override
+  String get path => '路徑';
+
+  @override
+  String get pickFile => '選擇文件';
+
+  @override
+  String get pingAvg => '平均:';
+
+  @override
+  String get pingInputIP => '請輸入目標IP或域名';
+
+  @override
+  String get pingNoServer => '沒有服務器可用於Ping\n請在服務器tab新增服務器後再試';
+
+  @override
+  String get pkg => '包管理';
+
+  @override
+  String get platformNotSupportUpdate => '當前平台不支持更新，請編譯最新源碼後手動安裝';
+
+  @override
+  String get plzEnterHost => '請輸入主機';
+
+  @override
+  String get plzSelectKey => '請選擇私鑰';
+
+  @override
+  String get port => '端口';
+
+  @override
+  String get preview => '預覽';
+
+  @override
+  String get privateKey => '私鑰';
+
+  @override
+  String get pushToken => '消息推送 Token';
+
+  @override
+  String get pwd => '密碼';
+
+  @override
+  String get rename => '重命名';
+
+  @override
+  String reportBugsOnGithubIssue(Object url) {
+    return '請到 $url 提交問題';
+  }
+
+  @override
+  String get restart => '重啓';
+
+  @override
+  String get restore => '恢復';
+
+  @override
+  String get restoreSuccess => '恢復成功，需要重啓App來應用更改';
+
+  @override
+  String restoreSureWithDate(Object date) {
+    return '確定恢復 $date 的備份嗎？';
+  }
+
+  @override
+  String get result => '結果';
+
+  @override
+  String get run => '運行';
+
+  @override
+  String get save => '保存';
+
+  @override
+  String get second => '秒';
+
+  @override
+  String get server => '服務器';
+
+  @override
+  String get serverTabConnecting => '連接中...';
+
+  @override
+  String get serverTabEmpty => '現在沒有服務器。\n點擊右下方按鈕來新增。';
+
+  @override
+  String get serverTabFailed => '失敗';
+
+  @override
+  String get serverTabLoading => '加載中...';
+
+  @override
+  String get serverTabPlzSave => '請再次保存該私鑰';
+
+  @override
+  String get serverTabUnkown => '未知狀態';
+
+  @override
+  String get setting => '設置';
+
+  @override
+  String get sftpDlPrepare => '準備連接至服務器...';
+
+  @override
+  String get sftpNoDownloadTask => '沒有下載任務';
+
+  @override
+  String get sftpSSHConnected => 'SFTP 已連接，即將開始下載...';
+
+  @override
+  String get showDistLogo => '顯示發行版 Logo';
+
+  @override
+  String get snippet => '程式片段';
+
+  @override
+  String spentTime(Object time) {
+    return '耗時: $time';
+  }
+
+  @override
+  String sshTip(Object url) {
+    return '該功能目前處於測試階段。\n\n請在 $url 反饋問題，或者加入我們開發。';
+  }
+
+  @override
+  String get start => '開始';
+
+  @override
+  String get stop => '停止';
+
+  @override
+  String get success => '成功';
+
+  @override
+  String sureDelete(Object name) {
+    return '確定刪除[$name]？';
+  }
+
+  @override
+  String get sureDirEmpty => '請確保文件夾為空';
+
+  @override
+  String get sureNoPwd => '確認使用無密碼？';
+
+  @override
+  String sureToDeleteServer(Object server) {
+    return '你確定要刪除服務器 [$server] 嗎？';
+  }
+
+  @override
+  String get terminal => '终端機';
+
+  @override
+  String get theme => '主題';
+
+  @override
+  String get themeMode => '主題模式';
+
+  @override
+  String get times => '次';
+
+  @override
+  String get ttl => '緩存時間';
+
+  @override
+  String get unknown => '未知';
+
+  @override
+  String get unknownError => '未知錯誤';
+
+  @override
+  String get unkownConvertMode => '未知轉換模式';
+
+  @override
+  String get update => '更新';
+
+  @override
+  String get updateAll => '更新全部';
+
+  @override
+  String get updateIntervalEqual0 => '你設置為0，服務器狀態不會自動更新。\n且不能計算CPU使用情況。';
+
+  @override
+  String get updateServerStatusInterval => '服務器狀態更新間隔';
+
+  @override
+  String updateTip(Object newest) {
+    return '新版本: v1.0.$newest';
+  }
+
+  @override
+  String updateTipTooLow(Object newest) {
+    return '當前版本過低，請升級至 v1.0.$newest';
+  }
+
+  @override
+  String get upsideDown => '上下交換';
+
+  @override
+  String get urlOrJson => '鏈接或JSON';
+
+  @override
+  String get user => '用戶';
+
+  @override
+  String versionHaveUpdate(Object build) {
+    return '找到新版本：v1.0.$build, 點擊更新';
+  }
+
+  @override
+  String versionUnknownUpdate(Object build) {
+    return '當前：v1.0.$build';
+  }
+
+  @override
+  String versionUpdated(Object build) {
+    return '當前：v1.0.$build, 已是最新版本';
+  }
+
+  @override
+  String get viewErr => '查看錯誤';
+
+  @override
+  String get waitConnection => '請等待連接建立';
+
+  @override
+  String get willTakEeffectImmediately => '更改將會立即生效';
+}
