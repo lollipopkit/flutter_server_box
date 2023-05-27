@@ -51,7 +51,7 @@ enum DockerMenuType {
 
   static List<DockerMenuType> items(bool running) {
     if (running) {
-      return [stop, restart, rm, logs];
+      return [stop, restart, rm, logs, terminal];
     } else {
       return [start, rm, logs];
     }

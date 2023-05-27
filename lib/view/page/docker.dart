@@ -3,7 +3,6 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/route.dart';
-import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/view/page/ssh.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 
@@ -154,7 +153,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
             context.pop();
             final result = await _docker.run(cmd);
             if (result != null) {
-              showSnackBar(context, Text(getErrMsg(result) ?? _s.unknownError));
+              showSnackBar(context, Text(result.message ?? _s.unknownError));
             }
           },
           child: Text(_s.run),
@@ -174,13 +173,6 @@ class _DockerManagePageState extends State<DockerManagePage> {
       return 'docker run -itd $suffix';
     }
     return 'docker run -itd --name $name $suffix';
-  }
-
-  String? getErrMsg(DockerErr err) {
-    switch (err.type) {
-      default:
-        return err.message;
-    }
   }
 
   void onSubmitted() {
@@ -308,7 +300,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
                         if (result != null) {
                           showSnackBar(
                             context,
-                            Text(getErrMsg(result) ?? _s.unknownError),
+                            Text(result.message ?? _s.unknownError),
                           );
                         }
                       },
@@ -354,23 +346,24 @@ class _DockerManagePageState extends State<DockerManagePage> {
   }
 
   Widget _buildEditHost() {
-    if (_docker.items!.isNotEmpty || _docker.images!.isNotEmpty) {
-      return placeholder;
+    final children = <Widget>[];
+    if (_docker.items!.isEmpty && _docker.images!.isEmpty) {
+      children.add(Padding(
+        padding: const EdgeInsets.fromLTRB(17, 17, 17, 0),
+        child: Text(
+          _s.dockerEmptyRunningItems,
+          textAlign: TextAlign.center,
+        ),
+      ));
     }
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(17, 17, 17, 0),
-      child: Column(
-        children: [
-          Text(
-            _s.dockerEmptyRunningItems,
-            textAlign: TextAlign.center,
-          ),
-          TextButton(
-            onPressed: () => _showEditHostDialog(),
-            child: Text(_s.dockerEditHost),
-          )
-        ],
+    children.add(
+      TextButton(
+        onPressed: _showEditHostDialog,
+        child: Text(_s.dockerEditHost),
       ),
+    );
+    return Column(
+      children: children,
     );
   }
 
@@ -483,6 +476,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
           case DockerMenuType.rm:
             showRoundDialog(
               context: context,
+              title: Text(_s.attention),
               child: Text(_s.sureDelete(dItem.name)),
               actions: [
                 TextButton(
@@ -505,19 +499,13 @@ class _DockerManagePageState extends State<DockerManagePage> {
             _docker.restart(dItem.containerId);
             break;
           case DockerMenuType.logs:
-            final logs = await _docker.logs(dItem.containerId);
-            showRoundDialog(
-              context: context,
-              child: SingleChildScrollView(
-                child: Text(logs),
+            AppRoute(
+              SSHPage(
+                spi: widget.spi,
+                initCmd: 'docker logs ${dItem.containerId}',
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => copy2Clipboard(logs),
-                  child: Text(_s.copy),
-                )
-              ],
-            );
+              'Docker logs',
+            ).go(context);
             break;
           case DockerMenuType.terminal:
             AppRoute(

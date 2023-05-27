@@ -492,7 +492,7 @@ class SZh extends S {
 
   @override
   String sureDelete(Object name) {
-    return '确定删除[$name]？';
+    return '确定删除 [$name]？';
   }
 
   @override
@@ -1078,7 +1078,7 @@ class SZhTw extends SZh {
 
   @override
   String sureDelete(Object name) {
-    return '確定刪除[$name]？';
+    return '確定刪除 [$name]？';
   }
 
   @override

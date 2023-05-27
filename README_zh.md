@@ -30,8 +30,7 @@
   - [x] `Docker & 包` 管理器
   - [x] 状态图表
   - [x] `Ping` 和 更多
-- [x] 本地化 ( English, 简体中文, Deutsch )
-  - 欢迎贡献 :)，[怎么贡献?](#l10n)
+- [x] 本地化 ( English, 简体中文, Deutsch, 繁體中文。 [如何贡献？](#l10n-guide))
 - [x] 桌面端支持
 
 

@@ -152,7 +152,7 @@
   "start": "開始",
   "stop": "停止",
   "success": "成功",
-  "sureDelete": "確定刪除[{name}]？",
+  "sureDelete": "確定刪除 [{name}]？",
   "sureDirEmpty": "請確保文件夾為空",
   "sureNoPwd": "確認使用無密碼？",
   "sureToDeleteServer": "你確定要刪除服務器 [{server}] 嗎？",

@@ -288,6 +288,9 @@ class _SSHPageState extends State<SSHPage> {
         ),
       );
     }
+    if (children.isEmpty) {
+      return;
+    }
     _menuController.show(
       context: context,
       contextMenuBuilder: (context) {
@@ -343,7 +346,7 @@ class _SSHPageState extends State<SSHPage> {
     _listen(session.stderr);
 
     if (widget.initCmd != null) {
-      _terminal.write(widget.initCmd!);
+      _terminal.textInput(widget.initCmd!);
       _terminal.keyInput(TerminalKey.enter);
     }
 
