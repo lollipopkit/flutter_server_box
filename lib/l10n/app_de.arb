@@ -46,6 +46,7 @@
   "downloadFinished": "Download abgeschlossen",
   "downloadStatus": "{percent}% von {size}",
   "edit": "Bearbeiten",
+  "editor": "Redakteure",
   "encode": "Encode",
   "error": "Fehler",
   "exampleName": "Servername",

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/locale.dart';
@@ -39,6 +40,7 @@ class _SettingPageState extends State<SettingPage> {
   final maxRetryKey = GlobalKey<PopupMenuButtonState<int>>();
   final fontSizeKey = GlobalKey<PopupMenuButtonState<double>>();
   final localeKey = GlobalKey<PopupMenuButtonState<String>>();
+  final editorThemeKey = GlobalKey<PopupMenuButtonState<String>>();
 
   late final SettingStore _setting;
   late final ServerProvider _serverProvider;
@@ -52,6 +54,7 @@ class _SettingPageState extends State<SettingPage> {
   late int _updateInterval;
   late double _fontSize;
   late String _localeCode;
+  late String _editorTheme;
 
   String? _pushToken;
 
@@ -74,6 +77,7 @@ class _SettingPageState extends State<SettingPage> {
     _maxRetryCount = _setting.maxRetryCount.fetch()!;
     _selectedColorValue = _setting.primaryColor.fetch()!;
     _fontSize = _setting.termFontSize.fetch()!;
+    _editorTheme = _setting.editorTheme.fetch()!;
   }
 
   @override
@@ -94,6 +98,9 @@ class _SettingPageState extends State<SettingPage> {
           // SSH
           _buildTitle('SSH'),
           _buildSSH(),
+          // Editor
+          _buildTitle('Editor'),
+          _buildEditor(),
           const SizedBox(height: 37),
         ],
       ),
@@ -116,7 +123,7 @@ class _SettingPageState extends State<SettingPage> {
     final children = [
       _buildLocale(),
       _buildThemeMode(),
-      _buildAppColorPreview(),
+      _buildAppColor(),
       _buildLaunchPage(),
       _buildCheckUpdate(),
     ];
@@ -148,6 +155,14 @@ class _SettingPageState extends State<SettingPage> {
         _buildFont(),
         _buildTermFontSize(),
         _buildSSHVirtualKeyAutoOff(),
+      ].map((e) => RoundRectCard(e)).toList(),
+    );
+  }
+
+  Widget _buildEditor() {
+    return Column(
+      children: [
+        _buildEditorTheme(),
       ].map((e) => RoundRectCard(e)).toList(),
     );
   }
@@ -232,7 +247,7 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  Widget _buildAppColorPreview() {
+  Widget _buildAppColor() {
     return ListTile(
       trailing: ClipOval(
         child: Container(
@@ -247,6 +262,7 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () async {
         await showRoundDialog(
           context: context,
+          title: Text(_s.appPrimaryColor),
           child: MaterialColorPicker(
             shrinkWrap: true,
             allowShades: true,
@@ -442,23 +458,21 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () {
         showRoundDialog(
           context: context,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              TextButton(
-                onPressed: () async => await _pickFontFile(),
-                child: Text(_s.pickFile),
-              ),
-              TextButton(
-                onPressed: () => setState(() {
-                  _setting.fontPath.delete();
-                  context.pop();
-                  _showRestartSnackbar();
-                }),
-                child: Text(_s.clear),
-              )
-            ],
-          ),
+          title: Text(_s.font),
+          actions: [
+            TextButton(
+              onPressed: () async => await _pickFontFile(),
+              child: Text(_s.pickFile),
+            ),
+            TextButton(
+              onPressed: () => setState(() {
+                _setting.fontPath.delete();
+                context.pop();
+                _showRestartSnackbar();
+              }),
+              child: Text(_s.clear),
+            )
+          ],
         );
       },
     );
@@ -604,6 +618,39 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(_s.sshVirtualKeyAutoOff),
       subtitle: const Text('Ctrl & Alt', style: grey),
       trailing: buildSwitch(context, _setting.sshVirtualKeyAutoOff),
+    );
+  }
+
+  Widget _buildEditorTheme() {
+    final items = themeMap.keys.map(
+      (key) {
+        return PopupMenuItem<String>(
+          value: key,
+          child: Text(key),
+        );
+      },
+    ).toList();
+    return ListTile(
+      title: Text(_s.editor + _s.theme),
+      trailing: PopupMenuButton(
+        key: editorThemeKey,
+        itemBuilder: (BuildContext context) => items,
+        initialValue: _editorTheme,
+        onSelected: (String idx) {
+          setState(() {
+            _editorTheme = idx;
+          });
+          _setting.editorTheme.put(idx);
+          _showRestartSnackbar();
+        },
+        child: Text(
+          _editorTheme,
+          style: textSize15,
+        ),
+      ),
+      onTap: () {
+        editorThemeKey.currentState?.showButtonMenu();
+      },
     );
   }
 }

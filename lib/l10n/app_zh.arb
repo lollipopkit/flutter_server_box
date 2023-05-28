@@ -46,6 +46,7 @@
   "downloadFinished": "下载完成",
   "downloadStatus": "{size} 的 {percent}%",
   "edit": "编辑",
+  "editor": "编辑器",
   "encode": "编码",
   "error": "错误",
   "exampleName": "名称示例",

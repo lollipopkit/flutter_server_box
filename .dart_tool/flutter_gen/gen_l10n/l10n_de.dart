@@ -153,6 +153,9 @@ class SDe extends S {
   String get edit => 'Bearbeiten';
 
   @override
+  String get editor => 'Redakteure';
+
+  @override
   String get encode => 'Encode';
 
   @override

@@ -153,6 +153,9 @@ class SEn extends S {
   String get edit => 'Edit';
 
   @override
+  String get editor => 'Editor';
+
+  @override
   String get encode => 'Encode';
 
   @override

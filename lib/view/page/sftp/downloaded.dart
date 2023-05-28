@@ -180,12 +180,14 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
               context.pop();
               final stat = await file.stat();
               if (stat.size > 1024 * 1024) {
-                showRoundDialog(context: context, child: Text('too big'));
+                showRoundDialog(
+                  context: context,
+                  child: Text(_s.fileTooLarge(fileName, stat.size, '1m')),
+                );
                 return;
               }
               final f = await File(file.absolute.path).readAsString();
-              AppRoute(EditorPage(initCode: f), 'sftp dled editor')
-                  .go(context);
+              AppRoute(EditorPage(initCode: f), 'sftp dled editor').go(context);
             },
           )
         ],

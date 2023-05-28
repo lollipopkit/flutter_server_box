@@ -372,6 +372,12 @@ abstract class S {
   /// **'Edit'**
   String get edit;
 
+  /// No description provided for @editor.
+  ///
+  /// In en, this message translates to:
+  /// **'Editor'**
+  String get editor;
+
   /// No description provided for @encode.
   ///
   /// In en, this message translates to:

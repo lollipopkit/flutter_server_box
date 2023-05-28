@@ -46,6 +46,7 @@
   "downloadFinished": "下載完成",
   "downloadStatus": "{size} 的 {percent}%",
   "edit": "編輯",
+  "editor": "編輯器",
   "encode": "編碼",
   "error": "錯誤",
   "exampleName": "名稱範例",

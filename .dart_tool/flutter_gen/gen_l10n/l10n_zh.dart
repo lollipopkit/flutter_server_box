@@ -153,6 +153,9 @@ class SZh extends S {
   String get edit => '编辑';
 
   @override
+  String get editor => '编辑器';
+
+  @override
   String get encode => '编码';
 
   @override
@@ -740,6 +743,9 @@ class SZhTw extends SZh {
 
   @override
   String get edit => '編輯';
+
+  @override
+  String get editor => '編輯器';
 
   @override
   String get encode => '編碼';
