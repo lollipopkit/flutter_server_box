@@ -1,7 +1,7 @@
-class CpuStatus {
+class Cpus {
   List<OneTimeCpuStatus> _pre;
   List<OneTimeCpuStatus> _now;
-  CpuStatus(this._pre, this._now);
+  Cpus(this._pre, this._now);
 
   double usedPercent({int coreIdx = 0}) {
     if (_now.length != _pre.length) return 0;

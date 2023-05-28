@@ -228,6 +228,9 @@ class _SSHPageState extends State<SSHPage> {
           _terminal.keyInput(TerminalKey.enter);
         });
         break;
+      case VirtualKeyFunc.file:
+        // TODO
+        showRoundDialog(context: context, child: const Text('TODO'));
     }
   }
 

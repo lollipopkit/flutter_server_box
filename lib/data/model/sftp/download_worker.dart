@@ -85,7 +85,8 @@ class SftpDownloadWorker {
             mainSendPort.send((i + form.length) / size * 100);
           }
         }
-        localFile.close();
+        await localFile.close();
+        await file.close();
         mainSendPort.send(watch.elapsed);
         mainSendPort.send(SftpWorkerStatus.finished);
       } catch (e) {

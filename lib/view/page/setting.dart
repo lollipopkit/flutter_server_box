@@ -99,7 +99,7 @@ class _SettingPageState extends State<SettingPage> {
           _buildTitle('SSH'),
           _buildSSH(),
           // Editor
-          _buildTitle('Editor'),
+          _buildTitle(_s.editor),
           _buildEditor(),
           const SizedBox(height: 37),
         ],
@@ -535,17 +535,18 @@ class _SettingPageState extends State<SettingPage> {
           ),
           actions: [
             TextButton(
-                onPressed: () {
-                  context.pop();
-                  final fontSize = double.tryParse(ctrller.text);
-                  if (fontSize == null) {
-                    showRoundDialog(context: context, child: Text(_s.failed));
-                    return;
-                  }
-                  _fontSize = fontSize;
-                  _setting.termFontSize.put(_fontSize);
-                },
-                child: Text(_s.ok)),
+              onPressed: () {
+                context.pop();
+                final fontSize = double.tryParse(ctrller.text);
+                if (fontSize == null) {
+                  showRoundDialog(context: context, child: Text(_s.failed));
+                  return;
+                }
+                _fontSize = fontSize;
+                _setting.termFontSize.put(_fontSize);
+              },
+              child: Text(_s.ok),
+            ),
           ],
         );
       },
@@ -559,23 +560,25 @@ class _SettingPageState extends State<SettingPage> {
       trailing: Text(_s.edit, style: textSize15),
       onTap: () {
         showRoundDialog(
-            context: context,
-            child: Input(
-              controller: TextEditingController(text: json.encode(paths)),
-              label: 'JSON',
-              type: TextInputType.visiblePassword,
-              maxLines: 3,
-              onSubmitted: (p0) {
-                try {
-                  final list = List<String>.from(json.decode(p0));
-                  _setting.diskIgnorePath.put(list);
-                  context.pop();
-                  showSnackBar(context, Text(_s.success));
-                } catch (e) {
-                  showSnackBar(context, Text(e.toString()));
-                }
-              },
-            ));
+          context: context,
+          title: Text(_s.diskIgnorePath),
+          child: Input(
+            controller: TextEditingController(text: json.encode(paths)),
+            label: 'JSON',
+            type: TextInputType.visiblePassword,
+            maxLines: 3,
+            onSubmitted: (p0) {
+              try {
+                final list = List<String>.from(json.decode(p0));
+                _setting.diskIgnorePath.put(list);
+                context.pop();
+                showSnackBar(context, Text(_s.success));
+              } catch (e) {
+                showSnackBar(context, Text(e.toString()));
+              }
+            },
+          ),
+        );
       },
     );
   }
@@ -641,7 +644,6 @@ class _SettingPageState extends State<SettingPage> {
             _editorTheme = idx;
           });
           _setting.editorTheme.put(idx);
-          _showRestartSnackbar();
         },
         child: Text(
           _editorTheme,

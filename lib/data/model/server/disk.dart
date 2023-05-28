@@ -1,6 +1,6 @@
 import '../../res/misc.dart';
 
-class DiskInfo {
+class Disk {
   final String path;
   final String loc;
   final int usedPercent;
@@ -8,7 +8,7 @@ class DiskInfo {
   final String size;
   final String avail;
 
-  DiskInfo({
+  Disk({
     required this.path,
     required this.loc,
     required this.usedPercent,
@@ -18,8 +18,8 @@ class DiskInfo {
   });
 }
 
-List<DiskInfo> parseDisk(String raw) {
-  final list = <DiskInfo>[];
+List<Disk> parseDisk(String raw) {
+  final list = <Disk>[];
   final items = raw.split('\n');
   items.removeAt(0);
   var pathCache = '';
@@ -36,7 +36,7 @@ List<DiskInfo> parseDisk(String raw) {
       vals[0] = pathCache;
       pathCache = '';
     }
-    list.add(DiskInfo(
+    list.add(Disk(
       path: vals[0],
       loc: vals[5],
       usedPercent: int.parse(vals[4].replaceFirst('%', '')),

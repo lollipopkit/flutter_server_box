@@ -900,6 +900,12 @@ abstract class S {
   /// **'Save'**
   String get save;
 
+  /// No description provided for @saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get saved;
+
   /// No description provided for @second.
   ///
   /// In en, this message translates to:

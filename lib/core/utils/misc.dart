@@ -67,3 +67,9 @@ String? getFileName(String? path) {
 void rebuildAll(BuildContext context) {
   RebuildWidget.restartApp(context);
 }
+
+String getTime(int? unixMill) {
+  return DateTime.fromMillisecondsSinceEpoch((unixMill ?? 0) * 1000)
+      .toString()
+      .replaceFirst('.000', '');
+}

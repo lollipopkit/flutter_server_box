@@ -1,19 +1,19 @@
 import 'package:toolbox/data/model/server/temp.dart';
 
-import 'cpu_status.dart';
-import 'disk_info.dart';
+import 'cpu.dart';
+import 'disk.dart';
 import 'memory.dart';
 import 'net_speed.dart';
-import 'conn_status.dart';
+import 'conn.dart';
 
 class ServerStatus {
-  CpuStatus cpu;
+  Cpus cpu;
   Memory mem;
   Swap swap;
   String sysVer;
   String uptime;
-  List<DiskInfo> disk;
-  ConnStatus tcp;
+  List<Disk> disk;
+  Conn tcp;
   NetSpeed netSpeed;
   Temperatures temps;
   String? failedInfo;

@@ -1,13 +1,18 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/navigator.dart';
+import 'package:toolbox/core/extension/sftpfile.dart';
+import 'package:toolbox/data/res/misc.dart';
+import 'package:toolbox/view/page/editor.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/extension/stringx.dart';
 import '../../../core/route.dart';
+import '../../../core/utils/misc.dart';
 import '../../../core/utils/ui.dart';
 import '../../../data/model/server/server.dart';
 import '../../../data/model/server/server_private_info.dart';
@@ -39,7 +44,7 @@ class _SFTPPageState extends State<SFTPPage> {
 
   late S _s;
 
-  Server? _si;
+  ServerState? _state;
   SSHClient? _client;
 
   @override
@@ -52,8 +57,8 @@ class _SFTPPageState extends State<SFTPPage> {
   void initState() {
     super.initState();
     final serverProvider = locator<ServerProvider>();
-    _si = serverProvider.servers[widget.spi.id];
-    _client = _si?.client;
+    _client = serverProvider.servers[widget.spi.id]?.client;
+    _state = serverProvider.servers[widget.spi.id]?.state;
   }
 
   @override
@@ -92,7 +97,7 @@ class _SFTPPageState extends State<SFTPPage> {
                 IconButton(
                   padding: const EdgeInsets.all(0),
                   onPressed: () async {
-                    await backward();
+                    await _backward();
                   },
                   icon: const Icon(Icons.arrow_back),
                 ),
@@ -116,11 +121,11 @@ class _SFTPPageState extends State<SFTPPage> {
                 ListTile(
                     leading: const Icon(Icons.folder),
                     title: Text(_s.createFolder),
-                    onTap: () => mkdir(context)),
+                    onTap: () => _mkdir(context)),
                 ListTile(
                     leading: const Icon(Icons.insert_drive_file),
                     title: Text(_s.createFile),
-                    onTap: () => newFile(context)),
+                    onTap: () => _newFile(context)),
               ],
             ),
             actions: [
@@ -163,14 +168,14 @@ class _SFTPPageState extends State<SFTPPage> {
           return;
         }
         _status.path?.update(p!);
-        listDir(path: p);
+        _listDir(path: p);
       },
       icon: const Icon(Icons.gps_fixed),
     );
   }
 
   Widget _buildFileView() {
-    if (_client == null || _si?.state != ServerState.connected) {
+    if (_client == null || _state != ServerState.connected) {
       return centerLoading;
     }
 
@@ -180,7 +185,7 @@ class _SFTPPageState extends State<SFTPPage> {
 
     if (_status.files == null) {
       _status.path = AbsolutePath('/');
-      listDir(path: '/', client: _client);
+      _listDir(path: '/', client: _client);
       return centerLoading;
     } else {
       return RefreshIndicator(
@@ -196,7 +201,7 @@ class _SFTPPageState extends State<SFTPPage> {
                 leading: Icon(isDir ? Icons.folder : Icons.insert_drive_file),
                 title: Text(file.filename),
                 trailing: Text(
-                  '${getTime(file.attr.modifyTime)}\n${getMode(file.attr.mode)}',
+                  '${getTime(file.attr.modifyTime)}\n${file.attr.mode?.str ?? ''}',
                   style: const TextStyle(color: Colors.grey),
                   textAlign: TextAlign.right,
                 ),
@@ -205,80 +210,105 @@ class _SFTPPageState extends State<SFTPPage> {
                 onTap: () {
                   if (isDir) {
                     _status.path?.update(file.filename);
-                    listDir(path: _status.path?.path);
+                    _listDir(path: _status.path?.path);
                   } else {
-                    onItemPress(context, file, true);
+                    _onItemPress(context, file, true);
                   }
                 },
-                onLongPress: () => onItemPress(context, file, false),
+                onLongPress: () => _onItemPress(context, file, false),
               );
             },
           ),
         ),
-        onRefresh: () => listDir(path: _status.path?.path),
+        onRefresh: () => _listDir(path: _status.path?.path),
       );
     }
   }
 
-  String getTime(int? unixMill) {
-    return DateTime.fromMillisecondsSinceEpoch((unixMill ?? 0) * 1000)
-        .toString()
-        .replaceFirst('.000', '');
-  }
-
-  String getMode(SftpFileMode? mode) {
-    if (mode == null) {
-      return '---';
-    }
-
-    final user = getRoleMode(mode.userRead, mode.userWrite, mode.userExecute);
-    final group =
-        getRoleMode(mode.groupRead, mode.groupWrite, mode.groupExecute);
-    final other =
-        getRoleMode(mode.otherRead, mode.otherWrite, mode.otherExecute);
-
-    return '$user$group$other';
-  }
-
-  String getRoleMode(bool r, bool w, bool x) {
-    return '${r ? 'r' : '-'}${w ? 'w' : '-'}${x ? 'x' : '-'}';
-  }
-
-  void onItemPress(BuildContext context, SftpName file, bool showDownload) {
+  void _onItemPress(BuildContext context, SftpName file, bool notDir) {
     showRoundDialog(
       context: context,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          notDir
+              ? ListTile(
+                  leading: const Icon(Icons.edit),
+                  title: Text(_s.edit),
+                  onTap: () => _edit(context, file),
+                )
+              : placeholder,
           ListTile(
             leading: const Icon(Icons.delete),
             title: Text(_s.delete),
-            onTap: () => delete(context, file),
+            onTap: () => _delete(context, file),
           ),
           ListTile(
-            leading: const Icon(Icons.edit),
+            leading: const Icon(Icons.abc),
             title: Text(_s.rename),
-            onTap: () => rename(context, file),
+            onTap: () => _rename(context, file),
           ),
-          showDownload
+          notDir
               ? ListTile(
                   leading: const Icon(Icons.download),
                   title: Text(_s.download),
-                  onTap: () => download(context, file),
+                  onTap: () => _download(context, file),
                 )
-              : placeholder
+              : placeholder,
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => context.pop(),
-          child: Text(_s.cancel),
-        )
-      ],
     );
   }
 
-  void download(BuildContext context, SftpName name) {
+  Future<void> _edit(BuildContext context, SftpName name) async {
+    final size = name.attr.size;
+    if (size == null || size > editorMaxSize) {
+      showSnackBar(
+          context,
+          Text(_s.fileTooLarge(
+            name.filename,
+            size ?? 0,
+            editorMaxSize,
+          )));
+      return;
+    }
+
+    final file = await _status.client!.open(
+      _getRemotePath(name),
+      mode: SftpFileOpenMode.read | SftpFileOpenMode.write,
+    );
+    final localPath = '${(await sftpDir).path}${_getRemotePath(name)}';
+    await Directory(localPath.substring(0, localPath.lastIndexOf('/')))
+        .create(recursive: true);
+    final local = File(localPath);
+    if (await local.exists()) {
+      await local.delete();
+    }
+    final localFile = local.openWrite(mode: FileMode.append);
+    const defaultChunkSize = 1024 * 1024;
+    final chunkSize = size > defaultChunkSize ? defaultChunkSize : size;
+    for (var i = 0; i < size; i += chunkSize) {
+      final fileData = file.read(length: chunkSize);
+      await for (var form in fileData) {
+        localFile.add(form);
+      }
+    }
+    await localFile.close();
+    context.pop();
+
+    final result = await AppRoute(
+      EditorPage(path: localPath),
+      'SFTP edit',
+    ).go<String>(context);
+    if (result != null) {
+      await local.writeAsString(result);
+      await file.writeBytes(result.uint8List);
+      showSnackBar(context, Text(_s.saved));
+    }
+    await file.close();
+  }
+
+  void _download(BuildContext context, SftpName name) {
     showRoundDialog(
       context: context,
       child: Text('${_s.dl2Local(name.filename)}\n${_s.keepForeground}'),
@@ -313,7 +343,7 @@ class _SFTPPageState extends State<SFTPPage> {
     );
   }
 
-  void delete(BuildContext context, SftpName file) {
+  void _delete(BuildContext context, SftpName file) {
     context.pop();
     final isDir = file.attr.isDirectory;
     final dirText = isDir ? '\n${_s.sureDirEmpty}' : '';
@@ -358,7 +388,7 @@ class _SFTPPageState extends State<SFTPPage> {
               );
               return;
             }
-            listDir();
+            _listDir();
           },
           child: Text(
             _s.delete,
@@ -369,7 +399,7 @@ class _SFTPPageState extends State<SFTPPage> {
     );
   }
 
-  void mkdir(BuildContext context) {
+  void _mkdir(BuildContext context) {
     context.pop();
     final textController = TextEditingController();
     showRoundDialog(
@@ -402,7 +432,7 @@ class _SFTPPageState extends State<SFTPPage> {
             _status.client!
                 .mkdir('${_status.path!.path}/${textController.text}');
             context.pop();
-            listDir();
+            _listDir();
           },
           child: Text(
             _s.ok,
@@ -413,7 +443,7 @@ class _SFTPPageState extends State<SFTPPage> {
     );
   }
 
-  void newFile(BuildContext context) {
+  void _newFile(BuildContext context) {
     context.pop();
     final textController = TextEditingController();
     showRoundDialog(
@@ -447,7 +477,7 @@ class _SFTPPageState extends State<SFTPPage> {
                     .open('${_status.path!.path}/${textController.text}'))
                 .writeBytes(Uint8List(0));
             context.pop();
-            listDir();
+            _listDir();
           },
           child: Text(
             _s.ok,
@@ -458,7 +488,7 @@ class _SFTPPageState extends State<SFTPPage> {
     );
   }
 
-  void rename(BuildContext context, SftpName file) {
+  void _rename(BuildContext context, SftpName file) {
     context.pop();
     final textController = TextEditingController();
     showRoundDialog(
@@ -487,7 +517,7 @@ class _SFTPPageState extends State<SFTPPage> {
             }
             await _status.client!.rename(file.filename, textController.text);
             context.pop();
-            listDir();
+            _listDir();
           },
           child: Text(
             _s.rename,
@@ -503,7 +533,7 @@ class _SFTPPageState extends State<SFTPPage> {
     return prePath + (prePath.endsWith('/') ? '' : '/') + name.filename;
   }
 
-  Future<void> listDir({String? path, SSHClient? client}) async {
+  Future<void> _listDir({String? path, SSHClient? client}) async {
     if (_status.isBusy) {
       return;
     }
@@ -535,13 +565,13 @@ class _SFTPPageState extends State<SFTPPage> {
           )
         ],
       );
-      await backward();
+      await _backward();
     }
   }
 
-  Future<void> backward() async {
+  Future<void> _backward() async {
     if (_status.path!.undo()) {
-      await listDir();
+      await _listDir();
     }
   }
 }

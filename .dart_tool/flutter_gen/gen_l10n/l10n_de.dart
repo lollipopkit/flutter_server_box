@@ -433,6 +433,9 @@ class SDe extends S {
   String get save => 'Speichern';
 
   @override
+  String get saved => 'Gerettet';
+
+  @override
   String get second => 's';
 
   @override

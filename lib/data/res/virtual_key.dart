@@ -10,9 +10,9 @@ final virtualKeys = [
   VirtualKey('Up', key: TerminalKey.arrowUp, icon: Icons.arrow_upward),
   VirtualKey('End', key: TerminalKey.end),
   VirtualKey(
-    'Del',
-    key: TerminalKey.delete,
-    icon: Icons.backspace,
+    'File',
+    func: VirtualKeyFunc.file,
+    icon: Icons.file_open,
   ),
   VirtualKey('Snippet', func: VirtualKeyFunc.snippet, icon: Icons.code),
   VirtualKey('Tab', key: TerminalKey.tab),

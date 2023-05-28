@@ -7,8 +7,11 @@ class AppRoute {
 
   AppRoute(this.page, this.title);
 
-  void go(BuildContext context) {
+  Future<T?> go<T>(BuildContext context) {
     Analysis.recordView(title);
-    Navigator.push(context, MaterialPageRoute(builder: (context) => page));
+    return Navigator.push<T>(
+      context,
+      MaterialPageRoute(builder: (context) => page),
+    );
   }
 }

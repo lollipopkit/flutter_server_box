@@ -3,7 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/navigator.dart';
+import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/view/page/editor.dart';
+import 'package:toolbox/view/widget/input_field.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/extension/stringx.dart';
@@ -142,6 +144,55 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
+            leading: const Icon(Icons.edit),
+            title: Text(_s.edit),
+            onTap: () async {
+              context.pop();
+              final stat = await file.stat();
+              if (stat.size > editorMaxSize) {
+                showRoundDialog(
+                  context: context,
+                  child: Text(_s.fileTooLarge(fileName, stat.size, '1m')),
+                );
+                return;
+              }
+              final f = File(file.absolute.path);
+              final data = await f.readAsString();
+              final result = await AppRoute(
+                EditorPage(
+                  initCode: data,
+                  path: fileName,
+                ),
+                'sftp dled editor',
+              ).go<String>(context);
+              if (result != null) {
+                f.writeAsString(result);
+                showSnackBar(context, Text(_s.saved));
+                setState(() {});
+              }
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.abc),
+            title: Text(_s.rename),
+            onTap: () {
+              context.pop();
+              showRoundDialog(
+                context: context,
+                title: Text(_s.rename),
+                child: Input(
+                  controller: TextEditingController(text: fileName),
+                  onSubmitted: (p0) {
+                    context.pop();
+                    final newPath = '${file.parent.path}/$p0';
+                    file.renameSync(newPath);
+                    setState(() {});
+                  },
+                ),
+              );
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.delete),
             title: Text(_s.delete),
             onTap: () {
@@ -173,31 +224,8 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
               shareFiles(context, [file.absolute.path]);
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.edit),
-            title: Text(_s.edit),
-            onTap: () async {
-              context.pop();
-              final stat = await file.stat();
-              if (stat.size > 1024 * 1024) {
-                showRoundDialog(
-                  context: context,
-                  child: Text(_s.fileTooLarge(fileName, stat.size, '1m')),
-                );
-                return;
-              }
-              final f = await File(file.absolute.path).readAsString();
-              AppRoute(EditorPage(initCode: f), 'sftp dled editor').go(context);
-            },
-          )
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: (() => context.pop()),
-          child: Text(_s.close),
-        )
-      ],
     );
   }
 }

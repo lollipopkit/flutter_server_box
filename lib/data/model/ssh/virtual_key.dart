@@ -17,4 +17,4 @@ class VirtualKey {
   });
 }
 
-enum VirtualKeyFunc { toggleIME, backspace, copy, paste, snippet }
+enum VirtualKeyFunc { toggleIME, backspace, copy, paste, snippet, file }

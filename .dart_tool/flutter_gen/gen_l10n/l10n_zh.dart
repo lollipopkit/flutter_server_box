@@ -433,6 +433,9 @@ class SZh extends S {
   String get save => '保存';
 
   @override
+  String get saved => '已保存';
+
+  @override
   String get second => '秒';
 
   @override
@@ -1023,6 +1026,9 @@ class SZhTw extends SZh {
 
   @override
   String get save => '保存';
+
+  @override
+  String get saved => '已保存';
 
   @override
   String get second => '秒';

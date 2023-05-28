@@ -1,11 +1,11 @@
 import 'package:toolbox/data/model/server/temp.dart';
 
-import '../model/server/cpu_status.dart';
-import '../model/server/disk_info.dart';
+import '../model/server/cpu.dart';
+import '../model/server/disk.dart';
 import '../model/server/memory.dart';
 import '../model/server/net_speed.dart';
 import '../model/server/server_status.dart';
-import '../model/server/conn_status.dart';
+import '../model/server/conn.dart';
 
 Memory get _initMemory => Memory(
       total: 1,
@@ -23,7 +23,7 @@ OneTimeCpuStatus get _initOneTimeCpuStatus => OneTimeCpuStatus(
       0,
       0,
     );
-CpuStatus get initCpuStatus => CpuStatus(
+Cpus get initCpuStatus => Cpus(
       [_initOneTimeCpuStatus],
       [_initOneTimeCpuStatus],
     );
@@ -48,7 +48,7 @@ ServerStatus get initStatus => ServerStatus(
       sysVer: 'Loading...',
       uptime: '',
       disk: [
-        DiskInfo(
+        Disk(
           path: '/',
           loc: '/',
           usedPercent: 0,
@@ -57,7 +57,7 @@ ServerStatus get initStatus => ServerStatus(
           avail: '0',
         )
       ],
-      tcp: ConnStatus(maxConn: 0, active: 0, passive: 0, fail: 0),
+      tcp: Conn(maxConn: 0, active: 0, passive: 0, fail: 0),
       netSpeed: initNetSpeed,
       swap: _initSwap,
       temps: Temperatures(),

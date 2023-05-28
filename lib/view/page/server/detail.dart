@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/order.dart';
-import 'package:toolbox/data/model/server/cpu_status.dart';
-import 'package:toolbox/data/model/server/disk_info.dart';
+import 'package:toolbox/data/model/server/cpu.dart';
+import 'package:toolbox/data/model/server/disk.dart';
 import 'package:toolbox/data/model/server/dist.dart';
 import 'package:toolbox/data/model/server/memory.dart';
 import 'package:toolbox/data/model/server/temp.dart';
@@ -118,7 +118,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildCPUView(CpuStatus cs) {
+  Widget _buildCPUView(Cpus cs) {
     return RoundRectCard(
       Padding(
         padding: roundRectCardPadding,
@@ -171,7 +171,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildCPUProgress(CpuStatus cs) {
+  Widget _buildCPUProgress(Cpus cs) {
     final children = <Widget>[];
     for (var i = 0; i < cs.coresCount; i++) {
       if (i == 0) continue;
@@ -288,7 +288,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildDiskView(List<DiskInfo> disk) {
+  Widget _buildDiskView(List<Disk> disk) {
     disk.removeWhere((e) {
       for (final ingorePath in _setting.diskIgnorePath.fetch()!) {
         if (e.path.startsWith(ingorePath)) return true;

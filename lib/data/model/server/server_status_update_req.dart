@@ -1,10 +1,10 @@
 import '../../res/server_cmd.dart';
-import 'cpu_status.dart';
-import 'disk_info.dart';
+import 'cpu.dart';
+import 'disk.dart';
 import 'memory.dart';
 import 'net_speed.dart';
 import 'server_status.dart';
-import 'conn_status.dart';
+import 'conn.dart';
 
 class ServerStatusUpdateReq {
   final ServerStatus ss;

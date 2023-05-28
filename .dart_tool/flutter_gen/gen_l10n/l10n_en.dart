@@ -433,6 +433,9 @@ class SEn extends S {
   String get save => 'Save';
 
   @override
+  String get saved => 'Saved';
+
+  @override
   String get second => 's';
 
   @override

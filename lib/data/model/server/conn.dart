@@ -1,13 +1,13 @@
 import '../../../core/extension/stringx.dart';
 import '../../res/misc.dart';
 
-class ConnStatus {
+class Conn {
   final int maxConn;
   final int active;
   final int passive;
   final int fail;
 
-  ConnStatus({
+  Conn({
     required this.maxConn,
     required this.active,
     required this.passive,
@@ -15,13 +15,13 @@ class ConnStatus {
   });
 }
 
-ConnStatus? parseConn(String raw) {
+Conn? parseConn(String raw) {
   final lines = raw.split('\n');
   final idx = lines.lastWhere((element) => element.startsWith('Tcp:'),
       orElse: () => '');
   if (idx != '') {
     final vals = idx.split(numReg);
-    return ConnStatus(
+    return Conn(
       maxConn: vals[5].i,
       active: vals[6].i,
       passive: vals[7].i,

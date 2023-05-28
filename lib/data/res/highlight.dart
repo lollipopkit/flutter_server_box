@@ -20,6 +20,7 @@ import 'package:highlight/languages/nix.dart';
 import 'package:highlight/languages/objectivec.dart';
 import 'package:highlight/languages/perl.dart';
 import 'package:highlight/languages/php.dart';
+import 'package:highlight/languages/plaintext.dart';
 import 'package:highlight/languages/powershell.dart';
 import 'package:highlight/languages/python.dart';
 import 'package:highlight/languages/ruby.dart';
@@ -34,7 +35,7 @@ import 'package:highlight/languages/yaml.dart';
 
 // KEY: fileNameSuffix
 // VAL: highlight
-final _suffix2HighlightMap = {
+final suffix2HighlightMap = {
   'dart': dart,
   'go': go,
   'rust': rust,
@@ -68,12 +69,16 @@ final _suffix2HighlightMap = {
   'html': htmlbars,
   'tex': tex,
   'vim': vim,
+  'plaintext': plaintext,
 };
 
 extension HighlightString on String? {
   Mode? get highlight {
+    return suffix2HighlightMap[highlightCode];
+  }
+
+  String? get highlightCode {
     if (this == null) return null;
-    final suffix = this!.split('.').last;
-    return _suffix2HighlightMap[suffix];
+    return this!.split('.').last;
   }
 }
