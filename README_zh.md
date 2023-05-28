@@ -29,6 +29,7 @@
   - [x] `SSH` 终端, `SFTP`
   - [x] `Docker & 包` 管理器
   - [x] 状态图表
+  - [x] 代码编辑器
   - [x] `Ping` 和 更多
 - [x] 本地化 ( English, 简体中文, Deutsch, 繁體中文。 [如何贡献？](#l10n-guide))
 - [x] 桌面端支持
@@ -56,7 +57,7 @@
 	    <img width="200px" src="imgs/ssh.jpg">
     </td>
     <td>
-	    <img width="200px" src="imgs/apt.png">
+	    <img width="200px" src="imgs/editor.jpg">
     </td>
   </tr>
 </table>

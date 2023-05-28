@@ -65,6 +65,7 @@ class _EditorPageState extends State<EditorPage> {
     return Scaffold(
       backgroundColor: _codeTheme['root']!.backgroundColor,
       appBar: AppBar(
+        centerTitle: true,
         title: TwoLineText(up: getFileName(widget.path) ?? '', down: _s.editor),
         actions: [
           PopupMenuButton(

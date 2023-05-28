@@ -10,7 +10,7 @@ const buildDataFilePath = 'lib/data/res/build_data.dart';
 const apkPath = 'build/app/outputs/flutter-apk/app-release.apk';
 const ipaPath = 'build/ios/ipa/$appName.ipa';
 const appleXCConfigPath = 'Runner.xcodeproj/project.pbxproj';
-const releaseDirPath = '/Volumes/bc4/releases';
+const releaseDirPath = './release';
 
 var regAppleProjectVer = RegExp(r'CURRENT_PROJECT_VERSION = .+;');
 var regAppleMarketVer = RegExp(r'MARKETING_VERSION = .+');
@@ -108,6 +108,8 @@ Future<void> flutterBuild(
   final args = [
     'build',
     buildType,
+    '--build-number=$build',
+    '--build-name=1.0.$build',
   ];
   final skslPath = '$buildType.sksl.json';
   if (await File(skslPath).exists()) {
@@ -118,8 +120,6 @@ Future<void> flutterBuild(
   if (isAndroid) {
     args.addAll([
       '--target-platform=android-arm64',
-      '--build-number=$build',
-      '--build-name=1.0.$build',
     ]);
   }
   print('\n[$buildType]\nBuilding with args: ${args.join(' ')}');

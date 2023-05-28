@@ -28,7 +28,8 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 - [x] Functions
   - [x] `SSH` Terminal, `SFTP`
   - [x] `Docker & Pkg` Manager
-  - [x] Status charts
+  - [x] `Status` charts
+  - [x] `Code editor`
   - [x] `Ping` and etc.
 - [x] Localization ( English, 简体中文, Deutsch, 繁體中文. [How to contribute?](#l10n-guide))
 - [x] Desktop support
@@ -56,7 +57,7 @@ If ServerBox app has any bug, please open an [issue](https://github.com/lollipop
 	    <img width="200px" src="imgs/ssh.jpg">
     </td>
     <td>
-	    <img width="200px" src="imgs/apt.png">
+	    <img width="200px" src="imgs/editor.jpg">
     </td>
   </tr>
 </table>
