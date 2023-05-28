@@ -32,7 +32,8 @@ import 'downloading.dart';
 
 class SFTPPage extends StatefulWidget {
   final ServerPrivateInfo spi;
-  const SFTPPage(this.spi, {Key? key}) : super(key: key);
+  final String? initPath;
+  const SFTPPage(this.spi, {Key? key, this.initPath}) : super(key: key);
 
   @override
   _SFTPPageState createState() => _SFTPPageState();
@@ -184,8 +185,9 @@ class _SFTPPageState extends State<SFTPPage> {
     }
 
     if (_status.files == null) {
-      _status.path = AbsolutePath('/');
-      _listDir(path: '/', client: _client);
+      final p_ = widget.initPath ?? '/';
+      _status.path = AbsolutePath(p_);
+      _listDir(path: p_, client: _client);
       return centerLoading;
     } else {
       return RefreshIndicator(

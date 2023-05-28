@@ -4,6 +4,8 @@ const seperator = 'SrvBox';
 const serverBoxDir = r'$HOME/.config/server_box';
 const shellPath = '$serverBoxDir/mobile_app.sh';
 
+const echoPWD = 'echo \$PWD';
+
 enum CmdType {
   export,
   net,

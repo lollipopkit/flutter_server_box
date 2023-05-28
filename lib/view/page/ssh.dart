@@ -7,8 +7,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/navigator.dart';
+import 'package:toolbox/data/res/server_cmd.dart';
 import 'package:xterm/xterm.dart';
 
+import '../../core/route.dart';
 import '../../core/utils/platform.dart';
 import '../../core/utils/misc.dart';
 import '../../core/utils/ui.dart';
@@ -21,6 +23,7 @@ import '../../data/res/terminal.dart';
 import '../../data/res/virtual_key.dart';
 import '../../data/store/setting.dart';
 import '../../locator.dart';
+import 'sftp/view.dart';
 
 class SSHPage extends StatefulWidget {
   final ServerPrivateInfo spi;
@@ -34,6 +37,7 @@ class SSHPage extends StatefulWidget {
 class _SSHPageState extends State<SSHPage> {
   late final _terminal = Terminal(inputHandler: _keyboard);
   SSHClient? _client;
+  late SSHSession _session;
   final _keyboard = locator<VirtualKeyboard>();
   final _setting = locator<SettingStore>();
   late MediaQueryData _media;
@@ -205,7 +209,7 @@ class _SSHPageState extends State<SSHPage> {
     }
   }
 
-  void _doVirtualKeyFunc(VirtualKeyFunc type) {
+  Future<void> _doVirtualKeyFunc(VirtualKeyFunc type) async {
     switch (type) {
       case VirtualKeyFunc.toggleIME:
         FocusScope.of(context).requestFocus(FocusNode());
@@ -229,8 +233,29 @@ class _SSHPageState extends State<SSHPage> {
         });
         break;
       case VirtualKeyFunc.file:
-        // TODO
-        showRoundDialog(context: context, child: const Text('TODO'));
+        // get $PWD from SSH session
+        _terminal.textInput(echoPWD);
+        _terminal.keyInput(TerminalKey.enter);
+        final cmds = _terminal.buffer.lines.toList();
+        // wait for the command to finish
+        await Future.delayed(const Duration(milliseconds: 777));
+        // the line below `echo $PWD` is the current path
+        final idx = cmds.lastIndexWhere((e) => e.toString().contains(echoPWD));
+        final initPath = cmds[idx + 1].toString();
+        if (initPath.isEmpty || !initPath.startsWith('/')) {
+          showRoundDialog(
+            context: context,
+            child: const Text('Failed to get current path'),
+          );
+          return;
+        }
+        AppRoute(
+                SFTPPage(
+                  widget.spi,
+                  initPath: initPath,
+                ),
+                'SSH SFTP')
+            .go(context);
     }
   }
 
@@ -321,7 +346,7 @@ class _SSHPageState extends State<SSHPage> {
     _write('Terminal size: ${_terminal.viewWidth}x${_terminal.viewHeight}\r\n');
     _write('Starting shell...\r\n');
 
-    final session = await _client!.shell(
+    _session = await _client!.shell(
       pty: SSHPtyConfig(
         width: _terminal.viewWidth,
         height: _terminal.viewHeight,
@@ -332,18 +357,18 @@ class _SSHPageState extends State<SSHPage> {
     _terminal.buffer.setCursor(0, 0);
 
     _terminal.onOutput = (data) {
-      session.write(utf8.encode(data) as Uint8List);
+      _session.write(utf8.encode(data) as Uint8List);
     };
 
-    _listen(session.stdout);
-    _listen(session.stderr);
+    _listen(_session.stdout);
+    _listen(_session.stderr);
 
     if (widget.initCmd != null) {
       _terminal.textInput(widget.initCmd!);
       _terminal.keyInput(TerminalKey.enter);
     }
 
-    await session.done;
+    await _session.done;
     if (mounted) {
       context.pop();
     }
