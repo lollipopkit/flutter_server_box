@@ -63,6 +63,9 @@ dependencies:
       url: https://github.com/lollipopkit/xterm.dart
   file_picker: ^5.2.5
   plain_notification_token: ^0.0.4
+  highlight: ^0.7.0
+  flutter_highlight: ^0.7.0
+  flutter_code_editor: ^0.2.23
 
 dev_dependencies:
   flutter_native_splash: ^2.1.6

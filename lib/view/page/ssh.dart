@@ -10,7 +10,6 @@ import 'package:toolbox/core/extension/navigator.dart';
 import 'package:xterm/xterm.dart';
 
 import '../../core/utils/platform.dart';
-import '../../data/model/ssh/terminal_color.dart';
 import '../../core/utils/misc.dart';
 import '../../core/utils/ui.dart';
 import '../../core/utils/server.dart';
@@ -44,7 +43,6 @@ class _SSHPageState extends State<SSHPage> {
   late TextStyle _menuTextStyle;
   late S _s;
   late TerminalStyle _terminalStyle;
-  late TerminalUITheme _termUITheme;
   late TerminalTheme _terminalTheme;
 
   var _isDark = false;
@@ -68,8 +66,7 @@ class _SSHPageState extends State<SSHPage> {
     _media = MediaQuery.of(context);
     _menuTextStyle = TextStyle(color: contentColor.resolve(context));
     _s = S.of(context)!;
-    _termUITheme = _isDark ? termDarkTheme : termLightTheme;
-    _terminalTheme = _termUITheme.toTerminalTheme(MacOSTerminalColor());
+    _terminalTheme = _isDark ? termDarkTheme : termLightTheme;
   }
 
   @override
@@ -81,7 +78,7 @@ class _SSHPageState extends State<SSHPage> {
   @override
   Widget build(BuildContext context) {
     Widget child = Scaffold(
-      backgroundColor: _termUITheme.background,
+      backgroundColor: _terminalTheme.background,
       body: _buildBody(),
       bottomNavigationBar: _buildBottom(),
     );
@@ -120,7 +117,7 @@ class _SSHPageState extends State<SSHPage> {
         duration: const Duration(milliseconds: 23),
         curve: Curves.fastOutSlowIn,
         child: Container(
-          color: _termUITheme.background,
+          color: _terminalTheme.background,
           height: _virtualKeyboardHeight,
           child: Consumer<VirtualKeyboard>(
             builder: (_, __, ___) => _buildVirtualKey(),

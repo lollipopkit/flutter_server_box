@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/navigator.dart';
+import 'package:toolbox/view/page/editor.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/extension/stringx.dart';
@@ -172,6 +173,21 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
               shareFiles(context, [file.absolute.path]);
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.edit),
+            title: Text(_s.edit),
+            onTap: () async {
+              context.pop();
+              final stat = await file.stat();
+              if (stat.size > 1024 * 1024) {
+                showRoundDialog(context: context, child: Text('too big'));
+                return;
+              }
+              final f = await File(file.absolute.path).readAsString();
+              AppRoute(EditorPage(initCode: f), 'sftp dled editor')
+                  .go(context);
+            },
+          )
         ],
       ),
       actions: [

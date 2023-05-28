@@ -8,9 +8,9 @@ const appName = 'ServerBox';
 
 const buildDataFilePath = 'lib/data/res/build_data.dart';
 const apkPath = 'build/app/outputs/flutter-apk/app-release.apk';
-const xcarchivePath = 'build/ios/archive/Runner.xcarchive';
+const ipaPath = 'build/ios/ipa/$appName.ipa';
 const appleXCConfigPath = 'Runner.xcodeproj/project.pbxproj';
-const releaseDirPath = './release';
+const releaseDirPath = '/Volumes/bc4/releases';
 
 var regAppleProjectVer = RegExp(r'CURRENT_PROJECT_VERSION = .+;');
 var regAppleMarketVer = RegExp(r'MARKETING_VERSION = .+');
@@ -148,12 +148,11 @@ Future<void> flutterBuild(
 }
 
 Future<void> flutterBuildIOS() async {
-  await flutterBuild(xcarchivePath, '${appName}_ios_build.xcarchive', 'ipa');
+  await flutterBuild(ipaPath, '${appName}_ios_build.ipa', 'ios');
 }
 
 Future<void> flutterBuildMacOS() async {
-  await flutterBuild(
-      xcarchivePath, '${appName}_macos_build.xcarchive', 'macos');
+  await flutterBuild(ipaPath, '${appName}_macos_build.ipa', 'macos');
 }
 
 Future<void> flutterBuildAndroid() async {
