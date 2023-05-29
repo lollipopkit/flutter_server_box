@@ -559,25 +559,31 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(_s.diskIgnorePath),
       trailing: Text(_s.edit, style: textSize15),
       onTap: () {
+        final ctrller = TextEditingController(text: json.encode(paths));
+        void onSubmit() {
+          try {
+            final list = List<String>.from(json.decode(ctrller.text));
+            _setting.diskIgnorePath.put(list);
+            context.pop();
+            showSnackBar(context, Text(_s.success));
+          } catch (e) {
+            showSnackBar(context, Text(e.toString()));
+          }
+        }
+
         showRoundDialog(
           context: context,
           title: Text(_s.diskIgnorePath),
           child: Input(
-            controller: TextEditingController(text: json.encode(paths)),
+            controller: ctrller,
             label: 'JSON',
             type: TextInputType.visiblePassword,
             maxLines: 3,
-            onSubmitted: (p0) {
-              try {
-                final list = List<String>.from(json.decode(p0));
-                _setting.diskIgnorePath.put(list);
-                context.pop();
-                showSnackBar(context, Text(_s.success));
-              } catch (e) {
-                showSnackBar(context, Text(e.toString()));
-              }
-            },
+            onSubmitted: (_) => onSubmit(),
           ),
+          actions: [
+            TextButton(onPressed: onSubmit, child: Text(_s.ok)),
+          ],
         );
       },
     );

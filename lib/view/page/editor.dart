@@ -68,10 +68,11 @@ class _EditorPageState extends State<EditorPage> {
         centerTitle: true,
         title: TwoLineText(up: getFileName(widget.path) ?? '', down: _s.editor),
         actions: [
-          PopupMenuButton(
+          PopupMenuButton<String>(
             icon: const Icon(Icons.language),
             onSelected: (value) {
               _controller.language = suffix2HighlightMap[value];
+              _langCode = value;
             },
             initialValue: _langCode,
             itemBuilder: (BuildContext context) {
