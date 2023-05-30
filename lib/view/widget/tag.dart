@@ -6,9 +6,11 @@ import '../../data/res/color.dart';
 
 class TagEditor extends StatelessWidget {
   final List<String> tags;
+  final String s;
   final void Function(List<String>)? onChanged;
 
-  const TagEditor({super.key, required this.tags, this.onChanged});
+  const TagEditor(
+      {super.key, required this.tags, this.onChanged, required this.s});
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +38,7 @@ class TagEditor extends StatelessWidget {
     List<String> tags,
     Function(String) onTagDelete,
   ) {
-    if (tags.isEmpty) return Text('Tags');
+    if (tags.isEmpty) return Text(s);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -49,35 +51,33 @@ class TagEditor extends StatelessWidget {
 
   Widget _buildTagItem(String tag, Function(String) onTagDelete) {
     return Padding(
-        padding: EdgeInsets.only(right: 7),
-        child: Container(
-      decoration: BoxDecoration(
-        borderRadius: const BorderRadius.all(
-          Radius.circular(20.0),
+      padding: const EdgeInsets.only(right: 7),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: const BorderRadius.all(Radius.circular(20.0)),
+          color: primaryColor,
         ),
-        color: primaryColor,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
               '#$tag',
               style: const TextStyle(color: Colors.white),
             ),
-          const SizedBox(width: 4.0),
-          InkWell(
-            child: const Icon(
-              Icons.cancel,
-              size: 14.0,
-              color: Colors.white,
-            ),
-            onTap: () {
-              onTagDelete(tag);
-            },
-          )
-        ],
-      ),
+            const SizedBox(width: 4.0),
+            InkWell(
+              child: const Icon(
+                Icons.cancel,
+                size: 14.0,
+                color: Colors.white,
+              ),
+              onTap: () {
+                onTagDelete(tag);
+              },
+            )
+          ],
+        ),
       ),
     );
   }
@@ -87,20 +87,20 @@ class TagEditor extends StatelessWidget {
     List<String> tags,
     void Function(List<String>)? onChanged,
   ) {
-    final _textEditingController = TextEditingController();
+    final textEditingController = TextEditingController();
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text('Add Tag'),
           content: Input(
-            controller: _textEditingController,
+            controller: textEditingController,
             hint: 'Tag',
           ),
           actions: [
             TextButton(
               onPressed: () {
-                final tag = _textEditingController.text;
+                final tag = textEditingController.text;
                 tags.add(tag.trim());
                 onChanged?.call(tags);
                 Navigator.pop(context);

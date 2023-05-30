@@ -402,6 +402,9 @@ class SEn extends S {
   String get pwd => 'Password';
 
   @override
+  String get remotePath => 'Remote path';
+
+  @override
   String get rename => 'Rename';
 
   @override
@@ -516,6 +519,9 @@ class SEn extends S {
   }
 
   @override
+  String get tag => 'Tags';
+
+  @override
   String get terminal => 'Terminal';
 
   @override
@@ -560,6 +566,9 @@ class SEn extends S {
   String updateTipTooLow(Object newest) {
     return 'Current version is too low, please update to v1.0.$newest';
   }
+
+  @override
+  String get upload => 'Upload';
 
   @override
   String get upsideDown => 'Upside Down';

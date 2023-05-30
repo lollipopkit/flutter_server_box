@@ -402,6 +402,9 @@ class SDe extends S {
   String get pwd => 'Passwort';
 
   @override
+  String get remotePath => 'Entfernte Pfade';
+
+  @override
   String get rename => 'Umbenennen';
 
   @override
@@ -516,6 +519,9 @@ class SDe extends S {
   }
 
   @override
+  String get tag => 'Tags';
+
+  @override
   String get terminal => 'Terminal';
 
   @override
@@ -560,6 +566,9 @@ class SDe extends S {
   String updateTipTooLow(Object newest) {
     return 'Aktuelle Version ist zu alt, bitte update auf v1.0.$newest';
   }
+
+  @override
+  String get upload => 'Hochladen';
 
   @override
   String get upsideDown => 'Upside Down';

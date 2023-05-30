@@ -1,14 +1,13 @@
 import 'package:toolbox/core/provider_base.dart';
 
-import '../model/sftp/download_item.dart';
-import '../model/sftp/download_status.dart';
+import '../model/sftp/req.dart';
 
 class SftpProvider extends ProviderBase {
-  final List<SftpDownloadStatus> _status = [];
-  List<SftpDownloadStatus> get status => _status;
+  final List<SftpReqStatus> _status = [];
+  List<SftpReqStatus> get status => _status;
 
-  List<SftpDownloadStatus> gets({int? id, String? fileName}) {
-    var found = <SftpDownloadStatus>[];
+  List<SftpReqStatus> gets({int? id, String? fileName}) {
+    var found = <SftpReqStatus>[];
     if (id != null) {
       found = _status.where((e) => e.id == id).toList();
     }
@@ -20,13 +19,18 @@ class SftpProvider extends ProviderBase {
     return found;
   }
 
-  SftpDownloadStatus? get({int? id, String? name}) {
+  SftpReqStatus? get({int? id, String? name}) {
     final found = gets(id: id, fileName: name);
     if (found.isEmpty) return null;
     return found.first;
   }
 
-  void add(DownloadItem item, {String? key}) {
-    _status.add(SftpDownloadStatus(item, notifyListeners, key: key));
+  void add(SftpReqItem item, SftpReqType type, {String? key}) {
+    _status.add(SftpReqStatus(
+      item: item,
+      notifyListeners: notifyListeners,
+      key: key,
+      type: type,
+    ));
   }
 }

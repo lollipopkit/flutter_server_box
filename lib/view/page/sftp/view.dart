@@ -18,9 +18,9 @@ import '../../../data/model/server/server.dart';
 import '../../../data/model/server/server_private_info.dart';
 import '../../../data/model/sftp/absolute_path.dart';
 import '../../../data/model/sftp/browser_status.dart';
-import '../../../data/model/sftp/download_item.dart';
+import '../../../data/model/sftp/req.dart';
 import '../../../data/provider/server.dart';
-import '../../../data/provider/sftp_download.dart';
+import '../../../data/provider/sftp.dart';
 import '../../../data/res/path.dart';
 import '../../../data/res/ui.dart';
 import '../../../data/store/private_key.dart';
@@ -313,6 +313,7 @@ class _SFTPPageState extends State<SFTPPage> {
   void _download(BuildContext context, SftpName name) {
     showRoundDialog(
       context: context,
+      title: Text(_s.attention),
       child: Text('${_s.dl2Local(name.filename)}\n${_s.keepForeground}'),
       actions: [
         TextButton(
@@ -325,16 +326,16 @@ class _SFTPPageState extends State<SFTPPage> {
             final remotePath = _getRemotePath(name);
             final local = '${(await sftpDir).path}$remotePath';
             final pubKeyId = widget.spi.pubKeyId;
+            final key = locator<PrivateKeyStore>().get(pubKeyId)?.privateKey;
 
             locator<SftpProvider>().add(
-              DownloadItem(
+              SftpReqItem(
                 widget.spi,
                 remotePath,
                 local,
               ),
-              key: pubKeyId == null
-                  ? null
-                  : locator<PrivateKeyStore>().get(pubKeyId).privateKey,
+              SftpReqType.download,
+              key: key,
             );
 
             context.pop();
@@ -354,6 +355,7 @@ class _SFTPPageState extends State<SFTPPage> {
     showRoundDialog(
       context: context,
       child: child,
+      title: Text(_s.attention),
       actions: [
         TextButton(
           onPressed: () => context.pop(),

@@ -5,8 +5,8 @@ import 'package:provider/provider.dart';
 import '../../../core/extension/numx.dart';
 import '../../../core/utils/misc.dart';
 import '../../../core/utils/ui.dart';
-import '../../../data/model/sftp/download_status.dart';
-import '../../../data/provider/sftp_download.dart';
+import '../../../data/model/sftp/req.dart';
+import '../../../data/provider/sftp.dart';
 import '../../../data/res/ui.dart';
 import '../../widget/round_rect_card.dart';
 
@@ -57,7 +57,7 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
     });
   }
 
-  Widget _wrapInCard(SftpDownloadStatus status, String? subtitle,
+  Widget _wrapInCard(SftpReqStatus status, String? subtitle,
       {Widget? trailing}) {
     return RoundRectCard(
       ListTile(
@@ -73,7 +73,7 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
     );
   }
 
-  Widget _buildItem(SftpDownloadStatus status) {
+  Widget _buildItem(SftpReqStatus status) {
     if (status.error != null) {
       showSnackBar(context, Text(status.error.toString()));
       status.error = null;

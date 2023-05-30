@@ -3,9 +3,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/navigator.dart';
+import 'package:toolbox/data/model/sftp/req.dart';
+import 'package:toolbox/data/provider/server.dart';
+import 'package:toolbox/data/provider/sftp.dart';
 import 'package:toolbox/data/res/misc.dart';
+import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/editor.dart';
 import 'package:toolbox/view/widget/input_field.dart';
+import 'package:toolbox/view/widget/picker.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/extension/stringx.dart';
@@ -214,6 +219,51 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
                     child: Text(_s.ok),
                   ),
                 ],
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.upload),
+            title: Text(_s.upload),
+            onTap: () async {
+              context.pop();
+              final remotePath = await showRoundDialog(
+                  context: context,
+                  title: Text(_s.remotePath),
+                  child: Input(
+                    controller: TextEditingController(text: '/'),
+                    onSubmitted: (p0) {
+                      context.pop(p0);
+                    },
+                  ));
+              if (remotePath == null) {
+                showSnackBar(context, Text(_s.fieldMustNotEmpty));
+                return;
+              }
+              final serverProvider = locator<ServerProvider>();
+              final ids = serverProvider.serverOrder;
+              var idx = 0;
+              await showRoundDialog(
+                context: context,
+                title: Text(_s.server),
+                child: Picker(
+                  items: ids.map((e) => Text(e)).toList(),
+                  onSelected: (idx_) => idx = idx_,
+                ),
+                actions: [
+                  TextButton(
+                      onPressed: () => context.pop(), child: Text(_s.ok)),
+                ],
+              );
+              final id = ids[idx];
+              final spi = serverProvider.servers[id]?.spi;
+              if (spi == null) {
+                showSnackBar(context, Text(_s.noResult));
+                return;
+              }
+              locator<SftpProvider>().add(
+                SftpReqItem(spi, remotePath, file.absolute.path),
+                SftpReqType.upload,
               );
             },
           ),

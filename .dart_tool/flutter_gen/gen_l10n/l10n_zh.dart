@@ -402,6 +402,9 @@ class SZh extends S {
   String get pwd => '密码';
 
   @override
+  String get remotePath => '远端路径';
+
+  @override
   String get rename => '重命名';
 
   @override
@@ -516,6 +519,9 @@ class SZh extends S {
   }
 
   @override
+  String get tag => '标签';
+
+  @override
   String get terminal => '终端';
 
   @override
@@ -560,6 +566,9 @@ class SZh extends S {
   String updateTipTooLow(Object newest) {
     return '当前版本过低，请升级至 v1.0.$newest';
   }
+
+  @override
+  String get upload => '上传';
 
   @override
   String get upsideDown => '上下交换';
@@ -997,6 +1006,9 @@ class SZhTw extends SZh {
   String get pwd => '密碼';
 
   @override
+  String get remotePath => '遠端路徑';
+
+  @override
   String get rename => '重命名';
 
   @override
@@ -1111,6 +1123,9 @@ class SZhTw extends SZh {
   }
 
   @override
+  String get tag => '标签';
+
+  @override
   String get terminal => '终端機';
 
   @override
@@ -1155,6 +1170,9 @@ class SZhTw extends SZh {
   String updateTipTooLow(Object newest) {
     return '當前版本過低，請升級至 v1.0.$newest';
   }
+
+  @override
+  String get upload => '上傳';
 
   @override
   String get upsideDown => '上下交換';

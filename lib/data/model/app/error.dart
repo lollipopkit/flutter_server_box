@@ -15,6 +15,21 @@ abstract class Err<T> {
   Err({required this.from, required this.type, this.message});
 }
 
+enum SSHErrType {
+  unknown,
+  noPrivateKey;
+}
+
+class SSHErr extends Err<SSHErrType> {
+  SSHErr({required SSHErrType type, String? message})
+      : super(from: ErrFrom.ssh, type: type, message: message);
+
+  @override
+  String toString() {
+    return 'SSHErr<$type>: $message';
+  }
+}
+
 enum DockerErrType {
   unknown,
   noClient,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class Picker extends StatelessWidget {
   final List<Widget> items;
-  final Function(int idx) onSelected;
+  final void Function(int idx) onSelected;
   final double height;
 
   const Picker({

@@ -846,6 +846,12 @@ abstract class S {
   /// **'Password'**
   String get pwd;
 
+  /// No description provided for @remotePath.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote path'**
+  String get remotePath;
+
   /// No description provided for @rename.
   ///
   /// In en, this message translates to:
@@ -1050,6 +1056,12 @@ abstract class S {
   /// **'Are you sure to delete server [{server}]?'**
   String sureToDeleteServer(Object server);
 
+  /// No description provided for @tag.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get tag;
+
   /// No description provided for @terminal.
   ///
   /// In en, this message translates to:
@@ -1133,6 +1145,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Current version is too low, please update to v1.0.{newest}'**
   String updateTipTooLow(Object newest);
+
+  /// No description provided for @upload.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload'**
+  String get upload;
 
   /// No description provided for @upsideDown.
   ///

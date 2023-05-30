@@ -112,6 +112,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           onChanged: (p0) => setState(() {
             _tags = p0;
           }),
+          s: _s.tag,
         )
       ],
     );

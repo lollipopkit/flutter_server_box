@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/foundation.dart';
+import 'package:toolbox/data/model/app/error.dart';
 
 import '../../data/model/server/server_private_info.dart';
 import '../../data/store/private_key.dart';
@@ -50,6 +51,12 @@ Future<SSHClient> genClient(
     );
   }
   final key = locator<PrivateKeyStore>().get(spi.pubKeyId!);
+  if (key == null) {
+    throw SSHErr(
+      type: SSHErrType.noPrivateKey,
+      message: 'key [${spi.pubKeyId}] not found',
+    );
+  }
   onStatus_(GenSSHClientStatus.key);
   return SSHClient(
     socket,

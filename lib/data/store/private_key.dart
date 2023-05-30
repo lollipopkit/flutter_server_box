@@ -18,7 +18,8 @@ class PrivateKeyStore extends PersistentStore {
     return ps;
   }
 
-  PrivateKeyInfo get(String id) {
+  PrivateKeyInfo? get(String? id) {
+    if (id == null) return null;
     return box.get(id);
   }
 
