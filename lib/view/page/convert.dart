@@ -44,6 +44,9 @@ class _ConvertPageState extends State<ConvertPage>
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
+      appBar: AppBar(
+        title: Text(_s.convert),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 7),
         controller: ScrollController(),

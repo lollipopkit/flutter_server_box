@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/view/widget/input_field.dart';
+import 'package:toolbox/view/widget/tag.dart';
 
 import '../../../core/utils/ui.dart';
 import '../../../data/model/server/snippet.dart';
@@ -27,6 +28,8 @@ class _SnippetEditPageState extends State<SnippetEditPage>
 
   late SnippetProvider _provider;
   late S _s;
+
+  var _tags = <String>[];
 
   @override
   void initState() {
@@ -53,7 +56,8 @@ class _SnippetEditPageState extends State<SnippetEditPage>
                     context.pop();
                   },
                   tooltip: _s.delete,
-                  icon: const Icon(Icons.delete))
+                  icon: const Icon(Icons.delete),
+                )
               : placeholder
         ],
       ),
@@ -72,7 +76,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           showSnackBar(context, Text(_s.fieldMustNotEmpty));
           return;
         }
-        final snippet = Snippet(name, script);
+        final snippet = Snippet(name, script, tags: _tags);
         if (widget.snippet != null) {
           _provider.update(widget.snippet!, snippet);
         } else {
@@ -103,6 +107,12 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           label: _s.snippet,
           icon: Icons.code,
         ),
+        TagEditor(
+          tags: widget.snippet?.tags ?? [],
+          onChanged: (p0) => setState(() {
+            _tags = p0;
+          }),
+        )
       ],
     );
   }
@@ -112,6 +122,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
     if (widget.snippet != null) {
       _nameController.text = widget.snippet!.name;
       _scriptController.text = widget.snippet!.script;
+      _tags = widget.snippet!.tags ?? [];
     }
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/navigator.dart';
+import 'package:toolbox/data/model/app/tab.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/model/server/snippet.dart';
@@ -99,17 +100,15 @@ void setTransparentNavigationBar(BuildContext context) {
   }
 }
 
-String tabTitleName(BuildContext context, int i) {
+String tabTitleName(BuildContext context, AppTab tab) {
   final s = S.of(context)!;
-  switch (i) {
-    case 0:
+  switch (tab) {
+    case AppTab.servers:
       return s.server;
-    case 1:
+    case AppTab.snippet:
       return s.convert;
-    case 2:
+    case AppTab.ping:
       return 'Ping';
-    default:
-      return '';
   }
 }
 

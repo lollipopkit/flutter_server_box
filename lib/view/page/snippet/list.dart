@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 
-import '../../../data/res/ui.dart';
 import '/core/route.dart';
 import '/data/provider/snippet.dart';
 import 'edit.dart';
@@ -27,9 +26,6 @@ class _SnippetListPageState extends State<SnippetListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_s.snippet, style: textSize18),
-      ),
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
@@ -41,8 +37,8 @@ class _SnippetListPageState extends State<SnippetListPage> {
 
   Widget _buildBody() {
     return Consumer<SnippetProvider>(
-      builder: (_, key, __) {
-        if (key.snippets.isEmpty) {
+      builder: (_, provider, __) {
+        if (provider.snippets.isEmpty) {
           return Center(
             child: Text(_s.noSavedSnippet),
           );
@@ -50,19 +46,22 @@ class _SnippetListPageState extends State<SnippetListPage> {
 
         return ListView.builder(
           padding: const EdgeInsets.all(13),
-          itemCount: key.snippets.length,
+          itemCount: provider.snippets.length,
           itemBuilder: (context, idx) {
             return RoundRectCard(
               ListTile(
+                contentPadding: const EdgeInsets.only(left: 23, right: 17),
                 title: Text(
-                  key.snippets[idx].name,
+                  provider.snippets[idx].name,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
-                trailing: TextButton(
+                trailing: IconButton(
                   onPressed: () => AppRoute(
-                          SnippetEditPage(snippet: key.snippets[idx]),
+                          SnippetEditPage(snippet: provider.snippets[idx]),
                           'snippet edit page')
                       .go(context),
-                  child: Text(_s.edit),
+                  icon: const Icon(Icons.edit),
                 ),
               ),
             );

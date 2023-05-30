@@ -29,14 +29,14 @@ import 'setting.dart';
 import 'sftp/downloaded.dart';
 import 'snippet/list.dart';
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key}) : super(key: key);
+class HomePage extends StatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage>
+class _HomePageState extends State<HomePage>
     with
         AutomaticKeepAliveClientMixin,
         AfterLayoutMixin,
@@ -122,7 +122,7 @@ class _MyHomePageState extends State<MyHomePage>
             FocusScope.of(context).requestFocus(FocusNode());
           });
         },
-        children: const [ServerPage(), ConvertPage(), PingPage()],
+        children: const [ServerPage(), SnippetListPage(), PingPage()],
       ),
       bottomNavigationBar: _buildBottomBar(context),
     );
@@ -151,12 +151,14 @@ class _MyHomePageState extends State<MyHomePage>
           selectedIcon: const Icon(Icons.cloud),
         ),
         NavigationDestination(
-          icon: const Icon(Icons.code),
-          label: _s.convert,
+          icon: const Icon(Icons.snippet_folder_outlined),
+          label: _s.snippet,
+          selectedIcon: const Icon(Icons.snippet_folder),
         ),
         const NavigationDestination(
-          icon: Icon(Icons.leak_add),
+          icon: Icon(Icons.network_check_outlined),
           label: 'Ping',
+          selectedIcon: Icon(Icons.network_check),
         ),
       ],
     );
@@ -221,11 +223,11 @@ class _MyHomePageState extends State<MyHomePage>
                   ).go(context),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.snippet_folder),
-                  title: Text(_s.snippet),
+                  leading: const Icon(Icons.code),
+                  title: Text(_s.convert),
                   onTap: () => AppRoute(
-                    const SnippetListPage(),
-                    'snippet list',
+                    const ConvertPage(),
+                    'convert page',
                   ).go(context),
                 ),
                 ListTile(

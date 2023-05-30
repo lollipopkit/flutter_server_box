@@ -291,7 +291,7 @@ class _SettingPageState extends State<SettingPage> {
         .map(
           (e) => PopupMenuItem(
             value: e.index,
-            child: Text(tabTitleName(context, e.index)),
+            child: Text(tabTitleName(context, e)),
           ),
         )
         .toList();
@@ -316,7 +316,7 @@ class _SettingPageState extends State<SettingPage> {
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: _media.size.width * 0.35),
           child: Text(
-            tabTitleName(context, _launchPageIdx),
+            tabTitleName(context, AppTab.values[_launchPageIdx]),
             textAlign: TextAlign.right,
             style: textSize15,
           ),

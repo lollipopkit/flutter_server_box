@@ -15,31 +15,22 @@ class SnippetProvider extends BusyProvider {
   }
 
   void add(Snippet snippet) {
-    if (have(snippet)) return;
     _snippets.add(snippet);
     _store.put(snippet);
     notifyListeners();
   }
 
   void del(Snippet snippet) {
-    if (!have(snippet)) return;
-    _snippets.removeAt(index(snippet));
+    _snippets.remove(snippet);
     _store.delete(snippet);
     notifyListeners();
   }
 
-  int index(Snippet snippet) {
-    return _snippets.indexWhere((e) => e.name == snippet.name);
-  }
-
-  bool have(Snippet snippet) {
-    return index(snippet) != -1;
-  }
-
   void update(Snippet old, Snippet newOne) {
-    if (!have(old)) return;
-    _snippets[index(old)] = newOne;
+    _store.delete(old);
     _store.put(newOne);
+    _snippets.remove(old);
+    _snippets.add(newOne);
     notifyListeners();
   }
 

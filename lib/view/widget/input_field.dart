@@ -9,12 +9,15 @@ class Input extends StatelessWidget {
   final String? hint;
   final String? label;
   final void Function(String)? onSubmitted;
+  final void Function(String)? onChanged;
   final bool obscureText;
   final IconData? icon;
   final TextInputType? type;
   final FocusNode? node;
   final bool autoCorrect;
   final bool suggestiion;
+  final String? errorText;
+  final Widget? prefix;
 
   const Input({
     super.key,
@@ -24,12 +27,15 @@ class Input extends StatelessWidget {
     this.hint,
     this.label,
     this.onSubmitted,
+    this.onChanged,
     this.obscureText = false,
     this.icon,
     this.type,
     this.node,
     this.autoCorrect = false,
     this.suggestiion = false,
+    this.errorText,
+    this.prefix,
   });
   @override
   Widget build(BuildContext context) {
@@ -40,16 +46,18 @@ class Input extends StatelessWidget {
           maxLines: maxLines,
           minLines: minLines,
           onSubmitted: onSubmitted,
+          onChanged: onChanged,
           keyboardType: type,
           focusNode: node,
           autocorrect: autoCorrect,
           enableSuggestions: suggestiion,
           decoration: InputDecoration(
-            label: label != null ? Text(label!) : null,
-            hintText: hint,
-            icon: icon != null ? Icon(icon) : null,
-            border: InputBorder.none,
-          ),
+              label: label != null ? Text(label!) : null,
+              hintText: hint,
+              icon: icon != null ? Icon(icon) : null,
+              border: InputBorder.none,
+              errorText: errorText,
+              prefix: prefix),
           controller: controller,
           obscureText: obscureText,
         ),

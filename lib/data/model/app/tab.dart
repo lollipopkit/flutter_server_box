@@ -1,1 +1,1 @@
-enum AppTab { servers, encode, ping }
+enum AppTab { servers, snippet, ping }
