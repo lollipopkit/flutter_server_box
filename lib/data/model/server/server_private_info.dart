@@ -16,6 +16,8 @@ class ServerPrivateInfo {
   late String pwd;
   @HiveField(5)
   String? pubKeyId;
+  @HiveField(6)
+  List<String>? tags;
 
   late String id;
 
@@ -26,6 +28,7 @@ class ServerPrivateInfo {
     required this.user,
     required this.pwd,
     this.pubKeyId,
+    this.tags,
   }) : id = '$user@$ip:$port';
 
   ServerPrivateInfo.fromJson(Map<String, dynamic> json) {
@@ -36,6 +39,7 @@ class ServerPrivateInfo {
     pwd = json["authorization"].toString();
     pubKeyId = json["pubKeyId"]?.toString();
     id = '$user@$ip:$port';
+    tags = json["tags"]?.cast<String>();
   }
 
   Map<String, dynamic> toJson() {
@@ -46,6 +50,11 @@ class ServerPrivateInfo {
     data["user"] = user;
     data["authorization"] = pwd;
     data["pubKeyId"] = pubKeyId;
+    data["tags"] = tags;
     return data;
+  }
+
+  bool shouldReconnect(ServerPrivateInfo old) {
+    return id != id || pwd != old.pwd || pubKeyId != old.pubKeyId;
   }
 }

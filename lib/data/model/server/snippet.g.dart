@@ -19,20 +19,17 @@ class SnippetAdapter extends TypeAdapter<Snippet> {
     return Snippet(
       fields[0] as String,
       fields[1] as String,
-      tags: (fields[2] as List?)?.cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, Snippet obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(2)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
-      ..write(obj.script)
-      ..writeByte(2)
-      ..write(obj.tags);
+      ..write(obj.script);
   }
 
   @override

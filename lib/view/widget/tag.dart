@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
+import 'package:flutter_gen/gen_l10n/l10n.dart';
 
+import '../../core/utils/ui.dart';
 import '../../data/res/color.dart';
 
 class TagEditor extends StatelessWidget {
   final List<String> tags;
-  final String s;
+  final S s;
   final void Function(List<String>)? onChanged;
 
-  const TagEditor(
-      {super.key, required this.tags, this.onChanged, required this.s});
+  const TagEditor({
+    super.key,
+    required this.tags,
+    this.onChanged,
+    required this.s,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +44,7 @@ class TagEditor extends StatelessWidget {
     List<String> tags,
     Function(String) onTagDelete,
   ) {
-    if (tags.isEmpty) return Text(s);
+    if (tags.isEmpty) return Text(s.tag);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -88,28 +94,24 @@ class TagEditor extends StatelessWidget {
     void Function(List<String>)? onChanged,
   ) {
     final textEditingController = TextEditingController();
-    showDialog(
+    showRoundDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Add Tag'),
-          content: Input(
-            controller: textEditingController,
-            hint: 'Tag',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                final tag = textEditingController.text;
-                tags.add(tag.trim());
-                onChanged?.call(tags);
-                Navigator.pop(context);
-              },
-              child: const Text('Add'),
-            ),
-          ],
-        );
-      },
+      title: Text(s.add),
+      child: Input(
+        controller: textEditingController,
+        hint: s.tag,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            final tag = textEditingController.text;
+            tags.add(tag.trim());
+            onChanged?.call(tags);
+            Navigator.pop(context);
+          },
+          child: Text(s.add),
+        ),
+      ],
     );
   }
 }

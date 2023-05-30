@@ -141,7 +141,7 @@ void showSnippetDialog(
             context.pop();
             AppRoute(const SnippetEditPage(), 'edit snippet').go(context);
           },
-          child: Text(s.addOne),
+          child: Text(s.add),
         )
       ],
     );

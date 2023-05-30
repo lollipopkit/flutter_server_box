@@ -23,7 +23,10 @@ typedef ServersMap = Map<String, Server>;
 class ServerProvider extends BusyProvider {
   final ServersMap _servers = {};
   ServersMap get servers => _servers;
-  final StringOrder serverOrder = [];
+  final StringOrder _serverOrder = [];
+  StringOrder get serverOrder => _serverOrder;
+  final List<String> _tags = [];
+  List<String> get tags => _tags;
 
   final _limiter = TryLimiter();
 
@@ -42,20 +45,35 @@ class ServerProvider extends BusyProvider {
     }
     final serverOrder_ = _settingStore.serverOrder.fetch();
     if (serverOrder_ != null) {
-      serverOrder.addAll(serverOrder_.toSet());
-      if (serverOrder.length != infos.length) {
+      _serverOrder.addAll(serverOrder_.toSet());
+      if (_serverOrder.length != infos.length) {
         final missed = infos
             .where(
-              (e) => !serverOrder.contains(e.id),
+              (e) => !_serverOrder.contains(e.id),
             )
             .map((e) => e.id);
-        serverOrder.addAll(missed);
+        _serverOrder.addAll(missed);
       }
     } else {
-      serverOrder.addAll(_servers.keys);
+      _serverOrder.addAll(_servers.keys);
     }
-    _settingStore.serverOrder.put(serverOrder);
+    _settingStore.serverOrder.put(_serverOrder);
+    _updateTags();
     setBusyState(false);
+    notifyListeners();
+  }
+
+  void _updateTags() {
+    _tags.clear();
+    for (final s in _servers.values) {
+      if (s.spi.tags == null) continue;
+      for (final t in s.spi.tags!) {
+        if (!_tags.contains(t)) {
+          _tags.add(t);
+        }
+      }
+    }
+    _tags.sort();
     notifyListeners();
   }
 
@@ -81,8 +99,7 @@ class ServerProvider extends BusyProvider {
   }
 
   Future<void> startAutoRefresh() async {
-    final duration =
-        locator<SettingStore>().serverStatusUpdateInterval.fetch()!;
+    final duration = _settingStore.serverStatusUpdateInterval.fetch()!;
     if (duration == 0) return;
     stopAutoRefresh();
     _timer = Timer.periodic(Duration(seconds: duration), (_) async {
@@ -126,15 +143,17 @@ class ServerProvider extends BusyProvider {
     _servers[spi.id] = genServer(spi);
     notifyListeners();
     _serverStore.put(spi);
-    serverOrder.add(spi.id);
-    _settingStore.serverOrder.put(serverOrder);
+    _serverOrder.add(spi.id);
+    _settingStore.serverOrder.put(_serverOrder);
+    _updateTags();
     refreshData(spi: spi);
   }
 
   void delServer(String id) {
     _servers.remove(id);
-    serverOrder.remove(id);
-    _settingStore.serverOrder.put(serverOrder);
+    _serverOrder.remove(id);
+    _settingStore.serverOrder.put(_serverOrder);
+    _updateTags();
     notifyListeners();
     _serverStore.delete(id);
   }
@@ -143,13 +162,27 @@ class ServerProvider extends BusyProvider {
     ServerPrivateInfo old,
     ServerPrivateInfo newSpi,
   ) async {
-    _servers.remove(old.id);
-    _serverStore.update(old, newSpi);
-    _servers[newSpi.id] = genServer(newSpi);
-    _servers[newSpi.id]?.client = await genClient(newSpi);
-    serverOrder.update(old.id, newSpi.id);
-    _settingStore.serverOrder.put(serverOrder);
-    await refreshData(spi: newSpi);
+    if (old != newSpi) {
+      _serverStore.update(old, newSpi);
+      _servers[old.id]?.spi = newSpi;
+
+      if (newSpi.id != old.id) {
+        _servers[newSpi.id] = _servers[old.id]!;
+        _servers[newSpi.id]?.spi = newSpi;
+        _servers.remove(old.id);
+        _serverOrder.update(old.id, newSpi.id);
+        _settingStore.serverOrder.put(_serverOrder);
+      }
+
+      // Only reconnect if neccessary
+      if (newSpi.shouldReconnect(old)) {
+        _servers[newSpi.id]?.client = await genClient(newSpi);
+        refreshData(spi: newSpi);
+      }
+
+      // Only update if [spi.tags] changed
+      _updateTags();
+    }
   }
 
   Future<void> _getData(ServerPrivateInfo spi) async {

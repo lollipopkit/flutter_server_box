@@ -217,7 +217,7 @@ class _SFTPPageState extends State<SFTPPage> {
                     _onItemPress(context, file, true);
                   }
                 },
-                onLongPress: () => _onItemPress(context, file, false),
+                onLongPress: () => _onItemPress(context, file, !isDir),
               );
             },
           ),

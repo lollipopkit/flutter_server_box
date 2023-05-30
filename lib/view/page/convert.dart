@@ -69,7 +69,6 @@ class _ConvertPageState extends State<ConvertPage>
           }
         },
         tooltip: _s.convert,
-        heroTag: 'convert fab',
         child: const Icon(Icons.send),
       ),
     );

@@ -11,13 +11,16 @@ class SEn extends S {
   String get aboutThanks => 'Thanks to the following people who participated in.';
 
   @override
+  String get add => 'Add';
+
+  @override
   String get addAServer => 'add a server';
 
   @override
-  String get addOne => 'Add one';
+  String get addPrivateKey => 'Add private key';
 
   @override
-  String get addPrivateKey => 'Add private key';
+  String get all => 'All';
 
   @override
   String get alreadyLastDir => 'Already in last directory.';

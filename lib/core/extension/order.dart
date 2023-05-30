@@ -19,4 +19,16 @@ extension StringOrderX on StringOrder {
     if (index == -1) return;
     this[index] = newId;
   }
+
+  int index(String id) {
+    return indexOf(id);
+  }
+
+  void moveById(String oid, String nid, StoreProperty property) {
+    final index = indexOf(oid);
+    if (index == -1) return;
+    final newIndex = indexOf(nid);
+    if (newIndex == -1) return;
+    move(index, newIndex, property);
+  }
 }

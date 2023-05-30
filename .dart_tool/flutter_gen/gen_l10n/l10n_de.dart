@@ -11,13 +11,16 @@ class SDe extends S {
   String get aboutThanks => 'Vielen Dank an die folgenden Personen, die daran teilgenommen haben.\n';
 
   @override
+  String get add => 'Neu';
+
+  @override
   String get addAServer => 'Server hinzufügen';
 
   @override
-  String get addOne => 'Hinzufügen';
+  String get addPrivateKey => 'Private key hinzufügen';
 
   @override
-  String get addPrivateKey => 'Private key hinzufügen';
+  String get all => 'Alle';
 
   @override
   String get alreadyLastDir => 'Bereits im letzten Verzeichnis.';

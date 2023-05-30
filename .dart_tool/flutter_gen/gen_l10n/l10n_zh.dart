@@ -11,13 +11,16 @@ class SZh extends S {
   String get aboutThanks => '感谢以下参与的各位。';
 
   @override
+  String get add => '新增';
+
+  @override
   String get addAServer => '添加服务器';
 
   @override
-  String get addOne => '前去新增';
+  String get addPrivateKey => '添加一个私钥';
 
   @override
-  String get addPrivateKey => '添加一个私钥';
+  String get all => '所有';
 
   @override
   String get alreadyLastDir => '已经是最上层目录了';
@@ -615,13 +618,16 @@ class SZhTw extends SZh {
   String get aboutThanks => '感謝以下參與的各位。';
 
   @override
+  String get add => '新增';
+
+  @override
   String get addAServer => '新增服務器';
 
   @override
-  String get addOne => '前去新增';
+  String get addPrivateKey => '新增一個私鑰';
 
   @override
-  String get addPrivateKey => '新增一個私鑰';
+  String get all => '所有';
 
   @override
   String get alreadyLastDir => '已經是最上層目錄了';

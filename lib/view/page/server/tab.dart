@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/core/utils/misc.dart';
+import 'package:toolbox/view/widget/fade_in.dart';
 
 import '../../../core/route.dart';
 import '../../../core/utils/ui.dart';
@@ -45,6 +46,8 @@ class _ServerPageState extends State<ServerPage>
   late SettingStore _settingStore;
   late S _s;
 
+  String? _tag;
+
   @override
   void initState() {
     super.initState();
@@ -71,8 +74,52 @@ class _ServerPageState extends State<ServerPage>
           'Add server info page',
         ).go(context),
         tooltip: _s.addAServer,
-        heroTag: 'server page fab',
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildTagsSwitcher(ServerProvider pro) {
+    if (pro.tags.isEmpty) return placeholder;
+    final items = <String?>[null, ...pro.tags];
+    return Container(
+      height: 37,
+      width: _media.size.width,
+      alignment: Alignment.center,
+      color: Colors.transparent,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemBuilder: (context, index) => _buildTagItem(items[index]),
+        itemCount: items.length,
+      ),
+    );
+  }
+
+  Widget _buildTagItem(String? tag) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, right: 5, bottom: 9),
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _tag = tag;
+          });
+        },
+        child: Container(
+            decoration: BoxDecoration(
+              borderRadius: const BorderRadius.all(Radius.circular(20.0)),
+              color: primaryColor.withAlpha(20),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 2.7),
+            child: Center(
+              child: Text(
+                tag == null ? _s.all : '#$tag',
+                style: TextStyle(
+                  color: _tag == tag ? null : _theme.disabledColor,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            )),
       ),
     );
   }
@@ -83,6 +130,9 @@ class _ServerPageState extends State<ServerPage>
           await _serverProvider.refreshData(onlyFailed: true),
       child: Consumer<ServerProvider>(
         builder: (_, pro, __) {
+          if (!pro.tags.contains(_tag)) {
+            _tag = null;
+          }
           if (pro.serverOrder.isEmpty) {
             return Center(
               child: Text(
@@ -91,21 +141,29 @@ class _ServerPageState extends State<ServerPage>
               ),
             );
           }
-          return ReorderableListView(
-            padding: const EdgeInsets.fromLTRB(7, 10, 7, 7),
-            physics: const AlwaysScrollableScrollPhysics(),
-            onReorder: (oldIndex, newIndex) => setState(() {
-              pro.serverOrder.move(
-                oldIndex,
-                newIndex,
-                _settingStore.serverOrder,
-              );
-            }),
-            children: pro.serverOrder
-                .where((e) => pro.servers.containsKey(e))
-                .map((e) => _buildEachServerCard(pro.servers[e]))
-                .toList(),
-          );
+          final filtered = pro.serverOrder
+              .where((e) => pro.servers.containsKey(e))
+              .where((e) =>
+                  _tag == null ||
+                  (pro.servers[e]?.spi.tags?.contains(_tag) ?? false))
+              .toList();
+          return FadeIn(
+              key: ValueKey(_tag),
+              child: ReorderableListView(
+                header: _buildTagsSwitcher(pro),
+                padding: const EdgeInsets.fromLTRB(7, 10, 7, 7),
+                physics: const AlwaysScrollableScrollPhysics(),
+                onReorder: (oldIndex, newIndex) => setState(() {
+                  pro.serverOrder.moveById(
+                    filtered[oldIndex],
+                    filtered[newIndex],
+                    _settingStore.serverOrder,
+                  );
+                }),
+                children: filtered
+                    .map((e) => _buildEachServerCard(pro.servers[e]))
+                    .toList(),
+              ));
         },
       ),
     );

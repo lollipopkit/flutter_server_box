@@ -108,23 +108,29 @@ abstract class S {
   /// **'Thanks to the following people who participated in.'**
   String get aboutThanks;
 
+  /// No description provided for @add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get add;
+
   /// No description provided for @addAServer.
   ///
   /// In en, this message translates to:
   /// **'add a server'**
   String get addAServer;
 
-  /// No description provided for @addOne.
-  ///
-  /// In en, this message translates to:
-  /// **'Add one'**
-  String get addOne;
-
   /// No description provided for @addPrivateKey.
   ///
   /// In en, this message translates to:
   /// **'Add private key'**
   String get addPrivateKey;
+
+  /// No description provided for @all.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get all;
 
   /// No description provided for @alreadyLastDir.
   ///

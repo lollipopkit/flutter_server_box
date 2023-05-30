@@ -76,7 +76,6 @@ class _PingPageState extends State<PingPage>
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        heroTag: 'ping fab',
         onPressed: () {
           try {
             doPing();
