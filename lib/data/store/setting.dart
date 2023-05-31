@@ -9,11 +9,16 @@ class SettingStore extends PersistentStore {
         defaultValue: defaultPrimaryColor.value,
       );
 
-  StoreProperty<int> get serverStatusUpdateInterval =>
-      property('serverStatusUpdateInterval', defaultValue: defaultUpdateInterval,);
+  StoreProperty<int> get serverStatusUpdateInterval => property(
+        'serverStatusUpdateInterval',
+        defaultValue: defaultUpdateInterval,
+      );
 
   // Lanch page idx
-  StoreProperty<int> get launchPage => property('launchPage', defaultValue: defaultLaunchPageIdx,);
+  StoreProperty<int> get launchPage => property(
+        'launchPage',
+        defaultValue: defaultLaunchPageIdx,
+      );
 
   // Version of store db
   StoreProperty<int> get storeVersion =>

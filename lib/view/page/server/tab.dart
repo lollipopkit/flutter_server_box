@@ -2,12 +2,12 @@ import 'package:after_layout/after_layout.dart';
 import 'package:circle_chart/circle_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/core/utils/misc.dart';
-import 'package:toolbox/view/widget/fade_in.dart';
 
 import '../../../core/route.dart';
 import '../../../core/utils/ui.dart';
@@ -148,44 +148,50 @@ class _ServerPageState extends State<ServerPage>
                   _tag == null ||
                   (pro.servers[e]?.spi.tags?.contains(_tag) ?? false))
               .toList();
-          return FadeIn(
-              key: ValueKey(_tag),
-              child: ReorderableListView(
-                header: _buildTagsSwitcher(pro),
-                padding: const EdgeInsets.fromLTRB(7, 10, 7, 7),
-                physics: const AlwaysScrollableScrollPhysics(),
-                onReorder: (oldIndex, newIndex) => setState(() {
-                  pro.serverOrder.moveById(
-                    filtered[oldIndex],
-                    filtered[newIndex],
-                    _settingStore.serverOrder,
-                  );
-                }),
-                children: filtered
-                    .map((e) => _buildEachServerCard(pro.servers[e]))
-                    .toList(),
-              ));
+          return AnimationLimiter(
+            key: ValueKey(_tag),
+              child: ReorderableListView.builder(
+            header: _buildTagsSwitcher(pro),
+            padding: const EdgeInsets.fromLTRB(7, 10, 7, 7),
+            physics: const AlwaysScrollableScrollPhysics(),
+            onReorder: (oldIndex, newIndex) => setState(() {
+              pro.serverOrder.moveById(
+                filtered[oldIndex],
+                filtered[newIndex],
+                _settingStore.serverOrder,
+              );
+            }),
+            itemBuilder: (context, index) =>
+                _buildEachServerCard(pro.servers[filtered[index]], index),
+            itemCount: filtered.length,
+          ));
         },
       ),
     );
   }
 
-  Widget _buildEachServerCard(Server? si) {
+  Widget _buildEachServerCard(Server? si, int index) {
     if (si == null) {
       return placeholder;
     }
     return GestureDetector(
-      key: Key(si.spi.id),
+      key: Key(si.spi.id + (_tag ?? '')),
       onTap: () => AppRoute(
         ServerDetailPage(si.spi.id),
         'server detail page',
       ).go(context),
-      child: RoundRectCard(
-        Padding(
-          padding: const EdgeInsets.all(13),
-          child: _buildRealServerCard(si.status, si.state, si.spi),
-        ),
-      ),
+      child: AnimationConfiguration.staggeredList(
+          position: index,
+          duration: const Duration(milliseconds: 375),
+          child: SlideAnimation(
+              verticalOffset: 50.0,
+              child: FadeInAnimation(
+                  child: RoundRectCard(
+                Padding(
+                  padding: const EdgeInsets.all(13),
+                  child: _buildRealServerCard(si.status, si.state, si.spi),
+                ),
+              )))),
     );
   }
 

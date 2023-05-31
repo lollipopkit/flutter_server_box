@@ -50,8 +50,11 @@ class TagEditor extends StatelessWidget {
           if (index < tags.length) {
             return _buildTagItem(context, tags[index], false);
           } else if (index > tags.length) {
-            return _buildTagItem(context,
-                tagSuggestions![index - tags.length - 1], true,);
+            return _buildTagItem(
+              context,
+              tagSuggestions![index - tags.length - 1],
+              true,
+            );
           }
           return const VerticalDivider();
         },
