@@ -73,6 +73,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       onPressed: () {
         showRoundDialog(
           context: context,
+          title: Text(_s.attention),
           child: Text(_s.sureToDeleteServer(widget.spi!.name)),
           actions: [
             TextButton(
@@ -151,6 +152,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
               _tags = p0;
             }),
             s: _s,
+            tagSuggestions: [..._serverProvider.tags],
           ),
           width7,
           Row(

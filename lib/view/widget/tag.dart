@@ -10,22 +10,23 @@ class TagEditor extends StatelessWidget {
   final List<String> tags;
   final S s;
   final void Function(List<String>)? onChanged;
+  final void Function(String)? onTapTag;
+  final List<String>? tagSuggestions;
 
   const TagEditor({
     super.key,
     required this.tags,
-    this.onChanged,
     required this.s,
+    this.onChanged,
+    this.onTapTag,
+    this.tagSuggestions,
   });
 
   @override
   Widget build(BuildContext context) {
     return RoundRectCard(ListTile(
       leading: const Icon(Icons.tag),
-      title: _buildTags(
-        tags,
-        _onTapDelete,
-      ),
+      title: _buildTags(tags),
       trailing: InkWell(
         child: const Icon(Icons.add),
         onTap: () {
@@ -35,54 +36,61 @@ class TagEditor extends StatelessWidget {
     ));
   }
 
-  void _onTapDelete(String tag) {
-    tags.remove(tag);
-    onChanged?.call(tags);
-  }
-
-  Widget _buildTags(
-    List<String> tags,
-    Function(String) onTagDelete,
-  ) {
-    if (tags.isEmpty) return Text(s.tag);
-    return SingleChildScrollView(
+  Widget _buildTags(List<String> tags) {
+    tagSuggestions?.removeWhere((element) => tags.contains(element));
+    final suggestionLen = tagSuggestions?.length ?? 0;
+    final counts = tags.length + suggestionLen + (suggestionLen == 0 ? 0 : 1);
+    if (counts == 0) return Text(s.tag);
+    return ConstrainedBox(constraints: BoxConstraints(maxHeight: 27), child: ListView.builder(
       scrollDirection: Axis.horizontal,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: tags.map((e) => _buildTagItem(e, onTagDelete)).toList(),
-      ),
-    );
+      itemBuilder: (context, index) {
+        if (index < tags.length) {
+          return _buildTagItem(tags[index], false);
+        } else if (index > tags.length) {
+          return _buildTagItem(tagSuggestions![index - tags.length - 1], true);
+        }
+        return const VerticalDivider();
+      },
+      itemCount: counts,
+    ),);
   }
 
-  Widget _buildTagItem(String tag, Function(String) onTagDelete) {
+  Widget _buildTagItem(String tag, bool isAdd) {
     return Padding(
-      padding: const EdgeInsets.only(right: 7),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: const BorderRadius.all(Radius.circular(20.0)),
-          color: primaryColor,
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              '#$tag',
-              style: const TextStyle(color: Colors.white),
-            ),
-            const SizedBox(width: 4.0),
-            InkWell(
-              child: const Icon(
-                Icons.cancel,
-                size: 14.0,
-                color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 3),
+      child: GestureDetector(
+        onTap: () => onTapTag?.call(tag),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: const BorderRadius.all(Radius.circular(20.0)),
+            color: primaryColor,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '#$tag',
+                style: const TextStyle(color: Colors.white),
               ),
-              onTap: () {
-                onTagDelete(tag);
-              },
-            )
-          ],
+              const SizedBox(width: 4.0),
+              InkWell(
+                child: Icon(
+                  isAdd ? Icons.add_circle : Icons.cancel,
+                  size: 14.0,
+                  color: Colors.white,
+                ),
+                onTap: () {
+                  if (isAdd) {
+                    tags.add(tag);
+                  } else {
+                    tags.remove(tag);
+                  }
+                  onChanged?.call(tags);
+                },
+              )
+            ],
+          ),
         ),
       ),
     );

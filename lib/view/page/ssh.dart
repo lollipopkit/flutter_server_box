@@ -96,6 +96,8 @@ class _SSHPageState extends State<SSHPage> {
   }
 
   Widget _buildBody() {
+    final keyboardType =
+        isIOS ? TextInputType.emailAddress : TextInputType.visiblePassword;
     return SizedBox(
       height: _media.size.height -
           _virtualKeyboardHeight -
@@ -104,6 +106,7 @@ class _SSHPageState extends State<SSHPage> {
       child: TerminalView(
         _terminal,
         controller: _terminalController,
+        keyboardType: keyboardType,
         textStyle: _terminalStyle,
         theme: _terminalTheme,
         deleteDetection: isIOS,
