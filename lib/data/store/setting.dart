@@ -1,19 +1,19 @@
-import 'package:flutter/material.dart';
 import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/core/utils/platform.dart';
-import 'package:toolbox/data/res/misc.dart';
+
+import '../res/default.dart';
 
 class SettingStore extends PersistentStore {
   StoreProperty<int> get primaryColor => property(
         'primaryColor',
-        defaultValue: const Color.fromARGB(255, 145, 58, 31).value,
+        defaultValue: defaultPrimaryColor.value,
       );
 
   StoreProperty<int> get serverStatusUpdateInterval =>
-      property('serverStatusUpdateInterval', defaultValue: 3);
+      property('serverStatusUpdateInterval', defaultValue: defaultUpdateInterval,);
 
   // Lanch page idx
-  StoreProperty<int> get launchPage => property('launchPage', defaultValue: 0);
+  StoreProperty<int> get launchPage => property('launchPage', defaultValue: defaultLaunchPageIdx,);
 
   // Version of store db
   StoreProperty<int> get storeVersion =>
@@ -57,14 +57,7 @@ class SettingStore extends PersistentStore {
 
   // Server detail disk ignore path
   StoreProperty<List<String>> get diskIgnorePath =>
-      property('diskIgnorePath', defaultValue: [
-        'udev',
-        'tmpfs',
-        'devtmpfs',
-        'overlay',
-        'run',
-        'none',
-      ]);
+      property('diskIgnorePath', defaultValue: defaultDiskIgnorePath);
 
   // Locale
   StoreProperty<String> get locale => property('locale', defaultValue: null);
@@ -75,5 +68,5 @@ class SettingStore extends PersistentStore {
 
   // Editor theme
   StoreProperty<String> get editorTheme =>
-      property('editorTheme', defaultValue: 'monokai');
+      property('editorTheme', defaultValue: defaultEditorTheme);
 }

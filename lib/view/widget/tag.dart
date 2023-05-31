@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
@@ -10,7 +11,7 @@ class TagEditor extends StatelessWidget {
   final List<String> tags;
   final S s;
   final void Function(List<String>)? onChanged;
-  final void Function(String)? onTapTag;
+  final void Function(String old, String new_)? onRenameTag;
   final List<String>? tagSuggestions;
 
   const TagEditor({
@@ -18,7 +19,7 @@ class TagEditor extends StatelessWidget {
     required this.tags,
     required this.s,
     this.onChanged,
-    this.onTapTag,
+    this.onRenameTag,
     this.tagSuggestions,
   });
 
@@ -26,7 +27,7 @@ class TagEditor extends StatelessWidget {
   Widget build(BuildContext context) {
     return RoundRectCard(ListTile(
       leading: const Icon(Icons.tag),
-      title: _buildTags(tags),
+      title: _buildTags(context, tags),
       trailing: InkWell(
         child: const Icon(Icons.add),
         onTap: () {
@@ -36,30 +37,34 @@ class TagEditor extends StatelessWidget {
     ));
   }
 
-  Widget _buildTags(List<String> tags) {
+  Widget _buildTags(BuildContext context, List<String> tags) {
     tagSuggestions?.removeWhere((element) => tags.contains(element));
     final suggestionLen = tagSuggestions?.length ?? 0;
     final counts = tags.length + suggestionLen + (suggestionLen == 0 ? 0 : 1);
     if (counts == 0) return Text(s.tag);
-    return ConstrainedBox(constraints: BoxConstraints(maxHeight: 27), child: ListView.builder(
-      scrollDirection: Axis.horizontal,
-      itemBuilder: (context, index) {
-        if (index < tags.length) {
-          return _buildTagItem(tags[index], false);
-        } else if (index > tags.length) {
-          return _buildTagItem(tagSuggestions![index - tags.length - 1], true);
-        }
-        return const VerticalDivider();
-      },
-      itemCount: counts,
-    ),);
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 27),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemBuilder: (context, index) {
+          if (index < tags.length) {
+            return _buildTagItem(context, tags[index], false);
+          } else if (index > tags.length) {
+            return _buildTagItem(context,
+                tagSuggestions![index - tags.length - 1], true,);
+          }
+          return const VerticalDivider();
+        },
+        itemCount: counts,
+      ),
+    );
   }
 
-  Widget _buildTagItem(String tag, bool isAdd) {
+  Widget _buildTagItem(BuildContext context, String tag, bool isAdd) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 3),
       child: GestureDetector(
-        onTap: () => onTapTag?.call(tag),
+        onTap: () => _showRenameDialog(context, tag),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: const BorderRadius.all(Radius.circular(20.0)),
@@ -118,6 +123,29 @@ class TagEditor extends StatelessWidget {
             Navigator.pop(context);
           },
           child: Text(s.add),
+        ),
+      ],
+    );
+  }
+
+  void _showRenameDialog(BuildContext context, String tag) {
+    final textEditingController = TextEditingController(text: tag);
+    showRoundDialog(
+      context: context,
+      title: Text(s.rename),
+      child: Input(
+        controller: textEditingController,
+        hint: s.tag,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            final newTag = textEditingController.text.trim();
+            if (newTag.isEmpty) return;
+            onRenameTag?.call(tag, newTag);
+            context.pop();
+          },
+          child: Text(s.rename),
         ),
       ],
     );

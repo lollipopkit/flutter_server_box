@@ -15,14 +15,3 @@ const maxDebugLogLines = 100;
 /// Method Channels
 const pkgName = 'tech.lolli.toolbox';
 const bgRunChannel = MethodChannel('$pkgName/app_retain');
-
-// default server details page cards order
-const defaultDetailCardOrder = [
-  'uptime',
-  'cpu',
-  'mem',
-  'swap',
-  'disk',
-  'net',
-  'temp'
-];

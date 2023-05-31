@@ -65,6 +65,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
 
   Widget _buildFAB() {
     return FloatingActionButton(
+      heroTag: 'snippet',
       child: const Icon(Icons.send),
       onPressed: () {
         final name = _nameController.text;

@@ -74,6 +74,7 @@ class _ServerPageState extends State<ServerPage>
           'Add server info page',
         ).go(context),
         tooltip: _s.addAServer,
+        heroTag: 'server',
         child: const Icon(Icons.add),
       ),
     );

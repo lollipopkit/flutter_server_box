@@ -7,7 +7,6 @@ import 'package:toolbox/data/model/server/disk.dart';
 import 'package:toolbox/data/model/server/dist.dart';
 import 'package:toolbox/data/model/server/memory.dart';
 import 'package:toolbox/data/model/server/temp.dart';
-import 'package:toolbox/data/res/misc.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../data/model/server/net_speed.dart';
@@ -15,6 +14,7 @@ import '../../../data/model/server/server.dart';
 import '../../../data/model/server/server_status.dart';
 import '../../../data/provider/server.dart';
 import '../../../data/res/color.dart';
+import '../../../data/res/default.dart';
 import '../../../data/res/ui.dart';
 import '../../../data/store/setting.dart';
 import '../../../locator.dart';

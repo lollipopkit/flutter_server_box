@@ -77,6 +77,19 @@ class ServerProvider extends BusyProvider {
     notifyListeners();
   }
 
+  void renameTag(String old, String new_) {
+    for (final s in _servers.values) {
+      if (s.spi.tags == null) continue;
+      for (var i = 0; i < s.spi.tags!.length; i++) {
+        if (s.spi.tags![i] == old) {
+          s.spi.tags![i] = new_;
+        }
+      }
+      _serverStore.update(s.spi, s.spi);
+    }
+    _updateTags();
+  }
+
   Server genServer(ServerPrivateInfo spi) {
     return Server(spi, initStatus, null, ServerState.disconnected);
   }

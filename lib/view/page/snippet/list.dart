@@ -28,9 +28,10 @@ class _SnippetListPageState extends State<SnippetListPage> {
     return Scaffold(
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'snippet',
         child: const Icon(Icons.add),
         onPressed: () =>
-            AppRoute(const SnippetEditPage(), 'snippet edit page').go(context),
+            AppRoute(const SnippetEditPage(), 'snippet edit page',).go(context),
       ),
     );
   }

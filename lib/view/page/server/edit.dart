@@ -153,6 +153,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             }),
             s: _s,
             tagSuggestions: [..._serverProvider.tags],
+            onRenameTag: _serverProvider.renameTag,
           ),
           width7,
           Row(
@@ -225,6 +226,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
 
   Widget _buildFAB() {
     return FloatingActionButton(
+      heroTag: 'server',
       child: const Icon(Icons.send),
       onPressed: () async {
         if (_ipController.text == '') {
