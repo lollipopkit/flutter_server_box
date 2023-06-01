@@ -142,7 +142,6 @@ class _HomePageState extends State<HomePage>
           );
         });
       },
-      elevation: 0.47,
       labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
       destinations: [
         NavigationDestination(

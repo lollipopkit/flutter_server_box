@@ -8,9 +8,7 @@ const appName = 'ServerBox';
 
 const buildDataFilePath = 'lib/data/res/build_data.dart';
 const apkPath = 'build/app/outputs/flutter-apk/app-release.apk';
-const ipaPath = 'build/ios/ipa/$appName.ipa';
 const appleXCConfigPath = 'Runner.xcodeproj/project.pbxproj';
-const releaseDirPath = './release';
 
 var regAppleProjectVer = RegExp(r'CURRENT_PROJECT_VERSION = .+;');
 var regAppleMarketVer = RegExp(r'MARKETING_VERSION = .+');
@@ -103,8 +101,7 @@ void flutterRun(String? mode) {
       mode: ProcessStartMode.inheritStdio, runInShell: true);
 }
 
-Future<void> flutterBuild(
-    String source, String target, String buildType) async {
+Future<void> flutterBuild(String buildType) async {
   final args = [
     'build',
     buildType,
@@ -126,20 +123,7 @@ Future<void> flutterBuild(
   final buildResult = await fvmRun(['flutter', ...args]);
   final exitCode = buildResult.exitCode;
 
-  if (exitCode == 0) {
-    target = target.replaceFirst('build', build.toString());
-    target = '$releaseDirPath/$target';
-    print('Copying from $source to $target');
-    if (isAndroid) {
-      await File(source).copy(target);
-    } else {
-      final result = await Process.run('cp', ['-r', source, target]);
-      if (result.exitCode != 0) {
-        print(result.stderr);
-        exit(1);
-      }
-    }
-  } else {
+  if (exitCode != 0) {
     print(buildResult.stdout);
     print(buildResult.stderr);
     print('\nBuild failed with exit code $exitCode');
@@ -148,15 +132,15 @@ Future<void> flutterBuild(
 }
 
 Future<void> flutterBuildIOS() async {
-  await flutterBuild(ipaPath, '${appName}_ios_build.ipa', 'ios');
+  await flutterBuild('ipa');
 }
 
 Future<void> flutterBuildMacOS() async {
-  await flutterBuild(ipaPath, '${appName}_macos_build.ipa', 'macos');
+  await flutterBuild('macos');
 }
 
 Future<void> flutterBuildAndroid() async {
-  await flutterBuild(apkPath, '${appName}_build_Arm64.apk', 'apk');
+  await flutterBuild('apk');
   await killJava();
 }
 

@@ -149,22 +149,22 @@ class _ServerPageState extends State<ServerPage>
                   (pro.servers[e]?.spi.tags?.contains(_tag) ?? false))
               .toList();
           return AnimationLimiter(
-            key: ValueKey(_tag),
+              key: ValueKey(_tag),
               child: ReorderableListView.builder(
-            header: _buildTagsSwitcher(pro),
-            padding: const EdgeInsets.fromLTRB(7, 10, 7, 7),
-            physics: const AlwaysScrollableScrollPhysics(),
-            onReorder: (oldIndex, newIndex) => setState(() {
-              pro.serverOrder.moveById(
-                filtered[oldIndex],
-                filtered[newIndex],
-                _settingStore.serverOrder,
-              );
-            }),
-            itemBuilder: (context, index) =>
-                _buildEachServerCard(pro.servers[filtered[index]], index),
-            itemCount: filtered.length,
-          ));
+                header: _buildTagsSwitcher(pro),
+                padding: const EdgeInsets.fromLTRB(7, 10, 7, 7),
+                physics: const AlwaysScrollableScrollPhysics(),
+                onReorder: (oldIndex, newIndex) => setState(() {
+                  pro.serverOrder.moveById(
+                    filtered[oldIndex],
+                    filtered[newIndex],
+                    _settingStore.serverOrder,
+                  );
+                }),
+                itemBuilder: (context, index) =>
+                    _buildEachServerCard(pro.servers[filtered[index]], index),
+                itemCount: filtered.length,
+              ));
         },
       ),
     );

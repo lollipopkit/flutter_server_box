@@ -23,9 +23,16 @@ class MyApp extends StatelessWidget {
       valueListenable: _setting.themeMode.listenable(),
       builder: (_, tMode, __) {
         final ok = tMode >= 0 && tMode <= ThemeMode.values.length - 1;
-        final themeMode = ok ? ThemeMode.values[tMode] : ThemeMode.system;
+        // Issue #57
+        // if not [ok] -> [AMOLED] mode, use [ThemeMode.dark]
+        final themeMode = ok ? ThemeMode.values[tMode] : ThemeMode.dark;
         final localeStr = _setting.locale.fetch();
         final locale = localeStr?.toLocale;
+        final darkTheme = ThemeData(
+          useMaterial3: true,
+          brightness: Brightness.dark,
+          colorSchemeSeed: primaryColor,
+        );
 
         return MaterialApp(
           debugShowCheckedModeBanner: false,
@@ -38,11 +45,30 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
             colorSchemeSeed: primaryColor,
           ),
-          darkTheme: ThemeData(
-            useMaterial3: true,
-            brightness: Brightness.dark,
-            colorSchemeSeed: primaryColor,
-          ),
+          darkTheme: ok
+              ? darkTheme
+              : darkTheme.copyWith(
+                  scaffoldBackgroundColor: Colors.black,
+                  dialogBackgroundColor: Colors.black,
+                  drawerTheme: const DrawerThemeData(
+                    backgroundColor: Colors.black,
+                  ),
+                  appBarTheme: const AppBarTheme(
+                    backgroundColor: Colors.black,
+                  ),
+                  bottomSheetTheme: const BottomSheetThemeData(
+                    backgroundColor: Colors.black,
+                  ),
+                  listTileTheme: const ListTileThemeData(
+                    tileColor: Colors.black12,
+                  ),
+                  cardTheme: const CardTheme(
+                    color: Colors.black12,
+                  ),
+                  navigationBarTheme: const NavigationBarThemeData(
+                    backgroundColor: Colors.black,
+                  ),
+                ),
           home: const HomePage(),
         );
       },

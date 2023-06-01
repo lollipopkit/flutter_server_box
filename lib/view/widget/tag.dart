@@ -66,8 +66,16 @@ class TagEditor extends StatelessWidget {
   Widget _buildTagItem(BuildContext context, String tag, bool isAdd) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 3),
-      child: GestureDetector(
-        onTap: () => _showRenameDialog(context, tag),
+      child: InkWell(
+        onTap: () {
+          if (isAdd) {
+            tags.add(tag);
+          } else {
+            tags.remove(tag);
+          }
+          onChanged?.call(tags);
+        },
+        onLongPress: () => _showRenameDialog(context, tag),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: const BorderRadius.all(Radius.circular(20.0)),
@@ -82,21 +90,11 @@ class TagEditor extends StatelessWidget {
                 style: const TextStyle(color: Colors.white),
               ),
               const SizedBox(width: 4.0),
-              InkWell(
-                child: Icon(
-                  isAdd ? Icons.add_circle : Icons.cancel,
-                  size: 14.0,
-                  color: Colors.white,
-                ),
-                onTap: () {
-                  if (isAdd) {
-                    tags.add(tag);
-                  } else {
-                    tags.remove(tag);
-                  }
-                  onChanged?.call(tags);
-                },
-              )
+              Icon(
+                isAdd ? Icons.add_circle : Icons.cancel,
+                size: 14.0,
+                color: Colors.white,
+              ),
             ],
           ),
         ),
