@@ -24,7 +24,9 @@ import '../../widget/fade_in.dart';
 import 'downloading.dart';
 
 class SFTPDownloadedPage extends StatefulWidget {
-  const SFTPDownloadedPage({Key? key}) : super(key: key);
+  final bool isPickFile;
+  const SFTPDownloadedPage({Key? key, this.isPickFile = false})
+      : super(key: key);
 
   @override
   State<SFTPDownloadedPage> createState() => _SFTPDownloadedPageState();
@@ -128,9 +130,9 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
                 .substring(0, stat.modified.toString().length - 4),
             style: grey,
           ),
-          onTap: () {
+          onTap: () async {
             if (!isDir) {
-              showFileActionDialog(file);
+              await showFileActionDialog(file);
               return;
             }
             _path!.update(fileName);
@@ -141,8 +143,24 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
     );
   }
 
-  void showFileActionDialog(FileSystemEntity file) {
+  Future<void> showFileActionDialog(FileSystemEntity file) async {
     final fileName = file.path.split('/').last;
+    if (widget.isPickFile) {
+      await showRoundDialog(
+          context: context,
+          title: Text(_s.pickFile),
+          child: Text(fileName),
+          actions: [
+            TextButton(
+              onPressed: () {
+                context.pop();
+                context.pop(file.path);
+              },
+              child: Text(_s.ok),
+            ),
+          ]);
+      return;
+    }
     showRoundDialog(
       context: context,
       child: Column(

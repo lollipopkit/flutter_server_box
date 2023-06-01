@@ -8,6 +8,7 @@ import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/extension/sftpfile.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/view/page/editor.dart';
+import 'package:toolbox/view/page/sftp/downloaded.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/extension/stringx.dart';
@@ -104,12 +105,38 @@ class _SFTPPageState extends State<SFTPPage> {
                 ),
                 _buildAddBtn(),
                 _buildGotoBtn(),
+                _buildUploadBtn(),
               ],
             )
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildUploadBtn() {
+    return IconButton(
+        onPressed: () async {
+          final path = await AppRoute(
+                  const SFTPDownloadedPage(
+                    isPickFile: true,
+                  ),
+                  'sftp dled pick')
+              .go<String>(context);
+          if (path == null) {
+            return;
+          }
+          final remotePath = _status.path?.path;
+          if (remotePath == null) {
+            showSnackBar(context, const Text('remote path is null'));
+            return;
+          }
+          locator<SftpProvider>().add(
+            SftpReqItem(widget.spi, remotePath, path),
+            SftpReqType.upload,
+          );
+        },
+        icon: const Icon(Icons.upload_file));
   }
 
   Widget _buildAddBtn() {
@@ -534,7 +561,7 @@ class _SFTPPageState extends State<SFTPPage> {
 
   String _getRemotePath(SftpName name) {
     final prePath = _status.path!.path;
-    return prePath + (prePath.endsWith('/') ? '' : '/') + name.filename;
+    return pathJoin(prePath, name.filename);
   }
 
   Future<void> _listDir({String? path, SSHClient? client}) async {

@@ -73,3 +73,7 @@ String getTime(int? unixMill) {
       .toString()
       .replaceFirst('.000', '');
 }
+
+String pathJoin(String path1, String path2) {
+  return path1 + (path1.endsWith('/') ? '' : '/') + path2;
+}

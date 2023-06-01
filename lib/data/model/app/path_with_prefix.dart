@@ -1,3 +1,5 @@
+import 'package:toolbox/core/utils/misc.dart';
+
 class PathWithPrefix {
   final String _prefixPath;
   String _path = '/';
@@ -19,7 +21,7 @@ class PathWithPrefix {
       _path = '/';
       return;
     }
-    _path = _path + (_path.endsWith('/') ? '' : '/') + newPath;
+    _path = pathJoin(_path, newPath);
   }
 
   bool undo() {

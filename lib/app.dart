@@ -56,6 +56,9 @@ class MyApp extends StatelessWidget {
                   appBarTheme: const AppBarTheme(
                     backgroundColor: Colors.black,
                   ),
+                  dialogTheme: const DialogTheme(
+                    backgroundColor: Colors.black,
+                  ),
                   bottomSheetTheme: const BottomSheetThemeData(
                     backgroundColor: Colors.black,
                   ),
@@ -67,6 +70,9 @@ class MyApp extends StatelessWidget {
                   ),
                   navigationBarTheme: const NavigationBarThemeData(
                     backgroundColor: Colors.black,
+                  ),
+                  popupMenuTheme: const PopupMenuThemeData(
+                    color: Colors.black,
                   ),
                 ),
           home: const HomePage(),

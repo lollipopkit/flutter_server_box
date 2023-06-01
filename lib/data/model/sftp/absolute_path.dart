@@ -1,3 +1,5 @@
+import 'package:toolbox/core/utils/misc.dart';
+
 class AbsolutePath {
   String _path;
   String get path => _path;
@@ -22,7 +24,7 @@ class AbsolutePath {
       _path = newPath;
       return;
     }
-    _path = _path + (_path.endsWith('/') ? '' : '/') + newPath;
+    _path = pathJoin(_path, newPath);
   }
 
   bool undo() {
