@@ -26,7 +26,7 @@ import 'ping.dart';
 import 'private_key/list.dart';
 import 'server/tab.dart';
 import 'setting.dart';
-import 'sftp/downloaded.dart';
+import 'sftp/local.dart';
 import 'snippet/list.dart';
 
 class HomePage extends StatefulWidget {

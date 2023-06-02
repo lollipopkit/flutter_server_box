@@ -360,12 +360,6 @@ abstract class S {
   /// **'Download'**
   String get download;
 
-  /// No description provided for @downloadFinished.
-  ///
-  /// In en, this message translates to:
-  /// **'Download finished'**
-  String get downloadFinished;
-
   /// No description provided for @downloadStatus.
   ///
   /// In en, this message translates to:
@@ -462,6 +456,12 @@ abstract class S {
   /// **'Files'**
   String get files;
 
+  /// No description provided for @finished.
+  ///
+  /// In en, this message translates to:
+  /// **'Finished'**
+  String get finished;
+
   /// No description provided for @font.
   ///
   /// In en, this message translates to:
@@ -527,6 +527,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Import'**
   String get import;
+
+  /// No description provided for @inner.
+  ///
+  /// In en, this message translates to:
+  /// **'Inner'**
+  String get inner;
 
   /// No description provided for @inputDomainHere.
   ///
@@ -665,6 +671,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'min'**
   String get min;
+
+  /// No description provided for @mission.
+  ///
+  /// In en, this message translates to:
+  /// **'Mission'**
+  String get mission;
 
   /// No description provided for @ms.
   ///
@@ -1061,6 +1073,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Are you sure to delete server [{server}]?'**
   String sureToDeleteServer(Object server);
+
+  /// No description provided for @system.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get system;
 
   /// No description provided for @tag.
   ///

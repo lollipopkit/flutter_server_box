@@ -23,7 +23,7 @@ import '../../data/res/terminal.dart';
 import '../../data/res/virtual_key.dart';
 import '../../data/store/setting.dart';
 import '../../locator.dart';
-import 'sftp/view.dart';
+import 'sftp/remote.dart';
 
 class SSHPage extends StatefulWidget {
   final ServerPrivateInfo spi;

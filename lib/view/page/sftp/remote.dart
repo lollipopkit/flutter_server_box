@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
@@ -8,7 +8,7 @@ import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/extension/sftpfile.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/view/page/editor.dart';
-import 'package:toolbox/view/page/sftp/downloaded.dart';
+import 'package:toolbox/view/page/sftp/local.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/extension/stringx.dart';
@@ -24,12 +24,11 @@ import '../../../data/provider/server.dart';
 import '../../../data/provider/sftp.dart';
 import '../../../data/res/path.dart';
 import '../../../data/res/ui.dart';
-import '../../../data/store/private_key.dart';
 import '../../../locator.dart';
 import '../../widget/fade_in.dart';
 import '../../widget/input_field.dart';
 import '../../widget/two_line_text.dart';
-import 'downloading.dart';
+import 'mission.dart';
 
 class SFTPPage extends StatefulWidget {
   final ServerPrivateInfo spi;
@@ -43,6 +42,8 @@ class SFTPPage extends StatefulWidget {
 class _SFTPPageState extends State<SFTPPage> {
   final SftpBrowserStatus _status = SftpBrowserStatus();
   final ScrollController _scrollController = ScrollController();
+
+  final _sftp = locator<SftpProvider>();
 
   late S _s;
 
@@ -117,12 +118,38 @@ class _SFTPPageState extends State<SFTPPage> {
   Widget _buildUploadBtn() {
     return IconButton(
         onPressed: () async {
-          final path = await AppRoute(
-                  const SFTPDownloadedPage(
-                    isPickFile: true,
+          final idx = await showRoundDialog(
+              context: context,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.open_in_new),
+                    title: Text(_s.system),
+                    onTap: () => context.pop(1),
                   ),
-                  'sftp dled pick')
-              .go<String>(context);
+                  ListTile(
+                    leading: const Icon(Icons.folder),
+                    title: Text(_s.inner),
+                    onTap: () => context.pop(0),
+                  ),
+                ],
+              ));
+          final path = await () async {
+            switch (idx) {
+              case 0:
+                return await AppRoute(
+                        const SFTPDownloadedPage(
+                          isPickFile: true,
+                        ),
+                        'sftp dled pick')
+                    .go<String>(context);
+              case 1:
+                return await pickOneFile();
+              default:
+                return null;
+            }
+          }();
           if (path == null) {
             return;
           }
@@ -131,7 +158,7 @@ class _SFTPPageState extends State<SFTPPage> {
             showSnackBar(context, const Text('remote path is null'));
             return;
           }
-          locator<SftpProvider>().add(
+          _sftp.add(
             SftpReqItem(widget.spi, remotePath, path),
             SftpReqType.upload,
           );
@@ -302,39 +329,20 @@ class _SFTPPageState extends State<SFTPPage> {
       return;
     }
 
-    final file = await _status.client!.open(
-      _getRemotePath(name),
-      mode: SftpFileOpenMode.read | SftpFileOpenMode.write,
-    );
-    final localPath = '${(await sftpDir).path}${_getRemotePath(name)}';
-    await Directory(localPath.substring(0, localPath.lastIndexOf('/')))
-        .create(recursive: true);
-    final local = File(localPath);
-    if (await local.exists()) {
-      await local.delete();
-    }
-    final localFile = local.openWrite(mode: FileMode.append);
-    const defaultChunkSize = 1024 * 1024;
-    final chunkSize = size > defaultChunkSize ? defaultChunkSize : size;
-    for (var i = 0; i < size; i += chunkSize) {
-      final fileData = file.read(length: chunkSize);
-      await for (var form in fileData) {
-        localFile.add(form);
-      }
-    }
-    await localFile.close();
-    context.pop();
+    final remotePath = _getRemotePath(name);
+    final localPath = await _getLocalPath(remotePath);
+    final completer = Completer();
+    final req = SftpReqItem(widget.spi, remotePath, localPath);
+    _sftp.add(req, SftpReqType.download, completer: completer);
+    await completer.future;
 
     final result = await AppRoute(
       EditorPage(path: localPath),
       'SFTP edit',
     ).go<String>(context);
     if (result != null) {
-      await local.writeAsString(result);
-      await file.writeBytes(result.uint8List);
-      showSnackBar(context, Text(_s.saved));
+      _sftp.add(req, SftpReqType.upload);
     }
-    await file.close();
   }
 
   void _download(BuildContext context, SftpName name) {
@@ -351,18 +359,14 @@ class _SFTPPageState extends State<SFTPPage> {
           onPressed: () async {
             context.pop();
             final remotePath = _getRemotePath(name);
-            final local = '${(await sftpDir).path}$remotePath';
-            final pubKeyId = widget.spi.pubKeyId;
-            final key = locator<PrivateKeyStore>().get(pubKeyId)?.privateKey;
 
-            locator<SftpProvider>().add(
+            _sftp.add(
               SftpReqItem(
                 widget.spi,
                 remotePath,
-                local,
+                await _getLocalPath(remotePath),
               ),
               SftpReqType.download,
-              key: key,
             );
 
             context.pop();
@@ -562,6 +566,10 @@ class _SFTPPageState extends State<SFTPPage> {
   String _getRemotePath(SftpName name) {
     final prePath = _status.path!.path;
     return pathJoin(prePath, name.filename);
+  }
+
+  Future<String> _getLocalPath(String remotePath) async {
+    return '${(await sftpDir).path}$remotePath';
   }
 
   Future<void> _listDir({String? path, SSHClient? client}) async {

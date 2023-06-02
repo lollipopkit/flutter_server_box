@@ -145,9 +145,6 @@ class SEn extends S {
   String get download => 'Download';
 
   @override
-  String get downloadFinished => 'Download finished';
-
-  @override
   String downloadStatus(Object percent, Object size) {
     return '$percent% of $size';
   }
@@ -202,6 +199,9 @@ class SEn extends S {
   String get files => 'Files';
 
   @override
+  String get finished => 'Finished';
+
+  @override
   String get font => 'Font';
 
   @override
@@ -237,6 +237,9 @@ class SEn extends S {
 
   @override
   String get import => 'Import';
+
+  @override
+  String get inner => 'Inner';
 
   @override
   String get inputDomainHere => 'Input Domain here';
@@ -310,6 +313,9 @@ class SEn extends S {
 
   @override
   String get min => 'min';
+
+  @override
+  String get mission => 'Mission';
 
   @override
   String get ms => 'ms';
@@ -520,6 +526,9 @@ class SEn extends S {
   String sureToDeleteServer(Object server) {
     return 'Are you sure to delete server [$server]?';
   }
+
+  @override
+  String get system => 'System';
 
   @override
   String get tag => 'Tags';

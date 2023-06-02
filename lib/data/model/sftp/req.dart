@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../server/server_private_info.dart';
 import 'worker.dart';
 
@@ -24,6 +26,7 @@ class SftpReqStatus {
   final SftpReqItem item;
   final void Function() notifyListeners;
   late SftpWorker worker;
+  final Completer? completer;
 
   String get fileName => item.localPath.split('/').last;
 
@@ -38,12 +41,11 @@ class SftpReqStatus {
     required this.item,
     required this.notifyListeners,
     required SftpReqType type,
-    String? key,
+    this.completer,
   }) : id = DateTime.now().microsecondsSinceEpoch {
     worker = SftpWorker(
       onNotify: onNotify,
       item: item,
-      privateKey: key,
       type: type,
     );
     worker.init();
@@ -61,6 +63,7 @@ class SftpReqStatus {
         status = event;
         if (status == SftpWorkerStatus.finished) {
           worker.dispose();
+          completer?.complete();
         }
         break;
       case double:

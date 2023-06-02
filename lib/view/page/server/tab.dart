@@ -2,7 +2,6 @@ import 'package:after_layout/after_layout.dart';
 import 'package:circle_chart/circle_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/navigator.dart';
@@ -26,7 +25,7 @@ import '../../widget/round_rect_card.dart';
 import '../../widget/url_text.dart';
 import '../docker.dart';
 import '../pkg.dart';
-import '../sftp/view.dart';
+import '../sftp/remote.dart';
 import '../ssh.dart';
 import 'detail.dart';
 import 'edit.dart';
@@ -80,9 +79,53 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  Widget _buildTagsSwitcher(ServerProvider pro) {
-    if (pro.tags.isEmpty) return placeholder;
-    final items = <String?>[null, ...pro.tags];
+  Widget _buildBody() {
+    return RefreshIndicator(
+      onRefresh: () async =>
+          await _serverProvider.refreshData(onlyFailed: true),
+      child: Consumer<ServerProvider>(
+        builder: (_, pro, __) {
+          if (!pro.tags.contains(_tag)) {
+            _tag = null;
+          }
+          if (pro.serverOrder.isEmpty) {
+            return Center(
+              child: Text(
+                _s.serverTabEmpty,
+                textAlign: TextAlign.center,
+              ),
+            );
+          }
+          final filtered = pro.serverOrder
+              .where((e) => pro.servers.containsKey(e))
+              .where((e) =>
+                  _tag == null ||
+                  (pro.servers[e]?.spi.tags?.contains(_tag) ?? false))
+              .toList();
+          return ReorderableListView.builder(
+            header: _buildTagsSwitcher(pro.tags),
+            padding: const EdgeInsets.fromLTRB(7, 10, 7, 7),
+            onReorder: (oldIndex, newIndex) => setState(() {
+              pro.serverOrder.moveById(
+                filtered[oldIndex],
+                filtered[newIndex],
+                _settingStore.serverOrder,
+              );
+            }),
+            itemBuilder: (_, index) => _buildEachServerCard(
+              pro.servers[filtered[index]],
+              index,
+            ),
+            itemCount: filtered.length,
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildTagsSwitcher(List<String> tags) {
+    if (tags.isEmpty) return placeholder;
+    final items = <String?>[null, ...tags];
     return Container(
       height: 37,
       width: _media.size.width,
@@ -125,51 +168,6 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  Widget _buildBody() {
-    return RefreshIndicator(
-      onRefresh: () async =>
-          await _serverProvider.refreshData(onlyFailed: true),
-      child: Consumer<ServerProvider>(
-        builder: (_, pro, __) {
-          if (!pro.tags.contains(_tag)) {
-            _tag = null;
-          }
-          if (pro.serverOrder.isEmpty) {
-            return Center(
-              child: Text(
-                _s.serverTabEmpty,
-                textAlign: TextAlign.center,
-              ),
-            );
-          }
-          final filtered = pro.serverOrder
-              .where((e) => pro.servers.containsKey(e))
-              .where((e) =>
-                  _tag == null ||
-                  (pro.servers[e]?.spi.tags?.contains(_tag) ?? false))
-              .toList();
-          return AnimationLimiter(
-              key: ValueKey(_tag),
-              child: ReorderableListView.builder(
-                header: _buildTagsSwitcher(pro),
-                padding: const EdgeInsets.fromLTRB(7, 10, 7, 7),
-                physics: const AlwaysScrollableScrollPhysics(),
-                onReorder: (oldIndex, newIndex) => setState(() {
-                  pro.serverOrder.moveById(
-                    filtered[oldIndex],
-                    filtered[newIndex],
-                    _settingStore.serverOrder,
-                  );
-                }),
-                itemBuilder: (context, index) =>
-                    _buildEachServerCard(pro.servers[filtered[index]], index),
-                itemCount: filtered.length,
-              ));
-        },
-      ),
-    );
-  }
-
   Widget _buildEachServerCard(Server? si, int index) {
     if (si == null) {
       return placeholder;
@@ -180,18 +178,12 @@ class _ServerPageState extends State<ServerPage>
         ServerDetailPage(si.spi.id),
         'server detail page',
       ).go(context),
-      child: AnimationConfiguration.staggeredList(
-          position: index,
-          duration: const Duration(milliseconds: 375),
-          child: SlideAnimation(
-              verticalOffset: 50.0,
-              child: FadeInAnimation(
-                  child: RoundRectCard(
-                Padding(
-                  padding: const EdgeInsets.all(13),
-                  child: _buildRealServerCard(si.status, si.state, si.spi),
-                ),
-              )))),
+      child: RoundRectCard(
+        Padding(
+          padding: const EdgeInsets.all(13),
+          child: _buildRealServerCard(si.status, si.state, si.spi),
+        ),
+      ),
     );
   }
 

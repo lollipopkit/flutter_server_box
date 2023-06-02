@@ -145,9 +145,6 @@ class SZh extends S {
   String get download => '下载';
 
   @override
-  String get downloadFinished => '下载完成';
-
-  @override
   String downloadStatus(Object percent, Object size) {
     return '$size 的 $percent%';
   }
@@ -202,6 +199,9 @@ class SZh extends S {
   String get files => '文件';
 
   @override
+  String get finished => '已完成';
+
+  @override
   String get font => '字体';
 
   @override
@@ -237,6 +237,9 @@ class SZh extends S {
 
   @override
   String get import => '导入';
+
+  @override
+  String get inner => '内置';
 
   @override
   String get inputDomainHere => '在这里输入域名';
@@ -310,6 +313,9 @@ class SZh extends S {
 
   @override
   String get min => '最小';
+
+  @override
+  String get mission => '任务';
 
   @override
   String get ms => '毫秒';
@@ -520,6 +526,9 @@ class SZh extends S {
   String sureToDeleteServer(Object server) {
     return '你确定要删除服务器 [$server] 吗？';
   }
+
+  @override
+  String get system => '系统';
 
   @override
   String get tag => '标签';
@@ -752,9 +761,6 @@ class SZhTw extends SZh {
   String get download => '下載';
 
   @override
-  String get downloadFinished => '下載完成';
-
-  @override
   String downloadStatus(Object percent, Object size) {
     return '$size 的 $percent%';
   }
@@ -809,6 +815,9 @@ class SZhTw extends SZh {
   String get files => '文件';
 
   @override
+  String get finished => '已完成';
+
+  @override
   String get font => '字體';
 
   @override
@@ -844,6 +853,9 @@ class SZhTw extends SZh {
 
   @override
   String get import => '導入';
+
+  @override
+  String get inner => '內置';
 
   @override
   String get inputDomainHere => '在這裡輸入域名';
@@ -917,6 +929,9 @@ class SZhTw extends SZh {
 
   @override
   String get min => '最小';
+
+  @override
+  String get mission => '任務';
 
   @override
   String get ms => '毫秒';
@@ -1127,6 +1142,9 @@ class SZhTw extends SZh {
   String sureToDeleteServer(Object server) {
     return '你確定要刪除服務器 [$server] 嗎？';
   }
+
+  @override
+  String get system => '系統';
 
   @override
   String get tag => '标签';

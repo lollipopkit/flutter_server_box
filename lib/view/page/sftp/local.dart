@@ -21,7 +21,7 @@ import '../../../data/model/app/path_with_prefix.dart';
 import '../../../data/res/path.dart';
 import '../../../data/res/ui.dart';
 import '../../widget/fade_in.dart';
-import 'downloading.dart';
+import 'mission.dart';
 
 class SFTPDownloadedPage extends StatefulWidget {
   final bool isPickFile;

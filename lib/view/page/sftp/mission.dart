@@ -31,7 +31,7 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _s.download,
+          _s.mission,
           style: textSize18,
         ),
       ),
@@ -61,7 +61,11 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
       {Widget? trailing}) {
     return RoundRectCard(
       ListTile(
-        title: Text(status.fileName),
+        title: Text(
+          status.fileName,
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
+        ),
         subtitle: subtitle == null
             ? null
             : Text(
@@ -81,21 +85,26 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
     switch (status.status) {
       case SftpWorkerStatus.finished:
         final time = status.spentTime.toString();
+        final str = '${_s.finished} ${_s.spentTime(
+          time == 'null' ? _s.unknown : (time.substring(0, time.length - 7)),
+        )}';
         return _wrapInCard(
           status,
-          '${_s.downloadFinished} ${_s.spentTime(time == 'null' ? _s.unknown : (time.substring(0, time.length - 7)))}',
+          str,
           trailing: IconButton(
             onPressed: () => shareFiles(context, [status.item.localPath]),
             icon: const Icon(Icons.open_in_new),
           ),
         );
       case SftpWorkerStatus.downloading:
+        final percentStr = (status.progress ?? 0.0).toStringAsFixed(2);
+        final percent = (status.progress ?? 0) / 100;
+        final size = (status.size ?? 0).convertBytes;
         return _wrapInCard(
-            status,
-            _s.downloadStatus((status.progress ?? 0.0).toStringAsFixed(2),
-                (status.size ?? 0).convertBytes),
-            trailing:
-                CircularProgressIndicator(value: (status.progress ?? 0) / 100));
+          status,
+          _s.downloadStatus(percentStr, size),
+          trailing: CircularProgressIndicator(value: percent),
+        );
       case SftpWorkerStatus.preparing:
         return _wrapInCard(status, _s.sftpDlPrepare, trailing: loadingIcon);
       case SftpWorkerStatus.sshConnectted:
@@ -104,10 +113,7 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
         return _wrapInCard(
           status,
           _s.unknown,
-          trailing: const Icon(
-            Icons.error,
-            size: 40,
-          ),
+          trailing: const Icon(Icons.error, size: 40),
         );
     }
   }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:toolbox/core/provider_base.dart';
 
 import '../model/sftp/req.dart';
@@ -25,12 +27,12 @@ class SftpProvider extends ProviderBase {
     return found.first;
   }
 
-  void add(SftpReqItem item, SftpReqType type, {String? key}) {
+  void add(SftpReqItem item, SftpReqType type, {Completer? completer}) {
     _status.add(SftpReqStatus(
       item: item,
       notifyListeners: notifyListeners,
-      key: key,
       type: type,
+      completer: completer,
     ));
   }
 }

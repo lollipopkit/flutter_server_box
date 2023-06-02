@@ -12,7 +12,6 @@ import 'req.dart';
 class SftpWorker {
   final Function(Object event) onNotify;
   final SftpReqItem item;
-  final String? privateKey;
   final SftpReqType type;
 
   final worker = Worker();
@@ -21,7 +20,6 @@ class SftpWorker {
     required this.onNotify,
     required this.item,
     required this.type,
-    this.privateKey,
   });
 
   void dispose() {
@@ -37,7 +35,7 @@ class SftpWorker {
       isolateMessageHandler,
       errorHandler: print,
     );
-    worker.sendMessage(SftpReq(item: item, privateKey: privateKey, type: type));
+    worker.sendMessage(SftpReq(item: item, type: type));
   }
 
   /// Handle the messages coming from the isolate

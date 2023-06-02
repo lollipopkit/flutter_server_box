@@ -145,9 +145,6 @@ class SDe extends S {
   String get download => 'Download';
 
   @override
-  String get downloadFinished => 'Download abgeschlossen';
-
-  @override
   String downloadStatus(Object percent, Object size) {
     return '$percent% von $size';
   }
@@ -202,6 +199,9 @@ class SDe extends S {
   String get files => 'Dateien';
 
   @override
+  String get finished => 'fertiggestellt';
+
+  @override
   String get font => 'Schriftarten';
 
   @override
@@ -237,6 +237,9 @@ class SDe extends S {
 
   @override
   String get import => 'Importieren';
+
+  @override
+  String get inner => 'Eingebaut';
 
   @override
   String get inputDomainHere => 'Domain eingeben';
@@ -310,6 +313,9 @@ class SDe extends S {
 
   @override
   String get min => 'min';
+
+  @override
+  String get mission => 'Mission';
 
   @override
   String get ms => 'ms';
@@ -520,6 +526,9 @@ class SDe extends S {
   String sureToDeleteServer(Object server) {
     return 'Bist du sicher, dass du [$server] löschen willst?';
   }
+
+  @override
+  String get system => 'Systeme';
 
   @override
   String get tag => 'Tags';
