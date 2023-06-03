@@ -328,6 +328,7 @@ class _SFTPPageState extends State<SFTPPage> {
           )));
       return;
     }
+    context.pop();
 
     final remotePath = _getRemotePath(name);
     final localPath = await _getLocalPath(remotePath);

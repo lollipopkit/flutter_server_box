@@ -26,6 +26,9 @@ class _SnippetListPageState extends State<SnippetListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text(_s.snippet),
+      ),
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
         heroTag: 'snippet',

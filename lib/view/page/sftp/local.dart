@@ -180,11 +180,9 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
                 return;
               }
               final f = File(file.absolute.path);
-              final data = await f.readAsString();
               final result = await AppRoute(
                 EditorPage(
-                  initCode: data,
-                  path: fileName,
+                  path: file.absolute.path,
                 ),
                 'sftp dled editor',
               ).go<String>(context);

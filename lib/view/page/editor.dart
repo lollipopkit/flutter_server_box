@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:after_layout/after_layout.dart';
 import 'package:code_text_field/code_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
@@ -15,14 +17,13 @@ import '../widget/two_line_text.dart';
 
 class EditorPage extends StatefulWidget {
   final String? path;
-  final String? initCode;
-  const EditorPage({Key? key, this.path, this.initCode}) : super(key: key);
+  const EditorPage({Key? key, this.path}) : super(key: key);
 
   @override
   _EditorPageState createState() => _EditorPageState();
 }
 
-class _EditorPageState extends State<EditorPage> {
+class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
   late CodeController _controller;
   late final _focusNode = FocusNode();
   final _setting = locator<SettingStore>();
@@ -35,15 +36,9 @@ class _EditorPageState extends State<EditorPage> {
     super.initState();
     _langCode = widget.path.highlightCode;
     _controller = CodeController(
-      text: widget.initCode,
-      language: suffix2HighlightMap[_langCode ?? 'plaintext'],
+      language: suffix2HighlightMap[_langCode],
     );
     _codeTheme = themeMap[_setting.editorTheme.fetch()] ?? monokaiTheme;
-    if (widget.initCode == null && widget.path != null) {
-      File(widget.path!)
-          .readAsString()
-          .then((value) => _controller.text = value);
-    }
     _focusNode.requestFocus();
   }
 
@@ -92,7 +87,6 @@ class _EditorPageState extends State<EditorPage> {
           child: CodeField(
             focusNode: _focusNode,
             controller: _controller,
-            textStyle: const TextStyle(fontFamily: 'SourceCode'),
           ),
         ),
       ),
@@ -103,5 +97,16 @@ class _EditorPageState extends State<EditorPage> {
         },
       ),
     );
+  }
+
+  @override
+  FutureOr<void> afterFirstLayout(BuildContext context) async {
+    if (widget.path != null) {
+      await Future.delayed(const Duration(milliseconds: 233));
+      final code = await File(widget.path!).readAsString();
+      setState(() {
+        _controller.text = code;
+      });
+    }
   }
 }

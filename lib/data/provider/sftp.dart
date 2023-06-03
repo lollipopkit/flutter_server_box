@@ -8,15 +8,14 @@ class SftpProvider extends ProviderBase {
   final List<SftpReqStatus> _status = [];
   List<SftpReqStatus> get status => _status;
 
-  List<SftpReqStatus> gets({int? id, String? fileName}) {
-    var found = <SftpReqStatus>[];
+  Iterable<SftpReqStatus> gets({int? id, String? fileName}) {
+    Iterable<SftpReqStatus> found = [];
     if (id != null) {
-      found = _status.where((e) => e.id == id).toList();
+      found = _status.where((e) => e.id == id);
     }
     if (fileName != null) {
       found = found
-          .where((e) => e.item.localPath.split('/').last == fileName)
-          .toList();
+          .where((e) => e.item.localPath.split('/').last == fileName);
     }
     return found;
   }
