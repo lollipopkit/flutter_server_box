@@ -227,7 +227,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   Widget _buildFAB() {
     return FloatingActionButton(
       heroTag: 'server',
-      child: const Icon(Icons.send),
+      child: const Icon(Icons.save),
       onPressed: () async {
         if (_ipController.text == '') {
           showSnackBar(context, Text(_s.plzEnterHost));
