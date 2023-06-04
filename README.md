@@ -1,7 +1,7 @@
 English | [简体中文](README_zh.md)
 <!-- Title-->
 <p align="center">
-  <img src="imgs/flutter_server_box.svg">
+  <img src="imgs/flutter_server_box.png">
 </p>
 
 <!-- Badges-->
