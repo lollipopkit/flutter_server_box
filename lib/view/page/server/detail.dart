@@ -114,6 +114,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       child: Image.asset(
         iconPath,
         fit: BoxFit.contain,
+        semanticLabel: _s.showDistLogo,
       ),
     );
   }

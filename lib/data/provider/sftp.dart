@@ -14,8 +14,7 @@ class SftpProvider extends ProviderBase {
       found = _status.where((e) => e.id == id);
     }
     if (fileName != null) {
-      found = found
-          .where((e) => e.item.localPath.split('/').last == fileName);
+      found = found.where((e) => e.item.localPath.split('/').last == fileName);
     }
     return found;
   }
