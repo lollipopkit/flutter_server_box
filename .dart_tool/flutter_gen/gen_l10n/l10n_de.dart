@@ -110,7 +110,7 @@ class SDe extends S {
   String get disconnected => 'Disconnected';
 
   @override
-  String get diskIgnorePath => 'Pfad für Platte ignorieren';
+  String get diskIgnorePath => 'Pfad für Datenträger ignorieren';
 
   @override
   String dl2Local(Object fileName) {
@@ -153,7 +153,7 @@ class SDe extends S {
   String get edit => 'Bearbeiten';
 
   @override
-  String get editor => 'Redakteure';
+  String get editor => 'Editor';
 
   @override
   String get encode => 'Encode';
@@ -540,7 +540,7 @@ class SDe extends S {
   String get theme => 'Themen';
 
   @override
-  String get themeMode => 'Thememodus';
+  String get themeMode => 'Themen-Modus';
 
   @override
   String get times => 'x';
