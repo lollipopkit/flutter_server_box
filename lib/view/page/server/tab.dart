@@ -17,12 +17,10 @@ import '../../../data/provider/server.dart';
 import '../../../data/res/color.dart';
 import '../../../data/model/app/menu.dart';
 import '../../../data/res/ui.dart';
-import '../../../data/res/url.dart';
 import '../../../data/store/setting.dart';
 import '../../../locator.dart';
 import '../../widget/popup_menu.dart';
 import '../../widget/round_rect_card.dart';
-import '../../widget/url_text.dart';
 import '../docker.dart';
 import '../pkg.dart';
 import '../sftp/remote.dart';
@@ -303,29 +301,7 @@ class _ServerPageState extends State<ServerPage>
         Icons.terminal,
         size: 21,
       ),
-      onTap: () async {
-        if (_settingStore.firstTimeUseSshTerm.fetch()!) {
-          await showRoundDialog(
-            context: context,
-            child: UrlText(
-              text: _s.sshTip(issueUrl),
-              replace: 'Github Issue',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  _settingStore.firstTimeUseSshTerm.put(false);
-                  context.pop();
-                  AppRoute(SSHPage(spi: spi), 'ssh page').go(context);
-                },
-                child: Text(_s.ok),
-              )
-            ],
-          );
-        } else {
-          AppRoute(SSHPage(spi: spi), 'ssh page').go(context);
-        }
-      },
+      onTap: () => AppRoute(SSHPage(spi: spi), 'ssh page').go(context),
     );
   }
 

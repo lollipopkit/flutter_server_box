@@ -2,11 +2,11 @@ import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
-import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/data/model/app/tab.dart';
 import 'package:toolbox/data/provider/app.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
+import 'package:toolbox/view/widget/value_notifier.dart';
 
 import '../../core/analysis.dart';
 import '../../core/route.dart';
@@ -23,12 +23,9 @@ import '../widget/url_text.dart';
 import 'backup.dart';
 import 'convert.dart';
 import 'debug.dart';
-import 'ping.dart';
 import 'private_key/list.dart';
-import 'server/tab.dart';
 import 'setting.dart';
 import 'sftp/local.dart';
-import 'snippet/list.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -47,19 +44,19 @@ class _HomePageState extends State<HomePage>
 
   late final PageController _pageController;
 
-  late int _selectIndex;
+  final _selectIndex = ValueNotifier(0);
   late S _s;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _selectIndex = _setting.launchPage.fetch()!;
+    _selectIndex.value = _setting.launchPage.fetch()!;
     // avoid index out of range
-    if (_selectIndex >= AppTab.values.length || _selectIndex < 0) {
-      _selectIndex = 0;
+    if (_selectIndex.value >= AppTab.values.length || _selectIndex.value < 0) {
+      _selectIndex.value = 0;
     }
-    _pageController = PageController(initialPage: _selectIndex);
+    _pageController = PageController(initialPage: _selectIndex.value);
   }
 
   @override
@@ -120,34 +117,27 @@ class _HomePageState extends State<HomePage>
           ),
         ],
       ),
-      body: PageView(
-        physics: const ClampingScrollPhysics(),
+      body: PageView.builder(
+        physics: const NeverScrollableScrollPhysics(),
         controller: _pageController,
-        onPageChanged: (index) {
-          setState(() {
-            _selectIndex = index;
-            FocusScope.of(context).requestFocus(FocusNode());
-          });
-        },
-        children: const [ServerPage(), SnippetListPage(), PingPage()],
+        itemBuilder: (_, index) => AppTab.values[index].page,
       ),
-      bottomNavigationBar: _buildBottomBar(context),
+      bottomNavigationBar:
+          ValueBuilder(listenable: _selectIndex, build: _buildBottomBar),
     );
   }
 
-  Widget _buildBottomBar(BuildContext context) {
+  Widget _buildBottomBar() {
     return NavigationBar(
-      selectedIndex: _selectIndex,
+      selectedIndex: _selectIndex.value,
       animationDuration: const Duration(milliseconds: 250),
       onDestinationSelected: (int index) {
-        setState(() {
-          _selectIndex = index;
-          _pageController.animateToPage(
-            index,
-            duration: const Duration(milliseconds: 677),
-            curve: Curves.fastLinearToSlowEaseIn,
-          );
-        });
+        _selectIndex.value = index;
+        _pageController.animateToPage(
+          index,
+          duration: const Duration(milliseconds: 677),
+          curve: Curves.fastLinearToSlowEaseIn,
+        );
       },
       labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
       destinations: [
@@ -189,9 +179,7 @@ class _HomePageState extends State<HomePage>
               style: textSize13,
             ),
           ),
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.07,
-          ),
+          const SizedBox(height: 37),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 17),
             child: Column(
@@ -264,17 +252,13 @@ class _HomePageState extends State<HomePage>
                       ),
                       actions: [
                         TextButton(
-                          onPressed: () => openUrl(issueUrl),
+                          onPressed: () => openUrl(appHelpUrl),
                           child: Text(_s.feedback),
                         ),
                         TextButton(
                           onPressed: () => showLicensePage(context: context),
                           child: Text(_s.license),
                         ),
-                        TextButton(
-                          onPressed: () => context.pop(),
-                          child: Text(_s.close),
-                        )
                       ],
                     );
                   },
@@ -288,20 +272,9 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildIcon() {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 53, maxWidth: 53),
-          child: Container(
-            color: Colors.white,
-          ),
-        ),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 83, maxWidth: 83),
-          child: appIcon,
-        )
-      ],
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 57, maxWidth: 57),
+      child: appIcon,
     );
   }
 

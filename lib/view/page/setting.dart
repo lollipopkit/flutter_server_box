@@ -142,7 +142,6 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildServer() {
     return Column(
       children: [
-        _buildDistLogoSwitch(),
         _buildUpdateInterval(),
         _buildMaxRetry(),
         _buildDiskIgnorePath(),
@@ -165,19 +164,6 @@ class _SettingPageState extends State<SettingPage> {
       children: [
         _buildEditorTheme(),
       ].map((e) => RoundRectCard(e)).toList(),
-    );
-  }
-
-  Widget _buildDistLogoSwitch() {
-    return ListTile(
-      title: Text(
-        _s.showDistLogo,
-      ),
-      subtitle: Text(
-        _s.onServerDetailPage,
-        style: grey,
-      ),
-      trailing: buildSwitch(context, _setting.showDistLogo),
     );
   }
 

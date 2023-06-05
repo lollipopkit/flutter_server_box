@@ -103,7 +103,7 @@ void setTransparentNavigationBar(BuildContext context) {
 String tabTitleName(BuildContext context, AppTab tab) {
   final s = S.of(context)!;
   switch (tab) {
-    case AppTab.servers:
+    case AppTab.server:
       return s.server;
     case AppTab.snippet:
       return s.convert;

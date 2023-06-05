@@ -419,7 +419,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
         return Text(_s.waitConnection);
       case DockerErrType.invalidVersion:
         return UrlText(
-          text: _s.invalidVersionHelp(issueUrl),
+          text: _s.invalidVersionHelp(appHelpUrl),
           replace: 'Github',
         );
       default:

@@ -475,9 +475,9 @@
 			baseConfigurationReference = C1C758C41C4E208965A68933 /* Pods-RunnerTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				CURRENT_PROJECT_VERSION = 347;
+				CURRENT_PROJECT_VERSION = 353;
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0.347;
+				MARKETING_VERSION = 1.0.353;
 				PRODUCT_BUNDLE_IDENTIFIER = tech.lolli.serverBox.RunnerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -490,9 +490,9 @@
 			baseConfigurationReference = 15AF97DF993E8968098D6EBE /* Pods-RunnerTests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				CURRENT_PROJECT_VERSION = 347;
+				CURRENT_PROJECT_VERSION = 353;
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0.347;
+				MARKETING_VERSION = 1.0.353;
 				PRODUCT_BUNDLE_IDENTIFIER = tech.lolli.serverBox.RunnerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -505,9 +505,9 @@
 			baseConfigurationReference = 7CFA7DE7FABA75685DFB6948 /* Pods-RunnerTests.profile.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				CURRENT_PROJECT_VERSION = 347;
+				CURRENT_PROJECT_VERSION = 353;
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0.347;
+				MARKETING_VERSION = 1.0.353;
 				PRODUCT_BUNDLE_IDENTIFIER = tech.lolli.serverBox.RunnerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;

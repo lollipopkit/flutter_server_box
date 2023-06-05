@@ -82,10 +82,10 @@ class _PingPageState extends State<PingPage>
     );
   }
 
-  void _doPing() {
+  Future<void> _doPing() async {
     context.pop();
     try {
-      doPing();
+      await doPing();
     } catch (e) {
       showRoundDialog(
         context: context,

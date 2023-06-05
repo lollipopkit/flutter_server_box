@@ -97,12 +97,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
         }
         FocusScope.of(context).unfocus();
         setState(() {
-          _loading = const SizedBox(
-            height: 50,
-            child: Center(
-              child: CircularProgressIndicator(),
-            ),
-          );
+          _loading = centerSizedLoading;
         });
         final info = PrivateKeyInfo(name, key, '');
         try {

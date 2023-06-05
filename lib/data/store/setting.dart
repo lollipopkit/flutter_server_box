@@ -24,14 +24,6 @@ class SettingStore extends PersistentStore {
   StoreProperty<int> get storeVersion =>
       property('storeVersion', defaultValue: 0);
 
-  // Show logo on server detail page
-  StoreProperty<bool> get showDistLogo =>
-      property('showDistLogo', defaultValue: true);
-
-  // First time to use SSH term
-  StoreProperty<bool> get firstTimeUseSshTerm =>
-      property('firstTimeUseSshTerm', defaultValue: true);
-
   StoreProperty<int> get termColorIdx =>
       property('termColorIdx', defaultValue: 0);
 
