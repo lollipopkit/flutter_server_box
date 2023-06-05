@@ -97,4 +97,5 @@ Support, but not tested| Windows / Linux
 
 
 ## 📝 License
-`GPL v3. lollipopkit 2023`
+1. You can package it for personal use, but you can't distribute it. (For example: You can teach others how to package it to avoid spending money to buy App, but you can't directly distribute the App you packaged.)
+2. Except for the above, apply the `GPLv3` license.
