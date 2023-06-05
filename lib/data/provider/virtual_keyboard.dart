@@ -6,8 +6,22 @@ import 'package:xterm/core.dart';
 class VirtualKeyboard extends TerminalInputHandler with ChangeNotifier {
   VirtualKeyboard();
 
-  bool ctrl = false;
-  bool alt = false;
+  bool _ctrl = false;
+  bool get ctrl => _ctrl;
+  set ctrl(bool value) {
+    if (value != _ctrl) {
+      _ctrl = value;
+      notifyListeners();
+    }
+  }
+  bool _alt = false;
+  bool get alt => _alt;
+  set alt(bool value) {
+    if (value != _alt) {
+      _alt = value;
+      notifyListeners();
+    }
+  }
 
   final _setting = locator<SettingStore>();
 

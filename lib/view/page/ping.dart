@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:toolbox/core/extension/navigator.dart';
+import 'package:toolbox/core/utils/misc.dart';
+import 'package:toolbox/view/widget/value_notifier.dart';
 
 import '../../core/extension/uint8list.dart';
 import '../../core/utils/ui.dart';
@@ -27,10 +30,11 @@ class PingPage extends StatefulWidget {
 class _PingPageState extends State<PingPage>
     with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
   late TextEditingController _textEditingController;
-  late MediaQueryData _media;
-  final List<PingResult> _results = [];
+  final _results = ValueNotifier(<PingResult>[]);
   final _serverProvider = locator<ServerProvider>();
-  late S s;
+  late S _s;
+
+  bool get isInit => _results.value.isEmpty;
 
   @override
   void initState() {
@@ -41,58 +45,85 @@ class _PingPageState extends State<PingPage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _media = MediaQuery.of(context);
-    s = S.of(context)!;
+    _s = S.of(context)!;
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 7),
-        child: Column(
-          children: [
-            height13,
-            Input(
-              controller: _textEditingController,
-              hint: s.inputDomainHere,
-              maxLines: 1,
-              onSubmitted: (_) => doPing(),
-            ),
-            SizedBox(
-              width: double.infinity,
-              height: _media.size.height * 0.6,
-              child: ListView.builder(
-                controller: ScrollController(),
-                itemCount: _results.length,
-                itemBuilder: (context, index) {
-                  final result = _results[index];
-                  return _buildResultItem(result);
-                },
-              ),
-            ),
+      body: ValueBuilder(
+        listenable: _results,
+        build: _buildBody,
+      ),
+      floatingActionButton: _buildFAB(),
+    );
+  }
+
+  Widget _buildFAB() {
+    return FloatingActionButton(
+      heroTag: 'ping',
+      onPressed: () {
+        showRoundDialog(
+          context: context,
+          title: Text(_s.choose),
+          child: Input(
+            controller: _textEditingController,
+            hint: _s.inputDomainHere,
+            maxLines: 1,
+            onSubmitted: (_) => _doPing(),
+          ),
+          actions: [
+            TextButton(onPressed: _doPing, child: Text(_s.ok)),
           ],
+        );
+      },
+      child: const Icon(Icons.search),
+    );
+  }
+
+  void _doPing() {
+    context.pop();
+    try {
+      doPing();
+    } catch (e) {
+      showRoundDialog(
+        context: context,
+        child: Text(e.toString()),
+        actions: [
+          TextButton(
+            onPressed: () => copy2Clipboard(e.toString()),
+            child: Text(_s.copy),
+          ),
+        ],
+      );
+      rethrow;
+    }
+  }
+
+  Widget _buildBody() {
+    if (isInit) {
+      return Center(
+        child: Text(
+          _s.noResult,
+          style: TextStyle(
+            fontSize: 18,
+            color: primaryColor,
+          ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'ping',
-        onPressed: () {
-          try {
-            doPing();
-          } catch (e) {
-            showSnackBar(context, Text('Error: \n$e'));
-            rethrow;
-          }
-        },
-        child: const Icon(Icons.play_arrow),
-      ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(11),
+      controller: ScrollController(),
+      itemCount: _results.value.length,
+      itemBuilder: (_, index) => _buildResultItem(_results.value[index]),
     );
   }
 
   Widget _buildResultItem(PingResult result) {
-    final unknown = s.unknown;
-    final ms = s.ms;
+    final unknown = _s.unknown;
+    final ms = _s.ms;
     return RoundRectCard(
       ListTile(
         contentPadding: const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
@@ -109,7 +140,7 @@ class _PingPageState extends State<PingPage>
           style: textSize11,
         ),
         trailing: Text(
-          '${s.pingAvg}${result.statistic?.avg?.toStringAsFixed(2) ?? s.unknown} $ms',
+          '${_s.pingAvg}${result.statistic?.avg?.toStringAsFixed(2) ?? _s.unknown} $ms',
           style: TextStyle(
             fontSize: 14,
             color: primaryColor,
@@ -122,32 +153,32 @@ class _PingPageState extends State<PingPage>
   String _buildPingSummary(PingResult result, String unknown, String ms) {
     final ip = result.ip ?? unknown;
     if (result.results == null || result.results!.isEmpty) {
-      return '$ip - ${s.noResult}';
+      return '$ip - ${_s.noResult}';
     }
     final ttl = result.results?.first.ttl ?? unknown;
     final loss = result.statistic?.loss ?? unknown;
     final min = result.statistic?.min ?? unknown;
     final max = result.statistic?.max ?? unknown;
-    return '$ip\n${s.ttl}: $ttl, ${s.loss}: $loss%\n${s.min}: $min $ms, ${s.max}: $max $ms';
+    return '$ip\n${_s.ttl}: $ttl, ${_s.loss}: $loss%\n${_s.min}: $min $ms, ${_s.max}: $max $ms';
   }
 
   Future<void> doPing() async {
     FocusScope.of(context).requestFocus(FocusNode());
-    _results.clear();
+    _results.value.clear();
     final target = _textEditingController.text.trim();
     if (target.isEmpty) {
-      showSnackBar(context, Text(s.pingInputIP));
+      showSnackBar(context, Text(_s.pingInputIP));
       return;
     }
 
     if (_serverProvider.servers.isEmpty) {
-      showSnackBar(context, Text(s.pingNoServer));
+      showSnackBar(context, Text(_s.pingNoServer));
       return;
     }
 
     /// avoid ping command injection
     if (!targetReg.hasMatch(target)) {
-      showSnackBar(context, Text(s.pingInputIP));
+      showSnackBar(context, Text(_s.pingInputIP));
       return;
     }
 
@@ -156,8 +187,13 @@ class _PingPageState extends State<PingPage>
         return;
       }
       final result = await e.client!.run('ping -c 3 $target').string;
-      _results.add(PingResult.parse(e.spi.name, result));
-      setState(() {});
+      _results.value.add(PingResult.parse(e.spi.name, result));
+      // [ValueNotifier] only notify when value is changed
+      // But we just add a element to list without changing the list itself
+      // So we need to notify manually
+      //
+      // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
+      _results.notifyListeners();
     }));
   }
 

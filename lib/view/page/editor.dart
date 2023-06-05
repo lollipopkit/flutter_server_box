@@ -87,6 +87,10 @@ class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
           child: CodeField(
             focusNode: _focusNode,
             controller: _controller,
+            lineNumberStyle: const LineNumberStyle(
+              width: 47,
+              margin: 7,
+            ),
           ),
         ),
       ),
@@ -104,9 +108,7 @@ class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
     if (widget.path != null) {
       await Future.delayed(const Duration(milliseconds: 233));
       final code = await File(widget.path!).readAsString();
-      setState(() {
-        _controller.text = code;
-      });
+      _controller.text = code;
     }
   }
 }

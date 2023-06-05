@@ -65,7 +65,8 @@ dependencies:
   plain_notification_token: ^0.0.4
   highlight: ^0.7.0
   flutter_highlight: ^0.7.0
-  code_text_field: ^1.1.0
+  code_text_field:
+    path: ../code_field
 
 dev_dependencies:
   flutter_native_splash: ^2.1.6

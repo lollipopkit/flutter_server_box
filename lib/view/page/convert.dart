@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/data/res/ui.dart';
+import 'package:toolbox/view/widget/value_notifier.dart';
 
 import '../../core/utils/ui.dart';
 import '../widget/input_field.dart';
@@ -24,7 +25,7 @@ class _ConvertPageState extends State<ConvertPage>
   late MediaQueryData _media;
   late S _s;
 
-  int _typeOptionIndex = 0;
+  final _typeOptionIndex = ValueNotifier(0);
 
   @override
   void initState() {
@@ -76,7 +77,7 @@ class _ConvertPageState extends State<ConvertPage>
 
   String doConvert() {
     final text = _textEditingController.text.trim();
-    switch (_typeOptionIndex) {
+    switch (_typeOptionIndex.value) {
       case 0:
         return utf8.decode(base64.decode(text));
       case 1:
@@ -136,30 +137,31 @@ class _ConvertPageState extends State<ConvertPage>
             )
           ],
         ),
-        trailing: PopupMenu<int>(
-          items: items,
-          initialValue: _typeOptionIndex,
-          onSelected: (p0) {
-            setState(() {
-              _typeOptionIndex = p0;
-            });
-          },
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.end,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                typeOption[_typeOptionIndex],
-                textScaleFactor: 1.0,
-                textAlign: TextAlign.right,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey,
+        trailing: ValueBuilder(
+          listenable: _typeOptionIndex,
+          build: () => PopupMenu<int>(
+            items: items,
+            initialValue: _typeOptionIndex.value,
+            onSelected: (p0) {
+              _typeOptionIndex.value = p0;
+            },
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  typeOption[_typeOptionIndex.value],
+                  textScaleFactor: 1.0,
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey,
+                  ),
                 ),
-              ),
-              const Icon(Icons.keyboard_arrow_down, color: Colors.grey)
-            ],
+                const Icon(Icons.keyboard_arrow_down, color: Colors.grey)
+              ],
+            ),
           ),
         ),
       ),

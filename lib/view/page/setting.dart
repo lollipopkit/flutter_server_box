@@ -10,6 +10,7 @@ import 'package:toolbox/core/extension/locale.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/data/model/app/tab.dart';
 import 'package:toolbox/view/widget/input_field.dart';
+import 'package:toolbox/view/widget/value_notifier.dart';
 
 import '../../core/utils/misc.dart';
 import '../../core/utils/platform.dart';
@@ -47,23 +48,23 @@ class _SettingPageState extends State<SettingPage> {
   late MediaQueryData _media;
   late S _s;
 
-  late int _selectedColorValue;
-  late int _launchPageIdx;
-  late int _nightMode;
-  late int _maxRetryCount;
-  late int _updateInterval;
-  late double _fontSize;
-  late String _localeCode;
-  late String _editorTheme;
+  final _selectedColorValue = ValueNotifier(0);
+  final _launchPageIdx = ValueNotifier(0);
+  final _nightMode = ValueNotifier(0);
+  final _maxRetryCount = ValueNotifier(0);
+  final _updateInterval = ValueNotifier(0);
+  final _fontSize = ValueNotifier(0.0);
+  final _localeCode = ValueNotifier('');
+  final _editorTheme = ValueNotifier('');
 
-  String? _pushToken;
+  final _pushToken = ValueNotifier<String?>(null);
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
     _s = S.of(context)!;
-    _localeCode = _setting.locale.fetch() ?? _s.localeName;
+    _localeCode.value = _setting.locale.fetch() ?? _s.localeName;
   }
 
   @override
@@ -71,13 +72,13 @@ class _SettingPageState extends State<SettingPage> {
     super.initState();
     _serverProvider = locator<ServerProvider>();
     _setting = locator<SettingStore>();
-    _launchPageIdx = _setting.launchPage.fetch()!;
-    _nightMode = _setting.themeMode.fetch()!;
-    _updateInterval = _setting.serverStatusUpdateInterval.fetch()!;
-    _maxRetryCount = _setting.maxRetryCount.fetch()!;
-    _selectedColorValue = _setting.primaryColor.fetch()!;
-    _fontSize = _setting.termFontSize.fetch()!;
-    _editorTheme = _setting.editorTheme.fetch()!;
+    _launchPageIdx.value = _setting.launchPage.fetch()!;
+    _nightMode.value = _setting.themeMode.fetch()!;
+    _updateInterval.value = _setting.serverStatusUpdateInterval.fetch()!;
+    _maxRetryCount.value = _setting.maxRetryCount.fetch()!;
+    _selectedColorValue.value = _setting.primaryColor.fetch()!;
+    _fontSize.value = _setting.termFontSize.fetch()!;
+    _editorTheme.value = _setting.editorTheme.fetch()!;
   }
 
   @override
@@ -225,23 +226,24 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () {
         updateIntervalKey.currentState?.showButtonMenu();
       },
-      trailing: PopupMenuButton(
-        key: updateIntervalKey,
-        itemBuilder: (_) => items,
-        initialValue: _updateInterval,
-        onSelected: (int val) {
-          setState(() {
-            _updateInterval = val;
-          });
-          _setting.serverStatusUpdateInterval.put(_updateInterval.toInt());
-          _serverProvider.startAutoRefresh();
-          if (val == 0) {
-            showSnackBar(context, Text(_s.updateIntervalEqual0));
-          }
-        },
-        child: Text(
-          '${_updateInterval.toInt()} ${_s.second}',
-          style: textSize15,
+      trailing: ValueBuilder(
+        listenable: _updateInterval,
+        build: () => PopupMenuButton(
+          key: updateIntervalKey,
+          itemBuilder: (_) => items,
+          initialValue: _updateInterval.value,
+          onSelected: (int val) {
+            _updateInterval.value = val;
+            _setting.serverStatusUpdateInterval.put(val);
+            _serverProvider.startAutoRefresh();
+            if (val == 0) {
+              showSnackBar(context, Text(_s.updateIntervalEqual0));
+            }
+          },
+          child: Text(
+            '${_updateInterval.value} ${_s.second}',
+            style: textSize15,
+          ),
         ),
       ),
     );
@@ -267,14 +269,14 @@ class _SettingPageState extends State<SettingPage> {
             shrinkWrap: true,
             allowShades: true,
             onColorChange: (color) {
-              _selectedColorValue = color.value;
+              _selectedColorValue.value = color.value;
             },
             selectedColor: primaryColor,
           ),
           actions: [
             TextButton(
               onPressed: () {
-                _setting.primaryColor.put(_selectedColorValue);
+                _setting.primaryColor.put(_selectedColorValue.value);
                 Navigator.pop(context);
                 _showRestartSnackbar();
               },
@@ -303,25 +305,23 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () {
         startPageKey.currentState?.showButtonMenu();
       },
-      trailing: PopupMenuButton(
+      trailing: ValueBuilder(listenable: _launchPageIdx, build: () => PopupMenuButton(
         key: startPageKey,
         itemBuilder: (BuildContext context) => items,
-        initialValue: _launchPageIdx,
+        initialValue: _launchPageIdx.value,
         onSelected: (int idx) {
-          setState(() {
-            _launchPageIdx = idx;
-          });
-          _setting.launchPage.put(_launchPageIdx);
+          _launchPageIdx.value = idx;
+          _setting.launchPage.put(_launchPageIdx.value);
         },
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: _media.size.width * 0.35),
           child: Text(
-            tabTitleName(context, AppTab.values[_launchPageIdx]),
+            tabTitleName(context, AppTab.values[_launchPageIdx.value]),
             textAlign: TextAlign.right,
             style: textSize15,
           ),
         ),
-      ),
+      )),
     );
   }
 
@@ -335,7 +335,7 @@ class _SettingPageState extends State<SettingPage> {
       growable: false,
     ).toList();
     final help =
-        _maxRetryCount == 0 ? _s.maxRetryCountEqual0 : _s.canPullRefresh;
+        _maxRetryCount.value == 0 ? _s.maxRetryCountEqual0 : _s.canPullRefresh;
 
     return ListTile(
       title: Text(
@@ -346,21 +346,19 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () {
         maxRetryKey.currentState?.showButtonMenu();
       },
-      trailing: PopupMenuButton(
+      trailing: ValueBuilder(build: () => PopupMenuButton(
         key: maxRetryKey,
         itemBuilder: (BuildContext context) => items,
-        initialValue: _maxRetryCount,
+        initialValue: _maxRetryCount.value,
         onSelected: (int val) {
-          setState(() {
-            _maxRetryCount = val;
-          });
-          _setting.maxRetryCount.put(_maxRetryCount);
+          _maxRetryCount.value = val;
+          _setting.maxRetryCount.put(_maxRetryCount.value);
         },
         child: Text(
-          '${_maxRetryCount.toInt()} ${_s.times}',
+          '${_maxRetryCount.value} ${_s.times}',
           style: textSize15,
         ),
-      ),
+      ), listenable: _maxRetryCount,),
     );
   }
 
@@ -384,21 +382,19 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () {
         themeKey.currentState?.showButtonMenu();
       },
-      trailing: PopupMenuButton(
+      trailing: ValueBuilder(listenable: _nightMode, build: () => PopupMenuButton(
         key: themeKey,
         itemBuilder: (BuildContext context) => items,
-        initialValue: _nightMode,
+        initialValue: _nightMode.value,
         onSelected: (int idx) {
-          setState(() {
-            _nightMode = idx;
-          });
-          _setting.themeMode.put(_nightMode);
+          _nightMode.value = idx;
+          _setting.themeMode.put(_nightMode.value);
         },
         child: Text(
-          _buildThemeModeStr(_nightMode),
+          _buildThemeModeStr(_nightMode.value),
           style: textSize15,
         ),
-      ),
+      ),),
     );
   }
 
@@ -425,8 +421,8 @@ class _SettingPageState extends State<SettingPage> {
         alignment: Alignment.centerRight,
         padding: EdgeInsets.zero,
         onPressed: () {
-          if (_pushToken != null) {
-            copy2Clipboard(_pushToken!);
+          if (_pushToken.value != null) {
+            copy2Clipboard(_pushToken.value!);
             showSnackBar(context, Text(_s.success));
           } else {
             showSnackBar(context, Text(_s.getPushTokenFailed));
@@ -439,7 +435,7 @@ class _SettingPageState extends State<SettingPage> {
         error: (error, trace) => Text('${_s.error}: $error'),
         noData: Text(_s.nullToken),
         success: (text) {
-          _pushToken = text;
+          _pushToken.value = text;
           return Text(
             text ?? _s.nullToken,
             style: grey,
@@ -469,11 +465,11 @@ class _SettingPageState extends State<SettingPage> {
               child: Text(_s.pickFile),
             ),
             TextButton(
-              onPressed: () => setState(() {
+              onPressed: () {
                 _setting.fontPath.delete();
                 context.pop();
                 _showRestartSnackbar();
-              }),
+              },
               child: Text(_s.clear),
             )
           ],
@@ -497,7 +493,6 @@ class _SettingPageState extends State<SettingPage> {
       }
 
       context.pop();
-      setState(() {});
       _showRestartSnackbar();
       return;
     }
@@ -521,14 +516,14 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildTermFontSize() {
-    return ListTile(
+    return ValueBuilder(listenable: _fontSize, build: () => ListTile(
       title: Text(_s.fontSize),
       trailing: Text(
-        _fontSize.toString(),
+        _fontSize.value.toString(),
         style: textSize15,
       ),
       onTap: () {
-        final ctrller = TextEditingController(text: _fontSize.toString());
+        final ctrller = TextEditingController(text: _fontSize.value.toString());
         showRoundDialog(
           context: context,
           title: Text(_s.fontSize),
@@ -546,15 +541,15 @@ class _SettingPageState extends State<SettingPage> {
                   showRoundDialog(context: context, child: Text(_s.failed));
                   return;
                 }
-                _fontSize = fontSize;
-                _setting.termFontSize.put(_fontSize);
+                _fontSize.value = fontSize;
+                _setting.termFontSize.put(_fontSize.value);
               },
               child: Text(_s.ok),
             ),
           ],
         );
       },
-    );
+    ),);
   }
 
   Widget _buildDiskIgnorePath() {
@@ -607,14 +602,12 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () {
         localeKey.currentState?.showButtonMenu();
       },
-      trailing: PopupMenuButton(
+      trailing: ValueBuilder(listenable: _localeCode, build: () => PopupMenuButton(
         key: localeKey,
         itemBuilder: (BuildContext context) => items,
-        initialValue: _localeCode,
+        initialValue: _localeCode.value,
         onSelected: (String idx) {
-          setState(() {
-            _localeCode = idx;
-          });
+          _localeCode.value = idx;
           _setting.locale.put(idx);
           _showRestartSnackbar();
         },
@@ -622,7 +615,7 @@ class _SettingPageState extends State<SettingPage> {
           _s.languageName,
           style: textSize15,
         ),
-      ),
+      )),
     );
   }
 
@@ -645,21 +638,19 @@ class _SettingPageState extends State<SettingPage> {
     ).toList();
     return ListTile(
       title: Text(_s.editor + _s.theme),
-      trailing: PopupMenuButton(
+      trailing: ValueBuilder(listenable: _editorTheme, build: () => PopupMenuButton(
         key: editorThemeKey,
         itemBuilder: (BuildContext context) => items,
-        initialValue: _editorTheme,
+        initialValue: _editorTheme.value,
         onSelected: (String idx) {
-          setState(() {
-            _editorTheme = idx;
-          });
+          _editorTheme.value = idx;
           _setting.editorTheme.put(idx);
         },
         child: Text(
-          _editorTheme,
+          _editorTheme.value,
           style: textSize15,
         ),
-      ),
+      ),),
       onTap: () {
         editorThemeKey.currentState?.showButtonMenu();
       },

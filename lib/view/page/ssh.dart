@@ -200,11 +200,9 @@ class _SSHPageState extends State<SSHPage> {
     switch (key) {
       case TerminalKey.control:
         _keyboard.ctrl = !_keyboard.ctrl;
-        setState(() {});
         break;
       case TerminalKey.alt:
         _keyboard.alt = !_keyboard.alt;
-        setState(() {});
         break;
       default:
         _terminal.keyInput(key);

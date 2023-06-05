@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:logging/logging.dart';
 import 'package:r_upgrade/r_upgrade.dart';
 import 'package:toolbox/core/extension/navigator.dart';
+import 'package:toolbox/core/utils/misc.dart';
+import 'package:toolbox/data/res/path.dart';
 
 import '../data/provider/app.dart';
 import '../data/res/build_data.dart';
@@ -25,6 +29,8 @@ Future<bool> isFileAvailable(String url) async {
 }
 
 Future<void> doUpdate(BuildContext context, {bool force = false}) async {
+  _rmDownloadApks();
+
   final update = await locator<AppService>().getUpdate();
 
   final newest = update.build.last.current;
@@ -93,5 +99,13 @@ Future<void> _doUpdate(String url, BuildContext context, S s) async {
         )
       ],
     );
+  }
+}
+
+// rmdir Download
+Future<void> _rmDownloadApks() async {
+  final dlDir = Directory(pathJoin((await docDir).path, 'Download'));
+  if (await dlDir.exists()) {
+    await dlDir.delete(recursive: true);
   }
 }
