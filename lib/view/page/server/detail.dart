@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/data/model/server/cpu.dart';
 import 'package:toolbox/data/model/server/disk.dart';
-import 'package:toolbox/data/model/server/dist.dart';
 import 'package:toolbox/data/model/server/memory.dart';
 import 'package:toolbox/data/model/server/temp.dart';
 
@@ -77,7 +76,6 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             _cardsOrder.move(oldIndex, newIndex, _setting.detailCardOrder);
           });
         },
-        header: _buildLinuxIcon(si.status.sysVer),
         footer: height13,
         children: _buildMainList(si.status),
       ),
@@ -100,23 +98,6 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     return _cardsOrder
         .map((e) => SizedBox(key: ValueKey(e), child: map[e]))
         .toList();
-  }
-
-  Widget _buildLinuxIcon(String sysVer) {
-    if (!_setting.showDistLogo.fetch()!) return placeholder;
-    final iconPath = sysVer.dist?.iconPath;
-    if (iconPath == null) return placeholder;
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: _media.size.height * 0.13,
-        maxWidth: _media.size.width * 0.6,
-      ),
-      child: Image.asset(
-        iconPath,
-        fit: BoxFit.contain,
-        semanticLabel: _s.showDistLogo,
-      ),
-    );
   }
 
   Widget _buildCPUView(Cpus cs) {

@@ -305,23 +305,26 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () {
         startPageKey.currentState?.showButtonMenu();
       },
-      trailing: ValueBuilder(listenable: _launchPageIdx, build: () => PopupMenuButton(
-        key: startPageKey,
-        itemBuilder: (BuildContext context) => items,
-        initialValue: _launchPageIdx.value,
-        onSelected: (int idx) {
-          _launchPageIdx.value = idx;
-          _setting.launchPage.put(_launchPageIdx.value);
-        },
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: _media.size.width * 0.35),
-          child: Text(
-            tabTitleName(context, AppTab.values[_launchPageIdx.value]),
-            textAlign: TextAlign.right,
-            style: textSize15,
-          ),
-        ),
-      )),
+      trailing: ValueBuilder(
+          listenable: _launchPageIdx,
+          build: () => PopupMenuButton(
+                key: startPageKey,
+                itemBuilder: (BuildContext context) => items,
+                initialValue: _launchPageIdx.value,
+                onSelected: (int idx) {
+                  _launchPageIdx.value = idx;
+                  _setting.launchPage.put(_launchPageIdx.value);
+                },
+                child: ConstrainedBox(
+                  constraints:
+                      BoxConstraints(maxWidth: _media.size.width * 0.35),
+                  child: Text(
+                    tabTitleName(context, AppTab.values[_launchPageIdx.value]),
+                    textAlign: TextAlign.right,
+                    style: textSize15,
+                  ),
+                ),
+              )),
     );
   }
 
@@ -346,19 +349,22 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () {
         maxRetryKey.currentState?.showButtonMenu();
       },
-      trailing: ValueBuilder(build: () => PopupMenuButton(
-        key: maxRetryKey,
-        itemBuilder: (BuildContext context) => items,
-        initialValue: _maxRetryCount.value,
-        onSelected: (int val) {
-          _maxRetryCount.value = val;
-          _setting.maxRetryCount.put(_maxRetryCount.value);
-        },
-        child: Text(
-          '${_maxRetryCount.value} ${_s.times}',
-          style: textSize15,
+      trailing: ValueBuilder(
+        build: () => PopupMenuButton(
+          key: maxRetryKey,
+          itemBuilder: (BuildContext context) => items,
+          initialValue: _maxRetryCount.value,
+          onSelected: (int val) {
+            _maxRetryCount.value = val;
+            _setting.maxRetryCount.put(_maxRetryCount.value);
+          },
+          child: Text(
+            '${_maxRetryCount.value} ${_s.times}',
+            style: textSize15,
+          ),
         ),
-      ), listenable: _maxRetryCount,),
+        listenable: _maxRetryCount,
+      ),
     );
   }
 
@@ -382,19 +388,22 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () {
         themeKey.currentState?.showButtonMenu();
       },
-      trailing: ValueBuilder(listenable: _nightMode, build: () => PopupMenuButton(
-        key: themeKey,
-        itemBuilder: (BuildContext context) => items,
-        initialValue: _nightMode.value,
-        onSelected: (int idx) {
-          _nightMode.value = idx;
-          _setting.themeMode.put(_nightMode.value);
-        },
-        child: Text(
-          _buildThemeModeStr(_nightMode.value),
-          style: textSize15,
+      trailing: ValueBuilder(
+        listenable: _nightMode,
+        build: () => PopupMenuButton(
+          key: themeKey,
+          itemBuilder: (BuildContext context) => items,
+          initialValue: _nightMode.value,
+          onSelected: (int idx) {
+            _nightMode.value = idx;
+            _setting.themeMode.put(_nightMode.value);
+          },
+          child: Text(
+            _buildThemeModeStr(_nightMode.value),
+            style: textSize15,
+          ),
         ),
-      ),),
+      ),
     );
   }
 
@@ -516,40 +525,44 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildTermFontSize() {
-    return ValueBuilder(listenable: _fontSize, build: () => ListTile(
-      title: Text(_s.fontSize),
-      trailing: Text(
-        _fontSize.value.toString(),
-        style: textSize15,
-      ),
-      onTap: () {
-        final ctrller = TextEditingController(text: _fontSize.value.toString());
-        showRoundDialog(
-          context: context,
-          title: Text(_s.fontSize),
-          child: Input(
-            controller: ctrller,
-            type: TextInputType.number,
-            icon: Icons.font_download,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                context.pop();
-                final fontSize = double.tryParse(ctrller.text);
-                if (fontSize == null) {
-                  showRoundDialog(context: context, child: Text(_s.failed));
-                  return;
-                }
-                _fontSize.value = fontSize;
-                _setting.termFontSize.put(_fontSize.value);
-              },
-              child: Text(_s.ok),
+    return ValueBuilder(
+      listenable: _fontSize,
+      build: () => ListTile(
+        title: Text(_s.fontSize),
+        trailing: Text(
+          _fontSize.value.toString(),
+          style: textSize15,
+        ),
+        onTap: () {
+          final ctrller =
+              TextEditingController(text: _fontSize.value.toString());
+          showRoundDialog(
+            context: context,
+            title: Text(_s.fontSize),
+            child: Input(
+              controller: ctrller,
+              type: TextInputType.number,
+              icon: Icons.font_download,
             ),
-          ],
-        );
-      },
-    ),);
+            actions: [
+              TextButton(
+                onPressed: () {
+                  context.pop();
+                  final fontSize = double.tryParse(ctrller.text);
+                  if (fontSize == null) {
+                    showRoundDialog(context: context, child: Text(_s.failed));
+                    return;
+                  }
+                  _fontSize.value = fontSize;
+                  _setting.termFontSize.put(_fontSize.value);
+                },
+                child: Text(_s.ok),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 
   Widget _buildDiskIgnorePath() {
@@ -602,20 +615,22 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () {
         localeKey.currentState?.showButtonMenu();
       },
-      trailing: ValueBuilder(listenable: _localeCode, build: () => PopupMenuButton(
-        key: localeKey,
-        itemBuilder: (BuildContext context) => items,
-        initialValue: _localeCode.value,
-        onSelected: (String idx) {
-          _localeCode.value = idx;
-          _setting.locale.put(idx);
-          _showRestartSnackbar();
-        },
-        child: Text(
-          _s.languageName,
-          style: textSize15,
-        ),
-      )),
+      trailing: ValueBuilder(
+          listenable: _localeCode,
+          build: () => PopupMenuButton(
+                key: localeKey,
+                itemBuilder: (BuildContext context) => items,
+                initialValue: _localeCode.value,
+                onSelected: (String idx) {
+                  _localeCode.value = idx;
+                  _setting.locale.put(idx);
+                  _showRestartSnackbar();
+                },
+                child: Text(
+                  _s.languageName,
+                  style: textSize15,
+                ),
+              )),
     );
   }
 
@@ -638,19 +653,22 @@ class _SettingPageState extends State<SettingPage> {
     ).toList();
     return ListTile(
       title: Text("${_s.editor} ${_s.theme}"),
-      trailing: ValueBuilder(listenable: _editorTheme, build: () => PopupMenuButton(
-        key: editorThemeKey,
-        itemBuilder: (BuildContext context) => items,
-        initialValue: _editorTheme.value,
-        onSelected: (String idx) {
-          _editorTheme.value = idx;
-          _setting.editorTheme.put(idx);
-        },
-        child: Text(
-          _editorTheme.value,
-          style: textSize15,
+      trailing: ValueBuilder(
+        listenable: _editorTheme,
+        build: () => PopupMenuButton(
+          key: editorThemeKey,
+          itemBuilder: (BuildContext context) => items,
+          initialValue: _editorTheme.value,
+          onSelected: (String idx) {
+            _editorTheme.value = idx;
+            _setting.editorTheme.put(idx);
+          },
+          child: Text(
+            _editorTheme.value,
+            style: textSize15,
+          ),
         ),
-      ),),
+      ),
       onTap: () {
         editorThemeKey.currentState?.showButtonMenu();
       },

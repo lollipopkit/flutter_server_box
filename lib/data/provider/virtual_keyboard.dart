@@ -14,6 +14,7 @@ class VirtualKeyboard extends TerminalInputHandler with ChangeNotifier {
       notifyListeners();
     }
   }
+
   bool _alt = false;
   bool get alt => _alt;
   set alt(bool value) {

@@ -10,10 +10,6 @@ enum Dist {
   arch,
   alpine,
   rocky;
-
-  String get iconPath {
-    return 'assets/linux/$name.png';
-  }
 }
 
 extension StringX on String {
