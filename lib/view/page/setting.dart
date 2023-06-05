@@ -637,7 +637,7 @@ class _SettingPageState extends State<SettingPage> {
       },
     ).toList();
     return ListTile(
-      title: Text(_s.editor + _s.theme),
+      title: Text("${_s.editor} ${_s.theme}"),
       trailing: ValueBuilder(listenable: _editorTheme, build: () => PopupMenuButton(
         key: editorThemeKey,
         itemBuilder: (BuildContext context) => items,
