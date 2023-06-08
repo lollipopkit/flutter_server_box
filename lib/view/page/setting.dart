@@ -127,6 +127,7 @@ class _SettingPageState extends State<SettingPage> {
       _buildAppColor(),
       _buildLaunchPage(),
       _buildCheckUpdate(),
+      _buildFullScreen(),
     ];
     if (isIOS) {
       children.add(_buildPushToken());
@@ -658,6 +659,17 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () {
         editorThemeKey.currentState?.showButtonMenu();
       },
+    );
+  }
+
+  Widget _buildFullScreen() {
+    return ListTile(
+      title: Text(_s.fullScreen),
+      trailing: buildSwitch(
+        context,
+        _setting.fullScreen,
+        func: (_) => _showRestartSnackbar(),
+      ),
     );
   }
 }

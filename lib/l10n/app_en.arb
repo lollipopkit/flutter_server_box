@@ -64,6 +64,7 @@
   "font": "Font",
   "fontSize": "Font size",
   "foundNUpdate": "Found {count} update",
+  "fullScreen": "Full screen mode",
   "getPushTokenFailed": "Can't fetch push token",
   "gettingToken": "Getting token...",
   "goto": "Go to",

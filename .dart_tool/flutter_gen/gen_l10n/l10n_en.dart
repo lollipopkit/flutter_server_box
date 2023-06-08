@@ -213,6 +213,9 @@ class SEn extends S {
   }
 
   @override
+  String get fullScreen => 'Full screen mode';
+
+  @override
   String get getPushTokenFailed => 'Can\'t fetch push token';
 
   @override

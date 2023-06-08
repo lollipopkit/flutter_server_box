@@ -112,7 +112,6 @@ class _ServerPageState extends State<ServerPage>
             }),
             itemBuilder: (_, index) => _buildEachServerCard(
               pro.servers[filtered[index]],
-              index,
             ),
             itemCount: filtered.length,
           );
@@ -166,7 +165,7 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  Widget _buildEachServerCard(Server? si, int index) {
+  Widget _buildEachServerCard(Server? si) {
     if (si == null) {
       return placeholder;
     }

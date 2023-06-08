@@ -6,7 +6,7 @@ import '../res/default.dart';
 class SettingStore extends PersistentStore {
   StoreProperty<int> get primaryColor => property(
         'primaryColor',
-        defaultValue: defaultPrimaryColor.value,
+        defaultValue: 4287106639,
       );
 
   StoreProperty<int> get serverStatusUpdateInterval => property(
@@ -66,4 +66,7 @@ class SettingStore extends PersistentStore {
   // Editor theme
   StoreProperty<String> get editorTheme =>
       property('editorTheme', defaultValue: defaultEditorTheme);
+
+  StoreProperty<bool> get fullScreen =>
+      property('fullScreen', defaultValue: false);
 }

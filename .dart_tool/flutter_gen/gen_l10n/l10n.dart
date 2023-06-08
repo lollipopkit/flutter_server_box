@@ -480,6 +480,12 @@ abstract class S {
   /// **'Found {count} update'**
   String foundNUpdate(Object count);
 
+  /// No description provided for @fullScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Full screen mode'**
+  String get fullScreen;
+
   /// No description provided for @getPushTokenFailed.
   ///
   /// In en, this message translates to:

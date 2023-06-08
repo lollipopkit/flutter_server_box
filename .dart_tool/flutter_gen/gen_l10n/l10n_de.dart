@@ -213,6 +213,9 @@ class SDe extends S {
   }
 
   @override
+  String get fullScreen => 'Full screen mode';
+
+  @override
   String get getPushTokenFailed => 'Push-Token kann nicht abgerufen werden';
 
   @override

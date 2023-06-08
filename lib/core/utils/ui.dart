@@ -74,7 +74,7 @@ Future<T?> showRoundDialog<T>({
 Widget buildSwitch(
   BuildContext context,
   StoreProperty<bool> prop, {
-  Function(bool)? func,
+  void Function(bool)? func,
 }) {
   return ValueListenableBuilder(
     valueListenable: prop.listenable(),
@@ -166,4 +166,9 @@ void showSnippetDialog(
       )
     ],
   );
+}
+
+void hideStatusBar() {
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky,
+      overlays: []);
 }

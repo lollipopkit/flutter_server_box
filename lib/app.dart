@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/locale.dart';
+import 'package:toolbox/view/page/full_screen.dart';
 
 import 'core/utils/ui.dart';
 import 'data/res/build_data.dart';
@@ -18,6 +19,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     setTransparentNavigationBar(context);
     primaryColor = Color(_setting.primaryColor.fetch()!);
+    final fullScreen = _setting.fullScreen.fetch()!;
 
     return ValueListenableBuilder<int>(
       valueListenable: _setting.themeMode.listenable(),
@@ -75,7 +77,7 @@ class MyApp extends StatelessWidget {
                     color: Colors.black,
                   ),
                 ),
-          home: const HomePage(),
+          home: fullScreen ? const FullScreenPage() : const HomePage(),
         );
       },
     );
