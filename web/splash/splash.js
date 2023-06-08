@@ -1,7 +1,5 @@
 function removeSplashFromWeb() {
-  const elem = document.getElementById("splash");
-  if (elem) {
-    elem.remove();
-  }
+  document.getElementById("splash")?.remove();
+  document.getElementById("splash-branding")?.remove();
   document.body.style.background = "transparent";
 }

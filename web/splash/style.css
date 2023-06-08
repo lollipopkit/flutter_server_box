@@ -1,8 +1,11 @@
+html {
+  height: 100%
+}
+
 body {
-  margin:0;
-  height:100%;
-  background: #ffffff;
-  
+  margin: 0;
+  min-height: 100%;
+  background-color: #ffffff;
   background-size: 100% 100%;
 }
 
@@ -32,12 +35,28 @@ body {
   object-fit: cover;
 }
 
+.bottom {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  -ms-transform: translate(-50%, 0);
+  transform: translate(-50%, 0);
+}
+
+.bottomLeft {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+
+.bottomRight {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+}
+
 @media (prefers-color-scheme: dark) {
   body {
-    margin:0;
-    height:100%;
-    background: #121212;
-    
-    background-size: 100% 100%;
+    background-color: #121212;
   }
 }

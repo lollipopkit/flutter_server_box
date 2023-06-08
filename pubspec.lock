@@ -173,9 +173,10 @@ packages:
   code_text_field:
     dependency: "direct main"
     description:
-      path: "../code_field"
-      relative: true
-    source: path
+      name: code_text_field
+      sha256: "0cbffbb2932cf82e1d022996388041de3493a476acad3fbb13e5917cac0fc5f2"
+      url: "https://pub.dev"
+    source: hosted
     version: "1.1.0"
   collection:
     dependency: transitive

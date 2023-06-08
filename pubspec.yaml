@@ -65,8 +65,7 @@ dependencies:
   plain_notification_token: ^0.0.4
   highlight: ^0.7.0
   flutter_highlight: ^0.7.0
-  code_text_field:
-    path: ../code_field
+  code_text_field: ^1.1.0
 
 dev_dependencies:
   flutter_native_splash: ^2.1.6
@@ -179,8 +178,9 @@ flutter_native_splash:
   # If you have changed the name(s) of your info.plist file(s), you can specify the filename(s) 
   # with the info_plist_files parameter.  Remove only the # characters in the three lines below,
   # do not remove any spaces:
-  #info_plist_files:
-  #  - 'ios/Runner/Info-Debug.plist'
-  #  - 'ios/Runner/Info-Release.plist'
+  info_plist_files:
+    - 'ios/Runner/Info-Debug.plist'
+    - 'ios/Runner/Info-Profile.plist'
+    - 'ios/Runner/Info-Release.plist'
   # To enable support for Android 12, set the following parameter to true.  Defaults to false.
   #android12: true

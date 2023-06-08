@@ -28,7 +28,7 @@ Future<bool> shareFiles(BuildContext context, List<String> filePaths) async {
   }
   _app.setCanMoveBg(false);
   // ignore: deprecated_member_use
-  await Share.shareFiles(filePaths, text: 'ServerBox -> $text');
+  await Share.shareFiles(filePaths, subject: 'ServerBox -> $text');
   _app.setCanMoveBg(true);
   return filePaths.isNotEmpty;
 }
