@@ -65,6 +65,8 @@
   "fontSize": "字体大小",
   "foundNUpdate": "找到 {count} 个更新",
   "fullScreen": "全屏模式",
+  "fullScreenJitter": "全屏模式抖动",
+  "fullScreenJitterHelp": "防止烧屏",
   "getPushTokenFailed": "未能获取到推送token",
   "gettingToken": "正在获取Token...",
   "goto": "前往",

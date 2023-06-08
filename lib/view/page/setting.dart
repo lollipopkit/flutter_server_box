@@ -128,6 +128,7 @@ class _SettingPageState extends State<SettingPage> {
       _buildLaunchPage(),
       _buildCheckUpdate(),
       _buildFullScreen(),
+      _buildFullScreenJitter(),
     ];
     if (isIOS) {
       children.add(_buildPushToken());
@@ -670,6 +671,14 @@ class _SettingPageState extends State<SettingPage> {
         _setting.fullScreen,
         func: (_) => _showRestartSnackbar(),
       ),
+    );
+  }
+
+  Widget _buildFullScreenJitter() {
+    return ListTile(
+      title: Text(_s.fullScreenJitter),
+      subtitle: Text(_s.fullScreenJitterHelp, style: grey),
+      trailing: buildSwitch(context, _setting.fullScreenJitter),
     );
   }
 }

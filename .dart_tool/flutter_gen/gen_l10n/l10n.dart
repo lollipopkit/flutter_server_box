@@ -486,6 +486,18 @@ abstract class S {
   /// **'Full screen mode'**
   String get fullScreen;
 
+  /// No description provided for @fullScreenJitter.
+  ///
+  /// In en, this message translates to:
+  /// **'Full screen jitter'**
+  String get fullScreenJitter;
+
+  /// No description provided for @fullScreenJitterHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'To avoid screen burn-in'**
+  String get fullScreenJitterHelp;
+
   /// No description provided for @getPushTokenFailed.
   ///
   /// In en, this message translates to:

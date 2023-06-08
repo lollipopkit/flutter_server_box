@@ -69,4 +69,7 @@ class SettingStore extends PersistentStore {
 
   StoreProperty<bool> get fullScreen =>
       property('fullScreen', defaultValue: false);
+
+  StoreProperty<bool> get fullScreenJitter =>
+      property('fullScreenJitter', defaultValue: true);
 }

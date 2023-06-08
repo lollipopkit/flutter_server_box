@@ -216,6 +216,12 @@ class SZh extends S {
   String get fullScreen => '全屏模式';
 
   @override
+  String get fullScreenJitter => '全屏模式抖动';
+
+  @override
+  String get fullScreenJitterHelp => '防止烧屏';
+
+  @override
   String get getPushTokenFailed => '未能获取到推送token';
 
   @override

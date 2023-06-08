@@ -65,6 +65,8 @@
   "fontSize": "Font size",
   "foundNUpdate": "Found {count} update",
   "fullScreen": "Full screen mode",
+  "fullScreenJitter": "Full screen jitter",
+  "fullScreenJitterHelp": "To avoid screen burn-in",
   "getPushTokenFailed": "Can't fetch push token",
   "gettingToken": "Getting token...",
   "goto": "Go to",

@@ -216,6 +216,12 @@ class SDe extends S {
   String get fullScreen => 'Full screen mode';
 
   @override
+  String get fullScreenJitter => 'Full screen jitter';
+
+  @override
+  String get fullScreenJitterHelp => 'To avoid screen burn-in';
+
+  @override
   String get getPushTokenFailed => 'Push-Token kann nicht abgerufen werden';
 
   @override

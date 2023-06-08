@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:after_layout/after_layout.dart';
 import 'package:circle_chart/circle_chart.dart';
 import 'package:flutter/material.dart';
@@ -28,10 +31,11 @@ class FullScreenPage extends StatefulWidget {
 }
 
 class _FullScreenPageState extends State<FullScreenPage>
-    with AfterLayoutMixin, AutomaticKeepAliveClientMixin {
+    with AfterLayoutMixin {
   late S _s;
   late MediaQueryData _media;
   late ThemeData _theme;
+  late Timer _timer;
 
   final _pageController = PageController(initialPage: 0);
   final _serverProvider = locator<ServerProvider>();
@@ -40,6 +44,13 @@ class _FullScreenPageState extends State<FullScreenPage>
   void initState() {
     super.initState();
     hideStatusBar();
+    _timer = Timer.periodic(const Duration(minutes: 1), (_) => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _timer.cancel();
   }
 
   @override
@@ -50,22 +61,35 @@ class _FullScreenPageState extends State<FullScreenPage>
     _theme = Theme.of(context);
   }
 
+  // x = _media.size.width * 0.1
+  // r = Random().nextDouble()
+  // Return [-x * r, x * r]
+  double get _offset {
+    final x = _media.size.width * 0.03;
+    var r = Random().nextDouble();
+    final n = Random().nextBool() ? -1 : 1;
+    return n * x * r;
+  }
+
   @override
   Widget build(BuildContext context) {
-    super.build(context);
+    final offset = Offset(_offset, _offset);
     return Scaffold(
       body: SafeArea(
         child: RotatedBox(
           quarterTurns: 3,
-          child: Stack(
-            children: [
-              _buildMain(),
-              Positioned(
-                top: 0,
-                left: 0,
-                child: _buildSettingBtn(),
-              ),
-            ],
+          child: Transform.translate(
+            offset: offset,
+            child: Stack(
+              children: [
+                _buildMain(),
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  child: _buildSettingBtn(),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -124,40 +148,44 @@ class _FullScreenPageState extends State<FullScreenPage>
         'server detail page',
       ).go(context),
       child: Stack(
-          children: [
-            Positioned(top: 0, left: 0, right: 0, child: _buildServerCardTitle(ss, cs, spi)),
-            Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-            SizedBox(height: _media.size.width * 0.1),
-                Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildPercentCircle(ss.cpu.usedPercent()),
-                _buildPercentCircle(ss.mem.usedPercent * 100),
-                _buildIOData(
-                    'Conn:\n${ss.tcp.maxConn}', 'Fail:\n${ss.tcp.fail}'),
-                _buildIOData(
-                  'Total:\n${rootDisk.size}',
-                  'Used:\n${rootDisk.usedPercent}%',
-                )
-              ],
-            ),
-            SizedBox(height: _media.size.width * 0.1),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildExplainText('CPU'),
-                _buildExplainText('Mem'),
-                _buildExplainText('Net'),
-                _buildExplainText('Disk'),
-              ],
-            ),
-              ],
-            ),
-          ],
-        ),
+        children: [
+          Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: _buildServerCardTitle(ss, cs, spi)),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(height: _media.size.width * 0.1),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildPercentCircle(ss.cpu.usedPercent()),
+                  _buildPercentCircle(ss.mem.usedPercent * 100),
+                  _buildIOData(
+                      'Conn:\n${ss.tcp.maxConn}', 'Fail:\n${ss.tcp.fail}'),
+                  _buildIOData(
+                    'Total:\n${rootDisk.size}',
+                    'Used:\n${rootDisk.usedPercent}%',
+                  )
+                ],
+              ),
+              SizedBox(height: _media.size.width * 0.1),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildExplainText('CPU'),
+                  _buildExplainText('Mem'),
+                  _buildExplainText('Net'),
+                  _buildExplainText('Disk'),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -172,6 +200,7 @@ class _FullScreenPageState extends State<FullScreenPage>
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          height13,
           Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -310,9 +339,6 @@ class _FullScreenPageState extends State<FullScreenPage>
       ),
     );
   }
-
-  @override
-  bool get wantKeepAlive => true;
 
   @override
   Future<void> afterFirstLayout(BuildContext context) async {

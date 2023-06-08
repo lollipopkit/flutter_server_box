@@ -216,6 +216,12 @@ class SEn extends S {
   String get fullScreen => 'Full screen mode';
 
   @override
+  String get fullScreenJitter => 'Full screen jitter';
+
+  @override
+  String get fullScreenJitterHelp => 'To avoid screen burn-in';
+
+  @override
   String get getPushTokenFailed => 'Can\'t fetch push token';
 
   @override
