@@ -1,0 +1,24 @@
+name: Build IPA
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v1
+        with:
+          flutter-version: '2.x.x'
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build app
+        run: flutter build ios --release --no-codesign
+      - name: Archive app
+        run: flutter build ios --release --no-codesign --build-number=$GITHUB_RUN_NUMBER --build-name=$GITHUB_SHA
+      - name: Create IPA
+        run: |
+          xcrun -sdk iphoneos PackageApplication -v build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app -o $PWD/Runner.ipa
