@@ -30,8 +30,7 @@ class FullScreenPage extends StatefulWidget {
   _FullScreenPageState createState() => _FullScreenPageState();
 }
 
-class _FullScreenPageState extends State<FullScreenPage>
-    with AfterLayoutMixin {
+class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
   late S _s;
   late MediaQueryData _media;
   late ThemeData _theme;
@@ -44,7 +43,13 @@ class _FullScreenPageState extends State<FullScreenPage>
   void initState() {
     super.initState();
     hideStatusBar();
-    _timer = Timer.periodic(const Duration(minutes: 1), (_) => setState(() {}));
+    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted) {
+        setState(() {});
+      } else {
+        _timer.cancel();
+      }
+    });
   }
 
   @override
@@ -61,10 +66,8 @@ class _FullScreenPageState extends State<FullScreenPage>
     _theme = Theme.of(context);
   }
 
-  // x = _media.size.width * 0.1
-  // r = Random().nextDouble()
-  // Return [-x * r, x * r]
   double get _offset {
+    // based on screen width
     final x = _media.size.width * 0.03;
     var r = Random().nextDouble();
     final n = Random().nextBool() ? -1 : 1;
