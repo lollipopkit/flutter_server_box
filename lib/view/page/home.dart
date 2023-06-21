@@ -50,6 +50,7 @@ class _HomePageState extends State<HomePage>
   @override
   void initState() {
     super.initState();
+    switchStatusBar(hide: false);
     WidgetsBinding.instance.addObserver(this);
     _selectIndex.value = _setting.launchPage.fetch()!;
     // avoid index out of range

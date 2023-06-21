@@ -11,7 +11,6 @@ import '../../data/model/server/snippet.dart';
 import '../../data/provider/snippet.dart';
 import '../../locator.dart';
 import '../../view/page/snippet/edit.dart';
-import '../../view/widget/card_dialog.dart';
 import '../../view/widget/picker.dart';
 import '../persistant_store.dart';
 import '../route.dart';
@@ -54,18 +53,16 @@ Future<T?> showRoundDialog<T>({
   Widget? child,
   List<Widget>? actions,
   Widget? title,
-  EdgeInsets? padding,
   bool barrierDismiss = true,
 }) async {
   return await showDialog<T>(
     context: context,
     barrierDismissible: barrierDismiss,
     builder: (_) {
-      return CardDialog(
+      return AlertDialog(
         title: title,
         content: child,
         actions: actions,
-        padding: padding,
       );
     },
   );
@@ -168,7 +165,12 @@ void showSnippetDialog(
   );
 }
 
-void hideStatusBar() {
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky,
+void switchStatusBar({required bool hide}) {
+  if (hide) {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky,
       overlays: []);
+  } else {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge,
+      overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom]);
+  }
 }

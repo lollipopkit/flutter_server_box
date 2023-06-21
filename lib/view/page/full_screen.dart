@@ -42,7 +42,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
   @override
   void initState() {
     super.initState();
-    hideStatusBar();
+    switchStatusBar(hide: true);
     _timer = Timer.periodic(const Duration(minutes: 1), (_) {
       if (mounted) {
         setState(() {});
