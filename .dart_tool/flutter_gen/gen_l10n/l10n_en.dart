@@ -414,6 +414,9 @@ class SEn extends S {
   String get privateKey => 'Private Key';
 
   @override
+  String get process => 'Process';
+
+  @override
   String get pushToken => 'Push token';
 
   @override

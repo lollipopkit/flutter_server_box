@@ -870,6 +870,12 @@ abstract class S {
   /// **'Private Key'**
   String get privateKey;
 
+  /// No description provided for @process.
+  ///
+  /// In en, this message translates to:
+  /// **'Process'**
+  String get process;
+
   /// No description provided for @pushToken.
   ///
   /// In en, this message translates to:

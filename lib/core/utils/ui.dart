@@ -168,9 +168,9 @@ void showSnippetDialog(
 void switchStatusBar({required bool hide}) {
   if (hide) {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky,
-      overlays: []);
+        overlays: []);
   } else {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge,
-      overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom]);
+        overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom]);
   }
 }

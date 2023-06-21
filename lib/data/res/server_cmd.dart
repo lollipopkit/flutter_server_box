@@ -1,3 +1,4 @@
+import '../model/app/shell_func.dart';
 import 'build_data.dart';
 
 const seperator = 'SrvBox';
@@ -36,11 +37,37 @@ const _cmdList = [
   'cat /etc/redhat-release',
 ];
 
+final shellFuncStatus = AppShellFunc(
+  'status',
+  _cmdList.join('\necho $seperator\n'),
+  's',
+);
+
+// Check if `htop` is installed.
+// Then app open SSH term and use `htop` or `ps` to see process.
+const shellFuncProcess = AppShellFunc(
+  'process',
+  '''
+if command -v htop &> /dev/null
+then
+  htop
+else
+  top 
+fi
+''',
+  'p',
+);
+
+final _generated = [
+  shellFuncStatus,
+  shellFuncProcess,
+].generate;
+
 final shellCmd = """
-# Script for app `${BuildData.name} v${BuildData.build}`
+# Script for app `${BuildData.name} v1.0.${BuildData.build}`
 # Delete this file while app is running will cause app crash
 
-${_cmdList.join('\necho $seperator\n')}
+$_generated
 """;
 
 final installShellCmd = "mkdir -p $serverBoxDir && "

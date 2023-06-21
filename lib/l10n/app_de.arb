@@ -126,6 +126,7 @@
   "port": "Port",
   "preview": "Vorschau",
   "privateKey": "Private Key",
+  "process": "Prozess",
   "pushToken": "Push Token",
   "pwd": "Passwort",
   "remotePath": "Entfernte Pfade",

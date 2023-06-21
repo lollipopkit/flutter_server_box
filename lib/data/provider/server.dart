@@ -240,7 +240,8 @@ class ServerProvider extends BusyProvider {
 
       if (s.client == null) return;
       // run script to get server status
-      raw = await s.client!.run("sh $shellPath").string;
+      raw =
+          await s.client!.run("sh $shellPath -${shellFuncStatus.flag}").string;
       segments = raw.split(seperator).map((e) => e.trim()).toList();
       if (raw.isEmpty || segments.length != CmdType.values.length) {
         s.state = ServerState.failed;

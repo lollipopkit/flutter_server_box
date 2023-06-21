@@ -6,6 +6,7 @@ enum ServerTabMenuType {
   snippet,
   pkg,
   docker,
+  process,
   edit;
 
   IconData get icon {
@@ -20,6 +21,8 @@ enum ServerTabMenuType {
         return Icons.view_agenda;
       case ServerTabMenuType.edit:
         return Icons.edit;
+      case ServerTabMenuType.process:
+        return Icons.list_alt_outlined;
     }
   }
 
@@ -35,6 +38,8 @@ enum ServerTabMenuType {
         return 'Docker';
       case ServerTabMenuType.edit:
         return s.edit;
+      case ServerTabMenuType.process:
+        return s.process;
     }
   }
 

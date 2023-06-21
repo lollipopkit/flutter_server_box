@@ -414,6 +414,9 @@ class SZh extends S {
   String get privateKey => '私钥';
 
   @override
+  String get process => '进程';
+
+  @override
   String get pushToken => '消息推送 Token';
 
   @override
@@ -1028,6 +1031,9 @@ class SZhTw extends SZh {
 
   @override
   String get privateKey => '私鑰';
+
+  @override
+  String get process => '進程';
 
   @override
   String get pushToken => '消息推送 Token';

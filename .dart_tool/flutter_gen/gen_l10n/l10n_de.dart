@@ -414,6 +414,9 @@ class SDe extends S {
   String get privateKey => 'Private Key';
 
   @override
+  String get process => 'Prozess';
+
+  @override
   String get pushToken => 'Push Token';
 
   @override

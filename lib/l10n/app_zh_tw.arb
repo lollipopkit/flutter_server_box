@@ -126,6 +126,7 @@
   "port": "端口",
   "preview": "預覽",
   "privateKey": "私鑰",
+  "process": "進程",
   "pushToken": "消息推送 Token",
   "pwd": "密碼",
   "remotePath": "遠端路徑",

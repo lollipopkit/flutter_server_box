@@ -129,6 +129,7 @@
   "port": "端口",
   "preview": "预览",
   "privateKey": "私钥",
+  "process": "进程",
   "pushToken": "消息推送 Token",
   "pwd": "密码",
   "remotePath": "远端路径",
