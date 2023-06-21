@@ -20,13 +20,13 @@ class SZh extends S {
   String get addPrivateKey => '添加一个私钥';
 
   @override
+  String get added2List => '已添加至任务列表';
+
+  @override
   String get all => '所有';
 
   @override
   String get alreadyLastDir => '已经是最上层目录了';
-
-  @override
-  String get appPrimaryColor => 'App主要色';
 
   @override
   String get attention => '注意';
@@ -411,6 +411,9 @@ class SZh extends S {
   String get preview => '预览';
 
   @override
+  String get primaryColor => '主题色';
+
+  @override
   String get privateKey => '私钥';
 
   @override
@@ -648,13 +651,13 @@ class SZhTw extends SZh {
   String get addPrivateKey => '新增一個私鑰';
 
   @override
+  String get added2List => '已添加至任務列表';
+
+  @override
   String get all => '所有';
 
   @override
   String get alreadyLastDir => '已經是最上層目錄了';
-
-  @override
-  String get appPrimaryColor => '主要色調';
 
   @override
   String get attention => '注意';
@@ -1028,6 +1031,9 @@ class SZhTw extends SZh {
 
   @override
   String get preview => '預覽';
+
+  @override
+  String get primaryColor => '主要色調';
 
   @override
   String get privateKey => '私鑰';

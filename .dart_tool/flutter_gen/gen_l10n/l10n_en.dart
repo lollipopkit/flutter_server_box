@@ -20,13 +20,13 @@ class SEn extends S {
   String get addPrivateKey => 'Add private key';
 
   @override
+  String get added2List => 'Added to task list';
+
+  @override
   String get all => 'All';
 
   @override
   String get alreadyLastDir => 'Already in last directory.';
-
-  @override
-  String get appPrimaryColor => 'App primary color';
 
   @override
   String get attention => 'Attention';
@@ -409,6 +409,9 @@ class SEn extends S {
 
   @override
   String get preview => 'Preview';
+
+  @override
+  String get primaryColor => 'Primary color';
 
   @override
   String get privateKey => 'Private Key';

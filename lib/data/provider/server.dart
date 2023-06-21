@@ -57,6 +57,10 @@ class ServerProvider extends BusyProvider {
     } else {
       _serverOrder.addAll(_servers.keys);
     }
+    final surplus = _serverOrder.where(
+      (e) => !_servers.containsKey(e),
+    );
+    _serverOrder.removeWhere((element) => surplus.contains(element));
     _settingStore.serverOrder.put(_serverOrder);
     _updateTags();
     setBusyState(false);

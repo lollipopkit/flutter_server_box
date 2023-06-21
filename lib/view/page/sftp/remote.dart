@@ -9,6 +9,7 @@ import 'package:toolbox/core/extension/sftpfile.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/view/page/editor.dart';
 import 'package:toolbox/view/page/sftp/local.dart';
+import 'package:toolbox/view/widget/round_rect_card.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/extension/stringx.dart';
@@ -33,7 +34,14 @@ import 'mission.dart';
 class SFTPPage extends StatefulWidget {
   final ServerPrivateInfo spi;
   final String? initPath;
-  const SFTPPage(this.spi, {Key? key, this.initPath}) : super(key: key);
+  final bool selectPath;
+
+  const SFTPPage(
+    this.spi, {
+    Key? key,
+    this.initPath,
+    this.selectPath = false,
+  }) : super(key: key);
 
   @override
   _SFTPPageState createState() => _SFTPPageState();
@@ -86,6 +94,24 @@ class _SFTPPageState extends State<SFTPPage> {
   }
 
   Widget _buildBottom() {
+    final children = widget.selectPath
+        ? [
+            IconButton(
+                onPressed: () => context.pop(_status.path?.path),
+                icon: const Icon(Icons.done))
+          ]
+        : [
+            IconButton(
+              padding: const EdgeInsets.all(0),
+              onPressed: () async {
+                await _backward();
+              },
+              icon: const Icon(Icons.arrow_back),
+            ),
+            _buildAddBtn(),
+            _buildGotoBtn(),
+            _buildUploadBtn(),
+          ];
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.fromLTRB(11, 7, 11, 11),
@@ -96,18 +122,7 @@ class _SFTPPageState extends State<SFTPPage> {
             (_status.path?.path ?? _s.loadingFiles).omitStartStr(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                IconButton(
-                  padding: const EdgeInsets.all(0),
-                  onPressed: () async {
-                    await _backward();
-                  },
-                  icon: const Icon(Icons.arrow_back),
-                ),
-                _buildAddBtn(),
-                _buildGotoBtn(),
-                _buildUploadBtn(),
-              ],
+              children: children,
             )
           ],
         ),
@@ -250,10 +265,11 @@ class _SFTPPageState extends State<SFTPPage> {
           child: ListView.builder(
             itemCount: _status.files!.length,
             controller: _scrollController,
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
             itemBuilder: (context, index) {
               final file = _status.files![index];
               final isDir = file.attr.isDirectory;
-              return ListTile(
+              return RoundRectCard(ListTile(
                 leading: Icon(isDir ? Icons.folder : Icons.insert_drive_file),
                 title: Text(file.filename),
                 trailing: Text(
@@ -272,7 +288,7 @@ class _SFTPPageState extends State<SFTPPage> {
                   }
                 },
                 onLongPress: () => _onItemPress(context, file, !isDir),
-              );
+              ));
             },
           ),
         ),
@@ -335,7 +351,9 @@ class _SFTPPageState extends State<SFTPPage> {
     final completer = Completer();
     final req = SftpReqItem(widget.spi, remotePath, localPath);
     _sftp.add(req, SftpReqType.download, completer: completer);
+    showRoundDialog(context: context, child: centerSizedLoading);
     await completer.future;
+    context.pop();
 
     final result = await AppRoute(
       EditorPage(path: localPath),

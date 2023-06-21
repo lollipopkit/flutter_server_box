@@ -247,12 +247,12 @@ class _SettingPageState extends State<SettingPage> {
         ),
       ),
       title: Text(
-        _s.appPrimaryColor,
+        _s.primaryColor,
       ),
       onTap: () async {
         await showRoundDialog(
           context: context,
-          title: Text(_s.appPrimaryColor),
+          title: Text(_s.primaryColor),
           child: MaterialColorPicker(
             shrinkWrap: true,
             allowShades: true,
@@ -640,7 +640,7 @@ class _SettingPageState extends State<SettingPage> {
       },
     ).toList();
     return ListTile(
-      title: Text("${_s.editor} ${_s.theme}"),
+      title: Text(_s.theme),
       trailing: ValueBuilder(
         listenable: _editorTheme,
         build: () => PopupMenuButton(

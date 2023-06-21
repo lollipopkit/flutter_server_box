@@ -9,8 +9,10 @@ import 'package:toolbox/data/provider/sftp.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/editor.dart';
+import 'package:toolbox/view/page/sftp/remote.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/picker.dart';
+import 'package:toolbox/view/widget/round_rect_card.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/extension/stringx.dart';
@@ -112,13 +114,14 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
     final files = dir.listSync();
     return ListView.builder(
       itemCount: files.length,
+      padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 7),
       itemBuilder: (context, index) {
         var file = files[index];
         var fileName = file.path.split('/').last;
         var stat = file.statSync();
         var isDir = stat.type == FileSystemEntityType.directory;
 
-        return ListTile(
+        return RoundRectCard(ListTile(
           leading: isDir
               ? const Icon(Icons.folder)
               : const Icon(Icons.insert_drive_file),
@@ -138,7 +141,7 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
             _path!.update(fileName);
             setState(() {});
           },
-        );
+        ));
       },
     );
   }
@@ -243,19 +246,6 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
             title: Text(_s.upload),
             onTap: () async {
               context.pop();
-              final remotePath = await showRoundDialog(
-                  context: context,
-                  title: Text(_s.remotePath),
-                  child: Input(
-                    controller: TextEditingController(text: '/'),
-                    onSubmitted: (p0) {
-                      context.pop(p0);
-                    },
-                  ));
-              if (remotePath == null) {
-                showSnackBar(context, Text(_s.fieldMustNotEmpty));
-                return;
-              }
               final serverProvider = locator<ServerProvider>();
               final ids = serverProvider.serverOrder;
               var idx = 0;
@@ -277,10 +267,22 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
                 showSnackBar(context, Text(_s.noResult));
                 return;
               }
+              final remotePath = await AppRoute(
+                SFTPPage(
+                  spi,
+                  selectPath: true,
+                ),
+                'SFTP page (select)',
+              ).go<String>(context);
+              if (remotePath == null) {
+                showSnackBar(context, Text(_s.fieldMustNotEmpty));
+                return;
+              }
               locator<SftpProvider>().add(
                 SftpReqItem(spi, remotePath, file.absolute.path),
                 SftpReqType.upload,
               );
+              showSnackBar(context, Text(_s.added2List));
             },
           ),
           ListTile(

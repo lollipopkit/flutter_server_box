@@ -20,13 +20,13 @@ class SDe extends S {
   String get addPrivateKey => 'Private key hinzufügen';
 
   @override
+  String get added2List => 'Zur Aufgabenliste hinzugefügt';
+
+  @override
   String get all => 'Alle';
 
   @override
   String get alreadyLastDir => 'Bereits im letzten Verzeichnis.';
-
-  @override
-  String get appPrimaryColor => 'Farbschema';
 
   @override
   String get attention => 'Achtung';
@@ -409,6 +409,9 @@ class SDe extends S {
 
   @override
   String get preview => 'Vorschau';
+
+  @override
+  String get primaryColor => 'Farbschema';
 
   @override
   String get privateKey => 'Private Key';

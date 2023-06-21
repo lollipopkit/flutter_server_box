@@ -106,10 +106,7 @@ class _PingPageState extends State<PingPage>
       return Center(
         child: Text(
           _s.noResult,
-          style: TextStyle(
-            fontSize: 18,
-            color: primaryColor,
-          ),
+          style: const TextStyle(fontSize: 18),
         ),
       );
     }

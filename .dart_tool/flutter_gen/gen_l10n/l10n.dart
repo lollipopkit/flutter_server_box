@@ -126,6 +126,12 @@ abstract class S {
   /// **'Add private key'**
   String get addPrivateKey;
 
+  /// No description provided for @added2List.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to task list'**
+  String get added2List;
+
   /// No description provided for @all.
   ///
   /// In en, this message translates to:
@@ -137,12 +143,6 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Already in last directory.'**
   String get alreadyLastDir;
-
-  /// No description provided for @appPrimaryColor.
-  ///
-  /// In en, this message translates to:
-  /// **'App primary color'**
-  String get appPrimaryColor;
 
   /// No description provided for @attention.
   ///
@@ -863,6 +863,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Preview'**
   String get preview;
+
+  /// No description provided for @primaryColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary color'**
+  String get primaryColor;
 
   /// No description provided for @privateKey.
   ///

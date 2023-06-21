@@ -24,10 +24,10 @@ class MyApp extends StatelessWidget {
     return ValueListenableBuilder<int>(
       valueListenable: _setting.themeMode.listenable(),
       builder: (_, tMode, __) {
-        final ok = tMode >= 0 && tMode <= ThemeMode.values.length - 1;
+        final isAMOLED = tMode >= 0 && tMode <= ThemeMode.values.length - 1;
         // Issue #57
         // if not [ok] -> [AMOLED] mode, use [ThemeMode.dark]
-        final themeMode = ok ? ThemeMode.values[tMode] : ThemeMode.dark;
+        final themeMode = isAMOLED ? ThemeMode.values[tMode] : ThemeMode.dark;
         final localeStr = _setting.locale.fetch();
         final locale = localeStr?.toLocale;
         final darkTheme = ThemeData(
@@ -47,7 +47,7 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
             colorSchemeSeed: primaryColor,
           ),
-          darkTheme: ok
+          darkTheme: isAMOLED
               ? darkTheme
               : darkTheme.copyWith(
                   scaffoldBackgroundColor: Colors.black,
