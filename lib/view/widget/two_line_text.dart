@@ -10,14 +10,18 @@ class TwoLineText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
           up,
           style: textSize15,
+          overflow: TextOverflow.ellipsis,
         ),
         Text(
           down,
           style: textSize11,
+          overflow: TextOverflow.ellipsis,
         )
       ],
     );

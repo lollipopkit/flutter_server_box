@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/core/utils/misc.dart';
-import 'package:toolbox/data/res/server_cmd.dart';
+import 'package:toolbox/view/page/process.dart';
 
 import '../../../core/route.dart';
 import '../../../core/utils/ui.dart';
@@ -338,13 +338,14 @@ class _ServerPageState extends State<ServerPage>
             AppRoute(DockerManagePage(spi), 'Docker manage').go(context);
             break;
           case ServerTabMenuType.process:
-            AppRoute(
-              SSHPage(
-                spi: spi,
-                initCmd: 'sh $shellPath -${shellFuncProcess.flag}',
-              ),
-              'ssh page (process)',
-            ).go(context);
+            // AppRoute(
+            //   SSHPage(
+            //     spi: spi,
+            //     initCmd: 'sh $shellPath -${shellFuncProcess.flag}',
+            //   ),
+            //   'ssh page (process)',
+            // ).go(context);
+            AppRoute(ProcessPage(spi: spi), 'process page').go(context);
             break;
         }
       },
