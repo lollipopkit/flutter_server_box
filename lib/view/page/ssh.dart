@@ -48,6 +48,7 @@ class _SSHPageState extends State<SSHPage> {
   late S _s;
   late TerminalStyle _terminalStyle;
   late TerminalTheme _terminalTheme;
+  late TextInputType _keyboardType;
 
   var _isDark = false;
 
@@ -60,6 +61,7 @@ class _SSHPageState extends State<SSHPage> {
       fontSize: _setting.termFontSize.fetch()!,
     );
     _terminalStyle = TerminalStyle.fromTextStyle(textStyle);
+    _keyboardType = TextInputType.values[_setting.keyboardType.fetch()!];
     initTerminal();
   }
 
@@ -96,8 +98,6 @@ class _SSHPageState extends State<SSHPage> {
   }
 
   Widget _buildBody() {
-    final keyboardType =
-        isIOS ? TextInputType.emailAddress : TextInputType.visiblePassword;
     return SizedBox(
       height: _media.size.height -
           _virtualKeyboardHeight -
@@ -106,7 +106,7 @@ class _SSHPageState extends State<SSHPage> {
       child: TerminalView(
         _terminal,
         controller: _terminalController,
-        keyboardType: keyboardType,
+        keyboardType: _keyboardType,
         textStyle: _terminalStyle,
         theme: _terminalTheme,
         deleteDetection: isIOS,

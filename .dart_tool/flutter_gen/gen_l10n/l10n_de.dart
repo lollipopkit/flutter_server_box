@@ -280,6 +280,12 @@ class SDe extends S {
   String get keyAuth => 'Schlüsselauthentifzierung';
 
   @override
+  String get keyboardCompatibility => 'Possible to improve input method compatibility';
+
+  @override
+  String get keyboardType => 'Keyborad type';
+
+  @override
   String get language => 'Sprache';
 
   @override

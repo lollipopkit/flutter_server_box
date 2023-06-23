@@ -85,6 +85,8 @@
   "isBusy": "Is busy now",
   "keepForeground": "Keep app foreground!",
   "keyAuth": "Key Auth",
+  "keyboardCompatibility": "Possible to improve input method compatibility",
+  "keyboardType": "Keyborad type",
   "language": "Language",
   "languageName": "English",
   "lastTry": "Last try",

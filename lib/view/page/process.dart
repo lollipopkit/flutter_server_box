@@ -100,6 +100,7 @@ class _ProcessPageState extends State<ProcessPage> {
     } else {
       child = ListView.builder(
         itemCount: _result.procs.length,
+        padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 7),
         itemBuilder: (ctx, idx) {
           final proc = _result.procs[idx];
           return _buildListItem(proc);

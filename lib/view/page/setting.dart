@@ -35,13 +35,13 @@ class SettingPage extends StatefulWidget {
 }
 
 class _SettingPageState extends State<SettingPage> {
-  final themeKey = GlobalKey<PopupMenuButtonState<int>>();
-  final startPageKey = GlobalKey<PopupMenuButtonState<int>>();
-  final updateIntervalKey = GlobalKey<PopupMenuButtonState<int>>();
-  final maxRetryKey = GlobalKey<PopupMenuButtonState<int>>();
-  final fontSizeKey = GlobalKey<PopupMenuButtonState<double>>();
-  final localeKey = GlobalKey<PopupMenuButtonState<String>>();
-  final editorThemeKey = GlobalKey<PopupMenuButtonState<String>>();
+  final _themeKey = GlobalKey<PopupMenuButtonState<int>>();
+  final _startPageKey = GlobalKey<PopupMenuButtonState<int>>();
+  final _updateIntervalKey = GlobalKey<PopupMenuButtonState<int>>();
+  final _maxRetryKey = GlobalKey<PopupMenuButtonState<int>>();
+  final _localeKey = GlobalKey<PopupMenuButtonState<String>>();
+  final _editorThemeKey = GlobalKey<PopupMenuButtonState<String>>();
+  final _keyboardTypeKey = GlobalKey<PopupMenuButtonState<int>>();
 
   late final SettingStore _setting;
   late final ServerProvider _serverProvider;
@@ -56,6 +56,7 @@ class _SettingPageState extends State<SettingPage> {
   final _fontSize = ValueNotifier(0.0);
   final _localeCode = ValueNotifier('');
   final _editorTheme = ValueNotifier('');
+  final _keyboardType = ValueNotifier(0);
 
   final _pushToken = ValueNotifier<String?>(null);
 
@@ -79,6 +80,7 @@ class _SettingPageState extends State<SettingPage> {
     _selectedColorValue.value = _setting.primaryColor.fetch()!;
     _fontSize.value = _setting.termFontSize.fetch()!;
     _editorTheme.value = _setting.editorTheme.fetch()!;
+    _keyboardType.value = _setting.keyboardType.fetch()!;
   }
 
   @override
@@ -157,6 +159,7 @@ class _SettingPageState extends State<SettingPage> {
         _buildFont(),
         _buildTermFontSize(),
         _buildSSHVirtualKeyAutoOff(),
+        _buildKeyboardType(),
       ].map((e) => RoundRectCard(e)).toList(),
     );
   }
@@ -212,12 +215,12 @@ class _SettingPageState extends State<SettingPage> {
         style: grey,
       ),
       onTap: () {
-        updateIntervalKey.currentState?.showButtonMenu();
+        _updateIntervalKey.currentState?.showButtonMenu();
       },
       trailing: ValueBuilder(
         listenable: _updateInterval,
         build: () => PopupMenuButton(
-          key: updateIntervalKey,
+          key: _updateIntervalKey,
           itemBuilder: (_) => items,
           initialValue: _updateInterval.value,
           onSelected: (int val) {
@@ -291,12 +294,12 @@ class _SettingPageState extends State<SettingPage> {
         _s.launchPage,
       ),
       onTap: () {
-        startPageKey.currentState?.showButtonMenu();
+        _startPageKey.currentState?.showButtonMenu();
       },
       trailing: ValueBuilder(
           listenable: _launchPageIdx,
           build: () => PopupMenuButton(
-                key: startPageKey,
+                key: _startPageKey,
                 itemBuilder: (BuildContext context) => items,
                 initialValue: _launchPageIdx.value,
                 onSelected: (int idx) {
@@ -335,11 +338,11 @@ class _SettingPageState extends State<SettingPage> {
       ),
       subtitle: Text(help, style: grey),
       onTap: () {
-        maxRetryKey.currentState?.showButtonMenu();
+        _maxRetryKey.currentState?.showButtonMenu();
       },
       trailing: ValueBuilder(
         build: () => PopupMenuButton(
-          key: maxRetryKey,
+          key: _maxRetryKey,
           itemBuilder: (BuildContext context) => items,
           initialValue: _maxRetryCount.value,
           onSelected: (int val) {
@@ -374,12 +377,12 @@ class _SettingPageState extends State<SettingPage> {
         _s.themeMode,
       ),
       onTap: () {
-        themeKey.currentState?.showButtonMenu();
+        _themeKey.currentState?.showButtonMenu();
       },
       trailing: ValueBuilder(
         listenable: _nightMode,
         build: () => PopupMenuButton(
-          key: themeKey,
+          key: _themeKey,
           itemBuilder: (BuildContext context) => items,
           initialValue: _nightMode.value,
           onSelected: (int idx) {
@@ -601,12 +604,12 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       title: Text(_s.language),
       onTap: () {
-        localeKey.currentState?.showButtonMenu();
+        _localeKey.currentState?.showButtonMenu();
       },
       trailing: ValueBuilder(
           listenable: _localeCode,
           build: () => PopupMenuButton(
-                key: localeKey,
+                key: _localeKey,
                 itemBuilder: (BuildContext context) => items,
                 initialValue: _localeCode.value,
                 onSelected: (String idx) {
@@ -644,7 +647,7 @@ class _SettingPageState extends State<SettingPage> {
       trailing: ValueBuilder(
         listenable: _editorTheme,
         build: () => PopupMenuButton(
-          key: editorThemeKey,
+          key: _editorThemeKey,
           itemBuilder: (BuildContext context) => items,
           initialValue: _editorTheme.value,
           onSelected: (String idx) {
@@ -658,7 +661,7 @@ class _SettingPageState extends State<SettingPage> {
         ),
       ),
       onTap: () {
-        editorThemeKey.currentState?.showButtonMenu();
+        _editorThemeKey.currentState?.showButtonMenu();
       },
     );
   }
@@ -679,6 +682,56 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(_s.fullScreenJitter),
       subtitle: Text(_s.fullScreenJitterHelp, style: grey),
       trailing: buildSwitch(context, _setting.fullScreenJitter),
+    );
+  }
+
+  Widget _buildKeyboardType() {
+    const List<String> names = <String>[
+      'text',
+      'multiline',
+      'number',
+      'phone',
+      'datetime',
+      'emailAddress',
+      'url',
+      'visiblePassword',
+      'name',
+      'address',
+      'none',
+    ];
+    if (names.length != TextInputType.values.length) {
+      throw 'names.length != TextInputType.values.length';
+    }
+    final items = TextInputType.values.map(
+      (key) {
+        return PopupMenuItem<int>(
+          value: key.index,
+          child: Text(names[key.index]),
+        );
+      },
+    ).toList();
+    return ListTile(
+      title: Text(_s.keyboardType),
+      subtitle: Text(_s.keyboardCompatibility, style: grey),
+      trailing: ValueBuilder(
+        listenable: _keyboardType,
+        build: () => PopupMenuButton<int>(
+          key: _keyboardTypeKey,
+          itemBuilder: (BuildContext context) => items,
+          initialValue: _keyboardType.value,
+          onSelected: (idx) {
+            _keyboardType.value = idx;
+            _setting.keyboardType.put(idx);
+          },
+          child: Text(
+            names[_keyboardType.value],
+            style: textSize15,
+          ),
+        ),
+      ),
+      onTap: () {
+        _keyboardTypeKey.currentState?.showButtonMenu();
+      },
     );
   }
 }

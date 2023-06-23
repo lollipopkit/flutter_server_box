@@ -606,6 +606,18 @@ abstract class S {
   /// **'Key Auth'**
   String get keyAuth;
 
+  /// No description provided for @keyboardCompatibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Possible to improve input method compatibility'**
+  String get keyboardCompatibility;
+
+  /// No description provided for @keyboardType.
+  ///
+  /// In en, this message translates to:
+  /// **'Keyborad type'**
+  String get keyboardType;
+
   /// No description provided for @language.
   ///
   /// In en, this message translates to:

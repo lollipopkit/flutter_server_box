@@ -82,6 +82,8 @@
   "isBusy": "當前正忙",
   "keepForeground": "請保持應用處於前台！",
   "keyAuth": "密鑰認證",
+  "keyboardCompatibility": "可能會改善輸入法兼容性",
+  "keyboardType": "鍵盤類型",
   "language": "語言",
   "languageName": "繁體中文",
   "lastTry": "最後嘗試",

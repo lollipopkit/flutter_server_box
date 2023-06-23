@@ -292,12 +292,12 @@ class _HomePageState extends State<HomePage>
 
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
+    doUpdate(context);
     await GetIt.I.allReady();
     await _serverProvider.loadLocalData();
     await _serverProvider.refreshData();
-    await doUpdate(context);
     if (!Analysis.enabled) {
-      await Analysis.init();
+      Analysis.init();
     }
   }
 }

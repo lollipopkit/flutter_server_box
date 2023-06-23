@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/core/utils/platform.dart';
 
@@ -72,4 +73,7 @@ class SettingStore extends PersistentStore {
 
   StoreProperty<bool> get fullScreenJitter =>
       property('fullScreenJitter', defaultValue: true);
+
+  StoreProperty<int> get keyboardType =>
+      property('keyboardType', defaultValue: TextInputType.text.index);
 }

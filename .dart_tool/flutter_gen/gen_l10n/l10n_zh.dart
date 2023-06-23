@@ -280,6 +280,12 @@ class SZh extends S {
   String get keyAuth => '密钥认证';
 
   @override
+  String get keyboardCompatibility => '可能会改善输入法兼容性';
+
+  @override
+  String get keyboardType => '键盘类型';
+
+  @override
   String get language => '语言';
 
   @override
@@ -900,6 +906,12 @@ class SZhTw extends SZh {
 
   @override
   String get keyAuth => '密鑰認證';
+
+  @override
+  String get keyboardCompatibility => '可能會改善輸入法兼容性';
+
+  @override
+  String get keyboardType => '鍵盤類型';
 
   @override
   String get language => '語言';

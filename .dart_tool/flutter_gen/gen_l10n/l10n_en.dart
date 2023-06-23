@@ -280,6 +280,12 @@ class SEn extends S {
   String get keyAuth => 'Key Auth';
 
   @override
+  String get keyboardCompatibility => 'Possible to improve input method compatibility';
+
+  @override
+  String get keyboardType => 'Keyborad type';
+
+  @override
   String get language => 'Language';
 
   @override
