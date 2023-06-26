@@ -104,6 +104,7 @@ Future<void> _doUpdate(String url, BuildContext context, S s) async {
 
 // rmdir Download
 Future<void> _rmDownloadApks() async {
+  if (!isAndroid) return;
   final dlDir = Directory(pathJoin((await docDir).path, 'Download'));
   if (await dlDir.exists()) {
     await dlDir.delete(recursive: true);

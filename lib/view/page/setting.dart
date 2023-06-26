@@ -92,16 +92,14 @@ class _SettingPageState extends State<SettingPage> {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 17),
         children: [
-          // App
           _buildTitle('App'),
           _buildApp(),
-          // Server
+          _buildTitle(_s.fullScreen),
+          _buildFullScreen(),
           _buildTitle(_s.server),
           _buildServer(),
-          // SSH
           _buildTitle('SSH'),
           _buildSSH(),
-          // Editor
           _buildTitle(_s.editor),
           _buildEditor(),
           const SizedBox(height: 37),
@@ -129,8 +127,6 @@ class _SettingPageState extends State<SettingPage> {
       _buildAppColor(),
       _buildLaunchPage(),
       _buildCheckUpdate(),
-      _buildFullScreen(),
-      _buildFullScreenJitter(),
     ];
     if (isIOS) {
       children.add(_buildPushToken());
@@ -140,6 +136,15 @@ class _SettingPageState extends State<SettingPage> {
     }
     return Column(
       children: children.map((e) => RoundRectCard(e)).toList(),
+    );
+  }
+
+  Widget _buildFullScreen() {
+    return Column(
+      children: [
+        _buildFullScreenSwitch(),
+        _buildFullScreenJitter(),
+      ].map((e) => RoundRectCard(e)).toList(),
     );
   }
 
@@ -666,7 +671,7 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  Widget _buildFullScreen() {
+  Widget _buildFullScreenSwitch() {
     return ListTile(
       title: Text(_s.fullScreen),
       trailing: buildSwitch(
