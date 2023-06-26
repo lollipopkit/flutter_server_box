@@ -32,7 +32,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     with SingleTickerProviderStateMixin {
   late MediaQueryData _media;
   late S _s;
-  final StringOrder _cardsOrder = [];
+  final Order _cardsOrder = [];
   final _setting = locator<SettingStore>();
 
   @override

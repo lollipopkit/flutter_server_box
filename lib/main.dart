@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/data/model/ssh/virtual_key.dart';
 
 import 'app.dart';
 import 'core/analysis.dart';
@@ -47,6 +48,7 @@ Future<void> initApp() async {
 Future<void> initHive() async {
   await Hive.initFlutter();
   Hive.registerAdapter(SnippetAdapter());
+  Hive.registerAdapter(VirtKeyAdapter());
   Hive.registerAdapter(PrivateKeyInfoAdapter());
   Hive.registerAdapter(ServerPrivateInfoAdapter());
 }

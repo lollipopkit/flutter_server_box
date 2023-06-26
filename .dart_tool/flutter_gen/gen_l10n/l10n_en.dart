@@ -107,6 +107,9 @@ class SEn extends S {
   String get delete => 'Delete';
 
   @override
+  String get disabled => 'Disabled';
+
+  @override
   String get disconnected => 'Disconnected';
 
   @override
@@ -151,6 +154,9 @@ class SEn extends S {
 
   @override
   String get edit => 'Edit';
+
+  @override
+  String get editVirtKeys => 'Edit virtual keys';
 
   @override
   String get editor => 'Editor';

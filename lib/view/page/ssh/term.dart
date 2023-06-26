@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:dartssh2/dartssh2.dart';
@@ -10,20 +11,19 @@ import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/data/res/server_cmd.dart';
 import 'package:xterm/xterm.dart';
 
-import '../../core/route.dart';
-import '../../core/utils/platform.dart';
-import '../../core/utils/misc.dart';
-import '../../core/utils/ui.dart';
-import '../../core/utils/server.dart';
-import '../../data/model/server/server_private_info.dart';
-import '../../data/model/ssh/virtual_key.dart';
-import '../../data/provider/virtual_keyboard.dart';
-import '../../data/res/color.dart';
-import '../../data/res/terminal.dart';
-import '../../data/res/virtual_key.dart';
-import '../../data/store/setting.dart';
-import '../../locator.dart';
-import 'sftp/remote.dart';
+import '../../../core/route.dart';
+import '../../../core/utils/platform.dart';
+import '../../../core/utils/misc.dart';
+import '../../../core/utils/ui.dart';
+import '../../../core/utils/server.dart';
+import '../../../data/model/server/server_private_info.dart';
+import '../../../data/model/ssh/virtual_key.dart';
+import '../../../data/provider/virtual_keyboard.dart';
+import '../../../data/res/color.dart';
+import '../../../data/res/terminal.dart';
+import '../../../data/store/setting.dart';
+import '../../../locator.dart';
+import '../sftp/remote.dart';
 
 class SSHPage extends StatefulWidget {
   final ServerPrivateInfo spi;
@@ -35,22 +35,26 @@ class SSHPage extends StatefulWidget {
 }
 
 class _SSHPageState extends State<SSHPage> {
-  late final _terminal = Terminal(inputHandler: _keyboard);
-  SSHClient? _client;
-  late SSHSession _session;
   final _keyboard = locator<VirtualKeyboard>();
   final _setting = locator<SettingStore>();
-  late MediaQueryData _media;
-  final _virtualKeyboardHeight = 57.0;
+  late final _terminal = Terminal(inputHandler: _keyboard);
   final TerminalController _terminalController = TerminalController();
   final ContextMenuController _menuController = ContextMenuController();
+  final List<List<VirtKey>> _virtKeysList = [];
+
+  late MediaQueryData _media;
   late TextStyle _menuTextStyle;
   late S _s;
   late TerminalStyle _terminalStyle;
   late TerminalTheme _terminalTheme;
   late TextInputType _keyboardType;
+  late SSHSession _session;
+  late double _virtKeyWidth;
+  late double _virtKeysHeight;
 
-  var _isDark = false;
+  bool _isDark = false;
+  Timer? _virtKeyLongPressTimer;
+  SSHClient? _client;
 
   @override
   void initState() {
@@ -62,7 +66,8 @@ class _SSHPageState extends State<SSHPage> {
     );
     _terminalStyle = TerminalStyle.fromTextStyle(textStyle);
     _keyboardType = TextInputType.values[_setting.keyboardType.fetch()!];
-    initTerminal();
+    _initTerminal();
+    _initVirtKeys();
   }
 
   @override
@@ -73,6 +78,9 @@ class _SSHPageState extends State<SSHPage> {
     _menuTextStyle = TextStyle(color: contentColor.resolve(context));
     _s = S.of(context)!;
     _terminalTheme = _isDark ? termDarkTheme : termLightTheme;
+    // Calculate virtkey width / height
+    _virtKeyWidth = _media.size.width / 7;
+    _virtKeysHeight = _media.size.height * 0.047 * _virtKeysList.length;
   }
 
   @override
@@ -100,7 +108,7 @@ class _SSHPageState extends State<SSHPage> {
   Widget _buildBody() {
     return SizedBox(
       height: _media.size.height -
-          _virtualKeyboardHeight -
+          _virtKeysHeight -
           _media.padding.bottom -
           _media.padding.top,
       child: TerminalView(
@@ -125,7 +133,7 @@ class _SSHPageState extends State<SSHPage> {
         curve: Curves.fastOutSlowIn,
         child: Container(
           color: _terminalTheme.background,
-          height: _virtualKeyboardHeight,
+          height: _virtKeysHeight,
           child: Consumer<VirtualKeyboard>(
             builder: (_, __, ___) => _buildVirtualKey(),
           ),
@@ -135,23 +143,18 @@ class _SSHPageState extends State<SSHPage> {
   }
 
   Widget _buildVirtualKey() {
-    final half = virtualKeys.length ~/ 2;
-    final top = virtualKeys.sublist(0, half);
-    final bottom = virtualKeys.sublist(half);
+    final rows = _virtKeysList
+        .map((e) => Row(
+              children: e.map((ee) => _buildVirtualKeyItem(ee)).toList(),
+            ))
+        .toList();
     return Column(
       mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          children: top.map((e) => _buildVirtualKeyItem(e)).toList(),
-        ),
-        Row(
-          children: bottom.map((e) => _buildVirtualKeyItem(e)).toList(),
-        )
-      ],
+      children: rows,
     );
   }
 
-  Widget _buildVirtualKeyItem(VirtualKey item) {
+  Widget _buildVirtualKeyItem(VirtKey item) {
     var selected = false;
     switch (item.key) {
       case TerminalKey.control:
@@ -176,9 +179,19 @@ class _SSHPageState extends State<SSHPage> {
 
     return InkWell(
       onTap: () => _doVirtualKey(item),
+      onTapDown: (details) {
+        if (item.canLongPress) {
+          _virtKeyLongPressTimer = Timer.periodic(
+            const Duration(milliseconds: 137),
+            (_) => _doVirtualKey(item),
+          );
+        }
+      },
+      onTapCancel: () => _virtKeyLongPressTimer?.cancel(),
+      onTapUp: (_) => _virtKeyLongPressTimer?.cancel(),
       child: SizedBox(
-        width: _media.size.width / (virtualKeys.length / 2),
-        height: _virtualKeyboardHeight / 2,
+        width: _virtKeyWidth,
+        height: _virtKeysHeight / _virtKeysList.length,
         child: Center(
           child: child,
         ),
@@ -186,7 +199,7 @@ class _SSHPageState extends State<SSHPage> {
     );
   }
 
-  void _doVirtualKey(VirtualKey item) {
+  void _doVirtualKey(VirtKey item) {
     if (item.func != null) {
       _doVirtualKeyFunc(item.func!);
       return;
@@ -326,7 +339,19 @@ class _SSHPageState extends State<SSHPage> {
     _terminal.write('$p0\r\n');
   }
 
-  Future<void> initTerminal() async {
+  void _initVirtKeys() {
+    final virtKeys = _setting.sshVirtKeys.fetch()!;
+
+    for (int len = 0; len < virtKeys.length; len += 7) {
+      if (len + 7 > virtKeys.length) {
+        _virtKeysList.add(virtKeys.sublist(len));
+      } else {
+        _virtKeysList.add(virtKeys.sublist(len, len + 7));
+      }
+    }
+  }
+
+  Future<void> _initTerminal() async {
     _write('Connecting...\r\n');
 
     _client = await genClient(

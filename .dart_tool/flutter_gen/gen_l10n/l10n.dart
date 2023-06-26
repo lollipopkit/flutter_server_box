@@ -300,6 +300,12 @@ abstract class S {
   /// **'Delete'**
   String get delete;
 
+  /// No description provided for @disabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get disabled;
+
   /// No description provided for @disconnected.
   ///
   /// In en, this message translates to:
@@ -371,6 +377,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Edit'**
   String get edit;
+
+  /// No description provided for @editVirtKeys.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit virtual keys'**
+  String get editVirtKeys;
 
   /// No description provided for @editor.
   ///

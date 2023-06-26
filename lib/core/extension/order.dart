@@ -1,9 +1,9 @@
 import 'package:toolbox/core/persistant_store.dart';
 
-typedef StringOrder = List<String>;
+typedef Order<T> = List<T>;
 
-extension StringOrderX on StringOrder {
-  void move(int oldIndex, int newIndex, StoreProperty property) {
+extension OrderX<T> on Order<T> {
+  void move(int oldIndex, int newIndex, StoreProperty<List<T>> property) {
     if (oldIndex == newIndex) return;
     if (oldIndex < newIndex) {
       newIndex -= 1;
@@ -14,17 +14,17 @@ extension StringOrderX on StringOrder {
     property.put(this);
   }
 
-  void update(String id, String newId) {
+  void update(T id, T newId) {
     final index = indexOf(id);
     if (index == -1) return;
     this[index] = newId;
   }
 
-  int index(String id) {
+  int index(T id) {
     return indexOf(id);
   }
 
-  void moveById(String oid, String nid, StoreProperty property) {
+  void moveById(T oid, T nid, StoreProperty<List<T>> property) {
     final index = indexOf(oid);
     if (index == -1) return;
     final newIndex = indexOf(nid);

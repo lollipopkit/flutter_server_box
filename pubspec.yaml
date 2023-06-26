@@ -66,6 +66,7 @@ dependencies:
   highlight: ^0.7.0
   flutter_highlight: ^0.7.0
   code_text_field: ^1.1.0
+  flutter_volume_controller: ^1.2.6
 
 dev_dependencies:
   flutter_native_splash: ^2.1.6

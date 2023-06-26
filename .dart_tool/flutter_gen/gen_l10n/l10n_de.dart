@@ -107,6 +107,9 @@ class SDe extends S {
   String get delete => 'Löschen';
 
   @override
+  String get disabled => 'Disabled';
+
+  @override
   String get disconnected => 'Disconnected';
 
   @override
@@ -151,6 +154,9 @@ class SDe extends S {
 
   @override
   String get edit => 'Bearbeiten';
+
+  @override
+  String get editVirtKeys => 'Edit virtual keys';
 
   @override
   String get editor => 'Editor';

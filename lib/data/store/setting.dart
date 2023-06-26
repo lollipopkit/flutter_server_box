@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/core/utils/platform.dart';
+import 'package:toolbox/data/model/ssh/virtual_key.dart';
 
 import '../res/default.dart';
 
 class SettingStore extends PersistentStore {
-  StoreProperty<int> get primaryColor => property(
+  StoreProperty<int> get primaryColor => property<int>(
         'primaryColor',
         defaultValue: 4287106639,
       );
@@ -76,4 +77,7 @@ class SettingStore extends PersistentStore {
 
   StoreProperty<int> get keyboardType =>
       property('keyboardType', defaultValue: TextInputType.text.index);
+
+  StoreProperty<List<VirtKey>> get sshVirtKeys =>
+      property('sshVirtKeys', defaultValue: defaultSSHVirtKeys);
 }

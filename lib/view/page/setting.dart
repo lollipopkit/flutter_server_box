@@ -8,7 +8,9 @@ import 'package:flutter_material_color_picker/flutter_material_color_picker.dart
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/locale.dart';
 import 'package:toolbox/core/extension/navigator.dart';
+import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/model/app/tab.dart';
+import 'package:toolbox/view/page/ssh/virt_key_setting.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/value_notifier.dart';
 
@@ -165,6 +167,7 @@ class _SettingPageState extends State<SettingPage> {
         _buildTermFontSize(),
         _buildSSHVirtualKeyAutoOff(),
         _buildKeyboardType(),
+        _buildSSHVirtKeys(),
       ].map((e) => RoundRectCard(e)).toList(),
     );
   }
@@ -737,6 +740,17 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () {
         _keyboardTypeKey.currentState?.showButtonMenu();
       },
+    );
+  }
+
+  Widget _buildSSHVirtKeys() {
+    return ListTile(
+      title: Text(_s.editVirtKeys),
+      trailing: const Icon(Icons.arrow_forward_ios, size: 13),
+      onTap: () => AppRoute(
+        const SSHVirtKeySettingPage(),
+        'ssh virt key edit',
+      ).go(context),
     );
   }
 }

@@ -25,7 +25,7 @@ import '../../widget/round_rect_card.dart';
 import '../docker.dart';
 import '../pkg.dart';
 import '../sftp/remote.dart';
-import '../ssh.dart';
+import '../ssh/term.dart';
 import 'detail.dart';
 import 'edit.dart';
 

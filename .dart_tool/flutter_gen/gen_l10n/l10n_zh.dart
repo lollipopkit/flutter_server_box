@@ -107,6 +107,9 @@ class SZh extends S {
   String get delete => '删除';
 
   @override
+  String get disabled => '已禁用';
+
+  @override
   String get disconnected => '连接断开';
 
   @override
@@ -151,6 +154,9 @@ class SZh extends S {
 
   @override
   String get edit => '编辑';
+
+  @override
+  String get editVirtKeys => '编辑虚拟按键';
 
   @override
   String get editor => '编辑器';
@@ -744,6 +750,9 @@ class SZhTw extends SZh {
   String get delete => '刪除';
 
   @override
+  String get disabled => '已禁用';
+
+  @override
   String get disconnected => '連接斷開';
 
   @override
@@ -788,6 +797,9 @@ class SZhTw extends SZh {
 
   @override
   String get edit => '編輯';
+
+  @override
+  String get editVirtKeys => '編輯虛擬按鍵';
 
   @override
   String get editor => '編輯器';

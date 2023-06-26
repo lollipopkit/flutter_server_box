@@ -23,8 +23,8 @@ typedef ServersMap = Map<String, Server>;
 class ServerProvider extends BusyProvider {
   final ServersMap _servers = {};
   ServersMap get servers => _servers;
-  final StringOrder _serverOrder = [];
-  StringOrder get serverOrder => _serverOrder;
+  final Order<String> _serverOrder = [];
+  Order get serverOrder => _serverOrder;
   final List<String> _tags = [];
   List<String> get tags => _tags;
 
