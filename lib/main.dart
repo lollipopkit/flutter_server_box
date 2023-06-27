@@ -47,10 +47,11 @@ Future<void> initApp() async {
 
 Future<void> initHive() async {
   await Hive.initFlutter();
-  Hive.registerAdapter(SnippetAdapter());
-  Hive.registerAdapter(VirtKeyAdapter());
+  // 以 typeId 为顺序
   Hive.registerAdapter(PrivateKeyInfoAdapter());
+  Hive.registerAdapter(SnippetAdapter());
   Hive.registerAdapter(ServerPrivateInfoAdapter());
+  Hive.registerAdapter(VirtKeyAdapter());
 }
 
 void runInZone(dynamic Function() body) {

@@ -31,6 +31,10 @@ class StoreProperty<T> {
     return _box.get(_key, defaultValue: defaultValue);
   }
 
+  dynamic fetchRaw() {
+    return _box.get(_key, defaultValue: defaultValue);
+  }
+
   Future<void> put(T value) {
     return _box.put(_key, value);
   }

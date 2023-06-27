@@ -80,7 +80,7 @@ class _SSHPageState extends State<SSHPage> {
     _terminalTheme = _isDark ? termDarkTheme : termLightTheme;
     // Calculate virtkey width / height
     _virtKeyWidth = _media.size.width / 7;
-    _virtKeysHeight = _media.size.height * 0.047 * _virtKeysList.length;
+    _virtKeysHeight = _media.size.height * 0.043 * _virtKeysList.length;
   }
 
   @override

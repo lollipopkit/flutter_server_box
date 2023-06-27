@@ -13,4 +13,5 @@ const thanksMap = {
   'QingAnLe': 'https://github.com/QingAnLe',
   'wxdjs': 'https://github.com/wxdjs',
   'Aeorq': 'https://github.com/Aeorq',
+  'jaychoubaby': 'https://github.com/jaychoubaby',
 };

@@ -28,7 +28,7 @@ class _ProcessPageState extends State<ProcessPage> {
 
   PsResult _result = PsResult(procs: []);
   int? _lastFocusId;
-  ProcSortMode _procSortMode = ProcSortMode.cpu;
+  ProcSortMode _procSortMode = ProcSortMode.mem;
 
   final _serverProvider = locator<ServerProvider>();
 
@@ -121,10 +121,10 @@ class _ProcessPageState extends State<ProcessPage> {
     return RoundRectCard(ListTile(
       leading: SizedBox(
         width: 57,
-        child: TwoLineText(up: proc.pid.toString(), down: 'pid'),
+        child: TwoLineText(up: proc.pid.toString(), down: proc.user),
       ),
       title: Text(proc.binary),
-      subtitle: Text(proc.command, style: grey),
+      subtitle: Text(proc.command, style: grey, maxLines: 3, overflow: TextOverflow.fade,),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

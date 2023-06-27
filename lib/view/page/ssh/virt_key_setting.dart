@@ -34,7 +34,11 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
   }
 
   Widget _buildBody() {
-    final keys = List<VirtKey>.from(_setting.sshVirtKeys.fetch()!);
+    final keys_ = _setting.sshVirtKeys.fetchRaw()!;
+    final keys = <VirtKey>[];
+    for (final key in keys_) {
+      keys.add(key);
+    }
     final disabled = VirtKey.values.where((e) => !keys.contains(e)).toList();
     final allKeys = [...keys, ...disabled];
     return ReorderableListView.builder(
@@ -55,9 +59,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
           return;
         }
         keys.moveById(keys[o], keys[n], _setting.sshVirtKeys);
-        setState(() {
-          
-        });
+        setState(() {});
       },
     );
   }

@@ -10,7 +10,7 @@ const privateKeyMaxSize = 20 * 1024;
 const editorMaxSize = 1024 * 1024;
 
 /// Max debug log lines
-const maxDebugLogLines = 100;
+const maxDebugLogLines = 377;
 
 /// Method Channels
 const pkgName = 'tech.lolli.toolbox';
