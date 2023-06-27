@@ -45,4 +45,5 @@ const defaultLaunchPageIdx = 0;
 
 const defaultUpdateInterval = 3;
 
-const defaultEditorTheme = 'monokai';
+const defaultEditorTheme = 'a11y-light';
+const defaultEditorDarkTheme = 'monokai';

@@ -23,8 +23,8 @@ class UrlText extends StatelessWidget {
     this.style = _textStyle,
   }) : super(key: key);
 
-  List<InlineSpan> _getTextSpans(Color c) {
-    List<InlineSpan> widgets = <InlineSpan>[];
+  List<InlineSpan> getTextSpans(Color c) {
+    final widgets = <InlineSpan>[];
     Iterable<Match> matches = _reg.allMatches(text);
     List<_ResultMatch> resultMatches = <_ResultMatch>[];
     int start = 0;
@@ -33,24 +33,27 @@ class UrlText extends StatelessWidget {
       final group0 = match.group(0);
       if (group0 != null && group0.isNotEmpty) {
         if (start != match.start) {
-          _ResultMatch result1 = _ResultMatch();
-          result1.isUrl = false;
-          result1.text = text.substring(start, match.start);
+          _ResultMatch result1 = _ResultMatch(
+            false,
+            text.substring(start, match.start),
+          );
           resultMatches.add(result1);
         }
 
-        _ResultMatch result2 = _ResultMatch();
-        result2.isUrl = true;
-        result2.text = match.group(0)!;
+        _ResultMatch result2 = _ResultMatch(
+          true,
+          match.group(0)!,
+        );
         resultMatches.add(result2);
         start = match.end;
       }
     }
 
     if (start < text.length) {
-      _ResultMatch result1 = _ResultMatch();
-      result1.isUrl = false;
-      result1.text = text.substring(start);
+      _ResultMatch result1 = _ResultMatch(
+        false,
+        text.substring(start),
+      );
       resultMatches.add(result1);
     }
 
@@ -81,7 +84,7 @@ class UrlText extends StatelessWidget {
   Widget build(BuildContext context) {
     return RichText(
       textAlign: textAlign ?? TextAlign.start,
-      text: TextSpan(children: _getTextSpans(contentColor.resolve(context))),
+      text: TextSpan(children: getTextSpans(contentColor.resolve(context))),
     );
   }
 }
@@ -99,6 +102,8 @@ class _LinkTextSpan extends TextSpan {
 }
 
 class _ResultMatch {
-  late bool isUrl;
-  late String text;
+  final bool isUrl;
+  final String text;
+
+  _ResultMatch(this.isUrl, this.text);
 }

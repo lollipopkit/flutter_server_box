@@ -68,6 +68,9 @@ class SettingStore extends PersistentStore {
   // Editor theme
   StoreProperty<String> get editorTheme =>
       property('editorTheme', defaultValue: defaultEditorTheme);
+      
+  StoreProperty<String> get editorDarkTheme =>
+      property('editorDarkTheme', defaultValue: defaultEditorDarkTheme);
 
   StoreProperty<bool> get fullScreen =>
       property('fullScreen', defaultValue: false);

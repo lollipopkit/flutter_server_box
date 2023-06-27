@@ -43,6 +43,7 @@ class _SettingPageState extends State<SettingPage> {
   final _maxRetryKey = GlobalKey<PopupMenuButtonState<int>>();
   final _localeKey = GlobalKey<PopupMenuButtonState<String>>();
   final _editorThemeKey = GlobalKey<PopupMenuButtonState<String>>();
+  final _editorDarkThemeKey = GlobalKey<PopupMenuButtonState<String>>();
   final _keyboardTypeKey = GlobalKey<PopupMenuButtonState<int>>();
 
   late final SettingStore _setting;
@@ -58,6 +59,7 @@ class _SettingPageState extends State<SettingPage> {
   final _fontSize = ValueNotifier(0.0);
   final _localeCode = ValueNotifier('');
   final _editorTheme = ValueNotifier('');
+  final _editorDarkTheme = ValueNotifier('');
   final _keyboardType = ValueNotifier(0);
 
   final _pushToken = ValueNotifier<String?>(null);
@@ -82,6 +84,7 @@ class _SettingPageState extends State<SettingPage> {
     _selectedColorValue.value = _setting.primaryColor.fetch()!;
     _fontSize.value = _setting.termFontSize.fetch()!;
     _editorTheme.value = _setting.editorTheme.fetch()!;
+    _editorDarkTheme.value = _setting.editorDarkTheme.fetch()!;
     _keyboardType.value = _setting.keyboardType.fetch()!;
   }
 
@@ -176,6 +179,7 @@ class _SettingPageState extends State<SettingPage> {
     return Column(
       children: [
         _buildEditorTheme(),
+        _buildEditorDarkTheme(),
       ].map((e) => RoundRectCard(e)).toList(),
     );
   }
@@ -651,7 +655,7 @@ class _SettingPageState extends State<SettingPage> {
       },
     ).toList();
     return ListTile(
-      title: Text(_s.theme),
+      title: Text(_s.light + _s.theme),
       trailing: ValueBuilder(
         listenable: _editorTheme,
         build: () => PopupMenuButton(
@@ -670,6 +674,39 @@ class _SettingPageState extends State<SettingPage> {
       ),
       onTap: () {
         _editorThemeKey.currentState?.showButtonMenu();
+      },
+    );
+  }
+
+  Widget _buildEditorDarkTheme() {
+    final items = themeMap.keys.map(
+      (key) {
+        return PopupMenuItem<String>(
+          value: key,
+          child: Text(key),
+        );
+      },
+    ).toList();
+    return ListTile(
+      title: Text(_s.dark + _s.theme),
+      trailing: ValueBuilder(
+        listenable: _editorDarkTheme,
+        build: () => PopupMenuButton(
+          key: _editorDarkThemeKey,
+          itemBuilder: (BuildContext context) => items,
+          initialValue: _editorDarkTheme.value,
+          onSelected: (String idx) {
+            _editorDarkTheme.value = idx;
+            _setting.editorDarkTheme.put(idx);
+          },
+          child: Text(
+            _editorDarkTheme.value,
+            style: textSize15,
+          ),
+        ),
+      ),
+      onTap: () {
+        _editorDarkThemeKey.currentState?.showButtonMenu();
       },
     );
   }

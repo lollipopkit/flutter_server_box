@@ -353,7 +353,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildNetSpeedItem(NetSpeed ns, String device) {
-    final width = (_media.size.width - 34 - 34) / 2.9;
+    final width = (_media.size.width - 34 - 34) / 3;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
@@ -365,6 +365,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               device,
               style: textSize11,
               textScaleFactor: 1.0,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           SizedBox(
