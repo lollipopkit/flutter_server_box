@@ -60,11 +60,11 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
   if (update.build.min.current! > BuildData.build) {
     showRoundDialog(
       context: context,
-      child: Text(s.updateTipTooLow(newest)),
+      child: Text('Current version is too low\nplease update to v$newest'),
       actions: [
         TextButton(
           onPressed: () => _doUpdate(url, context, s),
-          child: Text(s.ok),
+          child: const Text('ok'),
         )
       ],
     );
@@ -73,7 +73,7 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
 
   showSnackBarWithAction(
     context,
-    '${s.updateTip(newest)} \n${update.changelog.current}',
+    'Update: v$newest\n${update.changelog.current}',
     s.update,
     () => _doUpdate(url, context, s),
   );

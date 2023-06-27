@@ -6,9 +6,11 @@ import 'package:code_text_field/code_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:flutter_highlight/theme_map.dart';
+import 'package:flutter_highlight/themes/a11y-light.dart';
 import 'package:flutter_highlight/themes/monokai.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/utils/misc.dart';
+import 'package:toolbox/core/utils/ui.dart';
 import 'package:toolbox/data/res/highlight.dart';
 import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/locator.dart';
@@ -38,7 +40,13 @@ class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
     _controller = CodeController(
       language: suffix2HighlightMap[_langCode],
     );
-    _codeTheme = themeMap[_setting.editorTheme.fetch()] ?? monokaiTheme;
+
+    if (isDarkMode(context)) {
+      _codeTheme = themeMap[_setting.editorDarkTheme.fetch()] ?? monokaiTheme;
+    } else {
+      _codeTheme = themeMap[_setting.editorTheme.fetch()] ?? a11yLightTheme;
+    }
+
     _focusNode.requestFocus();
   }
 

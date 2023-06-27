@@ -124,7 +124,12 @@ class _ProcessPageState extends State<ProcessPage> {
         child: TwoLineText(up: proc.pid.toString(), down: proc.user),
       ),
       title: Text(proc.binary),
-      subtitle: Text(proc.command, style: grey, maxLines: 3, overflow: TextOverflow.fade,),
+      subtitle: Text(
+        proc.command,
+        style: grey,
+        maxLines: 3,
+        overflow: TextOverflow.fade,
+      ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
