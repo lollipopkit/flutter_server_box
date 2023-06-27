@@ -466,6 +466,9 @@ class SEn extends S {
   String get result => 'Result';
 
   @override
+  String get rotateAngel => 'Rotation angle';
+
+  @override
   String get run => 'Run';
 
   @override

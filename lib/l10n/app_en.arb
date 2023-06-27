@@ -145,6 +145,7 @@
   "restoreSuccess": "Restore success. Restart app to apply.",
   "restoreSureWithDate": "Are you sure to restore from {date} ?",
   "result": "Result",
+  "rotateAngel": "Rotation angle",
   "run": "Run",
   "save": "Save",
   "saved": "Saved",

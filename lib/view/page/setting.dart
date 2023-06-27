@@ -45,6 +45,7 @@ class _SettingPageState extends State<SettingPage> {
   final _editorThemeKey = GlobalKey<PopupMenuButtonState<String>>();
   final _editorDarkThemeKey = GlobalKey<PopupMenuButtonState<String>>();
   final _keyboardTypeKey = GlobalKey<PopupMenuButtonState<int>>();
+  final _rotateQuarterKey = GlobalKey<PopupMenuButtonState<int>>();
 
   late final SettingStore _setting;
   late final ServerProvider _serverProvider;
@@ -61,6 +62,7 @@ class _SettingPageState extends State<SettingPage> {
   final _editorTheme = ValueNotifier('');
   final _editorDarkTheme = ValueNotifier('');
   final _keyboardType = ValueNotifier(0);
+  final _rotateQuarter = ValueNotifier(0);
 
   final _pushToken = ValueNotifier<String?>(null);
 
@@ -86,6 +88,7 @@ class _SettingPageState extends State<SettingPage> {
     _editorTheme.value = _setting.editorTheme.fetch()!;
     _editorDarkTheme.value = _setting.editorDarkTheme.fetch()!;
     _keyboardType.value = _setting.keyboardType.fetch()!;
+    _rotateQuarter.value = _setting.fullScreenRotateQuarter.fetch()!;
   }
 
   @override
@@ -149,6 +152,7 @@ class _SettingPageState extends State<SettingPage> {
       children: [
         _buildFullScreenSwitch(),
         _buildFullScreenJitter(),
+        _buildFulScreenRotateQuarter(),
       ].map((e) => RoundRectCard(e)).toList(),
     );
   }
@@ -727,6 +731,39 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(_s.fullScreenJitter),
       subtitle: Text(_s.fullScreenJitterHelp, style: grey),
       trailing: buildSwitch(context, _setting.fullScreenJitter),
+    );
+  }
+
+  Widget _buildFulScreenRotateQuarter() {
+    final degrees = List.generate(4, (idx) => '${idx * 90}°').toList();
+    final items = List.generate(4, (idx) {
+      return PopupMenuItem<int>(
+        value: idx,
+        child: Text(degrees[idx]),
+      );
+    }).toList();
+
+    return ListTile(
+      title: Text(_s.rotateAngel),
+      onTap: () {
+        _rotateQuarterKey.currentState?.showButtonMenu();
+      },
+      trailing: ValueBuilder(
+        listenable: _rotateQuarter,
+        build: () => PopupMenuButton(
+          key: _rotateQuarterKey,
+          itemBuilder: (BuildContext context) => items,
+          initialValue: _rotateQuarter.value,
+          onSelected: (int idx) {
+            _rotateQuarter.value = idx;
+            _setting.fullScreenRotateQuarter.put(idx);
+          },
+          child: Text(
+            degrees[_rotateQuarter.value],
+            style: textSize15,
+          ),
+        ),
+      ),
     );
   }
 

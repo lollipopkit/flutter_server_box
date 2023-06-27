@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/ui.dart';
+import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/locator.dart';
 
 import '../../core/analysis.dart';
@@ -35,14 +36,17 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
   late MediaQueryData _media;
   late ThemeData _theme;
   late Timer _timer;
+  late int _rotateQuarter;
 
   final _pageController = PageController(initialPage: 0);
   final _serverProvider = locator<ServerProvider>();
+  final _setting = locator<SettingStore>();
 
   @override
   void initState() {
     super.initState();
     switchStatusBar(hide: true);
+    _rotateQuarter = _setting.fullScreenRotateQuarter.fetch()!;
     _timer = Timer.periodic(const Duration(minutes: 1), (_) {
       if (mounted) {
         setState(() {});
@@ -68,7 +72,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
 
   double get _offset {
     // based on screen width
-    final x = _media.size.width * 0.03;
+    final x = _screenWidth * 0.03;
     var r = Random().nextDouble();
     final n = Random().nextBool() ? -1 : 1;
     return n * x * r;
@@ -79,25 +83,35 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
     final offset = Offset(_offset, _offset);
     return Scaffold(
       body: SafeArea(
-        child: RotatedBox(
-          quarterTurns: 3,
-          child: Transform.translate(
-            offset: offset,
-            child: Stack(
-              children: [
-                _buildMain(),
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  child: _buildSettingBtn(),
+        child: ValueListenableBuilder<int>(
+            valueListenable: _setting.fullScreenRotateQuarter.listenable(),
+            builder: (_, val, __) {
+              _rotateQuarter = val;
+              return RotatedBox(
+                quarterTurns: val,
+                child: Transform.translate(
+                  offset: offset,
+                  child: Stack(
+                    children: [
+                      _buildMain(),
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        child: _buildSettingBtn(),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
-          ),
-        ),
+              );
+            }),
       ),
     );
   }
+
+  double get _screenWidth =>
+      _rotateQuarter % 2 == 0 ? _media.size.width : _media.size.height;
+  double get _screenHeight =>
+      _rotateQuarter % 2 == 0 ? _media.size.height : _media.size.width;
 
   Widget _buildSettingBtn() {
     return IconButton(
@@ -161,7 +175,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SizedBox(height: _media.size.width * 0.1),
+              SizedBox(height: _screenWidth * 0.1),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -175,7 +189,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
                   )
                 ],
               ),
-              SizedBox(height: _media.size.width * 0.1),
+              SizedBox(height: _screenWidth * 0.1),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -198,7 +212,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
     ServerPrivateInfo spi,
   ) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: _media.size.width * 0.05),
+      padding: EdgeInsets.symmetric(vertical: _screenWidth * 0.05),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -245,7 +259,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
 
   Widget _buildExplainText(String text) {
     return SizedBox(
-      width: _media.size.height * 0.2,
+      width: _screenHeight * 0.2,
       child: Text(
         text,
         style: const TextStyle(fontSize: 13),
@@ -289,7 +303,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
     final statusTextStyle = TextStyle(
         fontSize: 13, color: _theme.textTheme.bodyLarge!.color!.withAlpha(177));
     return SizedBox(
-      width: _media.size.height * 0.23,
+      width: _screenHeight * 0.23,
       child: Column(
         children: [
           const SizedBox(height: 5),
@@ -315,7 +329,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
     if (percent <= 0) percent = 0.01;
     if (percent >= 100) percent = 99.9;
     return SizedBox(
-      width: _media.size.height * 0.23,
+      width: _screenHeight * 0.23,
       child: Stack(
         children: [
           Center(
@@ -324,8 +338,8 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
               progressNumber: percent,
               animationDuration: const Duration(milliseconds: 377),
               maxNumber: 100,
-              width: _media.size.width * 0.22,
-              height: _media.size.width * 0.22,
+              width: _screenWidth * 0.22,
+              height: _screenWidth * 0.22,
             ),
           ),
           Positioned.fill(

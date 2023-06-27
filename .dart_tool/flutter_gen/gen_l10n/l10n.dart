@@ -966,6 +966,12 @@ abstract class S {
   /// **'Result'**
   String get result;
 
+  /// No description provided for @rotateAngel.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotation angle'**
+  String get rotateAngel;
+
   /// No description provided for @run.
   ///
   /// In en, this message translates to:

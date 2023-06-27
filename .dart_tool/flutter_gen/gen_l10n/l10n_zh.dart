@@ -466,6 +466,9 @@ class SZh extends S {
   String get result => '结果';
 
   @override
+  String get rotateAngel => '旋转角度';
+
+  @override
   String get run => '运行';
 
   @override
@@ -1098,6 +1101,9 @@ class SZhTw extends SZh {
 
   @override
   String get result => '結果';
+
+  @override
+  String get rotateAngel => '旋轉角度';
 
   @override
   String get run => '運行';

@@ -466,6 +466,9 @@ class SDe extends S {
   String get result => 'Result';
 
   @override
+  String get rotateAngel => 'Rotation angle';
+
+  @override
   String get run => 'Ausführen';
 
   @override

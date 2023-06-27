@@ -142,6 +142,7 @@
   "restoreSuccess": "恢復成功，需要重啓App來應用更改",
   "restoreSureWithDate": "確定恢復 {date} 的備份嗎？",
   "result": "結果",
+  "rotateAngel": "旋轉角度",
   "run": "運行",
   "save": "保存",
   "saved": "已保存",

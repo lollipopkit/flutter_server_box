@@ -68,7 +68,7 @@ class SettingStore extends PersistentStore {
   // Editor theme
   StoreProperty<String> get editorTheme =>
       property('editorTheme', defaultValue: defaultEditorTheme);
-      
+
   StoreProperty<String> get editorDarkTheme =>
       property('editorDarkTheme', defaultValue: defaultEditorDarkTheme);
 
@@ -77,6 +77,9 @@ class SettingStore extends PersistentStore {
 
   StoreProperty<bool> get fullScreenJitter =>
       property('fullScreenJitter', defaultValue: true);
+
+  StoreProperty<int> get fullScreenRotateQuarter =>
+      property('fullScreenRotateQuarter', defaultValue: 1);
 
   StoreProperty<int> get keyboardType =>
       property('keyboardType', defaultValue: TextInputType.text.index);
