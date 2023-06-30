@@ -190,7 +190,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildCheckUpdate() {
     return Consumer<AppProvider>(
-      builder: (_, app, __) {
+      builder: (ctx, app, __) {
         String display;
         if (app.newestBuild != null) {
           if (app.newestBuild! > BuildData.build) {
@@ -206,7 +206,7 @@ class _SettingPageState extends State<SettingPage> {
           title: Text(
             display,
           ),
-          onTap: () => doUpdate(context, force: true),
+          onTap: () => doUpdate(ctx, force: true),
         );
       },
     );

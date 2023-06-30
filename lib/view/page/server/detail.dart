@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:nil/nil.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/data/model/server/cpu.dart';
@@ -238,7 +239,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildSwapView(Swap swap) {
-    if (swap.total == 0) return placeholder;
+    if (swap.total == 0) return nil;
     final used = swap.usedPercent * 100;
     final cached = swap.cached / swap.total * 100;
     return RoundRectCard(
@@ -394,7 +395,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildTemperature(Temperatures temps) {
     if (temps.isEmpty) {
-      return placeholder;
+      return nil;
     }
     final List<Widget> children = [
       const Row(

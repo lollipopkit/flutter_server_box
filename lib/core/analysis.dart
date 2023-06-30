@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:countly_flutter/countly_config.dart';
 import 'package:countly_flutter/countly_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:toolbox/core/build_mode.dart';

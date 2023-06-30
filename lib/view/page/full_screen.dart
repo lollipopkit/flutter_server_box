@@ -6,6 +6,7 @@ import 'package:circle_chart/circle_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
+import 'package:nil/nil.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/provider/server.dart';
@@ -144,7 +145,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
           final id = pro.serverOrder[idx];
           final s = pro.servers[id];
           if (s == null) {
-            return placeholder;
+            return nil;
           }
           return _buildRealServerCard(s.status, s.state, s.spi);
         },
@@ -359,10 +360,10 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
 
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
+    doUpdate(context);
     await GetIt.I.allReady();
     await _serverProvider.loadLocalData();
     await _serverProvider.refreshData();
-    await doUpdate(context);
     if (!Analysis.enabled) {
       await Analysis.init();
     }

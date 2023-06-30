@@ -3,6 +3,7 @@ import 'package:circle_chart/circle_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
+import 'package:nil/nil.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/extension/order.dart';
@@ -122,7 +123,7 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildTagsSwitcher(List<String> tags) {
-    if (tags.isEmpty) return placeholder;
+    if (tags.isEmpty) return nil;
     final items = <String?>[null, ...tags];
     return Container(
       height: 37,
@@ -168,7 +169,7 @@ class _ServerPageState extends State<ServerPage>
 
   Widget _buildEachServerCard(Server? si) {
     if (si == null) {
-      return placeholder;
+      return nil;
     }
     return GestureDetector(
       key: Key(si.spi.id + (_tag ?? '')),
