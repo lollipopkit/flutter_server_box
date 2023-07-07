@@ -121,7 +121,7 @@ Future<void> loadFontFile(String? localPath) async {
 void showSnippetDialog(
   BuildContext context,
   S s,
-  Function(Snippet s) onSelected,
+  void Function(Snippet s) onSelected,
 ) {
   final provider = locator<SnippetProvider>();
   if (provider.snippets.isEmpty) {

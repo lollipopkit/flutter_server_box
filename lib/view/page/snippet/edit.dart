@@ -131,6 +131,10 @@ class _SnippetEditPageState extends State<SnippetEditPage>
     if (widget.snippet != null) {
       _nameController.text = widget.snippet!.name;
       _scriptController.text = widget.snippet!.script;
+      if (widget.snippet!.tags != null) {
+        _tags = widget.snippet!.tags!;
+        setState(() {});
+      }
     }
   }
 }

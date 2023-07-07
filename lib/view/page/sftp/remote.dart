@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:nil/nil.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/extension/sftpfile.dart';
 import 'package:toolbox/data/res/misc.dart';
@@ -119,7 +118,6 @@ class _SFTPPageState extends State<SFTPPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Divider(),
             (_status.path?.path ?? _s.loadingFiles).omitStartStr(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -299,36 +297,37 @@ class _SFTPPageState extends State<SFTPPage> {
   }
 
   void _onItemPress(BuildContext context, SftpName file, bool notDir) {
+    final children = [
+      ListTile(
+        leading: const Icon(Icons.delete),
+        title: Text(_s.delete),
+        onTap: () => _delete(context, file),
+      ),
+      ListTile(
+        leading: const Icon(Icons.abc),
+        title: Text(_s.rename),
+        onTap: () => _rename(context, file),
+      ),
+    ];
+    if (notDir) {
+      children.addAll([
+        ListTile(
+          leading: const Icon(Icons.edit),
+          title: Text(_s.edit),
+          onTap: () => _edit(context, file),
+        ),
+        ListTile(
+          leading: const Icon(Icons.download),
+          title: Text(_s.download),
+          onTap: () => _download(context, file),
+        ),
+      ]);
+    }
     showRoundDialog(
       context: context,
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          notDir
-              ? ListTile(
-                  leading: const Icon(Icons.edit),
-                  title: Text(_s.edit),
-                  onTap: () => _edit(context, file),
-                )
-              : nil,
-          ListTile(
-            leading: const Icon(Icons.delete),
-            title: Text(_s.delete),
-            onTap: () => _delete(context, file),
-          ),
-          ListTile(
-            leading: const Icon(Icons.abc),
-            title: Text(_s.rename),
-            onTap: () => _rename(context, file),
-          ),
-          notDir
-              ? ListTile(
-                  leading: const Icon(Icons.download),
-                  title: Text(_s.download),
-                  onTap: () => _download(context, file),
-                )
-              : nil,
-        ],
+        children: children,
       ),
     );
   }

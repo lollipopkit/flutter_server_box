@@ -68,19 +68,20 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
   }
 
   PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      title: Text(_s.edit, style: textSize18),
-      actions: [
-        widget.info != null
-            ? IconButton(
+    final actions = widget.info == null
+        ? null
+        : [
+            IconButton(
                 tooltip: _s.delete,
                 onPressed: () {
                   _provider.delInfo(widget.info!);
                   context.pop();
                 },
                 icon: const Icon(Icons.delete))
-            : nil
-      ],
+          ];
+    return AppBar(
+      title: Text(_s.edit, style: textSize18),
+      actions: actions,
     );
   }
 

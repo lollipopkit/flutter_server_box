@@ -1,10 +1,10 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:nil/nil.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/view/widget/input_field.dart';
+import 'package:toolbox/view/widget/round_rect_card.dart';
 
 import '../../../core/route.dart';
 import '../../../core/utils/ui.dart';
@@ -97,90 +97,91 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       },
       icon: const Icon(Icons.delete),
     );
+    final actions = widget.spi != null ? [delBtn] : null;
     return AppBar(
       title: Text(_s.edit, style: textSize18),
-      actions: [
-        widget.spi != null ? delBtn : nil,
-      ],
+      actions: actions,
     );
   }
 
   Widget _buildForm() {
+    final children = [
+      Input(
+        controller: _nameController,
+        type: TextInputType.text,
+        node: _nameFocus,
+        onSubmitted: (_) => _focusScope.requestFocus(_ipFocus),
+        hint: _s.exampleName,
+        label: _s.name,
+        icon: Icons.info,
+      ),
+      Input(
+        controller: _ipController,
+        type: TextInputType.text,
+        onSubmitted: (_) => _focusScope.requestFocus(_portFocus),
+        node: _ipFocus,
+        label: _s.host,
+        icon: Icons.storage,
+        hint: 'example.com',
+      ),
+      Input(
+        controller: _portController,
+        type: TextInputType.number,
+        node: _portFocus,
+        onSubmitted: (_) => _focusScope.requestFocus(_usernameFocus),
+        label: _s.port,
+        icon: Icons.format_list_numbered,
+        hint: '22',
+      ),
+      Input(
+        controller: _usernameController,
+        type: TextInputType.text,
+        node: _usernameFocus,
+        label: _s.user,
+        icon: Icons.account_box,
+        hint: 'root',
+      ),
+      TagEditor(
+        tags: _tags,
+        onChanged: (p0) => setState(() {
+          _tags = p0;
+        }),
+        s: _s,
+        tagSuggestions: [..._serverProvider.tags],
+        onRenameTag: _serverProvider.renameTag,
+      ),
+      width7,
+      Row(
+        children: [
+          width13,
+          Text(_s.keyAuth),
+          width13,
+          Switch(
+            value: usePublicKey,
+            onChanged: (val) => setState(() => usePublicKey = val),
+          ),
+        ],
+      ),
+    ];
+    if (usePublicKey) {
+      children.add(_buildKeyAuth());
+    } else {
+      children.add(Input(
+        controller: _passwordController,
+        obscureText: true,
+        type: TextInputType.text,
+        label: _s.pwd,
+        icon: Icons.password,
+        hint: _s.pwd,
+        onSubmitted: (_) => {},
+      ));
+    }
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(17),
+      padding: const EdgeInsets.fromLTRB(17, 17, 17, 47),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Input(
-            controller: _nameController,
-            type: TextInputType.text,
-            node: _nameFocus,
-            onSubmitted: (_) => _focusScope.requestFocus(_ipFocus),
-            hint: _s.exampleName,
-            label: _s.name,
-            icon: Icons.info,
-          ),
-          Input(
-            controller: _ipController,
-            type: TextInputType.text,
-            onSubmitted: (_) => _focusScope.requestFocus(_portFocus),
-            node: _ipFocus,
-            label: _s.host,
-            icon: Icons.storage,
-            hint: 'example.com',
-          ),
-          Input(
-            controller: _portController,
-            type: TextInputType.number,
-            node: _portFocus,
-            onSubmitted: (_) => _focusScope.requestFocus(_usernameFocus),
-            label: _s.port,
-            icon: Icons.format_list_numbered,
-            hint: '22',
-          ),
-          Input(
-            controller: _usernameController,
-            type: TextInputType.text,
-            node: _usernameFocus,
-            label: _s.user,
-            icon: Icons.account_box,
-            hint: 'root',
-          ),
-          TagEditor(
-            tags: _tags,
-            onChanged: (p0) => setState(() {
-              _tags = p0;
-            }),
-            s: _s,
-            tagSuggestions: [..._serverProvider.tags],
-            onRenameTag: _serverProvider.renameTag,
-          ),
-          width7,
-          Row(
-            children: [
-              width13,
-              Text(_s.keyAuth),
-              width13,
-              Switch(
-                value: usePublicKey,
-                onChanged: (val) => setState(() => usePublicKey = val),
-              ),
-            ],
-          ),
-          !usePublicKey
-              ? Input(
-                  controller: _passwordController,
-                  obscureText: true,
-                  type: TextInputType.text,
-                  label: _s.pwd,
-                  icon: Icons.password,
-                  hint: _s.pwd,
-                  onSubmitted: (_) => {},
-                )
-              : nil,
-          usePublicKey ? _buildKeyAuth() : nil
-        ],
+        children: children,
       ),
     );
   }
@@ -215,11 +216,12 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             ),
           ),
         );
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 17),
-          child: Column(
-            children: tiles,
-          ),
+        return RoundRectCard(
+          Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 17),
+              child: Column(
+                children: tiles,
+              )),
         );
       },
     );
