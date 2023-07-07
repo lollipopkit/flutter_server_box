@@ -46,6 +46,11 @@ class SettingStore extends PersistentStore {
   StoreProperty<List<String>> get serverOrder =>
       property('serverOrder', defaultValue: null);
 
+  StoreProperty<List<String>> get snippetOrder => property(
+        'snippetOrder',
+        defaultValue: null,
+      );
+
   // Server details page cards order
   StoreProperty<List<String>> get detailCardOrder =>
       property('detailCardPrder', defaultValue: defaultDetailCardOrder);

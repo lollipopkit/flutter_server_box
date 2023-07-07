@@ -9,6 +9,7 @@ import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/view/page/process.dart';
+import 'package:toolbox/view/widget/tag_switcher.dart';
 
 import '../../../core/route.dart';
 import '../../../core/utils/ui.dart';
@@ -103,13 +104,21 @@ class _ServerPageState extends State<ServerPage>
                   (pro.servers[e]?.spi.tags?.contains(_tag) ?? false))
               .toList();
           return ReorderableListView.builder(
-            header: _buildTagsSwitcher(pro.tags),
+            header: TagSwitcher(
+              tags: pro.tags,
+              width: _media.size.width,
+              onTagChanged: (p0) => setState(() {
+                _tag = p0;
+              }),
+              initTag: _tag,
+              all: _s.all,
+            ),
             padding: const EdgeInsets.fromLTRB(7, 10, 7, 7),
             onReorder: (oldIndex, newIndex) => setState(() {
               pro.serverOrder.moveById(
                 filtered[oldIndex],
                 filtered[newIndex],
-                _settingStore.serverOrder,
+                property: _settingStore.serverOrder,
               );
             }),
             itemBuilder: (_, index) => _buildEachServerCard(
@@ -118,51 +127,6 @@ class _ServerPageState extends State<ServerPage>
             itemCount: filtered.length,
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildTagsSwitcher(List<String> tags) {
-    if (tags.isEmpty) return nil;
-    final items = <String?>[null, ...tags];
-    return Container(
-      height: 37,
-      width: _media.size.width,
-      alignment: Alignment.center,
-      color: Colors.transparent,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemBuilder: (context, index) => _buildTagItem(items[index]),
-        itemCount: items.length,
-      ),
-    );
-  }
-
-  Widget _buildTagItem(String? tag) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, right: 5, bottom: 9),
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _tag = tag;
-          });
-        },
-        child: Container(
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.all(Radius.circular(20.0)),
-              color: primaryColor.withAlpha(20),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 2.7),
-            child: Center(
-              child: Text(
-                tag == null ? _s.all : '#$tag',
-                style: TextStyle(
-                  color: _tag == tag ? null : _theme.disabledColor,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            )),
       ),
     );
   }

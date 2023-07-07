@@ -58,7 +58,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
           showSnackBar(context, Text(_s.disabled));
           return;
         }
-        keys.moveById(keys[o], keys[n], _setting.sshVirtKeys);
+        keys.moveById(keys[o], keys[n], property: _setting.sshVirtKeys);
         setState(() {});
       },
     );

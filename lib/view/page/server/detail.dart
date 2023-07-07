@@ -74,7 +74,11 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             left: 13, right: 13, top: 13, bottom: _media.padding.bottom),
         onReorder: (int oldIndex, int newIndex) {
           setState(() {
-            _cardsOrder.move(oldIndex, newIndex, _setting.detailCardOrder);
+            _cardsOrder.move(
+              oldIndex,
+              newIndex,
+              property: _setting.detailCardOrder,
+            );
           });
         },
         footer: height13,

@@ -1,5 +1,5 @@
 PODS:
-  - countly_flutter (22.09.0):
+  - countly_flutter (23.6.0):
     - Flutter
   - file_picker (0.0.1):
     - Flutter
@@ -55,15 +55,15 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/url_launcher_ios/ios"
 
 SPEC CHECKSUMS:
-  countly_flutter: 135f1a4930f8e26ba223a14201d3f265ea7b4c83
+  countly_flutter: 4eeee607183664b871589250a0bd049cfd2697eb
   file_picker: 1d63c4949e05e386da864365f8c13e1e64787675
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
   flutter_native_splash: 52501b97d1c0a5f898d687f1646226c1f93c56ef
   flutter_volume_controller: e4d5832f08008180f76e30faf671ffd5a425e529
-  path_provider_foundation: c68054786f1b4f3343858c1e1d0caaded73f0be9
+  path_provider_foundation: eaf5b3e458fc0e5fbb9940fb09980e853fe058b8
   plain_notification_token: b36467dc91939a7b6754267c701bbaca14996ee1
   r_upgrade: 44d715c61914cce3d01ea225abffe894fd51c114
-  share_plus: 056a1e8ac890df3e33cb503afffaf1e9b4fbae68
+  share_plus: 599aa54e4ea31d4b4c0e9c911bcc26c55e791028
   url_launcher_ios: 08a3dfac5fb39e8759aeb0abbd5d9480f30fc8b4
 
 PODFILE CHECKSUM: 7fb15c416f8685fca4966867a8da218ec592ec2e

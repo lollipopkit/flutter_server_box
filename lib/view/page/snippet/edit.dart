@@ -1,7 +1,6 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:nil/nil.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 
@@ -10,6 +9,7 @@ import '../../../data/model/server/snippet.dart';
 import '../../../data/provider/snippet.dart';
 import '../../../data/res/ui.dart';
 import '../../../locator.dart';
+import '../../widget/tag_editor.dart';
 
 class SnippetEditPage extends StatefulWidget {
   const SnippetEditPage({Key? key, this.snippet}) : super(key: key);
@@ -29,6 +29,8 @@ class _SnippetEditPageState extends State<SnippetEditPage>
   late SnippetProvider _provider;
   late S _s;
 
+  List<String> _tags = [];
+
   @override
   void initState() {
     super.initState();
@@ -46,22 +48,27 @@ class _SnippetEditPageState extends State<SnippetEditPage>
     return Scaffold(
       appBar: AppBar(
         title: Text(_s.edit, style: textSize18),
-        actions: [
-          widget.snippet != null
-              ? IconButton(
-                  onPressed: () {
-                    _provider.del(widget.snippet!);
-                    context.pop();
-                  },
-                  tooltip: _s.delete,
-                  icon: const Icon(Icons.delete),
-                )
-              : nil
-        ],
+        actions: _buildAppBarActions(),
       ),
       body: _buildBody(),
       floatingActionButton: _buildFAB(),
     );
+  }
+
+  List<Widget>? _buildAppBarActions() {
+    if (widget.snippet == null) {
+      return null;
+    }
+    return [
+      IconButton(
+        onPressed: () {
+          _provider.del(widget.snippet!);
+          context.pop();
+        },
+        tooltip: _s.delete,
+        icon: const Icon(Icons.delete),
+      )
+    ];
   }
 
   Widget _buildFAB() {
@@ -75,7 +82,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           showSnackBar(context, Text(_s.fieldMustNotEmpty));
           return;
         }
-        final snippet = Snippet(name, script);
+        final snippet = Snippet(name, script, _tags);
         if (widget.snippet != null) {
           _provider.update(widget.snippet!, snippet);
         } else {
@@ -106,6 +113,15 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           label: _s.snippet,
           icon: Icons.code,
         ),
+        TagEditor(
+          tags: _tags,
+          onChanged: (p0) => setState(() {
+            _tags = p0;
+          }),
+          s: _s,
+          tagSuggestions: [..._provider.tags],
+          onRenameTag: _provider.renameTag,
+        )
       ],
     );
   }
