@@ -9,7 +9,7 @@ import '../../../data/model/server/snippet.dart';
 import '../../../data/provider/snippet.dart';
 import '../../../data/res/ui.dart';
 import '../../../locator.dart';
-import '../../widget/tag_editor.dart';
+import '../../widget/tag/editor.dart';
 
 class SnippetEditPage extends StatefulWidget {
   const SnippetEditPage({Key? key, this.snippet}) : super(key: key);

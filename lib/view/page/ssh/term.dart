@@ -259,6 +259,7 @@ class _SSHPageState extends State<SSHPage> {
         if (initPath.isEmpty || !initPath.startsWith('/')) {
           showRoundDialog(
             context: context,
+            title: Text(_s.error),
             child: const Text('Failed to get current path'),
           );
           return;

@@ -134,6 +134,7 @@ class _SFTPPageState extends State<SFTPPage> {
         onPressed: () async {
           final idx = await showRoundDialog(
               context: context,
+              title: Text(_s.choose),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -517,6 +518,7 @@ class _SFTPPageState extends State<SFTPPage> {
             if (textController.text == '') {
               showRoundDialog(
                 context: context,
+                title: Text(_s.attention),
                 child: Text(_s.fieldMustNotEmpty),
                 actions: [
                   TextButton(
@@ -559,6 +561,7 @@ class _SFTPPageState extends State<SFTPPage> {
             if (textController.text == '') {
               showRoundDialog(
                 context: context,
+                title: Text(_s.attention),
                 child: Text(_s.fieldMustNotEmpty),
                 actions: [
                   TextButton(

@@ -272,13 +272,18 @@ class _SettingPageState extends State<SettingPage> {
         await showRoundDialog(
           context: context,
           title: Text(_s.primaryColor),
-          child: MaterialColorPicker(
-            shrinkWrap: true,
-            allowShades: true,
-            onColorChange: (color) {
-              _selectedColorValue.value = color.value;
-            },
-            selectedColor: primaryColor,
+          child: SizedBox(
+            height: 211,
+            child: Center(
+              child: MaterialColorPicker(
+                shrinkWrap: true,
+                allowShades: true,
+                onColorChange: (color) {
+                  _selectedColorValue.value = color.value;
+                },
+                selectedColor: primaryColor,
+              ),
+            ),
           ),
           actions: [
             TextButton(
@@ -557,7 +562,11 @@ class _SettingPageState extends State<SettingPage> {
                   context.pop();
                   final fontSize = double.tryParse(ctrller.text);
                   if (fontSize == null) {
-                    showRoundDialog(context: context, child: Text(_s.failed));
+                    showRoundDialog(
+                      context: context,
+                      title: Text(_s.failed),
+                      child: Text('Parsed failed: ${ctrller.text}'),
+                    );
                     return;
                   }
                   _fontSize.value = fontSize;

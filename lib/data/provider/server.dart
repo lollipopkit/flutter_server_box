@@ -276,11 +276,11 @@ class ServerProvider extends BusyProvider {
     }
   }
 
-  Future<String?> runSnippet(String id, Snippet snippet) async {
+  Future<String?> runSnippets(String id, List<Snippet> snippets) async {
     final client = _servers[id]?.client;
     if (client == null) {
       return null;
     }
-    return await client.run(snippet.script).string;
+    return await client.run(snippets.map((e) => e.script).join('&&')).string;
   }
 }

@@ -5,11 +5,13 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
 import 'package:nil/nil.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/core/utils/misc.dart';
+import 'package:toolbox/data/model/server/snippet.dart';
+import 'package:toolbox/data/provider/snippet.dart';
 import 'package:toolbox/view/page/process.dart';
-import 'package:toolbox/view/widget/tag_switcher.dart';
+import 'package:toolbox/view/widget/tag/picker.dart';
+import 'package:toolbox/view/widget/tag/switcher.dart';
 
 import '../../../core/route.dart';
 import '../../../core/utils/ui.dart';
@@ -273,7 +275,7 @@ class _ServerPageState extends State<ServerPage>
   Widget _buildMoreBtn(ServerPrivateInfo spi) {
     return PopupMenu(
       items: ServerTabMenuType.values.map((e) => e.build(_s)).toList(),
-      onSelected: (ServerTabMenuType value) {
+      onSelected: (ServerTabMenuType value) async {
         switch (value) {
           case ServerTabMenuType.pkg:
             AppRoute(PkgManagePage(spi), 'pkg manage').go(context);
@@ -282,19 +284,33 @@ class _ServerPageState extends State<ServerPage>
             AppRoute(SFTPPage(spi), 'SFTP').go(context);
             break;
           case ServerTabMenuType.snippet:
-            showSnippetDialog(context, _s, (s) async {
-              final result = await _serverProvider.runSnippet(spi.id, s);
+            final provider = locator<SnippetProvider>();
+            final snippets = await showDialog<List<Snippet>>(
+              context: context,
+              builder: (_) => TagPicker<Snippet>(
+                items: provider.snippets,
+                containsTag: (t, tag) => t.tags?.contains(tag) ?? false,
+                tags: provider.tags.toSet(),
+                name: (t) => t.name,
+              ),
+            );
+            if (snippets == null) {
+              return;
+            }
+            final result = await _serverProvider.runSnippets(spi.id, snippets);
+            if (result != null && result.isNotEmpty) {
               showRoundDialog(
                 context: context,
-                child: Text(result ?? _s.error, style: textSize13),
+                title: Text(_s.result),
+                child: Text(result),
                 actions: [
                   TextButton(
-                    onPressed: () => context.pop(),
-                    child: Text(_s.ok),
+                    onPressed: () => copy2Clipboard(result),
+                    child: Text(_s.copy),
                   )
                 ],
               );
-            });
+            }
             break;
           case ServerTabMenuType.edit:
             AppRoute(ServerEditPage(spi: spi), 'Edit server info').go(context);
@@ -303,13 +319,6 @@ class _ServerPageState extends State<ServerPage>
             AppRoute(DockerManagePage(spi), 'Docker manage').go(context);
             break;
           case ServerTabMenuType.process:
-            // AppRoute(
-            //   SSHPage(
-            //     spi: spi,
-            //     initCmd: 'sh $shellPath -${shellFuncProcess.flag}',
-            //   ),
-            //   'ssh page (process)',
-            // ).go(context);
             AppRoute(ProcessPage(spi: spi), 'process page').go(context);
             break;
         }

@@ -180,6 +180,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
     if (_textController.text == '') {
       showRoundDialog(
         context: context,
+        title: Text(_s.attention),
         child: Text(_s.fieldMustNotEmpty),
         actions: [
           TextButton(
@@ -286,6 +287,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
               onPressed: () async {
                 showRoundDialog(
                   context: context,
+                  title: Text(_s.attention),
                   child: Text(_s.sureDelete(e.repo)),
                   actions: [
                     TextButton(

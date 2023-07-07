@@ -89,6 +89,7 @@ class _PingPageState extends State<PingPage>
     } catch (e) {
       showRoundDialog(
         context: context,
+        title: Text(_s.error),
         child: Text(e.toString()),
         actions: [
           TextButton(

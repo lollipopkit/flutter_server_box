@@ -4,8 +4,8 @@ import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 
-import '../../core/utils/ui.dart';
-import '../../data/res/color.dart';
+import '../../../core/utils/ui.dart';
+import '../../../data/res/color.dart';
 
 class TagEditor extends StatelessWidget {
   final List<String> tags;

@@ -178,6 +178,7 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
               if (stat.size > editorMaxSize) {
                 showRoundDialog(
                   context: context,
+                  title: Text(_s.attention),
                   child: Text(_s.fileTooLarge(fileName, stat.size, '1m')),
                 );
                 return;
@@ -223,6 +224,7 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
               context.pop();
               showRoundDialog(
                 context: context,
+                title: Text(_s.delete),
                 child: Text(_s.sureDelete(fileName)),
                 actions: [
                   TextButton(

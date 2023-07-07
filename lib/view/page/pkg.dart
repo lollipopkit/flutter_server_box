@@ -88,6 +88,7 @@ class _PkgManagePageState extends State<PkgManagePage>
     if (_textController.text == '') {
       showRoundDialog(
         context: context,
+        title: Text(_s.attention),
         child: Text(_s.fieldMustNotEmpty),
         actions: [
           TextButton(

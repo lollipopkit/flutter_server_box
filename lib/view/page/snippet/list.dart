@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/order.dart';
-import 'package:toolbox/view/widget/tag_switcher.dart';
+import 'package:toolbox/view/widget/tag/switcher.dart';
 
 import '../../../data/store/setting.dart';
 import '../../../locator.dart';

@@ -90,6 +90,7 @@ class _ProcessPageState extends State<ProcessPage> {
         icon: const Icon(Icons.error),
         onPressed: () => showRoundDialog(
           context: context,
+          title: Text(_s.error),
           child: Text(_result.error!),
         ),
       ));

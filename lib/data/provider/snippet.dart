@@ -18,17 +18,19 @@ class SnippetProvider extends BusyProvider {
 
   void loadData() {
     _snippets = _store.fetch();
+    _updateTags();
   }
 
   void _updateTags() {
     _tags.clear();
+    final tags = <String>{};
     for (final s in _snippets) {
       if (s.tags?.isEmpty ?? true) {
         continue;
       }
-      _tags.addAll(s.tags!);
+      tags.addAll(s.tags!);
     }
-    _tags.toSet().toList();
+    _tags.addAll(tags);
   }
 
   void add(Snippet snippet) {

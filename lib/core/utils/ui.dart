@@ -63,6 +63,7 @@ Future<T?> showRoundDialog<T>({
         title: title,
         content: child,
         actions: actions,
+        actionsPadding: const EdgeInsets.all(17),
       );
     },
   );
