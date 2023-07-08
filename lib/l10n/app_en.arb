@@ -110,6 +110,7 @@
   "newContainer": "New container",
   "noClient": "No client",
   "noInterface": "No interface",
+  "noOptions": "No options",
   "noResult": "No result",
   "noSavedPrivateKey": "No saved private keys.",
   "noSavedSnippet": "No saved snippets.",

@@ -357,6 +357,9 @@ class SZh extends S {
   String get noInterface => '没有可用的接口';
 
   @override
+  String get noOptions => '无可选项';
+
+  @override
   String get noResult => '无结果';
 
   @override
@@ -865,6 +868,15 @@ class SZhTw extends SZh {
   }
 
   @override
+  String get fullScreen => '全屏模式';
+
+  @override
+  String get fullScreenJitter => '全屏模式抖動';
+
+  @override
+  String get fullScreenJitterHelp => '防止燒屏';
+
+  @override
   String get getPushTokenFailed => '未能獲取到推送token';
 
   @override
@@ -992,6 +1004,9 @@ class SZhTw extends SZh {
 
   @override
   String get noInterface => '沒有可用的接口';
+
+  @override
+  String get noOptions => '無可選項';
 
   @override
   String get noResult => '無結果';

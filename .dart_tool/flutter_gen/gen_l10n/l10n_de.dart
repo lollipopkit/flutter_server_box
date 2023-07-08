@@ -107,7 +107,7 @@ class SDe extends S {
   String get delete => 'Löschen';
 
   @override
-  String get disabled => 'Disabled';
+  String get disabled => 'Behinderte';
 
   @override
   String get disconnected => 'Disconnected';
@@ -156,7 +156,7 @@ class SDe extends S {
   String get edit => 'Bearbeiten';
 
   @override
-  String get editVirtKeys => 'Edit virtual keys';
+  String get editVirtKeys => 'Virtuelle Tasten bearbeiten';
 
   @override
   String get editor => 'Editor';
@@ -219,13 +219,13 @@ class SDe extends S {
   }
 
   @override
-  String get fullScreen => 'Full screen mode';
+  String get fullScreen => 'Vollbildmodus';
 
   @override
-  String get fullScreenJitter => 'Full screen jitter';
+  String get fullScreenJitter => 'Jitter im Vollbildmodus';
 
   @override
-  String get fullScreenJitterHelp => 'To avoid screen burn-in';
+  String get fullScreenJitterHelp => 'Einbrennen des Bildschirms verhindern';
 
   @override
   String get getPushTokenFailed => 'Push-Token kann nicht abgerufen werden';
@@ -286,10 +286,10 @@ class SDe extends S {
   String get keyAuth => 'Schlüsselauthentifzierung';
 
   @override
-  String get keyboardCompatibility => 'Possible to improve input method compatibility';
+  String get keyboardCompatibility => 'Mögliche Verbesserungen bei der Kompatibilität der Eingabemethoden';
 
   @override
-  String get keyboardType => 'Keyborad type';
+  String get keyboardType => 'Tastatur Typ';
 
   @override
   String get language => 'Sprache';
@@ -355,6 +355,9 @@ class SDe extends S {
 
   @override
   String get noInterface => 'Kein Interface';
+
+  @override
+  String get noOptions => 'Keine Optionen verfügbar';
 
   @override
   String get noResult => 'Kein Ergebnis';
@@ -466,7 +469,7 @@ class SDe extends S {
   String get result => 'Result';
 
   @override
-  String get rotateAngel => 'Rotation angle';
+  String get rotateAngel => 'Rotationswinkel';
 
   @override
   String get run => 'Ausführen';

@@ -36,8 +36,8 @@ class _TagPickerState<T> extends State<TagPicker<T>> {
 
   @override
   Widget build(BuildContext context) {
-    final child = widget.tags.isEmpty
-        ? Text(_s.noSavedSnippet)
+    final child = widget.tags.isEmpty && widget.items.isEmpty
+        ? Text(_s.noOptions)
         : Column(
             mainAxisSize: MainAxisSize.min,
             children: [

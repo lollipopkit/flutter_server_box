@@ -357,6 +357,9 @@ class SEn extends S {
   String get noInterface => 'No interface';
 
   @override
+  String get noOptions => 'No options';
+
+  @override
   String get noResult => 'No result';
 
   @override

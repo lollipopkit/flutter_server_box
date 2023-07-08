@@ -756,6 +756,12 @@ abstract class S {
   /// **'No interface'**
   String get noInterface;
 
+  /// No description provided for @noOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'No options'**
+  String get noOptions;
+
   /// No description provided for @noResult.
   ///
   /// In en, this message translates to:
