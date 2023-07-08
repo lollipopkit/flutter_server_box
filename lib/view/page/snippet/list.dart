@@ -2,10 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/order.dart';
+import 'package:toolbox/data/model/server/server.dart';
+import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/view/widget/tag/switcher.dart';
 
+import '../../../core/utils/misc.dart';
+import '../../../core/utils/ui.dart';
+import '../../../data/model/server/snippet.dart';
 import '../../../data/store/setting.dart';
 import '../../../locator.dart';
+import '../../widget/tag/picker.dart';
 import '/core/route.dart';
 import '/data/provider/snippet.dart';
 import 'edit.dart';
@@ -90,12 +96,21 @@ class _SnippetListPageState extends State<SnippetListPage> {
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                 ),
-                trailing: IconButton(
-                  onPressed: () => AppRoute(
-                    SnippetEditPage(snippet: snippet),
-                    'snippet edit page',
-                  ).go(context),
-                  icon: const Icon(Icons.edit),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      onPressed: () => AppRoute(
+                        SnippetEditPage(snippet: snippet),
+                        'snippet edit page',
+                      ).go(context),
+                      icon: const Icon(Icons.edit),
+                    ),
+                    IconButton(
+                      onPressed: () => _runSnippet(snippet),
+                      icon: const Icon(Icons.play_arrow),
+                    ),
+                  ],
                 ),
               ),
               key: ValueKey(snippet.name),
@@ -104,5 +119,41 @@ class _SnippetListPageState extends State<SnippetListPage> {
         );
       },
     );
+  }
+
+  Future<void> _runSnippet(Snippet snippet) async {
+    final provider = locator<ServerProvider>();
+    final servers = await showDialog<List<Server>>(
+      context: context,
+      builder: (_) => TagPicker<Server>(
+        items: provider.servers.values.toList(),
+        containsTag: (t, tag) => t.spi.tags?.contains(tag) ?? false,
+        tags: provider.tags.toSet(),
+        name: (t) => t.spi.id,
+      ),
+    );
+    if (servers == null) {
+      return;
+    }
+    final ids = servers.map((e) => e.spi.id).toList();
+    final results = await provider.runSnippetsOnMulti(ids, [snippet]);
+    if (results.isNotEmpty) {
+      // SERVER_NAME: RESULT
+      final result = Map.fromIterables(
+        ids,
+        results,
+      ).entries.map((e) => '${e.key}:\n${e.value}').join('\n');
+      showRoundDialog(
+        context: context,
+        title: Text(_s.result),
+        child: Text(result),
+        actions: [
+          TextButton(
+            onPressed: () => copy2Clipboard(result),
+            child: Text(_s.copy),
+          )
+        ],
+      );
+    }
   }
 }

@@ -24,7 +24,7 @@ class ServerProvider extends BusyProvider {
   final ServersMap _servers = {};
   ServersMap get servers => _servers;
   final Order<String> _serverOrder = [];
-  Order get serverOrder => _serverOrder;
+  Order<String> get serverOrder => _serverOrder;
   final List<String> _tags = [];
   List<String> get tags => _tags;
 
@@ -282,5 +282,12 @@ class ServerProvider extends BusyProvider {
       return null;
     }
     return await client.run(snippets.map((e) => e.script).join('&&')).string;
+  }
+
+  Future<List<String?>> runSnippetsOnMulti(
+    List<String> ids,
+    List<Snippet> snippets,
+  ) async {
+    return await Future.wait(ids.map((id) async => runSnippets(id, snippets)));
   }
 }
