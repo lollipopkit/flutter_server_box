@@ -120,7 +120,9 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           }),
           s: _s,
           tagSuggestions: [..._provider.tags],
-          onRenameTag: _provider.renameTag,
+          onRenameTag: (old, n) => setState(() {
+            _provider.renameTag(old, n);
+          }),
         )
       ],
     );

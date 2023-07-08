@@ -31,16 +31,54 @@ extension OrderX<T> on Order<T> {
     return indexOf(id);
   }
 
-  void moveById(
-    T oid,
-    T nid, {
+  void moveByItem(
+    List<T> items,
+    int o,
+    int n, {
     StoreProperty<List<T>>? property,
     _OnMove<T>? onMove,
   }) {
-    final index = indexOf(oid);
+    if (o == n) return;
+    if (o < n) {
+      n -= 1;
+    }
+    final index = indexOf(items[o]);
     if (index == -1) return;
-    final newIndex = indexOf(nid);
+    var newIndex = indexOf(items[n]);
     if (newIndex == -1) return;
+    if (o < n) {
+      newIndex += 1;
+    }
     move(index, newIndex, property: property, onMove: onMove);
+  }
+
+  /// order: ['d', 'b', 'e']\
+  /// items: ['a', 'b', 'c', 'd']\
+  /// result: ['b', 'd', 'a', 'c']\
+  /// return: ['e']
+  List<String> reorder({
+    required List<String> order,
+    required bool Function(T, String) finder,
+  }) {
+    final newOrder = <T>[];
+    final missed = <T>[];
+    final surplus = <String>[];
+    for (final id in order.toSet()) {
+      try {
+        final item = firstWhere((e) => finder(e, id));
+        newOrder.add(item);
+      } catch (e) {
+        surplus.add(id);
+      }
+    }
+    for (final item in this) {
+      if (!newOrder.contains(item)) {
+        missed.add(item);
+      }
+    }
+    clear();
+    addAll(newOrder);
+    addAll(missed);
+    return surplus;
   }
 }

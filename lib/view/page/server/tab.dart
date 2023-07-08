@@ -10,6 +10,7 @@ import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/provider/snippet.dart';
 import 'package:toolbox/view/page/process.dart';
+import 'package:toolbox/view/widget/fade_in.dart';
 import 'package:toolbox/view/widget/tag/picker.dart';
 import 'package:toolbox/view/widget/tag/switcher.dart';
 
@@ -117,15 +118,18 @@ class _ServerPageState extends State<ServerPage>
             ),
             padding: const EdgeInsets.fromLTRB(7, 10, 7, 7),
             onReorder: (oldIndex, newIndex) => setState(() {
-              pro.serverOrder.moveById(
-                filtered[oldIndex],
-                filtered[newIndex],
+              pro.serverOrder.moveByItem(
+                filtered,
+                oldIndex,
+                newIndex,
                 property: _settingStore.serverOrder,
               );
             }),
-            itemBuilder: (_, index) => _buildEachServerCard(
-              pro.servers[filtered[index]],
-            ),
+            itemBuilder: (_, index) => FadeIn(
+                key: ValueKey('$_tag${filtered[index]}'),
+                child: _buildEachServerCard(
+                  pro.servers[filtered[index]],
+                )),
             itemCount: filtered.length,
           );
         },

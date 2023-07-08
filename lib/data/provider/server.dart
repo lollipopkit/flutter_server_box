@@ -39,15 +39,15 @@ class ServerProvider extends BusyProvider {
 
   Future<void> loadLocalData() async {
     setBusyState(true);
-    final infos = _serverStore.fetch();
-    for (final info in infos) {
-      _servers[info.id] = genServer(info);
+    final spis = _serverStore.fetch();
+    for (final spi in spis) {
+      _servers[spi.id] = genServer(spi);
     }
     final serverOrder_ = _settingStore.serverOrder.fetch();
     if (serverOrder_ != null) {
       _serverOrder.addAll(serverOrder_.toSet());
-      if (_serverOrder.length != infos.length) {
-        final missed = infos
+      if (_serverOrder.length != spis.length) {
+        final missed = spis
             .where(
               (e) => !_serverOrder.contains(e.id),
             )

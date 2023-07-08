@@ -6,6 +6,7 @@ import 'package:toolbox/data/store/snippet.dart';
 import 'package:toolbox/locator.dart';
 
 import '../../core/extension/order.dart';
+import '../store/setting.dart';
 
 class SnippetProvider extends BusyProvider {
   late Order<Snippet> _snippets;
@@ -15,9 +16,19 @@ class SnippetProvider extends BusyProvider {
   List<String> get tags => _tags;
 
   final _store = locator<SnippetStore>();
+  final _setting = locator<SettingStore>();
 
   void loadData() {
     _snippets = _store.fetch();
+    final order = _setting.snippetOrder.fetch();
+    if (order != null) {
+      final surplus = _snippets.reorder(
+        order: order,
+        finder: (order, name) => order.name == name,
+      );
+      order.removeWhere((e) => surplus.any((ele) => ele == e));
+      _setting.snippetOrder.put(order);
+    }
     _updateTags();
   }
 
@@ -36,15 +47,15 @@ class SnippetProvider extends BusyProvider {
   void add(Snippet snippet) {
     _snippets.add(snippet);
     _store.put(snippet);
-    notifyListeners();
     _updateTags();
+    notifyListeners();
   }
 
   void del(Snippet snippet) {
     _snippets.remove(snippet);
     _store.delete(snippet);
-    notifyListeners();
     _updateTags();
+    notifyListeners();
   }
 
   void update(Snippet old, Snippet newOne) {
@@ -52,8 +63,8 @@ class SnippetProvider extends BusyProvider {
     _store.put(newOne);
     _snippets.remove(old);
     _snippets.add(newOne);
-    notifyListeners();
     _updateTags();
+    notifyListeners();
   }
 
   void renameTag(String old, String newOne) {
@@ -61,13 +72,11 @@ class SnippetProvider extends BusyProvider {
       if (s.tags?.contains(old) ?? false) {
         s.tags?.remove(old);
         s.tags?.add(newOne);
+        _store.put(s);
       }
     }
-    for (final s in _snippets) {
-      _store.put(s);
-    }
-    notifyListeners();
     _updateTags();
+    notifyListeners();
   }
 
   String get export => json.encode(snippets);

@@ -47,6 +47,8 @@ class _HomePageState extends State<HomePage>
   final _selectIndex = ValueNotifier(0);
   late S _s;
 
+  bool _switchingPage = false;
+
   @override
   void initState() {
     super.initState();
@@ -119,12 +121,18 @@ class _HomePageState extends State<HomePage>
         ],
       ),
       body: PageView.builder(
-        physics: const NeverScrollableScrollPhysics(),
         controller: _pageController,
         itemBuilder: (_, index) => AppTab.values[index].page,
+        onPageChanged: (value) {
+          if (!_switchingPage) {
+            _selectIndex.value = value;
+          }
+        },
       ),
-      bottomNavigationBar:
-          ValueBuilder(listenable: _selectIndex, build: _buildBottomBar),
+      bottomNavigationBar: ValueBuilder(
+        listenable: _selectIndex,
+        build: _buildBottomBar,
+      ),
     );
   }
 
@@ -133,12 +141,17 @@ class _HomePageState extends State<HomePage>
       selectedIndex: _selectIndex.value,
       animationDuration: const Duration(milliseconds: 250),
       onDestinationSelected: (int index) {
+        if (_selectIndex.value == index) return;
         _selectIndex.value = index;
+        _switchingPage = true;
         _pageController.animateToPage(
           index,
           duration: const Duration(milliseconds: 677),
           curve: Curves.fastLinearToSlowEaseIn,
         );
+        Future.delayed(const Duration(milliseconds: 677), () {
+          _switchingPage = false;
+        });
       },
       labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
       destinations: [

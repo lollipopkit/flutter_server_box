@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/provider/server.dart';
+import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/widget/tag/switcher.dart';
 
 import '../../../core/utils/misc.dart';
@@ -71,9 +72,10 @@ class _SnippetListPageState extends State<SnippetListPage> {
           padding: const EdgeInsets.all(13),
           itemCount: filtered.length,
           onReorder: (oldIdx, newIdx) => setState(() {
-            provider.snippets.moveById(
-              filtered[oldIdx],
-              filtered[newIdx],
+            provider.snippets.moveByItem(
+              filtered,
+              oldIdx,
+              newIdx,
               onMove: (p0) {
                 _settingStore.snippetOrder.put(p0.map((e) => e.name).toList());
               },
@@ -87,7 +89,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
             width: _media.size.width,
           ),
           itemBuilder: (context, idx) {
-            final snippet = filtered[idx];
+            final snippet = filtered.elementAt(idx);
             return RoundRectCard(
               ListTile(
                 contentPadding: const EdgeInsets.only(left: 23, right: 17),
@@ -95,6 +97,12 @@ class _SnippetListPageState extends State<SnippetListPage> {
                   snippet.name,
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
+                ),
+                subtitle: Text(
+                  snippet.script,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: grey,
                 ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
