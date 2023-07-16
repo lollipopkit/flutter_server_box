@@ -53,8 +53,8 @@ extension OrderX<T> on Order<T> {
   }
 
   /// order: ['d', 'b', 'e']\
-  /// items: ['a', 'b', 'c', 'd']\
-  /// result: ['b', 'd', 'a', 'c']\
+  /// this: ['a', 'b', 'c', 'd']\
+  /// result: ['d', 'b', 'a', 'c']\
   /// return: ['e']
   List<String> reorder({
     required List<String> order,

@@ -126,10 +126,9 @@ class _ServerPageState extends State<ServerPage>
               );
             }),
             itemBuilder: (_, index) => FadeIn(
-                key: ValueKey('$_tag${filtered[index]}'),
-                child: _buildEachServerCard(
-                  pro.servers[filtered[index]],
-                )),
+              key: ValueKey('$_tag${filtered[index]}'),
+              child: _buildEachServerCard(pro.servers[filtered[index]]),
+            ),
             itemCount: filtered.length,
           );
         },

@@ -45,22 +45,14 @@ class ServerProvider extends BusyProvider {
     }
     final serverOrder_ = _settingStore.serverOrder.fetch();
     if (serverOrder_ != null) {
-      _serverOrder.addAll(serverOrder_.toSet());
-      if (_serverOrder.length != spis.length) {
-        final missed = spis
-            .where(
-              (e) => !_serverOrder.contains(e.id),
-            )
-            .map((e) => e.id);
-        _serverOrder.addAll(missed);
-      }
+      spis.reorder(
+        order: serverOrder_,
+        finder: (n, id) => n.id == id,
+      );
+      _serverOrder.addAll(spis.map((e) => e.id));
     } else {
       _serverOrder.addAll(_servers.keys);
     }
-    final surplus = _serverOrder.where(
-      (e) => !_servers.containsKey(e),
-    );
-    _serverOrder.removeWhere((element) => surplus.contains(element));
     _settingStore.serverOrder.put(_serverOrder);
     _updateTags();
     setBusyState(false);

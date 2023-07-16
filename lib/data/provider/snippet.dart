@@ -24,7 +24,7 @@ class SnippetProvider extends BusyProvider {
     if (order != null) {
       final surplus = _snippets.reorder(
         order: order,
-        finder: (order, name) => order.name == name,
+        finder: (n, name) => n.name == name,
       );
       order.removeWhere((e) => surplus.any((ele) => ele == e));
       _setting.snippetOrder.put(order);
