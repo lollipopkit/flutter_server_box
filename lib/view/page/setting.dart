@@ -91,7 +91,6 @@ class _SettingPageState extends State<SettingPage> {
     _editorDarkTheme.value = _setting.editorDarkTheme.fetch()!;
     _keyboardType.value = _setting.keyboardType.fetch()!;
     _rotateQuarter.value = _setting.fullScreenRotateQuarter.fetch()!;
-    SharedPreferences.setPrefix('');
     SharedPreferences.getInstance().then((value) => _sp = value);
   }
 

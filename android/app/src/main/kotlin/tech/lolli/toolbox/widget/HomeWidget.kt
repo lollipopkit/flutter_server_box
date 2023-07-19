@@ -32,6 +32,18 @@ class HomeWidget : AppWidgetProvider() {
             url = gUrl
         }
 
+        val intentUpdate = Intent(context, HomeWidget::class.java)
+        intentUpdate.action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+        val ids = intArrayOf(appWidgetId)
+        intentUpdate.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+
+        val pendingUpdate: PendingIntent = PendingIntent.getBroadcast(
+                context,
+                appWidgetId,
+                intentUpdate,
+                PendingIntent.FLAG_UPDATE_CURRENT)
+        views.setOnClickPendingIntent(R.id.widget_container, pendingUpdate)
+
         if (url.isNullOrEmpty()) {
             views.setViewVisibility(R.id.widget_cpu_label, View.INVISIBLE)
             views.setViewVisibility(R.id.widget_mem_label, View.INVISIBLE)
