@@ -36,7 +36,7 @@
 
 
 ## 📩 推送
-为了可以在不使用 ServerBox app 时获取服务器状态，你需要在你的服务器上安装 [ServerBoxMonitor](https://github.com/lollipopkit/server_box_monitor)，并且配置 `iOS / Webhook / Server酱` 推送服务。
+为了可以在不使用 ServerBox app 时获取服务器状态（例如：桌面小部件、推送服务），你需要在你的服务器上安装 [ServerBoxMonitor](https://github.com/lollipopkit/server_box_monitor)，并且正确配置，详情可见 [Wiki](https://github.com/lollipopkit/server_box_monitor/wiki/%E4%B8%BB%E9%A1%B5)。
 
 
 ## 🆘 帮助
