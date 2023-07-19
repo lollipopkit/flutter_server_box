@@ -528,6 +528,12 @@ abstract class S {
   /// **'Go to'**
   String get goto;
 
+  /// No description provided for @homeWidgetUrlConfig.
+  ///
+  /// In en, this message translates to:
+  /// **'Config home widget url'**
+  String get homeWidgetUrlConfig;
+
   /// No description provided for @host.
   ///
   /// In en, this message translates to:

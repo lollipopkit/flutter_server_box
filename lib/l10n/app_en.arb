@@ -72,6 +72,7 @@
   "getPushTokenFailed": "Can't fetch push token",
   "gettingToken": "Getting token...",
   "goto": "Go to",
+  "homeWidgetUrlConfig": "Config home widget url",
   "host": "Host",
   "httpFailedWithCode": "request failed, status code: {code}",
   "image": "Image",

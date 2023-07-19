@@ -237,6 +237,9 @@ class SZh extends S {
   String get goto => '前往';
 
   @override
+  String get homeWidgetUrlConfig => '桌面部件链接配置';
+
+  @override
   String get host => '主机';
 
   @override
@@ -884,6 +887,9 @@ class SZhTw extends SZh {
 
   @override
   String get goto => '前往';
+
+  @override
+  String get homeWidgetUrlConfig => '桌面部件鏈接配置';
 
   @override
   String get host => '主機';

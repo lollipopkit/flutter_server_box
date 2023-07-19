@@ -47,7 +47,7 @@
 						<key>INIntentParameterMetadataCapitalization</key>
 						<string>Characters</string>
 						<key>INIntentParameterMetadataDefaultValue</key>
-						<string>https://push.lolli.tech</string>
+						<string>https://</string>
 						<key>INIntentParameterMetadataDefaultValueID</key>
 						<string>wwvqC2</string>
 						<key>INIntentParameterMetadataDisableAutocorrect</key>

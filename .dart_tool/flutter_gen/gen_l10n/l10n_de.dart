@@ -237,6 +237,9 @@ class SDe extends S {
   String get goto => 'Pfad öffnen';
 
   @override
+  String get homeWidgetUrlConfig => 'Home-Widget-Link konfigurieren';
+
+  @override
   String get host => 'Host';
 
   @override

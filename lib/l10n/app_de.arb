@@ -72,6 +72,7 @@
   "getPushTokenFailed": "Push-Token kann nicht abgerufen werden",
   "gettingToken": "Getting token...",
   "goto": "Pfad öffnen",
+  "homeWidgetUrlConfig": "Home-Widget-Link konfigurieren",
   "host": "Host",
   "httpFailedWithCode": "Anfrage fehlgeschlagen, Statuscode: {code}",
   "image": "Image",

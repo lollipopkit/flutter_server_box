@@ -70,7 +70,7 @@ struct StatusWidgetEntryView : View {
             case .loading:
                 ProgressView().padding()
             case .error(let descriotion):
-                Text(descriotion)
+                Text(descriotion).padding(.all, 13)
             case .normal:
                 VStack(alignment: .leading, spacing: 5.7) {
                     Text(entry.data.name).font(.system(.title3))
@@ -108,8 +108,8 @@ struct StatusWidget_Previews: PreviewProvider {
 
 struct StatusLoader {
     static func fetch(completion: @escaping (Result<Status, Error>) -> Void) {
-        if url == nil || url == "" {
-            completion(.failure(NSError(domain: domain, code: 1, userInfo: [NSLocalizedDescriptionKey: "Please longpress it to config first."])))
+        if let url = url, url.count < 12 {
+            completion(.failure(NSError(domain: domain, code: 1, userInfo: [NSLocalizedDescriptionKey: "https://github.com/lollipopkit/server_box_monitor/wiki"])))
             return
         }
         let URL = URL(string: url!)!
@@ -134,7 +134,6 @@ struct StatusLoader {
     }
 
     static func getStatus(fromData data: Foundation.Data) -> Result<Status, Error> {
-
         let jsonAll = try! JSONSerialization.jsonObject(with: data, options: []) as! [String: Any]
         let code = jsonAll["code"] as! Int
         if (code != 0) {
@@ -194,7 +193,6 @@ struct DetailItem: View {
 
 func date2String(_ date:Date, dateFormat:String = "yyyy-MM-dd HH:mm:ss") -> String {
     let formatter = DateFormatter()
-    formatter.locale = Locale.init(identifier: "zh_CN")
     formatter.dateFormat = dateFormat
     let date = formatter.string(from: date)
     return date

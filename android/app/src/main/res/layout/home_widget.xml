@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:padding="17dp"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/widget_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/widgetTitleText"
+        android:textSize="23sp"
+        android:textStyle="bold"
+        tools:text="Server Name" />
+
+    <RelativeLayout
+        android:id="@+id/widget_container_inner"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:paddingTop="13dp">
+
+        <LinearLayout
+            android:id="@+id/widget_cpu_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingBottom="2.7dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="17dp"
+                android:layout_height="17dp"
+                android:src="@drawable/speed_24">
+            </ImageView>
+
+            <TextView
+                android:id="@+id/widget_cpu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="11dp"
+                android:singleLine="true"
+                android:ellipsize = "marquee"
+                android:textColor="@color/widgetTitleText"
+                android:textSize="12.7sp"
+                tools:text="CPU" />
+
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_mem_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingBottom="2.7dp"
+            android:layout_below="@id/widget_cpu_label"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="17dp"
+                android:layout_height="17dp"
+                android:src="@drawable/memory_24">
+            </ImageView>
+
+            <TextView
+                android:id="@+id/widget_mem"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="11dp"
+                android:maxLines="1"
+                android:textColor="@color/widgetTitleText"
+                android:textSize="12.7sp"
+                tools:text="Mem" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_disk_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingBottom="2.7dp"
+            android:layout_below="@id/widget_mem_label"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="17dp"
+                android:layout_height="17dp"
+                android:src="@drawable/storage_24">
+            </ImageView>
+
+            <TextView
+                android:id="@+id/widget_disk"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="11dp"
+                android:maxLines="1"
+                android:textColor="@color/widgetTitleText"
+                android:textSize="12.7sp"
+                tools:text="Disk" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_net_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/widget_disk_label"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="17dp"
+                android:layout_height="17dp"
+                android:src="@drawable/net_24">
+            </ImageView>
+
+            <TextView
+                android:id="@+id/widget_net"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="11dp"
+                android:maxLines="1"
+                android:textColor="@color/widgetTitleText"
+                android:textSize="12.7sp"
+                tools:text="Net" />
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/widget_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:maxLines="2"
+        android:textColor="@color/widgetSummaryText"
+        android:textSize="11sp"
+        tools:text="UpdateTime" />
+
+</RelativeLayout>

@@ -36,5 +36,25 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        
+        <receiver
+            android:name=".widget.HomeWidget"
+            android:exported="false"
+            android:label="StatusWidget">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="tech.lolli.toolbox.UPDATE_WIDGET" />
+                <action android:name="miui.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <!--
+                 <meta-data
+                android:name="miuiWidget"
+                android:value="true" />
+            -->
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/home_widget" />
+        </receiver>
     </application>
 </manifest>

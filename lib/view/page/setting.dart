@@ -6,6 +6,7 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toolbox/core/extension/locale.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/route.dart';
@@ -51,6 +52,7 @@ class _SettingPageState extends State<SettingPage> {
   late final ServerProvider _serverProvider;
   late MediaQueryData _media;
   late S _s;
+  late SharedPreferences _sp;
 
   final _selectedColorValue = ValueNotifier(0);
   final _launchPageIdx = ValueNotifier(0);
@@ -89,6 +91,8 @@ class _SettingPageState extends State<SettingPage> {
     _editorDarkTheme.value = _setting.editorDarkTheme.fetch()!;
     _keyboardType.value = _setting.keyboardType.fetch()!;
     _rotateQuarter.value = _setting.fullScreenRotateQuarter.fetch()!;
+    SharedPreferences.setPrefix('');
+    SharedPreferences.getInstance().then((value) => _sp = value);
   }
 
   @override
@@ -141,6 +145,7 @@ class _SettingPageState extends State<SettingPage> {
     }
     if (isAndroid) {
       children.add(_buildBgRun());
+      children.add(_buildAndroidWidgetSharedPreference());
     }
     return Column(
       children: children.map((e) => RoundRectCard(e)).toList(),
@@ -834,6 +839,58 @@ class _SettingPageState extends State<SettingPage> {
         const SSHVirtKeySettingPage(),
         'ssh virt key edit',
       ).go(context),
+    );
+  }
+
+  void _saveWidgetSP(String data, Map<String, String> old) {
+    context.pop();
+    try {
+      final map = Map<String, String>.from(json.decode(data));
+      final keysDel = old.keys.toSet().difference(map.keys.toSet());
+      for (final key in keysDel) {
+        _sp.remove(key);
+      }
+      map.forEach((key, value) {
+        _sp.setString(key, value);
+      });
+      showSnackBar(context, Text(_s.success));
+    } catch (e) {
+      showSnackBar(context, Text(e.toString()));
+    }
+  }
+
+  Widget _buildAndroidWidgetSharedPreference() {
+    return ListTile(
+      title: Text(_s.homeWidgetUrlConfig),
+      trailing: const Icon(Icons.arrow_forward_ios, size: 13),
+      onTap: () {
+        final data = <String, String>{};
+        _sp.getKeys().forEach((key) {
+          final val = _sp.getString(key);
+          if (val != null) {
+            data[key] = val;
+          }
+        });
+        final ctrl = TextEditingController(text: json.encode(data));
+        showRoundDialog(
+            context: context,
+            title: Text(_s.homeWidgetUrlConfig),
+            child: Input(
+              controller: ctrl,
+              label: 'JSON',
+              type: TextInputType.visiblePassword,
+              maxLines: 7,
+              onSubmitted: (p0) => _saveWidgetSP(p0, data),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  _saveWidgetSP(ctrl.text, data);
+                },
+                child: Text(_s.ok),
+              ),
+            ]);
+      },
     );
   }
 }

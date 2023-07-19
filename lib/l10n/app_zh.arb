@@ -72,6 +72,7 @@
   "getPushTokenFailed": "未能获取到推送token",
   "gettingToken": "正在获取Token...",
   "goto": "前往",
+  "homeWidgetUrlConfig": "桌面部件链接配置",
   "host": "主机",
   "httpFailedWithCode": "请求失败, 状态码: {code}",
   "image": "镜像",

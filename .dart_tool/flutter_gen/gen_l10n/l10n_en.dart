@@ -237,6 +237,9 @@ class SEn extends S {
   String get goto => 'Go to';
 
   @override
+  String get homeWidgetUrlConfig => 'Config home widget url';
+
+  @override
   String get host => 'Host';
 
   @override
