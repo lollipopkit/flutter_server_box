@@ -29,12 +29,12 @@ class ServerPrivateInfo {
     required this.pwd,
     this.pubKeyId,
     this.tags,
-  }) : id = '$user@$ip:$port';
+  }) : id = '$name<$user@$ip:$port>';
 
   ServerPrivateInfo.fromJson(Map<String, dynamic> json) {
     name = json["name"].toString();
     ip = json["ip"].toString();
-    port = json["port"].toInt();
+    port = int.tryParse(json["port"]) ?? 22;
     user = json["user"].toString();
     pwd = json["authorization"].toString();
     pubKeyId = json["pubKeyId"]?.toString();
@@ -55,6 +55,6 @@ class ServerPrivateInfo {
   }
 
   bool shouldReconnect(ServerPrivateInfo old) {
-    return id != id || pwd != old.pwd || pubKeyId != old.pubKeyId;
+    return id != old.id || pwd != old.pwd || pubKeyId != old.pubKeyId;
   }
 }

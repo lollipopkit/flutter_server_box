@@ -43,6 +43,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
     final allKeys = [...keys, ...disabled];
     return ReorderableListView.builder(
       padding: const EdgeInsets.fromLTRB(11, 3, 0, 3),
+      buildDefaultDragHandles: false,
       itemBuilder: (_, idx) {
         final key = allKeys[idx];
         return ListTile(

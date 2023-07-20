@@ -33,7 +33,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     with SingleTickerProviderStateMixin {
   late MediaQueryData _media;
   late S _s;
-  final Order _cardsOrder = [];
+  final Order<String> _cardsOrder = [];
   final _setting = locator<SettingStore>();
 
   @override
@@ -81,6 +81,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             );
           });
         },
+        buildDefaultDragHandles: false,
         footer: height13,
         children: _buildMainList(si.status),
       ),

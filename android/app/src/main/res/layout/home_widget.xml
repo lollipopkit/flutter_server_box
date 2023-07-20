@@ -12,7 +12,7 @@
         android:id="@+id/widget_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@color/widgetTitleText"
+        android:textColor="@color/widgetText"
         android:textSize="23sp"
         android:textStyle="bold"
         tools:text="Server Name" />
@@ -45,7 +45,7 @@
                 android:layout_marginStart="11dp"
                 android:singleLine="true"
                 android:ellipsize = "marquee"
-                android:textColor="@color/widgetTitleText"
+                android:textColor="@color/widgetSummaryText"
                 android:textSize="12.7sp"
                 tools:text="CPU" />
 
@@ -73,7 +73,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="11dp"
                 android:maxLines="1"
-                android:textColor="@color/widgetTitleText"
+                android:textColor="@color/widgetSummaryText"
                 android:textSize="12.7sp"
                 tools:text="Mem" />
 
@@ -100,7 +100,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="11dp"
                 android:maxLines="1"
-                android:textColor="@color/widgetTitleText"
+                android:textColor="@color/widgetSummaryText"
                 android:textSize="12.7sp"
                 tools:text="Disk" />
 
@@ -126,7 +126,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="11dp"
                 android:maxLines="1"
-                android:textColor="@color/widgetTitleText"
+                android:textColor="@color/widgetSummaryText"
                 android:textSize="12.7sp"
                 tools:text="Net" />
 

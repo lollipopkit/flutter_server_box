@@ -117,6 +117,7 @@ class _ServerPageState extends State<ServerPage>
               all: _s.all,
             ),
             padding: const EdgeInsets.fromLTRB(7, 10, 7, 7),
+            buildDefaultDragHandles: false,
             onReorder: (oldIndex, newIndex) => setState(() {
               pro.serverOrder.moveByItem(
                 filtered,
