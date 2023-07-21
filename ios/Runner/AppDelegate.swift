@@ -1,4 +1,5 @@
 import UIKit
+import WidgetKit
 import Flutter
 
 @UIApplicationMain
@@ -8,6 +9,9 @@ import Flutter
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
+      if #available(iOS 14.0, *) {
+          WidgetCenter.shared.reloadTimelines(ofKind: "StatusWidget")
+      }
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }
