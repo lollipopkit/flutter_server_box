@@ -351,6 +351,9 @@ class SZh extends S {
   String get needRestart => '需要重启 App';
 
   @override
+  String get netViewType => '网络视图类型';
+
+  @override
   String get newContainer => '新建容器';
 
   @override
@@ -1001,6 +1004,9 @@ class SZhTw extends SZh {
 
   @override
   String get needRestart => '需要重啓 App';
+
+  @override
+  String get netViewType => '網絡視圖類型';
 
   @override
   String get newContainer => '新建容器';

@@ -351,6 +351,9 @@ class SEn extends S {
   String get needRestart => 'Need to restart app';
 
   @override
+  String get netViewType => 'Net view type';
+
+  @override
   String get newContainer => 'New container';
 
   @override

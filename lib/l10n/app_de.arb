@@ -108,6 +108,7 @@
   "ms": "ms",
   "name": "Name",
   "needRestart": "App muss neugestartet werden",
+  "netViewType": "Netzwerkansicht Typ",
   "newContainer": "Neuer Container",
   "noClient": "Kein Client",
   "noInterface": "Kein Interface",

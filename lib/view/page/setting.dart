@@ -906,7 +906,7 @@ class _SettingPageState extends State<SettingPage> {
             ))
         .toList();
     return ListTile(
-      title: Text('net view type'),
+      title: Text(_s.netViewType),
       trailing: ValueBuilder(
         listenable: _netViewType,
         build: () => PopupMenuButton<NetViewType>(

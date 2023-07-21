@@ -108,6 +108,7 @@
   "ms": "ms",
   "name": "Name",
   "needRestart": "Need to restart app",
+  "netViewType": "Net view type",
   "newContainer": "New container",
   "noClient": "No client",
   "noInterface": "No interface",

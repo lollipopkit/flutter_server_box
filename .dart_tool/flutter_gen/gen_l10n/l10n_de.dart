@@ -351,6 +351,9 @@ class SDe extends S {
   String get needRestart => 'App muss neugestartet werden';
 
   @override
+  String get netViewType => 'Netzwerkansicht Typ';
+
+  @override
   String get newContainer => 'Neuer Container';
 
   @override

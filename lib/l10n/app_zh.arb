@@ -108,6 +108,7 @@
   "ms": "毫秒",
   "name": "名称",
   "needRestart": "需要重启 App",
+  "netViewType": "网络视图类型",
   "newContainer": "新建容器",
   "noClient": "没有SSH连接",
   "noInterface": "没有可用的接口",

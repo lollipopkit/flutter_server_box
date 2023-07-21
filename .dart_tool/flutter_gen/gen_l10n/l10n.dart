@@ -744,6 +744,12 @@ abstract class S {
   /// **'Need to restart app'**
   String get needRestart;
 
+  /// No description provided for @netViewType.
+  ///
+  /// In en, this message translates to:
+  /// **'Net view type'**
+  String get netViewType;
+
   /// No description provided for @newContainer.
   ///
   /// In en, this message translates to:
