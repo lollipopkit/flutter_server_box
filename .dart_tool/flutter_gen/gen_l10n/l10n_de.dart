@@ -74,6 +74,9 @@ class SDe extends S {
   String get cmd => 'Command';
 
   @override
+  String get conn => 'Verbindung';
+
+  @override
   String get containerName => 'Container Name';
 
   @override
@@ -529,6 +532,9 @@ class SDe extends S {
   String get snippet => 'Snippet';
 
   @override
+  String get speed => 'Tempo';
+
+  @override
   String spentTime(Object time) {
     return 'Benötigte Zeit: $time';
   }
@@ -583,6 +589,9 @@ class SDe extends S {
 
   @override
   String get times => 'x';
+
+  @override
+  String get traffic => 'Durchflussmenge';
 
   @override
   String get ttl => 'ttl';

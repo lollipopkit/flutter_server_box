@@ -234,6 +234,12 @@ abstract class S {
   /// **'Command'**
   String get cmd;
 
+  /// No description provided for @conn.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection'**
+  String get conn;
+
   /// No description provided for @containerName.
   ///
   /// In en, this message translates to:
@@ -1092,6 +1098,12 @@ abstract class S {
   /// **'Snippet'**
   String get snippet;
 
+  /// No description provided for @speed.
+  ///
+  /// In en, this message translates to:
+  /// **'Speed'**
+  String get speed;
+
   /// No description provided for @spentTime.
   ///
   /// In en, this message translates to:
@@ -1187,6 +1199,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Times'**
   String get times;
+
+  /// No description provided for @traffic.
+  ///
+  /// In en, this message translates to:
+  /// **'Traffic'**
+  String get traffic;
 
   /// No description provided for @ttl.
   ///

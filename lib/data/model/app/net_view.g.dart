@@ -14,26 +14,26 @@ class NetViewTypeAdapter extends TypeAdapter<NetViewType> {
   NetViewType read(BinaryReader reader) {
     switch (reader.readByte()) {
       case 0:
-        return NetViewType.count;
+        return NetViewType.conn;
       case 1:
         return NetViewType.speed;
       case 2:
-        return NetViewType.size;
+        return NetViewType.traffic;
       default:
-        return NetViewType.count;
+        return NetViewType.conn;
     }
   }
 
   @override
   void write(BinaryWriter writer, NetViewType obj) {
     switch (obj) {
-      case NetViewType.count:
+      case NetViewType.conn:
         writer.writeByte(0);
         break;
       case NetViewType.speed:
         writer.writeByte(1);
         break;
-      case NetViewType.size:
+      case NetViewType.traffic:
         writer.writeByte(2);
         break;
     }

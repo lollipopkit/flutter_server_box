@@ -33,6 +33,19 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   final Order<String> _cardsOrder = [];
   final _setting = locator<SettingStore>();
 
+  late final _cardBuildMap = Map.fromIterables(
+    defaultDetailCardOrder,
+    [
+      _buildUpTimeAndSys,
+      _buildCPUView,
+      _buildMemView,
+      _buildSwapView,
+      _buildDiskView,
+      _buildNetView,
+      _buildTemperature,
+    ],
+  );
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -48,18 +61,6 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   @override
   Widget build(BuildContext context) {
-    final map = Map.fromIterables(
-      defaultDetailCardOrder,
-      [
-        _buildUpTimeAndSys,
-        _buildCPUView,
-        _buildMemView,
-        _buildSwapView,
-        _buildDiskView,
-        _buildNetView,
-        _buildTemperature,
-      ],
-    );
     return Consumer<ServerProvider>(builder: (_, provider, __) {
       final s = provider.servers[widget.id];
       if (s == null) {
@@ -69,14 +70,11 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           ),
         );
       }
-      return _buildMainPage(s, map);
+      return _buildMainPage(s);
     });
   }
 
-  Widget _buildMainPage(
-    Server si,
-    Map<String, Widget Function(ServerStatus)> map,
-  ) {
+  Widget _buildMainPage(Server si) {
     return Scaffold(
       appBar: AppBar(
         title: Text(si.spi.name, style: textSize18),
@@ -99,7 +97,9 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         itemBuilder: (context, index) => ReorderableDelayedDragStartListener(
           key: ValueKey(index),
           index: index,
-          child: map[_cardsOrder[index]]?.call(si.status) ?? nil,
+          child: SizedBox(
+            child: _cardBuildMap[_cardsOrder[index]]?.call(si.status),
+          ),
         ),
       ),
     );

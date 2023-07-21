@@ -14,6 +14,15 @@ class Cpus {
   void update(List<OneTimeCpuStatus> newStatus) {
     _pre = _now;
     _now = newStatus;
+    // 类似 [NetSpeed.update] 的处理
+    // 虽然CPU热插拔情况较少...
+    if (_pre.length != _now.length) {
+      if (_pre.length > _now.length) {
+        _pre = _pre.sublist(0, _now.length);
+      } else {
+        _pre.addAll(_now.sublist(_pre.length, _now.length));
+      }
+    }
   }
 
   int get coresCount => _now.length;

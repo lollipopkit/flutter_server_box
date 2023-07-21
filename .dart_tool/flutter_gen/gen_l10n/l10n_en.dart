@@ -74,6 +74,9 @@ class SEn extends S {
   String get cmd => 'Command';
 
   @override
+  String get conn => 'Connection';
+
+  @override
   String get containerName => 'Container name';
 
   @override
@@ -529,6 +532,9 @@ class SEn extends S {
   String get snippet => 'Snippet';
 
   @override
+  String get speed => 'Speed';
+
+  @override
   String spentTime(Object time) {
     return 'Spent time: $time';
   }
@@ -583,6 +589,9 @@ class SEn extends S {
 
   @override
   String get times => 'Times';
+
+  @override
+  String get traffic => 'Traffic';
 
   @override
   String get ttl => 'ttl';

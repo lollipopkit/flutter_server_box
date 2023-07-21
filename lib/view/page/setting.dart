@@ -902,7 +902,7 @@ class _SettingPageState extends State<SettingPage> {
     final items = NetViewType.values
         .map((e) => PopupMenuItem(
               value: e,
-              child: Text(e.name),
+              child: Text(e.l10n(_s)),
             ))
         .toList();
     return ListTile(
@@ -918,7 +918,7 @@ class _SettingPageState extends State<SettingPage> {
             _setting.netViewType.put(idx);
           },
           child: Text(
-            _netViewType.value.name,
+            _netViewType.value.l10n(_s),
             style: textSize15,
           ),
         ),

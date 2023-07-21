@@ -24,6 +24,18 @@ class NetSpeed {
   void update(List<NetSpeedPart> newOne) {
     _old = _now;
     _now = newOne;
+    // 当长度不同，说明有网络接口改变
+    //
+    // 应当跟随改变：
+    // 旧长度 > 新长度：将旧的数据截断
+    // 旧长度 < 新长度：将旧的数据补齐
+    if (_old.length != _now.length) {
+      if (_old.length > _now.length) {
+        _old = _old.sublist(0, _now.length);
+      } else {
+        _old.addAll(_now.sublist(_old.length, _now.length));
+      }
+    }
   }
 
   BigInt get timeDiff => _now[0].time - _old[0].time;

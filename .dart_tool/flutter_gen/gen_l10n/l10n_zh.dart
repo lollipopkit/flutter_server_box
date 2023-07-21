@@ -74,6 +74,9 @@ class SZh extends S {
   String get cmd => '命令';
 
   @override
+  String get conn => '连接';
+
+  @override
   String get containerName => '容器名';
 
   @override
@@ -529,6 +532,9 @@ class SZh extends S {
   String get snippet => '代码片段';
 
   @override
+  String get speed => '速度';
+
+  @override
   String spentTime(Object time) {
     return '耗时: $time';
   }
@@ -583,6 +589,9 @@ class SZh extends S {
 
   @override
   String get times => '次';
+
+  @override
+  String get traffic => '流量';
 
   @override
   String get ttl => '缓存时间';
@@ -727,6 +736,9 @@ class SZhTw extends SZh {
 
   @override
   String get cmd => '命令';
+
+  @override
+  String get conn => '連接';
 
   @override
   String get containerName => '容器名稱';
@@ -1184,6 +1196,9 @@ class SZhTw extends SZh {
   String get snippet => '程式片段';
 
   @override
+  String get speed => '速度';
+
+  @override
   String spentTime(Object time) {
     return '耗時: $time';
   }
@@ -1238,6 +1253,9 @@ class SZhTw extends SZh {
 
   @override
   String get times => '次';
+
+  @override
+  String get traffic => '流量';
 
   @override
   String get ttl => '緩存時間';
