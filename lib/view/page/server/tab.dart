@@ -49,7 +49,6 @@ class _ServerPageState extends State<ServerPage>
   late ServerProvider _serverProvider;
   late SettingStore _settingStore;
   late S _s;
-  late NetViewType _netViewType;
 
   String? _tag;
 
@@ -58,7 +57,6 @@ class _ServerPageState extends State<ServerPage>
     super.initState();
     _serverProvider = locator<ServerProvider>();
     _settingStore = locator<SettingStore>();
-    _netViewType = _settingStore.netViewType.fetch() ?? NetViewType.speed;
   }
 
   @override
@@ -333,10 +331,15 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildNet(ServerStatus ss) {
-    final data = _netViewType.build(ss);
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 177),
-      child: _buildIOData(data.up, data.down),
+    return ValueListenableBuilder<NetViewType>(
+      valueListenable: _settingStore.netViewType.listenable(),
+      builder: (_, val, __) {
+        final data = val.build(ss);
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 177),
+          child: _buildIOData(data.up, data.down),
+        );
+      },
     );
   }
 

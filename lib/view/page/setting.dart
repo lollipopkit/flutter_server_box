@@ -924,7 +924,7 @@ class _SettingPageState extends State<SettingPage> {
         ),
       ),
       onTap: () {
-        _keyboardTypeKey.currentState?.showButtonMenu();
+        _netViewTypeKey.currentState?.showButtonMenu();
       },
     );
   }

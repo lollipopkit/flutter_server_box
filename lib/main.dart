@@ -5,6 +5,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:toolbox/data/model/app/net_view.dart';
 import 'package:toolbox/data/model/ssh/virtual_key.dart';
 
 import 'app.dart';
@@ -55,6 +56,7 @@ Future<void> initHive() async {
   Hive.registerAdapter(SnippetAdapter());
   Hive.registerAdapter(ServerPrivateInfoAdapter());
   Hive.registerAdapter(VirtKeyAdapter());
+  Hive.registerAdapter(NetViewTypeAdapter());
 }
 
 void runInZone(dynamic Function() body) {

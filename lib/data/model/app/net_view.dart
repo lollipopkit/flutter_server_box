@@ -1,6 +1,8 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:toolbox/data/model/server/server_status.dart';
 
+part 'net_view.g.dart';
+
 @HiveType(typeId: 5)
 enum NetViewType {
   @HiveField(0)
