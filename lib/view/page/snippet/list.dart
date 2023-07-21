@@ -88,44 +88,52 @@ class _SnippetListPageState extends State<SnippetListPage> {
             all: _s.all,
             width: _media.size.width,
           ),
+          buildDefaultDragHandles: false,
           itemBuilder: (context, idx) {
             final snippet = filtered.elementAt(idx);
-            return RoundRectCard(
-              ListTile(
-                contentPadding: const EdgeInsets.only(left: 23, right: 17),
-                title: Text(
-                  snippet.name,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
-                subtitle: Text(
-                  snippet.script,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  style: grey,
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      onPressed: () => AppRoute(
-                        SnippetEditPage(snippet: snippet),
-                        'snippet edit page',
-                      ).go(context),
-                      icon: const Icon(Icons.edit),
-                    ),
-                    IconButton(
-                      onPressed: () => _runSnippet(snippet),
-                      icon: const Icon(Icons.play_arrow),
-                    ),
-                  ],
-                ),
-              ),
+            return ReorderableDelayedDragStartListener(
               key: ValueKey(snippet.name),
+              index: idx,
+              child: _buildSnippetItem(snippet),
             );
           },
         );
       },
+    );
+  }
+
+  Widget _buildSnippetItem(Snippet snippet) {
+    return RoundRectCard(
+      ListTile(
+        contentPadding: const EdgeInsets.only(left: 23, right: 17),
+        title: Text(
+          snippet.name,
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
+        ),
+        subtitle: Text(
+          snippet.script,
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
+          style: grey,
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              onPressed: () => AppRoute(
+                SnippetEditPage(snippet: snippet),
+                'snippet edit page',
+              ).go(context),
+              icon: const Icon(Icons.edit),
+            ),
+            IconButton(
+              onPressed: () => _runSnippet(snippet),
+              icon: const Icon(Icons.play_arrow),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

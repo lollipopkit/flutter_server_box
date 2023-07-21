@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:nil/nil.dart';
 import 'package:toolbox/core/extension/order.dart';
+import 'package:toolbox/core/utils/platform.dart';
 import 'package:toolbox/core/utils/ui.dart';
 import 'package:toolbox/data/model/ssh/virtual_key.dart';
 import 'package:toolbox/data/store/setting.dart';
@@ -48,8 +50,10 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
         return ListTile(
           key: ValueKey(idx),
           title: _buildTitle(key),
-          leading: const Icon(Icons.drag_handle, color: Colors.grey),
-          trailing: _buildCheckBox(keys, key, idx, idx < keys.length),
+          leading: _buildCheckBox(keys, key, idx, idx < keys.length),
+          trailing: isDesktop
+              ? nil
+              : const Icon(Icons.drag_handle, color: Colors.grey),
         );
       },
       itemCount: allKeys.length,

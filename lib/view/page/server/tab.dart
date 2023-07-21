@@ -11,7 +11,6 @@ import 'package:toolbox/data/model/app/net_view.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/provider/snippet.dart';
 import 'package:toolbox/view/page/process.dart';
-import 'package:toolbox/view/widget/fade_in.dart';
 import 'package:toolbox/view/widget/tag/picker.dart';
 import 'package:toolbox/view/widget/tag/switcher.dart';
 
@@ -126,8 +125,10 @@ class _ServerPageState extends State<ServerPage>
                 property: _settingStore.serverOrder,
               );
             }),
-            itemBuilder: (_, index) => FadeIn(
+            buildDefaultDragHandles: false,
+            itemBuilder: (_, index) => ReorderableDelayedDragStartListener(
               key: ValueKey('$_tag${filtered[index]}'),
+              index: index,
               child: _buildEachServerCard(pro.servers[filtered[index]]),
             ),
             itemCount: filtered.length,
