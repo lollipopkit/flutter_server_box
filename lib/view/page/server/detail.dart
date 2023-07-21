@@ -81,7 +81,6 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             );
           });
         },
-        buildDefaultDragHandles: false,
         footer: height13,
         children: _buildMainList(si.status),
       ),
@@ -378,7 +377,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           SizedBox(
             width: width,
             child: Text(
-              '${ns.speedIn(device: device)} | ${ns.totalIn(device: device)}',
+              '${ns.speedIn(device: device)} | ${ns.sizeIn(device: device)}',
               style: textSize11,
               textAlign: TextAlign.center,
               textScaleFactor: 0.87,
@@ -387,7 +386,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           SizedBox(
             width: width,
             child: Text(
-              '${ns.speedOut(device: device)} | ${ns.totalOut(device: device)}',
+              '${ns.speedOut(device: device)} | ${ns.sizeOut(device: device)}',
               style: textSize11,
               textAlign: TextAlign.right,
               textScaleFactor: 0.87,

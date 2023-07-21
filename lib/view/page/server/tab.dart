@@ -7,6 +7,7 @@ import 'package:nil/nil.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/core/utils/misc.dart';
+import 'package:toolbox/data/model/app/net_view.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/provider/snippet.dart';
 import 'package:toolbox/view/page/process.dart';
@@ -48,6 +49,7 @@ class _ServerPageState extends State<ServerPage>
   late ServerProvider _serverProvider;
   late SettingStore _settingStore;
   late S _s;
+  late NetViewType _netViewType;
 
   String? _tag;
 
@@ -56,6 +58,7 @@ class _ServerPageState extends State<ServerPage>
     super.initState();
     _serverProvider = locator<ServerProvider>();
     _settingStore = locator<SettingStore>();
+    _netViewType = _settingStore.netViewType.fetch() ?? NetViewType.speed;
   }
 
   @override
@@ -117,7 +120,6 @@ class _ServerPageState extends State<ServerPage>
               all: _s.all,
             ),
             padding: const EdgeInsets.fromLTRB(7, 10, 7, 7),
-            buildDefaultDragHandles: false,
             onReorder: (oldIndex, newIndex) => setState(() {
               pro.serverOrder.moveByItem(
                 filtered,
@@ -173,7 +175,7 @@ class _ServerPageState extends State<ServerPage>
           children: [
             _buildPercentCircle(ss.cpu.usedPercent()),
             _buildPercentCircle(ss.mem.usedPercent * 100),
-            _buildIOData('Conn:\n${ss.tcp.maxConn}', 'Fail:\n${ss.tcp.fail}'),
+            _buildNet(ss),
             _buildIOData(
                 'Total:\n${rootDisk.size}', 'Used:\n${rootDisk.usedPercent}%')
           ],
@@ -327,6 +329,14 @@ class _ServerPageState extends State<ServerPage>
             break;
         }
       },
+    );
+  }
+
+  Widget _buildNet(ServerStatus ss) {
+    final data = _netViewType.build(ss);
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 177),
+      child: _buildIOData(data.up, data.down),
     );
   }
 

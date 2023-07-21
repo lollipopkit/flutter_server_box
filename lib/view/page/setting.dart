@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toolbox/core/extension/locale.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/route.dart';
+import 'package:toolbox/data/model/app/net_view.dart';
 import 'package:toolbox/data/model/app/tab.dart';
 import 'package:toolbox/view/page/ssh/virt_key_setting.dart';
 import 'package:toolbox/view/widget/input_field.dart';
@@ -47,6 +48,7 @@ class _SettingPageState extends State<SettingPage> {
   final _editorDarkThemeKey = GlobalKey<PopupMenuButtonState<String>>();
   final _keyboardTypeKey = GlobalKey<PopupMenuButtonState<int>>();
   final _rotateQuarterKey = GlobalKey<PopupMenuButtonState<int>>();
+  final _netViewTypeKey = GlobalKey<PopupMenuButtonState<NetViewType>>();
 
   late final SettingStore _setting;
   late final ServerProvider _serverProvider;
@@ -65,6 +67,7 @@ class _SettingPageState extends State<SettingPage> {
   final _editorDarkTheme = ValueNotifier('');
   final _keyboardType = ValueNotifier(0);
   final _rotateQuarter = ValueNotifier(0);
+  final _netViewType = ValueNotifier(NetViewType.speed);
 
   final _pushToken = ValueNotifier<String?>(null);
 
@@ -91,6 +94,7 @@ class _SettingPageState extends State<SettingPage> {
     _editorDarkTheme.value = _setting.editorDarkTheme.fetch()!;
     _keyboardType.value = _setting.keyboardType.fetch()!;
     _rotateQuarter.value = _setting.fullScreenRotateQuarter.fetch()!;
+    _netViewType.value = _setting.netViewType.fetch()!;
     SharedPreferences.getInstance().then((value) => _sp = value);
   }
 
@@ -164,6 +168,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildServer() {
     return Column(
       children: [
+        _buildNetViewType(),
         _buildUpdateInterval(),
         _buildMaxRetry(),
         _buildDiskIgnorePath(),
@@ -795,7 +800,7 @@ class _SettingPageState extends State<SettingPage> {
       'none',
     ];
     if (names.length != TextInputType.values.length) {
-      throw 'names.length != TextInputType.values.length';
+      throw Exception('names.length != TextInputType.values.length');
     }
     final items = TextInputType.values.map(
       (key) {
@@ -889,6 +894,37 @@ class _SettingPageState extends State<SettingPage> {
                 child: Text(_s.ok),
               ),
             ]);
+      },
+    );
+  }
+
+  Widget _buildNetViewType() {
+    final items = NetViewType.values
+        .map((e) => PopupMenuItem(
+              value: e,
+              child: Text(e.name),
+            ))
+        .toList();
+    return ListTile(
+      title: Text('net view type'),
+      trailing: ValueBuilder(
+        listenable: _netViewType,
+        build: () => PopupMenuButton<NetViewType>(
+          key: _netViewTypeKey,
+          itemBuilder: (BuildContext context) => items,
+          initialValue: _netViewType.value,
+          onSelected: (idx) {
+            _netViewType.value = idx;
+            _setting.netViewType.put(idx);
+          },
+          child: Text(
+            _netViewType.value.name,
+            style: textSize15,
+          ),
+        ),
+      ),
+      onTap: () {
+        _keyboardTypeKey.currentState?.showButtonMenu();
       },
     );
   }

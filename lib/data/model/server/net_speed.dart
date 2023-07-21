@@ -28,34 +28,61 @@ class NetSpeed {
 
   BigInt get timeDiff => _now[0].time - _old[0].time;
 
-  String speedIn({String? device}) {
+  double _speedIn(int i) => (_now[i].bytesIn - _old[i].bytesIn) / timeDiff;
+  double _speedOut(int i) => (_now[i].bytesOut - _old[i].bytesOut) / timeDiff;
+  BigInt _sizeIn(int i) => _now[i].bytesIn;
+  BigInt _sizeOut(int i) => _now[i].bytesOut;
+
+  String speedIn({String? device, bool all = false}) {
     if (_old[0].device == '' || _now[0].device == '') return '0kb/s';
+    if (all) {
+      var speed = 0.0;
+      for (var i = 0; i < _now.length; i++) {
+        speed += _speedIn(i);
+      }
+      return buildStandardOutput(speed);
+    }
     final idx = deviceIdx(device);
-    final speedInBytesPerSecond =
-        (_now[idx].bytesIn - _old[idx].bytesIn) / timeDiff;
-    return buildStandardOutput(speedInBytesPerSecond);
+    return buildStandardOutput(_speedIn(idx));
   }
 
-  String totalIn({String? device}) {
+  String sizeIn({String? device, bool all = false}) {
     if (_old[0].device == '' || _now[0].device == '') return '0kb';
+    if (all) {
+      var size = BigInt.from(0);
+      for (var i = 0; i < _now.length; i++) {
+        size += _sizeIn(i);
+      }
+      return size.convertBytes;
+    }
     final idx = deviceIdx(device);
-    final totalInBytes = _now[idx].bytesIn;
-    return totalInBytes.toInt().convertBytes;
+    return _sizeIn(idx).convertBytes;
   }
 
-  String speedOut({String? device}) {
+  String speedOut({String? device, bool all = false}) {
     if (_old[0].device == '' || _now[0].device == '') return '0kb/s';
+    if (all) {
+      var speed = 0.0;
+      for (var i = 0; i < _now.length; i++) {
+        speed += _speedOut(i);
+      }
+      return buildStandardOutput(speed);
+    }
     final idx = deviceIdx(device);
-    final speedOutBytesPerSecond =
-        (_now[idx].bytesOut - _old[idx].bytesOut) / timeDiff;
-    return buildStandardOutput(speedOutBytesPerSecond);
+    return buildStandardOutput(_speedOut(idx));
   }
 
-  String totalOut({String? device}) {
+  String sizeOut({String? device, bool all = false}) {
     if (_old[0].device == '' || _now[0].device == '') return '0kb';
+    if (all) {
+      var size = BigInt.from(0);
+      for (var i = 0; i < _now.length; i++) {
+        size += _sizeOut(i);
+      }
+      return size.convertBytes;
+    }
     final idx = deviceIdx(device);
-    final totalOutBytes = _now[idx].bytesOut;
-    return totalOutBytes.toInt().convertBytes;
+    return _sizeOut(idx).convertBytes;
   }
 
   int deviceIdx(String? device) {

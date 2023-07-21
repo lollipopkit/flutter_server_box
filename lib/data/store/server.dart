@@ -24,7 +24,7 @@ class ServerStore extends PersistentStore {
 
   void update(ServerPrivateInfo old, ServerPrivateInfo newInfo) {
     if (!have(old)) {
-      throw Exception('Old ServerPrivateInfo not found');
+      throw Exception('Old spi: $old not found');
     }
     delete(old.id);
     put(newInfo);

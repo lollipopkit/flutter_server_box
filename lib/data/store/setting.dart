@@ -3,6 +3,7 @@ import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/core/utils/platform.dart';
 import 'package:toolbox/data/model/ssh/virtual_key.dart';
 
+import '../model/app/net_view.dart';
 import '../res/default.dart';
 
 class SettingStore extends PersistentStore {
@@ -91,4 +92,7 @@ class SettingStore extends PersistentStore {
 
   StoreProperty<List<VirtKey>> get sshVirtKeys =>
       property('sshVirtKeys', defaultValue: defaultSSHVirtKeys);
+
+  StoreProperty<NetViewType> get netViewType =>
+      property('netViewType', defaultValue: NetViewType.speed);
 }

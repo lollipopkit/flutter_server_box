@@ -218,7 +218,7 @@ class ServerProvider extends BusyProvider {
         s.client = await genClient(spi);
         final time2 = DateTime.now();
         final spentTime = time2.difference(time1).inMilliseconds;
-        _logger.info('Connected to [$sid] in $spentTime ms.');
+        _logger.info('Connected to $sid in $spentTime ms.');
 
         // after connected
         s.state = ServerState.connected;

@@ -57,4 +57,9 @@ class ServerPrivateInfo {
   bool shouldReconnect(ServerPrivateInfo old) {
     return id != old.id || pwd != old.pwd || pubKeyId != old.pubKeyId;
   }
+
+  @override
+  String toString() {
+    return id;
+  }
 }
