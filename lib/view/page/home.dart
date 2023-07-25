@@ -85,6 +85,7 @@ class _HomePageState extends State<HomePage>
         if (!_serverProvider.isAutoRefreshOn) {
           _serverProvider.startAutoRefresh();
         }
+        updateHomeWidget();
         break;
       case AppLifecycleState.paused:
         // Keep running in background on Android device
@@ -306,11 +307,18 @@ class _HomePageState extends State<HomePage>
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
     doUpdate(context);
+    updateHomeWidget();
     await GetIt.I.allReady();
     await _serverProvider.loadLocalData();
     await _serverProvider.refreshData();
     if (!Analysis.enabled) {
       Analysis.init();
+    }
+  }
+
+  void updateHomeWidget() {
+    if (_setting.autoUpdateHomeWidget.fetch()!) {
+      homeWidgetChannel.invokeMethod('update');
     }
   }
 }

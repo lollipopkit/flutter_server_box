@@ -95,4 +95,7 @@ class SettingStore extends PersistentStore {
 
   StoreProperty<NetViewType> get netViewType =>
       property('netViewType', defaultValue: NetViewType.speed);
+  
+  // Only valid on iOS
+  StoreProperty<bool> get autoUpdateHomeWidget => property('autoUpdateHomeWidget', defaultValue: isIOS);
 }

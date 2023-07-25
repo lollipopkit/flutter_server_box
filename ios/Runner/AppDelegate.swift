@@ -9,9 +9,17 @@ import Flutter
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
-      if #available(iOS 14.0, *) {
+    
+    let controller : FlutterViewController = window?.rootViewController as! FlutterViewController
+    let methodChannel = FlutterMethodChannel(name: "tech.lolli.toolbox/home_widget", binaryMessenger: controller.binaryMessenger)
+    methodChannel.setMethodCallHandler({
+      (call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
+      if call.method == "update" {
+        if #available(iOS 14.0, *) {
           WidgetCenter.shared.reloadTimelines(ofKind: "StatusWidget")
+        }
       }
+    })
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }

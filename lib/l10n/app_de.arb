@@ -10,6 +10,7 @@
   "alreadyLastDir": "Bereits im letzten Verzeichnis.",
   "attention": "Achtung",
   "auto": "System folgen",
+  "autoUpdateHomeWidget": "Home-Widget automatisch aktualisieren",
   "backup": "Backup",
   "backupAndRestore": "Backup und Wiederherstellung",
   "backupTip": "Das Backup wird nur einfach verschlüsselt.\nBitte bewahre die Datei sicher auf.",
@@ -204,5 +205,6 @@
   "versionUpdated": "v1.0.{build} ist bereits die neueste Version",
   "viewErr": "Fehler anzeigen",
   "waitConnection": "Bitte warte, bis die Verbindung hergestellt wurde.",
+  "whenOpenApp": "Beim Öffnen der App",
   "willTakEeffectImmediately": "Wird sofort angewendet"
 }

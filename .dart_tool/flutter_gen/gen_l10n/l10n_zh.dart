@@ -35,6 +35,9 @@ class SZh extends S {
   String get auto => '自动';
 
   @override
+  String get autoUpdateHomeWidget => '自动更新桌面小部件';
+
+  @override
   String get backup => '备份';
 
   @override
@@ -661,6 +664,9 @@ class SZh extends S {
   String get waitConnection => '请等待连接建立';
 
   @override
+  String get whenOpenApp => '当打开 App 时';
+
+  @override
   String get willTakEeffectImmediately => '更改将会立即生效';
 }
 
@@ -697,6 +703,9 @@ class SZhTw extends SZh {
 
   @override
   String get auto => '自動';
+
+  @override
+  String get autoUpdateHomeWidget => '自動更新桌面小部件';
 
   @override
   String get backup => '備份';
@@ -1323,6 +1332,9 @@ class SZhTw extends SZh {
 
   @override
   String get waitConnection => '請等待連接建立';
+
+  @override
+  String get whenOpenApp => '當打開 App 時';
 
   @override
   String get willTakEeffectImmediately => '更改將會立即生效';

@@ -15,3 +15,4 @@ const maxDebugLogLines = 100;
 /// Method Channels
 const pkgName = 'tech.lolli.toolbox';
 const bgRunChannel = MethodChannel('$pkgName/app_retain');
+const homeWidgetChannel = MethodChannel('$pkgName/home_widget');

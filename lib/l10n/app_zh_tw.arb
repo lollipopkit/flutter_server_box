@@ -10,6 +10,7 @@
   "alreadyLastDir": "已經是最上層目錄了",
   "attention": "注意",
   "auto": "自動",
+  "autoUpdateHomeWidget": "自動更新桌面小部件",
   "backup": "備份",
   "backupAndRestore": "備份和還原",
   "backupTip": "導出的數據僅進行了簡單加密，請妥善保管。",
@@ -204,5 +205,6 @@
   "versionUpdated": "當前：v1.0.{build}, 已是最新版本",
   "viewErr": "查看錯誤",
   "waitConnection": "請等待連接建立",
+  "whenOpenApp": "當打開 App 時",
   "willTakEeffectImmediately": "更改將會立即生效"
 }

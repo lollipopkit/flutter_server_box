@@ -35,6 +35,9 @@ class SDe extends S {
   String get auto => 'System folgen';
 
   @override
+  String get autoUpdateHomeWidget => 'Home-Widget automatisch aktualisieren';
+
+  @override
   String get backup => 'Backup';
 
   @override
@@ -659,6 +662,9 @@ class SDe extends S {
 
   @override
   String get waitConnection => 'Bitte warte, bis die Verbindung hergestellt wurde.';
+
+  @override
+  String get whenOpenApp => 'Beim Öffnen der App';
 
   @override
   String get willTakEeffectImmediately => 'Wird sofort angewendet';

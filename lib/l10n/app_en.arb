@@ -10,6 +10,7 @@
   "alreadyLastDir": "Already in last directory.",
   "attention": "Attention",
   "auto": "Auto",
+  "autoUpdateHomeWidget": "Auto update home widget",
   "backup": "Backup",
   "backupAndRestore": "Backup and Restore",
   "backupTip": "The exported data is simply encrypted. \nPlease keep it safe.",
@@ -204,5 +205,6 @@
   "versionUpdated": "Current: v1.0.{build}, is up to date",
   "viewErr": "See error",
   "waitConnection": "Please wait for the connection to be established.",
+  "whenOpenApp": "When opening the app",
   "willTakEeffectImmediately": "Will take effect immediately"
 }

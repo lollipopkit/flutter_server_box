@@ -145,6 +145,7 @@ class _SettingPageState extends State<SettingPage> {
     ];
     if (isIOS) {
       children.add(_buildPushToken());
+      children.add(_buildAutoUpdateHomeWidget());
     }
     if (isAndroid) {
       children.add(_buildBgRun());
@@ -926,6 +927,14 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () {
         _netViewTypeKey.currentState?.showButtonMenu();
       },
+    );
+  }
+
+  Widget _buildAutoUpdateHomeWidget() {
+    return ListTile(
+      title: Text(_s.autoUpdateHomeWidget),
+      subtitle: Text(_s.whenOpenApp, style: grey),
+      trailing: buildSwitch(context, _setting.autoUpdateHomeWidget),
     );
   }
 }

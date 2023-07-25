@@ -156,6 +156,12 @@ abstract class S {
   /// **'Auto'**
   String get auto;
 
+  /// No description provided for @autoUpdateHomeWidget.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto update home widget'**
+  String get autoUpdateHomeWidget;
+
   /// No description provided for @backup.
   ///
   /// In en, this message translates to:
@@ -1319,6 +1325,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Please wait for the connection to be established.'**
   String get waitConnection;
+
+  /// No description provided for @whenOpenApp.
+  ///
+  /// In en, this message translates to:
+  /// **'When opening the app'**
+  String get whenOpenApp;
 
   /// No description provided for @willTakEeffectImmediately.
   ///

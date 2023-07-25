@@ -35,6 +35,9 @@ class SEn extends S {
   String get auto => 'Auto';
 
   @override
+  String get autoUpdateHomeWidget => 'Auto update home widget';
+
+  @override
   String get backup => 'Backup';
 
   @override
@@ -659,6 +662,9 @@ class SEn extends S {
 
   @override
   String get waitConnection => 'Please wait for the connection to be established.';
+
+  @override
+  String get whenOpenApp => 'When opening the app';
 
   @override
   String get willTakEeffectImmediately => 'Will take effect immediately';
