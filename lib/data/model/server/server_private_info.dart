@@ -29,7 +29,7 @@ class ServerPrivateInfo {
     required this.pwd,
     this.pubKeyId,
     this.tags,
-  }) : id = '$name<$user@$ip:$port>';
+  }) : id = '$user@$ip:$port';
 
   ServerPrivateInfo.fromJson(Map<String, dynamic> json) {
     name = json["name"].toString();

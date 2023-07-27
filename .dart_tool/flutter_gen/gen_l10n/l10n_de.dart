@@ -113,6 +113,9 @@ class SDe extends S {
   String get delete => 'Löschen';
 
   @override
+  String get deleteAllServers => 'Alle Server löschen';
+
+  @override
   String get disabled => 'Behinderte';
 
   @override

@@ -312,6 +312,12 @@ abstract class S {
   /// **'Delete'**
   String get delete;
 
+  /// No description provided for @deleteAllServers.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all servers'**
+  String get deleteAllServers;
+
   /// No description provided for @disabled.
   ///
   /// In en, this message translates to:

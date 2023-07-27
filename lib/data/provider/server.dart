@@ -167,6 +167,15 @@ class ServerProvider extends BusyProvider {
     _serverStore.delete(id);
   }
 
+  void deleteAll() {
+    _servers.clear();
+    _serverOrder.clear();
+    _settingStore.serverOrder.put(_serverOrder);
+    _updateTags();
+    notifyListeners();
+    _serverStore.deleteAll();
+  }
+
   Future<void> updateServer(
     ServerPrivateInfo old,
     ServerPrivateInfo newSpi,

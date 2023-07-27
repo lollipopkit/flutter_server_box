@@ -22,6 +22,10 @@ class ServerStore extends PersistentStore {
     box.delete(id);
   }
 
+  void deleteAll() {
+    box.clear();
+  }
+
   void update(ServerPrivateInfo old, ServerPrivateInfo newInfo) {
     if (!have(old)) {
       throw Exception('Old spi: $old not found');

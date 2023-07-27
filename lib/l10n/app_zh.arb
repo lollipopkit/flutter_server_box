@@ -36,6 +36,7 @@
   "debug": "调试",
   "decode": "解码",
   "delete": "删除",
+  "deleteAllServers": "删除所有服务器",
   "disabled": "已禁用",
   "disconnected": "连接断开",
   "diskIgnorePath": "忽略的磁盘路径",

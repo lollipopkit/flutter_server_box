@@ -109,14 +109,14 @@ class _SettingPageState extends State<SettingPage> {
         children: [
           _buildTitle('App'),
           _buildApp(),
-          _buildTitle(_s.fullScreen),
-          _buildFullScreen(),
           _buildTitle(_s.server),
           _buildServer(),
           _buildTitle('SSH'),
           _buildSSH(),
           _buildTitle(_s.editor),
           _buildEditor(),
+          _buildTitle(_s.fullScreen),
+          _buildFullScreen(),
           const SizedBox(height: 37),
         ],
       ),
@@ -173,6 +173,7 @@ class _SettingPageState extends State<SettingPage> {
         _buildUpdateInterval(),
         _buildMaxRetry(),
         _buildDiskIgnorePath(),
+        _buildDeleteAllServers(),
       ].map((e) => RoundRectCard(e)).toList(),
     );
   }
@@ -801,6 +802,7 @@ class _SettingPageState extends State<SettingPage> {
       'none',
     ];
     if (names.length != TextInputType.values.length) {
+      // This notify me to update the code
       throw Exception('names.length != TextInputType.values.length');
     }
     final items = TextInputType.values.map(
@@ -935,6 +937,24 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(_s.autoUpdateHomeWidget),
       subtitle: Text(_s.whenOpenApp, style: grey),
       trailing: buildSwitch(context, _setting.autoUpdateHomeWidget),
+    );
+  }
+
+  Widget _buildDeleteAllServers() {
+    return ListTile(
+      title: Text(_s.deleteAllServers),
+      trailing: const Icon(Icons.delete_forever),
+      onTap: () => showRoundDialog(
+        context: context,
+        title: Text(_s.attention),
+        child: Text(_s.sureDelete(_s.all)),
+        actions: [
+          TextButton(
+            onPressed: () => _serverProvider.deleteAll(),
+            child: Text(_s.ok),
+          )
+        ],
+      ),
     );
   }
 }
