@@ -7,6 +7,7 @@ import 'package:intl/intl.dart' as intl;
 
 import 'l10n_de.dart';
 import 'l10n_en.dart';
+import 'l10n_id.dart';
 import 'l10n_zh.dart';
 
 /// Callers can lookup localized strings with an instance of S
@@ -92,6 +93,7 @@ abstract class S {
   static const List<Locale> supportedLocales = <Locale>[
     Locale('de'),
     Locale('en'),
+    Locale('id'),
     Locale('zh'),
     Locale('zh', 'TW')
   ];
@@ -568,7 +570,7 @@ abstract class S {
   ///
   /// In en, this message translates to:
   /// **'request failed, status code: {code}'**
-  String httpFailedWithCode(Object code);
+  String httpFailedWithCode(Object code, Object kode);
 
   /// No description provided for @image.
   ///
@@ -1360,7 +1362,7 @@ class _SDelegate extends LocalizationsDelegate<S> {
   }
 
   @override
-  bool isSupported(Locale locale) => <String>['de', 'en', 'zh'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>['de', 'en', 'id', 'zh'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_SDelegate old) => false;
@@ -1382,6 +1384,7 @@ S lookupS(Locale locale) {
   switch (locale.languageCode) {
     case 'de': return SDe();
     case 'en': return SEn();
+    case 'id': return SId();
     case 'zh': return SZh();
   }
 

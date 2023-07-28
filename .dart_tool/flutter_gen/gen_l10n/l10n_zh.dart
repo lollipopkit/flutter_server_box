@@ -255,7 +255,7 @@ class SZh extends S {
   String get host => '主机';
 
   @override
-  String httpFailedWithCode(Object code) {
+  String httpFailedWithCode(Object code, Object kode) {
     return '请求失败, 状态码: $code';
   }
 
@@ -931,7 +931,7 @@ class SZhTw extends SZh {
   String get host => '主機';
 
   @override
-  String httpFailedWithCode(Object code) {
+  String httpFailedWithCode(Object code, Object kode) {
     return '請求失敗, 狀態碼: $code';
   }
 
