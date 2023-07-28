@@ -29,6 +29,9 @@ class SZh extends S {
   String get alreadyLastDir => '已经是最上层目录了';
 
   @override
+  String get alterHost => '备选主机';
+
+  @override
   String get attention => '注意';
 
   @override
@@ -700,6 +703,9 @@ class SZhTw extends SZh {
 
   @override
   String get alreadyLastDir => '已經是最上層目錄了';
+
+  @override
+  String get alterHost => '備選主機';
 
   @override
   String get attention => '注意';

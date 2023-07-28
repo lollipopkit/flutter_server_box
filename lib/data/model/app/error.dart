@@ -17,6 +17,7 @@ abstract class Err<T> {
 
 enum SSHErrType {
   unknown,
+  connect,
   noPrivateKey;
 }
 

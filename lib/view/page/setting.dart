@@ -869,7 +869,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildAndroidWidgetSharedPreference() {
     return ListTile(
       title: Text(_s.homeWidgetUrlConfig),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 13),
+      trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () {
         final data = <String, String>{};
         _sp.getKeys().forEach((key) {

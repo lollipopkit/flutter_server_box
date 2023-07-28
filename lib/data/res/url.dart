@@ -14,4 +14,5 @@ const thanksMap = {
   'wxdjs': 'https://github.com/wxdjs',
   'Aeorq': 'https://github.com/Aeorq',
   'jaychoubaby': 'https://github.com/jaychoubaby',
+  'allonmymind': 'https://github.com/allonmymind',
 };

@@ -35,15 +35,31 @@ Future<SSHClient> genClient(
   ServerPrivateInfo spi, {
   void Function(GenSSHClientStatus)? onStatus,
 }) async {
-  final onStatus_ = onStatus ?? (_) {};
-  onStatus_(GenSSHClientStatus.socket);
-  final socket = await SSHSocket.connect(
-    spi.ip,
-    spi.port,
-    timeout: const Duration(seconds: 5),
-  );
+  onStatus?.call(GenSSHClientStatus.socket);
+  late SSHSocket socket;
+  try {
+    socket = await SSHSocket.connect(
+      spi.ip,
+      spi.port,
+      timeout: const Duration(seconds: 5),
+    );
+  } catch (e) {
+    try {
+      socket = await SSHSocket.connect(
+        spi.alterHost!,
+        spi.port,
+        timeout: const Duration(seconds: 5),
+      );
+    } catch (e) {
+      throw SSHErr(
+        type: SSHErrType.connect,
+        message: e.toString(),
+      );
+    }
+  }
+
   if (spi.pubKeyId == null) {
-    onStatus_(GenSSHClientStatus.pwd);
+    onStatus?.call(GenSSHClientStatus.pwd);
     return SSHClient(
       socket,
       username: spi.user,
@@ -57,7 +73,7 @@ Future<SSHClient> genClient(
       message: 'key [${spi.pubKeyId}] not found',
     );
   }
-  onStatus_(GenSSHClientStatus.key);
+  onStatus?.call(GenSSHClientStatus.key);
   return SSHClient(
     socket,
     username: spi.user,

@@ -29,6 +29,9 @@ class SDe extends S {
   String get alreadyLastDir => 'Bereits im letzten Verzeichnis.';
 
   @override
+  String get alterHost => 'Alternative Gastgeber';
+
+  @override
   String get attention => 'Achtung';
 
   @override

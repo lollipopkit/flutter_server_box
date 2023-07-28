@@ -29,6 +29,9 @@ class SEn extends S {
   String get alreadyLastDir => 'Already in last directory.';
 
   @override
+  String get alterHost => 'Alter host';
+
+  @override
   String get attention => 'Attention';
 
   @override
