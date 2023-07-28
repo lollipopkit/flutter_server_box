@@ -31,7 +31,7 @@
   - [x] 状态图表
   - [x] 代码编辑器
   - [x] `Ping` 和 更多
-- [x] 本地化 ( English, 简体中文, Deutsch, 繁體中文。 [如何贡献？](#l10n-guide))
+- [x] 本地化 ( English, 简体中文, Deutsch, 繁體中文, Indonesian。 [如何贡献？](#l10n-guide))
 - [x] 桌面端支持
 
 

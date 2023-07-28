@@ -14,7 +14,7 @@ class SftpProvider extends ProviderBase {
       found = _status.where((e) => e.id == id);
     }
     if (fileName != null) {
-      found = found.where((e) => e.item.localPath.split('/').last == fileName);
+      found = found.where((e) => e.req.localPath.split('/').last == fileName);
     }
     return found;
   }
@@ -25,12 +25,11 @@ class SftpProvider extends ProviderBase {
     return found.first;
   }
 
-  void add(SftpReqItem item, SftpReqType type, {Completer? completer}) {
+  void add(SftpReq req, {Completer? completer}) {
     _status.add(SftpReqStatus(
-      item: item,
       notifyListeners: notifyListeners,
-      type: type,
       completer: completer,
+      req: req,
     ));
   }
 }

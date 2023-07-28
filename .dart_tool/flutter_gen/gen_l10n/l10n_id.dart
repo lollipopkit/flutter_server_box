@@ -255,8 +255,8 @@ class SId extends S {
   String get host => 'Host';
 
   @override
-  String httpFailedWithCode(Object code, Object kode) {
-    return 'Permintaan gagal, kode status: $kode';
+  String httpFailedWithCode(Object code) {
+    return 'Permintaan gagal, kode status: $code';
   }
 
   @override

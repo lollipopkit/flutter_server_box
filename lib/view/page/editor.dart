@@ -103,7 +103,9 @@ class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
         ),
         child: SingleChildScrollView(
           child: CodeTheme(
-            data: CodeThemeData(styles: _codeTheme ?? (isDarkMode(context) ? monokaiTheme : a11yLightTheme)),
+            data: CodeThemeData(
+                styles: _codeTheme ??
+                    (isDarkMode(context) ? monokaiTheme : a11yLightTheme)),
             child: CodeField(
               focusNode: _focusNode,
               controller: _controller,

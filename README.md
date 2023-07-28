@@ -31,7 +31,7 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
   - [x] `Status` charts
   - [x] `Code editor`
   - [x] `Ping` and etc.
-- [x] Localization ( English, 简体中文, Deutsch, 繁體中文. [How to contribute?](#l10n-guide))
+- [x] Localization ( English, 简体中文, Deutsch, 繁體中文, Indonesian. [How to contribute?](#l10n-guide))
 - [x] Desktop support
 
 

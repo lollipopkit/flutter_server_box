@@ -79,7 +79,11 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
 
   Widget _buildItem(SftpReqStatus status) {
     if (status.error != null) {
-      showSnackBar(context, Text(status.error.toString()));
+      final err = status.error.toString();
+      Future.delayed(
+        const Duration(milliseconds: 377),
+        () => showSnackBar(context, Text(err)),
+      );
       status.error = null;
     }
     switch (status.status) {
@@ -92,7 +96,7 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
           status,
           str,
           trailing: IconButton(
-            onPressed: () => shareFiles(context, [status.item.localPath]),
+            onPressed: () => shareFiles(context, [status.req.localPath]),
             icon: const Icon(Icons.open_in_new),
           ),
         );
@@ -103,18 +107,35 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
         return _wrapInCard(
           status,
           _s.downloadStatus(percentStr, size),
-          trailing: CircularProgressIndicator(value: percent),
+          trailing: SizedBox(
+            height: 27,
+            width: 27,
+            child: CircularProgressIndicator(
+              value: percent,
+            ),
+          )
         );
       case SftpWorkerStatus.preparing:
-        return _wrapInCard(status, _s.sftpDlPrepare, trailing: loadingIcon);
+        return _wrapInCard(
+          status,
+          _s.sftpDlPrepare,
+          trailing: _loading,
+        );
       case SftpWorkerStatus.sshConnectted:
-        return _wrapInCard(status, _s.sftpSSHConnected, trailing: loadingIcon);
+        return _wrapInCard(
+          status,
+          _s.sftpSSHConnected,
+          trailing: _loading,
+        );
       default:
         return _wrapInCard(
           status,
           _s.unknown,
-          trailing: const Icon(Icons.error, size: 40),
+          trailing: const Icon(Icons.error),
         );
     }
   }
 }
+
+const _loading =
+    SizedBox(height: 27, width: 27, child: CircularProgressIndicator());

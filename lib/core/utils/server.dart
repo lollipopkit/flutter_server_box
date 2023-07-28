@@ -31,9 +31,21 @@ enum GenSSHClientStatus {
   pwd,
 }
 
+String getPrivateKey(String id) {
+  final key = locator<PrivateKeyStore>().get(id);
+  if (key == null) {
+    throw SSHErr(
+      type: SSHErrType.noPrivateKey,
+      message: 'key [$id] not found',
+    );
+  }
+  return key.privateKey;
+}
+
 Future<SSHClient> genClient(
   ServerPrivateInfo spi, {
   void Function(GenSSHClientStatus)? onStatus,
+  String? privateKey,
 }) async {
   onStatus?.call(GenSSHClientStatus.socket);
   late SSHSocket socket;
@@ -66,17 +78,12 @@ Future<SSHClient> genClient(
       onPasswordRequest: () => spi.pwd,
     );
   }
-  final key = locator<PrivateKeyStore>().get(spi.pubKeyId!);
-  if (key == null) {
-    throw SSHErr(
-      type: SSHErrType.noPrivateKey,
-      message: 'key [${spi.pubKeyId}] not found',
-    );
-  }
+  privateKey ??= getPrivateKey(spi.pubKeyId!);
+
   onStatus?.call(GenSSHClientStatus.key);
   return SSHClient(
     socket,
     username: spi.user,
-    identities: await compute(loadIndentity, key.privateKey),
+    identities: await compute(loadIndentity, privateKey),
   );
 }

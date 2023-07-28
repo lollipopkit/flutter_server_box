@@ -255,7 +255,7 @@ class SEn extends S {
   String get host => 'Host';
 
   @override
-  String httpFailedWithCode(Object code, Object kode) {
+  String httpFailedWithCode(Object code) {
     return 'request failed, status code: $code';
   }
 

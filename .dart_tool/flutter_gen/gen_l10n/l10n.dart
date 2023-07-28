@@ -570,7 +570,7 @@ abstract class S {
   ///
   /// In en, this message translates to:
   /// **'request failed, status code: {code}'**
-  String httpFailedWithCode(Object code, Object kode);
+  String httpFailedWithCode(Object code);
 
   /// No description provided for @image.
   ///

@@ -6,20 +6,19 @@ import 'dart:typed_data';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:easy_isolate/easy_isolate.dart';
 import 'package:toolbox/core/utils/misc.dart';
+import 'package:toolbox/core/utils/server.dart';
 
 import 'req.dart';
 
 class SftpWorker {
   final Function(Object event) onNotify;
-  final SftpReqItem item;
-  final SftpReqType type;
+  final SftpReq req;
 
   final worker = Worker();
 
   SftpWorker({
     required this.onNotify,
-    required this.item,
-    required this.type,
+    required this.req,
   });
 
   void dispose() {
@@ -35,7 +34,7 @@ class SftpWorker {
       isolateMessageHandler,
       errorHandler: print,
     );
-    worker.sendMessage(SftpReq(item: item, type: type));
+    worker.sendMessage(req);
   }
 
   /// Handle the messages coming from the isolate
@@ -69,29 +68,19 @@ Future<void> isolateMessageHandler(
 }
 
 Future<void> _download(
-  SftpReq data,
+  SftpReq req,
   SendPort mainSendPort,
   SendErrorFunction sendError,
 ) async {
   try {
     mainSendPort.send(SftpWorkerStatus.preparing);
     final watch = Stopwatch()..start();
-    final item = data.item;
-    final spi = item.spi;
-    final socket = await SSHSocket.connect(spi.ip, spi.port);
-    SSHClient client;
-    if (spi.pubKeyId == null) {
-      client = SSHClient(socket,
-          username: spi.user, onPasswordRequest: () => spi.pwd);
-    } else {
-      client = SSHClient(socket,
-          username: spi.user, identities: SSHKeyPair.fromPem(data.privateKey!));
-    }
+    final client = await genClient(req.spi, privateKey: req.privateKey);
     mainSendPort.send(SftpWorkerStatus.sshConnectted);
 
-    final remotePath = item.remotePath;
-    final localPath = item.localPath;
-    await Directory(localPath.substring(0, item.localPath.lastIndexOf('/')))
+    final remotePath = req.remotePath;
+    final localPath = req.localPath;
+    await Directory(localPath.substring(0, req.localPath.lastIndexOf('/')))
         .create(recursive: true);
     final local = File(localPath);
     if (await local.exists()) {
@@ -104,7 +93,8 @@ Future<void> _download(
       mainSendPort.send(Exception('can not get file size'));
       return;
     }
-    const defaultChunkSize = 1024 * 1024;
+    // Read 10m each time
+    const defaultChunkSize = 1024 * 1024 * 10;
     final chunkSize = size > defaultChunkSize ? defaultChunkSize : size;
     mainSendPort.send(size);
     mainSendPort.send(SftpWorkerStatus.downloading);
@@ -125,29 +115,19 @@ Future<void> _download(
 }
 
 Future<void> _upload(
-  SftpReq data,
+  SftpReq req,
   SendPort mainSendPort,
   SendErrorFunction sendError,
 ) async {
   try {
     mainSendPort.send(SftpWorkerStatus.preparing);
     final watch = Stopwatch()..start();
-    final item = data.item;
-    final spi = item.spi;
-    final socket = await SSHSocket.connect(spi.ip, spi.port);
-    SSHClient client;
-    if (spi.pubKeyId == null) {
-      client = SSHClient(socket,
-          username: spi.user, onPasswordRequest: () => spi.pwd);
-    } else {
-      client = SSHClient(socket,
-          username: spi.user, identities: SSHKeyPair.fromPem(data.privateKey!));
-    }
+    final client = await genClient(req.spi, privateKey: req.privateKey);
     mainSendPort.send(SftpWorkerStatus.sshConnectted);
 
-    final localPath = item.localPath;
+    final localPath = req.localPath;
     final remotePath =
-        item.remotePath + (getFileName(localPath) ?? 'srvbox_sftp_upload');
+        req.remotePath + (getFileName(localPath) ?? 'srvbox_sftp_upload');
     final local = File(localPath);
     if (!await local.exists()) {
       mainSendPort.send(Exception('local file not exists'));

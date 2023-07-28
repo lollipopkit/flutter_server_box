@@ -174,8 +174,12 @@ class _SFTPPageState extends State<SFTPPage> {
             return;
           }
           _sftp.add(
-            SftpReqItem(widget.spi, remotePath, path),
-            SftpReqType.upload,
+            SftpReq(
+              widget.spi,
+              remotePath,
+              path,
+              SftpReqType.upload,
+            ),
           );
         },
         icon: const Icon(Icons.upload_file));
@@ -350,8 +354,13 @@ class _SFTPPageState extends State<SFTPPage> {
     final remotePath = _getRemotePath(name);
     final localPath = await _getLocalPath(remotePath);
     final completer = Completer();
-    final req = SftpReqItem(widget.spi, remotePath, localPath);
-    _sftp.add(req, SftpReqType.download, completer: completer);
+    final req = SftpReq(
+      widget.spi,
+      remotePath,
+      localPath,
+      SftpReqType.download,
+    );
+    _sftp.add(req, completer: completer);
     showRoundDialog(context: context, child: centerSizedLoading);
     await completer.future;
     context.pop();
@@ -361,7 +370,7 @@ class _SFTPPageState extends State<SFTPPage> {
       'SFTP edit',
     ).go<String>(context);
     if (result != null) {
-      _sftp.add(req, SftpReqType.upload);
+      _sftp.add(SftpReq(req.spi, remotePath, localPath, SftpReqType.upload));
     }
   }
 
@@ -381,12 +390,12 @@ class _SFTPPageState extends State<SFTPPage> {
             final remotePath = _getRemotePath(name);
 
             _sftp.add(
-              SftpReqItem(
+              SftpReq(
                 widget.spi,
                 remotePath,
                 await _getLocalPath(remotePath),
+                SftpReqType.download,
               ),
-              SftpReqType.download,
             );
 
             context.pop();

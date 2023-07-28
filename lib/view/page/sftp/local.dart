@@ -280,10 +280,12 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
                 showSnackBar(context, Text(_s.fieldMustNotEmpty));
                 return;
               }
-              locator<SftpProvider>().add(
-                SftpReqItem(spi, remotePath, file.absolute.path),
+              locator<SftpProvider>().add(SftpReq(
+                spi,
+                remotePath,
+                file.absolute.path,
                 SftpReqType.upload,
-              );
+              ));
               showSnackBar(context, Text(_s.added2List));
             },
           ),

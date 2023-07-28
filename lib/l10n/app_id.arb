@@ -78,7 +78,7 @@
   "goto": "Pergi ke",
   "homeWidgetUrlConfig": "Konfigurasi URL Widget Rumah",
   "host": "Host",
-  "httpFailedWithCode": "Permintaan gagal, kode status: {kode}",
+  "httpFailedWithCode": "Permintaan gagal, kode status: {code}",
   "image": "Gambar",
   "imagesList": "Daftar gambar",
   "import": "Impor",

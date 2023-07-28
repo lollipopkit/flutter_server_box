@@ -1,34 +1,38 @@
 import 'dart:async';
 
+import '../../../core/utils/server.dart';
 import '../server/server_private_info.dart';
 import 'worker.dart';
 
-class SftpReqItem {
+class SftpReq {
   final ServerPrivateInfo spi;
   final String remotePath;
   final String localPath;
+  final SftpReqType type;
+  String? privateKey;
 
-  SftpReqItem(this.spi, this.remotePath, this.localPath);
+  SftpReq(
+    this.spi,
+    this.remotePath,
+    this.localPath,
+    this.type,
+  ) {
+    if (spi.pubKeyId != null) {
+      privateKey = getPrivateKey(spi.pubKeyId!);
+    }
+  }
 }
 
 enum SftpReqType { download, upload }
 
-class SftpReq {
-  final SftpReqItem item;
-  final String? privateKey;
-  final SftpReqType type;
-
-  SftpReq({required this.item, this.privateKey, required this.type});
-}
-
 class SftpReqStatus {
   final int id;
-  final SftpReqItem item;
+  final SftpReq req;
   final void Function() notifyListeners;
   late SftpWorker worker;
   final Completer? completer;
 
-  String get fileName => item.localPath.split('/').last;
+  String get fileName => req.localPath.split('/').last;
 
   // status of the download
   double? progress;
@@ -38,17 +42,14 @@ class SftpReqStatus {
   Duration? spentTime;
 
   SftpReqStatus({
-    required this.item,
+    required this.req,
     required this.notifyListeners,
-    required SftpReqType type,
     this.completer,
   }) : id = DateTime.now().microsecondsSinceEpoch {
     worker = SftpWorker(
       onNotify: onNotify,
-      item: item,
-      type: type,
-    );
-    worker.init();
+      req: req,
+    )..init();
   }
 
   @override
@@ -79,6 +80,7 @@ class SftpReqStatus {
         spentTime = event;
         break;
       default:
+        error = Exception('unknown event: $event');
     }
     notifyListeners();
   }
