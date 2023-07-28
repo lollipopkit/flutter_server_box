@@ -12,6 +12,7 @@ class PersistentStore<E> {
   }
 
   StoreProperty<T> property<T>(String key, {T? defaultValue}) {
+    
     return StoreProperty<T>(box, key, defaultValue);
   }
 }
