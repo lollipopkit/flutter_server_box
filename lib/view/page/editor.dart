@@ -29,7 +29,7 @@ class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
   late CodeController _controller;
   late final _focusNode = FocusNode();
   final _setting = locator<SettingStore>();
-  late Map<String, TextStyle> _codeTheme;
+  Map<String, TextStyle>? _codeTheme;
   late S _s;
   late String? _langCode;
 
@@ -41,13 +41,15 @@ class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
       language: suffix2HighlightMap[_langCode],
     );
 
-    if (isDarkMode(context)) {
-      _codeTheme = themeMap[_setting.editorDarkTheme.fetch()] ?? monokaiTheme;
-    } else {
-      _codeTheme = themeMap[_setting.editorTheme.fetch()] ?? a11yLightTheme;
-    }
-
-    _focusNode.requestFocus();
+    WidgetsBinding.instance.addPostFrameCallback((Duration duration) async {
+      if (isDarkMode(context)) {
+        _codeTheme = themeMap[_setting.editorDarkTheme.fetch()] ?? monokaiTheme;
+      } else {
+        _codeTheme = themeMap[_setting.editorTheme.fetch()] ?? a11yLightTheme;
+      }
+      _focusNode.requestFocus();
+      setState(() {});
+    });
   }
 
   @override
@@ -66,7 +68,12 @@ class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _codeTheme['root']!.backgroundColor,
+      backgroundColor: () {
+        if (_codeTheme != null) {
+          return _codeTheme!['root']!.backgroundColor;
+        }
+        return null;
+      }(),
       appBar: AppBar(
         centerTitle: true,
         title: TwoLineText(up: getFileName(widget.path) ?? '', down: _s.editor),
@@ -89,15 +96,21 @@ class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
           )
         ],
       ),
-      body: SingleChildScrollView(
-        child: CodeTheme(
-          data: CodeThemeData(styles: _codeTheme),
-          child: CodeField(
-            focusNode: _focusNode,
-            controller: _controller,
-            lineNumberStyle: const LineNumberStyle(
-              width: 47,
-              margin: 7,
+      body: Visibility(
+        visible: (_codeTheme != null),
+        replacement: const Center(
+          child: CircularProgressIndicator(),
+        ),
+        child: SingleChildScrollView(
+          child: CodeTheme(
+            data: CodeThemeData(styles: _codeTheme ?? (isDarkMode(context) ? monokaiTheme : a11yLightTheme)),
+            child: CodeField(
+              focusNode: _focusNode,
+              controller: _controller,
+              lineNumberStyle: const LineNumberStyle(
+                width: 47,
+                margin: 7,
+              ),
             ),
           ),
         ),
