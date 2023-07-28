@@ -841,7 +841,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildSSHVirtKeys() {
     return ListTile(
       title: Text(_s.editVirtKeys),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 13),
+      trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () => AppRoute(
         const SSHVirtKeySettingPage(),
         'ssh virt key edit',
@@ -880,23 +880,24 @@ class _SettingPageState extends State<SettingPage> {
         });
         final ctrl = TextEditingController(text: json.encode(data));
         showRoundDialog(
-            context: context,
-            title: Text(_s.homeWidgetUrlConfig),
-            child: Input(
-              controller: ctrl,
-              label: 'JSON',
-              type: TextInputType.visiblePassword,
-              maxLines: 7,
-              onSubmitted: (p0) => _saveWidgetSP(p0, data),
+          context: context,
+          title: Text(_s.homeWidgetUrlConfig),
+          child: Input(
+            controller: ctrl,
+            label: 'JSON',
+            type: TextInputType.visiblePassword,
+            maxLines: 7,
+            onSubmitted: (p0) => _saveWidgetSP(p0, data),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                _saveWidgetSP(ctrl.text, data);
+              },
+              child: Text(_s.ok),
             ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  _saveWidgetSP(ctrl.text, data);
-                },
-                child: Text(_s.ok),
-              ),
-            ]);
+          ],
+        );
       },
     );
   }

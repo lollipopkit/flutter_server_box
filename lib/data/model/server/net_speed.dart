@@ -1,55 +1,35 @@
 import 'package:toolbox/core/extension/numx.dart';
 
-class NetSpeedPart {
+import 'time_seq.dart';
+
+class NetSpeedPart extends TimeSeqIface<NetSpeedPart> {
   String device;
   BigInt bytesIn;
   BigInt bytesOut;
   BigInt time;
   NetSpeedPart(this.device, this.bytesIn, this.bytesOut, this.time);
+
+  @override
+  bool same(NetSpeedPart other) => device == other.device;
 }
 
-class NetSpeed {
-  List<NetSpeedPart> _old;
-  List<NetSpeedPart> _now;
-  NetSpeed(this._old, this._now);
+class NetSpeed extends TimeSeq<NetSpeedPart> {
+  NetSpeed(super.pre, super.now);
 
-  List<String> get devices {
-    final devices = <String>[];
-    for (var item in _now) {
-      devices.add(item.device);
-    }
-    return devices;
-  }
+  List<String> get devices => now.map((e) => e.device).toList();
 
-  void update(List<NetSpeedPart> newOne) {
-    _old = _now;
-    _now = newOne;
-    // 当长度不同，说明有网络接口改变
-    //
-    // 应当跟随改变：
-    // 旧长度 > 新长度：将旧的数据截断
-    // 旧长度 < 新长度：将旧的数据补齐
-    if (_old.length != _now.length) {
-      if (_old.length > _now.length) {
-        _old = _old.sublist(0, _now.length);
-      } else {
-        _old.addAll(_now.sublist(_old.length, _now.length));
-      }
-    }
-  }
+  BigInt get _timeDiff => now[0].time - pre[0].time;
 
-  BigInt get timeDiff => _now[0].time - _old[0].time;
-
-  double _speedIn(int i) => (_now[i].bytesIn - _old[i].bytesIn) / timeDiff;
-  double _speedOut(int i) => (_now[i].bytesOut - _old[i].bytesOut) / timeDiff;
-  BigInt _sizeIn(int i) => _now[i].bytesIn;
-  BigInt _sizeOut(int i) => _now[i].bytesOut;
+  double _speedIn(int i) => (now[i].bytesIn - pre[i].bytesIn) / _timeDiff;
+  double _speedOut(int i) => (now[i].bytesOut - pre[i].bytesOut) / _timeDiff;
+  BigInt _sizeIn(int i) => now[i].bytesIn;
+  BigInt _sizeOut(int i) => now[i].bytesOut;
 
   String speedIn({String? device, bool all = false}) {
-    if (_old[0].device == '' || _now[0].device == '') return '0kb/s';
+    if (pre[0].device == '' || now[0].device == '') return '0kb/s';
     if (all) {
       var speed = 0.0;
-      for (var i = 0; i < _now.length; i++) {
+      for (var i = 0; i < now.length; i++) {
         speed += _speedIn(i);
       }
       return buildStandardOutput(speed);
@@ -59,10 +39,10 @@ class NetSpeed {
   }
 
   String sizeIn({String? device, bool all = false}) {
-    if (_old[0].device == '' || _now[0].device == '') return '0kb';
+    if (pre[0].device == '' || now[0].device == '') return '0kb';
     if (all) {
       var size = BigInt.from(0);
-      for (var i = 0; i < _now.length; i++) {
+      for (var i = 0; i < now.length; i++) {
         size += _sizeIn(i);
       }
       return size.convertBytes;
@@ -72,10 +52,10 @@ class NetSpeed {
   }
 
   String speedOut({String? device, bool all = false}) {
-    if (_old[0].device == '' || _now[0].device == '') return '0kb/s';
+    if (pre[0].device == '' || now[0].device == '') return '0kb/s';
     if (all) {
       var speed = 0.0;
-      for (var i = 0; i < _now.length; i++) {
+      for (var i = 0; i < now.length; i++) {
         speed += _speedOut(i);
       }
       return buildStandardOutput(speed);
@@ -85,10 +65,10 @@ class NetSpeed {
   }
 
   String sizeOut({String? device, bool all = false}) {
-    if (_old[0].device == '' || _now[0].device == '') return '0kb';
+    if (pre[0].device == '' || now[0].device == '') return '0kb';
     if (all) {
       var size = BigInt.from(0);
-      for (var i = 0; i < _now.length; i++) {
+      for (var i = 0; i < now.length; i++) {
         size += _sizeOut(i);
       }
       return size.convertBytes;
@@ -99,9 +79,9 @@ class NetSpeed {
 
   int deviceIdx(String? device) {
     if (device != null) {
-      for (var item in _now) {
+      for (var item in now) {
         if (item.device == device) {
-          return _now.indexOf(item);
+          return now.indexOf(item);
         }
       }
     }

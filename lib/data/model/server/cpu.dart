@@ -1,58 +1,44 @@
-class Cpus {
-  List<OneTimeCpuStatus> _pre;
-  List<OneTimeCpuStatus> _now;
-  Cpus(this._pre, this._now);
+import 'time_seq.dart';
+
+class Cpus extends TimeSeq<OneTimeCpuStatus> {
+  Cpus(super.pre, super.now);
 
   double usedPercent({int coreIdx = 0}) {
-    if (_now.length != _pre.length) return 0;
-    final idleDelta = _now[coreIdx].idle - _pre[coreIdx].idle;
-    final totalDelta = _now[coreIdx].total - _pre[coreIdx].total;
+    if (now.length != pre.length) return 0;
+    final idleDelta = now[coreIdx].idle - pre[coreIdx].idle;
+    final totalDelta = now[coreIdx].total - pre[coreIdx].total;
     final used = idleDelta / totalDelta;
     return used.isNaN ? 0 : 100 - used * 100;
   }
 
-  void update(List<OneTimeCpuStatus> newStatus) {
-    _pre = _now;
-    _now = newStatus;
-    // 类似 [NetSpeed.update] 的处理
-    // 虽然CPU热插拔情况较少...
-    if (_pre.length != _now.length) {
-      if (_pre.length > _now.length) {
-        _pre = _pre.sublist(0, _now.length);
-      } else {
-        _pre.addAll(_now.sublist(_pre.length, _now.length));
-      }
-    }
-  }
+  int get coresCount => now.length;
 
-  int get coresCount => _now.length;
-
-  int get totalDelta => _now[0].total - _pre[0].total;
+  int get totalDelta => now[0].total - pre[0].total;
 
   double get user {
-    if (_now.length != _pre.length) return 0;
-    final delta = _now[0].user - _pre[0].user;
+    if (now.length != pre.length) return 0;
+    final delta = now[0].user - pre[0].user;
     final used = delta / totalDelta;
     return used.isNaN ? 0 : used * 100;
   }
 
   double get sys {
-    if (_now.length != _pre.length) return 0;
-    final delta = _now[0].sys - _pre[0].sys;
+    if (now.length != pre.length) return 0;
+    final delta = now[0].sys - pre[0].sys;
     final used = delta / totalDelta;
     return used.isNaN ? 0 : used * 100;
   }
 
   double get nice {
-    if (_now.length != _pre.length) return 0;
-    final delta = _now[0].nice - _pre[0].nice;
+    if (now.length != pre.length) return 0;
+    final delta = now[0].nice - pre[0].nice;
     final used = delta / totalDelta;
     return used.isNaN ? 0 : used * 100;
   }
 
   double get iowait {
-    if (_now.length != _pre.length) return 0;
-    final delta = _now[0].iowait - _pre[0].iowait;
+    if (now.length != pre.length) return 0;
+    final delta = now[0].iowait - pre[0].iowait;
     final used = delta / totalDelta;
     return used.isNaN ? 0 : used * 100;
   }
@@ -60,7 +46,7 @@ class Cpus {
   double get idle => 100 - usedPercent();
 }
 
-class OneTimeCpuStatus {
+class OneTimeCpuStatus extends TimeSeqIface<OneTimeCpuStatus> {
   late String id;
   late int user;
   late int sys;
@@ -82,6 +68,9 @@ class OneTimeCpuStatus {
   );
 
   int get total => user + sys + nice + idle + iowait + irq + softirq;
+
+  @override
+  bool same(OneTimeCpuStatus other) => id == other.id;
 }
 
 List<OneTimeCpuStatus> parseCPU(String raw) {

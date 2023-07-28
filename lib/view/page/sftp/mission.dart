@@ -113,7 +113,7 @@ class _SFTPDownloadingPageState extends State<SFTPDownloadingPage> {
             child: CircularProgressIndicator(
               value: percent,
             ),
-          )
+          ),
         );
       case SftpWorkerStatus.preparing:
         return _wrapInCard(
