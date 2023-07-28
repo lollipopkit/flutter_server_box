@@ -17,6 +17,7 @@ import 'package:toolbox/locator.dart';
 import '../../core/analysis.dart';
 import '../../core/update.dart';
 import '../../core/utils/ui.dart';
+import '../../data/model/app/net_view.dart';
 import '../../data/model/server/server.dart';
 import '../../data/model/server/server_private_info.dart';
 import '../../data/model/server/server_status.dart';
@@ -182,8 +183,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
                 children: [
                   _buildPercentCircle(ss.cpu.usedPercent()),
                   _buildPercentCircle(ss.mem.usedPercent * 100),
-                  _buildIOData(
-                      'Conn:\n${ss.tcp.maxConn}', 'Fail:\n${ss.tcp.fail}'),
+                  _buildNet(ss),
                   _buildIOData(
                     'Total:\n${rootDisk.size}',
                     'Used:\n${rootDisk.usedPercent}%',
@@ -298,6 +298,19 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
       default:
         return _s.serverTabUnkown;
     }
+  }
+
+  Widget _buildNet(ServerStatus ss) {
+    return ValueListenableBuilder<NetViewType>(
+      valueListenable: _setting.netViewType.listenable(),
+      builder: (_, val, __) {
+        final data = val.build(ss);
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 177),
+          child: _buildIOData(data.up, data.down),
+        );
+      },
+    );
   }
 
   Widget _buildIOData(String up, String down) {
