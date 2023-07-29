@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:xterm/core.dart';
 
@@ -17,7 +18,7 @@ enum VirtKey {
   @HiveField(4)
   end,
   @HiveField(5)
-  file,
+  sftp,
   @HiveField(6)
   snippet,
   @HiveField(7)
@@ -31,7 +32,7 @@ enum VirtKey {
   @HiveField(11)
   right,
   @HiveField(12)
-  paste,
+  clipboard,
   @HiveField(13)
   ime,
   @HiveField(14)
@@ -94,11 +95,11 @@ enum VirtKey {
         return Icons.arrow_downward;
       case VirtKey.right:
         return Icons.arrow_forward;
-      case VirtKey.file:
+      case VirtKey.sftp:
         return Icons.file_open;
       case VirtKey.snippet:
         return Icons.code;
-      case VirtKey.paste:
+      case VirtKey.clipboard:
         return Icons.paste;
       case VirtKey.ime:
         return Icons.keyboard_hide;
@@ -112,12 +113,12 @@ enum VirtKey {
   // and make sure all [VirtualKeyFunc] are handled
   VirtualKeyFunc? get func {
     switch (this) {
-      case VirtKey.file:
+      case VirtKey.sftp:
         return VirtualKeyFunc.file;
       case VirtKey.snippet:
         return VirtualKeyFunc.snippet;
-      case VirtKey.paste:
-        return VirtualKeyFunc.paste;
+      case VirtKey.clipboard:
+        return VirtualKeyFunc.clipboard;
       case VirtKey.ime:
         return VirtualKeyFunc.toggleIME;
       default:
@@ -146,6 +147,17 @@ enum VirtKey {
         return false;
     }
   }
+
+  String? help(S s) {
+    switch (this) {
+      case VirtKey.sftp:
+        return s.virtKeyHelpSFTP;
+      case VirtKey.clipboard:
+        return s.virtKeyHelpClipboard;
+      default:
+        return null;
+    }
+  }
 }
 
-enum VirtualKeyFunc { toggleIME, backspace, copy, paste, snippet, file }
+enum VirtualKeyFunc { toggleIME, backspace, clipboard, snippet, file }

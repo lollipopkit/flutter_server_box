@@ -667,6 +667,12 @@ class SZh extends S {
   String get viewErr => '查看错误';
 
   @override
+  String get virtKeyHelpClipboard => '如果终端有选中字符，则复制选中字符至剪切板，否则粘贴剪切板内容至终端。';
+
+  @override
+  String get virtKeyHelpSFTP => '在 SFTP 中打开当前路径。';
+
+  @override
   String get waitConnection => '请等待连接建立';
 
   @override
@@ -1341,6 +1347,12 @@ class SZhTw extends SZh {
 
   @override
   String get viewErr => '查看錯誤';
+
+  @override
+  String get virtKeyHelpClipboard => '如果終端有選中字符，則復製選中字符至剪切板，否則粘貼剪切板內容至終端。';
+
+  @override
+  String get virtKeyHelpSFTP => '在 SFTP 中打開當前路徑。';
 
   @override
   String get waitConnection => '請等待連接建立';

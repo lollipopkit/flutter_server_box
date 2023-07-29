@@ -39,11 +39,9 @@ class _SSHPageState extends State<SSHPage> {
   final _setting = locator<SettingStore>();
   late final _terminal = Terminal(inputHandler: _keyboard);
   final TerminalController _terminalController = TerminalController();
-  final ContextMenuController _menuController = ContextMenuController();
   final List<List<VirtKey>> _virtKeysList = [];
 
   late MediaQueryData _media;
-  late TextStyle _menuTextStyle;
   late S _s;
   late TerminalStyle _terminalStyle;
   late TerminalTheme _terminalTheme;
@@ -75,7 +73,6 @@ class _SSHPageState extends State<SSHPage> {
     super.didChangeDependencies();
     _isDark = isDarkMode(context);
     _media = MediaQuery.of(context);
-    _menuTextStyle = TextStyle(color: contentColor.resolve(context));
     _s = S.of(context)!;
     _terminalTheme = _isDark ? termDarkTheme : termLightTheme;
     // Calculate virtkey width / height
@@ -118,8 +115,7 @@ class _SSHPageState extends State<SSHPage> {
         textStyle: _terminalStyle,
         theme: _terminalTheme,
         deleteDetection: isIOS,
-        onTapUp: _onTapUp,
-        autoFocus: true,
+        autofocus: true,
         keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,
       ),
     );
@@ -231,13 +227,12 @@ class _SSHPageState extends State<SSHPage> {
       case VirtualKeyFunc.backspace:
         _terminal.keyInput(TerminalKey.backspace);
         break;
-      case VirtualKeyFunc.paste:
-        _paste();
-        break;
-      case VirtualKeyFunc.copy:
+      case VirtualKeyFunc.clipboard:
         final selected = terminalSelected;
         if (selected != null) {
           copy2Clipboard(selected);
+        } else {
+          _paste();
         }
         break;
       case VirtualKeyFunc.snippet:
@@ -290,58 +285,12 @@ class _SSHPageState extends State<SSHPage> {
     return _terminal.buffer.getText(range);
   }
 
-  void _onTapUp(TapUpDetails details, CellOffset offset) {
-    if (_menuController.isShown) {
-      _menuController.remove();
-      return;
-    }
-    final selected = terminalSelected;
-    final children = <Widget>[
-      // TextButton(
-      //   onPressed: () {
-      //     _paste();
-      //   },
-      //   child: Text(_s.paste),
-      // ),
-    ];
-    if (selected?.trim().isNotEmpty ?? false) {
-      children.add(
-        TextButton(
-          child: Text(
-            _s.copy,
-            style: _menuTextStyle,
-          ),
-          onPressed: () {
-            _terminalController.setSelection(null);
-            if (selected != null) {
-              copy2Clipboard(selected);
-            }
-            _menuController.remove();
-          },
-        ),
-      );
-    }
-    if (children.isEmpty) {
-      return;
-    }
-    _menuController.show(
-      context: context,
-      contextMenuBuilder: (context) {
-        return TextSelectionToolbar(
-          anchorAbove: details.globalPosition,
-          anchorBelow: details.globalPosition,
-          children: children,
-        );
-      },
-    );
-  }
-
   void _write(String p0) {
     _terminal.write('$p0\r\n');
   }
 
   void _initVirtKeys() {
-    final virtKeys = _setting.sshVirtKeys.fetch()!;
+    final virtKeys = List<VirtKey>.from(_setting.sshVirtKeys.fetchRaw());
 
     for (int len = 0; len < virtKeys.length; len += 7) {
       if (len + 7 > virtKeys.length) {

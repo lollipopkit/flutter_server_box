@@ -667,6 +667,12 @@ class SDe extends S {
   String get viewErr => 'Fehler anzeigen';
 
   @override
+  String get virtKeyHelpClipboard => 'In die Zwischenablage kopieren, wenn das ausgewählte Terminal nicht leer ist, andernfalls den Inhalt der Zwischenablage in das Terminal einfügen.';
+
+  @override
+  String get virtKeyHelpSFTP => 'Aktuelles Verzeichnis in SFTP öffnen.';
+
+  @override
   String get waitConnection => 'Bitte warte, bis die Verbindung hergestellt wurde.';
 
   @override

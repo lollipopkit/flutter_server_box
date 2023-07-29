@@ -28,14 +28,14 @@ const defaultSSHVirtKeys = [
   VirtKey.home,
   VirtKey.up,
   VirtKey.end,
-  VirtKey.file,
+  VirtKey.sftp,
   VirtKey.snippet,
   VirtKey.tab,
   VirtKey.ctrl,
   VirtKey.left,
   VirtKey.down,
   VirtKey.right,
-  VirtKey.paste,
+  VirtKey.clipboard,
   VirtKey.ime,
 ];
 

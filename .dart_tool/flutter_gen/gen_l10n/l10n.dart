@@ -1334,6 +1334,18 @@ abstract class S {
   /// **'See error'**
   String get viewErr;
 
+  /// No description provided for @virtKeyHelpClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy to the clipboard if terminal selected is not empty, otherwise paste the contents of the clipboard to the terminal.'**
+  String get virtKeyHelpClipboard;
+
+  /// No description provided for @virtKeyHelpSFTP.
+  ///
+  /// In en, this message translates to:
+  /// **'Open current directory in SFTP.'**
+  String get virtKeyHelpSFTP;
+
   /// No description provided for @waitConnection.
   ///
   /// In en, this message translates to:

@@ -206,6 +206,8 @@
   "versionUnknownUpdate": "Aktuell: v1.0.{build}",
   "versionUpdated": "v1.0.{build} ist bereits die neueste Version",
   "viewErr": "Fehler anzeigen",
+  "virtKeyHelpClipboard": "In die Zwischenablage kopieren, wenn das ausgewählte Terminal nicht leer ist, andernfalls den Inhalt der Zwischenablage in das Terminal einfügen.",
+  "virtKeyHelpSFTP": "Aktuelles Verzeichnis in SFTP öffnen.",
   "waitConnection": "Bitte warte, bis die Verbindung hergestellt wurde.",
   "whenOpenApp": "Beim Öffnen der App",
   "willTakEeffectImmediately": "Wird sofort angewendet"

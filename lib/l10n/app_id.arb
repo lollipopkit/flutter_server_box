@@ -45,7 +45,7 @@
   "dockerEditHost": "Edit Docker_host",
   "dockerEmptyRunningItems": "Tidak ada wadah yang berjalan.\nMungkin saja env DOCKER_HOST tidak dibaca dengan benar. Anda dapat menemukannya dengan menjalankan `echo $DOCKER_HOST` di terminal.",
   "dockerImagesFmt": "{count} gambar",
-  "dockerNotInstalled": "Docker tidak terpasang", 
+  "dockerNotInstalled": "Docker tidak terpasang",
   "dockerStatusRunningAndStoppedFmt": "{runningCount} running, {stoppedCount} container stopped.",
   "dockerStatusRunningFmt": "{count} wadah berjalan.",
   "download": "Unduh",
@@ -206,6 +206,8 @@
   "versionUnknownUpdate": "Saat ini: v1.0.{build}",
   "versionUpdated": "Saat ini: v1.0.{build}, mutakhir",
   "viewErr": "Lihat kesalahan",
+  "virtKeyHelpClipboard": "Salin ke clipboard jika terminal yang dipilih tidak kosong, jika tidak, tempel isi clipboard ke terminal.",
+  "virtKeyHelpSFTP": "Buka direktori saat ini di SFTP.",
   "waitConnection": "Harap tunggu koneksi akan dibuat.",
   "whenOpenApp": "Saat membuka aplikasi",
   "willTakEeffectImmediately": "Akan segera berlaku"

@@ -361,14 +361,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_volume_controller:
-    dependency: "direct main"
-    description:
-      name: flutter_volume_controller
-      sha256: "5e7d1b63d051c881450a98155024219079a1cde0cf66ef895eb96dc9d8a7f670"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.2.6"
   flutter_web_plugins:
     dependency: transitive
     description: flutter
@@ -1070,12 +1062,11 @@ packages:
   xterm:
     dependency: "direct main"
     description:
-      path: "."
-      ref: master
-      resolved-ref: e945750b97a2f875befa37e0c483bc3f51e215b2
-      url: "https://github.com/lollipopkit/xterm.dart"
-    source: git
-    version: "3.6.1-pre"
+      name: xterm
+      sha256: "6a02b15d03152b8186e12790902ff28c8a932fc441e89fa7255a7491661a8e69"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.5.0"
   yaml:
     dependency: transitive
     description:
@@ -1084,14 +1075,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.2"
-  zmodem:
-    dependency: transitive
-    description:
-      name: zmodem
-      sha256: "3b7e5b29f3a7d8aee472029b05165a68438eff2f3f7766edf13daba1e297adbf"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.6"
 sdks:
   dart: ">=3.0.2 <4.0.0"
   flutter: ">=3.3.0"

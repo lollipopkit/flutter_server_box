@@ -17,7 +17,7 @@ class TryLimiter {
     return true;
   }
 
-  void resetTryTimes(String id) {
+  void reset(String id) {
     _triedTimes[id] = 0;
   }
 

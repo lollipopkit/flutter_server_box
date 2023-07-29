@@ -667,6 +667,12 @@ class SId extends S {
   String get viewErr => 'Lihat kesalahan';
 
   @override
+  String get virtKeyHelpClipboard => 'Salin ke clipboard jika terminal yang dipilih tidak kosong, jika tidak, tempel isi clipboard ke terminal.';
+
+  @override
+  String get virtKeyHelpSFTP => 'Buka direktori saat ini di SFTP.';
+
+  @override
   String get waitConnection => 'Harap tunggu koneksi akan dibuat.';
 
   @override

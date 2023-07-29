@@ -3,7 +3,6 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  flutter_volume_controller
   share_plus
   url_launcher_windows
 )

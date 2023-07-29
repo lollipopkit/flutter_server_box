@@ -101,7 +101,7 @@ class ServerProvider extends BusyProvider {
     await Future.wait(_servers.values.map((s) async {
       if (onlyFailed) {
         if (s.state != ServerState.failed) return;
-        _limiter.resetTryTimes(s.spi.id);
+        _limiter.reset(s.spi.id);
       }
       return await _getData(s.spi);
     }));
@@ -109,8 +109,8 @@ class ServerProvider extends BusyProvider {
 
   Future<void> startAutoRefresh() async {
     final duration = _settingStore.serverStatusUpdateInterval.fetch()!;
-    if (duration == 0) return;
     stopAutoRefresh();
+    if (duration == 0) return;
     _timer = Timer.periodic(Duration(seconds: duration), (_) async {
       await refreshData();
     });
@@ -240,7 +240,7 @@ class ServerProvider extends BusyProvider {
           throw Exception(writeResult);
         }
         // reset try times if connected successfully
-        _limiter.resetTryTimes(sid);
+        _limiter.reset(sid);
       }
 
       if (s.client == null) return;

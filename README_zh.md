@@ -31,7 +31,7 @@
   - [x] 状态图表
   - [x] 代码编辑器
   - [x] `Ping` 和 更多
-- [x] 本地化 ( English, 简体中文, Deutsch, 繁體中文, Indonesian。 [如何贡献？](#l10n-guide))
+- [x] 本地化 ( English, 简体中文, Deutsch, 繁體中文, Indonesian。 [如何贡献？](#l10n))
 - [x] 桌面端支持
 
 
@@ -85,8 +85,11 @@
 完整支持 | Android / iOS / macOS
 可能支持，未测试 | Windows / Linux
 
+## 🧱 贡献
+**任何正面的贡献都欢迎**.
+第一次参与贡献，会赠送 10 份 iOS App 兑换码。这是我唯一能送的。你可以同来送给其他人。:)
 
-## l10n
+### l10n
 1. Fork 本项目，并 Clone 你 Fork 的项目至你的电脑
 2. 在 `lib/l10n/` 文件夹内创建 `.arb` 本地化文件
    - 文件名应该类似 `intl_XX.arb`,  `XX` 是语言标识码。 例如 `intl_en.arb` 是给英语的， `intl_zh.arb` 是给中文的

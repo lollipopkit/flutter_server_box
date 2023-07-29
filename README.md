@@ -31,7 +31,7 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
   - [x] `Status` charts
   - [x] `Code editor`
   - [x] `Ping` and etc.
-- [x] Localization ( English, 简体中文, Deutsch, 繁體中文, Indonesian. [How to contribute?](#l10n-guide))
+- [x] Localization ( English, 简体中文, Deutsch, 繁體中文, Indonesian. [l10n guide](#l10n-guide) )
 - [x] Desktop support
 
 
@@ -86,7 +86,10 @@ Full Support| Android / iOS / macOS
 Support, but not tested| Windows / Linux
 
 
-## l10n guide
+## 🧱 Contribution
+**Any positive contribution is welcome**.
+10 iOS app redemption codes will be given away for the first time you participate in the contribution. This is the only thing I can do to thank you. :)
+### l10n guide
 1. Fork this repo and clone forked repo to your local machine.
 2. Create `arb` file in `lib/l10n/` directory
    - File name should be `intl_XX.arb`, where `XX` is the language code. Such as `intl_en.arb` for English and `intl_zh.arb` for Chinese.

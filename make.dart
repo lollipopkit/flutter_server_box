@@ -146,10 +146,9 @@ Future<void> flutterBuildAndroid() async {
 }
 
 Future<void> scp2CDN() async {
-  final result = await Process.run('scp', [
-    apkPath,
-    'custcdn:/usr/share/caddy/uploads/${appName}_${build}_Arm64.apk'
-  ]);
+  print('scp2CDN...');
+  final result = await Process.run(
+      'scp', [apkPath, 'hk:/var/www/res/serverbox/apks/$build.apk']);
   print(result.stdout);
   if (result.exitCode != 0) {
     print(result.stderr);

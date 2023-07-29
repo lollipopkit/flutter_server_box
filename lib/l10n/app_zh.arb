@@ -206,6 +206,8 @@
   "versionUnknownUpdate": "当前：v1.0.{build}",
   "versionUpdated": "当前：v1.0.{build}, 已是最新版本",
   "viewErr": "查看错误",
+  "virtKeyHelpClipboard": "如果终端有选中字符，则复制选中字符至剪切板，否则粘贴剪切板内容至终端。",
+  "virtKeyHelpSFTP": "在 SFTP 中打开当前路径。",
   "waitConnection": "请等待连接建立",
   "whenOpenApp": "当打开 App 时",
   "willTakEeffectImmediately": "更改将会立即生效"

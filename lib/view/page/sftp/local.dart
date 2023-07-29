@@ -76,18 +76,6 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
       bottomNavigationBar: SafeArea(
         child: _buildPath(),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton(
-        onPressed: (() {
-          if (_path!.path == _prefixPath) {
-            showSnackBar(context, Text(_s.alreadyLastDir));
-            return;
-          }
-          _path!.update('..');
-          setState(() {});
-        }),
-        child: const Icon(Icons.keyboard_arrow_left),
-      ),
     );
   }
 
@@ -112,10 +100,22 @@ class _SFTPDownloadedPageState extends State<SFTPDownloadedPage> {
     }
     final dir = Directory(_path!.path);
     final files = dir.listSync();
+    final canGoBack = _path!.path != _prefixPath;
     return ListView.builder(
-      itemCount: files.length,
+      itemCount: canGoBack ? files.length + 1 : files.length,
       padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 7),
       itemBuilder: (context, index) {
+        if (index == 0 && canGoBack) {
+          return RoundRectCard(ListTile(
+            leading: const Icon(Icons.keyboard_arrow_left),
+            title: const Text('..'),
+            onTap: () {
+              _path!.update('..');
+              setState(() {});
+            },
+          ));
+        }
+        index = canGoBack ? index - 1 : index;
         var file = files[index];
         var fileName = file.path.split('/').last;
         var stat = file.statSync();

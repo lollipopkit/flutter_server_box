@@ -667,6 +667,12 @@ class SEn extends S {
   String get viewErr => 'See error';
 
   @override
+  String get virtKeyHelpClipboard => 'Copy to the clipboard if terminal selected is not empty, otherwise paste the contents of the clipboard to the terminal.';
+
+  @override
+  String get virtKeyHelpSFTP => 'Open current directory in SFTP.';
+
+  @override
   String get waitConnection => 'Please wait for the connection to be established.';
 
   @override

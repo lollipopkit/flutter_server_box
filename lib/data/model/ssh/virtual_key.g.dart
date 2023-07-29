@@ -24,7 +24,7 @@ class VirtKeyAdapter extends TypeAdapter<VirtKey> {
       case 4:
         return VirtKey.end;
       case 5:
-        return VirtKey.file;
+        return VirtKey.sftp;
       case 6:
         return VirtKey.snippet;
       case 7:
@@ -38,7 +38,7 @@ class VirtKeyAdapter extends TypeAdapter<VirtKey> {
       case 11:
         return VirtKey.right;
       case 12:
-        return VirtKey.paste;
+        return VirtKey.clipboard;
       case 13:
         return VirtKey.ime;
       case 14:
@@ -68,7 +68,7 @@ class VirtKeyAdapter extends TypeAdapter<VirtKey> {
       case VirtKey.end:
         writer.writeByte(4);
         break;
-      case VirtKey.file:
+      case VirtKey.sftp:
         writer.writeByte(5);
         break;
       case VirtKey.snippet:
@@ -89,7 +89,7 @@ class VirtKeyAdapter extends TypeAdapter<VirtKey> {
       case VirtKey.right:
         writer.writeByte(11);
         break;
-      case VirtKey.paste:
+      case VirtKey.clipboard:
         writer.writeByte(12);
         break;
       case VirtKey.ime:
