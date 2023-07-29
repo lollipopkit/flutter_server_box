@@ -29,7 +29,7 @@ class SId extends S {
   String get alreadyLastDir => 'Sudah di direktori terakhir.';
 
   @override
-  String get alterHost => 'Alter host';
+  String get alterUrl => 'Alter url';
 
   @override
   String get attention => 'Perhatian';

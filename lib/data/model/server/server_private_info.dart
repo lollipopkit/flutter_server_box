@@ -1,5 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../app/error.dart';
+
 part 'server_private_info.g.dart';
 
 @HiveType(typeId: 3)
@@ -19,7 +21,7 @@ class ServerPrivateInfo {
   @HiveField(6)
   List<String>? tags;
   @HiveField(7)
-  String? alterHost;
+  String? alterUrl;
 
   late String id;
 
@@ -31,7 +33,7 @@ class ServerPrivateInfo {
     required this.pwd,
     this.pubKeyId,
     this.tags,
-    this.alterHost,
+    this.alterUrl,
   }) : id = '$user@$ip:$port';
 
   ServerPrivateInfo.fromJson(Map<String, dynamic> json) {
@@ -43,7 +45,7 @@ class ServerPrivateInfo {
     pubKeyId = json["pubKeyId"]?.toString();
     id = '$user@$ip:$port';
     tags = json["tags"]?.cast<String>();
-    alterHost = json["alterHost"]?.toString();
+    alterUrl = json["alterHost"]?.toString();
   }
 
   Map<String, dynamic> toJson() {
@@ -55,7 +57,7 @@ class ServerPrivateInfo {
     data["authorization"] = pwd;
     data["pubKeyId"] = pubKeyId;
     data["tags"] = tags;
-    data["alterHost"] = alterHost;
+    data["alterHost"] = alterUrl;
     return data;
   }
 
@@ -63,7 +65,31 @@ class ServerPrivateInfo {
     return id != old.id ||
         pwd != old.pwd ||
         pubKeyId != old.pubKeyId ||
-        alterHost != old.alterHost;
+        alterUrl != old.alterUrl;
+  }
+
+  void fromStringUrl() {
+    if (alterUrl == null) {
+      throw SSHErr(type: SSHErrType.connect, message: 'alterUrl is null');
+    }
+    final splited = alterUrl!.split('@');
+    if (splited.length != 2) {
+      throw SSHErr(type: SSHErrType.connect, message: 'alterUrl no @');
+    }
+    user = splited[0];
+    final splited2 = splited[1].split(':');
+    if (splited2.length != 2) {
+      throw SSHErr(type: SSHErrType.connect, message: 'alterUrl no :');
+    }
+    ip = splited2[0];
+    port = int.tryParse(splited2[1]) ?? 22;
+    if (port <= 0 || port > 65535) {
+      throw SSHErr(type: SSHErrType.connect, message: 'alterUrl port error');
+    }
+
+    // Do not update [id]
+    // Because [id] is the identity which is used to find the [SSHClient]
+    // id = '$user@$ip:$port';
   }
 
   @override

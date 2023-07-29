@@ -30,13 +30,13 @@ class ServerEditPage extends StatefulWidget {
 class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   final _nameController = TextEditingController();
   final _ipController = TextEditingController();
-  final _alterHostController = TextEditingController();
+  final _alterUrlController = TextEditingController();
   final _portController = TextEditingController();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameFocus = FocusNode();
   final _ipFocus = FocusNode();
-  final _alterHostFocus = FocusNode();
+  final _alterUrlFocus = FocusNode();
   final _portFocus = FocusNode();
   final _usernameFocus = FocusNode();
 
@@ -120,19 +120,11 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       Input(
         controller: _ipController,
         type: TextInputType.text,
-        onSubmitted: (_) => _focusScope.requestFocus(_alterHostFocus),
+        onSubmitted: (_) => _focusScope.requestFocus(_portFocus),
         node: _ipFocus,
         label: _s.host,
         icon: Icons.computer,
         hint: 'example.com',
-      ),
-      Input(
-        controller: _alterHostController,
-        type: TextInputType.text,
-        node: _alterHostFocus,
-        onSubmitted: (_) => _focusScope.requestFocus(_portFocus),
-        label: _s.alterHost,
-        icon: Icons.computer,
       ),
       Input(
         controller: _portController,
@@ -147,9 +139,18 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         controller: _usernameController,
         type: TextInputType.text,
         node: _usernameFocus,
+        onSubmitted: (_) => _focusScope.requestFocus(_alterUrlFocus),
         label: _s.user,
         icon: Icons.account_box,
         hint: 'root',
+      ),
+      Input(
+        controller: _alterUrlController,
+        type: TextInputType.text,
+        node: _alterUrlFocus,
+        label: _s.alterUrl,
+        icon: Icons.computer,
+        hint: 'user@ip:port',
       ),
       TagEditor(
         tags: _tags,
@@ -290,9 +291,9 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
           pwd: authorization,
           pubKeyId: usePublicKey ? _keyInfo!.id : null,
           tags: _tags,
-          alterHost: _alterHostController.text == ''
+          alterUrl: _alterUrlController.text == ''
               ? null
-              : _alterHostController.text,
+              : _alterUrlController.text,
         );
 
         if (widget.spi == null) {
@@ -334,7 +335,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       if (widget.spi?.tags != null) {
         _tags = widget.spi!.tags!;
       }
-      _alterHostController.text = widget.spi?.alterHost ?? '';
+      _alterUrlController.text = widget.spi?.alterUrl ?? '';
       setState(() {});
     }
   }

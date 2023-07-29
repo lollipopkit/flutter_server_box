@@ -57,16 +57,14 @@ Future<SSHClient> genClient(
     );
   } catch (e) {
     try {
+      spi.fromStringUrl();
       socket = await SSHSocket.connect(
-        spi.alterHost!,
+        spi.ip,
         spi.port,
         timeout: const Duration(seconds: 5),
       );
     } catch (e) {
-      throw SSHErr(
-        type: SSHErrType.connect,
-        message: e.toString(),
-      );
+      rethrow;
     }
   }
 

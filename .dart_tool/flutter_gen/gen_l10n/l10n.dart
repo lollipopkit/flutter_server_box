@@ -146,11 +146,11 @@ abstract class S {
   /// **'Already in last directory.'**
   String get alreadyLastDir;
 
-  /// No description provided for @alterHost.
+  /// No description provided for @alterUrl.
   ///
   /// In en, this message translates to:
-  /// **'Alter host'**
-  String get alterHost;
+  /// **'Alter url'**
+  String get alterUrl;
 
   /// No description provided for @attention.
   ///

@@ -24,7 +24,7 @@ class ServerPrivateInfoAdapter extends TypeAdapter<ServerPrivateInfo> {
       pwd: fields[4] as String,
       pubKeyId: fields[5] as String?,
       tags: (fields[6] as List?)?.cast<String>(),
-      alterHost: fields[7] as String?,
+      alterUrl: fields[7] as String?,
     );
   }
 
@@ -47,7 +47,7 @@ class ServerPrivateInfoAdapter extends TypeAdapter<ServerPrivateInfo> {
       ..writeByte(6)
       ..write(obj.tags)
       ..writeByte(7)
-      ..write(obj.alterHost);
+      ..write(obj.alterUrl);
   }
 
   @override
