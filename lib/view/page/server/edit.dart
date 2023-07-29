@@ -291,9 +291,8 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
           pwd: authorization,
           pubKeyId: usePublicKey ? _keyInfo!.id : null,
           tags: _tags,
-          alterUrl: _alterUrlController.text == ''
-              ? null
-              : _alterUrlController.text,
+          alterUrl:
+              _alterUrlController.text == '' ? null : _alterUrlController.text,
         );
 
         if (widget.spi == null) {

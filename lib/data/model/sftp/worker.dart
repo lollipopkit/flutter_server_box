@@ -94,7 +94,7 @@ Future<void> _download(
       return;
     }
     // Read 10m each time
-    const defaultChunkSize = 1024 * 1024 * 10;
+    const defaultChunkSize = 1024 * 1024;
     final chunkSize = size > defaultChunkSize ? defaultChunkSize : size;
     mainSendPort.send(size);
     mainSendPort.send(SftpWorkerStatus.downloading);

@@ -24,6 +24,8 @@ class PathWithPrefix {
     _path = pathJoin(_path, newPath);
   }
 
+  bool get canBack => path != '$_prefixPath/';
+
   bool undo() {
     if (_prePath == null || _path == _prePath) {
       return false;

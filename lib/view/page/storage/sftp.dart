@@ -8,7 +8,7 @@ import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/extension/sftpfile.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/view/page/editor.dart';
-import 'package:toolbox/view/page/sftp/local.dart';
+import 'package:toolbox/view/page/storage/local.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
 import '../../../core/extension/numx.dart';
@@ -29,14 +29,14 @@ import '../../../locator.dart';
 import '../../widget/fade_in.dart';
 import '../../widget/input_field.dart';
 import '../../widget/two_line_text.dart';
-import 'mission.dart';
+import 'sftp_mission.dart';
 
-class SFTPPage extends StatefulWidget {
+class SftpPage extends StatefulWidget {
   final ServerPrivateInfo spi;
   final String? initPath;
   final bool selectPath;
 
-  const SFTPPage(
+  const SftpPage(
     this.spi, {
     Key? key,
     this.initPath,
@@ -44,10 +44,10 @@ class SFTPPage extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _SFTPPageState createState() => _SFTPPageState();
+  _SftpPageState createState() => _SftpPageState();
 }
 
-class _SFTPPageState extends State<SFTPPage> {
+class _SftpPageState extends State<SftpPage> {
   final SftpBrowserStatus _status = SftpBrowserStatus();
   final ScrollController _scrollController = ScrollController();
 
@@ -82,7 +82,7 @@ class _SFTPPageState extends State<SFTPPage> {
           IconButton(
             icon: const Icon(Icons.downloading),
             onPressed: () => AppRoute(
-              const SFTPDownloadingPage(),
+              const SftpMissionPage(),
               'sftp downloading',
             ).go(context),
           ),
@@ -154,7 +154,7 @@ class _SFTPPageState extends State<SFTPPage> {
             switch (idx) {
               case 0:
                 return await AppRoute(
-                        const SFTPDownloadedPage(
+                        const LocalStoragePage(
                           isPickFile: true,
                         ),
                         'sftp dled pick')
@@ -262,43 +262,49 @@ class _SFTPPageState extends State<SFTPPage> {
       _status.path = AbsolutePath(p_);
       _listDir(path: p_, client: _client);
       return centerLoading;
-    } else {
-      return RefreshIndicator(
-        child: FadeIn(
-          key: Key(widget.spi.name + _status.path!.path),
-          child: ListView.builder(
-            itemCount: _status.files!.length,
-            controller: _scrollController,
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-            itemBuilder: (context, index) {
-              final file = _status.files![index];
-              final isDir = file.attr.isDirectory;
-              return RoundRectCard(ListTile(
-                leading: Icon(isDir ? Icons.folder : Icons.insert_drive_file),
-                title: Text(file.filename),
-                trailing: Text(
-                  '${getTime(file.attr.modifyTime)}\n${file.attr.mode?.str ?? ''}',
-                  style: const TextStyle(color: Colors.grey),
-                  textAlign: TextAlign.right,
-                ),
-                subtitle:
-                    isDir ? null : Text((file.attr.size ?? 0).convertBytes),
-                onTap: () {
-                  if (isDir) {
-                    _status.path?.update(file.filename);
-                    _listDir(path: _status.path?.path);
-                  } else {
-                    _onItemPress(context, file, true);
-                  }
-                },
-                onLongPress: () => _onItemPress(context, file, !isDir),
-              ));
-            },
-          ),
-        ),
-        onRefresh: () => _listDir(path: _status.path?.path),
-      );
     }
+
+    return RefreshIndicator(
+      child: FadeIn(
+        key: Key(widget.spi.name + _status.path!.path),
+        child: ListView.builder(
+          itemCount: _status.files!.length,
+          controller: _scrollController,
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+          itemBuilder: (_, index) => _buildItem(_status.files![index]),
+        ),
+      ),
+      onRefresh: () => _listDir(path: _status.path?.path),
+    );
+  }
+
+  Widget _buildItem(SftpName file) {
+    final isDir = file.attr.isDirectory;
+    final trailing = Text(
+      '${getTime(file.attr.modifyTime)}\n${file.attr.mode?.str ?? ''}',
+      style: grey,
+      textAlign: TextAlign.right,
+    );
+    return RoundRectCard(ListTile(
+      leading: Icon(isDir ? Icons.folder : Icons.insert_drive_file),
+      title: Text(file.filename),
+      trailing: trailing,
+      subtitle: isDir
+        ? null
+        : Text(
+            (file.attr.size ?? 0).convertBytes,
+            style: grey,
+          ),
+      onTap: () {
+        if (isDir) {
+          _status.path?.update(file.filename);
+          _listDir(path: _status.path?.path);
+        } else {
+          _onItemPress(context, file, true);
+        }
+      },
+      onLongPress: () => _onItemPress(context, file, !isDir),
+    ));
   }
 
   void _onItemPress(BuildContext context, SftpName file, bool notDir) {
@@ -479,7 +485,7 @@ class _SFTPPageState extends State<SFTPPage> {
           child: Text(_s.cancel),
         ),
         TextButton(
-          onPressed: () {
+          onPressed: () async {
             if (textController.text == '') {
               showRoundDialog(
                 context: context,
@@ -493,8 +499,8 @@ class _SFTPPageState extends State<SFTPPage> {
               );
               return;
             }
-            _status.client!
-                .mkdir('${_status.path!.path}/${textController.text}');
+            final dir = '${_status.path!.path}/${textController.text}';
+            await _status.client!.mkdir(dir);
             context.pop();
             _listDir();
           },
@@ -538,9 +544,9 @@ class _SFTPPageState extends State<SFTPPage> {
               );
               return;
             }
-            (await _status.client!
-                    .open('${_status.path!.path}/${textController.text}'))
-                .writeBytes(Uint8List(0));
+            final path = '${_status.path!.path}/${textController.text}';
+            final file = await _status.client!.open(path);
+            await file.writeBytes(Uint8List(0));
             context.pop();
             _listDir();
           },

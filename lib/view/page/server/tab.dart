@@ -29,7 +29,7 @@ import '../../widget/popup_menu.dart';
 import '../../widget/round_rect_card.dart';
 import '../docker.dart';
 import '../pkg.dart';
-import '../sftp/remote.dart';
+import '../storage/sftp.dart';
 import '../ssh/term.dart';
 import 'detail.dart';
 import 'edit.dart';
@@ -286,7 +286,7 @@ class _ServerPageState extends State<ServerPage>
             AppRoute(PkgManagePage(spi), 'pkg manage').go(context);
             break;
           case ServerTabMenuType.sftp:
-            AppRoute(SFTPPage(spi), 'SFTP').go(context);
+            AppRoute(SftpPage(spi), 'SFTP').go(context);
             break;
           case ServerTabMenuType.snippet:
             final provider = locator<SnippetProvider>();

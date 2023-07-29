@@ -23,7 +23,7 @@ import '../../../data/res/color.dart';
 import '../../../data/res/terminal.dart';
 import '../../../data/store/setting.dart';
 import '../../../locator.dart';
-import '../sftp/remote.dart';
+import '../storage/sftp.dart';
 
 class SSHPage extends StatefulWidget {
   final ServerPrivateInfo spi;
@@ -260,7 +260,7 @@ class _SSHPageState extends State<SSHPage> {
           return;
         }
         AppRoute(
-                SFTPPage(
+                SftpPage(
                   widget.spi,
                   initPath: initPath,
                 ),

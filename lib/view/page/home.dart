@@ -25,7 +25,7 @@ import 'convert.dart';
 import 'debug.dart';
 import 'private_key/list.dart';
 import 'setting.dart';
-import 'sftp/local.dart';
+import 'storage/local.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -219,7 +219,7 @@ class _HomePageState extends State<HomePage>
                   leading: const Icon(Icons.download),
                   title: Text(_s.download),
                   onTap: () => AppRoute(
-                    const SFTPDownloadedPage(),
+                    const LocalStoragePage(),
                     'sftp local page',
                   ).go(context),
                 ),
