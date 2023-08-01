@@ -320,11 +320,11 @@ abstract class S {
   /// **'Delete'**
   String get delete;
 
-  /// No description provided for @deleteAllServers.
+  /// No description provided for @deleteServers.
   ///
   /// In en, this message translates to:
-  /// **'Delete all servers'**
-  String get deleteAllServers;
+  /// **'Batch delete servers'**
+  String get deleteServers;
 
   /// No description provided for @disabled.
   ///

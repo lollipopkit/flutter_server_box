@@ -173,7 +173,7 @@ class _SettingPageState extends State<SettingPage> {
         _buildUpdateInterval(),
         _buildMaxRetry(),
         _buildDiskIgnorePath(),
-        _buildDeleteAllServers(),
+        _buildDeleteServers(),
       ].map((e) => RoundRectCard(e)).toList(),
     );
   }
@@ -941,21 +941,36 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  Widget _buildDeleteAllServers() {
+  Widget _buildDeleteServers() {
     return ListTile(
-      title: Text(_s.deleteAllServers),
+      title: Text(_s.deleteServers),
       trailing: const Icon(Icons.delete_forever),
-      onTap: () => showRoundDialog(
-        context: context,
-        title: Text(_s.attention),
-        child: Text(_s.sureDelete(_s.all)),
-        actions: [
-          TextButton(
-            onPressed: () => _serverProvider.deleteAll(),
-            child: Text(_s.ok),
-          )
-        ],
-      ),
+      onTap: () async {
+        final all = _serverProvider.servers.keys.map(
+          (e) => TextButton(
+            onPressed: () => showRoundDialog(
+              context: context,
+              title: Text(_s.attention),
+              child: Text(_s.sureDelete(e)),
+              actions: [
+                TextButton(
+                  onPressed: () => _serverProvider.delServer(e),
+                  child: Text(_s.ok),
+                )
+              ],
+            ),
+            child: Text(e),
+          ),
+        );
+        showRoundDialog<List<String>>(
+          context: context,
+          title: Text(_s.choose),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: all.toList(),
+          ),
+        );
+      },
     );
   }
 }

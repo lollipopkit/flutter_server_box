@@ -116,7 +116,7 @@ class SZh extends S {
   String get delete => '删除';
 
   @override
-  String get deleteAllServers => '删除所有服务器';
+  String get deleteServers => '批量删除服务器';
 
   @override
   String get disabled => '已禁用';
@@ -798,7 +798,7 @@ class SZhTw extends SZh {
   String get delete => '刪除';
 
   @override
-  String get deleteAllServers => '刪除所有服務器';
+  String get deleteServers => '批量刪除服務器';
 
   @override
   String get disabled => '已禁用';

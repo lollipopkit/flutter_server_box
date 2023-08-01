@@ -37,7 +37,7 @@
   "debug": "Debug",
   "decode": "Decode",
   "delete": "Löschen",
-  "deleteAllServers": "Alle Server löschen",
+  "deleteServers": "Batch-Löschung von Servern",
   "disabled": "Behinderte",
   "disconnected": "Disconnected",
   "diskIgnorePath": "Pfad für Datenträger ignorieren",

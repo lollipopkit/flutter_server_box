@@ -102,8 +102,12 @@ class BackupPage extends StatelessWidget {
     ));
   }
 
-  Widget _buildCard(String text, IconData icon, MediaQueryData media,
-      FutureOr Function() onTap) {
+  Widget _buildCard(
+    String text,
+    IconData icon,
+    MediaQueryData media,
+    FutureOr Function() onTap,
+  ) {
     final textColor = primaryColor.isBrightColor ? Colors.black : Colors.white;
     return GestureDetector(
       onTap: onTap,

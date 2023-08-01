@@ -37,7 +37,7 @@
   "debug": "調試",
   "decode": "解碼",
   "delete": "刪除",
-  "deleteAllServers": "刪除所有服務器",
+  "deleteServers": "批量刪除服務器",
   "disabled": "已禁用",
   "disconnected": "連接斷開",
   "diskIgnorePath": "忽略的磁盤路徑",

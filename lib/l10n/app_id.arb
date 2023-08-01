@@ -37,7 +37,7 @@
   "debug": "Debug",
   "decode": "Membaca sandi",
   "delete": "Menghapus",
-  "deleteAllServers": "Hapus semua server",
+  "deleteServers": "Penghapusan server secara batch",
   "disabled": "Dengan disabilitas",
   "disconnected": "Terputus",
   "diskIgnorePath": "Abaikan jalan untuk disk",

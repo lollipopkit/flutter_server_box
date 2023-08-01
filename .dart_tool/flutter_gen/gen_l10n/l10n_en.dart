@@ -116,7 +116,7 @@ class SEn extends S {
   String get delete => 'Delete';
 
   @override
-  String get deleteAllServers => 'Delete all servers';
+  String get deleteServers => 'Batch delete servers';
 
   @override
   String get disabled => 'Disabled';
