@@ -41,6 +41,7 @@ class _HomePageState extends State<HomePage>
         WidgetsBindingObserver {
   final _serverProvider = locator<ServerProvider>();
   final _setting = locator<SettingStore>();
+  final _app = locator<AppProvider>();
 
   late final PageController _pageController;
 
@@ -90,7 +91,7 @@ class _HomePageState extends State<HomePage>
       case AppLifecycleState.paused:
         // Keep running in background on Android device
         if (isAndroid && _setting.bgRun.fetch()!) {
-          if (locator<AppProvider>().moveBg) {
+          if (_app.moveBg) {
             bgRunChannel.invokeMethod('sendToBackground');
           }
         } else {

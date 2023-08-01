@@ -39,13 +39,13 @@ class ServerPrivateInfo {
   ServerPrivateInfo.fromJson(Map<String, dynamic> json) {
     name = json["name"].toString();
     ip = json["ip"].toString();
-    port = int.tryParse(json["port"]) ?? 22;
+    port = json["port"] ?? 22;
     user = json["user"].toString();
     pwd = json["authorization"].toString();
     pubKeyId = json["pubKeyId"]?.toString();
     id = '$user@$ip:$port';
     tags = json["tags"]?.cast<String>();
-    alterUrl = json["alterHost"]?.toString();
+    alterUrl = json["alterUrl"]?.toString();
   }
 
   Map<String, dynamic> toJson() {
@@ -57,7 +57,7 @@ class ServerPrivateInfo {
     data["authorization"] = pwd;
     data["pubKeyId"] = pubKeyId;
     data["tags"] = tags;
-    data["alterHost"] = alterUrl;
+    data["alterUrl"] = alterUrl;
     return data;
   }
 

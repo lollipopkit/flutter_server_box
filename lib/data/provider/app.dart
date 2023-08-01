@@ -4,15 +4,10 @@ class AppProvider extends BusyProvider {
   int? _newestBuild;
   int? get newestBuild => _newestBuild;
 
-  bool _moveBg = true;
-  bool get moveBg => _moveBg;
+  bool moveBg = true;
 
   void setNewestBuild(int build) {
     _newestBuild = build;
     notifyListeners();
-  }
-
-  void setCanMoveBg(bool moveBg) {
-    _moveBg = moveBg;
   }
 }

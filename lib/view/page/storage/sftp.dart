@@ -290,11 +290,11 @@ class _SftpPageState extends State<SftpPage> {
       title: Text(file.filename),
       trailing: trailing,
       subtitle: isDir
-        ? null
-        : Text(
-            (file.attr.size ?? 0).convertBytes,
-            style: grey,
-          ),
+          ? null
+          : Text(
+              (file.attr.size ?? 0).convertBytes,
+              style: grey,
+            ),
       onTap: () {
         if (isDir) {
           _status.path?.update(file.filename);
