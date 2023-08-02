@@ -4,6 +4,7 @@ import 'package:nil/nil.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/route.dart';
+import 'package:toolbox/data/model/docker/image.dart';
 import 'package:toolbox/view/page/ssh/term.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 
@@ -69,13 +70,13 @@ class _DockerManagePageState extends State<DockerManagePage> {
           title: TwoLineText(up: 'Docker', down: widget.spi.name),
           actions: [
             IconButton(
-              onPressed: () => _docker.refresh(),
+              onPressed: _docker.refresh,
               icon: const Icon(Icons.refresh),
             )
           ],
         ),
         body: _buildMain(),
-        floatingActionButton: _buildFAB(),
+        floatingActionButton: _docker.error == null ? _buildFAB() : null,
       );
     });
   }
@@ -177,6 +178,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   }
 
   void onSubmitted() {
+    context.pop();
     if (_textController.text == '') {
       showRoundDialog(
         context: context,
@@ -191,7 +193,6 @@ class _DockerManagePageState extends State<DockerManagePage> {
       );
       return;
     }
-    context.pop();
   }
 
   Future<String> onPwdRequest() async {
@@ -215,7 +216,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
           child: Text(_s.cancel),
         ),
         TextButton(
-          onPressed: () => onSubmitted(),
+          onPressed: onSubmitted,
           child: Text(
             _s.ok,
             style: const TextStyle(color: Colors.red),
@@ -249,7 +250,11 @@ class _DockerManagePageState extends State<DockerManagePage> {
       );
     }
     if (_docker.items == null || _docker.images == null) {
-      _docker.refresh();
+      Future.delayed(const Duration(milliseconds: 177), () {
+        if (mounted) {
+          _docker.refresh();
+        }
+      });
       return centerLoading;
     }
 
@@ -260,7 +265,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
         _docker.edition ?? _s.unknown,
         _docker.version ?? _s.unknown,
       ),
-      _buildPsItems(),
+      ..._buildPsItems(),
       _buildImages(),
       _buildEditHost(),
     ].map((e) => RoundRectCard(e)));
@@ -275,50 +280,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
     if (_docker.images == null) {
       return nil;
     }
-    final items = _docker.images!
-        .map(
-          (e) => ListTile(
-            title: Text(e.repo),
-            subtitle: Text('${e.tag} - ${e.size}', style: grey),
-            trailing: IconButton(
-              padding: EdgeInsets.zero,
-              alignment: Alignment.centerRight,
-              icon: const Icon(Icons.delete),
-              onPressed: () async {
-                showRoundDialog(
-                  context: context,
-                  title: Text(_s.attention),
-                  child: Text(_s.sureDelete(e.repo)),
-                  actions: [
-                    TextButton(
-                      onPressed: () => context.pop(),
-                      child: Text(_s.cancel),
-                    ),
-                    TextButton(
-                      onPressed: () async {
-                        context.pop();
-                        final result = await _docker.run(
-                          'docker rmi ${e.id} -f',
-                        );
-                        if (result != null) {
-                          showSnackBar(
-                            context,
-                            Text(result.message ?? _s.unknownError),
-                          );
-                        }
-                      },
-                      child: Text(
-                        _s.ok,
-                        style: const TextStyle(color: Colors.red),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-        )
-        .toList();
+    final items = _docker.images!.map(_buildImageItem).toList();
     items.insert(
       0,
       ListTile(
@@ -330,6 +292,51 @@ class _DockerManagePageState extends State<DockerManagePage> {
       ),
     );
     return Column(children: items);
+  }
+
+  Widget _buildImageItem(DockerImage e) {
+    return ListTile(
+      title: Text(e.repo),
+      subtitle: Text('${e.tag} - ${e.size}', style: grey),
+      trailing: IconButton(
+        padding: EdgeInsets.zero,
+        alignment: Alignment.centerRight,
+        icon: const Icon(Icons.delete),
+        onPressed: () => _showImageRmDialog(e),
+      ),
+    );
+  }
+
+  void _showImageRmDialog(DockerImage e) {
+    showRoundDialog(
+      context: context,
+      title: Text(_s.attention),
+      child: Text(_s.sureDelete(e.repo)),
+      actions: [
+        TextButton(
+          onPressed: () => context.pop(),
+          child: Text(_s.cancel),
+        ),
+        TextButton(
+          onPressed: () async {
+            context.pop();
+            final result = await _docker.run(
+              'docker rmi ${e.id} -f',
+            );
+            if (result != null) {
+              showSnackBar(
+                context,
+                Text(result.message ?? _s.unknownError),
+              );
+            }
+          },
+          child: Text(
+            _s.ok,
+            style: const TextStyle(color: Colors.red),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildLoading() {
@@ -440,20 +447,8 @@ class _DockerManagePageState extends State<DockerManagePage> {
     );
   }
 
-  Widget _buildPsItems() {
-    final items = _docker.items!.map(
-      (item) {
-        return ListTile(
-          title: Text(item.name),
-          isThreeLine: true,
-          subtitle: Text(
-            '${item.image}\n${item.status}',
-            style: textSize13Grey,
-          ),
-          trailing: _buildMoreBtn(item, _docker.isBusy),
-        );
-      },
-    ).toList();
+  List<Widget> _buildPsItems() {
+    final items = _docker.items!.map(_buildPsItem).toList();
     items.insert(
       0,
       ListTile(
@@ -461,8 +456,39 @@ class _DockerManagePageState extends State<DockerManagePage> {
         subtitle: Text(_buildSubtitle(_docker.items!), style: grey),
       ),
     );
+    return items;
+  }
+
+  Widget _buildPsItem(DockerPsItem item) {
     return Column(
-      children: items,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ListTile(
+          title: Text(item.name),
+          subtitle: Text(
+            '${item.image}\n${item.status}',
+            style: textSize13Grey,
+          ),
+          trailing: _buildMoreBtn(item, _docker.isBusy),
+        ),
+        _buildPsItemStat(item),
+      ],
+    );
+  }
+
+  Widget _buildPsItemStat(DockerPsItem item) {
+    if (!item.running) return const SizedBox();
+    return Padding(
+      padding: const EdgeInsets.only(left: 17, bottom: 11, right: 17),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(item.cpu ?? _s.unknown, style: grey),
+          Text(item.mem ?? _s.unknown, style: grey),
+          Text(item.net ?? _s.unknown, style: grey),
+          Text(item.disk ?? _s.unknown, style: grey),
+        ],
+      ),
     );
   }
 

@@ -8,6 +8,10 @@ class DockerPsItem {
   late String status;
   late String ports;
   late String name;
+  String? cpu;
+  String? mem;
+  String? net;
+  String? disk;
 
   DockerPsItem(
     this.containerId,
@@ -35,6 +39,20 @@ class DockerPsItem {
       ports = '';
       name = parts[5];
     }
+  }
+
+  void parseStats(String rawString) {
+    if (rawString.isEmpty) {
+      return;
+    }
+    final parts = rawString.split(_seperator);
+    if (parts.length != 8) {
+      return;
+    }
+    cpu = parts[2];
+    mem = parts[3];
+    net = parts[5];
+    disk = parts[6];
   }
 
   bool get running => status.contains('Up ');

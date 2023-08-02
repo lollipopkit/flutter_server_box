@@ -1,9 +1,13 @@
+import '../../res/server_cmd.dart';
+
 class AppShellFunc {
   final String name;
   final String cmd;
   final String flag;
 
   const AppShellFunc(this.name, this.cmd, this.flag);
+
+  String get exec => 'sh $shellPath -$flag';
 }
 
 typedef AppShellFuncs = List<AppShellFunc>;
@@ -39,3 +43,8 @@ esac
     return sb.toString();
   }
 }
+
+// enum AppShellFuncType {
+//   status,
+//   docker;
+// }

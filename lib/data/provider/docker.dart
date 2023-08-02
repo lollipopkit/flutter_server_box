@@ -5,11 +5,11 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:logging/logging.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/extension/stringx.dart';
-import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/provider_base.dart';
 import 'package:toolbox/data/model/docker/image.dart';
 import 'package:toolbox/data/model/docker/ps.dart';
 import 'package:toolbox/data/model/app/error.dart';
+import 'package:toolbox/data/res/server_cmd.dart';
 import 'package:toolbox/data/store/docker.dart';
 import 'package:toolbox/locator.dart';
 
@@ -17,9 +17,6 @@ final _dockerNotFound = RegExp(r'command not found|Unknown command');
 final _versionReg = RegExp(r'(Version:)\s+([0-9]+\.[0-9]+\.[0-9]+)');
 final _editionReg = RegExp(r'(Client:)\s+(.+-.+)');
 final _dockerPrefixReg = RegExp(r'(sudo )?docker ');
-
-const _dockerPS = 'docker ps -a';
-const _dockerImgs = 'docker images';
 
 final _logger = Logger('DOCKER');
 
@@ -54,53 +51,82 @@ class DockerProvider extends BusyProvider {
 
   Future<void> refresh() async {
     if (isBusy) return;
-    final verRaw = await client!.run('docker version'.withLangExport).string;
-    if (verRaw.contains(_dockerNotFound)) {
+    setBusyState();
+
+    var raw = '';
+    await client!.exec(
+      shellFuncDocker.exec,
+      onStderr: _onPwd,
+      onStdout: (data, _) => raw = '$raw$data',
+    );
+
+    if (raw.contains(_dockerNotFound)) {
       error = DockerErr(type: DockerErrType.notInstalled);
       setBusyState(false);
       return;
     }
 
+    // Check result segments count
+    final segments = raw.split(seperator);
+    if (segments.length != dockerCmds.length) {
+      error = DockerErr(type: DockerErrType.segmentsNotMatch);
+      setBusyState(false);
+      return;
+    }
+
+    // Parse docker version
+    final verRaw = segments[0];
     try {
       version = _versionReg.firstMatch(verRaw)?.group(2);
       edition = _editionReg.firstMatch(verRaw)?.group(2);
     } catch (e) {
+      error = DockerErr(type: DockerErrType.unknown, message: e.toString());
       rethrow;
     }
 
+    // Parse docker ps
+    final psRaw = segments[1];
     try {
-      setBusyState();
-      final cmd = _wrap(_dockerPS);
-
-      // run docker ps
-      var raw = '';
-      await client!.exec(
-        cmd,
-        onStderr: _onPwd,
-        onStdout: (data, _) => raw = '$raw$data',
-      );
-
-      // parse result
-      final lines = raw.split('\n');
-      lines.removeAt(0);
+      final lines = psRaw.split('\n');
       lines.removeWhere((element) => element.isEmpty);
+      lines.removeAt(0);
       items = lines.map((e) => DockerPsItem.fromRawString(e)).toList();
+    } catch (e) {
+      error = DockerErr(type: DockerErrType.unknown, message: e.toString());
+      rethrow;
+    } finally {
+      setBusyState(false);
+    }
 
-      final imageCmd = _wrap(_dockerImgs);
-      raw = '';
-      await client!.exec(
-        imageCmd,
-        onStderr: _onPwd,
-        onStdout: (data, _) => raw = '$raw$data',
-      );
-
-      final imageLines = raw.split('\n');
-      imageLines.removeAt(0);
+    // Parse docker images
+    final imageRaw = segments[3];
+    try {
+      final imageLines = imageRaw.split('\n');
       imageLines.removeWhere((element) => element.isEmpty);
+      imageLines.removeAt(0);
       images = imageLines.map((e) => DockerImage.fromRawStr(e)).toList();
     } catch (e) {
       error = DockerErr(type: DockerErrType.unknown, message: e.toString());
       rethrow;
+    } finally {
+      setBusyState(false);
+    }
+
+    // Parse docker stats
+    final statsRaw = segments[2];
+    try {
+      final statsLines = statsRaw.split('\n');
+      statsLines.removeWhere((element) => element.isEmpty);
+      statsLines.removeAt(0);
+      for (var item in items!) {
+        final statsLine = statsLines.firstWhere(
+          (element) => element.contains(item.containerId),
+          orElse: () => '',
+        );
+        item.parseStats(statsLine);
+      }
+    } catch (e) {
+      error = DockerErr(type: DockerErrType.unknown, message: e.toString());
     } finally {
       setBusyState(false);
     }
@@ -163,11 +189,11 @@ class DockerProvider extends BusyProvider {
     return null;
   }
 
-  // judge whether to use DOCKER_HOST / sudo
+  // judge whether to use DOCKER_HOST
   String _wrap(String cmd) {
     final dockerHost = dockerStore.getDockerHost(hostId!);
     if (dockerHost == null || dockerHost.isEmpty) {
-      return 'sudo $cmd'.withLangExport;
+      return cmd.withLangExport;
     }
     return 'export DOCKER_HOST=$dockerHost && $cmd'.withLangExport;
   }
