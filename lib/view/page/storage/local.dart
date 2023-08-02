@@ -43,13 +43,16 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
   void initState() {
     super.initState();
     if (widget.initDir != null) {
-      _path = PathWithPrefix(widget.initDir!);
+      setState(() {
+        _path = PathWithPrefix(widget.initDir!);
+      });
     } else {
       sftpDir.then((dir) {
-        _path = PathWithPrefix(dir.path);
+        setState(() {
+          _path = PathWithPrefix(dir.path);
+        });
       });
     }
-    setState(() {});
   }
 
   @override
