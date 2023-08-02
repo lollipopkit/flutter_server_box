@@ -26,6 +26,7 @@ import '../../data/res/build_data.dart';
 import '../../data/res/color.dart';
 import '../../data/res/path.dart';
 import '../../data/res/ui.dart';
+import '../../data/store/server.dart';
 import '../../data/store/setting.dart';
 import '../../locator.dart';
 import '../widget/future_widget.dart';
@@ -329,25 +330,25 @@ class _SettingPageState extends State<SettingPage> {
         _startPageKey.currentState?.showButtonMenu();
       },
       trailing: ValueBuilder(
-          listenable: _launchPageIdx,
-          build: () => PopupMenuButton(
-                key: _startPageKey,
-                itemBuilder: (BuildContext context) => items,
-                initialValue: _launchPageIdx.value,
-                onSelected: (int idx) {
-                  _launchPageIdx.value = idx;
-                  _setting.launchPage.put(_launchPageIdx.value);
-                },
-                child: ConstrainedBox(
-                  constraints:
-                      BoxConstraints(maxWidth: _media.size.width * 0.35),
-                  child: Text(
-                    tabTitleName(context, AppTab.values[_launchPageIdx.value]),
-                    textAlign: TextAlign.right,
-                    style: textSize15,
-                  ),
-                ),
-              )),
+        listenable: _launchPageIdx,
+        build: () => PopupMenuButton(
+          key: _startPageKey,
+          itemBuilder: (BuildContext context) => items,
+          initialValue: _launchPageIdx.value,
+          onSelected: (int idx) {
+            _launchPageIdx.value = idx;
+            _setting.launchPage.put(_launchPageIdx.value);
+          },
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: _media.size.width * 0.35),
+            child: Text(
+              tabTitleName(context, AppTab.values[_launchPageIdx.value]),
+              textAlign: TextAlign.right,
+              style: textSize15,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -643,21 +644,22 @@ class _SettingPageState extends State<SettingPage> {
         _localeKey.currentState?.showButtonMenu();
       },
       trailing: ValueBuilder(
-          listenable: _localeCode,
-          build: () => PopupMenuButton(
-                key: _localeKey,
-                itemBuilder: (BuildContext context) => items,
-                initialValue: _localeCode.value,
-                onSelected: (String idx) {
-                  _localeCode.value = idx;
-                  _setting.locale.put(idx);
-                  _showRestartSnackbar();
-                },
-                child: Text(
-                  _s.languageName,
-                  style: textSize15,
-                ),
-              )),
+        listenable: _localeCode,
+        build: () => PopupMenuButton(
+          key: _localeKey,
+          itemBuilder: (BuildContext context) => items,
+          initialValue: _localeCode.value,
+          onSelected: (String idx) {
+            _localeCode.value = idx;
+            _setting.locale.put(idx);
+            _showRestartSnackbar();
+          },
+          child: Text(
+            _s.languageName,
+            style: textSize15,
+          ),
+        ),
+      ),
     );
   }
 
@@ -946,28 +948,30 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(_s.deleteServers),
       trailing: const Icon(Icons.delete_forever),
       onTap: () async {
-        final all = _serverProvider.servers.keys.map(
-          (e) => TextButton(
-            onPressed: () => showRoundDialog(
-              context: context,
-              title: Text(_s.attention),
-              child: Text(_s.sureDelete(e)),
-              actions: [
-                TextButton(
-                  onPressed: () => _serverProvider.delServer(e),
-                  child: Text(_s.ok),
-                )
-              ],
-            ),
-            child: Text(e),
-          ),
-        );
+        final all = locator<ServerStore>().box.keys.map(
+              (e) => TextButton(
+                onPressed: () => showRoundDialog(
+                  context: context,
+                  title: Text(_s.attention),
+                  child: Text(_s.sureDelete(e)),
+                  actions: [
+                    TextButton(
+                      onPressed: () => _serverProvider.delServer(e),
+                      child: Text(_s.ok),
+                    )
+                  ],
+                ),
+                child: Text(e),
+              ),
+            );
         showRoundDialog<List<String>>(
           context: context,
           title: Text(_s.choose),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: all.toList(),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: all.toList(),
+            ),
           ),
         );
       },
