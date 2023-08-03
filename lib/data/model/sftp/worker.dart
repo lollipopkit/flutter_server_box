@@ -126,8 +126,8 @@ Future<void> _upload(
     mainSendPort.send(SftpWorkerStatus.sshConnectted);
 
     final localPath = req.localPath;
-    final remotePath =
-        req.remotePath + (getFileName(localPath) ?? 'srvbox_sftp_upload');
+    final fileName = getFileName(localPath) ?? 'srvbox_sftp_upload';
+    final remotePath = '${req.remotePath}/$fileName';
     final local = File(localPath);
     if (!await local.exists()) {
       mainSendPort.send(Exception('local file not exists'));
