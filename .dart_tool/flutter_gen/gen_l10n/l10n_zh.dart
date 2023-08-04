@@ -20,6 +20,9 @@ class SZh extends S {
   String get addPrivateKey => '添加一个私钥';
 
   @override
+  String get addSystemPrivateKeyTip => '当前没有任何私钥，是否添加系统自带的（~/.ssh/id_rsa）？';
+
+  @override
   String get added2List => '已添加至任务列表';
 
   @override
@@ -700,6 +703,9 @@ class SZhTw extends SZh {
 
   @override
   String get addPrivateKey => '新增一個私鑰';
+
+  @override
+  String get addSystemPrivateKeyTip => '當前沒有任何私鑰，是否添加系統自帶的（~/.ssh/id_rsa）？';
 
   @override
   String get added2List => '已添加至任務列表';

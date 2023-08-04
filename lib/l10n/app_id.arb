@@ -5,6 +5,7 @@
   "add": "Menambahkan",
   "addAServer": "tambahkan server",
   "addPrivateKey": "Tambahkan kunci pribadi",
+  "addSystemPrivateKeyTip": "Saat ini tidak memiliki kunci privat, apakah Anda menambahkan kunci yang disertakan dengan sistem (~/.ssh/id_rsa)?",
   "added2List": "Ditambahkan ke Daftar Tugas",
   "all": "Semua",
   "alreadyLastDir": "Sudah di direktori terakhir.",

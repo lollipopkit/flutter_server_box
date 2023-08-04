@@ -20,6 +20,9 @@ class SId extends S {
   String get addPrivateKey => 'Tambahkan kunci pribadi';
 
   @override
+  String get addSystemPrivateKeyTip => 'Saat ini tidak memiliki kunci privat, apakah Anda menambahkan kunci yang disertakan dengan sistem (~/.ssh/id_rsa)?';
+
+  @override
   String get added2List => 'Ditambahkan ke Daftar Tugas';
 
   @override

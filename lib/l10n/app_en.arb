@@ -5,6 +5,7 @@
   "add": "Add",
   "addAServer": "add a server",
   "addPrivateKey": "Add private key",
+  "addSystemPrivateKeyTip": "Currently don't have any private key, do you add the one that comes with the system (~/.ssh/id_rsa)?",
   "added2List": "Added to task list",
   "all": "All",
   "alreadyLastDir": "Already in last directory.",

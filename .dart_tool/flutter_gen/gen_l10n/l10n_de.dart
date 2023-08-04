@@ -20,6 +20,9 @@ class SDe extends S {
   String get addPrivateKey => 'Private key hinzufügen';
 
   @override
+  String get addSystemPrivateKeyTip => 'Derzeit haben Sie keinen privaten Schlüssel, fügen Sie den Schlüssel hinzu, der mit dem System geliefert wird (~/.ssh/id_rsa)?';
+
+  @override
   String get added2List => 'Zur Aufgabenliste hinzugefügt';
 
   @override

@@ -20,6 +20,9 @@ class SEn extends S {
   String get addPrivateKey => 'Add private key';
 
   @override
+  String get addSystemPrivateKeyTip => 'Currently don\'t have any private key, do you add the one that comes with the system (~/.ssh/id_rsa)?';
+
+  @override
   String get added2List => 'Added to task list';
 
   @override

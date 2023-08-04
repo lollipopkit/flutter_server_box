@@ -5,6 +5,7 @@
   "add": "Neu",
   "addAServer": "Server hinzufügen",
   "addPrivateKey": "Private key hinzufügen",
+  "addSystemPrivateKeyTip": "Derzeit haben Sie keinen privaten Schlüssel, fügen Sie den Schlüssel hinzu, der mit dem System geliefert wird (~/.ssh/id_rsa)?",
   "added2List": "Zur Aufgabenliste hinzugefügt",
   "all": "Alle",
   "alreadyLastDir": "Bereits im letzten Verzeichnis.",

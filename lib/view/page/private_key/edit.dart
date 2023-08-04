@@ -74,7 +74,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
             IconButton(
                 tooltip: _s.delete,
                 onPressed: () {
-                  _provider.delInfo(widget.info!);
+                  _provider.delete(widget.info!);
                   context.pop();
                 },
                 icon: const Icon(Icons.delete))
@@ -100,9 +100,9 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
         setState(() {
           _loading = centerSizedLoading;
         });
-        final info = PrivateKeyInfo(name, key, '');
+        final info = PrivateKeyInfo(id: name, key: key);
         try {
-          info.privateKey = await compute(decyptPem, [key, pwd]);
+          info.key = await compute(decyptPem, [key, pwd]);
         } catch (e) {
           showSnackBar(context, Text(e.toString()));
           rethrow;
@@ -112,9 +112,9 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
           });
         }
         if (widget.info != null) {
-          _provider.updateInfo(widget.info!, info);
+          _provider.update(widget.info!, info);
         } else {
-          _provider.addInfo(info);
+          _provider.add(info);
         }
         context.pop();
       },
@@ -194,8 +194,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
   Future<void> afterFirstLayout(BuildContext context) async {
     if (widget.info != null) {
       _nameController.text = widget.info!.id;
-      _keyController.text = widget.info!.privateKey;
-      _pwdController.text = widget.info!.password;
+      _keyController.text = widget.info!.key;
     } else {
       final clipdata = ((await Clipboard.getData(_format))?.text ?? '').trim();
       if (clipdata.startsWith('-----BEGIN') && clipdata.endsWith('-----')) {

@@ -77,13 +77,12 @@ String pathJoin(String path1, String path2) {
   return path1 + (path1.endsWith('/') ? '' : '/') + path2;
 }
 
-String getHome() {
-  String? home = "";
-  Map<String, String> envVars = Platform.environment;
-  if (isMacOS ||isLinux) {
-    home = envVars['HOME'];
+String? getHomeDir() {
+  final envVars = Platform.environment;
+  if (isMacOS || isLinux) {
+    return envVars['HOME'];
   } else if (isWindows) {
-    home = envVars['UserProfile'];
+    return envVars['UserProfile'];
   }
-  return home??"";
+  return null;
 }

@@ -200,17 +200,17 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   Widget _buildKeyAuth() {
     return Consumer<PrivateKeyProvider>(
       builder: (_, key, __) {
-        for (var item in key.infos) {
+        for (var item in key.pkis) {
           if (item.id == widget.spi?.pubKeyId) {
-            _pubKeyIndex ??= key.infos.indexOf(item);
+            _pubKeyIndex ??= key.pkis.indexOf(item);
           }
         }
-        final tiles = key.infos
+        final tiles = key.pkis
             .map(
               (e) => ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(e.id, textAlign: TextAlign.start),
-                trailing: _buildRadio(key.infos.indexOf(e), e),
+                trailing: _buildRadio(key.pkis.indexOf(e), e),
               ),
             )
             .toList();

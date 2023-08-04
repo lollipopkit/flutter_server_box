@@ -128,6 +128,12 @@ abstract class S {
   /// **'Add private key'**
   String get addPrivateKey;
 
+  /// No description provided for @addSystemPrivateKeyTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Currently don\'t have any private key, do you add the one that comes with the system (~/.ssh/id_rsa)?'**
+  String get addSystemPrivateKeyTip;
+
   /// No description provided for @added2List.
   ///
   /// In en, this message translates to:

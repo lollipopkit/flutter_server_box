@@ -4,29 +4,33 @@ import 'package:toolbox/data/store/private_key.dart';
 import 'package:toolbox/locator.dart';
 
 class PrivateKeyProvider extends BusyProvider {
-  List<PrivateKeyInfo> get infos => _infos;
+  List<PrivateKeyInfo> get pkis => _pkis;
   final _store = locator<PrivateKeyStore>();
-  late List<PrivateKeyInfo> _infos;
+  late List<PrivateKeyInfo> _pkis;
 
   void loadData() {
-    _infos = _store.fetch();
+    _pkis = _store.fetch();
   }
 
-  void addInfo(PrivateKeyInfo info) {
-    _infos.add(info);
+  void add(PrivateKeyInfo info) {
+    _pkis.add(info);
     _store.put(info);
     notifyListeners();
   }
 
-  void delInfo(PrivateKeyInfo info) {
-    _infos.removeWhere((e) => e.id == info.id);
+  void delete(PrivateKeyInfo info) {
+    _pkis.removeWhere((e) => e.id == info.id);
     _store.delete(info);
     notifyListeners();
   }
 
-  void updateInfo(PrivateKeyInfo old, PrivateKeyInfo newInfo) {
-    final idx = _infos.indexWhere((e) => e.id == old.id);
-    _infos[idx] = newInfo;
+  void update(PrivateKeyInfo old, PrivateKeyInfo newInfo) {
+    final idx = _pkis.indexWhere((e) => e.id == old.id);
+    if (idx == -1) {
+      _pkis.add(newInfo);
+    } else {
+      _pkis[idx] = newInfo;
+    }
     _store.put(newInfo);
     notifyListeners();
   }

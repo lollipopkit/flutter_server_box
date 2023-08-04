@@ -5,6 +5,7 @@
   "add": "新增",
   "addAServer": "添加服务器",
   "addPrivateKey": "添加一个私钥",
+  "addSystemPrivateKeyTip": "当前没有任何私钥，是否添加系统自带的（~/.ssh/id_rsa）？",
   "added2List": "已添加至任务列表",
   "all": "所有",
   "alreadyLastDir": "已经是最上层目录了",
