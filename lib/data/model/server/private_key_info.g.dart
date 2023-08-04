@@ -25,14 +25,11 @@ class PrivateKeyInfoAdapter extends TypeAdapter<PrivateKeyInfo> {
   @override
   void write(BinaryWriter writer, PrivateKeyInfo obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(2)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.key)
-      ..writeByte(2)
-      // ignore: deprecated_member_use_from_same_package
-      ..write(obj.password);
+      ..write(obj.key);
   }
 
   @override

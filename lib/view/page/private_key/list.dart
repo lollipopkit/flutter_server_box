@@ -74,7 +74,7 @@ class _PrivateKeyListState extends State<PrivateKeysListPage> {
                 title: Text(key.pkis[idx].id),
                 trailing: TextButton(
                   onPressed: () => AppRoute(
-                    PrivateKeyEditPage(info: key.pkis[idx]),
+                    PrivateKeyEditPage(pki: key.pkis[idx]),
                     'private key edit page',
                   ).go(context),
                   child: Text(_s.edit),
@@ -108,7 +108,7 @@ class _PrivateKeyListState extends State<PrivateKeysListPage> {
             onPressed: () {
               context.pop();
               AppRoute(
-                PrivateKeyEditPage(info: sysPk),
+                PrivateKeyEditPage(pki: sysPk),
                 'private key edit page',
               ).go(context);
             },
