@@ -16,6 +16,7 @@ import 'package:toolbox/view/widget/tag/switcher.dart';
 
 import '../../../core/route.dart';
 import '../../../core/utils/ui.dart';
+import '../../../data/model/server/disk.dart';
 import '../../../data/model/server/server.dart';
 import '../../../data/model/server/server_private_info.dart';
 import '../../../data/model/server/server_status.dart';
@@ -162,8 +163,7 @@ class _ServerPageState extends State<ServerPage>
     ServerState cs,
     ServerPrivateInfo spi,
   ) {
-    final rootDisks = ss.disk.where((element) => element.loc == '/');
-    final rootDisk = rootDisks.isNotEmpty ? rootDisks.first : ss.disk.first;
+    final rootDisk = findRootDisk(ss.disk);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,7 +177,7 @@ class _ServerPageState extends State<ServerPage>
             _buildPercentCircle(ss.mem.usedPercent * 100),
             _buildNet(ss),
             _buildIOData(
-                'Total:\n${rootDisk.size}', 'Used:\n${rootDisk.usedPercent}%')
+                'Total:\n${rootDisk?.size}', 'Used:\n${rootDisk?.usedPercent}%')
           ],
         ),
         height13,

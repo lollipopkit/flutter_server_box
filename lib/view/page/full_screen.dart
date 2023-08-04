@@ -9,6 +9,7 @@ import 'package:get_it/get_it.dart';
 import 'package:nil/nil.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/route.dart';
+import 'package:toolbox/data/model/server/disk.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/data/store/setting.dart';
@@ -159,7 +160,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
     ServerState cs,
     ServerPrivateInfo spi,
   ) {
-    final rootDisk = ss.disk.firstWhere((element) => element.loc == '/');
+    final rootDisk = findRootDisk(ss.disk);
 
     return InkWell(
       onTap: () => AppRoute(
@@ -185,8 +186,8 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
                   _buildPercentCircle(ss.mem.usedPercent * 100),
                   _buildNet(ss),
                   _buildIOData(
-                    'Total:\n${rootDisk.size}',
-                    'Used:\n${rootDisk.usedPercent}%',
+                    'Total:\n${rootDisk?.size}',
+                    'Used:\n${rootDisk?.usedPercent}%',
                   )
                 ],
               ),

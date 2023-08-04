@@ -47,3 +47,26 @@ List<Disk> parseDisk(String raw) {
   }
   return list;
 }
+
+/// Issue 88
+///
+/// Due to performance issues,
+/// if there is no `Disk.loc == '/' || Disk.loc == '/sysroot'`,
+/// return the first [Disk] of [disks].
+///
+/// If we find out the biggest [Disk] of [disks],
+/// the fps may lower than 60.
+Disk? findRootDisk(List<Disk> disks) {
+  if (disks.isEmpty) return null;
+  final roots = disks.where((element) => element.loc == '/');
+  if (roots.isEmpty) {
+    final sysRoots = disks.where((element) => element.loc == '/sysroot');
+    if (sysRoots.isEmpty) {
+      return disks.first;
+    } else {
+      return sysRoots.first;
+    }
+  } else {
+    return roots.first;
+  }
+}

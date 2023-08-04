@@ -123,6 +123,7 @@ class DockerProvider extends BusyProvider {
           (element) => element.contains(item.containerId),
           orElse: () => '',
         );
+        if (statsLine.isEmpty) continue;
         item.parseStats(statsLine);
       }
     } catch (e) {
