@@ -162,7 +162,8 @@ class _ServerPageState extends State<ServerPage>
     ServerState cs,
     ServerPrivateInfo spi,
   ) {
-    final rootDisk = ss.disk.firstWhere((element) => element.loc == '/');
+    final rootDisks = ss.disk.where((element) => element.loc == '/');
+    final rootDisk = rootDisks.isNotEmpty ? rootDisks.first : ss.disk.first;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
