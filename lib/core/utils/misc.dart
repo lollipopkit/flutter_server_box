@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -76,4 +75,15 @@ String getTime(int? unixMill) {
 
 String pathJoin(String path1, String path2) {
   return path1 + (path1.endsWith('/') ? '' : '/') + path2;
+}
+
+String getHome() {
+  String? home = "";
+  Map<String, String> envVars = Platform.environment;
+  if (isMacOS ||isLinux) {
+    home = envVars['HOME'];
+  } else if (isWindows) {
+    home = envVars['UserProfile'];
+  }
+  return home??"";
 }
