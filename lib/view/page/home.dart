@@ -2,6 +2,7 @@ import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
+import 'package:toolbox/data/model/app/github_id.dart';
 import 'package:toolbox/data/model/app/tab.dart';
 import 'package:toolbox/data/provider/app.dart';
 import 'package:toolbox/data/res/misc.dart';
@@ -197,92 +198,113 @@ class _HomePageState extends State<HomePage>
             ),
           ),
           const SizedBox(height: 37),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 17),
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.settings),
-                  title: Text(_s.setting),
-                  onTap: () => AppRoute(
-                    const SettingPage(),
-                    'Setting',
-                  ).go(context),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.vpn_key),
-                  title: Text(_s.privateKey),
-                  onTap: () => AppRoute(
-                    const PrivateKeysListPage(),
-                    'private key list',
-                  ).go(context),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.download),
-                  title: Text(_s.download),
-                  onTap: () => AppRoute(
-                    const LocalStoragePage(),
-                    'sftp local page',
-                  ).go(context),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.import_export),
-                  title: Text(_s.backup),
-                  onTap: () => AppRoute(
-                    BackupPage(),
-                    'backup page',
-                  ).go(context),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.code),
-                  title: Text(_s.convert),
-                  onTap: () => AppRoute(
-                    const ConvertPage(),
-                    'convert page',
-                  ).go(context),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.text_snippet),
-                  title: Text('${_s.about} & ${_s.feedback}'),
-                  onTap: () {
-                    showRoundDialog(
-                      context: context,
-                      title: Text(_s.about),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          UrlText(
-                              text: _s.madeWithLove(myGithub),
-                              replace: 'lollipopkit'),
-                          UrlText(
-                            text: _s.aboutThanks,
-                          ),
-                          // Thanks
-                          ...thanksMap.keys.map(
-                            (key) => UrlText(
-                              text: thanksMap[key] ?? '',
-                              replace: key,
-                            ),
-                          )
-                        ],
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => openUrl(appHelpUrl),
-                          child: Text(_s.feedback),
-                        ),
-                        TextButton(
-                          onPressed: () => showLicensePage(context: context),
-                          child: Text(_s.license),
-                        ),
-                      ],
-                    );
-                  },
-                )
-              ].map((e) => RoundRectCard(e)).toList(),
+          _buildTiles(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTiles() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 17),
+      child: Column(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.settings),
+            title: Text(_s.setting),
+            onTap: () => AppRoute(
+              const SettingPage(),
+              'Setting',
+            ).go(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.vpn_key),
+            title: Text(_s.privateKey),
+            onTap: () => AppRoute(
+              const PrivateKeysListPage(),
+              'private key list',
+            ).go(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.download),
+            title: Text(_s.download),
+            onTap: () => AppRoute(
+              const LocalStoragePage(),
+              'sftp local page',
+            ).go(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.import_export),
+            title: Text(_s.backup),
+            onTap: () => AppRoute(
+              BackupPage(),
+              'backup page',
+            ).go(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.code),
+            title: Text(_s.convert),
+            onTap: () => AppRoute(
+              const ConvertPage(),
+              'convert page',
+            ).go(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.text_snippet),
+            title: Text('${_s.about} & ${_s.feedback}'),
+            onTap: _showAboutDialog,
+          )
+        ].map((e) => RoundRectCard(e)).toList(),
+      ),
+    );
+  }
+
+  void _showAboutDialog() {
+    showRoundDialog(
+      context: context,
+      title: Text(_s.about),
+      child: _buildAboutContent(),
+      actions: [
+        TextButton(
+          onPressed: () => openUrl(appHelpUrl),
+          child: Text(_s.feedback),
+        ),
+        TextButton(
+          onPressed: () => showLicensePage(context: context),
+          child: Text(_s.license),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAboutContent() {
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          UrlText(
+            text: _s.madeWithLove(myGithub),
+            replace: 'lollipopkit',
+          ),
+          height13,
+          // Use [UrlText] for same text style
+          Text(_s.aboutThanks),
+          height13,
+          const Text('Contributors:'),
+          ...contributors.map(
+            (name) => UrlText(
+              text: name.url,
+              replace: name,
             ),
           ),
+          const Text('Participants:'),
+          ...participants.map(
+            (name) => UrlText(
+              text: name.url,
+              replace: name,
+            ),
+          )
         ],
       ),
     );

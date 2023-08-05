@@ -1,5 +1,7 @@
 import 'package:flutter/services.dart';
 
+import '../model/app/github_id.dart';
+
 /// RegExp for number
 final numReg = RegExp(r'\s{1,}');
 
@@ -16,3 +18,34 @@ const maxDebugLogLines = 100;
 const pkgName = 'tech.lolli.toolbox';
 const bgRunChannel = MethodChannel('$pkgName/app_retain');
 const homeWidgetChannel = MethodChannel('$pkgName/home_widget');
+
+// Thanks
+// If you want to change the url, please open an issue.
+const contributors = <GhId>{
+  'its-tom',
+  'RainSunMe',
+  'kalashnikov',
+  'azkadev',
+  'calvinweb',
+  'Liloupar'
+};
+const participants = <GhId>{
+  'jaychoubaby',
+  'fecture',
+  'Tao173',
+  'QingAnLe',
+  'wxdjs',
+  'Aeorq',
+  'allonmymind',
+  'LittleState',
+  'karuboniru',
+  'whosphp',
+  'Climit',
+  'dianso',
+  'Jasondeepny',
+  'kaliwell',
+  'ymxkiss',
+  'Ealrang',
+  'hange33',
+  'yuchen1204',
+};
