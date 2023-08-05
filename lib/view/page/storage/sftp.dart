@@ -76,6 +76,15 @@ class _SftpPageState extends State<SftpPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const BackButtonIcon(),
+          onPressed: () {
+            if (_status.path != null) {
+              _status.path!.update('/');
+            }
+            context.pop();
+          },
+        ),
         centerTitle: true,
         title: TwoLineText(up: 'SFTP', down: widget.spi.name),
         actions: [
@@ -275,6 +284,12 @@ class _SftpPageState extends State<SftpPage> {
       _status.path = AbsolutePath(p_);
       _listDir(path: p_, client: _client);
       return centerLoading;
+    }
+
+    if (_status.files!.isEmpty) {
+      return const Center(
+        child: Text('~'),
+      );
     }
 
     return RefreshIndicator(

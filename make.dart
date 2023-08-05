@@ -146,12 +146,6 @@ Future<void> flutterBuildAndroid() async {
 }
 
 Future<void> scp2CDN() async {
-  print('scp2CDN? (Y/n)');
-  final str = stdin.readLineSync() ?? '';
-  if (str.isNotEmpty) {
-    print('skip scp2CDN');
-    return;
-  }
   final result = await Process.run(
     'scp',
     [apkPath, 'hk:/var/www/res/serverbox/apks/$build.apk'],

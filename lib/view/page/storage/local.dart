@@ -65,31 +65,31 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const BackButtonIcon(),
+          onPressed: () {
+            if (_path != null) {
+              _path!.update('/');
+            }
+            context.pop();
+          },
+        ),
         title: Text(_s.download),
         actions: [
           IconButton(
             icon: const Icon(Icons.downloading),
-            onPressed: () =>
-                AppRoute(const SftpMissionPage(), 'sftp downloading')
-                    .go(context),
+            onPressed: () => AppRoute(
+              const SftpMissionPage(),
+              'sftp downloading',
+            ).go(context),
           )
         ],
       ),
       body: FadeIn(
         key: UniqueKey(),
-        child: _buildBody(),
+        child: _wrapPopScope(),
       ),
       bottomNavigationBar: SafeArea(child: _buildPath()),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final path = await pickOneFile();
-          if (path == null) return;
-          final name = getFileName(path) ?? 'imported';
-          await File(path).copy(pathJoin(_path!.path, name));
-          setState(() {});
-        },
-        child: const Icon(Icons.add),
-      ),
     );
   }
 
@@ -99,10 +99,50 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Divider(),
           (_path?.path ?? _s.loadingFiles).omitStartStr(),
+          _buildBtns(),
         ],
       ),
+    );
+  }
+
+  Widget _buildBtns() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        IconButton(
+          onPressed: () {
+            _path?.update('..');
+            setState(() {});
+          },
+          icon: const Icon(Icons.arrow_back),
+        ),
+        IconButton(
+          onPressed: () async {
+            final path = await pickOneFile();
+            if (path == null) return;
+            final name = getFileName(path) ?? 'imported';
+            await File(path).copy(pathJoin(_path!.path, name));
+            setState(() {});
+          },
+          icon: const Icon(Icons.add),
+        ),
+      ],
+    );
+  }
+
+  Widget _wrapPopScope() {
+    return WillPopScope(
+      onWillPop: () async {
+        if (_path == null) return true;
+        if (_path!.canBack) {
+          _path!.update('..');
+          setState(() {});
+          return false;
+        }
+        return true;
+      },
+      child: _buildBody(),
     );
   }
 
@@ -114,27 +154,10 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
     }
     final dir = Directory(_path!.path);
     final files = dir.listSync();
-    final canGoBack = _path!.canBack;
-    if (files.isEmpty) {
-      return const Center(
-        child: Text('~'),
-      );
-    }
     return ListView.builder(
-      itemCount: canGoBack ? files.length + 1 : files.length,
+      itemCount: files.length,
       padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 7),
       itemBuilder: (context, index) {
-        if (index == 0 && canGoBack) {
-          return RoundRectCard(ListTile(
-            leading: const Icon(Icons.keyboard_arrow_left),
-            title: const Text('..'),
-            onTap: () {
-              _path!.update('..');
-              setState(() {});
-            },
-          ));
-        }
-        index = canGoBack ? index - 1 : index;
         var file = files[index];
         var fileName = file.path.split('/').last;
         var stat = file.statSync();

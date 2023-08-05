@@ -37,6 +37,7 @@ const participants = <GhId>{
   'wxdjs',
   'Aeorq',
   'allonmymind',
+  'Yuuki-Rin',
   'LittleState',
   'karuboniru',
   'whosphp',
