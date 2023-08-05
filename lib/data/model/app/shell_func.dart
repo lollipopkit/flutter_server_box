@@ -1,22 +1,46 @@
 import '../../res/server_cmd.dart';
 
-class AppShellFunc {
-  final String name;
-  final String cmd;
-  final String flag;
+const _cmdDivider = '\necho $seperator\n';
 
-  const AppShellFunc(this.name, this.cmd, this.flag);
+enum AppShellFuncType {
+  status,
+  docker;
+
+  String get flag {
+    switch (this) {
+      case AppShellFuncType.status:
+        return 's';
+      case AppShellFuncType.docker:
+        return 'd';
+    }
+  }
 
   String get exec => 'sh $shellPath -$flag';
-}
 
-typedef AppShellFuncs = List<AppShellFunc>;
+  String get name {
+    switch (this) {
+      case AppShellFuncType.status:
+        return 'status';
+      case AppShellFuncType.docker:
+        /// `dockeR` -> avoid conflict with `docker` command
+        /// 以防止循环递归
+        return 'dockeR';
+    }
+  }
 
-extension AppShellFuncsExt on AppShellFuncs {
-  String get generate {
+  String get cmd {
+    switch (this) {
+      case AppShellFuncType.status:
+        return statusCmds.join(_cmdDivider);
+      case AppShellFuncType.docker:
+        return dockerCmds.join(_cmdDivider);
+    }
+  }
+
+  static String get shellScript {
     final sb = StringBuffer();
     // Write each func
-    for (final func in this) {
+    for (final func in values) {
       sb.write('''
 ${func.name}() {
 ${func.cmd}
@@ -27,7 +51,7 @@ ${func.cmd}
 
     // Write switch case
     sb.write('case \$1 in\n');
-    for (final func in this) {
+    for (final func in values) {
       sb.write('''
   '-${func.flag}')
     ${func.name}
@@ -38,13 +62,43 @@ ${func.cmd}
   *)
     echo "Invalid argument \$1"
     ;;
-esac
-''');
+esac''');
     return sb.toString();
   }
 }
 
-// enum AppShellFuncType {
-//   status,
-//   docker;
-// }
+abstract class _CmdType {
+  /// Find out the required segment from [segments]
+  String find(List<String> segments);
+}
+
+enum StatusCmdType implements _CmdType {
+  net,
+  sys,
+  cpu,
+  uptime,
+  conn,
+  disk,
+  mem,
+  tempType,
+  tempVal,
+  host,
+  sysRhel;
+
+  @override
+  String find(List<String> segments) {
+    return segments[index];
+  }
+}
+
+enum DockerCmdType implements _CmdType {
+  version,
+  ps,
+  stats,
+  images;
+
+  @override
+  String find(List<String> segments) {
+    return segments[index];
+  }
+}

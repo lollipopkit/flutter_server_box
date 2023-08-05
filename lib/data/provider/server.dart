@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
+import 'package:toolbox/data/model/app/shell_func.dart';
 
 import '../../core/extension/order.dart';
 import '../../core/extension/uint8list.dart';
@@ -245,9 +246,9 @@ class ServerProvider extends BusyProvider {
 
       if (s.client == null) return;
       // run script to get server status
-      raw = await s.client!.run(shellFuncStatus.exec).string;
+      raw = await s.client!.run(AppShellFuncType.status.exec).string;
       segments = raw.split(seperator).map((e) => e.trim()).toList();
-      if (raw.isEmpty || segments.length != CmdType.values.length) {
+      if (raw.isEmpty || segments.length != StatusCmdType.values.length) {
         s.state = ServerState.failed;
         if (s.status.failedInfo?.isEmpty ?? true) {
           s.status.failedInfo = 'Seperate segments failed, raw:\n$raw';

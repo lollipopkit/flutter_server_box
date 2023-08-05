@@ -456,6 +456,8 @@ class _DockerManagePageState extends State<DockerManagePage> {
         subtitle: Text(_buildSubtitle(_docker.items!), style: grey),
       ),
     );
+    // Bottom padding
+    items.add(height13);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: items,

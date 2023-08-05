@@ -1,4 +1,4 @@
-import '../../res/server_cmd.dart';
+import '../app/shell_func.dart';
 import 'cpu.dart';
 import 'disk.dart';
 import 'memory.dart';
@@ -13,50 +13,43 @@ class ServerStatusUpdateReq {
   const ServerStatusUpdateReq(this.ss, this.segments);
 }
 
-extension _SegmentsExt on List<String> {
-  String at(CmdType t) {
-    final index = t.index;
-    if (index >= length) return '';
-    return this[index];
-  }
-}
-
 Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
-  final net = parseNetSpeed(req.segments.at(CmdType.net));
+  final segments = req.segments;
+  final net = parseNetSpeed(StatusCmdType.net.find(segments));
   req.ss.netSpeed.update(net);
 
   final sys = _parseSysVer(
-    req.segments.at(CmdType.sys),
-    req.segments.at(CmdType.host),
-    req.segments.at(CmdType.sysRhel),
+    StatusCmdType.sys.find(segments),
+    StatusCmdType.host.find(segments),
+    StatusCmdType.sysRhel.find(segments),
   );
   if (sys != null) {
     req.ss.sysVer = sys;
   }
 
-  final cpus = parseCPU(req.segments.at(CmdType.cpu));
+  final cpus = parseCPU(StatusCmdType.cpu.find(segments));
   req.ss.cpu.update(cpus);
 
   req.ss.temps.parse(
-    req.segments.at(CmdType.tempType),
-    req.segments.at(CmdType.tempVal),
+    StatusCmdType.tempType.find(segments),
+    StatusCmdType.tempVal.find(segments),
   );
 
-  final tcp = parseConn(req.segments.at(CmdType.conn));
+  final tcp = parseConn(StatusCmdType.conn.find(segments));
   if (tcp != null) {
     req.ss.tcp = tcp;
   }
 
-  req.ss.disk = parseDisk(req.segments.at(CmdType.disk));
+  req.ss.disk = parseDisk(StatusCmdType.disk.find(segments));
 
-  req.ss.mem = parseMem(req.segments.at(CmdType.mem));
+  req.ss.mem = parseMem(StatusCmdType.mem.find(segments));
 
-  final uptime = _parseUpTime(req.segments.at(CmdType.uptime));
+  final uptime = _parseUpTime(StatusCmdType.uptime.find(segments));
   if (uptime != null) {
     req.ss.uptime = uptime;
   }
 
-  req.ss.swap = parseSwap(req.segments.at(CmdType.mem));
+  req.ss.swap = parseSwap(StatusCmdType.mem.find(segments));
   return req.ss;
 }
 

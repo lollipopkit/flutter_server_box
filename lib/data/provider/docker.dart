@@ -6,6 +6,7 @@ import 'package:logging/logging.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/provider_base.dart';
+import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/docker/image.dart';
 import 'package:toolbox/data/model/docker/ps.dart';
 import 'package:toolbox/data/model/app/error.dart';
@@ -55,7 +56,7 @@ class DockerProvider extends BusyProvider {
 
     var raw = '';
     await client!.exec(
-      shellFuncDocker.exec,
+      AppShellFuncType.docker.exec,
       onStderr: _onPwd,
       onStdout: (data, _) => raw = '$raw$data',
     );
@@ -75,7 +76,7 @@ class DockerProvider extends BusyProvider {
     }
 
     // Parse docker version
-    final verRaw = segments[0];
+    final verRaw = DockerCmdType.version.find(segments);
     try {
       version = _versionReg.firstMatch(verRaw)?.group(2);
       edition = _editionReg.firstMatch(verRaw)?.group(2);
@@ -88,7 +89,7 @@ class DockerProvider extends BusyProvider {
     }
 
     // Parse docker ps
-    final psRaw = segments[1];
+    final psRaw = DockerCmdType.ps.find(segments);
     try {
       final lines = psRaw.split('\n');
       lines.removeWhere((element) => element.isEmpty);
@@ -105,7 +106,7 @@ class DockerProvider extends BusyProvider {
     }
 
     // Parse docker images
-    final imageRaw = segments[3];
+    final imageRaw = DockerCmdType.images.find(segments);
     try {
       final imageLines = imageRaw.split('\n');
       imageLines.removeWhere((element) => element.isEmpty);
@@ -122,7 +123,7 @@ class DockerProvider extends BusyProvider {
     }
 
     // Parse docker stats
-    final statsRaw = segments[2];
+    final statsRaw = DockerCmdType.stats.find(segments);
     try {
       final statsLines = statsRaw.split('\n');
       statsLines.removeWhere((element) => element.isEmpty);
