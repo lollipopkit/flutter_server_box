@@ -88,8 +88,21 @@ class _SftpPageState extends State<SftpPage> {
           ),
         ],
       ),
-      body: _buildFileView(),
+      body: _buildBody(),
       bottomNavigationBar: _buildBottom(),
+    );
+  }
+
+  Widget _buildBody() {
+    return WillPopScope(
+      onWillPop: () async {
+        if (_status.path == null || _status.path?.path == '/') {
+          return true;
+        }
+        await _backward();
+        return false;
+      },
+      child: _buildFileView(),
     );
   }
 
@@ -627,6 +640,14 @@ class _SftpPageState extends State<SftpPage> {
       /// In order to compatible with the Synology NAS
       /// which not has '.' and '..' in listdir
       if (fs.isNotEmpty && fs.first.filename == '.') {
+        fs.removeAt(0);
+      }
+
+      /// Issue #96
+      /// Due to [WillPopScope] added in this page
+      /// There is no need to keep '..' folder in listdir
+      /// So remove it
+      if (fs.isNotEmpty && fs.first.filename == '..') {
         fs.removeAt(0);
       }
       if (mounted) {
