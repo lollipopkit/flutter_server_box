@@ -239,7 +239,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
               size: 37,
             ),
             const SizedBox(height: 27),
-            _buildErr(_docker.error!),
+            Text(_docker.error?.message ?? _s.unknownError),
             const SizedBox(height: 27),
             Padding(
               padding: const EdgeInsets.all(17),
@@ -250,7 +250,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
       );
     }
     if (_docker.items == null || _docker.images == null) {
-      Future.delayed(const Duration(milliseconds: 177), () {
+      Future.delayed(const Duration(milliseconds: 37), () {
         if (mounted) {
           _docker.refresh();
         }
@@ -258,40 +258,37 @@ class _DockerManagePageState extends State<DockerManagePage> {
       return centerLoading;
     }
 
-    final items = <Widget>[];
-    items.addAll([
+    final items = <Widget>[
       _buildLoading(),
-      _buildVersion(
-        _docker.edition ?? _s.unknown,
-        _docker.version ?? _s.unknown,
-      ),
+      _buildVersion(),
+      _buildPsHeader(),
       _buildPsItems(),
-      _buildImages(),
+      _buildImageHeader(),
+      _buildImageItems(),
       _buildEditHost(),
-    ].map((e) => RoundRectCard(e)));
-    items.add(const SizedBox(height: 37));
+      const SizedBox(height: 37),
+    ].map((e) => RoundRectCard(e));
     return ListView(
       padding: const EdgeInsets.all(7),
-      children: items,
+      children: items.toList(),
     );
   }
 
-  Widget _buildImages() {
+  Widget _buildImageHeader() {
+    return ListTile(
+      title: Text(_s.imagesList),
+      subtitle: Text(
+        _s.dockerImagesFmt(_docker.images!.length),
+        style: grey,
+      ),
+    );
+  }
+
+  Widget _buildImageItems() {
     if (_docker.images == null) {
       return nil;
     }
-    final items = _docker.images!.map(_buildImageItem).toList();
-    items.insert(
-      0,
-      ListTile(
-        title: Text(_s.imagesList),
-        subtitle: Text(
-          _s.dockerImagesFmt(_docker.images!.length),
-          style: grey,
-        ),
-      ),
-    );
-    return Column(children: items);
+    return Column(children: _docker.images!.map(_buildImageItem).toList());
   }
 
   Widget _buildImageItem(DockerImage e) {
@@ -355,69 +352,6 @@ class _DockerManagePageState extends State<DockerManagePage> {
     );
   }
 
-  Widget _buildEditHost() {
-    final children = <Widget>[];
-    if (_docker.items!.isEmpty && _docker.images!.isEmpty) {
-      children.add(Padding(
-        padding: const EdgeInsets.fromLTRB(17, 17, 17, 0),
-        child: Text(
-          _s.dockerEmptyRunningItems,
-          textAlign: TextAlign.center,
-        ),
-      ));
-    }
-    children.add(
-      TextButton(
-        onPressed: _showEditHostDialog,
-        child: Text(_s.dockerEditHost),
-      ),
-    );
-    return Column(
-      children: children,
-    );
-  }
-
-  Future<void> _showEditHostDialog() async {
-    await showRoundDialog(
-      context: context,
-      title: Text(_s.dockerEditHost),
-      child: Input(
-        maxLines: 1,
-        controller:
-            TextEditingController(text: 'unix:///run/user/1000/docker.sock'),
-        onSubmitted: (value) {
-          locator<DockerStore>().setDockerHost(widget.spi.id, value.trim());
-          _docker.refresh();
-          context.pop();
-        },
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => context.pop(),
-          child: Text(_s.cancel),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildErr(DockerErr err) {
-    var errStr = '';
-    switch (err.type) {
-      case DockerErrType.noClient:
-        errStr = _s.noClient;
-        break;
-      case DockerErrType.notInstalled:
-        errStr = _s.dockerNotInstalled;
-        break;
-      case DockerErrType.invalidVersion:
-        errStr = _s.invalidVersion;
-        break;
-      default:
-        errStr = err.message ?? _s.unknown;
-    }
-    return Text(errStr);
-  }
-
   Widget _buildSolution(DockerErr err) {
     switch (err.type) {
       case DockerErrType.notInstalled:
@@ -432,43 +366,58 @@ class _DockerManagePageState extends State<DockerManagePage> {
           text: _s.invalidVersionHelp(appHelpUrl),
           replace: 'Github',
         );
-      default:
-        return Text(_s.unknownError);
+
+      /// TODO: Add solution for these cases.
+      case DockerErrType.parseImages:
+        return const Text('Parse images error');
+      case DockerErrType.parsePsItem:
+        return const Text('Parse ps item error');
+      case DockerErrType.parseStats:
+        return const Text('Parse stats error');
+      case DockerErrType.unknown:
+        return const Text('Unknown error');
+      case DockerErrType.cmdNoPrefix:
+        return const Text('Cmd no prefix');
+      case DockerErrType.segmentsNotMatch:
+        return const Text('Segments not match');
     }
   }
 
-  Widget _buildVersion(String edition, String version) {
+  Widget _buildVersion() {
     return Padding(
       padding: const EdgeInsets.all(17),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [Text(edition), Text(version)],
+        children: [
+          Text(_docker.edition ?? _s.unknown),
+          Text(_docker.version ?? _s.unknown),
+        ],
       ),
     );
   }
 
-  Widget _buildPsItems() {
-    final items = _docker.items!.map(_buildPsItem).toList();
-    items.insert(
-      0,
-      ListTile(
-        title: Text(_s.containerStatus),
-        subtitle: Text(_buildSubtitle(_docker.items!), style: grey),
-      ),
+  Widget _buildPsHeader() {
+    return ListTile(
+      title: Text(_s.containerStatus),
+      subtitle: Text(_buildPsCardSubtitle(_docker.items!), style: grey),
     );
-    // Bottom padding
-    items.add(height13);
+  }
+
+  Widget _buildPsItems() {
+    if (_docker.items == null) {
+      return nil;
+    }
     return Column(
       mainAxisSize: MainAxisSize.min,
-      children: items,
+      children: _docker.items!.map(_buildPsItem).toList(),
     );
   }
 
   Widget _buildPsItem(DockerPsItem item) {
     return ListTile(
-      title: Text(item.name),
+      title: Text(item.image),
       subtitle: Text(
-        '${item.image}\n${item.status}',
+        '${item.name} - ${item.status}',
         style: textSize13Grey,
       ),
       trailing: _buildMoreBtn(item, _docker.isBusy),
@@ -554,12 +503,57 @@ class _DockerManagePageState extends State<DockerManagePage> {
     );
   }
 
-  String _buildSubtitle(List<DockerPsItem> running) {
+  String _buildPsCardSubtitle(List<DockerPsItem> running) {
     final runningCount = running.where((element) => element.running).length;
     final stoped = running.length - runningCount;
     if (stoped == 0) {
       return _s.dockerStatusRunningFmt(runningCount);
     }
     return _s.dockerStatusRunningAndStoppedFmt(runningCount, stoped);
+  }
+
+  Widget _buildEditHost() {
+    final children = <Widget>[];
+    if (_docker.items!.isEmpty && _docker.images!.isEmpty) {
+      children.add(Padding(
+        padding: const EdgeInsets.fromLTRB(17, 17, 17, 0),
+        child: Text(
+          _s.dockerEmptyRunningItems,
+          textAlign: TextAlign.center,
+        ),
+      ));
+    }
+    children.add(
+      TextButton(
+        onPressed: _showEditHostDialog,
+        child: Text(_s.dockerEditHost),
+      ),
+    );
+    return Column(
+      children: children,
+    );
+  }
+
+  Future<void> _showEditHostDialog() async {
+    await showRoundDialog(
+      context: context,
+      title: Text(_s.dockerEditHost),
+      child: Input(
+        maxLines: 1,
+        controller:
+            TextEditingController(text: 'unix:///run/user/1000/docker.sock'),
+        onSubmitted: (value) {
+          locator<DockerStore>().setDockerHost(widget.spi.id, value.trim());
+          _docker.refresh();
+          context.pop();
+        },
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => context.pop(),
+          child: Text(_s.cancel),
+        ),
+      ],
+    );
   }
 }

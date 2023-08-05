@@ -154,11 +154,11 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
           ),
           onLongPress: () {
             if (!isDir) return;
-            showDirActionDialog(file);
+            _showDirActionDialog(file);
           },
           onTap: () async {
             if (!isDir) {
-              await showFileActionDialog(file);
+              await _showFileActionDialog(file);
               return;
             }
             _path!.update(fileName);
@@ -169,7 +169,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
     );
   }
 
-  Future<void> showDirActionDialog(FileSystemEntity file) async {
+  Future<void> _showDirActionDialog(FileSystemEntity file) async {
     showRoundDialog(
       context: context,
       child: Column(
@@ -178,7 +178,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
           ListTile(
             onTap: () {
               context.pop();
-              showRenameDialog(file);
+              _showRenameDialog(file);
             },
             title: Text(_s.rename),
             leading: const Icon(Icons.abc),
@@ -186,7 +186,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
           ListTile(
             onTap: () {
               context.pop();
-              showDeleteDialog(file);
+              _showDeleteDialog(file);
             },
             title: Text(_s.delete),
             leading: const Icon(Icons.delete),
@@ -196,7 +196,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
     );
   }
 
-  Future<void> showFileActionDialog(FileSystemEntity file) async {
+  Future<void> _showFileActionDialog(FileSystemEntity file) async {
     final fileName = file.path.split('/').last;
     if (widget.isPickFile) {
       await showRoundDialog(
@@ -252,7 +252,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
             title: Text(_s.rename),
             onTap: () {
               context.pop();
-              showRenameDialog(file);
+              _showRenameDialog(file);
             },
           ),
           ListTile(
@@ -260,7 +260,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
             title: Text(_s.delete),
             onTap: () {
               context.pop();
-              showDeleteDialog(file);
+              _showDeleteDialog(file);
             },
           ),
           ListTile(
@@ -319,7 +319,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
     );
   }
 
-  void showRenameDialog(FileSystemEntity file) {
+  void _showRenameDialog(FileSystemEntity file) {
     final fileName = file.path.split('/').last;
     showRoundDialog(
       context: context,
@@ -342,7 +342,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
     );
   }
 
-  void showDeleteDialog(FileSystemEntity file) {
+  void _showDeleteDialog(FileSystemEntity file) {
     final fileName = file.path.split('/').last;
     showRoundDialog(
       context: context,

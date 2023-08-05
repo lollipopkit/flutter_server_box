@@ -1,7 +1,7 @@
 import '../model/app/shell_func.dart';
 import 'build_data.dart';
 
-const seperator = 'SrvBox';
+const seperator = 'SrvBoxSep';
 const serverBoxDir = r'$HOME/.config/server_box';
 const shellPath = '$serverBoxDir/mobile_app.sh';
 

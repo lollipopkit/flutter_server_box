@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/data/provider/debug.dart';
 
 class DebugPage extends StatefulWidget {
@@ -14,7 +15,11 @@ class _DebugPageState extends State<DebugPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Logs'),
+        leading: IconButton(
+          onPressed: () => context.pop(),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+        ),
+        title: const Text('Logs', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.black,
       ),
       body: _buildTerminal(context),

@@ -22,8 +22,8 @@ enum AppShellFuncType {
       case AppShellFuncType.status:
         return 'status';
       case AppShellFuncType.docker:
-        /// `dockeR` -> avoid conflict with `docker` command
-        /// 以防止循环递归
+        // `dockeR` -> avoid conflict with `docker` command
+        // 以防止循环递归
         return 'dockeR';
     }
   }

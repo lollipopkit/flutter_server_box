@@ -16,13 +16,14 @@ import 'package:toolbox/locator.dart';
 
 final _dockerNotFound = RegExp(r'command not found|Unknown command');
 final _versionReg = RegExp(r'(Version:)\s+([0-9]+\.[0-9]+\.[0-9]+)');
-final _editionReg = RegExp(r'(Client:)\s+(.+-.+)');
+// eg: `Docker Engine - Community`
+final _editionReg = RegExp(r'Docker Engine - [a-zA-Z]+');
 final _dockerPrefixReg = RegExp(r'(sudo )?docker ');
 
 final _logger = Logger('DOCKER');
 
 class DockerProvider extends BusyProvider {
-  final dockerStore = locator<DockerStore>();
+  final _dockerStore = locator<DockerStore>();
 
   SSHClient? client;
   String? userName;
@@ -36,8 +37,12 @@ class DockerProvider extends BusyProvider {
   String? runLog;
   bool isRequestingPwd = false;
 
-  void init(SSHClient client, String userName, PwdRequestFunc onPwdReq,
-      String hostId) {
+  void init(
+    SSHClient client,
+    String userName,
+    PwdRequestFunc onPwdReq,
+    String hostId,
+  ) {
     this.client = client;
     this.userName = userName;
     this.onPwdReq = onPwdReq;
@@ -77,29 +82,22 @@ class DockerProvider extends BusyProvider {
 
     // Parse docker version
     final verRaw = DockerCmdType.version.find(segments);
-    try {
-      version = _versionReg.firstMatch(verRaw)?.group(2);
-      edition = _editionReg.firstMatch(verRaw)?.group(2);
-    } catch (e) {
-      error = DockerErr(
-        type: DockerErrType.invalidVersion,
-        message: '$verRaw\n\n$e',
-      );
-      rethrow;
-    }
+    version = _versionReg.firstMatch(verRaw)?.group(2);
+    edition = _editionReg.firstMatch(verRaw)?.group(0);
 
     // Parse docker ps
     final psRaw = DockerCmdType.ps.find(segments);
     try {
       final lines = psRaw.split('\n');
       lines.removeWhere((element) => element.isEmpty);
-      lines.removeAt(0);
+      if (lines.isNotEmpty) lines.removeAt(0);
       items = lines.map((e) => DockerPsItem.fromRawString(e)).toList();
     } catch (e) {
       error = DockerErr(
         type: DockerErrType.parsePsItem,
-        message: '$psRaw\n\n$e',
+        message: '$psRaw\n-\n$e',
       );
+      _logger.warning('parse docker ps: $psRaw', e);
       rethrow;
     } finally {
       setBusyState(false);
@@ -110,13 +108,14 @@ class DockerProvider extends BusyProvider {
     try {
       final imageLines = imageRaw.split('\n');
       imageLines.removeWhere((element) => element.isEmpty);
-      imageLines.removeAt(0);
+      if (imageLines.isNotEmpty) imageLines.removeAt(0);
       images = imageLines.map((e) => DockerImage.fromRawStr(e)).toList();
     } catch (e) {
       error = DockerErr(
         type: DockerErrType.parseImages,
-        message: '$imageRaw\n\n$e',
+        message: '$imageRaw\n-\n$e',
       );
+      _logger.warning('parse docker images: $imageRaw', e);
       rethrow;
     } finally {
       setBusyState(false);
@@ -139,8 +138,10 @@ class DockerProvider extends BusyProvider {
     } catch (e) {
       error = DockerErr(
         type: DockerErrType.parseStats,
-        message: '$statsRaw\n\n$e',
+        message: '$statsRaw\n-\n$e',
       );
+      _logger.warning('parse docker stats: $statsRaw', e);
+      rethrow;
     } finally {
       setBusyState(false);
     }
@@ -205,7 +206,7 @@ class DockerProvider extends BusyProvider {
 
   // judge whether to use DOCKER_HOST
   String _wrap(String cmd) {
-    final dockerHost = dockerStore.getDockerHost(hostId!);
+    final dockerHost = _dockerStore.getDockerHost(hostId!);
     if (dockerHost == null || dockerHost.isEmpty) {
       return cmd.withLangExport;
     }

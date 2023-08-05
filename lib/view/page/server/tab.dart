@@ -223,7 +223,7 @@ class _ServerPageState extends State<ServerPage>
           Row(
             children: [
               _buildTopRightText(ss, cs),
-              width7,
+              width13,
               _buildSSHBtn(spi),
               _buildMoreBtn(spi),
             ],
@@ -240,32 +240,33 @@ class _ServerPageState extends State<ServerPage>
       ss.uptime,
       ss.failedInfo,
     );
-    final hasError = cs == ServerState.failed && ss.failedInfo != null;
-    return hasError
-        ? GestureDetector(
-            onTap: () => showRoundDialog(
-              context: context,
-              title: Text(_s.error),
-              child: Text(ss.failedInfo ?? _s.unknownError),
-              actions: [
-                TextButton(
-                  onPressed: () =>
-                      copy2Clipboard(ss.failedInfo ?? _s.unknownError),
-                  child: Text(_s.copy),
-                )
-              ],
-            ),
-            child: Text(
-              _s.viewErr,
-              style: textSize12Grey,
-              textScaleFactor: 1.0,
-            ),
-          )
-        : Text(
-            topRightStr,
-            style: textSize12Grey,
-            textScaleFactor: 1.0,
-          );
+    if (cs == ServerState.failed && ss.failedInfo != null) {
+      return GestureDetector(
+        onTap: () => showRoundDialog(
+          context: context,
+          title: Text(_s.error),
+          child: SingleChildScrollView(
+            child: Text(ss.failedInfo!),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => copy2Clipboard(ss.failedInfo!),
+              child: Text(_s.copy),
+            )
+          ],
+        ),
+        child: Text(
+          _s.viewErr,
+          style: textSize12Grey,
+          textScaleFactor: 1.0,
+        ),
+      );
+    }
+    return Text(
+      topRightStr,
+      style: textSize12Grey,
+      textScaleFactor: 1.0,
+    );
   }
 
   Widget _buildSSHBtn(ServerPrivateInfo spi) {
@@ -281,6 +282,7 @@ class _ServerPageState extends State<ServerPage>
   Widget _buildMoreBtn(ServerPrivateInfo spi) {
     return PopupMenu(
       items: ServerTabMenuType.values.map((e) => e.build(_s)).toList(),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       onSelected: (ServerTabMenuType value) async {
         switch (value) {
           case ServerTabMenuType.pkg:
