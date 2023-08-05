@@ -266,7 +266,6 @@ class _DockerManagePageState extends State<DockerManagePage> {
       _buildImageHeader(),
       _buildImageItems(),
       _buildEditHost(),
-      const SizedBox(height: 37),
     ].map((e) => RoundRectCard(e));
     return ListView(
       padding: const EdgeInsets.all(7),

@@ -619,10 +619,16 @@ class _SftpPageState extends State<SftpPage> {
       _status.client = sftpc;
     }
     try {
-      final fs =
-          await _status.client!.listdir(path ?? _status.path?.path ?? '/');
+      final listPath = path ?? _status.path?.path ?? '/';
+      final fs = await _status.client!.listdir(listPath);
       fs.sort((a, b) => a.filename.compareTo(b.filename));
-      fs.removeAt(0);
+
+      /// Issue #97
+      /// In order to compatible with the Synology NAS
+      /// which not has '.' and '..' in listdir
+      if (fs.isNotEmpty && fs.first.filename == '.') {
+        fs.removeAt(0);
+      }
       if (mounted) {
         setState(() {
           _status.files = fs;
