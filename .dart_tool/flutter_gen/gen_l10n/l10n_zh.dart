@@ -563,6 +563,9 @@ class SZh extends S {
   String get start => '开始';
 
   @override
+  String get stats => '统计';
+
+  @override
   String get stop => '停止';
 
   @override
@@ -1246,6 +1249,9 @@ class SZhTw extends SZh {
 
   @override
   String get start => '開始';
+
+  @override
+  String get stats => '統計';
 
   @override
   String get stop => '停止';

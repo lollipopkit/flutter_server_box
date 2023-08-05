@@ -563,6 +563,9 @@ class SDe extends S {
   String get start => 'Start';
 
   @override
+  String get stats => 'Statistik';
+
+  @override
   String get stop => 'Stop';
 
   @override

@@ -176,6 +176,7 @@
   "sshTip": "This function is now in the experimental stage.\n\nPlease report bugs on {url} or join our development.",
   "sshVirtualKeyAutoOff": "Auto switching of virtual keys",
   "start": "Start",
+  "stats": "Stats",
   "stop": "Stop",
   "success": "Success",
   "sureDelete": "Are you sure to delete [{name}]?",

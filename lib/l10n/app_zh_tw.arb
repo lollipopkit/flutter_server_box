@@ -176,6 +176,7 @@
   "sshTip": "該功能目前處於測試階段。\n\n請在 {url} 反饋問題，或者加入我們開發。",
   "sshVirtualKeyAutoOff": "虛擬按鍵自動切換",
   "start": "開始",
+  "stats": "統計",
   "stop": "停止",
   "success": "成功",
   "sureDelete": "確定刪除 [{name}]？",

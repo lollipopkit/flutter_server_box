@@ -176,6 +176,7 @@
   "sshTip": "Fungsi ini sekarang dalam tahap eksperimen.\n\nHarap laporkan bug di {url} atau bergabunglah dengan pengembangan kami.",
   "sshVirtualKeyAutoOff": "Switching Otomatis Kunci Virtual",
   "start": "Awal",
+  "stats": "Statistik",
   "stop": "Berhenti",
   "success": "Kesuksesan",
   "sureDelete": "Apakah Anda pasti akan menghapus [{name}]?",

@@ -265,7 +265,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
         _docker.edition ?? _s.unknown,
         _docker.version ?? _s.unknown,
       ),
-      ..._buildPsItems(),
+      _buildPsItems(),
       _buildImages(),
       _buildEditHost(),
     ].map((e) => RoundRectCard(e)));
@@ -447,7 +447,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
     );
   }
 
-  List<Widget> _buildPsItems() {
+  Widget _buildPsItems() {
     final items = _docker.items!.map(_buildPsItem).toList();
     items.insert(
       0,
@@ -456,46 +456,30 @@ class _DockerManagePageState extends State<DockerManagePage> {
         subtitle: Text(_buildSubtitle(_docker.items!), style: grey),
       ),
     );
-    return items;
-  }
-
-  Widget _buildPsItem(DockerPsItem item) {
     return Column(
       mainAxisSize: MainAxisSize.min,
-      children: [
-        ListTile(
-          title: Text(item.name),
-          subtitle: Text(
-            '${item.image}\n${item.status}',
-            style: textSize13Grey,
-          ),
-          trailing: _buildMoreBtn(item, _docker.isBusy),
-        ),
-        _buildPsItemStat(item),
-      ],
+      children: items,
     );
   }
 
-  Widget _buildPsItemStat(DockerPsItem item) {
-    if (!item.running) return const SizedBox();
-    return Padding(
-      padding: const EdgeInsets.only(left: 17, bottom: 11, right: 17),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(item.cpu ?? _s.unknown, style: grey),
-          Text(item.mem ?? _s.unknown, style: grey),
-          Text(item.net ?? _s.unknown, style: grey),
-          Text(item.disk ?? _s.unknown, style: grey),
-        ],
+  Widget _buildPsItem(DockerPsItem item) {
+    return ListTile(
+      title: Text(item.name),
+      subtitle: Text(
+        '${item.image}\n${item.status}',
+        style: textSize13Grey,
       ),
+      trailing: _buildMoreBtn(item, _docker.isBusy),
     );
   }
 
   Widget _buildMoreBtn(DockerPsItem dItem, bool busy) {
     return PopupMenu(
-      items:
-          DockerMenuType.items(dItem.running).map((e) => e.build(_s)).toList(),
+      items: DockerMenuType.items(dItem.running)
+          .map(
+            (e) => e.build(_s),
+          )
+          .toList(),
       onSelected: (DockerMenuType item) async {
         if (busy) {
           showSnackBar(context, Text(_s.isBusy));
@@ -544,6 +528,25 @@ class _DockerManagePageState extends State<DockerManagePage> {
               ),
               'Docker terminal',
             ).go(context);
+            break;
+          case DockerMenuType.stats:
+            showRoundDialog(
+              context: context,
+              title: Text(_s.stats),
+              child: Text(
+                'CPU: ${dItem.cpu}\n'
+                'Mem: ${dItem.mem}\n'
+                'Net: ${dItem.net}\n'
+                'Block: ${dItem.disk}',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => context.pop(),
+                  child: Text(_s.ok),
+                ),
+              ],
+            );
+            break;
         }
       },
     );

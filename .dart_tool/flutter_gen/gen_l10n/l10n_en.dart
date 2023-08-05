@@ -563,6 +563,9 @@ class SEn extends S {
   String get start => 'Start';
 
   @override
+  String get stats => 'Stats';
+
+  @override
   String get stop => 'Stop';
 
   @override

@@ -563,6 +563,9 @@ class SId extends S {
   String get start => 'Awal';
 
   @override
+  String get stats => 'Statistik';
+
+  @override
   String get stop => 'Berhenti';
 
   @override

@@ -1154,6 +1154,12 @@ abstract class S {
   /// **'Start'**
   String get start;
 
+  /// No description provided for @stats.
+  ///
+  /// In en, this message translates to:
+  /// **'Stats'**
+  String get stats;
+
   /// No description provided for @stop.
   ///
   /// In en, this message translates to:
