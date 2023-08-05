@@ -80,7 +80,10 @@ class DockerProvider extends BusyProvider {
       version = _versionReg.firstMatch(verRaw)?.group(2);
       edition = _editionReg.firstMatch(verRaw)?.group(2);
     } catch (e) {
-      error = DockerErr(type: DockerErrType.unknown, message: e.toString());
+      error = DockerErr(
+        type: DockerErrType.invalidVersion,
+        message: '$verRaw\n\n$e',
+      );
       rethrow;
     }
 
@@ -92,7 +95,10 @@ class DockerProvider extends BusyProvider {
       lines.removeAt(0);
       items = lines.map((e) => DockerPsItem.fromRawString(e)).toList();
     } catch (e) {
-      error = DockerErr(type: DockerErrType.unknown, message: e.toString());
+      error = DockerErr(
+        type: DockerErrType.parsePsItem,
+        message: '$psRaw\n\n$e',
+      );
       rethrow;
     } finally {
       setBusyState(false);
@@ -106,7 +112,10 @@ class DockerProvider extends BusyProvider {
       imageLines.removeAt(0);
       images = imageLines.map((e) => DockerImage.fromRawStr(e)).toList();
     } catch (e) {
-      error = DockerErr(type: DockerErrType.unknown, message: e.toString());
+      error = DockerErr(
+        type: DockerErrType.parseImages,
+        message: '$imageRaw\n\n$e',
+      );
       rethrow;
     } finally {
       setBusyState(false);
@@ -127,7 +136,10 @@ class DockerProvider extends BusyProvider {
         item.parseStats(statsLine);
       }
     } catch (e) {
-      error = DockerErr(type: DockerErrType.unknown, message: e.toString());
+      error = DockerErr(
+        type: DockerErrType.parseStats,
+        message: '$statsRaw\n\n$e',
+      );
     } finally {
       setBusyState(false);
     }
