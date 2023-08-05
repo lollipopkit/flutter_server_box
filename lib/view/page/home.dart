@@ -124,6 +124,7 @@ class _HomePageState extends State<HomePage>
       ),
       body: PageView.builder(
         controller: _pageController,
+        itemCount: AppTab.values.length,
         itemBuilder: (_, index) => AppTab.values[index].page,
         onPageChanged: (value) {
           if (!_switchingPage) {

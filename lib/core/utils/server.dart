@@ -56,6 +56,7 @@ Future<SSHClient> genClient(
       timeout: const Duration(seconds: 5),
     );
   } catch (e) {
+    if (spi.alterUrl == null) rethrow;
     try {
       spi.fromStringUrl();
       socket = await SSHSocket.connect(

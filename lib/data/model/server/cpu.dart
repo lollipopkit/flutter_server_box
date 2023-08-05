@@ -47,14 +47,14 @@ class Cpus extends TimeSeq<OneTimeCpuStatus> {
 }
 
 class OneTimeCpuStatus extends TimeSeqIface<OneTimeCpuStatus> {
-  late String id;
-  late int user;
-  late int sys;
-  late int nice;
-  late int idle;
-  late int iowait;
-  late int irq;
-  late int softirq;
+  final String id;
+  final int user;
+  final int sys;
+  final int nice;
+  final int idle;
+  final int iowait;
+  final int irq;
+  final int softirq;
 
   OneTimeCpuStatus(
     this.id,
