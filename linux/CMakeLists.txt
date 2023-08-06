@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(runner LANGUAGES CXX)
 
-set(BINARY_NAME "toolbox")
+set(BINARY_NAME "ServerBox")
 set(APPLICATION_ID "tech.lolli.toolbox")
 
 cmake_policy(SET CMP0063 NEW)
