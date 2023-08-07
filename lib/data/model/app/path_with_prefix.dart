@@ -1,4 +1,4 @@
-import 'package:toolbox/core/utils/misc.dart';
+import '../../../core/utils/platform.dart';
 
 class PathWithPrefix {
   final String _prefixPath;

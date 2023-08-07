@@ -1,4 +1,4 @@
-import 'dart:io' show File, Platform, Process;
+import 'dart:io' show Directory, File, Platform, Process;
 
 import 'package:after_layout/after_layout.dart';
 import 'package:circle_chart/circle_chart.dart';
@@ -8,7 +8,6 @@ import 'package:get_it/get_it.dart';
 import 'package:nil/nil.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/order.dart';
-import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/data/model/app/net_view.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/provider/snippet.dart';
@@ -17,6 +16,7 @@ import 'package:toolbox/view/widget/tag/picker.dart';
 import 'package:toolbox/view/widget/tag/switcher.dart';
 
 import '../../../core/route.dart';
+import '../../../core/utils/misc.dart' hide pathJoin;
 import '../../../core/utils/platform.dart';
 import '../../../core/utils/server.dart';
 import '../../../core/utils/ui.dart';
@@ -453,17 +453,24 @@ class _ServerPageState extends State<ServerPage>
       AppRoute(SSHPage(spi: spi), 'ssh page').go(context);
       return;
     }
-    List<String> extarArgs = [];
-
-    final path = "/tmp/.serverbox_pk_${spi.pubKeyId}";
-    final file = File(path);
-    if (spi.pubKeyId != null) {
-      await file.delete();
-      await file.writeAsString(getPrivateKey(spi.pubKeyId!));
-      extarArgs += ["-i", path];
+    final extraArgs = <String>[];
+    if (spi.port != 22) {
+      extraArgs.addAll(['-p', '${spi.port}']);
     }
 
-    List<String> sshCommand = ["ssh", "${spi.user}@${spi.ip}"] + extarArgs;
+    final path = () {
+      final tempKeyFileName = 'srvbox_pk_${spi.pubKeyId}';
+      return pathJoin(Directory.systemTemp.path, tempKeyFileName);
+    }();
+    final file = File(path);
+    final shouldGenKey = spi.pubKeyId != null;
+    if (shouldGenKey) {
+      await file.delete();
+      await file.writeAsString(getPrivateKey(spi.pubKeyId!));
+      extraArgs.addAll(["-i", path]);
+    }
+
+    List<String> sshCommand = ["ssh", "${spi.user}@${spi.ip}"] + extraArgs;
     final system = Platform.operatingSystem;
     switch (system) {
       case "windows":
@@ -482,7 +489,9 @@ class _ServerPageState extends State<ServerPage>
         showSnackBar(context, Text('Mismatch system: $system'));
     }
     // For security reason, delete the private key file after use
-    await file.delete();
+    if (shouldGenKey) {
+      await Future.delayed(const Duration(seconds: 2), file.delete);
+    }
   }
 
   @override
