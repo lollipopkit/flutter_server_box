@@ -1,3 +1,4 @@
+import 'dart:io' show Process, File;
 import 'dart:async';
 import 'dart:convert';
 
@@ -24,6 +25,33 @@ import '../../../data/res/terminal.dart';
 import '../../../data/store/setting.dart';
 import '../../../locator.dart';
 import '../storage/sftp.dart';
+
+startSSH(ServerPrivateInfo spi, BuildContext context) {
+  if (isLinux || isMacOS) {
+    unawaited(() async {
+      List<String> extarArgs = [];
+      if (spi.pubKeyId != null) {
+        String path = "/tmp/.serverbox_pk_${spi.pubKeyId}";
+        File(path).openWrite().write(getPrivateKey(spi.pubKeyId!));
+        extarArgs += ["-i", path];
+      }
+      List<String> sshCommand = ["ssh", spi.user + "@" + spi.ip] + extarArgs;
+      if (isLinux) {
+        Process.start("x-terminal-emulator", ["-e"] + sshCommand);
+        return;
+      }
+      if (isMacOS) {
+        Process.start("osascript", [
+          "-e",
+          'tell application "Terminal" to do script "${sshCommand.join(" ")}"'
+        ]);
+        return;
+      }
+    }());
+    return;
+  }
+  AppRoute(SSHPage(spi: spi), 'ssh page').go(context);
+}
 
 class SSHPage extends StatefulWidget {
   final ServerPrivateInfo spi;

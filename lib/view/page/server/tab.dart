@@ -225,6 +225,7 @@ class _ServerPageState extends State<ServerPage>
               _buildTopRightText(ss, cs),
               width13,
               _buildSSHBtn(spi),
+//              SizedBox(width: 5,),
               _buildMoreBtn(spi),
             ],
           )
@@ -270,12 +271,12 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildSSHBtn(ServerPrivateInfo spi) {
-    return GestureDetector(
-      child: const Icon(
+    return IconButton(
+      icon: const Icon(
         Icons.terminal,
         size: 21,
       ),
-      onTap: () => AppRoute(SSHPage(spi: spi), 'ssh page').go(context),
+      onPressed: () => startSSH(spi, context),
     );
   }
 
