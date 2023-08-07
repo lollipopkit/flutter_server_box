@@ -40,6 +40,7 @@
 
 
 ## 🆘 帮助
+**可能**更适合大陆地区的 [QQ](https://qm.qq.com/q/cpcFYXixgs) 反馈。  
 如果你有任何问题或者功能请求，请在 [讨论](https://github.com/lollipopkit/flutter_server_box/discussions/new/choose) 中交流。  
 如果 ServerBox app 有任何 bug，请在 [问题](https://github.com/lollipopkit/flutter_server_box/issues/new) 中反馈。
 
@@ -82,12 +83,12 @@
 ## 🖥 平台
 状态|平台         
 --- | ---
-完整支持 | Android / iOS / macOS
-可能支持，未测试 | Windows / Linux
+完整支持 | Android / iOS
+未测试 | macOS / Windows / Linux
 
 ## 🧱 贡献
 **任何正面的贡献都欢迎**.
-第一次参与贡献，会赠送 10 份 iOS App 兑换码。这是我唯一能送的。你可以用来送给其他人。:)
+第一次参与贡献，会赠送 10 份 iOS App 兑换码。如果没有 iOS 设备，你可以用来送给其他人。:)
 
 ### l10n
 1. Fork 本项目，并 Clone 你 Fork 的项目至你的电脑
@@ -95,10 +96,14 @@
    - 文件名应该类似 `intl_XX.arb`,  `XX` 是语言标识码。 例如 `intl_en.arb` 是给英语的， `intl_zh.arb` 是给中文的
 3. 向 `.arb` 本地化文件添加内容。 你可以查看 `intl_en.arb` 和 `intl_zh.arb` 的内容，并理解其含义，来创建新的本地化文件
 4. 运行 `flutter gen-l10n` 来生成所需文件
-5. Commit 变更到你的 Fork 的 Repo
-6. 在我的项目中发起 Pull Request.
+5. Commit 变更到你 Fork 的 Repo
+6. 在我的项目中发起 Pull Request
 
 
-## 📝 License
-1. 允许打包自用，但不允许分发（举例：你可以教别人如何打包，避免花钱购买App，但不能与他人分享你打包的App）
-2. 除去上诉情形：遵循 `GPLv3`
+## 📝 开源协议
+- 允许打包自用，但不允许分发
+  - 举例：你可以教别人如何打包，避免花钱购买App，但不能与他人分享你打包的App）
+  - 之所以这样做：
+    1. 安全性：可能会有有心之人植入后门并分发
+    2. 回血：苹果开发者 **99刀/年**，并且作为刚毕业的独立开发者，我需要收入
+- 除去上述情形：遵循 `GPLv3`
