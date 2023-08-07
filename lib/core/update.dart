@@ -6,7 +6,6 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:logging/logging.dart';
 import 'package:r_upgrade/r_upgrade.dart';
 import 'package:toolbox/core/extension/navigator.dart';
-import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/data/res/path.dart';
 
 import '../data/provider/app.dart';

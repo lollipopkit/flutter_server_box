@@ -1,3 +1,5 @@
+import 'dart:io' show Directory, File, Platform, Process;
+
 import 'package:after_layout/after_layout.dart';
 import 'package:circle_chart/circle_chart.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +8,6 @@ import 'package:get_it/get_it.dart';
 import 'package:nil/nil.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/order.dart';
-import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/data/model/app/net_view.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/provider/snippet.dart';
@@ -15,6 +16,9 @@ import 'package:toolbox/view/widget/tag/picker.dart';
 import 'package:toolbox/view/widget/tag/switcher.dart';
 
 import '../../../core/route.dart';
+import '../../../core/utils/misc.dart' hide pathJoin;
+import '../../../core/utils/platform.dart';
+import '../../../core/utils/server.dart';
 import '../../../core/utils/ui.dart';
 import '../../../data/model/server/disk.dart';
 import '../../../data/model/server/server.dart';
@@ -225,7 +229,6 @@ class _ServerPageState extends State<ServerPage>
               _buildTopRightText(ss, cs),
               width13,
               _buildSSHBtn(spi),
-//              SizedBox(width: 5,),
               _buildMoreBtn(spi),
             ],
           )
@@ -271,12 +274,9 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildSSHBtn(ServerPrivateInfo spi) {
-    return IconButton(
-      icon: const Icon(
-        Icons.terminal,
-        size: 21,
-      ),
-      onPressed: () => startSSH(spi, context),
+    return GestureDetector(
+      child: const Icon(Icons.terminal, size: 21),
+      onTap: () => gotoSSH(spi),
     );
   }
 
@@ -445,6 +445,53 @@ class _ServerPageState extends State<ServerPage>
         ],
       ),
     );
+  }
+
+  Future<void> gotoSSH(ServerPrivateInfo spi) async {
+    // as a `Mobile first` app -> handle mobile first
+    if (!isDesktop) {
+      AppRoute(SSHPage(spi: spi), 'ssh page').go(context);
+      return;
+    }
+    final extraArgs = <String>[];
+    if (spi.port != 22) {
+      extraArgs.addAll(['-p', '${spi.port}']);
+    }
+
+    final path = () {
+      final tempKeyFileName = 'srvbox_pk_${spi.pubKeyId}';
+      return pathJoin(Directory.systemTemp.path, tempKeyFileName);
+    }();
+    final file = File(path);
+    final shouldGenKey = spi.pubKeyId != null;
+    if (shouldGenKey) {
+      await file.delete();
+      await file.writeAsString(getPrivateKey(spi.pubKeyId!));
+      extraArgs.addAll(["-i", path]);
+    }
+
+    List<String> sshCommand = ["ssh", "${spi.user}@${spi.ip}"] + extraArgs;
+    final system = Platform.operatingSystem;
+    switch (system) {
+      case "windows":
+        await Process.start("cmd", ["/c", "start"] + sshCommand);
+        break;
+      case "linux":
+        await Process.start("x-terminal-emulator", ["-e"] + sshCommand);
+        break;
+      case "macos":
+        await Process.start("osascript", [
+          "-e",
+          'tell application "Terminal" to do script "${sshCommand.join(" ")}"'
+        ]);
+        break;
+      default:
+        showSnackBar(context, Text('Mismatch system: $system'));
+    }
+    // For security reason, delete the private key file after use
+    if (shouldGenKey) {
+      await Future.delayed(const Duration(seconds: 2), file.delete);
+    }
   }
 
   @override

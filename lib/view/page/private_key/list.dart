@@ -9,7 +9,6 @@ import 'package:toolbox/data/store/private_key.dart';
 import 'package:toolbox/locator.dart';
 
 import '../../../core/route.dart';
-import '../../../core/utils/misc.dart';
 import '../../../core/utils/platform.dart';
 import '../../../data/model/server/private_key_info.dart';
 import '../../../data/provider/private_key.dart';

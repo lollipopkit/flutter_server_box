@@ -73,16 +73,7 @@ String getTime(int? unixMill) {
       .replaceFirst('.000', '');
 }
 
+/// Join two path with `/`
 String pathJoin(String path1, String path2) {
   return path1 + (path1.endsWith('/') ? '' : '/') + path2;
-}
-
-String? getHomeDir() {
-  final envVars = Platform.environment;
-  if (isMacOS || isLinux) {
-    return envVars['HOME'];
-  } else if (isWindows) {
-    return envVars['UserProfile'];
-  }
-  return null;
 }
