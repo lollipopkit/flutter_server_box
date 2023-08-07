@@ -1,3 +1,5 @@
+import 'dart:io' show File, Platform, Process;
+
 import 'package:after_layout/after_layout.dart';
 import 'package:circle_chart/circle_chart.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +17,8 @@ import 'package:toolbox/view/widget/tag/picker.dart';
 import 'package:toolbox/view/widget/tag/switcher.dart';
 
 import '../../../core/route.dart';
+import '../../../core/utils/platform.dart';
+import '../../../core/utils/server.dart';
 import '../../../core/utils/ui.dart';
 import '../../../data/model/server/disk.dart';
 import '../../../data/model/server/server.dart';
@@ -225,7 +229,6 @@ class _ServerPageState extends State<ServerPage>
               _buildTopRightText(ss, cs),
               width13,
               _buildSSHBtn(spi),
-//              SizedBox(width: 5,),
               _buildMoreBtn(spi),
             ],
           )
@@ -271,12 +274,9 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildSSHBtn(ServerPrivateInfo spi) {
-    return IconButton(
-      icon: const Icon(
-        Icons.terminal,
-        size: 21,
-      ),
-      onPressed: () => startSSH(spi, context),
+    return GestureDetector(
+      child: const Icon(Icons.terminal, size: 21),
+      onTap: () => gotoSSH(spi),
     );
   }
 
@@ -445,6 +445,38 @@ class _ServerPageState extends State<ServerPage>
         ],
       ),
     );
+  }
+
+  void gotoSSH(ServerPrivateInfo spi) {
+    // as a `Mobile first` app -> handle mobile first
+    if (!isDesktop) {
+      AppRoute(SSHPage(spi: spi), 'ssh page').go(context);
+      return;
+    }
+    List<String> extarArgs = [];
+    if (spi.pubKeyId != null) {
+      String path = "/tmp/.serverbox_pk_${spi.pubKeyId}";
+      File(path).openWrite().write(getPrivateKey(spi.pubKeyId!));
+      extarArgs += ["-i", path];
+    }
+    List<String> sshCommand = ["ssh", "${spi.user}@${spi.ip}"] + extarArgs;
+    switch (Platform.operatingSystem) {
+      case "windows":
+        Process.start("cmd", ["/c", "start"] + sshCommand);
+        return;
+      case "linux":
+        Process.start("x-terminal-emulator", ["-e"] + sshCommand);
+        return;
+      case "macos":
+        Process.start("osascript", [
+          "-e",
+          'tell application "Terminal" to do script "${sshCommand.join(" ")}"'
+        ]);
+        return;
+      default:
+        AppRoute(SSHPage(spi: spi), 'ssh page').go(context);
+        return;
+    }
   }
 
   @override

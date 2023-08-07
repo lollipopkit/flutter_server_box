@@ -43,8 +43,7 @@ class _ProcessPageState extends State<ProcessPage> {
       showSnackBar(context, Text(_s.noClient));
       return;
     }
-    _timer =
-        Timer.periodic(const Duration(seconds: 3), (_) => _refresh());
+    _timer = Timer.periodic(const Duration(seconds: 3), (_) => _refresh());
   }
 
   Future<void> _refresh() async {
