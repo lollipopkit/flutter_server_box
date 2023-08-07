@@ -33,7 +33,16 @@ enum AppShellFuncType {
       case AppShellFuncType.status:
         return statusCmds.join(_cmdDivider);
       case AppShellFuncType.docker:
-        return dockerCmds.join(_cmdDivider);
+        return '''
+# If the cmd result contains "permission denied", try to use `sudo`
+result=\$(docker version 2>&1)
+deniedStr="permission denied"
+containStr=\$(echo \$result | grep "\${deniedStr}")
+if [[ \$containStr != "" ]]; then
+${dockerCmds.join(_cmdDivider)}
+else
+${dockerCmds.map((e) => "sudo -S $e").join(_cmdDivider)}
+fi''';
     }
   }
 
