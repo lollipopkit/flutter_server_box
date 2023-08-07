@@ -360,8 +360,6 @@ class _DockerManagePageState extends State<DockerManagePage> {
           text: _s.invalidVersionHelp(appHelpUrl),
           replace: 'Github',
         );
-
-      /// TODO: Add solution for these cases.
       case DockerErrType.parseImages:
         return const Text('Parse images error');
       case DockerErrType.parsePsItem:

@@ -148,7 +148,6 @@ class DockerProvider extends BusyProvider {
   }
 
   Future<void> _onPwd(String event, StreamSink<Uint8List> stdin) async {
-    print(event);
     if (isRequestingPwd) return;
     isRequestingPwd = true;
     if (event.contains('[sudo] password for ')) {
