@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/utils/ui.dart';
@@ -25,6 +27,7 @@ class ProcessPage extends StatefulWidget {
 class _ProcessPageState extends State<ProcessPage> {
   late S _s;
   late Timer _timer;
+  SSHClient? _client;
 
   PsResult _result = PsResult(procs: []);
   int? _lastFocusId;
@@ -35,24 +38,27 @@ class _ProcessPageState extends State<ProcessPage> {
   @override
   void initState() {
     super.initState();
-    final client = _serverProvider.servers[widget.spi.id]?.client;
-    if (client == null) {
+    _client = _serverProvider.servers[widget.spi.id]?.client;
+    if (_client == null) {
       showSnackBar(context, Text(_s.noClient));
       return;
     }
-    _timer = Timer.periodic(const Duration(seconds: 3), (_) async {
-      if (mounted) {
-        final result = await client.run('ps -aux'.withLangExport).string;
-        if (result.isEmpty) {
-          showSnackBar(context, Text(_s.noResult));
-          return;
-        }
-        _result = PsResult.parse(result, sort: _procSortMode);
-        setState(() {});
-      } else {
-        _timer.cancel();
+    _timer =
+        Timer.periodic(const Duration(seconds: 3), (_) => _refresh());
+  }
+
+  Future<void> _refresh() async {
+    if (mounted) {
+      final result = await _client?.run('ps -aux'.withLangExport).string;
+      if (result == null || result.isEmpty) {
+        showSnackBar(context, Text(_s.noResult));
+        return;
       }
-    });
+      _result = PsResult.parse(result, sort: _procSortMode);
+      setState(() {});
+    } else {
+      _timer.cancel();
+    }
   }
 
   @override
@@ -140,6 +146,24 @@ class _ProcessPageState extends State<ProcessPage> {
         ],
       ),
       onTap: () => _lastFocusId = proc.pid,
+      onLongPress: () {
+        showRoundDialog(
+          context: context,
+          title: Text(_s.attention),
+          child: Text(_s.sureStop(proc.pid)),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                await _client?.run('kill ${proc.pid}');
+                await _refresh();
+                context.pop();
+              },
+              child: Text(_s.ok),
+            ),
+          ],
+        );
+      },
+      selected: _lastFocusId == proc.pid,
       autofocus: _lastFocusId == proc.pid,
     ));
   }

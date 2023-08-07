@@ -183,6 +183,7 @@
   "sureDelete": "Soll [{name}] wirklich gelöscht werden?",
   "sureDirEmpty": "Stelle sicher, dass der Ordner leer ist.",
   "sureNoPwd": "Bist du sicher, dass du kein Passwort verwenden willst?",
+  "sureStop": "Sind Sie sicher, dass Sie [{item}] stoppen möchten?",
   "sureToDeleteServer": "Bist du sicher, dass du [{server}] löschen willst?",
   "system": "Systeme",
   "tag": "Tags",

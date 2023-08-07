@@ -586,6 +586,11 @@ class SEn extends S {
   String get sureNoPwd => 'Are you sure to use no password?';
 
   @override
+  String sureStop(Object item) {
+    return 'Sure to stop [$item] ?';
+  }
+
+  @override
   String sureToDeleteServer(Object server) {
     return 'Are you sure to delete server [$server]?';
   }

@@ -183,6 +183,7 @@
   "sureDelete": "Are you sure to delete [{name}]?",
   "sureDirEmpty": "Make sure dir is empty.",
   "sureNoPwd": "Are you sure to use no password?",
+  "sureStop": "Sure to stop [{item}] ?",
   "sureToDeleteServer": "Are you sure to delete server [{server}]?",
   "system": "System",
   "tag": "Tags",

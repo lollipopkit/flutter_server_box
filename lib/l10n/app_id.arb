@@ -183,6 +183,7 @@
   "sureDelete": "Apakah Anda pasti akan menghapus [{name}]?",
   "sureDirEmpty": "Pastikan dir kosong.",
   "sureNoPwd": "Apakah Anda pasti tidak menggunakan kata sandi?",
+  "sureStop": "Anda yakin ingin menghentikan [{item}]?",
   "sureToDeleteServer": "Apakah Anda pasti akan menghapus server [{server}]?",
   "system": "Sistem",
   "tag": "Tag",

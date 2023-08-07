@@ -586,6 +586,11 @@ class SId extends S {
   String get sureNoPwd => 'Apakah Anda pasti tidak menggunakan kata sandi?';
 
   @override
+  String sureStop(Object item) {
+    return 'Anda yakin ingin menghentikan [$item]?';
+  }
+
+  @override
   String sureToDeleteServer(Object server) {
     return 'Apakah Anda pasti akan menghapus server [$server]?';
   }

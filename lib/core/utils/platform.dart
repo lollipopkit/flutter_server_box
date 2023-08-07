@@ -9,6 +9,7 @@ enum PlatformType {
   macos,
   windows,
   web,
+  fuchsia,
   unknown,
 }
 
@@ -30,6 +31,9 @@ final _p = () {
   }
   if (Platform.isWindows) {
     return PlatformType.windows;
+  }
+  if (Platform.isFuchsia) {
+    return PlatformType.fuchsia;
   }
   return PlatformType.unknown;
 }();

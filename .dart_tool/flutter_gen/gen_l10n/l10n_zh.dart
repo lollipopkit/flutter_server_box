@@ -586,6 +586,11 @@ class SZh extends S {
   String get sureNoPwd => '确认使用无密码？';
 
   @override
+  String sureStop(Object item) {
+    return '确定要停止 [$item] 吗？';
+  }
+
+  @override
   String sureToDeleteServer(Object server) {
     return '你确定要删除服务器 [$server] 吗？';
   }
@@ -1275,6 +1280,11 @@ class SZhTw extends SZh {
 
   @override
   String get sureNoPwd => '確認使用無密碼？';
+
+  @override
+  String sureStop(Object item) {
+    return '確定要停止 [$item] 嗎？';
+  }
 
   @override
   String sureToDeleteServer(Object server) {

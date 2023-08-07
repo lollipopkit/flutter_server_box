@@ -586,6 +586,11 @@ class SDe extends S {
   String get sureNoPwd => 'Bist du sicher, dass du kein Passwort verwenden willst?';
 
   @override
+  String sureStop(Object item) {
+    return 'Sind Sie sicher, dass Sie [$item] stoppen möchten?';
+  }
+
+  @override
   String sureToDeleteServer(Object server) {
     return 'Bist du sicher, dass du [$server] löschen willst?';
   }

@@ -1196,6 +1196,12 @@ abstract class S {
   /// **'Are you sure to use no password?'**
   String get sureNoPwd;
 
+  /// No description provided for @sureStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Sure to stop [{item}] ?'**
+  String sureStop(Object item);
+
   /// No description provided for @sureToDeleteServer.
   ///
   /// In en, this message translates to:
