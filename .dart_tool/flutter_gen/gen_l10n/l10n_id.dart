@@ -41,6 +41,9 @@ class SId extends S {
   String get auto => 'Auto';
 
   @override
+  String get autoCheckUpdate => 'Periksa pembaruan otomatis';
+
+  @override
   String get autoUpdateHomeWidget => 'Widget Rumah Pembaruan Otomatis';
 
   @override

@@ -142,6 +142,7 @@ class _SettingPageState extends State<SettingPage> {
       _buildThemeMode(),
       _buildAppColor(),
       _buildLaunchPage(),
+      _buildAutoCheckAppUpdate(),
       _buildCheckUpdate(),
     ];
     if (isIOS) {
@@ -975,6 +976,14 @@ class _SettingPageState extends State<SettingPage> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildAutoCheckAppUpdate() {
+    return ListTile(
+      title: Text(_s.autoCheckUpdate),
+      subtitle: Text(_s.whenOpenApp, style: grey),
+      trailing: buildSwitch(context, _setting.autoCheckAppUpdate),
     );
   }
 }

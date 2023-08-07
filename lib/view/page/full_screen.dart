@@ -374,7 +374,9 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
 
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
-    doUpdate(context);
+    if (_setting.autoCheckAppUpdate.fetch()!) {
+      doUpdate(context);
+    }
     await GetIt.I.allReady();
     await _serverProvider.loadLocalData();
     await _serverProvider.refreshData();

@@ -99,4 +99,7 @@ class SettingStore extends PersistentStore {
   // Only valid on iOS
   StoreProperty<bool> get autoUpdateHomeWidget =>
       property('autoUpdateHomeWidget', defaultValue: isIOS);
+
+  StoreProperty<bool> get autoCheckAppUpdate =>
+      property('autoCheckAppUpdate', defaultValue: true);
 }

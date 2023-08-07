@@ -330,7 +330,9 @@ class _HomePageState extends State<HomePage>
 
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
-    doUpdate(context);
+    if (_setting.autoCheckAppUpdate.fetch()!) {
+      doUpdate(context);
+    }
     updateHomeWidget();
     await GetIt.I.allReady();
     await _serverProvider.loadLocalData();

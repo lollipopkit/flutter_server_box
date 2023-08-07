@@ -12,6 +12,7 @@
   "alterUrl": "Url ändern",
   "attention": "Achtung",
   "auto": "System folgen",
+  "autoCheckUpdate": "Aktualisierung automatisch prüfen",
   "autoUpdateHomeWidget": "Home-Widget automatisch aktualisieren",
   "backup": "Backup",
   "backupAndRestore": "Backup und Wiederherstellung",

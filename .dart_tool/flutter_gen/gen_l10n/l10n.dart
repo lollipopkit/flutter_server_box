@@ -170,6 +170,12 @@ abstract class S {
   /// **'Auto'**
   String get auto;
 
+  /// No description provided for @autoCheckUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto check update'**
+  String get autoCheckUpdate;
+
   /// No description provided for @autoUpdateHomeWidget.
   ///
   /// In en, this message translates to:
