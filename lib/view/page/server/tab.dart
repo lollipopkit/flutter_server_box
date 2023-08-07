@@ -447,36 +447,42 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  void gotoSSH(ServerPrivateInfo spi) {
+  Future<void> gotoSSH(ServerPrivateInfo spi) async {
     // as a `Mobile first` app -> handle mobile first
     if (!isDesktop) {
       AppRoute(SSHPage(spi: spi), 'ssh page').go(context);
       return;
     }
     List<String> extarArgs = [];
+
+    final path = "/tmp/.serverbox_pk_${spi.pubKeyId}";
+    final file = File(path);
     if (spi.pubKeyId != null) {
-      String path = "/tmp/.serverbox_pk_${spi.pubKeyId}";
-      File(path).openWrite().write(getPrivateKey(spi.pubKeyId!));
+      await file.delete();
+      await file.writeAsString(getPrivateKey(spi.pubKeyId!));
       extarArgs += ["-i", path];
     }
+
     List<String> sshCommand = ["ssh", "${spi.user}@${spi.ip}"] + extarArgs;
-    switch (Platform.operatingSystem) {
+    final system = Platform.operatingSystem;
+    switch (system) {
       case "windows":
-        Process.start("cmd", ["/c", "start"] + sshCommand);
-        return;
+        await Process.start("cmd", ["/c", "start"] + sshCommand);
+        break;
       case "linux":
-        Process.start("x-terminal-emulator", ["-e"] + sshCommand);
-        return;
+        await Process.start("x-terminal-emulator", ["-e"] + sshCommand);
+        break;
       case "macos":
-        Process.start("osascript", [
+        await Process.start("osascript", [
           "-e",
           'tell application "Terminal" to do script "${sshCommand.join(" ")}"'
         ]);
-        return;
+        break;
       default:
-        AppRoute(SSHPage(spi: spi), 'ssh page').go(context);
-        return;
+        showSnackBar(context, Text('Mismatch system: $system'));
     }
+    // For security reason, delete the private key file after use
+    await file.delete();
   }
 
   @override
