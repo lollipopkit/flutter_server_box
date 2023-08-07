@@ -27,7 +27,7 @@
 ## 🔖 特点
 - [x] 功能
   - [x] `SSH` 终端, `SFTP`
-  - [x] `Docker & 包` 管理器
+  - [x] `Docker & 包 & 进程` 管理器
   - [x] 状态图表
   - [x] 代码编辑器
   - [x] `Ping` 和 更多
@@ -40,7 +40,7 @@
 
 
 ## 🆘 帮助
-**可能**更适合大陆地区的 [QQ](https://qm.qq.com/q/cpcFYXixgs) 反馈。  
+**可能**更适合大陆地区的 [QQ](https://qm.qq.com/q/cpcFYXixgs) 或 [邮箱](mailto:lollipopkit@qq.com) 反馈。  
 如果你有任何问题或者功能请求，请在 [讨论](https://github.com/lollipopkit/flutter_server_box/discussions/new/choose) 中交流。  
 如果 ServerBox app 有任何 bug，请在 [问题](https://github.com/lollipopkit/flutter_server_box/issues/new) 中反馈。
 
@@ -87,7 +87,7 @@
 未测试 | macOS / Windows / Linux
 
 ## 🧱 贡献
-**任何正面的贡献都欢迎**.
+**任何正面的贡献都欢迎**。
 第一次参与贡献，会赠送 10 份 iOS App 兑换码。如果没有 iOS 设备，你可以用来送给其他人。:)
 
 ### l10n

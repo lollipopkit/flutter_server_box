@@ -40,7 +40,6 @@ In order to push  server status to your portable device without opening ServerBo
 
 
 ## 🆘 Help
-**Maybe** a more convinient [way](https://qm.qq.com/q/cpcFYXixgs) for China mainland people.
 If you have any question or feature request, please open a [discussion](https://github.com/lollipopkit/flutter_server_box/discussions/new/choose).  
 If ServerBox app has any bug, please open an [issue](https://github.com/lollipopkit/flutter_server_box/issues/new).
 
