@@ -36,14 +36,18 @@ List<Disk> parseDisk(String raw) {
       vals[0] = pathCache;
       pathCache = '';
     }
-    list.add(Disk(
-      path: vals[0],
-      loc: vals[5],
-      usedPercent: int.parse(vals[4].replaceFirst('%', '')),
-      used: vals[2],
-      size: vals[1],
-      avail: vals[3],
-    ));
+    try {
+      list.add(Disk(
+        path: vals[0],
+        loc: vals[5],
+        usedPercent: int.parse(vals[4].replaceFirst('%', '')),
+        used: vals[2],
+        size: vals[1],
+        avail: vals[3],
+      ));
+    } catch (e) {
+      continue;
+    }
   }
   return list;
 }
