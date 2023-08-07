@@ -261,10 +261,8 @@ class _DockerManagePageState extends State<DockerManagePage> {
     final items = <Widget>[
       _buildLoading(),
       _buildVersion(),
-      _buildPsHeader(),
-      _buildPsItems(),
-      _buildImageHeader(),
-      _buildImageItems(),
+      _buildPs(),
+      _buildImage(),
       _buildEditHost(),
     ].map((e) => RoundRectCard(e));
     return ListView(
@@ -273,21 +271,18 @@ class _DockerManagePageState extends State<DockerManagePage> {
     );
   }
 
-  Widget _buildImageHeader() {
-    return ListTile(
-      title: Text(_s.imagesList),
-      subtitle: Text(
-        _s.dockerImagesFmt(_docker.images!.length),
-        style: grey,
+  Widget _buildImage() {
+    final items = <Widget>[
+      ListTile(
+        title: Text(_s.imagesList),
+        subtitle: Text(
+          _s.dockerImagesFmt(_docker.images!.length),
+          style: grey,
+        ),
       ),
-    );
-  }
-
-  Widget _buildImageItems() {
-    if (_docker.images == null) {
-      return nil;
-    }
-    return Column(children: _docker.images!.map(_buildImageItem).toList());
+    ];
+    items.addAll(_docker.images!.map(_buildImageItem));
+    return Column(children: items);
   }
 
   Widget _buildImageItem(DockerImage e) {
@@ -365,8 +360,6 @@ class _DockerManagePageState extends State<DockerManagePage> {
           text: _s.invalidVersionHelp(appHelpUrl),
           replace: 'Github',
         );
-
-      /// TODO: Add solution for these cases.
       case DockerErrType.parseImages:
         return const Text('Parse images error');
       case DockerErrType.parsePsItem:
@@ -395,20 +388,17 @@ class _DockerManagePageState extends State<DockerManagePage> {
     );
   }
 
-  Widget _buildPsHeader() {
-    return ListTile(
-      title: Text(_s.containerStatus),
-      subtitle: Text(_buildPsCardSubtitle(_docker.items!), style: grey),
-    );
-  }
-
-  Widget _buildPsItems() {
-    if (_docker.items == null) {
-      return nil;
-    }
+  Widget _buildPs() {
+    final items = <Widget>[
+      ListTile(
+        title: Text(_s.containerStatus),
+        subtitle: Text(_buildPsCardSubtitle(_docker.items!), style: grey),
+      ),
+    ];
+    items.addAll(_docker.items!.map(_buildPsItem));
     return Column(
       mainAxisSize: MainAxisSize.min,
-      children: _docker.items!.map(_buildPsItem).toList(),
+      children: items,
     );
   }
 

@@ -126,7 +126,7 @@ class DockerProvider extends BusyProvider {
     try {
       final statsLines = statsRaw.split('\n');
       statsLines.removeWhere((element) => element.isEmpty);
-      statsLines.removeAt(0);
+      if (statsLines.isNotEmpty) statsLines.removeAt(0);
       for (var item in items!) {
         final statsLine = statsLines.firstWhere(
           (element) => element.contains(item.containerId),

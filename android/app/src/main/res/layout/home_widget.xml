@@ -15,6 +15,7 @@
         android:textColor="@color/widgetText"
         android:textSize="23sp"
         android:textStyle="bold"
+        android:maxLines="1"
         tools:text="Server Name" />
 
     <RelativeLayout
