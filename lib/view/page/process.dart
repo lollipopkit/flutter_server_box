@@ -27,6 +27,8 @@ class ProcessPage extends StatefulWidget {
 class _ProcessPageState extends State<ProcessPage> {
   late S _s;
   late Timer _timer;
+  late MediaQueryData _media;
+
   SSHClient? _client;
 
   PsResult _result = PsResult(procs: []);
@@ -44,6 +46,13 @@ class _ProcessPageState extends State<ProcessPage> {
       return;
     }
     _timer = Timer.periodic(const Duration(seconds: 3), (_) => _refresh());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _s = S.of(context)!;
+    _media = MediaQuery.of(context);
   }
 
   Future<void> _refresh() async {
@@ -64,12 +73,6 @@ class _ProcessPageState extends State<ProcessPage> {
   void dispose() {
     super.dispose();
     _timer.cancel();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _s = S.of(context)!;
   }
 
   @override
@@ -109,7 +112,18 @@ class _ProcessPageState extends State<ProcessPage> {
         padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 7),
         itemBuilder: (ctx, idx) {
           final proc = _result.procs[idx];
-          return _buildListItem(proc);
+          return AnimatedSwitcher(
+            duration: const Duration(milliseconds: 277),
+            switchInCurve: Curves.easeIn,
+            switchOutCurve: Curves.easeOut,
+            transitionBuilder: (child, animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: child,
+              );
+            },
+            child: _buildListItem(proc),
+          );
         },
       );
     }
@@ -124,46 +138,49 @@ class _ProcessPageState extends State<ProcessPage> {
   }
 
   Widget _buildListItem(Proc proc) {
-    return RoundRectCard(ListTile(
-      leading: SizedBox(
-        width: 57,
-        child: TwoLineText(up: proc.pid.toString(), down: proc.user),
-      ),
-      title: Text(proc.binary),
-      subtitle: Text(
-        proc.command,
-        style: grey,
-        maxLines: 3,
-        overflow: TextOverflow.fade,
-      ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TwoLineText(up: proc.cpu.toStringAsFixed(1), down: 'cpu'),
-          width13,
-          TwoLineText(up: proc.mem.toStringAsFixed(1), down: 'mem'),
-        ],
-      ),
-      onTap: () => _lastFocusId = proc.pid,
-      onLongPress: () {
-        showRoundDialog(
-          context: context,
-          title: Text(_s.attention),
-          child: Text(_s.sureStop(proc.pid)),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                await _client?.run('kill ${proc.pid}');
-                await _refresh();
-                context.pop();
-              },
-              child: Text(_s.ok),
-            ),
+    return RoundRectCard(
+      ListTile(
+        leading: SizedBox(
+          width: _media.size.width / 6,
+          child: TwoLineText(up: proc.pid.toString(), down: proc.user),
+        ),
+        title: Text(proc.binary),
+        subtitle: Text(
+          proc.command,
+          style: grey,
+          maxLines: 3,
+          overflow: TextOverflow.fade,
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TwoLineText(up: proc.cpu.toStringAsFixed(1), down: 'cpu'),
+            width13,
+            TwoLineText(up: proc.mem.toStringAsFixed(1), down: 'mem'),
           ],
-        );
-      },
-      selected: _lastFocusId == proc.pid,
-      autofocus: _lastFocusId == proc.pid,
-    ));
+        ),
+        onTap: () => _lastFocusId = proc.pid,
+        onLongPress: () {
+          showRoundDialog(
+            context: context,
+            title: Text(_s.attention),
+            child: Text(_s.sureStop(proc.pid)),
+            actions: [
+              TextButton(
+                onPressed: () async {
+                  await _client?.run('kill ${proc.pid}');
+                  await _refresh();
+                  context.pop();
+                },
+                child: Text(_s.ok),
+              ),
+            ],
+          );
+        },
+        selected: _lastFocusId == proc.pid,
+        autofocus: _lastFocusId == proc.pid,
+      ),
+      key: ValueKey(proc.pid),
+    );
   }
 }
