@@ -396,6 +396,9 @@ class SDe extends S {
   String get noServerAvailable => 'Kein Server verfügbar.';
 
   @override
+  String get noTask => 'Nicht fragen';
+
+  @override
   String get noUpdateAvailable => 'Kein Update verfügbar';
 
   @override
@@ -533,9 +536,6 @@ class SDe extends S {
 
   @override
   String get sftpDlPrepare => 'Verbindung vorbereiten...';
-
-  @override
-  String get sftpNoDownloadTask => 'Keine aktiven Downloads.';
 
   @override
   String get sftpSSHConnected => 'SFTP Verbunden';

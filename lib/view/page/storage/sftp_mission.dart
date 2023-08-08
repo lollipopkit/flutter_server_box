@@ -48,7 +48,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
     return Consumer<SftpProvider>(builder: (__, pro, _) {
       if (pro.status.isEmpty) {
         return Center(
-          child: Text(_s.sftpNoDownloadTask),
+          child: Text(_s.noTask),
         );
       }
       return ListView.builder(

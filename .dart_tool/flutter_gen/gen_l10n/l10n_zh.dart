@@ -396,6 +396,9 @@ class SZh extends S {
   String get noServerAvailable => '没有可用的服务器。';
 
   @override
+  String get noTask => '没有任务';
+
+  @override
   String get noUpdateAvailable => '没有可用更新';
 
   @override
@@ -535,10 +538,7 @@ class SZh extends S {
   String get sftpDlPrepare => '准备连接至服务器...';
 
   @override
-  String get sftpNoDownloadTask => '没有下载任务';
-
-  @override
-  String get sftpSSHConnected => 'SFTP 已连接，即将开始下载...';
+  String get sftpSSHConnected => 'SFTP 已连接...';
 
   @override
   String get showDistLogo => '显示发行版 Logo';
@@ -1092,6 +1092,9 @@ class SZhTw extends SZh {
   String get noServerAvailable => '沒有可用的服務器。';
 
   @override
+  String get noTask => '沒有任務';
+
+  @override
   String get noUpdateAvailable => '沒有可用更新';
 
   @override
@@ -1231,10 +1234,7 @@ class SZhTw extends SZh {
   String get sftpDlPrepare => '準備連接至服務器...';
 
   @override
-  String get sftpNoDownloadTask => '沒有下載任務';
-
-  @override
-  String get sftpSSHConnected => 'SFTP 已連接，即將開始下載...';
+  String get sftpSSHConnected => 'SFTP 已連接...';
 
   @override
   String get showDistLogo => '顯示發行版 Logo';

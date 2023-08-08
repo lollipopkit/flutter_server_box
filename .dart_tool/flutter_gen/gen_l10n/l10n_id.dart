@@ -396,6 +396,9 @@ class SId extends S {
   String get noServerAvailable => 'Tidak ada server yang tersedia.';
 
   @override
+  String get noTask => 'Tidak bertanya';
+
+  @override
   String get noUpdateAvailable => 'Tidak ada pembaruan yang tersedia';
 
   @override
@@ -533,9 +536,6 @@ class SId extends S {
 
   @override
   String get sftpDlPrepare => 'Bersiap untuk terhubung ...';
-
-  @override
-  String get sftpNoDownloadTask => 'Tidak ada tugas unduhan.';
 
   @override
   String get sftpSSHConnected => 'Sftp terhubung';

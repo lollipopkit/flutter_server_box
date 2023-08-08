@@ -396,6 +396,9 @@ class SEn extends S {
   String get noServerAvailable => 'No server available.';
 
   @override
+  String get noTask => 'No task';
+
+  @override
   String get noUpdateAvailable => 'No update available';
 
   @override
@@ -533,9 +536,6 @@ class SEn extends S {
 
   @override
   String get sftpDlPrepare => 'Preparing to connect...';
-
-  @override
-  String get sftpNoDownloadTask => 'No download task.';
 
   @override
   String get sftpSSHConnected => 'SFTP Connected';

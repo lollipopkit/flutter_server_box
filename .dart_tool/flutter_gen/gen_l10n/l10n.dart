@@ -836,6 +836,12 @@ abstract class S {
   /// **'No server available.'**
   String get noServerAvailable;
 
+  /// No description provided for @noTask.
+  ///
+  /// In en, this message translates to:
+  /// **'No task'**
+  String get noTask;
+
   /// No description provided for @noUpdateAvailable.
   ///
   /// In en, this message translates to:
@@ -1105,12 +1111,6 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Preparing to connect...'**
   String get sftpDlPrepare;
-
-  /// No description provided for @sftpNoDownloadTask.
-  ///
-  /// In en, this message translates to:
-  /// **'No download task.'**
-  String get sftpNoDownloadTask;
 
   /// No description provided for @sftpSSHConnected.
   ///
