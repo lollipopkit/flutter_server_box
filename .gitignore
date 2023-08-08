@@ -48,7 +48,6 @@ app.*.map.json
 /android/app/fjy.androidstudio.key
 /release
 test.dart
-.fvm
 
 # Keep generated l10n files
 /.dart_tool/*

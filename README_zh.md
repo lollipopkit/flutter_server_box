@@ -40,7 +40,6 @@
 
 
 ## 🆘 帮助
-**可能**更适合大陆地区的 [QQ](https://qm.qq.com/q/cpcFYXixgs) 或 [邮箱](mailto:lollipopkit@qq.com) 反馈。  
 如果你有任何问题或者功能请求，请在 [讨论](https://github.com/lollipopkit/flutter_server_box/discussions/new/choose) 中交流。  
 如果 ServerBox app 有任何 bug，请在 [问题](https://github.com/lollipopkit/flutter_server_box/issues/new) 中反馈。
 

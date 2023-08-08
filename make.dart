@@ -1,4 +1,4 @@
-#!/usr/bin/env fvm dart
+#!/usr/bin/env dart
 // ignore_for_file: avoid_print
 
 import 'dart:convert';
@@ -20,10 +20,6 @@ const buildFuncs = {
 };
 
 int? build;
-
-Future<ProcessResult> fvmRun(List<String> args) async {
-  return await Process.run('fvm', args, runInShell: true);
-}
 
 Future<void> getGitCommitCount() async {
   final result = await Process.run('git', ['log', '--oneline']);
@@ -58,7 +54,7 @@ Future<int> getGitModificationCount() async {
 }
 
 Future<String> getFlutterVersion() async {
-  final result = await fvmRun(['flutter', '--version']);
+  final result = await Process.run('flutter', ['--version']);
   final stdout = result.stdout as String;
   return stdout.split('\n')[0].split('•')[0].split(' ')[1].trim();
 }
@@ -87,7 +83,7 @@ Future<void> updateBuildData() async {
 }
 
 Future<void> dartFormat() async {
-  final result = await fvmRun(['dart', 'format', '.']);
+  final result = await Process.run('dart', ['format', '.']);
   print(result.stdout);
   if (result.exitCode != 0) {
     print(result.stderr);
@@ -95,10 +91,10 @@ Future<void> dartFormat() async {
   }
 }
 
-void flutterRun(String? mode) {
-  Process.start(
-      'fvm', mode == null ? ['flutter', 'run'] : ['flutter', 'run', '--$mode'],
-      mode: ProcessStartMode.inheritStdio, runInShell: true);
+Future<String> getFileSha1(String path) async {
+  final result = await Process.run('shasum', ['-a', '1', path]);
+  final stdout = result.stdout as String;
+  return stdout.split(' ')[0];
 }
 
 Future<void> flutterBuild(String buildType) async {
@@ -120,7 +116,7 @@ Future<void> flutterBuild(String buildType) async {
     ]);
   }
   print('\n[$buildType]\nBuilding with args: ${args.join(' ')}');
-  final buildResult = await fvmRun(['flutter', ...args]);
+  final buildResult = await Process.run('flutter', args);
   final exitCode = buildResult.exitCode;
 
   if (exitCode != 0) {
@@ -146,12 +142,13 @@ Future<void> flutterBuildAndroid() async {
 }
 
 Future<void> scp2CDN() async {
+  final sha1 = await getFileSha1(apkPath);
+  print('SHA1: $sha1');
   final result = await Process.run(
     'scp',
-    [apkPath, 'hk:/var/www/res/serverbox/apks/$build.apk'],
+    [apkPath, 'hk:/var/www/res/serverbox/apks/$sha1.apk'],
     runInShell: true,
   );
-  print(result.stdout);
   if (result.exitCode != 0) {
     print(result.stderr);
     exit(1);
