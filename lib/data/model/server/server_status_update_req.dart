@@ -67,13 +67,16 @@ String? _parseUpTime(String raw) {
 }
 
 String? _parseSysVer(String raw, String hostname, String rawRhel) {
-  if (!rawRhel.contains('No such file')) {
-    return rawRhel;
+  try {
+    final s = raw.split('=');
+    if (s.length == 2) {
+      return s[1].replaceAll('"', '').replaceFirst('\n', '');
+    }
+  } catch (e) {
+    if (!rawRhel.contains('cat: /etc/redhat-release:')) {
+      return rawRhel;
+    }
+    if (hostname.isNotEmpty) return hostname;
   }
-  final s = raw.split('=');
-  if (s.length == 2) {
-    return s[1].replaceAll('"', '').replaceFirst('\n', '');
-  }
-  if (hostname.isNotEmpty) return hostname;
   return null;
 }
