@@ -91,8 +91,8 @@ Future<void> dartFormat() async {
   }
 }
 
-Future<String> getFileSha1(String path) async {
-  final result = await Process.run('shasum', ['-a', '1', path]);
+Future<String> getFileSha256(String path) async {
+  final result = await Process.run('shasum', ['-a', '256', path]);
   final stdout = result.stdout as String;
   return stdout.split(' ')[0];
 }
@@ -142,11 +142,11 @@ Future<void> flutterBuildAndroid() async {
 }
 
 Future<void> scp2CDN() async {
-  final sha1 = await getFileSha1(apkPath);
-  print('SHA1: $sha1');
+  final sha256 = await getFileSha256(apkPath);
+  print('SHA256: $sha256');
   final result = await Process.run(
     'scp',
-    [apkPath, 'hk:/var/www/res/serverbox/apks/$build.apk'],
+    [apkPath, 'hk:/var/www/res/serverbox/$sha256.apk'],
     runInShell: true,
   );
   if (result.exitCode != 0) {

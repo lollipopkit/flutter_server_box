@@ -18,7 +18,6 @@ import 'utils/platform.dart';
 import 'utils/ui.dart';
 
 final _logger = Logger('UPDATE');
-late final String _dlDir;
 
 Future<bool> isFileAvailable(String url) async {
   try {
@@ -97,22 +96,44 @@ Future<void> _doUpdate(AppUpdate update, BuildContext context, S s) async {
       fileName: fileName,
       isAutoRequestInstall: false,
     );
-    if (id == null) {
-      showSnackBar(context, const Text('install id is null'));
-      return;
-    }
-    final sha256 = update.sha256.current;
-    if (sha256 == null) {
-      showSnackBar(context, const Text('sha256 is null'));
-      return;
-    }
-    final dlPath = pathJoin(_dlDir, fileName);
-    final computed = await getFileSha256(dlPath);
-    if (computed != sha256) {
-      showSnackBar(context, Text('Mismatch sha256: $computed, $sha256'));
-      return;
-    }
-    RUpgrade.install(id);
+    RUpgrade.stream.listen((event) async {
+      if (event.status?.value == 3) {
+        if (id == null) {
+          showSnackBar(context, const Text('install id is null'));
+          return;
+        }
+        final sha256 = () {
+          try {
+            return fileName.split('.').first;
+          } catch (e) {
+            _logger.warning('sha256 parse failed: $e');
+            return null;
+          }
+        }();
+        final dlPath = pathJoin(await _dlDir, fileName);
+        final computed = await getFileSha256(dlPath);
+        if (computed != sha256) {
+          _logger.info('Mismatch sha256: $computed, $sha256');
+          final resume = await showRoundDialog(
+            context: context,
+            title: Text(s.attention),
+            child: const Text('sha256 is null'),
+            actions: [
+              TextButton(
+                onPressed: () => context.pop(false),
+                child: Text(s.cancel),
+              ),
+              TextButton(
+                onPressed: () => context.pop(true),
+                child: Text(s.ok, style: const TextStyle(color: Colors.red)),
+              ),
+            ],
+          );
+          if (!resume) return;
+        }
+        RUpgrade.install(id);
+      }
+    });
   } else if (isIOS) {
     await RUpgrade.upgradeFromAppStore('1586449703');
   } else {
@@ -132,9 +153,10 @@ Future<void> _doUpdate(AppUpdate update, BuildContext context, S s) async {
 // rmdir Download
 Future<void> _rmDownloadApks() async {
   if (!isAndroid) return;
-  _dlDir = pathJoin((await docDir).path, 'Download');
-  final dlDir = Directory(_dlDir);
+  final dlDir = Directory(await _dlDir);
   if (await dlDir.exists()) {
     await dlDir.delete(recursive: true);
   }
 }
+
+Future<String> get _dlDir async => pathJoin((await docDir).path, 'Download');

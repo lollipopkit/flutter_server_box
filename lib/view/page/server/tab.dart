@@ -149,10 +149,16 @@ class _ServerPageState extends State<ServerPage>
     }
     return GestureDetector(
       key: Key(si.spi.id + (_tag ?? '')),
-      onTap: () => AppRoute(
-        ServerDetailPage(si.spi.id),
-        'server detail page',
-      ).go(context),
+      onTap: () {
+        if (si.state == ServerState.connected) {
+          AppRoute(
+            ServerDetailPage(si.spi.id),
+            'server detail page',
+          ).go(context);
+        } else {
+          _showFailReason(si.status);
+        }
+      },
       child: RoundRectCard(
         Padding(
           padding: const EdgeInsets.all(13),
@@ -260,19 +266,7 @@ class _ServerPageState extends State<ServerPage>
     );
     if (cs == ServerState.failed && ss.failedInfo != null) {
       return GestureDetector(
-        onTap: () => showRoundDialog(
-          context: context,
-          title: Text(_s.error),
-          child: SingleChildScrollView(
-            child: Text(ss.failedInfo!),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => copy2Clipboard(ss.failedInfo!),
-              child: Text(_s.copy),
-            )
-          ],
-        ),
+        onTap: () => _showFailReason(ss),
         child: Text(
           _s.viewErr,
           style: textSize12Grey,
@@ -284,6 +278,22 @@ class _ServerPageState extends State<ServerPage>
       topRightStr,
       style: textSize12Grey,
       textScaleFactor: 1.0,
+    );
+  }
+
+  void _showFailReason(ServerStatus ss) {
+    showRoundDialog(
+      context: context,
+      title: Text(_s.error),
+      child: SingleChildScrollView(
+        child: Text(ss.failedInfo!),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => copy2Clipboard(ss.failedInfo!),
+          child: Text(_s.copy),
+        )
+      ],
     );
   }
 
