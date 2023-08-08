@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
+import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/extension/stringx.dart';
-import 'package:toolbox/core/provider_base.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/docker/image.dart';
 import 'package:toolbox/data/model/docker/ps.dart';
@@ -22,7 +22,7 @@ final _dockerPrefixReg = RegExp(r'(sudo )?docker ');
 
 final _logger = Logger('DOCKER');
 
-class DockerProvider extends BusyProvider {
+class DockerProvider extends ChangeNotifier {
   final _dockerStore = locator<DockerStore>();
 
   SSHClient? client;
@@ -56,9 +56,6 @@ class DockerProvider extends BusyProvider {
   }
 
   Future<void> refresh() async {
-    if (isBusy) return;
-    setBusyState();
-
     var raw = '';
     await client!.exec(
       AppShellFuncType.docker.exec,
@@ -68,7 +65,7 @@ class DockerProvider extends BusyProvider {
 
     if (raw.contains(_dockerNotFound)) {
       error = DockerErr(type: DockerErrType.notInstalled);
-      setBusyState(false);
+      notifyListeners();
       return;
     }
 
@@ -76,7 +73,7 @@ class DockerProvider extends BusyProvider {
     final segments = raw.split(seperator);
     if (segments.length != dockerCmds.length) {
       error = DockerErr(type: DockerErrType.segmentsNotMatch);
-      setBusyState(false);
+      notifyListeners();
       return;
     }
 
@@ -98,9 +95,8 @@ class DockerProvider extends BusyProvider {
         message: '$psRaw\n-\n$e',
       );
       _logger.warning('parse docker ps: $psRaw', e);
-      rethrow;
     } finally {
-      setBusyState(false);
+      notifyListeners();
     }
 
     // Parse docker images
@@ -116,9 +112,8 @@ class DockerProvider extends BusyProvider {
         message: '$imageRaw\n-\n$e',
       );
       _logger.warning('parse docker images: $imageRaw', e);
-      rethrow;
     } finally {
-      setBusyState(false);
+      notifyListeners();
     }
 
     // Parse docker stats
@@ -141,9 +136,8 @@ class DockerProvider extends BusyProvider {
         message: '$statsRaw\n-\n$e',
       );
       _logger.warning('parse docker stats: $statsRaw', e);
-      rethrow;
     } finally {
-      setBusyState(false);
+      notifyListeners();
     }
   }
 
@@ -175,7 +169,6 @@ class DockerProvider extends BusyProvider {
     if (!cmd.startsWith(_dockerPrefixReg)) {
       return DockerErr(type: DockerErrType.cmdNoPrefix);
     }
-    setBusyState();
 
     runLog = '';
     final errs = <String>[];
@@ -191,16 +184,15 @@ class DockerProvider extends BusyProvider {
       },
     );
     runLog = null;
+    notifyListeners();
 
     if (code != 0) {
-      setBusyState(false);
       return DockerErr(
         type: DockerErrType.unknown,
         message: errs.join('\n').trim(),
       );
     }
     await refresh();
-    setBusyState(false);
     return null;
   }
 

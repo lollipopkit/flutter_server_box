@@ -70,7 +70,11 @@ class _DockerManagePageState extends State<DockerManagePage> {
           title: TwoLineText(up: 'Docker', down: widget.spi.name),
           actions: [
             IconButton(
-              onPressed: _docker.refresh,
+              onPressed: () async {
+                showLoadingDialog(context);
+                await _docker.refresh();
+                context.pop();
+              },
               icon: const Icon(Icons.refresh),
             )
           ],
@@ -153,7 +157,9 @@ class _DockerManagePageState extends State<DockerManagePage> {
         TextButton(
           onPressed: () async {
             context.pop();
+            showLoadingDialog(context);
             final result = await _docker.run(cmd);
+            context.pop();
             if (result != null) {
               showSnackBar(context, Text(result.message ?? _s.unknownError));
             }
@@ -331,7 +337,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   }
 
   Widget _buildLoading() {
-    if (!_docker.isBusy) return nil;
+    if (_docker.runLog == null) return nil;
     return Padding(
       padding: const EdgeInsets.all(17),
       child: Column(
@@ -409,11 +415,11 @@ class _DockerManagePageState extends State<DockerManagePage> {
         '${item.name} - ${item.status}',
         style: textSize13Grey,
       ),
-      trailing: _buildMoreBtn(item, _docker.isBusy),
+      trailing: _buildMoreBtn(item),
     );
   }
 
-  Widget _buildMoreBtn(DockerPsItem dItem, bool busy) {
+  Widget _buildMoreBtn(DockerPsItem dItem) {
     return PopupMenu(
       items: DockerMenuType.items(dItem.running)
           .map(
@@ -421,10 +427,6 @@ class _DockerManagePageState extends State<DockerManagePage> {
           )
           .toList(),
       onSelected: (DockerMenuType item) async {
-        if (busy) {
-          showSnackBar(context, Text(_s.isBusy));
-          return;
-        }
         switch (item) {
           case DockerMenuType.rm:
             showRoundDialog(
@@ -433,9 +435,11 @@ class _DockerManagePageState extends State<DockerManagePage> {
               child: Text(_s.sureDelete(dItem.name)),
               actions: [
                 TextButton(
-                  onPressed: () {
+                  onPressed: () async {
                     context.pop();
-                    _docker.delete(dItem.containerId);
+                    showLoadingDialog(context);
+                    await _docker.delete(dItem.containerId);
+                    context.pop();
                   },
                   child: Text(_s.ok),
                 )
@@ -443,13 +447,19 @@ class _DockerManagePageState extends State<DockerManagePage> {
             );
             break;
           case DockerMenuType.start:
-            _docker.start(dItem.containerId);
+            showLoadingDialog(context);
+            await _docker.start(dItem.containerId);
+            context.pop();
             break;
           case DockerMenuType.stop:
-            _docker.stop(dItem.containerId);
+            showLoadingDialog(context);
+            await _docker.stop(dItem.containerId);
+            context.pop();
             break;
           case DockerMenuType.restart:
-            _docker.restart(dItem.containerId);
+            showLoadingDialog(context);
+            await _docker.restart(dItem.containerId);
+            context.pop();
             break;
           case DockerMenuType.logs:
             AppRoute(

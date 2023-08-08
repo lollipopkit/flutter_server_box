@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/model/server/snippet.dart';
 import '../../data/provider/snippet.dart';
+import '../../data/res/ui.dart';
 import '../../locator.dart';
 import '../../view/page/snippet/edit.dart';
 import '../../view/widget/picker.dart';
@@ -66,6 +67,14 @@ Future<T?> showRoundDialog<T>({
         actionsPadding: const EdgeInsets.all(17),
       );
     },
+  );
+}
+
+void showLoadingDialog(BuildContext context, {bool barrierDismiss = false}) {
+  showRoundDialog(
+    context: context,
+    child: centerSizedLoading,
+    barrierDismiss: barrierDismiss,
   );
 }
 

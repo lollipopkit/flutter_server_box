@@ -395,7 +395,7 @@ class _SftpPageState extends State<SftpPage> {
       SftpReqType.download,
     );
     _sftp.add(req, completer: completer);
-    showRoundDialog(context: context, child: centerSizedLoading);
+    showLoadingDialog(context);
     await completer.future;
     context.pop();
 
@@ -458,10 +458,8 @@ class _SftpPageState extends State<SftpPage> {
         TextButton(
           onPressed: () async {
             context.pop();
-            showRoundDialog(
-              context: context,
-              child: centerSizedLoading,
-              barrierDismiss: false,
+            showLoadingDialog(
+              context
             );
             final remotePath = _getRemotePath(file);
             try {
