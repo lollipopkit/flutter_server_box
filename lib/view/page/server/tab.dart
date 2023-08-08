@@ -168,10 +168,15 @@ class _ServerPageState extends State<ServerPage>
     ServerPrivateInfo spi,
   ) {
     final rootDisk = findRootDisk(ss.disk);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+    late final List<Widget> children;
+    var height = 23.0;
+    if (cs != ServerState.connected) {
+      children = [
+        _buildServerCardTitle(ss, cs, spi),
+      ];
+    } else {
+      height = 137;
+      children = [
         _buildServerCardTitle(ss, cs, spi),
         height13,
         Row(
@@ -195,7 +200,17 @@ class _ServerPageState extends State<ServerPage>
           ],
         ),
         const SizedBox(height: 3),
-      ],
+      ];
+    }
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 377),
+      curve: Curves.fastEaseInToSlowEaseOut,
+      height: height,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: children,
+      ),
     );
   }
 
@@ -213,8 +228,7 @@ class _ServerPageState extends State<ServerPage>
             children: [
               Text(
                 spi.name,
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                style: textSize13Bold,
                 textScaleFactor: 1.0,
               ),
               const Icon(

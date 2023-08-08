@@ -455,7 +455,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
             AppRoute(
               SSHPage(
                 spi: widget.spi,
-                initCmd: 'docker logs ${dItem.containerId}',
+                initCmd: 'docker logs -f --tail 100 ${dItem.containerId}',
               ),
               'Docker logs',
             ).go(context);
@@ -464,7 +464,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
             AppRoute(
               SSHPage(
                 spi: widget.spi,
-                initCmd: 'docker exec -it ${dItem.containerId} /bin/sh',
+                initCmd: 'docker exec -it ${dItem.containerId} sh',
               ),
               'Docker terminal',
             ).go(context);

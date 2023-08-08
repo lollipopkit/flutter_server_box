@@ -106,6 +106,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildCPUView(ServerStatus ss) {
+    final percent = ss.cpu.usedPercent(coreIdx: 0).toInt();
     return RoundRectCard(
       Padding(
         padding: roundRectCardPadding,
@@ -113,10 +114,10 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                '${ss.cpu.usedPercent(coreIdx: 0).toInt()}%',
-                style: textSize27,
-                textScaleFactor: 1.0,
+              _buildAnimatedText(
+                ValueKey(percent),
+                '$percent%',
+                textSize27,
               ),
               Row(
                 children: [
@@ -206,6 +207,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     final free = ss.mem.free / ss.mem.total * 100;
     final avail = ss.mem.availPercent * 100;
     final used = ss.mem.usedPercent * 100;
+    final usedStr = used.toStringAsFixed(0);
 
     return RoundRectCard(
       Padding(
@@ -219,7 +221,11 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               children: [
                 Row(
                   children: [
-                    Text('${used.toStringAsFixed(0)}%', style: textSize27),
+                    _buildAnimatedText(
+                      ValueKey(usedStr),
+                      '$usedStr%',
+                      textSize27,
+                    ),
                     width7,
                     Text('of ${(ss.mem.total * 1024).convertBytes}',
                         style: textSize13Grey)
@@ -436,5 +442,21 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       padding: roundRectCardPadding,
       child: Column(children: children),
     ));
+  }
+
+  Widget _buildAnimatedText(Key key, String text, TextStyle style) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 277),
+      child: Text(
+        key: key,
+        text,
+        style: style,
+        textScaleFactor: 1.0,
+      ),
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: child,
+      ),
+    );
   }
 }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 const textSize11 = TextStyle(fontSize: 11);
 const textSize12Grey = TextStyle(color: Colors.grey, fontSize: 11);
 const textSize13 = TextStyle(fontSize: 13);
+const textSize13Bold = TextStyle(fontSize: 13, fontWeight: FontWeight.bold);
 const textSize13Grey = TextStyle(color: Colors.grey, fontSize: 13);
 const textSize15 = TextStyle(fontSize: 15);
 const textSize18 = TextStyle(fontSize: 18);
