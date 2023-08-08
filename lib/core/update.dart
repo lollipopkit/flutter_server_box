@@ -6,6 +6,8 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:logging/logging.dart';
 import 'package:r_upgrade/r_upgrade.dart';
 import 'package:toolbox/core/extension/navigator.dart';
+import 'package:toolbox/core/utils/misc.dart' hide pathJoin;
+import 'package:toolbox/data/model/app/update.dart';
 import 'package:toolbox/data/res/path.dart';
 
 import '../data/provider/app.dart';
@@ -16,6 +18,7 @@ import 'utils/platform.dart';
 import 'utils/ui.dart';
 
 final _logger = Logger('UPDATE');
+late final String _dlDir;
 
 Future<bool> isFileAvailable(String url) async {
   try {
@@ -28,7 +31,7 @@ Future<bool> isFileAvailable(String url) async {
 }
 
 Future<void> doUpdate(BuildContext context, {bool force = false}) async {
-  _rmDownloadApks();
+  await _rmDownloadApks();
 
   final update = await locator<AppService>().getUpdate();
 
@@ -68,7 +71,7 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
       child: Text(s.updateTipTooLow(newest)),
       actions: [
         TextButton(
-          onPressed: () => _doUpdate(url, context, s),
+          onPressed: () => _doUpdate(update, context, s),
           child: Text(s.ok),
         )
       ],
@@ -80,17 +83,36 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
     context,
     '${s.updateTip(newest)} \n${update.changelog.current}',
     s.update,
-    () => _doUpdate(url, context, s),
+    () => _doUpdate(update, context, s),
   );
 }
 
-Future<void> _doUpdate(String url, BuildContext context, S s) async {
+Future<void> _doUpdate(AppUpdate update, BuildContext context, S s) async {
   if (isAndroid) {
-    await RUpgrade.upgrade(
+    final url = update.url.current;
+    if (url == null) return;
+    final fileName = url.split('/').last;
+    final id = await RUpgrade.upgrade(
       url,
-      fileName: url.split('/').last,
-      isAutoRequestInstall: true,
+      fileName: fileName,
+      isAutoRequestInstall: false,
     );
+    if (id == null) {
+      showSnackBar(context, const Text('install id is null'));
+      return;
+    }
+    final sha256 = update.sha256.current;
+    if (sha256 == null) {
+      showSnackBar(context, const Text('sha256 is null'));
+      return;
+    }
+    final dlPath = pathJoin(_dlDir, fileName);
+    final computed = await getFileSha256(dlPath);
+    if (computed != sha256) {
+      showSnackBar(context, Text('Mismatch sha256: $computed, $sha256'));
+      return;
+    }
+    RUpgrade.install(id);
   } else if (isIOS) {
     await RUpgrade.upgradeFromAppStore('1586449703');
   } else {
@@ -110,7 +132,8 @@ Future<void> _doUpdate(String url, BuildContext context, S s) async {
 // rmdir Download
 Future<void> _rmDownloadApks() async {
   if (!isAndroid) return;
-  final dlDir = Directory(pathJoin((await docDir).path, 'Download'));
+  _dlDir = pathJoin((await docDir).path, 'Download');
+  final dlDir = Directory(_dlDir);
   if (await dlDir.exists()) {
     await dlDir.delete(recursive: true);
   }

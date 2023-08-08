@@ -146,7 +146,7 @@ Future<void> scp2CDN() async {
   print('SHA1: $sha1');
   final result = await Process.run(
     'scp',
-    [apkPath, 'hk:/var/www/res/serverbox/apks/$build-$sha1.apk'],
+    [apkPath, 'hk:/var/www/res/serverbox/apks/$build.apk'],
     runInShell: true,
   );
   if (result.exitCode != 0) {

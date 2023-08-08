@@ -479,7 +479,9 @@ class _ServerPageState extends State<ServerPage>
     final file = File(path);
     final shouldGenKey = spi.pubKeyId != null;
     if (shouldGenKey) {
-      await file.delete();
+      if (await file.exists()) {
+        await file.delete();
+      }
       await file.writeAsString(getPrivateKey(spi.pubKeyId!));
       extraArgs.addAll(["-i", path]);
     }

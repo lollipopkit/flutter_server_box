@@ -32,7 +32,7 @@ final shellCmd = """
 # Script for app `${BuildData.name} v1.0.${BuildData.build}`
 # Delete this file while app is running will cause app crash
 
-export LANG=en_US.utf-8
+export LANG="en_US.UTF-8"
 
 ${AppShellFuncType.shellScript}
 """;

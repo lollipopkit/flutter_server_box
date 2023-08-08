@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:crypto/crypto.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -76,4 +77,13 @@ String getTime(int? unixMill) {
 /// Join two path with `/`
 String pathJoin(String path1, String path2) {
   return path1 + (path1.endsWith('/') ? '' : '/') + path2;
+}
+
+Future<String?> getFileSha256(String path) async {
+  final file = File(path);
+  if (!(await file.exists())) {
+    return null;
+  }
+  final digest = await sha256.bind(file.openRead()).first;
+  return digest.toString();
 }

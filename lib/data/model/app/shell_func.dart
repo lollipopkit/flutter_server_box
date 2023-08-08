@@ -75,12 +75,14 @@ esac''');
   }
 }
 
-abstract class _CmdType {
+extension EnumX on Enum {
   /// Find out the required segment from [segments]
-  String find(List<String> segments);
+  String find(List<String> segments) {
+    return segments[index];
+  }
 }
 
-enum StatusCmdType implements _CmdType {
+enum StatusCmdType {
   net,
   sys,
   cpu,
@@ -92,21 +94,11 @@ enum StatusCmdType implements _CmdType {
   tempVal,
   host,
   sysRhel;
-
-  @override
-  String find(List<String> segments) {
-    return segments[index];
-  }
 }
 
-enum DockerCmdType implements _CmdType {
+enum DockerCmdType {
   version,
   ps,
   stats,
   images;
-
-  @override
-  String find(List<String> segments) {
-    return segments[index];
-  }
 }

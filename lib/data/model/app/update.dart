@@ -34,11 +34,13 @@ class AppUpdate {
     required this.changelog,
     required this.build,
     required this.url,
+    required this.sha256,
   });
 
   final AppUpdatePlatformSpecific<String> changelog;
   final Build build;
   final AppUpdatePlatformSpecific<String> url;
+  final AppUpdatePlatformSpecific<String?> sha256;
 
   factory AppUpdate.fromRawJson(String str) =>
       AppUpdate.fromJson(json.decode(str));
@@ -49,12 +51,14 @@ class AppUpdate {
         changelog: AppUpdatePlatformSpecific.fromJson(json["changelog"]),
         build: Build.fromJson(json["build"]),
         url: AppUpdatePlatformSpecific.fromJson(json["url"]),
+        sha256: AppUpdatePlatformSpecific.fromJson(json["sha256"]),
       );
 
   Map<String, dynamic> toJson() => {
         "changelog": changelog.toJson(),
         "build": build.toJson(),
         "url": url.toJson(),
+        "sha256": sha256.toJson(),
       };
 }
 
