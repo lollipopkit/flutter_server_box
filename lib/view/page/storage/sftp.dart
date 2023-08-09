@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:logging/logging.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/extension/sftpfile.dart';
 import 'package:toolbox/data/res/misc.dart';
@@ -16,7 +17,6 @@ import '../../../core/extension/stringx.dart';
 import '../../../core/route.dart';
 import '../../../core/utils/misc.dart';
 import '../../../core/utils/ui.dart';
-import '../../../data/model/server/server.dart';
 import '../../../data/model/server/server_private_info.dart';
 import '../../../data/model/sftp/absolute_path.dart';
 import '../../../data/model/sftp/browser_status.dart';
@@ -54,8 +54,9 @@ class _SftpPageState extends State<SftpPage> {
 
   late S _s;
 
-  ServerState? _state;
   SSHClient? _client;
+
+  final _logger = Logger('SFTP');
 
   @override
   void didChangeDependencies() {
@@ -68,7 +69,6 @@ class _SftpPageState extends State<SftpPage> {
     super.initState();
     final serverProvider = locator<ServerProvider>();
     _client = serverProvider.servers[widget.spi.id]?.client;
-    _state = serverProvider.servers[widget.spi.id]?.state;
   }
 
   @override
@@ -270,10 +270,6 @@ class _SftpPageState extends State<SftpPage> {
   }
 
   Widget _buildFileView() {
-    if (_client == null || _state != ServerState.connected) {
-      return centerLoading;
-    }
-
     if (_status.isBusy) {
       return centerLoading;
     }
@@ -665,8 +661,9 @@ class _SftpPageState extends State<SftpPage> {
           _status.isBusy = false;
         });
       }
-    } catch (e) {
-      await showRoundDialog(
+    } catch (e, trace) {
+      _logger.warning('list dir failed', e, trace);
+      Future.delayed(const Duration(milliseconds: 177), () => showRoundDialog(
         context: context,
         title: Text(_s.error),
         child: Text(e.toString()),
@@ -676,7 +673,7 @@ class _SftpPageState extends State<SftpPage> {
             child: Text(_s.ok),
           )
         ],
-      );
+      ));
       await _backward();
     }
   }

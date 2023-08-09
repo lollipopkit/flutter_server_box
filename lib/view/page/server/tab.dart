@@ -311,10 +311,18 @@ class _ServerPageState extends State<ServerPage>
       onSelected: (ServerTabMenuType value) async {
         switch (value) {
           case ServerTabMenuType.pkg:
-            AppRoute(PkgManagePage(spi), 'pkg manage').go(context);
+            AppRoute(PkgManagePage(spi), 'pkg manage').checkClientAndGo(
+              context: context,
+              s: _s,
+              id: spi.id,
+            );
             break;
           case ServerTabMenuType.sftp:
-            AppRoute(SftpPage(spi), 'SFTP').go(context);
+            AppRoute(SftpPage(spi), 'SFTP').checkClientAndGo(
+              context: context,
+              s: _s,
+              id: spi.id,
+            );
             break;
           case ServerTabMenuType.snippet:
             final provider = locator<SnippetProvider>();
@@ -349,10 +357,18 @@ class _ServerPageState extends State<ServerPage>
             AppRoute(ServerEditPage(spi: spi), 'Edit server info').go(context);
             break;
           case ServerTabMenuType.docker:
-            AppRoute(DockerManagePage(spi), 'Docker manage').go(context);
+            AppRoute(DockerManagePage(spi), 'Docker manage').checkClientAndGo(
+              context: context,
+              s: _s,
+              id: spi.id,
+            );
             break;
           case ServerTabMenuType.process:
-            AppRoute(ProcessPage(spi: spi), 'process page').go(context);
+            AppRoute(ProcessPage(spi: spi), 'process page').checkClientAndGo(
+              context: context,
+              s: _s,
+              id: spi.id,
+            );
             break;
         }
       },

@@ -83,15 +83,9 @@ void runInZone(void Function() body) {
 
   runZonedGuarded(
     body,
-    onError,
+    (obj, trace) => Analysis.recordException(trace),
     zoneSpecification: zoneSpec,
   );
-}
-
-void onError(Object obj, StackTrace stack) {
-  Analysis.recordException(stack);
-  _debug.addMultiline(obj, Colors.red);
-  _debug.addMultiline(stack, Colors.white);
 }
 
 Future<void> main() async {
