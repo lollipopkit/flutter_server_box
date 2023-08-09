@@ -28,6 +28,7 @@
   "close": "關閉",
   "cmd": "命令",
   "conn": "連接",
+  "connected": "已連接",
   "containerName": "容器名稱",
   "containerStatus": "容器狀態",
   "convert": "轉換",

@@ -52,6 +52,17 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    _nameController.dispose();
+    _keyController.dispose();
+    _pwdController.dispose();
+    _nameNode.dispose();
+    _keyNode.dispose();
+    _pwdNode.dispose();
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _s = S.of(context)!;

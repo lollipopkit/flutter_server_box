@@ -1,9 +1,9 @@
-import 'package:toolbox/core/provider_base.dart';
+import 'package:flutter/material.dart';
 import 'package:toolbox/data/model/server/private_key_info.dart';
 import 'package:toolbox/data/store/private_key.dart';
 import 'package:toolbox/locator.dart';
 
-class PrivateKeyProvider extends BusyProvider {
+class PrivateKeyProvider extends ChangeNotifier {
   List<PrivateKeyInfo> get pkis => _pkis;
   final _store = locator<PrivateKeyStore>();
   late List<PrivateKeyInfo> _pkis;

@@ -6,7 +6,6 @@ import 'package:toolbox/data/model/app/shell_func.dart';
 
 import '../../core/extension/order.dart';
 import '../../core/extension/uint8list.dart';
-import '../../core/provider_base.dart';
 import '../../core/utils/server.dart';
 import '../../locator.dart';
 import '../model/server/server.dart';
@@ -21,7 +20,7 @@ import '../store/setting.dart';
 
 typedef ServersMap = Map<String, Server>;
 
-class ServerProvider extends BusyProvider {
+class ServerProvider extends ChangeNotifier {
   final ServersMap _servers = {};
   ServersMap get servers => _servers;
   final Order<String> _serverOrder = [];
@@ -39,7 +38,6 @@ class ServerProvider extends BusyProvider {
   final _settingStore = locator<SettingStore>();
 
   Future<void> loadLocalData() async {
-    setBusyState(true);
     final spis = _serverStore.fetch();
     for (final spi in spis) {
       _servers[spi.id] = genServer(spi);
@@ -56,7 +54,6 @@ class ServerProvider extends BusyProvider {
     }
     _settingStore.serverOrder.put(_serverOrder);
     _updateTags();
-    setBusyState(false);
     notifyListeners();
   }
 
@@ -204,77 +201,96 @@ class ServerProvider extends BusyProvider {
     }
   }
 
+  void _setServerState(Server s, ServerState ss) {
+    s.state = ss;
+    notifyListeners();
+  }
+
   Future<void> _getData(ServerPrivateInfo spi) async {
     final sid = spi.id;
     final s = _servers[sid];
+
     if (s == null) return;
 
-    var raw = '';
-    var segments = <String>[];
-
-    try {
-      final state = s.state;
-      if (state.shouldConnect) {
-        if (!_limiter.shouldTry(sid)) {
-          s.state = ServerState.failed;
-          notifyListeners();
-          return;
-        }
-        s.state = ServerState.connecting;
-        notifyListeners();
-
-        // try to connect
-        final time1 = DateTime.now();
-        s.client = await genClient(spi);
-        final time2 = DateTime.now();
-        final spentTime = time2.difference(time1).inMilliseconds;
-        _logger.info('Connected to $sid in $spentTime ms.');
-
-        // after connected
-        s.state = ServerState.connected;
-        notifyListeners();
-        // write script to server
-        final writeResult = await s.client!.run(installShellCmd).string;
-
-        // if write failed
-        if (writeResult.isNotEmpty) {
-          throw Exception(writeResult);
-        }
-        // reset try times if connected successfully
-        _limiter.reset(sid);
+    if (!_limiter.canTry(sid)) {
+      if (s.state != ServerState.failed) {
+        _setServerState(s, ServerState.failed);
       }
+      return;
+    }
 
-      if (s.client == null) return;
-      // run script to get server status
-      raw = await s.client!.run(AppShellFuncType.status.exec).string;
-      segments = raw.split(seperator).map((e) => e.trim()).toList();
-      if (raw.isEmpty || segments.length != StatusCmdType.values.length) {
-        s.state = ServerState.failed;
-        if (s.status.failedInfo?.isEmpty ?? true) {
-          s.status.failedInfo = 'Seperate segments failed, raw:\n$raw';
-        }
+    if (s.state.shouldConnect) {
+      _setServerState(s, ServerState.connecting);
+
+      final time1 = DateTime.now();
+
+      try {
+        s.client = await genClient(spi);
+      } catch (e) {
+        _limiter.inc(sid);
+        s.status.failedInfo = e.toString();
+        _setServerState(s, ServerState.failed);
+        _logger.warning('Connect to $sid failed', e);
         return;
       }
-    } catch (e) {
-      s.state = ServerState.failed;
-      s.status.failedInfo = e.toString();
-      rethrow;
-    } finally {
-      notifyListeners();
+
+      final time2 = DateTime.now();
+      final spentTime = time2.difference(time1).inMilliseconds;
+      _logger.info('Connected to $sid in $spentTime ms.');
+
+      _setServerState(s, ServerState.connected);
+
+      try {
+        final writeResult = await s.client?.run(installShellCmd).string;
+        if (writeResult == null || writeResult.isNotEmpty) {
+          _limiter.inc(sid);
+          s.status.failedInfo = writeResult;
+          _setServerState(s, ServerState.failed);
+          return;
+        }
+      } catch (e) {
+        _limiter.inc(sid);
+        s.status.failedInfo = e.toString();
+        _setServerState(s, ServerState.failed);
+        _logger.warning('Write script to $sid failed', e);
+        return;
+      }
+    }
+
+    if (s.client == null) return;
+
+    if (s.state != ServerState.finished) {
+      _setServerState(s, ServerState.loading);
+    }
+
+    final raw = await s.client?.run(AppShellFuncType.status.exec).string;
+    final segments = raw?.split(seperator).map((e) => e.trim()).toList();
+    if (raw == null ||
+        raw.isEmpty ||
+        segments == null ||
+        segments.length != StatusCmdType.values.length) {
+      _limiter.inc(sid);
+      s.status.failedInfo = 'Seperate segments failed, raw:\n$raw';
+      _setServerState(s, ServerState.failed);
+      return;
     }
 
     try {
       final req = ServerStatusUpdateReq(s.status, segments);
       s.status = await compute(getStatus, req);
-      // Comment for debug
-      // s.status = await getStatus(req);
-    } catch (e) {
-      s.state = ServerState.failed;
+    } catch (e, trace) {
+      _limiter.inc(sid);
       s.status.failedInfo = 'Parse failed: $e\n\n$raw';
-      rethrow;
-    } finally {
-      notifyListeners();
+      _setServerState(s, ServerState.failed);
+      _logger.warning('Parse failed', e, trace);
+      return;
     }
+
+    if (s.state != ServerState.finished) {
+      _setServerState(s, ServerState.finished);
+    }
+    // reset try times only after prepared successfully
+    _limiter.reset(sid);
   }
 
   Future<String?> runSnippets(String id, List<Snippet> snippets) async {

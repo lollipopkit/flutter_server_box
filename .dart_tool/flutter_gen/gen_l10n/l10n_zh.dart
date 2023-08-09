@@ -89,6 +89,9 @@ class SZh extends S {
   String get conn => '连接';
 
   @override
+  String get connected => '已连接';
+
+  @override
   String get containerName => '容器名';
 
   @override
@@ -783,6 +786,9 @@ class SZhTw extends SZh {
 
   @override
   String get conn => '連接';
+
+  @override
+  String get connected => '已連接';
 
   @override
   String get containerName => '容器名稱';

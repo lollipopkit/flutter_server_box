@@ -89,6 +89,9 @@ class SEn extends S {
   String get conn => 'Connection';
 
   @override
+  String get connected => 'Connected';
+
+  @override
   String get containerName => 'Container name';
 
   @override

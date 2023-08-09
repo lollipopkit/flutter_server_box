@@ -69,6 +69,18 @@ class _SSHPageState extends State<SSHPage> {
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    _virtKeyLongPressTimer?.cancel();
+    _terminalController.dispose();
+    _client?.close();
+    // ignore: unnecessary_null_comparison
+    if (_session != null) {
+      _session.close();
+    }
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _isDark = isDarkMode(context);
@@ -78,12 +90,6 @@ class _SSHPageState extends State<SSHPage> {
     // Calculate virtkey width / height
     _virtKeyWidth = _media.size.width / 7;
     _virtKeysHeight = _media.size.height * 0.043 * _virtKeysList.length;
-  }
-
-  @override
-  void dispose() {
-    _client?.close();
-    super.dispose();
   }
 
   @override

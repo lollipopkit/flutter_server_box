@@ -12,11 +12,22 @@ class Server {
 }
 
 enum ServerState {
+  failed,
   disconnected,
   connecting,
-  connected,
-  failed;
 
-  bool get shouldConnect =>
-      this == ServerState.disconnected || this == ServerState.failed;
+  /// Connected to server
+  connected,
+
+  /// Status parsing
+  loading,
+
+  /// Status parsing finished
+  finished;
+
+  bool get shouldConnect => this < ServerState.connecting;
+
+  bool get canViewDetails => this == ServerState.finished;
+
+  operator <(ServerState other) => index < other.index;
 }

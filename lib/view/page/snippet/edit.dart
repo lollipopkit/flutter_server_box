@@ -38,6 +38,14 @@ class _SnippetEditPageState extends State<SnippetEditPage>
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    _nameController.dispose();
+    _scriptController.dispose();
+    _scriptNode.dispose();
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _s = S.of(context)!;

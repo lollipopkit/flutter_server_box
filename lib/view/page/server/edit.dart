@@ -56,6 +56,22 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    _nameController.dispose();
+    _ipController.dispose();
+    _alterUrlController.dispose();
+    _portController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
+    _nameFocus.dispose();
+    _ipFocus.dispose();
+    _alterUrlFocus.dispose();
+    _portFocus.dispose();
+    _usernameFocus.dispose();
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _s = S.of(context)!;

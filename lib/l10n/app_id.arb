@@ -28,6 +28,7 @@
   "close": "Menutup",
   "cmd": "Memerintah",
   "conn": "Koneksi",
+  "connected": "Terhubung",
   "containerName": "Nama kontainer",
   "containerStatus": "Status wadah",
   "convert": "Mengubah",

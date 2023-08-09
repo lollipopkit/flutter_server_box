@@ -49,6 +49,13 @@ class _PingPageState extends State<PingPage>
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    _textEditingController.dispose();
+    _results.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(

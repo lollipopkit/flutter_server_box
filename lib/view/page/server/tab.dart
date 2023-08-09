@@ -150,12 +150,12 @@ class _ServerPageState extends State<ServerPage>
     return GestureDetector(
       key: Key(si.spi.id + (_tag ?? '')),
       onTap: () {
-        if (si.state == ServerState.connected) {
+        if (si.state.canViewDetails) {
           AppRoute(
             ServerDetailPage(si.spi.id),
             'server detail page',
           ).go(context);
-        } else {
+        } else if (si.status.failedInfo != null) {
           _showFailReason(si.status);
         }
       },
@@ -176,7 +176,7 @@ class _ServerPageState extends State<ServerPage>
     final rootDisk = findRootDisk(ss.disk);
     late final List<Widget> children;
     var height = 23.0;
-    if (cs != ServerState.connected) {
+    if (cs != ServerState.finished) {
       children = [
         _buildServerCardTitle(ss, cs, spi),
       ];
@@ -286,7 +286,7 @@ class _ServerPageState extends State<ServerPage>
       context: context,
       title: Text(_s.error),
       child: SingleChildScrollView(
-        child: Text(ss.failedInfo!),
+        child: Text(ss.failedInfo ?? _s.unknownError),
       ),
       actions: [
         TextButton(
@@ -393,12 +393,16 @@ class _ServerPageState extends State<ServerPage>
     switch (cs) {
       case ServerState.disconnected:
         return _s.disconnected;
-      case ServerState.connected:
+      case ServerState.finished:
         final tempStr = temp == null ? '' : '${temp.toStringAsFixed(1)}°C';
         final items = [tempStr, upTime];
         final str = items.where((element) => element.isNotEmpty).join(' | ');
-        if (str.isEmpty) return _s.serverTabLoading;
+        if (str.isEmpty) return _s.noResult;
         return str;
+      case ServerState.loading:
+        return _s.serverTabLoading;
+      case ServerState.connected:
+        return _s.connected;
       case ServerState.connecting:
         return _s.serverTabConnecting;
       case ServerState.failed:
@@ -409,8 +413,6 @@ class _ServerPageState extends State<ServerPage>
           return _s.serverTabPlzSave;
         }
         return failedInfo;
-      default:
-        return _s.serverTabUnkown;
     }
   }
 

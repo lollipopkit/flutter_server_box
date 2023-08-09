@@ -89,6 +89,9 @@ class SDe extends S {
   String get conn => 'Verbindung';
 
   @override
+  String get connected => 'in Verbindung gebracht';
+
+  @override
   String get containerName => 'Container Name';
 
   @override

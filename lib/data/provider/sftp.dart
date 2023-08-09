@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:toolbox/core/provider_base.dart';
+import 'package:flutter/material.dart';
 
 import '../model/sftp/req.dart';
 
-class SftpProvider extends ProviderBase {
+class SftpProvider extends ChangeNotifier {
   final List<SftpReqStatus> _status = [];
   List<SftpReqStatus> get status => _status;
 

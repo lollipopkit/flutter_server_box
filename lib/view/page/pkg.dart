@@ -45,18 +45,17 @@ class _PkgManagePageState extends State<PkgManagePage>
   void dispose() {
     super.dispose();
     _pkgProvider.clear();
+    _textController.dispose();
+    _scrollController.dispose();
+    _scrollControllerUpdate.dispose();
   }
 
   @override
   void initState() {
     super.initState();
     final si = locator<ServerProvider>().servers[widget.spi.id];
-    if (si == null || si.client == null) {
-      showSnackBar(context, Text(_s.waitConnection));
-      context.pop();
-      return;
-    }
 
+    if (si == null) return;
     _pkgProvider.init(
       si.client!,
       si.status.sysVer.dist,

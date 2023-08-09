@@ -41,10 +41,6 @@ class _ProcessPageState extends State<ProcessPage> {
   void initState() {
     super.initState();
     _client = _serverProvider.servers[widget.spi.id]?.client;
-    if (_client == null) {
-      showSnackBar(context, Text(_s.noClient));
-      return;
-    }
     _timer = Timer.periodic(const Duration(seconds: 3), (_) => _refresh());
   }
 

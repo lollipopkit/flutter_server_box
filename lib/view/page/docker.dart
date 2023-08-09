@@ -41,6 +41,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   void dispose() {
     super.dispose();
     _docker.clear();
+    _textController.dispose();
   }
 
   @override
@@ -54,8 +55,6 @@ class _DockerManagePageState extends State<DockerManagePage> {
     super.initState();
     final client = locator<ServerProvider>().servers[widget.spi.id]?.client;
     if (client == null) {
-      showSnackBar(context, Text(_s.noClient));
-      context.pop();
       return;
     }
     _docker.init(client, widget.spi.user, onPwdRequest, widget.spi.id);

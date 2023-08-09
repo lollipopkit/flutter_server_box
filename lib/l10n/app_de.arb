@@ -28,6 +28,7 @@
   "close": "Schließen",
   "cmd": "Command",
   "conn": "Verbindung",
+  "connected": "in Verbindung gebracht",
   "containerName": "Container Name",
   "containerStatus": "Container Status",
   "convert": "Konvertieren",

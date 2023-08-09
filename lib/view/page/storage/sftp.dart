@@ -49,7 +49,6 @@ class SftpPage extends StatefulWidget {
 
 class _SftpPageState extends State<SftpPage> {
   final SftpBrowserStatus _status = SftpBrowserStatus();
-  final ScrollController _scrollController = ScrollController();
 
   final _sftp = locator<SftpProvider>();
 
@@ -297,7 +296,6 @@ class _SftpPageState extends State<SftpPage> {
         key: Key(widget.spi.name + _status.path!.path),
         child: ListView.builder(
           itemCount: _status.files!.length,
-          controller: _scrollController,
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
           itemBuilder: (_, index) => _buildItem(_status.files![index]),
         ),
@@ -458,9 +456,7 @@ class _SftpPageState extends State<SftpPage> {
         TextButton(
           onPressed: () async {
             context.pop();
-            showLoadingDialog(
-              context
-            );
+            showLoadingDialog(context);
             final remotePath = _getRemotePath(file);
             try {
               if (file.attr.isDirectory) {

@@ -89,6 +89,9 @@ class SId extends S {
   String get conn => 'Koneksi';
 
   @override
+  String get connected => 'Terhubung';
+
+  @override
   String get containerName => 'Nama kontainer';
 
   @override

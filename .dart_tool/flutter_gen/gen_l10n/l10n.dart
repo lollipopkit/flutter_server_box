@@ -266,6 +266,12 @@ abstract class S {
   /// **'Connection'**
   String get conn;
 
+  /// No description provided for @connected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get connected;
+
   /// No description provided for @containerName.
   ///
   /// In en, this message translates to:

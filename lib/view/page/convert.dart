@@ -42,6 +42,13 @@ class _ConvertPageState extends State<ConvertPage>
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    _textEditingController.dispose();
+    _textEditingControllerResult.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(

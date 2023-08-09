@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:toolbox/core/provider_base.dart';
+import 'package:flutter/material.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/store/snippet.dart';
 import 'package:toolbox/locator.dart';
@@ -8,7 +8,7 @@ import 'package:toolbox/locator.dart';
 import '../../core/extension/order.dart';
 import '../store/setting.dart';
 
-class SnippetProvider extends BusyProvider {
+class SnippetProvider extends ChangeNotifier {
   late Order<Snippet> _snippets;
   Order<Snippet> get snippets => _snippets;
 

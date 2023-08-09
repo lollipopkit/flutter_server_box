@@ -63,6 +63,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
   void dispose() {
     super.dispose();
     _timer.cancel();
+    _pageController.dispose();
   }
 
   @override

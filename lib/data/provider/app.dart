@@ -1,6 +1,6 @@
-import 'package:toolbox/core/provider_base.dart';
+import 'package:flutter/material.dart';
 
-class AppProvider extends BusyProvider {
+class AppProvider extends ChangeNotifier {
   int? _newestBuild;
   int? get newestBuild => _newestBuild;
 

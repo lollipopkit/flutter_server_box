@@ -44,8 +44,17 @@ Future<void> initApp() async {
 
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
+    var str = '[${record.loggerName}][${record.level.name}]: ${record.message}';
+    if (record.error != null) {
+      str += '\n${record.error}';
+      _debug.addMultiline(record.error.toString(), Colors.red);
+    }
+    if (record.stackTrace != null) {
+      str += '\n${record.stackTrace}';
+      _debug.addMultiline(record.stackTrace.toString(), Colors.white);
+    }
     // ignore: avoid_print
-    print('[${record.loggerName}][${record.level.name}]: ${record.message}');
+    print(str);
   });
 }
 
@@ -59,7 +68,7 @@ Future<void> initHive() async {
   Hive.registerAdapter(NetViewTypeAdapter());
 }
 
-void runInZone(dynamic Function() body) {
+void runInZone(void Function() body) {
   final zoneSpec = ZoneSpecification(
     print: (Zone self, ZoneDelegate parent, Zone zone, String line) {
       parent.print(zone, line);
@@ -80,7 +89,7 @@ void runInZone(dynamic Function() body) {
 }
 
 void onError(Object obj, StackTrace stack) {
-  Analysis.recordException(obj);
+  Analysis.recordException(stack);
   _debug.addMultiline(obj, Colors.red);
   _debug.addMultiline(stack, Colors.white);
 }

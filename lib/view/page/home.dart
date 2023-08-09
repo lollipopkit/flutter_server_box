@@ -75,6 +75,7 @@ class _HomePageState extends State<HomePage>
     super.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _serverProvider.closeServer();
+    _pageController.dispose();
   }
 
   @override
