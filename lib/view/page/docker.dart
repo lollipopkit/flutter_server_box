@@ -34,6 +34,7 @@ class DockerManagePage extends StatefulWidget {
 
 class _DockerManagePageState extends State<DockerManagePage> {
   final _docker = locator<DockerProvider>();
+  final _store = locator<DockerStore>();
   final _textController = TextEditingController();
   late S _s;
 
@@ -533,25 +534,30 @@ class _DockerManagePageState extends State<DockerManagePage> {
   }
 
   Future<void> _showEditHostDialog() async {
+    final id = widget.spi.id;
+    final host =
+        _store.fetch(id) ?? 'unix:///run/user/1000/docker.sock';
+    final ctrl = TextEditingController(text: host);
     await showRoundDialog(
       context: context,
       title: Text(_s.dockerEditHost),
       child: Input(
         maxLines: 1,
-        controller:
-            TextEditingController(text: 'unix:///run/user/1000/docker.sock'),
-        onSubmitted: (value) {
-          locator<DockerStore>().setDockerHost(widget.spi.id, value.trim());
-          _docker.refresh();
-          context.pop();
-        },
+        controller: ctrl,
+        onSubmitted: _onSaveDockerHost,
       ),
       actions: [
         TextButton(
-          onPressed: () => context.pop(),
-          child: Text(_s.cancel),
+          onPressed: () => _onSaveDockerHost(ctrl.text),
+          child: Text(_s.ok),
         ),
       ],
     );
+  }
+
+  void _onSaveDockerHost(String val) {
+    context.pop();
+    _store.put(widget.spi.id, val.trim());
+    _docker.refresh();
   }
 }

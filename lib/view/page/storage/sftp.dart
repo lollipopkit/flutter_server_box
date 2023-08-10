@@ -663,18 +663,21 @@ class _SftpPageState extends State<SftpPage> {
       }
     } catch (e, trace) {
       _logger.warning('list dir failed', e, trace);
-      Future.delayed(const Duration(milliseconds: 177), () => showRoundDialog(
-        context: context,
-        title: Text(_s.error),
-        child: Text(e.toString()),
-        actions: [
-          TextButton(
-            onPressed: () => context.pop(),
-            child: Text(_s.ok),
-          )
-        ],
-      ));
       await _backward();
+      Future.delayed(
+        const Duration(milliseconds: 177),
+        () => showRoundDialog(
+          context: context,
+          title: Text(_s.error),
+          child: Text(e.toString()),
+          actions: [
+            TextButton(
+              onPressed: () => context.pop(),
+              child: Text(_s.ok),
+            )
+          ],
+        ),
+      );
     }
   }
 

@@ -89,7 +89,7 @@ class BackupPage extends StatelessWidget {
                   spis: _server.fetch(),
                   snippets: _snippet.fetch(),
                   keys: _privateKey.fetch(),
-                  dockerHosts: _dockerHosts.fetch(),
+                  dockerHosts: _dockerHosts.fetchAll(),
                 ),
               ),
             );
@@ -170,7 +170,7 @@ class BackupPage extends StatelessWidget {
                 _privateKey.put(s);
               }
               for (final k in backup.dockerHosts.keys) {
-                _dockerHosts.setDockerHost(k, backup.dockerHosts[k]!);
+                _dockerHosts.put(k, backup.dockerHosts[k]!);
               }
               context.pop();
               showRoundDialog(

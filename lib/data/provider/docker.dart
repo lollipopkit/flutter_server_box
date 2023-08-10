@@ -198,7 +198,7 @@ class DockerProvider extends ChangeNotifier {
 
   // judge whether to use DOCKER_HOST
   String _wrap(String cmd) {
-    final dockerHost = _dockerStore.getDockerHost(hostId!);
+    final dockerHost = _dockerStore.fetch(hostId!);
     if (dockerHost == null || dockerHost.isEmpty) {
       return cmd.withLangExport;
     }
