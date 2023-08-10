@@ -109,12 +109,8 @@ class _HomePageState extends State<HomePage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Scaffold(
-      drawer: _buildDrawer(),
-      appBar: AppBar(
-        title: const Text(BuildData.name),
-        actions: [
-          IconButton(
+    final actions = <Widget>[
+      IconButton(
             icon: const Icon(Icons.developer_mode, size: 23),
             tooltip: _s.debug,
             onPressed: () => AppRoute(
@@ -122,7 +118,21 @@ class _HomePageState extends State<HomePage>
               'Debug Page',
             ).go(context),
           ),
-        ],
+    ];
+    if (isDesktop && _selectIndex.value == AppTab.server.index) {
+      actions.add(
+        IconButton(
+          icon: const Icon(Icons.refresh, size: 23),
+          tooltip: 'Refresh',
+          onPressed: () => _serverProvider.refreshData(),
+        ),
+      );
+    }
+    return Scaffold(
+      drawer: _buildDrawer(),
+      appBar: AppBar(
+        title: const Text(BuildData.name),
+        actions: actions,
       ),
       body: PageView.builder(
         controller: _pageController,

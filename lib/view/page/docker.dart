@@ -535,8 +535,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
 
   Future<void> _showEditHostDialog() async {
     final id = widget.spi.id;
-    final host =
-        _store.fetch(id) ?? 'unix:///run/user/1000/docker.sock';
+    final host = _store.fetch(id) ?? 'unix:///run/user/1000/docker.sock';
     final ctrl = TextEditingController(text: host);
     await showRoundDialog(
       context: context,

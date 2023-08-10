@@ -65,6 +65,7 @@ class DockerProvider extends ChangeNotifier {
 
     if (raw.contains(_dockerNotFound)) {
       error = DockerErr(type: DockerErrType.notInstalled);
+      _logger.warning('Docker not installed: $raw');
       notifyListeners();
       return;
     }
@@ -73,6 +74,7 @@ class DockerProvider extends ChangeNotifier {
     final segments = raw.split(seperator);
     if (segments.length != dockerCmds.length) {
       error = DockerErr(type: DockerErrType.segmentsNotMatch);
+      _logger.warning('Docker segments not match: ${segments.length}');
       notifyListeners();
       return;
     }
@@ -94,7 +96,7 @@ class DockerProvider extends ChangeNotifier {
         type: DockerErrType.parsePsItem,
         message: '$psRaw\n-\n$e',
       );
-      _logger.warning('parse docker ps: $psRaw', e);
+      _logger.warning('Parse docker ps: $psRaw', e);
     } finally {
       notifyListeners();
     }
@@ -106,12 +108,12 @@ class DockerProvider extends ChangeNotifier {
       imageLines.removeWhere((element) => element.isEmpty);
       if (imageLines.isNotEmpty) imageLines.removeAt(0);
       images = imageLines.map((e) => DockerImage.fromRawStr(e)).toList();
-    } catch (e) {
+    } catch (e, trace) {
       error = DockerErr(
         type: DockerErrType.parseImages,
         message: '$imageRaw\n-\n$e',
       );
-      _logger.warning('parse docker images: $imageRaw', e);
+      _logger.warning('Parse docker images: $imageRaw', e, trace);
     } finally {
       notifyListeners();
     }
@@ -130,12 +132,12 @@ class DockerProvider extends ChangeNotifier {
         if (statsLine.isEmpty) continue;
         item.parseStats(statsLine);
       }
-    } catch (e) {
+    } catch (e, trace) {
       error = DockerErr(
         type: DockerErrType.parseStats,
         message: '$statsRaw\n-\n$e',
       );
-      _logger.warning('parse docker stats: $statsRaw', e);
+      _logger.warning('Parse docker stats: $statsRaw', e, trace);
     } finally {
       notifyListeners();
     }
