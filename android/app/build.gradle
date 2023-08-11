@@ -79,6 +79,7 @@ android {
             applicationIdSuffix '.debug'
         }
     }
+    namespace 'tech.lolli.toolbox'
 }
 
 flutter {

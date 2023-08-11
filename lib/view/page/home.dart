@@ -111,13 +111,13 @@ class _HomePageState extends State<HomePage>
     super.build(context);
     final actions = <Widget>[
       IconButton(
-            icon: const Icon(Icons.developer_mode, size: 23),
-            tooltip: _s.debug,
-            onPressed: () => AppRoute(
-              const DebugPage(),
-              'Debug Page',
-            ).go(context),
-          ),
+        icon: const Icon(Icons.developer_mode, size: 23),
+        tooltip: _s.debug,
+        onPressed: () => AppRoute(
+          const DebugPage(),
+          'Debug Page',
+        ).go(context),
+      ),
     ];
     if (isDesktop && _selectIndex.value == AppTab.server.index) {
       actions.add(
