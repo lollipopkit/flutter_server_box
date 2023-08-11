@@ -288,6 +288,8 @@ class ServerProvider extends ChangeNotifier {
 
     if (s.state != ServerState.finished) {
       _setServerState(s, ServerState.finished);
+    } else {
+      notifyListeners();
     }
     // reset try times only after prepared successfully
     _limiter.reset(sid);
