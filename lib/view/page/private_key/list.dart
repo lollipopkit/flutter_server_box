@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
@@ -25,22 +25,28 @@ class PrivateKeysListPage extends StatefulWidget {
 
 class _PrivateKeyListState extends State<PrivateKeysListPage> {
   late S _s;
-
+  bool firstBuild = true;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _s = S.of(context)!;
+    this._s = S.of(context)!;
+    print(123);
   }
 
   @override
   void initState() {
     super.initState();
-
-    autoAddSystemPriavteKey();
+    //autoAddSystemPriavteKey();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (this.firstBuild) {
+      Future.delayed(Duration.zero, () {
+        autoAddSystemPriavteKey(context);
+      });
+    }
+    _s = S.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: Text(_s.privateKey, style: textSize18),
@@ -86,7 +92,7 @@ class _PrivateKeyListState extends State<PrivateKeysListPage> {
     );
   }
 
-  void autoAddSystemPriavteKey() {
+  void autoAddSystemPriavteKey(BuildContext context) {
     final store = locator<PrivateKeyStore>();
     // Only trigger on desktop platform and no private key saved
     if (isDesktop && store.box.keys.isEmpty) {
