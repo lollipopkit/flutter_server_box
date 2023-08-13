@@ -86,10 +86,6 @@ class ServerPrivateInfo {
       throw SSHErr(type: SSHErrType.connect, message: 'alterUrl port error');
     }
     return _IpPort(ip_, port_);
-
-    // Do not update [id]
-    // Because [id] is the identity which is used to find the [SSHClient]
-    // id = '$user@$ip:$port';
   }
 
   @override

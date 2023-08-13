@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:async';
+import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
@@ -23,30 +24,17 @@ class PrivateKeysListPage extends StatefulWidget {
   _PrivateKeyListState createState() => _PrivateKeyListState();
 }
 
-class _PrivateKeyListState extends State<PrivateKeysListPage> {
+class _PrivateKeyListState extends State<PrivateKeysListPage> with AfterLayoutMixin {
   late S _s;
-  bool firstBuild = true;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    this._s = S.of(context)!;
-    print(123);
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    //autoAddSystemPriavteKey();
+    _s = S.of(context)!;
   }
 
   @override
   Widget build(BuildContext context) {
-    if (this.firstBuild) {
-      Future.delayed(Duration.zero, () {
-        autoAddSystemPriavteKey(context);
-      });
-    }
-    _s = S.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: Text(_s.privateKey, style: textSize18),
@@ -92,7 +80,7 @@ class _PrivateKeyListState extends State<PrivateKeysListPage> {
     );
   }
 
-  void autoAddSystemPriavteKey(BuildContext context) {
+  void autoAddSystemPriavteKey() {
     final store = locator<PrivateKeyStore>();
     // Only trigger on desktop platform and no private key saved
     if (isDesktop && store.box.keys.isEmpty) {
@@ -126,5 +114,10 @@ class _PrivateKeyListState extends State<PrivateKeysListPage> {
         ],
       );
     }
+  }
+  
+  @override
+  FutureOr<void> afterFirstLayout(BuildContext context) {
+    autoAddSystemPriavteKey();
   }
 }

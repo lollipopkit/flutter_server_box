@@ -491,7 +491,9 @@ class _ServerPageState extends State<ServerPage>
 
   Future<void> gotoSSH(ServerPrivateInfo spi) async {
     // as a `Mobile first` app -> handle mobile first
-    if (!isDesktop) {
+    // 
+    // run built-in ssh on macOS due to incompatibility
+    if (!isDesktop || isMacOS) {
       AppRoute(SSHPage(spi: spi), 'ssh page').go(context);
       return;
     }
@@ -523,17 +525,12 @@ class _ServerPageState extends State<ServerPage>
       case "linux":
         await Process.start("x-terminal-emulator", ["-e"] + sshCommand);
         break;
-      case "macos":
-        await Process.start("osascript", [
-          "-e",
-          'tell application "Terminal" to do script "${sshCommand.join(" ")}"'
-        ]);
-        break;
       default:
         showSnackBar(context, Text('Mismatch system: $system'));
     }
     // For security reason, delete the private key file after use
     if (shouldGenKey) {
+      if (!await file.exists()) return;
       await Future.delayed(const Duration(seconds: 2), file.delete);
     }
   }
