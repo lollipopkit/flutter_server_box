@@ -58,10 +58,10 @@ Future<SSHClient> genClient(
   } catch (e) {
     if (spi.alterUrl == null) rethrow;
     try {
-      spi.fromStringUrl();
+      final ipPort = spi.fromStringUrl();
       socket = await SSHSocket.connect(
-        spi.ip,
-        spi.port,
+        ipPort.ip,
+        ipPort.port,
         timeout: const Duration(seconds: 5),
       );
     } catch (e) {

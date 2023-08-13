@@ -68,7 +68,7 @@ class ServerPrivateInfo {
         alterUrl != old.alterUrl;
   }
 
-  void fromStringUrl() {
+  _IpPort fromStringUrl() {
     if (alterUrl == null) {
       throw SSHErr(type: SSHErrType.connect, message: 'alterUrl is null');
     }
@@ -76,16 +76,16 @@ class ServerPrivateInfo {
     if (splited.length != 2) {
       throw SSHErr(type: SSHErrType.connect, message: 'alterUrl no @');
     }
-    user = splited[0];
     final splited2 = splited[1].split(':');
     if (splited2.length != 2) {
       throw SSHErr(type: SSHErrType.connect, message: 'alterUrl no :');
     }
-    ip = splited2[0];
-    port = int.tryParse(splited2[1]) ?? 22;
+    final ip_ = splited2[0];
+    final port_ = int.tryParse(splited2[1]) ?? 22;
     if (port <= 0 || port > 65535) {
       throw SSHErr(type: SSHErrType.connect, message: 'alterUrl port error');
     }
+    return _IpPort(ip_, port_);
 
     // Do not update [id]
     // Because [id] is the identity which is used to find the [SSHClient]
@@ -96,4 +96,11 @@ class ServerPrivateInfo {
   String toString() {
     return id;
   }
+}
+
+class _IpPort {
+  final String ip;
+  final int port;
+
+  _IpPort(this.ip, this.port);
 }
