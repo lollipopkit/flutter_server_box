@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:nil/nil.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/view/widget/input_field.dart';
@@ -132,9 +131,9 @@ class _PkgManagePageState extends State<PkgManagePage>
     return _textController.text.trim();
   }
 
-  Widget _buildFAB(PkgProvider pkg) {
+  Widget? _buildFAB(PkgProvider pkg) {
     if (pkg.upgradeable?.isEmpty ?? true) {
-      return nil;
+      return null;
     }
     return FloatingActionButton(
       onPressed: () {

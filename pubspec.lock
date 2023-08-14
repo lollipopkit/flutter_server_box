@@ -558,14 +558,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
-  nil:
-    dependency: "direct main"
-    description:
-      name: nil
-      sha256: ef05770c48942876d843bf6a4822d35e5da0ff893a61f1d5ad96d15c4a659136
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.1.1"
   package_config:
     dependency: transitive
     description:
@@ -1056,7 +1048,7 @@ packages:
     description:
       path: "."
       ref: master
-      resolved-ref: f289cc3d3fd264598c0bbf413da08ba599c00ef9
+      resolved-ref: "475bd72d5e3f75d7c2323225e931f71145cafc2e"
       url: "https://github.com/lollipopkit/xterm.dart"
     source: git
     version: "3.6.1-pre"

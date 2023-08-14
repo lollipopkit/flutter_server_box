@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:nil/nil.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/extension/numx.dart';
 import 'package:toolbox/core/utils/misc.dart';
@@ -43,7 +42,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
   late PrivateKeyProvider _provider;
   late S _s;
 
-  Widget _loading = nil;
+  Widget? _loading;
 
   @override
   void initState() {
@@ -124,7 +123,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
           rethrow;
         } finally {
           setState(() {
-            _loading = nil;
+            _loading = null;
           });
         }
         context.pop();
@@ -196,7 +195,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
           icon: Icons.password,
         ),
         SizedBox(height: MediaQuery.of(context).size.height * 0.1),
-        _loading
+        _loading ?? placeholder,
       ],
     );
   }

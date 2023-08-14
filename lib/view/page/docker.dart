@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:nil/nil.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/route.dart';
@@ -337,7 +336,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   }
 
   Widget _buildLoading() {
-    if (_docker.runLog == null) return nil;
+    if (_docker.runLog == null) return placeholder;
     return Padding(
       padding: const EdgeInsets.all(17),
       child: Column(

@@ -64,7 +64,6 @@ dependencies:
   highlight: ^0.7.0
   flutter_highlight: ^0.7.0
   code_text_field: ^1.1.0
-  nil: ^1.1.1
   shared_preferences: ^2.1.1
   crypto: ^3.0.3
 

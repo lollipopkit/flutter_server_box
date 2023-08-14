@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:nil/nil.dart';
+import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/widget/fade_in.dart';
 import 'package:toolbox/view/widget/tag/view.dart';
 
@@ -21,7 +21,7 @@ class TagSwitcher extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (tags.isEmpty) return nil;
+    if (tags.isEmpty) return placeholder;
     final items = <String?>[null, ...tags];
     return Container(
       height: 37,

@@ -5,7 +5,6 @@ import 'package:circle_chart/circle_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
-import 'package:nil/nil.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/data/model/app/net_view.dart';
@@ -121,6 +120,7 @@ class _ServerPageState extends State<ServerPage>
               initTag: _tag,
               all: _s.all,
             ),
+            footer: const SizedBox(height: 77),
             padding: const EdgeInsets.fromLTRB(7, 10, 7, 7),
             onReorder: (oldIndex, newIndex) => setState(() {
               pro.serverOrder.moveByItem(
@@ -145,7 +145,7 @@ class _ServerPageState extends State<ServerPage>
 
   Widget _buildEachServerCard(Server? si) {
     if (si == null) {
-      return nil;
+      return placeholder;
     }
     return GestureDetector(
       key: Key(si.spi.id + (_tag ?? '')),
@@ -491,7 +491,7 @@ class _ServerPageState extends State<ServerPage>
 
   Future<void> gotoSSH(ServerPrivateInfo spi) async {
     // as a `Mobile first` app -> handle mobile first
-    // 
+    //
     // run built-in ssh on macOS due to incompatibility
     if (!isDesktop || isMacOS) {
       AppRoute(SSHPage(spi: spi), 'ssh page').go(context);

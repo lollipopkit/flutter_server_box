@@ -6,7 +6,6 @@ import 'package:circle_chart/circle_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
-import 'package:nil/nil.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/model/server/disk.dart';
@@ -148,7 +147,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
           final id = pro.serverOrder[idx];
           final s = pro.servers[id];
           if (s == null) {
-            return nil;
+            return Center(child: Text(_s.noClient));
           }
           return _buildRealServerCard(s.status, s.state, s.spi);
         },

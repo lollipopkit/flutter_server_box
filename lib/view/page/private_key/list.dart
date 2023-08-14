@@ -24,7 +24,8 @@ class PrivateKeysListPage extends StatefulWidget {
   _PrivateKeyListState createState() => _PrivateKeyListState();
 }
 
-class _PrivateKeyListState extends State<PrivateKeysListPage> with AfterLayoutMixin {
+class _PrivateKeyListState extends State<PrivateKeysListPage>
+    with AfterLayoutMixin {
   late S _s;
 
   @override
@@ -115,7 +116,7 @@ class _PrivateKeyListState extends State<PrivateKeysListPage> with AfterLayoutMi
       );
     }
   }
-  
+
   @override
   FutureOr<void> afterFirstLayout(BuildContext context) {
     autoAddSystemPriavteKey();
