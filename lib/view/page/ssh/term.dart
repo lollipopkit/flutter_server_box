@@ -8,7 +8,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/navigator.dart';
-import 'package:toolbox/data/res/server_cmd.dart';
 import 'package:xterm/xterm.dart';
 
 import '../../../core/route.dart';
@@ -25,6 +24,8 @@ import '../../../data/store/setting.dart';
 import '../../../locator.dart';
 import '../storage/sftp.dart';
 
+const echoPWD = 'echo \$PWD';
+
 class SSHPage extends StatefulWidget {
   final ServerPrivateInfo spi;
   final String? initCmd;
@@ -39,6 +40,7 @@ class _SSHPageState extends State<SSHPage> {
   final _setting = locator<SettingStore>();
   late final _terminal = Terminal(inputHandler: _keyboard);
   final TerminalController _terminalController = TerminalController();
+  final ContextMenuController _menuController = ContextMenuController();
   final List<List<VirtKey>> _virtKeysList = [];
 
   late MediaQueryData _media;
@@ -97,7 +99,7 @@ class _SSHPageState extends State<SSHPage> {
     Widget child = Scaffold(
       backgroundColor: _terminalTheme.background,
       body: _buildBody(),
-      bottomNavigationBar: _buildBottom(),
+      bottomNavigationBar: isDesktop ? null : _buildBottom(),
     );
     if (isIOS) {
       child = AnnotatedRegion(
@@ -116,6 +118,7 @@ class _SSHPageState extends State<SSHPage> {
           _media.padding.top,
       child: TerminalView(
         _terminal,
+        onTapUp: _onTapUp,
         controller: _terminalController,
         keyboardType: _keyboardType,
         textStyle: _terminalStyle,
@@ -361,5 +364,50 @@ class _SSHPageState extends State<SSHPage> {
         .cast<List<int>>()
         .transform(const Utf8Decoder())
         .listen(_terminal.write);
+  }
+
+  void _onTapUp(TapUpDetails details, CellOffset offset) {
+    if (_menuController.isShown) {
+      _menuController.remove();
+      return;
+    }
+    final selected = terminalSelected;
+    final children = <Widget>[
+      // TextButton(
+      //   onPressed: () {
+      //     _paste();
+      //   },
+      //   child: Text(_s.paste),
+      // ),
+    ];
+    if (selected?.trim().isNotEmpty ?? false) {
+      children.add(
+        TextButton(
+          child: Text(
+            _s.copy,
+          ),
+          onPressed: () {
+            _terminalController.setSelection(CellAnchor(0), CellAnchor(0));
+            if (selected != null) {
+              copy2Clipboard(selected);
+            }
+            _menuController.remove();
+          },
+        ),
+      );
+    }
+    if (children.isEmpty) {
+      return;
+    }
+    _menuController.show(
+      context: context,
+      contextMenuBuilder: (context) {
+        return TextSelectionToolbar(
+          anchorAbove: details.globalPosition,
+          anchorBelow: details.globalPosition,
+          children: children,
+        );
+      },
+    );
   }
 }

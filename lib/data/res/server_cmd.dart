@@ -5,8 +5,6 @@ const seperator = 'SrvBoxSep';
 const serverBoxDir = r'$HOME/.config/server_box';
 const shellPath = '$serverBoxDir/mobile_app.sh';
 
-const echoPWD = 'echo \$PWD';
-
 const statusCmds = [
   'cat /proc/net/dev && date +%s',
   'cat /etc/os-release | grep PRETTY_NAME',
