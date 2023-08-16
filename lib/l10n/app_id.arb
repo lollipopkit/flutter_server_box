@@ -208,7 +208,7 @@
   "urlOrJson": "URL atau JSON",
   "user": "Username",
   "versionHaveUpdate": "Ditemukan: v1.0.{build}, klik untuk memperbarui",
-  "versionUnknownUpdate": "Saat ini: v1.0.{build}",
+  "versionUnknownUpdate": "Saat ini: v1.0.{build}. Klik untuk memeriksa pembaruan.",
   "versionUpdated": "Saat ini: v1.0.{build}, mutakhir",
   "viewErr": "Lihat kesalahan",
   "virtKeyHelpClipboard": "Salin ke clipboard jika terminal yang dipilih tidak kosong, jika tidak, tempel isi clipboard ke terminal.",

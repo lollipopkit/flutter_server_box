@@ -672,7 +672,7 @@ class SId extends S {
 
   @override
   String versionUnknownUpdate(Object build) {
-    return 'Saat ini: v1.0.$build';
+    return 'Saat ini: v1.0.$build. Klik untuk memeriksa pembaruan.';
   }
 
   @override

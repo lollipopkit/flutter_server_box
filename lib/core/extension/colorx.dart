@@ -8,6 +8,13 @@ const _interactiveStates = <MaterialState>{
 };
 
 extension ColorX on Color {
+  String get toHex {
+    final redStr = red.toRadixString(16).padLeft(2, '0');
+    final greenStr = green.toRadixString(16).padLeft(2, '0');
+    final blueStr = blue.toRadixString(16).padLeft(2, '0');
+    return '#$redStr$greenStr$blueStr';
+  }
+
   bool get isBrightColor {
     return getBrightnessFromColor == Brightness.light;
   }

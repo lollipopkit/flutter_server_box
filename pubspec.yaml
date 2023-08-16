@@ -40,7 +40,6 @@ dependencies:
   countly_flutter: ^23.6.0
   dartssh2: ^2.8.2
   logging: ^1.0.2
-  flutter_material_color_picker: ^1.1.0+2
   circle_chart:
     git:
       url: https://github.com/lollipopkit/circle_chart
@@ -55,10 +54,10 @@ dependencies:
   intl: ^0.18.0
   # xterm: ^3.5.0
   xterm:
-    #path: ../xterm.dart
-    git:
-      ref: master
-      url: https://github.com/lollipopkit/xterm.dart
+    path: ../xterm.dart
+    # git:
+    #   ref: master
+    #   url: https://github.com/lollipopkit/xterm.dart
   file_picker: ^5.3.2
   plain_notification_token: ^0.0.4
   highlight: ^0.7.0

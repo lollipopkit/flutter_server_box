@@ -672,7 +672,7 @@ class SDe extends S {
 
   @override
   String versionUnknownUpdate(Object build) {
-    return 'Aktuell: v1.0.$build';
+    return 'Aktuell: v1.0.$build. Klicken Sie hier, um nach Updates zu suchen';
   }
 
   @override

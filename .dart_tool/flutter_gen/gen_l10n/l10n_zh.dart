@@ -672,7 +672,7 @@ class SZh extends S {
 
   @override
   String versionUnknownUpdate(Object build) {
-    return '当前：v1.0.$build';
+    return '当前：v1.0.$build，点击检查更新';
   }
 
   @override
@@ -1371,7 +1371,7 @@ class SZhTw extends SZh {
 
   @override
   String versionUnknownUpdate(Object build) {
-    return '當前：v1.0.$build';
+    return '當前：v1.0.$build，點擊檢查更新';
   }
 
   @override

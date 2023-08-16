@@ -4,14 +4,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:flutter_highlight/theme_map.dart';
-import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:toolbox/core/extension/colorx.dart';
 import 'package:toolbox/core/extension/locale.dart';
 import 'package:toolbox/core/extension/navigator.dart';
+import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/model/app/net_view.dart';
-import 'package:toolbox/data/model/app/tab.dart';
 import 'package:toolbox/view/page/ssh/virt_key_setting.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/value_notifier.dart';
@@ -41,7 +41,7 @@ class SettingPage extends StatefulWidget {
 
 class _SettingPageState extends State<SettingPage> {
   final _themeKey = GlobalKey<PopupMenuButtonState<int>>();
-  final _startPageKey = GlobalKey<PopupMenuButtonState<int>>();
+  //final _startPageKey = GlobalKey<PopupMenuButtonState<int>>();
   final _updateIntervalKey = GlobalKey<PopupMenuButtonState<int>>();
   final _maxRetryKey = GlobalKey<PopupMenuButtonState<int>>();
   final _localeKey = GlobalKey<PopupMenuButtonState<String>>();
@@ -53,7 +53,6 @@ class _SettingPageState extends State<SettingPage> {
 
   late final SettingStore _setting;
   late final ServerProvider _serverProvider;
-  late MediaQueryData _media;
   late S _s;
   late SharedPreferences _sp;
 
@@ -75,7 +74,6 @@ class _SettingPageState extends State<SettingPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _media = MediaQuery.of(context);
     _s = S.of(context)!;
     _localeCode.value = _setting.locale.fetch() ?? _s.localeName;
   }
@@ -141,8 +139,7 @@ class _SettingPageState extends State<SettingPage> {
       _buildLocale(),
       _buildThemeMode(),
       _buildAppColor(),
-      _buildLaunchPage(),
-      _buildAutoCheckAppUpdate(),
+      //_buildLaunchPage(),
       _buildCheckUpdate(),
     ];
     if (isIOS) {
@@ -215,11 +212,10 @@ class _SettingPageState extends State<SettingPage> {
           display = _s.versionUnknownUpdate(BuildData.build);
         }
         return ListTile(
-          trailing: const Icon(Icons.keyboard_arrow_right),
-          title: Text(
-            display,
-          ),
+          title: Text(_s.autoCheckUpdate),
+          subtitle: Text(display, style: grey),
           onTap: () => doUpdate(ctx, force: true),
+          trailing: buildSwitch(context, _setting.autoCheckAppUpdate),
         );
       },
     );
@@ -282,76 +278,72 @@ class _SettingPageState extends State<SettingPage> {
         _s.primaryColor,
       ),
       onTap: () async {
+        final ctrl = TextEditingController(text: primaryColor.toHex);
         await showRoundDialog(
           context: context,
           title: Text(_s.primaryColor),
-          child: SizedBox(
-            height: 211,
-            child: Center(
-              child: MaterialColorPicker(
-                shrinkWrap: true,
-                allowShades: true,
-                onColorChange: (color) {
-                  _selectedColorValue.value = color.value;
-                },
-                selectedColor: primaryColor,
-              ),
-            ),
+          child: Input(
+            onSubmitted: _onSaveColor,
+            controller: ctrl,
+            hint: '#8b2252',
+            icon: Icons.colorize,
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                _setting.primaryColor.put(_selectedColorValue.value);
-                Navigator.pop(context);
-                _showRestartSnackbar();
-              },
-              child: Text(_s.ok),
-            )
-          ],
         );
       },
     );
   }
 
-  Widget _buildLaunchPage() {
-    final items = AppTab.values
-        .map(
-          (e) => PopupMenuItem(
-            value: e.index,
-            child: Text(tabTitleName(context, e)),
-          ),
-        )
-        .toList();
-
-    return ListTile(
-      title: Text(
-        _s.launchPage,
-      ),
-      onTap: () {
-        _startPageKey.currentState?.showButtonMenu();
-      },
-      trailing: ValueBuilder(
-        listenable: _launchPageIdx,
-        build: () => PopupMenuButton(
-          key: _startPageKey,
-          itemBuilder: (BuildContext context) => items,
-          initialValue: _launchPageIdx.value,
-          onSelected: (int idx) {
-            _launchPageIdx.value = idx;
-            _setting.launchPage.put(_launchPageIdx.value);
-          },
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: _media.size.width * 0.35),
-            child: Text(
-              tabTitleName(context, AppTab.values[_launchPageIdx.value]),
-              textAlign: TextAlign.right,
-              style: textSize15,
-            ),
-          ),
-        ),
-      ),
-    );
+  void _onSaveColor(String s) {
+    final color = s.hexToColor;
+    if (color == null) {
+      showSnackBar(context, Text(_s.failed));
+      return;
+    }
+    _selectedColorValue.value = color.value;
+    _setting.primaryColor.put(_selectedColorValue.value);
+    context.pop();
+    _showRestartSnackbar();
   }
+
+  // Widget _buildLaunchPage() {
+  //   final items = AppTab.values
+  //       .map(
+  //         (e) => PopupMenuItem(
+  //           value: e.index,
+  //           child: Text(tabTitleName(context, e)),
+  //         ),
+  //       )
+  //       .toList();
+
+  //   return ListTile(
+  //     title: Text(
+  //       _s.launchPage,
+  //     ),
+  //     onTap: () {
+  //       _startPageKey.currentState?.showButtonMenu();
+  //     },
+  //     trailing: ValueBuilder(
+  //       listenable: _launchPageIdx,
+  //       build: () => PopupMenuButton(
+  //         key: _startPageKey,
+  //         itemBuilder: (BuildContext context) => items,
+  //         initialValue: _launchPageIdx.value,
+  //         onSelected: (int idx) {
+  //           _launchPageIdx.value = idx;
+  //           _setting.launchPage.put(_launchPageIdx.value);
+  //         },
+  //         child: ConstrainedBox(
+  //           constraints: BoxConstraints(maxWidth: _media.size.width * 0.35),
+  //           child: Text(
+  //             tabTitleName(context, AppTab.values[_launchPageIdx.value]),
+  //             textAlign: TextAlign.right,
+  //             style: textSize15,
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildMaxRetry() {
     final items = List.generate(
@@ -976,14 +968,6 @@ class _SettingPageState extends State<SettingPage> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildAutoCheckAppUpdate() {
-    return ListTile(
-      title: Text(_s.autoCheckUpdate),
-      subtitle: Text(_s.whenOpenApp, style: grey),
-      trailing: buildSwitch(context, _setting.autoCheckAppUpdate),
     );
   }
 }

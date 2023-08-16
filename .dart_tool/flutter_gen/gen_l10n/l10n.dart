@@ -1349,7 +1349,7 @@ abstract class S {
   /// No description provided for @versionUnknownUpdate.
   ///
   /// In en, this message translates to:
-  /// **'Current: v1.0.{build}'**
+  /// **'Current: v1.0.{build}, click to check updates'**
   String versionUnknownUpdate(Object build);
 
   /// No description provided for @versionUpdated.

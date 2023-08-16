@@ -208,7 +208,7 @@
   "urlOrJson": "鏈接或JSON",
   "user": "用戶",
   "versionHaveUpdate": "找到新版本：v1.0.{build}, 點擊更新",
-  "versionUnknownUpdate": "當前：v1.0.{build}",
+  "versionUnknownUpdate": "當前：v1.0.{build}，點擊檢查更新",
   "versionUpdated": "當前：v1.0.{build}, 已是最新版本",
   "viewErr": "查看錯誤",
   "virtKeyHelpClipboard": "如果終端有選中字符，則復製選中字符至剪切板，否則粘貼剪切板內容至終端。",

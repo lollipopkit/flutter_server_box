@@ -208,7 +208,7 @@
   "urlOrJson": "URL or JSON",
   "user": "User",
   "versionHaveUpdate": "Found: v1.0.{build}, click to update",
-  "versionUnknownUpdate": "Current: v1.0.{build}",
+  "versionUnknownUpdate": "Current: v1.0.{build}, click to check updates",
   "versionUpdated": "Current: v1.0.{build}, is up to date",
   "viewErr": "See error",
   "virtKeyHelpClipboard": "Copy to the clipboard if terminal selected is not empty, otherwise paste the contents of the clipboard to the terminal.",

@@ -672,7 +672,7 @@ class SEn extends S {
 
   @override
   String versionUnknownUpdate(Object build) {
-    return 'Current: v1.0.$build';
+    return 'Current: v1.0.$build, click to check updates';
   }
 
   @override

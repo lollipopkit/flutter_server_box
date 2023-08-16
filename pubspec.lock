@@ -332,14 +332,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_material_color_picker:
-    dependency: "direct main"
-    description:
-      name: flutter_material_color_picker
-      sha256: ca1e7749d228c9155ea24bce98e647cdbffa350e6f334f6c001f841cd3d9c987
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.2.0"
   flutter_native_splash:
     dependency: "direct dev"
     description:
@@ -1046,11 +1038,9 @@ packages:
   xterm:
     dependency: "direct main"
     description:
-      path: "."
-      ref: master
-      resolved-ref: "132bbb310c6026ba1f5f2ef4eac81f874ee06774"
-      url: "https://github.com/lollipopkit/xterm.dart"
-    source: git
+      path: "../xterm.dart"
+      relative: true
+    source: path
     version: "3.6.1-pre"
   yaml:
     dependency: transitive
@@ -1069,5 +1059,5 @@ packages:
     source: hosted
     version: "0.0.6"
 sdks:
-  dart: ">=3.0.2 <4.0.0"
+  dart: ">=3.0.0 <4.0.0"
   flutter: ">=3.10.0"

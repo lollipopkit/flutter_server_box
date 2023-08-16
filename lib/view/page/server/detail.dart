@@ -372,7 +372,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           SizedBox(
-            width: width / 1.2,
+            width: width,
             child: Text(
               device,
               style: textSize11,
@@ -440,7 +440,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     return RoundRectCard(Padding(
       padding: roundRectCardPadding,
       child: Column(children: children),
-    ));
+    ),);
   }
 
   Widget _buildAnimatedText(Key key, String text, TextStyle style) {
