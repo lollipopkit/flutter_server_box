@@ -47,8 +47,8 @@ class _SSHPageState extends State<SSHPage> {
   late TerminalStyle _terminalStyle;
   late TerminalTheme _terminalTheme;
   late TextInputType _keyboardType;
-  late double _virtKeyWidth;
-  late double _virtKeysHeight;
+  double _virtKeyWidth = 0;
+  double _virtKeysHeight = 0;
 
   bool _isDark = false;
   Timer? _virtKeyLongPressTimer;
@@ -85,9 +85,12 @@ class _SSHPageState extends State<SSHPage> {
     _media = MediaQuery.of(context);
     _s = S.of(context)!;
     _terminalTheme = _isDark ? termDarkTheme : termLightTheme;
-    // Calculate virtkey width / height
-    _virtKeyWidth = _media.size.width / 7;
-    _virtKeysHeight = _media.size.height * 0.043 * _virtKeysList.length;
+    
+    // Because the virtual keyboard only displayed on mobile devices
+    if (isMobile) {
+      _virtKeyWidth = _media.size.width / 7;
+      _virtKeysHeight = _media.size.height * 0.043 * _virtKeysList.length;
+    }
   }
 
   @override
