@@ -456,7 +456,7 @@ class SEn extends S {
   String get preview => 'Preview';
 
   @override
-  String get primaryColor => 'Primary color';
+  String get primaryColorSeed => 'Primary color seed';
 
   @override
   String get privateKey => 'Private Key';

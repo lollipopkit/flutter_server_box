@@ -456,7 +456,7 @@ class SZh extends S {
   String get preview => '预览';
 
   @override
-  String get primaryColor => '主题色';
+  String get primaryColorSeed => '主题色种子';
 
   @override
   String get privateKey => '私钥';
@@ -1155,7 +1155,7 @@ class SZhTw extends SZh {
   String get preview => '預覽';
 
   @override
-  String get primaryColor => '主要色調';
+  String get primaryColorSeed => '主要色調種子';
 
   @override
   String get privateKey => '私鑰';

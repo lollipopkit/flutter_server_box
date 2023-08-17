@@ -456,7 +456,7 @@ class SId extends S {
   String get preview => 'Pratinjau';
 
   @override
-  String get primaryColor => 'Warna utama';
+  String get primaryColorSeed => 'Warna utama';
 
   @override
   String get privateKey => 'Kunci Pribadi';

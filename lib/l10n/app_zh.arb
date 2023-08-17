@@ -143,7 +143,7 @@
   "plzSelectKey": "请选择私钥",
   "port": "端口",
   "preview": "预览",
-  "primaryColor": "主题色",
+  "primaryColorSeed": "主题色种子",
   "privateKey": "私钥",
   "process": "进程",
   "pushToken": "消息推送 Token",

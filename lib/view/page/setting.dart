@@ -274,14 +274,12 @@ class _SettingPageState extends State<SettingPage> {
           width: 27,
         ),
       ),
-      title: Text(
-        _s.primaryColor,
-      ),
+      title: Text(_s.primaryColorSeed),
       onTap: () async {
         final ctrl = TextEditingController(text: primaryColor.toHex);
         await showRoundDialog(
           context: context,
-          title: Text(_s.primaryColor),
+          title: Text(_s.primaryColorSeed),
           child: Input(
             onSubmitted: _onSaveColor,
             controller: ctrl,
@@ -674,7 +672,7 @@ class _SettingPageState extends State<SettingPage> {
       },
     ).toList();
     return ListTile(
-      title: Text(_s.light + _s.theme),
+      title: Text('${_s.light} ${_s.theme.toLowerCase()}'),
       trailing: ValueBuilder(
         listenable: _editorTheme,
         build: () => PopupMenuButton(
@@ -707,7 +705,7 @@ class _SettingPageState extends State<SettingPage> {
       },
     ).toList();
     return ListTile(
-      title: Text(_s.dark + _s.theme),
+      title: Text('${_s.dark} ${_s.theme.toLowerCase()}'),
       trailing: ValueBuilder(
         listenable: _editorDarkTheme,
         build: () => PopupMenuButton(

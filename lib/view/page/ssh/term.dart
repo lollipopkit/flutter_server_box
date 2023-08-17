@@ -40,7 +40,6 @@ class _SSHPageState extends State<SSHPage> {
   final _setting = locator<SettingStore>();
   late final _terminal = Terminal(inputHandler: _keyboard);
   final TerminalController _terminalController = TerminalController();
-  final ContextMenuController _menuController = ContextMenuController();
   final List<List<VirtKey>> _virtKeysList = [];
 
   late MediaQueryData _media;
@@ -48,13 +47,13 @@ class _SSHPageState extends State<SSHPage> {
   late TerminalStyle _terminalStyle;
   late TerminalTheme _terminalTheme;
   late TextInputType _keyboardType;
-  late SSHSession _session;
   late double _virtKeyWidth;
   late double _virtKeysHeight;
 
   bool _isDark = false;
   Timer? _virtKeyLongPressTimer;
   SSHClient? _client;
+  SSHSession? _session;
 
   @override
   void initState() {
@@ -76,10 +75,7 @@ class _SSHPageState extends State<SSHPage> {
     _virtKeyLongPressTimer?.cancel();
     _terminalController.dispose();
     _client?.close();
-    // ignore: unnecessary_null_comparison
-    if (_session != null) {
-      _session.close();
-    }
+    _session?.close();
   }
 
   @override
@@ -116,16 +112,18 @@ class _SSHPageState extends State<SSHPage> {
           _virtKeysHeight -
           _media.padding.bottom -
           _media.padding.top,
-      child: TerminalView(
-        _terminal,
-        onTapUp: _onTapUp,
-        controller: _terminalController,
-        keyboardType: _keyboardType,
-        textStyle: _terminalStyle,
-        theme: _terminalTheme,
-        deleteDetection: isIOS,
-        autofocus: true,
-        keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,
+      child: Padding(
+        padding: EdgeInsets.only(top: _media.padding.top),
+        child: TerminalView(
+          _terminal,
+          controller: _terminalController,
+          keyboardType: _keyboardType,
+          textStyle: _terminalStyle,
+          theme: _terminalTheme,
+          deleteDetection: isIOS,
+          autofocus: true,
+          keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,
+        ),
       ),
     );
   }
@@ -268,13 +266,8 @@ class _SSHPageState extends State<SSHPage> {
           );
           return;
         }
-        AppRoute(
-                SftpPage(
-                  widget.spi,
-                  initPath: initPath,
-                ),
-                'SSH SFTP')
-            .go(context);
+        final page = SftpPage(widget.spi, initPath: initPath);
+        AppRoute(page, 'SSH SFTP').go(context);
     }
   }
 
@@ -338,76 +331,42 @@ class _SSHPageState extends State<SSHPage> {
       ),
     );
 
+    if (_session == null) {
+      showSnackBar(context, const Text('Null session'));
+      return;
+    }
+
     _terminal.buffer.clear();
     _terminal.buffer.setCursor(0, 0);
 
     _terminal.onOutput = (data) {
-      _session.write(utf8.encode(data) as Uint8List);
+      _session?.write(utf8.encode(data) as Uint8List);
+    };
+    _terminal.onResize = (width, height, pixelWidth, pixelHeight) {
+      _session?.resizeTerminal(width, height);
     };
 
-    _listen(_session.stdout);
-    _listen(_session.stderr);
+    _listen(_session?.stdout);
+    _listen(_session?.stderr);
 
     if (widget.initCmd != null) {
       _terminal.textInput(widget.initCmd!);
       _terminal.keyInput(TerminalKey.enter);
     }
 
-    await _session.done;
+    await _session?.done;
     if (mounted) {
       context.pop();
     }
   }
 
-  void _listen(Stream<Uint8List> stream) {
+  void _listen(Stream<Uint8List>? stream) {
+    if (stream == null) {
+      return;
+    }
     stream
         .cast<List<int>>()
         .transform(const Utf8Decoder())
         .listen(_terminal.write);
-  }
-
-  void _onTapUp(TapUpDetails details, CellOffset offset) {
-    if (_menuController.isShown) {
-      _menuController.remove();
-      return;
-    }
-    final selected = terminalSelected;
-    final children = <Widget>[
-      // TextButton(
-      //   onPressed: () {
-      //     _paste();
-      //   },
-      //   child: Text(_s.paste),
-      // ),
-    ];
-    if (selected?.trim().isNotEmpty ?? false) {
-      children.add(
-        TextButton(
-          child: Text(
-            _s.copy,
-          ),
-          onPressed: () {
-            _terminalController.setSelection(CellAnchor(0), CellAnchor(0));
-            if (selected != null) {
-              copy2Clipboard(selected);
-            }
-            _menuController.remove();
-          },
-        ),
-      );
-    }
-    if (children.isEmpty) {
-      return;
-    }
-    _menuController.show(
-      context: context,
-      contextMenuBuilder: (context) {
-        return TextSelectionToolbar(
-          anchorAbove: details.globalPosition,
-          anchorBelow: details.globalPosition,
-          children: children,
-        );
-      },
-    );
   }
 }

@@ -143,7 +143,7 @@
   "plzSelectKey": "Wähle einen Key.",
   "port": "Port",
   "preview": "Vorschau",
-  "primaryColor": "Farbschema",
+  "primaryColorSeed": "Farbschema",
   "privateKey": "Private Key",
   "process": "Prozess",
   "pushToken": "Push Token",

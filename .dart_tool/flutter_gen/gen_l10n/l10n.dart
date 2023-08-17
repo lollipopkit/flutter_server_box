@@ -956,11 +956,11 @@ abstract class S {
   /// **'Preview'**
   String get preview;
 
-  /// No description provided for @primaryColor.
+  /// No description provided for @primaryColorSeed.
   ///
   /// In en, this message translates to:
-  /// **'Primary color'**
-  String get primaryColor;
+  /// **'Primary color seed'**
+  String get primaryColorSeed;
 
   /// No description provided for @privateKey.
   ///

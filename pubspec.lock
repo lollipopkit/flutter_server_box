@@ -1038,9 +1038,11 @@ packages:
   xterm:
     dependency: "direct main"
     description:
-      path: "../xterm.dart"
-      relative: true
-    source: path
+      path: "."
+      ref: master
+      resolved-ref: "937c25f58904432a4eb478a8b7f81bc012d20027"
+      url: "https://github.com/lollipopkit/xterm.dart"
+    source: git
     version: "3.6.1-pre"
   yaml:
     dependency: transitive

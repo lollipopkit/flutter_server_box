@@ -437,10 +437,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             ),
           ],
         )));
-    return RoundRectCard(Padding(
-      padding: roundRectCardPadding,
-      child: Column(children: children),
-    ),);
+    return RoundRectCard(
+      Padding(
+        padding: roundRectCardPadding,
+        child: Column(children: children),
+      ),
+    );
   }
 
   Widget _buildAnimatedText(Key key, String text, TextStyle style) {

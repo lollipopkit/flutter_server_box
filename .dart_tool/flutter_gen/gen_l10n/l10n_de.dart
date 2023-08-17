@@ -456,7 +456,7 @@ class SDe extends S {
   String get preview => 'Vorschau';
 
   @override
-  String get primaryColor => 'Farbschema';
+  String get primaryColorSeed => 'Farbschema';
 
   @override
   String get privateKey => 'Private Key';

@@ -143,7 +143,7 @@
   "plzSelectKey": "請選擇私鑰",
   "port": "端口",
   "preview": "預覽",
-  "primaryColor": "主要色調",
+  "primaryColorSeed": "主要色調種子",
   "privateKey": "私鑰",
   "process": "進程",
   "pushToken": "消息推送 Token",
