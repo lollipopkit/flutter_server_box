@@ -309,6 +309,7 @@ class _HomePageState extends State<HomePage>
               replace: name,
             ),
           ),
+          height13,
           const Text('Participants:'),
           ...participants.map(
             (name) => UrlText(

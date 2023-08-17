@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/navigator.dart';
+import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:xterm/xterm.dart';
 
 import '../../../core/route.dart';
@@ -54,6 +55,7 @@ class _SSHPageState extends State<SSHPage> {
   Timer? _virtKeyLongPressTimer;
   SSHClient? _client;
   SSHSession? _session;
+  Timer? _discontinuityTimer;
 
   @override
   void initState() {
@@ -74,8 +76,12 @@ class _SSHPageState extends State<SSHPage> {
     super.dispose();
     _virtKeyLongPressTimer?.cancel();
     _terminalController.dispose();
-    _client?.close();
-    _session?.close();
+    if (_client?.isClosed == false) {
+      try {
+        _client?.close();
+      } catch (_) {}
+    }
+    _discontinuityTimer?.cancel();
   }
 
   @override
@@ -85,7 +91,7 @@ class _SSHPageState extends State<SSHPage> {
     _media = MediaQuery.of(context);
     _s = S.of(context)!;
     _terminalTheme = _isDark ? termDarkTheme : termLightTheme;
-    
+
     // Because the virtual keyboard only displayed on mobile devices
     if (isMobile) {
       _virtKeyWidth = _media.size.width / 7;
@@ -126,6 +132,7 @@ class _SSHPageState extends State<SSHPage> {
           deleteDetection: isIOS,
           autofocus: true,
           keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,
+          hideScrollBar: isMobile,
         ),
       ),
     );
@@ -334,6 +341,20 @@ class _SSHPageState extends State<SSHPage> {
       ),
     );
 
+    _discontinuityTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) async {
+        var throwTimeout = true;
+        Future.delayed(const Duration(seconds: 3), () {
+          if (throwTimeout) {
+            _catchTimeout();
+          }
+        });
+        await _client?.run('echo 1').string;
+        throwTimeout = false;
+      },
+    );
+
     if (_session == null) {
       showSnackBar(context, const Text('Null session'));
       return;
@@ -371,5 +392,28 @@ class _SSHPageState extends State<SSHPage> {
         .cast<List<int>>()
         .transform(const Utf8Decoder())
         .listen(_terminal.write);
+  }
+
+  void _catchTimeout() {
+    _discontinuityTimer?.cancel();
+    if (!mounted) return;
+    _write('\n\nConnection lost\r\n');
+    showRoundDialog(
+      context: context,
+      title: Text(_s.disconnected),
+      child: Text('Go back?'),
+      barrierDismiss: false,
+      actions: [
+        TextButton(
+          onPressed: () {
+            if (mounted) {
+              context.pop();
+              context.pop();
+            }
+          },
+          child: Text(_s.ok),
+        ),
+      ],
+    );
   }
 }

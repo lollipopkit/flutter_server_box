@@ -15,7 +15,10 @@ class ServerStatusUpdateReq {
 
 Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
   final segments = req.segments;
-  final net = parseNetSpeed(StatusCmdType.net.find(segments));
+
+  final time = int.parse(StatusCmdType.time.find(segments));
+
+  final net = parseNetSpeed(StatusCmdType.net.find(segments), time);
   req.ss.netSpeed.update(net);
 
   final sys = _parseSysVer(

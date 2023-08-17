@@ -6,7 +6,8 @@ const serverBoxDir = r'$HOME/.config/server_box';
 const shellPath = '$serverBoxDir/mobile_app.sh';
 
 const statusCmds = [
-  'cat /proc/net/dev && date +%s',
+  'date +%s',
+  'cat /proc/net/dev',
   'cat /etc/os-release | grep PRETTY_NAME',
   'cat /proc/stat | grep cpu',
   'uptime',

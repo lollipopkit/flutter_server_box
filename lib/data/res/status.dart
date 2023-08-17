@@ -31,7 +31,7 @@ NetSpeedPart get _initNetSpeedPart => NetSpeedPart(
       '',
       BigInt.zero,
       BigInt.zero,
-      BigInt.zero,
+      0,
     );
 NetSpeed get initNetSpeed => NetSpeed(
       [_initNetSpeedPart],

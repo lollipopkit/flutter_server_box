@@ -3,10 +3,11 @@ import 'package:toolbox/core/extension/numx.dart';
 import 'time_seq.dart';
 
 class NetSpeedPart extends TimeSeqIface<NetSpeedPart> {
-  String device;
-  BigInt bytesIn;
-  BigInt bytesOut;
-  BigInt time;
+  final String device;
+  final BigInt bytesIn;
+  final BigInt bytesOut;
+  final int time;
+
   NetSpeedPart(this.device, this.bytesIn, this.bytesOut, this.time);
 
   @override
@@ -18,7 +19,7 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
 
   List<String> get devices => now.map((e) => e.device).toList();
 
-  BigInt get _timeDiff => now[0].time - pre[0].time;
+  BigInt get _timeDiff => BigInt.from(now[0].time - pre[0].time);
 
   double _speedIn(int i) => (now[i].bytesIn - pre[i].bytesIn) / _timeDiff;
   double _speedOut(int i) => (now[i].bytesOut - pre[i].bytesOut) / _timeDiff;
@@ -96,14 +97,12 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
 ///   face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
 ///   lo: 45929941  269112    0    0    0     0          0         0 45929941  269112    0    0    0     0       0          0
 ///   eth0: 48481023  505772    0    0    0     0          0         0 36002262  202307    0    0    0     0       0          0
-/// 1635752901
-List<NetSpeedPart> parseNetSpeed(String raw) {
+List<NetSpeedPart> parseNetSpeed(String raw, int time) {
   final split = raw.split('\n');
   if (split.length < 4) {
     return [];
   }
 
-  final time = BigInt.parse(split[split.length - 1]);
   final results = <NetSpeedPart>[];
   for (final item in split.sublist(2, split.length - 1)) {
     final data = item.trim().split(':');

@@ -83,6 +83,7 @@ extension EnumX on Enum {
 }
 
 enum StatusCmdType {
+  time,
   net,
   sys,
   cpu,

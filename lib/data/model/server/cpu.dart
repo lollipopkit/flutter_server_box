@@ -88,7 +88,9 @@ List<OneTimeCpuStatus> parseCPU(String raw) {
         int.parse(matches[3]),
         int.parse(matches[4]),
         int.parse(matches[5]),
-        int.parse(matches[6])));
+        int.parse(matches[6]),
+      ),
+    );
   }
   return cpus;
 }

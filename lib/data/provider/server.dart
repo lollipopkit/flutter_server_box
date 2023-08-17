@@ -219,7 +219,7 @@ class ServerProvider extends ChangeNotifier {
       return;
     }
 
-    if (s.state.shouldConnect) {
+    if (s.state.shouldConnect || (s.client?.isClosed ?? true)) {
       _setServerState(s, ServerState.connecting);
 
       final time1 = DateTime.now();
