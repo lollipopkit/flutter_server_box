@@ -29,6 +29,7 @@ import '../../data/res/ui.dart';
 import '../../data/store/server.dart';
 import '../../data/store/setting.dart';
 import '../../locator.dart';
+import '../widget/custom_appbar.dart';
 import '../widget/future_widget.dart';
 import '../widget/round_rect_card.dart';
 
@@ -100,7 +101,7 @@ class _SettingPageState extends State<SettingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: CustomAppBar(
         title: Text(_s.setting),
       ),
       body: ListView(

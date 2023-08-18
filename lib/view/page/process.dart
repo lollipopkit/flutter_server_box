@@ -15,6 +15,7 @@ import 'package:toolbox/view/widget/two_line_text.dart';
 
 import '../../data/provider/server.dart';
 import '../../locator.dart';
+import '../widget/custom_appbar.dart';
 
 class ProcessPage extends StatefulWidget {
   final ServerPrivateInfo spi;
@@ -124,7 +125,7 @@ class _ProcessPageState extends State<ProcessPage> {
       );
     }
     return Scaffold(
-      appBar: AppBar(
+      appBar: CustomAppBar(
         centerTitle: true,
         title: TwoLineText(up: widget.spi.name, down: _s.process),
         actions: actions,

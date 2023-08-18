@@ -15,6 +15,7 @@ import '../../../data/provider/server.dart';
 import '../../../data/res/ui.dart';
 import '../../../data/store/private_key.dart';
 import '../../../locator.dart';
+import '../../widget/custom_appbar.dart';
 import '../../widget/tag/editor.dart';
 import '../private_key/edit.dart';
 
@@ -116,7 +117,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       icon: const Icon(Icons.delete),
     );
     final actions = widget.spi != null ? [delBtn] : null;
-    return AppBar(
+    return CustomAppBar(
       title: Text(_s.edit, style: textSize18),
       actions: actions,
     );

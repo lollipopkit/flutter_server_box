@@ -20,6 +20,7 @@ import '../../data/res/ui.dart';
 import '../../data/res/url.dart';
 import '../../data/store/setting.dart';
 import '../../locator.dart';
+import '../widget/custom_appbar.dart';
 import '../widget/url_text.dart';
 import 'backup.dart';
 import 'convert.dart';
@@ -109,31 +110,10 @@ class _HomePageState extends State<HomePage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final actions = <Widget>[
-      IconButton(
-        icon: const Icon(Icons.developer_mode, size: 23),
-        tooltip: _s.debug,
-        onPressed: () => AppRoute(
-          const DebugPage(),
-          'Debug Page',
-        ).go(context),
-      ),
-    ];
-    if (isDesktop && _selectIndex.value == AppTab.server.index) {
-      actions.add(
-        IconButton(
-          icon: const Icon(Icons.refresh, size: 23),
-          tooltip: 'Refresh',
-          onPressed: () => _serverProvider.refreshData(),
-        ),
-      );
-    }
+
     return Scaffold(
       drawer: _buildDrawer(),
-      appBar: AppBar(
-        title: const Text(BuildData.name),
-        actions: actions,
-      ),
+      appBar: _buildAppBar(),
       body: PageView.builder(
         controller: _pageController,
         itemCount: AppTab.values.length,
@@ -151,9 +131,44 @@ class _HomePageState extends State<HomePage>
     );
   }
 
+  PreferredSizeWidget _buildAppBar() {
+    final actions = <Widget>[
+      IconButton(
+        icon: const Icon(Icons.developer_mode, size: 23),
+        tooltip: _s.debug,
+        onPressed: () => AppRoute(
+          const DebugPage(),
+          'Debug Page',
+        ).go(context),
+      ),
+    ];
+    if (isDesktop && _selectIndex.value == AppTab.server.index) {
+      actions.add(
+        ValueBuilder(
+          listenable: _selectIndex,
+          build: () {
+            if (_selectIndex.value != AppTab.server.index) {
+              return const SizedBox();
+            }
+            return IconButton(
+              icon: const Icon(Icons.refresh, size: 23),
+              tooltip: 'Refresh',
+              onPressed: () => _serverProvider.refreshData(),
+            );
+          },
+        ),
+      );
+    }
+    return CustomAppBar(
+      title: const Text(BuildData.name),
+      actions: actions,
+    );
+  }
+
   Widget _buildBottomBar() {
     return NavigationBar(
       selectedIndex: _selectIndex.value,
+      height: kBottomNavigationBarHeight * 1.2,
       animationDuration: const Duration(milliseconds: 250),
       onDestinationSelected: (int index) {
         if (_selectIndex.value == index) return;

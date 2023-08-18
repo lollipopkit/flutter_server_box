@@ -19,6 +19,7 @@ import '../../data/store/private_key.dart';
 import '../../data/store/server.dart';
 import '../../data/store/snippet.dart';
 import '../../locator.dart';
+import '../widget/custom_appbar.dart';
 
 const backupFormatVersion = 1;
 
@@ -34,7 +35,7 @@ class BackupPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = S.of(context)!;
     return Scaffold(
-      appBar: AppBar(
+      appBar: CustomAppBar(
         title: Text(s.backupAndRestore, style: textSize18),
       ),
       body: _buildBody(context, s),

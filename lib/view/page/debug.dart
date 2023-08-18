@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/data/provider/debug.dart';
 
+import '../widget/custom_appbar.dart';
+
 class DebugPage extends StatefulWidget {
   const DebugPage({Key? key}) : super(key: key);
 
@@ -14,7 +16,7 @@ class _DebugPageState extends State<DebugPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: CustomAppBar(
         leading: IconButton(
           onPressed: () => context.pop(),
           icon: const Icon(Icons.arrow_back, color: Colors.white),

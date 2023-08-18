@@ -15,6 +15,7 @@ import 'package:toolbox/data/res/highlight.dart';
 import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/locator.dart';
 
+import '../widget/custom_appbar.dart';
 import '../widget/two_line_text.dart';
 
 class EditorPage extends StatefulWidget {
@@ -68,60 +69,62 @@ class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: () {
-        if (_codeTheme != null) {
-          return _codeTheme!['root']!.backgroundColor;
-        }
-        return null;
-      }(),
-      appBar: AppBar(
-        centerTitle: true,
-        title: TwoLineText(up: getFileName(widget.path) ?? '', down: _s.editor),
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.language),
-            onSelected: (value) {
-              _controller.language = suffix2HighlightMap[value];
-              _langCode = value;
-            },
-            initialValue: _langCode,
-            itemBuilder: (BuildContext context) {
-              return suffix2HighlightMap.keys.map((e) {
-                return PopupMenuItem(
-                  value: e,
-                  child: Text(e),
-                );
-              }).toList();
-            },
-          )
-        ],
-      ),
-      body: Visibility(
-        visible: (_codeTheme != null),
-        replacement: const Center(
-          child: CircularProgressIndicator(),
-        ),
-        child: SingleChildScrollView(
-          child: CodeTheme(
-            data: CodeThemeData(
-                styles: _codeTheme ??
-                    (isDarkMode(context) ? monokaiTheme : a11yLightTheme)),
-            child: CodeField(
-              focusNode: _focusNode,
-              controller: _controller,
-              lineNumberStyle: const LineNumberStyle(
-                width: 47,
-                margin: 7,
-              ),
-            ),
-          ),
-        ),
-      ),
+      backgroundColor: _codeTheme?['root']?.backgroundColor,
+      appBar: _buildAppBar(),
+      body: _buildBody(),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.done),
         onPressed: () {
           context.pop(_controller.text);
         },
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return CustomAppBar(
+      title: TwoLineText(up: getFileName(widget.path) ?? '', down: _s.editor),
+      actions: [
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.language),
+          onSelected: (value) {
+            _controller.language = suffix2HighlightMap[value];
+            _langCode = value;
+          },
+          initialValue: _langCode,
+          itemBuilder: (BuildContext context) {
+            return suffix2HighlightMap.keys.map((e) {
+              return PopupMenuItem(
+                value: e,
+                child: Text(e),
+              );
+            }).toList();
+          },
+        )
+      ],
+    );
+  }
+
+  Widget _buildBody() {
+    return Visibility(
+      visible: _codeTheme != null,
+      replacement: const Center(
+        child: CircularProgressIndicator(),
+      ),
+      child: SingleChildScrollView(
+        child: CodeTheme(
+          data: CodeThemeData(
+              styles: _codeTheme ??
+                  (isDarkMode(context) ? monokaiTheme : a11yLightTheme)),
+          child: CodeField(
+            focusNode: _focusNode,
+            controller: _controller,
+            lineNumberStyle: const LineNumberStyle(
+              width: 47,
+              margin: 7,
+            ),
+          ),
+        ),
       ),
     );
   }

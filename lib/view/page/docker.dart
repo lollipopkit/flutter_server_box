@@ -18,6 +18,7 @@ import '../../data/res/ui.dart';
 import '../../data/res/url.dart';
 import '../../data/store/docker.dart';
 import '../../locator.dart';
+import '../widget/custom_appbar.dart';
 import '../widget/popup_menu.dart';
 import '../widget/round_rect_card.dart';
 import '../widget/two_line_text.dart';
@@ -64,7 +65,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   Widget build(BuildContext context) {
     return Consumer<DockerProvider>(builder: (_, ___, __) {
       return Scaffold(
-        appBar: AppBar(
+        appBar: CustomAppBar(
           centerTitle: true,
           title: TwoLineText(up: 'Docker', down: widget.spi.name),
           actions: [

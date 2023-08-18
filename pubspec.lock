@@ -510,6 +510,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.0"
+  macos_window_utils:
+    dependency: "direct main"
+    description:
+      name: macos_window_utils
+      sha256: "43a90473f8786f00f07203e6819dab67e032f8896dafa4a6f85fbc71fba32c0b"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.0"
   matcher:
     dependency: transitive
     description:

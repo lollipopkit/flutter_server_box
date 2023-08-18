@@ -9,6 +9,7 @@ import '../../../data/model/server/snippet.dart';
 import '../../../data/provider/snippet.dart';
 import '../../../data/res/ui.dart';
 import '../../../locator.dart';
+import '../../widget/custom_appbar.dart';
 import '../../widget/tag/editor.dart';
 
 class SnippetEditPage extends StatefulWidget {
@@ -54,7 +55,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: CustomAppBar(
         title: Text(_s.edit, style: textSize18),
         actions: _buildAppBarActions(),
       ),

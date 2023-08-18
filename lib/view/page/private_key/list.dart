@@ -14,6 +14,7 @@ import '../../../core/utils/platform.dart';
 import '../../../data/model/server/private_key_info.dart';
 import '../../../data/provider/private_key.dart';
 import '../../../data/res/ui.dart';
+import '../../widget/custom_appbar.dart';
 import 'edit.dart';
 import '../../../view/widget/round_rect_card.dart';
 
@@ -37,7 +38,7 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: CustomAppBar(
         title: Text(_s.privateKey, style: textSize18),
       ),
       body: _buildBody(),

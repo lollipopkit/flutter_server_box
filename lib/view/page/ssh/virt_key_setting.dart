@@ -9,6 +9,8 @@ import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
+import '../../widget/custom_appbar.dart';
+
 class SSHVirtKeySettingPage extends StatefulWidget {
   const SSHVirtKeySettingPage({Key? key}) : super(key: key);
 
@@ -29,7 +31,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: CustomAppBar(
         title: Text(_s.editVirtKeys),
       ),
       body: _buildBody(),

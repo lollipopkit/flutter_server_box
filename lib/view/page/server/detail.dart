@@ -14,6 +14,7 @@ import '../../../data/res/default.dart';
 import '../../../data/res/ui.dart';
 import '../../../data/store/setting.dart';
 import '../../../locator.dart';
+import '../../widget/custom_appbar.dart';
 import '../../widget/round_rect_card.dart';
 
 class ServerDetailPage extends StatefulWidget {
@@ -75,7 +76,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildMainPage(Server si) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: CustomAppBar(
         title: Text(si.spi.name, style: textSize18),
       ),
       body: ReorderableListView.builder(

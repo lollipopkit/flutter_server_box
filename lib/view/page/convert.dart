@@ -7,6 +7,7 @@ import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/widget/value_notifier.dart';
 
 import '../../core/utils/ui.dart';
+import '../widget/custom_appbar.dart';
 import '../widget/input_field.dart';
 import '../widget/popup_menu.dart';
 import '../widget/round_rect_card.dart';
@@ -52,7 +53,7 @@ class _ConvertPageState extends State<ConvertPage>
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      appBar: AppBar(
+      appBar: CustomAppBar(
         title: Text(_s.convert),
       ),
       body: SingleChildScrollView(
