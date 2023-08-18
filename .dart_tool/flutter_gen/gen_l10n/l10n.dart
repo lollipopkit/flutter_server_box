@@ -566,6 +566,12 @@ abstract class S {
   /// **'Getting token...'**
   String get gettingToken;
 
+  /// No description provided for @goBackQ.
+  ///
+  /// In en, this message translates to:
+  /// **'Go back?'**
+  String get goBackQ;
+
   /// No description provided for @goto.
   ///
   /// In en, this message translates to:

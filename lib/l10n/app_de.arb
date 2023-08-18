@@ -78,6 +78,7 @@
   "fullScreenJitterHelp": "Einbrennen des Bildschirms verhindern",
   "getPushTokenFailed": "Push-Token kann nicht abgerufen werden",
   "gettingToken": "Getting token...",
+  "goBackQ": "Zurückkommen?",
   "goto": "Pfad öffnen",
   "homeWidgetUrlConfig": "Home-Widget-Link konfigurieren",
   "host": "Host",

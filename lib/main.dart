@@ -3,17 +3,20 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
+import 'package:macos_window_utils/window_manipulator.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:toolbox/data/model/app/net_view.dart';
-import 'package:toolbox/data/model/ssh/virtual_key.dart';
+import 'package:toolbox/view/widget/custom_appbar.dart';
 
 import 'app.dart';
 import 'core/analysis.dart';
+import 'core/utils/platform.dart';
 import 'core/utils/ui.dart';
+import 'data/model/app/net_view.dart';
 import 'data/model/server/private_key_info.dart';
 import 'data/model/server/server_private_info.dart';
 import 'data/model/server/snippet.dart';
+import 'data/model/ssh/virtual_key.dart';
 import 'data/provider/app.dart';
 import 'data/provider/debug.dart';
 import 'data/provider/docker.dart';
@@ -27,69 +30,10 @@ import 'data/store/setting.dart';
 import 'locator.dart';
 import 'view/widget/rebuild.dart';
 
-late final DebugProvider _debug;
-
-Future<void> initApp() async {
-  await initHive();
-  await setupLocator();
-
-  _debug = locator<DebugProvider>();
-  locator<SnippetProvider>().loadData();
-  locator<PrivateKeyProvider>().loadData();
-
-  final settings = locator<SettingStore>();
-  await loadFontFile(settings.fontPath.fetch());
-
-  SharedPreferences.setPrefix('');
-
-  Logger.root.level = Level.ALL;
-  Logger.root.onRecord.listen((record) {
-    var str = '[${record.loggerName}][${record.level.name}]: ${record.message}';
-    if (record.error != null) {
-      str += '\n${record.error}';
-      _debug.addMultiline(record.error.toString(), Colors.red);
-    }
-    if (record.stackTrace != null) {
-      str += '\n${record.stackTrace}';
-      _debug.addMultiline(record.stackTrace.toString(), Colors.white);
-    }
-    // ignore: avoid_print
-    print(str);
-  });
-}
-
-Future<void> initHive() async {
-  await Hive.initFlutter();
-  // 以 typeId 为顺序
-  Hive.registerAdapter(PrivateKeyInfoAdapter());
-  Hive.registerAdapter(SnippetAdapter());
-  Hive.registerAdapter(ServerPrivateInfoAdapter());
-  Hive.registerAdapter(VirtKeyAdapter());
-  Hive.registerAdapter(NetViewTypeAdapter());
-}
-
-void runInZone(void Function() body) {
-  final zoneSpec = ZoneSpecification(
-    print: (Zone self, ZoneDelegate parent, Zone zone, String line) {
-      parent.print(zone, line);
-      // This is a hack to avoid
-      // `setState() or markNeedsBuild() called during build`
-      // error.
-      Future.delayed(const Duration(milliseconds: 1), () {
-        _debug.addText(line);
-      });
-    },
-  );
-
-  runZonedGuarded(
-    body,
-    (obj, trace) => Analysis.recordException(trace),
-    zoneSpecification: zoneSpec,
-  );
-}
+DebugProvider? _debug;
 
 Future<void> main() async {
-  runInZone(() async {
+  _runInZone(() async {
     await initApp();
     runApp(
       MultiProvider(
@@ -110,4 +54,87 @@ Future<void> main() async {
       ),
     );
   });
+}
+
+void _runInZone(void Function() body) {
+  final zoneSpec = ZoneSpecification(
+    print: (Zone self, ZoneDelegate parent, Zone zone, String line) {
+      parent.print(zone, line);
+      // This is a hack to avoid
+      // `setState() or markNeedsBuild() called during build`
+      // error.
+      Future.delayed(const Duration(milliseconds: 1), () {
+        _debug?.addText(line);
+      });
+    },
+  );
+
+  runZonedGuarded(
+    body,
+    (obj, trace) => Analysis.recordException(trace),
+    zoneSpecification: zoneSpec,
+  );
+}
+
+Future<void> initApp() async {
+  await _initMacOSWindow();
+
+  // Base of all data.
+  await _initHive();
+  await setupLocator();
+
+  // Setup [DebugProvider] first to catch all logs.
+  _debug = locator<DebugProvider>();
+  _setupLogger();
+  _setupProviders();
+
+  // Load font
+  final settings = locator<SettingStore>();
+  loadFontFile(settings.fontPath.fetch());
+
+  // SharedPreferences is only used on Android for saving home widgets settings.
+  if (!isAndroid) return;
+  SharedPreferences.setPrefix('');
+}
+
+void _setupProviders() {
+  locator<SnippetProvider>().loadData();
+  locator<PrivateKeyProvider>().loadData();
+}
+
+Future<void> _initHive() async {
+  await Hive.initFlutter();
+  // 以 typeId 为顺序
+  Hive.registerAdapter(PrivateKeyInfoAdapter());
+  Hive.registerAdapter(SnippetAdapter());
+  Hive.registerAdapter(ServerPrivateInfoAdapter());
+  Hive.registerAdapter(VirtKeyAdapter());
+  Hive.registerAdapter(NetViewTypeAdapter());
+}
+
+void _setupLogger() {
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen((record) {
+    var str = '[${record.loggerName}][${record.level.name}]: ${record.message}';
+    if (record.error != null) {
+      str += '\n${record.error}';
+      _debug?.addMultiline(record.error.toString(), Colors.red);
+    }
+    if (record.stackTrace != null) {
+      str += '\n${record.stackTrace}';
+      _debug?.addMultiline(record.stackTrace.toString(), Colors.white);
+    }
+    // ignore: avoid_print
+    print(str);
+  });
+}
+
+Future<void> _initMacOSWindow() async {
+  if (!isMacOS) return;
+  WidgetsFlutterBinding.ensureInitialized();
+  await WindowManipulator.initialize();
+  WindowManipulator.makeTitlebarTransparent();
+  WindowManipulator.enableFullSizeContentView();
+  WindowManipulator.hideTitle();
+  await CustomAppBar.updateTitlebarHeight();
 }

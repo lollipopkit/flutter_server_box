@@ -78,6 +78,7 @@
   "fullScreenJitterHelp": "Untuk menghindari pembakaran layar",
   "getPushTokenFailed": "Tidak bisa mengambil token dorong",
   "gettingToken": "Mendapatkan token ...",
+  "goBackQ": "Datang kembali?",
   "goto": "Pergi ke",
   "homeWidgetUrlConfig": "Konfigurasi URL Widget Rumah",
   "host": "Host",

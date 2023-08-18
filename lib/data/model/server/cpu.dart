@@ -80,7 +80,8 @@ List<OneTimeCpuStatus> parseCPU(String raw) {
     if (item == '') break;
     final id = item.split(' ').first;
     final matches = item.replaceFirst(id, '').trim().split(' ');
-    cpus.add(OneTimeCpuStatus(
+    cpus.add(
+      OneTimeCpuStatus(
         id,
         int.parse(matches[0]),
         int.parse(matches[1]),

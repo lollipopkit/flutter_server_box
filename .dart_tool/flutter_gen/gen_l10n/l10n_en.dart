@@ -255,6 +255,9 @@ class SEn extends S {
   String get gettingToken => 'Getting token...';
 
   @override
+  String get goBackQ => 'Go back?';
+
+  @override
   String get goto => 'Go to';
 
   @override

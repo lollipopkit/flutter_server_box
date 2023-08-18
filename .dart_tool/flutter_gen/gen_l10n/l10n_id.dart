@@ -255,6 +255,9 @@ class SId extends S {
   String get gettingToken => 'Mendapatkan token ...';
 
   @override
+  String get goBackQ => 'Datang kembali?';
+
+  @override
   String get goto => 'Pergi ke';
 
   @override

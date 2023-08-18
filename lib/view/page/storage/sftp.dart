@@ -26,6 +26,7 @@ import '../../../data/provider/sftp.dart';
 import '../../../data/res/path.dart';
 import '../../../data/res/ui.dart';
 import '../../../locator.dart';
+import '../../widget/custom_appbar.dart';
 import '../../widget/fade_in.dart';
 import '../../widget/input_field.dart';
 import '../../widget/two_line_text.dart';
@@ -74,7 +75,7 @@ class _SftpPageState extends State<SftpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: CustomAppBar(
         leading: IconButton(
           icon: const BackButtonIcon(),
           onPressed: () {

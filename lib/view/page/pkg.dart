@@ -12,6 +12,7 @@ import '../../data/provider/pkg.dart';
 import '../../data/provider/server.dart';
 import '../../data/res/ui.dart';
 import '../../locator.dart';
+import '../widget/custom_appbar.dart';
 import '../widget/round_rect_card.dart';
 import '../widget/two_line_text.dart';
 
@@ -72,7 +73,7 @@ class _PkgManagePageState extends State<PkgManagePage>
   Widget build(BuildContext context) {
     return Consumer<PkgProvider>(builder: (_, pkg, __) {
       return Scaffold(
-        appBar: AppBar(
+        appBar: CustomAppBar(
           centerTitle: true,
           title: TwoLineText(up: _s.pkg, down: widget.spi.name),
         ),

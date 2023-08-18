@@ -13,6 +13,7 @@ import '../../../core/utils/ui.dart';
 import '../../../data/model/sftp/req.dart';
 import '../../../data/provider/sftp.dart';
 import '../../../data/res/ui.dart';
+import '../../widget/custom_appbar.dart';
 import '../../widget/round_rect_card.dart';
 
 class SftpMissionPage extends StatefulWidget {
@@ -34,11 +35,8 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          _s.mission,
-          style: textSize18,
-        ),
+      appBar: CustomAppBar(
+        title: Text(_s.mission, style: textSize18),
       ),
       body: _buildBody(),
     );

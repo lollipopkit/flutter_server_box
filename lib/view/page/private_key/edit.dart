@@ -17,6 +17,7 @@ import '../../../data/model/server/private_key_info.dart';
 import '../../../data/provider/private_key.dart';
 import '../../../data/res/ui.dart';
 import '../../../locator.dart';
+import '../../widget/custom_appbar.dart';
 
 const _format = 'text/plain';
 
@@ -89,7 +90,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
                 },
                 icon: const Icon(Icons.delete))
           ];
-    return AppBar(
+    return CustomAppBar(
       title: Text(_s.edit, style: textSize18),
       actions: actions,
     );

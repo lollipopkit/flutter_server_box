@@ -18,11 +18,11 @@ import 'data/store/snippet.dart';
 
 GetIt locator = GetIt.instance;
 
-void setupLocatorForServices() {
+void _setupLocatorForServices() {
   locator.registerLazySingleton(() => AppService());
 }
 
-void setupLocatorForProviders() {
+void _setupLocatorForProviders() {
   locator.registerSingleton(AppProvider());
   locator.registerSingleton(PkgProvider());
   locator.registerSingleton(DebugProvider());
@@ -34,7 +34,7 @@ void setupLocatorForProviders() {
   locator.registerSingleton(SftpProvider());
 }
 
-Future<void> setupLocatorForStores() async {
+Future<void> _setupLocatorForStores() async {
   final setting = SettingStore();
   await setting.init(boxName: 'setting');
   locator.registerSingleton(setting);
@@ -57,7 +57,7 @@ Future<void> setupLocatorForStores() async {
 }
 
 Future<void> setupLocator() async {
-  await setupLocatorForStores();
-  setupLocatorForProviders();
-  setupLocatorForServices();
+  await _setupLocatorForStores();
+  _setupLocatorForProviders();
+  _setupLocatorForServices();
 }

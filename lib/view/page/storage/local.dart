@@ -22,6 +22,7 @@ import '../../../core/utils/ui.dart';
 import '../../../data/model/app/path_with_prefix.dart';
 import '../../../data/res/path.dart';
 import '../../../data/res/ui.dart';
+import '../../widget/custom_appbar.dart';
 import '../../widget/fade_in.dart';
 import 'sftp_mission.dart';
 
@@ -64,7 +65,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: CustomAppBar(
         leading: IconButton(
           icon: const BackButtonIcon(),
           onPressed: () {
