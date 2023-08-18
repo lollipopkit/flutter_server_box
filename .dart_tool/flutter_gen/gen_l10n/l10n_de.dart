@@ -255,6 +255,9 @@ class SDe extends S {
   String get gettingToken => 'Getting token...';
 
   @override
+  String get goBackQ => 'Zurückkommen?';
+
+  @override
   String get goto => 'Pfad öffnen';
 
   @override

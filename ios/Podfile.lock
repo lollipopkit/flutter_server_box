@@ -60,7 +60,7 @@ SPEC CHECKSUMS:
   file_picker: 1d63c4949e05e386da864365f8c13e1e64787675
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
   flutter_native_splash: 52501b97d1c0a5f898d687f1646226c1f93c56ef
-  path_provider_foundation: eaf5b3e458fc0e5fbb9940fb09980e853fe058b8
+  path_provider_foundation: 29f094ae23ebbca9d3d0cec13889cd9060c0e943
   plain_notification_token: b36467dc91939a7b6754267c701bbaca14996ee1
   r_upgrade: 44d715c61914cce3d01ea225abffe894fd51c114
   share_plus: 599aa54e4ea31d4b4c0e9c911bcc26c55e791028

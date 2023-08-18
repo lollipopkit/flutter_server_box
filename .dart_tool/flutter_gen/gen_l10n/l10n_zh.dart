@@ -255,6 +255,9 @@ class SZh extends S {
   String get gettingToken => '正在获取Token...';
 
   @override
+  String get goBackQ => '返回？';
+
+  @override
   String get goto => '前往';
 
   @override
@@ -952,6 +955,9 @@ class SZhTw extends SZh {
 
   @override
   String get gettingToken => '正在獲取Token...';
+
+  @override
+  String get goBackQ => '返回？';
 
   @override
   String get goto => '前往';

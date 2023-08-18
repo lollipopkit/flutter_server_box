@@ -78,6 +78,7 @@
   "fullScreenJitterHelp": "防止烧屏",
   "getPushTokenFailed": "未能获取到推送token",
   "gettingToken": "正在获取Token...",
+  "goBackQ": "返回？",
   "goto": "前往",
   "homeWidgetUrlConfig": "桌面部件链接配置",
   "host": "主机",

@@ -8,7 +8,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/navigator.dart';
-import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:xterm/xterm.dart';
 
 import '../../../core/route.dart';
@@ -341,19 +340,7 @@ class _SSHPageState extends State<SSHPage> {
       ),
     );
 
-    _discontinuityTimer = Timer.periodic(
-      const Duration(seconds: 5),
-      (_) async {
-        var throwTimeout = true;
-        Future.delayed(const Duration(seconds: 3), () {
-          if (throwTimeout) {
-            _catchTimeout();
-          }
-        });
-        await _client?.run('echo 1').string;
-        throwTimeout = false;
-      },
-    );
+    _setupDiscontinuityTimer();
 
     if (_session == null) {
       showSnackBar(context, const Text('Null session'));
@@ -394,14 +381,30 @@ class _SSHPageState extends State<SSHPage> {
         .listen(_terminal.write);
   }
 
+  void _setupDiscontinuityTimer() {
+    _discontinuityTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) async {
+        var throwTimeout = true;
+        Future.delayed(const Duration(seconds: 3), () {
+          if (throwTimeout) {
+            _catchTimeout();
+          }
+        });
+        await _client?.ping();
+        throwTimeout = false;
+      },
+    );
+  }
+
   void _catchTimeout() {
     _discontinuityTimer?.cancel();
     if (!mounted) return;
     _write('\n\nConnection lost\r\n');
     showRoundDialog(
       context: context,
-      title: Text(_s.disconnected),
-      child: Text('Go back?'),
+      title: Text(_s.attention),
+      child: Text('${_s.disconnected}\n${_s.goBackQ}'),
       barrierDismiss: false,
       actions: [
         TextButton(
