@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/core/extension/media_queryx.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/data/model/app/net_view.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
@@ -54,6 +55,7 @@ class _ServerPageState extends State<ServerPage>
   late S _s;
 
   String? _tag;
+  bool _buildGrid = false;
 
   @override
   void initState() {
@@ -66,6 +68,7 @@ class _ServerPageState extends State<ServerPage>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
+    _buildGrid = _media.isLarge;
     _theme = Theme.of(context);
     _s = S.of(context)!;
   }
@@ -88,58 +91,87 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildBody() {
+    final child = Consumer<ServerProvider>(
+      builder: (_, pro, __) {
+        if (!pro.tags.contains(_tag)) {
+          _tag = null;
+        }
+        if (pro.serverOrder.isEmpty) {
+          return Center(
+            child: Text(
+              _s.serverTabEmpty,
+              textAlign: TextAlign.center,
+            ),
+          );
+        }
+
+        final filtered = _filterServers(pro);
+        if (_buildGrid) {
+          return _buildBodyMedium(pro);
+        }
+        return _buildBodySmall(pro, filtered);
+      },
+    );
+    if (isDesktop) {
+      return child;
+    }
     return RefreshIndicator(
       onRefresh: () async =>
           await _serverProvider.refreshData(onlyFailed: true),
-      child: Consumer<ServerProvider>(
-        builder: (_, pro, __) {
-          if (!pro.tags.contains(_tag)) {
-            _tag = null;
-          }
-          if (pro.serverOrder.isEmpty) {
-            return Center(
-              child: Text(
-                _s.serverTabEmpty,
-                textAlign: TextAlign.center,
-              ),
-            );
-          }
-          final filtered = pro.serverOrder
-              .where((e) => pro.servers.containsKey(e))
-              .where((e) =>
-                  _tag == null ||
-                  (pro.servers[e]?.spi.tags?.contains(_tag) ?? false))
-              .toList();
-          return ReorderableListView.builder(
-            header: TagSwitcher(
-              tags: pro.tags,
-              width: _media.size.width,
-              onTagChanged: (p0) => setState(() {
-                _tag = p0;
-              }),
-              initTag: _tag,
-              all: _s.all,
-            ),
-            footer: const SizedBox(height: 77),
-            padding: const EdgeInsets.fromLTRB(7, 10, 7, 7),
-            onReorder: (oldIndex, newIndex) => setState(() {
-              pro.serverOrder.moveByItem(
-                filtered,
-                oldIndex,
-                newIndex,
-                property: _settingStore.serverOrder,
-              );
-            }),
-            buildDefaultDragHandles: false,
-            itemBuilder: (_, index) => ReorderableDelayedDragStartListener(
-              key: ValueKey('$_tag${filtered[index]}'),
-              index: index,
-              child: _buildEachServerCard(pro.servers[filtered[index]]),
-            ),
-            itemCount: filtered.length,
-          );
-        },
+      child: child,
+    );
+  }
+
+  List<String> _filterServers(ServerProvider pro) => pro.serverOrder
+      .where((e) => pro.servers.containsKey(e))
+      .where((e) =>
+          _tag == null || (pro.servers[e]?.spi.tags?.contains(_tag) ?? false))
+      .toList();
+
+  Widget _buildBodySmall(ServerProvider pro, List<String> filtered) {
+    return ReorderableListView.builder(
+      header: TagSwitcher(
+        tags: pro.tags,
+        width: _media.size.width,
+        onTagChanged: (p0) => setState(() {
+          _tag = p0;
+        }),
+        initTag: _tag,
+        all: _s.all,
       ),
+      footer: const SizedBox(height: 77),
+      padding: const EdgeInsets.fromLTRB(7, 10, 7, 7),
+      onReorder: (oldIndex, newIndex) => setState(() {
+        pro.serverOrder.moveByItem(
+          filtered,
+          oldIndex,
+          newIndex,
+          property: _settingStore.serverOrder,
+        );
+      }),
+      buildDefaultDragHandles: false,
+      itemBuilder: (_, index) => ReorderableDelayedDragStartListener(
+        key: ValueKey('$_tag${filtered[index]}'),
+        index: index,
+        child: _buildEachServerCard(pro.servers[filtered[index]]),
+      ),
+      itemCount: filtered.length,
+    );
+  }
+
+  Widget _buildBodyMedium(ServerProvider pro) {
+    final filtered = _filterServers(pro);
+    final left = filtered.where((e) => filtered.indexOf(e) % 2 == 0).toList();
+    final right = filtered.where((e) => filtered.indexOf(e) % 2 == 1).toList();
+    return Row(
+      children: [
+        Expanded(
+          child: _buildBodySmall(pro, left),
+        ),
+        Expanded(
+          child: _buildBodySmall(pro, right),
+        ),
+      ],
     );
   }
 
@@ -147,6 +179,7 @@ class _ServerPageState extends State<ServerPage>
     if (si == null) {
       return placeholder;
     }
+
     return GestureDetector(
       key: Key(si.spi.id + (_tag ?? '')),
       onTap: () {
@@ -184,7 +217,6 @@ class _ServerPageState extends State<ServerPage>
       height = 137;
       children = [
         _buildServerCardTitle(ss, cs, spi),
-        height13,
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
@@ -193,16 +225,6 @@ class _ServerPageState extends State<ServerPage>
             _buildNet(ss),
             _buildIOData(
                 'Total:\n${rootDisk?.size}', 'Used:\n${rootDisk?.usedPercent}%')
-          ],
-        ),
-        height13,
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildExplainText('CPU'),
-            _buildExplainText('Mem'),
-            _buildExplainText('Net'),
-            _buildExplainText('Disk'),
           ],
         ),
         const SizedBox(height: 3),
@@ -214,6 +236,7 @@ class _ServerPageState extends State<ServerPage>
       curve: Curves.fastEaseInToSlowEaseOut,
       height: height,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: children,
       ),
@@ -389,15 +412,12 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildExplainText(String text) {
-    return SizedBox(
-      width: _media.size.width * 0.2,
-      child: Text(
+    return Text(
         text,
         style: const TextStyle(fontSize: 12),
         textAlign: TextAlign.center,
         textScaleFactor: 1.0,
-      ),
-    );
+      );
   }
 
   String _getTopRightStr(
@@ -435,9 +455,7 @@ class _ServerPageState extends State<ServerPage>
   Widget _buildIOData(String up, String down) {
     final statusTextStyle = TextStyle(
         fontSize: 9, color: _theme.textTheme.bodyLarge!.color!.withAlpha(177));
-    return SizedBox(
-      width: _media.size.width * 0.2,
-      child: Column(
+    return Column(
         children: [
           const SizedBox(height: 5),
           Text(
@@ -454,16 +472,13 @@ class _ServerPageState extends State<ServerPage>
             textScaleFactor: 1.0,
           )
         ],
-      ),
-    );
+      );
   }
 
   Widget _buildPercentCircle(double percent) {
     if (percent <= 0) percent = 0.01;
     if (percent >= 100) percent = 99.9;
-    return SizedBox(
-      width: _media.size.width * 0.2,
-      child: Stack(
+    return Stack(
         children: [
           Center(
             child: CircleChart(
@@ -485,7 +500,6 @@ class _ServerPageState extends State<ServerPage>
             ),
           ),
         ],
-      ),
     );
   }
 
