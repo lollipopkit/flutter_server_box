@@ -18,23 +18,24 @@ class TagBtn extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: 4, right: 5, bottom: 9),
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.all(Radius.circular(20.0)),
-              color: primaryColor.withAlpha(20),
-            ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.all(Radius.circular(20.0)),
+        child: Material(
+          color: primaryColor.withAlpha(20),
+          child: InkWell(
+          onTap: onTap,
+          child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 2.7),
-            child: Center(
-              child: Text(
-                content,
-                style: TextStyle(
-                  color: isEnable ? null : Colors.grey,
-                  fontSize: 13,
-                ),
+            child: Text(
+              content,
+              style: TextStyle(
+                color: isEnable ? null : Colors.grey,
+                fontSize: 13,
               ),
-            )),
+            ),
+          ),
+        ),
+        ),
       ),
     );
   }

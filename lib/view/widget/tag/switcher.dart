@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:toolbox/data/res/ui.dart';
-import 'package:toolbox/view/widget/fade_in.dart';
 import 'package:toolbox/view/widget/tag/view.dart';
 
 class TagSwitcher extends StatelessWidget {
@@ -32,14 +31,11 @@ class TagSwitcher extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         itemBuilder: (context, index) {
           final item = items[index];
-          return FadeIn(
-            key: ValueKey(initTag),
-            child: TagView(
-              tag: item,
-              initTag: initTag,
-              all: all,
-              onTap: onTagChanged,
-            ),
+          return TagView(
+            tag: item,
+            initTag: initTag,
+            all: all,
+            onTap: onTagChanged,
           );
         },
         itemCount: items.length,
