@@ -5,6 +5,7 @@ import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/data/model/server/cpu.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
+import 'package:toolbox/view/widget/server_func_btns.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/route.dart';
@@ -95,7 +96,11 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       ),
       body: ReorderableListView.builder(
         padding: EdgeInsets.only(
-            left: 13, right: 13, top: 13, bottom: _media.padding.bottom),
+          left: 13,
+          right: 13,
+          top: 13,
+          bottom: _media.padding.bottom,
+        ),
         onReorder: (int oldIndex, int newIndex) {
           setState(() {
             _cardsOrder.move(
@@ -106,6 +111,9 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           });
         },
         footer: height13,
+        header: _setting.moveOutServerTabFuncBtns.fetch()!
+            ? null
+            : RoundRectCard(ServerFuncBtns(spi: widget.spi, s: _s)),
         itemCount: _cardsOrder.length,
         buildDefaultDragHandles: false,
         itemBuilder: (context, index) => ReorderableDelayedDragStartListener(

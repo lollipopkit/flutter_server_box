@@ -113,6 +113,8 @@
   "maxRetryCountEqual0": "Will retry again and again.",
   "min": "min",
   "mission": "Mission",
+  "moveOutServerFuncBtns": "Server function button location",
+  "moveOutServerFuncBtnsHelp": "On: can be displayed below each card on the Server Tab page.\nOff: can be displayed at the top of the Server Details page.",
   "ms": "ms",
   "name": "Name",
   "needRestart": "Need to restart app",

@@ -776,6 +776,18 @@ abstract class S {
   /// **'Mission'**
   String get mission;
 
+  /// No description provided for @moveOutServerFuncBtns.
+  ///
+  /// In en, this message translates to:
+  /// **'Server function button location'**
+  String get moveOutServerFuncBtns;
+
+  /// No description provided for @moveOutServerFuncBtnsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'On: can be displayed below each card on the Server Tab page.\nOff: can be displayed at the top of the Server Details page.'**
+  String get moveOutServerFuncBtnsHelp;
+
   /// No description provided for @ms.
   ///
   /// In en, this message translates to:

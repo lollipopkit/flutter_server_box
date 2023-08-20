@@ -113,6 +113,8 @@
   "maxRetryCountEqual0": "Akan mencoba lagi lagi dan lagi.",
   "min": "Min",
   "mission": "Misi",
+  "moveOutServerFuncBtns": "Lokasi tombol fungsi server",
+  "moveOutServerFuncBtnsHelp": "Aktif: dapat ditampilkan di bawah setiap kartu pada halaman Tab Server.\nNonaktif: dapat ditampilkan di bagian atas halaman Rincian Server.",
   "ms": "MS",
   "name": "Nama",
   "needRestart": "Perlu memulai ulang aplikasi",

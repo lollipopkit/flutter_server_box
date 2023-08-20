@@ -113,6 +113,8 @@
   "maxRetryCountEqual0": "会无限重试",
   "min": "最小",
   "mission": "任务",
+  "moveOutServerFuncBtns": "服务器功能按钮位置",
+  "moveOutServerFuncBtnsHelp": "开启：可以在服务器 Tab 页的每个卡片下方显示。\n关闭：在服务器详情页顶部显示。",
   "ms": "毫秒",
   "name": "名称",
   "needRestart": "需要重启 App",

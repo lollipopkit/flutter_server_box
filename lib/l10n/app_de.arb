@@ -113,6 +113,8 @@
   "maxRetryCountEqual0": "Unbegrenzte Verbindungsversuche zum Server",
   "min": "min",
   "mission": "Mission",
+  "moveOutServerFuncBtns": "Position der Server-Funktionsschaltfläche",
+  "moveOutServerFuncBtnsHelp": "Ein: kann unter jeder Karte auf der Registerkarte \"Server\" angezeigt werden.\nAus: kann oben auf der Seite \"Serverdetails\" angezeigt werden.",
   "ms": "ms",
   "name": "Name",
   "needRestart": "App muss neugestartet werden",

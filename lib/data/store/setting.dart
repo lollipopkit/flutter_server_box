@@ -102,4 +102,10 @@ class SettingStore extends PersistentStore {
 
   StoreProperty<bool> get autoCheckAppUpdate =>
       property('autoCheckAppUpdate', defaultValue: true);
+
+  /// Display server tab function buttons on the bottom of each server card if [true]
+  ///
+  /// Otherwise, display them on the top of server detail page
+  StoreProperty<bool> get moveOutServerTabFuncBtns =>
+      property('moveOutServerTabFuncBtns', defaultValue: true);
 }

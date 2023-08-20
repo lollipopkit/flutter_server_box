@@ -366,6 +366,12 @@ class SId extends S {
   String get mission => 'Misi';
 
   @override
+  String get moveOutServerFuncBtns => 'Lokasi tombol fungsi server';
+
+  @override
+  String get moveOutServerFuncBtnsHelp => 'Aktif: dapat ditampilkan di bawah setiap kartu pada halaman Tab Server.\nNonaktif: dapat ditampilkan di bagian atas halaman Rincian Server.';
+
+  @override
   String get ms => 'MS';
 
   @override

@@ -169,6 +169,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildServer() {
     return Column(
       children: [
+        _buildMoveOutServerFuncBtns(),
         _buildNetViewType(),
         _buildUpdateInterval(),
         _buildMaxRetry(),
@@ -967,6 +968,14 @@ class _SettingPageState extends State<SettingPage> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildMoveOutServerFuncBtns() {
+    return ListTile(
+      title: Text(_s.moveOutServerFuncBtns),
+      subtitle: Text(_s.moveOutServerFuncBtnsHelp, style: textSize13Grey),
+      trailing: buildSwitch(context, _setting.moveOutServerTabFuncBtns),
     );
   }
 }

@@ -366,6 +366,12 @@ class SEn extends S {
   String get mission => 'Mission';
 
   @override
+  String get moveOutServerFuncBtns => 'Server function button location';
+
+  @override
+  String get moveOutServerFuncBtnsHelp => 'On: can be displayed below each card on the Server Tab page.\nOff: can be displayed at the top of the Server Details page.';
+
+  @override
   String get ms => 'ms';
 
   @override

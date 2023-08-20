@@ -366,6 +366,12 @@ class SDe extends S {
   String get mission => 'Mission';
 
   @override
+  String get moveOutServerFuncBtns => 'Position der Server-Funktionsschaltfläche';
+
+  @override
+  String get moveOutServerFuncBtnsHelp => 'Ein: kann unter jeder Karte auf der Registerkarte \"Server\" angezeigt werden.\nAus: kann oben auf der Seite \"Serverdetails\" angezeigt werden.';
+
+  @override
   String get ms => 'ms';
 
   @override
