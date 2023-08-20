@@ -1,9 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/analysis.dart';
+import 'package:toolbox/data/model/server/private_key_info.dart';
+import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/locator.dart';
+import 'package:toolbox/view/page/backup.dart';
+import 'package:toolbox/view/page/docker.dart';
+import 'package:toolbox/view/page/home.dart';
+import 'package:toolbox/view/page/ping.dart';
+import 'package:toolbox/view/page/private_key/edit.dart';
+import 'package:toolbox/view/page/private_key/list.dart';
+import 'package:toolbox/view/page/server/detail.dart';
+import 'package:toolbox/view/page/ssh/term.dart';
+import 'package:toolbox/view/page/ssh/virt_key_setting.dart';
+import 'package:toolbox/view/page/storage/local.dart';
 
+import '../data/model/server/snippet.dart';
+import '../view/page/convert.dart';
+import '../view/page/debug.dart';
+import '../view/page/editor.dart';
+import '../view/page/full_screen.dart';
+import '../view/page/pkg.dart';
+import '../view/page/process.dart';
+import '../view/page/server/edit.dart';
+import '../view/page/server/tab.dart';
+import '../view/page/setting.dart';
+import '../view/page/snippet/edit.dart';
+import '../view/page/snippet/list.dart';
+import '../view/page/storage/sftp.dart';
+import '../view/page/storage/sftp_mission.dart';
 import 'utils/ui.dart';
 
 class AppRoute {
@@ -31,5 +57,128 @@ class AppRoute {
       return Future.value(null);
     }
     return go(context);
+  }
+
+  static AppRoute serverDetail({Key? key, required ServerPrivateInfo spi}) {
+    return AppRoute(ServerDetailPage(key: key, spi: spi), 'server_detail');
+  }
+
+  static AppRoute serverTab({Key? key}) {
+    return AppRoute(ServerPage(key: key), 'server_tab');
+  }
+
+  static AppRoute serverEdit({Key? key, ServerPrivateInfo? spi}) {
+    return AppRoute(
+      ServerEditPage(spi: spi),
+      'server_${spi == null ? 'add' : 'edit'}',
+    );
+  }
+
+  static AppRoute keyEdit({Key? key, PrivateKeyInfo? pki}) {
+    return AppRoute(
+      PrivateKeyEditPage(pki: pki),
+      'key_${pki == null ? 'add' : 'edit'}',
+    );
+  }
+
+  static AppRoute keyList({Key? key}) {
+    return AppRoute(PrivateKeysListPage(key: key), 'key_detail');
+  }
+
+  static AppRoute snippetEdit({Key? key, Snippet? snippet}) {
+    return AppRoute(
+      SnippetEditPage(snippet: snippet),
+      'snippet_${snippet == null ? 'add' : 'edit'}',
+    );
+  }
+
+  static AppRoute snippetList({Key? key}) {
+    return AppRoute(SnippetListPage(key: key), 'snippet_detail');
+  }
+
+  static AppRoute ssh({
+    Key? key,
+    required ServerPrivateInfo spi,
+    String? initCmd,
+  }) {
+    return AppRoute(
+      SSHPage(
+        key: key,
+        spi: spi,
+        initCmd: initCmd,
+      ),
+      'ssh_term',
+    );
+  }
+
+  static AppRoute sshVirtKeySetting({Key? key}) {
+    return AppRoute(SSHVirtKeySettingPage(key: key), 'ssh_virt_key_setting');
+  }
+
+  static AppRoute localStorage({Key? key}) {
+    return AppRoute(LocalStoragePage(key: key), 'local_storage');
+  }
+
+  static AppRoute sftpMission({Key? key}) {
+    return AppRoute(SftpMissionPage(key: key), 'sftp_mission');
+  }
+
+  static AppRoute sftp(
+      {Key? key,
+      required ServerPrivateInfo spi,
+      String? initPath,
+      bool isSelect = false}) {
+    return AppRoute(
+        SftpPage(
+          key: key,
+          spi: spi,
+          initPath: initPath,
+          selectPath: isSelect,
+        ),
+        'sftp');
+  }
+
+  static AppRoute backup({Key? key}) {
+    return AppRoute(BackupPage(key: key), 'backup');
+  }
+
+  static AppRoute convert({Key? key}) {
+    return AppRoute(ConvertPage(key: key), 'convert');
+  }
+
+  static AppRoute debug({Key? key}) {
+    return AppRoute(DebugPage(key: key), 'debug');
+  }
+
+  static AppRoute docker({Key? key, required ServerPrivateInfo spi}) {
+    return AppRoute(DockerManagePage(key: key, spi: spi), 'docker');
+  }
+
+  static AppRoute editor({Key? key, required String path}) {
+    return AppRoute(EditorPage(key: key, path: path), 'editor');
+  }
+
+  static AppRoute fullscreen({Key? key}) {
+    return AppRoute(FullScreenPage(key: key), 'fullscreen');
+  }
+
+  static AppRoute home({Key? key}) {
+    return AppRoute(HomePage(key: key), 'home');
+  }
+
+  static AppRoute ping({Key? key}) {
+    return AppRoute(PingPage(key: key), 'ping');
+  }
+
+  static AppRoute pkg({Key? key, required ServerPrivateInfo spi}) {
+    return AppRoute(PkgPage(key: key, spi: spi), 'pkg');
+  }
+
+  static AppRoute process({Key? key, required ServerPrivateInfo spi}) {
+    return AppRoute(ProcessPage(key: key, spi: spi), 'process');
+  }
+
+  static AppRoute setting({Key? key}) {
+    return AppRoute(SettingPage(key: key), 'setting');
   }
 }

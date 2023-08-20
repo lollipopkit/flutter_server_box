@@ -37,11 +37,11 @@ class SftpPage extends StatefulWidget {
   final String? initPath;
   final bool selectPath;
 
-  const SftpPage(
-    this.spi, {
+  const SftpPage({
     Key? key,
+    required this.spi,
+    required this.selectPath,
     this.initPath,
-    this.selectPath = false,
   }) : super(key: key);
 
   @override
@@ -479,10 +479,7 @@ class _SftpPageState extends State<SftpPage> {
             }
             _listDir();
           },
-          child: Text(
-            _s.delete,
-            style: const TextStyle(color: Colors.red),
-          ),
+          child: Text(_s.delete, style: textRed),
         ),
       ],
     );
@@ -523,10 +520,7 @@ class _SftpPageState extends State<SftpPage> {
             context.pop();
             _listDir();
           },
-          child: Text(
-            _s.ok,
-            style: const TextStyle(color: Colors.red),
-          ),
+          child: Text(_s.ok, style: textRed),
         ),
       ],
     );
@@ -569,10 +563,7 @@ class _SftpPageState extends State<SftpPage> {
             context.pop();
             _listDir();
           },
-          child: Text(
-            _s.ok,
-            style: const TextStyle(color: Colors.red),
-          ),
+          child: Text(_s.ok, style: textRed),
         ),
       ],
     );
@@ -610,10 +601,7 @@ class _SftpPageState extends State<SftpPage> {
             context.pop();
             _listDir();
           },
-          child: Text(
-            _s.rename,
-            style: const TextStyle(color: Colors.red),
-          ),
+          child: Text(_s.rename, style: textRed),
         ),
       ],
     );

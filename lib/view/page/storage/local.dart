@@ -9,7 +9,6 @@ import 'package:toolbox/data/provider/sftp.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/editor.dart';
-import 'package:toolbox/view/page/storage/sftp.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/picker.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
@@ -312,12 +311,9 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
               if (spi == null) {
                 return;
               }
-              final remotePath = await AppRoute(
-                SftpPage(
-                  spi,
-                  selectPath: true,
-                ),
-                'SFTP page (select)',
+              final remotePath = await AppRoute.sftp(
+                spi: spi,
+                isSelect: true,
               ).go<String>(context);
               if (remotePath == null) {
                 return;

@@ -22,7 +22,6 @@ import '../../../data/res/color.dart';
 import '../../../data/res/terminal.dart';
 import '../../../data/store/setting.dart';
 import '../../../locator.dart';
-import '../storage/sftp.dart';
 
 const echoPWD = 'echo \$PWD';
 
@@ -275,8 +274,7 @@ class _SSHPageState extends State<SSHPage> {
           );
           return;
         }
-        final page = SftpPage(widget.spi, initPath: initPath);
-        AppRoute(page, 'SSH SFTP').go(context);
+        AppRoute.sftp(spi: widget.spi, initPath: initPath).go(context);
     }
   }
 

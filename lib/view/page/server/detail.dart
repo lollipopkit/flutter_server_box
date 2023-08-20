@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/data/model/server/cpu.dart';
+import 'package:toolbox/data/model/server/server_private_info.dart';
 
 import '../../../core/extension/numx.dart';
+import '../../../core/route.dart';
 import '../../../data/model/server/net_speed.dart';
 import '../../../data/model/server/server.dart';
 import '../../../data/model/server/server_status.dart';
@@ -18,9 +21,9 @@ import '../../widget/custom_appbar.dart';
 import '../../widget/round_rect_card.dart';
 
 class ServerDetailPage extends StatefulWidget {
-  const ServerDetailPage(this.id, {Key? key}) : super(key: key);
+  const ServerDetailPage({Key? key, required this.spi}) : super(key: key);
 
-  final String id;
+  final ServerPrivateInfo spi;
 
   @override
   _ServerDetailPageState createState() => _ServerDetailPageState();
@@ -62,7 +65,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   @override
   Widget build(BuildContext context) {
     return Consumer<ServerProvider>(builder: (_, provider, __) {
-      final s = provider.servers[widget.id];
+      final s = provider.servers[widget.spi.id];
       if (s == null) {
         return Scaffold(
           body: Center(
@@ -78,6 +81,17 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     return Scaffold(
       appBar: CustomAppBar(
         title: Text(si.spi.name, style: textSize18),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () async {
+              final delete = await AppRoute.serverEdit(spi: si.spi).go(context);
+              if (delete == true) {
+                context.pop();
+              }
+            },
+          )
+        ],
       ),
       body: ReorderableListView.builder(
         padding: EdgeInsets.only(

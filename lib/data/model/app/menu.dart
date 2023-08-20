@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 
 enum ServerTabMenuType {
+  terminal,
   sftp,
-  snippet,
-  pkg,
   docker,
   process,
-  edit;
+  pkg,
+  snippet,
+  ;
 
   IconData get icon {
     switch (this) {
@@ -19,31 +20,12 @@ enum ServerTabMenuType {
         return Icons.system_security_update;
       case ServerTabMenuType.docker:
         return Icons.view_agenda;
-      case ServerTabMenuType.edit:
-        return Icons.edit;
       case ServerTabMenuType.process:
         return Icons.list_alt_outlined;
+      case ServerTabMenuType.terminal:
+        return Icons.terminal;
     }
   }
-
-  String text(S s) {
-    switch (this) {
-      case ServerTabMenuType.sftp:
-        return 'SFTP';
-      case ServerTabMenuType.snippet:
-        return s.snippet;
-      case ServerTabMenuType.pkg:
-        return s.pkg;
-      case ServerTabMenuType.docker:
-        return 'Docker';
-      case ServerTabMenuType.edit:
-        return s.edit;
-      case ServerTabMenuType.process:
-        return s.process;
-    }
-  }
-
-  PopupMenuItem<ServerTabMenuType> build(S s) => _build(this, icon, text(s));
 }
 
 enum DockerMenuType {

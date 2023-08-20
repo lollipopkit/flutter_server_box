@@ -26,7 +26,7 @@ import '../widget/url_text.dart';
 
 class DockerManagePage extends StatefulWidget {
   final ServerPrivateInfo spi;
-  const DockerManagePage(this.spi, {Key? key}) : super(key: key);
+  const DockerManagePage({required this.spi, Key? key}) : super(key: key);
 
   @override
   State<DockerManagePage> createState() => _DockerManagePageState();
@@ -223,10 +223,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
         ),
         TextButton(
           onPressed: onSubmitted,
-          child: Text(
-            _s.ok,
-            style: const TextStyle(color: Colors.red),
-          ),
+          child: Text(_s.ok, style: textRed),
         ),
       ],
     );
@@ -327,10 +324,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
               );
             }
           },
-          child: Text(
-            _s.ok,
-            style: const TextStyle(color: Colors.red),
-          ),
+          child: Text(_s.ok, style: textRed),
         ),
       ],
     );

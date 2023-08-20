@@ -9,6 +9,7 @@ import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/utils/misc.dart' hide pathJoin;
 import 'package:toolbox/data/model/app/update.dart';
 import 'package:toolbox/data/res/path.dart';
+import 'package:toolbox/data/res/ui.dart';
 
 import '../data/provider/app.dart';
 import '../data/res/build_data.dart';
@@ -125,7 +126,7 @@ Future<void> _doUpdate(AppUpdate update, BuildContext context, S s) async {
               ),
               TextButton(
                 onPressed: () => context.pop(true),
-                child: Text(s.ok, style: const TextStyle(color: Colors.red)),
+                child: Text(s.ok, style: textRed),
               ),
             ],
           );

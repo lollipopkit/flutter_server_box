@@ -16,8 +16,8 @@ import '../widget/custom_appbar.dart';
 import '../widget/round_rect_card.dart';
 import '../widget/two_line_text.dart';
 
-class PkgManagePage extends StatefulWidget {
-  const PkgManagePage(this.spi, {Key? key}) : super(key: key);
+class PkgPage extends StatefulWidget {
+  const PkgPage({Key? key, required this.spi}) : super(key: key);
 
   final ServerPrivateInfo spi;
 
@@ -25,7 +25,7 @@ class PkgManagePage extends StatefulWidget {
   _PkgManagePageState createState() => _PkgManagePageState();
 }
 
-class _PkgManagePageState extends State<PkgManagePage>
+class _PkgManagePageState extends State<PkgPage>
     with SingleTickerProviderStateMixin {
   late MediaQueryData _media;
   final _scrollController = ScrollController();
@@ -122,10 +122,7 @@ class _PkgManagePageState extends State<PkgManagePage>
             child: Text(_s.cancel)),
         TextButton(
           onPressed: () => onSubmitted(),
-          child: Text(
-            _s.ok,
-            style: const TextStyle(color: Colors.red),
-          ),
+          child: Text(_s.ok, style: textRed),
         ),
       ],
     );

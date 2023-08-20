@@ -22,7 +22,6 @@ import '../../data/model/server/server.dart';
 import '../../data/model/server/server_private_info.dart';
 import '../../data/model/server/server_status.dart';
 import '../../data/res/color.dart';
-import 'server/detail.dart';
 import 'server/edit.dart';
 import 'setting.dart';
 
@@ -163,10 +162,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
     final rootDisk = findRootDisk(ss.disk);
 
     return InkWell(
-      onTap: () => AppRoute(
-        ServerDetailPage(spi.id),
-        'server detail page',
-      ).go(context),
+      onTap: () => AppRoute.serverDetail(spi: spi).go(context),
       child: Stack(
         children: [
           Positioned(

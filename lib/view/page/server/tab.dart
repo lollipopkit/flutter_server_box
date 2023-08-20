@@ -30,13 +30,8 @@ import '../../../data/model/app/menu.dart';
 import '../../../data/res/ui.dart';
 import '../../../data/store/setting.dart';
 import '../../../locator.dart';
-import '../../widget/popup_menu.dart';
 import '../../widget/round_rect_card.dart';
-import '../docker.dart';
-import '../pkg.dart';
-import '../storage/sftp.dart';
 import '../ssh/term.dart';
-import 'detail.dart';
 import 'edit.dart';
 
 class ServerPage extends StatefulWidget {
@@ -49,13 +44,12 @@ class ServerPage extends StatefulWidget {
 class _ServerPageState extends State<ServerPage>
     with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
   late MediaQueryData _media;
-  late ThemeData _theme;
   late ServerProvider _serverProvider;
   late SettingStore _settingStore;
   late S _s;
 
   String? _tag;
-  bool _buildGrid = false;
+  bool _useDoubleColumn = false;
 
   @override
   void initState() {
@@ -68,8 +62,7 @@ class _ServerPageState extends State<ServerPage>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
-    _buildGrid = _media.isLarge;
-    _theme = Theme.of(context);
+    _useDoubleColumn = _media.useDoubleColumn;
     _s = S.of(context)!;
   }
 
@@ -106,10 +99,10 @@ class _ServerPageState extends State<ServerPage>
         }
 
         final filtered = _filterServers(pro);
-        if (_buildGrid) {
+        if (_useDoubleColumn) {
           return _buildBodyMedium(pro);
         }
-        return _buildBodySmall(pro, filtered);
+        return _buildBodySmall(provider: pro, filtered: filtered);
       },
     );
     if (isDesktop) {
@@ -128,10 +121,13 @@ class _ServerPageState extends State<ServerPage>
           _tag == null || (pro.servers[e]?.spi.tags?.contains(_tag) ?? false))
       .toList();
 
-  Widget _buildBodySmall(ServerProvider pro, List<String> filtered) {
+  Widget _buildBodySmall(
+      {required ServerProvider provider,
+      required List<String> filtered,
+      EdgeInsets? padding = const EdgeInsets.fromLTRB(7, 10, 7, 7)}) {
     return ReorderableListView.builder(
       header: TagSwitcher(
-        tags: pro.tags,
+        tags: provider.tags,
         width: _media.size.width,
         onTagChanged: (p0) => setState(() {
           _tag = p0;
@@ -140,9 +136,9 @@ class _ServerPageState extends State<ServerPage>
         all: _s.all,
       ),
       footer: const SizedBox(height: 77),
-      padding: const EdgeInsets.fromLTRB(7, 10, 7, 7),
+      padding: padding,
       onReorder: (oldIndex, newIndex) => setState(() {
-        pro.serverOrder.moveByItem(
+        provider.serverOrder.moveByItem(
           filtered,
           oldIndex,
           newIndex,
@@ -153,7 +149,7 @@ class _ServerPageState extends State<ServerPage>
       itemBuilder: (_, index) => ReorderableDelayedDragStartListener(
         key: ValueKey('$_tag${filtered[index]}'),
         index: index,
-        child: _buildEachServerCard(pro.servers[filtered[index]]),
+        child: _buildEachServerCard(provider.servers[filtered[index]]),
       ),
       itemCount: filtered.length,
     );
@@ -166,10 +162,18 @@ class _ServerPageState extends State<ServerPage>
     return Row(
       children: [
         Expanded(
-          child: _buildBodySmall(pro, left),
+          child: _buildBodySmall(
+            provider: pro,
+            filtered: left,
+            padding: const EdgeInsets.fromLTRB(7, 10, 0, 7),
+          ),
         ),
         Expanded(
-          child: _buildBodySmall(pro, right),
+          child: _buildBodySmall(
+            provider: pro,
+            filtered: right,
+            padding: const EdgeInsets.fromLTRB(0, 10, 7, 7),
+          ),
         ),
       ],
     );
@@ -184,10 +188,7 @@ class _ServerPageState extends State<ServerPage>
       key: Key(si.spi.id + (_tag ?? '')),
       onTap: () {
         if (si.state.canViewDetails) {
-          AppRoute(
-            ServerDetailPage(si.spi.id),
-            'server detail page',
-          ).go(context);
+          AppRoute.serverDetail(spi: si.spi).go(context);
         } else if (si.status.failedInfo != null) {
           _showFailReason(si.status);
         }
@@ -208,26 +209,36 @@ class _ServerPageState extends State<ServerPage>
   ) {
     final rootDisk = findRootDisk(ss.disk);
     late final List<Widget> children;
-    var height = 23.0;
+    double? height;
     if (cs != ServerState.finished) {
+      height = 23.0;
       children = [
         _buildServerCardTitle(ss, cs, spi),
       ];
     } else {
-      height = 137;
       children = [
         _buildServerCardTitle(ss, cs, spi),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildPercentCircle(ss.cpu.usedPercent()),
-            _buildPercentCircle(ss.mem.usedPercent * 100),
-            _buildNet(ss),
-            _buildIOData(
-                'Total:\n${rootDisk?.size}', 'Used:\n${rootDisk?.usedPercent}%')
-          ],
+        height13,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 13),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildPercentCircle(ss.cpu.usedPercent()),
+              _buildPercentCircle(ss.mem.usedPercent * 100),
+              _buildNet(ss),
+              _buildIOData(
+                'Total:\n${rootDisk?.size}',
+                'Used:\n${rootDisk?.usedPercent}%',
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 3),
+        height13,
+        SizedBox(
+          height: 29,
+          child: _buildMoreBtn(spi),
+        ),
       ];
     }
 
@@ -237,7 +248,8 @@ class _ServerPageState extends State<ServerPage>
       height: height,
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: children,
       ),
     );
@@ -267,14 +279,7 @@ class _ServerPageState extends State<ServerPage>
               )
             ],
           ),
-          Row(
-            children: [
-              _buildTopRightText(ss, cs),
-              width13,
-              _buildSSHBtn(spi),
-              _buildMoreBtn(spi),
-            ],
-          )
+          _buildTopRightText(ss, cs),
         ],
       ),
     );
@@ -320,81 +325,81 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  Widget _buildSSHBtn(ServerPrivateInfo spi) {
-    return GestureDetector(
-      child: const Icon(Icons.terminal, size: 21),
-      onTap: () => gotoSSH(spi),
-    );
+  void _onTapMoreBtns(ServerTabMenuType value, ServerPrivateInfo spi) async {
+    switch (value) {
+      case ServerTabMenuType.pkg:
+        AppRoute.pkg(spi: spi).checkClientAndGo(
+          context: context,
+          s: _s,
+          id: spi.id,
+        );
+        break;
+      case ServerTabMenuType.sftp:
+        AppRoute.sftp(spi: spi).checkClientAndGo(
+          context: context,
+          s: _s,
+          id: spi.id,
+        );
+        break;
+      case ServerTabMenuType.snippet:
+        final provider = locator<SnippetProvider>();
+        final snippets = await showDialog<List<Snippet>>(
+          context: context,
+          builder: (_) => TagPicker<Snippet>(
+            items: provider.snippets,
+            containsTag: (t, tag) => t.tags?.contains(tag) ?? false,
+            tags: provider.tags.toSet(),
+            name: (t) => t.name,
+          ),
+        );
+        if (snippets == null) {
+          return;
+        }
+        final result = await _serverProvider.runSnippets(spi.id, snippets);
+        if (result != null && result.isNotEmpty) {
+          showRoundDialog(
+            context: context,
+            title: Text(_s.result),
+            child: Text(result),
+            actions: [
+              TextButton(
+                onPressed: () => copy2Clipboard(result),
+                child: Text(_s.copy),
+              )
+            ],
+          );
+        }
+        break;
+      case ServerTabMenuType.docker:
+        AppRoute.docker(spi: spi).checkClientAndGo(
+          context: context,
+          s: _s,
+          id: spi.id,
+        );
+        break;
+      case ServerTabMenuType.process:
+        AppRoute(ProcessPage(spi: spi), 'process page').checkClientAndGo(
+          context: context,
+          s: _s,
+          id: spi.id,
+        );
+        break;
+      case ServerTabMenuType.terminal:
+        gotoSSH(spi);
+        break;
+    }
   }
 
   Widget _buildMoreBtn(ServerPrivateInfo spi) {
-    return PopupMenu(
-      items: ServerTabMenuType.values.map((e) => e.build(_s)).toList(),
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      onSelected: (ServerTabMenuType value) async {
-        switch (value) {
-          case ServerTabMenuType.pkg:
-            AppRoute(PkgManagePage(spi), 'pkg manage').checkClientAndGo(
-              context: context,
-              s: _s,
-              id: spi.id,
-            );
-            break;
-          case ServerTabMenuType.sftp:
-            AppRoute(SftpPage(spi), 'SFTP').checkClientAndGo(
-              context: context,
-              s: _s,
-              id: spi.id,
-            );
-            break;
-          case ServerTabMenuType.snippet:
-            final provider = locator<SnippetProvider>();
-            final snippets = await showDialog<List<Snippet>>(
-              context: context,
-              builder: (_) => TagPicker<Snippet>(
-                items: provider.snippets,
-                containsTag: (t, tag) => t.tags?.contains(tag) ?? false,
-                tags: provider.tags.toSet(),
-                name: (t) => t.name,
-              ),
-            );
-            if (snippets == null) {
-              return;
-            }
-            final result = await _serverProvider.runSnippets(spi.id, snippets);
-            if (result != null && result.isNotEmpty) {
-              showRoundDialog(
-                context: context,
-                title: Text(_s.result),
-                child: Text(result),
-                actions: [
-                  TextButton(
-                    onPressed: () => copy2Clipboard(result),
-                    child: Text(_s.copy),
-                  )
-                ],
-              );
-            }
-            break;
-          case ServerTabMenuType.edit:
-            AppRoute(ServerEditPage(spi: spi), 'Edit server info').go(context);
-            break;
-          case ServerTabMenuType.docker:
-            AppRoute(DockerManagePage(spi), 'Docker manage').checkClientAndGo(
-              context: context,
-              s: _s,
-              id: spi.id,
-            );
-            break;
-          case ServerTabMenuType.process:
-            AppRoute(ProcessPage(spi: spi), 'process page').checkClientAndGo(
-              context: context,
-              s: _s,
-              id: spi.id,
-            );
-            break;
-        }
-      },
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: ServerTabMenuType.values
+          .map((e) => IconButton(
+                onPressed: () => _onTapMoreBtns(e, spi),
+                padding: EdgeInsets.zero,
+                icon: Icon(e.icon, size: 15),
+              ))
+          .toList(),
     );
   }
 
@@ -409,15 +414,6 @@ class _ServerPageState extends State<ServerPage>
         );
       },
     );
-  }
-
-  Widget _buildExplainText(String text) {
-    return Text(
-        text,
-        style: const TextStyle(fontSize: 12),
-        textAlign: TextAlign.center,
-        textScaleFactor: 1.0,
-      );
   }
 
   String _getTopRightStr(
@@ -453,53 +449,51 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildIOData(String up, String down) {
-    final statusTextStyle = TextStyle(
-        fontSize: 9, color: _theme.textTheme.bodyLarge!.color!.withAlpha(177));
     return Column(
-        children: [
-          const SizedBox(height: 5),
-          Text(
-            up,
-            style: statusTextStyle,
-            textAlign: TextAlign.center,
-            textScaleFactor: 1.0,
-          ),
-          const SizedBox(height: 3),
-          Text(
-            down,
-            style: statusTextStyle,
-            textAlign: TextAlign.center,
-            textScaleFactor: 1.0,
-          )
-        ],
-      );
+      children: [
+        const SizedBox(height: 5),
+        Text(
+          up,
+          style: textSize9Grey,
+          textAlign: TextAlign.center,
+          textScaleFactor: 1.0,
+        ),
+        const SizedBox(height: 3),
+        Text(
+          down,
+          style: textSize9Grey,
+          textAlign: TextAlign.center,
+          textScaleFactor: 1.0,
+        )
+      ],
+    );
   }
 
   Widget _buildPercentCircle(double percent) {
     if (percent <= 0) percent = 0.01;
     if (percent >= 100) percent = 99.9;
     return Stack(
-        children: [
-          Center(
-            child: CircleChart(
-              progressColor: primaryColor,
-              progressNumber: percent,
-              maxNumber: 100,
-              width: 53,
-              height: 53,
+      children: [
+        Center(
+          child: CircleChart(
+            progressColor: primaryColor,
+            progressNumber: percent,
+            maxNumber: 100,
+            width: 53,
+            height: 53,
+          ),
+        ),
+        Positioned.fill(
+          child: Center(
+            child: Text(
+              '${percent.toStringAsFixed(1)}%',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 11),
+              textScaleFactor: 1.0,
             ),
           ),
-          Positioned.fill(
-            child: Center(
-              child: Text(
-                '${percent.toStringAsFixed(1)}%',
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 11),
-                textScaleFactor: 1.0,
-              ),
-            ),
-          ),
-        ],
+        ),
+      ],
     );
   }
 
