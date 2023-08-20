@@ -153,7 +153,7 @@ class _HomePageState extends State<HomePage>
             return IconButton(
               icon: const Icon(Icons.refresh, size: 23),
               tooltip: 'Refresh',
-              onPressed: () => _serverProvider.refreshData(),
+              onPressed: () => _serverProvider.refreshData(onlyFailed: true),
             );
           },
         ),

@@ -5,14 +5,12 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/media_queryx.dart';
-import 'package:toolbox/data/model/app/net_view.dart';
-import 'package:toolbox/view/widget/server_func_btns.dart';
-import 'package:toolbox/view/widget/tag/switcher.dart';
 
 import '../../../core/route.dart';
 import '../../../core/utils/misc.dart' hide pathJoin;
 import '../../../core/utils/platform.dart';
 import '../../../core/utils/ui.dart';
+import '../../../data/model/app/net_view.dart';
 import '../../../data/model/server/disk.dart';
 import '../../../data/model/server/server.dart';
 import '../../../data/model/server/server_private_info.dart';
@@ -23,6 +21,8 @@ import '../../../data/res/ui.dart';
 import '../../../data/store/setting.dart';
 import '../../../locator.dart';
 import '../../widget/round_rect_card.dart';
+import '../../widget/server_func_btns.dart';
+import '../../widget/tag/switcher.dart';
 import 'edit.dart';
 
 class ServerPage extends StatefulWidget {
@@ -187,6 +187,13 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
+  Widget _wrapWithSizedbox(Widget child) {
+    return SizedBox(
+      width: _useDoubleColumn ? (_media.size.width - 146) / 8 : (_media.size.width - 74) / 4,
+      child: child,
+    );
+  }
+
   Widget _buildRealServerCard(
     ServerStatus ss,
     ServerState cs,
@@ -209,13 +216,13 @@ class _ServerPageState extends State<ServerPage>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildPercentCircle(ss.cpu.usedPercent()),
-              _buildPercentCircle(ss.mem.usedPercent * 100),
-              _buildNet(ss),
-              _buildIOData(
+              _wrapWithSizedbox(_buildPercentCircle(ss.cpu.usedPercent())),
+              _wrapWithSizedbox(_buildPercentCircle(ss.mem.usedPercent * 100)),
+              _wrapWithSizedbox(_buildNet(ss)),
+              _wrapWithSizedbox(_buildIOData(
                 'Total:\n${rootDisk?.size}',
                 'Used:\n${rootDisk?.usedPercent}%',
-              ),
+              )),
             ],
           ),
         ),
@@ -389,6 +396,7 @@ class _ServerPageState extends State<ServerPage>
             maxNumber: 100,
             width: 53,
             height: 53,
+            animationDuration: const Duration(milliseconds: 777),
           ),
         ),
         Positioned.fill(

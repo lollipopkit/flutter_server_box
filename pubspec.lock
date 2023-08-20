@@ -150,7 +150,7 @@ packages:
     description:
       path: "."
       ref: main
-      resolved-ref: "01eb9bcc7f1a1690381caeedb476ea98c5295d55"
+      resolved-ref: "449a3fa7e886869e87ea10ab56f99be3f16f2c1f"
       url: "https://github.com/lollipopkit/circle_chart"
     source: git
     version: "0.0.3"
