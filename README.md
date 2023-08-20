@@ -44,20 +44,20 @@ If you have any question or feature request, please open a [discussion](https://
 If ServerBox app has any bug, please open an [issue](https://github.com/lollipopkit/flutter_server_box/issues/new).
 
 
-## 📱 ScreenShots
+## 🏙️ ScreenShots
 <table>
   <tr>
     <td>
-	    <img width="200px" src="imgs/server.jpeg">
+	    <img width="200px" src="imgs/server.png">
     </td>
     <td>
-	    <img width="200px" src="imgs/detail.jpg">
+	    <img width="200px" src="imgs/detail.png">
     </td>
     <td>
-	    <img width="200px" src="imgs/ssh.jpg">
+	    <img width="200px" src="imgs/sftp.png">
     </td>
     <td>
-	    <img width="200px" src="imgs/editor.jpg">
+	    <img width="200px" src="imgs/editor.png">
     </td>
   </tr>
 </table>
@@ -67,7 +67,7 @@ If ServerBox app has any bug, please open an [issue](https://github.com/lollipop
 	    <img width="200px" src="imgs/ping.png">
     </td>
     <td>
-	    <img width="200px" src="imgs/sftp.jpeg">
+	    <img width="200px" src="imgs/ssh.jpg">
     </td>
     <td>
 	    <img width="200px" src="imgs/docker.jpeg">
@@ -82,8 +82,8 @@ If ServerBox app has any bug, please open an [issue](https://github.com/lollipop
 ## 🖥 Platform
 Status|Platform          
 --- | ---
-Full Support| Android / iOS
-Not tested| macOS / Windows / Linux
+Full Support| Android / iOS / macOS
+Not tested| Windows / Linux
 
 
 ## 🧱 Contribution

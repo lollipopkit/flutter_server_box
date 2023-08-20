@@ -153,8 +153,12 @@ class _ServerPageState extends State<ServerPage>
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Padding(padding: const EdgeInsets.symmetric(horizontal: 7), child: _buildTagsSwitcher(pro),),
-        Expanded(child: Row(
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 7),
+          child: _buildTagsSwitcher(pro),
+        ),
+        Expanded(
+            child: Row(
           children: [
             Expanded(
               child: _buildBodySmall(

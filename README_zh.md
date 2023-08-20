@@ -44,20 +44,20 @@
 如果 ServerBox app 有任何 bug，请在 [问题](https://github.com/lollipopkit/flutter_server_box/issues/new) 中反馈。
 
 
-## 📱 截屏
+## 🏙️ 截屏
 <table>
   <tr>
     <td>
-	    <img width="200px" src="imgs/server.jpeg">
+	    <img width="200px" src="imgs/server.png">
     </td>
     <td>
-	    <img width="200px" src="imgs/detail.jpg">
+	    <img width="200px" src="imgs/detail.png">
     </td>
     <td>
-	    <img width="200px" src="imgs/ssh.jpg">
+	    <img width="200px" src="imgs/sftp.png">
     </td>
     <td>
-	    <img width="200px" src="imgs/editor.jpg">
+	    <img width="200px" src="imgs/editor.png">
     </td>
   </tr>
 </table>
@@ -67,7 +67,7 @@
 	    <img width="200px" src="imgs/ping.png">
     </td>
     <td>
-	    <img width="200px" src="imgs/sftp.jpeg">
+	    <img width="200px" src="imgs/ssh.jpg">
     </td>
     <td>
 	    <img width="200px" src="imgs/docker.jpeg">
@@ -82,8 +82,8 @@
 ## 🖥 平台
 状态|平台         
 --- | ---
-完整支持 | Android / iOS
-未测试 | macOS / Windows / Linux
+完整支持 | Android / iOS / macOS
+未测试 | Windows / Linux
 
 ## 🧱 贡献
 **任何正面的贡献都欢迎**。
