@@ -31,8 +31,7 @@ class TagBtn extends StatelessWidget {
                 content,
                 style: TextStyle(
                   color: isEnable ? null : Colors.grey,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
                 ),
               ),
             )),

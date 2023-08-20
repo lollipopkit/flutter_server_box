@@ -23,7 +23,7 @@ import '../../data/model/server/server_private_info.dart';
 import '../../data/model/server/server_status.dart';
 import '../../data/res/color.dart';
 import 'server/edit.dart';
-import 'setting.dart';
+import 'setting/entry.dart';
 
 class FullScreenPage extends StatefulWidget {
   const FullScreenPage({Key? key}) : super(key: key);

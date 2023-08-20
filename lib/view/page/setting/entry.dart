@@ -12,26 +12,26 @@ import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/model/app/net_view.dart';
-import 'package:toolbox/view/page/ssh/virt_key_setting.dart';
+import 'package:toolbox/view/page/setting/virt_key.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/value_notifier.dart';
 
-import '../../core/utils/misc.dart';
-import '../../core/utils/platform.dart';
-import '../../core/update.dart';
-import '../../core/utils/ui.dart';
-import '../../data/provider/app.dart';
-import '../../data/provider/server.dart';
-import '../../data/res/build_data.dart';
-import '../../data/res/color.dart';
-import '../../data/res/path.dart';
-import '../../data/res/ui.dart';
-import '../../data/store/server.dart';
-import '../../data/store/setting.dart';
-import '../../locator.dart';
-import '../widget/custom_appbar.dart';
-import '../widget/future_widget.dart';
-import '../widget/round_rect_card.dart';
+import '../../../core/utils/misc.dart';
+import '../../../core/utils/platform.dart';
+import '../../../core/update.dart';
+import '../../../core/utils/ui.dart';
+import '../../../data/provider/app.dart';
+import '../../../data/provider/server.dart';
+import '../../../data/res/build_data.dart';
+import '../../../data/res/color.dart';
+import '../../../data/res/path.dart';
+import '../../../data/res/ui.dart';
+import '../../../data/store/server.dart';
+import '../../../data/store/setting.dart';
+import '../../../locator.dart';
+import '../../widget/custom_appbar.dart';
+import '../../widget/future_widget.dart';
+import '../../widget/round_rect_card.dart';
 
 class SettingPage extends StatefulWidget {
   const SettingPage({Key? key}) : super(key: key);
@@ -170,6 +170,8 @@ class _SettingPageState extends State<SettingPage> {
     return Column(
       children: [
         _buildMoveOutServerFuncBtns(),
+        _buildServerOrder(),
+        _buildServerDetailOrder(),
         _buildNetViewType(),
         _buildUpdateInterval(),
         _buildMaxRetry(),
@@ -976,6 +978,22 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(_s.moveOutServerFuncBtns),
       subtitle: Text(_s.moveOutServerFuncBtnsHelp, style: textSize13Grey),
       trailing: buildSwitch(context, _setting.moveOutServerTabFuncBtns),
+    );
+  }
+
+  Widget _buildServerOrder() {
+    return ListTile(
+      title: Text(_s.serverOrder),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: () => AppRoute.serverOrder().go(context),
+    );
+  }
+
+  Widget _buildServerDetailOrder() {
+    return ListTile(
+      title: Text(_s.serverDetailOrder),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: () => AppRoute.serverDetailOrder().go(context),
     );
   }
 }

@@ -12,8 +12,8 @@ import 'package:toolbox/view/page/ping.dart';
 import 'package:toolbox/view/page/private_key/edit.dart';
 import 'package:toolbox/view/page/private_key/list.dart';
 import 'package:toolbox/view/page/server/detail.dart';
-import 'package:toolbox/view/page/ssh/term.dart';
-import 'package:toolbox/view/page/ssh/virt_key_setting.dart';
+import 'package:toolbox/view/page/ssh_term.dart';
+import 'package:toolbox/view/page/setting/virt_key.dart';
 import 'package:toolbox/view/page/storage/local.dart';
 
 import '../data/model/server/snippet.dart';
@@ -25,7 +25,9 @@ import '../view/page/pkg.dart';
 import '../view/page/process.dart';
 import '../view/page/server/edit.dart';
 import '../view/page/server/tab.dart';
-import '../view/page/setting.dart';
+import '../view/page/setting/entry.dart';
+import '../view/page/setting/srv_detail_seq.dart';
+import '../view/page/setting/srv_seq.dart';
 import '../view/page/snippet/edit.dart';
 import '../view/page/snippet/list.dart';
 import '../view/page/storage/sftp.dart';
@@ -180,5 +182,13 @@ class AppRoute {
 
   static AppRoute setting({Key? key}) {
     return AppRoute(SettingPage(key: key), 'setting');
+  }
+
+  static AppRoute serverOrder({Key? key}) {
+    return AppRoute(ServerOrderPage(key: key), 'server_order');
+  }
+
+  static AppRoute serverDetailOrder({Key? key}) {
+    return AppRoute(ServerDetailOrderPage(key: key), 'server_detail_order');
   }
 }

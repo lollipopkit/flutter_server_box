@@ -369,7 +369,7 @@ class SEn extends S {
   String get moveOutServerFuncBtns => 'Server function button location';
 
   @override
-  String get moveOutServerFuncBtnsHelp => 'On: can be displayed below each card on the Server Tab page.\nOff: can be displayed at the top of the Server Details page.';
+  String get moveOutServerFuncBtnsHelp => 'On: can be displayed below each card on the Server Tab page. Off: can be displayed at the top of the Server Details page.';
 
   @override
   String get ms => 'ms';
@@ -524,6 +524,12 @@ class SEn extends S {
 
   @override
   String get server => 'Server';
+
+  @override
+  String get serverDetailOrder => 'Detail page widget order';
+
+  @override
+  String get serverOrder => 'Server order';
 
   @override
   String get serverTabConnecting => 'Connecting...';

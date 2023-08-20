@@ -94,35 +94,19 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           )
         ],
       ),
-      body: ReorderableListView.builder(
+      bottomNavigationBar: _setting.moveOutServerTabFuncBtns.fetch()!
+          ? null
+          : ServerFuncBtns(spi: widget.spi, s: _s, iconSize: 19),
+      body: ListView.builder(
         padding: EdgeInsets.only(
           left: 13,
           right: 13,
           top: 13,
-          bottom: _media.padding.bottom,
+          bottom: _media.padding.bottom + 77,
         ),
-        onReorder: (int oldIndex, int newIndex) {
-          setState(() {
-            _cardsOrder.move(
-              oldIndex,
-              newIndex,
-              property: _setting.detailCardOrder,
-            );
-          });
-        },
-        footer: height13,
-        header: _setting.moveOutServerTabFuncBtns.fetch()!
-            ? null
-            : RoundRectCard(ServerFuncBtns(spi: widget.spi, s: _s)),
         itemCount: _cardsOrder.length,
-        buildDefaultDragHandles: false,
-        itemBuilder: (context, index) => ReorderableDelayedDragStartListener(
-          key: ValueKey(index),
-          index: index,
-          child: SizedBox(
-            child: _cardBuildMap[_cardsOrder[index]]?.call(si.status),
-          ),
-        ),
+        itemBuilder: (context, index) =>
+            _cardBuildMap[_cardsOrder[index]]?.call(si.status),
       ),
     );
   }

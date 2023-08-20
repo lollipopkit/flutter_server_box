@@ -369,7 +369,7 @@ class SZh extends S {
   String get moveOutServerFuncBtns => '服务器功能按钮位置';
 
   @override
-  String get moveOutServerFuncBtnsHelp => '开启：可以在服务器 Tab 页的每个卡片下方显示。\n关闭：在服务器详情页顶部显示。';
+  String get moveOutServerFuncBtnsHelp => '开启：可以在服务器 Tab 页的每个卡片下方显示。关闭：在服务器详情页顶部显示。';
 
   @override
   String get ms => '毫秒';
@@ -524,6 +524,12 @@ class SZh extends S {
 
   @override
   String get server => '服务器';
+
+  @override
+  String get serverDetailOrder => '详情页部件顺序';
+
+  @override
+  String get serverOrder => '服务器顺序';
 
   @override
   String get serverTabConnecting => '连接中...';
@@ -1077,7 +1083,7 @@ class SZhTw extends SZh {
   String get moveOutServerFuncBtns => '服務器功能按鈕位置';
 
   @override
-  String get moveOutServerFuncBtnsHelp => '開啟：可以在服務器 Tab 頁的每個卡片下方顯示。\n關閉：在服務器詳情頁頂部顯示。';
+  String get moveOutServerFuncBtnsHelp => '開啟：可以在服務器 Tab 頁的每個卡片下方顯示。關閉：在服務器詳情頁頂部顯示。';
 
   @override
   String get ms => '毫秒';
@@ -1232,6 +1238,12 @@ class SZhTw extends SZh {
 
   @override
   String get server => '服務器';
+
+  @override
+  String get serverDetailOrder => '詳情頁部件順序';
+
+  @override
+  String get serverOrder => '服務器順序';
 
   @override
   String get serverTabConnecting => '連接中...';

@@ -369,7 +369,7 @@ class SDe extends S {
   String get moveOutServerFuncBtns => 'Position der Server-Funktionsschaltfläche';
 
   @override
-  String get moveOutServerFuncBtnsHelp => 'Ein: kann unter jeder Karte auf der Registerkarte \"Server\" angezeigt werden.\nAus: kann oben auf der Seite \"Serverdetails\" angezeigt werden.';
+  String get moveOutServerFuncBtnsHelp => 'Ein: kann unter jeder Karte auf der Registerkarte \"Server\" angezeigt werden. Aus: kann oben auf der Seite \"Serverdetails\" angezeigt werden.';
 
   @override
   String get ms => 'ms';
@@ -524,6 +524,12 @@ class SDe extends S {
 
   @override
   String get server => 'Server';
+
+  @override
+  String get serverDetailOrder => 'Reihenfolge der Widgets auf der Detailseite';
+
+  @override
+  String get serverOrder => 'Server-Bestellung';
 
   @override
   String get serverTabConnecting => 'Verbinden...';

@@ -18,10 +18,16 @@ import '../page/process.dart';
 import 'tag/picker.dart';
 
 class ServerFuncBtns extends StatelessWidget {
-  const ServerFuncBtns({super.key, required this.spi, required this.s});
+  const ServerFuncBtns({
+    super.key,
+    required this.spi,
+    required this.s,
+    this.iconSize,
+  });
 
   final ServerPrivateInfo spi;
   final S s;
+  final double? iconSize;
 
   void _onTapMoreBtns(
     ServerTabMenuType value,
@@ -101,7 +107,7 @@ class ServerFuncBtns extends StatelessWidget {
           .map((e) => IconButton(
                 onPressed: () => _onTapMoreBtns(e, spi, context),
                 padding: EdgeInsets.zero,
-                icon: Icon(e.icon, size: 15),
+                icon: Icon(e.icon, size: iconSize ?? 15),
               ))
           .toList(),
     );

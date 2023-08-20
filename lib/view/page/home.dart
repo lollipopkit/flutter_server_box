@@ -26,7 +26,7 @@ import 'backup.dart';
 import 'convert.dart';
 import 'debug.dart';
 import 'private_key/list.dart';
-import 'setting.dart';
+import 'setting/entry.dart';
 import 'storage/local.dart';
 
 class HomePage extends StatefulWidget {

@@ -785,7 +785,7 @@ abstract class S {
   /// No description provided for @moveOutServerFuncBtnsHelp.
   ///
   /// In en, this message translates to:
-  /// **'On: can be displayed below each card on the Server Tab page.\nOff: can be displayed at the top of the Server Details page.'**
+  /// **'On: can be displayed below each card on the Server Tab page. Off: can be displayed at the top of the Server Details page.'**
   String get moveOutServerFuncBtnsHelp;
 
   /// No description provided for @ms.
@@ -1087,6 +1087,18 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Server'**
   String get server;
+
+  /// No description provided for @serverDetailOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Detail page widget order'**
+  String get serverDetailOrder;
+
+  /// No description provided for @serverOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Server order'**
+  String get serverOrder;
 
   /// No description provided for @serverTabConnecting.
   ///

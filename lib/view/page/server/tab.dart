@@ -5,7 +5,6 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/media_queryx.dart';
-import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/data/model/app/net_view.dart';
 import 'package:toolbox/view/widget/server_func_btns.dart';
 import 'package:toolbox/view/widget/tag/switcher.dart';
@@ -72,6 +71,20 @@ class _ServerPageState extends State<ServerPage>
         heroTag: 'server',
         child: const Icon(Icons.add),
       ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(7, 17, 7, 3),
+        child: Consumer<ServerProvider>(builder: (_, pro, __) {
+          return TagSwitcher(
+            tags: pro.tags,
+            width: _media.size.width,
+            onTagChanged: (p0) => setState(() {
+              _tag = p0;
+            }),
+            initTag: _tag,
+            all: _s.all,
+          );
+        }),
+      ),
     );
   }
 
@@ -113,36 +126,15 @@ class _ServerPageState extends State<ServerPage>
           _tag == null || (pro.servers[e]?.spi.tags?.contains(_tag) ?? false))
       .toList();
 
-  Widget _buildBodySmall(
-      {required ServerProvider provider,
-      required List<String> filtered,
-      EdgeInsets? padding = const EdgeInsets.fromLTRB(7, 10, 7, 7)}) {
-    return ReorderableListView.builder(
-      header: TagSwitcher(
-        tags: provider.tags,
-        width: _media.size.width,
-        onTagChanged: (p0) => setState(() {
-          _tag = p0;
-        }),
-        initTag: _tag,
-        all: _s.all,
-      ),
-      footer: const SizedBox(height: 77),
+  Widget _buildBodySmall({
+    required ServerProvider provider,
+    required List<String> filtered,
+    EdgeInsets? padding = const EdgeInsets.fromLTRB(7, 10, 7, 7),
+  }) {
+    return ListView.builder(
       padding: padding,
-      onReorder: (oldIndex, newIndex) => setState(() {
-        provider.serverOrder.moveByItem(
-          filtered,
-          oldIndex,
-          newIndex,
-          property: _settingStore.serverOrder,
-        );
-      }),
-      buildDefaultDragHandles: false,
-      itemBuilder: (_, index) => ReorderableDelayedDragStartListener(
-        key: ValueKey('$_tag${filtered[index]}'),
-        index: index,
-        child: _buildEachServerCard(provider.servers[filtered[index]]),
-      ),
+      itemBuilder: (_, index) =>
+          _buildEachServerCard(provider.servers[filtered[index]]),
       itemCount: filtered.length,
     );
   }
@@ -176,17 +168,18 @@ class _ServerPageState extends State<ServerPage>
       return placeholder;
     }
 
-    return GestureDetector(
+    return RoundRectCard(
       key: Key(si.spi.id + (_tag ?? '')),
-      onTap: () {
-        if (si.state.canViewDetails) {
-          AppRoute.serverDetail(spi: si.spi).go(context);
-        } else if (si.status.failedInfo != null) {
-          _showFailReason(si.status);
-        }
-      },
-      child: RoundRectCard(
-        Padding(
+      InkWell(
+        onTap: () {
+          if (si.state.canViewDetails) {
+            AppRoute.serverDetail(spi: si.spi).go(context);
+          } else if (si.status.failedInfo != null) {
+            _showFailReason(si.status);
+          }
+        },
+        onLongPress: () => AppRoute.serverEdit(spi: si.spi).go(context),
+        child: Padding(
           padding: const EdgeInsets.all(13),
           child: _buildRealServerCard(si.status, si.state, si.spi),
         ),

@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/model/docker/image.dart';
-import 'package:toolbox/view/page/ssh/term.dart';
+import 'package:toolbox/view/page/ssh_term.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 
 import '../../core/utils/ui.dart';

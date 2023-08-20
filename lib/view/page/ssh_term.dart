@@ -10,18 +10,18 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:xterm/xterm.dart';
 
-import '../../../core/route.dart';
-import '../../../core/utils/platform.dart';
-import '../../../core/utils/misc.dart';
-import '../../../core/utils/ui.dart';
-import '../../../core/utils/server.dart';
-import '../../../data/model/server/server_private_info.dart';
-import '../../../data/model/ssh/virtual_key.dart';
-import '../../../data/provider/virtual_keyboard.dart';
-import '../../../data/res/color.dart';
-import '../../../data/res/terminal.dart';
-import '../../../data/store/setting.dart';
-import '../../../locator.dart';
+import '../../core/route.dart';
+import '../../core/utils/platform.dart';
+import '../../core/utils/misc.dart';
+import '../../core/utils/ui.dart';
+import '../../core/utils/server.dart';
+import '../../data/model/server/server_private_info.dart';
+import '../../data/model/ssh/virtual_key.dart';
+import '../../data/provider/virtual_keyboard.dart';
+import '../../data/res/color.dart';
+import '../../data/res/terminal.dart';
+import '../../data/store/setting.dart';
+import '../../locator.dart';
 
 const echoPWD = 'echo \$PWD';
 
