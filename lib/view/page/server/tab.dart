@@ -127,7 +127,7 @@ class _ServerPageState extends State<ServerPage>
   Widget _buildBodySmall({
     required ServerProvider provider,
     required List<String> filtered,
-    EdgeInsets? padding = const EdgeInsets.fromLTRB(7, 10, 7, 7),
+    EdgeInsets? padding = const EdgeInsets.fromLTRB(7, 0, 7, 7),
     bool buildTags = true,
   }) {
     final count = buildTags ? filtered.length + 2 : filtered.length + 1;
@@ -164,7 +164,7 @@ class _ServerPageState extends State<ServerPage>
               child: _buildBodySmall(
                 provider: pro,
                 filtered: left,
-                padding: const EdgeInsets.fromLTRB(7, 10, 0, 7),
+                padding: const EdgeInsets.fromLTRB(7, 0, 0, 7),
                 buildTags: false,
               ),
             ),
@@ -172,7 +172,7 @@ class _ServerPageState extends State<ServerPage>
               child: _buildBodySmall(
                 provider: pro,
                 filtered: right,
-                padding: const EdgeInsets.fromLTRB(0, 10, 7, 7),
+                padding: const EdgeInsets.fromLTRB(0, 0, 7, 7),
                 buildTags: false,
               ),
             ),

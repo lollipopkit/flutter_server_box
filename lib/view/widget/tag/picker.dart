@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/data/res/ui.dart';
-import 'package:toolbox/view/widget/tag/btn.dart';
+
+import 'btn.dart';
 
 class TagPicker<T> extends StatefulWidget {
   final List<T> items;

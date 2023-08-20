@@ -99,7 +99,6 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         padding: EdgeInsets.only(
           left: 13,
           right: 13,
-          top: 13,
           bottom: _media.padding.bottom + 77,
         ),
         itemCount: buildFuncs ? _cardsOrder.length + 1 : _cardsOrder.length,

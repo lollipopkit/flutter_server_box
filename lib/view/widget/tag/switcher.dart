@@ -23,7 +23,7 @@ class TagSwitcher extends StatelessWidget {
     if (tags.isEmpty) return placeholder;
     final items = <String?>[null, ...tags];
     return Container(
-      height: 37,
+      height: 31,
       width: width,
       alignment: Alignment.center,
       color: Colors.transparent,

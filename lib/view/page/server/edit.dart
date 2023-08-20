@@ -16,7 +16,7 @@ import '../../../data/res/ui.dart';
 import '../../../data/store/private_key.dart';
 import '../../../locator.dart';
 import '../../widget/custom_appbar.dart';
-import '../../widget/tag/editor.dart';
+import '../../widget/tag/btn.dart';
 import '../private_key/edit.dart';
 
 class ServerEditPage extends StatefulWidget {
