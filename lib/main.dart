@@ -6,6 +6,7 @@ import 'package:logging/logging.dart';
 import 'package:macos_window_utils/window_manipulator.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/view/widget/custom_appbar.dart';
 
 import 'app.dart';
@@ -92,8 +93,13 @@ Future<void> initApp() async {
   final settings = locator<SettingStore>();
   loadFontFile(settings.fontPath.fetch());
 
-  // SharedPreferences is only used on Android for saving home widgets settings.
+  // Android only
   if (!isAndroid) return;
+  // Only start service when [bgRun] is true.
+  if (locator<SettingStore>().bgRun.fetch() ?? false) {
+    bgRunChannel.invokeMethod('startService');
+  }
+  // SharedPreferences is only used on Android for saving home widgets settings.
   SharedPreferences.setPrefix('');
 }
 

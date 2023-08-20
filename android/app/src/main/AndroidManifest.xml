@@ -55,5 +55,7 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/home_widget" />
         </receiver>
+
+        <service android:name=".KeepAliveService"/>
     </application>
 </manifest>
