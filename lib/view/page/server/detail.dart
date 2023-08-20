@@ -79,6 +79,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildMainPage(Server si) {
+    final buildFuncs = !_setting.moveOutServerTabFuncBtns.fetch()!;
     return Scaffold(
       appBar: CustomAppBar(
         title: Text(si.spi.name, style: textSize18),
@@ -94,9 +95,6 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           )
         ],
       ),
-      bottomNavigationBar: _setting.moveOutServerTabFuncBtns.fetch()!
-          ? null
-          : ServerFuncBtns(spi: widget.spi, s: _s, iconSize: 19),
       body: ListView.builder(
         padding: EdgeInsets.only(
           left: 13,
@@ -104,9 +102,14 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           top: 13,
           bottom: _media.padding.bottom + 77,
         ),
-        itemCount: _cardsOrder.length,
-        itemBuilder: (context, index) =>
-            _cardBuildMap[_cardsOrder[index]]?.call(si.status),
+        itemCount: buildFuncs ? _cardsOrder.length + 1 : _cardsOrder.length,
+        itemBuilder: (context, index) {
+          if (index == 0 && buildFuncs) {
+            return ServerFuncBtns(spi: widget.spi, s: _s, iconSize: 19);
+          }
+          if (buildFuncs) index--;
+          return _cardBuildMap[_cardsOrder[index]]?.call(si.status);
+        },
       ),
     );
   }

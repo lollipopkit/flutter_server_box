@@ -23,18 +23,19 @@ class TagBtn extends StatelessWidget {
         child: Material(
           color: primaryColor.withAlpha(20),
           child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 2.7),
-            child: Text(
-              content,
-              style: TextStyle(
-                color: isEnable ? null : Colors.grey,
-                fontSize: 13,
+            onTap: onTap,
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 11, vertical: 2.7),
+              child: Text(
+                content,
+                style: TextStyle(
+                  color: isEnable ? null : Colors.grey,
+                  fontSize: 13,
+                ),
               ),
             ),
           ),
-        ),
         ),
       ),
     );

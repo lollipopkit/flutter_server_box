@@ -71,20 +71,6 @@ class _ServerPageState extends State<ServerPage>
         heroTag: 'server',
         child: const Icon(Icons.add),
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.fromLTRB(7, 17, 7, 3),
-        child: Consumer<ServerProvider>(builder: (_, pro, __) {
-          return TagSwitcher(
-            tags: pro.tags,
-            width: _media.size.width,
-            onTagChanged: (p0) => setState(() {
-              _tag = p0;
-            }),
-            initTag: _tag,
-            all: _s.all,
-          );
-        }),
-      ),
     );
   }
 
@@ -126,16 +112,37 @@ class _ServerPageState extends State<ServerPage>
           _tag == null || (pro.servers[e]?.spi.tags?.contains(_tag) ?? false))
       .toList();
 
+  Widget _buildTagsSwitcher(ServerProvider provider) {
+    return TagSwitcher(
+      tags: provider.tags,
+      width: _media.size.width,
+      onTagChanged: (p0) => setState(() {
+        _tag = p0;
+      }),
+      initTag: _tag,
+      all: _s.all,
+    );
+  }
+
   Widget _buildBodySmall({
     required ServerProvider provider,
     required List<String> filtered,
     EdgeInsets? padding = const EdgeInsets.fromLTRB(7, 10, 7, 7),
+    bool buildTags = true,
   }) {
+    final count = buildTags ? filtered.length + 2 : filtered.length + 1;
     return ListView.builder(
       padding: padding,
-      itemBuilder: (_, index) =>
-          _buildEachServerCard(provider.servers[filtered[index]]),
-      itemCount: filtered.length,
+      itemCount: count,
+      itemBuilder: (_, index) {
+        if (index == 0 && buildTags) return _buildTagsSwitcher(provider);
+
+        // Issue #130
+        if (index == count - 1) return const SizedBox(height: 77);
+
+        if (buildTags) index--;
+        return _buildEachServerCard(provider.servers[filtered[index]]);
+      },
     );
   }
 
@@ -143,22 +150,30 @@ class _ServerPageState extends State<ServerPage>
     final filtered = _filterServers(pro);
     final left = filtered.where((e) => filtered.indexOf(e) % 2 == 0).toList();
     final right = filtered.where((e) => filtered.indexOf(e) % 2 == 1).toList();
-    return Row(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Expanded(
-          child: _buildBodySmall(
-            provider: pro,
-            filtered: left,
-            padding: const EdgeInsets.fromLTRB(7, 10, 0, 7),
-          ),
-        ),
-        Expanded(
-          child: _buildBodySmall(
-            provider: pro,
-            filtered: right,
-            padding: const EdgeInsets.fromLTRB(0, 10, 7, 7),
-          ),
-        ),
+        Padding(padding: const EdgeInsets.symmetric(horizontal: 7), child: _buildTagsSwitcher(pro),),
+        Expanded(child: Row(
+          children: [
+            Expanded(
+              child: _buildBodySmall(
+                provider: pro,
+                filtered: left,
+                padding: const EdgeInsets.fromLTRB(7, 10, 0, 7),
+                buildTags: false,
+              ),
+            ),
+            Expanded(
+              child: _buildBodySmall(
+                provider: pro,
+                filtered: right,
+                padding: const EdgeInsets.fromLTRB(0, 10, 7, 7),
+                buildTags: false,
+              ),
+            ),
+          ],
+        ))
       ],
     );
   }
@@ -189,7 +204,9 @@ class _ServerPageState extends State<ServerPage>
 
   Widget _wrapWithSizedbox(Widget child) {
     return SizedBox(
-      width: _useDoubleColumn ? (_media.size.width - 146) / 8 : (_media.size.width - 74) / 4,
+      width: _useDoubleColumn
+          ? (_media.size.width - 146) / 10
+          : (_media.size.width - 74) / 5,
       child: child,
     );
   }
