@@ -96,6 +96,8 @@ class _ServerPageState extends State<ServerPage>
         return _buildBodySmall(provider: pro, filtered: filtered);
       },
     );
+
+    // Desktop doesn't support pull to refresh
     if (isDesktop) {
       return child;
     }
@@ -138,7 +140,7 @@ class _ServerPageState extends State<ServerPage>
         if (index == 0 && buildTags) return _buildTagsSwitcher(provider);
 
         // Issue #130
-        if (index == count - 1) return const SizedBox(height: 77);
+        if (index == count - 1) return height77;
 
         if (buildTags) index--;
         return _buildEachServerCard(provider.servers[filtered[index]]);
@@ -229,6 +231,7 @@ class _ServerPageState extends State<ServerPage>
         _buildServerCardTitle(ss, cs, spi),
       ];
     } else {
+      height = 107;
       children = [
         _buildServerCardTitle(ss, cs, spi),
         height13,

@@ -107,6 +107,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
       padding: const EdgeInsets.all(13),
       children: [
         Input(
+          autoFocus: true,
           controller: _nameController,
           type: TextInputType.text,
           onSubmitted: (_) => FocusScope.of(context).requestFocus(_scriptNode),

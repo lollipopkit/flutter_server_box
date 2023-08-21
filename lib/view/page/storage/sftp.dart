@@ -246,6 +246,8 @@ class _SftpPageState extends State<SftpPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Input(
+                autoFocus: true,
+                icon: Icons.abc,
                 label: _s.path,
                 onSubmitted: (value) => context.pop(value),
               ),
@@ -492,6 +494,8 @@ class _SftpPageState extends State<SftpPage> {
       context: context,
       title: Text(_s.createFolder),
       child: Input(
+        autoFocus: true,
+        icon: Icons.folder,
         controller: textController,
         label: _s.name,
       ),
@@ -533,6 +537,8 @@ class _SftpPageState extends State<SftpPage> {
       context: context,
       title: Text(_s.createFile),
       child: Input(
+        autoFocus: true,
+        icon: Icons.insert_drive_file,
         controller: textController,
         label: _s.name,
       ),
@@ -576,6 +582,8 @@ class _SftpPageState extends State<SftpPage> {
       context: context,
       title: Text(_s.rename),
       child: Input(
+        autoFocus: true,
+        icon: Icons.abc,
         controller: textController,
         label: _s.name,
       ),

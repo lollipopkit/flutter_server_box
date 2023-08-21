@@ -18,6 +18,7 @@ class Input extends StatelessWidget {
   final bool suggestiion;
   final String? errorText;
   final Widget? prefix;
+  final bool autoFocus;
 
   const Input({
     super.key,
@@ -36,6 +37,7 @@ class Input extends StatelessWidget {
     this.suggestiion = false,
     this.errorText,
     this.prefix,
+    this.autoFocus = false,
   });
   @override
   Widget build(BuildContext context) {
@@ -49,6 +51,7 @@ class Input extends StatelessWidget {
           onChanged: onChanged,
           keyboardType: type,
           focusNode: node,
+          autofocus: autoFocus,
           autocorrect: autoCorrect,
           enableSuggestions: suggestiion,
           decoration: InputDecoration(
@@ -57,7 +60,7 @@ class Input extends StatelessWidget {
               icon: icon != null ? Icon(icon) : null,
               border: InputBorder.none,
               errorText: errorText,
-              prefix: prefix),
+              prefix: prefix,),
           controller: controller,
           obscureText: obscureText,
         ),

@@ -153,6 +153,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
       padding: const EdgeInsets.all(13),
       children: [
         Input(
+          autoFocus: true,
           controller: _nameController,
           type: TextInputType.text,
           node: _nameNode,

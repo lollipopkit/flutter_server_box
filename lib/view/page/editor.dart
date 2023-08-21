@@ -33,6 +33,7 @@ class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
   Map<String, TextStyle>? _codeTheme;
   late S _s;
   late String? _langCode;
+  late TextStyle _textStyle;
 
   @override
   void initState() {
@@ -41,6 +42,7 @@ class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
     _controller = CodeController(
       language: suffix2HighlightMap[_langCode],
     );
+    _textStyle = TextStyle(fontSize: _setting.editorFontSize.fetch());
 
     WidgetsBinding.instance.addPostFrameCallback((Duration duration) async {
       if (isDarkMode(context)) {
@@ -119,6 +121,7 @@ class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
           child: CodeField(
             focusNode: _focusNode,
             controller: _controller,
+            textStyle: _textStyle,
             lineNumberStyle: const LineNumberStyle(
               width: 47,
               margin: 7,

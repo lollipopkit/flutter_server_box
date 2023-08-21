@@ -107,6 +107,7 @@ class _PkgManagePageState extends State<PkgPage>
       context: context,
       title: Text(widget.spi.user),
       child: Input(
+        autoFocus: true,
         controller: _textController,
         type: TextInputType.visiblePassword,
         obscureText: true,

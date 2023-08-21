@@ -71,6 +71,9 @@ class SettingStore extends PersistentStore {
   StoreProperty<bool> get sshVirtualKeyAutoOff =>
       property('sshVirtualKeyAutoOff', defaultValue: true);
 
+  StoreProperty<double> get editorFontSize =>
+      property('editorFontSize', defaultValue: 13);
+
   // Editor theme
   StoreProperty<String> get editorTheme =>
       property('editorTheme', defaultValue: defaultEditorTheme);

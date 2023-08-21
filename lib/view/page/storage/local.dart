@@ -345,6 +345,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
       context: context,
       title: Text(_s.rename),
       child: Input(
+        autoFocus: true,
         controller: TextEditingController(text: fileName),
         onSubmitted: (p0) {
           context.pop();

@@ -10,6 +10,7 @@ import 'package:toolbox/core/extension/colorx.dart';
 import 'package:toolbox/core/extension/locale.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/extension/stringx.dart';
+import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/model/app/net_view.dart';
 import 'package:toolbox/view/page/setting/virt_key.dart';
@@ -62,7 +63,8 @@ class _SettingPageState extends State<SettingPage> {
   final _nightMode = ValueNotifier(0);
   final _maxRetryCount = ValueNotifier(0);
   final _updateInterval = ValueNotifier(0);
-  final _fontSize = ValueNotifier(0.0);
+  final _termFontSize = ValueNotifier(0.0);
+  final _editorFontSize = ValueNotifier(0.0);
   final _localeCode = ValueNotifier('');
   final _editorTheme = ValueNotifier('');
   final _editorDarkTheme = ValueNotifier('');
@@ -89,7 +91,8 @@ class _SettingPageState extends State<SettingPage> {
     _updateInterval.value = _setting.serverStatusUpdateInterval.fetch()!;
     _maxRetryCount.value = _setting.maxRetryCount.fetch()!;
     _selectedColorValue.value = _setting.primaryColor.fetch()!;
-    _fontSize.value = _setting.termFontSize.fetch()!;
+    _termFontSize.value = _setting.termFontSize.fetch()!;
+    _editorFontSize.value = _setting.editorFontSize.fetch()!;
     _editorTheme.value = _setting.editorTheme.fetch()!;
     _editorDarkTheme.value = _setting.editorDarkTheme.fetch()!;
     _keyboardType.value = _setting.keyboardType.fetch()!;
@@ -196,6 +199,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildEditor() {
     return Column(
       children: [
+        _buildEditorFontSize(),
         _buildEditorTheme(),
         _buildEditorDarkTheme(),
       ].map((e) => RoundRectCard(e)).toList(),
@@ -285,6 +289,7 @@ class _SettingPageState extends State<SettingPage> {
           context: context,
           title: Text(_s.primaryColorSeed),
           child: Input(
+            autoFocus: true,
             onSubmitted: _onSaveColor,
             controller: ctrl,
             hint: '#8b2252',
@@ -545,45 +550,14 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildTermFontSize() {
     return ValueBuilder(
-      listenable: _fontSize,
+      listenable: _termFontSize,
       build: () => ListTile(
         title: Text(_s.fontSize),
         trailing: Text(
-          _fontSize.value.toString(),
+          _termFontSize.value.toString(),
           style: textSize15,
         ),
-        onTap: () {
-          final ctrller =
-              TextEditingController(text: _fontSize.value.toString());
-          showRoundDialog(
-            context: context,
-            title: Text(_s.fontSize),
-            child: Input(
-              controller: ctrller,
-              type: TextInputType.number,
-              icon: Icons.font_download,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  context.pop();
-                  final fontSize = double.tryParse(ctrller.text);
-                  if (fontSize == null) {
-                    showRoundDialog(
-                      context: context,
-                      title: Text(_s.failed),
-                      child: Text('Parsed failed: ${ctrller.text}'),
-                    );
-                    return;
-                  }
-                  _fontSize.value = fontSize;
-                  _setting.termFontSize.put(_fontSize.value);
-                },
-                child: Text(_s.ok),
-              ),
-            ],
-          );
-        },
+        onTap: () => _showFontSizeDialog(_termFontSize, _setting.termFontSize),
       ),
     );
   }
@@ -610,6 +584,7 @@ class _SettingPageState extends State<SettingPage> {
           context: context,
           title: Text(_s.diskIgnorePath),
           child: Input(
+            autoFocus: true,
             controller: ctrller,
             label: 'JSON',
             type: TextInputType.visiblePassword,
@@ -880,6 +855,7 @@ class _SettingPageState extends State<SettingPage> {
           context: context,
           title: Text(_s.homeWidgetUrlConfig),
           child: Input(
+            autoFocus: true,
             controller: ctrl,
             label: 'JSON',
             type: TextInputType.visiblePassword,
@@ -994,6 +970,60 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(_s.serverDetailOrder),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () => AppRoute.serverDetailOrder().go(context),
+    );
+  }
+
+  Widget _buildEditorFontSize() {
+    return ValueBuilder(
+      listenable: _editorFontSize,
+      build: () => ListTile(
+        title: Text(_s.fontSize),
+        trailing: Text(
+          _editorFontSize.value.toString(),
+          style: textSize15,
+        ),
+        onTap: () =>
+            _showFontSizeDialog(_editorFontSize, _setting.editorFontSize),
+      ),
+    );
+  }
+
+  void _showFontSizeDialog(
+    ValueNotifier<double> notifier,
+    StoreProperty property,
+  ) {
+    final ctrller = TextEditingController(text: notifier.value.toString());
+    void onSave() {
+      context.pop();
+      final fontSize = double.tryParse(ctrller.text);
+      if (fontSize == null) {
+        showRoundDialog(
+          context: context,
+          title: Text(_s.failed),
+          child: Text('Parsed failed: ${ctrller.text}'),
+        );
+        return;
+      }
+      notifier.value = fontSize;
+      property.put(fontSize);
+    }
+
+    showRoundDialog(
+      context: context,
+      title: Text(_s.fontSize),
+      child: Input(
+        controller: ctrller,
+        autoFocus: true,
+        type: TextInputType.number,
+        icon: Icons.font_download,
+        onSubmitted: (_) => onSave(),
+      ),
+      actions: [
+        TextButton(
+          onPressed: onSave,
+          child: Text(_s.ok),
+        ),
+      ],
     );
   }
 }

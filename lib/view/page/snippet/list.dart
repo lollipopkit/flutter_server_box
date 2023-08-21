@@ -68,7 +68,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
             .toList();
 
         return ReorderableListView.builder(
-          padding: const EdgeInsets.all(13),
+          padding: const EdgeInsets.symmetric(horizontal: 13),
           itemCount: filtered.length,
           onReorder: (oldIdx, newIdx) => setState(() {
             provider.snippets.moveByItem(
@@ -87,6 +87,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
             all: _s.all,
             width: _media.size.width,
           ),
+          footer: height77,
           buildDefaultDragHandles: false,
           itemBuilder: (context, idx) {
             final snippet = filtered.elementAt(idx);

@@ -75,6 +75,7 @@ class _PingPageState extends State<PingPage>
           context: context,
           title: Text(_s.choose),
           child: Input(
+            autoFocus: true,
             controller: _textEditingController,
             hint: _s.inputDomainHere,
             maxLines: 1,

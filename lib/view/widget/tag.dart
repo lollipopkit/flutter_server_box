@@ -60,7 +60,7 @@ class TagEditor extends StatelessWidget {
       trailing: InkWell(
         child: const Icon(Icons.add),
         onTap: () {
-          _showTagDialog(context, tags, onChanged);
+          _showAddTagDialog(context, tags, onChanged);
         },
       ),
     ));
@@ -72,7 +72,7 @@ class TagEditor extends StatelessWidget {
     final counts = tags.length + suggestionLen + (suggestionLen == 0 ? 0 : 1);
     if (counts == 0) return Text(s.tag);
     return ConstrainedBox(
-      constraints: const BoxConstraints(maxHeight: 27),
+      constraints: const BoxConstraints(maxHeight: _kTagBtnHeight),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemBuilder: (context, index) {
@@ -101,7 +101,7 @@ class TagEditor extends StatelessWidget {
           Text(
             '#$tag',
             textAlign: TextAlign.center,
-            style: textSize13,
+            style: isAdd ? textSize13Grey : textSize13,
             textScaleFactor: 1.0,
           ),
           const SizedBox(width: 4.0),
@@ -123,7 +123,7 @@ class TagEditor extends StatelessWidget {
     );
   }
 
-  void _showTagDialog(
+  void _showAddTagDialog(
     BuildContext context,
     List<String> tags,
     void Function(List<String>)? onChanged,
@@ -133,6 +133,8 @@ class TagEditor extends StatelessWidget {
       context: context,
       title: Text(s.add),
       child: Input(
+        autoFocus: true,
+        icon: Icons.tag,
         controller: textEditingController,
         hint: s.tag,
       ),
@@ -156,6 +158,8 @@ class TagEditor extends StatelessWidget {
       context: context,
       title: Text(s.rename),
       child: Input(
+        autoFocus: true,
+        icon: Icons.abc,
         controller: textEditingController,
         hint: s.tag,
       ),

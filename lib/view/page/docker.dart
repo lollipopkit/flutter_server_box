@@ -103,6 +103,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Input(
+            autoFocus: true,
             type: TextInputType.text,
             label: _s.image,
             hint: 'xxx:1.1',

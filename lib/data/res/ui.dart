@@ -27,6 +27,7 @@ const roundRectCardPadding = EdgeInsets.symmetric(horizontal: 17, vertical: 13);
 
 const placeholder = SizedBox();
 const height13 = SizedBox(height: 13);
+const height77 = SizedBox(height: 77);
 const width13 = SizedBox(width: 13);
 const width7 = SizedBox(width: 7);
 

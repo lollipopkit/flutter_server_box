@@ -119,6 +119,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   Widget _buildForm() {
     final children = [
       Input(
+        autoFocus: true,
         controller: _nameController,
         type: TextInputType.text,
         node: _nameFocus,
