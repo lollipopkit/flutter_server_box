@@ -5,8 +5,10 @@ import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 
-import '../../../core/utils/ui.dart';
-import '../../../data/res/color.dart';
+import '../../core/utils/ui.dart';
+import '../../data/res/color.dart';
+
+const _kTagBtnHeight = 31.0;
 
 class TagBtn extends StatelessWidget {
   final String content;
@@ -26,10 +28,8 @@ class TagBtn extends StatelessWidget {
       Text(
         content,
         textAlign: TextAlign.center,
-        style: TextStyle(
-          color: isEnable ? null : Colors.grey,
-          fontSize: 13,
-        ),
+        textScaleFactor: 1.0,
+        style: isEnable ? textSize13 : textSize13Grey,
       ),
       onTap: onTap,
     );
@@ -102,6 +102,7 @@ class TagEditor extends StatelessWidget {
             '#$tag',
             textAlign: TextAlign.center,
             style: textSize13,
+            textScaleFactor: 1.0,
           ),
           const SizedBox(width: 4.0),
           Icon(
@@ -173,8 +174,171 @@ class TagEditor extends StatelessWidget {
   }
 }
 
-Widget _wrap(Widget child, {void Function()? onTap,
-    void Function()? onLongPress,}) {
+class TagPicker<T> extends StatefulWidget {
+  final List<T> items;
+  final bool Function(T, String?) containsTag;
+  final String Function(T) name;
+  final Set<String> tags;
+
+  const TagPicker({
+    Key? key,
+    required this.items,
+    required this.containsTag,
+    required this.name,
+    required this.tags,
+  }) : super(key: key);
+
+  @override
+  _TagPickerState<T> createState() => _TagPickerState<T>();
+}
+
+class _TagPickerState<T> extends State<TagPicker<T>> {
+  late S _s;
+  late MediaQueryData _media;
+  final List<T> _selected = [];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _s = S.of(context)!;
+    _media = MediaQuery.of(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final children = <Widget>[];
+    if (widget.tags.isNotEmpty) {
+      children.add(Text(_s.tag));
+      children.add(height13);
+      children.add(SizedBox(
+        height: _kTagBtnHeight,
+        width: _media.size.width * 0.7,
+        child: _buildTags(),
+      ));
+    }
+    if (widget.items.isNotEmpty) {
+      children.add(Text(_s.all));
+      children.add(height13);
+      children.add(SizedBox(
+        height: _kTagBtnHeight,
+        width: _media.size.width * 0.7,
+        child: _buildItems(),
+      ));
+    }
+    final child = widget.tags.isEmpty && widget.items.isEmpty
+        ? Text(_s.noOptions)
+        : Column(mainAxisSize: MainAxisSize.min, children: children);
+    return AlertDialog(
+      title: Text(_s.choose),
+      content: child,
+      actions: [
+        TextButton(
+          onPressed: () => context.pop(_selected),
+          child: Text(_s.ok),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTags() {
+    return ListView.builder(
+      scrollDirection: Axis.horizontal,
+      itemCount: widget.tags.length,
+      itemBuilder: (_, idx) {
+        final item = widget.tags.elementAt(idx);
+        final isEnable =
+            widget.items.where((ele) => widget.containsTag(ele, item)).every(
+                  (element) => _selected.contains(element),
+                );
+        return TagBtn(
+          isEnable: isEnable,
+          onTap: () {
+            if (isEnable) {
+              _selected.removeWhere(
+                (element) => widget.containsTag(element, item),
+              );
+            } else {
+              _selected.addAll(widget.items.where(
+                (ele) => widget.containsTag(ele, item),
+              ));
+            }
+            setState(() {});
+          },
+          content: item,
+        );
+      },
+    );
+  }
+
+  Widget _buildItems() {
+    return ListView.builder(
+      scrollDirection: Axis.horizontal,
+      itemCount: widget.items.length,
+      itemBuilder: (context, index) {
+        final e = widget.items[index];
+        return TagBtn(
+          isEnable: _selected.contains(e),
+          onTap: () {
+            if (_selected.contains(e)) {
+              _selected.remove(e);
+            } else {
+              _selected.add(e);
+            }
+            setState(() {});
+          },
+          content: widget.name(e),
+        );
+      },
+    );
+  }
+}
+
+class TagSwitcher extends StatelessWidget {
+  final List<String> tags;
+  final double width;
+  final void Function(String?) onTagChanged;
+  final String? initTag;
+  final String all;
+
+  const TagSwitcher({
+    Key? key,
+    required this.tags,
+    required this.width,
+    required this.onTagChanged,
+    required this.all,
+    this.initTag,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    if (tags.isEmpty) return placeholder;
+    final items = <String?>[null, ...tags];
+    return Container(
+      height: _kTagBtnHeight,
+      width: width,
+      alignment: Alignment.center,
+      color: Colors.transparent,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemBuilder: (context, index) {
+          final item = items[index];
+          return TagBtn(
+            content: item == null ? all : '#$item',
+            isEnable: initTag == item,
+            onTap: () => onTagChanged(item),
+          );
+        },
+        itemCount: items.length,
+      ),
+    );
+  }
+}
+
+Widget _wrap(
+  Widget child, {
+  void Function()? onTap,
+  void Function()? onLongPress,
+}) {
   return Padding(
     padding: const EdgeInsets.all(3),
     child: ClipRRect(
@@ -185,7 +349,9 @@ Widget _wrap(Widget child, {void Function()? onTap,
           onTap: onTap,
           onLongPress: onLongPress,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 9.7, vertical: 1.7),
+            /// Hard coded padding
+            /// For centering the text
+            padding: const EdgeInsets.fromLTRB(11.7, 2.7, 11.7, 0),
             child: child,
           ),
         ),

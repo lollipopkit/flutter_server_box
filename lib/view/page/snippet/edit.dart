@@ -10,7 +10,7 @@ import '../../../data/provider/snippet.dart';
 import '../../../data/res/ui.dart';
 import '../../../locator.dart';
 import '../../widget/custom_appbar.dart';
-import '../../widget/tag/btn.dart';
+import '../../widget/tag.dart';
 
 class SnippetEditPage extends StatefulWidget {
   const SnippetEditPage({Key? key, this.snippet}) : super(key: key);

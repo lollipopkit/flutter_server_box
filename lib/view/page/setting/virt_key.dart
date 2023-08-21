@@ -52,13 +52,14 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
         final key = allKeys[idx];
         final help = key.help(_s);
         return RoundRectCard(
-            key: ValueKey(idx),
-            ListTile(
-              title: _buildTitle(key),
-              subtitle: help == null ? null : Text(help, style: grey),
-              leading: _buildCheckBox(keys, key, idx, idx < keys.length),
-              trailing: isDesktop ? null : const Icon(Icons.drag_handle),
-            ));
+          key: ValueKey(idx),
+          ListTile(
+            title: _buildTitle(key),
+            subtitle: help == null ? null : Text(help, style: grey),
+            leading: _buildCheckBox(keys, key, idx, idx < keys.length),
+            trailing: isDesktop ? null : const Icon(Icons.drag_handle),
+          ),
+        );
       },
       itemCount: allKeys.length,
       onReorder: (o, n) {

@@ -22,7 +22,7 @@ import '../../../data/store/setting.dart';
 import '../../../locator.dart';
 import '../../widget/round_rect_card.dart';
 import '../../widget/server_func_btns.dart';
-import '../../widget/tag/switcher.dart';
+import '../../widget/tag.dart';
 import 'edit.dart';
 
 class ServerPage extends StatefulWidget {
@@ -425,7 +425,7 @@ class _ServerPageState extends State<ServerPage>
             child: Text(
               '${percent.toStringAsFixed(1)}%',
               textAlign: TextAlign.center,
-              style: textSize11Grey,
+              style: textSize11,
               textScaleFactor: 1.0,
             ),
           ),

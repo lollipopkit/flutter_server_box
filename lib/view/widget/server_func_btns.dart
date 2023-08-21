@@ -15,7 +15,7 @@ import '../../data/model/server/snippet.dart';
 import '../../data/provider/snippet.dart';
 import '../../locator.dart';
 import '../page/process.dart';
-import 'tag/picker.dart';
+import 'tag.dart';
 
 class ServerFuncBtns extends StatelessWidget {
   const ServerFuncBtns({
@@ -107,6 +107,7 @@ class ServerFuncBtns extends StatelessWidget {
           .map((e) => IconButton(
                 onPressed: () => _onTapMoreBtns(e, spi, context),
                 padding: EdgeInsets.zero,
+                tooltip: e.name,
                 icon: Icon(e.icon, size: iconSize ?? 15),
               ))
           .toList(),
