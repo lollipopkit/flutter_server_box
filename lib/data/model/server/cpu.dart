@@ -112,7 +112,7 @@ Cpus parseBsdCpu(String raw) {
   if (percents.length != 3) return initCpuStatus;
   return initCpuStatus
     ..now = [
-      OneTimeCpuStatus('cpu', percents[0].toInt(), percents[1].toInt(), 0,
-          percents[2].toInt(), 0, 0, 0)
+      OneTimeCpuStatus('cpu', percents[0].toInt(), 0, 0,
+          percents[2].toInt() + percents[1].toInt(), 0, 0, 0)
     ];
 }

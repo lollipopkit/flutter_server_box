@@ -5,6 +5,7 @@ import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/data/model/server/cpu.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
+import 'package:toolbox/data/model/server/system.dart';
 import 'package:toolbox/view/widget/server_func_btns.dart';
 
 import '../../../core/extension/numx.dart';
@@ -115,6 +116,20 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildCPUView(ServerStatus ss) {
     final percent = ss.cpu.usedPercent(coreIdx: 0).toInt();
+    final details = [
+      _buildDetailPercent(ss.cpu.user, 'user'),
+      width13,
+      _buildDetailPercent(ss.cpu.idle, 'idle')
+    ];
+    if (ss.system == SystemType.linux) {
+      details.addAll([
+        width13,
+        _buildDetailPercent(ss.cpu.sys, 'sys'),
+        width13,
+        _buildDetailPercent(ss.cpu.iowait, 'io'),
+      ]);
+    }
+    
     return RoundRectCard(
       Padding(
         padding: roundRectCardPadding,
@@ -128,15 +143,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                 textSize27,
               ),
               Row(
-                children: [
-                  _buildDetailPercent(ss.cpu.user, 'user'),
-                  width13,
-                  _buildDetailPercent(ss.cpu.sys, 'sys'),
-                  width13,
-                  _buildDetailPercent(ss.cpu.iowait, 'io'),
-                  width13,
-                  _buildDetailPercent(ss.cpu.idle, 'idle')
-                ],
+                children: details,
               )
             ],
           ),
