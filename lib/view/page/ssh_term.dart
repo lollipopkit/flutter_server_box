@@ -130,7 +130,7 @@ class _SSHPageState extends State<SSHPage> {
           deleteDetection: isIOS,
           autofocus: true,
           keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,
-          hideScrollBar: isMobile,
+          hideScrollBar: false,
         ),
       ),
     );

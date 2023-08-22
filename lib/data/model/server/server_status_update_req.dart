@@ -1,3 +1,5 @@
+import 'package:toolbox/data/model/server/system.dart';
+
 import '../app/shell_func.dart';
 import 'cpu.dart';
 import 'disk.dart';
@@ -9,11 +11,25 @@ import 'conn.dart';
 class ServerStatusUpdateReq {
   final ServerStatus ss;
   final List<String> segments;
+  final SystemType system;
 
-  const ServerStatusUpdateReq(this.ss, this.segments);
+  const ServerStatusUpdateReq({
+    required this.system,
+    required this.ss,
+    required this.segments,
+  });
 }
 
 Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
+  switch (req.system) {
+    case SystemType.linux:
+      return _getLinuxStatus(req);
+    case SystemType.bsd:
+      return _getBsdStatus(req);
+  }
+}
+
+Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   final segments = req.segments;
 
   final time = int.parse(StatusCmdType.time.find(segments));
@@ -24,7 +40,6 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
   final sys = _parseSysVer(
     StatusCmdType.sys.find(segments),
     StatusCmdType.host.find(segments),
-    StatusCmdType.sysRhel.find(segments),
   );
   if (sys != null) {
     req.ss.sysVer = sys;
@@ -56,6 +71,30 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
   return req.ss;
 }
 
+Future<ServerStatus> _getBsdStatus(ServerStatusUpdateReq req) async {
+  final segments = req.segments;
+
+  final time = int.parse(BSDStatusCmdType.time.find(segments));
+
+  final net = parseBsdNetSpeed(BSDStatusCmdType.net.find(segments), time);
+  req.ss.netSpeed.update(net);
+
+  req.ss.sysVer = BSDStatusCmdType.sys.find(segments);
+
+  req.ss.cpu = parseBsdCpu(BSDStatusCmdType.cpu.find(segments));
+
+  //req.ss.mem = parseBsdMem(BSDStatusCmdType.mem.find(segments));
+
+  final uptime = _parseUpTime(BSDStatusCmdType.uptime.find(segments));
+  if (uptime != null) {
+    req.ss.uptime = uptime;
+  }
+
+  req.ss.disk = parseDisk(BSDStatusCmdType.disk.find(segments));
+
+  return req.ss;
+}
+
 // raw:
 //  19:39:15 up 61 days, 18:16,  1 user,  load average: 0.00, 0.00, 0.00
 String? _parseUpTime(String raw) {
@@ -69,17 +108,14 @@ String? _parseUpTime(String raw) {
   return null;
 }
 
-String? _parseSysVer(String raw, String hostname, String rawRhel) {
+String? _parseSysVer(String raw, String hostname) {
   try {
     final s = raw.split('=');
     if (s.length == 2) {
       return s[1].replaceAll('"', '').replaceFirst('\n', '');
     }
-  } catch (e) {
-    if (!rawRhel.contains('cat: /etc/redhat-release:')) {
-      return rawRhel;
-    }
-    if (hostname.isNotEmpty) return hostname;
+  } finally {
+    // ignore: control_flow_in_finally
+    return hostname.isEmpty ? null : hostname;
   }
-  return null;
 }

@@ -1,5 +1,3 @@
-// ignore_for_file: prefer_final_fields
-
 abstract class TimeSeq<T extends TimeSeqIface> {
   List<T> pre;
   List<T> now;

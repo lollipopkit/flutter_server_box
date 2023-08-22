@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
+import 'package:toolbox/data/model/server/system.dart';
 
 import '../../core/extension/order.dart';
 import '../../core/extension/uint8list.dart';
@@ -265,18 +266,28 @@ class ServerProvider extends ChangeNotifier {
 
     final raw = await s.client?.run(AppShellFuncType.status.exec).string;
     final segments = raw?.split(seperator).map((e) => e.trim()).toList();
-    if (raw == null ||
-        raw.isEmpty ||
-        segments == null ||
-        segments.length != StatusCmdType.values.length) {
+    if (raw == null || raw.isEmpty || segments == null || segments.isEmpty) {
       _limiter.inc(sid);
       s.status.failedInfo = 'Seperate segments failed, raw:\n$raw';
       _setServerState(s, ServerState.failed);
       return;
     }
 
+    final systemType = SystemType.parse(segments[0]);
+    if (systemType == null || !systemType.isSegmentsLenMatch(segments.length)) {
+      _limiter.inc(sid);
+      s.status.failedInfo = 'Segments not match: ${segments.length}';
+      _setServerState(s, ServerState.failed);
+      return;
+    }
+    s.status.system = systemType;
+
     try {
-      final req = ServerStatusUpdateReq(s.status, segments);
+      final req = ServerStatusUpdateReq(
+        ss: s.status,
+        segments: segments,
+        system: systemType,
+      );
       s.status = await compute(getStatus, req);
     } catch (e, trace) {
       _limiter.inc(sid);

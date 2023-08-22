@@ -474,24 +474,24 @@ class _DockerManagePageState extends State<DockerManagePage> {
               'Docker terminal',
             ).go(context);
             break;
-          case DockerMenuType.stats:
-            showRoundDialog(
-              context: context,
-              title: Text(_s.stats),
-              child: Text(
-                'CPU: ${dItem.cpu}\n'
-                'Mem: ${dItem.mem}\n'
-                'Net: ${dItem.net}\n'
-                'Block: ${dItem.disk}',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => context.pop(),
-                  child: Text(_s.ok),
-                ),
-              ],
-            );
-            break;
+          // case DockerMenuType.stats:
+          //   showRoundDialog(
+          //     context: context,
+          //     title: Text(_s.stats),
+          //     child: Text(
+          //       'CPU: ${dItem.cpu}\n'
+          //       'Mem: ${dItem.mem}\n'
+          //       'Net: ${dItem.net}\n'
+          //       'Block: ${dItem.disk}',
+          //     ),
+          //     actions: [
+          //       TextButton(
+          //         onPressed: () => context.pop(),
+          //         child: Text(_s.ok),
+          //       ),
+          //     ],
+          //   );
+          //   break;
         }
       },
     );

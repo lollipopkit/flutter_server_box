@@ -1,3 +1,5 @@
+import 'package:toolbox/data/res/status.dart';
+
 import 'time_seq.dart';
 
 class Cpus extends TimeSeq<OneTimeCpuStatus> {
@@ -94,4 +96,23 @@ List<OneTimeCpuStatus> parseCPU(String raw) {
     );
   }
   return cpus;
+}
+
+final _bsdCpuPercentReg = RegExp(r'(\d+\.\d+)%');
+
+/// TODO: Change this implementation to parse cpu status on BSD system
+///
+/// [raw]:
+/// CPU usage: 14.70% user, 12.76% sys, 72.52% idle
+Cpus parseBsdCpu(String raw) {
+  final percents = _bsdCpuPercentReg
+      .allMatches(raw)
+      .map((e) => double.parse(e.group(1) ?? '0') * 100)
+      .toList();
+  if (percents.length != 3) return initCpuStatus;
+  return initCpuStatus
+    ..now = [
+      OneTimeCpuStatus('cpu', percents[0].toInt(), percents[1].toInt(), 0,
+          percents[2].toInt(), 0, 0, 0)
+    ];
 }

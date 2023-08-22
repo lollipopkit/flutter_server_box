@@ -10,9 +10,10 @@ import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/docker/image.dart';
 import 'package:toolbox/data/model/docker/ps.dart';
 import 'package:toolbox/data/model/app/error.dart';
-import 'package:toolbox/data/res/server_cmd.dart';
 import 'package:toolbox/data/store/docker.dart';
 import 'package:toolbox/locator.dart';
+
+import '../res/server_cmd.dart';
 
 final _dockerNotFound = RegExp(r'command not found|Unknown command');
 final _versionReg = RegExp(r'(Version:)\s+([0-9]+\.[0-9]+\.[0-9]+)');
@@ -72,7 +73,7 @@ class DockerProvider extends ChangeNotifier {
 
     // Check result segments count
     final segments = raw.split(seperator);
-    if (segments.length != dockerCmds.length) {
+    if (segments.length != DockerCmdType.values.length) {
       error = DockerErr(type: DockerErrType.segmentsNotMatch);
       _logger.warning('Docker segments not match: ${segments.length}');
       notifyListeners();
@@ -119,28 +120,28 @@ class DockerProvider extends ChangeNotifier {
     }
 
     // Parse docker stats
-    final statsRaw = DockerCmdType.stats.find(segments);
-    try {
-      final statsLines = statsRaw.split('\n');
-      statsLines.removeWhere((element) => element.isEmpty);
-      if (statsLines.isNotEmpty) statsLines.removeAt(0);
-      for (var item in items!) {
-        final statsLine = statsLines.firstWhere(
-          (element) => element.contains(item.containerId),
-          orElse: () => '',
-        );
-        if (statsLine.isEmpty) continue;
-        item.parseStats(statsLine);
-      }
-    } catch (e, trace) {
-      error = DockerErr(
-        type: DockerErrType.parseStats,
-        message: '$statsRaw\n-\n$e',
-      );
-      _logger.warning('Parse docker stats: $statsRaw', e, trace);
-    } finally {
-      notifyListeners();
-    }
+    // final statsRaw = DockerCmdType.stats.find(segments);
+    // try {
+    //   final statsLines = statsRaw.split('\n');
+    //   statsLines.removeWhere((element) => element.isEmpty);
+    //   if (statsLines.isNotEmpty) statsLines.removeAt(0);
+    //   for (var item in items!) {
+    //     final statsLine = statsLines.firstWhere(
+    //       (element) => element.contains(item.containerId),
+    //       orElse: () => '',
+    //     );
+    //     if (statsLine.isEmpty) continue;
+    //     item.parseStats(statsLine);
+    //   }
+    // } catch (e, trace) {
+    //   error = DockerErr(
+    //     type: DockerErrType.parseStats,
+    //     message: '$statsRaw\n-\n$e',
+    //   );
+    //   _logger.warning('Parse docker stats: $statsRaw', e, trace);
+    // } finally {
+    //   notifyListeners();
+    // }
   }
 
   Future<void> _onPwd(String event, StreamSink<Uint8List> stdin) async {

@@ -1,3 +1,4 @@
+import 'package:toolbox/data/model/server/system.dart';
 import 'package:toolbox/data/model/server/temp.dart';
 
 import 'cpu.dart';
@@ -16,6 +17,7 @@ class ServerStatus {
   Conn tcp;
   NetSpeed netSpeed;
   Temperatures temps;
+  SystemType system;
   String? failedInfo;
 
   ServerStatus({
@@ -28,6 +30,7 @@ class ServerStatus {
     required this.netSpeed,
     required this.swap,
     required this.temps,
+    required this.system,
     this.failedInfo,
   });
 }

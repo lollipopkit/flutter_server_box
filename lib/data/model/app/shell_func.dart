@@ -1,6 +1,11 @@
+import '../../res/build_data.dart';
 import '../../res/server_cmd.dart';
+import '../server/system.dart';
 
 const _cmdDivider = '\necho $seperator\n';
+
+const _serverBoxDir = r'$HOME/.config/server_box';
+const _shellPath = '$_serverBoxDir/mobile_app.sh';
 
 enum AppShellFuncType {
   status,
@@ -15,7 +20,7 @@ enum AppShellFuncType {
     }
   }
 
-  String get exec => 'sh $shellPath -$flag';
+  String get exec => 'sh $_shellPath -$flag';
 
   String get name {
     switch (this) {
@@ -31,16 +36,20 @@ enum AppShellFuncType {
   String get cmd {
     switch (this) {
       case AppShellFuncType.status:
-        return statusCmds.join(_cmdDivider);
+        return '''
+result=\$(uname 2>&1 | grep "Linux")
+if [ "\$result" != "" ]; then
+${_statusCmds.join(_cmdDivider)}
+else
+${_bsdStatusCmd.join(_cmdDivider)}
+fi''';
       case AppShellFuncType.docker:
         return '''
-result=\$(docker version 2>&1)
-deniedStr="permission denied"
-containStr=\$(echo \$result | grep "\${deniedStr}")
-if [[ \$containStr != "" ]]; then
-${dockerCmds.join(_cmdDivider)}
+result=\$(docker version 2>&1 | grep "permission denied")
+if [ "\$result" != "" ]; then
+${_dockerCmds.join(_cmdDivider)}
 else
-${dockerCmds.map((e) => "sudo -S $e").join(_cmdDivider)}
+${_dockerCmds.map((e) => "sudo -S $e").join(_cmdDivider)}
 fi''';
     }
   }
@@ -83,6 +92,7 @@ extension EnumX on Enum {
 }
 
 enum StatusCmdType {
+  echo,
   time,
   net,
   sys,
@@ -94,12 +104,81 @@ enum StatusCmdType {
   tempType,
   tempVal,
   host,
-  sysRhel;
+  ;
 }
+
+/// Cmds for linux server
+const _statusCmds = [
+  'echo $linuxSign',
+  'date +%s',
+  'cat /proc/net/dev',
+  'cat /etc/*-release | grep PRETTY_NAME',
+  'cat /proc/stat | grep cpu',
+  'uptime',
+  'cat /proc/net/snmp',
+  'df -h',
+  'cat /proc/meminfo',
+  'cat /sys/class/thermal/thermal_zone*/type',
+  'cat /sys/class/thermal/thermal_zone*/temp',
+  'hostname',
+];
 
 enum DockerCmdType {
   version,
   ps,
-  stats,
-  images;
+  //stats,
+  images,
+  ;
 }
+
+const _dockerCmds = [
+  'docker version',
+  'docker ps -a',
+  //'docker stats --no-stream',
+  'docker image ls',
+];
+
+enum BSDStatusCmdType {
+  echo,
+  time,
+  net,
+  sys,
+  cpu,
+  uptime,
+  disk,
+  mem,
+  //temp,
+  host,
+  ;
+}
+
+/// Cmds for BSD server
+const _bsdStatusCmd = [
+  'echo $bsdSign',
+  'date +%s',
+  'netstat -ibn',
+  'uname -or',
+  'top -l 1 | grep "CPU usage"',
+  'uptime',
+  'df -h',
+  'top -l 1 | grep PhysMem',
+  //'sysctl -a | grep temperature',
+  'hostname',
+];
+
+final _shellCmd = """
+#!/bin/sh
+#
+# Script for ServerBox app v1.0.${BuildData.build}
+#
+# DO NOT delete this file while app is running
+# DO NOT run multi ServerBox apps with different version at the same time
+
+export LANG=en_US.UTF-8
+
+${AppShellFuncType.shellScript}
+""";
+
+final installShellCmd = "mkdir -p $_serverBoxDir && "
+    "echo '$_shellCmd' > $_shellPath && "
+    "chmod +x $_shellPath";

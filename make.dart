@@ -17,6 +17,7 @@ const buildFuncs = {
   'ios': flutterBuildIOS,
   'android': flutterBuildAndroid,
   'macos': flutterBuildMacOS,
+  'linux': flutterBuildLinux,
 };
 
 int? build;
@@ -133,15 +134,21 @@ Future<void> flutterBuildIOS() async {
 
 Future<void> flutterBuildMacOS() async {
   await flutterBuild('macos');
+  await scpMacOS2CDN();
 }
 
 Future<void> flutterBuildAndroid() async {
   await flutterBuild('apk');
   await killJava();
-  await scp2CDN();
+  await scpApk2CDN();
 }
 
-Future<void> scp2CDN() async {
+Future<void> flutterBuildLinux() async {
+  await flutterBuild('linux');
+  await scpLinux2CDN();
+}
+
+Future<void> scpApk2CDN() async {
   final sha256 = await getFileSha256(apkPath);
   print('SHA256: $sha256');
   final result = await Process.run(
@@ -153,6 +160,45 @@ Future<void> scp2CDN() async {
     print(result.stderr);
     exit(1);
   }
+}
+
+Future<void> scpMacOS2CDN() async {
+  final zipName = '$build.app.zip';
+  // Zip the .app
+  await Process.run('zip', [
+    '-r',
+    './release/$zipName',
+    './build/macos/Build/Products/Release/server_box.app',
+  ]);
+  final result = await Process.run(
+    'scp',
+    [
+      './release/$zipName',
+      'hk:/var/www/res/serverbox/$build.app.zip',
+    ],
+    runInShell: true,
+  );
+  if (result.exitCode != 0) {
+    print(result.stderr);
+    exit(1);
+  }
+  print('Upload macOS $zipName finished.');
+}
+
+Future<void> scpLinux2CDN() async {
+  final result = await Process.run(
+    'scp',
+    [
+      './build/linux/x64/release/bundle/server_box.tar.gz',
+      'hk:/var/www/res/serverbox/$build.tar.gz',
+    ],
+    runInShell: true,
+  );
+  if (result.exitCode != 0) {
+    print(result.stderr);
+    exit(1);
+  }
+  print('Upload Linux $build.tar.gz finished.');
 }
 
 Future<void> changeAppleVersion() async {
@@ -185,38 +231,40 @@ void main(List<String> args) async {
   }
 
   final command = args[0];
-
   switch (command) {
     case 'build':
-      final stopwatch = Stopwatch()..start();
       await dartFormat();
       await getGitCommitCount();
       // always change version to avoid dismatch version between different
       // platforms
       await changeAppleVersion();
       await updateBuildData();
+
+      final funcs = <Future<void> Function()>[];
+
       if (args.length > 1) {
         final platforms = args[1];
         for (final platform in platforms.split(',')) {
           if (buildFuncs.keys.contains(platform)) {
-            await buildFuncs[platform]!();
-            print('Build finished in [${stopwatch.elapsed}]');
-            stopwatch.reset();
-            stopwatch.start();
+            funcs.add(buildFuncs[platform]!);
           } else {
             print('Unknown platform: $platform');
           }
         }
+      } else {
+        funcs.addAll(buildFuncs.values);
+      }
 
-        return;
-      }
-      for (final func in buildFuncs.values) {
+      final stopwatch = Stopwatch();
+      for (final func in funcs) {
+        stopwatch.start();
         await func();
+        print('Build finished in ${stopwatch.elapsed}\n');
+        stopwatch.reset();
       }
-      print('Build finished in ${stopwatch.elapsed}\n');
-      return;
+      break;
     default:
       print('Unsupported command: $command');
-      return;
+      break;
   }
 }

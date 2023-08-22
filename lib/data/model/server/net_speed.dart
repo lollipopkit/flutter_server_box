@@ -115,3 +115,51 @@ List<NetSpeedPart> parseNetSpeed(String raw, int time) {
   }
   return results;
 }
+
+/// [raw] example:
+/// Name       Mtu   Network       Address            Ipkts Ierrs     Ibytes    Opkts Oerrs     Obytes  Coll
+/// lo0        16384 <Link#1>                      17296531     0 2524959720 17296531     0 2524959720     0
+/// lo0        16384 127           127.0.0.1       17296531     - 2524959720 17296531     - 2524959720     -
+/// lo0        16384 ::1/128     ::1               17296531     - 2524959720 17296531     - 2524959720     -
+/// lo0        16384 fe80::1%lo0 fe80:1::1         17296531     - 2524959720 17296531     - 2524959720     -
+/// gif0*      1280  <Link#2>                             0     0          0        0     0          0     0
+/// stf0*      1280  <Link#3>                             0     0          0        0     0          0     0
+/// en0        1500  <Link#4>    22:20:xx:xx:xx:e6   739447     0  693997876   535600     0   79008877     0
+/// en0        1500  fe80::f1:xx fe80:4::f1:xxxx:9   739447     -  693997876   535600     -   79008877     -
+/// en0        1500  192.168.2     192.168.2.111     739447     -  693997876   535600     -   79008877     -
+/// en0        1500  fd6b:xxxx:3 fd6b:xxxx:xxxx:0:   739447     -  693997876   535600     -   79008877     -
+/// en1        1500  <Link#5>    88:d8:xx:xx:xx:1d        0     0          0        0     0          0     0
+/// utun0      1380  <Link#6>                             0     0          0        3     0        280     0
+/// utun0      1380  fe80::xxxx: fe80:6::xxxx:xxxx        0     -          0        3     -        280     -
+/// utun1      2000  <Link#7>                             0     0          0        3     0        280     0
+/// utun1      2000  fe80::xxxx: fe80:7::xxxx:xxxx        0     -          0        3     -        280     -
+/// utun2      1000  <Link#8>                             0     0          0        3     0        280     0
+/// utun2      1000  fe80::xxxx: fe80:8::xxxx:xxx:        0     -          0        3     -        280     -
+/// utun4      9000  <Link#10>                       746744     0  845373390   386111     0  424400998     0
+/// utun4      9000  198.18.0/16   198.18.0.1        746744     -  845373390   386111     -  424400998     -
+/// en2*       1500  <Link#11>   36:7c:xx:xx:xx:xx        0     0          0        0     0          0     0
+List<NetSpeedPart> parseBsdNetSpeed(String raw, int time) {
+  final split = raw.split('\n');
+  if (split.length < 2) {
+    return [];
+  }
+
+  final results = <NetSpeedPart>[];
+  for (final item in split.sublist(1)) {
+    final data = item.trim().split(RegExp(r'\s+'));
+    final device = data[0];
+    if (device.endsWith('*')) {
+      continue;
+    }
+    if (results.any((element) => element.device == device)) {
+      continue;
+    }
+    if (data.length != 11) {
+      continue;
+    }
+    final bytesIn = BigInt.parse(data[6]);
+    final bytesOut = BigInt.parse(data[9]);
+    results.add(NetSpeedPart(device, bytesIn, bytesOut, time));
+  }
+  return results;
+}

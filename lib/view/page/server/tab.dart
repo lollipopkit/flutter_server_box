@@ -108,12 +108,6 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  List<String> _filterServers(ServerProvider pro) => pro.serverOrder
-      .where((e) => pro.servers.containsKey(e))
-      .where((e) =>
-          _tag == null || (pro.servers[e]?.spi.tags?.contains(_tag) ?? false))
-      .toList();
-
   Widget _buildTagsSwitcher(ServerProvider provider) {
     return TagSwitcher(
       tags: provider.tags,
@@ -224,14 +218,11 @@ class _ServerPageState extends State<ServerPage>
   ) {
     final rootDisk = findRootDisk(ss.disk);
     late final List<Widget> children;
-    double? height;
     if (cs != ServerState.finished) {
-      height = 23.0;
       children = [
         _buildServerCardTitle(ss, cs, spi),
       ];
     } else {
-      height = 107;
       children = [
         _buildServerCardTitle(ss, cs, spi),
         height13,
@@ -262,7 +253,7 @@ class _ServerPageState extends State<ServerPage>
     return AnimatedContainer(
       duration: const Duration(milliseconds: 377),
       curve: Curves.fastEaseInToSlowEaseOut,
-      height: height,
+      height: _calcCardHeight(cs),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.start,
@@ -355,38 +346,6 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  String _getTopRightStr(
-    ServerState cs,
-    double? temp,
-    String upTime,
-    String? failedInfo,
-  ) {
-    switch (cs) {
-      case ServerState.disconnected:
-        return _s.disconnected;
-      case ServerState.finished:
-        final tempStr = temp == null ? '' : '${temp.toStringAsFixed(1)}°C';
-        final items = [tempStr, upTime];
-        final str = items.where((element) => element.isNotEmpty).join(' | ');
-        if (str.isEmpty) return _s.noResult;
-        return str;
-      case ServerState.loading:
-        return _s.serverTabLoading;
-      case ServerState.connected:
-        return _s.connected;
-      case ServerState.connecting:
-        return _s.serverTabConnecting;
-      case ServerState.failed:
-        if (failedInfo == null) {
-          return _s.serverTabFailed;
-        }
-        if (failedInfo.contains('encypted')) {
-          return _s.serverTabPlzSave;
-        }
-        return failedInfo;
-    }
-  }
-
   Widget _buildIOData(String up, String down) {
     return Column(
       children: [
@@ -447,5 +406,53 @@ class _ServerPageState extends State<ServerPage>
       await _serverProvider.loadLocalData();
     }
     _serverProvider.startAutoRefresh();
+  }
+
+  List<String> _filterServers(ServerProvider pro) => pro.serverOrder
+      .where((e) => pro.servers.containsKey(e))
+      .where((e) =>
+          _tag == null || (pro.servers[e]?.spi.tags?.contains(_tag) ?? false))
+      .toList();
+
+  String _getTopRightStr(
+    ServerState cs,
+    double? temp,
+    String upTime,
+    String? failedInfo,
+  ) {
+    switch (cs) {
+      case ServerState.disconnected:
+        return _s.disconnected;
+      case ServerState.finished:
+        final tempStr = temp == null ? '' : '${temp.toStringAsFixed(1)}°C';
+        final items = [tempStr, upTime];
+        final str = items.where((element) => element.isNotEmpty).join(' | ');
+        if (str.isEmpty) return _s.noResult;
+        return str;
+      case ServerState.loading:
+        return _s.serverTabLoading;
+      case ServerState.connected:
+        return _s.connected;
+      case ServerState.connecting:
+        return _s.serverTabConnecting;
+      case ServerState.failed:
+        if (failedInfo == null) {
+          return _s.serverTabFailed;
+        }
+        if (failedInfo.contains('encypted')) {
+          return _s.serverTabPlzSave;
+        }
+        return failedInfo;
+    }
+  }
+
+  double _calcCardHeight(ServerState cs) {
+    if (cs != ServerState.finished) {
+      return 23.0;
+    }
+    if (_settingStore.moveOutServerTabFuncBtns.fetch()!) {
+      return 132;
+    }
+    return 107;
   }
 }

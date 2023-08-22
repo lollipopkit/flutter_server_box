@@ -6,6 +6,7 @@ import '../model/server/memory.dart';
 import '../model/server/net_speed.dart';
 import '../model/server/server_status.dart';
 import '../model/server/conn.dart';
+import '../model/server/system.dart';
 
 Memory get _initMemory => Memory(
       total: 1,
@@ -38,8 +39,8 @@ NetSpeed get initNetSpeed => NetSpeed(
       [_initNetSpeedPart],
     );
 Swap get _initSwap => Swap(
-      total: 1,
-      free: 1,
+      total: 0,
+      free: 0,
       cached: 0,
     );
 ServerStatus get initStatus => ServerStatus(
@@ -60,5 +61,6 @@ ServerStatus get initStatus => ServerStatus(
       tcp: Conn(maxConn: 0, active: 0, passive: 0, fail: 0),
       netSpeed: initNetSpeed,
       swap: _initSwap,
+      system: SystemType.linux,
       temps: Temperatures(),
     );
