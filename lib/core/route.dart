@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/analysis.dart';
 import 'package:toolbox/data/model/server/private_key_info.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
-import 'package:toolbox/data/provider/server.dart';
-import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/page/backup.dart';
 import 'package:toolbox/view/page/docker.dart';
 import 'package:toolbox/view/page/home.dart';
@@ -32,7 +29,6 @@ import '../view/page/snippet/edit.dart';
 import '../view/page/snippet/list.dart';
 import '../view/page/storage/sftp.dart';
 import '../view/page/storage/sftp_mission.dart';
-import 'utils/ui.dart';
 
 class AppRoute {
   final Widget page;
@@ -48,17 +44,14 @@ class AppRoute {
     );
   }
 
-  Future<T?> checkClientAndGo<T>({
+  Future<T?> checkGo<T>({
     required BuildContext context,
-    required S s,
-    required String id,
+    required bool Function() check,
   }) {
-    final server = locator<ServerProvider>().servers[id];
-    if (server == null || server.client == null) {
-      showSnackBar(context, Text(s.waitConnection));
-      return Future.value(null);
+    if (check()) {
+      return go(context);
     }
-    return go(context);
+    return Future.value(null);
   }
 
   static AppRoute serverDetail({Key? key, required ServerPrivateInfo spi}) {

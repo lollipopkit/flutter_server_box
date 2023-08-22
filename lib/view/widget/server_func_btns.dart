@@ -36,17 +36,15 @@ class ServerFuncBtns extends StatelessWidget {
   ) async {
     switch (value) {
       case ServerTabMenuType.pkg:
-        AppRoute.pkg(spi: spi).checkClientAndGo(
+        AppRoute.pkg(spi: spi).checkGo(
           context: context,
-          s: s,
-          id: spi.id,
+          check: () => _checkClient(context, spi.id),
         );
         break;
       case ServerTabMenuType.sftp:
-        AppRoute.sftp(spi: spi).checkClientAndGo(
+        AppRoute.sftp(spi: spi).checkGo(
           context: context,
-          s: s,
-          id: spi.id,
+          check: () => _checkClient(context, spi.id),
         );
         break;
       case ServerTabMenuType.snippet:
@@ -80,17 +78,15 @@ class ServerFuncBtns extends StatelessWidget {
         }
         break;
       case ServerTabMenuType.docker:
-        AppRoute.docker(spi: spi).checkClientAndGo(
+        AppRoute.docker(spi: spi).checkGo(
           context: context,
-          s: s,
-          id: spi.id,
+          check: () => _checkClient(context, spi.id),
         );
         break;
       case ServerTabMenuType.process:
-        AppRoute(ProcessPage(spi: spi), 'process page').checkClientAndGo(
+        AppRoute(ProcessPage(spi: spi), 'process page').checkGo(
           context: context,
-          s: s,
-          id: spi.id,
+          check: () => _checkClient(context, spi.id),
         );
         break;
       case ServerTabMenuType.terminal:
@@ -161,5 +157,14 @@ class ServerFuncBtns extends StatelessWidget {
       if (!await file.exists()) return;
       await Future.delayed(const Duration(seconds: 2), file.delete);
     }
+  }
+
+  bool _checkClient(BuildContext context, String id) {
+    final server = locator<ServerProvider>().servers[id];
+    if (server == null || server.client == null) {
+      showSnackBar(context, Text(s.waitConnection));
+      return false;
+    }
+    return true;
   }
 }
