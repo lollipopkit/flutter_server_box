@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/model/docker/image.dart';
-import 'package:toolbox/view/page/ssh_term.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 
 import '../../core/utils/ui.dart';
@@ -457,21 +456,15 @@ class _DockerManagePageState extends State<DockerManagePage> {
             context.pop();
             break;
           case DockerMenuType.logs:
-            AppRoute(
-              SSHPage(
-                spi: widget.spi,
-                initCmd: 'docker logs -f --tail 100 ${dItem.containerId}',
-              ),
-              'Docker logs',
+            AppRoute.ssh(
+              spi: widget.spi,
+              initCmd: 'docker logs -f --tail 100 ${dItem.containerId}',
             ).go(context);
             break;
           case DockerMenuType.terminal:
-            AppRoute(
-              SSHPage(
-                spi: widget.spi,
-                initCmd: 'docker exec -it ${dItem.containerId} sh',
-              ),
-              'Docker terminal',
+            AppRoute.ssh(
+              spi: widget.spi,
+              initCmd: 'docker exec -it ${dItem.containerId} sh',
             ).go(context);
             break;
           // case DockerMenuType.stats:

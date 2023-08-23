@@ -11,7 +11,6 @@ import '../../data/model/server/snippet.dart';
 import '../../data/provider/snippet.dart';
 import '../../data/res/ui.dart';
 import '../../locator.dart';
-import '../../view/page/snippet/edit.dart';
 import '../../view/widget/picker.dart';
 import '../persistant_store.dart';
 import '../route.dart';
@@ -146,7 +145,7 @@ void showSnippetDialog(
         TextButton(
           onPressed: () {
             context.pop();
-            AppRoute(const SnippetEditPage(), 'edit snippet').go(context);
+            AppRoute.snippetEdit().go(context);
           },
           child: Text(s.add),
         )

@@ -22,12 +22,6 @@ import '../../data/store/setting.dart';
 import '../../locator.dart';
 import '../widget/custom_appbar.dart';
 import '../widget/url_text.dart';
-import 'backup.dart';
-import 'convert.dart';
-import 'debug.dart';
-import 'private_key/list.dart';
-import 'setting/entry.dart';
-import 'storage/local.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -136,10 +130,7 @@ class _HomePageState extends State<HomePage>
       IconButton(
         icon: const Icon(Icons.developer_mode, size: 23),
         tooltip: _s.debug,
-        onPressed: () => AppRoute(
-          const DebugPage(),
-          'Debug Page',
-        ).go(context),
+        onPressed: () => AppRoute.debug().go(context),
       ),
     ];
     if (isDesktop && _selectIndex.value == AppTab.server.index) {
@@ -238,42 +229,27 @@ class _HomePageState extends State<HomePage>
           ListTile(
             leading: const Icon(Icons.settings),
             title: Text(_s.setting),
-            onTap: () => AppRoute(
-              const SettingPage(),
-              'Setting',
-            ).go(context),
+            onTap: () => AppRoute.setting().go(context),
           ),
           ListTile(
             leading: const Icon(Icons.vpn_key),
             title: Text(_s.privateKey),
-            onTap: () => AppRoute(
-              const PrivateKeysListPage(),
-              'private key list',
-            ).go(context),
+            onTap: () => AppRoute.keyList().go(context),
           ),
           ListTile(
             leading: const Icon(Icons.download),
             title: Text(_s.download),
-            onTap: () => AppRoute(
-              const LocalStoragePage(),
-              'sftp local page',
-            ).go(context),
+            onTap: () => AppRoute.localStorage().go(context),
           ),
           ListTile(
             leading: const Icon(Icons.import_export),
             title: Text(_s.backup),
-            onTap: () => AppRoute(
-              BackupPage(),
-              'backup page',
-            ).go(context),
+            onTap: () => AppRoute.backup().go(context),
           ),
           ListTile(
             leading: const Icon(Icons.code),
             title: Text(_s.convert),
-            onTap: () => AppRoute(
-              const ConvertPage(),
-              'convert page',
-            ).go(context),
+            onTap: () => AppRoute.convert().go(context),
           ),
           ListTile(
             leading: const Icon(Icons.text_snippet),

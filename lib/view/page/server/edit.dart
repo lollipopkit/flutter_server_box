@@ -17,7 +17,6 @@ import '../../../data/store/private_key.dart';
 import '../../../locator.dart';
 import '../../widget/custom_appbar.dart';
 import '../../widget/tag.dart';
-import '../private_key/edit.dart';
 
 class ServerEditPage extends StatefulWidget {
   const ServerEditPage({Key? key, this.spi}) : super(key: key);
@@ -231,10 +230,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             contentPadding: EdgeInsets.zero,
             trailing: IconButton(
               icon: const Icon(Icons.add),
-              onPressed: () => AppRoute(
-                const PrivateKeyEditPage(),
-                'private key edit page',
-              ).go(context),
+              onPressed: () => AppRoute.keyEdit().go(context),
             ),
           ),
         );

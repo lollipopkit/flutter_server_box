@@ -15,7 +15,6 @@ import '../../../data/model/server/private_key_info.dart';
 import '../../../data/provider/private_key.dart';
 import '../../../data/res/ui.dart';
 import '../../widget/custom_appbar.dart';
-import 'edit.dart';
 import '../../../view/widget/round_rect_card.dart';
 
 class PrivateKeysListPage extends StatefulWidget {
@@ -44,10 +43,7 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
-        onPressed: () => AppRoute(
-          const PrivateKeyEditPage(),
-          'private key edit page',
-        ).go(context),
+        onPressed: () => AppRoute.keyEdit().go(context),
       ),
     );
   }
@@ -68,10 +64,8 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
               ListTile(
                 title: Text(key.pkis[idx].id),
                 trailing: TextButton(
-                  onPressed: () => AppRoute(
-                    PrivateKeyEditPage(pki: key.pkis[idx]),
-                    'private key edit page',
-                  ).go(context),
+                  onPressed: () =>
+                      AppRoute.keyEdit(pki: key.pkis[idx]).go(context),
                   child: Text(_s.edit),
                 ),
               ),
@@ -102,10 +96,7 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
           TextButton(
             onPressed: () {
               context.pop();
-              AppRoute(
-                PrivateKeyEditPage(pki: sysPk),
-                'private key edit page',
-              ).go(context);
+              AppRoute.keyEdit(pki: sysPk).go(context);
             },
             child: Text(_s.ok),
           ),

@@ -13,7 +13,6 @@ import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/model/app/net_view.dart';
-import 'package:toolbox/view/page/setting/virt_key.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/value_notifier.dart';
 
@@ -814,10 +813,7 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       title: Text(_s.editVirtKeys),
       trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => AppRoute(
-        const SSHVirtKeySettingPage(),
-        'ssh virt key edit',
-      ).go(context),
+      onTap: () => AppRoute.sshVirtKeySetting().go(context),
     );
   }
 

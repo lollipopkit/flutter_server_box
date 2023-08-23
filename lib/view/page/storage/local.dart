@@ -8,7 +8,6 @@ import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/provider/sftp.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/locator.dart';
-import 'package:toolbox/view/page/editor.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/picker.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
@@ -23,13 +22,15 @@ import '../../../data/res/path.dart';
 import '../../../data/res/ui.dart';
 import '../../widget/custom_appbar.dart';
 import '../../widget/fade_in.dart';
-import 'sftp_mission.dart';
 
 class LocalStoragePage extends StatefulWidget {
   final bool isPickFile;
   final String? initDir;
-  const LocalStoragePage({Key? key, this.isPickFile = false, this.initDir})
-      : super(key: key);
+  const LocalStoragePage({
+    Key? key,
+    required this.isPickFile,
+    this.initDir,
+  }) : super(key: key);
 
   @override
   State<LocalStoragePage> createState() => _LocalStoragePageState();
@@ -78,10 +79,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.downloading),
-            onPressed: () => AppRoute(
-              const SftpMissionPage(),
-              'sftp downloading',
-            ).go(context),
+            onPressed: () => AppRoute.sftpMission().go(context),
           )
         ],
       ),
@@ -256,11 +254,8 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
                 );
                 return;
               }
-              final result = await AppRoute(
-                EditorPage(
-                  path: file.absolute.path,
-                ),
-                'sftp dled editor',
+              final result = await AppRoute.editor(
+                path: file.absolute.path,
               ).go<String>(context);
               final f = File(file.absolute.path);
               if (result != null) {

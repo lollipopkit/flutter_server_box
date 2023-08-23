@@ -9,8 +9,6 @@ import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/extension/sftpfile.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/store/history.dart';
-import 'package:toolbox/view/page/editor.dart';
-import 'package:toolbox/view/page/storage/local.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
 import '../../../core/extension/numx.dart';
@@ -31,7 +29,6 @@ import '../../widget/custom_appbar.dart';
 import '../../widget/fade_in.dart';
 import '../../widget/input_field.dart';
 import '../../widget/two_line_text.dart';
-import 'sftp_mission.dart';
 
 class SftpPage extends StatefulWidget {
   final ServerPrivateInfo spi;
@@ -92,10 +89,7 @@ class _SftpPageState extends State<SftpPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.downloading),
-            onPressed: () => AppRoute(
-              const SftpMissionPage(),
-              'sftp downloading',
-            ).go(context),
+            onPressed: () => AppRoute.sftpMission().go(context),
           ),
         ],
       ),
@@ -176,11 +170,7 @@ class _SftpPageState extends State<SftpPage> {
           final path = await () async {
             switch (idx) {
               case 0:
-                return await AppRoute(
-                        const LocalStoragePage(
-                          isPickFile: true,
-                        ),
-                        'sftp dled pick')
+                return await AppRoute.localStorage(isPickFile: true)
                     .go<String>(context);
               case 1:
                 return await pickOneFile();
@@ -390,10 +380,7 @@ class _SftpPageState extends State<SftpPage> {
     await completer.future;
     context.pop();
 
-    final result = await AppRoute(
-      EditorPage(path: localPath),
-      'SFTP edit',
-    ).go<String>(context);
+    final result = await AppRoute.editor(path: localPath).go<String>(context);
     if (result != null) {
       _sftp.add(SftpReq(req.spi, remotePath, localPath, SftpReqType.upload));
     }

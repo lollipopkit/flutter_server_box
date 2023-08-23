@@ -23,7 +23,6 @@ import '../../../locator.dart';
 import '../../widget/round_rect_card.dart';
 import '../../widget/server_func_btns.dart';
 import '../../widget/tag.dart';
-import 'edit.dart';
 
 class ServerPage extends StatefulWidget {
   const ServerPage({Key? key}) : super(key: key);
@@ -63,10 +62,7 @@ class _ServerPageState extends State<ServerPage>
     return Scaffold(
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => AppRoute(
-          const ServerEditPage(),
-          'Add server info page',
-        ).go(context),
+        onPressed: () => AppRoute.serverEdit().go(context),
         tooltip: _s.addAServer,
         heroTag: 'server',
         child: const Icon(Icons.add),

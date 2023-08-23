@@ -5,7 +5,6 @@ import 'package:toolbox/core/extension/datetime.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/locator.dart';
-import 'package:toolbox/view/page/storage/local.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/utils/misc.dart';
@@ -77,10 +76,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
                   onPressed: () {
                     final idx = status.req.localPath.lastIndexOf('/');
                     final dir = status.req.localPath.substring(0, idx);
-                    AppRoute(
-                      LocalStoragePage(initDir: dir),
-                      'sftp local',
-                    ).go(context);
+                    AppRoute.localStorage(initDir: dir).go(context);
                   },
                   icon: const Icon(Icons.file_open)),
               IconButton(

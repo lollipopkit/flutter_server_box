@@ -110,8 +110,15 @@ class AppRoute {
     return AppRoute(SSHVirtKeySettingPage(key: key), 'ssh_virt_key_setting');
   }
 
-  static AppRoute localStorage({Key? key}) {
-    return AppRoute(LocalStoragePage(key: key), 'local_storage');
+  static AppRoute localStorage(
+      {Key? key, bool isPickFile = false, String? initDir}) {
+    return AppRoute(
+        LocalStoragePage(
+          key: key,
+          isPickFile: isPickFile,
+          initDir: initDir,
+        ),
+        'local_storage');
   }
 
   static AppRoute sftpMission({Key? key}) {

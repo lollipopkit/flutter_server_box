@@ -14,7 +14,6 @@ import '../../../locator.dart';
 import '../../widget/tag.dart';
 import '/core/route.dart';
 import '/data/provider/snippet.dart';
-import 'edit.dart';
 import '/view/widget/round_rect_card.dart';
 
 class SnippetListPage extends StatefulWidget {
@@ -46,10 +45,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
       floatingActionButton: FloatingActionButton(
         heroTag: 'snippet',
         child: const Icon(Icons.add),
-        onPressed: () => AppRoute(
-          const SnippetEditPage(),
-          'snippet edit page',
-        ).go(context),
+        onPressed: () => AppRoute.snippetEdit().go(context),
       ),
     );
   }
@@ -121,10 +117,8 @@ class _SnippetListPageState extends State<SnippetListPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              onPressed: () => AppRoute(
-                SnippetEditPage(snippet: snippet),
-                'snippet edit page',
-              ).go(context),
+              onPressed: () =>
+                  AppRoute.snippetEdit(snippet: snippet).go(context),
               icon: const Icon(Icons.edit),
             ),
             IconButton(

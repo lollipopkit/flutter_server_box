@@ -22,8 +22,6 @@ import '../../data/model/server/server.dart';
 import '../../data/model/server/server_private_info.dart';
 import '../../data/model/server/server_status.dart';
 import '../../data/res/color.dart';
-import 'server/edit.dart';
-import 'setting/entry.dart';
 
 class FullScreenPage extends StatefulWidget {
   const FullScreenPage({Key? key}) : super(key: key);
@@ -117,10 +115,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
 
   Widget _buildSettingBtn() {
     return IconButton(
-        onPressed: () => AppRoute(
-              const SettingPage(),
-              'Setting',
-            ).go(context),
+        onPressed: () => AppRoute.setting().go(context),
         icon: const Icon(Icons.settings, color: Colors.grey));
   }
 
@@ -129,10 +124,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
       if (pro.serverOrder.isEmpty) {
         return Center(
           child: TextButton(
-              onPressed: () => AppRoute(
-                    const ServerEditPage(),
-                    'Add server info page',
-                  ).go(context),
+              onPressed: () => AppRoute.serverEdit().go(context),
               child: Text(
                 _s.addAServer,
                 style: const TextStyle(fontSize: 27),

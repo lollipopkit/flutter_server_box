@@ -14,7 +14,6 @@ import '../../data/model/server/server_private_info.dart';
 import '../../data/model/server/snippet.dart';
 import '../../data/provider/snippet.dart';
 import '../../locator.dart';
-import '../page/process.dart';
 import 'tag.dart';
 
 class ServerFuncBtns extends StatelessWidget {
@@ -84,7 +83,7 @@ class ServerFuncBtns extends StatelessWidget {
         );
         break;
       case ServerTabMenuType.process:
-        AppRoute(ProcessPage(spi: spi), 'process page').checkGo(
+        AppRoute.process(spi: spi).checkGo(
           context: context,
           check: () => _checkClient(context, spi.id),
         );
