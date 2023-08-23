@@ -129,7 +129,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         _buildDetailPercent(ss.cpu.iowait, 'io'),
       ]);
     }
-    
+
     return RoundRectCard(
       Padding(
         padding: roundRectCardPadding,

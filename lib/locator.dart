@@ -11,6 +11,7 @@ import 'data/provider/snippet.dart';
 import 'data/provider/virtual_keyboard.dart';
 import 'data/service/app.dart';
 import 'data/store/docker.dart';
+import 'data/store/history.dart';
 import 'data/store/private_key.dart';
 import 'data/store/server.dart';
 import 'data/store/setting.dart';
@@ -54,6 +55,10 @@ Future<void> _setupLocatorForStores() async {
   final docker = DockerStore();
   await docker.init(boxName: 'docker');
   locator.registerSingleton(docker);
+
+  final history = HistoryStore();
+  await history.init(boxName: 'history');
+  locator.registerSingleton(history);
 }
 
 Future<void> setupLocator() async {

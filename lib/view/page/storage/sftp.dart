@@ -8,6 +8,7 @@ import 'package:logging/logging.dart';
 import 'package:toolbox/core/extension/navigator.dart';
 import 'package:toolbox/core/extension/sftpfile.dart';
 import 'package:toolbox/data/res/misc.dart';
+import 'package:toolbox/data/store/history.dart';
 import 'package:toolbox/view/page/editor.dart';
 import 'package:toolbox/view/page/storage/local.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
@@ -52,6 +53,7 @@ class _SftpPageState extends State<SftpPage> {
   final SftpBrowserStatus _status = SftpBrowserStatus();
 
   final _sftp = locator<SftpProvider>();
+  final _history = locator<HistoryStore>();
 
   late S _s;
 
@@ -156,7 +158,6 @@ class _SftpPageState extends State<SftpPage> {
         onPressed: () async {
           final idx = await showRoundDialog(
               context: context,
-              title: Text(_s.choose),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -224,12 +225,6 @@ class _SftpPageState extends State<SftpPage> {
                     onTap: () => _newFile(context)),
               ],
             ),
-            actions: [
-              TextButton(
-                onPressed: () => context.pop(),
-                child: Text(_s.close),
-              )
-            ],
           )),
       icon: const Icon(Icons.add),
     );
@@ -242,31 +237,30 @@ class _SftpPageState extends State<SftpPage> {
         final p = await showRoundDialog<String>(
           context: context,
           title: Text(_s.goto),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Input(
+          child: Autocomplete<String>(
+            optionsBuilder: (val) => _history.sftpPath.all.where(
+              (element) => element.contains(val.text),
+            ),
+            fieldViewBuilder: (_, controller, node, __) {
+              return Input(
                 autoFocus: true,
                 icon: Icons.abc,
                 label: _s.path,
+                node: node,
+                controller: controller,
                 onSubmitted: (value) => context.pop(value),
-              ),
-            ],
+              );
+            },
           ),
-          actions: [
-            TextButton(
-              onPressed: () => context.pop(),
-              child: Text(_s.close),
-            )
-          ],
         );
 
-        // p == null || p.isEmpty
-        if (p?.isEmpty ?? true) {
+        if (p == null || p.isEmpty) {
           return;
         }
-        _status.path?.update(p!);
-        _listDir(path: p);
+
+        _status.path?.update(p);
+        final suc = await _listDir(path: p);
+        if (suc) _history.sftpPath.add(p);
       },
       icon: const Icon(Icons.gps_fixed),
     );
@@ -624,9 +618,10 @@ class _SftpPageState extends State<SftpPage> {
     return '${(await sftpDir).path}$remotePath';
   }
 
-  Future<void> _listDir({String? path, SSHClient? client}) async {
+  /// Only return true if the path is changed
+  Future<bool> _listDir({String? path, SSHClient? client}) async {
     if (_status.isBusy) {
-      return;
+      return false;
     }
     _status.isBusy = true;
     if (client != null) {
@@ -657,7 +652,9 @@ class _SftpPageState extends State<SftpPage> {
           _status.files = fs;
           _status.isBusy = false;
         });
+        return true;
       }
+      return false;
     } catch (e, trace) {
       _logger.warning('list dir failed', e, trace);
       await _backward();
@@ -675,6 +672,7 @@ class _SftpPageState extends State<SftpPage> {
           ],
         ),
       );
+      return false;
     }
   }
 
