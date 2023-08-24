@@ -6,6 +6,7 @@ import 'package:toolbox/view/widget/round_rect_card.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 
 import '../../core/utils/ui.dart';
+import '../../data/model/app/tag_pickable.dart';
 import '../../data/res/color.dart';
 
 const _kTagBtnHeight = 31.0;
@@ -178,17 +179,13 @@ class TagEditor extends StatelessWidget {
   }
 }
 
-class TagPicker<T> extends StatefulWidget {
+class TagPicker<T extends TagPickable> extends StatefulWidget {
   final List<T> items;
-  final bool Function(T, String?) containsTag;
-  final String Function(T) name;
   final Set<String> tags;
 
   const TagPicker({
     Key? key,
     required this.items,
-    required this.containsTag,
-    required this.name,
     required this.tags,
   }) : super(key: key);
 
@@ -196,7 +193,7 @@ class TagPicker<T> extends StatefulWidget {
   _TagPickerState<T> createState() => _TagPickerState<T>();
 }
 
-class _TagPickerState<T> extends State<TagPicker<T>> {
+class _TagPickerState<T extends TagPickable> extends State<TagPicker<T>> {
   late S _s;
   late MediaQueryData _media;
   final List<T> _selected = [];
@@ -251,19 +248,19 @@ class _TagPickerState<T> extends State<TagPicker<T>> {
       itemBuilder: (_, idx) {
         final item = widget.tags.elementAt(idx);
         final isEnable =
-            widget.items.where((ele) => widget.containsTag(ele, item)).every(
-                  (element) => _selected.contains(element),
+            widget.items.where((ele) => ele.containsTag(item)).every(
+                  (ele) => _selected.contains(ele),
                 );
         return TagBtn(
           isEnable: isEnable,
           onTap: () {
             if (isEnable) {
               _selected.removeWhere(
-                (element) => widget.containsTag(element, item),
+                (ele) => ele.containsTag(item),
               );
             } else {
               _selected.addAll(widget.items.where(
-                (ele) => widget.containsTag(ele, item),
+                (ele) => ele.containsTag(item),
               ));
             }
             setState(() {});
@@ -290,7 +287,7 @@ class _TagPickerState<T> extends State<TagPicker<T>> {
             }
             setState(() {});
           },
-          content: widget.name(e),
+          content: e.tagName,
         );
       },
     );

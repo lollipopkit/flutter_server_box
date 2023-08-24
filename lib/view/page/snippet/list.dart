@@ -137,9 +137,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
       context: context,
       builder: (_) => TagPicker<Server>(
         items: provider.servers.values.toList(),
-        containsTag: (t, tag) => t.spi.tags?.contains(tag) ?? false,
         tags: provider.tags.toSet(),
-        name: (t) => t.spi.id,
       ),
     );
     if (servers == null) {

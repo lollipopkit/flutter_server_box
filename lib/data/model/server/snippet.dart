@@ -1,9 +1,11 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../app/tag_pickable.dart';
+
 part 'snippet.g.dart';
 
 @HiveType(typeId: 2)
-class Snippet {
+class Snippet implements TagPickable {
   @HiveField(0)
   late String name;
   @HiveField(1)
@@ -24,4 +26,12 @@ class Snippet {
     data['tags'] = tags;
     return data;
   }
+
+  @override
+  bool containsTag(String tag) {
+    return tags?.contains(tag) ?? false;
+  }
+
+  @override
+  String get tagName => name;
 }

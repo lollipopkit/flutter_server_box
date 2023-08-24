@@ -52,9 +52,7 @@ class ServerFuncBtns extends StatelessWidget {
           context: context,
           builder: (_) => TagPicker<Snippet>(
             items: provider.snippets,
-            containsTag: (t, tag) => t.tags?.contains(tag) ?? false,
             tags: provider.tags.toSet(),
-            name: (t) => t.name,
           ),
         );
         if (snippets == null) {

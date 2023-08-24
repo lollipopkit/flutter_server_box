@@ -70,9 +70,7 @@ class UrlText extends StatelessWidget {
         widgets.add(
           TextSpan(
             text: result.text,
-            style: style.copyWith(
-              color: c,
-            ),
+            style: style.copyWith(color: c),
           ),
         );
       }

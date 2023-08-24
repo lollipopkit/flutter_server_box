@@ -259,7 +259,7 @@ void main(List<String> args) async {
       for (final func in funcs) {
         stopwatch.start();
         await func();
-        print('Build finished in ${stopwatch.elapsed}\n');
+        print('Build finished in ${stopwatch.elapsed}');
         stopwatch.reset();
       }
       break;
