@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:typed_data';
 
+import 'package:after_layout/after_layout.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
@@ -25,6 +25,7 @@ import '../../../data/provider/server.dart';
 import '../../../data/provider/sftp.dart';
 import '../../../data/res/path.dart';
 import '../../../data/res/ui.dart';
+import '../../../data/store/setting.dart';
 import '../../../locator.dart';
 import '../../widget/custom_appbar.dart';
 import '../../widget/fade_in.dart';
@@ -47,11 +48,12 @@ class SftpPage extends StatefulWidget {
   _SftpPageState createState() => _SftpPageState();
 }
 
-class _SftpPageState extends State<SftpPage> {
+class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   final SftpBrowserStatus _status = SftpBrowserStatus();
 
   final _sftp = locator<SftpProvider>();
   final _history = locator<HistoryStore>();
+  final _setting = locator<SettingStore>();
 
   late S _s;
 
@@ -85,7 +87,6 @@ class _SftpPageState extends State<SftpPage> {
             context.pop();
           },
         ),
-        centerTitle: true,
         title: TwoLineText(up: 'SFTP', down: widget.spi.name),
         actions: [
           IconButton(
@@ -191,7 +192,7 @@ class _SftpPageState extends State<SftpPage> {
           _sftp.add(
             SftpReq(
               widget.spi,
-              remotePath,
+              '$remotePath/${path.split('/').last}',
               path,
               SftpReqType.upload,
             ),
@@ -267,9 +268,6 @@ class _SftpPageState extends State<SftpPage> {
 
   Widget _buildFileView() {
     if (_status.files == null) {
-      final p_ = widget.initPath ?? '/';
-      _status.path = AbsolutePath(p_);
-      _listDir(path: p_, client: _client);
       return centerLoading;
     }
 
@@ -288,7 +286,7 @@ class _SftpPageState extends State<SftpPage> {
           itemBuilder: (_, index) => _buildItem(_status.files![index]),
         ),
       ),
-      onRefresh: () => _listDir(path: _status.path?.path),
+      onRefresh: () => _listDir(),
     );
   }
 
@@ -390,8 +388,8 @@ class _SftpPageState extends State<SftpPage> {
     await completer.future;
     context.pop();
 
-    final result = await AppRoute.editor(path: localPath).go<String>(context);
-    if (result != null) {
+    final result = await AppRoute.editor(path: localPath).go<bool>(context);
+    if (result != null && result) {
       _sftp.add(SftpReq(req.spi, remotePath, localPath, SftpReqType.upload));
     }
   }
@@ -431,7 +429,8 @@ class _SftpPageState extends State<SftpPage> {
   void _delete(BuildContext context, SftpName file) {
     context.pop();
     final isDir = file.attr.isDirectory;
-    final dirText = isDir ? '\n${_s.sureDirEmpty}' : '';
+    final useRmrf = _setting.sftpRmrfDir.fetch()!;
+    final dirText = (isDir && !useRmrf) ? '\n${_s.sureDirEmpty}' : '';
     final text = '${_s.sureDelete(file.filename)}$dirText';
     final child = Text(text);
     showRoundDialog(
@@ -449,7 +448,9 @@ class _SftpPageState extends State<SftpPage> {
             showLoadingDialog(context);
             final remotePath = _getRemotePath(file);
             try {
-              if (file.attr.isDirectory) {
+              if (useRmrf) {
+                await _client!.run('rm -rf "$remotePath"');
+              } else if (file.attr.isDirectory) {
                 await _status.client!.rmdir(remotePath);
               } else {
                 await _status.client!.remove(remotePath);
@@ -535,10 +536,6 @@ class _SftpPageState extends State<SftpPage> {
       ),
       actions: [
         TextButton(
-          onPressed: () => context.pop(),
-          child: Text(_s.cancel),
-        ),
-        TextButton(
           onPressed: () async {
             if (textController.text == '') {
               showRoundDialog(
@@ -554,9 +551,10 @@ class _SftpPageState extends State<SftpPage> {
               );
               return;
             }
+            context.pop();
             final path = '${_status.path!.path}/${textController.text}';
-            final file = await _status.client!.open(path);
-            await file.writeBytes(Uint8List(0));
+            showLoadingDialog(context);
+            await _client!.run('touch "$path"');
             context.pop();
             _listDir();
           },
@@ -699,6 +697,13 @@ class _SftpPageState extends State<SftpPage> {
     if (_status.path!.undo()) {
       await _listDir();
     }
+  }
+
+  @override
+  FutureOr<void> afterFirstLayout(BuildContext context) {
+    final p_ = widget.initPath ?? '/';
+    _status.path = AbsolutePath(p_);
+    _listDir(path: p_, client: _client);
   }
 }
 

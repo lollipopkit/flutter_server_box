@@ -86,4 +86,4 @@ class SftpReqStatus {
   }
 }
 
-enum SftpWorkerStatus { preparing, sshConnectted, downloading, finished }
+enum SftpWorkerStatus { preparing, sshConnectted, loading, finished }

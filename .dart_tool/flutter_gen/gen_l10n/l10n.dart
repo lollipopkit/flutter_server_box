@@ -416,12 +416,6 @@ abstract class S {
   /// **'Download'**
   String get download;
 
-  /// No description provided for @downloadStatus.
-  ///
-  /// In en, this message translates to:
-  /// **'{percent}% of {size}'**
-  String downloadStatus(Object percent, Object size);
-
   /// No description provided for @edit.
   ///
   /// In en, this message translates to:
@@ -920,6 +914,12 @@ abstract class S {
   /// **'Path'**
   String get path;
 
+  /// No description provided for @percentOfSize.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% of {size}'**
+  String percentOfSize(Object percent, Object size);
+
   /// No description provided for @pickFile.
   ///
   /// In en, this message translates to:
@@ -1153,6 +1153,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Preparing to connect...'**
   String get sftpDlPrepare;
+
+  /// No description provided for @sftpRmrfDir.
+  ///
+  /// In en, this message translates to:
+  /// **'Use `rm -rf` to delete dir on SFTP'**
+  String get sftpRmrfDir;
 
   /// No description provided for @sftpSSHConnected.
   ///

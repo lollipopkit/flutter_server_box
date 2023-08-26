@@ -172,11 +172,6 @@ class SZh extends S {
   String get download => '下载';
 
   @override
-  String downloadStatus(Object percent, Object size) {
-    return '$size 的 $percent%';
-  }
-
-  @override
   String get edit => '编辑';
 
   @override
@@ -438,6 +433,11 @@ class SZh extends S {
   String get path => '路径';
 
   @override
+  String percentOfSize(Object percent, Object size) {
+    return '$size 的 $percent%';
+  }
+
+  @override
   String get pickFile => '选择文件';
 
   @override
@@ -557,6 +557,9 @@ class SZh extends S {
 
   @override
   String get sftpDlPrepare => '准备连接至服务器...';
+
+  @override
+  String get sftpRmrfDir => '在 SFTP 中使用 `rm -rf` 删除文件夹';
 
   @override
   String get sftpSSHConnected => 'SFTP 已连接...';
@@ -889,11 +892,6 @@ class SZhTw extends SZh {
   String get download => '下載';
 
   @override
-  String downloadStatus(Object percent, Object size) {
-    return '$size 的 $percent%';
-  }
-
-  @override
   String get edit => '編輯';
 
   @override
@@ -1155,6 +1153,11 @@ class SZhTw extends SZh {
   String get path => '路徑';
 
   @override
+  String percentOfSize(Object percent, Object size) {
+    return '$size 的 $percent%';
+  }
+
+  @override
   String get pickFile => '選擇文件';
 
   @override
@@ -1274,6 +1277,9 @@ class SZhTw extends SZh {
 
   @override
   String get sftpDlPrepare => '準備連接至服務器...';
+
+  @override
+  String get sftpRmrfDir => '在 SFTP 中使用 `rm -rf` 刪除文件夾';
 
   @override
   String get sftpSSHConnected => 'SFTP 已連接...';

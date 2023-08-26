@@ -76,7 +76,18 @@ class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.done),
-        onPressed: () {
+        onPressed: () async {
+          // If path is not null, then it's a file editor
+          // save the text and return true to pop the page
+          if (widget.path != null) {
+            showLoadingDialog(context);
+            await File(widget.path!).writeAsString(_controller.text);
+            context.pop();
+            context.pop(true);
+            return;
+          }
+          // else it's a text editor
+          // return the text to the previous page
           context.pop(_controller.text);
         },
       ),

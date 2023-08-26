@@ -315,7 +315,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
               }
               locator<SftpProvider>().add(SftpReq(
                 spi,
-                remotePath,
+                '$remotePath/$fileName',
                 file.absolute.path,
                 SftpReqType.upload,
               ));

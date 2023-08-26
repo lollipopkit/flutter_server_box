@@ -172,11 +172,6 @@ class SEn extends S {
   String get download => 'Download';
 
   @override
-  String downloadStatus(Object percent, Object size) {
-    return '$percent% of $size';
-  }
-
-  @override
   String get edit => 'Edit';
 
   @override
@@ -438,6 +433,11 @@ class SEn extends S {
   String get path => 'Path';
 
   @override
+  String percentOfSize(Object percent, Object size) {
+    return '$percent% of $size';
+  }
+
+  @override
   String get pickFile => 'Pick file';
 
   @override
@@ -557,6 +557,9 @@ class SEn extends S {
 
   @override
   String get sftpDlPrepare => 'Preparing to connect...';
+
+  @override
+  String get sftpRmrfDir => 'Use `rm -rf` to delete dir on SFTP';
 
   @override
   String get sftpSSHConnected => 'SFTP Connected';

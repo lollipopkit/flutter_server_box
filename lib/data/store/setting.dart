@@ -111,4 +111,8 @@ class SettingStore extends PersistentStore {
   /// Otherwise, display them on the top of server detail page
   StoreProperty<bool> get moveOutServerTabFuncBtns =>
       property('moveOutServerTabFuncBtns', defaultValue: true);
+
+  /// Whether use `rm -rf` to delete directory on SFTP
+  StoreProperty<bool> get sftpRmrfDir =>
+      property('sftpRmrfDir', defaultValue: true);
 }

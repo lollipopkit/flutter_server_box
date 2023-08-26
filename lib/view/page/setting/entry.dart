@@ -191,6 +191,7 @@ class _SettingPageState extends State<SettingPage> {
         _buildSSHVirtualKeyAutoOff(),
         _buildKeyboardType(),
         _buildSSHVirtKeys(),
+        _buildSftpRmrfDir(),
       ].map((e) => RoundRectCard(e)).toList(),
     );
   }
@@ -1020,6 +1021,13 @@ class _SettingPageState extends State<SettingPage> {
           child: Text(_s.ok),
         ),
       ],
+    );
+  }
+
+  Widget _buildSftpRmrfDir() {
+    return ListTile(
+      title: Text(_s.sftpRmrfDir),
+      trailing: buildSwitch(context, _setting.sftpRmrfDir),
     );
   }
 }

@@ -172,11 +172,6 @@ class SId extends S {
   String get download => 'Unduh';
 
   @override
-  String downloadStatus(Object percent, Object size) {
-    return '$percent% dari $size';
-  }
-
-  @override
   String get edit => 'Edit';
 
   @override
@@ -438,6 +433,11 @@ class SId extends S {
   String get path => 'Jalur';
 
   @override
+  String percentOfSize(Object percent, Object size) {
+    return '$percent% dari $size';
+  }
+
+  @override
   String get pickFile => 'Pilih file';
 
   @override
@@ -557,6 +557,9 @@ class SId extends S {
 
   @override
   String get sftpDlPrepare => 'Bersiap untuk terhubung ...';
+
+  @override
+  String get sftpRmrfDir => 'Gunakan `rm -rf` untuk menghapus direktori di SFTP';
 
   @override
   String get sftpSSHConnected => 'Sftp terhubung';

@@ -172,11 +172,6 @@ class SDe extends S {
   String get download => 'Download';
 
   @override
-  String downloadStatus(Object percent, Object size) {
-    return '$percent% von $size';
-  }
-
-  @override
   String get edit => 'Bearbeiten';
 
   @override
@@ -438,6 +433,11 @@ class SDe extends S {
   String get path => 'Pfad';
 
   @override
+  String percentOfSize(Object percent, Object size) {
+    return '$percent% von $size';
+  }
+
+  @override
   String get pickFile => 'Datei wählen';
 
   @override
@@ -557,6 +557,9 @@ class SDe extends S {
 
   @override
   String get sftpDlPrepare => 'Verbindung vorbereiten...';
+
+  @override
+  String get sftpRmrfDir => 'Verwenden Sie `rm -rf`, um das Verzeichnis auf SFTP zu löschen';
 
   @override
   String get sftpSSHConnected => 'SFTP Verbunden';
