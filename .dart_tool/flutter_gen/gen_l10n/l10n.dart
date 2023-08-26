@@ -332,6 +332,12 @@ abstract class S {
   /// **'Decode'**
   String get decode;
 
+  /// No description provided for @decompress.
+  ///
+  /// In en, this message translates to:
+  /// **'Decompress'**
+  String get decompress;
+
   /// No description provided for @delete.
   ///
   /// In en, this message translates to:

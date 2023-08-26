@@ -39,6 +39,7 @@
   "dark": "Dunkel",
   "debug": "Debug",
   "decode": "Decode",
+  "decompress": "Dekomprimieren",
   "delete": "Löschen",
   "deleteServers": "Batch-Löschung von Servern",
   "disabled": "Behinderte",

@@ -122,6 +122,9 @@ class SDe extends S {
   String get decode => 'Decode';
 
   @override
+  String get decompress => 'Dekomprimieren';
+
+  @override
   String get delete => 'Löschen';
 
   @override

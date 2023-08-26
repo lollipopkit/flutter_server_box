@@ -5,7 +5,6 @@ class SftpBrowserStatus {
   List<SftpName>? files;
   AbsolutePath? path;
   SftpClient? client;
-  bool isBusy = false;
 
   SftpBrowserStatus();
 }

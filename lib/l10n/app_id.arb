@@ -39,6 +39,7 @@
   "dark": "Gelap",
   "debug": "Debug",
   "decode": "Membaca sandi",
+  "decompress": "Dekompresi",
   "delete": "Menghapus",
   "deleteServers": "Penghapusan server secara batch",
   "disabled": "Dengan disabilitas",

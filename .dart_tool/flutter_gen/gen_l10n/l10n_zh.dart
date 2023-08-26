@@ -122,6 +122,9 @@ class SZh extends S {
   String get decode => '解码';
 
   @override
+  String get decompress => '解压缩';
+
+  @override
   String get delete => '删除';
 
   @override
@@ -834,6 +837,9 @@ class SZhTw extends SZh {
 
   @override
   String get decode => '解碼';
+
+  @override
+  String get decompress => '解壓縮';
 
   @override
   String get delete => '刪除';

@@ -15,6 +15,7 @@ import '../../../core/extension/numx.dart';
 import '../../../core/extension/stringx.dart';
 import '../../../core/route.dart';
 import '../../../core/utils/misc.dart';
+import '../../../core/utils/platform.dart' hide pathJoin;
 import '../../../core/utils/ui.dart';
 import '../../../data/model/server/server_private_info.dart';
 import '../../../data/model/sftp/absolute_path.dart';
@@ -130,6 +131,7 @@ class _SftpPageState extends State<SftpPage> {
             _buildGotoBtn(),
             _buildUploadBtn(),
           ];
+    if (isDesktop) children.add(_buildRefreshBtn());
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.fromLTRB(11, 7, 11, 11),
@@ -256,11 +258,14 @@ class _SftpPageState extends State<SftpPage> {
     );
   }
 
-  Widget _buildFileView() {
-    if (_status.isBusy) {
-      return centerLoading;
-    }
+  Widget _buildRefreshBtn() {
+    return IconButton(
+      onPressed: () => _listDir(),
+      icon: const Icon(Icons.refresh),
+    );
+  }
 
+  Widget _buildFileView() {
     if (_status.files == null) {
       final p_ = widget.initPath ?? '/';
       _status.path = AbsolutePath(p_);
@@ -340,6 +345,11 @@ class _SftpPageState extends State<SftpPage> {
           leading: const Icon(Icons.download),
           title: Text(_s.download),
           onTap: () => _download(context, file),
+        ),
+        ListTile(
+          leading: const Icon(Icons.folder_zip),
+          title: Text(_s.decompress),
+          onTap: () => _decompress(context, file),
         ),
       ]);
     }
@@ -596,6 +606,30 @@ class _SftpPageState extends State<SftpPage> {
     );
   }
 
+  Future<void> _decompress(BuildContext context, SftpName name) async {
+    context.pop();
+    final absPath = _getRemotePath(name);
+    final cmd = _getDecompressCmd(absPath);
+    if (cmd == null) {
+      showRoundDialog(
+        context: context,
+        title: Text(_s.error),
+        child: Text('Unsupport file: ${name.filename}'),
+        actions: [
+          TextButton(
+            onPressed: () => context.pop(),
+            child: Text(_s.ok),
+          ),
+        ],
+      );
+      return;
+    }
+    showLoadingDialog(context);
+    await _client?.run(cmd);
+    context.pop();
+    _listDir();
+  }
+
   String _getRemotePath(SftpName name) {
     final prePath = _status.path!.path;
     return pathJoin(prePath, name.filename);
@@ -607,10 +641,7 @@ class _SftpPageState extends State<SftpPage> {
 
   /// Only return true if the path is changed
   Future<bool> _listDir({String? path, SSHClient? client}) async {
-    if (_status.isBusy) {
-      return false;
-    }
-    _status.isBusy = true;
+    showLoadingDialog(context);
     if (client != null) {
       final sftpc = await client.sftp();
       _status.client = sftpc;
@@ -637,12 +668,13 @@ class _SftpPageState extends State<SftpPage> {
       if (mounted) {
         setState(() {
           _status.files = fs;
-          _status.isBusy = false;
         });
+        context.pop();
         return true;
       }
       return false;
     } catch (e, trace) {
+      context.pop();
       _logger.warning('list dir failed', e, trace);
       await _backward();
       Future.delayed(
@@ -669,3 +701,60 @@ class _SftpPageState extends State<SftpPage> {
     }
   }
 }
+
+String? _getDecompressCmd(String filename) {
+  for (final ext in _extCmdMap.keys) {
+    if (filename.endsWith('.$ext')) {
+      return _extCmdMap[ext]?.replaceAll('FILE', '"$filename"');
+    }
+  }
+  return null;
+}
+
+/// Translate from
+/// https://github.com/ohmyzsh/ohmyzsh/blob/03a0d5bbaedc732436b5c67b166cde954817cc2f/plugins/extract/extract.plugin.zsh
+const _extCmdMap = {
+  'tar.gz': 'tar zxvf FILE',
+  'tgz': 'tar zxvf FILE',
+  'tar.bz2': 'tar jxvf FILE',
+  'tbz2': 'tar jxvf FILE',
+  'tar.xz': 'tar --xz -xvf FILE',
+  'txz': 'tar --xz -xvf FILE',
+  'tar.lzma': 'tar --lzma -xvf FILE',
+  'tlz': 'tar --lzma -xvf FILE',
+  'tar.zst': 'tar --zstd -xvf FILE',
+  'tzst': 'tar --zstd -xvf FILE',
+  'tar': 'tar xvf FILE',
+  'tar.lz': 'tar xvf FILE',
+  'tar.lz4': 'lz4 -c -d FILE | tar xvf - ',
+  'gz': 'gunzip FILE',
+  'bz2': 'bunzip2 FILE',
+  'xz': 'unxz FILE',
+  'lzma': 'unlzma FILE',
+  'z': 'uncompress FILE',
+  'zip': 'unzip FILE',
+  'war': 'unzip FILE',
+  'jar': 'unzip FILE',
+  'ear': 'unzip FILE',
+  'sublime-package': 'unzip FILE',
+  'ipa': 'unzip FILE',
+  'ipsw': 'unzip FILE',
+  'apk': 'unzip FILE',
+  'xpi': 'unzip FILE',
+  'aar': 'unzip FILE',
+  'whl': 'unzip FILE',
+  'rar': 'unrar x -ad FILE',
+  'rpm': 'rpm2cpio FILE | cpio --quiet -id',
+  '7z': '7za x FILE',
+  'deb': 'mkdir -p "control" "data"'
+      'ar vx FILE > /dev/null'
+      'cd control; extract ../control.tar.*'
+      'cd ../data; extract ../data.tar.*'
+      'cd ..; rm *.tar.* debian-binary',
+  'zst': 'unzstd FILE',
+  'cab': 'cabextract FILE',
+  'exe': 'cabextract FILE',
+  'cpio': 'cpio -idmvF FILE',
+  'obscpio': 'cpio -idmvF FILE',
+  'zpaq': 'zpaq x FILE',
+};

@@ -39,6 +39,7 @@
   "dark": "Dark",
   "debug": "Debug",
   "decode": "Decode",
+  "decompress": "Decompress",
   "delete": "Delete",
   "deleteServers": "Batch delete servers",
   "disabled": "Disabled",

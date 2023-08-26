@@ -39,6 +39,7 @@
   "dark": "暗",
   "debug": "调试",
   "decode": "解码",
+  "decompress": "解压缩",
   "delete": "删除",
   "deleteServers": "批量删除服务器",
   "disabled": "已禁用",

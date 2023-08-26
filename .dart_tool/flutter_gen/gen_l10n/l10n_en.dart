@@ -122,6 +122,9 @@ class SEn extends S {
   String get decode => 'Decode';
 
   @override
+  String get decompress => 'Decompress';
+
+  @override
   String get delete => 'Delete';
 
   @override

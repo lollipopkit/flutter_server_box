@@ -122,6 +122,9 @@ class SId extends S {
   String get decode => 'Membaca sandi';
 
   @override
+  String get decompress => 'Dekompresi';
+
+  @override
   String get delete => 'Menghapus';
 
   @override
