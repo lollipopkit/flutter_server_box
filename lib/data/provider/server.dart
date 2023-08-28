@@ -39,6 +39,11 @@ class ServerProvider extends ChangeNotifier {
   final _settingStore = locator<SettingStore>();
 
   Future<void> loadLocalData() async {
+    // Issue #147
+    // Clear all servers because of restarting app will cause duplicate servers
+    _servers.clear();
+    _serverOrder.clear();
+
     final spis = _serverStore.fetch();
     for (final spi in spis) {
       _servers[spi.id] = genServer(spi);
