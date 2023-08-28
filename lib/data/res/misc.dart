@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/services.dart';
 
 import '../model/app/github_id.dart';
@@ -52,3 +54,5 @@ const participants = <GhId>{
   'xgzxmytx',
   'wind057',
 };
+
+const jsonEncoder = JsonEncoder.withIndent('  ');

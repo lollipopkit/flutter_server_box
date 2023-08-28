@@ -254,7 +254,10 @@ class _HomePageState extends State<HomePage>
 
               /// Encode [map] to String with indent `\t`
               final text = const JsonEncoder.withIndent('\t').convert(map);
-              final result = await AppRoute.editor(text: text, langCode: 'json',).go(context);
+              final result = await AppRoute.editor(
+                text: text,
+                langCode: 'json',
+              ).go(context);
               if (result == null) {
                 return;
               }

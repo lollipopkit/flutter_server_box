@@ -1,18 +1,16 @@
-// Models for `ps -aux`
+import '../../../data/res/misc.dart';
 
-// Each line
-import 'dart:convert';
-
+/// Some field can be null due to incompatible format on `BSD` and `Alpine`
 class Proc {
   final String user;
   final int pid;
-  final double cpu;
-  final double mem;
-  final String vsz;
-  final String rss;
-  final String tty;
-  final String stat;
-  final String start;
+  final double? cpu;
+  final double? mem;
+  final String? vsz;
+  final String? rss;
+  final String? tty;
+  final String? stat;
+  final String? start;
   final String time;
   final String command;
 
@@ -65,7 +63,7 @@ class Proc {
 
   @override
   String toString() {
-    return const JsonEncoder.withIndent('  ').convert(toJson());
+    return jsonEncoder.convert(toJson());
   }
 
   String get binary {
@@ -99,16 +97,19 @@ class PsResult {
     }
     switch (sort) {
       case ProcSortMode.cpu:
-        procs.sort((a, b) => b.cpu.compareTo(a.cpu));
+        procs.sort((a, b) => b.cpu?.compareTo(a.cpu ?? 0) ?? 0);
         break;
       case ProcSortMode.mem:
-        procs.sort((a, b) => b.mem.compareTo(a.mem));
+        procs.sort((a, b) => b.mem?.compareTo(a.mem ?? 0) ?? 0);
         break;
       case ProcSortMode.pid:
         procs.sort((a, b) => a.pid.compareTo(b.pid));
         break;
       case ProcSortMode.user:
         procs.sort((a, b) => a.user.compareTo(b.user));
+        break;
+      case ProcSortMode.name:
+        procs.sort((a, b) => a.binary.compareTo(b.binary));
         break;
     }
     return PsResult(procs: procs, error: err.isEmpty ? null : err);
@@ -119,5 +120,7 @@ enum ProcSortMode {
   cpu,
   mem,
   pid,
-  user;
+  user,
+  name,
+  ;
 }

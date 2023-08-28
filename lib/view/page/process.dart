@@ -4,18 +4,18 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/context.dart';
-import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
-import 'package:toolbox/core/utils/ui.dart';
-import 'package:toolbox/data/model/server/proc.dart';
-import 'package:toolbox/data/model/server/server_private_info.dart';
-import 'package:toolbox/data/res/ui.dart';
-import 'package:toolbox/view/widget/round_rect_card.dart';
-import 'package:toolbox/view/widget/two_line_text.dart';
 
+import '../../core/utils/ui.dart';
+import '../../data/model/app/shell_func.dart';
+import '../../data/model/server/proc.dart';
+import '../../data/model/server/server_private_info.dart';
 import '../../data/provider/server.dart';
+import '../../data/res/ui.dart';
 import '../../locator.dart';
 import '../widget/custom_appbar.dart';
+import '../widget/round_rect_card.dart';
+import '../widget/two_line_text.dart';
 
 class ProcessPage extends StatefulWidget {
   final ServerPrivateInfo spi;
@@ -34,7 +34,12 @@ class _ProcessPageState extends State<ProcessPage> {
 
   PsResult _result = PsResult(procs: []);
   int? _lastFocusId;
-  ProcSortMode _procSortMode = ProcSortMode.mem;
+
+  // Issue #64
+  // In cpu mode, the process list will change in a high frequency.
+  // So user will easily know that the list is refreshed.
+  ProcSortMode _procSortMode = ProcSortMode.cpu;
+  List<ProcSortMode> _sortModes = ProcSortMode.values;
 
   final _serverProvider = locator<ServerProvider>();
 
@@ -54,12 +59,23 @@ class _ProcessPageState extends State<ProcessPage> {
 
   Future<void> _refresh() async {
     if (mounted) {
-      final result = await _client?.run('ps -aux'.withLangExport).string;
+      final result = await _client?.run(AppShellFuncType.process.exec).string;
       if (result == null || result.isEmpty) {
         showSnackBar(context, Text(_s.noResult));
         return;
       }
       _result = PsResult.parse(result, sort: _procSortMode);
+
+      // If there are any [Proc]'s data is not complete,
+      // the option to sort by cpu/mem will not be available.
+      final isAnyProcDataNotComplete =
+          _result.procs.any((e) => e.cpu == null || e.mem == null);
+      if (isAnyProcDataNotComplete) {
+        _sortModes.removeWhere((e) => e == ProcSortMode.cpu);
+        _sortModes.removeWhere((e) => e == ProcSortMode.mem);
+      } else {
+        _sortModes = ProcSortMode.values;
+      }
       setState(() {});
     } else {
       _timer.cancel();
@@ -83,10 +99,8 @@ class _ProcessPageState extends State<ProcessPage> {
         },
         icon: const Icon(Icons.sort),
         initialValue: _procSortMode,
-        itemBuilder: (_) => ProcSortMode.values
-            .map(
-              (e) => PopupMenuItem(value: e, child: Text(e.name)),
-            )
+        itemBuilder: (_) => _sortModes
+            .map((e) => PopupMenuItem(value: e, child: Text(e.name)))
             .toList(),
       ),
     ];
@@ -107,21 +121,7 @@ class _ProcessPageState extends State<ProcessPage> {
       child = ListView.builder(
         itemCount: _result.procs.length,
         padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 7),
-        itemBuilder: (ctx, idx) {
-          final proc = _result.procs[idx];
-          return AnimatedSwitcher(
-            duration: const Duration(milliseconds: 277),
-            switchInCurve: Curves.easeIn,
-            switchOutCurve: Curves.easeOut,
-            transitionBuilder: (child, animation) {
-              return FadeTransition(
-                opacity: animation,
-                child: child,
-              );
-            },
-            child: _buildListItem(proc),
-          );
-        },
+        itemBuilder: (_, idx) => _buildListItem(_result.procs[idx]),
       );
     }
     return Scaffold(
@@ -148,14 +148,7 @@ class _ProcessPageState extends State<ProcessPage> {
           maxLines: 3,
           overflow: TextOverflow.fade,
         ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TwoLineText(up: proc.cpu.toStringAsFixed(1), down: 'cpu'),
-            width13,
-            TwoLineText(up: proc.mem.toStringAsFixed(1), down: 'mem'),
-          ],
-        ),
+        trailing: _buildItemTrail(proc),
         onTap: () => _lastFocusId = proc.pid,
         onLongPress: () {
           showRoundDialog(
@@ -178,6 +171,20 @@ class _ProcessPageState extends State<ProcessPage> {
         autofocus: _lastFocusId == proc.pid,
       ),
       key: ValueKey(proc.pid),
+    );
+  }
+
+  Widget? _buildItemTrail(Proc proc) {
+    if (proc.cpu == null || proc.mem == null) {
+      return null;
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        TwoLineText(up: proc.cpu!.toStringAsFixed(1), down: 'cpu'),
+        width13,
+        TwoLineText(up: proc.mem!.toStringAsFixed(1), down: 'mem'),
+      ],
     );
   }
 }

@@ -2,14 +2,16 @@ import '../../res/build_data.dart';
 import '../../res/server_cmd.dart';
 import '../server/system.dart';
 
-const _cmdDivider = '\necho $seperator\n';
+const _cmdDivider = '\necho $seperator\n\t';
 
 const _serverBoxDir = r'$HOME/.config/server_box';
 const _shellPath = '$_serverBoxDir/mobile_app.sh';
 
 enum AppShellFuncType {
   status,
-  docker;
+  docker,
+  process,
+  ;
 
   String get flag {
     switch (this) {
@@ -17,6 +19,8 @@ enum AppShellFuncType {
         return 's';
       case AppShellFuncType.docker:
         return 'd';
+      case AppShellFuncType.process:
+        return 'p';
     }
   }
 
@@ -30,6 +34,8 @@ enum AppShellFuncType {
         // `dockeR` -> avoid conflict with `docker` command
         // 以防止循环递归
         return 'dockeR';
+      case AppShellFuncType.process:
+        return 'process';
     }
   }
 
@@ -39,17 +45,36 @@ enum AppShellFuncType {
         return '''
 result=\$(uname 2>&1 | grep "Linux")
 if [ "\$result" != "" ]; then
-${_statusCmds.join(_cmdDivider)}
+\t${_statusCmds.join(_cmdDivider)}
 else
-${_bsdStatusCmd.join(_cmdDivider)}
+\t${_bsdStatusCmd.join(_cmdDivider)}
 fi''';
       case AppShellFuncType.docker:
         return '''
 result=\$(docker version 2>&1 | grep "permission denied")
 if [ "\$result" != "" ]; then
-${_dockerCmds.join(_cmdDivider)}
+\t${_dockerCmds.join(_cmdDivider)}
 else
-${_dockerCmds.map((e) => "sudo -S $e").join(_cmdDivider)}
+\t${_dockerCmds.map((e) => "sudo -S $e").join(_cmdDivider)}
+fi''';
+      case AppShellFuncType.process:
+        return '''
+# Try sequencially
+# main Linux: `ps -aux`
+# BSD: `ps -ax`
+# alpine: `ps -o pid,user,time,args`
+#
+# If there is any error, try another one
+result=\$(ps -aux 2>&1 | grep "ps: ")
+if [ "\$result" = "" ]; then
+  ps -aux
+else
+  result=\$(ps -ax 2>&1 | grep "ps: ")
+  if [ "\$result" = "" ]; then
+    ps -ax
+  else
+    ps -o pid,user,time,args
+  fi
 fi''';
     }
   }
