@@ -194,7 +194,8 @@ class _SettingPageState extends State<SettingPage> {
         _buildFont(),
         _buildTermFontSize(),
         _buildSSHVirtualKeyAutoOff(),
-        _buildKeyboardType(),
+        // Use hardware keyboard on desktop, so there is no need to set it
+        if (isMobile) _buildKeyboardType(),
         _buildSSHVirtKeys(),
         _buildSftpRmrfDir(),
       ].map((e) => RoundRectCard(e)).toList(),

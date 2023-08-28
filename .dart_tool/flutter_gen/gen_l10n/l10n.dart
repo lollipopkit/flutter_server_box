@@ -158,6 +158,12 @@ abstract class S {
   /// **'Alter url'**
   String get alterUrl;
 
+  /// No description provided for @atOwnRisk.
+  ///
+  /// In en, this message translates to:
+  /// **'At your own risk !'**
+  String get atOwnRisk;
+
   /// No description provided for @attention.
   ///
   /// In en, this message translates to:

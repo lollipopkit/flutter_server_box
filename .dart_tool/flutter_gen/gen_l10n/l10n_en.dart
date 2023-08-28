@@ -35,6 +35,9 @@ class SEn extends S {
   String get alterUrl => 'Alter url';
 
   @override
+  String get atOwnRisk => 'At your own risk !';
+
+  @override
   String get attention => 'Attention';
 
   @override

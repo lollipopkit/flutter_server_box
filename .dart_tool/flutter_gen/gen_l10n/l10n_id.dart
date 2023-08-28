@@ -35,6 +35,9 @@ class SId extends S {
   String get alterUrl => 'Alter url';
 
   @override
+  String get atOwnRisk => 'Dengan risiko Anda sendiri';
+
+  @override
   String get attention => 'Perhatian';
 
   @override

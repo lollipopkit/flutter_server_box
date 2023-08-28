@@ -43,6 +43,28 @@ enum NetViewType {
         );
     }
   }
+
+  int toJson() {
+    switch (this) {
+      case NetViewType.conn:
+        return 0;
+      case NetViewType.speed:
+        return 1;
+      case NetViewType.traffic:
+        return 2;
+    }
+  }
+
+  static NetViewType fromJson(int json) {
+    switch (json) {
+      case 0:
+        return NetViewType.conn;
+      case 2:
+        return NetViewType.traffic;
+      default:
+        return NetViewType.speed;
+    }
+  }
 }
 
 class NetViewData {

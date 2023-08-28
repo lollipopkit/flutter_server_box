@@ -35,6 +35,9 @@ class SZh extends S {
   String get alterUrl => '备选链接';
 
   @override
+  String get atOwnRisk => '如果了解不多，请不要继续！';
+
+  @override
   String get attention => '注意';
 
   @override
@@ -753,6 +756,9 @@ class SZhTw extends SZh {
 
   @override
   String get alterUrl => '備選鏈接';
+
+  @override
+  String get atOwnRisk => '如果了解不多，請不要繼續！';
 
   @override
   String get attention => '注意';

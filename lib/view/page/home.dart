@@ -233,36 +233,7 @@ class _HomePageState extends State<HomePage>
             leading: const Icon(Icons.settings),
             title: Text(_s.setting),
             onTap: () => AppRoute.setting().go(context),
-            onLongPress: () async {
-              final map = _setting.toJson();
-              final go = await showRoundDialog(
-                context: context,
-                child: Text(_s.attention),
-                actions: [
-                  TextButton(
-                    onPressed: () => context.pop(true),
-                    child: Text(
-                      _s.ok,
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  ),
-                ],
-              );
-              if (go != true) {
-                return;
-              }
-
-              /// Encode [map] to String with indent `\t`
-              final text = const JsonEncoder.withIndent('\t').convert(map);
-              final result = await AppRoute.editor(
-                text: text,
-                langCode: 'json',
-              ).go(context);
-              if (result == null) {
-                return;
-              }
-              _setting.box.putAll(json.decode(result) as Map<String, dynamic>);
-            },
+            onLongPress: _onLongPressSetting,
           ),
           ListTile(
             leading: const Icon(Icons.vpn_key),
@@ -382,5 +353,37 @@ class _HomePageState extends State<HomePage>
     if (_setting.autoUpdateHomeWidget.fetch()) {
       homeWidgetChannel.invokeMethod('update');
     }
+  }
+
+  Future<void> _onLongPressSetting() async {
+    final go = await showRoundDialog(
+      context: context,
+      title: Text(_s.attention),
+      child: Text(_s.atOwnRisk),
+      actions: [
+        TextButton(
+          onPressed: () => context.pop(true),
+          child: Text(
+            _s.ok,
+            style: const TextStyle(color: Colors.red),
+          ),
+        ),
+      ],
+    );
+    if (go != true) {
+      return;
+    }
+
+    /// Encode [map] to String with indent `\t`
+    final map = _setting.toJson();
+    final text = jsonEncoder.convert(map);
+    final result = await AppRoute.editor(
+      text: text,
+      langCode: 'json',
+    ).go(context);
+    if (result == null) {
+      return;
+    }
+    _setting.box.putAll(json.decode(result) as Map<String, dynamic>);
   }
 }

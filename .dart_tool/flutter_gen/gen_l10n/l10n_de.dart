@@ -35,6 +35,9 @@ class SDe extends S {
   String get alterUrl => 'Url ändern';
 
   @override
+  String get atOwnRisk => 'Auf eigene Gefahr !';
+
+  @override
   String get attention => 'Achtung';
 
   @override
