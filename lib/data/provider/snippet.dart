@@ -21,7 +21,7 @@ class SnippetProvider extends ChangeNotifier {
   void loadData() {
     _snippets = _store.fetch();
     final order = _setting.snippetOrder.fetch();
-    if (order != null) {
+    if (order.isNotEmpty) {
       final surplus = _snippets.reorder(
         order: order,
         finder: (n, name) => n.name == name,

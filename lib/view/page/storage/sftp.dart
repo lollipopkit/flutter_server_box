@@ -430,7 +430,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   void _delete(BuildContext context, SftpName file) {
     context.pop();
     final isDir = file.attr.isDirectory;
-    final useRmrf = _setting.sftpRmrfDir.fetch()!;
+    final useRmrf = _setting.sftpRmrfDir.fetch();
     final dirText = (isDir && !useRmrf) ? '\n${_s.sureDirEmpty}' : '';
     final text = '${_s.sureDelete(file.filename)}$dirText';
     final child = Text(text);

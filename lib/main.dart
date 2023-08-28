@@ -96,7 +96,7 @@ Future<void> initApp() async {
   // Android only
   if (!isAndroid) return;
   // Only start service when [bgRun] is true.
-  if (locator<SettingStore>().bgRun.fetch() ?? false) {
+  if (locator<SettingStore>().bgRun.fetch()) {
     bgRunChannel.invokeMethod('startService');
   }
   // SharedPreferences is only used on Android for saving home widgets settings.

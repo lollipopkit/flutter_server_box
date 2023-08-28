@@ -45,7 +45,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
   void initState() {
     super.initState();
     switchStatusBar(hide: true);
-    _rotateQuarter = _setting.fullScreenRotateQuarter.fetch()!;
+    _rotateQuarter = _setting.fullScreenRotateQuarter.fetch();
     _timer = Timer.periodic(const Duration(minutes: 1), (_) {
       if (mounted) {
         setState(() {});
@@ -362,7 +362,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
 
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
-    if (_setting.autoCheckAppUpdate.fetch()!) {
+    if (_setting.autoCheckAppUpdate.fetch()) {
       doUpdate(context);
     }
     await GetIt.I.allReady();

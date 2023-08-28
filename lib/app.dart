@@ -18,8 +18,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     setTransparentNavigationBar(context);
-    primaryColor = Color(_setting.primaryColor.fetch()!);
-    final fullScreen = _setting.fullScreen.fetch()!;
+    primaryColor = Color(_setting.primaryColor.fetch());
+    final fullScreen = _setting.fullScreen.fetch();
 
     return ValueListenableBuilder<int>(
       valueListenable: _setting.themeMode.listenable(),
@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
         // Issue #57
         // if not [ok] -> [AMOLED] mode, use [ThemeMode.dark]
         final themeMode = isAMOLED ? ThemeMode.values[tMode] : ThemeMode.dark;
-        final locale = _setting.locale.fetch()?.toLocale;
+        final locale = _setting.locale.fetch().toLocale;
         final darkTheme = ThemeData(
           useMaterial3: true,
           brightness: Brightness.dark,

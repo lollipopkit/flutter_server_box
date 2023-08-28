@@ -10,35 +10,72 @@ class PersistentStore<E> {
     box = await Hive.openBox(boxName);
     return this;
   }
-
-  StoreProperty<T> property<T>(String key, {T? defaultValue}) {
-    return StoreProperty<T>(box, key, defaultValue);
-  }
 }
 
-class StoreProperty<T> {
+abstract class StorePropertyBase<T> {
+  ValueListenable<T> listenable();
+  T fetch();
+  Future<void> put(T value);
+  Future<void> delete();
+}
+
+class StoreProperty<T> implements StorePropertyBase<T> {
   StoreProperty(this._box, this._key, this.defaultValue);
 
   final Box _box;
   final String _key;
-  T? defaultValue;
+  T defaultValue;
 
+  @override
   ValueListenable<T> listenable() {
     return PropertyListenable<T>(_box, _key, defaultValue);
   }
 
-  T? fetch() {
-    return _box.get(_key, defaultValue: defaultValue);
+  @override
+  T fetch() {
+    return _box.get(_key, defaultValue: defaultValue)!;
   }
 
-  dynamic fetchRaw() {
-    return _box.get(_key, defaultValue: defaultValue);
-  }
-
+  @override
   Future<void> put(T value) {
     return _box.put(_key, value);
   }
 
+  @override
+  Future<void> delete() {
+    return _box.delete(_key);
+  }
+}
+
+class StoreListProperty<T> implements StorePropertyBase<List<T>> {
+  StoreListProperty(this._box, this._key, this.defaultValue);
+
+  final Box _box;
+  final String _key;
+  List<T> defaultValue;
+
+  @override
+  ValueListenable<List<T>> listenable() {
+    return PropertyListenable<List<T>>(_box, _key, defaultValue);
+  }
+
+  @override
+  List<T> fetch() {
+    final val = _box.get(_key, defaultValue: defaultValue)!;
+
+    if (val is! List) {
+      throw Exception('StoreListProperty("$_key") is: ${val.runtimeType}');
+    }
+
+    return List<T>.from(val);
+  }
+
+  @override
+  Future<void> put(List<T> value) {
+    return _box.put(_key, value);
+  }
+
+  @override
   Future<void> delete() {
     return _box.delete(_key);
   }

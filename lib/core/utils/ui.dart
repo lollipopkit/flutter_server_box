@@ -76,7 +76,7 @@ void showLoadingDialog(BuildContext context, {bool barrierDismiss = false}) {
 
 Widget buildSwitch(
   BuildContext context,
-  StoreProperty<bool> prop, {
+  StorePropertyBase<bool> prop, {
   void Function(bool)? func,
 }) {
   return ValueListenableBuilder(
@@ -115,8 +115,8 @@ String tabTitleName(BuildContext context, AppTab tab) {
   }
 }
 
-Future<void> loadFontFile(String? localPath) async {
-  if (localPath == null) return;
+Future<void> loadFontFile(String localPath) async {
+  if (localPath.isEmpty) return;
   final name = getFileName(localPath);
   if (name == null) return;
   var fontLoader = FontLoader(name);

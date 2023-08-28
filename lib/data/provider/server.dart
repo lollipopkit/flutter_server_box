@@ -49,7 +49,7 @@ class ServerProvider extends ChangeNotifier {
       _servers[spi.id] = genServer(spi);
     }
     final serverOrder_ = _settingStore.serverOrder.fetch();
-    if (serverOrder_ != null) {
+    if (serverOrder_.isNotEmpty) {
       spis.reorder(
         order: serverOrder_,
         finder: (n, id) => n.id == id,
@@ -112,7 +112,7 @@ class ServerProvider extends ChangeNotifier {
   }
 
   Future<void> startAutoRefresh() async {
-    final duration = _settingStore.serverStatusUpdateInterval.fetch()!;
+    final duration = _settingStore.serverStatusUpdateInterval.fetch();
     stopAutoRefresh();
     if (duration == 0) return;
     _timer = Timer.periodic(Duration(seconds: duration), (_) async {

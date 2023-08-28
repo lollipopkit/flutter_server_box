@@ -5,7 +5,7 @@ class TryLimiter {
   final Map<String, int> _triedTimes = {};
 
   bool canTry(String id) {
-    final maxCount = locator<SettingStore>().maxRetryCount.fetch()!;
+    final maxCount = locator<SettingStore>().maxRetryCount.fetch();
     if (maxCount <= 0) {
       return true;
     }

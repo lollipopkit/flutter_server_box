@@ -77,7 +77,12 @@ class _SettingPageState extends State<SettingPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _s = S.of(context)!;
-    _localeCode.value = _setting.locale.fetch() ?? _s.localeName;
+    final localeSettingVal = _setting.locale.fetch();
+    if (localeSettingVal.isEmpty) {
+      _localeCode.value = _s.localeName;
+    } else {
+      _localeCode.value = localeSettingVal;
+    }
   }
 
   @override
@@ -85,18 +90,18 @@ class _SettingPageState extends State<SettingPage> {
     super.initState();
     _serverProvider = locator<ServerProvider>();
     _setting = locator<SettingStore>();
-    _launchPageIdx.value = _setting.launchPage.fetch()!;
-    _nightMode.value = _setting.themeMode.fetch()!;
-    _updateInterval.value = _setting.serverStatusUpdateInterval.fetch()!;
-    _maxRetryCount.value = _setting.maxRetryCount.fetch()!;
-    _selectedColorValue.value = _setting.primaryColor.fetch()!;
-    _termFontSize.value = _setting.termFontSize.fetch()!;
-    _editorFontSize.value = _setting.editorFontSize.fetch()!;
-    _editorTheme.value = _setting.editorTheme.fetch()!;
-    _editorDarkTheme.value = _setting.editorDarkTheme.fetch()!;
-    _keyboardType.value = _setting.keyboardType.fetch()!;
-    _rotateQuarter.value = _setting.fullScreenRotateQuarter.fetch()!;
-    _netViewType.value = _setting.netViewType.fetch()!;
+    _launchPageIdx.value = _setting.launchPage.fetch();
+    _nightMode.value = _setting.themeMode.fetch();
+    _updateInterval.value = _setting.serverStatusUpdateInterval.fetch();
+    _maxRetryCount.value = _setting.maxRetryCount.fetch();
+    _selectedColorValue.value = _setting.primaryColor.fetch();
+    _termFontSize.value = _setting.termFontSize.fetch();
+    _editorFontSize.value = _setting.editorFontSize.fetch();
+    _editorTheme.value = _setting.editorTheme.fetch();
+    _editorDarkTheme.value = _setting.editorDarkTheme.fetch();
+    _keyboardType.value = _setting.keyboardType.fetch();
+    _rotateQuarter.value = _setting.fullScreenRotateQuarter.fetch();
+    _netViewType.value = _setting.netViewType.fetch();
     SharedPreferences.getInstance().then((value) => _sp = value);
   }
 
@@ -563,7 +568,7 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildDiskIgnorePath() {
-    final paths = _setting.diskIgnorePath.fetch()!;
+    final paths = _setting.diskIgnorePath.fetch();
     return ListTile(
       title: Text(_s.diskIgnorePath),
       trailing: Text(_s.edit, style: textSize15),
@@ -987,7 +992,7 @@ class _SettingPageState extends State<SettingPage> {
 
   void _showFontSizeDialog(
     ValueNotifier<double> notifier,
-    StoreProperty property,
+    StorePropertyBase<double> property,
   ) {
     final ctrller = TextEditingController(text: notifier.value.toString());
     void onSave() {

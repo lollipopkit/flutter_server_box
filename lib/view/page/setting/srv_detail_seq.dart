@@ -30,7 +30,7 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
   @override
   void initState() {
     super.initState();
-    _cardsOrder.addAll(_store.detailCardOrder.fetch()!);
+    _cardsOrder.addAll(_store.detailCardOrder.fetch());
   }
 
   @override

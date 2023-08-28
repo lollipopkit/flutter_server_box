@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/core/utils/platform.dart';
-import 'package:toolbox/data/model/ssh/virtual_key.dart';
 
 import '../model/app/net_view.dart';
 import '../res/default.dart';
@@ -9,112 +8,142 @@ import '../res/default.dart';
 class SettingStore extends PersistentStore {
   Map<String, dynamic> toJson() => {for (var e in box.keys) e: box.get(e)};
 
-  StoreProperty<int> get primaryColor => property<int>(
-        'primaryColor',
-        defaultValue: 4287106639,
-      );
+  late final primaryColor = StoreProperty(
+    box,
+    'primaryColor',
+    4287106639,
+  );
 
-  StoreProperty<int> get serverStatusUpdateInterval => property(
-        'serverStatusUpdateInterval',
-        defaultValue: defaultUpdateInterval,
-      );
+  late final serverStatusUpdateInterval = StoreProperty(
+    box,
+    'serverStatusUpdateInterval',
+    defaultUpdateInterval,
+  );
 
   // Lanch page idx
-  StoreProperty<int> get launchPage => property(
-        'launchPage',
-        defaultValue: defaultLaunchPageIdx,
-      );
+  late final launchPage = StoreProperty(
+    box,
+    'launchPage',
+    defaultLaunchPageIdx,
+  );
 
   // Version of store db
-  StoreProperty<int> get storeVersion =>
-      property('storeVersion', defaultValue: 0);
+  late final storeVersion = StoreProperty(box, 'storeVersion', 0);
 
-  StoreProperty<int> get termColorIdx =>
-      property('termColorIdx', defaultValue: 0);
+  late final termColorIdx = StoreProperty(box, 'termColorIdx', 0);
 
   // Max retry count when connect to server
-  StoreProperty<int> get maxRetryCount =>
-      property('maxRetryCount', defaultValue: 2);
+  late final maxRetryCount = StoreProperty(box, 'maxRetryCount', 2);
 
   // Night mode: 0 -> auto, 1 -> light, 2 -> dark
-  StoreProperty<int> get themeMode => property('themeMode', defaultValue: 0);
+  late final themeMode = StoreProperty(box, 'themeMode', 0);
 
   // Font file path
-  StoreProperty<String> get fontPath => property('fontPath');
+  late final fontPath = StoreProperty(box, 'fontPath', '');
 
   // Backgroud running (Android)
-  StoreProperty<bool> get bgRun => property('bgRun', defaultValue: isAndroid);
+  late final bgRun = StoreProperty(box, 'bgRun', isAndroid);
 
   // Server order
-  StoreProperty<List<String>> get serverOrder =>
-      property('serverOrder', defaultValue: null);
+  late final serverOrder = StoreListProperty<String>(box, 'serverOrder', []);
 
-  StoreProperty<List<String>> get snippetOrder => property(
-        'snippetOrder',
-        defaultValue: null,
-      );
+  late final snippetOrder = StoreListProperty<String>(box, 'snippetOrder', []);
 
   // Server details page cards order
-  StoreProperty<List<String>> get detailCardOrder =>
-      property('detailCardPrder', defaultValue: defaultDetailCardOrder);
+  late final detailCardOrder =
+      StoreListProperty(box, 'detailCardPrder', defaultDetailCardOrder);
 
   // SSH term font size
-  StoreProperty<double> get termFontSize =>
-      property('termFontSize', defaultValue: 13);
+  late final termFontSize = StoreProperty(box, 'termFontSize', 13.0);
 
   // Server detail disk ignore path
-  StoreProperty<List<String>> get diskIgnorePath =>
-      property('diskIgnorePath', defaultValue: defaultDiskIgnorePath);
+  late final diskIgnorePath =
+      StoreListProperty(box, 'diskIgnorePath', defaultDiskIgnorePath);
 
   // Locale
-  StoreProperty<String> get locale => property('locale', defaultValue: null);
+  late final locale = StoreProperty<String>(box, 'locale', '');
 
   // SSH virtual key (ctrl | alt) auto turn off
-  StoreProperty<bool> get sshVirtualKeyAutoOff =>
-      property('sshVirtualKeyAutoOff', defaultValue: true);
+  late final sshVirtualKeyAutoOff =
+      StoreProperty(box, 'sshVirtualKeyAutoOff', true);
 
-  StoreProperty<double> get editorFontSize =>
-      property('editorFontSize', defaultValue: 13);
+  late final editorFontSize = StoreProperty(box, 'editorFontSize', 13.0);
 
   // Editor theme
-  StoreProperty<String> get editorTheme =>
-      property('editorTheme', defaultValue: defaultEditorTheme);
+  late final editorTheme = StoreProperty(
+    box,
+    'editorTheme',
+    defaultEditorTheme,
+  );
 
-  StoreProperty<String> get editorDarkTheme =>
-      property('editorDarkTheme', defaultValue: defaultEditorDarkTheme);
+  late final editorDarkTheme = StoreProperty(
+    box,
+    'editorDarkTheme',
+    defaultEditorDarkTheme,
+  );
 
-  StoreProperty<bool> get fullScreen =>
-      property('fullScreen', defaultValue: false);
+  late final fullScreen = StoreProperty(
+    box,
+    'fullScreen',
+    false,
+  );
 
-  StoreProperty<bool> get fullScreenJitter =>
-      property('fullScreenJitter', defaultValue: true);
+  late final fullScreenJitter = StoreProperty(
+    box,
+    'fullScreenJitter',
+    true,
+  );
 
-  StoreProperty<int> get fullScreenRotateQuarter =>
-      property('fullScreenRotateQuarter', defaultValue: 1);
+  late final fullScreenRotateQuarter = StoreProperty(
+    box,
+    'fullScreenRotateQuarter',
+    1,
+  );
 
-  StoreProperty<int> get keyboardType =>
-      property('keyboardType', defaultValue: TextInputType.text.index);
+  late final keyboardType = StoreProperty(
+    box,
+    'keyboardType',
+    TextInputType.text.index,
+  );
 
-  StoreProperty<List<VirtKey>> get sshVirtKeys =>
-      property('sshVirtKeys', defaultValue: defaultSSHVirtKeys);
+  late final sshVirtKeys = StoreListProperty(
+    box,
+    'sshVirtKeys',
+    defaultSSHVirtKeys,
+  );
 
-  StoreProperty<NetViewType> get netViewType =>
-      property('netViewType', defaultValue: NetViewType.speed);
+  late final netViewType = StoreProperty(
+    box,
+    'netViewType',
+    NetViewType.speed,
+  );
 
   // Only valid on iOS
-  StoreProperty<bool> get autoUpdateHomeWidget =>
-      property('autoUpdateHomeWidget', defaultValue: isIOS);
+  late final autoUpdateHomeWidget = StoreProperty(
+    box,
+    'autoUpdateHomeWidget',
+    isIOS,
+  );
 
-  StoreProperty<bool> get autoCheckAppUpdate =>
-      property('autoCheckAppUpdate', defaultValue: true);
+  late final autoCheckAppUpdate = StoreProperty(
+    box,
+    'autoCheckAppUpdate',
+    true,
+  );
 
   /// Display server tab function buttons on the bottom of each server card if [true]
   ///
   /// Otherwise, display them on the top of server detail page
-  StoreProperty<bool> get moveOutServerTabFuncBtns =>
-      property('moveOutServerTabFuncBtns', defaultValue: true);
+  late final moveOutServerTabFuncBtns = StoreProperty(
+    box,
+    'moveOutServerTabFuncBtns',
+    true,
+  );
 
   /// Whether use `rm -rf` to delete directory on SFTP
-  StoreProperty<bool> get sftpRmrfDir =>
-      property('sftpRmrfDir', defaultValue: true);
+  late final sftpRmrfDir = StoreProperty(
+    box,
+    'sftpRmrfDir',
+    true,
+  );
 }

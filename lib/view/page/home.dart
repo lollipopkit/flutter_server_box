@@ -54,7 +54,7 @@ class _HomePageState extends State<HomePage>
     super.initState();
     switchStatusBar(hide: false);
     WidgetsBinding.instance.addObserver(this);
-    _selectIndex.value = _setting.launchPage.fetch()!;
+    _selectIndex.value = _setting.launchPage.fetch();
     // avoid index out of range
     if (_selectIndex.value >= AppTab.values.length || _selectIndex.value < 0) {
       _selectIndex.value = 0;
@@ -90,7 +90,7 @@ class _HomePageState extends State<HomePage>
         break;
       case AppLifecycleState.paused:
         // Keep running in background on Android device
-        if (isAndroid && _setting.bgRun.fetch()!) {
+        if (isAndroid && _setting.bgRun.fetch()) {
           if (_app.moveBg) {
             bgRunChannel.invokeMethod('sendToBackground');
           }
@@ -366,7 +366,7 @@ class _HomePageState extends State<HomePage>
 
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
-    if (_setting.autoCheckAppUpdate.fetch()!) {
+    if (_setting.autoCheckAppUpdate.fetch()) {
       doUpdate(context);
     }
     updateHomeWidget();
@@ -379,7 +379,7 @@ class _HomePageState extends State<HomePage>
   }
 
   void updateHomeWidget() {
-    if (_setting.autoUpdateHomeWidget.fetch()!) {
+    if (_setting.autoUpdateHomeWidget.fetch()) {
       homeWidgetChannel.invokeMethod('update');
     }
   }

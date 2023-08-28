@@ -61,10 +61,10 @@ class _SSHPageState extends State<SSHPage> {
     final fontFamilly = getFileName(_setting.fontPath.fetch());
     final textStyle = TextStyle(
       fontFamily: fontFamilly,
-      fontSize: _setting.termFontSize.fetch()!,
+      fontSize: _setting.termFontSize.fetch(),
     );
     _terminalStyle = TerminalStyle.fromTextStyle(textStyle);
-    _keyboardType = TextInputType.values[_setting.keyboardType.fetch()!];
+    _keyboardType = TextInputType.values[_setting.keyboardType.fetch()];
     _initTerminal();
     _initVirtKeys();
   }
@@ -299,7 +299,7 @@ class _SSHPageState extends State<SSHPage> {
   }
 
   void _initVirtKeys() {
-    final virtKeys = List<VirtKey>.from(_setting.sshVirtKeys.fetchRaw());
+    final virtKeys = List<VirtKey>.from(_setting.sshVirtKeys.fetch());
 
     for (int len = 0; len < virtKeys.length; len += 7) {
       if (len + 7 > virtKeys.length) {

@@ -61,7 +61,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   @override
   void initState() {
     super.initState();
-    _cardsOrder.addAll(_setting.detailCardOrder.fetch()!);
+    _cardsOrder.addAll(_setting.detailCardOrder.fetch());
   }
 
   @override
@@ -80,7 +80,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildMainPage(Server si) {
-    final buildFuncs = !_setting.moveOutServerTabFuncBtns.fetch()!;
+    final buildFuncs = !_setting.moveOutServerTabFuncBtns.fetch();
     return Scaffold(
       appBar: CustomAppBar(
         title: Text(si.spi.name, style: textSize18),
@@ -299,7 +299,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   Widget _buildDiskView(ServerStatus ss) {
     final disk = ss.disk;
     disk.removeWhere((e) {
-      for (final ingorePath in _setting.diskIgnorePath.fetch()!) {
+      for (final ingorePath in _setting.diskIgnorePath.fetch()) {
         if (e.path.startsWith(ingorePath)) return true;
       }
       return false;

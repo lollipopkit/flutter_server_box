@@ -42,7 +42,7 @@ class VirtualKeyboard extends TerminalInputHandler with ChangeNotifier {
       ctrl: event.ctrl || ctrl,
       alt: event.alt || alt,
     );
-    if (_setting.sshVirtualKeyAutoOff.fetch()!) {
+    if (_setting.sshVirtualKeyAutoOff.fetch()) {
       reset(e);
     }
     return defaultInputHandler.call(e);

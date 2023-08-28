@@ -7,7 +7,7 @@ extension OrderX<T> on Order<T> {
   void move(
     int oldIndex,
     int newIndex, {
-    StoreProperty<List<T>>? property,
+    StorePropertyBase<List<T>>? property,
     _OnMove<T>? onMove,
   }) {
     if (oldIndex == newIndex) return;
@@ -35,7 +35,7 @@ extension OrderX<T> on Order<T> {
     List<T> items,
     int o,
     int n, {
-    StoreProperty<List<T>>? property,
+    StorePropertyBase<List<T>>? property,
     _OnMove<T>? onMove,
   }) {
     if (o == n) return;

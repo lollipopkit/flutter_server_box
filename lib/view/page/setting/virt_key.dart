@@ -39,7 +39,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
   }
 
   Widget _buildBody() {
-    final keys_ = _setting.sshVirtKeys.fetchRaw()!;
+    final keys_ = _setting.sshVirtKeys.fetch();
     final keys = <VirtKey>[];
     for (final key in keys_) {
       keys.add(key);
