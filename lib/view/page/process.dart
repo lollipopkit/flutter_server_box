@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/context.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
+import 'package:toolbox/core/utils/misc.dart';
 
 import '../../core/utils/ui.dart';
 import '../../data/model/app/shell_func.dart';
@@ -12,6 +13,7 @@ import '../../data/model/server/proc.dart';
 import '../../data/model/server/server_private_info.dart';
 import '../../data/provider/server.dart';
 import '../../data/res/ui.dart';
+import '../../data/store/setting.dart';
 import '../../locator.dart';
 import '../widget/custom_appbar.dart';
 import '../widget/round_rect_card.dart';
@@ -30,6 +32,8 @@ class _ProcessPageState extends State<ProcessPage> {
   late Timer _timer;
   late MediaQueryData _media;
 
+  final _setting = locator<SettingStore>();
+
   SSHClient? _client;
 
   PsResult _result = PsResult(procs: []);
@@ -39,7 +43,7 @@ class _ProcessPageState extends State<ProcessPage> {
   // In cpu mode, the process list will change in a high frequency.
   // So user will easily know that the list is refreshed.
   ProcSortMode _procSortMode = ProcSortMode.cpu;
-  List<ProcSortMode> _sortModes = ProcSortMode.values;
+  List<ProcSortMode> _sortModes = List.from(ProcSortMode.values);
 
   final _serverProvider = locator<ServerProvider>();
 
@@ -47,7 +51,9 @@ class _ProcessPageState extends State<ProcessPage> {
   void initState() {
     super.initState();
     _client = _serverProvider.servers[widget.spi.id]?.client;
-    _timer = Timer.periodic(const Duration(seconds: 3), (_) => _refresh());
+    final duration =
+        Duration(seconds: _setting.serverStatusUpdateInterval.fetch());
+    _timer = Timer.periodic(duration, (_) => _refresh());
   }
 
   @override
@@ -110,7 +116,13 @@ class _ProcessPageState extends State<ProcessPage> {
         onPressed: () => showRoundDialog(
           context: context,
           title: Text(_s.error),
-          child: Text(_result.error!),
+          child: SingleChildScrollView(child: Text(_result.error!)),
+          actions: [
+            TextButton(
+              onPressed: () => copy2Clipboard(_result.error!),
+              child: Text(_s.copy),
+            ),
+          ],
         ),
       ));
     }
@@ -135,11 +147,14 @@ class _ProcessPageState extends State<ProcessPage> {
   }
 
   Widget _buildListItem(Proc proc) {
+    final leading = proc.user == null
+        ? Text(proc.pid.toString())
+        : TwoLineText(up: proc.pid.toString(), down: proc.user!);
     return RoundRectCard(
       ListTile(
         leading: SizedBox(
           width: _media.size.width / 6,
-          child: TwoLineText(up: proc.pid.toString(), down: proc.user),
+          child: leading,
         ),
         title: Text(proc.binary),
         subtitle: Text(
@@ -175,15 +190,23 @@ class _ProcessPageState extends State<ProcessPage> {
   }
 
   Widget? _buildItemTrail(Proc proc) {
-    if (proc.cpu == null || proc.mem == null) {
+    if (proc.cpu == null && proc.mem == null) {
       return null;
     }
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        TwoLineText(up: proc.cpu!.toStringAsFixed(1), down: 'cpu'),
+        if (proc.cpu != null)
+          TwoLineText(
+            up: proc.cpu!.toStringAsFixed(1),
+            down: 'cpu',
+          ),
         width13,
-        TwoLineText(up: proc.mem!.toStringAsFixed(1), down: 'mem'),
+        if (proc.mem != null)
+          TwoLineText(
+            up: proc.mem!.toStringAsFixed(1),
+            down: 'mem',
+          ),
       ],
     );
   }

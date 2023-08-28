@@ -43,8 +43,7 @@ enum AppShellFuncType {
     switch (this) {
       case AppShellFuncType.status:
         return '''
-result=\$(uname 2>&1 | grep "Linux")
-if [ "\$result" != "" ]; then
+if [ "\$isLinux" != "" ]; then
 \t${_statusCmds.join(_cmdDivider)}
 else
 \t${_bsdStatusCmd.join(_cmdDivider)}
@@ -59,23 +58,16 @@ else
 fi''';
       case AppShellFuncType.process:
         return '''
-# Try sequencially
-# main Linux: `ps -aux`
-# BSD: `ps -ax`
-# alpine: `ps -o pid,user,time,args`
-#
-# If there is any error, try another one
-result=\$(ps -aux 2>&1 | grep "ps: ")
-if [ "\$result" = "" ]; then
-  ps -aux
+if [ "\$isLinux" != "" ]; then
+\tif [ "\$isBusybox" != "" ]; then
+\t\tps w
+\telse
+\t\tps -aux
+\tfi
 else
-  result=\$(ps -ax 2>&1 | grep "ps: ")
-  if [ "\$result" = "" ]; then
-    ps -ax
-  else
-    ps -o pid,user,time,args
-  fi
-fi''';
+\tps -ax
+fi
+''';
     }
   }
 
@@ -200,6 +192,10 @@ final _shellCmd = """
 # DO NOT run multi ServerBox apps with different version at the same time
 
 export LANG=en_US.UTF-8
+
+isLinux=\$(uname 2>&1 | grep "Linux")
+# Link /bin/sh to busybox?
+isBusybox=\$(ls -l /bin/sh | grep "busybox")
 
 ${AppShellFuncType.shellScript}
 """;

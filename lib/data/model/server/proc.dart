@@ -1,8 +1,40 @@
+import 'package:logging/logging.dart';
+
 import '../../../data/res/misc.dart';
+
+final _logger = Logger('Proc');
+
+class _ProcValIdxMap {
+  final int pid;
+  final int? user;
+  final int? cpu;
+  final int? mem;
+  final int? vsz;
+  final int? rss;
+  final int? tty;
+  final int? stat;
+  final int? start;
+  final int? time;
+  final int command;
+
+  _ProcValIdxMap({
+    required this.pid,
+    this.user,
+    this.cpu,
+    this.mem,
+    this.vsz,
+    this.rss,
+    this.tty,
+    this.stat,
+    this.start,
+    this.time,
+    required this.command,
+  });
+}
 
 /// Some field can be null due to incompatible format on `BSD` and `Alpine`
 class Proc {
-  final String user;
+  final String? user;
   final int pid;
   final double? cpu;
   final double? mem;
@@ -11,37 +43,37 @@ class Proc {
   final String? tty;
   final String? stat;
   final String? start;
-  final String time;
+  final String? time;
   final String command;
 
   Proc({
-    required this.user,
+    this.user,
     required this.pid,
-    required this.cpu,
-    required this.mem,
-    required this.vsz,
-    required this.rss,
-    required this.tty,
-    required this.stat,
-    required this.start,
-    required this.time,
+    this.cpu,
+    this.mem,
+    this.vsz,
+    this.rss,
+    this.tty,
+    this.stat,
+    this.start,
+    this.time,
     required this.command,
   });
 
-  factory Proc.parse(String raw) {
+  factory Proc.parse(String raw, _ProcValIdxMap map) {
     final parts = raw.split(RegExp(r'\s+'));
     return Proc(
-      user: parts[0],
-      pid: int.parse(parts[1]),
-      cpu: double.parse(parts[2]),
-      mem: double.parse(parts[3]),
-      vsz: parts[4],
-      rss: parts[5],
-      tty: parts[6],
-      stat: parts[7],
-      start: parts[8],
-      time: parts[9],
-      command: parts.sublist(10).join(' '),
+      user: map.user == null ? null : parts[map.user!],
+      pid: int.parse(parts[map.pid]),
+      cpu: map.cpu == null ? null : double.parse(parts[map.cpu!]),
+      mem: map.mem == null ? null : double.parse(parts[map.mem!]),
+      vsz: map.vsz == null ? null : parts[map.vsz!],
+      rss: map.rss == null ? null : parts[map.rss!],
+      tty: map.tty == null ? null : parts[map.tty!],
+      stat: map.stat == null ? null : parts[map.stat!],
+      start: map.start == null ? null : parts[map.start!],
+      time: map.time == null ? null : parts[map.time!],
+      command: parts.sublist(map.command).join(' '),
     );
   }
 
@@ -84,17 +116,38 @@ class PsResult {
 
   factory PsResult.parse(String raw, {ProcSortMode sort = ProcSortMode.cpu}) {
     final lines = raw.split('\n');
+    if (lines.isEmpty) return PsResult(procs: [], error: null);
+
+    final header = lines[0];
+    final parts = header.split(RegExp(r'\s+'));
+    parts.removeWhere((element) => element.isEmpty);
+    final map = _ProcValIdxMap(
+      pid: parts.indexOfOrNull('PID')!,
+      user: parts.indexOfOrNull('USER'),
+      cpu: parts.indexOfOrNull('%CPU'),
+      mem: parts.indexOfOrNull('%MEM'),
+      vsz: parts.indexOfOrNull('VSZ'),
+      rss: parts.indexOfOrNull('RSS'),
+      tty: parts.indexOfOrNull('TTY'),
+      stat: parts.indexOfOrNull('STAT'),
+      start: parts.indexOfOrNull('START'),
+      time: parts.indexOfOrNull('TIME'),
+      command: parts.indexOfOrNull('COMMAND') ?? parts.indexOfOrNull('CMD')!,
+    );
+
     final procs = <Proc>[];
     var err = '';
     for (var i = 1; i < lines.length; i++) {
       final line = lines[i];
       if (line.isEmpty) continue;
       try {
-        procs.add(Proc.parse(line));
-      } catch (e) {
+        procs.add(Proc.parse(line, map));
+      } catch (e, trace) {
         err += '$line: $e\n';
+        _logger.warning(trace);
       }
     }
+
     switch (sort) {
       case ProcSortMode.cpu:
         procs.sort((a, b) => b.cpu?.compareTo(a.cpu ?? 0) ?? 0);
@@ -106,7 +159,7 @@ class PsResult {
         procs.sort((a, b) => a.pid.compareTo(b.pid));
         break;
       case ProcSortMode.user:
-        procs.sort((a, b) => a.user.compareTo(b.user));
+        procs.sort((a, b) => a.user?.compareTo(b.user ?? '') ?? 0);
         break;
       case ProcSortMode.name:
         procs.sort((a, b) => a.binary.compareTo(b.binary));
@@ -123,4 +176,11 @@ enum ProcSortMode {
   user,
   name,
   ;
+}
+
+extension _StrIndex on List<String> {
+  int? indexOfOrNull(String val) {
+    final idx = indexOf(val);
+    return idx == -1 ? null : idx;
+  }
 }
