@@ -2,8 +2,8 @@
 
 class BuildData {
   static const String name = "ServerBox";
-  static const int build = 501;
+  static const int build = 508;
   static const String engine = "3.13.1";
-  static const String buildAt = "2023-08-27 00:15:00.994465";
-  static const int modifications = 4;
+  static const String buildAt = "2023-08-28 19:31:32.616141";
+  static const int modifications = 2;
 }

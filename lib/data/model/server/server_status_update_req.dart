@@ -109,13 +109,9 @@ String? _parseUpTime(String raw) {
 }
 
 String? _parseSysVer(String raw, String hostname) {
-  try {
-    final s = raw.split('=');
-    if (s.length == 2) {
-      return s[1].replaceAll('"', '').replaceFirst('\n', '');
-    }
-  } finally {
-    // ignore: control_flow_in_finally
-    return hostname.isEmpty ? null : hostname;
+  final s = raw.split('=');
+  if (s.length == 2) {
+    return s[1].replaceAll('"', '').replaceFirst('\n', '');
   }
+  return hostname.isEmpty ? null : hostname;
 }
