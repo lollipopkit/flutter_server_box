@@ -8,7 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toolbox/core/extension/colorx.dart';
 import 'package:toolbox/core/extension/locale.dart';
-import 'package:toolbox/core/extension/navigator.dart';
+import 'package:toolbox/core/extension/context.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/core/route.dart';

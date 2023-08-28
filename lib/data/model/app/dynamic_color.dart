@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import '../../../core/utils/ui.dart';
+import '../../../core/extension/context.dart';
 
 class DynamicColor {
   /// 白天模式显示的颜色
@@ -11,5 +11,5 @@ class DynamicColor {
 
   DynamicColor(this.light, this.dark);
 
-  Color resolve(BuildContext context) => isDarkMode(context) ? dark : light;
+  Color resolve(BuildContext context) => context.isDark ? dark : light;
 }

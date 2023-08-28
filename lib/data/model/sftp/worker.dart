@@ -136,9 +136,12 @@ Future<void> _upload(
       req.remotePath,
       mode: SftpFileOpenMode.write | SftpFileOpenMode.create,
     );
-    final writer = file.write(localFile, onProgress: (total) {
-      mainSendPort.send(total / localLen * 100);
-    },);
+    final writer = file.write(
+      localFile,
+      onProgress: (total) {
+        mainSendPort.send(total / localLen * 100);
+      },
+    );
     await writer.done;
     await file.close();
     mainSendPort.send(watch.elapsed);

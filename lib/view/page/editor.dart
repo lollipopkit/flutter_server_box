@@ -8,7 +8,7 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_highlight/themes/a11y-light.dart';
 import 'package:flutter_highlight/themes/monokai.dart';
-import 'package:toolbox/core/extension/navigator.dart';
+import 'package:toolbox/core/extension/context.dart';
 import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/core/utils/ui.dart';
 import 'package:toolbox/data/res/highlight.dart';
@@ -19,8 +19,23 @@ import '../widget/custom_appbar.dart';
 import '../widget/two_line_text.dart';
 
 class EditorPage extends StatefulWidget {
+  /// If path is not null, then it's a file editor
+  /// If path is null, then it's a text editor
   final String? path;
-  const EditorPage({Key? key, this.path}) : super(key: key);
+
+  /// Only used when path is null
+  final String? text;
+
+  /// Code of language, eg: dart, go, etc.
+  /// Higher priority than [path]
+  final String? langCode;
+
+  const EditorPage({
+    Key? key,
+    this.path,
+    this.text,
+    this.langCode,
+  }) : super(key: key);
 
   @override
   _EditorPageState createState() => _EditorPageState();
@@ -30,7 +45,7 @@ class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
   late CodeController _controller;
   late final _focusNode = FocusNode();
   final _setting = locator<SettingStore>();
-  Map<String, TextStyle>? _codeTheme;
+  late Map<String, TextStyle> _codeTheme;
   late S _s;
   late String? _langCode;
   late TextStyle _textStyle;
@@ -38,27 +53,26 @@ class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
   @override
   void initState() {
     super.initState();
-    _langCode = widget.path.highlightCode;
+
+    /// Higher priority than [path]
+    _langCode = widget.langCode ?? widget.path.highlightCode;
     _controller = CodeController(
       language: suffix2HighlightMap[_langCode],
     );
     _textStyle = TextStyle(fontSize: _setting.editorFontSize.fetch());
-
-    WidgetsBinding.instance.addPostFrameCallback((Duration duration) async {
-      if (isDarkMode(context)) {
-        _codeTheme = themeMap[_setting.editorDarkTheme.fetch()] ?? monokaiTheme;
-      } else {
-        _codeTheme = themeMap[_setting.editorTheme.fetch()] ?? a11yLightTheme;
-      }
-      _focusNode.requestFocus();
-      setState(() {});
-    });
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _s = S.of(context)!;
+
+    if (context.isDark) {
+      _codeTheme = themeMap[_setting.editorDarkTheme.fetch()] ?? monokaiTheme;
+    } else {
+      _codeTheme = themeMap[_setting.editorTheme.fetch()] ?? a11yLightTheme;
+    }
+    _focusNode.requestFocus();
   }
 
   @override
@@ -71,7 +85,7 @@ class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _codeTheme?['root']?.backgroundColor,
+      backgroundColor: _codeTheme['root']?.backgroundColor,
       appBar: _buildAppBar(),
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
@@ -119,24 +133,18 @@ class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
   }
 
   Widget _buildBody() {
-    return Visibility(
-      visible: _codeTheme != null,
-      replacement: const Center(
-        child: CircularProgressIndicator(),
-      ),
-      child: SingleChildScrollView(
-        child: CodeTheme(
-          data: CodeThemeData(
-              styles: _codeTheme ??
-                  (isDarkMode(context) ? monokaiTheme : a11yLightTheme)),
-          child: CodeField(
-            focusNode: _focusNode,
-            controller: _controller,
-            textStyle: _textStyle,
-            lineNumberStyle: const LineNumberStyle(
-              width: 47,
-              margin: 7,
-            ),
+    return SingleChildScrollView(
+      child: CodeTheme(
+        data: CodeThemeData(
+          styles: _codeTheme,
+        ),
+        child: CodeField(
+          focusNode: _focusNode,
+          controller: _controller,
+          textStyle: _textStyle,
+          lineNumberStyle: const LineNumberStyle(
+            width: 47,
+            margin: 7,
           ),
         ),
       ),
@@ -145,10 +153,13 @@ class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
 
   @override
   FutureOr<void> afterFirstLayout(BuildContext context) async {
+    /// TODO: This is a temporary solution to avoid the loading stuck
+    await Future.delayed(const Duration(milliseconds: 377));
     if (widget.path != null) {
-      await Future.delayed(const Duration(milliseconds: 233));
       final code = await File(widget.path!).readAsString();
       _controller.text = code;
+    } else if (widget.text != null) {
+      _controller.text = widget.text!;
     }
   }
 }

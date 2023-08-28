@@ -5,7 +5,7 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:logging/logging.dart';
-import 'package:toolbox/core/extension/navigator.dart';
+import 'package:toolbox/core/extension/context.dart';
 import 'package:toolbox/core/extension/sftpfile.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/store/history.dart';
@@ -391,6 +391,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     final result = await AppRoute.editor(path: localPath).go<bool>(context);
     if (result != null && result) {
       _sftp.add(SftpReq(req.spi, remotePath, localPath, SftpReqType.upload));
+      showSnackBar(context, Text(_s.added2List));
     }
   }
 

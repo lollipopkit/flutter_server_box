@@ -7,6 +7,8 @@ import '../model/app/net_view.dart';
 import '../res/default.dart';
 
 class SettingStore extends PersistentStore {
+  Map<String, dynamic> toJson() => {for (var e in box.keys) e: box.get(e)};
+
   StoreProperty<int> get primaryColor => property<int>(
         'primaryColor',
         defaultValue: 4287106639,

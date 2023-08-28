@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:toolbox/core/extension/navigator.dart';
+import 'package:toolbox/core/extension/context.dart';
 import 'package:toolbox/data/model/app/tab.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -18,9 +18,6 @@ import 'misc.dart';
 import 'platform.dart';
 import '../extension/stringx.dart';
 import '../extension/uint8list.dart';
-
-bool isDarkMode(BuildContext context) =>
-    Theme.of(context).brightness == Brightness.dark;
 
 void showSnackBar(BuildContext context, Widget child) =>
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(

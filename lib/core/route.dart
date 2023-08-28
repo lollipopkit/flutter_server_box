@@ -156,8 +156,22 @@ class AppRoute {
     return AppRoute(DockerManagePage(key: key, spi: spi), 'docker');
   }
 
-  static AppRoute editor({Key? key, required String path}) {
-    return AppRoute(EditorPage(key: key, path: path), 'editor');
+  /// - Pop true if the text is changed & [path] is not null
+  /// - Pop text if [path] is null
+  static AppRoute editor({
+    Key? key,
+    String? path,
+    String? text,
+    String? langCode,
+  }) {
+    return AppRoute(
+        EditorPage(
+          key: key,
+          path: path,
+          text: text,
+          langCode: langCode,
+        ),
+        'editor');
   }
 
   static AppRoute fullscreen({Key? key}) {

@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
+import 'package:toolbox/core/extension/context.dart';
 import 'package:toolbox/data/model/app/github_id.dart';
 import 'package:toolbox/data/model/app/tab.dart';
 import 'package:toolbox/data/provider/app.dart';
@@ -230,6 +233,33 @@ class _HomePageState extends State<HomePage>
             leading: const Icon(Icons.settings),
             title: Text(_s.setting),
             onTap: () => AppRoute.setting().go(context),
+            onLongPress: () async {
+              final map = _setting.toJson();
+              final go = await showRoundDialog(
+                context: context,
+                child: Text(_s.attention),
+                actions: [
+                  TextButton(
+                    onPressed: () => context.pop(true),
+                    child: Text(
+                      _s.ok,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ),
+                ],
+              );
+              if (go != true) {
+                return;
+              }
+
+              /// Encode [map] to String with indent `\t`
+              final text = const JsonEncoder.withIndent('\t').convert(map);
+              final result = await AppRoute.editor(text: text, langCode: 'json',).go(context);
+              if (result == null) {
+                return;
+              }
+              _setting.box.putAll(json.decode(result) as Map<String, dynamic>);
+            },
           ),
           ListTile(
             leading: const Icon(Icons.vpn_key),

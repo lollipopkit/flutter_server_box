@@ -49,4 +49,6 @@ const participants = <GhId>{
   'Ealrang',
   'hange33',
   'yuchen1204',
+  'xgzxmytx',
+  'wind057',
 };

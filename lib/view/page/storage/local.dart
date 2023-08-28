@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:toolbox/core/extension/navigator.dart';
+import 'package:toolbox/core/extension/context.dart';
 import 'package:toolbox/data/model/sftp/req.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/provider/sftp.dart';
