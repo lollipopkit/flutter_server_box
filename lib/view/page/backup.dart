@@ -7,16 +7,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/context.dart';
 import 'package:toolbox/data/res/path.dart';
+import 'package:toolbox/view/widget/round_rect_card.dart';
 
-import '../../core/extension/colorx.dart';
 import '../../core/utils/misc.dart';
 import '../../core/utils/ui.dart';
 import '../../data/model/app/backup.dart';
-import '../../data/res/color.dart';
 import '../../data/res/ui.dart';
 import '../../data/store/docker.dart';
 import '../../data/store/private_key.dart';
 import '../../data/store/server.dart';
+import '../../data/store/setting.dart';
 import '../../data/store/snippet.dart';
 import '../../locator.dart';
 import '../widget/custom_appbar.dart';
@@ -30,6 +30,7 @@ class BackupPage extends StatelessWidget {
   final _snippet = locator<SnippetStore>();
   final _privateKey = locator<PrivateKeyStore>();
   final _dockerHosts = locator<DockerStore>();
+  final _setting = locator<SettingStore>();
 
   @override
   Widget build(BuildContext context) {
@@ -56,21 +57,13 @@ class BackupPage extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ),
-        const SizedBox(height: 107),
-        _buildCard(s.restore, Icons.download, media, () async {
-          final path = await pickOneFile();
-          if (path == null) {
-            showSnackBar(context, Text(s.notSelected));
-            return;
-          }
-          final file = File(path);
-          if (!file.existsSync()) {
-            showSnackBar(context, Text(s.fileNotExist(path)));
-            return;
-          }
-          final text = await file.readAsString();
-          _import(text, context, s);
-        }),
+        height77,
+        _buildCard(
+          s.restore,
+          Icons.download,
+          media,
+          () => _onRestore(context, s),
+        ),
         height13,
         const SizedBox(
           width: 37,
@@ -79,25 +72,9 @@ class BackupPage extends StatelessWidget {
         height13,
         _buildCard(
           s.backup,
-          Icons.file_upload,
+          Icons.save,
           media,
-          () async {
-            final result = _diyEncrtpt(
-              json.encode(
-                Backup(
-                  version: backupFormatVersion,
-                  date: DateTime.now().toString().split('.').first,
-                  spis: _server.fetch(),
-                  snippets: _snippet.fetch(),
-                  keys: _privateKey.fetch(),
-                  dockerHosts: _dockerHosts.fetchAll(),
-                ),
-              ),
-            );
-            final path = '${(await docDir).path}/srvbox_bak.json';
-            await File(path).writeAsString(result);
-            await shareFiles(context, [path]);
-          },
+          () => _onBackup(context, s),
         )
       ],
     ));
@@ -109,29 +86,57 @@ class BackupPage extends StatelessWidget {
     MediaQueryData media,
     FutureOr Function() onTap,
   ) {
-    final textColor = primaryColor.isBrightColor ? Colors.black : Colors.white;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(37), color: primaryColor),
+    return RoundRectCard(
+      InkWell(
+        onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                color: textColor,
-              ),
+              Icon(icon, size: 20),
               width7,
-              Text(text, style: TextStyle(color: textColor)),
+              Text(text),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _onRestore(BuildContext context, S s) async {
+    final path = await pickOneFile();
+    if (path == null) {
+      showSnackBar(context, Text(s.notSelected));
+      return;
+    }
+    final file = File(path);
+    if (!file.existsSync()) {
+      showSnackBar(context, Text(s.fileNotExist(path)));
+      return;
+    }
+    final text = await file.readAsString();
+    _import(text, context, s);
+  }
+
+  Future<void> _onBackup(BuildContext context, S s) async {
+    final result = _diyEncrtpt(
+      json.encode(
+        Backup(
+          version: backupFormatVersion,
+          date: DateTime.now().toString().split('.').first,
+          spis: _server.fetch(),
+          snippets: _snippet.fetch(),
+          keys: _privateKey.fetch(),
+          dockerHosts: _dockerHosts.fetchAll(),
+          settings: _setting.toJson(),
+        ),
+      ),
+    );
+    final path = '${(await docDir).path}/srvbox_bak.json';
+    await File(path).writeAsString(result);
+    await shareFiles(context, [path]);
   }
 
   Future<void> _import(String text, BuildContext context, S s) async {

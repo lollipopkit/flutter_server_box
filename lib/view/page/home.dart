@@ -241,19 +241,19 @@ class _HomePageState extends State<HomePage>
             onTap: () => AppRoute.keyList().go(context),
           ),
           ListTile(
-            leading: const Icon(Icons.download),
-            title: Text(_s.download),
+            leading: const Icon(Icons.file_open),
+            title: Text(_s.files),
             onTap: () => AppRoute.localStorage().go(context),
-          ),
-          ListTile(
-            leading: const Icon(Icons.import_export),
-            title: Text(_s.backup),
-            onTap: () => AppRoute.backup().go(context),
           ),
           ListTile(
             leading: const Icon(Icons.code),
             title: Text(_s.convert),
             onTap: () => AppRoute.convert().go(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.import_export),
+            title: Text(_s.backupAndRestore),
+            onTap: () => AppRoute.backup().go(context),
           ),
           ListTile(
             leading: const Icon(Icons.text_snippet),

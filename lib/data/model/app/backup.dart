@@ -10,6 +10,7 @@ class Backup {
   final List<Snippet> snippets;
   final List<PrivateKeyInfo> keys;
   final Map<String, String> dockerHosts;
+  final Map<String, dynamic> settings;
 
   Backup({
     required this.version,
@@ -18,6 +19,7 @@ class Backup {
     required this.snippets,
     required this.keys,
     required this.dockerHosts,
+    required this.settings,
   });
 
   Backup.fromJson(Map<String, dynamic> json)
@@ -31,7 +33,8 @@ class Backup {
         keys = (json['keys'] as List)
             .map((e) => PrivateKeyInfo.fromJson(e))
             .toList(),
-        dockerHosts = json['dockerHosts'] ?? {};
+        dockerHosts = json['dockerHosts'] ?? {},
+        settings = json['settings'] ?? {};
 
   Map<String, dynamic> toJson() => {
         'version': version,
@@ -39,5 +42,7 @@ class Backup {
         'spis': spis,
         'snippets': snippets,
         'keys': keys,
+        'dockerHosts': dockerHosts,
+        'settings': settings,
       };
 }
