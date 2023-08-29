@@ -176,7 +176,10 @@ class BackupPage extends StatelessWidget {
                 _privateKey.put(s);
               }
               for (final k in backup.dockerHosts.keys) {
-                _dockerHosts.put(k, backup.dockerHosts[k]!);
+                final val = backup.dockerHosts[k];
+                if (val != null && val is String && val.isNotEmpty) {
+                  _dockerHosts.put(k, val);
+                }
               }
               context.pop();
               showRoundDialog(

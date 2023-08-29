@@ -9,7 +9,7 @@ class Backup {
   final List<ServerPrivateInfo> spis;
   final List<Snippet> snippets;
   final List<PrivateKeyInfo> keys;
-  final Map<String, String> dockerHosts;
+  final Map<String, dynamic> dockerHosts;
   final Map<String, dynamic> settings;
 
   Backup({
