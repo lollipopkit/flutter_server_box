@@ -11,6 +11,7 @@ extension LocaleX on Locale {
 
 extension String2Locale on String {
   Locale? get toLocale {
+    // Issue #151
     if (isEmpty) {
       return null;
     }

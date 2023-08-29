@@ -83,7 +83,11 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
     final offset = Offset(_offset, _offset);
     return Scaffold(
       body: SafeArea(
-        child: ValueListenableBuilder<int>(
+        child: Padding(
+          // Avoid display cutout
+          // `_screenWidth * 0.03` is the offset value
+          padding: EdgeInsets.all(_screenWidth * 0.03),
+          child: ValueListenableBuilder<int>(
             valueListenable: _setting.fullScreenRotateQuarter.listenable(),
             builder: (_, val, __) {
               _rotateQuarter = val;
@@ -103,7 +107,9 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
                   ),
                 ),
               );
-            }),
+            },
+          ),
+        ),
       ),
     );
   }
