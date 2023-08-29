@@ -10,7 +10,10 @@ extension LocaleX on Locale {
 }
 
 extension String2Locale on String {
-  Locale get toLocale {
+  Locale? get toLocale {
+    if (isEmpty) {
+      return null;
+    }
     final parts = split('_');
     if (parts.length == 1) {
       return Locale(parts[0]);
