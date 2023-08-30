@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/media_queryx.dart';
 
 import '../../../core/route.dart';
-import '../../../core/utils/misc.dart' hide pathJoin;
+import '../../../core/utils/misc.dart';
 import '../../../core/utils/platform.dart';
 import '../../../core/utils/ui.dart';
 import '../../../data/model/app/net_view.dart';

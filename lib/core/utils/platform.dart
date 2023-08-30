@@ -38,12 +38,7 @@ final _p = () {
   return PlatformType.unknown;
 }();
 
-final _pathSep = () {
-  if (Platform.isWindows) {
-    return '\\';
-  }
-  return '/';
-}();
+final _pathSep = Platform.pathSeparator;
 
 PlatformType get platform => _p;
 String get pathSeparator => _pathSep;
@@ -73,7 +68,7 @@ String? getHomeDir() {
 }
 
 /// Join two paths with platform specific separator
-String pathJoin(String path1, String path2) {
+String joinPath(String path1, String path2) {
   if (isWindows) {
     return path1 + (path1.endsWith('\\') ? '' : '\\') + path2;
   }

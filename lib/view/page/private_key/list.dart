@@ -82,7 +82,7 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
     if (isDesktop && store.box.keys.isEmpty) {
       final home = getHomeDir();
       if (home == null) return;
-      final idRsaFile = File(pathJoin(home, '.ssh/id_rsa'));
+      final idRsaFile = File(joinPath(home, '.ssh/id_rsa'));
       if (!idRsaFile.existsSync()) return;
       final sysPk = PrivateKeyInfo(
         id: 'system',

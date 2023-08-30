@@ -2,16 +2,16 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:toolbox/data/provider/server.dart';
 
 import '../../core/route.dart';
-import '../../core/utils/misc.dart' hide pathJoin;
+import '../../core/utils/misc.dart';
 import '../../core/utils/platform.dart';
 import '../../core/utils/server.dart';
 import '../../core/utils/ui.dart';
 import '../../data/model/app/menu.dart';
 import '../../data/model/server/server_private_info.dart';
 import '../../data/model/server/snippet.dart';
+import '../../data/provider/server.dart';
 import '../../data/provider/snippet.dart';
 import '../../locator.dart';
 import 'popup_menu.dart';
@@ -161,7 +161,7 @@ Future<void> _gotoSSH(
 
   final path = () {
     final tempKeyFileName = 'srvbox_pk_${spi.pubKeyId}';
-    return pathJoin(Directory.systemTemp.path, tempKeyFileName);
+    return joinPath(Directory.systemTemp.path, tempKeyFileName);
   }();
   final file = File(path);
   final shouldGenKey = spi.pubKeyId != null;

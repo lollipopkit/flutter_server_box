@@ -37,7 +37,7 @@ class LocalStoragePage extends StatefulWidget {
 }
 
 class _LocalStoragePageState extends State<LocalStoragePage> {
-  PathWithPrefix? _path;
+  LocalPath? _path;
   late S _s;
 
   @override
@@ -45,12 +45,12 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
     super.initState();
     if (widget.initDir != null) {
       setState(() {
-        _path = PathWithPrefix(widget.initDir!);
+        _path = LocalPath(widget.initDir!);
       });
     } else {
       sftpDir.then((dir) {
         setState(() {
-          _path = PathWithPrefix(dir.path);
+          _path = LocalPath(dir.path);
         });
       });
     }
