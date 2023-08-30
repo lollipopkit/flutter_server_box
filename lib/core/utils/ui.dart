@@ -119,8 +119,10 @@ Future<void> loadFontFile(String localPath) async {
   if (localPath.isEmpty) return;
   final name = getFileName(localPath);
   if (name == null) return;
+  final file = File(localPath);
+  if (!await file.exists()) return;
   var fontLoader = FontLoader(name);
-  fontLoader.addFont(File(localPath).readAsBytes().byteData);
+  fontLoader.addFont(file.readAsBytes().byteData);
   await fontLoader.load();
 }
 

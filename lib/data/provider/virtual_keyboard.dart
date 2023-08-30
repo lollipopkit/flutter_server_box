@@ -1,7 +1,8 @@
 import 'package:flutter/widgets.dart';
-import 'package:toolbox/data/store/setting.dart';
-import 'package:toolbox/locator.dart';
 import 'package:xterm/core.dart';
+
+import '../../locator.dart';
+import '../store/setting.dart';
 
 class VirtualKeyboard extends TerminalInputHandler with ChangeNotifier {
   VirtualKeyboard();
