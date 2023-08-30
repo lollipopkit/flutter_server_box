@@ -115,7 +115,7 @@ class PsResult {
   });
 
   factory PsResult.parse(String raw, {ProcSortMode sort = ProcSortMode.cpu}) {
-    final lines = raw.split('\n');
+    final lines = raw.split('\n').map((e) => e.trim()).toList();
     if (lines.isEmpty) return PsResult(procs: [], error: null);
 
     final header = lines[0];
@@ -145,6 +145,7 @@ class PsResult {
       } catch (e, trace) {
         err += '$line: $e\n';
         _logger.warning(trace);
+        rethrow;
       }
     }
 
