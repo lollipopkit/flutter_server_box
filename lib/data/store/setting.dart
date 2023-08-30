@@ -146,4 +146,11 @@ class SettingStore extends PersistentStore {
     'sftpRmrfDir',
     true,
   );
+
+  /// Discussion #146
+  late final serverTabUseOldUI = StoreProperty(
+    box,
+    'serverTabUseOldUI',
+    false,
+  );
 }

@@ -345,11 +345,12 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           onTap: () => _download(context, file),
         ),
         // Only show decompress option when the file is a compressed file
-        if (_canDecompress(file.filename)) ListTile(
-          leading: const Icon(Icons.folder_zip),
-          title: Text(_s.decompress),
-          onTap: () => _decompress(context, file),
-        ),
+        if (_canDecompress(file.filename))
+          ListTile(
+            leading: const Icon(Icons.folder_zip),
+            title: Text(_s.decompress),
+            onTap: () => _decompress(context, file),
+          ),
       ]);
     }
     showRoundDialog(

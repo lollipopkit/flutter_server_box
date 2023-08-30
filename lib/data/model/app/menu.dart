@@ -26,6 +26,23 @@ enum ServerTabMenuType {
         return Icons.terminal;
     }
   }
+
+  String text(S s) {
+    switch (this) {
+      case ServerTabMenuType.sftp:
+        return 'SFTP';
+      case ServerTabMenuType.snippet:
+        return s.snippet;
+      case ServerTabMenuType.pkg:
+        return s.pkg;
+      case ServerTabMenuType.docker:
+        return 'Docker';
+      case ServerTabMenuType.process:
+        return s.process;
+      case ServerTabMenuType.terminal:
+        return s.terminal;
+    }
+  }
 }
 
 enum DockerMenuType {

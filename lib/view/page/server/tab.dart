@@ -238,7 +238,9 @@ class _ServerPageState extends State<ServerPage>
           ),
         ),
         height13,
-        if (_settingStore.moveOutServerTabFuncBtns.fetch())
+        if (_settingStore.moveOutServerTabFuncBtns.fetch() &&
+            // Discussion #146
+            !_settingStore.serverTabUseOldUI.fetch())
           SizedBox(
             height: 27,
             child: ServerFuncBtns(spi: spi, s: _s),
@@ -283,7 +285,13 @@ class _ServerPageState extends State<ServerPage>
               )
             ],
           ),
-          _buildTopRightText(ss, cs),
+          Row(
+            children: [
+              _buildTopRightText(ss, cs),
+              if (_settingStore.serverTabUseOldUI.fetch())
+                ServerFuncBtnsTopRight(spi: spi, s: _s)
+            ],
+          )
         ],
       ),
     );
@@ -446,7 +454,9 @@ class _ServerPageState extends State<ServerPage>
     if (cs != ServerState.finished) {
       return 23.0;
     }
-    if (_settingStore.moveOutServerTabFuncBtns.fetch()) {
+    if (_settingStore.moveOutServerTabFuncBtns.fetch() &&
+        // Discussion #146
+        !_settingStore.serverTabUseOldUI.fetch()) {
       return 132;
     }
     return 107;
