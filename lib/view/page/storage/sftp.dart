@@ -344,7 +344,8 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           title: Text(_s.download),
           onTap: () => _download(context, file),
         ),
-        ListTile(
+        // Only show decompress option when the file is a compressed file
+        if (_canDecompress(file.filename)) ListTile(
           leading: const Icon(Icons.folder_zip),
           title: Text(_s.decompress),
           onTap: () => _decompress(context, file),
@@ -717,6 +718,15 @@ String? _getDecompressCmd(String filename) {
   return null;
 }
 
+bool _canDecompress(String filename) {
+  for (final ext in _extCmdMap.keys) {
+    if (filename.endsWith('.$ext')) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /// Translate from
 /// https://github.com/ohmyzsh/ohmyzsh/blob/03a0d5bbaedc732436b5c67b166cde954817cc2f/plugins/extract/extract.plugin.zsh
 const _extCmdMap = {
@@ -752,11 +762,11 @@ const _extCmdMap = {
   'rar': 'unrar x -ad FILE',
   'rpm': 'rpm2cpio FILE | cpio --quiet -id',
   '7z': '7za x FILE',
-  'deb': 'mkdir -p "control" "data"'
-      'ar vx FILE > /dev/null'
-      'cd control; extract ../control.tar.*'
-      'cd ../data; extract ../data.tar.*'
-      'cd ..; rm *.tar.* debian-binary',
+  // 'deb': 'mkdir -p "control" "data"'
+  //     'ar vx FILE > /dev/null'
+  //     'cd control; extract ../control.tar.*'
+  //     'cd ../data; extract ../data.tar.*'
+  //     'cd ..; rm *.tar.* debian-binary',
   'zst': 'unzstd FILE',
   'cab': 'cabextract FILE',
   'exe': 'cabextract FILE',

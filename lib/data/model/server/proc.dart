@@ -136,16 +136,15 @@ class PsResult {
     );
 
     final procs = <Proc>[];
-    var err = '';
+    final errs = <String>[];
     for (var i = 1; i < lines.length; i++) {
       final line = lines[i];
       if (line.isEmpty) continue;
       try {
         procs.add(Proc.parse(line, map));
       } catch (e, trace) {
-        err += '$line: $e\n';
+        errs.add('$line: $e');
         _logger.warning(trace);
-        rethrow;
       }
     }
 
@@ -166,7 +165,7 @@ class PsResult {
         procs.sort((a, b) => a.binary.compareTo(b.binary));
         break;
     }
-    return PsResult(procs: procs, error: err.isEmpty ? null : err);
+    return PsResult(procs: procs, error: errs.isEmpty ? null : errs.join('\n'));
   }
 }
 
