@@ -153,4 +153,14 @@ class SettingStore extends PersistentStore {
     'serverTabUseOldUI',
     false,
   );
+
+  /// Time out for server connect and more...
+  late final timeout = StoreProperty(
+    box,
+    'timeOut',
+    5,
+  );
+
+  /// Duration of [timeout]
+  Duration get timeoutD => Duration(seconds: timeout.fetch());
 }

@@ -198,7 +198,10 @@ class ServerProvider extends ChangeNotifier {
 
       // Only reconnect if neccessary
       if (newSpi.shouldReconnect(old)) {
-        _servers[newSpi.id]?.client = await genClient(newSpi);
+        _servers[newSpi.id]?.client = await genClient(
+          newSpi,
+          timeout: _settingStore.timeoutD,
+        );
         refreshData(spi: newSpi);
       }
 
@@ -231,7 +234,10 @@ class ServerProvider extends ChangeNotifier {
       final time1 = DateTime.now();
 
       try {
-        s.client = await genClient(spi);
+        s.client = await genClient(
+          spi,
+          timeout: _settingStore.timeoutD,
+        );
       } catch (e) {
         _limiter.inc(sid);
         s.status.failedInfo = e.toString();

@@ -46,14 +46,16 @@ Future<SSHClient> genClient(
   ServerPrivateInfo spi, {
   void Function(GenSSHClientStatus)? onStatus,
   String? privateKey,
+  Duration? timeout,
 }) async {
   onStatus?.call(GenSSHClientStatus.socket);
   late SSHSocket socket;
+  final duration = timeout ?? const Duration(seconds: 5);
   try {
     socket = await SSHSocket.connect(
       spi.ip,
       spi.port,
-      timeout: const Duration(seconds: 5),
+      timeout: duration,
     );
   } catch (e) {
     if (spi.alterUrl == null) rethrow;
@@ -62,7 +64,7 @@ Future<SSHClient> genClient(
       socket = await SSHSocket.connect(
         ipPort.ip,
         ipPort.port,
-        timeout: const Duration(seconds: 5),
+        timeout: duration,
       );
     } catch (e) {
       rethrow;

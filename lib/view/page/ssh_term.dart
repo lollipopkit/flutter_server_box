@@ -326,6 +326,7 @@ class _SSHPageState extends State<SSHPage> {
             return _write('Sending password to auth...');
         }
       },
+      timeout: _setting.timeoutD,
     );
     _write('Connected\r\n');
     _write('Terminal size: ${_terminal.viewWidth}x${_terminal.viewHeight}\r\n');
