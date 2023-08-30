@@ -163,6 +163,7 @@ class AppRoute {
     String? path,
     String? text,
     String? langCode,
+    String? title,
   }) {
     return AppRoute(
         EditorPage(
@@ -170,6 +171,7 @@ class AppRoute {
           path: path,
           text: text,
           langCode: langCode,
+          title: title,
         ),
         'editor');
   }

@@ -272,6 +272,10 @@ class _HomePageState extends State<HomePage>
       child: _buildAboutContent(),
       actions: [
         TextButton(
+          onPressed: () => openUrl(appWikiUrl),
+          child: const Text('Wiki'),
+        ),
+        TextButton(
           onPressed: () => openUrl(appHelpUrl),
           child: Text(_s.feedback),
         ),
@@ -380,6 +384,7 @@ class _HomePageState extends State<HomePage>
     final result = await AppRoute.editor(
       text: text,
       langCode: 'json',
+      title: _s.setting,
     ).go(context);
     if (result == null) {
       return;

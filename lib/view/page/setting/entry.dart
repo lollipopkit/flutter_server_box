@@ -110,6 +110,26 @@ class _SettingPageState extends State<SettingPage> {
     return Scaffold(
       appBar: CustomAppBar(
         title: Text(_s.setting),
+        actions: [
+          IconButton(
+            onPressed: () => showRoundDialog(
+              context: context,
+              title: Text(_s.attention),
+              child: Text(_s.sureDelete(_s.all)),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    _setting.box.deleteAll(_setting.box.keys);
+                    context.pop();
+                    showSnackBar(context, Text(_s.success));
+                  },
+                  child: Text(_s.ok, style: const TextStyle(color: Colors.red)),
+                ),
+              ],
+            ),
+            icon: const Icon(Icons.delete),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 17),
@@ -609,8 +629,8 @@ class _SettingPageState extends State<SettingPage> {
     final items = S.supportedLocales
         .map(
           (e) => PopupMenuItem<String>(
-            value: e.name,
-            child: Text(e.name),
+            value: e.code,
+            child: Text(e.code),
           ),
         )
         .toList();

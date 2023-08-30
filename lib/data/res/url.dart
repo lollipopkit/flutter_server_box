@@ -1,5 +1,5 @@
 const backendUrl = 'https://res.lolli.tech';
-const baseUrl = '$backendUrl/serverbox';
-const joinQQGroupUrl = 'https://jq.qq.com/?_wv=1027&k=G0hUmPAq';
+const baseResUrl = '$backendUrl/serverbox';
 const myGithub = 'https://github.com/lollipopkit';
 const appHelpUrl = '$myGithub/flutter_server_box#-help';
+const appWikiUrl = '$myGithub/flutter_server_box/wiki';

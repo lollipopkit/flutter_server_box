@@ -30,11 +30,14 @@ class EditorPage extends StatefulWidget {
   /// Higher priority than [path]
   final String? langCode;
 
+  final String? title;
+
   const EditorPage({
     Key? key,
     this.path,
     this.text,
     this.langCode,
+    this.title,
   }) : super(key: key);
 
   @override
@@ -110,7 +113,11 @@ class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
 
   PreferredSizeWidget _buildAppBar() {
     return CustomAppBar(
-      title: TwoLineText(up: getFileName(widget.path) ?? '', down: _s.editor),
+      centerTitle: true,
+      title: TwoLineText(
+        up: widget.title ?? getFileName(widget.path) ?? '',
+        down: _s.editor,
+      ),
       actions: [
         PopupMenuButton<String>(
           icon: const Icon(Icons.language),
@@ -134,21 +141,20 @@ class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
 
   Widget _buildBody() {
     return SingleChildScrollView(
-      child: CodeTheme(
-        data: CodeThemeData(
-          styles: _codeTheme,
-        ),
-        child: CodeField(
-          focusNode: _focusNode,
-          controller: _controller,
-          textStyle: _textStyle,
-          lineNumberStyle: const LineNumberStyle(
-            width: 47,
-            margin: 7,
-          ),
+        child: CodeTheme(
+      data: CodeThemeData(
+        styles: _codeTheme,
+      ),
+      child: CodeField(
+        focusNode: _focusNode,
+        controller: _controller,
+        textStyle: _textStyle,
+        lineNumberStyle: const LineNumberStyle(
+          width: 47,
+          margin: 7,
         ),
       ),
-    );
+    ));
   }
 
   @override
