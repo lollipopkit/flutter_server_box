@@ -1,7 +1,7 @@
-import 'package:toolbox/core/persistant_store.dart';
-import 'package:toolbox/data/model/server/snippet.dart';
+import '../../core/persistant_store.dart';
+import '../model/server/snippet.dart';
 
-class SnippetStore extends PersistentStore {
+class SnippetStore extends PersistentStore<Snippet> {
   void put(Snippet snippet) {
     box.put(snippet.name, snippet);
   }

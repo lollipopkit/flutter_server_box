@@ -6,6 +6,35 @@ import '../model/app/net_view.dart';
 import '../res/default.dart';
 
 class SettingStore extends PersistentStore {
+
+  // ------BEGIN------
+  // These settings are not displayed in the settings page
+  // You can edit them in the settings json editor (by long press the settings 
+  // item in the drawer of the server tab page)
+
+  /// Discussion #146
+  late final serverTabUseOldUI = StoreProperty(
+    box,
+    'serverTabUseOldUI',
+    false,
+  );
+
+  /// Time out for server connect and more...
+  late final timeout = StoreProperty(
+    box,
+    'timeOut',
+    5,
+  );
+
+  /// Record history of SFTP path and etc.
+  late final recordHistory = StoreProperty(
+    box,
+    'recordHistory',
+    true,
+  );
+  // ------END------
+
+  /// Convert all settings into json
   Map<String, dynamic> toJson() => {for (var e in box.keys) e: box.get(e)};
 
   late final primaryColor = StoreProperty(
@@ -145,20 +174,6 @@ class SettingStore extends PersistentStore {
     box,
     'sftpRmrfDir',
     true,
-  );
-
-  /// Discussion #146
-  late final serverTabUseOldUI = StoreProperty(
-    box,
-    'serverTabUseOldUI',
-    false,
-  );
-
-  /// Time out for server connect and more...
-  late final timeout = StoreProperty(
-    box,
-    'timeOut',
-    5,
   );
 
   /// Duration of [timeout]

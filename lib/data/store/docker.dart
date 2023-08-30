@@ -1,6 +1,6 @@
-import 'package:toolbox/core/persistant_store.dart';
+import '../../core/persistant_store.dart';
 
-class DockerStore extends PersistentStore {
+class DockerStore extends PersistentStore<String> {
   String? fetch(String id) {
     return box.get(id);
   }

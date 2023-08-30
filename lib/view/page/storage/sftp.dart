@@ -231,9 +231,14 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           context: context,
           title: Text(_s.goto),
           child: Autocomplete<String>(
-            optionsBuilder: (val) => _history.sftpPath.all.where(
-              (element) => element.contains(val.text),
-            ),
+            optionsBuilder: (val) {
+              if (!_setting.recordHistory.fetch()) {
+                return [];
+              }
+              return _history.sftpPath.all.where(
+                (element) => element.contains(val.text),
+              );
+            },
             fieldViewBuilder: (_, controller, node, __) {
               return Input(
                 autoFocus: true,
@@ -253,7 +258,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
         _status.path?.update(p);
         final suc = await _listDir(path: p);
-        if (suc) _history.sftpPath.add(p);
+        if (suc && _setting.recordHistory.fetch()) _history.sftpPath.add(p);
       },
       icon: const Icon(Icons.gps_fixed),
     );

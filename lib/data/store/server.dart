@@ -1,7 +1,7 @@
-import 'package:toolbox/core/persistant_store.dart';
-import 'package:toolbox/data/model/server/server_private_info.dart';
+import '../../core/persistant_store.dart';
+import '../model/server/server_private_info.dart';
 
-class ServerStore extends PersistentStore {
+class ServerStore extends PersistentStore<ServerPrivateInfo> {
   void put(ServerPrivateInfo info) {
     box.put(info.id, info);
   }

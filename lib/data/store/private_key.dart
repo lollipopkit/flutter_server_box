@@ -1,7 +1,7 @@
-import 'package:toolbox/core/persistant_store.dart';
-import 'package:toolbox/data/model/server/private_key_info.dart';
+import '../../core/persistant_store.dart';
+import '../model/server/private_key_info.dart';
 
-class PrivateKeyStore extends PersistentStore {
+class PrivateKeyStore extends PersistentStore<PrivateKeyInfo> {
   void put(PrivateKeyInfo info) {
     box.put(info.id, info);
   }
