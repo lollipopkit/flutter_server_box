@@ -38,6 +38,8 @@ class _ServerPageState extends State<ServerPage>
   late SettingStore _settingStore;
   late S _s;
 
+  final _flipedCardIds = <String>{};
+
   String? _tag;
   bool _useDoubleColumn = false;
 
@@ -189,10 +191,16 @@ class _ServerPageState extends State<ServerPage>
             _showFailReason(si.status);
           }
         },
-        onLongPress: () => AppRoute.serverEdit(spi: si.spi).go(context),
+        onLongPress: () => setState(() {
+          if (_flipedCardIds.contains(si.spi.id)) {
+            _flipedCardIds.remove(si.spi.id);
+          } else {
+            _flipedCardIds.add(si.spi.id);
+          }
+        }),
         child: Padding(
           padding: const EdgeInsets.all(13),
-          child: _buildRealServerCard(si.status, si.state, si.spi),
+          child: _buildRealServerCard(si),
         ),
       ),
     );
@@ -207,51 +215,21 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  Widget _buildRealServerCard(
-    ServerStatus ss,
-    ServerState cs,
-    ServerPrivateInfo spi,
-  ) {
-    final rootDisk = findRootDisk(ss.disk);
-    late final List<Widget> children;
-    if (cs != ServerState.finished) {
-      children = [
-        _buildServerCardTitle(ss, cs, spi),
-      ];
+  Widget _buildRealServerCard(Server srv) {
+    final title = _buildServerCardTitle(srv.status, srv.state, srv.spi);
+    final List<Widget> children = [title];
+    if (srv.state != ServerState.finished) {
+      // Do nothing
+    } else if (_flipedCardIds.contains(srv.spi.id)) {
+      children.addAll(_buildFlipedCard(srv));
     } else {
-      children = [
-        _buildServerCardTitle(ss, cs, spi),
-        height13,
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 13),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _wrapWithSizedbox(_buildPercentCircle(ss.cpu.usedPercent())),
-              _wrapWithSizedbox(_buildPercentCircle(ss.mem.usedPercent * 100)),
-              _wrapWithSizedbox(_buildNet(ss)),
-              _wrapWithSizedbox(_buildIOData(
-                'Total:\n${rootDisk?.size}',
-                'Used:\n${rootDisk?.usedPercent}%',
-              )),
-            ],
-          ),
-        ),
-        height13,
-        if (_settingStore.moveOutServerTabFuncBtns.fetch() &&
-            // Discussion #146
-            !_settingStore.serverTabUseOldUI.fetch())
-          SizedBox(
-            height: 27,
-            child: ServerFuncBtns(spi: spi, s: _s),
-          ),
-      ];
+      children.addAll(_buildNormalCard(srv.status, srv.spi));
     }
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 377),
       curve: Curves.fastEaseInToSlowEaseOut,
-      height: _calcCardHeight(cs),
+      height: _calcCardHeight(srv.state, srv.spi.id),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.start,
@@ -259,6 +237,59 @@ class _ServerPageState extends State<ServerPage>
         children: children,
       ),
     );
+  }
+
+  List<Widget> _buildFlipedCard(Server srv) {
+    return [
+      height13,
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          IconButton(
+            onPressed: () => srv.client?.run('shutdown -h now'),
+            icon: const Icon(Icons.power_off),
+          ),
+          IconButton(
+            onPressed: () => srv.client?.run('reboot'),
+            icon: const Icon(Icons.refresh),
+          ),
+          IconButton(
+            onPressed: () => AppRoute.serverEdit(spi: srv.spi).go(context),
+            icon: const Icon(Icons.edit),
+          )
+        ],
+      )
+    ];
+  }
+
+  List<Widget> _buildNormalCard(ServerStatus ss, ServerPrivateInfo spi) {
+    final rootDisk = findRootDisk(ss.disk);
+    return [
+      height13,
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 13),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _wrapWithSizedbox(_buildPercentCircle(ss.cpu.usedPercent())),
+            _wrapWithSizedbox(_buildPercentCircle(ss.mem.usedPercent * 100)),
+            _wrapWithSizedbox(_buildNet(ss)),
+            _wrapWithSizedbox(_buildIOData(
+              'Total:\n${rootDisk?.size}',
+              'Used:\n${rootDisk?.usedPercent}%',
+            )),
+          ],
+        ),
+      ),
+      height13,
+      if (_settingStore.moveOutServerTabFuncBtns.fetch() &&
+          // Discussion #146
+          !_settingStore.serverTabUseOldUI.fetch())
+        SizedBox(
+          height: 27,
+          child: ServerFuncBtns(spi: spi, s: _s),
+        ),
+    ];
   }
 
   Widget _buildServerCardTitle(
@@ -450,9 +481,12 @@ class _ServerPageState extends State<ServerPage>
     }
   }
 
-  double _calcCardHeight(ServerState cs) {
+  double _calcCardHeight(ServerState cs, String id) {
     if (cs != ServerState.finished) {
       return 23.0;
+    }
+    if (_flipedCardIds.contains(id)) {
+      return 77.0;
     }
     if (_settingStore.moveOutServerTabFuncBtns.fetch() &&
         // Discussion #146

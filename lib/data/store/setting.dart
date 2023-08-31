@@ -6,10 +6,9 @@ import '../model/app/net_view.dart';
 import '../res/default.dart';
 
 class SettingStore extends PersistentStore {
-
   // ------BEGIN------
   // These settings are not displayed in the settings page
-  // You can edit them in the settings json editor (by long press the settings 
+  // You can edit them in the settings json editor (by long press the settings
   // item in the drawer of the server tab page)
 
   /// Discussion #146
