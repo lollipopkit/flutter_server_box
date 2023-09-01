@@ -1053,6 +1053,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildSftpRmrfDir() {
     return ListTile(
       title: Text(_s.sftpRmrfDir),
+      subtitle: Text(_s.sftpRmrfDirSummary, style: grey),
       trailing: buildSwitch(context, _setting.sftpRmrfDir),
     );
   }

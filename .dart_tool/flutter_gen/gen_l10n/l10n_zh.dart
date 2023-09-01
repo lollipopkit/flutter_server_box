@@ -35,9 +35,6 @@ class SZh extends S {
   String get alterUrl => '备选链接';
 
   @override
-  String get atOwnRisk => '如果了解不多，请不要继续！';
-
-  @override
   String get attention => '注意';
 
   @override
@@ -562,7 +559,10 @@ class SZh extends S {
   String get sftpDlPrepare => '准备连接至服务器...';
 
   @override
-  String get sftpRmrfDir => '在 SFTP 中使用 `rm -rf` 删除文件夹';
+  String get sftpRmrfDir => 'SFTP 使用 `rm -rf`';
+
+  @override
+  String get sftpRmrfDirSummary => '使用 `rm -rf` 来删除文件夹';
 
   @override
   String get sftpSSHConnected => 'SFTP 已连接...';
@@ -756,9 +756,6 @@ class SZhTw extends SZh {
 
   @override
   String get alterUrl => '備選鏈接';
-
-  @override
-  String get atOwnRisk => '如果了解不多，請不要繼續！';
 
   @override
   String get attention => '注意';
@@ -1285,7 +1282,10 @@ class SZhTw extends SZh {
   String get sftpDlPrepare => '準備連接至服務器...';
 
   @override
-  String get sftpRmrfDir => '在 SFTP 中使用 `rm -rf` 刪除文件夾';
+  String get sftpRmrfDir => 'SFTP 使用 `rm -rf`';
+
+  @override
+  String get sftpRmrfDirSummary => '使用 `rm -rf` 來刪除文件夾';
 
   @override
   String get sftpSSHConnected => 'SFTP 已連接...';

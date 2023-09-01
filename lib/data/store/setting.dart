@@ -172,7 +172,7 @@ class SettingStore extends PersistentStore {
   late final sftpRmrfDir = StoreProperty(
     box,
     'sftpRmrfDir',
-    true,
+    false,
   );
 
   /// Duration of [timeout]

@@ -35,9 +35,6 @@ class SEn extends S {
   String get alterUrl => 'Alter url';
 
   @override
-  String get atOwnRisk => 'At your own risk !';
-
-  @override
   String get attention => 'Attention';
 
   @override
@@ -562,7 +559,10 @@ class SEn extends S {
   String get sftpDlPrepare => 'Preparing to connect...';
 
   @override
-  String get sftpRmrfDir => 'Use `rm -rf` to delete dir on SFTP';
+  String get sftpRmrfDir => 'SFTP `rm -rf`';
+
+  @override
+  String get sftpRmrfDirSummary => 'Use `rm -rf` to delete a folder.';
 
   @override
   String get sftpSSHConnected => 'SFTP Connected';

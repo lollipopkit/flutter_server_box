@@ -35,9 +35,6 @@ class SDe extends S {
   String get alterUrl => 'Url ändern';
 
   @override
-  String get atOwnRisk => 'Auf eigene Gefahr !';
-
-  @override
   String get attention => 'Achtung';
 
   @override
@@ -562,7 +559,10 @@ class SDe extends S {
   String get sftpDlPrepare => 'Verbindung vorbereiten...';
 
   @override
-  String get sftpRmrfDir => 'Verwenden Sie `rm -rf`, um das Verzeichnis auf SFTP zu löschen';
+  String get sftpRmrfDir => 'SFTP `rm -rf`';
+
+  @override
+  String get sftpRmrfDirSummary => 'Verwenden Sie `rm -rf`, um einen Ordner zu löschen.';
 
   @override
   String get sftpSSHConnected => 'SFTP Verbunden';

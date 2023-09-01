@@ -4,27 +4,26 @@ import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
-import 'package:toolbox/core/extension/context.dart';
-import 'package:toolbox/data/model/app/github_id.dart';
-import 'package:toolbox/data/model/app/tab.dart';
-import 'package:toolbox/data/provider/app.dart';
-import 'package:toolbox/data/res/misc.dart';
-import 'package:toolbox/view/widget/round_rect_card.dart';
-import 'package:toolbox/view/widget/value_notifier.dart';
 
 import '../../core/analysis.dart';
 import '../../core/route.dart';
 import '../../core/update.dart';
 import '../../core/utils/platform.dart';
 import '../../core/utils/ui.dart';
+import '../../data/model/app/github_id.dart';
+import '../../data/model/app/tab.dart';
+import '../../data/provider/app.dart';
 import '../../data/provider/server.dart';
 import '../../data/res/build_data.dart';
+import '../../data/res/misc.dart';
 import '../../data/res/ui.dart';
 import '../../data/res/url.dart';
 import '../../data/store/setting.dart';
 import '../../locator.dart';
 import '../widget/custom_appbar.dart';
+import '../widget/round_rect_card.dart';
 import '../widget/url_text.dart';
+import '../widget/value_notifier.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -360,24 +359,6 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<void> _onLongPressSetting() async {
-    final go = await showRoundDialog(
-      context: context,
-      title: Text(_s.attention),
-      child: Text(_s.atOwnRisk),
-      actions: [
-        TextButton(
-          onPressed: () => context.pop(true),
-          child: Text(
-            _s.ok,
-            style: const TextStyle(color: Colors.red),
-          ),
-        ),
-      ],
-    );
-    if (go != true) {
-      return;
-    }
-
     /// Encode [map] to String with indent `\t`
     final map = _setting.toJson();
     final text = jsonEncoder.convert(map);

@@ -35,9 +35,6 @@ class SId extends S {
   String get alterUrl => 'Alter url';
 
   @override
-  String get atOwnRisk => 'Dengan risiko Anda sendiri';
-
-  @override
   String get attention => 'Perhatian';
 
   @override
@@ -562,7 +559,10 @@ class SId extends S {
   String get sftpDlPrepare => 'Bersiap untuk terhubung ...';
 
   @override
-  String get sftpRmrfDir => 'Gunakan `rm -rf` untuk menghapus direktori di SFTP';
+  String get sftpRmrfDir => 'SFTP `rm -rf`';
+
+  @override
+  String get sftpRmrfDirSummary => 'Gunakan `rm -rf` untuk menghapus folder.';
 
   @override
   String get sftpSSHConnected => 'Sftp terhubung';
