@@ -1,16 +1,20 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/data/model/app/tab.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/model/server/snippet.dart';
 import '../../data/provider/snippet.dart';
+import '../../data/res/misc.dart';
 import '../../data/res/ui.dart';
 import '../../locator.dart';
+import '../../view/widget/input_field.dart';
 import '../../view/widget/picker.dart';
 import '../persistant_store.dart';
 import '../route.dart';
@@ -72,6 +76,40 @@ void showLoadingDialog(BuildContext context, {bool barrierDismiss = false}) {
     child: centerSizedLoading,
     barrierDismiss: barrierDismiss,
   );
+}
+
+Future<String?> showPwdDialog(
+  BuildContext context,
+  String? user,
+) async {
+  if (!context.mounted) return null;
+  final s = S.of(context)!;
+  return await showRoundDialog<String>(
+    context: context,
+    title: Text(user ?? s.pwd),
+    child: Input(
+      autoFocus: true,
+      type: TextInputType.visiblePassword,
+      obscureText: true,
+      onSubmitted: (val) => context.pop(val.trim()),
+      label: s.pwd,
+    ),
+  );
+}
+
+Future<void> onPwd(
+  String event,
+  StreamSink<Uint8List> stdin,
+  PwdRequestFunc? onPwdReq,
+) async {
+  if (event.contains('[sudo] password for ')) {
+    final user = pwdRequestWithUserReg.firstMatch(event)?.group(1);
+    final pwd = await onPwdReq?.call(user);
+    if (pwd == null || pwd.isEmpty) {
+      return;
+    }
+    stdin.add('$pwd\n'.uint8List);
+  }
 }
 
 Widget buildSwitch(

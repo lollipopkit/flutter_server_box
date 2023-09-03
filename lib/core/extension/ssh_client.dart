@@ -7,8 +7,7 @@ import 'package:toolbox/core/extension/uint8list.dart';
 typedef OnStd = void Function(String data, StreamSink<Uint8List> sink);
 typedef OnStdin = void Function(StreamSink<Uint8List> sink);
 
-typedef PwdRequestFunc = Future<String> Function();
-final pwdRequestWithUserReg = RegExp(r'\[sudo\] password for (.+):');
+typedef PwdRequestFunc = Future<String?> Function(String? user);
 
 extension SSHClientX on SSHClient {
   Future<int?> exec(

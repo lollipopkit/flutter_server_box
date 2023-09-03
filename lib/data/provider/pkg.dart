@@ -5,8 +5,8 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
-import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
+import 'package:toolbox/core/utils/ui.dart';
 import 'package:toolbox/data/model/pkg/manager.dart';
 import 'package:toolbox/data/model/pkg/upgrade_info.dart';
 import 'package:toolbox/data/model/server/dist.dart';
@@ -124,16 +124,7 @@ class PkgProvider extends ChangeNotifier {
   Future<void> _onPwd(String event, StreamSink<Uint8List> stdin) async {
     if (isRequestingPwd) return;
     isRequestingPwd = true;
-    if (event.contains('[sudo] password for ')) {
-      final user = pwdRequestWithUserReg.firstMatch(event)?.group(1);
-      logger.info('sudo password request for $user');
-      final pwd = await onPasswordRequest!();
-      if (pwd.isEmpty) {
-        logger.info('sudo password request cancelled');
-        return;
-      }
-      stdin.add('$pwd\n'.uint8List);
-    }
+    await onPwd(event, stdin, onPasswordRequest);
     isRequestingPwd = false;
   }
 

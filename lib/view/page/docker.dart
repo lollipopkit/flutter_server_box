@@ -57,7 +57,12 @@ class _DockerManagePageState extends State<DockerManagePage> {
     if (client == null) {
       return;
     }
-    _docker.init(client, widget.spi.user, onPwdRequest, widget.spi.id);
+    _docker.init(
+      client,
+      widget.spi.user,
+      (user) async => await showPwdDialog(context, user),
+      widget.spi.id,
+    );
   }
 
   @override
@@ -181,53 +186,6 @@ class _DockerManagePageState extends State<DockerManagePage> {
       return 'docker run -itd $suffix';
     }
     return 'docker run -itd --name $name $suffix';
-  }
-
-  void onSubmitted() {
-    context.pop();
-    if (_textController.text == '') {
-      showRoundDialog(
-        context: context,
-        title: Text(_s.attention),
-        child: Text(_s.fieldMustNotEmpty),
-        actions: [
-          TextButton(
-            onPressed: () => context.pop(),
-            child: Text(_s.ok),
-          ),
-        ],
-      );
-      return;
-    }
-  }
-
-  Future<String> onPwdRequest() async {
-    if (!mounted) return '';
-    await showRoundDialog(
-      context: context,
-      title: Text(widget.spi.user),
-      child: Input(
-        controller: _textController,
-        type: TextInputType.visiblePassword,
-        obscureText: true,
-        onSubmitted: (_) => onSubmitted(),
-        label: _s.pwd,
-      ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            context.pop();
-            context.pop();
-          },
-          child: Text(_s.cancel),
-        ),
-        TextButton(
-          onPressed: onSubmitted,
-          child: Text(_s.ok, style: textRed),
-        ),
-      ],
-    );
-    return _textController.text.trim();
   }
 
   Widget _buildMain() {

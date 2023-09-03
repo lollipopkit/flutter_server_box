@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/extension/stringx.dart';
+import 'package:toolbox/core/utils/ui.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/docker/image.dart';
 import 'package:toolbox/data/model/docker/ps.dart';
@@ -147,15 +148,7 @@ class DockerProvider extends ChangeNotifier {
   Future<void> _onPwd(String event, StreamSink<Uint8List> stdin) async {
     if (isRequestingPwd) return;
     isRequestingPwd = true;
-    if (event.contains('[sudo] password for ')) {
-      _logger.info('sudo password request for $userName');
-      final pwd = await onPwdReq!();
-      if (pwd.isEmpty) {
-        _logger.info('sudo password request cancelled');
-        return;
-      }
-      stdin.add('$pwd\n'.uint8List);
-    }
+    await onPwd(event, stdin, onPwdReq);
     isRequestingPwd = false;
   }
 

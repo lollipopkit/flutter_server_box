@@ -7,6 +7,9 @@ import '../model/app/github_id.dart';
 /// RegExp for number
 final numReg = RegExp(r'\s{1,}');
 
+/// RegExp for password request
+final pwdRequestWithUserReg = RegExp(r'\[sudo\] password for (.+):');
+
 /// Private Key max allowed size is 20kb
 const privateKeyMaxSize = 20 * 1024;
 

@@ -218,11 +218,10 @@ class _ServerPageState extends State<ServerPage>
   Widget _buildRealServerCard(Server srv) {
     final title = _buildServerCardTitle(srv.status, srv.state, srv.spi);
     final List<Widget> children = [title];
-    if (srv.state != ServerState.finished) {
-      // Do nothing
-    } else if (_flipedCardIds.contains(srv.spi.id)) {
+
+    if (_flipedCardIds.contains(srv.spi.id)) {
       children.addAll(_buildFlipedCard(srv));
-    } else {
+    } else if (srv.state == ServerState.finished) {
       children.addAll(_buildNormalCard(srv.status, srv.spi));
     }
 
@@ -245,6 +244,7 @@ class _ServerPageState extends State<ServerPage>
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
+          // TODO: sudo | on pwd request
           IconButton(
             onPressed: () => srv.client?.run('shutdown -h now'),
             icon: const Icon(Icons.power_off),
@@ -482,11 +482,11 @@ class _ServerPageState extends State<ServerPage>
   }
 
   double _calcCardHeight(ServerState cs, String id) {
-    if (cs != ServerState.finished) {
-      return 23.0;
-    }
     if (_flipedCardIds.contains(id)) {
       return 77.0;
+    }
+    if (cs != ServerState.finished) {
+      return 23.0;
     }
     if (_settingStore.moveOutServerTabFuncBtns.fetch() &&
         // Discussion #146

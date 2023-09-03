@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/extension/context.dart';
-import 'package:toolbox/view/widget/input_field.dart';
 
 import '../../data/model/pkg/upgrade_info.dart';
 import '../../data/model/server/dist.dart';
@@ -63,7 +61,7 @@ class _PkgManagePageState extends State<PkgPage>
           _scrollController.jumpTo(_scrollController.position.maxScrollExtent),
       () => _scrollControllerUpdate
           .jumpTo(_scrollController.position.maxScrollExtent),
-      onPwdRequest,
+      (user) async => await showPwdDialog(context, user),
       widget.spi.user,
     );
     _pkgProvider.refresh();
@@ -81,53 +79,6 @@ class _PkgManagePageState extends State<PkgPage>
         floatingActionButton: _buildFAB(pkg),
       );
     });
-  }
-
-  void onSubmitted() {
-    if (_textController.text == '') {
-      showRoundDialog(
-        context: context,
-        title: Text(_s.attention),
-        child: Text(_s.fieldMustNotEmpty),
-        actions: [
-          TextButton(
-            onPressed: () => context.pop(),
-            child: Text(_s.ok),
-          ),
-        ],
-      );
-      return;
-    }
-    context.pop();
-  }
-
-  Future<String> onPwdRequest() async {
-    if (!mounted) return '';
-    await showRoundDialog(
-      context: context,
-      title: Text(widget.spi.user),
-      child: Input(
-        autoFocus: true,
-        controller: _textController,
-        type: TextInputType.visiblePassword,
-        obscureText: true,
-        onSubmitted: (_) => onSubmitted(),
-        label: _s.pwd,
-      ),
-      actions: [
-        TextButton(
-            onPressed: () {
-              context.pop();
-              context.pop();
-            },
-            child: Text(_s.cancel)),
-        TextButton(
-          onPressed: () => onSubmitted(),
-          child: Text(_s.ok, style: textRed),
-        ),
-      ],
-    );
-    return _textController.text.trim();
   }
 
   Widget? _buildFAB(PkgProvider pkg) {
