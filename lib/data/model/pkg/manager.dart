@@ -92,28 +92,28 @@ enum PkgManager {
     list.removeWhere((element) => element.isEmpty);
     return list;
   }
-}
 
-PkgManager? fromDist(Dist? dist) {
-  switch (dist) {
-    case Dist.centos:
-    case Dist.rocky:
-    case Dist.fedora:
-      return PkgManager.yum;
-    case Dist.debian:
-    case Dist.ubuntu:
-    case Dist.kali:
-    case Dist.armbian:
-      return PkgManager.apt;
-    case Dist.opensuse:
-      return PkgManager.zypper;
-    case Dist.wrt:
-      return PkgManager.opkg;
-    case Dist.arch:
-      return PkgManager.pacman;
-    case Dist.alpine:
-      return PkgManager.apk;
-    default:
-      return null;
+  static PkgManager? fromDist(Dist? dist) {
+    switch (dist) {
+      case Dist.centos:
+      case Dist.rocky:
+      case Dist.fedora:
+        return PkgManager.yum;
+      case Dist.debian:
+      case Dist.ubuntu:
+      case Dist.kali:
+      case Dist.armbian:
+        return PkgManager.apt;
+      case Dist.opensuse:
+        return PkgManager.zypper;
+      case Dist.wrt:
+        return PkgManager.opkg;
+      case Dist.arch:
+        return PkgManager.pacman;
+      case Dist.alpine:
+        return PkgManager.apk;
+      default:
+        return null;
+    }
   }
 }

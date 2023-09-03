@@ -18,7 +18,6 @@ import '../view/page/convert.dart';
 import '../view/page/debug.dart';
 import '../view/page/editor.dart';
 import '../view/page/full_screen.dart';
-import '../view/page/pkg.dart';
 import '../view/page/process.dart';
 import '../view/page/server/edit.dart';
 import '../view/page/server/tab.dart';
@@ -186,10 +185,6 @@ class AppRoute {
 
   static AppRoute ping({Key? key}) {
     return AppRoute(PingPage(key: key), 'ping');
-  }
-
-  static AppRoute pkg({Key? key, required ServerPrivateInfo spi}) {
-    return AppRoute(PkgPage(key: key, spi: spi), 'pkg');
   }
 
   static AppRoute process({Key? key, required ServerPrivateInfo spi}) {

@@ -2,6 +2,11 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/core/extension/ssh_client.dart';
+import 'package:toolbox/core/extension/uint8list.dart';
+import 'package:toolbox/data/model/pkg/manager.dart';
+import 'package:toolbox/data/model/server/dist.dart';
 
 import '../../core/route.dart';
 import '../../core/utils/misc.dart';
@@ -9,6 +14,7 @@ import '../../core/utils/platform.dart';
 import '../../core/utils/server.dart';
 import '../../core/utils/ui.dart';
 import '../../data/model/app/menu.dart';
+import '../../data/model/pkg/upgrade_info.dart';
 import '../../data/model/server/server_private_info.dart';
 import '../../data/model/server/snippet.dart';
 import '../../data/provider/server.dart';
@@ -86,10 +92,7 @@ void _onTapMoreBtns(
 ) async {
   switch (value) {
     case ServerTabMenuType.pkg:
-      AppRoute.pkg(spi: spi).checkGo(
-        context: context,
-        check: () => _checkClient(context, spi.id, s.waitConnection),
-      );
+      _onPkg(context, s, spi);
       break;
     case ServerTabMenuType.sftp:
       AppRoute.sftp(spi: spi).checkGo(
@@ -199,4 +202,71 @@ bool _checkClient(BuildContext context, String id, String msg) {
     return false;
   }
   return true;
+}
+
+Future<void> _onPkg(BuildContext context, S s, ServerPrivateInfo spi) async {
+  final server = locator<ServerProvider>().servers[spi.id];
+  if (server == null) {
+    showSnackBar(context, Text(s.noClient));
+    return;
+  }
+  final sys = server.status.sysVer;
+  final pkg = PkgManager.fromDist(sys.dist);
+
+  // Update pkg list
+  showLoadingDialog(context);
+  final updateCmd = pkg?.update;
+  if (updateCmd != null) {
+    await server.client!.execWithPwd(
+      updateCmd,
+      context: context,
+    );
+  }
+  context.pop();
+
+  final listCmd = pkg?.listUpdate;
+  if (listCmd == null) {
+    showSnackBar(context, Text('Unsupported dist: $sys'));
+    return;
+  }
+
+  // Get upgrade list
+  showLoadingDialog(context);
+  final result = await server.client?.run(listCmd).string;
+  context.pop();
+  if (result == null) {
+    showSnackBar(context, Text(s.noResult));
+    return;
+  }
+  final list = pkg?.updateListRemoveUnused(result.split('\n'));
+  final upgradeable = list?.map((e) => UpgradePkgInfo(e, pkg)).toList();
+  if (upgradeable == null || upgradeable.isEmpty) {
+    showSnackBar(context, Text(s.noUpdateAvailable));
+    return;
+  }
+  final args = upgradeable.map((e) => e.package).join(' ');
+  final isSU = server.spi.user == 'root';
+  final upgradeCmd = isSU ? pkg?.upgrade(args) : 'sudo ${pkg?.upgrade(args)}';
+
+  // Confirm upgrade
+  final gotoUpgrade = await showRoundDialog<bool>(
+    context: context,
+    title: Text(s.attention),
+    child: SingleChildScrollView(
+      child: Text('${s.foundNUpdate(upgradeable.length)}\n\n$upgradeCmd'),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => context.pop(true),
+        child: Text(s.update),
+      ),
+    ],
+  );
+
+  if (gotoUpgrade != true) return;
+
+  AppRoute.ssh(spi: spi, initCmd: upgradeCmd).checkGo(
+    context: context,
+    check: () => _checkClient(context, spi.id, s.waitConnection),
+  );
 }
