@@ -1,12 +1,10 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
-import 'package:toolbox/core/utils/ui.dart';
 import 'package:toolbox/data/model/pkg/manager.dart';
 import 'package:toolbox/data/model/pkg/upgrade_info.dart';
 import 'package:toolbox/data/model/server/dist.dart';
@@ -19,7 +17,7 @@ class PkgProvider extends ChangeNotifier {
   PkgManager? type;
   Function()? onUpgrade;
   Function()? onUpdate;
-  PwdRequestFunc? onPasswordRequest;
+  BuildContext? context;
 
   String? whoami;
   List<UpgradePkgInfo>? upgradeable;
@@ -27,20 +25,18 @@ class PkgProvider extends ChangeNotifier {
   String? upgradeLog;
   String? updateLog;
   String lastLog = '';
-  bool isRequestingPwd = false;
 
   Future<void> init(
     SSHClient client,
     Dist? dist,
     Function() onUpgrade,
     Function() onUpdate,
-    PwdRequestFunc onPasswordRequest,
     String user,
+    BuildContext context,
   ) async {
     this.client = client;
     this.dist = dist;
     this.onUpgrade = onUpgrade;
-    this.onPasswordRequest = onPasswordRequest;
     whoami = user;
 
     type = fromDist(dist);
@@ -52,9 +48,8 @@ class PkgProvider extends ChangeNotifier {
   bool get isSU => whoami == 'root';
 
   void clear() {
-    client = dist = updateLog = upgradeLog = upgradeable =
-        error = whoami = onUpdate = onUpgrade = onPasswordRequest = null;
-    isRequestingPwd = false;
+    client = dist = updateLog = upgradeLog =
+        upgradeable = error = whoami = onUpdate = onUpgrade = context = null;
   }
 
   Future<void> refresh() async {
@@ -78,9 +73,9 @@ class PkgProvider extends ChangeNotifier {
   Future<String?> _update() async {
     final updateCmd = type?.update;
     if (updateCmd != null) {
-      await client!.exec(
+      await client!.execWithPwd(
         _wrap(updateCmd),
-        onStderr: _onPwd,
+        context: context,
         onStdout: (data, sink) {
           updateLog = (updateLog ?? '') + data;
           if (onUpdate != null) onUpdate!();
@@ -105,9 +100,9 @@ class PkgProvider extends ChangeNotifier {
       return;
     }
 
-    await client!.exec(
+    await client!.execWithPwd(
       _wrap(upgradeCmd),
-      onStderr: _onPwd,
+      context: context,
       onStdout: (log, sink) {
         if (lastLog == log.trim()) return;
         upgradeLog = (upgradeLog ?? '') + log;
@@ -119,13 +114,6 @@ class PkgProvider extends ChangeNotifier {
 
     upgradeLog = null;
     refresh();
-  }
-
-  Future<void> _onPwd(String event, StreamSink<Uint8List> stdin) async {
-    if (isRequestingPwd) return;
-    isRequestingPwd = true;
-    await onPwd(event, stdin, onPasswordRequest);
-    isRequestingPwd = false;
   }
 
   String _wrap(String cmd) =>

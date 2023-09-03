@@ -11,6 +11,8 @@ enum AppShellFuncType {
   status,
   docker,
   process,
+  shutdown,
+  reboot,
   ;
 
   String get flag {
@@ -21,6 +23,10 @@ enum AppShellFuncType {
         return 'd';
       case AppShellFuncType.process:
         return 'p';
+      case AppShellFuncType.shutdown:
+        return 'sd';
+      case AppShellFuncType.reboot:
+        return 'r';
     }
   }
 
@@ -36,6 +42,10 @@ enum AppShellFuncType {
         return 'dockeR';
       case AppShellFuncType.process:
         return 'process';
+      case AppShellFuncType.shutdown:
+        return 'ShutDown';
+      case AppShellFuncType.reboot:
+        return 'Reboot';
     }
   }
 
@@ -68,10 +78,24 @@ else
 \tps -ax
 fi
 ''';
+      case AppShellFuncType.shutdown:
+        return '''
+if [ "\$userId" = "0" ]; then
+\tshutdown -h now
+else
+\tsudo -S shutdown -h now
+fi''';
+      case AppShellFuncType.reboot:
+        return '''
+if [ "\$userId" = "0" ]; then
+\treboot
+else
+\tsudo -S reboot
+fi''';
     }
   }
 
-  static String get shellScript {
+  static final String shellScript = () {
     final sb = StringBuffer();
     // Write each func
     for (final func in values) {
@@ -98,7 +122,7 @@ ${func.cmd}
     ;;
 esac''');
     return sb.toString();
-  }
+  }();
 }
 
 extension EnumX on Enum {
@@ -196,6 +220,7 @@ export LANG=en_US.UTF-8
 isLinux=\$(uname 2>&1 | grep "Linux")
 # Link /bin/sh to busybox?
 isBusybox=\$(ls -l /bin/sh | grep "busybox")
+userId=\$(id -u)
 
 ${AppShellFuncType.shellScript}
 """;

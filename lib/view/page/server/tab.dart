@@ -5,6 +5,8 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/media_queryx.dart';
+import 'package:toolbox/core/extension/ssh_client.dart';
+import 'package:toolbox/data/model/app/shell_func.dart';
 
 import '../../../core/route.dart';
 import '../../../core/utils/misc.dart';
@@ -244,13 +246,18 @@ class _ServerPageState extends State<ServerPage>
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          // TODO: sudo | on pwd request
           IconButton(
-            onPressed: () => srv.client?.run('shutdown -h now'),
+            onPressed: () => srv.client?.execWithPwd(
+              AppShellFuncType.shutdown.cmd,
+              context: context,
+            ),
             icon: const Icon(Icons.power_off),
           ),
           IconButton(
-            onPressed: () => srv.client?.run('reboot'),
+            onPressed: () => srv.client?.execWithPwd(
+              AppShellFuncType.reboot.cmd,
+              context: context,
+            ),
             icon: const Icon(Icons.refresh),
           ),
           IconButton(

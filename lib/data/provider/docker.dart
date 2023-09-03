@@ -1,12 +1,10 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/extension/stringx.dart';
-import 'package:toolbox/core/utils/ui.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/docker/image.dart';
 import 'package:toolbox/data/model/docker/ps.dart';
@@ -34,34 +32,33 @@ class DockerProvider extends ChangeNotifier {
   String? version;
   String? edition;
   DockerErr? error;
-  PwdRequestFunc? onPwdReq;
   String? hostId;
   String? runLog;
-  bool isRequestingPwd = false;
+  BuildContext? context;
 
   void init(
     SSHClient client,
     String userName,
     PwdRequestFunc onPwdReq,
     String hostId,
+    BuildContext context,
   ) {
     this.client = client;
     this.userName = userName;
-    this.onPwdReq = onPwdReq;
+    this.context = context;
     this.hostId = hostId;
   }
 
   void clear() {
-    client = userName = error = items = version = edition = onPwdReq = null;
-    isRequestingPwd = false;
+    client = userName = error = items = version = edition = context = null;
     hostId = runLog = images = null;
   }
 
   Future<void> refresh() async {
     var raw = '';
-    await client!.exec(
+    await client!.execWithPwd(
       AppShellFuncType.docker.exec,
-      onStderr: _onPwd,
+      context: context,
       onStdout: (data, _) => raw = '$raw$data',
     );
 
@@ -145,13 +142,6 @@ class DockerProvider extends ChangeNotifier {
     // }
   }
 
-  Future<void> _onPwd(String event, StreamSink<Uint8List> stdin) async {
-    if (isRequestingPwd) return;
-    isRequestingPwd = true;
-    await onPwd(event, stdin, onPwdReq);
-    isRequestingPwd = false;
-  }
-
   Future<DockerErr?> stop(String id) async => await run('docker stop $id');
 
   Future<DockerErr?> start(String id) async => await run('docker start $id');
@@ -168,16 +158,14 @@ class DockerProvider extends ChangeNotifier {
 
     runLog = '';
     final errs = <String>[];
-    final code = await client!.exec(
+    final code = await client!.execWithPwd(
       _wrap(cmd),
-      onStderr: (data, sink) {
-        _onPwd(data, sink);
-        errs.add(data);
-      },
+      context: context,
       onStdout: (data, _) {
         runLog = '$runLog$data';
         notifyListeners();
       },
+      onStderr: (data, _) => errs.add(data),
     );
     runLog = null;
     notifyListeners();

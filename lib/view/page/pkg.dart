@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 
 import '../../data/model/pkg/upgrade_info.dart';
 import '../../data/model/server/dist.dart';
-import '../../core/utils/ui.dart';
 import '../../data/model/server/server_private_info.dart';
 import '../../data/provider/pkg.dart';
 import '../../data/provider/server.dart';
@@ -61,8 +60,8 @@ class _PkgManagePageState extends State<PkgPage>
           _scrollController.jumpTo(_scrollController.position.maxScrollExtent),
       () => _scrollControllerUpdate
           .jumpTo(_scrollController.position.maxScrollExtent),
-      (user) async => await showPwdDialog(context, user),
       widget.spi.user,
+      context,
     );
     _pkgProvider.refresh();
   }

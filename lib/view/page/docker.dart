@@ -62,6 +62,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
       widget.spi.user,
       (user) async => await showPwdDialog(context, user),
       widget.spi.id,
+      context,
     );
   }
 
