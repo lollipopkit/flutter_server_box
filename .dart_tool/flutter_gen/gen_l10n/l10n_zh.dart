@@ -44,6 +44,9 @@ class SZh extends S {
   String get autoCheckUpdate => '自动检查更新';
 
   @override
+  String get autoConnect => '自动连接';
+
+  @override
   String get autoUpdateHomeWidget => '自动更新桌面小部件';
 
   @override
@@ -765,6 +768,9 @@ class SZhTw extends SZh {
 
   @override
   String get autoCheckUpdate => '自動檢查更新';
+
+  @override
+  String get autoConnect => '自動連接';
 
   @override
   String get autoUpdateHomeWidget => '自動更新桌面小部件';

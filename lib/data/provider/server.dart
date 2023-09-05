@@ -94,6 +94,8 @@ class ServerProvider extends ChangeNotifier {
     return Server(spi, initStatus, null, ServerState.disconnected);
   }
 
+  /// if [spi] is specificed then only refresh this server
+  /// [onlyFailed] only refresh failed servers
   Future<void> refreshData({
     ServerPrivateInfo? spi,
     bool onlyFailed = false,
@@ -107,6 +109,7 @@ class ServerProvider extends ChangeNotifier {
         if (s.state != ServerState.failed) return;
         _limiter.reset(s.spi.id);
       }
+      if (!(s.spi.autoConnect ?? true)) return;
       return await _getData(s.spi);
     }));
   }

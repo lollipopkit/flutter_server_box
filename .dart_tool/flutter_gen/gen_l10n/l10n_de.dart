@@ -44,6 +44,9 @@ class SDe extends S {
   String get autoCheckUpdate => 'Aktualisierung automatisch prüfen';
 
   @override
+  String get autoConnect => 'Automatisch verbinden';
+
+  @override
   String get autoUpdateHomeWidget => 'Home-Widget automatisch aktualisieren';
 
   @override

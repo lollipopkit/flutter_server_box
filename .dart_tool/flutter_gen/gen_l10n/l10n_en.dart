@@ -44,6 +44,9 @@ class SEn extends S {
   String get autoCheckUpdate => 'Auto check update';
 
   @override
+  String get autoConnect => 'Auto connect';
+
+  @override
   String get autoUpdateHomeWidget => 'Auto update home widget';
 
   @override

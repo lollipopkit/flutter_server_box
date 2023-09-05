@@ -193,13 +193,19 @@ class _ServerPageState extends State<ServerPage>
             _showFailReason(si.status);
           }
         },
-        onLongPress: () => setState(() {
-          if (_flipedCardIds.contains(si.spi.id)) {
-            _flipedCardIds.remove(si.spi.id);
+        onLongPress: () {
+          if (si.state == ServerState.finished) {
+            setState(() {
+              if (_flipedCardIds.contains(si.spi.id)) {
+                _flipedCardIds.remove(si.spi.id);
+              } else {
+                _flipedCardIds.add(si.spi.id);
+              }
+            });
           } else {
-            _flipedCardIds.add(si.spi.id);
+            AppRoute.serverEdit(spi: si.spi).go(context);
           }
-        }),
+        },
         child: Padding(
           padding: const EdgeInsets.all(13),
           child: _buildRealServerCard(si),
@@ -221,10 +227,12 @@ class _ServerPageState extends State<ServerPage>
     final title = _buildServerCardTitle(srv.status, srv.state, srv.spi);
     final List<Widget> children = [title];
 
-    if (_flipedCardIds.contains(srv.spi.id)) {
-      children.addAll(_buildFlipedCard(srv));
-    } else if (srv.state == ServerState.finished) {
-      children.addAll(_buildNormalCard(srv.status, srv.spi));
+    if (srv.state == ServerState.finished) {
+      if (_flipedCardIds.contains(srv.spi.id)) {
+        children.addAll(_buildFlipedCard(srv));
+      } else {
+        children.addAll(_buildNormalCard(srv.status, srv.spi));
+      }
     }
 
     return AnimatedContainer(
@@ -304,6 +312,22 @@ class _ServerPageState extends State<ServerPage>
     ServerState cs,
     ServerPrivateInfo spi,
   ) {
+    Widget? rightCorner;
+    if (!(spi.autoConnect ?? true) && cs == ServerState.disconnected) {
+      rightCorner = InkWell(
+        onTap: () => _serverProvider.refreshData(spi: spi),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 7),
+          child: Icon(
+            Icons.link,
+            size: 21,
+            color: Colors.grey,
+          ),
+        ),
+      );
+    } else if (_settingStore.serverTabUseOldUI.fetch()) {
+      rightCorner = ServerFuncBtnsTopRight(spi: spi, s: _s);
+    }
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 7),
       child: Row(
@@ -326,8 +350,7 @@ class _ServerPageState extends State<ServerPage>
           Row(
             children: [
               _buildTopRightText(ss, cs),
-              if (_settingStore.serverTabUseOldUI.fetch())
-                ServerFuncBtnsTopRight(spi: spi, s: _s)
+              if (rightCorner != null) rightCorner,
             ],
           )
         ],
@@ -489,11 +512,11 @@ class _ServerPageState extends State<ServerPage>
   }
 
   double _calcCardHeight(ServerState cs, String id) {
-    if (_flipedCardIds.contains(id)) {
-      return 77.0;
-    }
     if (cs != ServerState.finished) {
       return 23.0;
+    }
+    if (_flipedCardIds.contains(id)) {
+      return 77.0;
     }
     if (_settingStore.moveOutServerTabFuncBtns.fetch() &&
         // Discussion #146

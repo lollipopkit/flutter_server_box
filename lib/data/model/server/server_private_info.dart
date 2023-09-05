@@ -7,23 +7,25 @@ part 'server_private_info.g.dart';
 @HiveType(typeId: 3)
 class ServerPrivateInfo {
   @HiveField(0)
-  late String name;
+  final String name;
   @HiveField(1)
-  late String ip;
+  final String ip;
   @HiveField(2)
-  late int port;
+  final int port;
   @HiveField(3)
-  late String user;
+  final String user;
   @HiveField(4)
-  late String pwd;
+  final String? pwd;
   @HiveField(5)
-  String? pubKeyId;
+  final String? pubKeyId;
   @HiveField(6)
-  List<String>? tags;
+  final List<String>? tags;
   @HiveField(7)
-  String? alterUrl;
+  final String? alterUrl;
+  @HiveField(8)
+  final bool? autoConnect;
 
-  late String id;
+  final String id;
 
   ServerPrivateInfo({
     required this.name,
@@ -34,19 +36,23 @@ class ServerPrivateInfo {
     this.pubKeyId,
     this.tags,
     this.alterUrl,
+    this.autoConnect,
   }) : id = '$user@$ip:$port';
 
-  ServerPrivateInfo.fromJson(Map<String, dynamic> json) {
-    name = json["name"].toString();
-    ip = json["ip"].toString();
-    port = json["port"] ?? 22;
-    user = json["user"].toString();
-    pwd = json["authorization"].toString();
-    pubKeyId = json["pubKeyId"]?.toString();
-    id = '$user@$ip:$port';
-    tags = json["tags"]?.cast<String>();
-    alterUrl = json["alterUrl"]?.toString();
-  }
+  /// TODO: if any field is changed, remember to update [id] [name]
+  ServerPrivateInfo.fromJson(Map<String, dynamic> json)
+      : ip = json["ip"].toString(),
+        port = json["port"] ?? 22,
+        user = json["user"]?.toString() ?? 'root',
+        id =
+            '${json["user"]?.toString() ?? "root"}@${json["ip"].toString()}:${json["port"] ?? 22}',
+        name = json["name"]?.toString() ??
+            '${json["user"]?.toString() ?? 'root'}@${json["ip"].toString()}:${json["port"] ?? 22}',
+        pwd = json["authorization"]?.toString(),
+        pubKeyId = json["pubKeyId"]?.toString(),
+        tags = json["tags"]?.cast<String>(),
+        alterUrl = json["alterUrl"]?.toString(),
+        autoConnect = json["autoConnect"];
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
@@ -58,6 +64,7 @@ class ServerPrivateInfo {
     data["pubKeyId"] = pubKeyId;
     data["tags"] = tags;
     data["alterUrl"] = alterUrl;
+    data["autoConnect"] = autoConnect;
     return data;
   }
 

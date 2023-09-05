@@ -176,6 +176,12 @@ abstract class S {
   /// **'Auto check update'**
   String get autoCheckUpdate;
 
+  /// No description provided for @autoConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto connect'**
+  String get autoConnect;
+
   /// No description provided for @autoUpdateHomeWidget.
   ///
   /// In en, this message translates to:

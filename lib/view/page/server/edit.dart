@@ -44,7 +44,8 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   late ServerProvider _serverProvider;
   late S _s;
 
-  bool usePublicKey = false;
+  final usePublicKey = ValueNotifier(false);
+  final autoConnect = ValueNotifier(true);
   int? _pubKeyIndex;
   PrivateKeyInfo? _keyInfo;
   List<String> _tags = [];
@@ -178,13 +179,24 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
           Text(_s.keyAuth),
           width13,
           Switch(
-            value: usePublicKey,
-            onChanged: (val) => setState(() => usePublicKey = val),
+            value: usePublicKey.value,
+            onChanged: (val) => setState(() => usePublicKey.value = val),
           ),
         ],
       ),
+      Row(
+        children: [
+          width13,
+          Text(_s.autoConnect),
+          width13,
+          Switch(
+            value: autoConnect.value,
+            onChanged: (val) => setState(() => autoConnect.value = val),
+          ),
+        ],
+      )
     ];
-    if (usePublicKey) {
+    if (usePublicKey.value) {
       children.add(_buildKeyAuth());
     } else {
       children.add(Input(
@@ -254,7 +266,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
           showSnackBar(context, Text(_s.plzEnterHost));
           return;
         }
-        if (!usePublicKey && _passwordController.text == '') {
+        if (!usePublicKey.value && _passwordController.text == '') {
           final cancel = await showRoundDialog<bool>(
             context: context,
             title: Text(_s.attention),
@@ -274,7 +286,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             return;
           }
         }
-        if (usePublicKey && _pubKeyIndex == -1) {
+        if (usePublicKey.value && _pubKeyIndex == -1) {
           showSnackBar(context, Text(_s.plzSelectKey));
           return;
         }
@@ -296,10 +308,11 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
           port: int.parse(_portController.text),
           user: _usernameController.text,
           pwd: authorization,
-          pubKeyId: usePublicKey ? _keyInfo!.id : null,
+          pubKeyId: usePublicKey.value ? _keyInfo!.id : null,
           tags: _tags,
           alterUrl:
               _alterUrlController.text == '' ? null : _alterUrlController.text,
+          autoConnect: autoConnect.value,
         );
 
         if (widget.spi == null) {
@@ -336,12 +349,13 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       if (widget.spi?.pubKeyId == null) {
         _passwordController.text = widget.spi?.pwd ?? '';
       } else {
-        usePublicKey = true;
+        usePublicKey.value = true;
       }
       if (widget.spi?.tags != null) {
         _tags = widget.spi!.tags!;
       }
       _alterUrlController.text = widget.spi?.alterUrl ?? '';
+      autoConnect.value = widget.spi?.autoConnect ?? true;
       setState(() {});
     }
   }
