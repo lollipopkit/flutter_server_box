@@ -57,7 +57,8 @@ class MyApp extends StatelessWidget {
 ThemeData _getAmoledTheme(ThemeData darkTheme) => darkTheme.copyWith(
       scaffoldBackgroundColor: Colors.black,
       dialogBackgroundColor: Colors.black,
-      drawerTheme: const DrawerThemeData(backgroundColor: Colors.black),
+      drawerTheme: const DrawerThemeData(
+          backgroundColor: Colors.black, shadowColor: Colors.black),
       appBarTheme: const AppBarTheme(backgroundColor: Colors.black),
       dialogTheme: const DialogTheme(backgroundColor: Colors.black),
       bottomSheetTheme:

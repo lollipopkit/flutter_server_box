@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
+import 'package:toolbox/view/widget/value_notifier.dart';
 
 import '../../../core/route.dart';
 import '../../../core/utils/ui.dart';
@@ -13,7 +14,6 @@ import '../../../data/model/server/server_private_info.dart';
 import '../../../data/provider/private_key.dart';
 import '../../../data/provider/server.dart';
 import '../../../data/res/ui.dart';
-import '../../../data/store/private_key.dart';
 import '../../../locator.dart';
 import '../../widget/custom_appbar.dart';
 import '../../widget/tag.dart';
@@ -30,7 +30,7 @@ class ServerEditPage extends StatefulWidget {
 class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   final _nameController = TextEditingController();
   final _ipController = TextEditingController();
-  final _alterUrlController = TextEditingController();
+  final _altUrlController = TextEditingController();
   final _portController = TextEditingController();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -41,27 +41,21 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   final _usernameFocus = FocusNode();
 
   late FocusScopeNode _focusScope;
-  late ServerProvider _serverProvider;
   late S _s;
 
-  final usePublicKey = ValueNotifier(false);
-  final autoConnect = ValueNotifier(true);
-  int? _pubKeyIndex;
-  PrivateKeyInfo? _keyInfo;
-  List<String> _tags = [];
+  final _serverProvider = locator<ServerProvider>();
+  final _keyProvider = locator<PrivateKeyProvider>();
 
-  @override
-  void initState() {
-    super.initState();
-    _serverProvider = locator<ServerProvider>();
-  }
+  final _keyIdx = ValueNotifier<int?>(null);
+  final _autoConnect = ValueNotifier(true);
+  List<String> _tags = <String>[];
 
   @override
   void dispose() {
     super.dispose();
     _nameController.dispose();
     _ipController.dispose();
-    _alterUrlController.dispose();
+    _altUrlController.dispose();
     _portController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
@@ -156,7 +150,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         hint: 'root',
       ),
       Input(
-        controller: _alterUrlController,
+        controller: _altUrlController,
         type: TextInputType.text,
         node: _alterUrlFocus,
         label: _s.alterUrl,
@@ -165,50 +159,29 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       ),
       TagEditor(
         tags: _tags,
-        onChanged: (p0) => setState(() {
-          _tags = p0;
-        }),
+        onChanged: (p0) {
+          setState(() {
+            _tags = p0;
+          });
+        },
         s: _s,
         tagSuggestions: [..._serverProvider.tags],
         onRenameTag: _serverProvider.renameTag,
       ),
-      width7,
-      Row(
-        children: [
-          width13,
-          Text(_s.keyAuth),
-          width13,
-          Switch(
-            value: usePublicKey.value,
-            onChanged: (val) => setState(() => usePublicKey.value = val),
+      _buildAuth(),
+      ListTile(
+        title: Text(_s.autoConnect),
+        trailing: ValueBuilder(
+          listenable: _autoConnect,
+          build: () => Switch(
+            value: _autoConnect.value,
+            onChanged: (val) {
+              _autoConnect.value = val;
+            },
           ),
-        ],
+        ),
       ),
-      Row(
-        children: [
-          width13,
-          Text(_s.autoConnect),
-          width13,
-          Switch(
-            value: autoConnect.value,
-            onChanged: (val) => setState(() => autoConnect.value = val),
-          ),
-        ],
-      )
     ];
-    if (usePublicKey.value) {
-      children.add(_buildKeyAuth());
-    } else {
-      children.add(Input(
-        controller: _passwordController,
-        obscureText: true,
-        type: TextInputType.text,
-        label: _s.pwd,
-        icon: Icons.password,
-        hint: _s.pwd,
-        onSubmitted: (_) => {},
-      ));
-    }
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(17, 17, 17, 47),
       child: Column(
@@ -219,23 +192,58 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     );
   }
 
+  Widget _buildAuth() {
+    final switch_ = ListTile(
+      title: Text(_s.keyAuth),
+      trailing: ValueBuilder(
+        listenable: _keyIdx,
+        build: () => Switch(
+          value: _keyIdx.value != null,
+          onChanged: (val) {
+            if (val) {
+              _keyIdx.value = -1;
+            } else {
+              _keyIdx.value = null;
+            }
+          },
+        ),
+      ),
+    );
+
+    /// Put [switch_] out of [ValueBuilder] to avoid rebuild
+    return ValueBuilder(
+      listenable: _keyIdx,
+      build: () {
+        final children = <Widget>[switch_];
+        if (_keyIdx.value != null) {
+          children.add(_buildKeyAuth());
+        } else {
+          children.add(Input(
+            controller: _passwordController,
+            obscureText: true,
+            type: TextInputType.text,
+            label: _s.pwd,
+            icon: Icons.password,
+            hint: _s.pwd,
+            onSubmitted: (_) => _onSave(),
+          ));
+        }
+        return Column(children: children);
+      },
+    );
+  }
+
   Widget _buildKeyAuth() {
     return Consumer<PrivateKeyProvider>(
       builder: (_, key, __) {
-        for (var item in key.pkis) {
-          if (item.id == widget.spi?.pubKeyId) {
-            _pubKeyIndex ??= key.pkis.indexOf(item);
-          }
-        }
-        final tiles = key.pkis
-            .map(
-              (e) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(e.id, textAlign: TextAlign.start),
-                trailing: _buildRadio(key.pkis.indexOf(e), e),
-              ),
-            )
-            .toList();
+        final tiles = List<Widget>.generate(key.pkis.length, (index) {
+          final e = key.pkis[index];
+          return ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(e.id, textAlign: TextAlign.start),
+            trailing: _buildRadio(index, e),
+          );
+        });
         tiles.add(
           ListTile(
             title: Text(_s.addPrivateKey),
@@ -248,10 +256,11 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         );
         return RoundRectCard(
           Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 17),
-              child: Column(
-                children: tiles,
-              )),
+            padding: const EdgeInsets.symmetric(horizontal: 17),
+            child: Column(
+              children: tiles,
+            ),
+          ),
         );
       },
     );
@@ -260,82 +269,21 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   Widget _buildFAB() {
     return FloatingActionButton(
       heroTag: 'server',
+      onPressed: _onSave,
       child: const Icon(Icons.save),
-      onPressed: () async {
-        if (_ipController.text == '') {
-          showSnackBar(context, Text(_s.plzEnterHost));
-          return;
-        }
-        if (!usePublicKey.value && _passwordController.text == '') {
-          final cancel = await showRoundDialog<bool>(
-            context: context,
-            title: Text(_s.attention),
-            child: Text(_s.sureNoPwd),
-            actions: [
-              TextButton(
-                onPressed: () => context.pop(false),
-                child: Text(_s.ok),
-              ),
-              TextButton(
-                onPressed: () => context.pop(true),
-                child: Text(_s.cancel),
-              )
-            ],
-          );
-          if (cancel ?? true) {
-            return;
-          }
-        }
-        if (usePublicKey.value && _pubKeyIndex == -1) {
-          showSnackBar(context, Text(_s.plzSelectKey));
-          return;
-        }
-        if (_usernameController.text.isEmpty) {
-          _usernameController.text = 'root';
-        }
-        if (_portController.text.isEmpty) {
-          _portController.text = '22';
-        }
-
-        if (widget.spi != null && widget.spi!.pubKeyId != null) {
-          _keyInfo ??= locator<PrivateKeyStore>().get(widget.spi!.pubKeyId!);
-        }
-
-        final authorization = _passwordController.text;
-        final spi = ServerPrivateInfo(
-          name: _nameController.text,
-          ip: _ipController.text,
-          port: int.parse(_portController.text),
-          user: _usernameController.text,
-          pwd: authorization,
-          pubKeyId: usePublicKey.value ? _keyInfo!.id : null,
-          tags: _tags,
-          alterUrl:
-              _alterUrlController.text == '' ? null : _alterUrlController.text,
-          autoConnect: autoConnect.value,
-        );
-
-        if (widget.spi == null) {
-          _serverProvider.addServer(spi);
-        } else {
-          _serverProvider.updateServer(widget.spi!, spi);
-        }
-
-        context.pop();
-      },
     );
   }
 
-  Radio _buildRadio(int index, PrivateKeyInfo pki) {
-    return Radio<int>(
-      value: index,
-      groupValue: _pubKeyIndex,
-      onChanged: (int? value) {
-        setState(() {
-          _pubKeyIndex = value!;
-          _keyInfo = pki;
-        });
-      },
+  Widget _buildRadio(int index, PrivateKeyInfo pki) {
+    return ValueBuilder(
+      listenable: _keyIdx,
+      build: () => Radio<int>(
+        value: index,
+        groupValue: _keyIdx.value,
+        onChanged: (value) {
+          _keyIdx.value = value;
+        },
+      ),
     );
   }
 
@@ -349,14 +297,75 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       if (widget.spi?.pubKeyId == null) {
         _passwordController.text = widget.spi?.pwd ?? '';
       } else {
-        usePublicKey.value = true;
+        _keyIdx.value =
+            _keyProvider.pkis.indexWhere((e) => e.id == widget.spi!.pubKeyId);
       }
       if (widget.spi?.tags != null) {
         _tags = widget.spi!.tags!;
       }
-      _alterUrlController.text = widget.spi?.alterUrl ?? '';
-      autoConnect.value = widget.spi?.autoConnect ?? true;
+      _altUrlController.text = widget.spi?.alterUrl ?? '';
+      _autoConnect.value = widget.spi?.autoConnect ?? true;
       setState(() {});
     }
+  }
+
+  void _onSave() async {
+    if (_ipController.text == '') {
+      showSnackBar(context, Text(_s.plzEnterHost));
+      return;
+    }
+    if (_keyIdx.value == null && _passwordController.text == '') {
+      final cancel = await showRoundDialog<bool>(
+        context: context,
+        title: Text(_s.attention),
+        child: Text(_s.sureNoPwd),
+        actions: [
+          TextButton(
+            onPressed: () => context.pop(false),
+            child: Text(_s.ok),
+          ),
+          TextButton(
+            onPressed: () => context.pop(true),
+            child: Text(_s.cancel),
+          )
+        ],
+      );
+      if (cancel ?? true) {
+        return;
+      }
+    }
+    // If [_pubKeyIndex] is -1, it means that the user has not selected
+    if (_keyIdx.value == -1) {
+      showSnackBar(context, Text(_s.plzSelectKey));
+      return;
+    }
+    if (_usernameController.text.isEmpty) {
+      _usernameController.text = 'root';
+    }
+    if (_portController.text.isEmpty) {
+      _portController.text = '22';
+    }
+
+    final spi = ServerPrivateInfo(
+      name: _nameController.text,
+      ip: _ipController.text,
+      port: int.parse(_portController.text),
+      user: _usernameController.text,
+      pwd: _passwordController.text.isEmpty ? null : _passwordController.text,
+      pubKeyId: _keyIdx.value != null
+          ? _keyProvider.pkis.elementAt(_keyIdx.value!).id
+          : null,
+      tags: _tags,
+      alterUrl: _altUrlController.text.isEmpty ? null : _altUrlController.text,
+      autoConnect: _autoConnect.value,
+    );
+
+    if (widget.spi == null) {
+      _serverProvider.addServer(spi);
+    } else {
+      _serverProvider.updateServer(widget.spi!, spi);
+    }
+
+    context.pop();
   }
 }
