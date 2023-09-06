@@ -60,14 +60,20 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
           padding: const EdgeInsets.all(13),
           itemCount: key.pkis.length,
           itemBuilder: (context, idx) {
+            final item = key.pkis[idx];
             return RoundRectCard(
               ListTile(
-                title: Text(key.pkis[idx].id),
-                trailing: TextButton(
-                  onPressed: () =>
-                      AppRoute.keyEdit(pki: key.pkis[idx]).go(context),
-                  child: Text(_s.edit),
+                leading: Text(
+                  '#$idx',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
+                title: Text(item.id),
+                subtitle: Text(item.type ?? _s.unknown, style: grey),
+                onTap: () => AppRoute.keyEdit(pki: item).go(context),
+                trailing: const Icon(Icons.edit),
               ),
             );
           },

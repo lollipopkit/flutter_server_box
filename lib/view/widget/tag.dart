@@ -37,12 +37,12 @@ class TagBtn extends StatelessWidget {
   }
 }
 
-class TagEditor extends StatelessWidget {
+class TagEditor extends StatefulWidget {
   final List<String> tags;
   final S s;
   final void Function(List<String>)? onChanged;
   final void Function(String old, String new_)? onRenameTag;
-  final List<String>? tagSuggestions;
+  final List<String> allTags;
 
   const TagEditor({
     super.key,
@@ -50,40 +50,46 @@ class TagEditor extends StatelessWidget {
     required this.s,
     this.onChanged,
     this.onRenameTag,
-    this.tagSuggestions,
+    this.allTags = const <String>[],
   });
 
+  @override
+  State<StatefulWidget> createState() => _TagEditorState();
+}
+
+class _TagEditorState extends State<TagEditor> {
   @override
   Widget build(BuildContext context) {
     return RoundRectCard(ListTile(
       leading: const Icon(Icons.tag),
-      title: _buildTags(context, tags),
+      title: _buildTags(widget.tags),
       trailing: InkWell(
         child: const Icon(Icons.add),
         onTap: () {
-          _showAddTagDialog(context, tags, onChanged);
+          _showAddTagDialog();
         },
       ),
     ));
   }
 
-  Widget _buildTags(BuildContext context, List<String> tags) {
-    tagSuggestions?.removeWhere((element) => tags.contains(element));
-    final suggestionLen = tagSuggestions?.length ?? 0;
+  Widget _buildTags(List<String> tags) {
+    final suggestions = widget.allTags.where((e) => !tags.contains(e)).toList();
+    final suggestionLen = suggestions.length;
+
+    /// Add vertical divider if suggestions.length > 0
     final counts = tags.length + suggestionLen + (suggestionLen == 0 ? 0 : 1);
-    if (counts == 0) return Text(s.tag);
+    if (counts == 0) return Text(widget.s.tag);
     return ConstrainedBox(
       constraints: const BoxConstraints(maxHeight: _kTagBtnHeight),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemBuilder: (context, index) {
           if (index < tags.length) {
-            return _buildTagItem(context, tags[index], false);
+            return _buildTagItem(tags[index]);
           } else if (index > tags.length) {
             return _buildTagItem(
-              context,
-              tagSuggestions![index - tags.length - 1],
-              true,
+              suggestions[index - tags.length - 1],
+              isAdd: true,
             );
           }
           return const VerticalDivider();
@@ -93,7 +99,7 @@ class TagEditor extends StatelessWidget {
     );
   }
 
-  Widget _buildTagItem(BuildContext context, String tag, bool isAdd) {
+  Widget _buildTagItem(String tag, {bool isAdd = false}) {
     return _wrap(
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -114,65 +120,63 @@ class TagEditor extends StatelessWidget {
       ),
       onTap: () {
         if (isAdd) {
-          tags.add(tag);
+          widget.tags.add(tag);
         } else {
-          tags.remove(tag);
+          widget.tags.remove(tag);
         }
-        onChanged?.call(tags);
+        widget.onChanged?.call(widget.tags);
+        setState(() {});
       },
-      onLongPress: () => _showRenameDialog(context, tag),
+      onLongPress: () => _showRenameDialog(tag),
     );
   }
 
-  void _showAddTagDialog(
-    BuildContext context,
-    List<String> tags,
-    void Function(List<String>)? onChanged,
-  ) {
+  void _showAddTagDialog() {
     final textEditingController = TextEditingController();
     showRoundDialog(
       context: context,
-      title: Text(s.add),
+      title: Text(widget.s.add),
       child: Input(
         autoFocus: true,
         icon: Icons.tag,
         controller: textEditingController,
-        hint: s.tag,
+        hint: widget.s.tag,
       ),
       actions: [
         TextButton(
           onPressed: () {
             final tag = textEditingController.text;
-            tags.add(tag.trim());
-            onChanged?.call(tags);
-            Navigator.pop(context);
+            widget.tags.add(tag.trim());
+            widget.onChanged?.call(widget.tags);
+            context.pop();
           },
-          child: Text(s.add),
+          child: Text(widget.s.add),
         ),
       ],
     );
   }
 
-  void _showRenameDialog(BuildContext context, String tag) {
+  void _showRenameDialog(String tag) {
     final textEditingController = TextEditingController(text: tag);
     showRoundDialog(
       context: context,
-      title: Text(s.rename),
+      title: Text(widget.s.rename),
       child: Input(
         autoFocus: true,
         icon: Icons.abc,
         controller: textEditingController,
-        hint: s.tag,
+        hint: widget.s.tag,
       ),
       actions: [
         TextButton(
           onPressed: () {
             final newTag = textEditingController.text.trim();
             if (newTag.isEmpty) return;
-            onRenameTag?.call(tag, newTag);
+            widget.onRenameTag?.call(tag, newTag);
             context.pop();
+            setState(() {});
           },
-          child: Text(s.rename),
+          child: Text(widget.s.rename),
         ),
       ],
     );

@@ -1,11 +1,7 @@
-import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context.dart';
-import 'package:toolbox/view/widget/input_field.dart';
-import 'package:toolbox/view/widget/round_rect_card.dart';
-import 'package:toolbox/view/widget/value_notifier.dart';
 
 import '../../../core/route.dart';
 import '../../../core/utils/ui.dart';
@@ -16,7 +12,10 @@ import '../../../data/provider/server.dart';
 import '../../../data/res/ui.dart';
 import '../../../locator.dart';
 import '../../widget/custom_appbar.dart';
+import '../../widget/input_field.dart';
+import '../../widget/round_rect_card.dart';
 import '../../widget/tag.dart';
+import '../../widget/value_notifier.dart';
 
 class ServerEditPage extends StatefulWidget {
   const ServerEditPage({Key? key, this.spi}) : super(key: key);
@@ -27,7 +26,7 @@ class ServerEditPage extends StatefulWidget {
   _ServerEditPageState createState() => _ServerEditPageState();
 }
 
-class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
+class _ServerEditPageState extends State<ServerEditPage> {
   final _nameController = TextEditingController();
   final _ipController = TextEditingController();
   final _altUrlController = TextEditingController();
@@ -43,12 +42,42 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   late FocusScopeNode _focusScope;
   late S _s;
 
-  final _serverProvider = locator<ServerProvider>();
-  final _keyProvider = locator<PrivateKeyProvider>();
+  final _srvs = locator<ServerProvider>();
+  final _keys = locator<PrivateKeyProvider>();
 
   final _keyIdx = ValueNotifier<int?>(null);
   final _autoConnect = ValueNotifier(true);
-  List<String> _tags = <String>[];
+
+  var _tags = <String>[];
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.spi != null) {
+      _nameController.text = widget.spi?.name ?? '';
+      _ipController.text = widget.spi?.ip ?? '';
+      _portController.text = (widget.spi?.port ?? 22).toString();
+      _usernameController.text = widget.spi?.user ?? '';
+      if (widget.spi?.pubKeyId == null) {
+        _passwordController.text = widget.spi?.pwd ?? '';
+      } else {
+        _keyIdx.value = _keys.pkis.indexWhere(
+          (e) => e.id == widget.spi!.pubKeyId,
+        );
+      }
+      if (widget.spi?.tags != null) {
+        /// List in dart is passed by pointer, so you need to copy it here
+        _tags.addAll(widget.spi!.tags!);
+      }
+      if (widget.spi?.alterUrl != null) {
+        _altUrlController.text = widget.spi!.alterUrl!;
+      }
+      if (widget.spi?.autoConnect != null) {
+        _autoConnect.value = widget.spi!.autoConnect!;
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -92,7 +121,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
           actions: [
             TextButton(
               onPressed: () {
-                _serverProvider.delServer(widget.spi!.id);
+                _srvs.delServer(widget.spi!.id);
                 context.pop();
                 context.pop(true);
               },
@@ -159,14 +188,10 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       ),
       TagEditor(
         tags: _tags,
-        onChanged: (p0) {
-          setState(() {
-            _tags = p0;
-          });
-        },
+        onChanged: (p0) => _tags = p0,
         s: _s,
-        tagSuggestions: [..._serverProvider.tags],
-        onRenameTag: _serverProvider.renameTag,
+        allTags: [..._srvs.tags],
+        onRenameTag: _srvs.renameTag,
       ),
       _buildAuth(),
       ListTile(
@@ -240,7 +265,16 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
           final e = key.pkis[index];
           return ListTile(
             contentPadding: EdgeInsets.zero,
+            leading: Text(
+              '#${index + 1}',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            ),
             title: Text(e.id, textAlign: TextAlign.start),
+            subtitle: Text(
+              e.type ?? _s.unknown,
+              textAlign: TextAlign.start,
+              style: grey,
+            ),
             trailing: _buildRadio(index, e),
           );
         });
@@ -287,28 +321,6 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     );
   }
 
-  @override
-  void afterFirstLayout(BuildContext context) {
-    if (widget.spi != null) {
-      _nameController.text = widget.spi?.name ?? '';
-      _ipController.text = widget.spi?.ip ?? '';
-      _portController.text = (widget.spi?.port ?? 22).toString();
-      _usernameController.text = widget.spi?.user ?? '';
-      if (widget.spi?.pubKeyId == null) {
-        _passwordController.text = widget.spi?.pwd ?? '';
-      } else {
-        _keyIdx.value =
-            _keyProvider.pkis.indexWhere((e) => e.id == widget.spi!.pubKeyId);
-      }
-      if (widget.spi?.tags != null) {
-        _tags = widget.spi!.tags!;
-      }
-      _altUrlController.text = widget.spi?.alterUrl ?? '';
-      _autoConnect.value = widget.spi?.autoConnect ?? true;
-      setState(() {});
-    }
-  }
-
   void _onSave() async {
     if (_ipController.text == '') {
       showSnackBar(context, Text(_s.plzEnterHost));
@@ -353,7 +365,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       user: _usernameController.text,
       pwd: _passwordController.text.isEmpty ? null : _passwordController.text,
       pubKeyId: _keyIdx.value != null
-          ? _keyProvider.pkis.elementAt(_keyIdx.value!).id
+          ? _keys.pkis.elementAt(_keyIdx.value!).id
           : null,
       tags: _tags,
       alterUrl: _altUrlController.text.isEmpty ? null : _altUrlController.text,
@@ -361,9 +373,9 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     );
 
     if (widget.spi == null) {
-      _serverProvider.addServer(spi);
+      _srvs.addServer(spi);
     } else {
-      _serverProvider.updateServer(widget.spi!, spi);
+      _srvs.updateServer(widget.spi!, spi);
     }
 
     context.pop();

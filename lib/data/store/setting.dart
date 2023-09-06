@@ -6,10 +6,13 @@ import '../model/app/net_view.dart';
 import '../res/default.dart';
 
 class SettingStore extends PersistentStore {
+  /// Convert all settings into json
+  Map<String, dynamic> toJson() => {for (var e in box.keys) e: box.get(e)};
+
   // ------BEGIN------
   // These settings are not displayed in the settings page
   // You can edit them in the settings json editor (by long press the settings
-  // item in the drawer of the server tab page)
+  // item in the drawer of the home page)
 
   /// Discussion #146
   late final serverTabUseOldUI = StoreProperty(
@@ -31,10 +34,16 @@ class SettingStore extends PersistentStore {
     'recordHistory',
     true,
   );
-  // ------END------
 
-  /// Convert all settings into json
-  Map<String, dynamic> toJson() => {for (var e in box.keys) e: box.get(e)};
+  /// Bigger for bigger font size
+  /// 1.0 means 100%
+  /// Warning: This may cause some UI issues
+  late final textFactor = StoreProperty(
+    box,
+    'textFactor',
+    1.0,
+  );
+  // ------END------
 
   late final primaryColor = StoreProperty(
     box,

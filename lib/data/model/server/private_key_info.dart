@@ -14,6 +14,19 @@ class PrivateKeyInfo {
     required this.key,
   });
 
+  String? get type {
+    final lines = key.split('\n');
+    if (lines.length < 2) {
+      return null;
+    }
+    final firstLine = lines[0];
+    final splited = firstLine.split(RegExp(r'\s+'));
+    if (splited.length < 2) {
+      return null;
+    }
+    return splited[1];
+  }
+
   PrivateKeyInfo.fromJson(Map<String, dynamic> json)
       : id = json["id"].toString(),
         key = json["private_key"].toString();

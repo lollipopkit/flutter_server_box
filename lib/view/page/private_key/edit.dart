@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:after_layout/after_layout.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -30,8 +29,7 @@ class PrivateKeyEditPage extends StatefulWidget {
   _PrivateKeyEditPageState createState() => _PrivateKeyEditPageState();
 }
 
-class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
-    with AfterLayoutMixin {
+class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
   final _nameController = TextEditingController();
   final _keyController = TextEditingController();
   final _pwdController = TextEditingController();
@@ -40,7 +38,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
   final _pwdNode = FocusNode();
 
   late FocusScopeNode _focusScope;
-  late PrivateKeyProvider _provider;
+  final _provider = locator<PrivateKeyProvider>();
   late S _s;
 
   Widget? _loading;
@@ -48,7 +46,18 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
   @override
   void initState() {
     super.initState();
-    _provider = locator<PrivateKeyProvider>();
+    if (widget.pki != null) {
+      _nameController.text = widget.pki!.id;
+      _keyController.text = widget.pki!.key;
+    } else {
+      Clipboard.getData(_format).then((value) {
+        if (value == null) return;
+        final clipdata = value.text?.trim() ?? '';
+        if (clipdata.startsWith('-----BEGIN') && clipdata.endsWith('-----')) {
+          _keyController.text = clipdata;
+        }
+      });
+    }
   }
 
   @override
@@ -215,18 +224,5 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage>
         _loading ?? placeholder,
       ],
     );
-  }
-
-  @override
-  Future<void> afterFirstLayout(BuildContext context) async {
-    if (widget.pki != null) {
-      _nameController.text = widget.pki!.id;
-      _keyController.text = widget.pki!.key;
-    } else {
-      final clipdata = ((await Clipboard.getData(_format))?.text ?? '').trim();
-      if (clipdata.startsWith('-----BEGIN') && clipdata.endsWith('-----')) {
-        _keyController.text = clipdata;
-      }
-    }
   }
 }
