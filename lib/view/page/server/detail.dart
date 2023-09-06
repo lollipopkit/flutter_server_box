@@ -38,6 +38,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   final Order<String> _cardsOrder = [];
   final _setting = locator<SettingStore>();
 
+  late final _textFactor = _setting.textFactor.fetch();
+
   late final _cardBuildMap = Map.fromIterables(
     defaultDetailCardOrder,
     [
@@ -163,12 +165,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         Text(
           '${percent.toStringAsFixed(1)}%',
           style: const TextStyle(fontSize: 13),
-          textScaleFactor: 1.0,
+          textScaleFactor: _textFactor,
         ),
         Text(
           timeType,
           style: const TextStyle(fontSize: 10, color: Colors.grey),
-          textScaleFactor: 1.0,
+          textScaleFactor: _textFactor,
         ),
       ],
     );
@@ -206,11 +208,11 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(ss.sysVer, style: textSize11, textScaleFactor: 1.0),
+            Text(ss.sysVer, style: textSize11, textScaleFactor: _textFactor),
             Text(
               ss.uptime,
               style: textSize11,
-              textScaleFactor: 1.0,
+              textScaleFactor: _textFactor,
             ),
           ],
         ),
@@ -316,9 +318,9 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                       Text(
                         '${disk.usedPercent}% of ${disk.size}',
                         style: textSize11,
-                        textScaleFactor: 1.0,
+                        textScaleFactor: _textFactor,
                       ),
-                      Text(disk.path, style: textSize11, textScaleFactor: 1.0)
+                      Text(disk.path, style: textSize11, textScaleFactor: _textFactor,)
                     ],
                   ),
                   _buildProgress(disk.usedPercent.toDouble())
@@ -392,7 +394,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             child: Text(
               device,
               style: textSize11,
-              textScaleFactor: 1.0,
+              textScaleFactor: _textFactor,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -403,7 +405,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               '${ns.speedIn(device: device)} | ${ns.sizeIn(device: device)}',
               style: textSize11,
               textAlign: TextAlign.center,
-              textScaleFactor: 0.87,
+              textScaleFactor: 0.87 * _textFactor,
             ),
           ),
           SizedBox(
@@ -412,7 +414,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               '${ns.speedOut(device: device)} | ${ns.sizeOut(device: device)}',
               style: textSize11,
               textAlign: TextAlign.right,
-              textScaleFactor: 0.87,
+              textScaleFactor: 0.87 * _textFactor,
             ),
           )
         ],
@@ -444,12 +446,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             Text(
               key,
               style: textSize11,
-              textScaleFactor: 1.0,
+              textScaleFactor: _textFactor,
             ),
             Text(
               '${temps.get(key)}°C',
               style: textSize11,
-              textScaleFactor: 1.0,
+              textScaleFactor: _textFactor,
             ),
           ],
         )));
@@ -468,7 +470,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         key: key,
         text,
         style: style,
-        textScaleFactor: 1.0,
+        textScaleFactor: _textFactor,
       ),
       transitionBuilder: (child, animation) => FadeTransition(
         opacity: animation,
