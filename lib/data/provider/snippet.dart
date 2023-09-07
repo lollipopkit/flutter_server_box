@@ -29,7 +29,17 @@ class SnippetProvider extends ChangeNotifier {
       order.removeWhere((e) => surplus.any((ele) => ele == e));
       _setting.snippetOrder.put(order);
     }
+    _addInternal();
     _updateTags();
+  }
+
+  void _addInternal() {
+    if (!_setting.fTISBM.fetch()) {
+      return;
+    }
+    _snippets.add(installSBM);
+    _store.put(installSBM);
+    _setting.fTISBM.put(false);
   }
 
   void _updateTags() {
