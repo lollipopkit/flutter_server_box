@@ -172,6 +172,9 @@ class SId extends S {
   }
 
   @override
+  String get doubleColumnMode => 'Mode kolom ganda';
+
+  @override
   String get download => 'Unduh';
 
   @override

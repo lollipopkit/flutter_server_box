@@ -172,6 +172,9 @@ class SEn extends S {
   }
 
   @override
+  String get doubleColumnMode => 'Double column mode';
+
+  @override
   String get download => 'Download';
 
   @override

@@ -172,6 +172,9 @@ class SDe extends S {
   }
 
   @override
+  String get doubleColumnMode => 'Doppelspaltiger Modus';
+
+  @override
   String get download => 'Download';
 
   @override

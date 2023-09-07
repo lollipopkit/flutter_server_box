@@ -416,6 +416,12 @@ abstract class S {
   /// **'{count} container running.'**
   String dockerStatusRunningFmt(Object count);
 
+  /// No description provided for @doubleColumnMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Double column mode'**
+  String get doubleColumnMode;
+
   /// No description provided for @download.
   ///
   /// In en, this message translates to:

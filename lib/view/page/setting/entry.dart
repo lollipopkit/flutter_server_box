@@ -204,6 +204,7 @@ class _SettingPageState extends State<SettingPage> {
         _buildMaxRetry(),
         _buildDiskIgnorePath(),
         _buildDeleteServers(),
+        if (isDesktop) _buildDoubleColumnServersPage(),
       ].map((e) => RoundRectCard(e)).toList(),
     );
   }
@@ -1055,6 +1056,13 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(_s.sftpRmrfDir),
       subtitle: Text(_s.sftpRmrfDirSummary, style: grey),
       trailing: buildSwitch(context, _setting.sftpRmrfDir),
+    );
+  }
+
+  Widget _buildDoubleColumnServersPage() {
+    return ListTile(
+      title: Text(_s.doubleColumnMode),
+      trailing: buildSwitch(context, _setting.doubleColumnServersPage),
     );
   }
 }

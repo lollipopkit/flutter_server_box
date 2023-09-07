@@ -53,6 +53,7 @@
   "dockerNotInstalled": "Docker not installed",
   "dockerStatusRunningAndStoppedFmt": "{runningCount} running, {stoppedCount} container stopped.",
   "dockerStatusRunningFmt": "{count} container running.",
+  "doubleColumnMode": "Double column mode",
   "download": "Download",
   "edit": "Edit",
   "editVirtKeys": "Edit virtual keys",

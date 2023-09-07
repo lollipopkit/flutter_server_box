@@ -27,6 +27,8 @@ class SettingStore extends PersistentStore {
     'timeOut',
     5,
   );
+  /// Duration of [timeout]
+  Duration get timeoutD => Duration(seconds: timeout.fetch());
 
   /// Record history of SFTP path and etc.
   late final recordHistory = StoreProperty(
@@ -63,9 +65,6 @@ class SettingStore extends PersistentStore {
     'launchPage',
     defaultLaunchPageIdx,
   );
-
-  // Version of store db
-  late final storeVersion = StoreProperty(box, 'storeVersion', 0);
 
   late final termColorIdx = StoreProperty(box, 'termColorIdx', 0);
 
@@ -184,6 +183,17 @@ class SettingStore extends PersistentStore {
     false,
   );
 
-  /// Duration of [timeout]
-  Duration get timeoutD => Duration(seconds: timeout.fetch());
+  /// Use double column servers page on Desktop
+  late final doubleColumnServersPage = StoreProperty(
+    box,
+    'doubleColumnServersPage',
+    isDesktop,
+  );
+
+  // Never show these settings for users
+  // ------BEGIN------
+
+  /// Version of store db
+  late final storeVersion = StoreProperty(box, 'storeVersion', 0);
+  // ------END------
 }

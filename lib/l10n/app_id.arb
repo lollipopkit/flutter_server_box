@@ -53,6 +53,7 @@
   "dockerNotInstalled": "Docker tidak terpasang",
   "dockerStatusRunningAndStoppedFmt": "{runningCount} running, {stoppedCount} container stopped.",
   "dockerStatusRunningFmt": "{count} wadah berjalan.",
+  "doubleColumnMode": "Mode kolom ganda",
   "download": "Unduh",
   "edit": "Edit",
   "editVirtKeys": "Edit kunci virtual",

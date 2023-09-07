@@ -36,21 +36,14 @@ class ServerPage extends StatefulWidget {
 class _ServerPageState extends State<ServerPage>
     with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
   late MediaQueryData _media;
-  late ServerProvider _serverProvider;
-  late SettingStore _settingStore;
   late S _s;
 
   final _flipedCardIds = <String>{};
+  final _serverProvider = locator<ServerProvider>();
+  final _setting = locator<SettingStore>();
 
   String? _tag;
   bool _useDoubleColumn = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _serverProvider = locator<ServerProvider>();
-    _settingStore = locator<SettingStore>();
-  }
 
   @override
   void didChangeDependencies() {
@@ -90,7 +83,7 @@ class _ServerPageState extends State<ServerPage>
         }
 
         final filtered = _filterServers(pro);
-        if (_useDoubleColumn) {
+        if (_useDoubleColumn && _setting.doubleColumnServersPage.fetch()) {
           return _buildBodyMedium(pro);
         }
         return _buildBodySmall(provider: pro, filtered: filtered);
@@ -297,9 +290,9 @@ class _ServerPageState extends State<ServerPage>
         ),
       ),
       height13,
-      if (_settingStore.moveOutServerTabFuncBtns.fetch() &&
+      if (_setting.moveOutServerTabFuncBtns.fetch() &&
           // Discussion #146
-          !_settingStore.serverTabUseOldUI.fetch())
+          !_setting.serverTabUseOldUI.fetch())
         SizedBox(
           height: 27,
           child: ServerFuncBtns(spi: spi, s: _s),
@@ -325,7 +318,7 @@ class _ServerPageState extends State<ServerPage>
           ),
         ),
       );
-    } else if (_settingStore.serverTabUseOldUI.fetch()) {
+    } else if (_setting.serverTabUseOldUI.fetch()) {
       rightCorner = ServerFuncBtnsTopRight(spi: spi, s: _s);
     }
     return Padding(
@@ -400,7 +393,7 @@ class _ServerPageState extends State<ServerPage>
 
   Widget _buildNet(ServerStatus ss) {
     return ValueListenableBuilder<NetViewType>(
-      valueListenable: _settingStore.netViewType.listenable(),
+      valueListenable: _setting.netViewType.listenable(),
       builder: (_, val, __) {
         final data = val.build(ss);
         return AnimatedSwitcher(
@@ -518,9 +511,9 @@ class _ServerPageState extends State<ServerPage>
     if (_flipedCardIds.contains(id)) {
       return 77.0;
     }
-    if (_settingStore.moveOutServerTabFuncBtns.fetch() &&
+    if (_setting.moveOutServerTabFuncBtns.fetch() &&
         // Discussion #146
-        !_settingStore.serverTabUseOldUI.fetch()) {
+        !_setting.serverTabUseOldUI.fetch()) {
       return 132;
     }
     return 107;

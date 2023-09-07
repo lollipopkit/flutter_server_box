@@ -172,6 +172,9 @@ class SZh extends S {
   }
 
   @override
+  String get doubleColumnMode => '双列模式';
+
+  @override
   String get download => '下载';
 
   @override
@@ -896,6 +899,9 @@ class SZhTw extends SZh {
   String dockerStatusRunningFmt(Object count) {
     return '$count個容器正在運行';
   }
+
+  @override
+  String get doubleColumnMode => '雙列模式';
 
   @override
   String get download => '下載';

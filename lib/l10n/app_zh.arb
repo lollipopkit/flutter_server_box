@@ -53,6 +53,7 @@
   "dockerNotInstalled": "Docker 未安装",
   "dockerStatusRunningAndStoppedFmt": "{runningCount}个正在运行, {stoppedCount}个已停止",
   "dockerStatusRunningFmt": "{count}个容器正在运行",
+  "doubleColumnMode": "双列模式",
   "download": "下载",
   "edit": "编辑",
   "editVirtKeys": "编辑虚拟按键",
