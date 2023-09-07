@@ -421,6 +421,9 @@ class SDe extends S {
   String get notSelected => 'Nicht ausgewählt';
 
   @override
+  String get note => 'Hinweis';
+
+  @override
   String get nullToken => 'Null token';
 
   @override

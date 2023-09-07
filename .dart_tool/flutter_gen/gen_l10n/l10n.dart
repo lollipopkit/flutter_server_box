@@ -890,6 +890,12 @@ abstract class S {
   /// **'Not selected'**
   String get notSelected;
 
+  /// No description provided for @note.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get note;
+
   /// No description provided for @nullToken.
   ///
   /// In en, this message translates to:

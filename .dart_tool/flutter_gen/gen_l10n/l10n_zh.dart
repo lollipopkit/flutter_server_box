@@ -421,6 +421,9 @@ class SZh extends S {
   String get notSelected => '未选择';
 
   @override
+  String get note => '备注';
+
+  @override
   String get nullToken => '无Token';
 
   @override
@@ -1148,6 +1151,9 @@ class SZhTw extends SZh {
 
   @override
   String get notSelected => '未選擇';
+
+  @override
+  String get note => '備註';
 
   @override
   String get nullToken => '無Token';

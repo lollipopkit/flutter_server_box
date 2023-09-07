@@ -25,6 +25,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
     with AfterLayoutMixin {
   final _nameController = TextEditingController();
   final _scriptController = TextEditingController();
+  final _noteController = TextEditingController();
   final _scriptNode = FocusNode();
 
   late SnippetProvider _provider;
@@ -91,7 +92,13 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           showSnackBar(context, Text(_s.fieldMustNotEmpty));
           return;
         }
-        final snippet = Snippet(name, script, _tags);
+        final note = _noteController.text;
+        final snippet = Snippet(
+          name: name,
+          script: script,
+          tags: _tags.isEmpty ? null : _tags,
+          note: note.isEmpty ? null : note,
+        );
         if (widget.snippet != null) {
           _provider.update(widget.snippet!, snippet);
         } else {
@@ -115,13 +122,12 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           icon: Icons.info,
         ),
         Input(
-          controller: _scriptController,
-          node: _scriptNode,
+          controller: _noteController,
           minLines: 3,
-          maxLines: 10,
+          maxLines: 3,
           type: TextInputType.multiline,
-          label: _s.snippet,
-          icon: Icons.code,
+          label: _s.note,
+          icon: Icons.note,
         ),
         TagEditor(
           tags: _tags,
@@ -133,7 +139,16 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           onRenameTag: (old, n) => setState(() {
             _provider.renameTag(old, n);
           }),
-        )
+        ),
+        Input(
+          controller: _scriptController,
+          node: _scriptNode,
+          minLines: 3,
+          maxLines: 10,
+          type: TextInputType.multiline,
+          label: _s.snippet,
+          icon: Icons.code,
+        ),
       ],
     );
   }
@@ -143,6 +158,10 @@ class _SnippetEditPageState extends State<SnippetEditPage>
     if (widget.snippet != null) {
       _nameController.text = widget.snippet!.name;
       _scriptController.text = widget.snippet!.script;
+      if (widget.snippet!.note != null) {
+        _noteController.text = widget.snippet!.note!;
+      }
+
       if (widget.snippet!.tags != null) {
         _tags = widget.snippet!.tags!;
         setState(() {});

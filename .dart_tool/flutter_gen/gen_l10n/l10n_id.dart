@@ -421,6 +421,9 @@ class SId extends S {
   String get notSelected => 'Tidak terpilih';
 
   @override
+  String get note => 'Catatan';
+
+  @override
   String get nullToken => 'Token NULL';
 
   @override

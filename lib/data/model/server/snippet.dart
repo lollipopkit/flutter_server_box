@@ -12,18 +12,28 @@ class Snippet implements TagPickable {
   final String script;
   @HiveField(2)
   final List<String>? tags;
-  const Snippet(this.name, this.script, this.tags);
+  @HiveField(3)
+  final String? note;
+
+  const Snippet({
+    required this.name,
+    required this.script,
+    this.tags,
+    this.note,
+  });
 
   Snippet.fromJson(Map<String, dynamic> json)
       : name = json['name'].toString(),
         script = json['script'].toString(),
-        tags = json['tags']?.cast<String>();
+        tags = json['tags']?.cast<String>(),
+        note = json['note']?.toString();
 
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
     data['name'] = name;
     data['script'] = script;
     data['tags'] = tags;
+    data['note'] = note;
     return data;
   }
 
@@ -38,7 +48,9 @@ class Snippet implements TagPickable {
 
 /// Snippet for installing ServerBoxMonitor
 const installSBM = Snippet(
-  'Install ServerBoxMonitor',
-  'curl -fsSL https://raw.githubusercontent.com/lollipopkit/server_box_monitor/main/install.sh | sh -s -- install',
-  null,
+  name: 'Install ServerBoxMonitor',
+  script:
+      'curl -fsSL https://raw.githubusercontent.com/lollipopkit/server_box_monitor/main/install.sh | sh -s -- install',
+  tags: ['ServerBoxMonitor'],
+  note: 'One click script to install ServerBoxMonitor',
 );

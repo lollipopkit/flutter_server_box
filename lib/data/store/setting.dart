@@ -27,6 +27,7 @@ class SettingStore extends PersistentStore {
     'timeOut',
     5,
   );
+
   /// Duration of [timeout]
   Duration get timeoutD => Duration(seconds: timeout.fetch());
 

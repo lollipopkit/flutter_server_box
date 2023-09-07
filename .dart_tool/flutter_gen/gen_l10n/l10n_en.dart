@@ -421,6 +421,9 @@ class SEn extends S {
   String get notSelected => 'Not selected';
 
   @override
+  String get note => 'Note';
+
+  @override
   String get nullToken => 'Null token';
 
   @override

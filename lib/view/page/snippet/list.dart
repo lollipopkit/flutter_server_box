@@ -108,9 +108,9 @@ class _SnippetListPageState extends State<SnippetListPage> {
           maxLines: 1,
         ),
         subtitle: Text(
-          snippet.script,
+          snippet.note ?? snippet.script,
           overflow: TextOverflow.ellipsis,
-          maxLines: 1,
+          maxLines: 3,
           style: grey,
         ),
         trailing: Row(
