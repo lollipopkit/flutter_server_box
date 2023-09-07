@@ -27,7 +27,7 @@ class ServerPrivateInfo {
 
   final String id;
 
-  ServerPrivateInfo({
+  const ServerPrivateInfo({
     required this.name,
     required this.ip,
     required this.port,

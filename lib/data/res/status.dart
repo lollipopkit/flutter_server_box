@@ -8,7 +8,7 @@ import '../model/server/server_status.dart';
 import '../model/server/conn.dart';
 import '../model/server/system.dart';
 
-Memory get _initMemory => Memory(
+Memory get _initMemory => const Memory(
       total: 1,
       free: 1,
       cache: 0,
@@ -38,7 +38,7 @@ NetSpeed get initNetSpeed => NetSpeed(
       [_initNetSpeedPart],
       [_initNetSpeedPart],
     );
-Swap get _initSwap => Swap(
+Swap get _initSwap => const Swap(
       total: 0,
       free: 0,
       cached: 0,
@@ -49,7 +49,7 @@ ServerStatus get initStatus => ServerStatus(
       sysVer: 'Loading...',
       uptime: '',
       disk: [
-        Disk(
+        const Disk(
           path: '/',
           loc: '/',
           usedPercent: 0,
@@ -58,7 +58,7 @@ ServerStatus get initStatus => ServerStatus(
           avail: '0',
         )
       ],
-      tcp: Conn(maxConn: 0, active: 0, passive: 0, fail: 0),
+      tcp: const Conn(maxConn: 0, active: 0, passive: 0, fail: 0),
       netSpeed: initNetSpeed,
       swap: _initSwap,
       system: SystemType.linux,

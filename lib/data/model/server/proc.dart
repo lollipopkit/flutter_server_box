@@ -17,7 +17,7 @@ class _ProcValIdxMap {
   final int? time;
   final int command;
 
-  _ProcValIdxMap({
+  const _ProcValIdxMap({
     required this.pid,
     this.user,
     this.cpu,
@@ -46,7 +46,7 @@ class Proc {
   final String? time;
   final String command;
 
-  Proc({
+  const Proc({
     this.user,
     required this.pid,
     this.cpu,
@@ -109,14 +109,14 @@ class PsResult {
   final List<Proc> procs;
   final String? error;
 
-  PsResult({
+  const PsResult({
     required this.procs,
     this.error,
   });
 
   factory PsResult.parse(String raw, {ProcSortMode sort = ProcSortMode.cpu}) {
     final lines = raw.split('\n').map((e) => e.trim()).toList();
-    if (lines.isEmpty) return PsResult(procs: [], error: null);
+    if (lines.isEmpty) return const PsResult(procs: [], error: null);
 
     final header = lines[0];
     final parts = header.split(RegExp(r'\s+'));

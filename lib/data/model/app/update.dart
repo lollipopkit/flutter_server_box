@@ -30,7 +30,7 @@ import 'dart:convert';
 import '/core/utils/platform.dart';
 
 class AppUpdate {
-  AppUpdate({
+  const AppUpdate({
     required this.changelog,
     required this.build,
     required this.url,

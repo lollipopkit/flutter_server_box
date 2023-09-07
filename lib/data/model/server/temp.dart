@@ -1,8 +1,6 @@
 class Temperatures {
   final Map<String, double> _map = {};
 
-  Temperatures();
-
   void parse(String type, String value) {
     const noMatch = "/sys/class/thermal/thermal_zone*/type";
     // Not support to get CPU temperature

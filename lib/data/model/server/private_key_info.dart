@@ -9,7 +9,7 @@ class PrivateKeyInfo {
   @HiveField(1)
   final String key;
 
-  PrivateKeyInfo({
+  const PrivateKeyInfo({
     required this.id,
     required this.key,
   });

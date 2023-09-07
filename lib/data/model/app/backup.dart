@@ -12,7 +12,7 @@ class Backup {
   final Map<String, dynamic> dockerHosts;
   final Map<String, dynamic> settings;
 
-  Backup({
+  const Backup({
     required this.version,
     required this.date,
     required this.spis,

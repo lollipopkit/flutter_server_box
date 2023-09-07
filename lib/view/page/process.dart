@@ -36,7 +36,7 @@ class _ProcessPageState extends State<ProcessPage> {
 
   SSHClient? _client;
 
-  PsResult _result = PsResult(procs: []);
+  PsResult _result = const PsResult(procs: []);
   int? _lastFocusId;
 
   // Issue #64

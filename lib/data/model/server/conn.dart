@@ -7,7 +7,7 @@ class Conn {
   final int passive;
   final int fail;
 
-  Conn({
+  const Conn({
     required this.maxConn,
     required this.active,
     required this.passive,

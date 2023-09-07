@@ -9,6 +9,8 @@ const appName = 'ServerBox';
 const buildDataFilePath = 'lib/data/res/build_data.dart';
 const apkPath = 'build/app/outputs/flutter-apk/app-release.apk';
 const appleXCConfigPath = 'Runner.xcodeproj/project.pbxproj';
+const macOSArchievePath = 'build/macos/Build/Products/Release/server_box.app';
+const releaseDir = 'release';
 
 var regAppleProjectVer = RegExp(r'CURRENT_PROJECT_VERSION = .+;');
 var regAppleMarketVer = RegExp(r'MARKETING_VERSION = .+');
@@ -163,17 +165,21 @@ Future<void> scpApk2CDN() async {
 }
 
 Future<void> scpMacOS2CDN() async {
-  final zipName = '$build.app.zip';
+  await Process.run('mv', [
+    macOSArchievePath,
+    'release',
+  ]);
+  final zipPath = '$releaseDir/$build.app.zip';
   // Zip the .app
   await Process.run('zip', [
     '-r',
-    './release/$zipName',
-    './build/macos/Build/Products/Release/server_box.app',
+    zipPath,
+    macOSArchievePath,
   ]);
   final result = await Process.run(
     'scp',
     [
-      './release/$zipName',
+      zipPath,
       'hk:/var/www/res/serverbox/$build.app.zip',
     ],
     runInShell: true,
@@ -182,7 +188,7 @@ Future<void> scpMacOS2CDN() async {
     print(result.stderr);
     exit(1);
   }
-  print('Upload macOS $zipName finished.');
+  print('Upload macOS $zipPath finished.');
 }
 
 Future<void> scpLinux2CDN() async {

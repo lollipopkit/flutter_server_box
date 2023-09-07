@@ -8,7 +8,7 @@ class Disk {
   final String size;
   final String avail;
 
-  Disk({
+  const Disk({
     required this.path,
     required this.loc,
     required this.usedPercent,

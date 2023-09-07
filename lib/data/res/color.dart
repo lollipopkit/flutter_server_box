@@ -6,6 +6,6 @@ import '../model/app/dynamic_color.dart';
 
 Color primaryColor = Color(locator<SettingStore>().primaryColor.fetch());
 
-final contentColor = DynamicColor(Colors.black87, Colors.white70);
-final bgColor = DynamicColor(Colors.white, Colors.black);
-final progressColor = DynamicColor(Colors.black12, Colors.white10);
+const contentColor = DynamicColor(Colors.black87, Colors.white70);
+const bgColor = DynamicColor(Colors.white, Colors.black);
+const progressColor = DynamicColor(Colors.black12, Colors.white10);

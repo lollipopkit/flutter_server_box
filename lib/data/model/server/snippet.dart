@@ -7,18 +7,18 @@ part 'snippet.g.dart';
 @HiveType(typeId: 2)
 class Snippet implements TagPickable {
   @HiveField(0)
-  late String name;
+  final String name;
   @HiveField(1)
-  late String script;
+  final String script;
   @HiveField(2)
-  late List<String>? tags;
-  Snippet(this.name, this.script, this.tags);
+  final List<String>? tags;
+  const Snippet(this.name, this.script, this.tags);
 
-  Snippet.fromJson(Map<String, dynamic> json) {
-    name = json['name'].toString();
-    script = json['script'].toString();
-    tags = json['tags']?.cast<String>();
-  }
+  Snippet.fromJson(Map<String, dynamic> json)
+      : name = json['name'].toString(),
+        script = json['script'].toString(),
+        tags = json['tags']?.cast<String>();
+
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
     data['name'] = name;
@@ -35,3 +35,10 @@ class Snippet implements TagPickable {
   @override
   String get tagName => name;
 }
+
+/// Snippet for installing ServerBoxMonitor
+const installSBM = Snippet(
+  'Install ServerBoxMonitor',
+  'curl -fsSL https://raw.githubusercontent.com/lollipopkit/server_box_monitor/main/install.sh | sh -s -- install',
+  null,
+);

@@ -4,7 +4,7 @@ class Memory {
   final int cache;
   final int avail;
 
-  Memory({
+  const Memory({
     required this.total,
     required this.free,
     required this.cache,
@@ -80,7 +80,7 @@ class Swap {
   final int free;
   final int cached;
 
-  Swap({
+  const Swap({
     required this.total,
     required this.free,
     required this.cached,
