@@ -33,6 +33,14 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
           brightness: Brightness.dark,
           colorSchemeSeed: primaryColor,
+
+          /// After upgrading to flutter 3.13,
+          /// the shadow color of the drawer is white (maybe a bug).
+          /// TODO: remember to remove it after the bug is fixed.
+          drawerTheme: const DrawerThemeData(
+            backgroundColor: Colors.black,
+            shadowColor: Colors.black12,
+          ),
         );
 
         return MaterialApp(
@@ -57,8 +65,6 @@ class MyApp extends StatelessWidget {
 ThemeData _getAmoledTheme(ThemeData darkTheme) => darkTheme.copyWith(
       scaffoldBackgroundColor: Colors.black,
       dialogBackgroundColor: Colors.black,
-      drawerTheme: const DrawerThemeData(
-          backgroundColor: Colors.black, shadowColor: Colors.black),
       appBarTheme: const AppBarTheme(backgroundColor: Colors.black),
       dialogTheme: const DialogTheme(backgroundColor: Colors.black),
       bottomSheetTheme:

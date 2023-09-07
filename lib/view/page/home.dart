@@ -370,6 +370,15 @@ class _HomePageState extends State<HomePage>
     if (result == null) {
       return;
     }
-    _setting.box.putAll(json.decode(result) as Map<String, dynamic>);
+    try {
+      final newSettings = json.decode(result) as Map<String, dynamic>;
+      _setting.box.putAll(newSettings);
+    } catch (e) {
+      showRoundDialog(
+        context: context,
+        title: Text(_s.error),
+        child: Text('${_s.save}:\n$e'),
+      );
+    }
   }
 }

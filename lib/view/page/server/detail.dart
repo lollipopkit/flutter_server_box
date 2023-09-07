@@ -320,7 +320,11 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                         style: textSize11,
                         textScaleFactor: _textFactor,
                       ),
-                      Text(disk.path, style: textSize11, textScaleFactor: _textFactor,)
+                      Text(
+                        disk.path,
+                        style: textSize11,
+                        textScaleFactor: _textFactor,
+                      )
                     ],
                   ),
                   _buildProgress(disk.usedPercent.toDouble())

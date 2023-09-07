@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:after_layout/after_layout.dart';
 import 'package:code_text_field/code_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
@@ -44,14 +43,16 @@ class EditorPage extends StatefulWidget {
   _EditorPageState createState() => _EditorPageState();
 }
 
-class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
-  late CodeController _controller;
-  late final _focusNode = FocusNode();
+class _EditorPageState extends State<EditorPage> {
+  final _focusNode = FocusNode();
   final _setting = locator<SettingStore>();
+
+  late CodeController _controller;
   late Map<String, TextStyle> _codeTheme;
   late S _s;
-  late String? _langCode;
-  late TextStyle _textStyle;
+  late final _textStyle = TextStyle(fontSize: _setting.editorFontSize.fetch());
+
+  String? _langCode;
 
   @override
   void initState() {
@@ -62,7 +63,16 @@ class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
     _controller = CodeController(
       language: suffix2HighlightMap[_langCode],
     );
-    _textStyle = TextStyle(fontSize: _setting.editorFontSize.fetch());
+
+    /// TODO: This is a temporary solution to avoid the loading stuck
+    Future.delayed(const Duration(milliseconds: 377)).then((value) async {
+      if (widget.path != null) {
+        final code = await File(widget.path!).readAsString();
+        _controller.text = code;
+      } else if (widget.text != null) {
+        _controller.text = widget.text!;
+      }
+    });
   }
 
   @override
@@ -115,7 +125,7 @@ class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
     return CustomAppBar(
       centerTitle: true,
       title: TwoLineText(
-        up: widget.title ?? getFileName(widget.path) ?? '',
+        up: widget.title ?? getFileName(widget.path) ?? _s.unknown,
         down: _s.editor,
       ),
       actions: [
@@ -155,17 +165,5 @@ class _EditorPageState extends State<EditorPage> with AfterLayoutMixin {
         ),
       ),
     ));
-  }
-
-  @override
-  FutureOr<void> afterFirstLayout(BuildContext context) async {
-    /// TODO: This is a temporary solution to avoid the loading stuck
-    await Future.delayed(const Duration(milliseconds: 377));
-    if (widget.path != null) {
-      final code = await File(widget.path!).readAsString();
-      _controller.text = code;
-    } else if (widget.text != null) {
-      _controller.text = widget.text!;
-    }
   }
 }
