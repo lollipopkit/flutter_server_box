@@ -23,7 +23,6 @@ class Analysis {
           .setLoggingEnabled(false)
           .enableCrashReporting();
       await Countly.initWithConfig(config);
-      await Countly.start();
       await Countly.giveAllConsent();
     } else {
       Logger('COUNTLY')
@@ -33,7 +32,7 @@ class Analysis {
 
   static void recordView(String view) {
     if (enabled) {
-      Countly.recordView(view);
+      Countly.instance.views.startView(view);
     }
   }
 
