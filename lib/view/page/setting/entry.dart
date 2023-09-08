@@ -10,16 +10,14 @@ import 'package:toolbox/core/extension/colorx.dart';
 import 'package:toolbox/core/extension/locale.dart';
 import 'package:toolbox/core/extension/context.dart';
 import 'package:toolbox/core/extension/stringx.dart';
-import 'package:toolbox/core/persistant_store.dart';
-import 'package:toolbox/core/route.dart';
-import 'package:toolbox/data/model/app/net_view.dart';
-import 'package:toolbox/view/widget/input_field.dart';
-import 'package:toolbox/view/widget/value_notifier.dart';
 
+import '../../../core/persistant_store.dart';
+import '../../../core/route.dart';
 import '../../../core/utils/misc.dart';
 import '../../../core/utils/platform.dart';
 import '../../../core/update.dart';
 import '../../../core/utils/ui.dart';
+import '../../../data/model/app/net_view.dart';
 import '../../../data/provider/app.dart';
 import '../../../data/provider/server.dart';
 import '../../../data/res/build_data.dart';
@@ -29,9 +27,12 @@ import '../../../data/res/ui.dart';
 import '../../../data/store/server.dart';
 import '../../../data/store/setting.dart';
 import '../../../locator.dart';
+import '../../widget/color_picker.dart';
 import '../../widget/custom_appbar.dart';
 import '../../widget/future_widget.dart';
+import '../../widget/input_field.dart';
 import '../../widget/round_rect_card.dart';
+import '../../widget/value_notifier.dart';
 
 class SettingPage extends StatefulWidget {
   const SettingPage({Key? key}) : super(key: key);
@@ -313,16 +314,45 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () async {
         final ctrl = TextEditingController(text: primaryColor.toHex);
         await showRoundDialog(
-          context: context,
-          title: Text(_s.primaryColorSeed),
-          child: Input(
-            autoFocus: true,
-            onSubmitted: _onSaveColor,
-            controller: ctrl,
-            hint: '#8b2252',
-            icon: Icons.colorize,
-          ),
-        );
+            context: context,
+            title: Text(_s.primaryColorSeed),
+            child: StatefulBuilder(builder: (context, setState) {
+              final children = <Widget>[
+                /// Plugin [dynamic_color] is not supported on iOS
+                if (!isIOS) ListTile(
+                  title: Text(_s.followSystem),
+                  trailing: buildSwitch(
+                    context,
+                    _setting.useSystemPrimaryColor,
+                    func: (_) => setState(() {}),
+                  ),
+                )
+              ];
+              if (!_setting.useSystemPrimaryColor.fetch()) {
+                children.addAll([
+                  Input(
+                    onSubmitted: _onSaveColor,
+                    controller: ctrl,
+                    hint: '#8b2252',
+                    icon: Icons.colorize,
+                  ),
+                  ColorPicker(
+                    color: primaryColor,
+                    onColorChanged: (c) => ctrl.text = c.toHex,
+                  )
+                ]);
+              }
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: children,
+              );
+            }),
+            actions: [
+              TextButton(
+                onPressed: () => _onSaveColor(ctrl.text),
+                child: Text(_s.ok),
+              ),
+            ]);
       },
     );
   }

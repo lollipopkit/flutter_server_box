@@ -530,6 +530,12 @@ abstract class S {
   /// **'Finished'**
   String get finished;
 
+  /// No description provided for @followSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow system'**
+  String get followSystem;
+
   /// No description provided for @font.
   ///
   /// In en, this message translates to:

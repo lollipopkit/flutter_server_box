@@ -72,6 +72,7 @@
   "fileTooLarge": "File '{file}' too large {size}, max {sizeMax}",
   "files": "Files",
   "finished": "Finished",
+  "followSystem": "Follow system",
   "font": "Font",
   "fontSize": "Font size",
   "foundNUpdate": "Found {count} update",

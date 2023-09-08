@@ -72,6 +72,7 @@
   "fileTooLarge": "Datei '{file}' ist zu groß {size}, max {sizeMax}",
   "files": "Dateien",
   "finished": "fertiggestellt",
+  "followSystem": "System verfolgen",
   "font": "Schriftarten",
   "fontSize": "Schriftgröße",
   "foundNUpdate": "Update {count} gefunden",

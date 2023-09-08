@@ -233,6 +233,9 @@ class SId extends S {
   String get finished => 'Selesai';
 
   @override
+  String get followSystem => 'Ikuti sistem';
+
+  @override
   String get font => 'Font';
 
   @override

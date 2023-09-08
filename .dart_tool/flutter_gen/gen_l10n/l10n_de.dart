@@ -233,6 +233,9 @@ class SDe extends S {
   String get finished => 'fertiggestellt';
 
   @override
+  String get followSystem => 'System verfolgen';
+
+  @override
   String get font => 'Schriftarten';
 
   @override

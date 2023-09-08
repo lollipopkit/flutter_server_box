@@ -233,6 +233,9 @@ class SZh extends S {
   String get finished => '已完成';
 
   @override
+  String get followSystem => '跟随系统';
+
+  @override
   String get font => '字体';
 
   @override
@@ -963,6 +966,9 @@ class SZhTw extends SZh {
 
   @override
   String get finished => '已完成';
+
+  @override
+  String get followSystem => '跟隨系統';
 
   @override
   String get font => '字體';

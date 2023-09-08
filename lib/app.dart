@@ -1,5 +1,7 @@
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:toolbox/core/extension/context.dart';
 import 'package:toolbox/core/extension/locale.dart';
 import 'package:toolbox/view/page/full_screen.dart';
 
@@ -17,48 +19,67 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    setTransparentNavigationBar(context);
-    primaryColor = Color(_setting.primaryColor.fetch());
-    final fullScreen = _setting.fullScreen.fetch();
+    return DynamicColorBuilder(builder: (light, dark) {
+      setTransparentNavigationBar(context);
+      _setupPrimaryColor(context, light, dark);
 
-    return ValueListenableBuilder<int>(
-      valueListenable: _setting.themeMode.listenable(),
-      builder: (_, tMode, __) {
-        final isAMOLED = tMode >= 0 && tMode <= ThemeMode.values.length - 1;
-        // Issue #57
-        // if not [ok] -> [AMOLED] mode, use [ThemeMode.dark]
-        final themeMode = isAMOLED ? ThemeMode.values[tMode] : ThemeMode.dark;
-        final locale = _setting.locale.fetch().toLocale;
-        final darkTheme = ThemeData(
-          useMaterial3: true,
-          brightness: Brightness.dark,
-          colorSchemeSeed: primaryColor,
-
-          /// After upgrading to flutter 3.13,
-          /// the shadow color of the drawer is white (maybe a bug).
-          /// TODO: remember to remove it after the bug is fixed.
-          drawerTheme: const DrawerThemeData(
-            backgroundColor: Colors.black,
-            shadowColor: Colors.black12,
-          ),
-        );
-
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          locale: locale,
-          localizationsDelegates: S.localizationsDelegates,
-          supportedLocales: S.supportedLocales,
-          title: BuildData.name,
-          themeMode: themeMode,
-          theme: ThemeData(
+      return ValueListenableBuilder<int>(
+        valueListenable: _setting.themeMode.listenable(),
+        builder: (_, tMode, __) {
+          final isAMOLED = tMode >= 0 && tMode <= ThemeMode.values.length - 1;
+          // Issue #57
+          // if not [ok] -> [AMOLED] mode, use [ThemeMode.dark]
+          final themeMode = isAMOLED ? ThemeMode.values[tMode] : ThemeMode.dark;
+          final locale = _setting.locale.fetch().toLocale;
+          final darkTheme = ThemeData(
             useMaterial3: true,
+            brightness: Brightness.dark,
             colorSchemeSeed: primaryColor,
-          ),
-          darkTheme: isAMOLED ? darkTheme : _getAmoledTheme(darkTheme),
-          home: fullScreen ? const FullScreenPage() : const HomePage(),
-        );
-      },
-    );
+
+            /// After upgrading to flutter 3.13,
+            /// the shadow color of the drawer is white (maybe a bug).
+            /// Only on [iOS].
+            /// TODO: remember to remove it after the bug is fixed.
+            drawerTheme: const DrawerThemeData(
+              shadowColor: Colors.black12,
+            ),
+          );
+
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            locale: locale,
+            localizationsDelegates: S.localizationsDelegates,
+            supportedLocales: S.supportedLocales,
+            title: BuildData.name,
+            themeMode: themeMode,
+            theme: ThemeData(
+              useMaterial3: true,
+              colorSchemeSeed: primaryColor,
+            ),
+            darkTheme: isAMOLED ? darkTheme : _getAmoledTheme(darkTheme),
+            home: _setting.fullScreen.fetch()
+                ? const FullScreenPage()
+                : const HomePage(),
+          );
+        },
+      );
+    });
+  }
+
+  void _setupPrimaryColor(
+    BuildContext context,
+    ColorScheme? light,
+    ColorScheme? dark,
+  ) {
+    if (_setting.useSystemPrimaryColor.fetch()) {
+      if (context.isDark && light != null) {
+        primaryColor = light.primary;
+      } else if (!context.isDark && dark != null) {
+        primaryColor = dark.primary;
+      }
+    } else {
+      primaryColor = Color(_setting.primaryColor.fetch());
+    }
   }
 }
 

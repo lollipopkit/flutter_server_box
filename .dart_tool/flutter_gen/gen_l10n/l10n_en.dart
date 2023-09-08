@@ -233,6 +233,9 @@ class SEn extends S {
   String get finished => 'Finished';
 
   @override
+  String get followSystem => 'Follow system';
+
+  @override
   String get font => 'Font';
 
   @override

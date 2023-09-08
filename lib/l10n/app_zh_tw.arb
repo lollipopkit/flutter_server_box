@@ -72,6 +72,7 @@
   "fileTooLarge": "文件 '{file}' 過大 '{size}'，超過了 {sizeMax}",
   "files": "文件",
   "finished": "已完成",
+  "followSystem": "跟隨系統",
   "font": "字體",
   "fontSize": "字體大小",
   "foundNUpdate": "找到 {count} 個更新",

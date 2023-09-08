@@ -191,6 +191,13 @@ class SettingStore extends PersistentStore {
     isDesktop,
   );
 
+  /// Whether use system's primary color as the app's primary color
+  late final useSystemPrimaryColor = StoreProperty(
+    box,
+    'useSystemPrimaryColor',
+    false,
+  );
+
   // Never show these settings for users
   // Guide for these settings:
   // - key should start with `_` and be shorter as possible
