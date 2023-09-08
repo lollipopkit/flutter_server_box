@@ -169,17 +169,20 @@ Future<void> scpMacOS2CDN() async {
     macOSArchievePath,
     'release',
   ]);
-  final zipPath = '$releaseDir/$build.app.zip';
+  final zipName = '$build.app.zip';
   // Zip the .app
-  await Process.run('zip', [
-    '-r',
-    zipPath,
-    macOSArchievePath,
-  ]);
+  await Process.run(
+      'zip',
+      [
+        '-r',
+        zipName,
+        'server_box.app',
+      ],
+      workingDirectory: releaseDir);
   final result = await Process.run(
     'scp',
     [
-      zipPath,
+      '$releaseDir/$zipName',
       'hk:/var/www/res/serverbox/$build.app.zip',
     ],
     runInShell: true,
@@ -188,7 +191,7 @@ Future<void> scpMacOS2CDN() async {
     print(result.stderr);
     exit(1);
   }
-  print('Upload macOS $zipPath finished.');
+  print('Upload macOS $zipName finished.');
 }
 
 Future<void> scpLinux2CDN() async {

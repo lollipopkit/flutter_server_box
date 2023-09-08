@@ -245,13 +245,15 @@ class ServerProvider extends ChangeNotifier {
         _limiter.inc(sid);
         s.status.failedInfo = e.toString();
         _setServerState(s, ServerState.failed);
-        _logger.warning('Connect to $sid failed', e);
+
+        /// In order to keep privacy, print [spi.name] instead of [spi.id]
+        _logger.warning('Connect to ${spi.name} failed', e);
         return;
       }
 
       final time2 = DateTime.now();
       final spentTime = time2.difference(time1).inMilliseconds;
-      _logger.info('Connected to $sid in $spentTime ms.');
+      _logger.info('Connected to ${spi.name} in $spentTime ms.');
 
       _setServerState(s, ServerState.connected);
 
@@ -267,7 +269,7 @@ class ServerProvider extends ChangeNotifier {
         _limiter.inc(sid);
         s.status.failedInfo = e.toString();
         _setServerState(s, ServerState.failed);
-        _logger.warning('Write script to $sid failed', e);
+        _logger.warning('Write script to ${spi.name} failed', e);
         return;
       }
     }

@@ -1,5 +1,5 @@
 PODS:
-  - countly_flutter (23.6.0):
+  - countly_flutter (23.8.0):
     - Flutter
   - file_picker (0.0.1):
     - Flutter
@@ -56,7 +56,7 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/url_launcher_ios/ios"
 
 SPEC CHECKSUMS:
-  countly_flutter: 4eeee607183664b871589250a0bd049cfd2697eb
+  countly_flutter: f153e5547d4f3cdf24be11f6ed4df32c9a421fa3
   file_picker: 1d63c4949e05e386da864365f8c13e1e64787675
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
   flutter_native_splash: 52501b97d1c0a5f898d687f1646226c1f93c56ef
