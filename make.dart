@@ -32,6 +32,15 @@ Future<void> getGitCommitCount() async {
       .length;
 }
 
+Future<int> getScriptCommitCount() async {
+  final result = await Process.run(
+      'git', ['log', '--oneline', 'lib/data/model/app/shell_func.dart']);
+  return (result.stdout as String)
+      .split('\n')
+      .where((line) => line.isNotEmpty)
+      .length;
+}
+
 Future<void> writeStaicConfigFile(
     Map<String, dynamic> data, String className, String path) async {
   final buffer = StringBuffer();
@@ -69,6 +78,7 @@ Future<Map<String, dynamic>> getBuildData() async {
     'engine': await getFlutterVersion(),
     'buildAt': DateTime.now().toString(),
     'modifications': await getGitModificationCount(),
+    'script': await getScriptCommitCount(),
   };
   return data;
 }

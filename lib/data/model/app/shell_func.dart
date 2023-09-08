@@ -5,7 +5,11 @@ import '../server/system.dart';
 const _cmdDivider = '\necho $seperator\n\t';
 
 const _serverBoxDir = r'$HOME/.config/server_box';
-const _shellPath = '$_serverBoxDir/mobile_app_v${BuildData.build}.sh';
+
+/// Issue #159
+/// Use script commit count as version of shell script.
+/// So different version of app can run at the same time.
+const _shellPath = '$_serverBoxDir/mobile_v${BuildData.script}.sh';
 
 enum AppShellFuncType {
   status,

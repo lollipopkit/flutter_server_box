@@ -319,14 +319,15 @@ class _SettingPageState extends State<SettingPage> {
             child: StatefulBuilder(builder: (context, setState) {
               final children = <Widget>[
                 /// Plugin [dynamic_color] is not supported on iOS
-                if (!isIOS) ListTile(
-                  title: Text(_s.followSystem),
-                  trailing: buildSwitch(
-                    context,
-                    _setting.useSystemPrimaryColor,
-                    func: (_) => setState(() {}),
-                  ),
-                )
+                if (!isIOS)
+                  ListTile(
+                    title: Text(_s.followSystem),
+                    trailing: buildSwitch(
+                      context,
+                      _setting.useSystemPrimaryColor,
+                      func: (_) => setState(() {}),
+                    ),
+                  )
               ];
               if (!_setting.useSystemPrimaryColor.fetch()) {
                 children.addAll([
