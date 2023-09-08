@@ -5,7 +5,7 @@ import '../server/system.dart';
 const _cmdDivider = '\necho $seperator\n\t';
 
 const _serverBoxDir = r'$HOME/.config/server_box';
-const _shellPath = '$_serverBoxDir/mobile_app.sh';
+const _shellPath = '$_serverBoxDir/mobile_app_v${BuildData.build}.sh';
 
 enum AppShellFuncType {
   status,
