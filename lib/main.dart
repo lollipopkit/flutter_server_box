@@ -6,8 +6,6 @@ import 'package:logging/logging.dart';
 import 'package:macos_window_utils/window_manipulator.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:toolbox/data/res/misc.dart';
-import 'package:toolbox/view/widget/custom_appbar.dart';
 
 import 'app.dart';
 import 'core/analysis.dart';
@@ -26,8 +24,11 @@ import 'data/provider/server.dart';
 import 'data/provider/sftp.dart';
 import 'data/provider/snippet.dart';
 import 'data/provider/virtual_keyboard.dart';
+import 'data/res/color.dart';
+import 'data/res/misc.dart';
 import 'data/store/setting.dart';
 import 'locator.dart';
+import 'view/widget/custom_appbar.dart';
 import 'view/widget/rebuild.dart';
 
 DebugProvider? _debug;
@@ -90,6 +91,7 @@ Future<void> initApp() async {
   // Load font
   final settings = locator<SettingStore>();
   loadFontFile(settings.fontPath.fetch());
+  primaryColor = Color(settings.primaryColor.fetch());
 
   // Android only
   if (!isAndroid) return;

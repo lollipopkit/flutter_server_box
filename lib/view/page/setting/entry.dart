@@ -366,6 +366,7 @@ class _SettingPageState extends State<SettingPage> {
     }
     _selectedColorValue.value = color.value;
     _setting.primaryColor.put(_selectedColorValue.value);
+    primaryColor = color;
     context.pop();
     _showRestartSnackbar();
   }
