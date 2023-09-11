@@ -43,6 +43,15 @@ void showSnackBarWithAction(
   ));
 }
 
+void showRestartSnackbar(BuildContext context, S s) {
+  showSnackBarWithAction(
+    context,
+    '${s.success}\n${s.needRestart}',
+    s.restart,
+    () => rebuildAll(context),
+  );
+}
+
 Future<bool> openUrl(String url) async {
   return await launchUrl(url.uri, mode: LaunchMode.externalApplication);
 }

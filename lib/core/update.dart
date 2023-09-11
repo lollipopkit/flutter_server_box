@@ -119,4 +119,4 @@ Future<void> _rmDownloadApks() async {
   }
 }
 
-Future<String> get _dlDir async => joinPath((await docDir).path, 'Download');
+Future<String> get _dlDir async => joinPath(await docDir, 'Download');

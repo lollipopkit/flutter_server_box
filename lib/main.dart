@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -6,6 +7,8 @@ import 'package:logging/logging.dart';
 import 'package:macos_window_utils/window_manipulator.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:toolbox/core/utils/icloud.dart';
+import 'package:toolbox/data/res/path.dart';
 
 import 'app.dart';
 import 'core/analysis.dart';
@@ -93,14 +96,18 @@ Future<void> initApp() async {
   loadFontFile(settings.fontPath.fetch());
   primaryColor = Color(settings.primaryColor.fetch());
 
-  // Android only
-  if (!isAndroid) return;
-  // Only start service when [bgRun] is true.
-  if (locator<SettingStore>().bgRun.fetch()) {
-    bgRunChannel.invokeMethod('startService');
+  if (isIOS || isMacOS) {
+    if (settings.icloudSync.fetch()) _syncApple();
   }
-  // SharedPreferences is only used on Android for saving home widgets settings.
-  SharedPreferences.setPrefix('');
+
+  if (isAndroid) {
+    // Only start service when [bgRun] is true.
+    if (locator<SettingStore>().bgRun.fetch()) {
+      bgRunChannel.invokeMethod('startService');
+    }
+    // SharedPreferences is only used on Android for saving home widgets settings.
+    SharedPreferences.setPrefix('');
+  }
 }
 
 void _setupProviders() {
@@ -143,4 +150,13 @@ Future<void> _initMacOSWindow() async {
   WindowManipulator.enableFullSizeContentView();
   WindowManipulator.hideTitle();
   await CustomAppBar.updateTitlebarHeight();
+}
+
+Future<void> _syncApple() async {
+  final docPath = await docDir;
+  final dir = Directory(docPath);
+  final files = await dir.list().toList();
+  files.removeWhere((e) => !e.path.endsWith('.hive'));
+  final paths = files.map((e) => e.path.replaceFirst('$docPath/', ''));
+  ICloud.sync(relativePaths: paths);
 }

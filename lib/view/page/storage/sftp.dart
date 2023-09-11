@@ -642,7 +642,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   }
 
   Future<String> _getLocalPath(String remotePath) async {
-    return '${(await sftpDir).path}$remotePath';
+    return '${await sftpDir}$remotePath';
   }
 
   /// Only return true if the path is changed

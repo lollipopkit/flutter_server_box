@@ -50,7 +50,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
     } else {
       sftpDir.then((dir) {
         setState(() {
-          _path = LocalPath(dir.path);
+          _path = LocalPath(dir);
         });
       });
     }

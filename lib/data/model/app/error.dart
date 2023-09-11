@@ -52,3 +52,19 @@ class DockerErr extends Err<DockerErrType> {
     return 'DockerErr<$type>: $message';
   }
 }
+
+enum ICloudErrType {
+  generic,
+  notFound,
+  multipleFiles,
+}
+
+class ICloudErr extends Err<ICloudErrType> {
+  ICloudErr({required ICloudErrType type, String? message})
+      : super(from: ErrFrom.docker, type: type, message: message);
+
+  @override
+  String toString() {
+    return 'ICloudErr<$type>: $message';
+  }
+}

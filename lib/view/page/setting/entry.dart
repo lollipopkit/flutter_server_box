@@ -368,7 +368,7 @@ class _SettingPageState extends State<SettingPage> {
     _setting.primaryColor.put(_selectedColorValue.value);
     primaryColor = color;
     context.pop();
-    _showRestartSnackbar();
+    showRestartSnackbar(context, _s);
   }
 
   // Widget _buildLaunchPage() {
@@ -560,7 +560,7 @@ class _SettingPageState extends State<SettingPage> {
               onPressed: () {
                 _setting.fontPath.delete();
                 context.pop();
-                _showRestartSnackbar();
+                showRestartSnackbar(context, _s);
               },
               child: Text(_s.clear),
             )
@@ -577,27 +577,17 @@ class _SettingPageState extends State<SettingPage> {
       if (isIOS) {
         _setting.fontPath.put(path);
       } else {
-        final fontDir_ = await fontDir;
         final fontFile = File(path);
-        final newPath = '${fontDir_.path}/${path.split('/').last}';
+        final newPath = '${await fontDir}/${path.split('/').last}';
         await fontFile.copy(newPath);
         _setting.fontPath.put(newPath);
       }
 
       context.pop();
-      _showRestartSnackbar();
+      showRestartSnackbar(context, _s);
       return;
     }
     showSnackBar(context, Text(_s.failed));
-  }
-
-  void _showRestartSnackbar() {
-    showSnackBarWithAction(
-      context,
-      '${_s.success}\n${_s.needRestart}',
-      _s.restart,
-      () => rebuildAll(context),
-    );
   }
 
   Widget _buildBgRun() {
@@ -681,7 +671,7 @@ class _SettingPageState extends State<SettingPage> {
           onSelected: (String idx) {
             _localeCode.value = idx;
             _setting.locale.put(idx);
-            _showRestartSnackbar();
+            showRestartSnackbar(context, _s);
           },
           child: Text(
             _s.languageName,
@@ -772,7 +762,7 @@ class _SettingPageState extends State<SettingPage> {
       trailing: buildSwitch(
         context,
         _setting.fullScreen,
-        func: (_) => _showRestartSnackbar(),
+        func: (_) => showRestartSnackbar(context, _s),
       ),
     );
   }

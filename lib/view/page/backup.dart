@@ -1,35 +1,23 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/context.dart';
-import 'package:toolbox/data/res/path.dart';
+import 'package:toolbox/core/utils/backup.dart';
+import 'package:toolbox/core/utils/platform.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
 import '../../core/utils/misc.dart';
 import '../../core/utils/ui.dart';
-import '../../data/model/app/backup.dart';
 import '../../data/res/ui.dart';
-import '../../data/store/docker.dart';
-import '../../data/store/private_key.dart';
-import '../../data/store/server.dart';
 import '../../data/store/setting.dart';
-import '../../data/store/snippet.dart';
 import '../../locator.dart';
 import '../widget/custom_appbar.dart';
-
-const backupFormatVersion = 1;
 
 class BackupPage extends StatelessWidget {
   BackupPage({Key? key}) : super(key: key);
 
-  final _server = locator<ServerStore>();
-  final _snippet = locator<SnippetStore>();
-  final _privateKey = locator<PrivateKeyStore>();
-  final _dockerHosts = locator<DockerStore>();
   final _setting = locator<SettingStore>();
 
   @override
@@ -44,12 +32,12 @@ class BackupPage extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context, S s) {
-    final media = MediaQuery.of(context);
-    return Center(
-        child: Column(
+    return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        if (isMacOS || isIOS) _buildIcloudSync(context),
+        height13,
         Padding(
           padding: const EdgeInsets.all(37),
           child: Text(
@@ -61,7 +49,6 @@ class BackupPage extends StatelessWidget {
         _buildCard(
           s.restore,
           Icons.download,
-          media,
           () => _onRestore(context, s),
         ),
         height13,
@@ -73,17 +60,18 @@ class BackupPage extends StatelessWidget {
         _buildCard(
           s.backup,
           Icons.save,
-          media,
-          () => _onBackup(context, s),
+          () async {
+            await backup();
+            await shareFiles(context, [await backupPath]);
+          },
         )
       ],
-    ));
+    );
   }
 
   Widget _buildCard(
     String text,
     IconData icon,
-    MediaQueryData media,
     FutureOr Function() onTap,
   ) {
     return RoundRectCard(
@@ -105,6 +93,20 @@ class BackupPage extends StatelessWidget {
     );
   }
 
+  Widget _buildIcloudSync(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text(
+          'iCloud',
+          textAlign: TextAlign.center,
+        ),
+        width13,
+        buildSwitch(context, _setting.icloudSync)
+      ],
+    );
+  }
+
   Future<void> _onRestore(BuildContext context, S s) async {
     final path = await pickOneFile();
     if (path == null) {
@@ -120,25 +122,6 @@ class BackupPage extends StatelessWidget {
     _import(text, context, s);
   }
 
-  Future<void> _onBackup(BuildContext context, S s) async {
-    final result = _diyEncrtpt(
-      json.encode(
-        Backup(
-          version: backupFormatVersion,
-          date: DateTime.now().toString().split('.').first,
-          spis: _server.fetch(),
-          snippets: _snippet.fetch(),
-          keys: _privateKey.fetch(),
-          dockerHosts: _dockerHosts.fetchAll(),
-          settings: _setting.toJson(),
-        ),
-      ),
-    );
-    final path = '${(await docDir).path}/srvbox_bak.json';
-    await File(path).writeAsString(result);
-    await shareFiles(context, [path]);
-  }
-
   Future<void> _import(String text, BuildContext context, S s) async {
     if (text.isEmpty) {
       showSnackBar(context, Text(s.fieldMustNotEmpty));
@@ -149,7 +132,7 @@ class BackupPage extends StatelessWidget {
 
   Future<void> _importBackup(String raw, BuildContext context, S s) async {
     try {
-      final backup = await compute(_decode, raw);
+      final backup = await decodeBackup(raw);
       if (backupFormatVersion != backup.version) {
         showSnackBar(context, Text(s.backupVersionNotMatch));
         return;
@@ -166,37 +149,9 @@ class BackupPage extends StatelessWidget {
           ),
           TextButton(
             onPressed: () async {
-              for (final s in backup.snippets) {
-                _snippet.put(s);
-              }
-              for (final s in backup.spis) {
-                _server.put(s);
-              }
-              for (final s in backup.keys) {
-                _privateKey.put(s);
-              }
-              for (final k in backup.dockerHosts.keys) {
-                final val = backup.dockerHosts[k];
-                if (val != null && val is String && val.isNotEmpty) {
-                  _dockerHosts.put(k, val);
-                }
-              }
+              restore(backup);
               context.pop();
-              showRoundDialog(
-                context: context,
-                title: Text(s.restore),
-                child: Text(s.restoreSuccess),
-                actions: [
-                  TextButton(
-                    onPressed: () => rebuildAll(context),
-                    child: Text(s.restart),
-                  ),
-                  TextButton(
-                    onPressed: () => context.pop(),
-                    child: Text(s.cancel),
-                  ),
-                ],
-              );
+              showRestartSnackbar(context, s);
             },
             child: Text(s.ok),
           ),
@@ -207,20 +162,4 @@ class BackupPage extends StatelessWidget {
       rethrow;
     }
   }
-}
-
-Backup _decode(String raw) {
-  final decrypted = _diyDecrypt(raw);
-  return Backup.fromJson(json.decode(decrypted));
-}
-
-String _diyEncrtpt(String raw) =>
-    json.encode(raw.codeUnits.map((e) => e * 2 + 1).toList(growable: false));
-String _diyDecrypt(String raw) {
-  final list = json.decode(raw);
-  final sb = StringBuffer();
-  for (final e in list) {
-    sb.writeCharCode((e - 1) ~/ 2);
-  }
-  return sb.toString();
 }

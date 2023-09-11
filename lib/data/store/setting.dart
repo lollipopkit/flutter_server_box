@@ -198,6 +198,13 @@ class SettingStore extends PersistentStore {
     false,
   );
 
+  /// Only valid on iOS and macOS
+  late final icloudSync = StoreProperty(
+    box,
+    'icloudSync',
+    false,
+  );
+
   // Never show these settings for users
   // Guide for these settings:
   // - key should start with `_` and be shorter as possible
