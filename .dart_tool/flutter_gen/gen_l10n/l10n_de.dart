@@ -279,6 +279,9 @@ class SDe extends S {
   }
 
   @override
+  String get icloudSynced => 'iCloud wird synchronisiert und einige Einstellungen erfordern möglicherweise einen Neustart der App, um wirksam zu werden.';
+
+  @override
   String get image => 'Image';
 
   @override

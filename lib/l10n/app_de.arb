@@ -86,6 +86,7 @@
   "homeWidgetUrlConfig": "Home-Widget-Link konfigurieren",
   "host": "Host",
   "httpFailedWithCode": "Anfrage fehlgeschlagen, Statuscode: {code}",
+  "icloudSynced": "iCloud wird synchronisiert und einige Einstellungen erfordern möglicherweise einen Neustart der App, um wirksam zu werden.",
   "image": "Image",
   "imagesList": "Images",
   "import": "Importieren",

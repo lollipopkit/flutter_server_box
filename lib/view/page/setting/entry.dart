@@ -368,7 +368,7 @@ class _SettingPageState extends State<SettingPage> {
     _setting.primaryColor.put(_selectedColorValue.value);
     primaryColor = color;
     context.pop();
-    showRestartSnackbar(context, _s);
+    showRestartSnackbar(context, btn: _s.restart, msg: _s.needRestart);
   }
 
   // Widget _buildLaunchPage() {
@@ -560,7 +560,11 @@ class _SettingPageState extends State<SettingPage> {
               onPressed: () {
                 _setting.fontPath.delete();
                 context.pop();
-                showRestartSnackbar(context, _s);
+                showRestartSnackbar(
+                  context,
+                  btn: _s.restart,
+                  msg: _s.needRestart,
+                );
               },
               child: Text(_s.clear),
             )
@@ -584,7 +588,7 @@ class _SettingPageState extends State<SettingPage> {
       }
 
       context.pop();
-      showRestartSnackbar(context, _s);
+      showRestartSnackbar(context, btn: _s.restart, msg: _s.needRestart);
       return;
     }
     showSnackBar(context, Text(_s.failed));
@@ -671,7 +675,7 @@ class _SettingPageState extends State<SettingPage> {
           onSelected: (String idx) {
             _localeCode.value = idx;
             _setting.locale.put(idx);
-            showRestartSnackbar(context, _s);
+            showRestartSnackbar(context, btn: _s.restart, msg: _s.needRestart);
           },
           child: Text(
             _s.languageName,
@@ -762,7 +766,11 @@ class _SettingPageState extends State<SettingPage> {
       trailing: buildSwitch(
         context,
         _setting.fullScreen,
-        func: (_) => showRestartSnackbar(context, _s),
+        func: (_) => showRestartSnackbar(
+          context,
+          btn: _s.restart,
+          msg: _s.needRestart,
+        ),
       ),
     );
   }

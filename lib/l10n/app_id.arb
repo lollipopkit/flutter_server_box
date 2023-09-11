@@ -86,6 +86,7 @@
   "homeWidgetUrlConfig": "Konfigurasi URL Widget Rumah",
   "host": "Host",
   "httpFailedWithCode": "Permintaan gagal, kode status: {code}",
+  "icloudSynced": "iCloud disinkronkan dan beberapa pengaturan mungkin memerlukan pengaktifan ulang aplikasi agar dapat diterapkan.",
   "image": "Gambar",
   "imagesList": "Daftar gambar",
   "import": "Impor",

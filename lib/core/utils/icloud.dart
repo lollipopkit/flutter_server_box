@@ -13,7 +13,7 @@ final _logger = Logger('iCloud');
 class ICloud {
   static const _containerId = 'iCloud.tech.lolli.serverbox';
 
-  const ICloud();
+  const ICloud._();
 
   /// Upload file to iCloud
   ///
@@ -148,7 +148,6 @@ class ICloud {
           errs.add(err);
         }
       }
-      _logger.info('Errs: $errs');
 
       return errs.isEmpty ? null : errs;
     } catch (e, s) {

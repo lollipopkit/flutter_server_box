@@ -43,11 +43,11 @@ void showSnackBarWithAction(
   ));
 }
 
-void showRestartSnackbar(BuildContext context, S s) {
+void showRestartSnackbar(BuildContext context, {String? btn, String? msg}) {
   showSnackBarWithAction(
     context,
-    '${s.success}\n${s.needRestart}',
-    s.restart,
+    msg ?? 'Need restart to take effect',
+    btn ?? 'Restart',
     () => rebuildAll(context),
   );
 }

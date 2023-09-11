@@ -279,6 +279,9 @@ class SId extends S {
   }
 
   @override
+  String get icloudSynced => 'iCloud disinkronkan dan beberapa pengaturan mungkin memerlukan pengaktifan ulang aplikasi agar dapat diterapkan.';
+
+  @override
   String get image => 'Gambar';
 
   @override

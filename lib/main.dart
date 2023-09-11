@@ -7,11 +7,10 @@ import 'package:logging/logging.dart';
 import 'package:macos_window_utils/window_manipulator.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:toolbox/core/utils/icloud.dart';
-import 'package:toolbox/data/res/path.dart';
 
 import 'app.dart';
 import 'core/analysis.dart';
+import 'core/utils/icloud.dart';
 import 'core/utils/platform.dart';
 import 'core/utils/ui.dart';
 import 'data/model/app/net_view.dart';
@@ -29,6 +28,7 @@ import 'data/provider/snippet.dart';
 import 'data/provider/virtual_keyboard.dart';
 import 'data/res/color.dart';
 import 'data/res/misc.dart';
+import 'data/res/path.dart';
 import 'data/store/setting.dart';
 import 'locator.dart';
 import 'view/widget/custom_appbar.dart';
@@ -96,9 +96,7 @@ Future<void> initApp() async {
   loadFontFile(settings.fontPath.fetch());
   primaryColor = Color(settings.primaryColor.fetch());
 
-  if (isIOS || isMacOS) {
-    if (settings.icloudSync.fetch()) _syncApple();
-  }
+  if (settings.icloudSync.fetch()) _syncApple();
 
   if (isAndroid) {
     // Only start service when [bgRun] is true.
@@ -152,11 +150,14 @@ Future<void> _initMacOSWindow() async {
   await CustomAppBar.updateTitlebarHeight();
 }
 
-Future<void> _syncApple() async {
+// Don't call it via `await`, it will block the main thread.
+void _syncApple() async {
+  if (!isIOS && !isMacOS) return;
   final docPath = await docDir;
   final dir = Directory(docPath);
   final files = await dir.list().toList();
+  // filter out non-hive(db) files
   files.removeWhere((e) => !e.path.endsWith('.hive'));
   final paths = files.map((e) => e.path.replaceFirst('$docPath/', ''));
-  ICloud.sync(relativePaths: paths);
+  await ICloud.sync(relativePaths: paths);
 }

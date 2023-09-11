@@ -614,6 +614,12 @@ abstract class S {
   /// **'request failed, status code: {code}'**
   String httpFailedWithCode(Object code);
 
+  /// No description provided for @icloudSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'iCloud wird synchronisiert und einige Einstellungen erfordern möglicherweise einen Neustart der App, um wirksam zu werden.'**
+  String get icloudSynced;
+
   /// No description provided for @image.
   ///
   /// In en, this message translates to:

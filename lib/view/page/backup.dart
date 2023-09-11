@@ -151,7 +151,7 @@ class BackupPage extends StatelessWidget {
             onPressed: () async {
               restore(backup);
               context.pop();
-              showRestartSnackbar(context, s);
+              showRestartSnackbar(context, btn: s.restart, msg: s.needRestart);
             },
             child: Text(s.ok),
           ),

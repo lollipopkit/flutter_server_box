@@ -86,6 +86,7 @@
   "homeWidgetUrlConfig": "桌面部件链接配置",
   "host": "主机",
   "httpFailedWithCode": "请求失败, 状态码: {code}",
+  "icloudSynced": "iCloud已同步，某些设置可能需要重启才能生效。",
   "image": "镜像",
   "imagesList": "镜像列表",
   "import": "导入",

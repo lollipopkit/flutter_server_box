@@ -6,6 +6,8 @@ PODS:
   - Flutter (1.0.0)
   - flutter_native_splash (0.0.1):
     - Flutter
+  - icloud_storage (0.0.1):
+    - Flutter
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -26,6 +28,7 @@ DEPENDENCIES:
   - file_picker (from `.symlinks/plugins/file_picker/ios`)
   - Flutter (from `Flutter`)
   - flutter_native_splash (from `.symlinks/plugins/flutter_native_splash/ios`)
+  - icloud_storage (from `.symlinks/plugins/icloud_storage/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - plain_notification_token (from `.symlinks/plugins/plain_notification_token/ios`)
   - r_upgrade (from `.symlinks/plugins/r_upgrade/ios`)
@@ -42,6 +45,8 @@ EXTERNAL SOURCES:
     :path: Flutter
   flutter_native_splash:
     :path: ".symlinks/plugins/flutter_native_splash/ios"
+  icloud_storage:
+    :path: ".symlinks/plugins/icloud_storage/ios"
   path_provider_foundation:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
   plain_notification_token:
@@ -60,6 +65,7 @@ SPEC CHECKSUMS:
   file_picker: 1d63c4949e05e386da864365f8c13e1e64787675
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
   flutter_native_splash: 52501b97d1c0a5f898d687f1646226c1f93c56ef
+  icloud_storage: d9ac7a33ced81df08ba7ea1bf3099cc0ee58f60a
   path_provider_foundation: 29f094ae23ebbca9d3d0cec13889cd9060c0e943
   plain_notification_token: b36467dc91939a7b6754267c701bbaca14996ee1
   r_upgrade: 44d715c61914cce3d01ea225abffe894fd51c114

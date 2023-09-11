@@ -279,6 +279,9 @@ class SZh extends S {
   }
 
   @override
+  String get icloudSynced => 'iCloud已同步，某些设置可能需要重启才能生效。';
+
+  @override
   String get image => '镜像';
 
   @override
@@ -1012,6 +1015,9 @@ class SZhTw extends SZh {
   String httpFailedWithCode(Object code) {
     return '請求失敗, 狀態碼: $code';
   }
+
+  @override
+  String get icloudSynced => 'iCloud已同步，某些設置可能需要重啟才能生效。';
 
   @override
   String get image => '鏡像';
