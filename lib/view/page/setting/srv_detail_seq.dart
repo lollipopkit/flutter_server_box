@@ -50,7 +50,7 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
         _cardsOrder.move(
           oldIndex,
           newIndex,
-          property: _store.serverOrder,
+          property: _store.detailCardOrder,
         );
       }),
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
