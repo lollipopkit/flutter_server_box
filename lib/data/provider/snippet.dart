@@ -27,7 +27,9 @@ class SnippetProvider extends ChangeNotifier {
         finder: (n, name) => n.name == name,
       );
       order.removeWhere((e) => surplus.any((ele) => ele == e));
-      _setting.snippetOrder.put(order);
+      if (order != _setting.snippetOrder.fetch()) {
+        _setting.snippetOrder.put(order);
+      }
     }
     _addInternal();
     _updateTags();

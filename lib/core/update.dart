@@ -39,7 +39,7 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
     return;
   }
 
-  locator<AppProvider>().setNewestBuild(newest);
+  locator<AppProvider>().newestBuild = newest;
 
   if (!force && newest <= BuildData.build) {
     _logger.info('Update ignored due to current: ${BuildData.build}, '

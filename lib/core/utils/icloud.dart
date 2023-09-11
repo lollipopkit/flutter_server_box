@@ -103,23 +103,26 @@ class ICloud {
       final errs = <ICloudErr>[];
 
       final allFiles = await getAll();
-      // remove files not in relativePaths
+      /// remove files not in relativePaths
       allFiles.removeWhere((e) => !relativePaths.contains(e.relativePath));
 
-      // upload files not in iCloud
+      final mission = <Future<void>>[];
+
+      /// upload files not in iCloud
       final missed = relativePaths.where((e) {
         return !allFiles.any((f) => f.relativePath == e);
       });
-      for (final e in missed) {
+      mission.addAll(missed.map((e) async {
         final err = await upload(relativePath: e);
         if (err != null) {
           errs.add(err);
         }
-      }
+        //_logger.info('upload missed: $e');
+      }));
 
       final docPath = await docDir;
-      // compare files in iCloud and local
-      for (final file in allFiles) {
+      /// compare files in iCloud and local
+      mission.addAll(allFiles.map((file) async {
         final relativePath = file.relativePath;
 
         /// Check date
@@ -130,16 +133,23 @@ class ICloud {
           if (err != null) {
             errs.add(err);
           }
-          continue;
+          //_logger.info('local not found: $relativePath');
+          return;
         }
         final localDate = await localFile.lastModified();
-        if (file.contentChangeDate.isBefore(localDate)) {
-          /// Local is newer than remote, so upload local file
+        final remoteDate = file.contentChangeDate;
+
+        /// Same date, skip
+        if (remoteDate.difference(localDate) == Duration.zero) return;
+
+        /// Local is newer than remote, so upload local file
+        if (remoteDate.isBefore(localDate)) {
           final err = await upload(relativePath: relativePath);
           if (err != null) {
             errs.add(err);
           }
-          continue;
+          //_logger.info('local newer: $relativePath');
+          return;
         }
 
         /// Remote is newer than local, so download remote
@@ -147,12 +157,17 @@ class ICloud {
         if (err != null) {
           errs.add(err);
         }
-      }
+        //_logger.info('remote newer: $relativePath');
+      }));
+
+      await Future.wait(mission);
 
       return errs.isEmpty ? null : errs;
     } catch (e, s) {
       _logger.warning('Sync failed: $relativePaths', e, s);
       return [ICloudErr(type: ICloudErrType.generic, message: '$e')];
+    } finally {
+      _logger.info('Sync finished.');
     }
   }
 }

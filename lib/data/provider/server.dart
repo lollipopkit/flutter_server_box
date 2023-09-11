@@ -58,7 +58,10 @@ class ServerProvider extends ChangeNotifier {
     } else {
       _serverOrder.addAll(_servers.keys);
     }
-    _settingStore.serverOrder.put(_serverOrder);
+    // Must use [equals] to compare [Order] here.
+    if (!_serverOrder.equals(serverOrder_)) {
+      _settingStore.serverOrder.put(_serverOrder);
+    }
     _updateTags();
     notifyListeners();
   }

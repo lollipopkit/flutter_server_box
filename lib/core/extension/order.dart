@@ -81,4 +81,14 @@ extension OrderX<T> on Order<T> {
     addAll(missed);
     return surplus;
   }
+
+  /// Dart uses memory address to compare objects by default.
+  /// This method compares the values of the objects.
+  bool equals(Order<T> other) {
+    if (length != other.length) return false;
+    for (var i = 0; i < length; i++) {
+      if (this[i] != other[i]) return false;
+    }
+    return true;
+  }
 }
