@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/context.dart';
 import 'package:toolbox/core/utils/backup.dart';
+import 'package:toolbox/core/utils/icloud.dart';
 import 'package:toolbox/core/utils/platform.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
@@ -36,7 +37,7 @@ class BackupPage extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        if (isMacOS || isIOS) _buildIcloudSync(context),
+        if (isMacOS || isIOS) _buildIcloudSync(context, s),
         height13,
         Padding(
           padding: const EdgeInsets.all(37),
@@ -93,7 +94,7 @@ class BackupPage extends StatelessWidget {
     );
   }
 
-  Widget _buildIcloudSync(BuildContext context) {
+  Widget _buildIcloudSync(BuildContext context, S s) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -101,6 +102,15 @@ class BackupPage extends StatelessWidget {
           'iCloud',
           textAlign: TextAlign.center,
         ),
+        width13,
+        IconButton(
+            onPressed: () async {
+              showLoadingDialog(context);
+              await syncApple();
+              context.pop();
+              showRestartSnackbar(context, btn: s.restart, msg: s.icloudSynced);
+            },
+            icon: const Icon(Icons.sync)),
         width13,
         buildSwitch(context, _setting.icloudSync)
       ],

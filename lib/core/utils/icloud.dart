@@ -7,6 +7,7 @@ import 'package:logging/logging.dart';
 import '../../data/model/app/error.dart';
 import '../../data/model/app/json.dart';
 import '../../data/res/path.dart';
+import 'platform.dart';
 
 final _logger = Logger('iCloud');
 
@@ -172,4 +173,15 @@ class ICloud {
       _logger.info('Sync finished.');
     }
   }
+}
+
+Future<void> syncApple() async {
+  if (!isIOS && !isMacOS) return;
+  final docPath = await docDir;
+  final dir = Directory(docPath);
+  final files = await dir.list().toList();
+  // filter out non-hive(db) files
+  files.removeWhere((e) => !e.path.endsWith('.hive'));
+  final paths = files.map((e) => e.path.replaceFirst('$docPath/', ''));
+  await ICloud.sync(relativePaths: paths);
 }

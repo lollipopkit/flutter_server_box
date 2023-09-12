@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -28,7 +27,6 @@ import 'data/provider/snippet.dart';
 import 'data/provider/virtual_keyboard.dart';
 import 'data/res/color.dart';
 import 'data/res/misc.dart';
-import 'data/res/path.dart';
 import 'data/store/setting.dart';
 import 'locator.dart';
 import 'view/widget/custom_appbar.dart';
@@ -96,7 +94,8 @@ Future<void> initApp() async {
   loadFontFile(settings.fontPath.fetch());
   primaryColor = Color(settings.primaryColor.fetch());
 
-  if (settings.icloudSync.fetch()) _syncApple();
+  // Don't call it via `await`, it will block the main thread.
+  if (settings.icloudSync.fetch()) syncApple();
 
   if (isAndroid) {
     // Only start service when [bgRun] is true.
@@ -148,16 +147,4 @@ Future<void> _initMacOSWindow() async {
   WindowManipulator.enableFullSizeContentView();
   WindowManipulator.hideTitle();
   await CustomAppBar.updateTitlebarHeight();
-}
-
-// Don't call it via `await`, it will block the main thread.
-void _syncApple() async {
-  if (!isIOS && !isMacOS) return;
-  final docPath = await docDir;
-  final dir = Directory(docPath);
-  final files = await dir.list().toList();
-  // filter out non-hive(db) files
-  files.removeWhere((e) => !e.path.endsWith('.hive'));
-  final paths = files.map((e) => e.path.replaceFirst('$docPath/', ''));
-  await ICloud.sync(relativePaths: paths);
 }
