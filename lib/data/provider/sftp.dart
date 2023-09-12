@@ -23,14 +23,14 @@ class SftpProvider extends ChangeNotifier {
   @override
   void dispose() {
     for (final item in _status) {
-      item.worker.dispose();
+      item.dispose();
     }
     super.dispose();
   }
 
   void cancel(int id) {
     final idx = _status.indexWhere((element) => element.id == id);
-    _status[idx].worker.dispose();
+    _status[idx].dispose();
     _status.removeAt(idx);
     notifyListeners();
   }

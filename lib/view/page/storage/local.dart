@@ -75,7 +75,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
             context.pop();
           },
         ),
-        title: Text(_s.download),
+        title: Text(_s.files),
         actions: [
           IconButton(
             icon: const Icon(Icons.downloading),

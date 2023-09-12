@@ -103,6 +103,7 @@ class ICloud {
       final errs = <ICloudErr>[];
 
       final allFiles = await getAll();
+
       /// remove files not in relativePaths
       allFiles.removeWhere((e) => !relativePaths.contains(e.relativePath));
 
@@ -121,6 +122,7 @@ class ICloud {
       }));
 
       final docPath = await docDir;
+
       /// compare files in iCloud and local
       mission.addAll(allFiles.map((file) async {
         final relativePath = file.relativePath;

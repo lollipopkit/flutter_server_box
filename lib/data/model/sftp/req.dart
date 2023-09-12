@@ -58,13 +58,18 @@ class SftpReqStatus {
   @override
   int get hashCode => id ^ super.hashCode;
 
+  void dispose() {
+    // ignore: deprecated_member_use_from_same_package
+    worker.dispose();
+    completer?.complete();
+  }
+
   void onNotify(dynamic event) {
     switch (event.runtimeType) {
       case SftpWorkerStatus:
         status = event;
         if (status == SftpWorkerStatus.finished) {
-          worker.dispose();
-          completer?.complete();
+          dispose();
         }
         break;
       case double:
