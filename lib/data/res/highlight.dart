@@ -33,6 +33,8 @@ import 'package:highlight/languages/xml.dart';
 import 'package:highlight/languages/yaml.dart';
 
 class Highlights {
+  const Highlights._();
+
   /// - KEY: fileNameSuffix
   /// - VAL: highlight
   static final all = {

@@ -10,7 +10,9 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
-import 'package:xterm/xterm.dart';
+import 'package:toolbox/data/res/store.dart';
+import 'package:xterm/core.dart';
+import 'package:xterm/ui.dart' hide TerminalThemes;
 
 import '../../core/route.dart';
 import '../../core/utils/platform.dart';
@@ -21,7 +23,6 @@ import '../../data/model/ssh/virtual_key.dart';
 import '../../data/provider/virtual_keyboard.dart';
 import '../../data/res/color.dart';
 import '../../data/res/terminal.dart';
-import '../../data/store/setting.dart';
 import '../../locator.dart';
 
 const echoPWD = 'echo \$PWD';
@@ -37,7 +38,6 @@ class SSHPage extends StatefulWidget {
 
 class _SSHPageState extends State<SSHPage> {
   final _keyboard = locator<VirtualKeyboard>();
-  final _setting = locator<SettingStore>();
   late final _terminal = Terminal(inputHandler: _keyboard);
   final TerminalController _terminalController = TerminalController();
   final List<List<VirtKey>> _virtKeysList = [];
@@ -59,13 +59,13 @@ class _SSHPageState extends State<SSHPage> {
   @override
   void initState() {
     super.initState();
-    final fontFamilly = getFileName(_setting.fontPath.fetch());
+    final fontFamilly = getFileName(Stores.setting.fontPath.fetch());
     final textStyle = TextStyle(
       fontFamily: fontFamilly,
-      fontSize: _setting.termFontSize.fetch(),
+      fontSize: Stores.setting.termFontSize.fetch(),
     );
     _terminalStyle = TerminalStyle.fromTextStyle(textStyle);
-    _keyboardType = TextInputType.values[_setting.keyboardType.fetch()];
+    _keyboardType = TextInputType.values[Stores.setting.keyboardType.fetch()];
     _initTerminal();
     _initVirtKeys();
   }
@@ -89,7 +89,7 @@ class _SSHPageState extends State<SSHPage> {
     _isDark = context.isDark;
     _media = MediaQuery.of(context);
     _s = S.of(context)!;
-    _terminalTheme = _isDark ? termDarkTheme : termLightTheme;
+    _terminalTheme = _isDark ? TerminalThemes.dark : TerminalThemes.light;
 
     // Because the virtual keyboard only displayed on mobile devices
     if (isMobile) {
@@ -299,7 +299,7 @@ class _SSHPageState extends State<SSHPage> {
   }
 
   void _initVirtKeys() {
-    final virtKeys = List<VirtKey>.from(_setting.sshVirtKeys.fetch());
+    final virtKeys = List<VirtKey>.from(Stores.setting.sshVirtKeys.fetch());
 
     for (int len = 0; len < virtKeys.length; len += 7) {
       if (len + 7 > virtKeys.length) {
@@ -326,7 +326,7 @@ class _SSHPageState extends State<SSHPage> {
             return _write('Sending password to auth...');
         }
       },
-      timeout: _setting.timeoutD,
+      timeout: Stores.setting.timeoutD,
     );
     _write('Connected\r\n');
     _write('Terminal size: ${_terminal.viewWidth}x${_terminal.viewHeight}\r\n');

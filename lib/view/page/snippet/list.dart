@@ -3,13 +3,13 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/order.dart';
+import 'package:toolbox/data/res/store.dart';
 
 import '../../../core/utils/misc.dart';
 import '../../../data/model/server/server.dart';
 import '../../../data/model/server/snippet.dart';
 import '../../../data/provider/server.dart';
 import '../../../data/res/ui.dart';
-import '../../../data/store/setting.dart';
 import '../../../locator.dart';
 import '../../widget/tag.dart';
 import '/core/route.dart';
@@ -26,8 +26,6 @@ class SnippetListPage extends StatefulWidget {
 class _SnippetListPageState extends State<SnippetListPage> {
   late S _s;
   late MediaQueryData _media;
-
-  final _settingStore = locator<SettingStore>();
 
   String? _tag;
 
@@ -72,7 +70,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
               oldIdx,
               newIdx,
               onMove: (p0) {
-                _settingStore.snippetOrder.put(p0.map((e) => e.name).toList());
+                Stores.setting.snippetOrder.put(p0.map((e) => e.name).toList());
               },
             );
           }),

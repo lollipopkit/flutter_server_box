@@ -7,6 +7,7 @@ import 'package:get_it/get_it.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/data/res/github_id.dart';
 import 'package:toolbox/data/res/logger.dart';
+import 'package:toolbox/data/res/store.dart';
 
 import '../../core/analysis.dart';
 import '../../core/route.dart';
@@ -21,7 +22,6 @@ import '../../data/res/build_data.dart';
 import '../../data/res/misc.dart';
 import '../../data/res/ui.dart';
 import '../../data/res/url.dart';
-import '../../data/store/setting.dart';
 import '../../locator.dart';
 import '../widget/custom_appbar.dart';
 import '../widget/round_rect_card.dart';
@@ -41,7 +41,6 @@ class _HomePageState extends State<HomePage>
         AfterLayoutMixin,
         WidgetsBindingObserver {
   final _serverProvider = locator<ServerProvider>();
-  final _setting = locator<SettingStore>();
   final _app = locator<AppProvider>();
 
   late final PageController _pageController;
@@ -56,7 +55,7 @@ class _HomePageState extends State<HomePage>
     super.initState();
     switchStatusBar(hide: false);
     WidgetsBinding.instance.addObserver(this);
-    _selectIndex.value = _setting.launchPage.fetch();
+    _selectIndex.value = Stores.setting.launchPage.fetch();
     // avoid index out of range
     if (_selectIndex.value >= AppTab.values.length || _selectIndex.value < 0) {
       _selectIndex.value = 0;
@@ -92,7 +91,7 @@ class _HomePageState extends State<HomePage>
         break;
       case AppLifecycleState.paused:
         // Keep running in background on Android device
-        if (isAndroid && _setting.bgRun.fetch()) {
+        if (isAndroid && Stores.setting.bgRun.fetch()) {
           if (_app.moveBg) {
             Miscs.bgRunChannel.invokeMethod('sendToBackground');
           }
@@ -210,7 +209,8 @@ class _HomePageState extends State<HomePage>
           TextButton(
             onPressed: () => context.showRoundDialog(
               title: Text(_versionStr),
-              child: const Text(BuildData.buildAt),
+              child: const Text(
+                  '${BuildData.buildAt}\nFlutter ${BuildData.engine}'),
             ),
             child: Text(
               '${BuildData.name}\n$_versionStr',
@@ -333,7 +333,7 @@ class _HomePageState extends State<HomePage>
     if (BuildData.modifications != 0) {
       mod = '(+${BuildData.modifications})';
     }
-    return 'Ver: 1.0.${BuildData.build}$mod';
+    return 'v1.0.${BuildData.build}$mod';
   }
 
   @override
@@ -341,7 +341,7 @@ class _HomePageState extends State<HomePage>
 
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
-    if (_setting.autoCheckAppUpdate.fetch()) {
+    if (Stores.setting.autoCheckAppUpdate.fetch()) {
       doUpdate(context);
     }
     updateHomeWidget();
@@ -354,14 +354,14 @@ class _HomePageState extends State<HomePage>
   }
 
   void updateHomeWidget() {
-    if (_setting.autoUpdateHomeWidget.fetch()) {
+    if (Stores.setting.autoUpdateHomeWidget.fetch()) {
       Miscs.homeWidgetChannel.invokeMethod('update');
     }
   }
 
   Future<void> _onLongPressSetting() async {
     /// Encode [map] to String with indent `\t`
-    final map = _setting.toJson();
+    final map = Stores.setting.toJson();
     final keys = map.keys;
     final text = Miscs.jsonEncoder.convert(map);
     final result = await AppRoute.editor(
@@ -374,11 +374,11 @@ class _HomePageState extends State<HomePage>
     }
     try {
       final newSettings = json.decode(result) as Map<String, dynamic>;
-      _setting.box.putAll(newSettings);
+      Stores.setting.box.putAll(newSettings);
       final newKeys = newSettings.keys;
       final removedKeys = keys.where((e) => !newKeys.contains(e));
       for (final key in removedKeys) {
-        _setting.box.delete(key);
+        Stores.setting.box.delete(key);
       }
     } catch (e, trace) {
       context.showRoundDialog(

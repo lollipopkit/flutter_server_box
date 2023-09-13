@@ -3,12 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/locale.dart';
+import 'package:toolbox/data/res/store.dart';
 
 import 'core/utils/ui.dart';
 import 'data/res/build_data.dart';
 import 'data/res/color.dart';
-import 'data/store/setting.dart';
-import 'locator.dart';
 import 'view/page/full_screen.dart';
 import 'view/page/home.dart';
 
@@ -21,15 +20,13 @@ const _drawerTheme = DrawerThemeData(
 );
 
 class MyApp extends StatelessWidget {
-  MyApp({Key? key}) : super(key: key);
-
-  final _setting = locator<SettingStore>();
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     setTransparentNavigationBar(context);
     final child = _wrapTheme(context);
-    if (_setting.useSystemPrimaryColor.fetch()) {
+    if (Stores.setting.useSystemPrimaryColor.fetch()) {
       return _wrapSystemColor(context, child);
     }
     return child;
@@ -37,13 +34,13 @@ class MyApp extends StatelessWidget {
 
   Widget _wrapTheme(BuildContext context) {
     return ValueListenableBuilder<int>(
-      valueListenable: _setting.themeMode.listenable(),
+      valueListenable: Stores.setting.themeMode.listenable(),
       builder: (_, tMode, __) {
         final isAMOLED = tMode >= 0 && tMode <= ThemeMode.values.length - 1;
         // Issue #57
         // if not [ok] -> [AMOLED] mode, use [ThemeMode.dark]
         final themeMode = isAMOLED ? ThemeMode.values[tMode] : ThemeMode.dark;
-        final locale = _setting.locale.fetch().toLocale;
+        final locale = Stores.setting.locale.fetch().toLocale;
         final darkTheme = ThemeData(
           useMaterial3: true,
           brightness: Brightness.dark,
@@ -63,7 +60,7 @@ class MyApp extends StatelessWidget {
             colorSchemeSeed: primaryColor,
           ),
           darkTheme: isAMOLED ? darkTheme : _getAmoledTheme(darkTheme),
-          home: _setting.fullScreen.fetch()
+          home: Stores.setting.fullScreen.fetch()
               ? const FullScreenPage()
               : const HomePage(),
         );

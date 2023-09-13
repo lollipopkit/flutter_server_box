@@ -3,10 +3,9 @@ import 'dart:async';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:toolbox/data/model/app/error.dart';
+import 'package:toolbox/data/res/store.dart';
 
 import '../../data/model/server/server_private_info.dart';
-import '../../data/store/private_key.dart';
-import '../../locator.dart';
 
 /// Must put this func out of any Class.
 ///
@@ -32,7 +31,7 @@ enum GenSSHClientStatus {
 }
 
 String getPrivateKey(String id) {
-  final pki = locator<PrivateKeyStore>().get(id);
+  final pki = Stores.key.get(id);
   if (pki == null) {
     throw SSHErr(
       type: SSHErrType.noPrivateKey,

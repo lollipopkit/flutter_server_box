@@ -6,8 +6,7 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
-import 'package:toolbox/data/store/private_key.dart';
-import 'package:toolbox/locator.dart';
+import 'package:toolbox/data/res/store.dart';
 
 import '../../../core/route.dart';
 import '../../../core/utils/platform.dart';
@@ -83,9 +82,8 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
   }
 
   void autoAddSystemPriavteKey() {
-    final store = locator<PrivateKeyStore>();
     // Only trigger on desktop platform and no private key saved
-    if (isDesktop && store.box.keys.isEmpty) {
+    if (isDesktop && Stores.snippet.box.keys.isEmpty) {
       final home = getHomeDir();
       if (home == null) return;
       final idRsaFile = File(joinPath(home, '.ssh/id_rsa'));

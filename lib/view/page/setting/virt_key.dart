@@ -4,9 +4,8 @@ import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/core/utils/platform.dart';
 import 'package:toolbox/data/model/ssh/virtual_key.dart';
+import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/data/res/ui.dart';
-import 'package:toolbox/data/store/setting.dart';
-import 'package:toolbox/locator.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
 import '../../widget/custom_appbar.dart';
@@ -19,7 +18,6 @@ class SSHVirtKeySettingPage extends StatefulWidget {
 }
 
 class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
-  final _setting = locator<SettingStore>();
   late S _s;
 
   @override
@@ -39,7 +37,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
   }
 
   Widget _buildBody() {
-    final keys_ = _setting.sshVirtKeys.fetch();
+    final keys_ = Stores.setting.sshVirtKeys.fetch();
     final keys = <VirtKey>[];
     for (final key in keys_) {
       keys.add(key);
@@ -67,7 +65,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
           context.showSnackBar(_s.disabled);
           return;
         }
-        keys.moveByItem(keys, o, n, property: _setting.sshVirtKeys);
+        keys.moveByItem(keys, o, n, property: Stores.setting.sshVirtKeys);
         setState(() {});
       },
     );
@@ -99,7 +97,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
         } else {
           keys.remove(key);
         }
-        _setting.sshVirtKeys.put(keys);
+        Stores.setting.sshVirtKeys.put(keys);
         setState(() {});
       },
     );

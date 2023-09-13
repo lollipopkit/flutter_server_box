@@ -2,11 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
-import 'package:toolbox/data/store/snippet.dart';
-import 'package:toolbox/locator.dart';
+import 'package:toolbox/data/res/store.dart';
 
 import '../../core/extension/order.dart';
-import '../store/setting.dart';
 
 class SnippetProvider extends ChangeNotifier {
   late Order<Snippet> _snippets;
@@ -15,20 +13,17 @@ class SnippetProvider extends ChangeNotifier {
   final _tags = <String>[];
   List<String> get tags => _tags;
 
-  final _store = locator<SnippetStore>();
-  final _setting = locator<SettingStore>();
-
   void loadData() {
-    _snippets = _store.fetch();
-    final order = _setting.snippetOrder.fetch();
+    _snippets = Stores.snippet.fetch();
+    final order = Stores.setting.snippetOrder.fetch();
     if (order.isNotEmpty) {
       final surplus = _snippets.reorder(
         order: order,
         finder: (n, name) => n.name == name,
       );
       order.removeWhere((e) => surplus.any((ele) => ele == e));
-      if (order != _setting.snippetOrder.fetch()) {
-        _setting.snippetOrder.put(order);
+      if (order != Stores.setting.snippetOrder.fetch()) {
+        Stores.setting.snippetOrder.put(order);
       }
     }
     _addInternal();
@@ -36,12 +31,12 @@ class SnippetProvider extends ChangeNotifier {
   }
 
   void _addInternal() {
-    if (!_setting.fTISBM.fetch()) {
+    if (!Stores.setting.fTISBM.fetch()) {
       return;
     }
     _snippets.add(installSBM);
-    _store.put(installSBM);
-    _setting.fTISBM.put(false);
+    Stores.snippet.put(installSBM);
+    Stores.setting.fTISBM.put(false);
   }
 
   void _updateTags() {
@@ -58,21 +53,21 @@ class SnippetProvider extends ChangeNotifier {
 
   void add(Snippet snippet) {
     _snippets.add(snippet);
-    _store.put(snippet);
+    Stores.snippet.put(snippet);
     _updateTags();
     notifyListeners();
   }
 
   void del(Snippet snippet) {
     _snippets.remove(snippet);
-    _store.delete(snippet);
+    Stores.snippet.delete(snippet);
     _updateTags();
     notifyListeners();
   }
 
   void update(Snippet old, Snippet newOne) {
-    _store.delete(old);
-    _store.put(newOne);
+    Stores.snippet.delete(old);
+    Stores.snippet.put(newOne);
     _snippets.remove(old);
     _snippets.add(newOne);
     _updateTags();
@@ -84,7 +79,7 @@ class SnippetProvider extends ChangeNotifier {
       if (s.tags?.contains(old) ?? false) {
         s.tags?.remove(old);
         s.tags?.add(newOne);
-        _store.put(s);
+        Stores.snippet.put(s);
       }
     }
     _updateTags();

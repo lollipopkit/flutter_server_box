@@ -76,7 +76,7 @@ Future<Map<String, dynamic>> getBuildData() async {
     'name': appName,
     'build': build,
     'engine': await getFlutterVersion(),
-    'buildAt': DateTime.now().toString(),
+    'buildAt': DateTime.now().toString().split('.')[0],
     'modifications': await getGitModificationCount(),
     'script': await getScriptCommitCount(),
   };

@@ -8,6 +8,7 @@ import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/media_queryx.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
+import 'package:toolbox/data/res/store.dart';
 
 import '../../../core/route.dart';
 import '../../../core/utils/misc.dart';
@@ -20,7 +21,6 @@ import '../../../data/model/server/server_status.dart';
 import '../../../data/provider/server.dart';
 import '../../../data/res/color.dart';
 import '../../../data/res/ui.dart';
-import '../../../data/store/setting.dart';
 import '../../../locator.dart';
 import '../../widget/round_rect_card.dart';
 import '../../widget/server_func_btns.dart';
@@ -40,7 +40,6 @@ class _ServerPageState extends State<ServerPage>
 
   final _flipedCardIds = <String>{};
   final _serverProvider = locator<ServerProvider>();
-  final _setting = locator<SettingStore>();
 
   String? _tag;
   bool _useDoubleColumn = false;
@@ -83,7 +82,8 @@ class _ServerPageState extends State<ServerPage>
         }
 
         final filtered = _filterServers(pro);
-        if (_useDoubleColumn && _setting.doubleColumnServersPage.fetch()) {
+        if (_useDoubleColumn &&
+            Stores.setting.doubleColumnServersPage.fetch()) {
           return _buildBodyMedium(pro);
         }
         return _buildBodySmall(provider: pro, filtered: filtered);
@@ -290,9 +290,9 @@ class _ServerPageState extends State<ServerPage>
         ),
       ),
       UIs.height13,
-      if (_setting.moveOutServerTabFuncBtns.fetch() &&
+      if (Stores.setting.moveOutServerTabFuncBtns.fetch() &&
           // Discussion #146
-          !_setting.serverTabUseOldUI.fetch())
+          !Stores.setting.serverTabUseOldUI.fetch())
         SizedBox(
           height: 27,
           child: ServerFuncBtns(spi: spi, s: _s),
@@ -318,7 +318,7 @@ class _ServerPageState extends State<ServerPage>
           ),
         ),
       );
-    } else if (_setting.serverTabUseOldUI.fetch()) {
+    } else if (Stores.setting.serverTabUseOldUI.fetch()) {
       rightCorner = ServerFuncBtnsTopRight(spi: spi, s: _s);
     }
     return Padding(
@@ -392,7 +392,7 @@ class _ServerPageState extends State<ServerPage>
 
   Widget _buildNet(ServerStatus ss) {
     return ValueListenableBuilder<NetViewType>(
-      valueListenable: _setting.netViewType.listenable(),
+      valueListenable: Stores.setting.netViewType.listenable(),
       builder: (_, val, __) {
         final data = val.build(ss);
         return AnimatedSwitcher(
@@ -510,9 +510,9 @@ class _ServerPageState extends State<ServerPage>
     if (_flipedCardIds.contains(id)) {
       return 77.0;
     }
-    if (_setting.moveOutServerTabFuncBtns.fetch() &&
+    if (Stores.setting.moveOutServerTabFuncBtns.fetch() &&
         // Discussion #146
-        !_setting.serverTabUseOldUI.fetch()) {
+        !Stores.setting.serverTabUseOldUI.fetch()) {
       return 132;
     }
     return 107;

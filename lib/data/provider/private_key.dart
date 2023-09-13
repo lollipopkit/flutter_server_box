@@ -1,26 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:toolbox/data/model/server/private_key_info.dart';
-import 'package:toolbox/data/store/private_key.dart';
-import 'package:toolbox/locator.dart';
+import 'package:toolbox/data/res/store.dart';
 
 class PrivateKeyProvider extends ChangeNotifier {
   List<PrivateKeyInfo> get pkis => _pkis;
-  final _store = locator<PrivateKeyStore>();
   late List<PrivateKeyInfo> _pkis;
 
   void loadData() {
-    _pkis = _store.fetch();
+    _pkis = Stores.key.fetch();
   }
 
   void add(PrivateKeyInfo info) {
     _pkis.add(info);
-    _store.put(info);
+    Stores.key.put(info);
     notifyListeners();
   }
 
   void delete(PrivateKeyInfo info) {
     _pkis.removeWhere((e) => e.id == info.id);
-    _store.delete(info);
+    Stores.key.delete(info);
     notifyListeners();
   }
 
@@ -31,7 +29,7 @@ class PrivateKeyProvider extends ChangeNotifier {
     } else {
       _pkis[idx] = newInfo;
     }
-    _store.put(newInfo);
+    Stores.key.put(newInfo);
     notifyListeners();
   }
 }

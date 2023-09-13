@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/order.dart';
+import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
 import '../../../data/provider/server.dart';
-import '../../../data/store/setting.dart';
 import '../../../locator.dart';
 import '../../widget/custom_appbar.dart';
 
@@ -16,7 +16,6 @@ class ServerOrderPage extends StatefulWidget {
 }
 
 class _ServerOrderPageState extends State<ServerOrderPage> {
-  final _store = locator<SettingStore>();
   final _provider = locator<ServerProvider>();
 
   late S _s;
@@ -44,7 +43,7 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
         _provider.serverOrder.move(
           oldIndex,
           newIndex,
-          property: _store.serverOrder,
+          property: Stores.setting.serverOrder,
         );
       }),
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),

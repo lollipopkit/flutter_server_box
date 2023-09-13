@@ -6,6 +6,7 @@ import 'package:logging/logging.dart';
 import 'package:macos_window_utils/window_manipulator.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:toolbox/data/res/store.dart';
 
 import 'app.dart';
 import 'core/analysis.dart';
@@ -27,7 +28,6 @@ import 'data/provider/snippet.dart';
 import 'data/provider/virtual_keyboard.dart';
 import 'data/res/color.dart';
 import 'data/res/misc.dart';
-import 'data/store/setting.dart';
 import 'locator.dart';
 import 'view/widget/custom_appbar.dart';
 import 'view/widget/rebuild.dart';
@@ -49,7 +49,7 @@ Future<void> main() async {
           ChangeNotifierProvider(create: (_) => locator<PrivateKeyProvider>()),
           ChangeNotifierProvider(create: (_) => locator<SftpProvider>()),
         ],
-        child: RebuildWidget(
+        child: const RebuildWidget(
           child: MyApp(),
         ),
       ),
@@ -61,12 +61,6 @@ void _runInZone(void Function() body) {
   final zoneSpec = ZoneSpecification(
     print: (Zone self, ZoneDelegate parent, Zone zone, String line) {
       parent.print(zone, line);
-      // This is a hack to avoid
-      // `setState() or markNeedsBuild() called during build`
-      // error.
-      Future.delayed(const Duration(milliseconds: 1), () {
-        _debug?.addText(line);
-      });
     },
   );
 
@@ -90,16 +84,15 @@ Future<void> initApp() async {
   _setupProviders();
 
   // Load font
-  final settings = locator<SettingStore>();
-  loadFontFile(settings.fontPath.fetch());
-  primaryColor = Color(settings.primaryColor.fetch());
+  primaryColor = Color(Stores.setting.primaryColor.fetch());
+  loadFontFile(Stores.setting.fontPath.fetch());
 
   // Don't call it via `await`, it will block the main thread.
-  if (settings.icloudSync.fetch()) ICloud.syncDb();
+  if (Stores.setting.icloudSync.fetch()) ICloud.syncDb();
 
   if (isAndroid) {
     // Only start service when [bgRun] is true.
-    if (locator<SettingStore>().bgRun.fetch()) {
+    if (Stores.setting.bgRun.fetch()) {
       Miscs.bgRunChannel.invokeMethod('startService');
     }
     // SharedPreferences is only used on Android for saving home widgets settings.
@@ -126,6 +119,7 @@ void _setupLogger() {
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
     var str = '[${record.loggerName}][${record.level.name}]: ${record.message}';
+    _debug?.addText(str);
     if (record.error != null) {
       str += '\n${record.error}';
       _debug?.addMultiline(record.error.toString(), Colors.red);

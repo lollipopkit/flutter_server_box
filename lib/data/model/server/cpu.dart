@@ -109,8 +109,8 @@ Cpus parseBsdCpu(String raw) {
       .allMatches(raw)
       .map((e) => double.parse(e.group(1) ?? '0') * 100)
       .toList();
-  if (percents.length != 3) return initCpuStatus;
-  return initCpuStatus
+  if (percents.length != 3) return InitStatus.cpus;
+  return InitStatus.cpus
     ..now = [
       OneTimeCpuStatus('cpu', percents[0].toInt(), 0, 0,
           percents[2].toInt() + percents[1].toInt(), 0, 0, 0)

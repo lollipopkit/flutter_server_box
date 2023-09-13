@@ -1,8 +1,6 @@
 import 'package:flutter/widgets.dart';
+import 'package:toolbox/data/res/store.dart';
 import 'package:xterm/core.dart';
-
-import '../../locator.dart';
-import '../store/setting.dart';
 
 class VirtualKeyboard extends TerminalInputHandler with ChangeNotifier {
   VirtualKeyboard();
@@ -25,8 +23,6 @@ class VirtualKeyboard extends TerminalInputHandler with ChangeNotifier {
     }
   }
 
-  final _setting = locator<SettingStore>();
-
   void reset(TerminalKeyboardEvent e) {
     if (e.ctrl) {
       ctrl = false;
@@ -43,7 +39,7 @@ class VirtualKeyboard extends TerminalInputHandler with ChangeNotifier {
       ctrl: event.ctrl || ctrl,
       alt: event.alt || alt,
     );
-    if (_setting.sshVirtualKeyAutoOff.fetch()) {
+    if (Stores.setting.sshVirtualKeyAutoOff.fetch()) {
       reset(e);
     }
     return defaultInputHandler.call(e);

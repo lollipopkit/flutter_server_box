@@ -10,8 +10,8 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/model/server/disk.dart';
 import 'package:toolbox/data/provider/server.dart';
+import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/data/res/ui.dart';
-import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/locator.dart';
 
 import '../../core/analysis.dart';
@@ -39,13 +39,12 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
 
   final _pageController = PageController(initialPage: 0);
   final _serverProvider = locator<ServerProvider>();
-  final _setting = locator<SettingStore>();
 
   @override
   void initState() {
     super.initState();
     switchStatusBar(hide: true);
-    _rotateQuarter = _setting.fullScreenRotateQuarter.fetch();
+    _rotateQuarter = Stores.setting.fullScreenRotateQuarter.fetch();
     _timer = Timer.periodic(const Duration(minutes: 1), (_) {
       if (mounted) {
         setState(() {});
@@ -88,7 +87,8 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
           // `_screenWidth * 0.03` is the offset value
           padding: EdgeInsets.all(_screenWidth * 0.03),
           child: ValueListenableBuilder<int>(
-            valueListenable: _setting.fullScreenRotateQuarter.listenable(),
+            valueListenable:
+                Stores.setting.fullScreenRotateQuarter.listenable(),
             builder: (_, val, __) {
               _rotateQuarter = val;
               return RotatedBox(
@@ -297,7 +297,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
 
   Widget _buildNet(ServerStatus ss) {
     return ValueListenableBuilder<NetViewType>(
-      valueListenable: _setting.netViewType.listenable(),
+      valueListenable: Stores.setting.netViewType.listenable(),
       builder: (_, val, __) {
         final data = val.build(ss);
         return AnimatedSwitcher(
@@ -368,7 +368,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
 
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
-    if (_setting.autoCheckAppUpdate.fetch()) {
+    if (Stores.setting.autoCheckAppUpdate.fetch()) {
       doUpdate(context);
     }
     await GetIt.I.allReady();

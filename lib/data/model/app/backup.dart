@@ -6,12 +6,7 @@ import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/path.dart';
-import 'package:toolbox/data/store/docker.dart';
-import 'package:toolbox/data/store/private_key.dart';
-import 'package:toolbox/data/store/server.dart';
-import 'package:toolbox/data/store/setting.dart';
-import 'package:toolbox/data/store/snippet.dart';
-import 'package:toolbox/locator.dart';
+import 'package:toolbox/data/res/store.dart';
 
 const backupFormatVersion = 1;
 
@@ -62,11 +57,11 @@ class Backup {
   Backup.loadFromStore()
       : version = backupFormatVersion,
         date = DateTime.now().toString().split('.').first,
-        spis = _server.fetch(),
-        snippets = _snippet.fetch(),
-        keys = _privateKey.fetch(),
-        dockerHosts = _dockerHosts.fetchAll(),
-        settings = _setting.toJson();
+        spis = Stores.server.fetch(),
+        snippets = Stores.snippet.fetch(),
+        keys = Stores.key.fetch(),
+        dockerHosts = Stores.docker.fetchAll(),
+        settings = Stores.setting.toJson();
 
   static Future<void> backup() async {
     final result = _diyEncrtpt(json.encode(Backup.loadFromStore()));
@@ -75,18 +70,18 @@ class Backup {
 
   Future<void> restore() async {
     for (final s in snippets) {
-      _snippet.put(s);
+      Stores.snippet.put(s);
     }
     for (final s in spis) {
-      _server.put(s);
+      Stores.server.put(s);
     }
     for (final s in keys) {
-      _privateKey.put(s);
+      Stores.key.put(s);
     }
     for (final k in dockerHosts.keys) {
       final val = dockerHosts[k];
       if (val != null && val is String && val.isNotEmpty) {
-        _dockerHosts.put(k, val);
+        Stores.docker.put(k, val);
       }
     }
   }
@@ -94,12 +89,6 @@ class Backup {
   Backup.fromJsonString(String raw)
       : this.fromJson(json.decode(_diyDecrypt(raw)));
 }
-
-final _server = locator<ServerStore>();
-final _snippet = locator<SnippetStore>();
-final _privateKey = locator<PrivateKeyStore>();
-final _dockerHosts = locator<DockerStore>();
-final _setting = locator<SettingStore>();
 
 String _diyEncrtpt(String raw) => json.encode(
       raw.codeUnits.map((e) => e * 2 + 1).toList(growable: false),

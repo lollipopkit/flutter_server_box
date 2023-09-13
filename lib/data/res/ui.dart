@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class UIs {
+  const UIs._();
+
   /// Font style
 
   static const textSize9Grey = TextStyle(color: Colors.grey, fontSize: 9);

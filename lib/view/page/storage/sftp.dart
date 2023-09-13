@@ -10,7 +10,7 @@ import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/sftpfile.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/misc.dart';
-import 'package:toolbox/data/store/history.dart';
+import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
 import '../../../core/extension/numx.dart';
@@ -26,7 +26,6 @@ import '../../../data/provider/server.dart';
 import '../../../data/provider/sftp.dart';
 import '../../../data/res/path.dart';
 import '../../../data/res/ui.dart';
-import '../../../data/store/setting.dart';
 import '../../../locator.dart';
 import '../../widget/custom_appbar.dart';
 import '../../widget/fade_in.dart';
@@ -53,8 +52,6 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   final SftpBrowserStatus _status = SftpBrowserStatus();
 
   final _sftp = locator<SftpProvider>();
-  final _history = locator<HistoryStore>();
-  final _setting = locator<SettingStore>();
 
   late S _s;
 
@@ -228,10 +225,10 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           title: Text(_s.goto),
           child: Autocomplete<String>(
             optionsBuilder: (val) {
-              if (!_setting.recordHistory.fetch()) {
+              if (!Stores.setting.recordHistory.fetch()) {
                 return [];
               }
-              return _history.sftpPath.all.where(
+              return Stores.history.sftpPath.all.where(
                 (element) => element.contains(val.text),
               );
             },
@@ -254,7 +251,9 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
         _status.path?.update(p);
         final suc = await _listDir(path: p);
-        if (suc && _setting.recordHistory.fetch()) _history.sftpPath.add(p);
+        if (suc && Stores.setting.recordHistory.fetch()) {
+          Stores.history.sftpPath.add(p);
+        }
       },
       icon: const Icon(Icons.gps_fixed),
     );
@@ -429,7 +428,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   void _delete(BuildContext context, SftpName file) {
     context.pop();
     final isDir = file.attr.isDirectory;
-    final useRmrf = _setting.sftpRmrfDir.fetch();
+    final useRmrf = Stores.setting.sftpRmrfDir.fetch();
     final dirText = (isDir && !useRmrf) ? '\n${_s.sureDirEmpty}' : '';
     final text = '${_s.sureDelete(file.filename)}$dirText';
     final child = Text(text);

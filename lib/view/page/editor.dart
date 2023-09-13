@@ -11,8 +11,7 @@ import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/data/res/highlight.dart';
-import 'package:toolbox/data/store/setting.dart';
-import 'package:toolbox/locator.dart';
+import 'package:toolbox/data/res/store.dart';
 
 import '../widget/custom_appbar.dart';
 import '../widget/two_line_text.dart';
@@ -45,12 +44,12 @@ class EditorPage extends StatefulWidget {
 
 class _EditorPageState extends State<EditorPage> {
   final _focusNode = FocusNode();
-  final _setting = locator<SettingStore>();
 
   late CodeController _controller;
   late Map<String, TextStyle> _codeTheme;
   late S _s;
-  late final _textStyle = TextStyle(fontSize: _setting.editorFontSize.fetch());
+  late final _textStyle =
+      TextStyle(fontSize: Stores.setting.editorFontSize.fetch());
 
   String? _langCode;
 
@@ -81,9 +80,11 @@ class _EditorPageState extends State<EditorPage> {
     _s = S.of(context)!;
 
     if (context.isDark) {
-      _codeTheme = themeMap[_setting.editorDarkTheme.fetch()] ?? monokaiTheme;
+      _codeTheme =
+          themeMap[Stores.setting.editorDarkTheme.fetch()] ?? monokaiTheme;
     } else {
-      _codeTheme = themeMap[_setting.editorTheme.fetch()] ?? a11yLightTheme;
+      _codeTheme =
+          themeMap[Stores.setting.editorTheme.fetch()] ?? a11yLightTheme;
     }
     _focusNode.requestFocus();
   }

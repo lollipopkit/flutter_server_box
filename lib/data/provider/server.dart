@@ -4,19 +4,17 @@ import 'package:flutter/foundation.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/system.dart';
 import 'package:toolbox/data/res/logger.dart';
+import 'package:toolbox/data/res/store.dart';
 
 import '../../core/extension/order.dart';
 import '../../core/extension/uint8list.dart';
 import '../../core/utils/server.dart';
-import '../../locator.dart';
 import '../model/server/server.dart';
 import '../model/server/server_private_info.dart';
 import '../model/server/server_status_update_req.dart';
 import '../model/server/snippet.dart';
 import '../model/server/try_limiter.dart';
 import '../res/status.dart';
-import '../store/server.dart';
-import '../store/setting.dart';
 
 typedef ServersMap = Map<String, Server>;
 
@@ -32,20 +30,17 @@ class ServerProvider extends ChangeNotifier {
 
   Timer? _timer;
 
-  final _serverStore = locator<ServerStore>();
-  final _settingStore = locator<SettingStore>();
-
   Future<void> loadLocalData() async {
     // Issue #147
     // Clear all servers because of restarting app will cause duplicate servers
     _servers.clear();
     _serverOrder.clear();
 
-    final spis = _serverStore.fetch();
+    final spis = Stores.server.fetch();
     for (final spi in spis) {
       _servers[spi.id] = genServer(spi);
     }
-    final serverOrder_ = _settingStore.serverOrder.fetch();
+    final serverOrder_ = Stores.setting.serverOrder.fetch();
     if (serverOrder_.isNotEmpty) {
       spis.reorder(
         order: serverOrder_,
@@ -57,7 +52,7 @@ class ServerProvider extends ChangeNotifier {
     }
     // Must use [equals] to compare [Order] here.
     if (!_serverOrder.equals(serverOrder_)) {
-      _settingStore.serverOrder.put(_serverOrder);
+      Stores.setting.serverOrder.put(_serverOrder);
     }
     _updateTags();
     notifyListeners();
@@ -85,13 +80,13 @@ class ServerProvider extends ChangeNotifier {
           s.spi.tags![i] = new_;
         }
       }
-      _serverStore.update(s.spi, s.spi);
+      Stores.server.update(s.spi, s.spi);
     }
     _updateTags();
   }
 
   Server genServer(ServerPrivateInfo spi) {
-    return Server(spi, initStatus, null, ServerState.disconnected);
+    return Server(spi, InitStatus.status, null, ServerState.disconnected);
   }
 
   /// if [spi] is specificed then only refresh this server
@@ -115,7 +110,7 @@ class ServerProvider extends ChangeNotifier {
   }
 
   Future<void> startAutoRefresh() async {
-    final duration = _settingStore.serverStatusUpdateInterval.fetch();
+    final duration = Stores.setting.serverStatusUpdateInterval.fetch();
     stopAutoRefresh();
     if (duration == 0) return;
     _timer = Timer.periodic(Duration(seconds: duration), (_) async {
@@ -158,9 +153,9 @@ class ServerProvider extends ChangeNotifier {
   void addServer(ServerPrivateInfo spi) {
     _servers[spi.id] = genServer(spi);
     notifyListeners();
-    _serverStore.put(spi);
+    Stores.server.put(spi);
     _serverOrder.add(spi.id);
-    _settingStore.serverOrder.put(_serverOrder);
+    Stores.setting.serverOrder.put(_serverOrder);
     _updateTags();
     refreshData(spi: spi);
   }
@@ -168,19 +163,19 @@ class ServerProvider extends ChangeNotifier {
   void delServer(String id) {
     _servers.remove(id);
     _serverOrder.remove(id);
-    _settingStore.serverOrder.put(_serverOrder);
+    Stores.setting.serverOrder.put(_serverOrder);
     _updateTags();
     notifyListeners();
-    _serverStore.delete(id);
+    Stores.server.delete(id);
   }
 
   void deleteAll() {
     _servers.clear();
     _serverOrder.clear();
-    _settingStore.serverOrder.put(_serverOrder);
+    Stores.setting.serverOrder.put(_serverOrder);
     _updateTags();
     notifyListeners();
-    _serverStore.deleteAll();
+    Stores.server.deleteAll();
   }
 
   Future<void> updateServer(
@@ -188,7 +183,7 @@ class ServerProvider extends ChangeNotifier {
     ServerPrivateInfo newSpi,
   ) async {
     if (old != newSpi) {
-      _serverStore.update(old, newSpi);
+      Stores.server.update(old, newSpi);
       _servers[old.id]?.spi = newSpi;
 
       if (newSpi.id != old.id) {
@@ -196,14 +191,14 @@ class ServerProvider extends ChangeNotifier {
         _servers[newSpi.id]?.spi = newSpi;
         _servers.remove(old.id);
         _serverOrder.update(old.id, newSpi.id);
-        _settingStore.serverOrder.put(_serverOrder);
+        Stores.setting.serverOrder.put(_serverOrder);
       }
 
       // Only reconnect if neccessary
       if (newSpi.shouldReconnect(old)) {
         _servers[newSpi.id]?.client = await genClient(
           newSpi,
-          timeout: _settingStore.timeoutD,
+          timeout: Stores.setting.timeoutD,
         );
         refreshData(spi: newSpi);
       }
@@ -239,7 +234,7 @@ class ServerProvider extends ChangeNotifier {
       try {
         s.client = await genClient(
           spi,
-          timeout: _settingStore.timeoutD,
+          timeout: Stores.setting.timeoutD,
         );
       } catch (e) {
         _limiter.inc(sid);

@@ -6,6 +6,7 @@ import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/model/docker/image.dart';
+import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 
 import '../../data/model/docker/ps.dart';
@@ -16,7 +17,6 @@ import '../../data/model/app/error.dart';
 import '../../data/model/app/menu.dart';
 import '../../data/res/ui.dart';
 import '../../data/res/url.dart';
-import '../../data/store/docker.dart';
 import '../../locator.dart';
 import '../widget/custom_appbar.dart';
 import '../widget/popup_menu.dart';
@@ -34,7 +34,6 @@ class DockerManagePage extends StatefulWidget {
 
 class _DockerManagePageState extends State<DockerManagePage> {
   final _docker = locator<DockerProvider>();
-  final _store = locator<DockerStore>();
   final _textController = TextEditingController();
   late S _s;
 
@@ -479,7 +478,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
 
   Future<void> _showEditHostDialog() async {
     final id = widget.spi.id;
-    final host = _store.fetch(id) ?? 'unix:///run/user/1000/docker.sock';
+    final host = Stores.docker.fetch(id) ?? 'unix:///run/user/1000/docker.sock';
     final ctrl = TextEditingController(text: host);
     await context.showRoundDialog(
       title: Text(_s.dockerEditHost),
@@ -499,7 +498,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
 
   void _onSaveDockerHost(String val) {
     context.pop();
-    _store.put(widget.spi.id, val.trim());
+    Stores.docker.put(widget.spi.id, val.trim());
     _docker.refresh();
   }
 }

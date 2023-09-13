@@ -8,13 +8,13 @@ import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/utils/misc.dart';
+import 'package:toolbox/data/res/store.dart';
 
 import '../../data/model/app/shell_func.dart';
 import '../../data/model/server/proc.dart';
 import '../../data/model/server/server_private_info.dart';
 import '../../data/provider/server.dart';
 import '../../data/res/ui.dart';
-import '../../data/store/setting.dart';
 import '../../locator.dart';
 import '../widget/custom_appbar.dart';
 import '../widget/round_rect_card.dart';
@@ -32,8 +32,6 @@ class _ProcessPageState extends State<ProcessPage> {
   late S _s;
   late Timer _timer;
   late MediaQueryData _media;
-
-  final _setting = locator<SettingStore>();
 
   SSHClient? _client;
 
@@ -53,7 +51,7 @@ class _ProcessPageState extends State<ProcessPage> {
     super.initState();
     _client = _serverProvider.servers[widget.spi.id]?.client;
     final duration =
-        Duration(seconds: _setting.serverStatusUpdateInterval.fetch());
+        Duration(seconds: Stores.setting.serverStatusUpdateInterval.fetch());
     _timer = Timer.periodic(duration, (_) => _refresh());
   }
 

@@ -6,6 +6,7 @@ import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/data/model/server/cpu.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/system.dart';
+import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/server_func_btns.dart';
 
 import '../../../core/extension/numx.dart';
@@ -17,8 +18,6 @@ import '../../../data/provider/server.dart';
 import '../../../data/res/color.dart';
 import '../../../data/res/default.dart';
 import '../../../data/res/ui.dart';
-import '../../../data/store/setting.dart';
-import '../../../locator.dart';
 import '../../widget/custom_appbar.dart';
 import '../../widget/round_rect_card.dart';
 
@@ -36,9 +35,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   late MediaQueryData _media;
   late S _s;
   final Order<String> _cardsOrder = [];
-  final _setting = locator<SettingStore>();
 
-  late final _textFactor = _setting.textFactor.fetch();
+  late final _textFactor = Stores.setting.textFactor.fetch();
 
   late final _cardBuildMap = Map.fromIterables(
     Defaults.detailCardOrder,
@@ -63,7 +61,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   @override
   void initState() {
     super.initState();
-    _cardsOrder.addAll(_setting.detailCardOrder.fetch());
+    _cardsOrder.addAll(Stores.setting.detailCardOrder.fetch());
   }
 
   @override
@@ -82,7 +80,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildMainPage(Server si) {
-    final buildFuncs = !_setting.moveOutServerTabFuncBtns.fetch();
+    final buildFuncs = !Stores.setting.moveOutServerTabFuncBtns.fetch();
     return Scaffold(
       appBar: CustomAppBar(
         title: Text(si.spi.name, style: UIs.textSize18),
@@ -309,7 +307,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   Widget _buildDiskView(ServerStatus ss) {
     final disk = ss.disk;
     disk.removeWhere((e) {
-      for (final ingorePath in _setting.diskIgnorePath.fetch()) {
+      for (final ingorePath in Stores.setting.diskIgnorePath.fetch()) {
         if (e.path.startsWith(ingorePath)) return true;
       }
       return false;

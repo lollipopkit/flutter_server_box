@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 
 class Miscs {
+  const Miscs._();
+
   /// RegExp for number
   static final numReg = RegExp(r'\s{1,}');
 

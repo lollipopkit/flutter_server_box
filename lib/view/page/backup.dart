@@ -11,19 +11,16 @@ import 'package:toolbox/core/utils/platform.dart';
 import 'package:toolbox/data/model/app/backup.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/path.dart';
+import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
 import '../../core/utils/misc.dart';
 import '../../data/res/ui.dart';
-import '../../data/store/setting.dart';
-import '../../locator.dart';
 import '../widget/custom_appbar.dart';
 import '../widget/store_switch.dart';
 
 class BackupPage extends StatelessWidget {
-  BackupPage({Key? key}) : super(key: key);
-
-  final _setting = locator<SettingStore>();
+  const BackupPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +115,7 @@ class BackupPage extends StatelessWidget {
         //     },
         //     icon: const Icon(Icons.sync)),
         // width13,
-        StoreSwitch(prop: _setting.icloudSync)
+        StoreSwitch(prop: Stores.setting.icloudSync)
       ],
     );
   }

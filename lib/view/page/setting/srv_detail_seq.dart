@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:toolbox/data/res/store.dart';
 
 import '../../../core/extension/order.dart';
-import '../../../data/store/setting.dart';
-import '../../../locator.dart';
 import '../../widget/custom_appbar.dart';
 import '../../widget/round_rect_card.dart';
 
@@ -15,8 +14,6 @@ class ServerDetailOrderPage extends StatefulWidget {
 }
 
 class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
-  final _store = locator<SettingStore>();
-
   final Order<String> _cardsOrder = [];
 
   late S _s;
@@ -30,7 +27,7 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
   @override
   void initState() {
     super.initState();
-    _cardsOrder.addAll(_store.detailCardOrder.fetch());
+    _cardsOrder.addAll(Stores.setting.detailCardOrder.fetch());
   }
 
   @override
@@ -50,7 +47,7 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
         _cardsOrder.move(
           oldIndex,
           newIndex,
-          property: _store.detailCardOrder,
+          property: Stores.setting.detailCardOrder,
         );
       }),
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),

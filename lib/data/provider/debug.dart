@@ -38,15 +38,9 @@ class DebugProvider extends ChangeNotifier {
   }
 
   void addMultiline(Object data, [Color color = Colors.blue]) {
-    final widget = Text(
-      '$data',
-      style: TextStyle(
-        color: color,
-      ),
-    );
     _addWidget(SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      child: widget,
+      child: Text('$data', style: TextStyle(color: color)),
     ));
   }
 

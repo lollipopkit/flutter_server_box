@@ -9,8 +9,7 @@ import 'package:toolbox/data/model/docker/image.dart';
 import 'package:toolbox/data/model/docker/ps.dart';
 import 'package:toolbox/data/model/app/error.dart';
 import 'package:toolbox/data/res/logger.dart';
-import 'package:toolbox/data/store/docker.dart';
-import 'package:toolbox/locator.dart';
+import 'package:toolbox/data/res/store.dart';
 
 final _dockerNotFound = RegExp(r'command not found|Unknown command');
 final _versionReg = RegExp(r'(Version:)\s+([0-9]+\.[0-9]+\.[0-9]+)');
@@ -19,8 +18,6 @@ final _editionReg = RegExp(r'Docker Engine - [a-zA-Z]+');
 final _dockerPrefixReg = RegExp(r'(sudo )?docker ');
 
 class DockerProvider extends ChangeNotifier {
-  final _dockerStore = locator<DockerStore>();
-
   SSHClient? client;
   String? userName;
   List<DockerPsItem>? items;
@@ -177,7 +174,7 @@ class DockerProvider extends ChangeNotifier {
 
   // judge whether to use DOCKER_HOST
   String _wrap(String cmd) {
-    final dockerHost = _dockerStore.fetch(hostId!);
+    final dockerHost = Stores.docker.fetch(hostId!);
     if (dockerHost == null || dockerHost.isEmpty) {
       return cmd.withLangExport;
     }

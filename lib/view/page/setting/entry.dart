@@ -12,6 +12,7 @@ import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/locale.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/stringx.dart';
+import 'package:toolbox/data/res/store.dart';
 
 import '../../../core/persistant_store.dart';
 import '../../../core/route.dart';
@@ -25,8 +26,6 @@ import '../../../data/res/build_data.dart';
 import '../../../data/res/color.dart';
 import '../../../data/res/path.dart';
 import '../../../data/res/ui.dart';
-import '../../../data/store/server.dart';
-import '../../../data/store/setting.dart';
 import '../../../locator.dart';
 import '../../widget/color_picker.dart';
 import '../../widget/custom_appbar.dart';
@@ -53,9 +52,9 @@ class _SettingPageState extends State<SettingPage> {
   final _keyboardTypeKey = GlobalKey<PopupMenuButtonState<int>>();
   final _rotateQuarterKey = GlobalKey<PopupMenuButtonState<int>>();
   final _netViewTypeKey = GlobalKey<PopupMenuButtonState<NetViewType>>();
+  final _serverProvider = locator<ServerProvider>();
+  final _setting = Stores.setting;
 
-  late final SettingStore _setting;
-  late final ServerProvider _serverProvider;
   late S _s;
   late SharedPreferences _sp;
 
@@ -89,8 +88,6 @@ class _SettingPageState extends State<SettingPage> {
   @override
   void initState() {
     super.initState();
-    _serverProvider = locator<ServerProvider>();
-    _setting = locator<SettingStore>();
     _nightMode.value = _setting.themeMode.fetch();
     _updateInterval.value = _setting.serverStatusUpdateInterval.fetch();
     _maxRetryCount.value = _setting.maxRetryCount.fetch();
@@ -964,21 +961,21 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(_s.deleteServers),
       trailing: const Icon(Icons.delete_forever),
       onTap: () async {
-        final all = locator<ServerStore>().box.keys.map(
-              (e) => TextButton(
-                onPressed: () => context.showRoundDialog(
-                  title: Text(_s.attention),
-                  child: Text(_s.sureDelete(e)),
-                  actions: [
-                    TextButton(
-                      onPressed: () => _serverProvider.delServer(e),
-                      child: Text(_s.ok),
-                    )
-                  ],
-                ),
-                child: Text(e),
-              ),
-            );
+        final all = Stores.server.box.keys.map(
+          (e) => TextButton(
+            onPressed: () => context.showRoundDialog(
+              title: Text(_s.attention),
+              child: Text(_s.sureDelete(e)),
+              actions: [
+                TextButton(
+                  onPressed: () => _serverProvider.delServer(e),
+                  child: Text(_s.ok),
+                )
+              ],
+            ),
+            child: Text(e),
+          ),
+        );
         context.showRoundDialog<List<String>>(
           title: Text(_s.choose),
           child: SingleChildScrollView(
