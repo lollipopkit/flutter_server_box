@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:toolbox/core/extension/context.dart';
 import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/widget/value_notifier.dart';
 
-import '../../core/utils/ui.dart';
 import '../widget/custom_appbar.dart';
 import '../widget/input_field.dart';
 import '../widget/popup_menu.dart';
@@ -74,7 +74,7 @@ class _ConvertPageState extends State<ConvertPage>
             _textEditingControllerResult.text = doConvert();
             FocusScope.of(context).requestFocus(FocusNode());
           } catch (e) {
-            showSnackBar(context, Text('Error: \n$e'));
+            context.showSnackBar('Error: \n$e');
           }
         },
         tooltip: _s.convert,

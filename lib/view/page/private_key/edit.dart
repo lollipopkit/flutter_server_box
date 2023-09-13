@@ -11,7 +11,6 @@ import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 
 import '../../../core/utils/server.dart';
-import '../../../core/utils/ui.dart';
 import '../../../data/model/server/private_key_info.dart';
 import '../../../data/provider/private_key.dart';
 import '../../../data/res/ui.dart';
@@ -92,8 +91,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
       IconButton(
         tooltip: _s.delete,
         onPressed: () {
-          showRoundDialog(
-            context: context,
+          context.showRoundDialog(
             title: Text(_s.attention),
             child: Text(_s.sureDelete(widget.pki!.id)),
             actions: [
@@ -128,7 +126,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
         final key = _keyController.text.trim();
         final pwd = _pwdController.text;
         if (name.isEmpty || key.isEmpty) {
-          showSnackBar(context, Text(_s.fieldMustNotEmpty));
+          context.showSnackBar(_s.fieldMustNotEmpty);
           return;
         }
         FocusScope.of(context).unfocus();
@@ -144,7 +142,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
             _provider.add(pki);
           }
         } catch (e) {
-          showSnackBar(context, Text(e.toString()));
+          context.showSnackBar(e.toString());
           rethrow;
         } finally {
           setState(() {
@@ -184,25 +182,22 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
           onPressed: () async {
             final path = await pickOneFile();
             if (path == null) {
-              showSnackBar(context, Text(_s.fieldMustNotEmpty));
+              context.showSnackBar(_s.fieldMustNotEmpty);
               return;
             }
 
             final file = File(path);
             if (!file.existsSync()) {
-              showSnackBar(context, Text(_s.fileNotExist(path)));
+              context.showSnackBar(_s.fileNotExist(path));
               return;
             }
             final size = (await file.stat()).size;
             if (size > privateKeyMaxSize) {
-              showSnackBar(
-                context,
-                Text(
-                  _s.fileTooLarge(
-                    path,
-                    size.convertBytes,
-                    privateKeyMaxSize.convertBytes,
-                  ),
+              context.showSnackBar(
+                _s.fileTooLarge(
+                  path,
+                  size.convertBytes,
+                  privateKeyMaxSize.convertBytes,
                 ),
               );
               return;

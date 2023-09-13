@@ -16,7 +16,6 @@ import '../../../core/extension/stringx.dart';
 import '../../../core/route.dart';
 import '../../../core/utils/misc.dart';
 import '../../../core/utils/platform.dart';
-import '../../../core/utils/ui.dart';
 import '../../../data/model/server/server_private_info.dart';
 import '../../../data/model/sftp/absolute_path.dart';
 import '../../../data/model/sftp/browser_status.dart';
@@ -153,23 +152,22 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   Widget _buildUploadBtn() {
     return IconButton(
         onPressed: () async {
-          final idx = await showRoundDialog(
-              context: context,
+          final idx = await context.showRoundDialog(
               child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.open_in_new),
-                    title: Text(_s.system),
-                    onTap: () => context.pop(1),
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.folder),
-                    title: Text(_s.inner),
-                    onTap: () => context.pop(0),
-                  ),
-                ],
-              ));
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.open_in_new),
+                title: Text(_s.system),
+                onTap: () => context.pop(1),
+              ),
+              ListTile(
+                leading: const Icon(Icons.folder),
+                title: Text(_s.inner),
+                onTap: () => context.pop(0),
+              ),
+            ],
+          ));
           final path = await () async {
             switch (idx) {
               case 0:
@@ -186,7 +184,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           }
           final remotePath = _status.path?.path;
           if (remotePath == null) {
-            showSnackBar(context, const Text('remote path is null'));
+            context.showSnackBar('remote path is null');
             return;
           }
           _sftp.add(
@@ -203,8 +201,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
   Widget _buildAddBtn() {
     return IconButton(
-      onPressed: (() => showRoundDialog(
-            context: context,
+      onPressed: (() => context.showRoundDialog(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -227,8 +224,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     return IconButton(
       padding: const EdgeInsets.all(0),
       onPressed: () async {
-        final p = await showRoundDialog<String>(
-          context: context,
+        final p = await context.showRoundDialog<String>(
           title: Text(_s.goto),
           child: Autocomplete<String>(
             optionsBuilder: (val) {
@@ -358,8 +354,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           ),
       ]);
     }
-    showRoundDialog(
-      context: context,
+    context.showRoundDialog(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: children,
@@ -370,13 +365,11 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   Future<void> _edit(BuildContext context, SftpName name) async {
     final size = name.attr.size;
     if (size == null || size > editorMaxSize) {
-      showSnackBar(
-          context,
-          Text(_s.fileTooLarge(
-            name.filename,
-            size ?? 0,
-            editorMaxSize,
-          )));
+      context.showSnackBar(_s.fileTooLarge(
+        name.filename,
+        size ?? 0,
+        editorMaxSize,
+      ));
       return;
     }
     context.pop();
@@ -391,20 +384,19 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       SftpReqType.download,
     );
     _sftp.add(req, completer: completer);
-    showLoadingDialog(context);
+    context.showLoadingDialog();
     await completer.future;
     context.pop();
 
     final result = await AppRoute.editor(path: localPath).go<bool>(context);
     if (result != null && result) {
       _sftp.add(SftpReq(req.spi, remotePath, localPath, SftpReqType.upload));
-      showSnackBar(context, Text(_s.added2List));
+      context.showSnackBar(_s.added2List);
     }
   }
 
   void _download(BuildContext context, SftpName name) {
-    showRoundDialog(
-      context: context,
+    context.showRoundDialog(
       title: Text(_s.attention),
       child: Text('${_s.dl2Local(name.filename)}\n${_s.keepForeground}'),
       actions: [
@@ -441,8 +433,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     final dirText = (isDir && !useRmrf) ? '\n${_s.sureDirEmpty}' : '';
     final text = '${_s.sureDelete(file.filename)}$dirText';
     final child = Text(text);
-    showRoundDialog(
-      context: context,
+    context.showRoundDialog(
       child: child,
       title: Text(_s.attention),
       actions: [
@@ -453,7 +444,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         TextButton(
           onPressed: () async {
             context.pop();
-            showLoadingDialog(context);
+            context.showLoadingDialog();
             final remotePath = _getRemotePath(file);
             try {
               if (useRmrf) {
@@ -466,8 +457,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
               context.pop();
             } catch (e) {
               context.pop();
-              showRoundDialog(
-                context: context,
+              context.showRoundDialog(
                 title: Text(_s.error),
                 child: Text(e.toString()),
                 actions: [
@@ -490,8 +480,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   void _mkdir(BuildContext context) {
     context.pop();
     final textController = TextEditingController();
-    showRoundDialog(
-      context: context,
+    context.showRoundDialog(
       title: Text(_s.createFolder),
       child: Input(
         autoFocus: true,
@@ -507,8 +496,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         TextButton(
           onPressed: () async {
             if (textController.text == '') {
-              showRoundDialog(
-                context: context,
+              context.showRoundDialog(
                 child: Text(_s.fieldMustNotEmpty),
                 actions: [
                   TextButton(
@@ -533,8 +521,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   void _newFile(BuildContext context) {
     context.pop();
     final textController = TextEditingController();
-    showRoundDialog(
-      context: context,
+    context.showRoundDialog(
       title: Text(_s.createFile),
       child: Input(
         autoFocus: true,
@@ -546,8 +533,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         TextButton(
           onPressed: () async {
             if (textController.text == '') {
-              showRoundDialog(
-                context: context,
+              context.showRoundDialog(
                 title: Text(_s.attention),
                 child: Text(_s.fieldMustNotEmpty),
                 actions: [
@@ -561,7 +547,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
             }
             context.pop();
             final path = '${_status.path!.path}/${textController.text}';
-            showLoadingDialog(context);
+            context.showLoadingDialog();
             await _client!.run('touch "$path"');
             context.pop();
             _listDir();
@@ -575,8 +561,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   void _rename(BuildContext context, SftpName file) {
     context.pop();
     final textController = TextEditingController();
-    showRoundDialog(
-      context: context,
+    context.showRoundDialog(
       title: Text(_s.rename),
       child: Input(
         autoFocus: true,
@@ -589,8 +574,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         TextButton(
           onPressed: () async {
             if (textController.text == '') {
-              showRoundDialog(
-                context: context,
+              context.showRoundDialog(
                 title: Text(_s.attention),
                 child: Text(_s.fieldMustNotEmpty),
                 actions: [
@@ -617,8 +601,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     final absPath = _getRemotePath(name);
     final cmd = _getDecompressCmd(absPath);
     if (cmd == null) {
-      showRoundDialog(
-        context: context,
+      context.showRoundDialog(
         title: Text(_s.error),
         child: Text('Unsupport file: ${name.filename}'),
         actions: [
@@ -630,7 +613,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       );
       return;
     }
-    showLoadingDialog(context);
+    context.showLoadingDialog();
     await _client?.run(cmd);
     context.pop();
     _listDir();
@@ -647,7 +630,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
   /// Only return true if the path is changed
   Future<bool> _listDir({String? path, SSHClient? client}) async {
-    showLoadingDialog(context);
+    context.showLoadingDialog();
     if (client != null) {
       final sftpc = await client.sftp();
       _status.client = sftpc;
@@ -681,12 +664,11 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       return false;
     } catch (e, trace) {
       context.pop();
-      _logger.warning('list dir failed', e, trace);
+      _logger.warning('List dir failed', e, trace);
       await _backward();
       Future.delayed(
         const Duration(milliseconds: 177),
-        () => showRoundDialog(
-          context: context,
+        () => context.showRoundDialog(
           title: Text(_s.error),
           child: Text(e.toString()),
           actions: [

@@ -9,7 +9,6 @@ import 'package:flutter_highlight/themes/a11y-light.dart';
 import 'package:flutter_highlight/themes/monokai.dart';
 import 'package:toolbox/core/extension/context.dart';
 import 'package:toolbox/core/utils/misc.dart';
-import 'package:toolbox/core/utils/ui.dart';
 import 'package:toolbox/data/res/highlight.dart';
 import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/locator.dart';
@@ -107,7 +106,7 @@ class _EditorPageState extends State<EditorPage> {
           // If path is not null, then it's a file editor
           // save the text and return true to pop the page
           if (widget.path != null) {
-            showLoadingDialog(context);
+            context.showLoadingDialog();
             await File(widget.path!).writeAsString(_controller.text);
             context.pop();
             context.pop(true);

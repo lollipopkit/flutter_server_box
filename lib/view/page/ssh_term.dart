@@ -13,7 +13,6 @@ import 'package:xterm/xterm.dart';
 import '../../core/route.dart';
 import '../../core/utils/platform.dart';
 import '../../core/utils/misc.dart';
-import '../../core/utils/ui.dart';
 import '../../core/utils/server.dart';
 import '../../data/model/server/server_private_info.dart';
 import '../../data/model/ssh/virtual_key.dart';
@@ -251,7 +250,7 @@ class _SSHPageState extends State<SSHPage> {
         }
         break;
       case VirtualKeyFunc.snippet:
-        showSnippetDialog(context, _s, (s) {
+        context.showSnippetDialog(_s, (s) {
           _terminal.textInput(s.script);
           _terminal.keyInput(TerminalKey.enter);
         });
@@ -267,8 +266,7 @@ class _SSHPageState extends State<SSHPage> {
         final idx = cmds.lastIndexWhere((e) => e.toString().contains(echoPWD));
         final initPath = cmds[idx + 1].toString();
         if (initPath.isEmpty || !initPath.startsWith('/')) {
-          showRoundDialog(
-            context: context,
+          context.showRoundDialog(
             title: Text(_s.error),
             child: const Text('Failed to get current path'),
           );
@@ -342,7 +340,7 @@ class _SSHPageState extends State<SSHPage> {
     _setupDiscontinuityTimer();
 
     if (_session == null) {
-      showSnackBar(context, const Text('Null session'));
+      context.showSnackBar('Null session');
       return;
     }
 
@@ -400,8 +398,7 @@ class _SSHPageState extends State<SSHPage> {
     _discontinuityTimer?.cancel();
     if (!mounted) return;
     _write('\n\nConnection lost\r\n');
-    showRoundDialog(
-      context: context,
+    context.showRoundDialog(
       title: Text(_s.attention),
       child: Text('${_s.disconnected}\n${_s.goBackQ}'),
       barrierDismiss: false,

@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context.dart';
 
 import '../../../core/route.dart';
-import '../../../core/utils/ui.dart';
 import '../../../data/model/server/private_key_info.dart';
 import '../../../data/model/server/server_private_info.dart';
 import '../../../data/provider/private_key.dart';
@@ -114,8 +113,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
   PreferredSizeWidget _buildAppBar() {
     final delBtn = IconButton(
       onPressed: () {
-        showRoundDialog(
-          context: context,
+        context.showRoundDialog(
           title: Text(_s.attention),
           child: Text(_s.sureToDeleteServer(widget.spi!.name)),
           actions: [
@@ -323,12 +321,11 @@ class _ServerEditPageState extends State<ServerEditPage> {
 
   void _onSave() async {
     if (_ipController.text == '') {
-      showSnackBar(context, Text(_s.plzEnterHost));
+      context.showSnackBar(_s.plzEnterHost);
       return;
     }
     if (_keyIdx.value == null && _passwordController.text == '') {
-      final cancel = await showRoundDialog<bool>(
-        context: context,
+      final cancel = await context.showRoundDialog<bool>(
         title: Text(_s.attention),
         child: Text(_s.sureNoPwd),
         actions: [
@@ -348,7 +345,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
     }
     // If [_pubKeyIndex] is -1, it means that the user has not selected
     if (_keyIdx.value == -1) {
-      showSnackBar(context, Text(_s.plzSelectKey));
+      context.showSnackBar(_s.plzSelectKey);
       return;
     }
     if (_usernameController.text.isEmpty) {

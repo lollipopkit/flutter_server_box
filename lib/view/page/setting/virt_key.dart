@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:toolbox/core/extension/context.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/core/utils/platform.dart';
-import 'package:toolbox/core/utils/ui.dart';
 import 'package:toolbox/data/model/ssh/virtual_key.dart';
 import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/data/store/setting.dart';
@@ -64,7 +64,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
       itemCount: allKeys.length,
       onReorder: (o, n) {
         if (o >= keys.length || n >= keys.length) {
-          showSnackBar(context, Text(_s.disabled));
+          context.showSnackBar(_s.disabled);
           return;
         }
         keys.moveByItem(keys, o, n, property: _setting.sshVirtKeys);

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/core/extension/context.dart';
 import 'package:toolbox/core/extension/media_queryx.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
@@ -11,7 +12,6 @@ import 'package:toolbox/data/model/app/shell_func.dart';
 import '../../../core/route.dart';
 import '../../../core/utils/misc.dart';
 import '../../../core/utils/platform.dart';
-import '../../../core/utils/ui.dart';
 import '../../../data/model/app/net_view.dart';
 import '../../../data/model/server/disk.dart';
 import '../../../data/model/server/server.dart';
@@ -376,8 +376,7 @@ class _ServerPageState extends State<ServerPage>
   }
 
   void _showFailReason(ServerStatus ss) {
-    showRoundDialog(
-      context: context,
+    context.showRoundDialog(
       title: Text(_s.error),
       child: SingleChildScrollView(
         child: Text(ss.failedInfo ?? _s.unknownError),

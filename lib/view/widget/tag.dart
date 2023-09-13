@@ -5,7 +5,6 @@ import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 
-import '../../core/utils/ui.dart';
 import '../../data/model/app/tag_pickable.dart';
 import '../../data/res/color.dart';
 
@@ -133,8 +132,7 @@ class _TagEditorState extends State<TagEditor> {
 
   void _showAddTagDialog() {
     final textEditingController = TextEditingController();
-    showRoundDialog(
-      context: context,
+    context.showRoundDialog(
       title: Text(widget.s.add),
       child: Input(
         autoFocus: true,
@@ -158,8 +156,7 @@ class _TagEditorState extends State<TagEditor> {
 
   void _showRenameDialog(String tag) {
     final textEditingController = TextEditingController(text: tag);
-    showRoundDialog(
-      context: context,
+    context.showRoundDialog(
       title: Text(widget.s.rename),
       child: Input(
         autoFocus: true,

@@ -10,6 +10,7 @@ class SettingStore extends PersistentStore {
   Map<String, dynamic> toJson() => {for (var e in box.keys) e: box.get(e)};
 
   // ------BEGIN------
+  //
   // These settings are not displayed in the settings page
   // You can edit them in the settings json editor (by long press the settings
   // item in the drawer of the home page)
@@ -46,6 +47,25 @@ class SettingStore extends PersistentStore {
     'textFactor',
     1.0,
   );
+
+  /// Lanch page idx
+  late final launchPage = StoreProperty(
+    box,
+    'launchPage',
+    defaultLaunchPageIdx,
+  );
+
+  /// Server detail disk ignore path
+  late final diskIgnorePath =
+      StoreListProperty(box, 'diskIgnorePath', defaultDiskIgnorePath);
+
+  /// Use double column servers page on Desktop
+  late final doubleColumnServersPage = StoreProperty(
+    box,
+    'doubleColumnServersPage',
+    isDesktop,
+  );
+
   // ------END------
 
   late final primaryColor = StoreProperty(
@@ -59,15 +79,6 @@ class SettingStore extends PersistentStore {
     'serverStatusUpdateInterval',
     defaultUpdateInterval,
   );
-
-  // Lanch page idx
-  late final launchPage = StoreProperty(
-    box,
-    'launchPage',
-    defaultLaunchPageIdx,
-  );
-
-  late final termColorIdx = StoreProperty(box, 'termColorIdx', 0);
 
   // Max retry count when connect to server
   late final maxRetryCount = StoreProperty(box, 'maxRetryCount', 2);
@@ -92,10 +103,6 @@ class SettingStore extends PersistentStore {
 
   // SSH term font size
   late final termFontSize = StoreProperty(box, 'termFontSize', 13.0);
-
-  // Server detail disk ignore path
-  late final diskIgnorePath =
-      StoreListProperty(box, 'diskIgnorePath', defaultDiskIgnorePath);
 
   // Locale
   late final locale = StoreProperty<String>(box, 'locale', '');
@@ -182,13 +189,6 @@ class SettingStore extends PersistentStore {
     box,
     'sftpRmrfDir',
     false,
-  );
-
-  /// Use double column servers page on Desktop
-  late final doubleColumnServersPage = StoreProperty(
-    box,
-    'doubleColumnServersPage',
-    isDesktop,
   );
 
   /// Whether use system's primary color as the app's primary color

@@ -57,15 +57,14 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
 
   final s = S.of(context);
   if (s == null) {
-    showSnackBar(context, const Text('Null l10n'));
+    context.showSnackBar('Null l10n');
     return;
   }
 
   final min = update.build.min.current;
 
   if (min != null && min > BuildData.build) {
-    showRoundDialog(
-      context: context,
+    context.showRoundDialog(
       child: Text(s.updateTipTooLow(newest)),
       actions: [
         TextButton(
@@ -77,8 +76,7 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
     return;
   }
 
-  showSnackBarWithAction(
-    context,
+  context.showSnackBarWithAction(
     '${s.updateTip(newest)} \n${update.changelog.current}',
     s.update,
     () => _doUpdate(update, context, s),
@@ -97,8 +95,7 @@ Future<void> _doUpdate(AppUpdate update, BuildContext context, S s) async {
   } else if (isMacOS) {
     await openUrl(url);
   } else {
-    showRoundDialog(
-      context: context,
+    context.showRoundDialog(
       child: Text(s.platformNotSupportUpdate),
       actions: [
         TextButton(

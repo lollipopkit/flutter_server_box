@@ -4,7 +4,6 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/context.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 
-import '../../../core/utils/ui.dart';
 import '../../../data/model/server/snippet.dart';
 import '../../../data/provider/snippet.dart';
 import '../../../data/res/ui.dart';
@@ -89,7 +88,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
         final name = _nameController.text;
         final script = _scriptController.text;
         if (name.isEmpty || script.isEmpty) {
-          showSnackBar(context, Text(_s.fieldMustNotEmpty));
+          context.showSnackBar(_s.fieldMustNotEmpty);
           return;
         }
         final note = _noteController.text;

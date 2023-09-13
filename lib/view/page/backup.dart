@@ -1,20 +1,24 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:logging/logging.dart';
 import 'package:toolbox/core/extension/context.dart';
-import 'package:toolbox/core/utils/backup.dart';
-import 'package:toolbox/core/utils/icloud.dart';
 import 'package:toolbox/core/utils/platform.dart';
+import 'package:toolbox/data/model/app/backup.dart';
+import 'package:toolbox/data/res/path.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
 import '../../core/utils/misc.dart';
-import '../../core/utils/ui.dart';
 import '../../data/res/ui.dart';
 import '../../data/store/setting.dart';
 import '../../locator.dart';
 import '../widget/custom_appbar.dart';
+import '../widget/store_switch.dart';
+
+final _logger = Logger('Backup');
 
 class BackupPage extends StatelessWidget {
   BackupPage({Key? key}) : super(key: key);
@@ -62,7 +66,7 @@ class BackupPage extends StatelessWidget {
           s.backup,
           Icons.save,
           () async {
-            await backup();
+            await Backup.backup();
             await shareFiles(context, [await backupPath]);
           },
         )
@@ -103,53 +107,47 @@ class BackupPage extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         width13,
-        IconButton(
-            onPressed: () async {
-              showLoadingDialog(context);
-              await syncApple();
-              context.pop();
-              showRestartSnackbar(context, btn: s.restart, msg: s.icloudSynced);
-            },
-            icon: const Icon(Icons.sync)),
-        width13,
-        buildSwitch(context, _setting.icloudSync)
+        // Hive db only save data into local file after app exit,
+        // so this button is useless
+        // IconButton(
+        //     onPressed: () async {
+        //       showLoadingDialog(context);
+        //       await ICloud.syncDb();
+        //       context.pop();
+        //       showRestartSnackbar(context, btn: s.restart, msg: s.icloudSynced);
+        //     },
+        //     icon: const Icon(Icons.sync)),
+        // width13,
+        StoreSwitch(prop: _setting.icloudSync)
       ],
     );
   }
 
   Future<void> _onRestore(BuildContext context, S s) async {
     final path = await pickOneFile();
-    if (path == null) {
-      showSnackBar(context, Text(s.notSelected));
-      return;
-    }
+    if (path == null) return;
+
     final file = File(path);
-    if (!file.existsSync()) {
-      showSnackBar(context, Text(s.fileNotExist(path)));
+    if (!await file.exists()) {
+      context.showSnackBar(s.fileNotExist(path));
       return;
     }
+
     final text = await file.readAsString();
-    _import(text, context, s);
-  }
-
-  Future<void> _import(String text, BuildContext context, S s) async {
     if (text.isEmpty) {
-      showSnackBar(context, Text(s.fieldMustNotEmpty));
+      context.showSnackBar(s.fieldMustNotEmpty);
       return;
     }
-    await _importBackup(text, context, s);
-  }
 
-  Future<void> _importBackup(String raw, BuildContext context, S s) async {
     try {
-      final backup = await decodeBackup(raw);
+      context.showLoadingDialog();
+      final backup = await compute(Backup.fromJsonString, text.trim());
       if (backupFormatVersion != backup.version) {
-        showSnackBar(context, Text(s.backupVersionNotMatch));
+        context.showSnackBar(s.backupVersionNotMatch);
         return;
       }
 
-      await showRoundDialog(
-        context: context,
+      await context.showRoundDialog(
         title: Text(s.restore),
         child: Text(s.restoreSureWithDate(backup.date)),
         actions: [
@@ -159,17 +157,19 @@ class BackupPage extends StatelessWidget {
           ),
           TextButton(
             onPressed: () async {
-              restore(backup);
+              backup.restore();
               context.pop();
-              showRestartSnackbar(context, btn: s.restart, msg: s.needRestart);
+              context.showRestartSnackbar(btn: s.restart, msg: s.needRestart);
             },
             child: Text(s.ok),
           ),
         ],
       );
-    } catch (e) {
-      showSnackBar(context, Text(e.toString()));
-      rethrow;
+    } catch (e, trace) {
+      _logger.warning('Import backup failed', e, trace);
+      context.showSnackBar(e.toString());
+    } finally {
+      context.pop();
     }
   }
 }

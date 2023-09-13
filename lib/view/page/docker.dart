@@ -6,7 +6,6 @@ import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/model/docker/image.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 
-import '../../core/utils/ui.dart';
 import '../../data/model/docker/ps.dart';
 import '../../data/model/server/server_private_info.dart';
 import '../../data/provider/docker.dart';
@@ -60,7 +59,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
     _docker.init(
       client,
       widget.spi.user,
-      (user) async => await showPwdDialog(context, user),
+      (user) async => await context.showPwdDialog(user),
       widget.spi.id,
       context,
     );
@@ -76,7 +75,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
           actions: [
             IconButton(
               onPressed: () async {
-                showLoadingDialog(context);
+                context.showLoadingDialog();
                 await _docker.refresh();
                 context.pop();
               },
@@ -101,8 +100,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
     final imageCtrl = TextEditingController();
     final nameCtrl = TextEditingController();
     final argsCtrl = TextEditingController();
-    await showRoundDialog(
-      context: context,
+    await context.showRoundDialog(
       title: Text(_s.newContainer),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -151,8 +149,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   }
 
   Future<void> _showAddCmdPreview(String cmd) async {
-    await showRoundDialog(
-      context: context,
+    await context.showRoundDialog(
       title: Text(_s.preview),
       child: Text(cmd),
       actions: [
@@ -163,11 +160,11 @@ class _DockerManagePageState extends State<DockerManagePage> {
         TextButton(
           onPressed: () async {
             context.pop();
-            showLoadingDialog(context);
+            context.showLoadingDialog();
             final result = await _docker.run(cmd);
             context.pop();
             if (result != null) {
-              showSnackBar(context, Text(result.message ?? _s.unknownError));
+              context.showSnackBar(result.message ?? _s.unknownError);
             }
           },
           child: Text(_s.run),
@@ -261,8 +258,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   }
 
   void _showImageRmDialog(DockerImage e) {
-    showRoundDialog(
-      context: context,
+    context.showRoundDialog(
       title: Text(_s.attention),
       child: Text(_s.sureDelete(e.repo)),
       actions: [
@@ -277,10 +273,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
               'docker rmi ${e.id} -f',
             );
             if (result != null) {
-              showSnackBar(
-                context,
-                Text(result.message ?? _s.unknownError),
-              );
+              context.showSnackBar(result.message ?? _s.unknownError);
             }
           },
           child: Text(_s.ok, style: textRed),
@@ -382,15 +375,14 @@ class _DockerManagePageState extends State<DockerManagePage> {
       onSelected: (DockerMenuType item) async {
         switch (item) {
           case DockerMenuType.rm:
-            showRoundDialog(
-              context: context,
+            context.showRoundDialog(
               title: Text(_s.attention),
               child: Text(_s.sureDelete(dItem.name)),
               actions: [
                 TextButton(
                   onPressed: () async {
                     context.pop();
-                    showLoadingDialog(context);
+                    context.showLoadingDialog();
                     await _docker.delete(dItem.containerId);
                     context.pop();
                   },
@@ -400,17 +392,17 @@ class _DockerManagePageState extends State<DockerManagePage> {
             );
             break;
           case DockerMenuType.start:
-            showLoadingDialog(context);
+            context.showLoadingDialog();
             await _docker.start(dItem.containerId);
             context.pop();
             break;
           case DockerMenuType.stop:
-            showLoadingDialog(context);
+            context.showLoadingDialog();
             await _docker.stop(dItem.containerId);
             context.pop();
             break;
           case DockerMenuType.restart:
-            showLoadingDialog(context);
+            context.showLoadingDialog();
             await _docker.restart(dItem.containerId);
             context.pop();
             break;
@@ -484,8 +476,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
     final id = widget.spi.id;
     final host = _store.fetch(id) ?? 'unix:///run/user/1000/docker.sock';
     final ctrl = TextEditingController(text: host);
-    await showRoundDialog(
-      context: context,
+    await context.showRoundDialog(
       title: Text(_s.dockerEditHost),
       child: Input(
         maxLines: 1,

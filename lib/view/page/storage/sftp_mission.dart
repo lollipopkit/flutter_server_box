@@ -8,7 +8,6 @@ import 'package:toolbox/locator.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/utils/misc.dart';
-import '../../../core/utils/ui.dart';
 import '../../../data/model/sftp/req.dart';
 import '../../../data/provider/sftp.dart';
 import '../../../data/res/ui.dart';
@@ -111,8 +110,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
           status: status,
           subtitle: _s.unknown,
           trailing: IconButton(
-            onPressed: () => showRoundDialog(
-              context: context,
+            onPressed: () => context.showRoundDialog(
               title: Text(_s.error),
               child: Text((status.error ?? _s.unknown).toString()),
             ),
@@ -149,8 +147,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
 
   Widget _buildDelete(String name, int id) {
     return IconButton(
-      onPressed: () => showRoundDialog(
-          context: context,
+      onPressed: () => context.showRoundDialog(
           title: Text(_s.attention),
           child: Text(_s.sureDelete(name)),
           actions: [

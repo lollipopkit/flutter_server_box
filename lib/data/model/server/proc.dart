@@ -144,7 +144,7 @@ class PsResult {
         procs.add(Proc.parse(line, map));
       } catch (e, trace) {
         errs.add('$line: $e');
-        _logger.warning(trace);
+        _logger.warning('Parse process failed', e, trace);
       }
     }
 

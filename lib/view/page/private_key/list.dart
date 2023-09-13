@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context.dart';
-import 'package:toolbox/core/utils/ui.dart';
 import 'package:toolbox/data/store/private_key.dart';
 import 'package:toolbox/locator.dart';
 
@@ -94,8 +93,7 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
         id: 'system',
         key: idRsaFile.readAsStringSync(),
       );
-      showRoundDialog(
-        context: context,
+      context.showRoundDialog(
         title: Text(_s.attention),
         child: Text(_s.addSystemPrivateKeyTip),
         actions: [

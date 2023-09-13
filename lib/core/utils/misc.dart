@@ -9,7 +9,6 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../data/provider/app.dart';
 import '../../locator.dart';
-import '../../view/widget/rebuild.dart';
 import 'platform.dart';
 
 final _app = locator<AppProvider>();
@@ -64,10 +63,7 @@ String? getFileName(String? path) {
   return path.split('/').last;
 }
 
-void rebuildAll(BuildContext context) {
-  RebuildWidget.restartApp(context);
-}
-
+/// Return fmt: 2021-01-01 00:00:00
 String getTime(int? unixMill) {
   return DateTime.fromMillisecondsSinceEpoch((unixMill ?? 0) * 1000)
       .toString()

@@ -16,7 +16,6 @@ import '../../../core/route.dart';
 import '../../../core/utils/misc.dart';
 import '../../../core/utils/platform.dart';
 import '../../../core/update.dart';
-import '../../../core/utils/ui.dart';
 import '../../../data/model/app/net_view.dart';
 import '../../../data/provider/app.dart';
 import '../../../data/provider/server.dart';
@@ -32,6 +31,7 @@ import '../../widget/custom_appbar.dart';
 import '../../widget/future_widget.dart';
 import '../../widget/input_field.dart';
 import '../../widget/round_rect_card.dart';
+import '../../widget/store_switch.dart';
 import '../../widget/value_notifier.dart';
 
 class SettingPage extends StatefulWidget {
@@ -43,7 +43,6 @@ class SettingPage extends StatefulWidget {
 
 class _SettingPageState extends State<SettingPage> {
   final _themeKey = GlobalKey<PopupMenuButtonState<int>>();
-  //final _startPageKey = GlobalKey<PopupMenuButtonState<int>>();
   final _updateIntervalKey = GlobalKey<PopupMenuButtonState<int>>();
   final _maxRetryKey = GlobalKey<PopupMenuButtonState<int>>();
   final _localeKey = GlobalKey<PopupMenuButtonState<String>>();
@@ -59,7 +58,6 @@ class _SettingPageState extends State<SettingPage> {
   late SharedPreferences _sp;
 
   final _selectedColorValue = ValueNotifier(0);
-  final _launchPageIdx = ValueNotifier(0);
   final _nightMode = ValueNotifier(0);
   final _maxRetryCount = ValueNotifier(0);
   final _updateInterval = ValueNotifier(0);
@@ -91,7 +89,6 @@ class _SettingPageState extends State<SettingPage> {
     super.initState();
     _serverProvider = locator<ServerProvider>();
     _setting = locator<SettingStore>();
-    _launchPageIdx.value = _setting.launchPage.fetch();
     _nightMode.value = _setting.themeMode.fetch();
     _updateInterval.value = _setting.serverStatusUpdateInterval.fetch();
     _maxRetryCount.value = _setting.maxRetryCount.fetch();
@@ -113,8 +110,7 @@ class _SettingPageState extends State<SettingPage> {
         title: Text(_s.setting),
         actions: [
           IconButton(
-            onPressed: () => showRoundDialog(
-              context: context,
+            onPressed: () => context.showRoundDialog(
               title: Text(_s.attention),
               child: Text(_s.sureDelete(_s.all)),
               actions: [
@@ -122,7 +118,7 @@ class _SettingPageState extends State<SettingPage> {
                   onPressed: () {
                     _setting.box.deleteAll(_setting.box.keys);
                     context.pop();
-                    showSnackBar(context, Text(_s.success));
+                    context.showSnackBar(_s.success);
                   },
                   child: Text(_s.ok, style: const TextStyle(color: Colors.red)),
                 ),
@@ -203,9 +199,9 @@ class _SettingPageState extends State<SettingPage> {
         _buildNetViewType(),
         _buildUpdateInterval(),
         _buildMaxRetry(),
-        _buildDiskIgnorePath(),
+        //_buildDiskIgnorePath(),
         _buildDeleteServers(),
-        if (isDesktop) _buildDoubleColumnServersPage(),
+        //if (isDesktop) _buildDoubleColumnServersPage(),
       ].map((e) => RoundRectCard(e)).toList(),
     );
   }
@@ -251,7 +247,7 @@ class _SettingPageState extends State<SettingPage> {
           title: Text(_s.autoCheckUpdate),
           subtitle: Text(display, style: grey),
           onTap: () => doUpdate(ctx, force: true),
-          trailing: buildSwitch(context, _setting.autoCheckAppUpdate),
+          trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),
         );
       },
     );
@@ -289,7 +285,7 @@ class _SettingPageState extends State<SettingPage> {
             _setting.serverStatusUpdateInterval.put(val);
             _serverProvider.startAutoRefresh();
             if (val == 0) {
-              showSnackBar(context, Text(_s.updateIntervalEqual0));
+              context.showSnackBar(_s.updateIntervalEqual0);
             }
           },
           child: Text(
@@ -313,8 +309,7 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(_s.primaryColorSeed),
       onTap: () async {
         final ctrl = TextEditingController(text: primaryColor.toHex);
-        await showRoundDialog(
-            context: context,
+        await context.showRoundDialog(
             title: Text(_s.primaryColorSeed),
             child: StatefulBuilder(builder: (context, setState) {
               final children = <Widget>[
@@ -322,9 +317,8 @@ class _SettingPageState extends State<SettingPage> {
                 if (!isIOS)
                   ListTile(
                     title: Text(_s.followSystem),
-                    trailing: buildSwitch(
-                      context,
-                      _setting.useSystemPrimaryColor,
+                    trailing: StoreSwitch(
+                      prop: _setting.useSystemPrimaryColor,
                       func: (_) => setState(() {}),
                     ),
                   )
@@ -361,14 +355,14 @@ class _SettingPageState extends State<SettingPage> {
   void _onSaveColor(String s) {
     final color = s.hexToColor;
     if (color == null) {
-      showSnackBar(context, Text(_s.failed));
+      context.showSnackBar(_s.failed);
       return;
     }
     _selectedColorValue.value = color.value;
     _setting.primaryColor.put(_selectedColorValue.value);
     primaryColor = color;
     context.pop();
-    showRestartSnackbar(context, btn: _s.restart, msg: _s.needRestart);
+    context.showRestartSnackbar(btn: _s.restart, msg: _s.needRestart);
   }
 
   // Widget _buildLaunchPage() {
@@ -515,9 +509,9 @@ class _SettingPageState extends State<SettingPage> {
         onPressed: () {
           if (_pushToken.value != null) {
             copy2Clipboard(_pushToken.value!);
-            showSnackBar(context, Text(_s.success));
+            context.showSnackBar(_s.success);
           } else {
-            showSnackBar(context, Text(_s.getPushTokenFailed));
+            context.showSnackBar(_s.getPushTokenFailed);
           }
         },
       ),
@@ -548,8 +542,7 @@ class _SettingPageState extends State<SettingPage> {
         style: textSize15,
       ),
       onTap: () {
-        showRoundDialog(
-          context: context,
+        context.showRoundDialog(
           title: Text(_s.font),
           actions: [
             TextButton(
@@ -560,8 +553,7 @@ class _SettingPageState extends State<SettingPage> {
               onPressed: () {
                 _setting.fontPath.delete();
                 context.pop();
-                showRestartSnackbar(
-                  context,
+                context.showRestartSnackbar(
                   btn: _s.restart,
                   msg: _s.needRestart,
                 );
@@ -588,16 +580,16 @@ class _SettingPageState extends State<SettingPage> {
       }
 
       context.pop();
-      showRestartSnackbar(context, btn: _s.restart, msg: _s.needRestart);
+      context.showRestartSnackbar(btn: _s.restart, msg: _s.needRestart);
       return;
     }
-    showSnackBar(context, Text(_s.failed));
+    context.showSnackBar(_s.failed);
   }
 
   Widget _buildBgRun() {
     return ListTile(
       title: Text(_s.bgRun),
-      trailing: buildSwitch(context, _setting.bgRun),
+      trailing: StoreSwitch(prop: _setting.bgRun),
     );
   }
 
@@ -615,42 +607,42 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  Widget _buildDiskIgnorePath() {
-    final paths = _setting.diskIgnorePath.fetch();
-    return ListTile(
-      title: Text(_s.diskIgnorePath),
-      trailing: Text(_s.edit, style: textSize15),
-      onTap: () {
-        final ctrller = TextEditingController(text: json.encode(paths));
-        void onSubmit() {
-          try {
-            final list = List<String>.from(json.decode(ctrller.text));
-            _setting.diskIgnorePath.put(list);
-            context.pop();
-            showSnackBar(context, Text(_s.success));
-          } catch (e) {
-            showSnackBar(context, Text(e.toString()));
-          }
-        }
+  // Widget _buildDiskIgnorePath() {
+  //   final paths = _setting.diskIgnorePath.fetch();
+  //   return ListTile(
+  //     title: Text(_s.diskIgnorePath),
+  //     trailing: Text(_s.edit, style: textSize15),
+  //     onTap: () {
+  //       final ctrller = TextEditingController(text: json.encode(paths));
+  //       void onSubmit() {
+  //         try {
+  //           final list = List<String>.from(json.decode(ctrller.text));
+  //           _setting.diskIgnorePath.put(list);
+  //           context.pop();
+  //           showSnackBar(context, Text(_s.success));
+  //         } catch (e) {
+  //           showSnackBar(context, Text(e.toString()));
+  //         }
+  //       }
 
-        showRoundDialog(
-          context: context,
-          title: Text(_s.diskIgnorePath),
-          child: Input(
-            autoFocus: true,
-            controller: ctrller,
-            label: 'JSON',
-            type: TextInputType.visiblePassword,
-            maxLines: 3,
-            onSubmitted: (_) => onSubmit(),
-          ),
-          actions: [
-            TextButton(onPressed: onSubmit, child: Text(_s.ok)),
-          ],
-        );
-      },
-    );
-  }
+  //       showRoundDialog(
+  //         context: context,
+  //         title: Text(_s.diskIgnorePath),
+  //         child: Input(
+  //           autoFocus: true,
+  //           controller: ctrller,
+  //           label: 'JSON',
+  //           type: TextInputType.visiblePassword,
+  //           maxLines: 3,
+  //           onSubmitted: (_) => onSubmit(),
+  //         ),
+  //         actions: [
+  //           TextButton(onPressed: onSubmit, child: Text(_s.ok)),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
 
   Widget _buildLocale() {
     final items = S.supportedLocales
@@ -675,7 +667,7 @@ class _SettingPageState extends State<SettingPage> {
           onSelected: (String idx) {
             _localeCode.value = idx;
             _setting.locale.put(idx);
-            showRestartSnackbar(context, btn: _s.restart, msg: _s.needRestart);
+            context.showRestartSnackbar(btn: _s.restart, msg: _s.needRestart);
           },
           child: Text(
             _s.languageName,
@@ -690,7 +682,7 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       title: Text(_s.sshVirtualKeyAutoOff),
       subtitle: const Text('Ctrl & Alt', style: grey),
-      trailing: buildSwitch(context, _setting.sshVirtualKeyAutoOff),
+      trailing: StoreSwitch(prop: _setting.sshVirtualKeyAutoOff),
     );
   }
 
@@ -763,11 +755,9 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildFullScreenSwitch() {
     return ListTile(
       title: Text(_s.fullScreen),
-      trailing: buildSwitch(
-        context,
-        _setting.fullScreen,
-        func: (_) => showRestartSnackbar(
-          context,
+      trailing: StoreSwitch(
+        prop: _setting.fullScreen,
+        func: (_) => context.showRestartSnackbar(
           btn: _s.restart,
           msg: _s.needRestart,
         ),
@@ -779,7 +769,7 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       title: Text(_s.fullScreenJitter),
       subtitle: Text(_s.fullScreenJitterHelp, style: grey),
-      trailing: buildSwitch(context, _setting.fullScreenJitter),
+      trailing: StoreSwitch(prop: _setting.fullScreenJitter),
     );
   }
 
@@ -886,9 +876,9 @@ class _SettingPageState extends State<SettingPage> {
       map.forEach((key, value) {
         _sp.setString(key, value);
       });
-      showSnackBar(context, Text(_s.success));
+      context.showSnackBar(_s.success);
     } catch (e) {
-      showSnackBar(context, Text(e.toString()));
+      context.showSnackBar(e.toString());
     }
   }
 
@@ -905,8 +895,7 @@ class _SettingPageState extends State<SettingPage> {
           }
         });
         final ctrl = TextEditingController(text: json.encode(data));
-        showRoundDialog(
-          context: context,
+        context.showRoundDialog(
           title: Text(_s.homeWidgetUrlConfig),
           child: Input(
             autoFocus: true,
@@ -964,7 +953,7 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       title: Text(_s.autoUpdateHomeWidget),
       subtitle: Text(_s.whenOpenApp, style: grey),
-      trailing: buildSwitch(context, _setting.autoUpdateHomeWidget),
+      trailing: StoreSwitch(prop: _setting.autoUpdateHomeWidget),
     );
   }
 
@@ -975,8 +964,7 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () async {
         final all = locator<ServerStore>().box.keys.map(
               (e) => TextButton(
-                onPressed: () => showRoundDialog(
-                  context: context,
+                onPressed: () => context.showRoundDialog(
                   title: Text(_s.attention),
                   child: Text(_s.sureDelete(e)),
                   actions: [
@@ -989,8 +977,7 @@ class _SettingPageState extends State<SettingPage> {
                 child: Text(e),
               ),
             );
-        showRoundDialog<List<String>>(
-          context: context,
+        context.showRoundDialog<List<String>>(
           title: Text(_s.choose),
           child: SingleChildScrollView(
             child: Column(
@@ -1007,7 +994,7 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       title: Text(_s.moveOutServerFuncBtns),
       subtitle: Text(_s.moveOutServerFuncBtnsHelp, style: textSize13Grey),
-      trailing: buildSwitch(context, _setting.moveOutServerTabFuncBtns),
+      trailing: StoreSwitch(prop: _setting.moveOutServerTabFuncBtns),
     );
   }
 
@@ -1051,8 +1038,7 @@ class _SettingPageState extends State<SettingPage> {
       context.pop();
       final fontSize = double.tryParse(ctrller.text);
       if (fontSize == null) {
-        showRoundDialog(
-          context: context,
+        context.showRoundDialog(
           title: Text(_s.failed),
           child: Text('Parsed failed: ${ctrller.text}'),
         );
@@ -1062,8 +1048,7 @@ class _SettingPageState extends State<SettingPage> {
       property.put(fontSize);
     }
 
-    showRoundDialog(
-      context: context,
+    context.showRoundDialog(
       title: Text(_s.fontSize),
       child: Input(
         controller: ctrller,
@@ -1085,14 +1070,14 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       title: Text(_s.sftpRmrfDir),
       subtitle: Text(_s.sftpRmrfDirSummary, style: grey),
-      trailing: buildSwitch(context, _setting.sftpRmrfDir),
+      trailing: StoreSwitch(prop: _setting.sftpRmrfDir),
     );
   }
 
-  Widget _buildDoubleColumnServersPage() {
-    return ListTile(
-      title: Text(_s.doubleColumnMode),
-      trailing: buildSwitch(context, _setting.doubleColumnServersPage),
-    );
-  }
+  // Widget _buildDoubleColumnServersPage() {
+  //   return ListTile(
+  //     title: Text(_s.doubleColumnMode),
+  //     trailing: StoreSwitch(prop: _setting.doubleColumnServersPage),
+  //   );
+  // }
 }

@@ -8,7 +8,6 @@ import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/view/widget/value_notifier.dart';
 
 import '../../core/extension/uint8list.dart';
-import '../../core/utils/ui.dart';
 import '../../data/model/server/ping_result.dart';
 import '../../data/provider/server.dart';
 import '../../data/res/color.dart';
@@ -71,8 +70,7 @@ class _PingPageState extends State<PingPage>
     return FloatingActionButton(
       heroTag: 'ping',
       onPressed: () {
-        showRoundDialog(
-          context: context,
+        context.showRoundDialog(
           title: Text(_s.choose),
           child: Input(
             autoFocus: true,
@@ -95,8 +93,7 @@ class _PingPageState extends State<PingPage>
     try {
       await doPing();
     } catch (e) {
-      showRoundDialog(
-        context: context,
+      context.showRoundDialog(
         title: Text(_s.error),
         child: Text(e.toString()),
         actions: [
@@ -173,18 +170,18 @@ class _PingPageState extends State<PingPage>
     _results.value.clear();
     final target = _textEditingController.text.trim();
     if (target.isEmpty) {
-      showSnackBar(context, Text(_s.pingInputIP));
+      context.showSnackBar(_s.pingInputIP);
       return;
     }
 
     if (_serverProvider.servers.isEmpty) {
-      showSnackBar(context, Text(_s.pingNoServer));
+      context.showSnackBar(_s.pingNoServer);
       return;
     }
 
     /// avoid ping command injection
     if (!targetReg.hasMatch(target)) {
-      showSnackBar(context, Text(_s.pingInputIP));
+      context.showSnackBar(_s.pingInputIP);
       return;
     }
 

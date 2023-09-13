@@ -43,3 +43,5 @@ Future<String> get fontDir async {
   await dir.create(recursive: true);
   return _fontDir!;
 }
+
+Future<String> get backupPath async => '${await docDir}/srvbox_bak.json';

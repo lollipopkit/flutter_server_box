@@ -95,7 +95,7 @@ Future<void> initApp() async {
   primaryColor = Color(settings.primaryColor.fetch());
 
   // Don't call it via `await`, it will block the main thread.
-  if (settings.icloudSync.fetch()) syncApple();
+  if (settings.icloudSync.fetch()) ICloud.syncDb();
 
   if (isAndroid) {
     // Only start service when [bgRun] is true.

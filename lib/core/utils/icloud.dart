@@ -100,6 +100,9 @@ class ICloud {
   static Future<Iterable<ICloudErr>?> sync({
     required Iterable<String> relativePaths,
   }) async {
+    final uploadFiles = <String>[];
+    final downloadFiles = <String>[];
+
     try {
       final errs = <ICloudErr>[];
 
@@ -147,11 +150,13 @@ class ICloud {
 
         /// Local is newer than remote, so upload local file
         if (remoteDate.isBefore(localDate)) {
+          await delete(relativePath);
           final err = await upload(relativePath: relativePath);
           if (err != null) {
             errs.add(err);
           }
           //_logger.info('local newer: $relativePath');
+          uploadFiles.add(relativePath);
           return;
         }
 
@@ -161,6 +166,7 @@ class ICloud {
           errs.add(err);
         }
         //_logger.info('remote newer: $relativePath');
+        downloadFiles.add(relativePath);
       }));
 
       await Future.wait(mission);
@@ -170,18 +176,18 @@ class ICloud {
       _logger.warning('Sync failed: $relativePaths', e, s);
       return [ICloudErr(type: ICloudErrType.generic, message: '$e')];
     } finally {
-      _logger.info('Sync finished.');
+      _logger.info('Sync upload: $uploadFiles, download: $downloadFiles');
     }
   }
-}
 
-Future<void> syncApple() async {
-  if (!isIOS && !isMacOS) return;
-  final docPath = await docDir;
-  final dir = Directory(docPath);
-  final files = await dir.list().toList();
-  // filter out non-hive(db) files
-  files.removeWhere((e) => !e.path.endsWith('.hive'));
-  final paths = files.map((e) => e.path.replaceFirst('$docPath/', ''));
-  await ICloud.sync(relativePaths: paths);
+  static Future<void> syncDb() async {
+    if (!isIOS && !isMacOS) return;
+    final docPath = await docDir;
+    final dir = Directory(docPath);
+    final files = await dir.list().toList();
+    // filter out non-hive(db) files
+    files.removeWhere((e) => !e.path.endsWith('.hive'));
+    final paths = files.map((e) => e.path.replaceFirst('$docPath/', ''));
+    await ICloud.sync(relativePaths: paths);
+  }
 }

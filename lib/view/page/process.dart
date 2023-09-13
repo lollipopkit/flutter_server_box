@@ -7,7 +7,6 @@ import 'package:toolbox/core/extension/context.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/utils/misc.dart';
 
-import '../../core/utils/ui.dart';
 import '../../data/model/app/shell_func.dart';
 import '../../data/model/server/proc.dart';
 import '../../data/model/server/server_private_info.dart';
@@ -67,7 +66,7 @@ class _ProcessPageState extends State<ProcessPage> {
     if (mounted) {
       final result = await _client?.run(AppShellFuncType.process.exec).string;
       if (result == null || result.isEmpty) {
-        showSnackBar(context, Text(_s.noResult));
+        context.showSnackBar(_s.noResult);
         return;
       }
       _result = PsResult.parse(result, sort: _procSortMode);
@@ -113,8 +112,7 @@ class _ProcessPageState extends State<ProcessPage> {
     if (_result.error != null) {
       actions.add(IconButton(
         icon: const Icon(Icons.error),
-        onPressed: () => showRoundDialog(
-          context: context,
+        onPressed: () => context.showRoundDialog(
           title: Text(_s.error),
           child: SingleChildScrollView(child: Text(_result.error!)),
           actions: [
@@ -166,8 +164,7 @@ class _ProcessPageState extends State<ProcessPage> {
         trailing: _buildItemTrail(proc),
         onTap: () => _lastFocusId = proc.pid,
         onLongPress: () {
-          showRoundDialog(
-            context: context,
+          context.showRoundDialog(
             title: Text(_s.attention),
             child: Text(_s.sureStop(proc.pid)),
             actions: [

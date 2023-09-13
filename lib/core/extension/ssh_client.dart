@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:toolbox/core/extension/context.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
-import 'package:toolbox/core/utils/ui.dart';
 
 import '../../data/res/misc.dart';
 
@@ -72,7 +72,7 @@ extension SSHClientX on SSHClient {
         if (data.contains('[sudo] password for ')) {
           final user = pwdRequestWithUserReg.firstMatch(data)?.group(1);
           if (context == null) return;
-          final pwd = await showPwdDialog(context, user);
+          final pwd = await context.showPwdDialog(user);
           if (pwd == null || pwd.isEmpty) {
             return;
           }

@@ -4,6 +4,7 @@ import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
+import 'package:toolbox/core/extension/context.dart';
 
 import '../../core/analysis.dart';
 import '../../core/route.dart';
@@ -205,8 +206,7 @@ class _HomePageState extends State<HomePage>
         children: [
           _buildIcon(),
           TextButton(
-            onPressed: () => showRoundDialog(
-              context: context,
+            onPressed: () => context.showRoundDialog(
               title: Text(_versionStr),
               child: const Text(BuildData.buildAt),
             ),
@@ -265,8 +265,7 @@ class _HomePageState extends State<HomePage>
   }
 
   void _showAboutDialog() {
-    showRoundDialog(
-      context: context,
+    context.showRoundDialog(
       title: Text(_s.about),
       child: _buildAboutContent(),
       actions: [
@@ -374,8 +373,7 @@ class _HomePageState extends State<HomePage>
       final newSettings = json.decode(result) as Map<String, dynamic>;
       _setting.box.putAll(newSettings);
     } catch (e) {
-      showRoundDialog(
-        context: context,
+      context.showRoundDialog(
         title: Text(_s.error),
         child: Text('${_s.save}:\n$e'),
       );

@@ -16,7 +16,6 @@ import '../../../core/extension/numx.dart';
 import '../../../core/extension/stringx.dart';
 import '../../../core/route.dart';
 import '../../../core/utils/misc.dart';
-import '../../../core/utils/ui.dart';
 import '../../../data/model/app/path_with_prefix.dart';
 import '../../../data/res/path.dart';
 import '../../../data/res/ui.dart';
@@ -191,8 +190,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
   }
 
   Future<void> _showDirActionDialog(FileSystemEntity file) async {
-    showRoundDialog(
-      context: context,
+    context.showRoundDialog(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -220,8 +218,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
   Future<void> _showFileActionDialog(FileSystemEntity file) async {
     final fileName = file.path.split('/').last;
     if (widget.isPickFile) {
-      await showRoundDialog(
-          context: context,
+      await context.showRoundDialog(
           title: Text(_s.pickFile),
           child: Text(fileName),
           actions: [
@@ -235,8 +232,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
           ]);
       return;
     }
-    showRoundDialog(
-      context: context,
+    context.showRoundDialog(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -247,8 +243,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
               context.pop();
               final stat = await file.stat();
               if (stat.size > editorMaxSize) {
-                showRoundDialog(
-                  context: context,
+                context.showRoundDialog(
                   title: Text(_s.attention),
                   child: Text(_s.fileTooLarge(fileName, stat.size, '1m')),
                 );
@@ -260,7 +255,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
               final f = File(file.absolute.path);
               if (result != null) {
                 f.writeAsString(result);
-                showSnackBar(context, Text(_s.saved));
+                context.showSnackBar(_s.saved);
                 setState(() {});
               }
             },
@@ -289,8 +284,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
               final serverProvider = locator<ServerProvider>();
               final ids = serverProvider.serverOrder;
               var idx = 0;
-              await showRoundDialog(
-                context: context,
+              await context.showRoundDialog(
                 title: Text(_s.server),
                 child: Picker(
                   items: ids.map((e) => Text(e)).toList(),
@@ -319,7 +313,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
                 file.absolute.path,
                 SftpReqType.upload,
               ));
-              showSnackBar(context, Text(_s.added2List));
+              context.showSnackBar(_s.added2List);
             },
           ),
           ListTile(
@@ -336,8 +330,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
 
   void _showRenameDialog(FileSystemEntity file) {
     final fileName = file.path.split('/').last;
-    showRoundDialog(
-      context: context,
+    context.showRoundDialog(
       title: Text(_s.rename),
       child: Input(
         autoFocus: true,
@@ -348,7 +341,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
           try {
             file.renameSync(newPath);
           } catch (e) {
-            showSnackBar(context, Text('${_s.failed}:\n$e'));
+            context.showSnackBar('${_s.failed}:\n$e');
             return;
           }
 
@@ -360,8 +353,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
 
   void _showDeleteDialog(FileSystemEntity file) {
     final fileName = file.path.split('/').last;
-    showRoundDialog(
-      context: context,
+    context.showRoundDialog(
       title: Text(_s.delete),
       child: Text(_s.sureDelete(fileName)),
       actions: [
@@ -375,7 +367,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
             try {
               file.deleteSync(recursive: true);
             } catch (e) {
-              showSnackBar(context, Text('${_s.failed}:\n$e'));
+              context.showSnackBar('${_s.failed}:\n$e');
               return;
             }
             setState(() {});

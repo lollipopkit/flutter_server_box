@@ -12,7 +12,6 @@ import '../../core/route.dart';
 import '../../core/utils/misc.dart';
 import '../../core/utils/platform.dart';
 import '../../core/utils/server.dart';
-import '../../core/utils/ui.dart';
 import '../../data/model/app/menu.dart';
 import '../../data/model/pkg/upgrade_info.dart';
 import '../../data/model/server/server_private_info.dart';
@@ -115,8 +114,7 @@ void _onTapMoreBtns(
       final result =
           await locator<ServerProvider>().runSnippets(spi.id, snippets);
       if (result != null && result.isNotEmpty) {
-        showRoundDialog(
-          context: context,
+        context.showRoundDialog(
           title: Text(s.result),
           child: Text(result),
           actions: [
@@ -186,7 +184,7 @@ Future<void> _gotoSSH(
       await Process.start("x-terminal-emulator", ["-e"] + sshCommand);
       break;
     default:
-      showSnackBar(context, Text('Mismatch system: $system'));
+      context.showSnackBar('Mismatch system: $system');
   }
   // For security reason, delete the private key file after use
   if (shouldGenKey) {
@@ -198,7 +196,7 @@ Future<void> _gotoSSH(
 bool _checkClient(BuildContext context, String id, String msg) {
   final server = locator<ServerProvider>().servers[id];
   if (server == null || server.client == null) {
-    showSnackBar(context, Text(msg));
+    context.showSnackBar(msg);
     return false;
   }
   return true;
@@ -207,14 +205,14 @@ bool _checkClient(BuildContext context, String id, String msg) {
 Future<void> _onPkg(BuildContext context, S s, ServerPrivateInfo spi) async {
   final server = locator<ServerProvider>().servers[spi.id];
   if (server == null) {
-    showSnackBar(context, Text(s.noClient));
+    context.showSnackBar(s.noClient);
     return;
   }
   final sys = server.status.sysVer;
   final pkg = PkgManager.fromDist(sys.dist);
 
   // Update pkg list
-  showLoadingDialog(context);
+  context.showLoadingDialog();
   final updateCmd = pkg?.update;
   if (updateCmd != null) {
     await server.client!.execWithPwd(
@@ -226,22 +224,22 @@ Future<void> _onPkg(BuildContext context, S s, ServerPrivateInfo spi) async {
 
   final listCmd = pkg?.listUpdate;
   if (listCmd == null) {
-    showSnackBar(context, Text('Unsupported dist: $sys'));
+    context.showSnackBar('Unsupported dist: $sys');
     return;
   }
 
   // Get upgrade list
-  showLoadingDialog(context);
+  context.showLoadingDialog();
   final result = await server.client?.run(listCmd).string;
   context.pop();
   if (result == null) {
-    showSnackBar(context, Text(s.noResult));
+    context.showSnackBar(s.noResult);
     return;
   }
   final list = pkg?.updateListRemoveUnused(result.split('\n'));
   final upgradeable = list?.map((e) => UpgradePkgInfo(e, pkg)).toList();
   if (upgradeable == null || upgradeable.isEmpty) {
-    showSnackBar(context, Text(s.noUpdateAvailable));
+    context.showSnackBar(s.noUpdateAvailable);
     return;
   }
   final args = upgradeable.map((e) => e.package).join(' ');
@@ -249,8 +247,7 @@ Future<void> _onPkg(BuildContext context, S s, ServerPrivateInfo spi) async {
   final upgradeCmd = isSU ? pkg?.upgrade(args) : 'sudo ${pkg?.upgrade(args)}';
 
   // Confirm upgrade
-  final gotoUpgrade = await showRoundDialog<bool>(
-    context: context,
+  final gotoUpgrade = await context.showRoundDialog<bool>(
     title: Text(s.attention),
     child: SingleChildScrollView(
       child: Text('${s.foundNUpdate(upgradeable.length)}\n\n$upgradeCmd'),
