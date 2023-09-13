@@ -2,14 +2,12 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:icloud_storage/icloud_storage.dart';
-import 'package:logging/logging.dart';
+import 'package:toolbox/data/res/logger.dart';
 
 import '../../data/model/app/error.dart';
 import '../../data/model/app/json.dart';
 import '../../data/res/path.dart';
 import 'platform.dart';
-
-final _logger = Logger('iCloud');
 
 class ICloud {
   static const _containerId = 'iCloud.tech.lolli.serverbox';
@@ -122,7 +120,6 @@ class ICloud {
         if (err != null) {
           errs.add(err);
         }
-        //_logger.info('upload missed: $e');
       }));
 
       final docPath = await docDir;
@@ -139,7 +136,6 @@ class ICloud {
           if (err != null) {
             errs.add(err);
           }
-          //_logger.info('local not found: $relativePath');
           return;
         }
         final localDate = await localFile.lastModified();
@@ -155,7 +151,6 @@ class ICloud {
           if (err != null) {
             errs.add(err);
           }
-          //_logger.info('local newer: $relativePath');
           uploadFiles.add(relativePath);
           return;
         }
@@ -165,7 +160,6 @@ class ICloud {
         if (err != null) {
           errs.add(err);
         }
-        //_logger.info('remote newer: $relativePath');
         downloadFiles.add(relativePath);
       }));
 
@@ -173,10 +167,10 @@ class ICloud {
 
       return errs.isEmpty ? null : errs;
     } catch (e, s) {
-      _logger.warning('Sync failed: $relativePaths', e, s);
+      Loggers.app.warning('iCloud sync: $relativePaths failed', e, s);
       return [ICloudErr(type: ICloudErrType.generic, message: '$e')];
     } finally {
-      _logger.info('Sync upload: $uploadFiles, download: $downloadFiles');
+      Loggers.app.info('iCloud sync, up: $uploadFiles, down: $downloadFiles');
     }
   }
 

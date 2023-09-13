@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:logging/logging.dart';
 import 'package:toolbox/data/model/server/private_key_info.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
+import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/path.dart';
 import 'package:toolbox/data/store/docker.dart';
 import 'package:toolbox/data/store/private_key.dart';
@@ -14,8 +14,6 @@ import 'package:toolbox/data/store/snippet.dart';
 import 'package:toolbox/locator.dart';
 
 const backupFormatVersion = 1;
-
-final _logger = Logger('Backup');
 
 class Backup {
   // backup format version
@@ -116,7 +114,7 @@ String _diyDecrypt(String raw) {
     }
     return sb.toString();
   } catch (e, trace) {
-    _logger.warning('Decrypt failed', e, trace);
+    Loggers.app.warning('Backup decrypt failed', e, trace);
     rethrow;
   }
 }

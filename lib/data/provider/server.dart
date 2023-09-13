@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:logging/logging.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/system.dart';
+import 'package:toolbox/data/res/logger.dart';
 
 import '../../core/extension/order.dart';
 import '../../core/extension/uint8list.dart';
@@ -32,8 +32,6 @@ class ServerProvider extends ChangeNotifier {
   final _limiter = TryLimiter();
 
   Timer? _timer;
-
-  final _logger = Logger('SERVER');
 
   final _serverStore = locator<ServerStore>();
   final _settingStore = locator<SettingStore>();
@@ -250,13 +248,13 @@ class ServerProvider extends ChangeNotifier {
         _setServerState(s, ServerState.failed);
 
         /// In order to keep privacy, print [spi.name] instead of [spi.id]
-        _logger.warning('Connect to ${spi.name} failed', e);
+        Loggers.app.warning('Connect to ${spi.name} failed', e);
         return;
       }
 
       final time2 = DateTime.now();
       final spentTime = time2.difference(time1).inMilliseconds;
-      _logger.info('Connected to ${spi.name} in $spentTime ms.');
+      Loggers.app.info('Connected to ${spi.name} in $spentTime ms.');
 
       _setServerState(s, ServerState.connected);
 
@@ -272,7 +270,7 @@ class ServerProvider extends ChangeNotifier {
         _limiter.inc(sid);
         s.status.failedInfo = e.toString();
         _setServerState(s, ServerState.failed);
-        _logger.warning('Write script to ${spi.name} failed', e);
+        Loggers.app.warning('Write script to ${spi.name} failed', e);
         return;
       }
     }
@@ -312,7 +310,7 @@ class ServerProvider extends ChangeNotifier {
       _limiter.inc(sid);
       s.status.failedInfo = 'Parse failed: $e\n\n$raw';
       _setServerState(s, ServerState.failed);
-      _logger.warning('Parse failed', e, trace);
+      Loggers.parse.warning('Server status', e, trace);
       return;
     }
 

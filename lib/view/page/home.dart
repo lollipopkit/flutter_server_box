@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
 import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/data/res/logger.dart';
 
 import '../../core/analysis.dart';
 import '../../core/route.dart';
@@ -360,6 +361,7 @@ class _HomePageState extends State<HomePage>
   Future<void> _onLongPressSetting() async {
     /// Encode [map] to String with indent `\t`
     final map = _setting.toJson();
+    final keys = map.keys;
     final text = jsonEncoder.convert(map);
     final result = await AppRoute.editor(
       text: text,
@@ -372,11 +374,17 @@ class _HomePageState extends State<HomePage>
     try {
       final newSettings = json.decode(result) as Map<String, dynamic>;
       _setting.box.putAll(newSettings);
-    } catch (e) {
+      final newKeys = newSettings.keys;
+      final removedKeys = keys.where((e) => !newKeys.contains(e));
+      for (final key in removedKeys) {
+        _setting.box.delete(key);
+      }
+    } catch (e, trace) {
       context.showRoundDialog(
         title: Text(_s.error),
         child: Text('${_s.save}:\n$e'),
       );
+      Loggers.app.warning('Update json settings failed', e, trace);
     }
   }
 }

@@ -4,10 +4,10 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:logging/logging.dart';
 import 'package:toolbox/core/extension/context.dart';
 import 'package:toolbox/core/utils/platform.dart';
 import 'package:toolbox/data/model/app/backup.dart';
+import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/path.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
@@ -17,8 +17,6 @@ import '../../data/store/setting.dart';
 import '../../locator.dart';
 import '../widget/custom_appbar.dart';
 import '../widget/store_switch.dart';
-
-final _logger = Logger('Backup');
 
 class BackupPage extends StatelessWidget {
   BackupPage({Key? key}) : super(key: key);
@@ -166,7 +164,7 @@ class BackupPage extends StatelessWidget {
         ],
       );
     } catch (e, trace) {
-      _logger.warning('Import backup failed', e, trace);
+      Loggers.app.warning('Import backup failed', e, trace);
       context.showSnackBar(e.toString());
     } finally {
       context.pop();

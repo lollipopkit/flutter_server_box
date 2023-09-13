@@ -4,9 +4,9 @@ import 'package:after_layout/after_layout.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:logging/logging.dart';
 import 'package:toolbox/core/extension/context.dart';
 import 'package:toolbox/core/extension/sftpfile.dart';
+import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/store/history.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
@@ -57,8 +57,6 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   late S _s;
 
   SSHClient? _client;
-
-  final _logger = Logger('SFTP');
 
   @override
   void didChangeDependencies() {
@@ -664,7 +662,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       return false;
     } catch (e, trace) {
       context.pop();
-      _logger.warning('List dir failed', e, trace);
+      Loggers.app.warning('List dir failed', e, trace);
       await _backward();
       Future.delayed(
         const Duration(milliseconds: 177),

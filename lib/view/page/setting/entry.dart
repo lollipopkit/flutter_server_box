@@ -1068,7 +1068,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildSftpRmrfDir() {
     return ListTile(
-      title: Text(_s.sftpRmrfDir),
+      title: const Text('rm -rf'),
       subtitle: Text(_s.sftpRmrfDirSummary, style: grey),
       trailing: StoreSwitch(prop: _setting.sftpRmrfDir),
     );

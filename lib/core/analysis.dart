@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:countly_flutter/countly_flutter.dart';
-import 'package:logging/logging.dart';
 import 'package:toolbox/core/build_mode.dart';
+import 'package:toolbox/data/res/logger.dart';
 
 import 'utils/platform.dart';
 
@@ -25,8 +25,7 @@ class Analysis {
       await Countly.initWithConfig(config);
       await Countly.giveAllConsent();
     } else {
-      Logger('COUNTLY')
-          .info('Unsupported platform ${Platform.operatingSystem}');
+      Loggers.app.info('Countly unsupport: ${Platform.operatingSystem}');
     }
   }
 

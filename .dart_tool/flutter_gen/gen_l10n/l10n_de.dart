@@ -574,10 +574,7 @@ class SDe extends S {
   String get sftpDlPrepare => 'Verbindung vorbereiten...';
 
   @override
-  String get sftpRmrfDir => 'SFTP `rm -rf`';
-
-  @override
-  String get sftpRmrfDirSummary => 'Verwenden Sie `rm -rf`, um einen Ordner zu löschen.';
+  String get sftpRmrfDirSummary => 'Verwenden Sie \"rm -rf\", um das Verzeichnis in SFTP zu löschen.';
 
   @override
   String get sftpSSHConnected => 'SFTP Verbunden';

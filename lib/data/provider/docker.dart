@@ -2,13 +2,13 @@ import 'dart:async';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
-import 'package:logging/logging.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/docker/image.dart';
 import 'package:toolbox/data/model/docker/ps.dart';
 import 'package:toolbox/data/model/app/error.dart';
+import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/store/docker.dart';
 import 'package:toolbox/locator.dart';
 
@@ -19,8 +19,6 @@ final _versionReg = RegExp(r'(Version:)\s+([0-9]+\.[0-9]+\.[0-9]+)');
 // eg: `Docker Engine - Community`
 final _editionReg = RegExp(r'Docker Engine - [a-zA-Z]+');
 final _dockerPrefixReg = RegExp(r'(sudo )?docker ');
-
-final _logger = Logger('DOCKER');
 
 class DockerProvider extends ChangeNotifier {
   final _dockerStore = locator<DockerStore>();
@@ -64,7 +62,6 @@ class DockerProvider extends ChangeNotifier {
 
     if (raw.contains(_dockerNotFound)) {
       error = DockerErr(type: DockerErrType.notInstalled);
-      _logger.warning('Docker not installed: $raw');
       notifyListeners();
       return;
     }
@@ -73,7 +70,7 @@ class DockerProvider extends ChangeNotifier {
     final segments = raw.split(seperator);
     if (segments.length != DockerCmdType.values.length) {
       error = DockerErr(type: DockerErrType.segmentsNotMatch);
-      _logger.warning('Docker segments not match: ${segments.length}');
+      Loggers.parse.warning('Docker segments: ${segments.length}');
       notifyListeners();
       return;
     }
@@ -90,12 +87,12 @@ class DockerProvider extends ChangeNotifier {
       lines.removeWhere((element) => element.isEmpty);
       if (lines.isNotEmpty) lines.removeAt(0);
       items = lines.map((e) => DockerPsItem.fromRawString(e)).toList();
-    } catch (e) {
+    } catch (e, trace) {
       error = DockerErr(
         type: DockerErrType.parsePsItem,
         message: '$psRaw\n-\n$e',
       );
-      _logger.warning('Parse docker ps: $psRaw', e);
+      Loggers.parse.warning('Docker ps failed', e, trace);
     } finally {
       notifyListeners();
     }
@@ -112,7 +109,7 @@ class DockerProvider extends ChangeNotifier {
         type: DockerErrType.parseImages,
         message: '$imageRaw\n-\n$e',
       );
-      _logger.warning('Parse docker images: $imageRaw', e, trace);
+      Loggers.parse.warning('Docker images failed', e, trace);
     } finally {
       notifyListeners();
     }

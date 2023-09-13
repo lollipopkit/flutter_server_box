@@ -1,8 +1,6 @@
-import 'package:logging/logging.dart';
+import 'package:toolbox/data/res/logger.dart';
 
 import '../../../data/res/misc.dart';
-
-final _logger = Logger('Proc');
 
 class _ProcValIdxMap {
   final int pid;
@@ -144,7 +142,7 @@ class PsResult {
         procs.add(Proc.parse(line, map));
       } catch (e, trace) {
         errs.add('$line: $e');
-        _logger.warning('Parse process failed', e, trace);
+        Loggers.parse.warning('Process failed', e, trace);
       }
     }
 
