@@ -82,7 +82,9 @@ class UrlText extends StatelessWidget {
   Widget build(BuildContext context) {
     return RichText(
       textAlign: textAlign ?? TextAlign.start,
-      text: TextSpan(children: getTextSpans(contentColor.resolve(context))),
+      text: TextSpan(
+        children: getTextSpans(DynamicColors.content.resolve(context)),
+      ),
     );
   }
 }

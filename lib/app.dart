@@ -1,7 +1,7 @@
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/locale.dart';
 
 import 'core/utils/ui.dart';

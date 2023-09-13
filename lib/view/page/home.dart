@@ -4,7 +4,8 @@ import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
-import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/data/res/github_id.dart';
 import 'package:toolbox/data/res/logger.dart';
 
 import '../../core/analysis.dart';
@@ -93,7 +94,7 @@ class _HomePageState extends State<HomePage>
         // Keep running in background on Android device
         if (isAndroid && _setting.bgRun.fetch()) {
           if (_app.moveBg) {
-            bgRunChannel.invokeMethod('sendToBackground');
+            Miscs.bgRunChannel.invokeMethod('sendToBackground');
           }
         } else {
           _serverProvider.setDisconnected();
@@ -214,7 +215,7 @@ class _HomePageState extends State<HomePage>
             child: Text(
               '${BuildData.name}\n$_versionStr',
               textAlign: TextAlign.center,
-              style: textSize13,
+              style: UIs.textSize13,
             ),
           ),
           const SizedBox(height: 37),
@@ -271,11 +272,11 @@ class _HomePageState extends State<HomePage>
       child: _buildAboutContent(),
       actions: [
         TextButton(
-          onPressed: () => openUrl(appWikiUrl),
+          onPressed: () => openUrl(Urls.appWiki),
           child: const Text('Wiki'),
         ),
         TextButton(
-          onPressed: () => openUrl(appHelpUrl),
+          onPressed: () => openUrl(Urls.appHelp),
           child: Text(_s.feedback),
         ),
         TextButton(
@@ -293,23 +294,23 @@ class _HomePageState extends State<HomePage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           UrlText(
-            text: _s.madeWithLove(myGithub),
+            text: _s.madeWithLove(Urls.myGithub),
             replace: 'lollipopkit',
           ),
-          height13,
+          UIs.height13,
           // Use [UrlText] for same text style
           Text(_s.aboutThanks),
-          height13,
+          UIs.height13,
           const Text('Contributors:'),
-          ...contributors.map(
+          ...GithubIds.contributors.map(
             (name) => UrlText(
               text: name.url,
               replace: name,
             ),
           ),
-          height13,
+          UIs.height13,
           const Text('Participants:'),
-          ...participants.map(
+          ...GithubIds.participants.map(
             (name) => UrlText(
               text: name.url,
               replace: name,
@@ -323,7 +324,7 @@ class _HomePageState extends State<HomePage>
   Widget _buildIcon() {
     return ConstrainedBox(
       constraints: const BoxConstraints(maxHeight: 57, maxWidth: 57),
-      child: appIcon,
+      child: UIs.appIcon,
     );
   }
 
@@ -354,7 +355,7 @@ class _HomePageState extends State<HomePage>
 
   void updateHomeWidget() {
     if (_setting.autoUpdateHomeWidget.fetch()) {
-      homeWidgetChannel.invokeMethod('update');
+      Miscs.homeWidgetChannel.invokeMethod('update');
     }
   }
 
@@ -362,7 +363,7 @@ class _HomePageState extends State<HomePage>
     /// Encode [map] to String with indent `\t`
     final map = _setting.toJson();
     final keys = map.keys;
-    final text = jsonEncoder.convert(map);
+    final text = Miscs.jsonEncoder.convert(map);
     final result = await AppRoute.editor(
       text: text,
       langCode: 'json',

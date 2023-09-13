@@ -7,8 +7,10 @@ import 'package:flutter_highlight/theme_map.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toolbox/core/extension/colorx.dart';
+import 'package:toolbox/core/extension/context/common.dart';
+import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/locale.dart';
-import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 
 import '../../../core/persistant_store.dart';
@@ -153,7 +155,7 @@ class _SettingPageState extends State<SettingPage> {
       child: Center(
         child: Text(
           text,
-          style: grey,
+          style: UIs.textGrey,
         ),
       ),
     );
@@ -245,7 +247,7 @@ class _SettingPageState extends State<SettingPage> {
         }
         return ListTile(
           title: Text(_s.autoCheckUpdate),
-          subtitle: Text(display, style: grey),
+          subtitle: Text(display, style: UIs.textGrey),
           onTap: () => doUpdate(ctx, force: true),
           trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),
         );
@@ -269,7 +271,7 @@ class _SettingPageState extends State<SettingPage> {
       ),
       subtitle: Text(
         _s.willTakEeffectImmediately,
-        style: grey,
+        style: UIs.textGrey,
       ),
       onTap: () {
         _updateIntervalKey.currentState?.showButtonMenu();
@@ -290,7 +292,7 @@ class _SettingPageState extends State<SettingPage> {
           },
           child: Text(
             '${_updateInterval.value} ${_s.second}',
-            style: textSize15,
+            style: UIs.textSize15,
           ),
         ),
       ),
@@ -422,7 +424,7 @@ class _SettingPageState extends State<SettingPage> {
         _s.maxRetryCount,
         textAlign: TextAlign.start,
       ),
-      subtitle: Text(help, style: grey),
+      subtitle: Text(help, style: UIs.textGrey),
       onTap: () {
         _maxRetryKey.currentState?.showButtonMenu();
       },
@@ -437,7 +439,7 @@ class _SettingPageState extends State<SettingPage> {
           },
           child: Text(
             '${_maxRetryCount.value} ${_s.times}',
-            style: textSize15,
+            style: UIs.textSize15,
           ),
         ),
         listenable: _maxRetryCount,
@@ -477,7 +479,7 @@ class _SettingPageState extends State<SettingPage> {
           },
           child: Text(
             _buildThemeModeStr(_nightMode.value),
-            style: textSize15,
+            style: UIs.textSize15,
           ),
         ),
       ),
@@ -524,7 +526,7 @@ class _SettingPageState extends State<SettingPage> {
           _pushToken.value = text;
           return Text(
             text ?? _s.nullToken,
-            style: grey,
+            style: UIs.textGrey,
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           );
@@ -539,7 +541,7 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(_s.font),
       trailing: Text(
         fontName ?? _s.notSelected,
-        style: textSize15,
+        style: UIs.textSize15,
       ),
       onTap: () {
         context.showRoundDialog(
@@ -574,7 +576,7 @@ class _SettingPageState extends State<SettingPage> {
         _setting.fontPath.put(path);
       } else {
         final fontFile = File(path);
-        final newPath = '${await fontDir}/${path.split('/').last}';
+        final newPath = '${await Paths.font}/${path.split('/').last}';
         await fontFile.copy(newPath);
         _setting.fontPath.put(newPath);
       }
@@ -600,7 +602,7 @@ class _SettingPageState extends State<SettingPage> {
         title: Text(_s.fontSize),
         trailing: Text(
           _termFontSize.value.toString(),
-          style: textSize15,
+          style: UIs.textSize15,
         ),
         onTap: () => _showFontSizeDialog(_termFontSize, _setting.termFontSize),
       ),
@@ -671,7 +673,7 @@ class _SettingPageState extends State<SettingPage> {
           },
           child: Text(
             _s.languageName,
-            style: textSize15,
+            style: UIs.textSize15,
           ),
         ),
       ),
@@ -681,7 +683,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildSSHVirtualKeyAutoOff() {
     return ListTile(
       title: Text(_s.sshVirtualKeyAutoOff),
-      subtitle: const Text('Ctrl & Alt', style: grey),
+      subtitle: const Text('Ctrl & Alt', style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.sshVirtualKeyAutoOff),
     );
   }
@@ -709,7 +711,7 @@ class _SettingPageState extends State<SettingPage> {
           },
           child: Text(
             _editorTheme.value,
-            style: textSize15,
+            style: UIs.textSize15,
           ),
         ),
       ),
@@ -742,7 +744,7 @@ class _SettingPageState extends State<SettingPage> {
           },
           child: Text(
             _editorDarkTheme.value,
-            style: textSize15,
+            style: UIs.textSize15,
           ),
         ),
       ),
@@ -768,7 +770,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildFullScreenJitter() {
     return ListTile(
       title: Text(_s.fullScreenJitter),
-      subtitle: Text(_s.fullScreenJitterHelp, style: grey),
+      subtitle: Text(_s.fullScreenJitterHelp, style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.fullScreenJitter),
     );
   }
@@ -799,7 +801,7 @@ class _SettingPageState extends State<SettingPage> {
           },
           child: Text(
             degrees[_rotateQuarter.value],
-            style: textSize15,
+            style: UIs.textSize15,
           ),
         ),
       ),
@@ -834,7 +836,7 @@ class _SettingPageState extends State<SettingPage> {
     ).toList();
     return ListTile(
       title: Text(_s.keyboardType),
-      subtitle: Text(_s.keyboardCompatibility, style: grey),
+      subtitle: Text(_s.keyboardCompatibility, style: UIs.textGrey),
       trailing: ValueBuilder(
         listenable: _keyboardType,
         build: () => PopupMenuButton<int>(
@@ -847,7 +849,7 @@ class _SettingPageState extends State<SettingPage> {
           },
           child: Text(
             names[_keyboardType.value],
-            style: textSize15,
+            style: UIs.textSize15,
           ),
         ),
       ),
@@ -939,7 +941,7 @@ class _SettingPageState extends State<SettingPage> {
           },
           child: Text(
             _netViewType.value.l10n(_s),
-            style: textSize15,
+            style: UIs.textSize15,
           ),
         ),
       ),
@@ -952,7 +954,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildAutoUpdateHomeWidget() {
     return ListTile(
       title: Text(_s.autoUpdateHomeWidget),
-      subtitle: Text(_s.whenOpenApp, style: grey),
+      subtitle: Text(_s.whenOpenApp, style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.autoUpdateHomeWidget),
     );
   }
@@ -993,7 +995,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildMoveOutServerFuncBtns() {
     return ListTile(
       title: Text(_s.moveOutServerFuncBtns),
-      subtitle: Text(_s.moveOutServerFuncBtnsHelp, style: textSize13Grey),
+      subtitle: Text(_s.moveOutServerFuncBtnsHelp, style: UIs.textSize13Grey),
       trailing: StoreSwitch(prop: _setting.moveOutServerTabFuncBtns),
     );
   }
@@ -1021,7 +1023,7 @@ class _SettingPageState extends State<SettingPage> {
         title: Text(_s.fontSize),
         trailing: Text(
           _editorFontSize.value.toString(),
-          style: textSize15,
+          style: UIs.textSize15,
         ),
         onTap: () =>
             _showFontSizeDialog(_editorFontSize, _setting.editorFontSize),
@@ -1069,7 +1071,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildSftpRmrfDir() {
     return ListTile(
       title: const Text('rm -rf'),
-      subtitle: Text(_s.sftpRmrfDirSummary, style: grey),
+      subtitle: Text(_s.sftpRmrfDirSummary, style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.sftpRmrfDir),
     );
   }

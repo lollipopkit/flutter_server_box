@@ -1,55 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:toolbox/view/widget/rebuild.dart';
+import 'package:toolbox/core/extension/context/common.dart';
 
-import '../../data/model/server/snippet.dart';
-import '../../data/provider/snippet.dart';
-import '../../data/res/ui.dart';
-import '../../locator.dart';
-import '../../view/widget/input_field.dart';
-import '../../view/widget/picker.dart';
-import '../route.dart';
-
-extension ContextX on BuildContext {
-  void pop<T extends Object?>([T? result]) {
-    Navigator.of(this).pop<T>(result);
-  }
-
-  bool get canPop => Navigator.of(this).canPop();
-
-  bool get isDark => Theme.of(this).brightness == Brightness.dark;
-}
-
-extension SnackBarX on BuildContext {
-  void showSnackBar(String text) =>
-      ScaffoldMessenger.of(this).showSnackBar(SnackBar(
-        content: Text(text),
-        behavior: SnackBarBehavior.floating,
-      ));
-
-  void showSnackBarWithAction(
-    String content,
-    String action,
-    GestureTapCallback onTap,
-  ) {
-    ScaffoldMessenger.of(this).showSnackBar(SnackBar(
-      content: Text(content),
-      behavior: SnackBarBehavior.floating,
-      action: SnackBarAction(
-        label: action,
-        onPressed: onTap,
-      ),
-    ));
-  }
-
-  void showRestartSnackbar({String? btn, String? msg}) {
-    showSnackBarWithAction(
-      msg ?? 'Need restart to take effect',
-      btn ?? 'Restart',
-      () => RebuildWidget.restartApp(this),
-    );
-  }
-}
+import '../../../data/model/server/snippet.dart';
+import '../../../data/provider/snippet.dart';
+import '../../../data/res/ui.dart';
+import '../../../locator.dart';
+import '../../../view/widget/input_field.dart';
+import '../../../view/widget/picker.dart';
+import '../../route.dart';
 
 extension DialogX on BuildContext {
   Future<T?> showRoundDialog<T>({
@@ -74,7 +33,7 @@ extension DialogX on BuildContext {
 
   void showLoadingDialog({bool barrierDismiss = false}) {
     showRoundDialog(
-      child: centerSizedLoading,
+      child: UIs.centerSizedLoading,
       barrierDismiss: barrierDismiss,
     );
   }

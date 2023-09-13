@@ -52,9 +52,9 @@ class DebugProvider extends ChangeNotifier {
 
   void _addWidget(Widget widget) {
     widgets.add(widget);
-    widgets.add(height13);
-    if (widgets.length > maxDebugLogLines) {
-      widgets.removeRange(0, widgets.length - maxDebugLogLines);
+    widgets.add(UIs.height13);
+    if (widgets.length > Miscs.maxDebugLogLines) {
+      widgets.removeRange(0, widgets.length - Miscs.maxDebugLogLines);
     }
     notifyListeners();
   }

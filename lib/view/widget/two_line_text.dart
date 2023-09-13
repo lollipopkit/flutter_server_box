@@ -15,12 +15,12 @@ class TwoLineText extends StatelessWidget {
       children: [
         Text(
           up,
-          style: textSize15,
+          style: UIs.textSize15,
           overflow: TextOverflow.ellipsis,
         ),
         Text(
           down,
-          style: textSize11,
+          style: UIs.textSize11,
           overflow: TextOverflow.ellipsis,
         )
       ],

@@ -4,7 +4,8 @@ import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/core/extension/context/common.dart';
+import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/data/store/private_key.dart';
 import 'package:toolbox/locator.dart';
 
@@ -37,7 +38,7 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(_s.privateKey, style: textSize18),
+        title: Text(_s.privateKey, style: UIs.textSize18),
       ),
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
@@ -70,7 +71,7 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
                   ),
                 ),
                 title: Text(item.id),
-                subtitle: Text(item.type ?? _s.unknown, style: grey),
+                subtitle: Text(item.type ?? _s.unknown, style: UIs.textGrey),
                 onTap: () => AppRoute.keyEdit(pki: item).go(context),
                 trailing: const Icon(Icons.edit),
               ),

@@ -1,4 +1,3 @@
-import 'package:highlight/highlight_core.dart';
 import 'package:highlight/languages/accesslog.dart';
 import 'package:highlight/languages/awk.dart';
 import 'package:highlight/languages/bash.dart';
@@ -33,52 +32,48 @@ import 'package:highlight/languages/vim.dart';
 import 'package:highlight/languages/xml.dart';
 import 'package:highlight/languages/yaml.dart';
 
-// KEY: fileNameSuffix
-// VAL: highlight
-final suffix2HighlightMap = {
-  'dart': dart,
-  'go': go,
-  'rust': rust,
-  'lua': lua,
-  'sh': bash,
-  'py': python,
-  'js': javascript,
-  'ts': typescript,
-  'java': java,
-  'kt': kotlin,
-  'swift': swift,
-  'c': cpp,
-  'oc': objectivec,
-  'ruby': ruby,
-  'perl': perl,
-  'php': php,
-  'nix': nix,
-  'lisp': lisp,
-  'sql': sql,
-  'powershell': powershell,
-  'log': accesslog,
-  'ini': ini,
-  'cmake': cmake,
-  'awk': awk,
-  'json': json,
-  'yaml': yaml,
-  'xml': xml,
-  'cpp': cpp,
-  'diff': diff,
-  'css': css,
-  'html': htmlbars,
-  'tex': tex,
-  'vim': vim,
-  'plaintext': plaintext,
-};
+class Highlights {
+  /// - KEY: fileNameSuffix
+  /// - VAL: highlight
+  static final all = {
+    'dart': dart,
+    'go': go,
+    'rust': rust,
+    'lua': lua,
+    'sh': bash,
+    'py': python,
+    'js': javascript,
+    'ts': typescript,
+    'java': java,
+    'kt': kotlin,
+    'swift': swift,
+    'c': cpp,
+    'oc': objectivec,
+    'ruby': ruby,
+    'perl': perl,
+    'php': php,
+    'nix': nix,
+    'lisp': lisp,
+    'sql': sql,
+    'powershell': powershell,
+    'log': accesslog,
+    'ini': ini,
+    'cmake': cmake,
+    'awk': awk,
+    'json': json,
+    'yaml': yaml,
+    'xml': xml,
+    'cpp': cpp,
+    'diff': diff,
+    'css': css,
+    'html': htmlbars,
+    'tex': tex,
+    'vim': vim,
+    'plaintext': plaintext,
+  };
 
-extension HighlightString on String? {
-  Mode? get highlight {
-    return suffix2HighlightMap[highlightCode];
-  }
-
-  String? get highlightCode {
-    if (this == null) return null;
-    return this!.split('.').last;
+  static String? getCode(String? fileName) {
+    if (fileName == null) return null;
+    return fileName.split('.').last;
   }
 }

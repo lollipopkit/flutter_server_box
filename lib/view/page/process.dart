@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/core/extension/context/common.dart';
+import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/utils/misc.dart';
 
@@ -126,7 +128,7 @@ class _ProcessPageState extends State<ProcessPage> {
     }
     Widget child;
     if (_result.procs.isEmpty) {
-      child = centerLoading;
+      child = UIs.centerLoading;
     } else {
       child = ListView.builder(
         itemCount: _result.procs.length,
@@ -157,7 +159,7 @@ class _ProcessPageState extends State<ProcessPage> {
         title: Text(proc.binary),
         subtitle: Text(
           proc.command,
-          style: grey,
+          style: UIs.textGrey,
           maxLines: 3,
           overflow: TextOverflow.fade,
         ),
@@ -198,7 +200,7 @@ class _ProcessPageState extends State<ProcessPage> {
             up: proc.cpu!.toStringAsFixed(1),
             down: 'cpu',
           ),
-        width13,
+        UIs.width13,
         if (proc.mem != null)
           TwoLineText(
             up: proc.mem!.toStringAsFixed(1),

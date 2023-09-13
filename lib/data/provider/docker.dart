@@ -12,8 +12,6 @@ import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/store/docker.dart';
 import 'package:toolbox/locator.dart';
 
-import '../res/server_cmd.dart';
-
 final _dockerNotFound = RegExp(r'command not found|Unknown command');
 final _versionReg = RegExp(r'(Version:)\s+([0-9]+\.[0-9]+\.[0-9]+)');
 // eg: `Docker Engine - Community`

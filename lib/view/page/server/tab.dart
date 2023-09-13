@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/media_queryx.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
@@ -127,7 +127,7 @@ class _ServerPageState extends State<ServerPage>
         if (index == 0 && buildTags) return _buildTagsSwitcher(provider);
 
         // Issue #130
-        if (index == count - 1) return height77;
+        if (index == count - 1) return UIs.height77;
 
         if (buildTags) index--;
         return _buildEachServerCard(provider.servers[filtered[index]]);
@@ -173,7 +173,7 @@ class _ServerPageState extends State<ServerPage>
 
   Widget _buildEachServerCard(Server? si) {
     if (si == null) {
-      return placeholder;
+      return UIs.placeholder;
     }
 
     return RoundRectCard(
@@ -243,7 +243,7 @@ class _ServerPageState extends State<ServerPage>
 
   List<Widget> _buildFlipedCard(Server srv) {
     return [
-      height13,
+      UIs.height13,
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
@@ -273,7 +273,7 @@ class _ServerPageState extends State<ServerPage>
   List<Widget> _buildNormalCard(ServerStatus ss, ServerPrivateInfo spi) {
     final rootDisk = findRootDisk(ss.disk);
     return [
-      height13,
+      UIs.height13,
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 13),
         child: Row(
@@ -289,7 +289,7 @@ class _ServerPageState extends State<ServerPage>
           ],
         ),
       ),
-      height13,
+      UIs.height13,
       if (_setting.moveOutServerTabFuncBtns.fetch() &&
           // Discussion #146
           !_setting.serverTabUseOldUI.fetch())
@@ -330,7 +330,7 @@ class _ServerPageState extends State<ServerPage>
             children: [
               Text(
                 spi.name,
-                style: textSize13Bold,
+                style: UIs.textSize13Bold,
                 textScaleFactor: 1.0,
               ),
               const Icon(
@@ -363,14 +363,14 @@ class _ServerPageState extends State<ServerPage>
         onTap: () => _showFailReason(ss),
         child: Text(
           _s.viewErr,
-          style: textSize11Grey,
+          style: UIs.textSize11Grey,
           textScaleFactor: 1.0,
         ),
       );
     }
     return Text(
       topRightStr,
-      style: textSize11Grey,
+      style: UIs.textSize11Grey,
       textScaleFactor: 1.0,
     );
   }
@@ -409,14 +409,14 @@ class _ServerPageState extends State<ServerPage>
         const SizedBox(height: 5),
         Text(
           up,
-          style: textSize9Grey,
+          style: UIs.textSize9Grey,
           textAlign: TextAlign.center,
           textScaleFactor: 1.0,
         ),
         const SizedBox(height: 3),
         Text(
           down,
-          style: textSize9Grey,
+          style: UIs.textSize9Grey,
           textAlign: TextAlign.center,
           textScaleFactor: 1.0,
         )
@@ -444,7 +444,7 @@ class _ServerPageState extends State<ServerPage>
             child: Text(
               '${percent.toStringAsFixed(1)}%',
               textAlign: TextAlign.center,
-              style: textSize11,
+              style: UIs.textSize11,
               textScaleFactor: 1.0,
             ),
           ),

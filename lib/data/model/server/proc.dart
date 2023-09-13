@@ -93,7 +93,7 @@ class Proc {
 
   @override
   String toString() {
-    return jsonEncoder.convert(toJson());
+    return Miscs.jsonEncoder.convert(toJson());
   }
 
   String get binary {

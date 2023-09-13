@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/core/extension/context/common.dart';
+import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/view/widget/value_notifier.dart';
 
@@ -140,7 +142,7 @@ class _PingPageState extends State<PingPage>
         ),
         subtitle: Text(
           _buildPingSummary(result, unknown, ms),
-          style: textSize11,
+          style: UIs.textSize11,
         ),
         trailing: Text(
           '${_s.pingAvg}${result.statistic?.avg?.toStringAsFixed(2) ?? _s.unknown} $ms',

@@ -4,7 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/core/extension/context/common.dart';
+import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/numx.dart';
 import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/data/res/misc.dart';
@@ -103,7 +105,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
                 },
                 child: Text(
                   _s.ok,
-                  style: textRed,
+                  style: UIs.textRed,
                 ),
               ),
             ],
@@ -113,7 +115,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
       )
     ];
     return CustomAppBar(
-      title: Text(_s.edit, style: textSize18),
+      title: Text(_s.edit, style: UIs.textSize18),
       actions: widget.pki == null ? null : actions,
     );
   }
@@ -131,7 +133,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
         }
         FocusScope.of(context).unfocus();
         setState(() {
-          _loading = centerSizedLoading;
+          _loading = UIs.centerSizedLoading;
         });
         try {
           final decrypted = await compute(decyptPem, [key, pwd]);
@@ -192,12 +194,12 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
               return;
             }
             final size = (await file.stat()).size;
-            if (size > privateKeyMaxSize) {
+            if (size > Miscs.privateKeyMaxSize) {
               context.showSnackBar(
                 _s.fileTooLarge(
                   path,
                   size.convertBytes,
-                  privateKeyMaxSize.convertBytes,
+                  Miscs.privateKeyMaxSize.convertBytes,
                 ),
               );
               return;
@@ -216,7 +218,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
           icon: Icons.password,
         ),
         SizedBox(height: MediaQuery.of(context).size.height * 0.1),
-        _loading ?? placeholder,
+        _loading ?? UIs.placeholder,
       ],
     );
   }

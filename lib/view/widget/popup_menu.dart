@@ -12,7 +12,7 @@ class PopupMenu<T> extends StatelessWidget {
     super.key,
     required this.items,
     required this.onSelected,
-    this.child = popMenuChild,
+    this.child = UIs.popMenuChild,
     this.padding = const EdgeInsets.all(7),
     this.initialValue,
   });

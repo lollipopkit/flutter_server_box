@@ -70,7 +70,7 @@ class Backup {
 
   static Future<void> backup() async {
     final result = _diyEncrtpt(json.encode(Backup.loadFromStore()));
-    await File(await backupPath).writeAsString(result);
+    await File(await Paths.bak).writeAsString(result);
   }
 
   Future<void> restore() async {

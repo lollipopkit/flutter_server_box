@@ -27,7 +27,7 @@ List<Disk> parseDisk(String raw) {
     if (item.isEmpty) {
       continue;
     }
-    final vals = item.split(numReg);
+    final vals = item.split(Miscs.numReg);
     if (vals.length == 1) {
       pathCache = vals[0];
       continue;

@@ -1,52 +1,55 @@
 import 'package:flutter/material.dart';
 
-/// Font style
+class UIs {
+  /// Font style
 
-const textSize9Grey = TextStyle(color: Colors.grey, fontSize: 9);
-const textSize11 = TextStyle(fontSize: 11);
-const textSize11Grey = TextStyle(color: Colors.grey, fontSize: 11);
-const textSize13 = TextStyle(fontSize: 13);
-const textSize13Bold = TextStyle(fontSize: 13, fontWeight: FontWeight.bold);
-const textSize13Grey = TextStyle(color: Colors.grey, fontSize: 13);
-const textSize15 = TextStyle(fontSize: 15);
-const textSize18 = TextStyle(fontSize: 18);
-const textSize27 = TextStyle(fontSize: 27);
+  static const textSize9Grey = TextStyle(color: Colors.grey, fontSize: 9);
+  static const textSize11 = TextStyle(fontSize: 11);
+  static const textSize11Grey = TextStyle(color: Colors.grey, fontSize: 11);
+  static const textSize13 = TextStyle(fontSize: 13);
+  static const textSize13Bold =
+      TextStyle(fontSize: 13, fontWeight: FontWeight.bold);
+  static const textSize13Grey = TextStyle(color: Colors.grey, fontSize: 13);
+  static const textSize15 = TextStyle(fontSize: 15);
+  static const textSize18 = TextStyle(fontSize: 18);
+  static const textSize27 = TextStyle(fontSize: 27);
+  static const textGrey = TextStyle(color: Colors.grey);
+  static const textRed = TextStyle(color: Colors.red);
 
-const grey = TextStyle(color: Colors.grey);
-const textRed = TextStyle(color: Colors.red);
+  /// Icon
 
-/// Icon
+  static final appIcon = Image.asset('assets/app_icon.png');
 
-final appIcon = Image.asset('assets/app_icon.png');
+  /// Padding
 
-/// Padding
+  static const roundRectCardPadding =
+      EdgeInsets.symmetric(horizontal: 17, vertical: 13);
 
-const roundRectCardPadding = EdgeInsets.symmetric(horizontal: 17, vertical: 13);
+  /// SizedBox
 
-/// SizedBox
+  static const placeholder = SizedBox();
+  static const height13 = SizedBox(height: 13);
+  static const height77 = SizedBox(height: 77);
+  static const width13 = SizedBox(width: 13);
+  static const width7 = SizedBox(width: 7);
 
-const placeholder = SizedBox();
-const height13 = SizedBox(height: 13);
-const height77 = SizedBox(height: 77);
-const width13 = SizedBox(width: 13);
-const width7 = SizedBox(width: 7);
+  /// Misc
 
-/// Misc
+  static const popMenuChild = Padding(
+    padding: EdgeInsets.only(left: 7),
+    child: Icon(
+      Icons.more_vert,
+      size: 21,
+    ),
+  );
 
-const popMenuChild = Padding(
-  padding: EdgeInsets.only(left: 7),
-  child: Icon(
-    Icons.more_vert,
-    size: 21,
-  ),
-);
+  static const centerLoading = Center(child: CircularProgressIndicator());
 
-const centerLoading = Center(child: CircularProgressIndicator());
-
-const centerSizedLoading = SizedBox(
-  width: 77,
-  height: 77,
-  child: Center(
-    child: CircularProgressIndicator(),
-  ),
-);
+  static const centerSizedLoading = SizedBox(
+    width: 77,
+    height: 77,
+    child: Center(
+      child: CircularProgressIndicator(),
+    ),
+  );
+}

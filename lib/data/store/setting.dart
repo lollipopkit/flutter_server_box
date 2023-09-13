@@ -52,12 +52,12 @@ class SettingStore extends PersistentStore {
   late final launchPage = StoreProperty(
     box,
     'launchPage',
-    defaultLaunchPageIdx,
+    Defaults.launchPageIdx,
   );
 
   /// Server detail disk ignore path
   late final diskIgnorePath =
-      StoreListProperty(box, 'diskIgnorePath', defaultDiskIgnorePath);
+      StoreListProperty(box, 'diskIgnorePath', Defaults.diskIgnorePath);
 
   /// Use double column servers page on Desktop
   late final doubleColumnServersPage = StoreProperty(
@@ -77,7 +77,7 @@ class SettingStore extends PersistentStore {
   late final serverStatusUpdateInterval = StoreProperty(
     box,
     'serverStatusUpdateInterval',
-    defaultUpdateInterval,
+    Defaults.updateInterval,
   );
 
   // Max retry count when connect to server
@@ -99,7 +99,7 @@ class SettingStore extends PersistentStore {
 
   // Server details page cards order
   late final detailCardOrder =
-      StoreListProperty(box, 'detailCardPrder', defaultDetailCardOrder);
+      StoreListProperty(box, 'detailCardPrder', Defaults.detailCardOrder);
 
   // SSH term font size
   late final termFontSize = StoreProperty(box, 'termFontSize', 13.0);
@@ -117,13 +117,13 @@ class SettingStore extends PersistentStore {
   late final editorTheme = StoreProperty(
     box,
     'editorTheme',
-    defaultEditorTheme,
+    Defaults.editorTheme,
   );
 
   late final editorDarkTheme = StoreProperty(
     box,
     'editorDarkTheme',
-    defaultEditorDarkTheme,
+    Defaults.editorDarkTheme,
   );
 
   late final fullScreen = StoreProperty(
@@ -153,7 +153,7 @@ class SettingStore extends PersistentStore {
   late final sshVirtKeys = StoreListProperty(
     box,
     'sshVirtKeys',
-    defaultSSHVirtKeys,
+    Defaults.sshVirtKeys,
   );
 
   late final netViewType = StoreProperty(

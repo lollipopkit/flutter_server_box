@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/datetime.dart';
-import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/locator.dart';
 
@@ -34,7 +35,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(_s.mission, style: textSize18),
+        title: Text(_s.mission, style: UIs.textSize18),
       ),
       body: _buildBody(),
     );
@@ -134,12 +135,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
           overflow: TextOverflow.ellipsis,
           maxLines: 1,
         ),
-        subtitle: subtitle == null
-            ? null
-            : Text(
-                subtitle,
-                style: grey,
-              ),
+        subtitle: subtitle == null ? null : Text(subtitle, style: UIs.textGrey),
         trailing: trailing,
       ),
     );

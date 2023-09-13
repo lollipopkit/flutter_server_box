@@ -213,7 +213,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          height13,
+          UIs.height13,
           Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -232,7 +232,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
               )
             ],
           ),
-          height13,
+          UIs.height13,
           _buildTopRightText(ss, cs),
         ],
       ),
@@ -248,7 +248,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
     );
     return Text(
       topRightStr,
-      style: textSize11Grey,
+      style: UIs.textSize11Grey,
       textScaleFactor: 1.0,
     );
   }

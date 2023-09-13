@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/data/model/server/cpu.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
@@ -41,7 +41,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   late final _textFactor = _setting.textFactor.fetch();
 
   late final _cardBuildMap = Map.fromIterables(
-    defaultDetailCardOrder,
+    Defaults.detailCardOrder,
     [
       _buildUpTimeAndSys,
       _buildCPUView,
@@ -85,7 +85,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     final buildFuncs = !_setting.moveOutServerTabFuncBtns.fetch();
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(si.spi.name, style: textSize18),
+        title: Text(si.spi.name, style: UIs.textSize18),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
@@ -120,21 +120,21 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     final percent = ss.cpu.usedPercent(coreIdx: 0).toInt();
     final details = [
       _buildDetailPercent(ss.cpu.user, 'user'),
-      width13,
+      UIs.width13,
       _buildDetailPercent(ss.cpu.idle, 'idle')
     ];
     if (ss.system == SystemType.linux) {
       details.addAll([
-        width13,
+        UIs.width13,
         _buildDetailPercent(ss.cpu.sys, 'sys'),
-        width13,
+        UIs.width13,
         _buildDetailPercent(ss.cpu.iowait, 'io'),
       ]);
     }
 
     return RoundRectCard(
       Padding(
-        padding: roundRectCardPadding,
+        padding: UIs.roundRectCardPadding,
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -142,14 +142,14 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               _buildAnimatedText(
                 ValueKey(percent),
                 '$percent%',
-                textSize27,
+                UIs.textSize27,
               ),
               Row(
                 children: details,
               )
             ],
           ),
-          height13,
+          UIs.height13,
           _buildCPUProgress(ss.cpu)
         ]),
       ),
@@ -196,7 +196,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     return LinearProgressIndicator(
       value: percentWithinOne,
       minHeight: 7,
-      backgroundColor: progressColor.resolve(context),
+      backgroundColor: DynamicColors.progress.resolve(context),
       color: primaryColor,
     );
   }
@@ -204,14 +204,18 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   Widget _buildUpTimeAndSys(ServerStatus ss) {
     return RoundRectCard(
       Padding(
-        padding: roundRectCardPadding,
+        padding: UIs.roundRectCardPadding,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(ss.sysVer, style: textSize11, textScaleFactor: _textFactor),
+            Text(
+              ss.sysVer,
+              style: UIs.textSize11,
+              textScaleFactor: _textFactor,
+            ),
             Text(
               ss.uptime,
-              style: textSize11,
+              style: UIs.textSize11,
               textScaleFactor: _textFactor,
             ),
           ],
@@ -228,7 +232,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
     return RoundRectCard(
       Padding(
-        padding: roundRectCardPadding,
+        padding: UIs.roundRectCardPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -241,23 +245,25 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                     _buildAnimatedText(
                       ValueKey(usedStr),
                       '$usedStr%',
-                      textSize27,
+                      UIs.textSize27,
                     ),
-                    width7,
-                    Text('of ${(ss.mem.total * 1024).convertBytes}',
-                        style: textSize13Grey)
+                    UIs.width7,
+                    Text(
+                      'of ${(ss.mem.total * 1024).convertBytes}',
+                      style: UIs.textSize13Grey,
+                    )
                   ],
                 ),
                 Row(
                   children: [
                     _buildDetailPercent(free, 'free'),
-                    width13,
+                    UIs.width13,
                     _buildDetailPercent(avail, 'avail'),
                   ],
                 ),
               ],
             ),
-            height13,
+            UIs.height13,
             _buildProgress(used)
           ],
         ),
@@ -266,12 +272,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildSwapView(ServerStatus ss) {
-    if (ss.swap.total == 0) return placeholder;
+    if (ss.swap.total == 0) return UIs.placeholder;
     final used = ss.swap.usedPercent * 100;
     final cached = ss.swap.cached / ss.swap.total * 100;
     return RoundRectCard(
       Padding(
-        padding: roundRectCardPadding,
+        padding: UIs.roundRectCardPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -281,16 +287,18 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               children: [
                 Row(
                   children: [
-                    Text('${used.toStringAsFixed(0)}%', style: textSize27),
-                    width7,
-                    Text('of ${(ss.swap.total * 1024).convertBytes} ',
-                        style: textSize13Grey)
+                    Text('${used.toStringAsFixed(0)}%', style: UIs.textSize27),
+                    UIs.width7,
+                    Text(
+                      'of ${(ss.swap.total * 1024).convertBytes} ',
+                      style: UIs.textSize13Grey,
+                    )
                   ],
                 ),
                 _buildDetailPercent(cached, 'cached'),
               ],
             ),
-            height13,
+            UIs.height13,
             _buildProgress(used)
           ],
         ),
@@ -317,12 +325,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                     children: [
                       Text(
                         '${disk.usedPercent}% of ${disk.size}',
-                        style: textSize11,
+                        style: UIs.textSize11,
                         textScaleFactor: _textFactor,
                       ),
                       Text(
                         disk.path,
-                        style: textSize11,
+                        style: UIs.textSize11,
                         textScaleFactor: _textFactor,
                       )
                     ],
@@ -334,7 +342,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         .toList();
     return RoundRectCard(
       Padding(
-        padding: roundRectCardPadding,
+        padding: UIs.roundRectCardPadding,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: children,
@@ -364,7 +372,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
     return RoundRectCard(
       Padding(
-        padding: roundRectCardPadding,
+        padding: UIs.roundRectCardPadding,
         child: Column(
           children: children,
         ),
@@ -397,7 +405,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             width: width,
             child: Text(
               device,
-              style: textSize11,
+              style: UIs.textSize11,
               textScaleFactor: _textFactor,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -407,7 +415,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             width: width,
             child: Text(
               '${ns.speedIn(device: device)} | ${ns.sizeIn(device: device)}',
-              style: textSize11,
+              style: UIs.textSize11,
               textAlign: TextAlign.center,
               textScaleFactor: 0.87 * _textFactor,
             ),
@@ -416,7 +424,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             width: width,
             child: Text(
               '${ns.speedOut(device: device)} | ${ns.sizeOut(device: device)}',
-              style: textSize11,
+              style: UIs.textSize11,
               textAlign: TextAlign.right,
               textScaleFactor: 0.87 * _textFactor,
             ),
@@ -429,7 +437,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   Widget _buildTemperature(ServerStatus ss) {
     final temps = ss.temps;
     if (temps.isEmpty) {
-      return placeholder;
+      return UIs.placeholder;
     }
     final List<Widget> children = [
       const Row(
@@ -449,19 +457,19 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           children: [
             Text(
               key,
-              style: textSize11,
+              style: UIs.textSize11,
               textScaleFactor: _textFactor,
             ),
             Text(
               '${temps.get(key)}°C',
-              style: textSize11,
+              style: UIs.textSize11,
               textScaleFactor: _textFactor,
             ),
           ],
         )));
     return RoundRectCard(
       Padding(
-        padding: roundRectCardPadding,
+        padding: UIs.roundRectCardPadding,
         child: Column(children: children),
       ),
     );

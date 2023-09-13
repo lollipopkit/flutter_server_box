@@ -4,6 +4,8 @@ import '../model/app/dynamic_color.dart';
 
 late Color primaryColor;
 
-const contentColor = DynamicColor(Colors.black87, Colors.white70);
-const bgColor = DynamicColor(Colors.white, Colors.black);
-const progressColor = DynamicColor(Colors.black12, Colors.white10);
+class DynamicColors {
+  static const content = DynamicColor(Colors.black87, Colors.white70);
+  static const bg = DynamicColor(Colors.white, Colors.black);
+  static const progress = DynamicColor(Colors.black12, Colors.white10);
+}

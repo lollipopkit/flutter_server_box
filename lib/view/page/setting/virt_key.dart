@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/core/utils/platform.dart';
 import 'package:toolbox/data/model/ssh/virtual_key.dart';
@@ -55,7 +55,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
           key: ValueKey(idx),
           ListTile(
             title: _buildTitle(key),
-            subtitle: help == null ? null : Text(help, style: grey),
+            subtitle: help == null ? null : Text(help, style: UIs.textGrey),
             leading: _buildCheckBox(keys, key, idx, idx < keys.length),
             trailing: isDesktop ? null : const Icon(Icons.drag_handle),
           ),

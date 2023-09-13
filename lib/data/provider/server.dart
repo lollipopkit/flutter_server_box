@@ -14,7 +14,6 @@ import '../model/server/server_private_info.dart';
 import '../model/server/server_status_update_req.dart';
 import '../model/server/snippet.dart';
 import '../model/server/try_limiter.dart';
-import '../res/server_cmd.dart';
 import '../res/status.dart';
 import '../store/server.dart';
 import '../store/setting.dart';

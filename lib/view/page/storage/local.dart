@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/core/extension/context/common.dart';
+import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/data/model/sftp/req.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/provider/sftp.dart';
@@ -47,7 +49,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
         _path = LocalPath(widget.initDir!);
       });
     } else {
-      sftpDir.then((dir) {
+      Paths.sftp.then((dir) {
         setState(() {
           _path = LocalPath(dir);
         });
@@ -165,12 +167,13 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
               ? const Icon(Icons.folder)
               : const Icon(Icons.insert_drive_file),
           title: Text(fileName),
-          subtitle: isDir ? null : Text(stat.size.convertBytes, style: grey),
+          subtitle:
+              isDir ? null : Text(stat.size.convertBytes, style: UIs.textGrey),
           trailing: Text(
             stat.modified
                 .toString()
                 .substring(0, stat.modified.toString().length - 4),
-            style: grey,
+            style: UIs.textGrey,
           ),
           onLongPress: () {
             if (!isDir) return;
@@ -242,7 +245,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
             onTap: () async {
               context.pop();
               final stat = await file.stat();
-              if (stat.size > editorMaxSize) {
+              if (stat.size > Miscs.editorMaxSize) {
                 context.showRoundDialog(
                   title: Text(_s.attention),
                   child: Text(_s.fileTooLarge(fileName, stat.size, '1m')),

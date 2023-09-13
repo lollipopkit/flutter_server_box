@@ -20,7 +20,7 @@ Conn? parseConn(String raw) {
   final idx = lines.lastWhere((element) => element.startsWith('Tcp:'),
       orElse: () => '');
   if (idx != '') {
-    final vals = idx.split(numReg);
+    final vals = idx.split(Miscs.numReg);
     return Conn(
       maxConn: vals[5].i,
       active: vals[6].i,

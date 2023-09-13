@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/order.dart';
 
 import '../../../core/utils/misc.dart';
@@ -83,7 +83,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
             all: _s.all,
             width: _media.size.width,
           ),
-          footer: height77,
+          footer: UIs.height77,
           buildDefaultDragHandles: false,
           itemBuilder: (context, idx) {
             final snippet = filtered.elementAt(idx);
@@ -111,7 +111,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
           snippet.note ?? snippet.script,
           overflow: TextOverflow.ellipsis,
           maxLines: 3,
-          style: grey,
+          style: UIs.textGrey,
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,

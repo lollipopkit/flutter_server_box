@@ -4,7 +4,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/core/extension/context/common.dart';
+import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/utils/platform.dart';
 import 'package:toolbox/data/model/app/backup.dart';
 import 'package:toolbox/data/res/logger.dart';
@@ -28,7 +30,7 @@ class BackupPage extends StatelessWidget {
     final s = S.of(context)!;
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(s.backupAndRestore, style: textSize18),
+        title: Text(s.backupAndRestore, style: UIs.textSize18),
       ),
       body: _buildBody(context, s),
     );
@@ -40,7 +42,7 @@ class BackupPage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         if (isMacOS || isIOS) _buildIcloudSync(context, s),
-        height13,
+        UIs.height13,
         Padding(
           padding: const EdgeInsets.all(37),
           child: Text(
@@ -48,24 +50,24 @@ class BackupPage extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ),
-        height77,
+        UIs.height77,
         _buildCard(
           s.restore,
           Icons.download,
           () => _onRestore(context, s),
         ),
-        height13,
+        UIs.height13,
         const SizedBox(
           width: 37,
           child: Divider(),
         ),
-        height13,
+        UIs.height13,
         _buildCard(
           s.backup,
           Icons.save,
           () async {
             await Backup.backup();
-            await shareFiles(context, [await backupPath]);
+            await shareFiles(context, [await Paths.bak]);
           },
         )
       ],
@@ -87,7 +89,7 @@ class BackupPage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, size: 20),
-              width7,
+              UIs.width7,
               Text(text),
             ],
           ),
@@ -104,7 +106,7 @@ class BackupPage extends StatelessWidget {
           'iCloud',
           textAlign: TextAlign.center,
         ),
-        width13,
+        UIs.width13,
         // Hive db only save data into local file after app exit,
         // so this button is useless
         // IconButton(

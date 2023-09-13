@@ -4,7 +4,9 @@ import 'package:after_layout/after_layout.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/core/extension/context/common.dart';
+import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/sftpfile.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/misc.dart';
@@ -267,7 +269,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
   Widget _buildFileView() {
     if (_status.files == null) {
-      return centerLoading;
+      return UIs.centerLoading;
     }
 
     if (_status.files!.isEmpty) {
@@ -293,7 +295,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     final isDir = file.attr.isDirectory;
     final trailing = Text(
       '${getTime(file.attr.modifyTime)}\n${file.attr.mode?.str ?? ''}',
-      style: grey,
+      style: UIs.textGrey,
       textAlign: TextAlign.right,
     );
     return RoundRectCard(ListTile(
@@ -304,7 +306,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           ? null
           : Text(
               (file.attr.size ?? 0).convertBytes,
-              style: grey,
+              style: UIs.textGrey,
             ),
       onTap: () {
         if (isDir) {
@@ -362,11 +364,11 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
   Future<void> _edit(BuildContext context, SftpName name) async {
     final size = name.attr.size;
-    if (size == null || size > editorMaxSize) {
+    if (size == null || size > Miscs.editorMaxSize) {
       context.showSnackBar(_s.fileTooLarge(
         name.filename,
         size ?? 0,
-        editorMaxSize,
+        Miscs.editorMaxSize,
       ));
       return;
     }
@@ -469,7 +471,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
             }
             _listDir();
           },
-          child: Text(_s.delete, style: textRed),
+          child: Text(_s.delete, style: UIs.textRed),
         ),
       ],
     );
@@ -510,7 +512,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
             context.pop();
             _listDir();
           },
-          child: Text(_s.ok, style: textRed),
+          child: Text(_s.ok, style: UIs.textRed),
         ),
       ],
     );
@@ -550,7 +552,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
             context.pop();
             _listDir();
           },
-          child: Text(_s.ok, style: textRed),
+          child: Text(_s.ok, style: UIs.textRed),
         ),
       ],
     );
@@ -588,7 +590,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
             context.pop();
             _listDir();
           },
-          child: Text(_s.rename, style: textRed),
+          child: Text(_s.rename, style: UIs.textRed),
         ),
       ],
     );
@@ -623,7 +625,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   }
 
   Future<String> _getLocalPath(String remotePath) async {
-    return '${await sftpDir}$remotePath';
+    return '${await Paths.sftp}$remotePath';
   }
 
   /// Only return true if the path is changed

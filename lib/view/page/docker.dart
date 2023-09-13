@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/core/extension/context/common.dart';
+import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/model/docker/image.dart';
 import 'package:toolbox/view/widget/input_field.dart';
@@ -214,7 +216,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
           _docker.refresh();
         }
       });
-      return centerLoading;
+      return UIs.centerLoading;
     }
 
     final items = <Widget>[
@@ -236,7 +238,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
         title: Text(_s.imagesList),
         subtitle: Text(
           _s.dockerImagesFmt(_docker.images!.length),
-          style: grey,
+          style: UIs.textGrey,
         ),
       ),
     ];
@@ -247,7 +249,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   Widget _buildImageItem(DockerImage e) {
     return ListTile(
       title: Text(e.repo),
-      subtitle: Text('${e.tag} - ${e.size}', style: grey),
+      subtitle: Text('${e.tag} - ${e.size}', style: UIs.textGrey),
       trailing: IconButton(
         padding: EdgeInsets.zero,
         alignment: Alignment.centerRight,
@@ -276,14 +278,14 @@ class _DockerManagePageState extends State<DockerManagePage> {
               context.showSnackBar(result.message ?? _s.unknownError);
             }
           },
-          child: Text(_s.ok, style: textRed),
+          child: Text(_s.ok, style: UIs.textRed),
         ),
       ],
     );
   }
 
   Widget _buildLoading() {
-    if (_docker.runLog == null) return placeholder;
+    if (_docker.runLog == null) return UIs.placeholder;
     return Padding(
       padding: const EdgeInsets.all(17),
       child: Column(
@@ -291,7 +293,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
           const Center(
             child: CircularProgressIndicator(),
           ),
-          height13,
+          UIs.height13,
           Text(_docker.runLog ?? '...'),
         ],
       ),
@@ -309,7 +311,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
         return Text(_s.waitConnection);
       case DockerErrType.invalidVersion:
         return UrlText(
-          text: _s.invalidVersionHelp(appHelpUrl),
+          text: _s.invalidVersionHelp(Urls.appHelp),
           replace: 'Github',
         );
       case DockerErrType.parseImages:
@@ -344,7 +346,10 @@ class _DockerManagePageState extends State<DockerManagePage> {
     final items = <Widget>[
       ListTile(
         title: Text(_s.containerStatus),
-        subtitle: Text(_buildPsCardSubtitle(_docker.items!), style: grey),
+        subtitle: Text(
+          _buildPsCardSubtitle(_docker.items!),
+          style: UIs.textGrey,
+        ),
       ),
     ];
     items.addAll(_docker.items!.map(_buildPsItem));
@@ -359,7 +364,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
       title: Text(item.image),
       subtitle: Text(
         '${item.name} - ${item.status}',
-        style: textSize13Grey,
+        style: UIs.textSize13Grey,
       ),
       trailing: _buildMoreBtn(item),
     );

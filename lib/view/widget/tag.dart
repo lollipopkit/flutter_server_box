@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/core/extension/context/common.dart';
+import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
@@ -29,7 +30,7 @@ class TagBtn extends StatelessWidget {
         content,
         textAlign: TextAlign.center,
         textScaleFactor: 1.0,
-        style: isEnable ? textSize13 : textSize13Grey,
+        style: isEnable ? UIs.textSize13 : UIs.textSize13Grey,
       ),
       onTap: onTap,
     );
@@ -107,7 +108,7 @@ class _TagEditorState extends State<TagEditor> {
           Text(
             '#$tag',
             textAlign: TextAlign.center,
-            style: isAdd ? textSize13Grey : textSize13,
+            style: isAdd ? UIs.textSize13Grey : UIs.textSize13,
             textScaleFactor: 1.0,
           ),
           const SizedBox(width: 4.0),
@@ -211,7 +212,7 @@ class _TagPickerState<T extends TagPickable> extends State<TagPicker<T>> {
     final children = <Widget>[];
     if (widget.tags.isNotEmpty) {
       children.add(Text(_s.tag));
-      children.add(height13);
+      children.add(UIs.height13);
       children.add(SizedBox(
         height: _kTagBtnHeight,
         width: _media.size.width * 0.7,
@@ -220,7 +221,7 @@ class _TagPickerState<T extends TagPickable> extends State<TagPicker<T>> {
     }
     if (widget.items.isNotEmpty) {
       children.add(Text(_s.all));
-      children.add(height13);
+      children.add(UIs.height13);
       children.add(SizedBox(
         height: _kTagBtnHeight,
         width: _media.size.width * 0.7,
@@ -313,7 +314,7 @@ class TagSwitcher extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (tags.isEmpty) return placeholder;
+    if (tags.isEmpty) return UIs.placeholder;
     final items = <String?>[null, ...tags];
     return Container(
       height: _kTagBtnHeight,

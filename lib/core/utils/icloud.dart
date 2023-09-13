@@ -29,7 +29,7 @@ class ICloud {
     final completer = Completer<ICloudErr?>();
     await ICloudStorage.upload(
       containerId: _containerId,
-      filePath: localPath ?? '${await docDir}/$relativePath',
+      filePath: localPath ?? '${await Paths.doc}/$relativePath',
       destinationRelativePath: relativePath,
       onProgress: (stream) {
         stream.listen(
@@ -73,7 +73,7 @@ class ICloud {
     await ICloudStorage.download(
       containerId: _containerId,
       relativePath: relativePath,
-      destinationFilePath: localPath ?? '${await docDir}/$relativePath',
+      destinationFilePath: localPath ?? '${await Paths.doc}/$relativePath',
       onProgress: (stream) {
         stream.listen(
           null,
@@ -122,7 +122,7 @@ class ICloud {
         }
       }));
 
-      final docPath = await docDir;
+      final docPath = await Paths.doc;
 
       /// compare files in iCloud and local
       mission.addAll(allFiles.map((file) async {
@@ -176,7 +176,7 @@ class ICloud {
 
   static Future<void> syncDb() async {
     if (!isIOS && !isMacOS) return;
-    final docPath = await docDir;
+    final docPath = await Paths.doc;
     final dir = Directory(docPath);
     final files = await dir.list().toList();
     // filter out non-hive(db) files

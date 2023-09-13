@@ -7,7 +7,8 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_highlight/themes/a11y-light.dart';
 import 'package:flutter_highlight/themes/monokai.dart';
-import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/core/extension/context/common.dart';
+import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/data/res/highlight.dart';
 import 'package:toolbox/data/store/setting.dart';
@@ -58,9 +59,9 @@ class _EditorPageState extends State<EditorPage> {
     super.initState();
 
     /// Higher priority than [path]
-    _langCode = widget.langCode ?? widget.path.highlightCode;
+    _langCode = widget.langCode ?? Highlights.getCode(widget.path);
     _controller = CodeController(
-      language: suffix2HighlightMap[_langCode],
+      language: Highlights.all[_langCode],
     );
 
     /// TODO: This is a temporary solution to avoid the loading stuck
@@ -131,12 +132,12 @@ class _EditorPageState extends State<EditorPage> {
         PopupMenuButton<String>(
           icon: const Icon(Icons.language),
           onSelected: (value) {
-            _controller.language = suffix2HighlightMap[value];
+            _controller.language = Highlights.all[value];
             _langCode = value;
           },
           initialValue: _langCode,
           itemBuilder: (BuildContext context) {
-            return suffix2HighlightMap.keys.map((e) {
+            return Highlights.all.keys.map((e) {
               return PopupMenuItem(
                 value: e,
                 child: Text(e),

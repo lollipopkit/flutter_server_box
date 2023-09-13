@@ -1,6 +1,5 @@
 import 'package:flutter/widgets.dart';
-
-import '../../../core/extension/context.dart';
+import 'package:toolbox/core/extension/context/common.dart';
 
 class DynamicColor {
   /// 白天模式显示的颜色

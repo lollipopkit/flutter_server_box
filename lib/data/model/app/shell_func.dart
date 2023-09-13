@@ -1,6 +1,7 @@
 import '../../res/build_data.dart';
-import '../../res/server_cmd.dart';
 import '../server/system.dart';
+
+const seperator = 'SrvBoxSep';
 
 const _cmdDivider = '\necho $seperator\n\t';
 

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/core/extension/context/common.dart';
+import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/snackbar.dart';
 
 import '../../../core/route.dart';
 import '../../../data/model/server/private_key_info.dart';
@@ -123,7 +125,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
                 context.pop();
                 context.pop(true);
               },
-              child: Text(_s.ok, style: textRed),
+              child: Text(_s.ok, style: UIs.textRed),
             ),
           ],
         );
@@ -132,7 +134,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
     );
     final actions = widget.spi != null ? [delBtn] : null;
     return CustomAppBar(
-      title: Text(_s.edit, style: textSize18),
+      title: Text(_s.edit, style: UIs.textSize18),
       actions: actions,
     );
   }
@@ -271,7 +273,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
             subtitle: Text(
               e.type ?? _s.unknown,
               textAlign: TextAlign.start,
-              style: grey,
+              style: UIs.textGrey,
             ),
             trailing: _buildRadio(index, e),
           );

@@ -2,48 +2,50 @@ import 'dart:ui';
 
 import 'package:toolbox/data/model/ssh/virtual_key.dart';
 
-// default server details page cards order
-const defaultDetailCardOrder = [
-  'uptime',
-  'cpu',
-  'mem',
-  'swap',
-  'disk',
-  'net',
-  'temp'
-];
+class Defaults {
+  // default server details page cards order
+  static const detailCardOrder = [
+    'uptime',
+    'cpu',
+    'mem',
+    'swap',
+    'disk',
+    'net',
+    'temp'
+  ];
 
-const defaultDiskIgnorePath = [
-  'udev',
-  'tmpfs',
-  'devtmpfs',
-  'overlay',
-  'run',
-  'none',
-];
+  static const diskIgnorePath = [
+    'udev',
+    'tmpfs',
+    'devtmpfs',
+    'overlay',
+    'run',
+    'none',
+  ];
 
-const defaultSSHVirtKeys = [
-  VirtKey.esc,
-  VirtKey.alt,
-  VirtKey.home,
-  VirtKey.up,
-  VirtKey.end,
-  VirtKey.sftp,
-  VirtKey.snippet,
-  VirtKey.tab,
-  VirtKey.ctrl,
-  VirtKey.left,
-  VirtKey.down,
-  VirtKey.right,
-  VirtKey.clipboard,
-  VirtKey.ime,
-];
+  static const sshVirtKeys = [
+    VirtKey.esc,
+    VirtKey.alt,
+    VirtKey.home,
+    VirtKey.up,
+    VirtKey.end,
+    VirtKey.sftp,
+    VirtKey.snippet,
+    VirtKey.tab,
+    VirtKey.ctrl,
+    VirtKey.left,
+    VirtKey.down,
+    VirtKey.right,
+    VirtKey.clipboard,
+    VirtKey.ime,
+  ];
 
-const defaultPrimaryColor = Color.fromARGB(255, 145, 58, 31);
+  static const primaryColor = Color.fromARGB(255, 145, 58, 31);
 
-const defaultLaunchPageIdx = 0;
+  static const launchPageIdx = 0;
 
-const defaultUpdateInterval = 3;
+  static const updateInterval = 3;
 
-const defaultEditorTheme = 'a11y-light';
-const defaultEditorDarkTheme = 'monokai';
+  static const editorTheme = 'a11y-light';
+  static const editorDarkTheme = 'monokai';
+}

@@ -4,7 +4,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:r_upgrade/r_upgrade.dart';
-import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/core/extension/context/common.dart';
+import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/data/model/app/update.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/path.dart';
@@ -103,10 +105,8 @@ Future<void> _doUpdate(AppUpdate update, BuildContext context, S? s) async {
 // rmdir Download
 Future<void> _rmDownloadApks() async {
   if (!isAndroid) return;
-  final dlDir = Directory(await _dlDir);
+  final dlDir = Directory(await Paths.dl);
   if (await dlDir.exists()) {
     await dlDir.delete(recursive: true);
   }
 }
-
-Future<String> get _dlDir async => joinPath(await docDir, 'Download');

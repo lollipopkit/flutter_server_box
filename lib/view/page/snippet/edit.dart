@@ -1,7 +1,8 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:toolbox/core/extension/context.dart';
+import 'package:toolbox/core/extension/context/common.dart';
+import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 
 import '../../../data/model/server/snippet.dart';
@@ -56,7 +57,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(_s.edit, style: textSize18),
+        title: Text(_s.edit, style: UIs.textSize18),
         actions: _buildAppBarActions(),
       ),
       body: _buildBody(),
