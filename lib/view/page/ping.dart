@@ -6,15 +6,14 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
+import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/utils/misc.dart';
+import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/view/widget/value_notifier.dart';
 
-import '../../core/extension/uint8list.dart';
 import '../../data/model/server/ping_result.dart';
-import '../../data/provider/server.dart';
 import '../../data/res/color.dart';
 import '../../data/res/ui.dart';
-import '../../locator.dart';
 import '../widget/input_field.dart';
 import '../widget/round_rect_card.dart';
 
@@ -32,7 +31,6 @@ class _PingPageState extends State<PingPage>
     with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
   late TextEditingController _textEditingController;
   final _results = ValueNotifier(<PingResult>[]);
-  final _serverProvider = locator<ServerProvider>();
   late S _s;
 
   bool get isInit => _results.value.isEmpty;
@@ -176,7 +174,7 @@ class _PingPageState extends State<PingPage>
       return;
     }
 
-    if (_serverProvider.servers.isEmpty) {
+    if (Providers.server.servers.isEmpty) {
       context.showSnackBar(_s.pingNoServer);
       return;
     }
@@ -187,7 +185,7 @@ class _PingPageState extends State<PingPage>
       return;
     }
 
-    await Future.wait(_serverProvider.servers.values.map((e) async {
+    await Future.wait(Providers.server.servers.values.map((e) async {
       if (e.client == null) {
         return;
       }
@@ -207,9 +205,9 @@ class _PingPageState extends State<PingPage>
 
   @override
   Future<FutureOr<void>> afterFirstLayout(BuildContext context) async {
-    if (_serverProvider.servers.isEmpty) {
-      await _serverProvider.loadLocalData();
-      await _serverProvider.refreshData();
+    if (Providers.server.servers.isEmpty) {
+      await Providers.server.loadLocalData();
+      await Providers.server.refreshData();
     }
   }
 }

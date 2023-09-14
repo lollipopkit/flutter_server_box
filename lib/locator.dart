@@ -27,7 +27,7 @@ void _setupLocatorForProviders() {
   locator.registerSingleton(DebugProvider());
   locator.registerSingleton(DockerProvider());
   locator.registerSingleton(ServerProvider());
-  locator.registerSingleton(VirtualKeyboard());
+  locator.registerSingleton(VirtKeyProvider());
   locator.registerSingleton(SnippetProvider());
   locator.registerSingleton(PrivateKeyProvider());
   locator.registerSingleton(SftpProvider());

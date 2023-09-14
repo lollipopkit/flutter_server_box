@@ -10,9 +10,9 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/model/server/disk.dart';
 import 'package:toolbox/data/provider/server.dart';
+import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/data/res/ui.dart';
-import 'package:toolbox/locator.dart';
 
 import '../../core/analysis.dart';
 import '../../core/update.dart';
@@ -38,7 +38,6 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
   late int _rotateQuarter;
 
   final _pageController = PageController(initialPage: 0);
-  final _serverProvider = locator<ServerProvider>();
 
   @override
   void initState() {
@@ -372,8 +371,8 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
       doUpdate(context);
     }
     await GetIt.I.allReady();
-    await _serverProvider.loadLocalData();
-    await _serverProvider.refreshData();
+    await Providers.server.loadLocalData();
+    await Providers.server.refreshData();
     if (!Analysis.enabled) {
       await Analysis.init();
     }

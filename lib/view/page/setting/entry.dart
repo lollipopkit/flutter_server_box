@@ -12,6 +12,7 @@ import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/locale.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/stringx.dart';
+import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 
 import '../../../core/persistant_store.dart';
@@ -21,12 +22,10 @@ import '../../../core/utils/platform.dart';
 import '../../../core/update.dart';
 import '../../../data/model/app/net_view.dart';
 import '../../../data/provider/app.dart';
-import '../../../data/provider/server.dart';
 import '../../../data/res/build_data.dart';
 import '../../../data/res/color.dart';
 import '../../../data/res/path.dart';
 import '../../../data/res/ui.dart';
-import '../../../locator.dart';
 import '../../widget/color_picker.dart';
 import '../../widget/custom_appbar.dart';
 import '../../widget/future_widget.dart';
@@ -52,7 +51,6 @@ class _SettingPageState extends State<SettingPage> {
   final _keyboardTypeKey = GlobalKey<PopupMenuButtonState<int>>();
   final _rotateQuarterKey = GlobalKey<PopupMenuButtonState<int>>();
   final _netViewTypeKey = GlobalKey<PopupMenuButtonState<NetViewType>>();
-  final _serverProvider = locator<ServerProvider>();
   final _setting = Stores.setting;
 
   late S _s;
@@ -108,8 +106,8 @@ class _SettingPageState extends State<SettingPage> {
       appBar: CustomAppBar(
         title: Text(_s.setting),
         actions: [
-          IconButton(
-            onPressed: () => context.showRoundDialog(
+          InkWell(
+            onTap: () => context.showRoundDialog(
               title: Text(_s.attention),
               child: Text(_s.sureDelete(_s.all)),
               actions: [
@@ -123,7 +121,26 @@ class _SettingPageState extends State<SettingPage> {
                 ),
               ],
             ),
-            icon: const Icon(Icons.delete),
+            onDoubleTap: () => context.showRoundDialog(
+              title: Text(_s.attention),
+              child: Text(_s.sureDelete(_s.all)),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Stores.docker.box.deleteFromDisk();
+                    Stores.server.box.deleteFromDisk();
+                    Stores.setting.box.deleteFromDisk();
+                    Stores.history.box.deleteFromDisk();
+                    Stores.snippet.box.deleteFromDisk();
+                    Stores.key.box.deleteFromDisk();
+                    context.pop();
+                    context.showSnackBar(_s.success);
+                  },
+                  child: Text(_s.ok, style: const TextStyle(color: Colors.red)),
+                ),
+              ],
+            ),
+            child: const Icon(Icons.delete),
           ),
         ],
       ),
@@ -282,7 +299,7 @@ class _SettingPageState extends State<SettingPage> {
           onSelected: (int val) {
             _updateInterval.value = val;
             _setting.serverStatusUpdateInterval.put(val);
-            _serverProvider.startAutoRefresh();
+            Providers.server.startAutoRefresh();
             if (val == 0) {
               context.showSnackBar(_s.updateIntervalEqual0);
             }
@@ -968,7 +985,7 @@ class _SettingPageState extends State<SettingPage> {
               child: Text(_s.sureDelete(e)),
               actions: [
                 TextButton(
-                  onPressed: () => _serverProvider.delServer(e),
+                  onPressed: () => Providers.server.delServer(e),
                   child: Text(_s.ok),
                 )
               ],

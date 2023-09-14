@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/context/common.dart';
+import 'package:toolbox/data/res/provider.dart';
 
 import '../../../data/model/server/snippet.dart';
-import '../../../data/provider/snippet.dart';
 import '../../../data/res/ui.dart';
-import '../../../locator.dart';
 import '../../../view/widget/input_field.dart';
 import '../../../view/widget/picker.dart';
 import '../../route.dart';
@@ -59,8 +58,7 @@ extension DialogX on BuildContext {
     S s,
     void Function(Snippet s) onSelected,
   ) {
-    final provider = locator<SnippetProvider>();
-    if (provider.snippets.isEmpty) {
+    if (Providers.snippet.snippets.isEmpty) {
       showRoundDialog(
         child: Text(s.noSavedSnippet),
         actions: [
@@ -80,12 +78,12 @@ extension DialogX on BuildContext {
       return;
     }
 
-    var snippet = provider.snippets.first;
+    var snippet = Providers.snippet.snippets.first;
     showRoundDialog(
       title: Text(s.choose),
       child: Picker(
-        items: provider.snippets.map((e) => Text(e.name)).toList(),
-        onSelected: (idx) => snippet = provider.snippets[idx],
+        items: Providers.snippet.snippets.map((e) => Text(e.name)).toList(),
+        onSelected: (idx) => snippet = Providers.snippet.snippets[idx],
       ),
       actions: [
         TextButton(

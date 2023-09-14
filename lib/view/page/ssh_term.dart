@@ -37,7 +37,7 @@ class SSHPage extends StatefulWidget {
 }
 
 class _SSHPageState extends State<SSHPage> {
-  final _keyboard = locator<VirtualKeyboard>();
+  final _keyboard = locator<VirtKeyProvider>();
   late final _terminal = Terminal(inputHandler: _keyboard);
   final TerminalController _terminalController = TerminalController();
   final List<List<VirtKey>> _virtKeysList = [];
@@ -146,7 +146,7 @@ class _SSHPageState extends State<SSHPage> {
         child: Container(
           color: _terminalTheme.background,
           height: _virtKeysHeight,
-          child: Consumer<VirtualKeyboard>(
+          child: Consumer<VirtKeyProvider>(
             builder: (_, __, ___) => _buildVirtualKey(),
           ),
         ),

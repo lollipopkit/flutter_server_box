@@ -6,10 +6,8 @@ import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/data/model/sftp/req.dart';
-import 'package:toolbox/data/provider/server.dart';
-import 'package:toolbox/data/provider/sftp.dart';
 import 'package:toolbox/data/res/misc.dart';
-import 'package:toolbox/locator.dart';
+import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/picker.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
@@ -284,8 +282,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
             title: Text(_s.upload),
             onTap: () async {
               context.pop();
-              final serverProvider = locator<ServerProvider>();
-              final ids = serverProvider.serverOrder;
+              final ids = Providers.server.serverOrder;
               var idx = 0;
               await context.showRoundDialog(
                 title: Text(_s.server),
@@ -299,7 +296,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
                 ],
               );
               final id = ids[idx];
-              final spi = serverProvider.servers[id]?.spi;
+              final spi = Providers.server.servers[id]?.spi;
               if (spi == null) {
                 return;
               }
@@ -310,7 +307,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
               if (remotePath == null) {
                 return;
               }
-              locator<SftpProvider>().add(SftpReq(
+              Providers.sftp.add(SftpReq(
                 spi,
                 '$remotePath/$fileName',
                 file.absolute.path,

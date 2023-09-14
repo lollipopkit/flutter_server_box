@@ -3,12 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
+import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 
 import '../../../data/model/server/snippet.dart';
-import '../../../data/provider/snippet.dart';
 import '../../../data/res/ui.dart';
-import '../../../locator.dart';
 import '../../widget/custom_appbar.dart';
 import '../../widget/tag.dart';
 
@@ -28,16 +27,9 @@ class _SnippetEditPageState extends State<SnippetEditPage>
   final _noteController = TextEditingController();
   final _scriptNode = FocusNode();
 
-  late SnippetProvider _provider;
   late S _s;
 
   List<String> _tags = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _provider = locator<SnippetProvider>();
-  }
 
   @override
   void dispose() {
@@ -72,7 +64,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
     return [
       IconButton(
         onPressed: () {
-          _provider.del(widget.snippet!);
+          Providers.snippet.del(widget.snippet!);
           context.pop();
         },
         tooltip: _s.delete,
@@ -100,9 +92,9 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           note: note.isEmpty ? null : note,
         );
         if (widget.snippet != null) {
-          _provider.update(widget.snippet!, snippet);
+          Providers.snippet.update(widget.snippet!, snippet);
         } else {
-          _provider.add(snippet);
+          Providers.snippet.add(snippet);
         }
         context.pop();
       },
@@ -135,9 +127,9 @@ class _SnippetEditPageState extends State<SnippetEditPage>
             _tags = p0;
           }),
           s: _s,
-          allTags: [..._provider.tags],
+          allTags: [...Providers.server.tags],
           onRenameTag: (old, n) => setState(() {
-            _provider.renameTag(old, n);
+            Providers.server.renameTag(old, n);
           }),
         ),
         Input(

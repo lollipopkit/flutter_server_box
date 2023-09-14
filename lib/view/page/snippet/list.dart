@@ -3,14 +3,13 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/order.dart';
+import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 
 import '../../../core/utils/misc.dart';
 import '../../../data/model/server/server.dart';
 import '../../../data/model/server/snippet.dart';
-import '../../../data/provider/server.dart';
 import '../../../data/res/ui.dart';
-import '../../../locator.dart';
 import '../../widget/tag.dart';
 import '/core/route.dart';
 import '/data/provider/snippet.dart';
@@ -130,19 +129,18 @@ class _SnippetListPageState extends State<SnippetListPage> {
   }
 
   Future<void> _runSnippet(Snippet snippet) async {
-    final provider = locator<ServerProvider>();
     final servers = await showDialog<List<Server>>(
       context: context,
       builder: (_) => TagPicker<Server>(
-        items: provider.servers.values.toList(),
-        tags: provider.tags.toSet(),
+        items: Providers.server.servers.values.toList(),
+        tags: Providers.server.tags.toSet(),
       ),
     );
     if (servers == null) {
       return;
     }
     final ids = servers.map((e) => e.spi.id).toList();
-    final results = await provider.runSnippetsOnMulti(ids, [snippet]);
+    final results = await Providers.server.runSnippetsMulti(ids, [snippet]);
     if (results.isNotEmpty) {
       // SERVER_NAME: RESULT
       final result = Map.fromIterables(

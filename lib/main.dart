@@ -6,6 +6,7 @@ import 'package:logging/logging.dart';
 import 'package:macos_window_utils/window_manipulator.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 
 import 'app.dart';
@@ -32,8 +33,6 @@ import 'locator.dart';
 import 'view/widget/custom_appbar.dart';
 import 'view/widget/rebuild.dart';
 
-DebugProvider? _debug;
-
 Future<void> main() async {
   _runInZone(() async {
     await initApp();
@@ -45,7 +44,7 @@ Future<void> main() async {
           ChangeNotifierProvider(create: (_) => locator<DockerProvider>()),
           ChangeNotifierProvider(create: (_) => locator<ServerProvider>()),
           ChangeNotifierProvider(create: (_) => locator<SnippetProvider>()),
-          ChangeNotifierProvider(create: (_) => locator<VirtualKeyboard>()),
+          ChangeNotifierProvider(create: (_) => locator<VirtKeyProvider>()),
           ChangeNotifierProvider(create: (_) => locator<PrivateKeyProvider>()),
           ChangeNotifierProvider(create: (_) => locator<SftpProvider>()),
         ],
@@ -77,9 +76,6 @@ Future<void> initApp() async {
   // Base of all data.
   await _initHive();
   await setupLocator();
-
-  // Setup [DebugProvider] first to catch all logs.
-  _debug = locator<DebugProvider>();
   _setupLogger();
   _setupProviders();
 
@@ -101,8 +97,8 @@ Future<void> initApp() async {
 }
 
 void _setupProviders() {
-  locator<SnippetProvider>().loadData();
-  locator<PrivateKeyProvider>().loadData();
+  Providers.snippet.loadData();
+  Providers.key.loadData();
 }
 
 Future<void> _initHive() async {
@@ -119,14 +115,14 @@ void _setupLogger() {
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
     var str = '[${record.loggerName}][${record.level.name}]: ${record.message}';
-    _debug?.addText(str);
+    Providers.debug.addText(str);
     if (record.error != null) {
       str += '\n${record.error}';
-      _debug?.addMultiline(record.error.toString(), Colors.red);
+      Providers.debug.addMultiline(record.error.toString(), Colors.red);
     }
     if (record.stackTrace != null) {
       str += '\n${record.stackTrace}';
-      _debug?.addMultiline(record.stackTrace.toString(), Colors.white);
+      Providers.debug.addMultiline(record.stackTrace.toString(), Colors.white);
     }
     // ignore: avoid_print
     print(str);

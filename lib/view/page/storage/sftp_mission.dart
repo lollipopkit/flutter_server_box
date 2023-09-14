@@ -5,7 +5,7 @@ import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/datetime.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/route.dart';
-import 'package:toolbox/locator.dart';
+import 'package:toolbox/data/res/provider.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/utils/misc.dart';
@@ -149,7 +149,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
           actions: [
             TextButton(
               onPressed: () {
-                locator<SftpProvider>().cancel(id);
+                Providers.sftp.cancel(id);
                 context.pop();
               },
               child: Text(_s.ok),

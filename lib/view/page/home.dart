@@ -7,6 +7,7 @@ import 'package:get_it/get_it.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/data/res/github_id.dart';
 import 'package:toolbox/data/res/logger.dart';
+import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 
 import '../../core/analysis.dart';
@@ -16,13 +17,10 @@ import '../../core/utils/platform.dart';
 import '../../core/utils/ui.dart';
 import '../../data/model/app/github_id.dart';
 import '../../data/model/app/tab.dart';
-import '../../data/provider/app.dart';
-import '../../data/provider/server.dart';
 import '../../data/res/build_data.dart';
 import '../../data/res/misc.dart';
 import '../../data/res/ui.dart';
 import '../../data/res/url.dart';
-import '../../locator.dart';
 import '../widget/custom_appbar.dart';
 import '../widget/round_rect_card.dart';
 import '../widget/url_text.dart';
@@ -40,9 +38,6 @@ class _HomePageState extends State<HomePage>
         AutomaticKeepAliveClientMixin,
         AfterLayoutMixin,
         WidgetsBindingObserver {
-  final _serverProvider = locator<ServerProvider>();
-  final _app = locator<AppProvider>();
-
   late final PageController _pageController;
 
   final _selectIndex = ValueNotifier(0);
@@ -73,7 +68,7 @@ class _HomePageState extends State<HomePage>
   void dispose() {
     super.dispose();
     WidgetsBinding.instance.removeObserver(this);
-    _serverProvider.closeServer();
+    Providers.server.closeServer();
     _pageController.dispose();
   }
 
@@ -84,20 +79,20 @@ class _HomePageState extends State<HomePage>
 
     switch (state) {
       case AppLifecycleState.resumed:
-        if (!_serverProvider.isAutoRefreshOn) {
-          _serverProvider.startAutoRefresh();
+        if (!Providers.server.isAutoRefreshOn) {
+          Providers.server.startAutoRefresh();
         }
         updateHomeWidget();
         break;
       case AppLifecycleState.paused:
         // Keep running in background on Android device
         if (isAndroid && Stores.setting.bgRun.fetch()) {
-          if (_app.moveBg) {
+          if (Providers.app.moveBg) {
             Miscs.bgRunChannel.invokeMethod('sendToBackground');
           }
         } else {
-          _serverProvider.setDisconnected();
-          _serverProvider.stopAutoRefresh();
+          Providers.server.setDisconnected();
+          Providers.server.stopAutoRefresh();
         }
         break;
       default:
@@ -148,7 +143,7 @@ class _HomePageState extends State<HomePage>
             return IconButton(
               icon: const Icon(Icons.refresh, size: 23),
               tooltip: 'Refresh',
-              onPressed: () => _serverProvider.refreshData(onlyFailed: true),
+              onPressed: () => Providers.server.refreshData(onlyFailed: true),
             );
           },
         ),
@@ -346,8 +341,8 @@ class _HomePageState extends State<HomePage>
     }
     updateHomeWidget();
     await GetIt.I.allReady();
-    await _serverProvider.loadLocalData();
-    await _serverProvider.refreshData();
+    await Providers.server.loadLocalData();
+    await Providers.server.refreshData();
     if (!Analysis.enabled) {
       Analysis.init();
     }

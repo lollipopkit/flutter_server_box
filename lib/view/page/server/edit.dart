@@ -4,14 +4,13 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
+import 'package:toolbox/data/res/provider.dart';
 
 import '../../../core/route.dart';
 import '../../../data/model/server/private_key_info.dart';
 import '../../../data/model/server/server_private_info.dart';
 import '../../../data/provider/private_key.dart';
-import '../../../data/provider/server.dart';
 import '../../../data/res/ui.dart';
-import '../../../locator.dart';
 import '../../widget/custom_appbar.dart';
 import '../../widget/input_field.dart';
 import '../../widget/round_rect_card.dart';
@@ -43,9 +42,6 @@ class _ServerEditPageState extends State<ServerEditPage> {
   late FocusScopeNode _focusScope;
   late S _s;
 
-  final _srvs = locator<ServerProvider>();
-  final _keys = locator<PrivateKeyProvider>();
-
   final _keyIdx = ValueNotifier<int?>(null);
   final _autoConnect = ValueNotifier(true);
 
@@ -63,7 +59,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
       if (widget.spi?.pubKeyId == null) {
         _passwordController.text = widget.spi?.pwd ?? '';
       } else {
-        _keyIdx.value = _keys.pkis.indexWhere(
+        _keyIdx.value = Providers.key.pkis.indexWhere(
           (e) => e.id == widget.spi!.pubKeyId,
         );
       }
@@ -121,7 +117,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
           actions: [
             TextButton(
               onPressed: () {
-                _srvs.delServer(widget.spi!.id);
+                Providers.server.delServer(widget.spi!.id);
                 context.pop();
                 context.pop(true);
               },
@@ -190,8 +186,8 @@ class _ServerEditPageState extends State<ServerEditPage> {
         tags: _tags,
         onChanged: (p0) => _tags = p0,
         s: _s,
-        allTags: [..._srvs.tags],
-        onRenameTag: _srvs.renameTag,
+        allTags: [...Providers.server.tags],
+        onRenameTag: Providers.server.renameTag,
       ),
       _buildAuth(),
       ListTile(
@@ -364,7 +360,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
       user: _usernameController.text,
       pwd: _passwordController.text.isEmpty ? null : _passwordController.text,
       pubKeyId: _keyIdx.value != null
-          ? _keys.pkis.elementAt(_keyIdx.value!).id
+          ? Providers.key.pkis.elementAt(_keyIdx.value!).id
           : null,
       tags: _tags,
       alterUrl: _altUrlController.text.isEmpty ? null : _altUrlController.text,
@@ -372,9 +368,9 @@ class _ServerEditPageState extends State<ServerEditPage> {
     );
 
     if (widget.spi == null) {
-      _srvs.addServer(spi);
+      Providers.server.addServer(spi);
     } else {
-      _srvs.updateServer(widget.spi!, spi);
+      Providers.server.updateServer(widget.spi!, spi);
     }
 
     context.pop();

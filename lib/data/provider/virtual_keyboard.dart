@@ -2,8 +2,8 @@ import 'package:flutter/widgets.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:xterm/core.dart';
 
-class VirtualKeyboard extends TerminalInputHandler with ChangeNotifier {
-  VirtualKeyboard();
+class VirtKeyProvider extends TerminalInputHandler with ChangeNotifier {
+  VirtKeyProvider();
 
   bool _ctrl = false;
   bool get ctrl => _ctrl;

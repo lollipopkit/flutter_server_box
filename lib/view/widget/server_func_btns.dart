@@ -9,6 +9,7 @@ import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/data/model/pkg/manager.dart';
 import 'package:toolbox/data/model/server/dist.dart';
+import 'package:toolbox/data/res/provider.dart';
 
 import '../../core/route.dart';
 import '../../core/utils/misc.dart';
@@ -18,9 +19,6 @@ import '../../data/model/app/menu.dart';
 import '../../data/model/pkg/upgrade_info.dart';
 import '../../data/model/server/server_private_info.dart';
 import '../../data/model/server/snippet.dart';
-import '../../data/provider/server.dart';
-import '../../data/provider/snippet.dart';
-import '../../locator.dart';
 import 'popup_menu.dart';
 import 'tag.dart';
 
@@ -102,19 +100,17 @@ void _onTapMoreBtns(
       );
       break;
     case ServerTabMenuType.snippet:
-      final provider = locator<SnippetProvider>();
       final snippets = await showDialog<List<Snippet>>(
         context: context,
         builder: (_) => TagPicker<Snippet>(
-          items: provider.snippets,
-          tags: provider.tags.toSet(),
+          items: Providers.snippet.snippets,
+          tags: Providers.server.tags.toSet(),
         ),
       );
       if (snippets == null) {
         return;
       }
-      final result =
-          await locator<ServerProvider>().runSnippets(spi.id, snippets);
+      final result = await Providers.server.runSnippets(spi.id, snippets);
       if (result != null && result.isNotEmpty) {
         context.showRoundDialog(
           title: Text(s.result),
@@ -196,7 +192,7 @@ Future<void> _gotoSSH(
 }
 
 bool _checkClient(BuildContext context, String id, String msg) {
-  final server = locator<ServerProvider>().servers[id];
+  final server = Providers.server.servers[id];
   if (server == null || server.client == null) {
     context.showSnackBar(msg);
     return false;
@@ -205,7 +201,7 @@ bool _checkClient(BuildContext context, String id, String msg) {
 }
 
 Future<void> _onPkg(BuildContext context, S s, ServerPrivateInfo spi) async {
-  final server = locator<ServerProvider>().servers[spi.id];
+  final server = spi.findServer;
   if (server == null) {
     context.showSnackBar(s.noClient);
     return;

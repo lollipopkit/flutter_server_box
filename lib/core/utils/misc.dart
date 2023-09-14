@@ -6,12 +6,9 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:plain_notification_token/plain_notification_token.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:toolbox/data/res/provider.dart';
 
-import '../../data/provider/app.dart';
-import '../../locator.dart';
 import 'platform.dart';
-
-final _app = locator<AppProvider>();
 
 Future<bool> shareFiles(BuildContext context, List<String> filePaths) async {
   for (final filePath in filePaths) {
@@ -25,10 +22,10 @@ Future<bool> shareFiles(BuildContext context, List<String> filePaths) async {
   } else {
     text = '${filePaths.length} ${S.of(context)!.files}';
   }
-  _app.moveBg = false;
+  Providers.app.moveBg = false;
   // ignore: deprecated_member_use
   await Share.shareFiles(filePaths, subject: 'ServerBox -> $text');
-  _app.moveBg = true;
+  Providers.app.moveBg = true;
   return filePaths.isNotEmpty;
 }
 
@@ -37,9 +34,9 @@ void copy2Clipboard(String text) {
 }
 
 Future<String?> pickOneFile() async {
-  _app.moveBg = false;
+  Providers.app.moveBg = false;
   final result = await FilePicker.platform.pickFiles(type: FileType.any);
-  _app.moveBg = true;
+  Providers.app.moveBg = true;
   return result?.files.single.path;
 }
 

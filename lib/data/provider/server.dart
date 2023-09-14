@@ -325,7 +325,7 @@ class ServerProvider extends ChangeNotifier {
     return await client.run(snippets.map((e) => e.script).join('&&')).string;
   }
 
-  Future<List<String?>> runSnippetsOnMulti(
+  Future<List<String?>> runSnippetsMulti(
     List<String> ids,
     List<Snippet> snippets,
   ) async {

@@ -8,6 +8,7 @@ import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/media_queryx.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
+import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 
 import '../../../core/route.dart';
@@ -21,7 +22,6 @@ import '../../../data/model/server/server_status.dart';
 import '../../../data/provider/server.dart';
 import '../../../data/res/color.dart';
 import '../../../data/res/ui.dart';
-import '../../../locator.dart';
 import '../../widget/round_rect_card.dart';
 import '../../widget/server_func_btns.dart';
 import '../../widget/tag.dart';
@@ -39,7 +39,6 @@ class _ServerPageState extends State<ServerPage>
   late S _s;
 
   final _flipedCardIds = <String>{};
-  final _serverProvider = locator<ServerProvider>();
 
   String? _tag;
   bool _useDoubleColumn = false;
@@ -96,7 +95,7 @@ class _ServerPageState extends State<ServerPage>
     }
     return RefreshIndicator(
       onRefresh: () async =>
-          await _serverProvider.refreshData(onlyFailed: true),
+          await Providers.server.refreshData(onlyFailed: true),
       child: child,
     );
   }
@@ -308,7 +307,7 @@ class _ServerPageState extends State<ServerPage>
     Widget? rightCorner;
     if (!(spi.autoConnect ?? true) && cs == ServerState.disconnected) {
       rightCorner = InkWell(
-        onTap: () => _serverProvider.refreshData(spi: spi),
+        onTap: () => Providers.server.refreshData(spi: spi),
         child: const Padding(
           padding: EdgeInsets.symmetric(horizontal: 7),
           child: Icon(
@@ -459,10 +458,10 @@ class _ServerPageState extends State<ServerPage>
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
     await GetIt.I.allReady();
-    if (_serverProvider.servers.isEmpty) {
-      await _serverProvider.loadLocalData();
+    if (Providers.server.servers.isEmpty) {
+      await Providers.server.loadLocalData();
     }
-    _serverProvider.startAutoRefresh();
+    Providers.server.startAutoRefresh();
   }
 
   List<String> _filterServers(ServerProvider pro) => pro.serverOrder

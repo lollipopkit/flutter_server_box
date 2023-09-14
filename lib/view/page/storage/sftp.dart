@@ -10,6 +10,7 @@ import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/sftpfile.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/misc.dart';
+import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
@@ -22,11 +23,8 @@ import '../../../data/model/server/server_private_info.dart';
 import '../../../data/model/sftp/absolute_path.dart';
 import '../../../data/model/sftp/browser_status.dart';
 import '../../../data/model/sftp/req.dart';
-import '../../../data/provider/server.dart';
-import '../../../data/provider/sftp.dart';
 import '../../../data/res/path.dart';
 import '../../../data/res/ui.dart';
-import '../../../locator.dart';
 import '../../widget/custom_appbar.dart';
 import '../../widget/fade_in.dart';
 import '../../widget/input_field.dart';
@@ -51,8 +49,6 @@ class SftpPage extends StatefulWidget {
 class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   final SftpBrowserStatus _status = SftpBrowserStatus();
 
-  final _sftp = locator<SftpProvider>();
-
   late S _s;
 
   SSHClient? _client;
@@ -66,8 +62,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   @override
   void initState() {
     super.initState();
-    final serverProvider = locator<ServerProvider>();
-    _client = serverProvider.servers[widget.spi.id]?.client;
+    _client = Providers.server.servers[widget.spi.id]?.client;
   }
 
   @override
@@ -184,7 +179,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
             context.showSnackBar('remote path is null');
             return;
           }
-          _sftp.add(
+          Providers.sftp.add(
             SftpReq(
               widget.spi,
               '$remotePath/${path.split('/').last}',
@@ -382,14 +377,15 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       localPath,
       SftpReqType.download,
     );
-    _sftp.add(req, completer: completer);
+    Providers.sftp.add(req, completer: completer);
     context.showLoadingDialog();
     await completer.future;
     context.pop();
 
     final result = await AppRoute.editor(path: localPath).go<bool>(context);
     if (result != null && result) {
-      _sftp.add(SftpReq(req.spi, remotePath, localPath, SftpReqType.upload));
+      Providers.sftp
+          .add(SftpReq(req.spi, remotePath, localPath, SftpReqType.upload));
       context.showSnackBar(_s.added2List);
     }
   }
@@ -408,7 +404,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
             context.pop();
             final remotePath = _getRemotePath(name);
 
-            _sftp.add(
+            Providers.sftp.add(
               SftpReq(
                 widget.spi,
                 remotePath,

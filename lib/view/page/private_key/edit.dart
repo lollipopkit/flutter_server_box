@@ -10,13 +10,12 @@ import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/numx.dart';
 import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/data/res/misc.dart';
+import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 
 import '../../../core/utils/server.dart';
 import '../../../data/model/server/private_key_info.dart';
-import '../../../data/provider/private_key.dart';
 import '../../../data/res/ui.dart';
-import '../../../locator.dart';
 import '../../widget/custom_appbar.dart';
 
 const _format = 'text/plain';
@@ -39,7 +38,6 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
   final _pwdNode = FocusNode();
 
   late FocusScopeNode _focusScope;
-  final _provider = locator<PrivateKeyProvider>();
   late S _s;
 
   Widget? _loading;
@@ -99,7 +97,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
             actions: [
               TextButton(
                 onPressed: () {
-                  _provider.delete(widget.pki!);
+                  Providers.key.delete(widget.pki!);
                   context.pop();
                   context.pop();
                 },
@@ -139,9 +137,9 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
           final decrypted = await compute(decyptPem, [key, pwd]);
           final pki = PrivateKeyInfo(id: name, key: decrypted);
           if (widget.pki != null) {
-            _provider.update(widget.pki!, pki);
+            Providers.key.update(widget.pki!, pki);
           } else {
-            _provider.add(pki);
+            Providers.key.add(pki);
           }
         } catch (e) {
           context.showSnackBar(e.toString());

@@ -1,4 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:toolbox/data/model/server/server.dart';
+import 'package:toolbox/data/res/provider.dart';
 
 import '../app/error.dart';
 
@@ -67,6 +69,8 @@ class ServerPrivateInfo {
     data["autoConnect"] = autoConnect;
     return data;
   }
+
+  Server? get findServer => Providers.server.servers[id];
 
   bool shouldReconnect(ServerPrivateInfo old) {
     return id != old.id ||

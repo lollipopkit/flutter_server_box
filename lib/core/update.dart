@@ -10,8 +10,8 @@ import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/data/model/app/update.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/path.dart';
+import 'package:toolbox/data/res/provider.dart';
 
-import '../data/provider/app.dart';
 import '../data/res/build_data.dart';
 import '../data/service/app.dart';
 import '../locator.dart';
@@ -39,7 +39,7 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
     return;
   }
 
-  locator<AppProvider>().newestBuild = newest;
+  Providers.app.newestBuild = newest;
 
   if (!force && newest <= BuildData.build) {
     Loggers.app.info('Update ignored: ${BuildData.build} >= $newest');

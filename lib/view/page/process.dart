@@ -8,14 +8,13 @@ import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/utils/misc.dart';
+import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 
 import '../../data/model/app/shell_func.dart';
 import '../../data/model/server/proc.dart';
 import '../../data/model/server/server_private_info.dart';
-import '../../data/provider/server.dart';
 import '../../data/res/ui.dart';
-import '../../locator.dart';
 import '../widget/custom_appbar.dart';
 import '../widget/round_rect_card.dart';
 import '../widget/two_line_text.dart';
@@ -44,12 +43,10 @@ class _ProcessPageState extends State<ProcessPage> {
   ProcSortMode _procSortMode = ProcSortMode.cpu;
   List<ProcSortMode> _sortModes = List.from(ProcSortMode.values);
 
-  final _serverProvider = locator<ServerProvider>();
-
   @override
   void initState() {
     super.initState();
-    _client = _serverProvider.servers[widget.spi.id]?.client;
+    _client = Providers.server.servers[widget.spi.id]?.client;
     final duration =
         Duration(seconds: Stores.setting.serverStatusUpdateInterval.fetch());
     _timer = Timer.periodic(duration, (_) => _refresh());

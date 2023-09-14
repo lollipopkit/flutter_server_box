@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/order.dart';
+import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
-import '../../../data/provider/server.dart';
-import '../../../locator.dart';
 import '../../widget/custom_appbar.dart';
 
 class ServerOrderPage extends StatefulWidget {
@@ -16,8 +15,6 @@ class ServerOrderPage extends StatefulWidget {
 }
 
 class _ServerOrderPageState extends State<ServerOrderPage> {
-  final _provider = locator<ServerProvider>();
-
   late S _s;
 
   @override
@@ -40,7 +37,7 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
     return ReorderableListView.builder(
       footer: const SizedBox(height: 77),
       onReorder: (oldIndex, newIndex) => setState(() {
-        _provider.serverOrder.move(
+        Providers.server.serverOrder.move(
           oldIndex,
           newIndex,
           property: Stores.setting.serverOrder,
@@ -49,13 +46,13 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       buildDefaultDragHandles: false,
       itemBuilder: (_, index) =>
-          _buildItem(index, _provider.serverOrder[index]),
-      itemCount: _provider.serverOrder.length,
+          _buildItem(index, Providers.server.serverOrder[index]),
+      itemCount: Providers.server.serverOrder.length,
     );
   }
 
   Widget _buildItem(int index, String id) {
-    final spi = _provider.servers[id]?.spi;
+    final spi = Providers.server.servers[id]?.spi;
     if (spi == null) {
       return const SizedBox();
     }

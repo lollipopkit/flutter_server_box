@@ -6,18 +6,17 @@ import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/model/docker/image.dart';
+import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 
 import '../../data/model/docker/ps.dart';
 import '../../data/model/server/server_private_info.dart';
 import '../../data/provider/docker.dart';
-import '../../data/provider/server.dart';
 import '../../data/model/app/error.dart';
 import '../../data/model/app/menu.dart';
 import '../../data/res/ui.dart';
 import '../../data/res/url.dart';
-import '../../locator.dart';
 import '../widget/custom_appbar.dart';
 import '../widget/popup_menu.dart';
 import '../widget/round_rect_card.dart';
@@ -33,14 +32,13 @@ class DockerManagePage extends StatefulWidget {
 }
 
 class _DockerManagePageState extends State<DockerManagePage> {
-  final _docker = locator<DockerProvider>();
   final _textController = TextEditingController();
   late S _s;
 
   @override
   void dispose() {
     super.dispose();
-    _docker.clear();
+    Providers.docker.clear();
     _textController.dispose();
   }
 
@@ -53,17 +51,19 @@ class _DockerManagePageState extends State<DockerManagePage> {
   @override
   void initState() {
     super.initState();
-    final client = locator<ServerProvider>().servers[widget.spi.id]?.client;
+    final client = widget.spi.findServer?.client;
     if (client == null) {
       return;
     }
-    _docker.init(
-      client,
-      widget.spi.user,
-      (user) async => await context.showPwdDialog(user),
-      widget.spi.id,
-      context,
-    );
+    Providers.docker
+      ..init(
+        client,
+        widget.spi.user,
+        (user) async => await context.showPwdDialog(user),
+        widget.spi.id,
+        context,
+      )
+      ..refresh();
   }
 
   @override
@@ -77,7 +77,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
             IconButton(
               onPressed: () async {
                 context.showLoadingDialog();
-                await _docker.refresh();
+                await Providers.docker.refresh();
                 context.pop();
               },
               icon: const Icon(Icons.refresh),
@@ -85,7 +85,8 @@ class _DockerManagePageState extends State<DockerManagePage> {
           ],
         ),
         body: _buildMain(),
-        floatingActionButton: _docker.error == null ? _buildFAB() : null,
+        floatingActionButton:
+            Providers.docker.error == null ? _buildFAB() : null,
       );
     });
   }
@@ -162,7 +163,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
           onPressed: () async {
             context.pop();
             context.showLoadingDialog();
-            final result = await _docker.run(cmd);
+            final result = await Providers.docker.run(cmd);
             context.pop();
             if (result != null) {
               context.showSnackBar(result.message ?? _s.unknownError);
@@ -188,7 +189,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   }
 
   Widget _buildMain() {
-    if (_docker.error != null && _docker.items == null) {
+    if (Providers.docker.error != null && Providers.docker.items == null) {
       return SizedBox.expand(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -199,22 +200,17 @@ class _DockerManagePageState extends State<DockerManagePage> {
               size: 37,
             ),
             const SizedBox(height: 27),
-            Text(_docker.error?.message ?? _s.unknownError),
+            Text(Providers.docker.error?.message ?? _s.unknownError),
             const SizedBox(height: 27),
             Padding(
               padding: const EdgeInsets.all(17),
-              child: _buildSolution(_docker.error!),
+              child: _buildSolution(Providers.docker.error!),
             )
           ],
         ),
       );
     }
-    if (_docker.items == null || _docker.images == null) {
-      Future.delayed(const Duration(milliseconds: 37), () {
-        if (mounted) {
-          _docker.refresh();
-        }
-      });
+    if (Providers.docker.items == null || Providers.docker.images == null) {
       return UIs.centerLoading;
     }
 
@@ -236,12 +232,12 @@ class _DockerManagePageState extends State<DockerManagePage> {
       ListTile(
         title: Text(_s.imagesList),
         subtitle: Text(
-          _s.dockerImagesFmt(_docker.images!.length),
+          _s.dockerImagesFmt(Providers.docker.images!.length),
           style: UIs.textGrey,
         ),
       ),
     ];
-    items.addAll(_docker.images!.map(_buildImageItem));
+    items.addAll(Providers.docker.images!.map(_buildImageItem));
     return Column(children: items);
   }
 
@@ -270,7 +266,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
         TextButton(
           onPressed: () async {
             context.pop();
-            final result = await _docker.run(
+            final result = await Providers.docker.run(
               'docker rmi ${e.id} -f',
             );
             if (result != null) {
@@ -284,7 +280,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   }
 
   Widget _buildLoading() {
-    if (_docker.runLog == null) return UIs.placeholder;
+    if (Providers.docker.runLog == null) return UIs.placeholder;
     return Padding(
       padding: const EdgeInsets.all(17),
       child: Column(
@@ -293,7 +289,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
             child: CircularProgressIndicator(),
           ),
           UIs.height13,
-          Text(_docker.runLog ?? '...'),
+          Text(Providers.docker.runLog ?? '...'),
         ],
       ),
     );
@@ -334,8 +330,8 @@ class _DockerManagePageState extends State<DockerManagePage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(_docker.edition ?? _s.unknown),
-          Text(_docker.version ?? _s.unknown),
+          Text(Providers.docker.edition ?? _s.unknown),
+          Text(Providers.docker.version ?? _s.unknown),
         ],
       ),
     );
@@ -346,12 +342,12 @@ class _DockerManagePageState extends State<DockerManagePage> {
       ListTile(
         title: Text(_s.containerStatus),
         subtitle: Text(
-          _buildPsCardSubtitle(_docker.items!),
+          _buildPsCardSubtitle(Providers.docker.items!),
           style: UIs.textGrey,
         ),
       ),
     ];
-    items.addAll(_docker.items!.map(_buildPsItem));
+    items.addAll(Providers.docker.items!.map(_buildPsItem));
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: items,
@@ -387,7 +383,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
                   onPressed: () async {
                     context.pop();
                     context.showLoadingDialog();
-                    await _docker.delete(dItem.containerId);
+                    await Providers.docker.delete(dItem.containerId);
                     context.pop();
                   },
                   child: Text(_s.ok),
@@ -397,17 +393,17 @@ class _DockerManagePageState extends State<DockerManagePage> {
             break;
           case DockerMenuType.start:
             context.showLoadingDialog();
-            await _docker.start(dItem.containerId);
+            await Providers.docker.start(dItem.containerId);
             context.pop();
             break;
           case DockerMenuType.stop:
             context.showLoadingDialog();
-            await _docker.stop(dItem.containerId);
+            await Providers.docker.stop(dItem.containerId);
             context.pop();
             break;
           case DockerMenuType.restart:
             context.showLoadingDialog();
-            await _docker.restart(dItem.containerId);
+            await Providers.docker.restart(dItem.containerId);
             context.pop();
             break;
           case DockerMenuType.logs:
@@ -456,7 +452,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
 
   Widget _buildEditHost() {
     final children = <Widget>[];
-    if (_docker.items!.isEmpty && _docker.images!.isEmpty) {
+    if (Providers.docker.items!.isEmpty && Providers.docker.images!.isEmpty) {
       children.add(Padding(
         padding: const EdgeInsets.fromLTRB(17, 17, 17, 0),
         child: Text(
@@ -499,6 +495,6 @@ class _DockerManagePageState extends State<DockerManagePage> {
   void _onSaveDockerHost(String val) {
     context.pop();
     Stores.docker.put(widget.spi.id, val.trim());
-    _docker.refresh();
+    Providers.docker.refresh();
   }
 }
