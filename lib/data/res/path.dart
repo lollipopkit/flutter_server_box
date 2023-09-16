@@ -1,7 +1,8 @@
 import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
-import 'package:toolbox/core/utils/platform.dart';
+import 'package:toolbox/core/utils/platform/base.dart';
+import 'package:toolbox/core/utils/platform/path.dart';
 
 class Paths {
   const Paths._();

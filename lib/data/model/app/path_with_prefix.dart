@@ -1,4 +1,4 @@
-import '../../../core/utils/platform.dart';
+import 'package:toolbox/core/utils/platform/path.dart';
 
 /// It's used on platform's file system.
 /// So use [Platform.pathSeparator] to join path.

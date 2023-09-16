@@ -3,9 +3,8 @@ import 'dart:io';
 
 import 'package:countly_flutter/countly_flutter.dart';
 import 'package:toolbox/core/build_mode.dart';
+import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/res/logger.dart';
-
-import 'utils/platform.dart';
 
 class Analysis {
   static const _url = 'https://countly.xuty.cc';

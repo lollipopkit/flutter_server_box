@@ -3,10 +3,10 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'misc.dart';
-import 'platform.dart';
 import '../extension/stringx.dart';
 import '../extension/uint8list.dart';
 

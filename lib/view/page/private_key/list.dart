@@ -6,10 +6,11 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/utils/platform/base.dart';
+import 'package:toolbox/core/utils/platform/path.dart';
 import 'package:toolbox/data/res/store.dart';
 
 import '../../../core/route.dart';
-import '../../../core/utils/platform.dart';
 import '../../../data/model/server/private_key_info.dart';
 import '../../../data/provider/private_key.dart';
 import '../../../data/res/ui.dart';

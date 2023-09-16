@@ -38,10 +38,7 @@ final _p = () {
   return PlatformType.unknown;
 }();
 
-final _pathSep = Platform.pathSeparator;
-
 PlatformType get platform => _p;
-String get pathSeparator => _pathSep;
 
 bool get isAndroid => _p == PlatformType.android;
 bool get isIOS => _p == PlatformType.ios;
@@ -54,23 +51,3 @@ bool get isDesktop =>
     _p == PlatformType.linux ||
     _p == PlatformType.macos ||
     _p == PlatformType.windows;
-
-/// Available only on desktop,
-/// return null on mobile
-String? getHomeDir() {
-  final envVars = Platform.environment;
-  if (isMacOS || isLinux) {
-    return envVars['HOME'];
-  } else if (isWindows) {
-    return envVars['UserProfile'];
-  }
-  return null;
-}
-
-/// Join two paths with platform specific separator
-String joinPath(String path1, String path2) {
-  if (isWindows) {
-    return path1 + (path1.endsWith('\\') ? '' : '\\') + path2;
-  }
-  return path1 + (path1.endsWith('/') ? '' : '/') + path2;
-}

@@ -6,9 +6,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:plain_notification_token/plain_notification_token.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/res/provider.dart';
-
-import 'platform.dart';
 
 Future<bool> shareFiles(BuildContext context, List<String> filePaths) async {
   for (final filePath in filePaths) {

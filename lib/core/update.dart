@@ -7,6 +7,7 @@ import 'package:r_upgrade/r_upgrade.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
+import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/model/app/update.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/path.dart';
@@ -15,7 +16,6 @@ import 'package:toolbox/data/res/provider.dart';
 import '../data/res/build_data.dart';
 import '../data/service/app.dart';
 import '../locator.dart';
-import 'utils/platform.dart';
 import 'utils/ui.dart';
 
 Future<bool> isFileAvailable(String url) async {

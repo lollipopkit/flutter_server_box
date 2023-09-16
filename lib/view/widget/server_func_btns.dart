@@ -7,13 +7,14 @@ import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
+import 'package:toolbox/core/utils/platform/base.dart';
+import 'package:toolbox/core/utils/platform/path.dart';
 import 'package:toolbox/data/model/pkg/manager.dart';
 import 'package:toolbox/data/model/server/dist.dart';
 import 'package:toolbox/data/res/provider.dart';
 
 import '../../core/route.dart';
 import '../../core/utils/misc.dart';
-import '../../core/utils/platform.dart';
 import '../../core/utils/server.dart';
 import '../../data/model/app/menu.dart';
 import '../../data/model/pkg/upgrade_info.dart';

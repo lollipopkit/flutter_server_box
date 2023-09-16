@@ -7,13 +7,13 @@ import 'package:macos_window_utils/window_manipulator.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toolbox/core/channel/bg_run.dart';
+import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 
 import 'app.dart';
 import 'core/analysis.dart';
 import 'core/utils/icloud.dart';
-import 'core/utils/platform.dart';
 import 'core/utils/ui.dart';
 import 'data/model/app/net_view.dart';
 import 'data/model/server/private_key_info.dart';

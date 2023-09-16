@@ -2,12 +2,12 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:icloud_storage/icloud_storage.dart';
+import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/res/logger.dart';
 
 import '../../data/model/app/error.dart';
 import '../../data/model/app/json.dart';
 import '../../data/res/path.dart';
-import 'platform.dart';
 
 class ICloud {
   static const _containerId = 'iCloud.tech.lolli.serverbox';
