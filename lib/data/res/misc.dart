@@ -1,7 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/services.dart';
-
 class Miscs {
   const Miscs._();
 
@@ -20,10 +18,7 @@ class Miscs {
   /// Max debug log lines
   static const maxDebugLogLines = 100;
 
-  /// Method Channels
   static const pkgName = 'tech.lolli.toolbox';
-  static const bgRunChannel = MethodChannel('$pkgName/app_retain');
-  static const homeWidgetChannel = MethodChannel('$pkgName/home_widget');
 
   static const jsonEncoder = JsonEncoder.withIndent('  ');
 }

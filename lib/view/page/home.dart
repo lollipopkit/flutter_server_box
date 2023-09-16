@@ -4,6 +4,8 @@ import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
+import 'package:toolbox/core/channel/bg_run.dart';
+import 'package:toolbox/core/channel/home_widget.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/data/res/github_id.dart';
 import 'package:toolbox/data/res/logger.dart';
@@ -88,7 +90,7 @@ class _HomePageState extends State<HomePage>
         // Keep running in background on Android device
         if (isAndroid && Stores.setting.bgRun.fetch()) {
           if (Providers.app.moveBg) {
-            Miscs.bgRunChannel.invokeMethod('sendToBackground');
+            BgRunMC.moveToBg();
           }
         } else {
           Providers.server.setDisconnected();
@@ -350,7 +352,7 @@ class _HomePageState extends State<HomePage>
 
   void updateHomeWidget() {
     if (Stores.setting.autoUpdateHomeWidget.fetch()) {
-      Miscs.homeWidgetChannel.invokeMethod('update');
+      HomeWidgetMC.update();
     }
   }
 

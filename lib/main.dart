@@ -6,6 +6,7 @@ import 'package:logging/logging.dart';
 import 'package:macos_window_utils/window_manipulator.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:toolbox/core/channel/bg_run.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 
@@ -28,7 +29,6 @@ import 'data/provider/sftp.dart';
 import 'data/provider/snippet.dart';
 import 'data/provider/virtual_keyboard.dart';
 import 'data/res/color.dart';
-import 'data/res/misc.dart';
 import 'locator.dart';
 import 'view/widget/custom_appbar.dart';
 import 'view/widget/rebuild.dart';
@@ -89,7 +89,7 @@ Future<void> initApp() async {
   if (isAndroid) {
     // Only start service when [bgRun] is true.
     if (Stores.setting.bgRun.fetch()) {
-      Miscs.bgRunChannel.invokeMethod('startService');
+      BgRunMC.startService();
     }
     // SharedPreferences is only used on Android for saving home widgets settings.
     SharedPreferences.setPrefix('');
