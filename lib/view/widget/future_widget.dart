@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class FutureWidget<T> extends StatelessWidget {
-  final Future future;
+  final Future<T> future;
   final Widget loading;
   final Widget Function(Object? error, StackTrace? trace) error;
   final Widget Function(T data) success;

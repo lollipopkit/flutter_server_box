@@ -64,5 +64,7 @@
 		</array>
 		<key>NSLocalNetworkUsageDescription</key>
 		<string>ServerBox needs to access your local network to discover and connect to your server.</string>
+		<key>NSFaceIDUsageDescription</key>
+		<string>Required for auth</string>
 	</dict>
 </plist>

@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   dynamic_color
+  local_auth_windows
   share_plus
   url_launcher_windows
 )

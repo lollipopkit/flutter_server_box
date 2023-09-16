@@ -205,6 +205,13 @@ class SettingStore extends PersistentStore {
     false,
   );
 
+  /// Only valid on iOS / Android
+  late final useBioAuth = StoreProperty(
+    box,
+    'useBioAuth',
+    false,
+  );
+
   // Never show these settings for users
   // Guide for these settings:
   // - key should start with `_` and be shorter as possible

@@ -38,6 +38,9 @@ class SId extends S {
   String get attention => 'Perhatian';
 
   @override
+  String get authRequired => 'Auth diperlukan';
+
+  @override
   String get auto => 'Auto';
 
   @override
@@ -63,6 +66,9 @@ class SId extends S {
 
   @override
   String get bgRun => 'Jalankan di Backgroud';
+
+  @override
+  String get bioAuth => 'Biosertifikasi';
 
   @override
   String get canPullRefresh => 'Anda dapat menarik untuk menyegarkan.';

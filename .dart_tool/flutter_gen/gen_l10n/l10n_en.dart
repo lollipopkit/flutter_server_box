@@ -38,6 +38,9 @@ class SEn extends S {
   String get attention => 'Attention';
 
   @override
+  String get authRequired => 'Auth required';
+
+  @override
   String get auto => 'Auto';
 
   @override
@@ -63,6 +66,9 @@ class SEn extends S {
 
   @override
   String get bgRun => 'Run in backgroud';
+
+  @override
+  String get bioAuth => 'Biometric auth';
 
   @override
   String get canPullRefresh => 'You can pull to refresh.';

@@ -12,6 +12,7 @@ import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/locale.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/stringx.dart';
+import 'package:toolbox/core/utils/platform/auth.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
@@ -183,13 +184,16 @@ class _SettingPageState extends State<SettingPage> {
       //_buildLaunchPage(),
       _buildCheckUpdate(),
     ];
+    if (isAndroid) {
+      children.add(_buildBgRun());
+      children.add(_buildAndroidWidgetSharedPreference());
+    }
     if (isIOS) {
       children.add(_buildPushToken());
       children.add(_buildAutoUpdateHomeWidget());
     }
-    if (isAndroid) {
-      children.add(_buildBgRun());
-      children.add(_buildAndroidWidgetSharedPreference());
+    if (BioAuth.isPlatformSupported) {
+      children.add(_buildBioAuth());
     }
     return Column(
       children: children.map((e) => RoundRectCard(e)).toList(),
@@ -1096,4 +1100,41 @@ class _SettingPageState extends State<SettingPage> {
   //     trailing: StoreSwitch(prop: _setting.doubleColumnServersPage),
   //   );
   // }
+
+  Widget _buildBioAuth() {
+    return FutureWidget<bool>(
+      future: BioAuth.isAvail,
+      loading: ListTile(
+        title: Text(_s.bioAuth),
+        subtitle: Text(_s.serverTabLoading, style: UIs.textGrey),
+      ),
+      error: (e, __) => ListTile(
+        title: Text(_s.bioAuth),
+        subtitle: Text('${_s.failed}: $e', style: UIs.textGrey),
+      ),
+      success: (can) {
+        return ListTile(
+          title: Text(_s.bioAuth),
+          trailing: can
+              ? StoreSwitch(
+                  prop: Stores.setting.useBioAuth,
+                  func: (val) async {
+                    if (val) {
+                      Stores.setting.useBioAuth.put(false);
+                      return;
+                    }
+                    // Only auth when turn off (val == false)
+                    final result = await BioAuth.auth(_s.authRequired);
+                    // If failed, turn on again
+                    if (result != AuthResult.success) {
+                      Stores.setting.useBioAuth.put(true);
+                    }
+                  },
+                )
+              : Text(_s.error, style: UIs.textGrey),
+        );
+      },
+      noData: UIs.placeholder,
+    );
+  }
 }

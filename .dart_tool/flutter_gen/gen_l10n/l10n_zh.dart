@@ -38,6 +38,9 @@ class SZh extends S {
   String get attention => '注意';
 
   @override
+  String get authRequired => '需要认证';
+
+  @override
   String get auto => '自动';
 
   @override
@@ -63,6 +66,9 @@ class SZh extends S {
 
   @override
   String get bgRun => '后台运行';
+
+  @override
+  String get bioAuth => '生物认证';
 
   @override
   String get canPullRefresh => '可以下拉刷新';
@@ -773,6 +779,9 @@ class SZhTw extends SZh {
   String get attention => '注意';
 
   @override
+  String get authRequired => '需要認證';
+
+  @override
   String get auto => '自動';
 
   @override
@@ -798,6 +807,9 @@ class SZhTw extends SZh {
 
   @override
   String get bgRun => '背景運行';
+
+  @override
+  String get bioAuth => '生物認證';
 
   @override
   String get canPullRefresh => '可以下拉更新';

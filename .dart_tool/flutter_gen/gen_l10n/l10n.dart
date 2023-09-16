@@ -164,6 +164,12 @@ abstract class S {
   /// **'Attention'**
   String get attention;
 
+  /// No description provided for @authRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Auth required'**
+  String get authRequired;
+
   /// No description provided for @auto.
   ///
   /// In en, this message translates to:
@@ -217,6 +223,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Run in backgroud'**
   String get bgRun;
+
+  /// No description provided for @bioAuth.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric auth'**
+  String get bioAuth;
 
   /// No description provided for @canPullRefresh.
   ///

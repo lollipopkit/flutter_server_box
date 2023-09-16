@@ -38,6 +38,9 @@ class SDe extends S {
   String get attention => 'Achtung';
 
   @override
+  String get authRequired => 'Autorisierung erforderlich';
+
+  @override
   String get auto => 'System folgen';
 
   @override
@@ -63,6 +66,9 @@ class SDe extends S {
 
   @override
   String get bgRun => 'Hintergrundaktualisierung';
+
+  @override
+  String get bioAuth => 'Biozertifizierung';
 
   @override
   String get canPullRefresh => 'Danach: herunterziehen zum Aktualisieren';
