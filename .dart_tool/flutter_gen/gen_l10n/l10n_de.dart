@@ -735,6 +735,9 @@ class SDe extends S {
   String get waitConnection => 'Bitte warte, bis die Verbindung hergestellt wurde.';
 
   @override
+  String get watchNotPaired => 'Keine gekoppelte Apple Watch';
+
+  @override
   String get whenOpenApp => 'Beim Öffnen der App';
 
   @override

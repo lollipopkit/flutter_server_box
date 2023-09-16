@@ -228,6 +228,7 @@
   "virtKeyHelpClipboard": "Salin ke clipboard jika terminal yang dipilih tidak kosong, jika tidak, tempel isi clipboard ke terminal.",
   "virtKeyHelpSFTP": "Buka direktori saat ini di SFTP.",
   "waitConnection": "Harap tunggu koneksi akan dibuat.",
+  "watchNotPaired": "Tidak ada Apple Watch yang dipasangkan",
   "whenOpenApp": "Saat membuka aplikasi",
   "willTakEeffectImmediately": "Akan segera berlaku"
 }

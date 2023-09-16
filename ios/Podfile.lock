@@ -24,6 +24,8 @@ PODS:
     - FlutterMacOS
   - url_launcher_ios (0.0.1):
     - Flutter
+  - watch_connectivity (0.0.1):
+    - Flutter
 
 DEPENDENCIES:
   - countly_flutter (from `.symlinks/plugins/countly_flutter/ios`)
@@ -38,6 +40,7 @@ DEPENDENCIES:
   - share_plus (from `.symlinks/plugins/share_plus/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
+  - watch_connectivity (from `.symlinks/plugins/watch_connectivity/ios`)
 
 EXTERNAL SOURCES:
   countly_flutter:
@@ -64,6 +67,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
   url_launcher_ios:
     :path: ".symlinks/plugins/url_launcher_ios/ios"
+  watch_connectivity:
+    :path: ".symlinks/plugins/watch_connectivity/ios"
 
 SPEC CHECKSUMS:
   countly_flutter: f153e5547d4f3cdf24be11f6ed4df32c9a421fa3
@@ -78,6 +83,7 @@ SPEC CHECKSUMS:
   share_plus: 599aa54e4ea31d4b4c0e9c911bcc26c55e791028
   shared_preferences_foundation: 5b919d13b803cadd15ed2dc053125c68730e5126
   url_launcher_ios: 08a3dfac5fb39e8759aeb0abbd5d9480f30fc8b4
+  watch_connectivity: 715eb484685e05846eab74795348a44bb2809b82
 
 PODFILE CHECKSUM: 7fb15c416f8685fca4966867a8da218ec592ec2e
 

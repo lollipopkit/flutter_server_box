@@ -735,6 +735,9 @@ class SEn extends S {
   String get waitConnection => 'Please wait for the connection to be established.';
 
   @override
+  String get watchNotPaired => 'No paired Apple Watch';
+
+  @override
   String get whenOpenApp => 'When opening the app';
 
   @override

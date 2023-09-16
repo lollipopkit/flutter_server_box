@@ -50,6 +50,11 @@ dependencies:
   dynamic_color: ^1.6.6
   icloud_storage: ^2.2.0
   local_auth: ^2.1.7
+  watch_connectivity:
+    #path: ../watch_connectivity
+    git:
+      ref: master
+      url: https://github.com/lollipopkit/watch_connectivity
 
 dev_dependencies:
   flutter_native_splash: ^2.1.6

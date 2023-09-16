@@ -735,6 +735,9 @@ class SZh extends S {
   String get waitConnection => '请等待连接建立';
 
   @override
+  String get watchNotPaired => '没有已配对的 Apple Watch';
+
+  @override
   String get whenOpenApp => '当打开 App 时';
 
   @override
@@ -1474,6 +1477,9 @@ class SZhTw extends SZh {
 
   @override
   String get waitConnection => '請等待連接建立';
+
+  @override
+  String get watchNotPaired => '沒有已配對的 Apple Watch';
 
   @override
   String get whenOpenApp => '當打開 App 時';

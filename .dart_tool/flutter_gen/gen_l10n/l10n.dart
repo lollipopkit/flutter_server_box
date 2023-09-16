@@ -1466,6 +1466,12 @@ abstract class S {
   /// **'Please wait for the connection to be established.'**
   String get waitConnection;
 
+  /// No description provided for @watchNotPaired.
+  ///
+  /// In en, this message translates to:
+  /// **'No paired Apple Watch'**
+  String get watchNotPaired;
+
   /// No description provided for @whenOpenApp.
   ///
   /// In en, this message translates to:

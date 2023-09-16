@@ -735,6 +735,9 @@ class SId extends S {
   String get waitConnection => 'Harap tunggu koneksi akan dibuat.';
 
   @override
+  String get watchNotPaired => 'Tidak ada Apple Watch yang dipasangkan';
+
+  @override
   String get whenOpenApp => 'Saat membuka aplikasi';
 
   @override

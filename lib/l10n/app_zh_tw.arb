@@ -228,6 +228,7 @@
   "virtKeyHelpClipboard": "如果終端有選中字符，則復製選中字符至剪切板，否則粘貼剪切板內容至終端。",
   "virtKeyHelpSFTP": "在 SFTP 中打開當前路徑。",
   "waitConnection": "請等待連接建立",
+  "watchNotPaired": "沒有已配對的 Apple Watch",
   "whenOpenApp": "當打開 App 時",
   "willTakEeffectImmediately": "更改將會立即生效"
 }

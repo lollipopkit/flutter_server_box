@@ -1051,6 +1051,23 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.4"
+  watch_connectivity:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: master
+      resolved-ref: "56379d77955db89222f00ee18f5cae80b05ec13f"
+      url: "https://github.com/lollipopkit/watch_connectivity"
+    source: git
+    version: "0.1.5"
+  watch_connectivity_platform_interface:
+    dependency: transitive
+    description:
+      name: watch_connectivity_platform_interface
+      sha256: "9074115391bd764c08a17346fcbc4d5c0b555672defbe6928ac648503b54aa9c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.2"
   watcher:
     dependency: transitive
     description:

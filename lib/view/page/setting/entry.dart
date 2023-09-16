@@ -6,6 +6,7 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:toolbox/core/build_mode.dart';
 import 'package:toolbox/core/extension/colorx.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
@@ -14,8 +15,11 @@ import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/utils/platform/auth.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
+import 'package:toolbox/data/res/logger.dart';
+import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
+import 'package:watch_connectivity/watch_connectivity.dart';
 
 import '../../../core/persistant_store.dart';
 import '../../../core/route.dart';
@@ -57,6 +61,8 @@ class _SettingPageState extends State<SettingPage> {
   late S _s;
   late SharedPreferences _sp;
 
+  final wc = WatchConnectivity();
+
   final _selectedColorValue = ValueNotifier(0);
   final _nightMode = ValueNotifier(0);
   final _maxRetryCount = ValueNotifier(0);
@@ -69,7 +75,6 @@ class _SettingPageState extends State<SettingPage> {
   final _keyboardType = ValueNotifier(0);
   final _rotateQuarter = ValueNotifier(0);
   final _netViewType = ValueNotifier(NetViewType.speed);
-
   final _pushToken = ValueNotifier<String?>(null);
 
   @override
@@ -188,12 +193,13 @@ class _SettingPageState extends State<SettingPage> {
       children.add(_buildBgRun());
       children.add(_buildAndroidWidgetSharedPreference());
     }
-    if (isIOS) {
-      children.add(_buildPushToken());
-      children.add(_buildAutoUpdateHomeWidget());
-    }
     if (BioAuth.isPlatformSupported) {
       children.add(_buildBioAuth());
+    }
+    if (isIOS) {
+      if (BuildMode.isRelease) children.add(_buildPushToken());
+      children.add(_buildAutoUpdateHomeWidget());
+      children.add(_buildWatchApp());
     }
     return Column(
       children: children.map((e) => RoundRectCard(e)).toList(),
@@ -1115,6 +1121,10 @@ class _SettingPageState extends State<SettingPage> {
       success: (can) {
         return ListTile(
           title: Text(_s.bioAuth),
+          subtitle: can
+              ? null
+              : const Text('Error: Bio auth is not available',
+                  style: UIs.textGrey),
           trailing: can
               ? StoreSwitch(
                   prop: Stores.setting.useBioAuth,
@@ -1131,10 +1141,66 @@ class _SettingPageState extends State<SettingPage> {
                     }
                   },
                 )
-              : Text(_s.error, style: UIs.textGrey),
+              : null,
         );
       },
       noData: UIs.placeholder,
     );
+  }
+
+  Widget _buildWatchApp() {
+    return FutureWidget<Map<String, dynamic>?>(
+      future: () async {
+        if (!await wc.isPaired) {
+          return null;
+        }
+        return await wc.applicationContext;
+      }(),
+      loading: UIs.centerLoading,
+      error: (e, trace) {
+        Loggers.app.warning('WatchOS error', e, trace);
+        return ListTile(
+          title: const Text('Watch app'),
+          subtitle: Text('${_s.error}: $e', style: UIs.textGrey),
+        );
+      },
+      success: (ctx) {
+        if (ctx == null) {
+          return ListTile(
+            title: const Text('Watch app'),
+            subtitle: Text(_s.watchNotPaired, style: UIs.textGrey),
+          );
+        }
+        return ListTile(
+          title: const Text('Watch app'),
+          trailing: const Icon(Icons.keyboard_arrow_right),
+          onTap: () async => _onTapWatchApp(ctx),
+        );
+      },
+      noData: UIs.placeholder,
+    );
+  }
+
+  void _onTapWatchApp(Map<String, dynamic> map) async {
+    /// Encode [map] to String with indent `\t`
+    final text = Miscs.jsonEncoder.convert(map);
+    final result = await AppRoute.editor(
+      text: text,
+      langCode: 'json',
+      title: 'Watch app config',
+    ).go(context);
+    if (result == null) {
+      return;
+    }
+    try {
+      final newCtx = json.decode(result) as Map<String, dynamic>;
+      await wc.updateApplicationContext(newCtx);
+    } catch (e, trace) {
+      context.showRoundDialog(
+        title: Text(_s.error),
+        child: Text('${_s.save}:\n$e'),
+      );
+      Loggers.app.warning('Update watch config failed', e, trace);
+    }
   }
 }

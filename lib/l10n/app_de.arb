@@ -228,6 +228,7 @@
   "virtKeyHelpClipboard": "In die Zwischenablage kopieren, wenn das ausgewählte Terminal nicht leer ist, andernfalls den Inhalt der Zwischenablage in das Terminal einfügen.",
   "virtKeyHelpSFTP": "Aktuelles Verzeichnis in SFTP öffnen.",
   "waitConnection": "Bitte warte, bis die Verbindung hergestellt wurde.",
+  "watchNotPaired": "Keine gekoppelte Apple Watch",
   "whenOpenApp": "Beim Öffnen der App",
   "willTakEeffectImmediately": "Wird sofort angewendet"
 }

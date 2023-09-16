@@ -362,9 +362,10 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<void> _onLongPressSetting() async {
-    /// Encode [map] to String with indent `\t`
     final map = Stores.setting.toJson();
     final keys = map.keys;
+
+    /// Encode [map] to String with indent `\t`
     final text = Miscs.jsonEncoder.convert(map);
     final result = await AppRoute.editor(
       text: text,

@@ -228,6 +228,7 @@
   "virtKeyHelpClipboard": "Copy to the clipboard if terminal selected is not empty, otherwise paste the contents of the clipboard to the terminal.",
   "virtKeyHelpSFTP": "Open current directory in SFTP.",
   "waitConnection": "Please wait for the connection to be established.",
+  "watchNotPaired": "No paired Apple Watch",
   "whenOpenApp": "When opening the app",
   "willTakEeffectImmediately": "Will take effect immediately"
 }
