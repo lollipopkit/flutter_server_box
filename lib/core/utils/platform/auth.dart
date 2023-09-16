@@ -14,14 +14,15 @@ class BioAuth {
 
   static Future<bool> get isAvail async {
     if (!isPlatformSupported) return false;
-    final canCheckBiometrics = await _auth.canCheckBiometrics;
-    if (!canCheckBiometrics) {
+    if (!await _auth.canCheckBiometrics) {
       return false;
     }
     final biometrics = await _auth.getAvailableBiometrics();
-    if (biometrics.isEmpty) return false;
-    return biometrics.contains(BiometricType.fingerprint) ||
-        biometrics.contains(BiometricType.face);
+    /// [biometrics] on Android and Windows is returned with error
+    /// Handle it specially
+    if (isAndroid | isWindows) return biometrics.isNotEmpty;
+    return biometrics.contains(BiometricType.face) ||
+        biometrics.contains(BiometricType.fingerprint);
   }
 
   static Future<AuthResult> auth([String? msg]) async {
@@ -31,7 +32,6 @@ class BioAuth {
         localizedReason: msg ?? 'Auth required',
         options: const AuthenticationOptions(
           stickyAuth: true,
-          sensitiveTransaction: true,
           biometricOnly: true,
         ),
       );

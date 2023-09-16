@@ -1056,7 +1056,7 @@ packages:
     description:
       path: "."
       ref: master
-      resolved-ref: e3bc722f3a73aad24b314a6a19e43c205b1940e3
+      resolved-ref: ad5f151a5591b64d384ef22b7855b7a2a53ad3d3
       url: "https://github.com/lollipopkit/watch_connectivity"
     source: git
     version: "0.1.5"
