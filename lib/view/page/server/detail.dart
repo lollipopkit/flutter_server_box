@@ -4,14 +4,15 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/data/model/server/cpu.dart';
+import 'package:toolbox/data/model/server/net_speed.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/system.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/server_func_btns.dart';
+import 'package:toolbox/view/widget/value_notifier.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/route.dart';
-import '../../../data/model/server/net_speed.dart';
 import '../../../data/model/server/server.dart';
 import '../../../data/model/server/server_status.dart';
 import '../../../data/provider/server.dart';
@@ -50,6 +51,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       _buildTemperature,
     ],
   );
+
+  final _netSortType = ValueNotifier(_NetSortType.device);
 
   @override
   void didChangeDependencies() {
@@ -350,43 +353,80 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildNetView(ServerStatus ss) {
-    final ns = ss.netSpeed;
-    final children = <Widget>[
-      _buildNetSpeedTop(),
-      const Divider(
-        height: 7,
-      )
-    ];
-    if (ns.devices.isEmpty) {
-      children.add(Center(
-        child: Text(
-          _s.noInterface,
-          style: const TextStyle(color: Colors.grey, fontSize: 13),
-        ),
-      ));
-    } else {
-      children.addAll(ns.devices.map((e) => _buildNetSpeedItem(ns, e)));
-    }
-
     return RoundRectCard(
       Padding(
         padding: UIs.roundRectCardPadding,
-        child: Column(
-          children: children,
+        child: ValueBuilder(
+          listenable: _netSortType,
+          build: () {
+            final ns = ss.netSpeed;
+            final children = <Widget>[
+              _buildNetSpeedTop(),
+              const Divider(
+                height: 7,
+              )
+            ];
+            if (ns.devices.isEmpty) {
+              children.add(Center(
+                child: Text(
+                  _s.noInterface,
+                  style: const TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+              ));
+            } else {
+              final devices = ns.devices;
+              devices.sort(_netSortType.value.getSortFunc(ns));
+              children.addAll(devices.map((e) => _buildNetSpeedItem(ns, e)));
+            }
+            return Column(
+              children: children,
+            );
+          },
         ),
       ),
     );
   }
 
   Widget _buildNetSpeedTop() {
-    return const Padding(
-      padding: EdgeInsets.only(bottom: 3),
+    const icon = Icon(Icons.arrow_downward, size: 17);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 3),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(Icons.device_hub, size: 17),
-          Icon(Icons.arrow_downward, size: 17),
-          Icon(Icons.arrow_upward, size: 17),
+          GestureDetector(
+            child: _netSortType.value.isDevice
+                ? const Row(
+                    children: [
+                      Text('Iface'),
+                      icon,
+                    ],
+                  )
+                : const Text('Iface'),
+            onTap: () => _netSortType.value = _NetSortType.device,
+          ),
+          GestureDetector(
+            child: _netSortType.value.isIn
+                ? const Row(
+                    children: [
+                      Text('Recv'),
+                      icon,
+                    ],
+                  )
+                : const Text('Recv'),
+            onTap: () => _netSortType.value = _NetSortType.recv,
+          ),
+          GestureDetector(
+            child: _netSortType.value.isOut
+                ? const Row(
+                    children: [
+                      Text('Trans'),
+                      icon,
+                    ],
+                  )
+                : const Text('Trans'),
+            onTap: () => _netSortType.value = _NetSortType.trans,
+          ),
         ],
       ),
     );
@@ -487,5 +527,31 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         child: child,
       ),
     );
+  }
+}
+
+enum _NetSortType {
+  device,
+  trans,
+  recv,
+  ;
+
+  bool get isDevice => this == _NetSortType.device;
+  bool get isIn => this == _NetSortType.recv;
+  bool get isOut => this == _NetSortType.trans;
+
+  int Function(String, String) getSortFunc(NetSpeed ns) {
+    switch (this) {
+      case _NetSortType.device:
+        return (b, a) => a.compareTo(b);
+      case _NetSortType.recv:
+        return (b, a) => ns
+            .speedInBytes(ns.deviceIdx(a))
+            .compareTo(ns.speedInBytes(ns.deviceIdx(b)));
+      case _NetSortType.trans:
+        return (b, a) => ns
+            .speedOutBytes(ns.deviceIdx(a))
+            .compareTo(ns.speedOutBytes(ns.deviceIdx(b)));
+    }
   }
 }

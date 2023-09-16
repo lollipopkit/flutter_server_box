@@ -21,22 +21,23 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
 
   BigInt get _timeDiff => BigInt.from(now[0].time - pre[0].time);
 
-  double _speedIn(int i) => (now[i].bytesIn - pre[i].bytesIn) / _timeDiff;
-  double _speedOut(int i) => (now[i].bytesOut - pre[i].bytesOut) / _timeDiff;
-  BigInt _sizeIn(int i) => now[i].bytesIn;
-  BigInt _sizeOut(int i) => now[i].bytesOut;
+  double speedInBytes(int i) => (now[i].bytesIn - pre[i].bytesIn) / _timeDiff;
+  double speedOutBytes(int i) =>
+      (now[i].bytesOut - pre[i].bytesOut) / _timeDiff;
+  BigInt sizeInBytes(int i) => now[i].bytesIn;
+  BigInt sizeOutBytes(int i) => now[i].bytesOut;
 
   String speedIn({String? device, bool all = false}) {
     if (pre[0].device == '' || now[0].device == '') return '0kb/s';
     if (all) {
       var speed = 0.0;
       for (var i = 0; i < now.length; i++) {
-        speed += _speedIn(i);
+        speed += speedInBytes(i);
       }
       return buildStandardOutput(speed);
     }
     final idx = deviceIdx(device);
-    return buildStandardOutput(_speedIn(idx));
+    return buildStandardOutput(speedInBytes(idx));
   }
 
   String sizeIn({String? device, bool all = false}) {
@@ -44,12 +45,12 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
     if (all) {
       var size = BigInt.from(0);
       for (var i = 0; i < now.length; i++) {
-        size += _sizeIn(i);
+        size += sizeInBytes(i);
       }
       return size.convertBytes;
     }
     final idx = deviceIdx(device);
-    return _sizeIn(idx).convertBytes;
+    return sizeInBytes(idx).convertBytes;
   }
 
   String speedOut({String? device, bool all = false}) {
@@ -57,12 +58,12 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
     if (all) {
       var speed = 0.0;
       for (var i = 0; i < now.length; i++) {
-        speed += _speedOut(i);
+        speed += speedOutBytes(i);
       }
       return buildStandardOutput(speed);
     }
     final idx = deviceIdx(device);
-    return buildStandardOutput(_speedOut(idx));
+    return buildStandardOutput(speedOutBytes(idx));
   }
 
   String sizeOut({String? device, bool all = false}) {
@@ -70,12 +71,12 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
     if (all) {
       var size = BigInt.from(0);
       for (var i = 0; i < now.length; i++) {
-        size += _sizeOut(i);
+        size += sizeOutBytes(i);
       }
       return size.convertBytes;
     }
     final idx = deviceIdx(device);
-    return _sizeOut(idx).convertBytes;
+    return sizeOutBytes(idx).convertBytes;
   }
 
   int deviceIdx(String? device) {
