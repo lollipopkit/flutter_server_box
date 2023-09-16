@@ -18,6 +18,7 @@ class BioAuth {
       return false;
     }
     final biometrics = await _auth.getAvailableBiometrics();
+
     /// [biometrics] on Android and Windows is returned with error
     /// Handle it specially
     if (isAndroid | isWindows) return biometrics.isNotEmpty;

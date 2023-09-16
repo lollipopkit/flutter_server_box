@@ -1,5 +1,5 @@
 PODS:
-  - countly_flutter (23.8.0):
+  - countly_flutter (23.8.1):
     - Flutter
   - file_picker (0.0.1):
     - Flutter
@@ -71,7 +71,7 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/watch_connectivity/ios"
 
 SPEC CHECKSUMS:
-  countly_flutter: f153e5547d4f3cdf24be11f6ed4df32c9a421fa3
+  countly_flutter: 9024d787ff03c4a2882bca3578edee80901b4289
   file_picker: 1d63c4949e05e386da864365f8c13e1e64787675
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
   flutter_native_splash: 52501b97d1c0a5f898d687f1646226c1f93c56ef

@@ -9,25 +9,17 @@ import WidgetKit
 import SwiftUI
 import Intents
 
-struct Status {
-    let name: String
-    let cpu: String
-    let mem: String
-    let disk: String
-    let net: String
-}
-
-let demoStatus = Status(name: "Server Name", cpu: "31.7%", mem: "1.3g / 1.9g", disk: "7.1g / 30.0g", net: "712.3k / 1.2m")
+let demoStatus = Status(name: "Server", cpu: "31.7%", mem: "1.3g / 1.9g", disk: "7.1g / 30.0g", net: "712.3k / 1.2m")
 let domain = "com.lollipopkit.toolbox"
 var url: String?
 
 struct Provider: IntentTimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), configuration: ConfigurationIntent(), data: demoStatus, state: .normal)
+        SimpleEntry(date: Date(), configuration: ConfigurationIntent(), state: .normal(demoStatus))
     }
 
     func getSnapshot(for configuration: ConfigurationIntent, in context: Context, completion: @escaping (SimpleEntry) -> ()) {
-        let entry = SimpleEntry(date: Date(), configuration: configuration, data: demoStatus, state: .normal)
+        let entry = SimpleEntry(date: Date(), configuration: configuration, state: .normal(demoStatus))
         completion(entry)
     }
 
@@ -43,11 +35,10 @@ struct Provider: IntentTimelineProvider {
                 entry = SimpleEntry(
                     date: currentDate,
                     configuration: configuration,
-                    data: status,
-                    state: .normal
+                    state: .normal(status)
                 )
             case .failure(let err):
-                entry = SimpleEntry(date: currentDate, configuration: configuration, data: demoStatus, state: .error(err.localizedDescription))
+                entry = SimpleEntry(date: currentDate, configuration: configuration, state: .error(err.localizedDescription))
             }
             let timeline = Timeline(entries: [entry], policy: .after(refreshDate))
             completion(timeline)
@@ -58,7 +49,6 @@ struct Provider: IntentTimelineProvider {
 struct SimpleEntry: TimelineEntry {
     let date: Date
     let configuration: ConfigurationIntent
-    let data: Status
     let state: ContentState
 }
 
@@ -71,17 +61,19 @@ struct StatusWidgetEntryView : View {
                 ProgressView().padding()
             case .error(let descriotion):
                 Text(descriotion).padding(.all, 13)
-            case .normal:
-                VStack(alignment: .leading, spacing: 5.7) {
-                    Text(entry.data.name).font(.system(.title3))
+            case .normal(let data):
+                let sumColor: Color = .primary.opacity(0.7)
+                VStack(alignment: .leading, spacing: 3.7) {
+                    Text(data.name).font(.system(.title3, design: .monospaced))
                     Spacer()
-                    DetailItem(icon: "cpu", text: entry.data.cpu, color: .primary.opacity(0.7))
-                    DetailItem(icon: "memorychip", text: entry.data.mem, color: .primary.opacity(0.7))
-                    DetailItem(icon: "externaldrive", text: entry.data.disk, color: .primary.opacity(0.7))
+                    DetailItem(icon: "cpu", text: data.cpu, color: sumColor)
+                    DetailItem(icon: "memorychip", text: data.mem, color: sumColor)
+                    DetailItem(icon: "externaldrive", text: data.disk, color: sumColor)
+                    DetailItem(icon: "network", text: data.net, color: sumColor)
                     Spacer()
-                    DetailItem(icon: "clock", text: date2String(entry.date, dateFormat: "HH:mm"), color: .primary.opacity(0.7))
+                    DetailItem(icon: "clock", text: entry.date.toStr(), color: sumColor)
                 }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .padding()
+                .padding(.all, 17)
         }
     }
 }
@@ -101,28 +93,31 @@ struct StatusWidget: Widget {
 
 struct StatusWidget_Previews: PreviewProvider {
     static var previews: some View {
-        StatusWidgetEntryView(entry: SimpleEntry(date: Date(), configuration: ConfigurationIntent(), data: demoStatus, state: .normal))
+        StatusWidgetEntryView(entry: SimpleEntry(date: Date(), configuration: ConfigurationIntent(), state: .normal(demoStatus)))
             .previewContext(WidgetPreviewContext(family: .systemSmall))
     }
 }
 
 struct StatusLoader {
     static func fetch(completion: @escaping (Result<Status, Error>) -> Void) {
-        if let url = url, url.count < 12 {
-            completion(.failure(NSError(domain: domain, code: 1, userInfo: [NSLocalizedDescriptionKey: "https://github.com/lollipopkit/server_box_monitor/wiki"])))
+        guard let url = url, url.count < 12 else {
+            completion(.failure(NSError(domain: domain, code: 0, userInfo: [NSLocalizedDescriptionKey: "https://github.com/lollipopkit/server_box_monitor/wiki"])))
             return
         }
-        let URL = URL(string: url!)!
-        let task = URLSession.shared.dataTask(with: URL) { (data, response, error) in
+        guard let url = URL(string: url) else {
+            completion(.failure(NSError(domain: domain, code: 1, userInfo: [NSLocalizedDescriptionKey: "url is invalid"])))
+            return
+        }
+        let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
             guard error == nil else {
                 completion(.failure(error!))
                 return
             }
-            guard data != nil else {
+            guard let data = data else {
                 completion(.failure(NSError(domain: domain, code: 2, userInfo: [NSLocalizedDescriptionKey: "empty network data."])))
                 return
             }
-            let result = getStatus(fromData: data!) 
+            let result = getStatus(fromData: data)
             switch result {
             case .success(let status):
                 completion(.success(status))
@@ -182,24 +177,11 @@ struct DetailItem: View {
     let color: Color
     
     var body: some View {
-        HStack(spacing: 5.7) {
+        HStack(spacing: 7.7) {
             Image(systemName: icon).resizable().foregroundColor(color).frame(width: 11, height: 11, alignment: .center)
             Text(text)
-                .font(.system(.caption2))
+                .font(.system(.caption2, design: .monospaced))
                 .foregroundColor(color)
         }
     }
-}
-
-func date2String(_ date:Date, dateFormat:String = "yyyy-MM-dd HH:mm:ss") -> String {
-    let formatter = DateFormatter()
-    formatter.dateFormat = dateFormat
-    let date = formatter.string(from: date)
-    return date
-}
-
-enum ContentState {
-    case loading
-    case error(String)
-    case normal
 }

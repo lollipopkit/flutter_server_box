@@ -65,7 +65,7 @@ struct PageView: View {
                     DetailItem(icon: "memorychip", text: status.mem)
                     DetailItem(icon: "externaldrive", text: status.disk)
                     DetailItem(icon: "network", text: status.net)
-                }.frame(maxWidth: .infinity, maxHeight: .infinity).padding([.horizontal], 7)
+                }.frame(maxWidth: .infinity, maxHeight: .infinity).padding([.horizontal], 11)
             }
         }
     }
@@ -134,18 +134,3 @@ struct DetailItem: View {
         }
     }
 }
-
-enum ContentState {
-    case loading
-    case error(String)
-    case normal(Status)
-}
-
-struct Status {
-    let name: String
-    let cpu: String
-    let mem: String
-    let disk: String
-    let net: String
-}
-
