@@ -29,10 +29,10 @@ packages:
     dependency: "direct main"
     description:
       name: archive
-      sha256: "49b1fad315e57ab0bbc15bcbb874e83116a1d78f77ebd500a4af6c9407d6b28e"
+      sha256: e0902a06f0e00414e4e3438a084580161279f137aeb862274710f29ec10cf01e
       url: "https://pub.dev"
     source: hosted
-    version: "3.3.8"
+    version: "3.3.9"
   args:
     dependency: transitive
     description:
@@ -93,10 +93,10 @@ packages:
     dependency: transitive
     description:
       name: build_resolvers
-      sha256: a7417cc44d9edb3f2c8760000270c99dba8c72ff66d0146772b8326565780745
+      sha256: d912852cce27c9e80a93603db721c267716894462e7033165178b91138587972
       url: "https://pub.dev"
     source: hosted
-    version: "2.3.1"
+    version: "2.3.2"
   build_runner:
     dependency: "direct dev"
     description:
@@ -198,10 +198,10 @@ packages:
     dependency: "direct main"
     description:
       name: countly_flutter
-      sha256: "539bd14dcefc0e41a5ab3bd7a0298b86739bbaeea39d3b42cb3ad6f37e8b8201"
+      sha256: e6fcb88ff1dbfaf94cb73fe052e7cf3bac02b5fb4e7f82efb66874017a9201a1
       url: "https://pub.dev"
     source: hosted
-    version: "23.8.0"
+    version: "23.8.1"
   cross_file:
     dependency: transitive
     description:
@@ -230,10 +230,10 @@ packages:
     dependency: transitive
     description:
       name: dart_style
-      sha256: "1efa911ca7086affd35f463ca2fc1799584fb6aa89883cf0af8e3664d6a02d55"
+      sha256: abd7625e16f51f554ea244d090292945ec4d4be7bfbaf2ec8cccea568919d334
       url: "https://pub.dev"
     source: hosted
-    version: "2.3.2"
+    version: "2.3.3"
   dartssh2:
     dependency: "direct main"
     description:
@@ -254,10 +254,10 @@ packages:
     dependency: "direct main"
     description:
       name: dynamic_color
-      sha256: de4798a7069121aee12d5895315680258415de9b00e717723a1bd73d58f0126d
+      sha256: "96bff3df72e3d428bda2b874c7a521e8c86f592cae626ea594922fcc8d166e0c"
       url: "https://pub.dev"
     source: hosted
-    version: "1.6.6"
+    version: "1.6.7"
   easy_isolate:
     dependency: "direct main"
     description:
@@ -1056,7 +1056,7 @@ packages:
     description:
       path: "."
       ref: master
-      resolved-ref: "56379d77955db89222f00ee18f5cae80b05ec13f"
+      resolved-ref: e3bc722f3a73aad24b314a6a19e43c205b1940e3
       url: "https://github.com/lollipopkit/watch_connectivity"
     source: git
     version: "0.1.5"

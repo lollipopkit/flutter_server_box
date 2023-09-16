@@ -1187,7 +1187,7 @@ class _SettingPageState extends State<SettingPage> {
     final result = await AppRoute.editor(
       text: text,
       langCode: 'json',
-      title: 'Watch app config',
+      title: 'Watch app',
     ).go(context);
     if (result == null) {
       return;

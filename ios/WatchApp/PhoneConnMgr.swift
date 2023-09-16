@@ -31,7 +31,6 @@ class PhoneConnMgr: NSObject, WCSessionDelegate, ObservableObject {
         session?.activate()
         
         ctx = Store.getCtx()
-        print("init", ctx)
     }
  
     func updateUrls(_ val: [String: Any]) {
@@ -47,7 +46,6 @@ class PhoneConnMgr: NSObject, WCSessionDelegate, ObservableObject {
     // implement session:didReceiveApplicationContext:
     func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String : Any]) {
         ctx = applicationContext
-        print("update", ctx)
     }
 }
 
