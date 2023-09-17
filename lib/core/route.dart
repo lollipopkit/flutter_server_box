@@ -9,12 +9,13 @@ import 'package:toolbox/view/page/ping.dart';
 import 'package:toolbox/view/page/private_key/edit.dart';
 import 'package:toolbox/view/page/private_key/list.dart';
 import 'package:toolbox/view/page/server/detail.dart';
+import 'package:toolbox/view/page/setting/android.dart';
+import 'package:toolbox/view/page/setting/ios.dart';
 import 'package:toolbox/view/page/ssh_term.dart';
 import 'package:toolbox/view/page/setting/virt_key.dart';
 import 'package:toolbox/view/page/storage/local.dart';
 
 import '../data/model/server/snippet.dart';
-import '../view/page/convert.dart';
 import '../view/page/debug.dart';
 import '../view/page/editor.dart';
 import '../view/page/full_screen.dart';
@@ -143,10 +144,6 @@ class AppRoute {
     return AppRoute(BackupPage(key: key), 'backup');
   }
 
-  static AppRoute convert({Key? key}) {
-    return AppRoute(ConvertPage(key: key), 'convert');
-  }
-
   static AppRoute debug({Key? key}) {
     return AppRoute(DebugPage(key: key), 'debug');
   }
@@ -191,7 +188,7 @@ class AppRoute {
     return AppRoute(ProcessPage(key: key, spi: spi), 'process');
   }
 
-  static AppRoute setting({Key? key}) {
+  static AppRoute settings({Key? key}) {
     return AppRoute(SettingPage(key: key), 'setting');
   }
 
@@ -201,5 +198,13 @@ class AppRoute {
 
   static AppRoute serverDetailOrder({Key? key}) {
     return AppRoute(ServerDetailOrderPage(key: key), 'server_detail_order');
+  }
+
+  static AppRoute iosSettings({Key? key}) {
+    return AppRoute(IOSSettingsPage(key: key), 'ios_setting');
+  }
+
+  static AppRoute androidSettings({Key? key}) {
+    return AppRoute(AndroidSettingsPage(key: key), 'android_setting');
   }
 }

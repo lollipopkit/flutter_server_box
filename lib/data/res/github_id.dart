@@ -36,5 +36,6 @@ class GithubIds {
     'xgzxmytx',
     'wind057',
     'a1564471347',
+    'fanzhebufan1',
   };
 }

@@ -100,7 +100,7 @@ struct StatusWidget_Previews: PreviewProvider {
 
 struct StatusLoader {
     static func fetch(completion: @escaping (Result<Status, Error>) -> Void) {
-        guard let url = url, url.count < 12 else {
+        guard let url = url, url.count >= 12 else {
             completion(.failure(NSError(domain: domain, code: 0, userInfo: [NSLocalizedDescriptionKey: "https://github.com/lollipopkit/server_box_monitor/wiki"])))
             return
         }
@@ -109,7 +109,7 @@ struct StatusLoader {
             return
         }
         let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
-            guard error == nil else {
+            if error != nil {
                 completion(.failure(error!))
                 return
             }
@@ -117,8 +117,7 @@ struct StatusLoader {
                 completion(.failure(NSError(domain: domain, code: 2, userInfo: [NSLocalizedDescriptionKey: "empty network data."])))
                 return
             }
-            let result = getStatus(fromData: data)
-            switch result {
+            switch getStatus(fromData: data) {
             case .success(let status):
                 completion(.success(status))
             case .failure(let error):
@@ -129,46 +128,24 @@ struct StatusLoader {
     }
 
     static func getStatus(fromData data: Foundation.Data) -> Result<Status, Error> {
-        let jsonAll = try! JSONSerialization.jsonObject(with: data, options: []) as! [String: Any]
-        let code = jsonAll["code"] as! Int
+        let jsonAll = try! JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] ?? [:]
+        let code = jsonAll["code"] as? Int ?? 1
         if (code != 0) {
             switch (code) {
             default:
-                let msg = jsonAll["msg"] as! String? ?? ""
+                let msg = jsonAll["msg"] as? String ?? ""
                 return .failure(NSError(domain: domain, code: code, userInfo: [NSLocalizedDescriptionKey: msg]))
             }
         }
 
-        let json = jsonAll["data"] as! [String: Any]
-        let name = json["name"] as! String
-        let disk = json["disk"] as! String
-        let cpu = json["cpu"] as! String
-        let mem = json["mem"] as! String
-        let net = json["net"] as! String
+        let json = jsonAll["data"] as? [String: Any] ?? [:]
+        let name = json["name"] as? String ?? ""
+        let disk = json["disk"] as? String ?? ""
+        let cpu = json["cpu"] as? String ?? ""
+        let mem = json["mem"] as? String ?? ""
+        let net = json["net"] as? String ?? ""
         return .success(Status(name: name, cpu: cpu, mem: mem, disk: disk, net: net))
     }
-}
-
-private func dynamicUIColor(color: DynamicColor) -> UIColor {
-    if #available(iOS 13, *) {  // 版本号大于等于13
-  return UIColor { (traitCollection: UITraitCollection) -> UIColor in
-    return traitCollection.userInterfaceStyle == UIUserInterfaceStyle.dark ?
-      color.dark : color.light
-  }
-}
-    return color.light
-}
-
-struct DynamicColor {
-    let dark: UIColor
-    let light: UIColor
-}
-
-let bgColor = DynamicColor(dark: UIColor(.black), light: UIColor(.white))
-let textColor = DynamicColor(dark: UIColor(.white), light: UIColor(.black))
-
-private func dynamicColor(color: DynamicColor) -> Color {
-    return Color.init(dynamicUIColor(color: color))
 }
 
 struct DetailItem: View {
@@ -177,10 +154,10 @@ struct DetailItem: View {
     let color: Color
     
     var body: some View {
-        HStack(spacing: 7.7) {
+        HStack(spacing: 6.7) {
             Image(systemName: icon).resizable().foregroundColor(color).frame(width: 11, height: 11, alignment: .center)
             Text(text)
-                .font(.system(.caption2, design: .monospaced))
+                .font(.system(size: 11, design: .monospaced))
                 .foregroundColor(color)
         }
     }

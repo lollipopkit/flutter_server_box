@@ -233,7 +233,7 @@ class _HomePageState extends State<HomePage>
           ListTile(
             leading: const Icon(Icons.settings),
             title: Text(_s.setting),
-            onTap: () => AppRoute.setting().go(context),
+            onTap: () => AppRoute.settings().go(context),
             onLongPress: _onLongPressSetting,
           ),
           ListTile(
@@ -245,11 +245,6 @@ class _HomePageState extends State<HomePage>
             leading: const Icon(Icons.file_open),
             title: Text(_s.files),
             onTap: () => AppRoute.localStorage().go(context),
-          ),
-          ListTile(
-            leading: const Icon(Icons.code),
-            title: Text(_s.convert),
-            onTap: () => AppRoute.convert().go(context),
           ),
           ListTile(
             leading: const Icon(Icons.import_export),

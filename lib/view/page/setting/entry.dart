@@ -1,12 +1,9 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:toolbox/core/build_mode.dart';
 import 'package:toolbox/core/extension/colorx.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
@@ -15,11 +12,8 @@ import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/utils/platform/auth.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
-import 'package:toolbox/data/res/logger.dart';
-import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:watch_connectivity/watch_connectivity.dart';
 
 import '../../../core/persistant_store.dart';
 import '../../../core/route.dart';
@@ -59,9 +53,6 @@ class _SettingPageState extends State<SettingPage> {
   final _setting = Stores.setting;
 
   late S _s;
-  late SharedPreferences _sp;
-
-  final wc = WatchConnectivity();
 
   final _selectedColorValue = ValueNotifier(0);
   final _nightMode = ValueNotifier(0);
@@ -75,7 +66,6 @@ class _SettingPageState extends State<SettingPage> {
   final _keyboardType = ValueNotifier(0);
   final _rotateQuarter = ValueNotifier(0);
   final _netViewType = ValueNotifier(NetViewType.speed);
-  final _pushToken = ValueNotifier<String?>(null);
 
   @override
   void didChangeDependencies() {
@@ -103,7 +93,6 @@ class _SettingPageState extends State<SettingPage> {
     _keyboardType.value = _setting.keyboardType.fetch();
     _rotateQuarter.value = _setting.fullScreenRotateQuarter.fetch();
     _netViewType.value = _setting.netViewType.fetch();
-    SharedPreferences.getInstance().then((value) => _sp = value);
   }
 
   @override
@@ -112,8 +101,8 @@ class _SettingPageState extends State<SettingPage> {
       appBar: CustomAppBar(
         title: Text(_s.setting),
         actions: [
-          InkWell(
-            onTap: () => context.showRoundDialog(
+          IconButton(
+            onPressed: () => context.showRoundDialog(
               title: Text(_s.attention),
               child: Text(_s.sureDelete(_s.all)),
               actions: [
@@ -127,26 +116,26 @@ class _SettingPageState extends State<SettingPage> {
                 ),
               ],
             ),
-            onDoubleTap: () => context.showRoundDialog(
-              title: Text(_s.attention),
-              child: Text(_s.sureDelete(_s.all)),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Stores.docker.box.deleteFromDisk();
-                    Stores.server.box.deleteFromDisk();
-                    Stores.setting.box.deleteFromDisk();
-                    Stores.history.box.deleteFromDisk();
-                    Stores.snippet.box.deleteFromDisk();
-                    Stores.key.box.deleteFromDisk();
-                    context.pop();
-                    context.showSnackBar(_s.success);
-                  },
-                  child: Text(_s.ok, style: const TextStyle(color: Colors.red)),
-                ),
-              ],
-            ),
-            child: const Icon(Icons.delete),
+            // onDoubleTap: () => context.showRoundDialog(
+            //   title: Text(_s.attention),
+            //   child: Text(_s.sureDelete(_s.all)),
+            //   actions: [
+            //     TextButton(
+            //       onPressed: () {
+            //         Stores.docker.box.deleteFromDisk();
+            //         Stores.server.box.deleteFromDisk();
+            //         Stores.setting.box.deleteFromDisk();
+            //         Stores.history.box.deleteFromDisk();
+            //         Stores.snippet.box.deleteFromDisk();
+            //         Stores.key.box.deleteFromDisk();
+            //         context.pop();
+            //         context.showSnackBar(_s.success);
+            //       },
+            //       child: Text(_s.ok, style: const TextStyle(color: Colors.red)),
+            //     ),
+            //   ],
+            // ),
+            icon: const Icon(Icons.delete),
           ),
         ],
       ),
@@ -189,17 +178,12 @@ class _SettingPageState extends State<SettingPage> {
       //_buildLaunchPage(),
       _buildCheckUpdate(),
     ];
-    if (isAndroid) {
-      children.add(_buildBgRun());
-      children.add(_buildAndroidWidgetSharedPreference());
-    }
     if (BioAuth.isPlatformSupported) {
       children.add(_buildBioAuth());
     }
-    if (isIOS) {
-      if (BuildMode.isRelease) children.add(_buildPushToken());
-      children.add(_buildAutoUpdateHomeWidget());
-      children.add(_buildWatchApp());
+    /// Platform specific settings
+    if (platform.hasSettings) {
+      children.add(_buildPlatformSetting(platform));
     }
     return Column(
       children: children.map((e) => RoundRectCard(e)).toList(),
@@ -221,7 +205,6 @@ class _SettingPageState extends State<SettingPage> {
       children: [
         _buildMoveOutServerFuncBtns(),
         _buildServerOrder(),
-        _buildServerDetailOrder(),
         _buildNetViewType(),
         _buildUpdateInterval(),
         _buildMaxRetry(),
@@ -523,42 +506,6 @@ class _SettingPageState extends State<SettingPage> {
     }
   }
 
-  Widget _buildPushToken() {
-    return ListTile(
-      title: Text(
-        _s.pushToken,
-      ),
-      trailing: IconButton(
-        icon: const Icon(Icons.copy),
-        alignment: Alignment.centerRight,
-        padding: EdgeInsets.zero,
-        onPressed: () {
-          if (_pushToken.value != null) {
-            copy2Clipboard(_pushToken.value!);
-            context.showSnackBar(_s.success);
-          } else {
-            context.showSnackBar(_s.getPushTokenFailed);
-          }
-        },
-      ),
-      subtitle: FutureWidget<String?>(
-        future: getToken(),
-        loading: Text(_s.gettingToken),
-        error: (error, trace) => Text('${_s.error}: $error'),
-        noData: Text(_s.nullToken),
-        success: (text) {
-          _pushToken.value = text;
-          return Text(
-            text ?? _s.nullToken,
-            style: UIs.textGrey,
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          );
-        },
-      ),
-    );
-  }
-
   Widget _buildFont() {
     final fontName = getFileName(_setting.fontPath.fetch());
     return ListTile(
@@ -610,13 +557,6 @@ class _SettingPageState extends State<SettingPage> {
       return;
     }
     context.showSnackBar(_s.failed);
-  }
-
-  Widget _buildBgRun() {
-    return ListTile(
-      title: Text(_s.bgRun),
-      trailing: StoreSwitch(prop: _setting.bgRun),
-    );
   }
 
   Widget _buildTermFontSize() {
@@ -891,59 +831,6 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  void _saveWidgetSP(String data, Map<String, String> old) {
-    context.pop();
-    try {
-      final map = Map<String, String>.from(json.decode(data));
-      final keysDel = old.keys.toSet().difference(map.keys.toSet());
-      for (final key in keysDel) {
-        _sp.remove(key);
-      }
-      map.forEach((key, value) {
-        _sp.setString(key, value);
-      });
-      context.showSnackBar(_s.success);
-    } catch (e) {
-      context.showSnackBar(e.toString());
-    }
-  }
-
-  Widget _buildAndroidWidgetSharedPreference() {
-    return ListTile(
-      title: Text(_s.homeWidgetUrlConfig),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () {
-        final data = <String, String>{};
-        _sp.getKeys().forEach((key) {
-          final val = _sp.getString(key);
-          if (val != null) {
-            data[key] = val;
-          }
-        });
-        final ctrl = TextEditingController(text: json.encode(data));
-        context.showRoundDialog(
-          title: Text(_s.homeWidgetUrlConfig),
-          child: Input(
-            autoFocus: true,
-            controller: ctrl,
-            label: 'JSON',
-            type: TextInputType.visiblePassword,
-            maxLines: 7,
-            onSubmitted: (p0) => _saveWidgetSP(p0, data),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                _saveWidgetSP(ctrl.text, data);
-              },
-              child: Text(_s.ok),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   Widget _buildNetViewType() {
     final items = NetViewType.values
         .map((e) => PopupMenuItem(
@@ -972,14 +859,6 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () {
         _netViewTypeKey.currentState?.showButtonMenu();
       },
-    );
-  }
-
-  Widget _buildAutoUpdateHomeWidget() {
-    return ListTile(
-      title: Text(_s.autoUpdateHomeWidget),
-      subtitle: Text(_s.whenOpenApp, style: UIs.textGrey),
-      trailing: StoreSwitch(prop: _setting.autoUpdateHomeWidget),
     );
   }
 
@@ -1027,16 +906,27 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildServerOrder() {
     return ListTile(
       title: Text(_s.serverOrder),
+      subtitle: Text('${_s.serverOrder} / ${_s.serverDetailOrder}',
+          style: UIs.textGrey),
       trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => AppRoute.serverOrder().go(context),
-    );
-  }
-
-  Widget _buildServerDetailOrder() {
-    return ListTile(
-      title: Text(_s.serverDetailOrder),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => AppRoute.serverDetailOrder().go(context),
+      onTap: () => context.showRoundDialog(
+        title: Text(_s.choose),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: Text(_s.serverOrder),
+              trailing: const Icon(Icons.keyboard_arrow_right),
+              onTap: () => AppRoute.serverOrder().go(context),
+            ),
+            ListTile(
+              title: Text(_s.serverDetailOrder),
+              trailing: const Icon(Icons.keyboard_arrow_right),
+              onTap: () => AppRoute.serverDetailOrder().go(context),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1148,59 +1038,22 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  Widget _buildWatchApp() {
-    return FutureWidget<Map<String, dynamic>?>(
-      future: () async {
-        if (!await wc.isPaired) {
-          return null;
+  Widget _buildPlatformSetting(PlatformType type) {
+    return ListTile(
+      title: Text('${type.prettyName} ${_s.setting}'),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: () {
+        switch (type) {
+          case PlatformType.android:
+            AppRoute.androidSettings().go(context);
+            break;
+          case PlatformType.ios:
+            AppRoute.iosSettings().go(context);
+            break;
+          default:
+            break;
         }
-        return await wc.applicationContext;
-      }(),
-      loading: UIs.centerLoading,
-      error: (e, trace) {
-        Loggers.app.warning('WatchOS error', e, trace);
-        return ListTile(
-          title: const Text('Watch app'),
-          subtitle: Text('${_s.error}: $e', style: UIs.textGrey),
-        );
       },
-      success: (ctx) {
-        if (ctx == null) {
-          return ListTile(
-            title: const Text('Watch app'),
-            subtitle: Text(_s.watchNotPaired, style: UIs.textGrey),
-          );
-        }
-        return ListTile(
-          title: const Text('Watch app'),
-          trailing: const Icon(Icons.keyboard_arrow_right),
-          onTap: () async => _onTapWatchApp(ctx),
-        );
-      },
-      noData: UIs.placeholder,
     );
-  }
-
-  void _onTapWatchApp(Map<String, dynamic> map) async {
-    /// Encode [map] to String with indent `\t`
-    final text = Miscs.jsonEncoder.convert(map);
-    final result = await AppRoute.editor(
-      text: text,
-      langCode: 'json',
-      title: 'Watch app',
-    ).go(context);
-    if (result == null) {
-      return;
-    }
-    try {
-      final newCtx = json.decode(result) as Map<String, dynamic>;
-      await wc.updateApplicationContext(newCtx);
-    } catch (e, trace) {
-      context.showRoundDialog(
-        title: Text(_s.error),
-        child: Text('${_s.save}:\n$e'),
-      );
-      Loggers.app.warning('Update watch config failed', e, trace);
-    }
   }
 }

@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "E39515C62AB5AD62003602C1"
-               BuildableName = "WatchApp.app"
+               BuildableName = "ServerBox.app"
                BlueprintName = "WatchApp"
                ReferencedContainer = "container:Runner.xcodeproj">
             </BuildableReference>
@@ -58,7 +58,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "E39515C62AB5AD62003602C1"
-            BuildableName = "WatchApp.app"
+            BuildableName = "ServerBox.app"
             BlueprintName = "WatchApp"
             ReferencedContainer = "container:Runner.xcodeproj">
          </BuildableReference>
@@ -75,7 +75,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "E39515C62AB5AD62003602C1"
-            BuildableName = "WatchApp.app"
+            BuildableName = "ServerBox.app"
             BlueprintName = "WatchApp"
             ReferencedContainer = "container:Runner.xcodeproj">
          </BuildableReference>

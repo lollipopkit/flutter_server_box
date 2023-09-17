@@ -50,7 +50,7 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
           property: Stores.setting.detailCardOrder,
         );
       }),
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      padding: const EdgeInsets.all(17),
       buildDefaultDragHandles: false,
       itemBuilder: (_, index) => _buildItem(index, _cardsOrder[index]),
       itemCount: _cardsOrder.length,

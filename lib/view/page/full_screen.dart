@@ -120,7 +120,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
 
   Widget _buildSettingBtn() {
     return IconButton(
-        onPressed: () => AppRoute.setting().go(context),
+        onPressed: () => AppRoute.settings().go(context),
         icon: const Icon(Icons.settings, color: Colors.grey));
   }
 

@@ -11,6 +11,38 @@ enum PlatformType {
   web,
   fuchsia,
   unknown;
+
+  String get prettyName {
+    switch (this) {
+      case PlatformType.android:
+        return 'Android';
+      case PlatformType.ios:
+        return 'iOS';
+      case PlatformType.linux:
+        return 'Linux';
+      case PlatformType.macos:
+        return 'macOS';
+      case PlatformType.windows:
+        return 'Windows';
+      case PlatformType.web:
+        return 'Web';
+      case PlatformType.fuchsia:
+        return 'Fuchsia';
+      case PlatformType.unknown:
+        return 'Unknown';
+    }
+  }
+
+  /// Whether has platform specific settings.
+  bool get hasSettings {
+    switch (this) {
+      case PlatformType.android:
+      case PlatformType.ios:
+        return true;
+      default:
+        return false;
+    }
+  }
 }
 
 final _p = () {

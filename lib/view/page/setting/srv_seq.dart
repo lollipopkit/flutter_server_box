@@ -34,6 +34,9 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
   }
 
   Widget _buildBody() {
+    if (Providers.server.serverOrder.isEmpty) {
+      return Center(child: Text(_s.noServerAvailable));
+    }
     return ReorderableListView.builder(
       footer: const SizedBox(height: 77),
       onReorder: (oldIndex, newIndex) => setState(() {
