@@ -112,12 +112,12 @@ class AppUpdatePlatformSpecific<T> {
       };
 
   T? get current {
-    switch (platform) {
-      case PlatformType.macos:
+    switch (OS.type) {
+      case OS.macos:
         return mac;
-      case PlatformType.ios:
+      case OS.ios:
         return ios;
-      case PlatformType.android:
+      case OS.android:
         return android;
       default:
         return null;

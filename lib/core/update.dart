@@ -35,7 +35,7 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
 
   final newest = update.build.last.current;
   if (newest == null) {
-    Loggers.app.warning('Update not available on $platform');
+    Loggers.app.warning('Update not available on ${OS.type}');
     return;
   }
 

@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
-enum PlatformType {
+enum OS {
   android,
   ios,
   linux,
@@ -12,32 +12,60 @@ enum PlatformType {
   fuchsia,
   unknown;
 
-  String get prettyName {
+  static final _os = () {
+    if (kIsWeb) {
+      return OS.web;
+    }
+    if (Platform.isAndroid) {
+      return OS.android;
+    }
+    if (Platform.isIOS) {
+      return OS.ios;
+    }
+    if (Platform.isLinux) {
+      return OS.linux;
+    }
+    if (Platform.isMacOS) {
+      return OS.macos;
+    }
+    if (Platform.isWindows) {
+      return OS.windows;
+    }
+    if (Platform.isFuchsia) {
+      return OS.fuchsia;
+    }
+    return OS.unknown;
+  }();
+
+  static OS get type => _os;
+
+  @override
+  String toString() {
     switch (this) {
-      case PlatformType.android:
+      case OS.android:
         return 'Android';
-      case PlatformType.ios:
+      case OS.ios:
         return 'iOS';
-      case PlatformType.linux:
+      case OS.linux:
         return 'Linux';
-      case PlatformType.macos:
+      case OS.macos:
         return 'macOS';
-      case PlatformType.windows:
+      case OS.windows:
         return 'Windows';
-      case PlatformType.web:
+      case OS.web:
         return 'Web';
-      case PlatformType.fuchsia:
+      case OS.fuchsia:
         return 'Fuchsia';
-      case PlatformType.unknown:
+      case OS.unknown:
         return 'Unknown';
     }
   }
 
   /// Whether has platform specific settings.
-  bool get hasSettings {
-    switch (this) {
-      case PlatformType.android:
-      case PlatformType.ios:
+  static bool get hasSettings {
+    switch (type) {
+      case OS.android:
+      case OS.ios:
         return true;
       default:
         return false;
@@ -45,41 +73,16 @@ enum PlatformType {
   }
 }
 
-final _p = () {
-  if (kIsWeb) {
-    return PlatformType.web;
-  }
-  if (Platform.isAndroid) {
-    return PlatformType.android;
-  }
-  if (Platform.isIOS) {
-    return PlatformType.ios;
-  }
-  if (Platform.isLinux) {
-    return PlatformType.linux;
-  }
-  if (Platform.isMacOS) {
-    return PlatformType.macos;
-  }
-  if (Platform.isWindows) {
-    return PlatformType.windows;
-  }
-  if (Platform.isFuchsia) {
-    return PlatformType.fuchsia;
-  }
-  return PlatformType.unknown;
-}();
-
-PlatformType get platform => _p;
-
-bool get isAndroid => _p == PlatformType.android;
-bool get isIOS => _p == PlatformType.ios;
-bool get isLinux => _p == PlatformType.linux;
-bool get isMacOS => _p == PlatformType.macos;
-bool get isWindows => _p == PlatformType.windows;
-bool get isWeb => _p == PlatformType.web;
-bool get isMobile => _p == PlatformType.ios || _p == PlatformType.android;
+bool get isAndroid => OS.type == OS.android;
+bool get isIOS => OS.type == OS.ios;
+bool get isLinux => OS.type == OS.linux;
+bool get isMacOS => OS.type == OS.macos;
+bool get isWindows => OS.type == OS.windows;
+bool get isWeb => OS.type == OS.web;
+bool get isMobile =>
+    OS.type == OS.ios ||
+    OS.type == OS.android;
 bool get isDesktop =>
-    _p == PlatformType.linux ||
-    _p == PlatformType.macos ||
-    _p == PlatformType.windows;
+    OS.type == OS.linux ||
+    OS.type == OS.macos ||
+    OS.type == OS.windows;

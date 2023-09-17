@@ -388,7 +388,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildNetSpeedTop() {
-    const icon = Icon(Icons.arrow_downward, size: 17);
+    const icon = Icon(Icons.arrow_downward, size: 13);
     return Padding(
       padding: const EdgeInsets.only(bottom: 3),
       child: Row(

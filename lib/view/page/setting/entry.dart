@@ -181,9 +181,10 @@ class _SettingPageState extends State<SettingPage> {
     if (BioAuth.isPlatformSupported) {
       children.add(_buildBioAuth());
     }
+
     /// Platform specific settings
-    if (platform.hasSettings) {
-      children.add(_buildPlatformSetting(platform));
+    if (OS.hasSettings) {
+      children.add(_buildPlatformSetting());
     }
     return Column(
       children: children.map((e) => RoundRectCard(e)).toList(),
@@ -1038,16 +1039,16 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  Widget _buildPlatformSetting(PlatformType type) {
+  Widget _buildPlatformSetting() {
     return ListTile(
-      title: Text('${type.prettyName} ${_s.setting}'),
+      title: Text('${OS.type} ${_s.setting}'),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () {
-        switch (type) {
-          case PlatformType.android:
+        switch (OS.type) {
+          case OS.android:
             AppRoute.androidSettings().go(context);
             break;
-          case PlatformType.ios:
+          case OS.ios:
             AppRoute.iosSettings().go(context);
             break;
           default:
