@@ -20,15 +20,15 @@
 		E33A3E452A626DD0009744AB /* StatusWidget.intentdefinition in Sources */ = {isa = PBXBuildFile; fileRef = E33A3E412A626DCE009744AB /* StatusWidget.intentdefinition */; };
 		E33A3E462A626DD0009744AB /* StatusWidget.intentdefinition in Sources */ = {isa = PBXBuildFile; fileRef = E33A3E412A626DCE009744AB /* StatusWidget.intentdefinition */; };
 		E33A3E492A626DD0009744AB /* StatusWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E33A3E352A626DCD009744AB /* StatusWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		E39515C02AB5AC85003602C1 /* Info-Release.plist in Resources */ = {isa = PBXBuildFile; fileRef = E39515BD2AB5AC85003602C1 /* Info-Release.plist */; };
-		E39515C12AB5AC85003602C1 /* Info-Debug.plist in Resources */ = {isa = PBXBuildFile; fileRef = E39515BE2AB5AC85003602C1 /* Info-Debug.plist */; };
-		E39515C22AB5AC85003602C1 /* Info-Profile.plist in Resources */ = {isa = PBXBuildFile; fileRef = E39515BF2AB5AC85003602C1 /* Info-Profile.plist */; };
 		E39515CA2AB5AD62003602C1 /* WatchEndApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E39515C92AB5AD62003602C1 /* WatchEndApp.swift */; };
 		E39515CC2AB5AD62003602C1 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E39515CB2AB5AD62003602C1 /* ContentView.swift */; };
 		E39515D42AB5AD64003602C1 /* ServerBox.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = E39515C72AB5AD62003602C1 /* ServerBox.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		E39515DB2AB5AE7F003602C1 /* PhoneConnMgr.swift in Sources */ = {isa = PBXBuildFile; fileRef = E39515DA2AB5AE7F003602C1 /* PhoneConnMgr.swift */; };
 		E39515DD2AB5AE9E003602C1 /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = E39515DC2AB5AE9E003602C1 /* Store.swift */; };
 		E39515E02AB5CF97003602C1 /* Watch.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E39515DF2AB5CF97003602C1 /* Watch.xcassets */; };
+		E39A76AE2AB9A2F70067C641 /* Info-Debug.plist in Resources */ = {isa = PBXBuildFile; fileRef = E39A76AB2AB9A2F70067C641 /* Info-Debug.plist */; };
+		E39A76AF2AB9A2F70067C641 /* Info-Release.plist in Resources */ = {isa = PBXBuildFile; fileRef = E39A76AC2AB9A2F70067C641 /* Info-Release.plist */; };
+		E39A76B02AB9A2F70067C641 /* Info-Profile.plist in Resources */ = {isa = PBXBuildFile; fileRef = E39A76AD2AB9A2F70067C641 /* Info-Profile.plist */; };
 		E3AE8AEA2AB601DB000A6459 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3AE8AE92AB601DB000A6459 /* Utils.swift */; };
 		E3AE8AEB2AB601DB000A6459 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3AE8AE92AB601DB000A6459 /* Utils.swift */; };
 		E3AE8AEC2AB601DB000A6459 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3AE8AE92AB601DB000A6459 /* Utils.swift */; };
@@ -110,9 +110,6 @@
 		E33A3E3F2A626DCE009744AB /* StatusWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusWidget.swift; sourceTree = "<group>"; };
 		E33A3E412A626DCE009744AB /* StatusWidget.intentdefinition */ = {isa = PBXFileReference; lastKnownFileType = file.intentdefinition; path = StatusWidget.intentdefinition; sourceTree = "<group>"; };
 		E33A3E442A626DD0009744AB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		E39515BD2AB5AC85003602C1 /* Info-Release.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "Info-Release.plist"; path = "../../../server_box_bak/ios/Runner/Info-Release.plist"; sourceTree = "<group>"; };
-		E39515BE2AB5AC85003602C1 /* Info-Debug.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "Info-Debug.plist"; path = "../../../server_box_bak/ios/Runner/Info-Debug.plist"; sourceTree = "<group>"; };
-		E39515BF2AB5AC85003602C1 /* Info-Profile.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "Info-Profile.plist"; path = "../../../server_box_bak/ios/Runner/Info-Profile.plist"; sourceTree = "<group>"; };
 		E39515C72AB5AD62003602C1 /* ServerBox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ServerBox.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E39515C92AB5AD62003602C1 /* WatchEndApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchEndApp.swift; sourceTree = "<group>"; };
 		E39515CB2AB5AD62003602C1 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -120,6 +117,9 @@
 		E39515DC2AB5AE9E003602C1 /* Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
 		E39515DF2AB5CF97003602C1 /* Watch.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Watch.xcassets; sourceTree = "<group>"; };
 		E398BF6A29BDB34500FE4FD5 /* Runner.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
+		E39A76AB2AB9A2F70067C641 /* Info-Debug.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Info-Debug.plist"; sourceTree = "<group>"; };
+		E39A76AC2AB9A2F70067C641 /* Info-Release.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Info-Release.plist"; sourceTree = "<group>"; };
+		E39A76AD2AB9A2F70067C641 /* Info-Profile.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Info-Profile.plist"; sourceTree = "<group>"; };
 		E3AE8AE92AB601DB000A6459 /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
 		E3DB67EC2A31FE200027B8CB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -202,10 +202,10 @@
 				E398BF6A29BDB34500FE4FD5 /* Runner.entitlements */,
 				97C146FA1CF9000F007C117D /* Main.storyboard */,
 				97C146FD1CF9000F007C117D /* Assets.xcassets */,
-				E39515BE2AB5AC85003602C1 /* Info-Debug.plist */,
-				E39515BF2AB5AC85003602C1 /* Info-Profile.plist */,
-				E39515BD2AB5AC85003602C1 /* Info-Release.plist */,
 				E3DB67EB2A31FE200027B8CB /* LaunchScreen.storyboard */,
+				E39A76AB2AB9A2F70067C641 /* Info-Debug.plist */,
+				E39A76AD2AB9A2F70067C641 /* Info-Profile.plist */,
+				E39A76AC2AB9A2F70067C641 /* Info-Release.plist */,
 				1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */,
 				1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */,
 				E3AE8AE92AB601DB000A6459 /* Utils.swift */,
@@ -261,10 +261,10 @@
 				97C146EB1CF9000F007C117D /* Frameworks */,
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
-				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				AA0A1FF2F3246F84EB0D91F2 /* [CP] Embed Pods Frameworks */,
 				E33A3E4A2A626DD0009744AB /* Embed Foundation Extensions */,
 				E39515D52AB5AD64003602C1 /* Embed Watch Content */,
+				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 			);
 			buildRules = (
 			);
@@ -359,11 +359,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */,
-				E39515C02AB5AC85003602C1 /* Info-Release.plist in Resources */,
 				E3DB67ED2A31FE200027B8CB /* LaunchScreen.storyboard in Resources */,
+				E39A76AF2AB9A2F70067C641 /* Info-Release.plist in Resources */,
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
-				E39515C12AB5AC85003602C1 /* Info-Debug.plist in Resources */,
-				E39515C22AB5AC85003602C1 /* Info-Profile.plist in Resources */,
+				E39A76AE2AB9A2F70067C641 /* Info-Debug.plist in Resources */,
+				E39A76B02AB9A2F70067C641 /* Info-Profile.plist in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -586,15 +586,17 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
-				CURRENT_PROJECT_VERSION = 563;
+				CURRENT_PROJECT_VERSION = 565;
 				DEVELOPMENT_TEAM = BA88US33G6;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "Runner/Info-$(CONFIGURATION).plist";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.563;
+				MARKETING_VERSION = 1.0.565;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
@@ -718,15 +720,17 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
-				CURRENT_PROJECT_VERSION = 563;
+				CURRENT_PROJECT_VERSION = 565;
 				DEVELOPMENT_TEAM = BA88US33G6;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "Runner/Info-$(CONFIGURATION).plist";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.563;
+				MARKETING_VERSION = 1.0.565;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
@@ -744,15 +748,17 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
-				CURRENT_PROJECT_VERSION = 563;
+				CURRENT_PROJECT_VERSION = 565;
 				DEVELOPMENT_TEAM = BA88US33G6;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "Runner/Info-$(CONFIGURATION).plist";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.563;
+				MARKETING_VERSION = 1.0.565;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
@@ -773,7 +779,7 @@
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 563;
+				CURRENT_PROJECT_VERSION = 565;
 				DEVELOPMENT_TEAM = BA88US33G6;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -786,7 +792,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.563;
+				MARKETING_VERSION = 1.0.565;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox.StatusWidget;
@@ -812,7 +818,7 @@
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 563;
+				CURRENT_PROJECT_VERSION = 565;
 				DEVELOPMENT_TEAM = BA88US33G6;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -825,7 +831,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.563;
+				MARKETING_VERSION = 1.0.565;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox.StatusWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -848,7 +854,7 @@
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 563;
+				CURRENT_PROJECT_VERSION = 565;
 				DEVELOPMENT_TEAM = BA88US33G6;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -861,7 +867,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.563;
+				MARKETING_VERSION = 1.0.565;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox.StatusWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -884,7 +890,7 @@
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 563;
+				CURRENT_PROJECT_VERSION = 565;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = BA88US33G6;
 				ENABLE_PREVIEWS = YES;
@@ -896,7 +902,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.563;
+				MARKETING_VERSION = 1.0.565;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox.WatchEnd;
@@ -925,7 +931,7 @@
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 563;
+				CURRENT_PROJECT_VERSION = 565;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = BA88US33G6;
 				ENABLE_PREVIEWS = YES;
@@ -937,7 +943,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.563;
+				MARKETING_VERSION = 1.0.565;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox.WatchEnd;
 				PRODUCT_NAME = ServerBox;
@@ -963,7 +969,7 @@
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 563;
+				CURRENT_PROJECT_VERSION = 565;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = BA88US33G6;
 				ENABLE_PREVIEWS = YES;
@@ -975,7 +981,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.563;
+				MARKETING_VERSION = 1.0.565;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox.WatchEnd;
 				PRODUCT_NAME = ServerBox;
