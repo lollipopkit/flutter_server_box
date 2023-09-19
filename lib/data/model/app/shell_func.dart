@@ -58,7 +58,7 @@ enum AppShellFuncType {
     switch (this) {
       case AppShellFuncType.status:
         return '''
-if [ "\$isLinux" != "" ]; then
+if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 \t${_statusCmds.join(_cmdDivider)}
 else
 \t${_bsdStatusCmd.join(_cmdDivider)}
@@ -73,7 +73,7 @@ else
 fi''';
       case AppShellFuncType.process:
         return '''
-if [ "\$isLinux" != "" ]; then
+if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 \tif [ "\$isBusybox" != "" ]; then
 \t\tps w
 \telse
@@ -106,7 +106,7 @@ fi''';
     for (final func in values) {
       sb.write('''
 ${func.name}() {
-${func.cmd}
+${func.cmd.split('\n').map((e) => '\t$e').join('\n')}
 }
 
 ''');
@@ -214,22 +214,27 @@ const _bsdStatusCmd = [
 
 final _shellCmd = """
 #!/bin/sh
-#
 # Script for ServerBox app v1.0.${BuildData.build}
-#
 # DO NOT delete this file while app is running
-# DO NOT run multi ServerBox apps with different version at the same time
 
 export LANG=en_US.UTF-8
 
-isLinux=\$(uname 2>&1 | grep "Linux")
+# If macSign & bsdSign are both empty, then it's linux
+macSign=\$(uname 2>&1 | grep "Darwin")
+bsdSign=\$(uname 2>&1 | grep "BSD")
+
 # Link /bin/sh to busybox?
 isBusybox=\$(ls -l /bin/sh | grep "busybox")
+
 userId=\$(id -u)
 
 ${AppShellFuncType.shellScript}
 """;
 
-final installShellCmd = "mkdir -p $_serverBoxDir && "
-    "echo '$_shellCmd' > $_shellPath && "
-    "chmod +x $_shellPath";
+final installShellCmd = """
+mkdir -p $_serverBoxDir
+cat << 'EOF' > $_shellPath
+$_shellCmd
+EOF
+chmod +x $_shellPath
+""";

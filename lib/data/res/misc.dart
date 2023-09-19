@@ -12,7 +12,7 @@ class Miscs {
   /// Private Key max allowed size is 20kb
   static const privateKeyMaxSize = 20 * 1024;
 
-// Editor max allowed size is 1mb
+  /// Editor max allowed size is 1mb
   static const editorMaxSize = 1024 * 1024;
 
   /// Max debug log lines

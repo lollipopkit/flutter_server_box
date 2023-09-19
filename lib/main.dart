@@ -114,18 +114,9 @@ Future<void> _initHive() async {
 void _setupLogger() {
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
-    var str = '[${record.loggerName}][${record.level.name}]: ${record.message}';
-    Providers.debug.addText(str);
-    if (record.error != null) {
-      str += '\n${record.error}';
-      Providers.debug.addMultiline(record.error.toString(), Colors.red);
-    }
-    if (record.stackTrace != null) {
-      str += '\n${record.stackTrace}';
-      Providers.debug.addMultiline(record.stackTrace.toString(), Colors.white);
-    }
+    Providers.debug.addLog(record);
     // ignore: avoid_print
-    print(str);
+    print(record);
   });
 }
 
