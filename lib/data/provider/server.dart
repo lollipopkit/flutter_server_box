@@ -104,7 +104,15 @@ class ServerProvider extends ChangeNotifier {
         if (s.state != ServerState.failed) return;
         _limiter.reset(s.spi.id);
       }
-      if (!(s.spi.autoConnect ?? true)) return;
+      /// If [spi.autoConnect] is false and server is disconnected, then skip.
+      /// 
+      /// If [spi.autoConnect] is false and server is connected, then refresh.
+      /// If no this, the server will only refresh once by clicking refresh button.
+      /// 
+      /// If [spi.autoConnect] is true, then refresh.
+      if (!(s.spi.autoConnect ?? true) && s.state == ServerState.disconnected) {
+        return;
+      }
       return await _getData(s.spi);
     }));
   }

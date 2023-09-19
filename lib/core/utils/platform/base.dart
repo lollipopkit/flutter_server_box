@@ -79,10 +79,6 @@ bool get isLinux => OS.type == OS.linux;
 bool get isMacOS => OS.type == OS.macos;
 bool get isWindows => OS.type == OS.windows;
 bool get isWeb => OS.type == OS.web;
-bool get isMobile =>
-    OS.type == OS.ios ||
-    OS.type == OS.android;
+bool get isMobile => OS.type == OS.ios || OS.type == OS.android;
 bool get isDesktop =>
-    OS.type == OS.linux ||
-    OS.type == OS.macos ||
-    OS.type == OS.windows;
+    OS.type == OS.linux || OS.type == OS.macos || OS.type == OS.windows;
