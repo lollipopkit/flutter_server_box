@@ -231,9 +231,11 @@ userId=\$(id -u)
 ${AppShellFuncType.shellScript}
 """;
 
+/// Issue #168
+/// Use `sh` for compatibility
 final installShellCmd = """
 mkdir -p $_serverBoxDir
-cat << 'EOF' > $_shellPath
+sh -c cat << 'EOF' > $_shellPath
 $_shellCmd
 EOF
 chmod +x $_shellPath

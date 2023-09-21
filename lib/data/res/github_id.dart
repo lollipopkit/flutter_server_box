@@ -37,5 +37,6 @@ class GithubIds {
     'wind057',
     'a1564471347',
     'fanzhebufan1',
+    'wcbing',
   };
 }

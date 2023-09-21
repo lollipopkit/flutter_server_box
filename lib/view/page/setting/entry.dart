@@ -635,6 +635,7 @@ class _SettingPageState extends State<SettingPage> {
             _localeCode.value = idx;
             _setting.locale.put(idx);
             RebuildNodes.app.rebuild();
+            context.pop();
           },
           child: Text(
             l10n.languageName,
