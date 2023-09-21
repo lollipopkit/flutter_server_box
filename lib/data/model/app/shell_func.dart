@@ -235,8 +235,8 @@ ${AppShellFuncType.shellScript}
 /// Use `sh` for compatibility
 final installShellCmd = """
 mkdir -p $_serverBoxDir
-sh -c cat << 'EOF' > $_shellPath
+sh -c 'cat << 'EOF' > $_shellPath
 $_shellCmd
-EOF
+EOF'
 chmod +x $_shellPath
 """;
