@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/locale.dart';
+import 'package:toolbox/core/utils/rebuild.dart';
 import 'package:toolbox/data/res/store.dart';
+import 'package:toolbox/view/widget/value_notifier.dart';
 
 import 'core/utils/ui.dart';
 import 'data/res/build_data.dart';
@@ -33,9 +35,10 @@ class MyApp extends StatelessWidget {
   }
 
   Widget _wrapTheme(BuildContext context) {
-    return ValueListenableBuilder<int>(
-      valueListenable: Stores.setting.themeMode.listenable(),
-      builder: (_, tMode, __) {
+    return ValueBuilder(
+      listenable: RebuildNodes.app,
+      build: () {
+        final tMode = Stores.setting.themeMode.fetch();
         final isAMOLED = tMode >= 0 && tMode <= ThemeMode.values.length - 1;
         // Issue #57
         // if not [ok] -> [AMOLED] mode, use [ThemeMode.dark]

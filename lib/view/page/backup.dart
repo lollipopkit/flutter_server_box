@@ -8,6 +8,7 @@ import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
+import 'package:toolbox/core/utils/rebuild.dart';
 import 'package:toolbox/data/model/app/backup.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/path.dart';
@@ -156,7 +157,7 @@ class BackupPage extends StatelessWidget {
             onPressed: () async {
               backup.restore();
               context.pop();
-              context.showRestartSnackbar(btn: s.restart, msg: s.needRestart);
+              RebuildNodes.app.rebuild();
             },
             child: Text(s.ok),
           ),

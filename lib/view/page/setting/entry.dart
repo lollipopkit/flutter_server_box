@@ -12,6 +12,7 @@ import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/utils/platform/auth.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
+import 'package:toolbox/core/utils/rebuild.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 
@@ -372,7 +373,7 @@ class _SettingPageState extends State<SettingPage> {
     _setting.primaryColor.put(_selectedColorValue.value);
     primaryColor = color;
     context.pop();
-    context.showRestartSnackbar(btn: _s.restart, msg: _s.needRestart);
+    RebuildNodes.app.rebuild();
   }
 
   // Widget _buildLaunchPage() {
@@ -484,6 +485,8 @@ class _SettingPageState extends State<SettingPage> {
           onSelected: (int idx) {
             _nightMode.value = idx;
             _setting.themeMode.put(_nightMode.value);
+
+              RebuildNodes.app.rebuild();
           },
           child: Text(
             _buildThemeModeStr(_nightMode.value),
@@ -527,10 +530,7 @@ class _SettingPageState extends State<SettingPage> {
               onPressed: () {
                 _setting.fontPath.delete();
                 context.pop();
-                context.showRestartSnackbar(
-                  btn: _s.restart,
-                  msg: _s.needRestart,
-                );
+              RebuildNodes.app.rebuild();
               },
               child: Text(_s.clear),
             )
@@ -554,7 +554,7 @@ class _SettingPageState extends State<SettingPage> {
       }
 
       context.pop();
-      context.showRestartSnackbar(btn: _s.restart, msg: _s.needRestart);
+              RebuildNodes.app.rebuild();
       return;
     }
     context.showSnackBar(_s.failed);
@@ -634,7 +634,7 @@ class _SettingPageState extends State<SettingPage> {
           onSelected: (String idx) {
             _localeCode.value = idx;
             _setting.locale.put(idx);
-            context.showRestartSnackbar(btn: _s.restart, msg: _s.needRestart);
+              RebuildNodes.app.rebuild();
           },
           child: Text(
             _s.languageName,
@@ -724,10 +724,8 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(_s.fullScreen),
       trailing: StoreSwitch(
         prop: _setting.fullScreen,
-        func: (_) => context.showRestartSnackbar(
-          btn: _s.restart,
-          msg: _s.needRestart,
-        ),
+        func: (_) => 
+              RebuildNodes.app.rebuild(),
       ),
     );
   }

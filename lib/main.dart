@@ -31,7 +31,6 @@ import 'data/provider/virtual_keyboard.dart';
 import 'data/res/color.dart';
 import 'locator.dart';
 import 'view/widget/custom_appbar.dart';
-import 'view/widget/rebuild.dart';
 
 Future<void> main() async {
   _runInZone(() async {
@@ -48,9 +47,7 @@ Future<void> main() async {
           ChangeNotifierProvider(create: (_) => locator<PrivateKeyProvider>()),
           ChangeNotifierProvider(create: (_) => locator<SftpProvider>()),
         ],
-        child: const RebuildWidget(
-          child: MyApp(),
-        ),
+        child: const MyApp(),
       ),
     );
   });
