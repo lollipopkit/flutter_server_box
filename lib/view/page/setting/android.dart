@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/custom_appbar.dart';
@@ -20,14 +20,7 @@ class AndroidSettingsPage extends StatefulWidget {
 }
 
 class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
-  late S _s;
   late SharedPreferences _sp;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _s = S.of(context)!;
-  }
 
   @override
   void initState() {
@@ -53,7 +46,7 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
 
   Widget _buildBgRun() {
     return ListTile(
-      title: Text(_s.bgRun),
+      title: Text(l10n.bgRun),
       trailing: StoreSwitch(prop: Stores.setting.bgRun),
     );
   }
@@ -69,7 +62,7 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
       map.forEach((key, value) {
         _sp.setString(key, value);
       });
-      context.showSnackBar(_s.success);
+      context.showSnackBar(l10n.success);
     } catch (e) {
       context.showSnackBar(e.toString());
     }
@@ -77,7 +70,7 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
 
   Widget _buildAndroidWidgetSharedPreference() {
     return ListTile(
-      title: Text(_s.homeWidgetUrlConfig),
+      title: Text(l10n.homeWidgetUrlConfig),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () {
         final data = <String, String>{};
@@ -89,7 +82,7 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
         });
         final ctrl = TextEditingController(text: json.encode(data));
         context.showRoundDialog(
-          title: Text(_s.homeWidgetUrlConfig),
+          title: Text(l10n.homeWidgetUrlConfig),
           child: Input(
             autoFocus: true,
             controller: ctrl,
@@ -103,7 +96,7 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
               onPressed: () {
                 _saveWidgetSP(ctrl.text, data);
               },
-              child: Text(_s.ok),
+              child: Text(l10n.ok),
             ),
           ],
         );

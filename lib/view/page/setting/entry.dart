@@ -1,11 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:flutter_highlight/theme_map.dart';
+import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/colorx.dart';
 import 'package:toolbox/core/extension/context/common.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/locale.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
@@ -53,8 +54,6 @@ class _SettingPageState extends State<SettingPage> {
   final _netViewTypeKey = GlobalKey<PopupMenuButtonState<NetViewType>>();
   final _setting = Stores.setting;
 
-  late S _s;
-
   final _selectedColorValue = ValueNotifier(0);
   final _nightMode = ValueNotifier(0);
   final _maxRetryCount = ValueNotifier(0);
@@ -71,10 +70,9 @@ class _SettingPageState extends State<SettingPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _s = S.of(context)!;
     final localeSettingVal = _setting.locale.fetch();
     if (localeSettingVal.isEmpty) {
-      _localeCode.value = _s.localeName;
+      _localeCode.value = l10n.localeName;
     } else {
       _localeCode.value = localeSettingVal;
     }
@@ -100,26 +98,27 @@ class _SettingPageState extends State<SettingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(_s.setting),
+        title: Text(l10n.setting),
         actions: [
           IconButton(
             onPressed: () => context.showRoundDialog(
-              title: Text(_s.attention),
-              child: Text(_s.sureDelete(_s.all)),
+              title: Text(l10n.attention),
+              child: Text(l10n.sureDelete(l10n.all)),
               actions: [
                 TextButton(
                   onPressed: () {
                     _setting.box.deleteAll(_setting.box.keys);
                     context.pop();
-                    context.showSnackBar(_s.success);
+                    context.showSnackBar(l10n.success);
                   },
-                  child: Text(_s.ok, style: const TextStyle(color: Colors.red)),
+                  child:
+                      Text(l10n.ok, style: const TextStyle(color: Colors.red)),
                 ),
               ],
             ),
             // onDoubleTap: () => context.showRoundDialog(
-            //   title: Text(_s.attention),
-            //   child: Text(_s.sureDelete(_s.all)),
+            //   title: Text(l10n.attention),
+            //   child: Text(l10n.sureDelete(l10n.all)),
             //   actions: [
             //     TextButton(
             //       onPressed: () {
@@ -130,9 +129,9 @@ class _SettingPageState extends State<SettingPage> {
             //         Stores.snippet.box.deleteFromDisk();
             //         Stores.key.box.deleteFromDisk();
             //         context.pop();
-            //         context.showSnackBar(_s.success);
+            //         context.showSnackBar(l10n.success);
             //       },
-            //       child: Text(_s.ok, style: const TextStyle(color: Colors.red)),
+            //       child: Text(l10n.ok, style: const TextStyle(color: Colors.red)),
             //     ),
             //   ],
             // ),
@@ -145,13 +144,13 @@ class _SettingPageState extends State<SettingPage> {
         children: [
           _buildTitle('App'),
           _buildApp(),
-          _buildTitle(_s.server),
+          _buildTitle(l10n.server),
           _buildServer(),
           _buildTitle('SSH'),
           _buildSSH(),
-          _buildTitle(_s.editor),
+          _buildTitle(l10n.editor),
           _buildEditor(),
-          _buildTitle(_s.fullScreen),
+          _buildTitle(l10n.fullScreen),
           _buildFullScreen(),
           const SizedBox(height: 37),
         ],
@@ -247,15 +246,15 @@ class _SettingPageState extends State<SettingPage> {
         String display;
         if (app.newestBuild != null) {
           if (app.newestBuild! > BuildData.build) {
-            display = _s.versionHaveUpdate(app.newestBuild!);
+            display = l10n.versionHaveUpdate(app.newestBuild!);
           } else {
-            display = _s.versionUpdated(BuildData.build);
+            display = l10n.versionUpdated(BuildData.build);
           }
         } else {
-          display = _s.versionUnknownUpdate(BuildData.build);
+          display = l10n.versionUnknownUpdate(BuildData.build);
         }
         return ListTile(
-          title: Text(_s.autoCheckUpdate),
+          title: Text(l10n.autoCheckUpdate),
           subtitle: Text(display, style: UIs.textGrey),
           onTap: () => doUpdate(ctx, force: true),
           trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),
@@ -269,17 +268,17 @@ class _SettingPageState extends State<SettingPage> {
       10,
       (index) => PopupMenuItem(
         value: index,
-        child: Text('$index ${_s.second}'),
+        child: Text('$index ${l10n.second}'),
       ),
       growable: false,
     ).toList();
 
     return ListTile(
       title: Text(
-        _s.updateServerStatusInterval,
+        l10n.updateServerStatusInterval,
       ),
       subtitle: Text(
-        _s.willTakEeffectImmediately,
+        l10n.willTakEeffectImmediately,
         style: UIs.textGrey,
       ),
       onTap: () {
@@ -296,11 +295,11 @@ class _SettingPageState extends State<SettingPage> {
             _setting.serverStatusUpdateInterval.put(val);
             Providers.server.startAutoRefresh();
             if (val == 0) {
-              context.showSnackBar(_s.updateIntervalEqual0);
+              context.showSnackBar(l10n.updateIntervalEqual0);
             }
           },
           child: Text(
-            '${_updateInterval.value} ${_s.second}',
+            '${_updateInterval.value} ${l10n.second}',
             style: UIs.textSize15,
           ),
         ),
@@ -317,17 +316,17 @@ class _SettingPageState extends State<SettingPage> {
           width: 27,
         ),
       ),
-      title: Text(_s.primaryColorSeed),
+      title: Text(l10n.primaryColorSeed),
       onTap: () async {
         final ctrl = TextEditingController(text: primaryColor.toHex);
         await context.showRoundDialog(
-            title: Text(_s.primaryColorSeed),
+            title: Text(l10n.primaryColorSeed),
             child: StatefulBuilder(builder: (context, setState) {
               final children = <Widget>[
                 /// Plugin [dynamic_color] is not supported on iOS
                 if (!isIOS)
                   ListTile(
-                    title: Text(_s.followSystem),
+                    title: Text(l10n.followSystem),
                     trailing: StoreSwitch(
                       prop: _setting.useSystemPrimaryColor,
                       func: (_) => setState(() {}),
@@ -356,7 +355,7 @@ class _SettingPageState extends State<SettingPage> {
             actions: [
               TextButton(
                 onPressed: () => _onSaveColor(ctrl.text),
-                child: Text(_s.ok),
+                child: Text(l10n.ok),
               ),
             ]);
       },
@@ -366,7 +365,7 @@ class _SettingPageState extends State<SettingPage> {
   void _onSaveColor(String s) {
     final color = s.hexToColor;
     if (color == null) {
-      context.showSnackBar(_s.failed);
+      context.showSnackBar(l10n.failed);
       return;
     }
     _selectedColorValue.value = color.value;
@@ -388,7 +387,7 @@ class _SettingPageState extends State<SettingPage> {
 
   //   return ListTile(
   //     title: Text(
-  //       _s.launchPage,
+  //      l10n.launchPage,
   //     ),
   //     onTap: () {
   //       _startPageKey.currentState?.showButtonMenu();
@@ -421,16 +420,17 @@ class _SettingPageState extends State<SettingPage> {
       10,
       (index) => PopupMenuItem(
         value: index,
-        child: Text('$index ${_s.times}'),
+        child: Text('$index ${l10n.times}'),
       ),
       growable: false,
     ).toList();
-    final help =
-        _maxRetryCount.value == 0 ? _s.maxRetryCountEqual0 : _s.canPullRefresh;
+    final help = _maxRetryCount.value == 0
+        ? l10n.maxRetryCountEqual0
+        : l10n.canPullRefresh;
 
     return ListTile(
       title: Text(
-        _s.maxRetryCount,
+        l10n.maxRetryCount,
         textAlign: TextAlign.start,
       ),
       subtitle: Text(help, style: UIs.textGrey),
@@ -447,7 +447,7 @@ class _SettingPageState extends State<SettingPage> {
             _setting.maxRetryCount.put(_maxRetryCount.value);
           },
           child: Text(
-            '${_maxRetryCount.value} ${_s.times}',
+            '${_maxRetryCount.value} ${l10n.times}',
             style: UIs.textSize15,
           ),
         ),
@@ -471,7 +471,7 @@ class _SettingPageState extends State<SettingPage> {
 
     return ListTile(
       title: Text(
-        _s.themeMode,
+        l10n.themeMode,
       ),
       onTap: () {
         _themeKey.currentState?.showButtonMenu();
@@ -486,7 +486,7 @@ class _SettingPageState extends State<SettingPage> {
             _nightMode.value = idx;
             _setting.themeMode.put(_nightMode.value);
 
-              RebuildNodes.app.rebuild();
+            RebuildNodes.app.rebuild();
           },
           child: Text(
             _buildThemeModeStr(_nightMode.value),
@@ -500,39 +500,39 @@ class _SettingPageState extends State<SettingPage> {
   String _buildThemeModeStr(int n) {
     switch (n) {
       case 1:
-        return _s.light;
+        return l10n.light;
       case 2:
-        return _s.dark;
+        return l10n.dark;
       case 3:
         return 'AMOLED';
       default:
-        return _s.auto;
+        return l10n.auto;
     }
   }
 
   Widget _buildFont() {
     final fontName = getFileName(_setting.fontPath.fetch());
     return ListTile(
-      title: Text(_s.font),
+      title: Text(l10n.font),
       trailing: Text(
-        fontName ?? _s.notSelected,
+        fontName ?? l10n.notSelected,
         style: UIs.textSize15,
       ),
       onTap: () {
         context.showRoundDialog(
-          title: Text(_s.font),
+          title: Text(l10n.font),
           actions: [
             TextButton(
               onPressed: () async => await _pickFontFile(),
-              child: Text(_s.pickFile),
+              child: Text(l10n.pickFile),
             ),
             TextButton(
               onPressed: () {
                 _setting.fontPath.delete();
                 context.pop();
-              RebuildNodes.app.rebuild();
+                RebuildNodes.app.rebuild();
               },
-              child: Text(_s.clear),
+              child: Text(l10n.clear),
             )
           ],
         );
@@ -554,17 +554,17 @@ class _SettingPageState extends State<SettingPage> {
       }
 
       context.pop();
-              RebuildNodes.app.rebuild();
+      RebuildNodes.app.rebuild();
       return;
     }
-    context.showSnackBar(_s.failed);
+    context.showSnackBar(l10n.failed);
   }
 
   Widget _buildTermFontSize() {
     return ValueBuilder(
       listenable: _termFontSize,
       build: () => ListTile(
-        title: Text(_s.fontSize),
+        title: Text(l10n.fontSize),
         trailing: Text(
           _termFontSize.value.toString(),
           style: UIs.textSize15,
@@ -577,8 +577,8 @@ class _SettingPageState extends State<SettingPage> {
   // Widget _buildDiskIgnorePath() {
   //   final paths = _setting.diskIgnorePath.fetch();
   //   return ListTile(
-  //     title: Text(_s.diskIgnorePath),
-  //     trailing: Text(_s.edit, style: textSize15),
+  //     title: Text(l10n.diskIgnorePath),
+  //     trailing: Text(l10n.edit, style: textSize15),
   //     onTap: () {
   //       final ctrller = TextEditingController(text: json.encode(paths));
   //       void onSubmit() {
@@ -586,7 +586,7 @@ class _SettingPageState extends State<SettingPage> {
   //           final list = List<String>.from(json.decode(ctrller.text));
   //           _setting.diskIgnorePath.put(list);
   //           context.pop();
-  //           showSnackBar(context, Text(_s.success));
+  //           showSnackBar(context, Text(l10n.success));
   //         } catch (e) {
   //           showSnackBar(context, Text(e.toString()));
   //         }
@@ -594,7 +594,7 @@ class _SettingPageState extends State<SettingPage> {
 
   //       showRoundDialog(
   //         context: context,
-  //         title: Text(_s.diskIgnorePath),
+  //         title: Text(l10n.diskIgnorePath),
   //         child: Input(
   //           autoFocus: true,
   //           controller: ctrller,
@@ -604,7 +604,7 @@ class _SettingPageState extends State<SettingPage> {
   //           onSubmitted: (_) => onSubmit(),
   //         ),
   //         actions: [
-  //           TextButton(onPressed: onSubmit, child: Text(_s.ok)),
+  //           TextButton(onPressed: onSubmit, child: Text(l10n.ok)),
   //         ],
   //       );
   //     },
@@ -621,7 +621,7 @@ class _SettingPageState extends State<SettingPage> {
         )
         .toList();
     return ListTile(
-      title: Text(_s.language),
+      title: Text(l10n.language),
       onTap: () {
         _localeKey.currentState?.showButtonMenu();
       },
@@ -634,10 +634,10 @@ class _SettingPageState extends State<SettingPage> {
           onSelected: (String idx) {
             _localeCode.value = idx;
             _setting.locale.put(idx);
-              RebuildNodes.app.rebuild();
+            RebuildNodes.app.rebuild();
           },
           child: Text(
-            _s.languageName,
+            l10n.languageName,
             style: UIs.textSize15,
           ),
         ),
@@ -647,7 +647,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildSSHVirtualKeyAutoOff() {
     return ListTile(
-      title: Text(_s.sshVirtualKeyAutoOff),
+      title: Text(l10n.sshVirtualKeyAutoOff),
       subtitle: const Text('Ctrl & Alt', style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.sshVirtualKeyAutoOff),
     );
@@ -663,7 +663,7 @@ class _SettingPageState extends State<SettingPage> {
       },
     ).toList();
     return ListTile(
-      title: Text('${_s.light} ${_s.theme.toLowerCase()}'),
+      title: Text('${l10n.light} ${l10n.theme.toLowerCase()}'),
       trailing: ValueBuilder(
         listenable: _editorTheme,
         build: () => PopupMenuButton(
@@ -696,7 +696,7 @@ class _SettingPageState extends State<SettingPage> {
       },
     ).toList();
     return ListTile(
-      title: Text('${_s.dark} ${_s.theme.toLowerCase()}'),
+      title: Text('${l10n.dark} ${l10n.theme.toLowerCase()}'),
       trailing: ValueBuilder(
         listenable: _editorDarkTheme,
         build: () => PopupMenuButton(
@@ -721,19 +721,18 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildFullScreenSwitch() {
     return ListTile(
-      title: Text(_s.fullScreen),
+      title: Text(l10n.fullScreen),
       trailing: StoreSwitch(
         prop: _setting.fullScreen,
-        func: (_) => 
-              RebuildNodes.app.rebuild(),
+        func: (_) => RebuildNodes.app.rebuild(),
       ),
     );
   }
 
   Widget _buildFullScreenJitter() {
     return ListTile(
-      title: Text(_s.fullScreenJitter),
-      subtitle: Text(_s.fullScreenJitterHelp, style: UIs.textGrey),
+      title: Text(l10n.fullScreenJitter),
+      subtitle: Text(l10n.fullScreenJitterHelp, style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.fullScreenJitter),
     );
   }
@@ -748,7 +747,7 @@ class _SettingPageState extends State<SettingPage> {
     }).toList();
 
     return ListTile(
-      title: Text(_s.rotateAngel),
+      title: Text(l10n.rotateAngel),
       onTap: () {
         _rotateQuarterKey.currentState?.showButtonMenu();
       },
@@ -798,8 +797,8 @@ class _SettingPageState extends State<SettingPage> {
       },
     ).toList();
     return ListTile(
-      title: Text(_s.keyboardType),
-      subtitle: Text(_s.keyboardCompatibility, style: UIs.textGrey),
+      title: Text(l10n.keyboardType),
+      subtitle: Text(l10n.keyboardCompatibility, style: UIs.textGrey),
       trailing: ValueBuilder(
         listenable: _keyboardType,
         build: () => PopupMenuButton<int>(
@@ -824,7 +823,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildSSHVirtKeys() {
     return ListTile(
-      title: Text(_s.editVirtKeys),
+      title: Text(l10n.editVirtKeys),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () => AppRoute.sshVirtKeySetting().go(context),
     );
@@ -834,11 +833,11 @@ class _SettingPageState extends State<SettingPage> {
     final items = NetViewType.values
         .map((e) => PopupMenuItem(
               value: e,
-              child: Text(e.l10n(_s)),
+              child: Text(e.toStr),
             ))
         .toList();
     return ListTile(
-      title: Text(_s.netViewType),
+      title: Text(l10n.netViewType),
       trailing: ValueBuilder(
         listenable: _netViewType,
         build: () => PopupMenuButton<NetViewType>(
@@ -850,7 +849,7 @@ class _SettingPageState extends State<SettingPage> {
             _setting.netViewType.put(idx);
           },
           child: Text(
-            _netViewType.value.l10n(_s),
+            _netViewType.value.toStr,
             style: UIs.textSize15,
           ),
         ),
@@ -863,18 +862,18 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildDeleteServers() {
     return ListTile(
-      title: Text(_s.deleteServers),
+      title: Text(l10n.deleteServers),
       trailing: const Icon(Icons.delete_forever),
       onTap: () async {
         final all = Stores.server.box.keys.map(
           (e) => TextButton(
             onPressed: () => context.showRoundDialog(
-              title: Text(_s.attention),
-              child: Text(_s.sureDelete(e)),
+              title: Text(l10n.attention),
+              child: Text(l10n.sureDelete(e)),
               actions: [
                 TextButton(
                   onPressed: () => Providers.server.delServer(e),
-                  child: Text(_s.ok),
+                  child: Text(l10n.ok),
                 )
               ],
             ),
@@ -882,7 +881,7 @@ class _SettingPageState extends State<SettingPage> {
           ),
         );
         context.showRoundDialog<List<String>>(
-          title: Text(_s.choose),
+          title: Text(l10n.choose),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -896,30 +895,30 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildMoveOutServerFuncBtns() {
     return ListTile(
-      title: Text(_s.moveOutServerFuncBtns),
-      subtitle: Text(_s.moveOutServerFuncBtnsHelp, style: UIs.textSize13Grey),
+      title: Text(l10n.moveOutServerFuncBtns),
+      subtitle: Text(l10n.moveOutServerFuncBtnsHelp, style: UIs.textSize13Grey),
       trailing: StoreSwitch(prop: _setting.moveOutServerTabFuncBtns),
     );
   }
 
   Widget _buildServerOrder() {
     return ListTile(
-      title: Text(_s.serverOrder),
-      subtitle: Text('${_s.serverOrder} / ${_s.serverDetailOrder}',
+      title: Text(l10n.serverOrder),
+      subtitle: Text('${l10n.serverOrder} / ${l10n.serverDetailOrder}',
           style: UIs.textGrey),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () => context.showRoundDialog(
-        title: Text(_s.choose),
+        title: Text(l10n.choose),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: Text(_s.serverOrder),
+              title: Text(l10n.serverOrder),
               trailing: const Icon(Icons.keyboard_arrow_right),
               onTap: () => AppRoute.serverOrder().go(context),
             ),
             ListTile(
-              title: Text(_s.serverDetailOrder),
+              title: Text(l10n.serverDetailOrder),
               trailing: const Icon(Icons.keyboard_arrow_right),
               onTap: () => AppRoute.serverDetailOrder().go(context),
             ),
@@ -933,7 +932,7 @@ class _SettingPageState extends State<SettingPage> {
     return ValueBuilder(
       listenable: _editorFontSize,
       build: () => ListTile(
-        title: Text(_s.fontSize),
+        title: Text(l10n.fontSize),
         trailing: Text(
           _editorFontSize.value.toString(),
           style: UIs.textSize15,
@@ -954,7 +953,7 @@ class _SettingPageState extends State<SettingPage> {
       final fontSize = double.tryParse(ctrller.text);
       if (fontSize == null) {
         context.showRoundDialog(
-          title: Text(_s.failed),
+          title: Text(l10n.failed),
           child: Text('Parsed failed: ${ctrller.text}'),
         );
         return;
@@ -964,7 +963,7 @@ class _SettingPageState extends State<SettingPage> {
     }
 
     context.showRoundDialog(
-      title: Text(_s.fontSize),
+      title: Text(l10n.fontSize),
       child: Input(
         controller: ctrller,
         autoFocus: true,
@@ -975,7 +974,7 @@ class _SettingPageState extends State<SettingPage> {
       actions: [
         TextButton(
           onPressed: onSave,
-          child: Text(_s.ok),
+          child: Text(l10n.ok),
         ),
       ],
     );
@@ -984,14 +983,14 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildSftpRmrfDir() {
     return ListTile(
       title: const Text('rm -rf'),
-      subtitle: Text(_s.sftpRmrfDirSummary, style: UIs.textGrey),
+      subtitle: Text(l10n.sftpRmrfDirSummary, style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.sftpRmrfDir),
     );
   }
 
   // Widget _buildDoubleColumnServersPage() {
   //   return ListTile(
-  //     title: Text(_s.doubleColumnMode),
+  //     title: Text(l10n.doubleColumnMode),
   //     trailing: StoreSwitch(prop: _setting.doubleColumnServersPage),
   //   );
   // }
@@ -1000,16 +999,16 @@ class _SettingPageState extends State<SettingPage> {
     return FutureWidget<bool>(
       future: BioAuth.isAvail,
       loading: ListTile(
-        title: Text(_s.bioAuth),
-        subtitle: Text(_s.serverTabLoading, style: UIs.textGrey),
+        title: Text(l10n.bioAuth),
+        subtitle: Text(l10n.serverTabLoading, style: UIs.textGrey),
       ),
       error: (e, __) => ListTile(
-        title: Text(_s.bioAuth),
-        subtitle: Text('${_s.failed}: $e', style: UIs.textGrey),
+        title: Text(l10n.bioAuth),
+        subtitle: Text('${l10n.failed}: $e', style: UIs.textGrey),
       ),
       success: (can) {
         return ListTile(
-          title: Text(_s.bioAuth),
+          title: Text(l10n.bioAuth),
           subtitle: can
               ? null
               : const Text('Error: Bio auth is not available',
@@ -1023,7 +1022,7 @@ class _SettingPageState extends State<SettingPage> {
                       return;
                     }
                     // Only auth when turn off (val == false)
-                    final result = await BioAuth.auth(_s.authRequired);
+                    final result = await BioAuth.auth(l10n.authRequired);
                     // If failed, turn on again
                     if (result != AuthResult.success) {
                       Stores.setting.useBioAuth.put(true);
@@ -1039,7 +1038,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildPlatformSetting() {
     return ListTile(
-      title: Text('${OS.type} ${_s.setting}'),
+      title: Text('${OS.type} ${l10n.setting}'),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () {
         switch (OS.type) {

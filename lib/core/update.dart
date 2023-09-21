@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:r_upgrade/r_upgrade.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/model/app/update.dart';
@@ -54,17 +54,15 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
     return;
   }
 
-  final s = S.of(context);
-
   final min = update.build.min.current;
 
   if (min != null && min > BuildData.build) {
     context.showRoundDialog(
-      child: Text(s?.updateTipTooLow(newest) ?? 'Update: $newest'),
+      child: Text(l10n.updateTipTooLow(newest)),
       actions: [
         TextButton(
-          onPressed: () => _doUpdate(update, context, s),
-          child: Text(s?.ok ?? 'Ok'),
+          onPressed: () => _doUpdate(update, context),
+          child: Text(l10n.ok),
         )
       ],
     );
@@ -72,13 +70,13 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
   }
 
   context.showSnackBarWithAction(
-    '${s?.updateTip(newest) ?? "Update: $newest"} \n${update.changelog.current}',
-    s?.update ?? 'Update',
-    () => _doUpdate(update, context, s),
+    '${l10n.updateTip(newest)} \n${update.changelog.current}',
+    l10n.update,
+    () => _doUpdate(update, context),
   );
 }
 
-Future<void> _doUpdate(AppUpdate update, BuildContext context, S? s) async {
+Future<void> _doUpdate(AppUpdate update, BuildContext context) async {
   final url = update.url.current;
   if (url == null) return;
 
@@ -91,11 +89,11 @@ Future<void> _doUpdate(AppUpdate update, BuildContext context, S? s) async {
     await openUrl(url);
   } else {
     context.showRoundDialog(
-      child: Text(s?.platformNotSupportUpdate ?? 'Unsupported platform'),
+      child: Text(l10n.platformNotSupportUpdate),
       actions: [
         TextButton(
           onPressed: () => context.pop(),
-          child: Text(s?.ok ?? 'Ok'),
+          child: Text(l10n.ok),
         )
       ],
     );

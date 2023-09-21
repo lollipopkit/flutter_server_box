@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
@@ -23,7 +23,6 @@ class SnippetListPage extends StatefulWidget {
 }
 
 class _SnippetListPageState extends State<SnippetListPage> {
-  late S _s;
   late MediaQueryData _media;
 
   String? _tag;
@@ -31,7 +30,6 @@ class _SnippetListPageState extends State<SnippetListPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _s = S.of(context)!;
     _media = MediaQuery.of(context);
   }
 
@@ -52,7 +50,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
       builder: (_, provider, __) {
         if (provider.snippets.isEmpty) {
           return Center(
-            child: Text(_s.noSavedSnippet),
+            child: Text(l10n.noSavedSnippet),
           );
         }
 
@@ -77,7 +75,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
             tags: provider.tags,
             onTagChanged: (tag) => setState(() => _tag = tag),
             initTag: _tag,
-            all: _s.all,
+            all: l10n.all,
             width: _media.size.width,
           ),
           footer: UIs.height77,
@@ -148,12 +146,12 @@ class _SnippetListPageState extends State<SnippetListPage> {
         results,
       ).entries.map((e) => '${e.key}:\n${e.value}').join('\n');
       context.showRoundDialog(
-        title: Text(_s.result),
+        title: Text(l10n.result),
         child: Text(result),
         actions: [
           TextButton(
             onPressed: () => copy2Clipboard(result),
-            child: Text(_s.copy),
+            child: Text(l10n.copy),
           )
         ],
       );

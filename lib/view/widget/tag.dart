@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 
 import '../../data/model/app/tag_pickable.dart';
 import '../../data/res/color.dart';
@@ -39,7 +39,6 @@ class TagBtn extends StatelessWidget {
 
 class TagEditor extends StatefulWidget {
   final List<String> tags;
-  final S s;
   final void Function(List<String>)? onChanged;
   final void Function(String old, String new_)? onRenameTag;
   final List<String> allTags;
@@ -47,7 +46,6 @@ class TagEditor extends StatefulWidget {
   const TagEditor({
     super.key,
     required this.tags,
-    required this.s,
     this.onChanged,
     this.onRenameTag,
     this.allTags = const <String>[],
@@ -78,7 +76,7 @@ class _TagEditorState extends State<TagEditor> {
 
     /// Add vertical divider if suggestions.length > 0
     final counts = tags.length + suggestionLen + (suggestionLen == 0 ? 0 : 1);
-    if (counts == 0) return Text(widget.s.tag);
+    if (counts == 0) return Text(l10n.tag);
     return ConstrainedBox(
       constraints: const BoxConstraints(maxHeight: _kTagBtnHeight),
       child: ListView.builder(
@@ -134,12 +132,12 @@ class _TagEditorState extends State<TagEditor> {
   void _showAddTagDialog() {
     final textEditingController = TextEditingController();
     context.showRoundDialog(
-      title: Text(widget.s.add),
+      title: Text(l10n.add),
       child: Input(
         autoFocus: true,
         icon: Icons.tag,
         controller: textEditingController,
-        hint: widget.s.tag,
+        hint: l10n.tag,
       ),
       actions: [
         TextButton(
@@ -149,7 +147,7 @@ class _TagEditorState extends State<TagEditor> {
             widget.onChanged?.call(widget.tags);
             context.pop();
           },
-          child: Text(widget.s.add),
+          child: Text(l10n.add),
         ),
       ],
     );
@@ -158,12 +156,12 @@ class _TagEditorState extends State<TagEditor> {
   void _showRenameDialog(String tag) {
     final textEditingController = TextEditingController(text: tag);
     context.showRoundDialog(
-      title: Text(widget.s.rename),
+      title: Text(l10n.rename),
       child: Input(
         autoFocus: true,
         icon: Icons.abc,
         controller: textEditingController,
-        hint: widget.s.tag,
+        hint: l10n.tag,
       ),
       actions: [
         TextButton(
@@ -174,7 +172,7 @@ class _TagEditorState extends State<TagEditor> {
             context.pop();
             setState(() {});
           },
-          child: Text(widget.s.rename),
+          child: Text(l10n.rename),
         ),
       ],
     );
@@ -196,14 +194,12 @@ class TagPicker<T extends TagPickable> extends StatefulWidget {
 }
 
 class _TagPickerState<T extends TagPickable> extends State<TagPicker<T>> {
-  late S _s;
   late MediaQueryData _media;
   final List<T> _selected = [];
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _s = S.of(context)!;
     _media = MediaQuery.of(context);
   }
 
@@ -211,7 +207,7 @@ class _TagPickerState<T extends TagPickable> extends State<TagPicker<T>> {
   Widget build(BuildContext context) {
     final children = <Widget>[];
     if (widget.tags.isNotEmpty) {
-      children.add(Text(_s.tag));
+      children.add(Text(l10n.tag));
       children.add(UIs.height13);
       children.add(SizedBox(
         height: _kTagBtnHeight,
@@ -220,7 +216,7 @@ class _TagPickerState<T extends TagPickable> extends State<TagPicker<T>> {
       ));
     }
     if (widget.items.isNotEmpty) {
-      children.add(Text(_s.all));
+      children.add(Text(l10n.all));
       children.add(UIs.height13);
       children.add(SizedBox(
         height: _kTagBtnHeight,
@@ -229,15 +225,15 @@ class _TagPickerState<T extends TagPickable> extends State<TagPicker<T>> {
       ));
     }
     final child = widget.tags.isEmpty && widget.items.isEmpty
-        ? Text(_s.noOptions)
+        ? Text(l10n.noOptions)
         : Column(mainAxisSize: MainAxisSize.min, children: children);
     return AlertDialog(
-      title: Text(_s.choose),
+      title: Text(l10n.choose),
       content: child,
       actions: [
         TextButton(
           onPressed: () => context.pop(_selected),
-          child: Text(_s.ok),
+          child: Text(l10n.ok),
         ),
       ],
     );

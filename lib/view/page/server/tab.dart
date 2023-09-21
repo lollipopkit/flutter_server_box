@@ -1,10 +1,10 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:circle_chart/circle_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/media_queryx.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
@@ -36,7 +36,6 @@ class ServerPage extends StatefulWidget {
 class _ServerPageState extends State<ServerPage>
     with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
   late MediaQueryData _media;
-  late S _s;
 
   final _flipedCardIds = <String>{};
 
@@ -48,7 +47,6 @@ class _ServerPageState extends State<ServerPage>
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
     _useDoubleColumn = _media.useDoubleColumn;
-    _s = S.of(context)!;
   }
 
   @override
@@ -58,7 +56,7 @@ class _ServerPageState extends State<ServerPage>
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
         onPressed: () => AppRoute.serverEdit().go(context),
-        tooltip: _s.addAServer,
+        tooltip: l10n.addAServer,
         heroTag: 'server',
         child: const Icon(Icons.add),
       ),
@@ -74,7 +72,7 @@ class _ServerPageState extends State<ServerPage>
         if (pro.serverOrder.isEmpty) {
           return Center(
             child: Text(
-              _s.serverTabEmpty,
+              l10n.serverTabEmpty,
               textAlign: TextAlign.center,
             ),
           );
@@ -108,7 +106,7 @@ class _ServerPageState extends State<ServerPage>
         _tag = p0;
       }),
       initTag: _tag,
-      all: _s.all,
+      all: l10n.all,
     );
   }
 
@@ -294,7 +292,7 @@ class _ServerPageState extends State<ServerPage>
           !Stores.setting.serverTabUseOldUI.fetch())
         SizedBox(
           height: 27,
-          child: ServerFuncBtns(spi: spi, s: _s),
+          child: ServerFuncBtns(spi: spi),
         ),
     ];
   }
@@ -318,7 +316,7 @@ class _ServerPageState extends State<ServerPage>
         ),
       );
     } else if (Stores.setting.serverTabUseOldUI.fetch()) {
-      rightCorner = ServerFuncBtnsTopRight(spi: spi, s: _s);
+      rightCorner = ServerFuncBtnsTopRight(spi: spi);
     }
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 7),
@@ -361,7 +359,7 @@ class _ServerPageState extends State<ServerPage>
       return GestureDetector(
         onTap: () => _showFailReason(ss),
         child: Text(
-          _s.viewErr,
+          l10n.viewErr,
           style: UIs.textSize11Grey,
           textScaleFactor: 1.0,
         ),
@@ -376,14 +374,14 @@ class _ServerPageState extends State<ServerPage>
 
   void _showFailReason(ServerStatus ss) {
     context.showRoundDialog(
-      title: Text(_s.error),
+      title: Text(l10n.error),
       child: SingleChildScrollView(
-        child: Text(ss.failedInfo ?? _s.unknownError),
+        child: Text(ss.failedInfo ?? l10n.unknownError),
       ),
       actions: [
         TextButton(
           onPressed: () => copy2Clipboard(ss.failedInfo!),
-          child: Text(_s.copy),
+          child: Text(l10n.copy),
         )
       ],
     );
@@ -478,25 +476,25 @@ class _ServerPageState extends State<ServerPage>
   ) {
     switch (cs) {
       case ServerState.disconnected:
-        return _s.disconnected;
+        return l10n.disconnected;
       case ServerState.finished:
         final tempStr = temp == null ? '' : '${temp.toStringAsFixed(1)}°C';
         final items = [tempStr, upTime];
         final str = items.where((element) => element.isNotEmpty).join(' | ');
-        if (str.isEmpty) return _s.noResult;
+        if (str.isEmpty) return l10n.noResult;
         return str;
       case ServerState.loading:
-        return _s.serverTabLoading;
+        return l10n.serverTabLoading;
       case ServerState.connected:
-        return _s.connected;
+        return l10n.connected;
       case ServerState.connecting:
-        return _s.serverTabConnecting;
+        return l10n.serverTabConnecting;
       case ServerState.failed:
         if (failedInfo == null) {
-          return _s.serverTabFailed;
+          return l10n.serverTabFailed;
         }
         if (failedInfo.contains('encypted')) {
-          return _s.serverTabPlzSave;
+          return l10n.serverTabPlzSave;
         }
         return failedInfo;
     }

@@ -3,9 +3,9 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/rebuild.dart';
@@ -25,34 +25,33 @@ class BackupPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = S.of(context)!;
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(s.backupAndRestore, style: UIs.textSize18),
+        title: Text(l10n.backupAndRestore, style: UIs.textSize18),
       ),
-      body: _buildBody(context, s),
+      body: _buildBody(context),
     );
   }
 
-  Widget _buildBody(BuildContext context, S s) {
+  Widget _buildBody(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        if (isMacOS || isIOS) _buildIcloudSync(context, s),
+        if (isMacOS || isIOS) _buildIcloudSync(context),
         UIs.height13,
         Padding(
           padding: const EdgeInsets.all(37),
           child: Text(
-            s.backupTip,
+            l10n.backupTip,
             textAlign: TextAlign.center,
           ),
         ),
         UIs.height77,
         _buildCard(
-          s.restore,
+          l10n.restore,
           Icons.download,
-          () => _onRestore(context, s),
+          () => _onRestore(context),
         ),
         UIs.height13,
         const SizedBox(
@@ -61,7 +60,7 @@ class BackupPage extends StatelessWidget {
         ),
         UIs.height13,
         _buildCard(
-          s.backup,
+          l10n.backup,
           Icons.save,
           () async {
             await Backup.backup();
@@ -96,7 +95,7 @@ class BackupPage extends StatelessWidget {
     );
   }
 
-  Widget _buildIcloudSync(BuildContext context, S s) {
+  Widget _buildIcloudSync(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -121,19 +120,19 @@ class BackupPage extends StatelessWidget {
     );
   }
 
-  Future<void> _onRestore(BuildContext context, S s) async {
+  Future<void> _onRestore(BuildContext context) async {
     final path = await pickOneFile();
     if (path == null) return;
 
     final file = File(path);
     if (!await file.exists()) {
-      context.showSnackBar(s.fileNotExist(path));
+      context.showSnackBar(l10n.fileNotExist(path));
       return;
     }
 
     final text = await file.readAsString();
     if (text.isEmpty) {
-      context.showSnackBar(s.fieldMustNotEmpty);
+      context.showSnackBar(l10n.fieldMustNotEmpty);
       return;
     }
 
@@ -141,17 +140,17 @@ class BackupPage extends StatelessWidget {
       context.showLoadingDialog();
       final backup = await compute(Backup.fromJsonString, text.trim());
       if (backupFormatVersion != backup.version) {
-        context.showSnackBar(s.backupVersionNotMatch);
+        context.showSnackBar(l10n.backupVersionNotMatch);
         return;
       }
 
       await context.showRoundDialog(
-        title: Text(s.restore),
-        child: Text(s.restoreSureWithDate(backup.date)),
+        title: Text(l10n.restore),
+        child: Text(l10n.restoreSureWithDate(backup.date)),
         actions: [
           TextButton(
             onPressed: () => context.pop(),
-            child: Text(s.cancel),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () async {
@@ -159,7 +158,7 @@ class BackupPage extends StatelessWidget {
               context.pop();
               RebuildNodes.app.rebuild();
             },
-            child: Text(s.ok),
+            child: Text(l10n.ok),
           ),
         ],
       );

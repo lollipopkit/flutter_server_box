@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/utils/misc.dart';
@@ -31,20 +31,12 @@ class _PingPageState extends State<PingPage>
     with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
   late TextEditingController _textEditingController;
   final _results = ValueNotifier(<PingResult>[]);
-  late S _s;
-
   bool get isInit => _results.value.isEmpty;
 
   @override
   void initState() {
     super.initState();
     _textEditingController = TextEditingController(text: '');
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _s = S.of(context)!;
   }
 
   @override
@@ -71,16 +63,16 @@ class _PingPageState extends State<PingPage>
       heroTag: 'ping',
       onPressed: () {
         context.showRoundDialog(
-          title: Text(_s.choose),
+          title: Text(l10n.choose),
           child: Input(
             autoFocus: true,
             controller: _textEditingController,
-            hint: _s.inputDomainHere,
+            hint: l10n.inputDomainHere,
             maxLines: 1,
             onSubmitted: (_) => _doPing(),
           ),
           actions: [
-            TextButton(onPressed: _doPing, child: Text(_s.ok)),
+            TextButton(onPressed: _doPing, child: Text(l10n.ok)),
           ],
         );
       },
@@ -94,12 +86,12 @@ class _PingPageState extends State<PingPage>
       await doPing();
     } catch (e) {
       context.showRoundDialog(
-        title: Text(_s.error),
+        title: Text(l10n.error),
         child: Text(e.toString()),
         actions: [
           TextButton(
             onPressed: () => copy2Clipboard(e.toString()),
-            child: Text(_s.copy),
+            child: Text(l10n.copy),
           ),
         ],
       );
@@ -111,7 +103,7 @@ class _PingPageState extends State<PingPage>
     if (isInit) {
       return Center(
         child: Text(
-          _s.noResult,
+          l10n.noResult,
           style: const TextStyle(fontSize: 18),
         ),
       );
@@ -125,8 +117,8 @@ class _PingPageState extends State<PingPage>
   }
 
   Widget _buildResultItem(PingResult result) {
-    final unknown = _s.unknown;
-    final ms = _s.ms;
+    final unknown = l10n.unknown;
+    final ms = l10n.ms;
     return RoundRectCard(
       ListTile(
         contentPadding: const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
@@ -143,7 +135,7 @@ class _PingPageState extends State<PingPage>
           style: UIs.textSize11,
         ),
         trailing: Text(
-          '${_s.pingAvg}${result.statistic?.avg?.toStringAsFixed(2) ?? _s.unknown} $ms',
+          '${l10n.pingAvg}${result.statistic?.avg?.toStringAsFixed(2) ?? l10n.unknown} $ms',
           style: TextStyle(
             fontSize: 14,
             color: primaryColor,
@@ -156,13 +148,13 @@ class _PingPageState extends State<PingPage>
   String _buildPingSummary(PingResult result, String unknown, String ms) {
     final ip = result.ip ?? unknown;
     if (result.results == null || result.results!.isEmpty) {
-      return '$ip - ${_s.noResult}';
+      return '$ip - ${l10n.noResult}';
     }
     final ttl = result.results?.first.ttl ?? unknown;
     final loss = result.statistic?.loss ?? unknown;
     final min = result.statistic?.min ?? unknown;
     final max = result.statistic?.max ?? unknown;
-    return '$ip\n${_s.ttl}: $ttl, ${_s.loss}: $loss%\n${_s.min}: $min $ms, ${_s.max}: $max $ms';
+    return '$ip\n${l10n.ttl}: $ttl, ${l10n.loss}: $loss%\n${l10n.min}: $min $ms, ${l10n.max}: $max $ms';
   }
 
   Future<void> doPing() async {
@@ -170,18 +162,18 @@ class _PingPageState extends State<PingPage>
     _results.value.clear();
     final target = _textEditingController.text.trim();
     if (target.isEmpty) {
-      context.showSnackBar(_s.pingInputIP);
+      context.showSnackBar(l10n.pingInputIP);
       return;
     }
 
     if (Providers.server.servers.isEmpty) {
-      context.showSnackBar(_s.pingNoServer);
+      context.showSnackBar(l10n.pingNoServer);
       return;
     }
 
     /// avoid ping command injection
     if (!targetReg.hasMatch(target)) {
-      context.showSnackBar(_s.pingInputIP);
+      context.showSnackBar(l10n.pingInputIP);
       return;
     }
 

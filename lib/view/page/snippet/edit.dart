@@ -1,7 +1,7 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/context/common.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/view/widget/input_field.dart';
@@ -27,8 +27,6 @@ class _SnippetEditPageState extends State<SnippetEditPage>
   final _noteController = TextEditingController();
   final _scriptNode = FocusNode();
 
-  late S _s;
-
   List<String> _tags = [];
 
   @override
@@ -40,16 +38,10 @@ class _SnippetEditPageState extends State<SnippetEditPage>
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _s = S.of(context)!;
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(_s.edit, style: UIs.textSize18),
+        title: Text(l10n.edit, style: UIs.textSize18),
         actions: _buildAppBarActions(),
       ),
       body: _buildBody(),
@@ -67,7 +59,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           Providers.snippet.del(widget.snippet!);
           context.pop();
         },
-        tooltip: _s.delete,
+        tooltip: l10n.delete,
         icon: const Icon(Icons.delete),
       )
     ];
@@ -81,7 +73,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
         final name = _nameController.text;
         final script = _scriptController.text;
         if (name.isEmpty || script.isEmpty) {
-          context.showSnackBar(_s.fieldMustNotEmpty);
+          context.showSnackBar(l10n.fieldMustNotEmpty);
           return;
         }
         final note = _noteController.text;
@@ -110,7 +102,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           controller: _nameController,
           type: TextInputType.text,
           onSubmitted: (_) => FocusScope.of(context).requestFocus(_scriptNode),
-          label: _s.name,
+          label: l10n.name,
           icon: Icons.info,
         ),
         Input(
@@ -118,7 +110,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           minLines: 3,
           maxLines: 3,
           type: TextInputType.multiline,
-          label: _s.note,
+          label: l10n.note,
           icon: Icons.note,
         ),
         TagEditor(
@@ -126,7 +118,6 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           onChanged: (p0) => setState(() {
             _tags = p0;
           }),
-          s: _s,
           allTags: [...Providers.server.tags],
           onRenameTag: (old, n) => setState(() {
             Providers.server.renameTag(old, n);
@@ -138,7 +129,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           minLines: 3,
           maxLines: 10,
           type: TextInputType.multiline,
-          label: _s.snippet,
+          label: l10n.snippet,
           icon: Icons.code,
         ),
       ],

@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/data/model/sftp/req.dart';
 import 'package:toolbox/data/res/misc.dart';
@@ -37,7 +37,6 @@ class LocalStoragePage extends StatefulWidget {
 
 class _LocalStoragePageState extends State<LocalStoragePage> {
   LocalPath? _path;
-  late S _s;
 
   @override
   void initState() {
@@ -56,12 +55,6 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _s = S.of(context)!;
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
@@ -74,7 +67,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
             context.pop();
           },
         ),
-        title: Text(_s.files),
+        title: Text(l10n.files),
         actions: [
           IconButton(
             icon: const Icon(Icons.downloading),
@@ -96,7 +89,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          (_path?.path ?? _s.loadingFiles).omitStartStr(),
+          (_path?.path ?? l10n.loadingFiles).omitStartStr(),
           _buildBtns(),
         ],
       ),
@@ -200,7 +193,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
               context.pop();
               _showRenameDialog(file);
             },
-            title: Text(_s.rename),
+            title: Text(l10n.rename),
             leading: const Icon(Icons.abc),
           ),
           ListTile(
@@ -208,7 +201,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
               context.pop();
               _showDeleteDialog(file);
             },
-            title: Text(_s.delete),
+            title: Text(l10n.delete),
             leading: const Icon(Icons.delete),
           ),
         ],
@@ -220,7 +213,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
     final fileName = file.path.split('/').last;
     if (widget.isPickFile) {
       await context.showRoundDialog(
-          title: Text(_s.pickFile),
+          title: Text(l10n.pickFile),
           child: Text(fileName),
           actions: [
             TextButton(
@@ -228,7 +221,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
                 context.pop();
                 context.pop(file.path);
               },
-              child: Text(_s.ok),
+              child: Text(l10n.ok),
             ),
           ]);
       return;
@@ -239,14 +232,14 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
         children: [
           ListTile(
             leading: const Icon(Icons.edit),
-            title: Text(_s.edit),
+            title: Text(l10n.edit),
             onTap: () async {
               context.pop();
               final stat = await file.stat();
               if (stat.size > Miscs.editorMaxSize) {
                 context.showRoundDialog(
-                  title: Text(_s.attention),
-                  child: Text(_s.fileTooLarge(fileName, stat.size, '1m')),
+                  title: Text(l10n.attention),
+                  child: Text(l10n.fileTooLarge(fileName, stat.size, '1m')),
                 );
                 return;
               }
@@ -256,14 +249,14 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
               final f = File(file.absolute.path);
               if (result != null) {
                 f.writeAsString(result);
-                context.showSnackBar(_s.saved);
+                context.showSnackBar(l10n.saved);
                 setState(() {});
               }
             },
           ),
           ListTile(
             leading: const Icon(Icons.abc),
-            title: Text(_s.rename),
+            title: Text(l10n.rename),
             onTap: () {
               context.pop();
               _showRenameDialog(file);
@@ -271,7 +264,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
           ),
           ListTile(
             leading: const Icon(Icons.delete),
-            title: Text(_s.delete),
+            title: Text(l10n.delete),
             onTap: () {
               context.pop();
               _showDeleteDialog(file);
@@ -279,20 +272,20 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
           ),
           ListTile(
             leading: const Icon(Icons.upload),
-            title: Text(_s.upload),
+            title: Text(l10n.upload),
             onTap: () async {
               context.pop();
               final ids = Providers.server.serverOrder;
               var idx = 0;
               await context.showRoundDialog(
-                title: Text(_s.server),
+                title: Text(l10n.server),
                 child: Picker(
                   items: ids.map((e) => Text(e)).toList(),
                   onSelected: (idx_) => idx = idx_,
                 ),
                 actions: [
                   TextButton(
-                      onPressed: () => context.pop(), child: Text(_s.ok)),
+                      onPressed: () => context.pop(), child: Text(l10n.ok)),
                 ],
               );
               final id = ids[idx];
@@ -313,12 +306,12 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
                 file.absolute.path,
                 SftpReqType.upload,
               ));
-              context.showSnackBar(_s.added2List);
+              context.showSnackBar(l10n.added2List);
             },
           ),
           ListTile(
             leading: const Icon(Icons.open_in_new),
-            title: Text(_s.open),
+            title: Text(l10n.open),
             onTap: () {
               shareFiles(context, [file.absolute.path]);
             },
@@ -331,7 +324,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
   void _showRenameDialog(FileSystemEntity file) {
     final fileName = file.path.split('/').last;
     context.showRoundDialog(
-      title: Text(_s.rename),
+      title: Text(l10n.rename),
       child: Input(
         autoFocus: true,
         controller: TextEditingController(text: fileName),
@@ -341,7 +334,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
           try {
             file.renameSync(newPath);
           } catch (e) {
-            context.showSnackBar('${_s.failed}:\n$e');
+            context.showSnackBar('${l10n.failed}:\n$e');
             return;
           }
 
@@ -354,12 +347,12 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
   void _showDeleteDialog(FileSystemEntity file) {
     final fileName = file.path.split('/').last;
     context.showRoundDialog(
-      title: Text(_s.delete),
-      child: Text(_s.sureDelete(fileName)),
+      title: Text(l10n.delete),
+      child: Text(l10n.sureDelete(fileName)),
       actions: [
         TextButton(
           onPressed: () => context.pop(),
-          child: Text(_s.cancel),
+          child: Text(l10n.cancel),
         ),
         TextButton(
           onPressed: () {
@@ -367,12 +360,12 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
             try {
               file.deleteSync(recursive: true);
             } catch (e) {
-              context.showSnackBar('${_s.failed}:\n$e');
+              context.showSnackBar('${l10n.failed}:\n$e');
               return;
             }
             setState(() {});
           },
-          child: Text(_s.ok),
+          child: Text(l10n.ok),
         ),
       ],
     );

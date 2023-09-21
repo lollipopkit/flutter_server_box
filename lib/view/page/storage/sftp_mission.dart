@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/datetime.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/route.dart';
@@ -23,19 +23,11 @@ class SftpMissionPage extends StatefulWidget {
 }
 
 class _SftpMissionPageState extends State<SftpMissionPage> {
-  late S _s;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _s = S.of(context)!;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(_s.mission, style: UIs.textSize18),
+        title: Text(l10n.mission, style: UIs.textSize18),
       ),
       body: _buildBody(),
     );
@@ -45,7 +37,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
     return Consumer<SftpProvider>(builder: (__, pro, _) {
       if (pro.status.isEmpty) {
         return Center(
-          child: Text(_s.noTask),
+          child: Text(l10n.noTask),
         );
       }
       return ListView.builder(
@@ -63,8 +55,8 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
     switch (status.status) {
       case SftpWorkerStatus.finished:
         final time = status.spentTime.toString();
-        final str = '${_s.finished} ${_s.spentTime(
-          time == 'null' ? _s.unknown : (time.substring(0, time.length - 7)),
+        final str = '${l10n.finished} ${l10n.spentTime(
+          time == 'null' ? l10n.unknown : (time.substring(0, time.length - 7)),
         )}';
         return _wrapInCard(
           status: status,
@@ -91,29 +83,29 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
         final size = (status.size ?? 0).convertBytes;
         return _wrapInCard(
           status: status,
-          subtitle: _s.percentOfSize(percentStr, size),
+          subtitle: l10n.percentOfSize(percentStr, size),
           trailing: _buildDelete(status.fileName, status.id),
         );
       case SftpWorkerStatus.preparing:
         return _wrapInCard(
           status: status,
-          subtitle: _s.sftpDlPrepare,
+          subtitle: l10n.sftpDlPrepare,
           trailing: _buildDelete(status.fileName, status.id),
         );
       case SftpWorkerStatus.sshConnectted:
         return _wrapInCard(
           status: status,
-          subtitle: _s.sftpSSHConnected,
+          subtitle: l10n.sftpSSHConnected,
           trailing: _buildDelete(status.fileName, status.id),
         );
       default:
         return _wrapInCard(
           status: status,
-          subtitle: _s.unknown,
+          subtitle: l10n.unknown,
           trailing: IconButton(
             onPressed: () => context.showRoundDialog(
-              title: Text(_s.error),
-              child: Text((status.error ?? _s.unknown).toString()),
+              title: Text(l10n.error),
+              child: Text((status.error ?? l10n.unknown).toString()),
             ),
             icon: const Icon(Icons.error),
           ),
@@ -144,15 +136,15 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
   Widget _buildDelete(String name, int id) {
     return IconButton(
       onPressed: () => context.showRoundDialog(
-          title: Text(_s.attention),
-          child: Text(_s.sureDelete(name)),
+          title: Text(l10n.attention),
+          child: Text(l10n.sureDelete(name)),
           actions: [
             TextButton(
               onPressed: () {
                 Providers.sftp.cancel(id);
                 context.pop();
               },
-              child: Text(_s.ok),
+              child: Text(l10n.ok),
             ),
           ]),
       icon: const Icon(Icons.delete),

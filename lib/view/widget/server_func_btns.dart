@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
@@ -25,12 +25,10 @@ import 'tag.dart';
 
 class ServerFuncBtnsTopRight extends StatelessWidget {
   final ServerPrivateInfo spi;
-  final S s;
 
   const ServerFuncBtnsTopRight({
     super.key,
     required this.spi,
-    required this.s,
   });
 
   @override
@@ -45,13 +43,13 @@ class ServerFuncBtnsTopRight extends StatelessWidget {
                     const SizedBox(
                       width: 10,
                     ),
-                    Text(e.text(s)),
+                    Text(e.toStr),
                   ],
                 ),
               ))
           .toList(),
       padding: const EdgeInsets.symmetric(horizontal: 10),
-      onSelected: (val) => _onTapMoreBtns(val, spi, context, s),
+      onSelected: (val) => _onTapMoreBtns(val, spi, context),
     );
   }
 }
@@ -60,12 +58,10 @@ class ServerFuncBtns extends StatelessWidget {
   const ServerFuncBtns({
     super.key,
     required this.spi,
-    required this.s,
     this.iconSize,
   });
 
   final ServerPrivateInfo spi;
-  final S s;
   final double? iconSize;
 
   @override
@@ -74,7 +70,7 @@ class ServerFuncBtns extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: ServerTabMenuType.values
           .map((e) => IconButton(
-                onPressed: () => _onTapMoreBtns(e, spi, context, s),
+                onPressed: () => _onTapMoreBtns(e, spi, context),
                 padding: EdgeInsets.zero,
                 tooltip: e.name,
                 icon: Icon(e.icon, size: iconSize ?? 15),
@@ -88,16 +84,15 @@ void _onTapMoreBtns(
   ServerTabMenuType value,
   ServerPrivateInfo spi,
   BuildContext context,
-  S s,
 ) async {
   switch (value) {
     case ServerTabMenuType.pkg:
-      _onPkg(context, s, spi);
+      _onPkg(context, spi);
       break;
     case ServerTabMenuType.sftp:
       AppRoute.sftp(spi: spi).checkGo(
         context: context,
-        check: () => _checkClient(context, spi.id, s.waitConnection),
+        check: () => _checkClient(context, spi.id),
       );
       break;
     case ServerTabMenuType.snippet:
@@ -114,12 +109,12 @@ void _onTapMoreBtns(
       final result = await Providers.server.runSnippets(spi.id, snippets);
       if (result != null && result.isNotEmpty) {
         context.showRoundDialog(
-          title: Text(s.result),
+          title: Text(l10n.result),
           child: Text(result),
           actions: [
             TextButton(
               onPressed: () => copy2Clipboard(result),
-              child: Text(s.copy),
+              child: Text(l10n.copy),
             )
           ],
         );
@@ -128,13 +123,13 @@ void _onTapMoreBtns(
     case ServerTabMenuType.docker:
       AppRoute.docker(spi: spi).checkGo(
         context: context,
-        check: () => _checkClient(context, spi.id, s.waitConnection),
+        check: () => _checkClient(context, spi.id),
       );
       break;
     case ServerTabMenuType.process:
       AppRoute.process(spi: spi).checkGo(
         context: context,
-        check: () => _checkClient(context, spi.id, s.waitConnection),
+        check: () => _checkClient(context, spi.id),
       );
       break;
     case ServerTabMenuType.terminal:
@@ -192,19 +187,19 @@ Future<void> _gotoSSH(
   }
 }
 
-bool _checkClient(BuildContext context, String id, String msg) {
+bool _checkClient(BuildContext context, String id) {
   final server = Providers.server.servers[id];
   if (server == null || server.client == null) {
-    context.showSnackBar(msg);
+    context.showSnackBar(l10n.waitConnection);
     return false;
   }
   return true;
 }
 
-Future<void> _onPkg(BuildContext context, S s, ServerPrivateInfo spi) async {
+Future<void> _onPkg(BuildContext context, ServerPrivateInfo spi) async {
   final server = spi.findServer;
   if (server == null) {
-    context.showSnackBar(s.noClient);
+    context.showSnackBar(l10n.noClient);
     return;
   }
   final sys = server.status.sysVer;
@@ -232,13 +227,13 @@ Future<void> _onPkg(BuildContext context, S s, ServerPrivateInfo spi) async {
   final result = await server.client?.run(listCmd).string;
   context.pop();
   if (result == null) {
-    context.showSnackBar(s.noResult);
+    context.showSnackBar(l10n.noResult);
     return;
   }
   final list = pkg?.updateListRemoveUnused(result.split('\n'));
   final upgradeable = list?.map((e) => UpgradePkgInfo(e, pkg)).toList();
   if (upgradeable == null || upgradeable.isEmpty) {
-    context.showSnackBar(s.noUpdateAvailable);
+    context.showSnackBar(l10n.noUpdateAvailable);
     return;
   }
   final args = upgradeable.map((e) => e.package).join(' ');
@@ -247,14 +242,14 @@ Future<void> _onPkg(BuildContext context, S s, ServerPrivateInfo spi) async {
 
   // Confirm upgrade
   final gotoUpgrade = await context.showRoundDialog<bool>(
-    title: Text(s.attention),
+    title: Text(l10n.attention),
     child: SingleChildScrollView(
-      child: Text('${s.foundNUpdate(upgradeable.length)}\n\n$upgradeCmd'),
+      child: Text('${l10n.foundNUpdate(upgradeable.length)}\n\n$upgradeCmd'),
     ),
     actions: [
       TextButton(
         onPressed: () => context.pop(true),
-        child: Text(s.update),
+        child: Text(l10n.update),
       ),
     ],
   );
@@ -263,6 +258,6 @@ Future<void> _onPkg(BuildContext context, S s, ServerPrivateInfo spi) async {
 
   AppRoute.ssh(spi: spi, initCmd: upgradeCmd).checkGo(
     context: context,
-    check: () => _checkClient(context, spi.id, s.waitConnection),
+    check: () => _checkClient(context, spi.id),
   );
 }

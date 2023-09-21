@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/data/model/server/cpu.dart';
 import 'package:toolbox/data/model/server/net_speed.dart';
@@ -34,7 +34,6 @@ class ServerDetailPage extends StatefulWidget {
 class _ServerDetailPageState extends State<ServerDetailPage>
     with SingleTickerProviderStateMixin {
   late MediaQueryData _media;
-  late S _s;
   final Order<String> _cardsOrder = [];
 
   late final _textFactor = Stores.setting.textFactor.fetch();
@@ -58,7 +57,6 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
-    _s = S.of(context)!;
   }
 
   @override
@@ -74,7 +72,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       if (s == null) {
         return Scaffold(
           body: Center(
-            child: Text(_s.noClient),
+            child: Text(l10n.noClient),
           ),
         );
       }
@@ -108,7 +106,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         itemCount: buildFuncs ? _cardsOrder.length + 1 : _cardsOrder.length,
         itemBuilder: (context, index) {
           if (index == 0 && buildFuncs) {
-            return ServerFuncBtns(spi: widget.spi, s: _s, iconSize: 19);
+            return ServerFuncBtns(spi: widget.spi, iconSize: 19);
           }
           if (buildFuncs) index--;
           return _cardBuildMap[_cardsOrder[index]]?.call(si.status);
@@ -369,7 +367,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             if (ns.devices.isEmpty) {
               children.add(Center(
                 child: Text(
-                  _s.noInterface,
+                  l10n.noInterface,
                   style: const TextStyle(color: Colors.grey, fontSize: 13),
                 ),
               ));

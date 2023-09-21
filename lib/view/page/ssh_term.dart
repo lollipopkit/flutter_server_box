@@ -5,10 +5,10 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/res/store.dart';
@@ -43,7 +43,6 @@ class _SSHPageState extends State<SSHPage> {
   final List<List<VirtKey>> _virtKeysList = [];
 
   late MediaQueryData _media;
-  late S _s;
   late TerminalStyle _terminalStyle;
   late TerminalTheme _terminalTheme;
   late TextInputType _keyboardType;
@@ -88,7 +87,6 @@ class _SSHPageState extends State<SSHPage> {
     super.didChangeDependencies();
     _isDark = context.isDark;
     _media = MediaQuery.of(context);
-    _s = S.of(context)!;
     _terminalTheme = _isDark ? TerminalThemes.dark : TerminalThemes.light;
 
     // Because the virtual keyboard only displayed on mobile devices
@@ -252,7 +250,7 @@ class _SSHPageState extends State<SSHPage> {
         }
         break;
       case VirtualKeyFunc.snippet:
-        context.showSnippetDialog(_s, (s) {
+        context.showSnippetDialog((s) {
           _terminal.textInput(s.script);
           _terminal.keyInput(TerminalKey.enter);
         });
@@ -269,7 +267,7 @@ class _SSHPageState extends State<SSHPage> {
         final initPath = cmds[idx + 1].toString();
         if (initPath.isEmpty || !initPath.startsWith('/')) {
           context.showRoundDialog(
-            title: Text(_s.error),
+            title: Text(l10n.error),
             child: const Text('Failed to get current path'),
           );
           return;
@@ -401,8 +399,8 @@ class _SSHPageState extends State<SSHPage> {
     if (!mounted) return;
     _write('\n\nConnection lost\r\n');
     context.showRoundDialog(
-      title: Text(_s.attention),
-      child: Text('${_s.disconnected}\n${_s.goBackQ}'),
+      title: Text(l10n.attention),
+      child: Text('${l10n.disconnected}\n${l10n.goBackQ}'),
       barrierDismiss: false,
       actions: [
         TextButton(
@@ -412,7 +410,7 @@ class _SSHPageState extends State<SSHPage> {
               context.pop();
             }
           },
-          child: Text(_s.ok),
+          child: Text(l10n.ok),
         ),
       ],
     );

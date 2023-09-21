@@ -3,9 +3,9 @@ import 'package:crypto/crypto.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:plain_notification_token/plain_notification_token.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/res/provider.dart';
 
@@ -19,7 +19,7 @@ Future<bool> shareFiles(BuildContext context, List<String> filePaths) async {
   if (filePaths.length == 1) {
     text = filePaths.first.split('/').last;
   } else {
-    text = '${filePaths.length} ${S.of(context)!.files}';
+    text = '${filePaths.length} ${l10n.files}';
   }
   Providers.app.moveBg = false;
   // ignore: deprecated_member_use

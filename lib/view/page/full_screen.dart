@@ -4,9 +4,9 @@ import 'dart:math';
 import 'package:after_layout/after_layout.dart';
 import 'package:circle_chart/circle_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/model/server/disk.dart';
 import 'package:toolbox/data/provider/server.dart';
@@ -31,7 +31,6 @@ class FullScreenPage extends StatefulWidget {
 }
 
 class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
-  late S _s;
   late MediaQueryData _media;
   late ThemeData _theme;
   late Timer _timer;
@@ -63,7 +62,6 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _s = S.of(context)!;
     _media = MediaQuery.of(context);
     _theme = Theme.of(context);
   }
@@ -131,7 +129,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
           child: TextButton(
               onPressed: () => AppRoute.serverEdit().go(context),
               child: Text(
-                _s.addAServer,
+                l10n.addAServer,
                 style: const TextStyle(fontSize: 27),
               )),
         );
@@ -143,7 +141,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
           final id = pro.serverOrder[idx];
           final s = pro.servers[id];
           if (s == null) {
-            return Center(child: Text(_s.noClient));
+            return Center(child: Text(l10n.noClient));
           }
           return _buildRealServerCard(s.status, s.state, s.spi);
         },
@@ -272,25 +270,25 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
   ) {
     switch (cs) {
       case ServerState.disconnected:
-        return _s.disconnected;
+        return l10n.disconnected;
       case ServerState.connected:
         final tempStr = temp == null ? '' : '${temp.toStringAsFixed(1)}°C';
         final items = [tempStr, upTime];
         final str = items.where((element) => element.isNotEmpty).join(' | ');
-        if (str.isEmpty) return _s.serverTabLoading;
+        if (str.isEmpty) return l10n.serverTabLoading;
         return str;
       case ServerState.connecting:
-        return _s.serverTabConnecting;
+        return l10n.serverTabConnecting;
       case ServerState.failed:
         if (failedInfo == null) {
-          return _s.serverTabFailed;
+          return l10n.serverTabFailed;
         }
         if (failedInfo.contains('encypted')) {
-          return _s.serverTabPlzSave;
+          return l10n.serverTabPlzSave;
         }
         return failedInfo;
       default:
-        return _s.serverTabUnkown;
+        return l10n.serverTabUnkown;
     }
   }
 

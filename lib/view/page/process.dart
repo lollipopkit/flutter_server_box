@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/utils/misc.dart';
@@ -28,7 +28,6 @@ class ProcessPage extends StatefulWidget {
 }
 
 class _ProcessPageState extends State<ProcessPage> {
-  late S _s;
   late Timer _timer;
   late MediaQueryData _media;
 
@@ -55,7 +54,6 @@ class _ProcessPageState extends State<ProcessPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _s = S.of(context)!;
     _media = MediaQuery.of(context);
   }
 
@@ -63,7 +61,7 @@ class _ProcessPageState extends State<ProcessPage> {
     if (mounted) {
       final result = await _client?.run(AppShellFuncType.process.exec).string;
       if (result == null || result.isEmpty) {
-        context.showSnackBar(_s.noResult);
+        context.showSnackBar(l10n.noResult);
         return;
       }
       _result = PsResult.parse(result, sort: _procSortMode);
@@ -110,12 +108,12 @@ class _ProcessPageState extends State<ProcessPage> {
       actions.add(IconButton(
         icon: const Icon(Icons.error),
         onPressed: () => context.showRoundDialog(
-          title: Text(_s.error),
+          title: Text(l10n.error),
           child: SingleChildScrollView(child: Text(_result.error!)),
           actions: [
             TextButton(
               onPressed: () => copy2Clipboard(_result.error!),
-              child: Text(_s.copy),
+              child: Text(l10n.copy),
             ),
           ],
         ),
@@ -134,7 +132,7 @@ class _ProcessPageState extends State<ProcessPage> {
     return Scaffold(
       appBar: CustomAppBar(
         centerTitle: true,
-        title: TwoLineText(up: widget.spi.name, down: _s.process),
+        title: TwoLineText(up: widget.spi.name, down: l10n.process),
         actions: actions,
       ),
       body: child,
@@ -162,8 +160,8 @@ class _ProcessPageState extends State<ProcessPage> {
         onTap: () => _lastFocusId = proc.pid,
         onLongPress: () {
           context.showRoundDialog(
-            title: Text(_s.attention),
-            child: Text(_s.sureStop(proc.pid)),
+            title: Text(l10n.attention),
+            child: Text(l10n.sureStop(proc.pid)),
             actions: [
               TextButton(
                 onPressed: () async {
@@ -171,7 +169,7 @@ class _ProcessPageState extends State<ProcessPage> {
                   await _refresh();
                   context.pop();
                 },
-                child: Text(_s.ok),
+                child: Text(l10n.ok),
               ),
             ],
           );

@@ -3,12 +3,12 @@ import 'dart:io';
 
 import 'package:code_text_field/code_text_field.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_highlight/themes/a11y-light.dart';
 import 'package:flutter_highlight/themes/monokai.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/data/res/highlight.dart';
 import 'package:toolbox/data/res/store.dart';
@@ -47,7 +47,6 @@ class _EditorPageState extends State<EditorPage> {
 
   late CodeController _controller;
   late Map<String, TextStyle> _codeTheme;
-  late S _s;
   late final _textStyle =
       TextStyle(fontSize: Stores.setting.editorFontSize.fetch());
 
@@ -77,7 +76,6 @@ class _EditorPageState extends State<EditorPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _s = S.of(context)!;
 
     if (context.isDark) {
       _codeTheme =
@@ -126,8 +124,8 @@ class _EditorPageState extends State<EditorPage> {
     return CustomAppBar(
       centerTitle: true,
       title: TwoLineText(
-        up: widget.title ?? getFileName(widget.path) ?? _s.unknown,
-        down: _s.editor,
+        up: widget.title ?? getFileName(widget.path) ?? l10n.unknown,
+        down: l10n.editor,
       ),
       actions: [
         PopupMenuButton<String>(

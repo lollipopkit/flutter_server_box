@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/context/common.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/data/res/provider.dart';
 
 import '../../../data/model/server/snippet.dart';
@@ -41,37 +41,35 @@ extension DialogX on BuildContext {
     String? user,
   ) async {
     if (!mounted) return null;
-    final s = S.of(this)!;
     return await showRoundDialog<String>(
-      title: Text(user ?? s.pwd),
+      title: Text(user ?? l10n.pwd),
       child: Input(
         autoFocus: true,
         type: TextInputType.visiblePassword,
         obscureText: true,
         onSubmitted: (val) => pop(val.trim()),
-        label: s.pwd,
+        label: l10n.pwd,
       ),
     );
   }
 
   void showSnippetDialog(
-    S s,
     void Function(Snippet s) onSelected,
   ) {
     if (Providers.snippet.snippets.isEmpty) {
       showRoundDialog(
-        child: Text(s.noSavedSnippet),
+        child: Text(l10n.noSavedSnippet),
         actions: [
           TextButton(
             onPressed: () => pop(),
-            child: Text(s.ok),
+            child: Text(l10n.ok),
           ),
           TextButton(
             onPressed: () {
               pop();
               AppRoute.snippetEdit().go(this);
             },
-            child: Text(s.add),
+            child: Text(l10n.add),
           )
         ],
       );
@@ -80,7 +78,7 @@ extension DialogX on BuildContext {
 
     var snippet = Providers.snippet.snippets.first;
     showRoundDialog(
-      title: Text(s.choose),
+      title: Text(l10n.choose),
       child: Picker(
         items: Providers.snippet.snippets.map((e) => Text(e.name)).toList(),
         onSelected: (idx) => snippet = Providers.snippet.snippets[idx],
@@ -91,7 +89,7 @@ extension DialogX on BuildContext {
             pop();
             onSelected(snippet);
           },
-          child: Text(s.ok),
+          child: Text(l10n.ok),
         )
       ],
     );

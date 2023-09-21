@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/data/res/provider.dart';
 
@@ -40,7 +40,6 @@ class _ServerEditPageState extends State<ServerEditPage> {
   final _usernameFocus = FocusNode();
 
   late FocusScopeNode _focusScope;
-  late S _s;
 
   final _keyIdx = ValueNotifier<int?>(null);
   final _autoConnect = ValueNotifier(true);
@@ -95,7 +94,6 @@ class _ServerEditPageState extends State<ServerEditPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _s = S.of(context)!;
     _focusScope = FocusScope.of(context);
   }
 
@@ -112,8 +110,8 @@ class _ServerEditPageState extends State<ServerEditPage> {
     final delBtn = IconButton(
       onPressed: () {
         context.showRoundDialog(
-          title: Text(_s.attention),
-          child: Text(_s.sureToDeleteServer(widget.spi!.name)),
+          title: Text(l10n.attention),
+          child: Text(l10n.sureToDeleteServer(widget.spi!.name)),
           actions: [
             TextButton(
               onPressed: () {
@@ -121,7 +119,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
                 context.pop();
                 context.pop(true);
               },
-              child: Text(_s.ok, style: UIs.textRed),
+              child: Text(l10n.ok, style: UIs.textRed),
             ),
           ],
         );
@@ -130,7 +128,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
     );
     final actions = widget.spi != null ? [delBtn] : null;
     return CustomAppBar(
-      title: Text(_s.edit, style: UIs.textSize18),
+      title: Text(l10n.edit, style: UIs.textSize18),
       actions: actions,
     );
   }
@@ -143,8 +141,8 @@ class _ServerEditPageState extends State<ServerEditPage> {
         type: TextInputType.text,
         node: _nameFocus,
         onSubmitted: (_) => _focusScope.requestFocus(_ipFocus),
-        hint: _s.exampleName,
-        label: _s.name,
+        hint: l10n.exampleName,
+        label: l10n.name,
         icon: Icons.info,
       ),
       Input(
@@ -152,7 +150,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         type: TextInputType.text,
         onSubmitted: (_) => _focusScope.requestFocus(_portFocus),
         node: _ipFocus,
-        label: _s.host,
+        label: l10n.host,
         icon: Icons.computer,
         hint: 'example.com',
       ),
@@ -161,7 +159,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         type: TextInputType.number,
         node: _portFocus,
         onSubmitted: (_) => _focusScope.requestFocus(_usernameFocus),
-        label: _s.port,
+        label: l10n.port,
         icon: Icons.format_list_numbered,
         hint: '22',
       ),
@@ -170,7 +168,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         type: TextInputType.text,
         node: _usernameFocus,
         onSubmitted: (_) => _focusScope.requestFocus(_alterUrlFocus),
-        label: _s.user,
+        label: l10n.user,
         icon: Icons.account_box,
         hint: 'root',
       ),
@@ -178,20 +176,19 @@ class _ServerEditPageState extends State<ServerEditPage> {
         controller: _altUrlController,
         type: TextInputType.text,
         node: _alterUrlFocus,
-        label: _s.alterUrl,
+        label: l10n.alterUrl,
         icon: Icons.computer,
         hint: 'user@ip:port',
       ),
       TagEditor(
         tags: _tags,
         onChanged: (p0) => _tags = p0,
-        s: _s,
         allTags: [...Providers.server.tags],
         onRenameTag: Providers.server.renameTag,
       ),
       _buildAuth(),
       ListTile(
-        title: Text(_s.autoConnect),
+        title: Text(l10n.autoConnect),
         trailing: ValueBuilder(
           listenable: _autoConnect,
           build: () => Switch(
@@ -215,7 +212,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
 
   Widget _buildAuth() {
     final switch_ = ListTile(
-      title: Text(_s.keyAuth),
+      title: Text(l10n.keyAuth),
       trailing: ValueBuilder(
         listenable: _keyIdx,
         build: () => Switch(
@@ -243,9 +240,9 @@ class _ServerEditPageState extends State<ServerEditPage> {
             controller: _passwordController,
             obscureText: true,
             type: TextInputType.text,
-            label: _s.pwd,
+            label: l10n.pwd,
             icon: Icons.password,
-            hint: _s.pwd,
+            hint: l10n.pwd,
             onSubmitted: (_) => _onSave(),
           ));
         }
@@ -267,7 +264,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
             ),
             title: Text(e.id, textAlign: TextAlign.start),
             subtitle: Text(
-              e.type ?? _s.unknown,
+              e.type ?? l10n.unknown,
               textAlign: TextAlign.start,
               style: UIs.textGrey,
             ),
@@ -276,7 +273,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         });
         tiles.add(
           ListTile(
-            title: Text(_s.addPrivateKey),
+            title: Text(l10n.addPrivateKey),
             contentPadding: EdgeInsets.zero,
             trailing: IconButton(
               icon: const Icon(Icons.add),
@@ -319,21 +316,21 @@ class _ServerEditPageState extends State<ServerEditPage> {
 
   void _onSave() async {
     if (_ipController.text == '') {
-      context.showSnackBar(_s.plzEnterHost);
+      context.showSnackBar(l10n.plzEnterHost);
       return;
     }
     if (_keyIdx.value == null && _passwordController.text == '') {
       final cancel = await context.showRoundDialog<bool>(
-        title: Text(_s.attention),
-        child: Text(_s.sureNoPwd),
+        title: Text(l10n.attention),
+        child: Text(l10n.sureNoPwd),
         actions: [
           TextButton(
             onPressed: () => context.pop(false),
-            child: Text(_s.ok),
+            child: Text(l10n.ok),
           ),
           TextButton(
             onPressed: () => context.pop(true),
-            child: Text(_s.cancel),
+            child: Text(l10n.cancel),
           )
         ],
       );
@@ -343,7 +340,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
     }
     // If [_pubKeyIndex] is -1, it means that the user has not selected
     if (_keyIdx.value == -1) {
-      context.showSnackBar(_s.plzSelectKey);
+      context.showSnackBar(l10n.plzSelectKey);
       return;
     }
     if (_usernameController.text.isEmpty) {

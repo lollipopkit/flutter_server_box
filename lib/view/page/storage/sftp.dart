@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:after_layout/after_layout.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/sftpfile.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
@@ -49,14 +49,11 @@ class SftpPage extends StatefulWidget {
 class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   final SftpBrowserStatus _status = SftpBrowserStatus();
 
-  late S _s;
-
   SSHClient? _client;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _s = S.of(context)!;
   }
 
   @override
@@ -130,7 +127,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            (_status.path?.path ?? _s.loadingFiles).omitStartStr(),
+            (_status.path?.path ?? l10n.loadingFiles).omitStartStr(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: children,
@@ -150,12 +147,12 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
             children: [
               ListTile(
                 leading: const Icon(Icons.open_in_new),
-                title: Text(_s.system),
+                title: Text(l10n.system),
                 onTap: () => context.pop(1),
               ),
               ListTile(
                 leading: const Icon(Icons.folder),
-                title: Text(_s.inner),
+                title: Text(l10n.inner),
                 onTap: () => context.pop(0),
               ),
             ],
@@ -199,11 +196,11 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
               children: [
                 ListTile(
                     leading: const Icon(Icons.folder),
-                    title: Text(_s.createFolder),
+                    title: Text(l10n.createFolder),
                     onTap: () => _mkdir(context)),
                 ListTile(
                     leading: const Icon(Icons.insert_drive_file),
-                    title: Text(_s.createFile),
+                    title: Text(l10n.createFile),
                     onTap: () => _newFile(context)),
               ],
             ),
@@ -217,7 +214,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       padding: const EdgeInsets.all(0),
       onPressed: () async {
         final p = await context.showRoundDialog<String>(
-          title: Text(_s.goto),
+          title: Text(l10n.goto),
           child: Autocomplete<String>(
             optionsBuilder: (val) {
               if (!Stores.setting.recordHistory.fetch()) {
@@ -231,7 +228,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
               return Input(
                 autoFocus: true,
                 icon: Icons.abc,
-                label: _s.path,
+                label: l10n.path,
                 node: node,
                 controller: controller,
                 onSubmitted: (value) => context.pop(value),
@@ -318,12 +315,12 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     final children = [
       ListTile(
         leading: const Icon(Icons.delete),
-        title: Text(_s.delete),
+        title: Text(l10n.delete),
         onTap: () => _delete(context, file),
       ),
       ListTile(
         leading: const Icon(Icons.abc),
-        title: Text(_s.rename),
+        title: Text(l10n.rename),
         onTap: () => _rename(context, file),
       ),
     ];
@@ -331,19 +328,19 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       children.addAll([
         ListTile(
           leading: const Icon(Icons.edit),
-          title: Text(_s.edit),
+          title: Text(l10n.edit),
           onTap: () => _edit(context, file),
         ),
         ListTile(
           leading: const Icon(Icons.download),
-          title: Text(_s.download),
+          title: Text(l10n.download),
           onTap: () => _download(context, file),
         ),
         // Only show decompress option when the file is a compressed file
         if (_canDecompress(file.filename))
           ListTile(
             leading: const Icon(Icons.folder_zip),
-            title: Text(_s.decompress),
+            title: Text(l10n.decompress),
             onTap: () => _decompress(context, file),
           ),
       ]);
@@ -359,7 +356,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   Future<void> _edit(BuildContext context, SftpName name) async {
     final size = name.attr.size;
     if (size == null || size > Miscs.editorMaxSize) {
-      context.showSnackBar(_s.fileTooLarge(
+      context.showSnackBar(l10n.fileTooLarge(
         name.filename,
         size ?? 0,
         Miscs.editorMaxSize,
@@ -386,18 +383,18 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     if (result != null && result) {
       Providers.sftp
           .add(SftpReq(req.spi, remotePath, localPath, SftpReqType.upload));
-      context.showSnackBar(_s.added2List);
+      context.showSnackBar(l10n.added2List);
     }
   }
 
   void _download(BuildContext context, SftpName name) {
     context.showRoundDialog(
-      title: Text(_s.attention),
-      child: Text('${_s.dl2Local(name.filename)}\n${_s.keepForeground}'),
+      title: Text(l10n.attention),
+      child: Text('${l10n.dl2Local(name.filename)}\n${l10n.keepForeground}'),
       actions: [
         TextButton(
           onPressed: () => context.pop(),
-          child: Text(_s.cancel),
+          child: Text(l10n.cancel),
         ),
         TextButton(
           onPressed: () async {
@@ -415,7 +412,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
             context.pop();
           },
-          child: Text(_s.download),
+          child: Text(l10n.download),
         )
       ],
     );
@@ -425,16 +422,16 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     context.pop();
     final isDir = file.attr.isDirectory;
     final useRmrf = Stores.setting.sftpRmrfDir.fetch();
-    final dirText = (isDir && !useRmrf) ? '\n${_s.sureDirEmpty}' : '';
-    final text = '${_s.sureDelete(file.filename)}$dirText';
+    final dirText = (isDir && !useRmrf) ? '\n${l10n.sureDirEmpty}' : '';
+    final text = '${l10n.sureDelete(file.filename)}$dirText';
     final child = Text(text);
     context.showRoundDialog(
       child: child,
-      title: Text(_s.attention),
+      title: Text(l10n.attention),
       actions: [
         TextButton(
           onPressed: () => context.pop(),
-          child: Text(_s.cancel),
+          child: Text(l10n.cancel),
         ),
         TextButton(
           onPressed: () async {
@@ -453,12 +450,12 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
             } catch (e) {
               context.pop();
               context.showRoundDialog(
-                title: Text(_s.error),
+                title: Text(l10n.error),
                 child: Text(e.toString()),
                 actions: [
                   TextButton(
                     onPressed: () => context.pop(),
-                    child: Text(_s.ok),
+                    child: Text(l10n.ok),
                   )
                 ],
               );
@@ -466,7 +463,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
             }
             _listDir();
           },
-          child: Text(_s.delete, style: UIs.textRed),
+          child: Text(l10n.delete, style: UIs.textRed),
         ),
       ],
     );
@@ -476,27 +473,27 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     context.pop();
     final textController = TextEditingController();
     context.showRoundDialog(
-      title: Text(_s.createFolder),
+      title: Text(l10n.createFolder),
       child: Input(
         autoFocus: true,
         icon: Icons.folder,
         controller: textController,
-        label: _s.name,
+        label: l10n.name,
       ),
       actions: [
         TextButton(
           onPressed: () => context.pop(),
-          child: Text(_s.cancel),
+          child: Text(l10n.cancel),
         ),
         TextButton(
           onPressed: () async {
             if (textController.text == '') {
               context.showRoundDialog(
-                child: Text(_s.fieldMustNotEmpty),
+                child: Text(l10n.fieldMustNotEmpty),
                 actions: [
                   TextButton(
                     onPressed: () => context.pop(),
-                    child: Text(_s.ok),
+                    child: Text(l10n.ok),
                   ),
                 ],
               );
@@ -507,7 +504,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
             context.pop();
             _listDir();
           },
-          child: Text(_s.ok, style: UIs.textRed),
+          child: Text(l10n.ok, style: UIs.textRed),
         ),
       ],
     );
@@ -517,24 +514,24 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     context.pop();
     final textController = TextEditingController();
     context.showRoundDialog(
-      title: Text(_s.createFile),
+      title: Text(l10n.createFile),
       child: Input(
         autoFocus: true,
         icon: Icons.insert_drive_file,
         controller: textController,
-        label: _s.name,
+        label: l10n.name,
       ),
       actions: [
         TextButton(
           onPressed: () async {
             if (textController.text == '') {
               context.showRoundDialog(
-                title: Text(_s.attention),
-                child: Text(_s.fieldMustNotEmpty),
+                title: Text(l10n.attention),
+                child: Text(l10n.fieldMustNotEmpty),
                 actions: [
                   TextButton(
                     onPressed: () => context.pop(),
-                    child: Text(_s.ok),
+                    child: Text(l10n.ok),
                   ),
                 ],
               );
@@ -547,7 +544,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
             context.pop();
             _listDir();
           },
-          child: Text(_s.ok, style: UIs.textRed),
+          child: Text(l10n.ok, style: UIs.textRed),
         ),
       ],
     );
@@ -557,25 +554,25 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     context.pop();
     final textController = TextEditingController();
     context.showRoundDialog(
-      title: Text(_s.rename),
+      title: Text(l10n.rename),
       child: Input(
         autoFocus: true,
         icon: Icons.abc,
         controller: textController,
-        label: _s.name,
+        label: l10n.name,
       ),
       actions: [
-        TextButton(onPressed: () => context.pop(), child: Text(_s.cancel)),
+        TextButton(onPressed: () => context.pop(), child: Text(l10n.cancel)),
         TextButton(
           onPressed: () async {
             if (textController.text == '') {
               context.showRoundDialog(
-                title: Text(_s.attention),
-                child: Text(_s.fieldMustNotEmpty),
+                title: Text(l10n.attention),
+                child: Text(l10n.fieldMustNotEmpty),
                 actions: [
                   TextButton(
                     onPressed: () => context.pop(),
-                    child: Text(_s.ok),
+                    child: Text(l10n.ok),
                   ),
                 ],
               );
@@ -585,7 +582,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
             context.pop();
             _listDir();
           },
-          child: Text(_s.rename, style: UIs.textRed),
+          child: Text(l10n.rename, style: UIs.textRed),
         ),
       ],
     );
@@ -597,12 +594,12 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     final cmd = _getDecompressCmd(absPath);
     if (cmd == null) {
       context.showRoundDialog(
-        title: Text(_s.error),
+        title: Text(l10n.error),
         child: Text('Unsupport file: ${name.filename}'),
         actions: [
           TextButton(
             onPressed: () => context.pop(),
-            child: Text(_s.ok),
+            child: Text(l10n.ok),
           ),
         ],
       );
@@ -664,12 +661,12 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       Future.delayed(
         const Duration(milliseconds: 177),
         () => context.showRoundDialog(
-          title: Text(_s.error),
+          title: Text(l10n.error),
           child: Text(e.toString()),
           actions: [
             TextButton(
               onPressed: () => context.pop(),
-              child: Text(_s.ok),
+              child: Text(l10n.ok),
             )
           ],
         ),

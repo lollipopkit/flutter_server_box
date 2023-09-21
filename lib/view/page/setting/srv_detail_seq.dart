@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/data/res/store.dart';
 
 import '../../../core/extension/order.dart';
@@ -16,14 +16,6 @@ class ServerDetailOrderPage extends StatefulWidget {
 class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
   final Order<String> _cardsOrder = [];
 
-  late S _s;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _s = S.of(context)!;
-  }
-
   @override
   void initState() {
     super.initState();
@@ -34,7 +26,7 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(_s.serverOrder),
+        title: Text(l10n.serverOrder),
       ),
       body: _buildBody(),
     );

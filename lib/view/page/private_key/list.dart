@@ -2,10 +2,10 @@ import 'dart:io';
 import 'dart:async';
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/platform/path.dart';
 import 'package:toolbox/data/res/store.dart';
@@ -26,19 +26,11 @@ class PrivateKeysListPage extends StatefulWidget {
 
 class _PrivateKeyListState extends State<PrivateKeysListPage>
     with AfterLayoutMixin {
-  late S _s;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _s = S.of(context)!;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(_s.privateKey, style: UIs.textSize18),
+        title: Text(l10n.privateKey, style: UIs.textSize18),
       ),
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
@@ -53,7 +45,7 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
       builder: (_, key, __) {
         if (key.pkis.isEmpty) {
           return Center(
-            child: Text(_s.noSavedPrivateKey),
+            child: Text(l10n.noSavedPrivateKey),
           );
         }
         return ListView.builder(
@@ -71,7 +63,7 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
                   ),
                 ),
                 title: Text(item.id),
-                subtitle: Text(item.type ?? _s.unknown, style: UIs.textGrey),
+                subtitle: Text(item.type ?? l10n.unknown, style: UIs.textGrey),
                 onTap: () => AppRoute.keyEdit(pki: item).go(context),
                 trailing: const Icon(Icons.edit),
               ),
@@ -94,19 +86,19 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
         key: idRsaFile.readAsStringSync(),
       );
       context.showRoundDialog(
-        title: Text(_s.attention),
-        child: Text(_s.addSystemPrivateKeyTip),
+        title: Text(l10n.attention),
+        child: Text(l10n.addSystemPrivateKeyTip),
         actions: [
           TextButton(
             onPressed: () {
               context.pop();
               AppRoute.keyEdit(pki: sysPk).go(context);
             },
-            child: Text(_s.ok),
+            child: Text(l10n.ok),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(_s.cancel),
+            child: Text(l10n.cancel),
           ),
         ],
       );

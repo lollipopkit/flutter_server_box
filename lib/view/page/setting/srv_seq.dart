@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
@@ -15,19 +15,11 @@ class ServerOrderPage extends StatefulWidget {
 }
 
 class _ServerOrderPageState extends State<ServerOrderPage> {
-  late S _s;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _s = S.of(context)!;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(_s.serverOrder),
+        title: Text(l10n.serverOrder),
       ),
       body: _buildBody(),
     );
@@ -35,7 +27,7 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
 
   Widget _buildBody() {
     if (Providers.server.serverOrder.isEmpty) {
-      return Center(child: Text(_s.noServerAvailable));
+      return Center(child: Text(l10n.noServerAvailable));
     }
     return ReorderableListView.builder(
       footer: const SizedBox(height: 77),

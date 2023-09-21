@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
@@ -18,19 +18,11 @@ class SSHVirtKeySettingPage extends StatefulWidget {
 }
 
 class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
-  late S _s;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _s = S.of(context)!;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(_s.editVirtKeys),
+        title: Text(l10n.editVirtKeys),
       ),
       body: _buildBody(),
     );
@@ -48,7 +40,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
       padding: const EdgeInsets.all(7),
       itemBuilder: (_, idx) {
         final key = allKeys[idx];
-        final help = key.help(_s);
+        final help = key.help;
         return RoundRectCard(
           key: ValueKey(idx),
           ListTile(
@@ -62,7 +54,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
       itemCount: allKeys.length,
       onReorder: (o, n) {
         if (o >= keys.length || n >= keys.length) {
-          context.showSnackBar(_s.disabled);
+          context.showSnackBar(l10n.disabled);
           return;
         }
         keys.moveByItem(keys, o, n, property: Stores.setting.sshVirtKeys);

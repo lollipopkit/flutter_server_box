@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/numx.dart';
 import 'package:toolbox/core/utils/misc.dart';
@@ -38,7 +38,6 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
   final _pwdNode = FocusNode();
 
   late FocusScopeNode _focusScope;
-  late S _s;
 
   Widget? _loading;
 
@@ -73,7 +72,6 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _s = S.of(context)!;
     _focusScope = FocusScope.of(context);
   }
 
@@ -89,11 +87,11 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
   PreferredSizeWidget _buildAppBar() {
     final actions = [
       IconButton(
-        tooltip: _s.delete,
+        tooltip: l10n.delete,
         onPressed: () {
           context.showRoundDialog(
-            title: Text(_s.attention),
-            child: Text(_s.sureDelete(widget.pki!.id)),
+            title: Text(l10n.attention),
+            child: Text(l10n.sureDelete(widget.pki!.id)),
             actions: [
               TextButton(
                 onPressed: () {
@@ -102,7 +100,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
                   context.pop();
                 },
                 child: Text(
-                  _s.ok,
+                  l10n.ok,
                   style: UIs.textRed,
                 ),
               ),
@@ -113,20 +111,20 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
       )
     ];
     return CustomAppBar(
-      title: Text(_s.edit, style: UIs.textSize18),
+      title: Text(l10n.edit, style: UIs.textSize18),
       actions: widget.pki == null ? null : actions,
     );
   }
 
   Widget _buildFAB() {
     return FloatingActionButton(
-      tooltip: _s.save,
+      tooltip: l10n.save,
       onPressed: () async {
         final name = _nameController.text;
         final key = _keyController.text.trim();
         final pwd = _pwdController.text;
         if (name.isEmpty || key.isEmpty) {
-          context.showSnackBar(_s.fieldMustNotEmpty);
+          context.showSnackBar(l10n.fieldMustNotEmpty);
           return;
         }
         FocusScope.of(context).unfocus();
@@ -165,7 +163,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
           type: TextInputType.text,
           node: _nameNode,
           onSubmitted: (_) => _focusScope.requestFocus(_keyNode),
-          label: _s.name,
+          label: l10n.name,
           icon: Icons.info,
         ),
         Input(
@@ -175,26 +173,26 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
           type: TextInputType.text,
           node: _keyNode,
           onSubmitted: (_) => _focusScope.requestFocus(_pwdNode),
-          label: _s.privateKey,
+          label: l10n.privateKey,
           icon: Icons.vpn_key,
         ),
         TextButton(
           onPressed: () async {
             final path = await pickOneFile();
             if (path == null) {
-              context.showSnackBar(_s.fieldMustNotEmpty);
+              context.showSnackBar(l10n.fieldMustNotEmpty);
               return;
             }
 
             final file = File(path);
             if (!file.existsSync()) {
-              context.showSnackBar(_s.fileNotExist(path));
+              context.showSnackBar(l10n.fileNotExist(path));
               return;
             }
             final size = (await file.stat()).size;
             if (size > Miscs.privateKeyMaxSize) {
               context.showSnackBar(
-                _s.fileTooLarge(
+                l10n.fileTooLarge(
                   path,
                   size.convertBytes,
                   Miscs.privateKeyMaxSize.convertBytes,
@@ -205,14 +203,14 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
 
             _keyController.text = await file.readAsString();
           },
-          child: Text(_s.pickFile),
+          child: Text(l10n.pickFile),
         ),
         Input(
           controller: _pwdController,
           type: TextInputType.text,
           node: _pwdNode,
           obscureText: true,
-          label: _s.pwd,
+          label: l10n.pwd,
           icon: Icons.password,
         ),
         SizedBox(height: MediaQuery.of(context).size.height * 0.1),

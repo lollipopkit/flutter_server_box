@@ -1,5 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/data/model/server/server_status.dart';
 
 part 'net_view.g.dart';
@@ -13,14 +13,14 @@ enum NetViewType {
   @HiveField(2)
   traffic;
 
-  String l10n(S s) {
+  String get toStr {
     switch (this) {
       case NetViewType.conn:
-        return s.conn;
+        return l10n.conn;
       case NetViewType.traffic:
-        return s.traffic;
+        return l10n.traffic;
       case NetViewType.speed:
-        return s.speed;
+        return l10n.speed;
     }
   }
 

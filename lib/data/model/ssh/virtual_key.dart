@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:xterm/core.dart';
 
 part 'virtual_key.g.dart';
@@ -148,12 +148,12 @@ enum VirtKey {
     }
   }
 
-  String? help(S s) {
+  String? get help {
     switch (this) {
       case VirtKey.sftp:
-        return s.virtKeyHelpSFTP;
+        return l10n.virtKeyHelpSFTP;
       case VirtKey.clipboard:
-        return s.virtKeyHelpClipboard;
+        return l10n.virtKeyHelpClipboard;
       default:
         return null;
     }

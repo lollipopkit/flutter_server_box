@@ -7,6 +7,7 @@ import 'package:get_it/get_it.dart';
 import 'package:toolbox/core/channel/bg_run.dart';
 import 'package:toolbox/core/channel/home_widget.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/utils/platform/auth.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/res/github_id.dart';
@@ -44,7 +45,6 @@ class _HomePageState extends State<HomePage>
   late final PageController _pageController;
 
   final _selectIndex = ValueNotifier(0);
-  late S _s;
 
   bool _switchingPage = false;
   bool _isAuthing = false;
@@ -65,7 +65,7 @@ class _HomePageState extends State<HomePage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _s = S.of(context)!;
+    l10n = S.of(context)!;
   }
 
   @override
@@ -133,7 +133,7 @@ class _HomePageState extends State<HomePage>
     final actions = <Widget>[
       IconButton(
         icon: const Icon(Icons.developer_mode, size: 23),
-        tooltip: _s.debug,
+        tooltip: l10n.debug,
         onPressed: () => AppRoute.debug().go(context),
       ),
     ];
@@ -182,12 +182,12 @@ class _HomePageState extends State<HomePage>
       destinations: [
         NavigationDestination(
           icon: const Icon(Icons.cloud_outlined),
-          label: _s.server,
+          label: l10n.server,
           selectedIcon: const Icon(Icons.cloud),
         ),
         NavigationDestination(
           icon: const Icon(Icons.snippet_folder_outlined),
-          label: _s.snippet,
+          label: l10n.snippet,
           selectedIcon: const Icon(Icons.snippet_folder),
         ),
         const NavigationDestination(
@@ -232,28 +232,28 @@ class _HomePageState extends State<HomePage>
         children: [
           ListTile(
             leading: const Icon(Icons.settings),
-            title: Text(_s.setting),
+            title: Text(l10n.setting),
             onTap: () => AppRoute.settings().go(context),
             onLongPress: _onLongPressSetting,
           ),
           ListTile(
             leading: const Icon(Icons.vpn_key),
-            title: Text(_s.privateKey),
+            title: Text(l10n.privateKey),
             onTap: () => AppRoute.keyList().go(context),
           ),
           ListTile(
             leading: const Icon(Icons.file_open),
-            title: Text(_s.files),
+            title: Text(l10n.files),
             onTap: () => AppRoute.localStorage().go(context),
           ),
           ListTile(
             leading: const Icon(Icons.import_export),
-            title: Text(_s.backupAndRestore),
+            title: Text(l10n.backupAndRestore),
             onTap: () => AppRoute.backup().go(context),
           ),
           ListTile(
             leading: const Icon(Icons.text_snippet),
-            title: Text('${_s.about} & ${_s.feedback}'),
+            title: Text('${l10n.about} & ${l10n.feedback}'),
             onTap: _showAboutDialog,
           )
         ].map((e) => RoundRectCard(e)).toList(),
@@ -263,7 +263,7 @@ class _HomePageState extends State<HomePage>
 
   void _showAboutDialog() {
     context.showRoundDialog(
-      title: Text(_s.about),
+      title: Text(l10n.about),
       child: _buildAboutContent(),
       actions: [
         TextButton(
@@ -272,11 +272,11 @@ class _HomePageState extends State<HomePage>
         ),
         TextButton(
           onPressed: () => openUrl(Urls.appHelp),
-          child: Text(_s.feedback),
+          child: Text(l10n.feedback),
         ),
         TextButton(
           onPressed: () => showLicensePage(context: context),
-          child: Text(_s.license),
+          child: Text(l10n.license),
         ),
       ],
     );
@@ -289,12 +289,12 @@ class _HomePageState extends State<HomePage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           UrlText(
-            text: _s.madeWithLove(Urls.myGithub),
+            text: l10n.madeWithLove(Urls.myGithub),
             replace: 'lollipopkit',
           ),
           UIs.height13,
           // Use [UrlText] for same text style
-          Text(_s.aboutThanks),
+          Text(l10n.aboutThanks),
           UIs.height13,
           const Text('Contributors:'),
           ...GithubIds.contributors.map(
@@ -365,7 +365,7 @@ class _HomePageState extends State<HomePage>
     final result = await AppRoute.editor(
       text: text,
       langCode: 'json',
-      title: _s.setting,
+      title: l10n.setting,
     ).go(context);
     if (result == null) {
       return;
@@ -380,8 +380,8 @@ class _HomePageState extends State<HomePage>
       }
     } catch (e, trace) {
       context.showRoundDialog(
-        title: Text(_s.error),
-        child: Text('${_s.save}:\n$e'),
+        title: Text(l10n.error),
+        child: Text('${l10n.save}:\n$e'),
       );
       Loggers.app.warning('Update json settings failed', e, trace);
     }
@@ -391,7 +391,7 @@ class _HomePageState extends State<HomePage>
     if (Stores.setting.useBioAuth.fetch()) {
       if (!_isAuthing) {
         _isAuthing = true;
-        BioAuth.auth(_s.authRequired).then(
+        BioAuth.auth(l10n.authRequired).then(
           (val) {
             switch (val) {
               case AuthResult.success:

@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/core/utils/misc.dart';
@@ -24,17 +24,9 @@ class IOSSettingsPage extends StatefulWidget {
 }
 
 class _IOSSettingsPageState extends State<IOSSettingsPage> {
-  late S _s;
-
   final _pushToken = ValueNotifier<String?>(null);
 
   final wc = WatchConnectivity();
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _s = S.of(context)!;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,9 +47,7 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
 
   Widget _buildPushToken() {
     return ListTile(
-      title: Text(
-        _s.pushToken,
-      ),
+      title: Text(l10n.pushToken),
       trailing: IconButton(
         icon: const Icon(Icons.copy),
         alignment: Alignment.centerRight,
@@ -65,21 +55,21 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
         onPressed: () {
           if (_pushToken.value != null) {
             copy2Clipboard(_pushToken.value!);
-            context.showSnackBar(_s.success);
+            context.showSnackBar(l10n.success);
           } else {
-            context.showSnackBar(_s.getPushTokenFailed);
+            context.showSnackBar(l10n.getPushTokenFailed);
           }
         },
       ),
       subtitle: FutureWidget<String?>(
         future: getToken(),
-        loading: Text(_s.gettingToken),
-        error: (error, trace) => Text('${_s.error}: $error'),
-        noData: Text(_s.nullToken),
+        loading: Text(l10n.gettingToken),
+        error: (error, trace) => Text('${l10n.error}: $error'),
+        noData: Text(l10n.nullToken),
         success: (text) {
           _pushToken.value = text;
           return Text(
-            text ?? _s.nullToken,
+            text ?? l10n.nullToken,
             style: UIs.textGrey,
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
@@ -91,8 +81,8 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
 
   Widget _buildAutoUpdateHomeWidget() {
     return ListTile(
-      title: Text(_s.autoUpdateHomeWidget),
-      subtitle: Text(_s.whenOpenApp, style: UIs.textGrey),
+      title: Text(l10n.autoUpdateHomeWidget),
+      subtitle: Text(l10n.whenOpenApp, style: UIs.textGrey),
       trailing: StoreSwitch(prop: Stores.setting.autoUpdateHomeWidget),
     );
   }
@@ -110,14 +100,14 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
         Loggers.app.warning('WatchOS error', e, trace);
         return ListTile(
           title: const Text('Watch app'),
-          subtitle: Text('${_s.error}: $e', style: UIs.textGrey),
+          subtitle: Text('${l10n.error}: $e', style: UIs.textGrey),
         );
       },
       success: (ctx) {
         if (ctx == null) {
           return ListTile(
             title: const Text('Watch app'),
-            subtitle: Text(_s.watchNotPaired, style: UIs.textGrey),
+            subtitle: Text(l10n.watchNotPaired, style: UIs.textGrey),
           );
         }
         return ListTile(
@@ -146,8 +136,8 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
       await wc.updateApplicationContext(newCtx);
     } catch (e, trace) {
       context.showRoundDialog(
-        title: Text(_s.error),
-        child: Text('${_s.save}:\n$e'),
+        title: Text(l10n.error),
+        child: Text('${l10n.save}:\n$e'),
       );
       Loggers.app.warning('Update watch config failed', e, trace);
     }
