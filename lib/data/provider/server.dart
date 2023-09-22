@@ -1,9 +1,14 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:toolbox/core/utils/platform/path.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/system.dart';
+import 'package:toolbox/data/model/sftp/req.dart';
 import 'package:toolbox/data/res/logger.dart';
+import 'package:toolbox/data/res/path.dart';
+import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 
 import '../../core/extension/order.dart';
@@ -20,7 +25,7 @@ typedef ServersMap = Map<String, Server>;
 
 class ServerProvider extends ChangeNotifier {
   final ServersMap _servers = {};
-  ServersMap get servers => _servers;
+  Iterable<Server> get servers => _servers.values;
   final Order<String> _serverOrder = [];
   Order<String> get serverOrder => _serverOrder;
   final List<String> _tags = [];
@@ -56,6 +61,19 @@ class ServerProvider extends ChangeNotifier {
     }
     _updateTags();
     notifyListeners();
+  }
+
+  /// Get a [Server] by [spi] or [id].
+  ///
+  /// Priority: [spi] > [id]
+  Server? pick({ServerPrivateInfo? spi, String? id}) {
+    if (spi != null) {
+      return _servers[spi.id];
+    }
+    if (id != null) {
+      return _servers[id];
+    }
+    return null;
   }
 
   void _updateTags() {
@@ -264,27 +282,43 @@ class ServerProvider extends ChangeNotifier {
       try {
         final writeResult = await s.client?.run(installShellCmd).string;
         if (writeResult == null || writeResult.isNotEmpty) {
-          _limiter.inc(sid);
-          s.status.failedInfo = writeResult;
-          _setServerState(s, ServerState.failed);
-          return;
+          throw Exception('$writeResult');
         }
       } catch (e) {
-        _limiter.inc(sid);
-        s.status.failedInfo = e.toString();
-        _setServerState(s, ServerState.failed);
-        Loggers.app.warning('Write script to ${spi.name} failed', e);
-        return;
+        var sftpFailed = false;
+        try {
+          Loggers.app.warning('Using SFTP to write script to ${spi.name}');
+          final localPath = joinPath(await Paths.doc, 'install.sh');
+          final file = File(localPath);
+          file.writeAsString(ShellFunc.allScript);
+          final sftp = Providers.sftp;
+          final completer = Completer();
+          sftp.add(
+            SftpReq(spi, installShellPath, localPath, SftpReqType.upload),
+            completer: completer,
+          );
+          await completer.future;
+          await file.delete();
+        } catch (_) {
+          sftpFailed = true;
+        }
+        if (sftpFailed) {
+          _limiter.inc(sid);
+          s.status.failedInfo = e.toString();
+          _setServerState(s, ServerState.failed);
+          Loggers.app.warning('Write script to ${spi.name} failed', e);
+          return;
+        }
       }
     }
 
-    if (s.client == null) return;
-
+    /// Keep [finished] state, or the UI will be refreshed to [loading] state
+    /// instead of the 'Temp & Uptime'.
     if (s.state != ServerState.finished) {
       _setServerState(s, ServerState.loading);
     }
 
-    final raw = await s.client?.run(AppShellFuncType.status.exec).string;
+    final raw = await s.client?.run(ShellFunc.status.exec).string;
     final segments = raw?.split(seperator).map((e) => e.trim()).toList();
     if (raw == null || raw.isEmpty || segments == null || segments.isEmpty) {
       _limiter.inc(sid);

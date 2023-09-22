@@ -70,7 +70,7 @@ class ServerPrivateInfo {
     return data;
   }
 
-  Server? get findServer => Providers.server.servers[id];
+  Server? get server => Providers.server.pick(spi: this);
 
   bool shouldReconnect(ServerPrivateInfo old) {
     return id != old.id ||

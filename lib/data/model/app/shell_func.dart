@@ -10,9 +10,9 @@ const _serverBoxDir = r'$HOME/.config/server_box';
 /// Issue #159
 /// Use script commit count as version of shell script.
 /// So different version of app can run at the same time.
-const _shellPath = '$_serverBoxDir/mobile_v${BuildData.script}.sh';
+const installShellPath = '$_serverBoxDir/mobile_v${BuildData.script}.sh';
 
-enum AppShellFuncType {
+enum ShellFunc {
   status,
   docker,
   process,
@@ -22,48 +22,48 @@ enum AppShellFuncType {
 
   String get flag {
     switch (this) {
-      case AppShellFuncType.status:
+      case ShellFunc.status:
         return 's';
-      case AppShellFuncType.docker:
+      case ShellFunc.docker:
         return 'd';
-      case AppShellFuncType.process:
+      case ShellFunc.process:
         return 'p';
-      case AppShellFuncType.shutdown:
+      case ShellFunc.shutdown:
         return 'sd';
-      case AppShellFuncType.reboot:
+      case ShellFunc.reboot:
         return 'r';
     }
   }
 
-  String get exec => 'sh $_shellPath -$flag';
+  String get exec => 'sh $installShellPath -$flag';
 
   String get name {
     switch (this) {
-      case AppShellFuncType.status:
+      case ShellFunc.status:
         return 'status';
-      case AppShellFuncType.docker:
+      case ShellFunc.docker:
         // `dockeR` -> avoid conflict with `docker` command
         // 以防止循环递归
         return 'dockeR';
-      case AppShellFuncType.process:
+      case ShellFunc.process:
         return 'process';
-      case AppShellFuncType.shutdown:
+      case ShellFunc.shutdown:
         return 'ShutDown';
-      case AppShellFuncType.reboot:
+      case ShellFunc.reboot:
         return 'Reboot';
     }
   }
 
   String get cmd {
     switch (this) {
-      case AppShellFuncType.status:
+      case ShellFunc.status:
         return '''
 if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 \t${_statusCmds.join(_cmdDivider)}
 else
 \t${_bsdStatusCmd.join(_cmdDivider)}
 fi''';
-      case AppShellFuncType.docker:
+      case ShellFunc.docker:
         return '''
 result=\$(docker version 2>&1 | grep "permission denied")
 if [ "\$result" != "" ]; then
@@ -71,7 +71,7 @@ if [ "\$result" != "" ]; then
 else
 \t${_dockerCmds.map((e) => "sudo -S $e").join(_cmdDivider)}
 fi''';
-      case AppShellFuncType.process:
+      case ShellFunc.process:
         return '''
 if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 \tif [ "\$isBusybox" != "" ]; then
@@ -83,14 +83,14 @@ else
 \tps -ax
 fi
 ''';
-      case AppShellFuncType.shutdown:
+      case ShellFunc.shutdown:
         return '''
 if [ "\$userId" = "0" ]; then
 \tshutdown -h now
 else
 \tsudo -S shutdown -h now
 fi''';
-      case AppShellFuncType.reboot:
+      case ShellFunc.reboot:
         return '''
 if [ "\$userId" = "0" ]; then
 \treboot
@@ -100,8 +100,25 @@ fi''';
     }
   }
 
-  static final String shellScript = () {
+  static final String allScript = () {
     final sb = StringBuffer();
+    sb.write('''
+#!/bin/sh
+# Script for ServerBox app v1.0.${BuildData.build}
+# DO NOT delete this file while app is running
+
+export LANG=en_US.UTF-8
+
+# If macSign & bsdSign are both empty, then it's linux
+macSign=\$(uname 2>&1 | grep "Darwin")
+bsdSign=\$(uname 2>&1 | grep "BSD")
+
+# Link /bin/sh to busybox?
+isBusybox=\$(ls -l /bin/sh | grep "busybox")
+
+userId=\$(id -u)
+
+''');
     // Write each func
     for (final func in values) {
       sb.write('''
@@ -212,31 +229,12 @@ const _bsdStatusCmd = [
   'hostname',
 ];
 
-final _shellCmd = """
-#!/bin/sh
-# Script for ServerBox app v1.0.${BuildData.build}
-# DO NOT delete this file while app is running
-
-export LANG=en_US.UTF-8
-
-# If macSign & bsdSign are both empty, then it's linux
-macSign=\$(uname 2>&1 | grep "Darwin")
-bsdSign=\$(uname 2>&1 | grep "BSD")
-
-# Link /bin/sh to busybox?
-isBusybox=\$(ls -l /bin/sh | grep "busybox")
-
-userId=\$(id -u)
-
-${AppShellFuncType.shellScript}
-""";
-
 /// Issue #168
 /// Use `sh` for compatibility
 final installShellCmd = """
 mkdir -p $_serverBoxDir
-sh -c cat << 'EOF' > $_shellPath
-$_shellCmd
+cat << 'EOF' > $installShellPath
+${ShellFunc.allScript}
 EOF
-chmod +x $_shellPath
+chmod +x $installShellPath
 """;
