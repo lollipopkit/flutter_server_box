@@ -188,7 +188,7 @@ Future<void> _gotoSSH(
 }
 
 bool _checkClient(BuildContext context, String id) {
-  final server = Providers.server.servers[id];
+  final server = Providers.server.pick(id: id);
   if (server == null || server.client == null) {
     context.showSnackBar(l10n.waitConnection);
     return false;
@@ -197,7 +197,7 @@ bool _checkClient(BuildContext context, String id) {
 }
 
 Future<void> _onPkg(BuildContext context, ServerPrivateInfo spi) async {
-  final server = spi.findServer;
+  final server = spi.server;
   if (server == null) {
     context.showSnackBar(l10n.noClient);
     return;

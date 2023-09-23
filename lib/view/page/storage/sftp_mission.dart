@@ -72,7 +72,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
                   },
                   icon: const Icon(Icons.file_open)),
               IconButton(
-                onPressed: () => shareFiles(context, [status.req.localPath]),
+                onPressed: () => shareFiles([status.req.localPath]),
                 icon: const Icon(Icons.open_in_new),
               )
             ],

@@ -289,7 +289,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
                 ],
               );
               final id = ids[idx];
-              final spi = Providers.server.servers[id]?.spi;
+              final spi = Providers.server.pick(id: id)?.spi;
               if (spi == null) {
                 return;
               }
@@ -313,7 +313,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
             leading: const Icon(Icons.open_in_new),
             title: Text(l10n.open),
             onTap: () {
-              shareFiles(context, [file.absolute.path]);
+              shareFiles([file.absolute.path]);
             },
           ),
         ],

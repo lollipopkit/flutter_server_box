@@ -135,7 +135,7 @@ class AppRoute {
           key: key,
           spi: spi,
           initPath: initPath,
-          selectPath: isSelect,
+          isSelect: isSelect,
         ),
         'sftp');
   }

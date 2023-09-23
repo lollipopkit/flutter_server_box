@@ -44,7 +44,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   @override
   void initState() {
     super.initState();
-    final client = widget.spi.findServer?.client;
+    final client = widget.spi.server?.client;
     if (client == null) {
       return;
     }

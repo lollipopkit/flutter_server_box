@@ -310,10 +310,13 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildAppColor() {
     return ListTile(
       trailing: ClipOval(
-        child: Container(
-          color: primaryColor,
-          height: 27,
-          width: 27,
+        child: ValueBuilder(
+          listenable: _selectedColorValue,
+          build: () => Container(
+            color: primaryColor,
+            height: 27,
+            width: 27,
+          ),
         ),
       ),
       title: Text(l10n.primaryColorSeed),
@@ -368,9 +371,11 @@ class _SettingPageState extends State<SettingPage> {
       context.showSnackBar(l10n.failed);
       return;
     }
+    // Change [primaryColor] first, then change [_selectedColorValue],
+    // So the [ValueBuilder] will be triggered with the new value
+    primaryColor = color;
     _selectedColorValue.value = color.value;
     _setting.primaryColor.put(_selectedColorValue.value);
-    primaryColor = color;
     context.pop();
     RebuildNodes.app.rebuild();
   }

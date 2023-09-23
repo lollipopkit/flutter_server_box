@@ -1,15 +1,13 @@
 import 'dart:io';
-import 'package:crypto/crypto.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:plain_notification_token/plain_notification_token.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/res/provider.dart';
 
-Future<bool> shareFiles(BuildContext context, List<String> filePaths) async {
+Future<bool> shareFiles(List<String> filePaths) async {
   for (final filePath in filePaths) {
     if (!await File(filePath).exists()) {
       return false;
@@ -23,7 +21,7 @@ Future<bool> shareFiles(BuildContext context, List<String> filePaths) async {
   }
   Providers.app.moveBg = false;
   // ignore: deprecated_member_use
-  await Share.shareFiles(filePaths, subject: 'ServerBox -> $text');
+  await Share.shareFiles(filePaths, subject: text);
   Providers.app.moveBg = true;
   return filePaths.isNotEmpty;
 }
@@ -59,23 +57,7 @@ String? getFileName(String? path) {
   return path.split('/').last;
 }
 
-/// Return fmt: 2021-01-01 00:00:00
-String getTime(int? unixMill) {
-  return DateTime.fromMillisecondsSinceEpoch((unixMill ?? 0) * 1000)
-      .toString()
-      .replaceFirst('.000', '');
-}
-
 /// Join two path with `/`
 String pathJoin(String path1, String path2) {
   return path1 + (path1.endsWith('/') ? '' : '/') + path2;
-}
-
-Future<String?> getFileSha256(String path) async {
-  final file = File(path);
-  if (!(await file.exists())) {
-    return null;
-  }
-  final digest = await sha256.bind(file.openRead()).first;
-  return digest.toString();
 }

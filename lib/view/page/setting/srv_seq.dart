@@ -47,7 +47,7 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
   }
 
   Widget _buildItem(int index, String id) {
-    final spi = Providers.server.servers[id]?.spi;
+    final spi = Providers.server.pick(id: id)?.spi;
     if (spi == null) {
       return const SizedBox();
     }

@@ -130,7 +130,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
     final servers = await showDialog<List<Server>>(
       context: context,
       builder: (_) => TagPicker<Server>(
-        items: Providers.server.servers.values.toList(),
+        items: Providers.server.servers.toList(),
         tags: Providers.server.tags.toSet(),
       ),
     );

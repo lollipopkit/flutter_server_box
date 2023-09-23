@@ -8,7 +8,6 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/utils/misc.dart';
-import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 
 import '../../data/model/app/shell_func.dart';
@@ -45,7 +44,7 @@ class _ProcessPageState extends State<ProcessPage> {
   @override
   void initState() {
     super.initState();
-    _client = Providers.server.servers[widget.spi.id]?.client;
+    _client = widget.spi.server?.client;
     final duration =
         Duration(seconds: Stores.setting.serverStatusUpdateInterval.fetch());
     _timer = Timer.periodic(duration, (_) => _refresh());
@@ -59,7 +58,7 @@ class _ProcessPageState extends State<ProcessPage> {
 
   Future<void> _refresh() async {
     if (mounted) {
-      final result = await _client?.run(AppShellFuncType.process.exec).string;
+      final result = await _client?.run(ShellFunc.process.exec).string;
       if (result == null || result.isEmpty) {
         context.showSnackBar(l10n.noResult);
         return;

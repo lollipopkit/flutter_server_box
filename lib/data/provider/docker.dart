@@ -50,7 +50,7 @@ class DockerProvider extends ChangeNotifier {
   Future<void> refresh() async {
     var raw = '';
     await client!.execWithPwd(
-      AppShellFuncType.docker.exec,
+      ShellFunc.docker.exec,
       context: context,
       onStdout: (data, _) => raw = '$raw$data',
     );

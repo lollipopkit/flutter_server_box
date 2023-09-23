@@ -68,7 +68,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   @override
   Widget build(BuildContext context) {
     return Consumer<ServerProvider>(builder: (_, provider, __) {
-      final s = provider.servers[widget.spi.id];
+      final s = widget.spi.server;
       if (s == null) {
         return Scaffold(
           body: Center(

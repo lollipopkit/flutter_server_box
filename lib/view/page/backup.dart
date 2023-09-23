@@ -64,7 +64,7 @@ class BackupPage extends StatelessWidget {
           Icons.save,
           () async {
             await Backup.backup();
-            await shareFiles(context, [await Paths.bak]);
+            await shareFiles([await Paths.bak]);
           },
         )
       ],

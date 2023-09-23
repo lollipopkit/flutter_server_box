@@ -45,7 +45,6 @@ dependencies:
   flutter_highlight: ^0.7.0
   code_text_field: ^1.1.0
   shared_preferences: ^2.1.1
-  crypto: ^3.0.3
   macos_window_utils: ^1.2.0
   dynamic_color: ^1.6.6
   icloud_storage: ^2.2.0

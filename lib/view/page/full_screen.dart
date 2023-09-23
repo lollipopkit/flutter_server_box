@@ -136,10 +136,9 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
       }
       return PageView.builder(
         controller: _pageController,
-        itemCount: pro.servers.length,
+        itemCount: pro.serverOrder.length,
         itemBuilder: (_, idx) {
-          final id = pro.serverOrder[idx];
-          final s = pro.servers[id];
+          final s = pro.pick(id: pro.serverOrder[idx]);
           if (s == null) {
             return Center(child: Text(l10n.noClient));
           }

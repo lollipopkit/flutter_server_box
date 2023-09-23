@@ -127,7 +127,7 @@ class _ServerPageState extends State<ServerPage>
         if (index == count - 1) return UIs.height77;
 
         if (buildTags) index--;
-        return _buildEachServerCard(provider.servers[filtered[index]]);
+        return _buildEachServerCard(provider.pick(id: filtered[index]));
       },
     );
   }
@@ -246,14 +246,14 @@ class _ServerPageState extends State<ServerPage>
         children: [
           IconButton(
             onPressed: () => srv.client?.execWithPwd(
-              AppShellFuncType.shutdown.cmd,
+              ShellFunc.shutdown.cmd,
               context: context,
             ),
             icon: const Icon(Icons.power_off),
           ),
           IconButton(
             onPressed: () => srv.client?.execWithPwd(
-              AppShellFuncType.reboot.cmd,
+              ShellFunc.reboot.cmd,
               context: context,
             ),
             icon: const Icon(Icons.refresh),
@@ -456,16 +456,16 @@ class _ServerPageState extends State<ServerPage>
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
     await GetIt.I.allReady();
-    if (Providers.server.servers.isEmpty) {
+    if (Providers.server.serverOrder.isEmpty) {
       await Providers.server.loadLocalData();
     }
     Providers.server.startAutoRefresh();
   }
 
   List<String> _filterServers(ServerProvider pro) => pro.serverOrder
-      .where((e) => pro.servers.containsKey(e))
+      .where((e) => pro.serverOrder.contains(e))
       .where((e) =>
-          _tag == null || (pro.servers[e]?.spi.tags?.contains(_tag) ?? false))
+          _tag == null || (pro.pick(id: e)?.spi.tags?.contains(_tag) ?? false))
       .toList();
 
   String _getTopRightStr(

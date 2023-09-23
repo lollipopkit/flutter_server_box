@@ -166,7 +166,7 @@ class _PingPageState extends State<PingPage>
       return;
     }
 
-    if (Providers.server.servers.isEmpty) {
+    if (Providers.server.serverOrder.isEmpty) {
       context.showSnackBar(l10n.pingNoServer);
       return;
     }
@@ -177,7 +177,7 @@ class _PingPageState extends State<PingPage>
       return;
     }
 
-    await Future.wait(Providers.server.servers.values.map((e) async {
+    await Future.wait(Providers.server.servers.map((e) async {
       if (e.client == null) {
         return;
       }
@@ -197,7 +197,7 @@ class _PingPageState extends State<PingPage>
 
   @override
   Future<FutureOr<void>> afterFirstLayout(BuildContext context) async {
-    if (Providers.server.servers.isEmpty) {
+    if (Providers.server.serverOrder.isEmpty) {
       await Providers.server.loadLocalData();
       await Providers.server.refreshData();
     }

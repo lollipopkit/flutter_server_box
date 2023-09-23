@@ -33,12 +33,12 @@ import '../../widget/two_line_text.dart';
 class SftpPage extends StatefulWidget {
   final ServerPrivateInfo spi;
   final String? initPath;
-  final bool selectPath;
+  final bool isSelect;
 
   const SftpPage({
     Key? key,
     required this.spi,
-    required this.selectPath,
+    required this.isSelect,
     this.initPath,
   }) : super(key: key);
 
@@ -47,20 +47,8 @@ class SftpPage extends StatefulWidget {
 }
 
 class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
-  final SftpBrowserStatus _status = SftpBrowserStatus();
-
-  SSHClient? _client;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _client = Providers.server.servers[widget.spi.id]?.client;
-  }
+  final _status = SftpBrowserStatus();
+  late final _client = widget.spi.server?.client;
 
   @override
   Widget build(BuildContext context) {
@@ -69,9 +57,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         leading: IconButton(
           icon: const BackButtonIcon(),
           onPressed: () {
-            if (_status.path != null) {
-              _status.path!.update('/');
-            }
+            _status.path?.update('/');
             context.pop();
           },
         ),
@@ -102,7 +88,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   }
 
   Widget _buildBottom() {
-    final children = widget.selectPath
+    final children = widget.isSelect
         ? [
             IconButton(
                 onPressed: () => context.pop(_status.path?.path),
@@ -195,13 +181,15 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
-                    leading: const Icon(Icons.folder),
-                    title: Text(l10n.createFolder),
-                    onTap: () => _mkdir(context)),
+                  leading: const Icon(Icons.folder),
+                  title: Text(l10n.createFolder),
+                  onTap: _mkdir,
+                ),
                 ListTile(
-                    leading: const Icon(Icons.insert_drive_file),
-                    title: Text(l10n.createFile),
-                    onTap: () => _newFile(context)),
+                  leading: const Icon(Icons.insert_drive_file),
+                  title: Text(l10n.createFile),
+                  onTap: _newFile,
+                ),
               ],
             ),
           )),
@@ -242,7 +230,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         }
 
         _status.path?.update(p);
-        final suc = await _listDir(path: p);
+        final suc = await _listDir();
         if (suc && Stores.setting.recordHistory.fetch()) {
           Stores.history.sftpPath.add(p);
         }
@@ -285,7 +273,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   Widget _buildItem(SftpName file) {
     final isDir = file.attr.isDirectory;
     final trailing = Text(
-      '${getTime(file.attr.modifyTime)}\n${file.attr.mode?.str ?? ''}',
+      '${_getTime(file.attr.modifyTime)}\n${file.attr.mode?.str ?? ''}',
       style: UIs.textGrey,
       textAlign: TextAlign.right,
     );
@@ -302,26 +290,26 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       onTap: () {
         if (isDir) {
           _status.path?.update(file.filename);
-          _listDir(path: _status.path?.path);
+          _listDir();
         } else {
-          _onItemPress(context, file, true);
+          _onItemPress(file, true);
         }
       },
-      onLongPress: () => _onItemPress(context, file, !isDir),
+      onLongPress: () => _onItemPress(file, !isDir),
     ));
   }
 
-  void _onItemPress(BuildContext context, SftpName file, bool notDir) {
+  void _onItemPress(SftpName file, bool notDir) {
     final children = [
       ListTile(
         leading: const Icon(Icons.delete),
         title: Text(l10n.delete),
-        onTap: () => _delete(context, file),
+        onTap: () => _delete(file),
       ),
       ListTile(
         leading: const Icon(Icons.abc),
         title: Text(l10n.rename),
-        onTap: () => _rename(context, file),
+        onTap: () => _rename(file),
       ),
     ];
     if (notDir) {
@@ -329,19 +317,19 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         ListTile(
           leading: const Icon(Icons.edit),
           title: Text(l10n.edit),
-          onTap: () => _edit(context, file),
+          onTap: () => _edit(file),
         ),
         ListTile(
           leading: const Icon(Icons.download),
           title: Text(l10n.download),
-          onTap: () => _download(context, file),
+          onTap: () => _download(file),
         ),
         // Only show decompress option when the file is a compressed file
         if (_canDecompress(file.filename))
           ListTile(
             leading: const Icon(Icons.folder_zip),
             title: Text(l10n.decompress),
-            onTap: () => _decompress(context, file),
+            onTap: () => _decompress(file),
           ),
       ]);
     }
@@ -353,7 +341,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     );
   }
 
-  Future<void> _edit(BuildContext context, SftpName name) async {
+  Future<void> _edit(SftpName name) async {
     final size = name.attr.size;
     if (size == null || size > Miscs.editorMaxSize) {
       context.showSnackBar(l10n.fileTooLarge(
@@ -387,7 +375,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     }
   }
 
-  void _download(BuildContext context, SftpName name) {
+  void _download(SftpName name) {
     context.showRoundDialog(
       title: Text(l10n.attention),
       child: Text('${l10n.dl2Local(name.filename)}\n${l10n.keepForeground}'),
@@ -418,7 +406,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     );
   }
 
-  void _delete(BuildContext context, SftpName file) {
+  void _delete(SftpName file) {
     context.pop();
     final isDir = file.attr.isDirectory;
     final useRmrf = Stores.setting.sftpRmrfDir.fetch();
@@ -469,7 +457,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     );
   }
 
-  void _mkdir(BuildContext context) {
+  void _mkdir() {
     context.pop();
     final textController = TextEditingController();
     context.showRoundDialog(
@@ -510,7 +498,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     );
   }
 
-  void _newFile(BuildContext context) {
+  void _newFile() {
     context.pop();
     final textController = TextEditingController();
     context.showRoundDialog(
@@ -550,7 +538,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     );
   }
 
-  void _rename(BuildContext context, SftpName file) {
+  void _rename(SftpName file) {
     context.pop();
     final textController = TextEditingController();
     context.showRoundDialog(
@@ -588,7 +576,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     );
   }
 
-  Future<void> _decompress(BuildContext context, SftpName name) async {
+  Future<void> _decompress(SftpName name) async {
     context.pop();
     final absPath = _getRemotePath(name);
     final cmd = _getDecompressCmd(absPath);
@@ -621,15 +609,18 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   }
 
   /// Only return true if the path is changed
-  Future<bool> _listDir({String? path, SSHClient? client}) async {
+  Future<bool> _listDir() async {
     context.showLoadingDialog();
-    if (client != null) {
-      final sftpc = await client.sftp();
+    if (_status.client == null) {
+      final sftpc = await _client?.sftp();
       _status.client = sftpc;
     }
     try {
-      final listPath = path ?? _status.path?.path ?? '/';
-      final fs = await _status.client!.listdir(listPath);
+      final listPath = _status.path?.path ?? '/';
+      final fs = await _status.client?.listdir(listPath);
+      if (fs == null) {
+        return false;
+      }
       fs.sort((a, b) => a.filename.compareTo(b.filename));
 
       /// Issue #97
@@ -676,16 +667,15 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   }
 
   Future<void> _backward() async {
-    if (_status.path!.undo()) {
+    if (_status.path?.undo() ?? false) {
       await _listDir();
     }
   }
 
   @override
   FutureOr<void> afterFirstLayout(BuildContext context) {
-    final p_ = widget.initPath ?? '/';
-    _status.path = AbsolutePath(p_);
-    _listDir(path: p_, client: _client);
+    _status.path = AbsolutePath(widget.initPath ?? '/');
+    _listDir();
   }
 }
 
@@ -754,3 +744,10 @@ const _extCmdMap = {
   'obscpio': 'cpio -idmvF FILE',
   'zpaq': 'zpaq x FILE',
 };
+
+/// Return fmt: 2021-01-01 00:00:00
+String _getTime(int? unixMill) {
+  return DateTime.fromMillisecondsSinceEpoch((unixMill ?? 0) * 1000)
+      .toString()
+      .replaceFirst('.000', '');
+}
