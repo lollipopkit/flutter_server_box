@@ -17,4 +17,10 @@ class Providers {
   static final server = locator<ServerProvider>();
   static final sftp = locator<SftpProvider>();
   static final snippet = locator<SnippetProvider>();
+
+  static void reload() {
+    key.load();
+    server.load();
+    snippet.load();
+  }
 }

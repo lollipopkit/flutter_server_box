@@ -456,7 +456,7 @@ class _ServerPageState extends State<ServerPage>
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
     await GetIt.I.allReady();
-    await Providers.server.loadLocalData();
+    await Providers.server.load();
     Providers.server.startAutoRefresh();
   }
 

@@ -6,7 +6,7 @@ class PrivateKeyProvider extends ChangeNotifier {
   List<PrivateKeyInfo> get pkis => _pkis;
   late List<PrivateKeyInfo> _pkis;
 
-  void loadData() {
+  void load() {
     _pkis = Stores.key.fetch();
   }
 

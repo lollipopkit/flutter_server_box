@@ -92,8 +92,8 @@ Future<void> initApp() async {
 }
 
 void _setupProviders() {
-  Providers.snippet.loadData();
-  Providers.key.loadData();
+  Providers.snippet.load();
+  Providers.key.load();
 }
 
 Future<void> _initHive() async {

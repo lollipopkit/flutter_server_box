@@ -12,6 +12,7 @@ import 'package:toolbox/core/utils/rebuild.dart';
 import 'package:toolbox/data/model/app/backup.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/path.dart';
+import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
@@ -157,6 +158,7 @@ class BackupPage extends StatelessWidget {
               backup.restore();
               context.pop();
               RebuildNodes.app.rebuild();
+              Providers.reload();
             },
             child: Text(l10n.ok),
           ),

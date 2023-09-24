@@ -343,7 +343,7 @@ class _HomePageState extends State<HomePage>
     }
     updateHomeWidget();
     await GetIt.I.allReady();
-    await Providers.server.loadLocalData();
+    await Providers.server.load();
     await Providers.server.refreshData();
     if (!Analysis.enabled) {
       Analysis.init();

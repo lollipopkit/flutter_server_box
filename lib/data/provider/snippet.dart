@@ -13,7 +13,7 @@ class SnippetProvider extends ChangeNotifier {
   final _tags = <String>[];
   List<String> get tags => _tags;
 
-  void loadData() {
+  void load() {
     _snippets = Stores.snippet.fetch();
     final order = Stores.setting.snippetOrder.fetch();
     if (order.isNotEmpty) {

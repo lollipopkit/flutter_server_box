@@ -35,7 +35,7 @@ class ServerProvider extends ChangeNotifier {
 
   Timer? _timer;
 
-  Future<void> loadLocalData() async {
+  Future<void> load() async {
     // Issue #147
     // Clear all servers because of restarting app will cause duplicate servers
     _servers.clear();
