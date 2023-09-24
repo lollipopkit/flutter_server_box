@@ -456,9 +456,7 @@ class _ServerPageState extends State<ServerPage>
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
     await GetIt.I.allReady();
-    if (Providers.server.serverOrder.isEmpty) {
-      await Providers.server.loadLocalData();
-    }
+    await Providers.server.loadLocalData();
     Providers.server.startAutoRefresh();
   }
 
@@ -505,7 +503,7 @@ class _ServerPageState extends State<ServerPage>
       return 23.0;
     }
     if (_flipedCardIds.contains(id)) {
-      return 77.0;
+      return 80.0;
     }
     if (Stores.setting.moveOutServerTabFuncBtns.fetch() &&
         // Discussion #146

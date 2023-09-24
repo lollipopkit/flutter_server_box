@@ -31,7 +31,7 @@ class SnippetProvider extends ChangeNotifier {
   }
 
   void _addInternal() {
-    if (!Stores.setting.fTISBM.fetch()) {
+    if (!Stores.setting.fTISBM.fetch() || _snippets.isNotEmpty) {
       return;
     }
     _snippets.add(installSBM);

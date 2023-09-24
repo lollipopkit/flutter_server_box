@@ -100,42 +100,46 @@ class _SettingPageState extends State<SettingPage> {
       appBar: CustomAppBar(
         title: Text(l10n.setting),
         actions: [
-          IconButton(
-            onPressed: () => context.showRoundDialog(
-              title: Text(l10n.attention),
-              child: Text(l10n.sureDelete(l10n.all)),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    _setting.box.deleteAll(_setting.box.keys);
-                    context.pop();
-                    context.showSnackBar(l10n.success);
-                  },
-                  child:
-                      Text(l10n.ok, style: const TextStyle(color: Colors.red)),
-                ),
-              ],
+          Padding(
+            padding: const EdgeInsets.only(right: 17),
+            child: InkWell(
+              onTap: () => context.showRoundDialog(
+                title: Text(l10n.attention),
+                child: Text(l10n.sureDelete(l10n.all)),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      _setting.box.deleteAll(_setting.box.keys);
+                      context.pop();
+                      context.showSnackBar(l10n.success);
+                    },
+                    child: Text(l10n.ok,
+                        style: const TextStyle(color: Colors.red)),
+                  ),
+                ],
+              ),
+              /// Only for debug, this will cause the app to crash
+              // onDoubleTap: () => context.showRoundDialog(
+              //   title: Text(l10n.attention),
+              //   child: Text(l10n.sureDelete(l10n.all)),
+              //   actions: [
+              //     TextButton(
+              //       onPressed: () {
+              //         Stores.docker.box.deleteFromDisk();
+              //         Stores.server.box.deleteFromDisk();
+              //         Stores.setting.box.deleteFromDisk();
+              //         Stores.history.box.deleteFromDisk();
+              //         Stores.snippet.box.deleteFromDisk();
+              //         Stores.key.box.deleteFromDisk();
+              //         exit(0);
+              //       },
+              //       child: Text(l10n.ok,
+              //           style: const TextStyle(color: Colors.red)),
+              //     ),
+              //   ],
+              // ),
+              child: const Icon(Icons.delete),
             ),
-            // onDoubleTap: () => context.showRoundDialog(
-            //   title: Text(l10n.attention),
-            //   child: Text(l10n.sureDelete(l10n.all)),
-            //   actions: [
-            //     TextButton(
-            //       onPressed: () {
-            //         Stores.docker.box.deleteFromDisk();
-            //         Stores.server.box.deleteFromDisk();
-            //         Stores.setting.box.deleteFromDisk();
-            //         Stores.history.box.deleteFromDisk();
-            //         Stores.snippet.box.deleteFromDisk();
-            //         Stores.key.box.deleteFromDisk();
-            //         context.pop();
-            //         context.showSnackBar(l10n.success);
-            //       },
-            //       child: Text(l10n.ok, style: const TextStyle(color: Colors.red)),
-            //     ),
-            //   ],
-            // ),
-            icon: const Icon(Icons.delete),
           ),
         ],
       ),

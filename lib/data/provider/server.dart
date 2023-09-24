@@ -42,8 +42,8 @@ class ServerProvider extends ChangeNotifier {
     _serverOrder.clear();
 
     final spis = Stores.server.fetch();
-    for (final spi in spis) {
-      _servers[spi.id] = genServer(spi);
+    for (int idx = 0; idx < spis.length; idx++) {
+      _servers[spis[idx].id] = genServer(spis[idx]);
     }
     final serverOrder_ = Stores.setting.serverOrder.fetch();
     if (serverOrder_.isNotEmpty) {

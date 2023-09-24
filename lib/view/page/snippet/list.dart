@@ -83,7 +83,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
           itemBuilder: (context, idx) {
             final snippet = filtered.elementAt(idx);
             return ReorderableDelayedDragStartListener(
-              key: ValueKey(snippet.name),
+              key: ValueKey(idx),
               index: idx,
               child: _buildSnippetItem(snippet),
             );

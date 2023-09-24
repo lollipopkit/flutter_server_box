@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
@@ -28,7 +27,7 @@ class PingPage extends StatefulWidget {
 }
 
 class _PingPageState extends State<PingPage>
-    with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
+    with AutomaticKeepAliveClientMixin {
   late TextEditingController _textEditingController;
   final _results = ValueNotifier(<PingResult>[]);
   bool get isInit => _results.value.isEmpty;
@@ -194,12 +193,4 @@ class _PingPageState extends State<PingPage>
 
   @override
   bool get wantKeepAlive => true;
-
-  @override
-  Future<FutureOr<void>> afterFirstLayout(BuildContext context) async {
-    if (Providers.server.serverOrder.isEmpty) {
-      await Providers.server.loadLocalData();
-      await Providers.server.refreshData();
-    }
-  }
 }
