@@ -11,6 +11,7 @@ import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
+import 'package:toolbox/data/provider/virtual_keyboard.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
@@ -20,10 +21,8 @@ import '../../core/utils/misc.dart';
 import '../../core/utils/server.dart';
 import '../../data/model/server/server_private_info.dart';
 import '../../data/model/ssh/virtual_key.dart';
-import '../../data/provider/virtual_keyboard.dart';
 import '../../data/res/color.dart';
 import '../../data/res/terminal.dart';
-import '../../locator.dart';
 
 const echoPWD = 'echo \$PWD';
 
@@ -37,7 +36,7 @@ class SSHPage extends StatefulWidget {
 }
 
 class _SSHPageState extends State<SSHPage> {
-  final _keyboard = locator<VirtKeyProvider>();
+  final _keyboard = VirtKeyProvider();
   late final _terminal = Terminal(inputHandler: _keyboard);
   final TerminalController _terminalController = TerminalController();
   final List<List<VirtKey>> _virtKeysList = [];
@@ -144,8 +143,12 @@ class _SSHPageState extends State<SSHPage> {
         child: Container(
           color: _terminalTheme.background,
           height: _virtKeysHeight,
-          child: Consumer<VirtKeyProvider>(
-            builder: (_, __, ___) => _buildVirtualKey(),
+          child: ChangeNotifierProvider(
+            create: (_) => _keyboard,
+            builder: (_, __) =>
+                Consumer<VirtKeyProvider>(builder: (_, __, ___) {
+              return _buildVirtualKey();
+            }),
           ),
         ),
       ),

@@ -118,6 +118,7 @@ class _SettingPageState extends State<SettingPage> {
                   ),
                 ],
               ),
+
               /// Only for debug, this will cause the app to crash
               // onDoubleTap: () => context.showRoundDialog(
               //   title: Text(l10n.attention),

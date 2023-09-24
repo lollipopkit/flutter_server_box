@@ -27,7 +27,6 @@ import 'data/provider/private_key.dart';
 import 'data/provider/server.dart';
 import 'data/provider/sftp.dart';
 import 'data/provider/snippet.dart';
-import 'data/provider/virtual_keyboard.dart';
 import 'data/res/color.dart';
 import 'locator.dart';
 import 'view/widget/custom_appbar.dart';
@@ -43,7 +42,6 @@ Future<void> main() async {
           ChangeNotifierProvider(create: (_) => locator<DockerProvider>()),
           ChangeNotifierProvider(create: (_) => locator<ServerProvider>()),
           ChangeNotifierProvider(create: (_) => locator<SnippetProvider>()),
-          ChangeNotifierProvider(create: (_) => locator<VirtKeyProvider>()),
           ChangeNotifierProvider(create: (_) => locator<PrivateKeyProvider>()),
           ChangeNotifierProvider(create: (_) => locator<SftpProvider>()),
         ],
