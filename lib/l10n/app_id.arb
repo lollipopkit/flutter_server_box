@@ -200,6 +200,7 @@
   "sureNoPwd": "Apakah Anda pasti tidak menggunakan kata sandi?",
   "sureStop": "Anda yakin ingin menghentikan [{item}]?",
   "sureToDeleteServer": "Apakah Anda pasti akan menghapus server [{server}]?",
+  "suspendTip": "Fungsi penangguhan memerlukan hak akses root dan dukungan systemd.",
   "syncTip": "Setelah sinkronisasi otomatis, mungkin perlu memulai ulang aplikasi agar perubahan tertentu dapat diterapkan.",
   "system": "Sistem",
   "tag": "Tag",

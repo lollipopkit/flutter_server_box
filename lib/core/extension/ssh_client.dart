@@ -74,9 +74,11 @@ extension SSHClientX on SSHClient {
           if (context == null) return;
           final pwd = await context.showPwdDialog(user);
           if (pwd == null || pwd.isEmpty) {
-            return;
+            // Add ctrl + c to exit.
+            sink.add('\x03'.uint8List);
+          } else {
+            sink.add('$pwd\n'.uint8List);
           }
-          sink.add('$pwd\n'.uint8List);
         }
       },
       onStdout: onStdout,

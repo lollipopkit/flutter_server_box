@@ -164,7 +164,7 @@ class BackupPage extends StatelessWidget {
               backup.restore();
               context.pop();
               RebuildNodes.app.rebuild();
-              Providers.reload();
+              Pros.reload();
             },
             child: Text(l10n.ok),
           ),

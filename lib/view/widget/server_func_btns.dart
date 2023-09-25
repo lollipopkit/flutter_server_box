@@ -99,14 +99,14 @@ void _onTapMoreBtns(
       final snippets = await showDialog<List<Snippet>>(
         context: context,
         builder: (_) => TagPicker<Snippet>(
-          items: Providers.snippet.snippets,
-          tags: Providers.server.tags.toSet(),
+          items: Pros.snippet.snippets,
+          tags: Pros.server.tags.toSet(),
         ),
       );
       if (snippets == null) {
         return;
       }
-      final result = await Providers.server.runSnippets(spi.id, snippets);
+      final result = await Pros.server.runSnippets(spi.id, snippets);
       if (result != null && result.isNotEmpty) {
         context.showRoundDialog(
           title: Text(l10n.result),
@@ -188,7 +188,7 @@ Future<void> _gotoSSH(
 }
 
 bool _checkClient(BuildContext context, String id) {
-  final server = Providers.server.pick(id: id);
+  final server = Pros.server.pick(id: id);
   if (server == null || server.client == null) {
     context.showSnackBar(l10n.waitConnection);
     return false;

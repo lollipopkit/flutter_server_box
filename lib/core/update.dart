@@ -39,7 +39,7 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
     return;
   }
 
-  Providers.app.newestBuild = newest;
+  Pros.app.newestBuild = newest;
 
   if (!force && newest <= BuildData.build) {
     Loggers.app.info('Update ignored: ${BuildData.build} >= $newest');

@@ -7,11 +7,10 @@ import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'misc.dart';
-import '../extension/stringx.dart';
 import '../extension/uint8list.dart';
 
 Future<bool> openUrl(String url) async {
-  return await launchUrl(url.uri, mode: LaunchMode.externalApplication);
+  return await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
 }
 
 void setTransparentNavigationBar(BuildContext context) {

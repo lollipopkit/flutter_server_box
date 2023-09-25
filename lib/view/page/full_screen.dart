@@ -368,8 +368,8 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
       doUpdate(context);
     }
     await GetIt.I.allReady();
-    await Providers.server.load();
-    await Providers.server.refreshData();
+    await Pros.server.load();
+    await Pros.server.refreshData();
     if (!Analysis.enabled) {
       await Analysis.init();
     }

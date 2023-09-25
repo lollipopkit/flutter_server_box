@@ -205,7 +205,7 @@ class SettingStore extends PersistentStore {
     false,
   );
 
-  /// Only valid on iOS / Android
+  /// Only valid on iOS / Android / Windows
   late final useBioAuth = StoreProperty(
     box,
     'useBioAuth',
@@ -213,15 +213,11 @@ class SettingStore extends PersistentStore {
   );
 
   // Never show these settings for users
-  // Guide for these settings:
-  // - key should start with `_` and be shorter as possible
   //
   // ------BEGIN------
 
   /// Version of store db
   late final storeVersion = StoreProperty(box, 'storeVersion', 0);
 
-  /// Whether is first time to add Snippet<Install ServerBoxMonitor>
-  late final fTISBM = StoreProperty(box, '_fTISBM', true);
   // ------END------
 }

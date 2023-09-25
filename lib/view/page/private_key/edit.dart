@@ -95,7 +95,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
             actions: [
               TextButton(
                 onPressed: () {
-                  Providers.key.delete(widget.pki!);
+                  Pros.key.delete(widget.pki!);
                   context.pop();
                   context.pop();
                 },
@@ -135,9 +135,9 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
           final decrypted = await compute(decyptPem, [key, pwd]);
           final pki = PrivateKeyInfo(id: name, key: decrypted);
           if (widget.pki != null) {
-            Providers.key.update(widget.pki!, pki);
+            Pros.key.update(widget.pki!, pki);
           } else {
-            Providers.key.add(pki);
+            Pros.key.add(pki);
           }
         } catch (e) {
           context.showSnackBar(e.toString());

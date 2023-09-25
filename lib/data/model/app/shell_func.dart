@@ -18,6 +18,7 @@ enum ShellFunc {
   process,
   shutdown,
   reboot,
+  suspend,
   ;
 
   String get flag {
@@ -32,6 +33,8 @@ enum ShellFunc {
         return 'sd';
       case ShellFunc.reboot:
         return 'r';
+      case ShellFunc.suspend:
+        return 'sp';
     }
   }
 
@@ -51,10 +54,12 @@ enum ShellFunc {
         return 'ShutDown';
       case ShellFunc.reboot:
         return 'Reboot';
+      case ShellFunc.suspend:
+        return 'Suspend';
     }
   }
 
-  String get cmd {
+  String get _cmd {
     switch (this) {
       case ShellFunc.status:
         return '''
@@ -97,6 +102,13 @@ if [ "\$userId" = "0" ]; then
 else
 \tsudo -S reboot
 fi''';
+      case ShellFunc.suspend:
+        return '''
+if [ "\$userId" = "0" ]; then
+\tsystemctl suspend
+else
+\tsudo -S systemctl suspend
+fi''';
     }
   }
 
@@ -123,7 +135,7 @@ userId=\$(id -u)
     for (final func in values) {
       sb.write('''
 ${func.name}() {
-${func.cmd.split('\n').map((e) => '\t$e').join('\n')}
+${func._cmd.split('\n').map((e) => '\t$e').join('\n')}
 }
 
 ''');

@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
-import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/docker/image.dart';
 import 'package:toolbox/data/model/docker/ps.dart';
@@ -175,9 +174,10 @@ class DockerProvider extends ChangeNotifier {
   // judge whether to use DOCKER_HOST
   String _wrap(String cmd) {
     final dockerHost = Stores.docker.fetch(hostId!);
+    cmd = 'export LANG=en_US.UTF-8 && $cmd';
     if (dockerHost == null || dockerHost.isEmpty) {
-      return cmd.withLangExport;
+      return cmd;
     }
-    return 'export DOCKER_HOST=$dockerHost && $cmd'.withLangExport;
+    return 'export DOCKER_HOST=$dockerHost && $cmd';
   }
 }

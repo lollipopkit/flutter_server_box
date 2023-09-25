@@ -641,6 +641,9 @@ class SZh extends S {
   }
 
   @override
+  String get suspendTip => 'suspend 功能需要 root 权限及 systemd 支持。';
+
+  @override
   String get syncTip => '在自动同步后，可能需要重新启动，某些更改才能生效。';
 
   @override
@@ -1386,6 +1389,9 @@ class SZhTw extends SZh {
   String sureToDeleteServer(Object server) {
     return '你確定要刪除服務器 [$server] 嗎？';
   }
+
+  @override
+  String get suspendTip => 'suspend 功能需要 root 權限及 systemd 支持。';
 
   @override
   String get syncTip => '在自動同步後，可能需要重新啟動，某些更改才能生效。';

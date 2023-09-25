@@ -9,11 +9,11 @@ import 'package:toolbox/data/model/sftp/req.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/view/widget/input_field.dart';
+import 'package:toolbox/view/widget/omit_start_text.dart';
 import 'package:toolbox/view/widget/picker.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
 import '../../../core/extension/numx.dart';
-import '../../../core/extension/stringx.dart';
 import '../../../core/route.dart';
 import '../../../core/utils/misc.dart';
 import '../../../data/model/app/path_with_prefix.dart';
@@ -89,7 +89,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          (_path?.path ?? l10n.loadingFiles).omitStartStr(),
+          OmitStartText(_path?.path ?? l10n.loadingFiles),
           _buildBtns(),
         ],
       ),
@@ -275,7 +275,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
             title: Text(l10n.upload),
             onTap: () async {
               context.pop();
-              final ids = Providers.server.serverOrder;
+              final ids = Pros.server.serverOrder;
               var idx = 0;
               await context.showRoundDialog(
                 title: Text(l10n.server),
@@ -289,7 +289,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
                 ],
               );
               final id = ids[idx];
-              final spi = Providers.server.pick(id: id)?.spi;
+              final spi = Pros.server.pick(id: id)?.spi;
               if (spi == null) {
                 return;
               }
@@ -300,7 +300,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
               if (remotePath == null) {
                 return;
               }
-              Providers.sftp.add(SftpReq(
+              Pros.sftp.add(SftpReq(
                 spi,
                 '$remotePath/$fileName',
                 file.absolute.path,

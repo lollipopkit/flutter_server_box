@@ -1,4 +1,3 @@
-import '../../../core/extension/stringx.dart';
 import '../../res/misc.dart';
 
 class Conn {
@@ -22,10 +21,10 @@ Conn? parseConn(String raw) {
   if (idx != '') {
     final vals = idx.split(Miscs.numReg);
     return Conn(
-      maxConn: vals[5].i,
-      active: vals[6].i,
-      passive: vals[7].i,
-      fail: vals[8].i,
+      maxConn: int.tryParse(vals[5]) ?? 0,
+      active: int.tryParse(vals[6]) ?? 0,
+      passive: int.tryParse(vals[7]) ?? 0,
+      fail: int.tryParse(vals[8]) ?? 0,
     );
   }
   return null;

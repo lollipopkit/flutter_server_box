@@ -200,6 +200,7 @@
   "sureNoPwd": "Are you sure to use no password?",
   "sureStop": "Sure to stop [{item}] ?",
   "sureToDeleteServer": "Are you sure to delete server [{server}]?",
+  "suspendTip": "The suspend function requires root privileges and systemd support.",
   "syncTip": "After auto sync, a restart may be required for some changes to take effect.",
   "system": "System",
   "tag": "Tags",

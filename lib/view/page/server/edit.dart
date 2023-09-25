@@ -58,7 +58,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
       if (widget.spi?.pubKeyId == null) {
         _passwordController.text = widget.spi?.pwd ?? '';
       } else {
-        _keyIdx.value = Providers.key.pkis.indexWhere(
+        _keyIdx.value = Pros.key.pkis.indexWhere(
           (e) => e.id == widget.spi!.pubKeyId,
         );
       }
@@ -115,7 +115,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
           actions: [
             TextButton(
               onPressed: () {
-                Providers.server.delServer(widget.spi!.id);
+                Pros.server.delServer(widget.spi!.id);
                 context.pop();
                 context.pop(true);
               },
@@ -183,8 +183,8 @@ class _ServerEditPageState extends State<ServerEditPage> {
       TagEditor(
         tags: _tags,
         onChanged: (p0) => _tags = p0,
-        allTags: [...Providers.server.tags],
-        onRenameTag: Providers.server.renameTag,
+        allTags: [...Pros.server.tags],
+        onRenameTag: Pros.server.renameTag,
       ),
       _buildAuth(),
       ListTile(
@@ -357,7 +357,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
       user: _usernameController.text,
       pwd: _passwordController.text.isEmpty ? null : _passwordController.text,
       pubKeyId: _keyIdx.value != null
-          ? Providers.key.pkis.elementAt(_keyIdx.value!).id
+          ? Pros.key.pkis.elementAt(_keyIdx.value!).id
           : null,
       tags: _tags,
       alterUrl: _altUrlController.text.isEmpty ? null : _altUrlController.text,
@@ -365,9 +365,9 @@ class _ServerEditPageState extends State<ServerEditPage> {
     );
 
     if (widget.spi == null) {
-      Providers.server.addServer(spi);
+      Pros.server.addServer(spi);
     } else {
-      Providers.server.updateServer(widget.spi!, spi);
+      Pros.server.updateServer(widget.spi!, spi);
     }
 
     context.pop();

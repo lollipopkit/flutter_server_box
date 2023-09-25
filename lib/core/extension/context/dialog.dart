@@ -56,7 +56,7 @@ extension DialogX on BuildContext {
   void showSnippetDialog(
     void Function(Snippet s) onSelected,
   ) {
-    if (Providers.snippet.snippets.isEmpty) {
+    if (Pros.snippet.snippets.isEmpty) {
       showRoundDialog(
         child: Text(l10n.noSavedSnippet),
         actions: [
@@ -76,12 +76,12 @@ extension DialogX on BuildContext {
       return;
     }
 
-    var snippet = Providers.snippet.snippets.first;
+    var snippet = Pros.snippet.snippets.first;
     showRoundDialog(
       title: Text(l10n.choose),
       child: Picker(
-        items: Providers.snippet.snippets.map((e) => Text(e.name)).toList(),
-        onSelected: (idx) => snippet = Providers.snippet.snippets[idx],
+        items: Pros.snippet.snippets.map((e) => Text(e.name)).toList(),
+        onSelected: (idx) => snippet = Pros.snippet.snippets[idx],
       ),
       actions: [
         TextButton(

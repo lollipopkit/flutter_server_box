@@ -26,13 +26,13 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
   }
 
   Widget _buildBody() {
-    if (Providers.server.serverOrder.isEmpty) {
+    if (Pros.server.serverOrder.isEmpty) {
       return Center(child: Text(l10n.noServerAvailable));
     }
     return ReorderableListView.builder(
       footer: const SizedBox(height: 77),
       onReorder: (oldIndex, newIndex) => setState(() {
-        Providers.server.serverOrder.move(
+        Pros.server.serverOrder.move(
           oldIndex,
           newIndex,
           property: Stores.setting.serverOrder,
@@ -41,13 +41,13 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       buildDefaultDragHandles: false,
       itemBuilder: (_, index) =>
-          _buildItem(index, Providers.server.serverOrder[index]),
-      itemCount: Providers.server.serverOrder.length,
+          _buildItem(index, Pros.server.serverOrder[index]),
+      itemCount: Pros.server.serverOrder.length,
     );
   }
 
   Widget _buildItem(int index, String id) {
-    final spi = Providers.server.pick(id: id)?.spi;
+    final spi = Pros.server.pick(id: id)?.spi;
     if (spi == null) {
       return const SizedBox();
     }

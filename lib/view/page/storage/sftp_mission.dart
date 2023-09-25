@@ -141,7 +141,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
           actions: [
             TextButton(
               onPressed: () {
-                Providers.sftp.cancel(id);
+                Pros.sftp.cancel(id);
                 context.pop();
               },
               child: Text(l10n.ok),

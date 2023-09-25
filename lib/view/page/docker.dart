@@ -37,7 +37,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   @override
   void dispose() {
     super.dispose();
-    Providers.docker.clear();
+    Pros.docker.clear();
     _textController.dispose();
   }
 
@@ -48,7 +48,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
     if (client == null) {
       return;
     }
-    Providers.docker
+    Pros.docker
       ..init(
         client,
         widget.spi.user,
@@ -70,7 +70,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
             IconButton(
               onPressed: () async {
                 context.showLoadingDialog();
-                await Providers.docker.refresh();
+                await Pros.docker.refresh();
                 context.pop();
               },
               icon: const Icon(Icons.refresh),
@@ -78,8 +78,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
           ],
         ),
         body: _buildMain(),
-        floatingActionButton:
-            Providers.docker.error == null ? _buildFAB() : null,
+        floatingActionButton: Pros.docker.error == null ? _buildFAB() : null,
       );
     });
   }
@@ -156,7 +155,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
           onPressed: () async {
             context.pop();
             context.showLoadingDialog();
-            final result = await Providers.docker.run(cmd);
+            final result = await Pros.docker.run(cmd);
             context.pop();
             if (result != null) {
               context.showSnackBar(result.message ?? l10n.unknownError);
@@ -182,7 +181,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   }
 
   Widget _buildMain() {
-    if (Providers.docker.error != null && Providers.docker.items == null) {
+    if (Pros.docker.error != null && Pros.docker.items == null) {
       return SizedBox.expand(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -193,17 +192,17 @@ class _DockerManagePageState extends State<DockerManagePage> {
               size: 37,
             ),
             const SizedBox(height: 27),
-            Text(Providers.docker.error?.message ?? l10n.unknownError),
+            Text(Pros.docker.error?.message ?? l10n.unknownError),
             const SizedBox(height: 27),
             Padding(
               padding: const EdgeInsets.all(17),
-              child: _buildSolution(Providers.docker.error!),
+              child: _buildSolution(Pros.docker.error!),
             )
           ],
         ),
       );
     }
-    if (Providers.docker.items == null || Providers.docker.images == null) {
+    if (Pros.docker.items == null || Pros.docker.images == null) {
       return UIs.centerLoading;
     }
 
@@ -225,12 +224,12 @@ class _DockerManagePageState extends State<DockerManagePage> {
       ListTile(
         title: Text(l10n.imagesList),
         subtitle: Text(
-          l10n.dockerImagesFmt(Providers.docker.images!.length),
+          l10n.dockerImagesFmt(Pros.docker.images!.length),
           style: UIs.textGrey,
         ),
       ),
     ];
-    items.addAll(Providers.docker.images!.map(_buildImageItem));
+    items.addAll(Pros.docker.images!.map(_buildImageItem));
     return Column(children: items);
   }
 
@@ -259,7 +258,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
         TextButton(
           onPressed: () async {
             context.pop();
-            final result = await Providers.docker.run(
+            final result = await Pros.docker.run(
               'docker rmi ${e.id} -f',
             );
             if (result != null) {
@@ -273,7 +272,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   }
 
   Widget _buildLoading() {
-    if (Providers.docker.runLog == null) return UIs.placeholder;
+    if (Pros.docker.runLog == null) return UIs.placeholder;
     return Padding(
       padding: const EdgeInsets.all(17),
       child: Column(
@@ -282,7 +281,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
             child: CircularProgressIndicator(),
           ),
           UIs.height13,
-          Text(Providers.docker.runLog ?? '...'),
+          Text(Pros.docker.runLog ?? '...'),
         ],
       ),
     );
@@ -323,8 +322,8 @@ class _DockerManagePageState extends State<DockerManagePage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(Providers.docker.edition ?? l10n.unknown),
-          Text(Providers.docker.version ?? l10n.unknown),
+          Text(Pros.docker.edition ?? l10n.unknown),
+          Text(Pros.docker.version ?? l10n.unknown),
         ],
       ),
     );
@@ -335,12 +334,12 @@ class _DockerManagePageState extends State<DockerManagePage> {
       ListTile(
         title: Text(l10n.containerStatus),
         subtitle: Text(
-          _buildPsCardSubtitle(Providers.docker.items!),
+          _buildPsCardSubtitle(Pros.docker.items!),
           style: UIs.textGrey,
         ),
       ),
     ];
-    items.addAll(Providers.docker.items!.map(_buildPsItem));
+    items.addAll(Pros.docker.items!.map(_buildPsItem));
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: items,
@@ -372,7 +371,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
                   onPressed: () async {
                     context.pop();
                     context.showLoadingDialog();
-                    await Providers.docker.delete(dItem.containerId);
+                    await Pros.docker.delete(dItem.containerId);
                     context.pop();
                   },
                   child: Text(l10n.ok),
@@ -382,17 +381,17 @@ class _DockerManagePageState extends State<DockerManagePage> {
             break;
           case DockerMenuType.start:
             context.showLoadingDialog();
-            await Providers.docker.start(dItem.containerId);
+            await Pros.docker.start(dItem.containerId);
             context.pop();
             break;
           case DockerMenuType.stop:
             context.showLoadingDialog();
-            await Providers.docker.stop(dItem.containerId);
+            await Pros.docker.stop(dItem.containerId);
             context.pop();
             break;
           case DockerMenuType.restart:
             context.showLoadingDialog();
-            await Providers.docker.restart(dItem.containerId);
+            await Pros.docker.restart(dItem.containerId);
             context.pop();
             break;
           case DockerMenuType.logs:
@@ -441,7 +440,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
 
   Widget _buildEditHost() {
     final children = <Widget>[];
-    if (Providers.docker.items!.isEmpty && Providers.docker.images!.isEmpty) {
+    if (Pros.docker.items!.isEmpty && Pros.docker.images!.isEmpty) {
       children.add(Padding(
         padding: const EdgeInsets.fromLTRB(17, 17, 17, 0),
         child: Text(
@@ -484,6 +483,6 @@ class _DockerManagePageState extends State<DockerManagePage> {
   void _onSaveDockerHost(String val) {
     context.pop();
     Stores.docker.put(widget.spi.id, val.trim());
-    Providers.docker.refresh();
+    Pros.docker.refresh();
   }
 }

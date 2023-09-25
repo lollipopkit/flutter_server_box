@@ -56,7 +56,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
     return [
       IconButton(
         onPressed: () {
-          Providers.snippet.del(widget.snippet!);
+          Pros.snippet.del(widget.snippet!);
           context.pop();
         },
         tooltip: l10n.delete,
@@ -84,9 +84,9 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           note: note.isEmpty ? null : note,
         );
         if (widget.snippet != null) {
-          Providers.snippet.update(widget.snippet!, snippet);
+          Pros.snippet.update(widget.snippet!, snippet);
         } else {
-          Providers.snippet.add(snippet);
+          Pros.snippet.add(snippet);
         }
         context.pop();
       },
@@ -118,9 +118,9 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           onChanged: (p0) => setState(() {
             _tags = p0;
           }),
-          allTags: [...Providers.server.tags],
+          allTags: [...Pros.server.tags],
           onRenameTag: (old, n) => setState(() {
-            Providers.server.renameTag(old, n);
+            Pros.server.renameTag(old, n);
           }),
         ),
         Input(

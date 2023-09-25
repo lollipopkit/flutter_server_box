@@ -165,7 +165,7 @@ class _PingPageState extends State<PingPage>
       return;
     }
 
-    if (Providers.server.serverOrder.isEmpty) {
+    if (Pros.server.serverOrder.isEmpty) {
       context.showSnackBar(l10n.pingNoServer);
       return;
     }
@@ -176,7 +176,7 @@ class _PingPageState extends State<PingPage>
       return;
     }
 
-    await Future.wait(Providers.server.servers.map((e) async {
+    await Future.wait(Pros.server.servers.map((e) async {
       if (e.client == null) {
         return;
       }

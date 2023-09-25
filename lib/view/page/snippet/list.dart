@@ -130,15 +130,15 @@ class _SnippetListPageState extends State<SnippetListPage> {
     final servers = await showDialog<List<Server>>(
       context: context,
       builder: (_) => TagPicker<Server>(
-        items: Providers.server.servers.toList(),
-        tags: Providers.server.tags.toSet(),
+        items: Pros.server.servers.toList(),
+        tags: Pros.server.tags.toSet(),
       ),
     );
     if (servers == null) {
       return;
     }
     final ids = servers.map((e) => e.spi.id).toList();
-    final results = await Providers.server.runSnippetsMulti(ids, [snippet]);
+    final results = await Pros.server.runSnippetsMulti(ids, [snippet]);
     if (results.isNotEmpty) {
       // SERVER_NAME: RESULT
       final result = Map.fromIterables(

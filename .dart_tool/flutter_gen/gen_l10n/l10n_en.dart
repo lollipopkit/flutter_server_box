@@ -641,6 +641,9 @@ class SEn extends S {
   }
 
   @override
+  String get suspendTip => 'The suspend function requires root privileges and systemd support.';
+
+  @override
   String get syncTip => 'After auto sync, a restart may be required for some changes to take effect.';
 
   @override

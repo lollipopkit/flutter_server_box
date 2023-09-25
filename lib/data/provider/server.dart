@@ -291,7 +291,7 @@ class ServerProvider extends ChangeNotifier {
           final localPath = joinPath(await Paths.doc, 'install.sh');
           final file = File(localPath);
           file.writeAsString(ShellFunc.allScript);
-          final sftp = Providers.sftp;
+          final sftp = Pros.sftp;
           final completer = Completer();
           sftp.add(
             SftpReq(spi, installShellPath, localPath, SftpReqType.upload),

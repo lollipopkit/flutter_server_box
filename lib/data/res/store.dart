@@ -1,4 +1,5 @@
 import 'package:toolbox/data/store/docker.dart';
+import 'package:toolbox/data/store/first.dart';
 import 'package:toolbox/data/store/history.dart';
 import 'package:toolbox/data/store/private_key.dart';
 import 'package:toolbox/data/store/server.dart';
@@ -15,4 +16,5 @@ class Stores {
   static final history = locator<HistoryStore>();
   static final key = locator<PrivateKeyStore>();
   static final snippet = locator<SnippetStore>();
+  static final first = locator<FirstStore>();
 }

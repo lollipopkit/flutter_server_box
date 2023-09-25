@@ -31,12 +31,13 @@ class SnippetProvider extends ChangeNotifier {
   }
 
   void _addInternal() {
-    if (!Stores.setting.fTISBM.fetch() || _snippets.isNotEmpty) {
+    if (!Stores.first.iSSBM.fetch() ||
+        _snippets.any((e) => e.name == installSBM.name)) {
       return;
     }
     _snippets.add(installSBM);
     Stores.snippet.put(installSBM);
-    Stores.setting.fTISBM.put(false);
+    Stores.first.iSSBM.put(false);
   }
 
   void _updateTags() {

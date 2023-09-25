@@ -92,8 +92,7 @@ class _ServerPageState extends State<ServerPage>
       return child;
     }
     return RefreshIndicator(
-      onRefresh: () async =>
-          await Providers.server.refreshData(onlyFailed: true),
+      onRefresh: () async => await Pros.server.refreshData(onlyFailed: true),
       child: child,
     );
   }
@@ -245,22 +244,42 @@ class _ServerPageState extends State<ServerPage>
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           IconButton(
-            onPressed: () => srv.client?.execWithPwd(
-              ShellFunc.shutdown.cmd,
-              context: context,
-            ),
-            icon: const Icon(Icons.power_off),
+            onPressed: () async {
+              if (Stores.first.showSuspendTip.fetch()) {
+                await context.showRoundDialog(
+                  title: Text(l10n.attention),
+                  child: Text(l10n.suspendTip),
+                );
+                Stores.first.showSuspendTip.put(false);
+              }
+              srv.client?.execWithPwd(
+                ShellFunc.suspend.exec,
+                context: context,
+              );
+            },
+            icon: const Icon(Icons.stop),
+            tooltip: 'Suspend',
           ),
           IconButton(
             onPressed: () => srv.client?.execWithPwd(
-              ShellFunc.reboot.cmd,
+              ShellFunc.shutdown.exec,
               context: context,
             ),
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.power_off),
+            tooltip: 'Shutdown',
+          ),
+          IconButton(
+            onPressed: () => srv.client?.execWithPwd(
+              ShellFunc.reboot.exec,
+              context: context,
+            ),
+            icon: const Icon(Icons.restart_alt),
+            tooltip: 'Reboot',
           ),
           IconButton(
             onPressed: () => AppRoute.serverEdit(spi: srv.spi).go(context),
             icon: const Icon(Icons.edit),
+            tooltip: l10n.edit,
           )
         ],
       )
@@ -305,7 +324,7 @@ class _ServerPageState extends State<ServerPage>
     Widget? rightCorner;
     if (!(spi.autoConnect ?? true) && cs == ServerState.disconnected) {
       rightCorner = InkWell(
-        onTap: () => Providers.server.refreshData(spi: spi),
+        onTap: () => Pros.server.refreshData(spi: spi),
         child: const Padding(
           padding: EdgeInsets.symmetric(horizontal: 7),
           child: Icon(
@@ -456,8 +475,8 @@ class _ServerPageState extends State<ServerPage>
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
     await GetIt.I.allReady();
-    await Providers.server.load();
-    Providers.server.startAutoRefresh();
+    await Pros.server.load();
+    Pros.server.startAutoRefresh();
   }
 
   List<String> _filterServers(ServerProvider pro) => pro.serverOrder

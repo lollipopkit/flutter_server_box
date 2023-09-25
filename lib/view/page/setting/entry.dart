@@ -298,7 +298,7 @@ class _SettingPageState extends State<SettingPage> {
           onSelected: (int val) {
             _updateInterval.value = val;
             _setting.serverStatusUpdateInterval.put(val);
-            Providers.server.startAutoRefresh();
+            Pros.server.startAutoRefresh();
             if (val == 0) {
               context.showSnackBar(l10n.updateIntervalEqual0);
             }
@@ -883,7 +883,7 @@ class _SettingPageState extends State<SettingPage> {
               child: Text(l10n.sureDelete(e)),
               actions: [
                 TextButton(
-                  onPressed: () => Providers.server.delServer(e),
+                  onPressed: () => Pros.server.delServer(e),
                   child: Text(l10n.ok),
                 )
               ],

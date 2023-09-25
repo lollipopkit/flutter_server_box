@@ -13,10 +13,10 @@ import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
+import 'package:toolbox/view/widget/omit_start_text.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
 import '../../../core/extension/numx.dart';
-import '../../../core/extension/stringx.dart';
 import '../../../core/route.dart';
 import '../../../core/utils/misc.dart';
 import '../../../data/model/server/server_private_info.dart';
@@ -113,7 +113,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            (_status.path?.path ?? l10n.loadingFiles).omitStartStr(),
+            OmitStartText(_status.path?.path ?? l10n.loadingFiles),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: children,
@@ -162,7 +162,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
             context.showSnackBar('remote path is null');
             return;
           }
-          Providers.sftp.add(
+          Pros.sftp.add(
             SftpReq(
               widget.spi,
               '$remotePath/${path.split('/').last}',
@@ -362,14 +362,14 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       localPath,
       SftpReqType.download,
     );
-    Providers.sftp.add(req, completer: completer);
+    Pros.sftp.add(req, completer: completer);
     context.showLoadingDialog();
     await completer.future;
     context.pop();
 
     final result = await AppRoute.editor(path: localPath).go<bool>(context);
     if (result != null && result) {
-      Providers.sftp
+      Pros.sftp
           .add(SftpReq(req.spi, remotePath, localPath, SftpReqType.upload));
       context.showSnackBar(l10n.added2List);
     }
@@ -389,7 +389,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
             context.pop();
             final remotePath = _getRemotePath(name);
 
-            Providers.sftp.add(
+            Pros.sftp.add(
               SftpReq(
                 widget.spi,
                 remotePath,

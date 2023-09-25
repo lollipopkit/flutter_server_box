@@ -7,8 +7,8 @@ import 'package:toolbox/data/provider/sftp.dart';
 import 'package:toolbox/data/provider/snippet.dart';
 import 'package:toolbox/locator.dart';
 
-class Providers {
-  const Providers._();
+class Pros {
+  const Pros._();
 
   static final app = locator<AppProvider>();
   static final debug = locator<DebugProvider>();

@@ -19,10 +19,10 @@ Future<bool> shareFiles(List<String> filePaths) async {
   } else {
     text = '${filePaths.length} ${l10n.files}';
   }
-  Providers.app.moveBg = false;
+  Pros.app.moveBg = false;
   // ignore: deprecated_member_use
   await Share.shareFiles(filePaths, subject: text);
-  Providers.app.moveBg = true;
+  Pros.app.moveBg = true;
   return filePaths.isNotEmpty;
 }
 
@@ -31,9 +31,9 @@ void copy2Clipboard(String text) {
 }
 
 Future<String?> pickOneFile() async {
-  Providers.app.moveBg = false;
+  Pros.app.moveBg = false;
   final result = await FilePicker.platform.pickFiles(type: FileType.any);
-  Providers.app.moveBg = true;
+  Pros.app.moveBg = true;
   return result?.files.single.path;
 }
 

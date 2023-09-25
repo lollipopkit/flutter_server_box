@@ -1298,6 +1298,12 @@ abstract class S {
   /// **'Are you sure to delete server [{server}]?'**
   String sureToDeleteServer(Object server);
 
+  /// No description provided for @suspendTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The suspend function requires root privileges and systemd support.'**
+  String get suspendTip;
+
   /// No description provided for @syncTip.
   ///
   /// In en, this message translates to:

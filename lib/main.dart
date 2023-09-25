@@ -92,8 +92,8 @@ Future<void> initApp() async {
 }
 
 void _setupProviders() {
-  Providers.snippet.load();
-  Providers.key.load();
+  Pros.snippet.load();
+  Pros.key.load();
 }
 
 Future<void> _initHive() async {
@@ -109,7 +109,7 @@ Future<void> _initHive() async {
 void _setupLogger() {
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
-    Providers.debug.addLog(record);
+    Pros.debug.addLog(record);
     // ignore: avoid_print
     print(record);
   });

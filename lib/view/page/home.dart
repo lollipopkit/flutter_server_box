@@ -72,7 +72,7 @@ class _HomePageState extends State<HomePage>
   void dispose() {
     super.dispose();
     WidgetsBinding.instance.removeObserver(this);
-    Providers.server.closeServer();
+    Pros.server.closeServer();
     _pageController.dispose();
   }
 
@@ -84,20 +84,20 @@ class _HomePageState extends State<HomePage>
     switch (state) {
       case AppLifecycleState.resumed:
         _auth();
-        if (!Providers.server.isAutoRefreshOn) {
-          Providers.server.startAutoRefresh();
+        if (!Pros.server.isAutoRefreshOn) {
+          Pros.server.startAutoRefresh();
         }
         updateHomeWidget();
         break;
       case AppLifecycleState.paused:
         // Keep running in background on Android device
         if (isAndroid && Stores.setting.bgRun.fetch()) {
-          if (Providers.app.moveBg) {
+          if (Pros.app.moveBg) {
             BgRunMC.moveToBg();
           }
         } else {
-          Providers.server.setDisconnected();
-          Providers.server.stopAutoRefresh();
+          Pros.server.setDisconnected();
+          Pros.server.stopAutoRefresh();
         }
         break;
       default:
@@ -148,7 +148,7 @@ class _HomePageState extends State<HomePage>
             return IconButton(
               icon: const Icon(Icons.refresh, size: 23),
               tooltip: 'Refresh',
-              onPressed: () => Providers.server.refreshData(onlyFailed: true),
+              onPressed: () => Pros.server.refreshData(onlyFailed: true),
             );
           },
         ),
@@ -343,8 +343,8 @@ class _HomePageState extends State<HomePage>
     }
     updateHomeWidget();
     await GetIt.I.allReady();
-    await Providers.server.load();
-    await Providers.server.refreshData();
+    await Pros.server.load();
+    await Pros.server.refreshData();
     if (!Analysis.enabled) {
       Analysis.init();
     }
