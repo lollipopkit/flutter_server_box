@@ -245,10 +245,8 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
               }
               final result = await AppRoute.editor(
                 path: file.absolute.path,
-              ).go<String>(context);
-              final f = File(file.absolute.path);
-              if (result != null) {
-                f.writeAsString(result);
+              ).go<bool>(context);
+              if (result == true) {
                 context.showSnackBar(l10n.saved);
                 setState(() {});
               }

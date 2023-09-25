@@ -366,7 +366,7 @@ class _HomePageState extends State<HomePage>
       text: text,
       langCode: 'json',
       title: l10n.setting,
-    ).go(context);
+    ).go<String>(context);
     if (result == null) {
       return;
     }

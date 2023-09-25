@@ -540,7 +540,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
   void _rename(SftpName file) {
     context.pop();
-    final textController = TextEditingController();
+    final textController = TextEditingController(text: file.filename);
     context.showRoundDialog(
       title: Text(l10n.rename),
       child: Input(

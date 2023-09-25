@@ -127,7 +127,7 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
       text: text,
       langCode: 'json',
       title: 'Watch app',
-    ).go(context);
+    ).go<String>(context);
     if (result == null) {
       return;
     }

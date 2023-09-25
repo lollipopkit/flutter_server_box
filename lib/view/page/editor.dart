@@ -100,23 +100,6 @@ class _EditorPageState extends State<EditorPage> {
       backgroundColor: _codeTheme['root']?.backgroundColor,
       appBar: _buildAppBar(),
       body: _buildBody(),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.done),
-        onPressed: () async {
-          // If path is not null, then it's a file editor
-          // save the text and return true to pop the page
-          if (widget.path != null) {
-            context.showLoadingDialog();
-            await File(widget.path!).writeAsString(_controller.text);
-            context.pop();
-            context.pop(true);
-            return;
-          }
-          // else it's a text editor
-          // return the text to the previous page
-          context.pop(_controller.text);
-        },
-      ),
     );
   }
 
@@ -130,6 +113,7 @@ class _EditorPageState extends State<EditorPage> {
       actions: [
         PopupMenuButton<String>(
           icon: const Icon(Icons.language),
+          tooltip: l10n.language,
           onSelected: (value) {
             _controller.language = Highlights.all[value];
             _langCode = value;
@@ -142,6 +126,24 @@ class _EditorPageState extends State<EditorPage> {
                 child: Text(e),
               );
             }).toList();
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.save),
+          tooltip: l10n.save,
+          onPressed: () async {
+            // If path is not null, then it's a file editor
+            // save the text and return true to pop the page
+            if (widget.path != null) {
+              context.showLoadingDialog();
+              await File(widget.path!).writeAsString(_controller.text);
+              context.pop();
+              context.pop(true);
+              return;
+            }
+            // else it's a text editor
+            // return the text to the previous page
+            context.pop(_controller.text);
           },
         )
       ],
