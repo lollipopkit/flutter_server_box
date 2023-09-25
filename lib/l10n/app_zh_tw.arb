@@ -200,6 +200,7 @@
   "sureNoPwd": "確認使用無密碼？",
   "sureStop": "確定要停止 [{item}] 嗎？",
   "sureToDeleteServer": "你確定要刪除服務器 [{server}] 嗎？",
+  "syncTip": "在自動同步後，可能需要重新啟動，某些更改才能生效。",
   "system": "系統",
   "tag": "标签",
   "terminal": "终端機",

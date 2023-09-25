@@ -641,6 +641,9 @@ class SDe extends S {
   }
 
   @override
+  String get syncTip => 'Nach der automatischen Synchronisierung kann es erforderlich sein, die App neu zu starten, damit bestimmte Änderungen wirksam werden.';
+
+  @override
   String get system => 'Systeme';
 
   @override

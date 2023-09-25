@@ -641,6 +641,9 @@ class SEn extends S {
   }
 
   @override
+  String get syncTip => 'After auto sync, a restart may be required for some changes to take effect.';
+
+  @override
   String get system => 'System';
 
   @override

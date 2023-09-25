@@ -1298,6 +1298,12 @@ abstract class S {
   /// **'Are you sure to delete server [{server}]?'**
   String sureToDeleteServer(Object server);
 
+  /// No description provided for @syncTip.
+  ///
+  /// In en, this message translates to:
+  /// **'After auto sync, a restart may be required for some changes to take effect.'**
+  String get syncTip;
+
   /// No description provided for @system.
   ///
   /// In en, this message translates to:

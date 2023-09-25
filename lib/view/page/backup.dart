@@ -35,6 +35,12 @@ class BackupPage extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context) {
+    final tip = () {
+      if (isMacOS || isIOS) {
+        return '${l10n.syncTip}\n${l10n.backupTip}';
+      }
+      return l10n.backupTip;
+    }();
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -44,7 +50,7 @@ class BackupPage extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.all(37),
           child: Text(
-            l10n.backupTip,
+            tip,
             textAlign: TextAlign.center,
           ),
         ),

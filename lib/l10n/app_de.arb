@@ -200,6 +200,7 @@
   "sureNoPwd": "Bist du sicher, dass du kein Passwort verwenden willst?",
   "sureStop": "Sind Sie sicher, dass Sie [{item}] stoppen möchten?",
   "sureToDeleteServer": "Bist du sicher, dass du [{server}] löschen willst?",
+  "syncTip": "Nach der automatischen Synchronisierung kann es erforderlich sein, die App neu zu starten, damit bestimmte Änderungen wirksam werden.",
   "system": "Systeme",
   "tag": "Tags",
   "terminal": "Terminal",

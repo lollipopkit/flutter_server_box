@@ -200,6 +200,7 @@
   "sureNoPwd": "Are you sure to use no password?",
   "sureStop": "Sure to stop [{item}] ?",
   "sureToDeleteServer": "Are you sure to delete server [{server}]?",
+  "syncTip": "After auto sync, a restart may be required for some changes to take effect.",
   "system": "System",
   "tag": "Tags",
   "terminal": "Terminal",

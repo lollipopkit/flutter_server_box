@@ -641,6 +641,9 @@ class SId extends S {
   }
 
   @override
+  String get syncTip => 'Setelah sinkronisasi otomatis, mungkin perlu memulai ulang aplikasi agar perubahan tertentu dapat diterapkan.';
+
+  @override
   String get system => 'Sistem';
 
   @override
