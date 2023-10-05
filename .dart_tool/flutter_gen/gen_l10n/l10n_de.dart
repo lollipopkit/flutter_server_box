@@ -512,6 +512,9 @@ class SDe extends S {
   String get pwd => 'Passwort';
 
   @override
+  String get reboot => 'Neustart';
+
+  @override
   String get remotePath => 'Entfernte Pfade';
 
   @override
@@ -592,6 +595,9 @@ class SDe extends S {
   String get showDistLogo => 'Distributionslogo anzeigen';
 
   @override
+  String get shutdown => 'Abschaltung';
+
+  @override
   String get snippet => 'Snippet';
 
   @override
@@ -621,6 +627,9 @@ class SDe extends S {
 
   @override
   String get success => 'Erfolgreich';
+
+  @override
+  String get suspend => 'Suspend';
 
   @override
   String get suspendTip => 'Die Suspend-Funktion erfordert Root-Rechte und systemd-Unterstützung.';

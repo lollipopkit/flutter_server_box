@@ -128,9 +128,9 @@ class _SnippetListPageState extends State<SnippetListPage> {
 
   Future<void> _runSnippet(Snippet snippet) async {
     final servers = await context.showPickDialog<Server>(
-        items: Pros.server.servers.toList(),
-        name: (e) => e.spi.name,
-      );
+      items: Pros.server.servers.toList(),
+      name: (e) => e.spi.name,
+    );
     if (servers == null) {
       return;
     }

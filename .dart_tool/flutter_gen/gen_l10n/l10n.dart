@@ -1064,6 +1064,12 @@ abstract class S {
   /// **'Password'**
   String get pwd;
 
+  /// No description provided for @reboot.
+  ///
+  /// In en, this message translates to:
+  /// **'Reboot'**
+  String get reboot;
+
   /// No description provided for @remotePath.
   ///
   /// In en, this message translates to:
@@ -1220,6 +1226,12 @@ abstract class S {
   /// **'Show distribution logo'**
   String get showDistLogo;
 
+  /// No description provided for @shutdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Shutdown'**
+  String get shutdown;
+
   /// No description provided for @snippet.
   ///
   /// In en, this message translates to:
@@ -1273,6 +1285,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Success'**
   String get success;
+
+  /// No description provided for @suspend.
+  ///
+  /// In en, this message translates to:
+  /// **'Suspend'**
+  String get suspend;
 
   /// No description provided for @suspendTip.
   ///

@@ -338,7 +338,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
     final fileName = file.path.split('/').last;
     context.showRoundDialog(
       title: Text(l10n.delete),
-      child: Text(l10n.askContinue('${l10n.delete}: $fileName')),
+      child: Text(l10n.askContinue('${l10n.delete} $fileName')),
       actions: [
         TextButton(
           onPressed: () => context.pop(),

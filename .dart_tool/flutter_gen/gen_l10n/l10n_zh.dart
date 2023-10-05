@@ -512,6 +512,9 @@ class SZh extends S {
   String get pwd => '密码';
 
   @override
+  String get reboot => '重启';
+
+  @override
   String get remotePath => '远端路径';
 
   @override
@@ -592,6 +595,9 @@ class SZh extends S {
   String get showDistLogo => '显示发行版 Logo';
 
   @override
+  String get shutdown => '关机';
+
+  @override
   String get snippet => '代码片段';
 
   @override
@@ -621,6 +627,9 @@ class SZh extends S {
 
   @override
   String get success => '成功';
+
+  @override
+  String get suspend => '挂起';
 
   @override
   String get suspendTip => 'suspend 功能需要 root 权限及 systemd 支持。';
@@ -1247,6 +1256,9 @@ class SZhTw extends SZh {
   String get pwd => '密碼';
 
   @override
+  String get reboot => '重启';
+
+  @override
   String get remotePath => '遠端路徑';
 
   @override
@@ -1327,6 +1339,9 @@ class SZhTw extends SZh {
   String get showDistLogo => '顯示發行版 Logo';
 
   @override
+  String get shutdown => '关机';
+
+  @override
   String get snippet => '程式片段';
 
   @override
@@ -1356,6 +1371,9 @@ class SZhTw extends SZh {
 
   @override
   String get success => '成功';
+
+  @override
+  String get suspend => '挂起';
 
   @override
   String get suspendTip => 'suspend 功能需要 root 權限及 systemd 支持。';

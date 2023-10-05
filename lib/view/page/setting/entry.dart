@@ -332,44 +332,45 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () async {
         final ctrl = TextEditingController(text: primaryColor.toHex);
         await context.showRoundDialog(
-            title: Text(l10n.primaryColorSeed),
-            child: StatefulBuilder(builder: (context, setState) {
-              final children = <Widget>[
-                /// Plugin [dynamic_color] is not supported on iOS
-                if (!isIOS)
-                  ListTile(
-                    title: Text(l10n.followSystem),
-                    trailing: StoreSwitch(
-                      prop: _setting.useSystemPrimaryColor,
-                      func: (_) => setState(() {}),
-                    ),
-                  )
-              ];
-              if (!_setting.useSystemPrimaryColor.fetch()) {
-                children.addAll([
-                  Input(
-                    onSubmitted: _onSaveColor,
-                    controller: ctrl,
-                    hint: '#8b2252',
-                    icon: Icons.colorize,
+          title: Text(l10n.primaryColorSeed),
+          child: StatefulBuilder(builder: (context, setState) {
+            final children = <Widget>[
+              /// Plugin [dynamic_color] is not supported on iOS
+              if (!isIOS)
+                ListTile(
+                  title: Text(l10n.followSystem),
+                  trailing: StoreSwitch(
+                    prop: _setting.useSystemPrimaryColor,
+                    func: (_) => setState(() {}),
                   ),
-                  ColorPicker(
-                    color: primaryColor,
-                    onColorChanged: (c) => ctrl.text = c.toHex,
-                  )
-                ]);
-              }
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: children,
-              );
-            }),
-            actions: [
-              TextButton(
-                onPressed: () => _onSaveColor(ctrl.text),
-                child: Text(l10n.ok),
-              ),
-            ]);
+                )
+            ];
+            if (!_setting.useSystemPrimaryColor.fetch()) {
+              children.addAll([
+                Input(
+                  onSubmitted: _onSaveColor,
+                  controller: ctrl,
+                  hint: '#8b2252',
+                  icon: Icons.colorize,
+                ),
+                ColorPicker(
+                  color: primaryColor,
+                  onColorChanged: (c) => ctrl.text = c.toHex,
+                )
+              ]);
+            }
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: children,
+            );
+          }),
+          actions: [
+            TextButton(
+              onPressed: () => _onSaveColor(ctrl.text),
+              child: Text(l10n.ok),
+            ),
+          ],
+        );
       },
     );
   }

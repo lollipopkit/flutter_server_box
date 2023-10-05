@@ -96,9 +96,9 @@ void _onTapMoreBtns(
       break;
     case ServerTabMenuType.snippet:
       final snippets = await context.showPickDialog<Snippet>(
-          items: Pros.snippet.snippets,
-          name: (e) => e.name,
-        );
+        items: Pros.snippet.snippets,
+        name: (e) => e.name,
+      );
       if (snippets == null) {
         return;
       }

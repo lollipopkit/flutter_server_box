@@ -412,10 +412,10 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     final useRmr = Stores.setting.sftpRmrDir.fetch();
     final text = () {
       if (isDir && !useRmr) {
-        return l10n.askContinue(
-            '${l10n.dirEmpty}\n${l10n.delete} ${l10n.files}(${file.filename})');
+        return l10n
+            .askContinue('${l10n.dirEmpty}\n${l10n.delete} ${file.filename}');
       }
-      return l10n.askContinue('${l10n.delete} ${l10n.files}(${file.filename})');
+      return l10n.askContinue('${l10n.delete} ${file.filename}');
     }();
     context.showRoundDialog(
       child: Text(text),

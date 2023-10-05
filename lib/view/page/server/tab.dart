@@ -259,10 +259,11 @@ class _ServerPageState extends State<ServerPage>
                   context: context,
                 );
               },
-              msg: 'Suspend ${srv.spi.name}',
+              typ: l10n.suspend,
+              name: srv.spi.name,
             ),
             icon: const Icon(Icons.stop),
-            tooltip: 'Suspend',
+            tooltip: l10n.suspend,
           ),
           IconButton(
             onPressed: () => _askFor(
@@ -270,10 +271,11 @@ class _ServerPageState extends State<ServerPage>
                 ShellFunc.shutdown.exec,
                 context: context,
               ),
-              msg: 'Shutdown ${srv.spi.name}',
+              typ: l10n.shutdown,
+              name: srv.spi.name,
             ),
             icon: const Icon(Icons.power_off),
-            tooltip: 'Shutdown',
+            tooltip: l10n.shutdown,
           ),
           IconButton(
             onPressed: () => _askFor(
@@ -281,10 +283,11 @@ class _ServerPageState extends State<ServerPage>
                 ShellFunc.reboot.exec,
                 context: context,
               ),
-              msg: 'Reboot ${srv.spi.name}',
+              typ: l10n.reboot,
+              name: srv.spi.name,
             ),
             icon: const Icon(Icons.restart_alt),
-            tooltip: 'Reboot',
+            tooltip: l10n.reboot,
           ),
           IconButton(
             onPressed: () => AppRoute.serverEdit(spi: srv.spi).go(context),
@@ -542,10 +545,14 @@ class _ServerPageState extends State<ServerPage>
     return 107;
   }
 
-  void _askFor({required void Function() func, required String msg}) {
+  void _askFor({
+    required void Function() func,
+    required String typ,
+    required String name,
+  }) {
     context.showRoundDialog(
       title: Text(l10n.attention),
-      child: Text(l10n.askContinue(msg)),
+      child: Text(l10n.askContinue('$typ ${l10n.server}($name)')),
       actions: [
         TextButton(
           onPressed: () {

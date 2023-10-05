@@ -512,6 +512,9 @@ class SEn extends S {
   String get pwd => 'Password';
 
   @override
+  String get reboot => 'Reboot';
+
+  @override
   String get remotePath => 'Remote path';
 
   @override
@@ -592,6 +595,9 @@ class SEn extends S {
   String get showDistLogo => 'Show distribution logo';
 
   @override
+  String get shutdown => 'Shutdown';
+
+  @override
   String get snippet => 'Snippet';
 
   @override
@@ -621,6 +627,9 @@ class SEn extends S {
 
   @override
   String get success => 'Success';
+
+  @override
+  String get suspend => 'Suspend';
 
   @override
   String get suspendTip => 'The suspend function requires root privileges and systemd support.';

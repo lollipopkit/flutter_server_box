@@ -512,6 +512,9 @@ class SId extends S {
   String get pwd => 'Kata sandi';
 
   @override
+  String get reboot => 'Reboot';
+
+  @override
   String get remotePath => 'Jalur jarak jauh';
 
   @override
@@ -592,6 +595,9 @@ class SId extends S {
   String get showDistLogo => 'Tampilkan logo distribusi';
 
   @override
+  String get shutdown => 'Matikan';
+
+  @override
   String get snippet => 'Snippet';
 
   @override
@@ -621,6 +627,9 @@ class SId extends S {
 
   @override
   String get success => 'Kesuksesan';
+
+  @override
+  String get suspend => 'Suspend';
 
   @override
   String get suspendTip => 'Fungsi penangguhan memerlukan hak akses root dan dukungan systemd.';
