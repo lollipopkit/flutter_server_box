@@ -583,7 +583,7 @@ class SEn extends S {
   String get sftpDlPrepare => 'Preparing to connect...';
 
   @override
-  String get sftpRmrfDirSummary => 'Use `rm -rf` to delete a folder in SFTP.';
+  String get sftpRmrDirSummary => 'Use `rm -r` to delete a folder in SFTP.';
 
   @override
   String get sftpSSHConnected => 'SFTP Connected';

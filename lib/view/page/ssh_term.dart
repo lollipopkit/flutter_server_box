@@ -11,7 +11,9 @@ import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
+import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/provider/virtual_keyboard.dart';
+import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
@@ -253,10 +255,13 @@ class _SSHPageState extends State<SSHPage> {
         }
         break;
       case VirtualKeyFunc.snippet:
-        context.showSnippetDialog((s) {
-          _terminal.textInput(s.script);
-          _terminal.keyInput(TerminalKey.enter);
-        });
+        final s = await context.showPickSingleDialog<Snippet>(
+          items: Pros.snippet.snippets,
+          name: (p0) => p0.name,
+        );
+        if (s == null) return;
+        _terminal.textInput(s.script);
+        _terminal.keyInput(TerminalKey.enter);
         break;
       case VirtualKeyFunc.file:
         // get $PWD from SSH session

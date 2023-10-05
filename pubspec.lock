@@ -145,6 +145,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.3"
+  choice:
+    dependency: "direct main"
+    description:
+      name: choice
+      sha256: "176e52882753cd6d3cdf537be3c392bc67f8114bc8bd2b1a625207015c6de856"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.0"
   circle_chart:
     dependency: "direct main"
     description:

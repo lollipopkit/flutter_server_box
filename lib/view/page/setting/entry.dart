@@ -234,7 +234,7 @@ class _SettingPageState extends State<SettingPage> {
         // Use hardware keyboard on desktop, so there is no need to set it
         if (isMobile) _buildKeyboardType(),
         _buildSSHVirtKeys(),
-        _buildSftpRmrfDir(),
+        _buildSftpRmrDir(),
       ].map((e) => RoundRectCard(e)).toList(),
     );
   }
@@ -997,11 +997,11 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  Widget _buildSftpRmrfDir() {
+  Widget _buildSftpRmrDir() {
     return ListTile(
-      title: const Text('rm -rf'),
-      subtitle: Text(l10n.sftpRmrfDirSummary, style: UIs.textGrey),
-      trailing: StoreSwitch(prop: _setting.sftpRmrfDir),
+      title: const Text('rm -r'),
+      subtitle: Text(l10n.sftpRmrDirSummary, style: UIs.textGrey),
+      trailing: StoreSwitch(prop: _setting.sftpRmrDir),
     );
   }
 

@@ -184,10 +184,10 @@ class SettingStore extends PersistentStore {
     true,
   );
 
-  /// Whether use `rm -rf` to delete directory on SFTP
-  late final sftpRmrfDir = StoreProperty(
+  /// Whether use `rm -r` to delete directory on SFTP
+  late final sftpRmrDir = StoreProperty(
     box,
-    'sftpRmrfDir',
+    'sftpRmrDir',
     false,
   );
 

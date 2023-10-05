@@ -265,18 +265,24 @@ class _ServerPageState extends State<ServerPage>
             tooltip: 'Suspend',
           ),
           IconButton(
-            onPressed: () => _askFor(func: () => srv.client?.execWithPwd(
-              ShellFunc.shutdown.exec,
-              context: context,
-            ), msg: 'Shutdown ${srv.spi.name}',),
+            onPressed: () => _askFor(
+              func: () => srv.client?.execWithPwd(
+                ShellFunc.shutdown.exec,
+                context: context,
+              ),
+              msg: 'Shutdown ${srv.spi.name}',
+            ),
             icon: const Icon(Icons.power_off),
             tooltip: 'Shutdown',
           ),
           IconButton(
-            onPressed: () => _askFor(func: () => srv.client?.execWithPwd(
-              ShellFunc.reboot.exec,
-              context: context,
-            ), msg: 'Reboot ${srv.spi.name}',),
+            onPressed: () => _askFor(
+              func: () => srv.client?.execWithPwd(
+                ShellFunc.reboot.exec,
+                context: context,
+              ),
+              msg: 'Reboot ${srv.spi.name}',
+            ),
             icon: const Icon(Icons.restart_alt),
             tooltip: 'Reboot',
           ),

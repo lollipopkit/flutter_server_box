@@ -5,12 +5,12 @@ import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
+import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/sftp/req.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/omit_start_text.dart';
-import 'package:toolbox/view/widget/picker.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
 import '../../../core/extension/numx.dart';
@@ -273,24 +273,15 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
             title: Text(l10n.upload),
             onTap: () async {
               context.pop();
-              final ids = Pros.server.serverOrder;
-              var idx = 0;
-              await context.showRoundDialog(
-                title: Text(l10n.server),
-                child: Picker(
-                  items: ids.map((e) => Text(e)).toList(),
-                  onSelected: (idx_) => idx = idx_,
-                ),
-                actions: [
-                  TextButton(
-                      onPressed: () => context.pop(), child: Text(l10n.ok)),
-                ],
+
+              final spi = await context.showPickSingleDialog<ServerPrivateInfo>(
+                items: Pros.server.serverOrder
+                    .map((e) => Pros.server.pick(id: e)?.spi)
+                    .toList(),
+                name: (e) => e.name,
               );
-              final id = ids[idx];
-              final spi = Pros.server.pick(id: id)?.spi;
-              if (spi == null) {
-                return;
-              }
+              if (spi == null) return;
+
               final remotePath = await AppRoute.sftp(
                 spi: spi,
                 isSelect: true,
@@ -298,6 +289,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
               if (remotePath == null) {
                 return;
               }
+
               Pros.sftp.add(SftpReq(
                 spi,
                 '$remotePath/$fileName',
@@ -346,7 +338,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
     final fileName = file.path.split('/').last;
     context.showRoundDialog(
       title: Text(l10n.delete),
-      child: Text(l10n.sureDelete(fileName)),
+      child: Text(l10n.askContinue('${l10n.delete}: $fileName')),
       actions: [
         TextButton(
           onPressed: () => context.pop(),

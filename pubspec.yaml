@@ -54,6 +54,7 @@ dependencies:
     git:
       ref: master
       url: https://github.com/lollipopkit/watch_connectivity
+  choice: ^2.0.0
 
 dev_dependencies:
   flutter_native_splash: ^2.1.6

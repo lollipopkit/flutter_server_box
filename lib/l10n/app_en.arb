@@ -184,7 +184,7 @@
   "serverTabUnkown": "Unknown state",
   "setting": "Settings",
   "sftpDlPrepare": "Preparing to connect...",
-  "sftpRmrfDirSummary": "Use `rm -rf` to delete a folder in SFTP.",
+  "sftpRmrDirSummary": "Use `rm -r` to delete a folder in SFTP.",
   "sftpSSHConnected": "SFTP Connected",
   "showDistLogo": "Show distribution logo",
   "snippet": "Snippet",

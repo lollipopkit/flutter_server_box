@@ -1202,11 +1202,11 @@ abstract class S {
   /// **'Preparing to connect...'**
   String get sftpDlPrepare;
 
-  /// No description provided for @sftpRmrfDirSummary.
+  /// No description provided for @sftpRmrDirSummary.
   ///
   /// In en, this message translates to:
-  /// **'Use `rm -rf` to delete a folder in SFTP.'**
-  String get sftpRmrfDirSummary;
+  /// **'Use `rm -r` to delete a folder in SFTP.'**
+  String get sftpRmrDirSummary;
 
   /// No description provided for @sftpSSHConnected.
   ///

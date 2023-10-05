@@ -409,13 +409,16 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   void _delete(SftpName file) {
     context.pop();
     final isDir = file.attr.isDirectory;
-    final useRmrf = Stores.setting.sftpRmrfDir.fetch();
-    final dirText = (isDir && !useRmrf) ? '\n${l10n.dirEmpty}' : '';
-    final text = l10n.askContinue(
-        '${l10n.delete} ${l10n.files}(${file.filename})\n$dirText');
-    final child = Text(text);
+    final useRmr = Stores.setting.sftpRmrDir.fetch();
+    final text = () {
+      if (isDir && !useRmr) {
+        return l10n.askContinue(
+            '${l10n.dirEmpty}\n${l10n.delete} ${l10n.files}(${file.filename})');
+      }
+      return l10n.askContinue('${l10n.delete} ${l10n.files}(${file.filename})');
+    }();
     context.showRoundDialog(
-      child: child,
+      child: Text(text),
       title: Text(l10n.attention),
       actions: [
         TextButton(
@@ -428,8 +431,8 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
             context.showLoadingDialog();
             final remotePath = _getRemotePath(file);
             try {
-              if (useRmrf) {
-                await _client!.run('rm -rf "$remotePath"');
+              if (useRmr) {
+                await _client!.run('rm -r "$remotePath"');
               } else if (file.attr.isDirectory) {
                 await _status.client!.rmdir(remotePath);
               } else {

@@ -73,21 +73,13 @@ class MyApp extends StatelessWidget {
 
   Widget _wrapSystemColor(BuildContext context, Widget child) {
     return DynamicColorBuilder(builder: (light, dark) {
-      _setupPrimaryColor(context, light, dark);
+      if (context.isDark && light != null) {
+        primaryColor = light.primary;
+      } else if (!context.isDark && dark != null) {
+        primaryColor = dark.primary;
+      }
       return child;
     });
-  }
-
-  void _setupPrimaryColor(
-    BuildContext context,
-    ColorScheme? light,
-    ColorScheme? dark,
-  ) {
-    if (context.isDark && light != null) {
-      primaryColor = light.primary;
-    } else if (!context.isDark && dark != null) {
-      primaryColor = dark.primary;
-    }
   }
 }
 

@@ -21,7 +21,6 @@ import '../../data/model/pkg/upgrade_info.dart';
 import '../../data/model/server/server_private_info.dart';
 import '../../data/model/server/snippet.dart';
 import 'popup_menu.dart';
-import 'tag.dart';
 
 class ServerFuncBtnsTopRight extends StatelessWidget {
   final ServerPrivateInfo spi;
@@ -96,13 +95,10 @@ void _onTapMoreBtns(
       );
       break;
     case ServerTabMenuType.snippet:
-      final snippets = await showDialog<List<Snippet>>(
-        context: context,
-        builder: (_) => TagPicker<Snippet>(
+      final snippets = await context.showPickDialog<Snippet>(
           items: Pros.snippet.snippets,
-          tags: Pros.server.tags.toSet(),
-        ),
-      );
+          name: (e) => e.name,
+        );
       if (snippets == null) {
         return;
       }

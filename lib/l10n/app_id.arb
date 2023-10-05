@@ -184,7 +184,7 @@
   "serverTabUnkown": "Negara yang tidak diketahui",
   "setting": "Pengaturan",
   "sftpDlPrepare": "Bersiap untuk terhubung ...",
-  "sftpRmrfDirSummary": "Gunakan `rm -rf` untuk menghapus dir di SFTP",
+  "sftpRmrDirSummary": "Gunakan `rm -r` untuk menghapus dir di SFTP",
   "sftpSSHConnected": "Sftp terhubung",
   "showDistLogo": "Tampilkan logo distribusi",
   "snippet": "Snippet",

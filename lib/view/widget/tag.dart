@@ -6,7 +6,6 @@ import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
 
-import '../../data/model/app/tag_pickable.dart';
 import '../../data/res/color.dart';
 
 const _kTagBtnHeight = 31.0;
@@ -175,119 +174,6 @@ class _TagEditorState extends State<TagEditor> {
           child: Text(l10n.rename),
         ),
       ],
-    );
-  }
-}
-
-class TagPicker<T extends TagPickable> extends StatefulWidget {
-  final List<T> items;
-  final Set<String> tags;
-
-  const TagPicker({
-    Key? key,
-    required this.items,
-    required this.tags,
-  }) : super(key: key);
-
-  @override
-  _TagPickerState<T> createState() => _TagPickerState<T>();
-}
-
-class _TagPickerState<T extends TagPickable> extends State<TagPicker<T>> {
-  late MediaQueryData _media;
-  final List<T> _selected = [];
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _media = MediaQuery.of(context);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final children = <Widget>[];
-    if (widget.tags.isNotEmpty) {
-      children.add(Text(l10n.tag));
-      children.add(UIs.height13);
-      children.add(SizedBox(
-        height: _kTagBtnHeight,
-        width: _media.size.width * 0.7,
-        child: _buildTags(),
-      ));
-    }
-    if (widget.items.isNotEmpty) {
-      children.add(Text(l10n.all));
-      children.add(UIs.height13);
-      children.add(SizedBox(
-        height: _kTagBtnHeight,
-        width: _media.size.width * 0.7,
-        child: _buildItems(),
-      ));
-    }
-    final child = widget.tags.isEmpty && widget.items.isEmpty
-        ? Text(l10n.noOptions)
-        : Column(mainAxisSize: MainAxisSize.min, children: children);
-    return AlertDialog(
-      title: Text(l10n.choose),
-      content: child,
-      actions: [
-        TextButton(
-          onPressed: () => context.pop(_selected),
-          child: Text(l10n.ok),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTags() {
-    return ListView.builder(
-      scrollDirection: Axis.horizontal,
-      itemCount: widget.tags.length,
-      itemBuilder: (_, idx) {
-        final item = widget.tags.elementAt(idx);
-        final isEnable =
-            widget.items.where((ele) => ele.containsTag(item)).every(
-                  (ele) => _selected.contains(ele),
-                );
-        return TagBtn(
-          isEnable: isEnable,
-          onTap: () {
-            if (isEnable) {
-              _selected.removeWhere(
-                (ele) => ele.containsTag(item),
-              );
-            } else {
-              _selected.addAll(widget.items.where(
-                (ele) => ele.containsTag(item),
-              ));
-            }
-            setState(() {});
-          },
-          content: item,
-        );
-      },
-    );
-  }
-
-  Widget _buildItems() {
-    return ListView.builder(
-      scrollDirection: Axis.horizontal,
-      itemCount: widget.items.length,
-      itemBuilder: (context, index) {
-        final e = widget.items[index];
-        return TagBtn(
-          isEnable: _selected.contains(e),
-          onTap: () {
-            if (_selected.contains(e)) {
-              _selected.remove(e);
-            } else {
-              _selected.add(e);
-            }
-            setState(() {});
-          },
-          content: e.tagName,
-        );
-      },
     );
   }
 }

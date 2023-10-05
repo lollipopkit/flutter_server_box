@@ -583,7 +583,7 @@ class SId extends S {
   String get sftpDlPrepare => 'Bersiap untuk terhubung ...';
 
   @override
-  String get sftpRmrfDirSummary => 'Gunakan `rm -rf` untuk menghapus dir di SFTP';
+  String get sftpRmrDirSummary => 'Gunakan `rm -r` untuk menghapus dir di SFTP';
 
   @override
   String get sftpSSHConnected => 'Sftp terhubung';

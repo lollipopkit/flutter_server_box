@@ -583,7 +583,7 @@ class SZh extends S {
   String get sftpDlPrepare => '准备连接至服务器...';
 
   @override
-  String get sftpRmrfDirSummary => '在 SFTP 中使用 `rm -rf` 来删除文件夹';
+  String get sftpRmrDirSummary => '在 SFTP 中使用 `rm -r` 来删除文件夹';
 
   @override
   String get sftpSSHConnected => 'SFTP 已连接...';
@@ -1318,7 +1318,7 @@ class SZhTw extends SZh {
   String get sftpDlPrepare => '準備連接至服務器...';
 
   @override
-  String get sftpRmrfDirSummary => '在 SFTP 中使用 `rm -rf` 來刪除文件夾';
+  String get sftpRmrDirSummary => '在 SFTP 中使用 `rm -r` 來刪除文件夾';
 
   @override
   String get sftpSSHConnected => 'SFTP 已連接...';

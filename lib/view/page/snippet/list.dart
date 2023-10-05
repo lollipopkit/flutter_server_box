@@ -127,13 +127,10 @@ class _SnippetListPageState extends State<SnippetListPage> {
   }
 
   Future<void> _runSnippet(Snippet snippet) async {
-    final servers = await showDialog<List<Server>>(
-      context: context,
-      builder: (_) => TagPicker<Server>(
+    final servers = await context.showPickDialog<Server>(
         items: Pros.server.servers.toList(),
-        tags: Pros.server.tags.toSet(),
-      ),
-    );
+        name: (e) => e.spi.name,
+      );
     if (servers == null) {
       return;
     }

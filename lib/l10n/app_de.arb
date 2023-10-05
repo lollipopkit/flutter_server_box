@@ -184,7 +184,7 @@
   "serverTabUnkown": "Unbekannter Status",
   "setting": "Einstellungen",
   "sftpDlPrepare": "Verbindung vorbereiten...",
-  "sftpRmrfDirSummary": "Verwenden Sie \"rm -rf\", um das Verzeichnis in SFTP zu löschen.",
+  "sftpRmrDirSummary": "Verwenden Sie \"rm -r\", um das Verzeichnis in SFTP zu löschen.",
   "sftpSSHConnected": "SFTP Verbunden",
   "showDistLogo": "Distributionslogo anzeigen",
   "snippet": "Snippet",
