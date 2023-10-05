@@ -249,7 +249,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   void _showImageRmDialog(DockerImage e) {
     context.showRoundDialog(
       title: Text(l10n.attention),
-      child: Text(l10n.sureDelete(e.repo)),
+      child: Text(l10n.askContinue('${l10n.delete} Image(${e.repo})')),
       actions: [
         TextButton(
           onPressed: () => context.pop(),
@@ -365,7 +365,9 @@ class _DockerManagePageState extends State<DockerManagePage> {
           case DockerMenuType.rm:
             context.showRoundDialog(
               title: Text(l10n.attention),
-              child: Text(l10n.sureDelete(dItem.name)),
+              child: Text(l10n.askContinue(
+                '${l10n.delete} Container(${dItem.name})',
+              )),
               actions: [
                 TextButton(
                   onPressed: () async {

@@ -410,8 +410,9 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     context.pop();
     final isDir = file.attr.isDirectory;
     final useRmrf = Stores.setting.sftpRmrfDir.fetch();
-    final dirText = (isDir && !useRmrf) ? '\n${l10n.sureDirEmpty}' : '';
-    final text = '${l10n.sureDelete(file.filename)}$dirText';
+    final dirText = (isDir && !useRmrf) ? '\n${l10n.dirEmpty}' : '';
+    final text = l10n.askContinue(
+        '${l10n.delete} ${l10n.files}(${file.filename})\n$dirText');
     final child = Text(text);
     context.showRoundDialog(
       child: child,
@@ -475,7 +476,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         ),
         TextButton(
           onPressed: () async {
-            if (textController.text == '') {
+            if (textController.text.isEmpty) {
               context.showRoundDialog(
                 child: Text(l10n.fieldMustNotEmpty),
                 actions: [
@@ -512,7 +513,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       actions: [
         TextButton(
           onPressed: () async {
-            if (textController.text == '') {
+            if (textController.text.isEmpty) {
               context.showRoundDialog(
                 title: Text(l10n.attention),
                 child: Text(l10n.fieldMustNotEmpty),
@@ -553,7 +554,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         TextButton(onPressed: () => context.pop(), child: Text(l10n.cancel)),
         TextButton(
           onPressed: () async {
-            if (textController.text == '') {
+            if (textController.text.isEmpty) {
               context.showRoundDialog(
                 title: Text(l10n.attention),
                 child: Text(l10n.fieldMustNotEmpty),
@@ -566,7 +567,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
               );
               return;
             }
-            await _status.client!.rename(file.filename, textController.text);
+            await _status.client?.rename(file.filename, textController.text);
             context.pop();
             _listDir();
           },
@@ -610,7 +611,8 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
   /// Only return true if the path is changed
   Future<bool> _listDir() async {
-    context.showLoadingDialog();
+    // Allow dismiss, because may this op will take a long time
+    context.showLoadingDialog(barrierDismiss: true);
     if (_status.client == null) {
       final sftpc = await _client?.sftp();
       _status.client = sftpc;

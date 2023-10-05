@@ -3,6 +3,7 @@ import 'package:circle_chart/circle_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/media_queryx.dart';
@@ -244,35 +245,38 @@ class _ServerPageState extends State<ServerPage>
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           IconButton(
-            onPressed: () async {
-              if (Stores.first.showSuspendTip.fetch()) {
-                await context.showRoundDialog(
-                  title: Text(l10n.attention),
-                  child: Text(l10n.suspendTip),
+            onPressed: () => _askFor(
+              func: () async {
+                if (Stores.first.showSuspendTip.fetch()) {
+                  await context.showRoundDialog(
+                    title: Text(l10n.attention),
+                    child: Text(l10n.suspendTip),
+                  );
+                  Stores.first.showSuspendTip.put(false);
+                }
+                srv.client?.execWithPwd(
+                  ShellFunc.suspend.exec,
+                  context: context,
                 );
-                Stores.first.showSuspendTip.put(false);
-              }
-              srv.client?.execWithPwd(
-                ShellFunc.suspend.exec,
-                context: context,
-              );
-            },
+              },
+              msg: 'Suspend ${srv.spi.name}',
+            ),
             icon: const Icon(Icons.stop),
             tooltip: 'Suspend',
           ),
           IconButton(
-            onPressed: () => srv.client?.execWithPwd(
+            onPressed: () => _askFor(func: () => srv.client?.execWithPwd(
               ShellFunc.shutdown.exec,
               context: context,
-            ),
+            ), msg: 'Shutdown ${srv.spi.name}',),
             icon: const Icon(Icons.power_off),
             tooltip: 'Shutdown',
           ),
           IconButton(
-            onPressed: () => srv.client?.execWithPwd(
+            onPressed: () => _askFor(func: () => srv.client?.execWithPwd(
               ShellFunc.reboot.exec,
               context: context,
-            ),
+            ), msg: 'Reboot ${srv.spi.name}',),
             icon: const Icon(Icons.restart_alt),
             tooltip: 'Reboot',
           ),
@@ -530,5 +534,21 @@ class _ServerPageState extends State<ServerPage>
       return 132;
     }
     return 107;
+  }
+
+  void _askFor({required void Function() func, required String msg}) {
+    context.showRoundDialog(
+      title: Text(l10n.attention),
+      child: Text(l10n.askContinue(msg)),
+      actions: [
+        TextButton(
+          onPressed: () {
+            context.pop();
+            func();
+          },
+          child: Text(l10n.ok),
+        ),
+      ],
+    );
   }
 }

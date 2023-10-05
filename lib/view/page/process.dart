@@ -160,7 +160,9 @@ class _ProcessPageState extends State<ProcessPage> {
         onLongPress: () {
           context.showRoundDialog(
             title: Text(l10n.attention),
-            child: Text(l10n.sureStop(proc.pid)),
+            child: Text(l10n.askContinue(
+              '${l10n.stop} ${l10n.process}(${proc.pid})',
+            )),
             actions: [
               TextButton(
                 onPressed: () async {

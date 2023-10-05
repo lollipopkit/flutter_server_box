@@ -137,7 +137,9 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
     return IconButton(
       onPressed: () => context.showRoundDialog(
           title: Text(l10n.attention),
-          child: Text(l10n.sureDelete(name)),
+          child: Text(l10n.askContinue(
+            '${l10n.delete} ${l10n.mission}($name)',
+          )),
           actions: [
             TextButton(
               onPressed: () {

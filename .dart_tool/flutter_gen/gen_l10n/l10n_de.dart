@@ -35,6 +35,11 @@ class SDe extends S {
   String get alterUrl => 'Url ändern';
 
   @override
+  String askContinue(Object msg) {
+    return '$msg, weiter?';
+  }
+
+  @override
   String get attention => 'Achtung';
 
   @override
@@ -138,6 +143,9 @@ class SDe extends S {
 
   @override
   String get deleteServers => 'Batch-Löschung von Servern';
+
+  @override
+  String get dirEmpty => 'Stelle sicher, dass der Ordner leer ist.';
 
   @override
   String get disabled => 'Behinderte';
@@ -524,11 +532,6 @@ class SDe extends S {
   String get restoreSuccess => 'Wiederherstellung erfolgreich. App neustarten um Änderungen anzuwenden.';
 
   @override
-  String restoreSureWithDate(Object date) {
-    return 'Bist du sicher, dass du das Backup vom $date wiederherstellen möchtest?';
-  }
-
-  @override
   String get result => 'Result';
 
   @override
@@ -620,27 +623,6 @@ class SDe extends S {
   String get success => 'Erfolgreich';
 
   @override
-  String sureDelete(Object name) {
-    return 'Soll [$name] wirklich gelöscht werden?';
-  }
-
-  @override
-  String get sureDirEmpty => 'Stelle sicher, dass der Ordner leer ist.';
-
-  @override
-  String get sureNoPwd => 'Bist du sicher, dass du kein Passwort verwenden willst?';
-
-  @override
-  String sureStop(Object item) {
-    return 'Sind Sie sicher, dass Sie [$item] stoppen möchten?';
-  }
-
-  @override
-  String sureToDeleteServer(Object server) {
-    return 'Bist du sicher, dass du [$server] löschen willst?';
-  }
-
-  @override
   String get suspendTip => 'Die Suspend-Funktion erfordert Root-Rechte und systemd-Unterstützung.';
 
   @override
@@ -709,6 +691,9 @@ class SDe extends S {
 
   @override
   String get urlOrJson => 'URL oder JSON';
+
+  @override
+  String get useNoPwd => 'Es wird kein Passwort verwendet.';
 
   @override
   String get user => 'Benutzer';

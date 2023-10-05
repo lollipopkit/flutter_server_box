@@ -153,7 +153,9 @@ class BackupPage extends StatelessWidget {
 
       await context.showRoundDialog(
         title: Text(l10n.restore),
-        child: Text(l10n.restoreSureWithDate(backup.date)),
+        child: Text(l10n.askContinue(
+          '${l10n.restore} ${l10n.backup}(${backup.date})',
+        )),
         actions: [
           TextButton(
             onPressed: () => context.pop(),

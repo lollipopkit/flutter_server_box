@@ -91,7 +91,9 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
         onPressed: () {
           context.showRoundDialog(
             title: Text(l10n.attention),
-            child: Text(l10n.sureDelete(widget.pki!.id)),
+            child: Text(l10n.askContinue(
+              '${l10n.delete} ${l10n.privateKey}(${widget.pki!.id})',
+            )),
             actions: [
               TextButton(
                 onPressed: () {

@@ -35,6 +35,11 @@ class SId extends S {
   String get alterUrl => 'Alter url';
 
   @override
+  String askContinue(Object msg) {
+    return '$msg, lanjutkan?';
+  }
+
+  @override
   String get attention => 'Perhatian';
 
   @override
@@ -138,6 +143,9 @@ class SId extends S {
 
   @override
   String get deleteServers => 'Penghapusan server secara batch';
+
+  @override
+  String get dirEmpty => 'Pastikan dir kosong.';
 
   @override
   String get disabled => 'Dengan disabilitas';
@@ -524,11 +532,6 @@ class SId extends S {
   String get restoreSuccess => 'Kembalikan kesuksesan. Mulai ulang aplikasi untuk diterapkan.';
 
   @override
-  String restoreSureWithDate(Object date) {
-    return 'Apakah Anda pasti akan memulihkan dari $date?';
-  }
-
-  @override
   String get result => 'Hasil';
 
   @override
@@ -620,27 +623,6 @@ class SId extends S {
   String get success => 'Kesuksesan';
 
   @override
-  String sureDelete(Object name) {
-    return 'Apakah Anda pasti akan menghapus [$name]?';
-  }
-
-  @override
-  String get sureDirEmpty => 'Pastikan dir kosong.';
-
-  @override
-  String get sureNoPwd => 'Apakah Anda pasti tidak menggunakan kata sandi?';
-
-  @override
-  String sureStop(Object item) {
-    return 'Anda yakin ingin menghentikan [$item]?';
-  }
-
-  @override
-  String sureToDeleteServer(Object server) {
-    return 'Apakah Anda pasti akan menghapus server [$server]?';
-  }
-
-  @override
   String get suspendTip => 'Fungsi penangguhan memerlukan hak akses root dan dukungan systemd.';
 
   @override
@@ -709,6 +691,9 @@ class SId extends S {
 
   @override
   String get urlOrJson => 'URL atau JSON';
+
+  @override
+  String get useNoPwd => 'Tidak ada kata sandi yang akan digunakan.';
 
   @override
   String get user => 'Username';

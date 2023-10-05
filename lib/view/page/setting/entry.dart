@@ -105,7 +105,9 @@ class _SettingPageState extends State<SettingPage> {
             child: InkWell(
               onTap: () => context.showRoundDialog(
                 title: Text(l10n.attention),
-                child: Text(l10n.sureDelete(l10n.all)),
+                child: Text(l10n.askContinue(
+                  '${l10n.delete}: **${l10n.all}** ${l10n.setting}',
+                )),
                 actions: [
                   TextButton(
                     onPressed: () {
@@ -113,8 +115,10 @@ class _SettingPageState extends State<SettingPage> {
                       context.pop();
                       context.showSnackBar(l10n.success);
                     },
-                    child: Text(l10n.ok,
-                        style: const TextStyle(color: Colors.red)),
+                    child: Text(
+                      l10n.ok,
+                      style: const TextStyle(color: Colors.red),
+                    ),
                   ),
                 ],
               ),
@@ -880,7 +884,9 @@ class _SettingPageState extends State<SettingPage> {
           (e) => TextButton(
             onPressed: () => context.showRoundDialog(
               title: Text(l10n.attention),
-              child: Text(l10n.sureDelete(e)),
+              child: Text(l10n.askContinue(
+                '${l10n.delete} ${l10n.server}($e)',
+              )),
               actions: [
                 TextButton(
                   onPressed: () => Pros.server.delServer(e),

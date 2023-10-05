@@ -1,6 +1,7 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/common.dart';
+import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/data/res/provider.dart';
@@ -56,8 +57,22 @@ class _SnippetEditPageState extends State<SnippetEditPage>
     return [
       IconButton(
         onPressed: () {
-          Pros.snippet.del(widget.snippet!);
-          context.pop();
+          context.showRoundDialog(
+            title: Text(l10n.attention),
+            child: Text(l10n.askContinue(
+              '${l10n.delete} ${l10n.snippet}(${widget.snippet!.name})',
+            )),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Pros.snippet.del(widget.snippet!);
+                  context.pop();
+                  context.pop();
+                },
+                child: Text(l10n.ok, style: UIs.textRed),
+              ),
+            ],
+          );
         },
         tooltip: l10n.delete,
         icon: const Icon(Icons.delete),

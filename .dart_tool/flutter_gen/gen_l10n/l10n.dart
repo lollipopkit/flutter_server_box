@@ -158,6 +158,12 @@ abstract class S {
   /// **'Alter url'**
   String get alterUrl;
 
+  /// No description provided for @askContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'{msg}, continue?'**
+  String askContinue(Object msg);
+
   /// No description provided for @attention.
   ///
   /// In en, this message translates to:
@@ -367,6 +373,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Batch delete servers'**
   String get deleteServers;
+
+  /// No description provided for @dirEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Make sure dir is empty.'**
+  String get dirEmpty;
 
   /// No description provided for @disabled.
   ///
@@ -1088,12 +1100,6 @@ abstract class S {
   /// **'Restore success. Restart app to apply.'**
   String get restoreSuccess;
 
-  /// No description provided for @restoreSureWithDate.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure to restore from {date} ?'**
-  String restoreSureWithDate(Object date);
-
   /// No description provided for @result.
   ///
   /// In en, this message translates to:
@@ -1268,36 +1274,6 @@ abstract class S {
   /// **'Success'**
   String get success;
 
-  /// No description provided for @sureDelete.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure to delete [{name}]?'**
-  String sureDelete(Object name);
-
-  /// No description provided for @sureDirEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'Make sure dir is empty.'**
-  String get sureDirEmpty;
-
-  /// No description provided for @sureNoPwd.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure to use no password?'**
-  String get sureNoPwd;
-
-  /// No description provided for @sureStop.
-  ///
-  /// In en, this message translates to:
-  /// **'Sure to stop [{item}] ?'**
-  String sureStop(Object item);
-
-  /// No description provided for @sureToDeleteServer.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure to delete server [{server}]?'**
-  String sureToDeleteServer(Object server);
-
   /// No description provided for @suspendTip.
   ///
   /// In en, this message translates to:
@@ -1429,6 +1405,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'URL or JSON'**
   String get urlOrJson;
+
+  /// No description provided for @useNoPwd.
+  ///
+  /// In en, this message translates to:
+  /// **'No password will be used.'**
+  String get useNoPwd;
 
   /// No description provided for @user.
   ///

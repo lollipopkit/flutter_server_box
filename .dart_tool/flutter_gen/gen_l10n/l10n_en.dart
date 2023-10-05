@@ -35,6 +35,11 @@ class SEn extends S {
   String get alterUrl => 'Alter url';
 
   @override
+  String askContinue(Object msg) {
+    return '$msg, continue?';
+  }
+
+  @override
   String get attention => 'Attention';
 
   @override
@@ -138,6 +143,9 @@ class SEn extends S {
 
   @override
   String get deleteServers => 'Batch delete servers';
+
+  @override
+  String get dirEmpty => 'Make sure dir is empty.';
 
   @override
   String get disabled => 'Disabled';
@@ -524,11 +532,6 @@ class SEn extends S {
   String get restoreSuccess => 'Restore success. Restart app to apply.';
 
   @override
-  String restoreSureWithDate(Object date) {
-    return 'Are you sure to restore from $date ?';
-  }
-
-  @override
   String get result => 'Result';
 
   @override
@@ -620,27 +623,6 @@ class SEn extends S {
   String get success => 'Success';
 
   @override
-  String sureDelete(Object name) {
-    return 'Are you sure to delete [$name]?';
-  }
-
-  @override
-  String get sureDirEmpty => 'Make sure dir is empty.';
-
-  @override
-  String get sureNoPwd => 'Are you sure to use no password?';
-
-  @override
-  String sureStop(Object item) {
-    return 'Sure to stop [$item] ?';
-  }
-
-  @override
-  String sureToDeleteServer(Object server) {
-    return 'Are you sure to delete server [$server]?';
-  }
-
-  @override
   String get suspendTip => 'The suspend function requires root privileges and systemd support.';
 
   @override
@@ -709,6 +691,9 @@ class SEn extends S {
 
   @override
   String get urlOrJson => 'URL or JSON';
+
+  @override
+  String get useNoPwd => 'No password will be used.';
 
   @override
   String get user => 'User';

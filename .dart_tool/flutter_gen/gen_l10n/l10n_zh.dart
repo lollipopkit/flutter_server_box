@@ -35,6 +35,11 @@ class SZh extends S {
   String get alterUrl => '备选链接';
 
   @override
+  String askContinue(Object msg) {
+    return '$msg，继续吗？';
+  }
+
+  @override
   String get attention => '注意';
 
   @override
@@ -138,6 +143,9 @@ class SZh extends S {
 
   @override
   String get deleteServers => '批量删除服务器';
+
+  @override
+  String get dirEmpty => '请确保文件夹为空';
 
   @override
   String get disabled => '已禁用';
@@ -524,11 +532,6 @@ class SZh extends S {
   String get restoreSuccess => '恢复成功，需要重启App来应用更改';
 
   @override
-  String restoreSureWithDate(Object date) {
-    return '确定恢复 $date 的备份吗？';
-  }
-
-  @override
   String get result => '结果';
 
   @override
@@ -620,27 +623,6 @@ class SZh extends S {
   String get success => '成功';
 
   @override
-  String sureDelete(Object name) {
-    return '确定删除 [$name]？';
-  }
-
-  @override
-  String get sureDirEmpty => '请确保文件夹为空';
-
-  @override
-  String get sureNoPwd => '确认使用无密码？';
-
-  @override
-  String sureStop(Object item) {
-    return '确定要停止 [$item] 吗？';
-  }
-
-  @override
-  String sureToDeleteServer(Object server) {
-    return '你确定要删除服务器 [$server] 吗？';
-  }
-
-  @override
   String get suspendTip => 'suspend 功能需要 root 权限及 systemd 支持。';
 
   @override
@@ -709,6 +691,9 @@ class SZh extends S {
 
   @override
   String get urlOrJson => '链接或JSON';
+
+  @override
+  String get useNoPwd => '将会使用无密码。';
 
   @override
   String get user => '用户';
@@ -783,6 +768,11 @@ class SZhTw extends SZh {
 
   @override
   String get alterUrl => '備選鏈接';
+
+  @override
+  String askContinue(Object msg) {
+    return '$msg，繼續嗎？';
+  }
 
   @override
   String get attention => '注意';
@@ -888,6 +878,9 @@ class SZhTw extends SZh {
 
   @override
   String get deleteServers => '批量刪除服務器';
+
+  @override
+  String get dirEmpty => '請確保文件夾為空';
 
   @override
   String get disabled => '已禁用';
@@ -1274,11 +1267,6 @@ class SZhTw extends SZh {
   String get restoreSuccess => '恢復成功，需要重啓App來應用更改';
 
   @override
-  String restoreSureWithDate(Object date) {
-    return '確定恢復 $date 的備份嗎？';
-  }
-
-  @override
   String get result => '結果';
 
   @override
@@ -1370,27 +1358,6 @@ class SZhTw extends SZh {
   String get success => '成功';
 
   @override
-  String sureDelete(Object name) {
-    return '確定刪除 [$name]？';
-  }
-
-  @override
-  String get sureDirEmpty => '請確保文件夾為空';
-
-  @override
-  String get sureNoPwd => '確認使用無密碼？';
-
-  @override
-  String sureStop(Object item) {
-    return '確定要停止 [$item] 嗎？';
-  }
-
-  @override
-  String sureToDeleteServer(Object server) {
-    return '你確定要刪除服務器 [$server] 嗎？';
-  }
-
-  @override
   String get suspendTip => 'suspend 功能需要 root 權限及 systemd 支持。';
 
   @override
@@ -1459,6 +1426,9 @@ class SZhTw extends SZh {
 
   @override
   String get urlOrJson => '鏈接或JSON';
+
+  @override
+  String get useNoPwd => '将使用無密碼。';
 
   @override
   String get user => '用戶';

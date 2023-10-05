@@ -111,7 +111,9 @@ class _ServerEditPageState extends State<ServerEditPage> {
       onPressed: () {
         context.showRoundDialog(
           title: Text(l10n.attention),
-          child: Text(l10n.sureToDeleteServer(widget.spi!.name)),
+          child: Text(l10n.askContinue(
+            '${l10n.delete} ${l10n.server}(${widget.spi!.name})',
+          )),
           actions: [
             TextButton(
               onPressed: () {
@@ -315,14 +317,14 @@ class _ServerEditPageState extends State<ServerEditPage> {
   }
 
   void _onSave() async {
-    if (_ipController.text == '') {
+    if (_ipController.text.isEmpty) {
       context.showSnackBar(l10n.plzEnterHost);
       return;
     }
-    if (_keyIdx.value == null && _passwordController.text == '') {
+    if (_keyIdx.value == null && _passwordController.text.isEmpty) {
       final cancel = await context.showRoundDialog<bool>(
         title: Text(l10n.attention),
-        child: Text(l10n.sureNoPwd),
+        child: Text(l10n.askContinue(l10n.useNoPwd)),
         actions: [
           TextButton(
             onPressed: () => context.pop(false),
