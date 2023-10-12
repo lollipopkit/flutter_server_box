@@ -17,6 +17,8 @@
   </a>
 </p>
 
+<p align="center" style="font-weight: bold">由于中国政策原因，且无法完成<a href="https://github.com/lollipopkit/flutter_server_box/discussions/180">备案</a>。现已转为免费，请移步其他区下载。</p>
+
 <p align="center">
 使用 Flutter 开发的 <a href="../../issues/43">Linux</a> 服务器工具箱，提供服务器状态图表和管理工具。
 <br>
@@ -100,9 +102,4 @@
 
 
 ## 📝 开源协议
-- 允许打包自用，但不允许分发
-  - 举例：你可以教别人如何打包，避免花钱购买App，但不能与他人分享你打包的App）
-  - 之所以这样做：
-    1. 安全性：可能会有有心之人植入后门并分发
-    2. 回血：苹果开发者 **99刀/年**，并且作为刚毕业的独立开发者，我需要收入
-- 除去上述情形：遵循 `GPLv3`
+`GPL v3 lollipopkit 2023`
