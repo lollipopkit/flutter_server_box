@@ -201,6 +201,9 @@ class SDe extends S {
   String get editor => 'Editor';
 
   @override
+  String get editorHighlightTip => 'Die Leistung der aktuellen Codehervorhebung ist schlechter und kann zur Verbesserung optional ausgeschaltet werden.';
+
+  @override
   String get encode => 'Encode';
 
   @override
@@ -280,6 +283,9 @@ class SDe extends S {
 
   @override
   String get goto => 'Pfad öffnen';
+
+  @override
+  String get highlight => 'Code highlight';
 
   @override
   String get homeWidgetUrlConfig => 'Home-Widget-Link konfigurieren';

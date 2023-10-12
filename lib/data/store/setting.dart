@@ -212,6 +212,9 @@ class SettingStore extends PersistentStore {
     false,
   );
 
+  /// The performance of highlight is bad
+  late final editorHighlight = StoreProperty(box, 'editorHighlight', true);
+
   // Never show these settings for users
   //
   // ------BEGIN------

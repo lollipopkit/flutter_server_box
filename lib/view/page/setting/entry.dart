@@ -245,6 +245,7 @@ class _SettingPageState extends State<SettingPage> {
         _buildEditorFontSize(),
         _buildEditorTheme(),
         _buildEditorDarkTheme(),
+        _buildEditorHighlight(),
       ].map((e) => RoundRectCard(e)).toList(),
     );
   }
@@ -1070,6 +1071,14 @@ class _SettingPageState extends State<SettingPage> {
             break;
         }
       },
+    );
+  }
+
+  Widget _buildEditorHighlight() {
+    return ListTile(
+      title: Text(l10n.highlight),
+      subtitle: Text(l10n.editorHighlightTip, style: UIs.textGrey),
+      trailing: StoreSwitch(prop: _setting.editorHighlight),
     );
   }
 }

@@ -470,6 +470,12 @@ abstract class S {
   /// **'Editor'**
   String get editor;
 
+  /// No description provided for @editorHighlightTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The current code highlighting performance is worse and can be optionally turned off to improve.'**
+  String get editorHighlightTip;
+
   /// No description provided for @encode.
   ///
   /// In en, this message translates to:
@@ -619,6 +625,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Go to'**
   String get goto;
+
+  /// No description provided for @highlight.
+  ///
+  /// In en, this message translates to:
+  /// **'Code highlight'**
+  String get highlight;
 
   /// No description provided for @homeWidgetUrlConfig.
   ///

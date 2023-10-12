@@ -201,6 +201,9 @@ class SEn extends S {
   String get editor => 'Editor';
 
   @override
+  String get editorHighlightTip => 'The current code highlighting performance is worse and can be optionally turned off to improve.';
+
+  @override
   String get encode => 'Encode';
 
   @override
@@ -280,6 +283,9 @@ class SEn extends S {
 
   @override
   String get goto => 'Go to';
+
+  @override
+  String get highlight => 'Code highlight';
 
   @override
   String get homeWidgetUrlConfig => 'Config home widget url';

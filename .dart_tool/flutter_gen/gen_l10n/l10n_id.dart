@@ -201,6 +201,9 @@ class SId extends S {
   String get editor => 'Editor';
 
   @override
+  String get editorHighlightTip => 'Performa penyorotan kode saat ini lebih buruk, dan dapat dimatikan secara opsional untuk perbaikan.';
+
+  @override
   String get encode => 'Menyandi';
 
   @override
@@ -280,6 +283,9 @@ class SId extends S {
 
   @override
   String get goto => 'Pergi ke';
+
+  @override
+  String get highlight => 'Sorotan kode';
 
   @override
   String get homeWidgetUrlConfig => 'Konfigurasi URL Widget Rumah';
