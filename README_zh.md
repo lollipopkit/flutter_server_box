@@ -28,13 +28,10 @@
 
 ## 🔖 特点
 - [x] 功能
-  - [x] `SSH` 终端, `SFTP`
-  - [x] `Docker & 包 & 进程` 管理器
-  - [x] 状态图表
-  - [x] 代码编辑器
-  - [x] `Ping` 和 更多
+  - [x] `SSH` 终端, `SFTP`, `Docker & 包 & 进程` 管理器, 状态图表, 代码编辑器...
+  - [x] 特殊支持：`生物认证`、`推送`、`桌面小部件`、`watchOS App`、`跟随系统颜色`...
 - [x] 本地化 ( English, 简体中文, Deutsch, 繁體中文, Indonesian。 [如何贡献？](#l10n))
-- [x] 桌面端支持
+- [x] 支持平台：`iOS / Android / macOS / Windows / Linux`
 
 
 ## 📩 推送
@@ -58,24 +55,18 @@
     <td>
 	    <img width="200px" src="imgs/sftp.png">
     </td>
-    <td>
-	    <img width="200px" src="imgs/editor.png">
-    </td>
   </tr>
 </table>
 <table>
   <tr>
     <td>
-	    <img width="200px" src="imgs/ping.png">
+	    <img width="200px" src="imgs/editor.png">
     </td>
     <td>
-	    <img width="200px" src="imgs/ssh.jpg">
+	    <img width="200px" src="imgs/ssh.png">
     </td>
     <td>
-	    <img width="200px" src="imgs/docker.jpeg">
-    </td>
-    <td>
-	    <img width="200px" src="imgs/convert.png">
+	    <img width="200px" src="imgs/docker.png">
     </td>
   </tr>
 </table>
@@ -89,7 +80,6 @@
 
 ## 🧱 贡献
 **任何正面的贡献都欢迎**。
-第一次参与贡献，会赠送 10 份 iOS App 兑换码。如果没有 iOS 设备，你可以用来送给其他人。:)
 
 ### l10n
 1. Fork 本项目，并 Clone 你 Fork 的项目至你的电脑

@@ -7,7 +7,10 @@
         {
             "name": "toolbox",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            // "args": [
+            //     "-v"
+            // ]
         },
         {
             "name": "toolbox (profile mode)",

@@ -28,13 +28,10 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 
 ## 🔖 Feature
 - [x] Functions
-  - [x] `SSH` Terminal, `SFTP`
-  - [x] `Docker & Pkg` Manager
-  - [x] `Status` charts
-  - [x] `Code editor`
-  - [x] `Ping` and etc.
+  - [x] `SSH` Terminal, `SFTP`, `Docker & Pkg & Process`, Status chart, Code editor...
+  - [x] Platform specific: `Bio auth`、`Msg push`、`Home widget`、`watchOS App`...
 - [x] Localization ( English, 简体中文, Deutsch, 繁體中文, Indonesian. [l10n guide](#l10n-guide) )
-- [x] Desktop support
+- [x] Platform support: `iOS / Android / macOS / Windows / Linux`
 
 
 ## 📩 Push
@@ -58,24 +55,18 @@ If ServerBox app has any bug, please open an [issue](https://github.com/lollipop
     <td>
 	    <img width="200px" src="imgs/sftp.png">
     </td>
-    <td>
-	    <img width="200px" src="imgs/editor.png">
-    </td>
   </tr>
 </table>
 <table>
   <tr>
     <td>
-	    <img width="200px" src="imgs/ping.png">
+	    <img width="200px" src="imgs/editor.png">
     </td>
     <td>
-	    <img width="200px" src="imgs/ssh.jpg">
+	    <img width="200px" src="imgs/ssh.png">
     </td>
     <td>
-	    <img width="200px" src="imgs/docker.jpeg">
-    </td>
-    <td>
-	    <img width="200px" src="imgs/convert.png">
+	    <img width="200px" src="imgs/docker.png">
     </td>
   </tr>
 </table>
@@ -90,7 +81,7 @@ Not tested| Windows / Linux
 
 ## 🧱 Contribution
 **Any positive contribution is welcome**.
-10 iOS app redemption codes will be given away for the first time you participate in the contribution. :)
+
 ### l10n guide
 1. Fork this repo and clone forked repo to your local machine.
 2. Create `arb` file in `lib/l10n/` directory
