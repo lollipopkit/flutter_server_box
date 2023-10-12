@@ -122,8 +122,8 @@ fi''';
 export LANG=en_US.UTF-8
 
 # If macSign & bsdSign are both empty, then it's linux
-macSign=\$(uname 2>&1 | grep "Darwin")
-bsdSign=\$(uname 2>&1 | grep "BSD")
+macSign=\$(uname -a 2>&1 | grep "Darwin")
+bsdSign=\$(uname -a 2>&1 | grep "BSD")
 
 # Link /bin/sh to busybox?
 isBusybox=\$(ls -l /bin/sh | grep "busybox")

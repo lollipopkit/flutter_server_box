@@ -1,4 +1,5 @@
 import 'package:toolbox/data/model/server/system.dart';
+import 'package:toolbox/data/res/logger.dart';
 
 import '../app/shell_func.dart';
 import 'cpu.dart';
@@ -29,69 +30,124 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
   }
 }
 
+// Wrap each operation with a try-catch, so that if one operation fails,
+// the following operations can still be executed.
 Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   final segments = req.segments;
 
-  final time = int.parse(StatusCmdType.time.find(segments));
-
-  final net = parseNetSpeed(StatusCmdType.net.find(segments), time);
-  req.ss.netSpeed.update(net);
-
-  final sys = _parseSysVer(
-    StatusCmdType.sys.find(segments),
-    StatusCmdType.host.find(segments),
-  );
-  if (sys != null) {
-    req.ss.sysVer = sys;
+  try {
+    final time = int.parse(StatusCmdType.time.find(segments));
+    final net = parseNetSpeed(StatusCmdType.net.find(segments), time);
+    req.ss.netSpeed.update(net);
+  } catch (e, s) {
+    Loggers.parse.warning(e, s);
   }
 
-  final cpus = parseCPU(StatusCmdType.cpu.find(segments));
-  req.ss.cpu.update(cpus);
-
-  req.ss.temps.parse(
-    StatusCmdType.tempType.find(segments),
-    StatusCmdType.tempVal.find(segments),
-  );
-
-  final tcp = parseConn(StatusCmdType.conn.find(segments));
-  if (tcp != null) {
-    req.ss.tcp = tcp;
+  try {
+    final sys = _parseSysVer(
+      StatusCmdType.sys.find(segments),
+      StatusCmdType.host.find(segments),
+    );
+    if (sys != null) {
+      req.ss.sysVer = sys;
+    }
+  } catch (e, s) {
+    Loggers.parse.warning(e, s);
   }
 
-  req.ss.disk = parseDisk(StatusCmdType.disk.find(segments));
-
-  req.ss.mem = parseMem(StatusCmdType.mem.find(segments));
-
-  final uptime = _parseUpTime(StatusCmdType.uptime.find(segments));
-  if (uptime != null) {
-    req.ss.uptime = uptime;
+  try {
+    final cpus = parseCPU(StatusCmdType.cpu.find(segments));
+    req.ss.cpu.update(cpus);
+    req.ss.temps.parse(
+      StatusCmdType.tempType.find(segments),
+      StatusCmdType.tempVal.find(segments),
+    );
+  } catch (e, s) {
+    Loggers.parse.warning(e, s);
   }
 
-  req.ss.swap = parseSwap(StatusCmdType.mem.find(segments));
+  try {
+    final tcp = parseConn(StatusCmdType.conn.find(segments));
+    if (tcp != null) {
+      req.ss.tcp = tcp;
+    }
+  } catch (e, s) {
+    Loggers.parse.warning(e, s);
+  }
+
+  try {
+    req.ss.disk = parseDisk(StatusCmdType.disk.find(segments));
+  } catch (e, s) {
+    Loggers.parse.warning(e, s);
+  }
+
+  try {
+    req.ss.mem = parseMem(StatusCmdType.mem.find(segments));
+  } catch (e, s) {
+    Loggers.parse.warning(e, s);
+  }
+
+  try {
+    final uptime = _parseUpTime(StatusCmdType.uptime.find(segments));
+    if (uptime != null) {
+      req.ss.uptime = uptime;
+    }
+  } catch (e, s) {
+    Loggers.parse.warning(e, s);
+  }
+
+  try {
+    req.ss.swap = parseSwap(StatusCmdType.mem.find(segments));
+  } catch (e, s) {
+    Loggers.parse.warning(e, s);
+  }
   return req.ss;
 }
 
+// Same as above, wrap with try-catch
 Future<ServerStatus> _getBsdStatus(ServerStatusUpdateReq req) async {
   final segments = req.segments;
 
-  final time = int.parse(BSDStatusCmdType.time.find(segments));
-
-  final net = parseBsdNetSpeed(BSDStatusCmdType.net.find(segments), time);
-  req.ss.netSpeed.update(net);
-
-  req.ss.sysVer = BSDStatusCmdType.sys.find(segments);
-
-  req.ss.cpu = parseBsdCpu(BSDStatusCmdType.cpu.find(segments));
-
-  //req.ss.mem = parseBsdMem(BSDStatusCmdType.mem.find(segments));
-
-  final uptime = _parseUpTime(BSDStatusCmdType.uptime.find(segments));
-  if (uptime != null) {
-    req.ss.uptime = uptime;
+  try {
+    final time = int.parse(BSDStatusCmdType.time.find(segments));
+    final net = parseBsdNetSpeed(BSDStatusCmdType.net.find(segments), time);
+    req.ss.netSpeed.update(net);
+  } catch (e, s) {
+    Loggers.parse.warning(e, s);
   }
 
-  req.ss.disk = parseDisk(BSDStatusCmdType.disk.find(segments));
+  try {
+    req.ss.sysVer = BSDStatusCmdType.sys.find(segments);
+  } catch (e, s) {
+    Loggers.parse.warning(e, s);
+  }
 
+  try {
+    req.ss.cpu = parseBsdCpu(BSDStatusCmdType.cpu.find(segments));
+  } catch (e, s) {
+    Loggers.parse.warning(e, s);
+  }
+
+  // try {
+  //   req.ss.mem = parseBsdMem(BSDStatusCmdType.mem.find(segments));
+  // } catch (e, s) {
+  //   Loggers.parse.warning(e, s);
+  // }
+
+  try {
+    final uptime = _parseUpTime(BSDStatusCmdType.uptime.find(segments));
+    if (uptime != null) {
+      req.ss.uptime = uptime;
+    }
+  } catch (e, s) {
+    Loggers.parse.warning(e, s);
+  }
+
+  try {
+    req.ss.disk = parseDisk(BSDStatusCmdType.disk.find(segments));
+  } catch (e, s) {
+    Loggers.parse.warning(e, s);
+  }
   return req.ss;
 }
 
