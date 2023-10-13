@@ -1,13 +1,11 @@
 class Memory {
   final int total;
   final int free;
-  final int cache;
   final int avail;
 
   const Memory({
     required this.total,
     required this.free,
-    required this.cache,
     required this.avail,
   });
 
@@ -46,16 +44,6 @@ Memory parseMem(String raw) {
             '0',
       ) ??
       0;
-  final cached = int.tryParse(
-        items
-                .firstWhere(
-                  (e) => e?.group(1) == 'Cached:',
-                  orElse: () => null,
-                )
-                ?.group(2) ??
-            '0',
-      ) ??
-      0;
   final available = int.tryParse(
         items
                 .firstWhere(
@@ -70,7 +58,6 @@ Memory parseMem(String raw) {
   return Memory(
     total: total,
     free: free,
-    cache: cached,
     avail: available,
   );
 }

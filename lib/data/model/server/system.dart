@@ -20,12 +20,14 @@ enum SystemType {
     return null;
   }
 
-  bool isSegmentsLenMatch(int len) {
+  bool isSegmentsLenMatch(int len) => len == segmentsLen;
+
+  int get segmentsLen {
     switch (this) {
       case SystemType.linux:
-        return len == StatusCmdType.values.length;
+        return StatusCmdType.values.length;
       case SystemType.bsd:
-        return len == BSDStatusCmdType.values.length;
+        return BSDStatusCmdType.values.length;
     }
   }
 }

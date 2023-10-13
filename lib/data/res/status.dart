@@ -40,7 +40,6 @@ class InitStatus {
         mem: const Memory(
           total: 1,
           free: 1,
-          cache: 0,
           avail: 1,
         ),
         sysVer: 'Loading...',

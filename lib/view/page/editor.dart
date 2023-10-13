@@ -60,9 +60,9 @@ class _EditorPageState extends State<EditorPage> {
     if (Stores.setting.editorHighlight.fetch()) {
       _langCode = widget.langCode ?? Highlights.getCode(widget.path);
     }
-      _controller = CodeController(
-        language: Highlights.all[_langCode],
-      );
+    _controller = CodeController(
+      language: Highlights.all[_langCode],
+    );
 
     /// TODO: This is a temporary solution to avoid the loading stuck
     Future.delayed(const Duration(milliseconds: 377)).then((value) async {

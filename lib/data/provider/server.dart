@@ -313,7 +313,8 @@ class ServerProvider extends ChangeNotifier {
     }
 
     /// Keep [finished] state, or the UI will be refreshed to [loading] state
-    /// instead of the 'Temp & Uptime'.
+    /// instead of the '$Temp | $Uptime'.
+    /// eg: '32C | 7 days'
     if (s.state != ServerState.finished) {
       _setServerState(s, ServerState.loading);
     }
@@ -330,7 +331,8 @@ class ServerProvider extends ChangeNotifier {
     final systemType = SystemType.parse(segments[0]);
     if (systemType == null || !systemType.isSegmentsLenMatch(segments.length)) {
       _limiter.inc(sid);
-      s.status.failedInfo = 'Segments not match: ${segments.length}';
+      s.status.failedInfo =
+          'Segments not match: expect ${systemType?.segmentsLen}, got ${segments.length}';
       _setServerState(s, ServerState.failed);
       return;
     }

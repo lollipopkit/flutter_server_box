@@ -192,7 +192,7 @@ const _statusCmds = [
   'uptime',
   'cat /proc/net/snmp',
   'df -h',
-  'cat /proc/meminfo',
+  'cat /proc/meminfo | grep Mem',
   'cat /sys/class/thermal/thermal_zone*/type',
   'cat /sys/class/thermal/thermal_zone*/temp',
   'hostname',
