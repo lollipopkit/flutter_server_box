@@ -145,7 +145,6 @@ Future<void> flutterBuildIOS() async {
 
 Future<void> flutterBuildMacOS() async {
   await flutterBuild('macos');
-  await scpMacOS2CDN();
 }
 
 Future<void> flutterBuildAndroid() async {
@@ -178,36 +177,6 @@ Future<void> scpApk2CDN() async {
   }
 }
 
-Future<void> scpMacOS2CDN() async {
-  await Process.run('mv', [
-    macOSArchievePath,
-    'release',
-  ]);
-  final zipName = '$build.app.zip';
-  // Zip the .app
-  await Process.run(
-      'zip',
-      [
-        '-r',
-        zipName,
-        'server_box.app',
-      ],
-      workingDirectory: releaseDir);
-  final result = await Process.run(
-    'scp',
-    [
-      '$releaseDir/$zipName',
-      'hk:/var/www/res/serverbox/$build.app.zip',
-    ],
-    runInShell: true,
-  );
-  if (result.exitCode != 0) {
-    print(result.stderr);
-    exit(1);
-  }
-  print('Upload macOS $zipName finished.');
-}
-
 Future<void> scpLinux2CDN() async {
   final result = await Process.run(
     'scp',
@@ -222,6 +191,22 @@ Future<void> scpLinux2CDN() async {
     exit(1);
   }
   print('Upload Linux $build.tar.gz finished.');
+}
+
+Future<void> scpWindows2CDN() async {
+  final result = await Process.run(
+    'scp',
+    [
+      './build/windows/runner/Release/server_box.zip',
+      'hk:/var/www/res/serverbox/$build.zip',
+    ],
+    runInShell: true,
+  );
+  if (result.exitCode != 0) {
+    print(result.stderr);
+    exit(1);
+  }
+  print('Upload Windows $build.zip finished.');
 }
 
 Future<void> changeAppleVersion() async {

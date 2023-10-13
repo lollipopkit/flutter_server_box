@@ -19,32 +19,28 @@ class PlatformPublicSettings {
         subtitle: Text('${l10n.failed}: $e', style: UIs.textGrey),
       ),
       success: (can) {
-        return can
-            ? ListTile(
-                title: Text(l10n.bioAuth),
-                subtitle: can
-                    ? null
-                    : const Text('Error: Bio auth is not available',
-                        style: UIs.textGrey),
-                trailing: can
-                    ? StoreSwitch(
-                        prop: Stores.setting.useBioAuth,
-                        func: (val) async {
-                          if (val) {
-                            Stores.setting.useBioAuth.put(false);
-                            return;
-                          }
-                          // Only auth when turn off (val == false)
-                          final result = await BioAuth.auth(l10n.authRequired);
-                          // If failed, turn on again
-                          if (result != AuthResult.success) {
-                            Stores.setting.useBioAuth.put(true);
-                          }
-                        },
-                      )
-                    : null,
-              )
-            : UIs.placeholder;
+        return ListTile(
+          title: Text(l10n.bioAuth),
+          subtitle:
+              can ? null : const Text('Not available', style: UIs.textGrey),
+          trailing: can
+              ? StoreSwitch(
+                  prop: Stores.setting.useBioAuth,
+                  func: (val) async {
+                    if (val) {
+                      Stores.setting.useBioAuth.put(false);
+                      return;
+                    }
+                    // Only auth when turn off (val == false)
+                    final result = await BioAuth.auth(l10n.authRequired);
+                    // If failed, turn on again
+                    if (result != AuthResult.success) {
+                      Stores.setting.useBioAuth.put(true);
+                    }
+                  },
+                )
+              : null,
+        );
       },
       noData: UIs.placeholder,
     );

@@ -72,8 +72,44 @@ struct StatusWidgetEntryView : View {
                     DetailItem(icon: "network", text: data.net, color: sumColor)
                     Spacer()
                     DetailItem(icon: "clock", text: entry.date.toStr(), color: sumColor)
-                }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .padding(.all, 17)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .autoPadding()
+                .widgetBackground()
+        }
+    }
+}
+
+extension View {
+    // Set bg to Color.black in Night, Color.white in Day
+    @ViewBuilder
+    func widgetBackground() -> some View {
+        let backgroundView = Color(UIColor.systemBackground)
+        if #available(iOS 17.0, *) {
+            @Environment(\.showsWidgetContainerBackground) var showsWidgetContainerBackground
+            containerBackground(for: .widget) {
+                // If it's show in StandBy
+                if showsWidgetContainerBackground {
+                    backgroundView
+                } else {
+                    self
+                }
+            }
+        } else {
+            background(backgroundView)
+        }
+    }
+    
+    // iOS 17 will auto add a SafeArea, so when iOS < 17, add .padding(.all, 17)
+    func autoPadding() -> some View {
+        if #available(iOS 17.0, *) {
+            @Environment(\.showsWidgetContainerBackground) var showsWidgetContainerBackground
+            if (showsWidgetContainerBackground) {
+                return self.padding(.all, 17)
+            }
+            return self
+        } else {
+            return self.padding(.all, 17)
         }
     }
 }
@@ -82,12 +118,16 @@ struct StatusWidget: Widget {
     let kind: String = "StatusWidget"
 
     var body: some WidgetConfiguration {
-        IntentConfiguration(kind: kind, intent: ConfigurationIntent.self, provider: Provider()) { entry in
+        let cfg = IntentConfiguration(kind: kind, intent: ConfigurationIntent.self, provider: Provider()) { entry in
             StatusWidgetEntryView(entry: entry)
         }
         .configurationDisplayName("Status")
         .description("Status of your servers.")
         .supportedFamilies([.systemSmall])
+        if #available(iOS 16.0, *) {
+            let _ = cfg.supportedFamilies([.accessoryInline, .accessoryCircular])
+        }
+        return cfg
     }
 }
 
