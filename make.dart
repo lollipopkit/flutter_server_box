@@ -10,7 +10,7 @@ const buildDataFilePath = 'lib/data/res/build_data.dart';
 const apkPath = 'build/app/outputs/flutter-apk/app-release.apk';
 const appleXCConfigPath = 'Runner.xcodeproj/project.pbxproj';
 const macOSArchievePath = 'build/macos/Build/Products/Release/server_box.app';
-const releaseDir = 'release';
+const releaseDir = '/Volumes/pm981/release/serverbox';
 
 var regAppleProjectVer = RegExp(r'CURRENT_PROJECT_VERSION = .+;');
 var regAppleMarketVer = RegExp(r'MARKETING_VERSION = .+');
@@ -18,8 +18,9 @@ var regAppleMarketVer = RegExp(r'MARKETING_VERSION = .+');
 const buildFuncs = {
   'ios': flutterBuildIOS,
   'android': flutterBuildAndroid,
-  'macos': flutterBuildMacOS,
+  'mac': flutterBuildMacOS,
   'linux': flutterBuildLinux,
+  'win': flutterBuildWin,
 };
 
 int? build;
@@ -122,11 +123,9 @@ Future<void> flutterBuild(String buildType) async {
     args.add('--bundle-sksl-path=$skslPath');
   }
   final isAndroid = 'apk' == buildType;
-  // [--target-platform] only for Android
   if (isAndroid) {
-    args.addAll([
-      '--target-platform=android-arm64',
-    ]);
+    // Only arm64
+    args.add('--target-platform=android-arm64');
   }
   print('\n[$buildType]\nBuilding with args: ${args.join(' ')}');
   final buildResult = await Process.run('flutter', args);
@@ -158,6 +157,11 @@ Future<void> flutterBuildAndroid() async {
 Future<void> flutterBuildLinux() async {
   await flutterBuild('linux');
   await scpLinux2CDN();
+}
+
+Future<void> flutterBuildWin() async {
+  await flutterBuild('windows');
+  //await scpWindows2CDN();
 }
 
 Future<void> scpApk2CDN() async {

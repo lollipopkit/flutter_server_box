@@ -6,10 +6,12 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/core/utils/misc.dart';
+import 'package:toolbox/core/utils/platform/auth.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/data/res/ui.dart';
+import 'package:toolbox/view/page/setting/platform_pub.dart';
 import 'package:toolbox/view/widget/custom_appbar.dart';
 import 'package:toolbox/view/widget/future_widget.dart';
 import 'package:toolbox/view/widget/round_rect_card.dart';
@@ -40,6 +42,8 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
           _buildPushToken(),
           _buildAutoUpdateHomeWidget(),
           _buildWatchApp(),
+          if (BioAuth.isPlatformSupported)
+            PlatformPublicSettings.buildBioAuth(),
         ].map((e) => RoundRectCard(e)).toList(),
       ),
     );
