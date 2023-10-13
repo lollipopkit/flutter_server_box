@@ -2,17 +2,9 @@ class Temperatures {
   final Map<String, double> _map = {};
 
   void parse(String type, String value) {
-    const noMatch = "/sys/class/thermal/thermal_zone*/type";
-    // Not support to get CPU temperature
-    if (type.contains(noMatch) || value.isEmpty || type.isEmpty) {
-      return;
-    }
     final typeSplited = type.split('\n');
     final valueSplited = value.split('\n');
-    if (typeSplited.length != valueSplited.length) {
-      return;
-    }
-    for (var i = 0; i < typeSplited.length; i++) {
+    for (var i = 0; i < typeSplited.length && i < valueSplited.length; i++) {
       final t = typeSplited[i];
       final v = valueSplited[i];
       if (t.isEmpty || v.isEmpty) {
@@ -25,10 +17,6 @@ class Temperatures {
       }
       _map[name] = temp / 1000;
     }
-  }
-
-  void add(String name, double value) {
-    _map[name] = value;
   }
 
   double? get(String name) {
@@ -56,4 +44,6 @@ class Temperatures {
   }
 }
 
-final cpuTempReg = RegExp(r'(x86_pkg_temp|cpu_thermal)');
+/// soc: mobile phone
+/// cpu_thermal / x86_pkg_temp: x86
+final cpuTempReg = RegExp(r'(x86_pkg_temp|cpu_thermal|soc)');
