@@ -462,6 +462,12 @@ class SId extends S {
   String get open => 'Membuka';
 
   @override
+  String get openLastPath => 'Buka jalur terakhir';
+
+  @override
+  String get openLastPathTip => 'Server yang berbeda akan memiliki catatan yang berbeda, dan catatan tersebut adalah jalur menuju pintu keluar';
+
+  @override
   String get paste => 'Tempel';
 
   @override

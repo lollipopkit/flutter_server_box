@@ -462,6 +462,12 @@ class SDe extends S {
   String get open => 'Öffnen';
 
   @override
+  String get openLastPath => 'Öffnen Sie den letzten Pfad';
+
+  @override
+  String get openLastPathTip => 'Verschiedene Server haben unterschiedliche Einträge, und der Eintrag ist der Pfad zum Ausgang';
+
+  @override
   String get paste => 'Einfügen';
 
   @override

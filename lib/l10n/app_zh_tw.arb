@@ -145,6 +145,8 @@
   "ok": "好",
   "onServerDetailPage": "在服務器詳情頁",
   "open": "打開",
+  "openLastPath": "打開上次的路徑",
+  "openLastPathTip": "不同的服務器會有不同的記錄，且記錄的是退出時的路徑",
   "paste": "貼上",
   "path": "路徑",
   "percentOfSize": "{size} 的 {percent}%",

@@ -462,6 +462,12 @@ class SZh extends S {
   String get open => '打开';
 
   @override
+  String get openLastPath => '打开上次的路径';
+
+  @override
+  String get openLastPathTip => '不同的服务器会有不同的记录，且记录的是退出时的路径';
+
+  @override
   String get paste => '粘贴';
 
   @override
@@ -1210,6 +1216,12 @@ class SZhTw extends SZh {
 
   @override
   String get open => '打開';
+
+  @override
+  String get openLastPath => '打開上次的路徑';
+
+  @override
+  String get openLastPathTip => '不同的服務器會有不同的記錄，且記錄的是退出時的路徑';
 
   @override
   String get paste => '貼上';

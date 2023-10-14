@@ -968,6 +968,18 @@ abstract class S {
   /// **'Open'**
   String get open;
 
+  /// No description provided for @openLastPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the last path'**
+  String get openLastPath;
+
+  /// No description provided for @openLastPathTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Different servers will have different logs, and the log is the path to the exit'**
+  String get openLastPathTip;
+
   /// No description provided for @paste.
   ///
   /// In en, this message translates to:

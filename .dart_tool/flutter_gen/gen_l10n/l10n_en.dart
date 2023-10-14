@@ -462,6 +462,12 @@ class SEn extends S {
   String get open => 'Open';
 
   @override
+  String get openLastPath => 'Open the last path';
+
+  @override
+  String get openLastPathTip => 'Different servers will have different logs, and the log is the path to the exit';
+
+  @override
   String get paste => 'Paste';
 
   @override

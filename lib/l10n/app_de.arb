@@ -145,6 +145,8 @@
   "ok": "OK",
   "onServerDetailPage": "in Detailansicht des Servers",
   "open": "Öffnen",
+  "openLastPath": "Öffnen Sie den letzten Pfad",
+  "openLastPathTip": "Verschiedene Server haben unterschiedliche Einträge, und der Eintrag ist der Pfad zum Ausgang",
   "paste": "Einfügen",
   "path": "Pfad",
   "percentOfSize": "{percent}% von {size}",

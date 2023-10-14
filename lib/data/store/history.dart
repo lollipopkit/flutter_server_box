@@ -1,16 +1,18 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:toolbox/core/persistant_store.dart';
 
-typedef _HistoryType = List<String>;
+
+typedef _HistoryList = List<String>;
+typedef _HistoryMap = Map<String, String>;
 
 /// index from 0 -> n : latest -> oldest
-class _History {
-  final _HistoryType _history;
+class _ListHistory {
+  final _HistoryList _history;
   final String _name;
-  final Box<_HistoryType> _box;
+  final Box _box;
 
-  _History({
-    required Box<_HistoryType> box,
+  _ListHistory({
+    required Box box,
     required String name,
   })  : _box = box,
         _name = name,
@@ -22,11 +24,34 @@ class _History {
     _box.put(_name, _history);
   }
 
-  _HistoryType get all => _history;
+  _HistoryList get all => _history;
 }
 
-class HistoryStore extends PersistentStore<_HistoryType> {
-  late final _History sftpPath = _History(box: box, name: 'sftpPath');
+class _MapHistory {
+  final _HistoryMap _history;
+  final String _name;
+  final Box _box;
 
-  late final _History sshCmds = _History(box: box, name: 'sshCmds');
+  _MapHistory({
+    required Box box,
+    required String name,
+  })  : _box = box,
+        _name = name,
+        _history = box.get(name, defaultValue: <String, String>{})!;
+
+  void put(String id, String val) {
+    _history[id] = val;
+    _box.put(_name, _history);
+  }
+
+  String? fetch(String id) => _history[id];
+}
+
+class HistoryStore extends PersistentStore {
+  /// Paths that user has visited by 'Locate' button
+  late final sftpGoPath = _ListHistory(box: box, name: 'sftpPath');
+
+  late final sftpLastPath = _MapHistory(box: box, name: 'sftpLastPath');
+
+  late final sshCmds = _ListHistory(box: box, name: 'sshCmds');
 }

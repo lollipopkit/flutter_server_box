@@ -156,6 +156,8 @@ class _SettingPageState extends State<SettingPage> {
           _buildServer(),
           _buildTitle('SSH'),
           _buildSSH(),
+          _buildTitle('SFTP'),
+          _buildSFTP(),
           _buildTitle(l10n.editor),
           _buildEditor(),
           _buildTitle(l10n.fullScreen),
@@ -230,7 +232,6 @@ class _SettingPageState extends State<SettingPage> {
         // Use hardware keyboard on desktop, so there is no need to set it
         if (isMobile) _buildKeyboardType(),
         _buildSSHVirtKeys(),
-        _buildSftpRmrDir(),
       ].map((e) => RoundRectCard(e)).toList(),
     );
   }
@@ -839,6 +840,23 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(l10n.editVirtKeys),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () => AppRoute.sshVirtKeySetting().go(context),
+    );
+  }
+
+  Widget _buildSFTP() {
+    return Column(
+      children: [
+        _buildSftpRmrDir(),
+        _buildSftpOpenLastPath(),
+      ].map((e) => RoundRectCard(e)).toList(),
+    );
+  }
+
+  Widget _buildSftpOpenLastPath() {
+    return ListTile(
+      title: Text(l10n.openLastPath),
+      subtitle: Text(l10n.openLastPathTip, style: UIs.textGrey),
+      trailing: StoreSwitch(prop: _setting.sftpOpenLastPath),
     );
   }
 

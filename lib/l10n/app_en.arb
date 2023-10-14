@@ -145,6 +145,8 @@
   "ok": "OK",
   "onServerDetailPage": "On server detail page",
   "open": "Open",
+  "openLastPath": "Open the last path",
+  "openLastPathTip": "Different servers will have different logs, and the log is the path to the exit",
   "paste": "Paste",
   "path": "Path",
   "percentOfSize": "{percent}% of {size}",
