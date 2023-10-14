@@ -15,6 +15,7 @@ import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/rebuild.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
+import 'package:toolbox/view/widget/expand_tile.dart';
 
 import '../../../core/persistant_store.dart';
 import '../../../core/route.dart';
@@ -916,29 +917,24 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildServerOrder() {
-    return ListTile(
+    return ExpandTile(
       title: Text(l10n.serverOrder),
-      subtitle: Text('${l10n.serverOrder} / ${l10n.serverDetailOrder}',
-          style: UIs.textGrey),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => context.showRoundDialog(
-        title: Text(l10n.choose),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: Text(l10n.serverOrder),
-              trailing: const Icon(Icons.keyboard_arrow_right),
-              onTap: () => AppRoute.serverOrder().go(context),
-            ),
-            ListTile(
-              title: Text(l10n.serverDetailOrder),
-              trailing: const Icon(Icons.keyboard_arrow_right),
-              onTap: () => AppRoute.serverDetailOrder().go(context),
-            ),
-          ],
-        ),
+      subtitle: Text(
+        '${l10n.serverOrder} / ${l10n.serverDetailOrder}',
+        style: UIs.textGrey,
       ),
+      children: [
+        ListTile(
+          title: Text(l10n.serverOrder),
+          trailing: const Icon(Icons.keyboard_arrow_right),
+          onTap: () => AppRoute.serverOrder().go(context),
+        ),
+        ListTile(
+          title: Text(l10n.serverDetailOrder),
+          trailing: const Icon(Icons.keyboard_arrow_right),
+          onTap: () => AppRoute.serverDetailOrder().go(context),
+        ),
+      ],
     );
   }
 

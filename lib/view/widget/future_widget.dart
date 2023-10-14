@@ -1,26 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:toolbox/data/res/ui.dart';
 
 class FutureWidget<T> extends StatelessWidget {
   final Future<T> future;
   final Widget loading;
   final Widget Function(Object? error, StackTrace? trace) error;
-  final Widget Function(T data) success;
-  final Widget noData;
+  final Widget Function(T? data) success;
   final Widget Function(AsyncSnapshot<Object?> snapshot)? active;
 
   const FutureWidget({
     super.key,
     required this.future,
-    required this.loading,
+    this.loading = UIs.placeholder,
     required this.error,
     required this.success,
-    required this.noData,
     this.active,
   });
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
+    return FutureBuilder<T>(
       future: future,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
@@ -36,10 +35,7 @@ class FutureWidget<T> extends StatelessWidget {
             }
             return loading;
           case ConnectionState.done:
-            if (snapshot.hasData) {
-              return success(snapshot.data as T);
-            }
-            return noData;
+            return success(snapshot.data);
         }
       },
     );

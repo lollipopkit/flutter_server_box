@@ -208,7 +208,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
               if (!Stores.setting.recordHistory.fetch()) {
                 return [];
               }
-              return Stores.history.sftpPath.all.where(
+              return Stores.history.sftpGoPath.all.where(
                 (element) => element.contains(val.text),
               );
             },
@@ -232,7 +232,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         _status.path?.update(p);
         final suc = await _listDir();
         if (suc && Stores.setting.recordHistory.fetch()) {
-          Stores.history.sftpPath.add(p);
+          Stores.history.sftpGoPath.add(p);
         }
       },
       icon: const Icon(Icons.gps_fixed),

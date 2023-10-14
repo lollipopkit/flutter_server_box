@@ -8,6 +8,7 @@ import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/model/docker/image.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
+import 'package:toolbox/view/widget/expand_tile.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 
 import '../../data/model/docker/ps.dart';
@@ -220,17 +221,14 @@ class _DockerManagePageState extends State<DockerManagePage> {
   }
 
   Widget _buildImage() {
-    final items = <Widget>[
-      ListTile(
-        title: Text(l10n.imagesList),
-        subtitle: Text(
-          l10n.dockerImagesFmt(Pros.docker.images!.length),
-          style: UIs.textGrey,
-        ),
+    return ExpandTile(
+      title: Text(l10n.imagesList),
+      subtitle: Text(
+        l10n.dockerImagesFmt(Pros.docker.images!.length),
+        style: UIs.textGrey,
       ),
-    ];
-    items.addAll(Pros.docker.images!.map(_buildImageItem));
-    return Column(children: items);
+      children: Pros.docker.images?.map(_buildImageItem).toList() ?? [],
+    );
   }
 
   Widget _buildImageItem(DockerImage e) {

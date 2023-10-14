@@ -69,7 +69,6 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
         future: getToken(),
         loading: Text(l10n.gettingToken),
         error: (error, trace) => Text('${l10n.error}: $error'),
-        noData: Text(l10n.nullToken),
         success: (text) {
           _pushToken.value = text;
           return Text(
@@ -120,7 +119,6 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
           onTap: () async => _onTapWatchApp(ctx),
         );
       },
-      noData: UIs.placeholder,
     );
   }
 

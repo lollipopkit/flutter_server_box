@@ -21,9 +21,13 @@ class PlatformPublicSettings {
       success: (can) {
         return ListTile(
           title: Text(l10n.bioAuth),
-          subtitle:
-              can ? null : const Text('Not available', style: UIs.textGrey),
-          trailing: can
+          subtitle: can == true
+              ? null
+              : const Text(
+                  'Not available',
+                  style: UIs.textGrey,
+                ),
+          trailing: can == true
               ? StoreSwitch(
                   prop: Stores.setting.useBioAuth,
                   func: (val) async {
@@ -42,7 +46,6 @@ class PlatformPublicSettings {
               : null,
         );
       },
-      noData: UIs.placeholder,
     );
   }
 }
