@@ -52,3 +52,7 @@ test.dart
 # Keep generated l10n files
 /.dart_tool/*
 !/.dart_tool/flutter_gen
+
+# Linux release
+ServerBox.AppDir
+ServerBox-x86_64.AppImage

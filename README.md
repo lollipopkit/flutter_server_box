@@ -1,4 +1,5 @@
 English | [简体中文](README_zh.md)
+
 <!-- Title-->
 <p align="center">
   <img src="imgs/flutter_server_box.png">
@@ -6,18 +7,26 @@ English | [简体中文](README_zh.md)
 
 <!-- Badges-->
 <p align="center">
-  <a href="https://apps.apple.com/app/id1586449703">
-    <img style="height: 37px" src="imgs/appstore.svg">
-  </a>
   <a href="https://count.ly/f/badge" rel="nofollow">
     <img style="height: 37px" src="https://count.ly/badges/dark.svg">
   </a>
-  <a href="https://github.com/lollipopkit/flutter_server_box/releases/latest">
-    <img style="height: 37px" src="imgs/dl-android.svg">
-  </a>
 </p>
 
-<p align="center" style="font-weight: bold">Due to Chinese government policy and the <a href="https://github.com/lollipopkit/flutter_server_box/discussions/180">BEIAN</a> issue. ServerBox is now free. Please download it from other regions.</p>
+<!-- Download -->
+<p align="center">
+  Download：
+  <a href="https://apps.apple.com/app/id1586449703">iOS</a>
+  /
+  <a href="https://res.lolli.tech/serverbox/latest.apk">Android</a>
+  /
+  <a href="https://apps.apple.com/app/id1586449703">macOS</a>
+  /
+  <a href="https://res.lolli.tech/serverbox/latest.AppImage">Linux</a>
+  /
+  Windows (In progress)
+</p>
+
+<p align="center" style="font-weight: bold; color: cyan">Due to Chinese government policy and the <a href="https://github.com/lollipopkit/flutter_server_box/discussions/180">BEIAN</a> issue. iOS app is now free. Please download it from other regions of AppStore.</p>
 
 <p align="center">
 A Flutter project which provide charts to display <a href="../../issues/43">Linux</a> server status and tools to manage server.

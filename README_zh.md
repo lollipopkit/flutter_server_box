@@ -1,4 +1,5 @@
 简体中文 | [English](README.md)
+
 <!-- Title-->
 <p align="center">
   <img src="imgs/flutter_server_box.png">
@@ -6,23 +7,31 @@
 
 <!-- Badges-->
 <p align="center">
-  <a href="https://apps.apple.com/app/id1586449703">
-    <img style="height: 37px" src="imgs/appstore.svg">
-  </a>
   <a href="https://count.ly/f/badge" rel="nofollow">
     <img style="height: 37px" src="https://count.ly/badges/dark.svg">
   </a>
-  <a href="https://github.com/lollipopkit/flutter_server_box/releases/latest">
-    <img style="height: 37px" src="imgs/dl-android.svg">
-  </a>
 </p>
 
-<p align="center" style="font-weight: bold">由于中国政策原因，且无法完成<a href="https://github.com/lollipopkit/flutter_server_box/discussions/180">备案</a>。现已转为免费，请移步其他区下载。</p>
+<!-- Download -->
+<p align="center">
+  下载：
+  <a href="https://apps.apple.com/app/id1586449703">iOS</a>
+  /
+  <a href="https://res.lolli.tech/serverbox/latest.apk">Android</a>
+  /
+  <a href="https://apps.apple.com/app/id1586449703">macOS</a>
+  /
+  <a href="https://res.lolli.tech/serverbox/latest.AppImage">Linux</a>
+  /
+  Windows (暂未发布)
+</p>
+
+<p align="center" style="font-weight: bold; color: cyan">由于中国政策原因，且无法完成<a href="https://github.com/lollipopkit/flutter_server_box/discussions/180">备案</a>。iOS 端现已转为免费，请移步 AppStore 其他区下载。</p>
 
 <p align="center">
 使用 Flutter 开发的 <a href="../../issues/43">Linux</a> 服务器工具箱，提供服务器状态图表和管理工具。
 <br>
-特别感谢 <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a> & <a href="https://github.com/TerminalStudio/xterm.dart">xterm.dart</a>.
+特别感谢 <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a> & <a href="https://github.com/TerminalStudio/xterm.dart">xterm.dart</a>。
 </p>
 
 

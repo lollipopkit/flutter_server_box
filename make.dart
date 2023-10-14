@@ -155,7 +155,47 @@ Future<void> flutterBuildAndroid() async {
 
 Future<void> flutterBuildLinux() async {
   await flutterBuild('linux');
+  // mkdir ServerBox.AppDir
+  await Process.run('mkdir', ['ServerBox.AppDir']);
+  // cp -r build/linux/x64/release/bundle/* ServerBox.AppDir
+  await Process.run('cp', [
+    '-r',
+    './build/linux/x64/release/bundle/*',
+    'ServerBox.AppDir',
+  ]);
+  // cp -r assets/app_icon.png ServerBox.AppDir
+  await Process.run('cp', [
+    '-r',
+    './assets/app_icon.png',
+    'ServerBox.AppDir',
+  ]);
+  // Create AppRun
+  const appRun = '''
+#!/bin/sh
+cd "\$(dirname "\$0")"
+exec ./ServerBox
+''';
+  await File('ServerBox.AppDir/AppRun').writeAsString(appRun);
+  // chmod +x AppRun
+  await Process.run('chmod', ['+x', 'ServerBox.AppDir/AppRun']);
+  // Create .desktop
+  const desktop = '''
+[Desktop Entry]
+Name=ServerBox
+Exec=ServerBox
+Icon=app_icon
+Type=Application
+Categories=Network;
+''';
+  await File('ServerBox.AppDir/ServerBox.desktop').writeAsString(desktop);
+  // Run appimagetool
+  await Process.run('appimagetool', ['ServerBox.AppDir']);
+
   await scpLinux2CDN();
+
+  // Clean build files
+  await Process.run('rm', ['-r', 'ServerBox.AppDir']);
+  await Process.run('rm', ['ServerBox-x86_64.AppImage']);
 }
 
 Future<void> flutterBuildWin() async {
@@ -181,8 +221,8 @@ Future<void> scpLinux2CDN() async {
   final result = await Process.run(
     'scp',
     [
-      './build/linux/x64/release/bundle/server_box.tar.gz',
-      'hk:/var/www/res/serverbox/$build.tar.gz',
+      'ServerBox-x86_64.AppImage',
+      'hk:/var/www/res/serverbox/$build.AppImage',
     ],
     runInShell: true,
   );
@@ -190,7 +230,7 @@ Future<void> scpLinux2CDN() async {
     print(result.stderr);
     exit(1);
   }
-  print('Upload Linux $build.tar.gz finished.');
+  print('Upload $build.AppImage finished.');
 }
 
 Future<void> scpWindows2CDN() async {
