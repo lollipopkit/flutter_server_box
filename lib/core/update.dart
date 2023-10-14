@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:r_upgrade/r_upgrade.dart';
-import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
@@ -78,25 +77,18 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
 
 Future<void> _doUpdate(AppUpdate update, BuildContext context) async {
   final url = update.url.current;
-  if (url == null) return;
+  if (url == null) {
+    Loggers.app.warning('Update url not is null');
+    return;
+  }
 
   if (isAndroid) {
     final fileName = url.split('/').last;
     await RUpgrade.upgrade(url, fileName: fileName);
   } else if (isIOS) {
     await RUpgrade.upgradeFromAppStore('1586449703');
-  } else if (isMacOS) {
-    await openUrl(url);
   } else {
-    context.showRoundDialog(
-      child: Text(l10n.platformNotSupportUpdate),
-      actions: [
-        TextButton(
-          onPressed: () => context.pop(),
-          child: Text(l10n.ok),
-        )
-      ],
-    );
+    await openUrl(url);
   }
 }
 

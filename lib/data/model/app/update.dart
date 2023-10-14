@@ -87,11 +87,15 @@ class AppUpdatePlatformSpecific<T> {
     required this.mac,
     required this.ios,
     required this.android,
+    required this.windows,
+    required this.linux,
   });
 
   final T mac;
   final T ios;
   final T android;
+  final T windows;
+  final T linux;
 
   factory AppUpdatePlatformSpecific.fromRawJson(String str) =>
       AppUpdatePlatformSpecific.fromJson(json.decode(str));
@@ -103,12 +107,16 @@ class AppUpdatePlatformSpecific<T> {
         mac: json["mac"],
         ios: json["ios"],
         android: json["android"],
+        windows: json["windows"],
+        linux: json["linux"],
       );
 
   Map<String, dynamic> toJson() => {
         "mac": mac,
         "ios": ios,
         "android": android,
+        "windows": windows,
+        "linux": linux,
       };
 
   T? get current {
@@ -119,7 +127,15 @@ class AppUpdatePlatformSpecific<T> {
         return ios;
       case OS.android:
         return android;
-      default:
+      case OS.windows:
+        return windows;
+      case OS.linux:
+        return linux;
+
+      /// Not implemented yet.
+      case OS.web:
+      case OS.fuchsia:
+      case OS.unknown:
         return null;
     }
   }
