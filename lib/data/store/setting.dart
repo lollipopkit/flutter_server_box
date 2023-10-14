@@ -216,7 +216,7 @@ class SettingStore extends PersistentStore {
   late final editorHighlight = StoreProperty(box, 'editorHighlight', true);
 
   /// Open SFTP with last viewed path
-  late final sftpOpenLastPath = StoreProperty(box, 'sftpOpenLastPath', true); 
+  late final sftpOpenLastPath = StoreProperty(box, 'sftpOpenLastPath', true);
 
   // Never show these settings for users
   //

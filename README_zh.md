@@ -2,14 +2,14 @@
 
 <!-- Title-->
 <p align="center">
-  <img src="imgs/flutter_server_box.png">
+  <img src="https://socialify.git.ci/lollipopkit/flutter_server_box/image?description=1&font=Raleway&logo=https%3A%2F%2Fgithub.com%2Flollipopkit%2Fflutter_server_box%2Fblob%2Fmain%2Fassets%2Fapp_icon.png%3Fraw%3Dtrue&name=1&owner=1&pattern=Solid&theme=Auto" alt="flutter_server_box" width="640" height="320" />
 </p>
 
 <!-- Badges-->
 <p align="center">
-  <a href="https://count.ly/f/badge" rel="nofollow">
-    <img style="height: 37px" src="https://count.ly/badges/dark.svg">
-  </a>
+  <img alt="lang" src="https://img.shields.io/badge/lang-dart-pink">
+  <img alt="countly" src="https://img.shields.io/badge/analysis-countly-pink">
+  <img alt="license" src="https://img.shields.io/badge/license-GPLv3-pink">
 </p>
 
 <p align="center">

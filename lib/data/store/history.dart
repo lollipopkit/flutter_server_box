@@ -1,7 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:toolbox/core/persistant_store.dart';
 
-
 typedef _HistoryList = List<String>;
 typedef _HistoryMap = Map<String, String>;
 

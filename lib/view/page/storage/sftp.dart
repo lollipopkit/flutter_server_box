@@ -687,7 +687,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   FutureOr<void> afterFirstLayout(BuildContext context) {
     var initPath = '/';
     if (Stores.setting.sftpOpenLastPath.fetch()) {
-      final history =  Stores.history.sftpLastPath.fetch(widget.spi.id);
+      final history = Stores.history.sftpLastPath.fetch(widget.spi.id);
       if (history != null) {
         initPath = history;
       }
