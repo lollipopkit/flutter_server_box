@@ -8,10 +8,11 @@
 import WidgetKit
 import SwiftUI
 import Intents
+import Foundation
 
 let demoStatus = Status(name: "Server", cpu: "31.7%", mem: "1.3g / 1.9g", disk: "7.1g / 30.0g", net: "712.3k / 1.2m")
 let domain = "com.lollipopkit.toolbox"
-var url: String?
+let bgColor = DynamicColor(dark: UIColor.black, light: UIColor.white)
 
 struct Provider: IntentTimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
@@ -24,11 +25,18 @@ struct Provider: IntentTimelineProvider {
     }
 
     func getTimeline(for configuration: ConfigurationIntent, in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
-        url = configuration.url
+        var url = configuration.url
+        
+        @Environment(\.widgetFamily) var family: WidgetFamily
+        if #available(iOSApplicationExtension 16.0, *) {
+            if family == .accessoryInline || family == .accessoryRectangular {
+                url = UserDefaults.standard.string(forKey: accessoryKey)
+            }
+        }
 
         let currentDate = Date()
         let refreshDate = Calendar.current.date(byAdding: .minute, value: 30, to: currentDate)!
-        StatusLoader.fetch { result in
+        StatusLoader.fetch(url: url) { result in
             let entry: SimpleEntry
             switch result {
             case .success(let status):
@@ -55,36 +63,61 @@ struct SimpleEntry: TimelineEntry {
 struct StatusWidgetEntryView : View {
     var entry: Provider.Entry
 
+    @Environment(\.widgetFamily) var family: WidgetFamily
+
     var body: some View {
         switch entry.state {
             case .loading:
-                ProgressView().padding()
+                ProgressView().widgetBackground()
             case .error(let descriotion):
-                Text(descriotion).padding(.all, 13)
+                Text(descriotion).widgetBackground()
             case .normal(let data):
                 let sumColor: Color = .primary.opacity(0.7)
-                VStack(alignment: .leading, spacing: 3.7) {
-                    Text(data.name).font(.system(.title3, design: .monospaced))
-                    Spacer()
-                    DetailItem(icon: "cpu", text: data.cpu, color: sumColor)
-                    DetailItem(icon: "memorychip", text: data.mem, color: sumColor)
-                    DetailItem(icon: "externaldrive", text: data.disk, color: sumColor)
-                    DetailItem(icon: "network", text: data.net, color: sumColor)
-                    Spacer()
-                    DetailItem(icon: "clock", text: entry.date.toStr(), color: sumColor)
+                switch family {
+                    case .accessoryRectangular:
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack {
+                                Text(data.name)
+                                    .font(.system(size: 15, weight: .semibold, design: .monospaced))
+                                Spacer()
+                                CirclePercent(percent: data.cpu)
+                                    .padding(.top, 3)
+                                    .padding(.trailing, 3)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                            Spacer()
+                            DetailItem(icon: "memorychip", text: data.mem, color: sumColor)
+                            DetailItem(icon: "externaldrive", text: data.disk, color: sumColor)
+                            DetailItem(icon: "network", text: data.net, color: sumColor)
+                        }
+                        .widgetBackground()
+                    case .accessoryInline:
+                        Text("\(data.name) \(data.cpu)").widgetBackground()
+                    default:
+                        VStack(alignment: .leading, spacing: 3.7) {
+                            Text(data.name).font(.system(.title3, design: .monospaced))
+                            Spacer()
+                            DetailItem(icon: "cpu", text: data.cpu, color: sumColor)
+                            DetailItem(icon: "memorychip", text: data.mem, color: sumColor)
+                            DetailItem(icon: "externaldrive", text: data.disk, color: sumColor)
+                            DetailItem(icon: "network", text: data.net, color: sumColor)
+                            Spacer()
+                            DetailItem(icon: "clock", text: entry.date.toStr(), color: sumColor)
+                                .padding(.bottom, 3)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        .autoPadding()
+                        .widgetBackground()
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .autoPadding()
-                .widgetBackground()
         }
     }
 }
 
 extension View {
-    // Set bg to Color.black in Night, Color.white in Day
     @ViewBuilder
     func widgetBackground() -> some View {
-        let backgroundView = Color(UIColor.systemBackground)
+        // Set bg to black in Night, white in Day
+        let backgroundView = Color(bgColor.resolve())
         if #available(iOS 17.0, *) {
             @Environment(\.showsWidgetContainerBackground) var showsWidgetContainerBackground
             containerBackground(for: .widget) {
@@ -103,10 +136,6 @@ extension View {
     // iOS 17 will auto add a SafeArea, so when iOS < 17, add .padding(.all, 17)
     func autoPadding() -> some View {
         if #available(iOS 17.0, *) {
-            @Environment(\.showsWidgetContainerBackground) var showsWidgetContainerBackground
-            if (showsWidgetContainerBackground) {
-                return self.padding(.all, 17)
-            }
             return self
         } else {
             return self.padding(.all, 17)
@@ -123,11 +152,12 @@ struct StatusWidget: Widget {
         }
         .configurationDisplayName("Status")
         .description("Status of your servers.")
-        .supportedFamilies([.systemSmall])
-        if #available(iOS 16.0, *) {
-            let _ = cfg.supportedFamilies([.accessoryInline, .accessoryCircular])
+        
+        if #available(iOSApplicationExtension 16.0, *) {
+            return cfg.supportedFamilies([.systemSmall, .accessoryRectangular, .accessoryInline])
+        } else {
+            return cfg.supportedFamilies([.systemSmall])
         }
-        return cfg
     }
 }
 
@@ -139,7 +169,7 @@ struct StatusWidget_Previews: PreviewProvider {
 }
 
 struct StatusLoader {
-    static func fetch(completion: @escaping (Result<Status, Error>) -> Void) {
+    static func fetch(url: String?, completion: @escaping (Result<Status, Error>) -> Void) {
         guard let url = url, url.count >= 12 else {
             completion(.failure(NSError(domain: domain, code: 0, userInfo: [NSLocalizedDescriptionKey: "https://github.com/lollipopkit/server_box_monitor/wiki"])))
             return
@@ -148,6 +178,9 @@ struct StatusLoader {
             completion(.failure(NSError(domain: domain, code: 1, userInfo: [NSLocalizedDescriptionKey: "url is invalid"])))
             return
         }
+        
+        UserDefaults.standard.set(url.absoluteString, forKey: accessoryKey)
+
         let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
             if error != nil {
                 completion(.failure(error!))
@@ -173,7 +206,7 @@ struct StatusLoader {
         if (code != 0) {
             switch (code) {
             default:
-                let msg = jsonAll["msg"] as? String ?? ""
+                let msg = jsonAll["msg"] as? String ?? "Empty err"
                 return .failure(NSError(domain: domain, code: code, userInfo: [NSLocalizedDescriptionKey: msg]))
             }
         }
@@ -200,5 +233,51 @@ struct DetailItem: View {
                 .font(.system(size: 11, design: .monospaced))
                 .foregroundColor(color)
         }
+    }
+}
+
+struct DetailItemSmall: View {
+    let icon: String
+    let text: String
+    let color: Color
+    
+    var body: some View {
+        HStack(spacing: 6.7) {
+            Image(systemName: icon).resizable().foregroundColor(color).frame(width: 11, height: 11, alignment: .center)
+            Text(text)
+                .font(.system(size: 11, design: .monospaced))
+                .foregroundColor(color)
+        }
+    }
+}
+
+// 空心圆，显示百分比
+struct CirclePercent: View {
+    // eg: 31.7%
+    let percent: String
+    
+    var body: some View {
+        // 31.7% -> 0.317
+        let percentD = Double(percent.trimmingCharacters(in: .init(charactersIn: "%")))
+        let double = (percentD ?? 0) / 100
+        Circle()
+            .trim(from: 0, to: CGFloat(double))
+            .stroke(Color.primary, lineWidth: 3)
+            .animation(.easeInOut(duration: 0.5))
+    }
+}
+
+struct DynamicColor {
+    let dark: UIColor
+    let light: UIColor
+    
+    func resolve() -> UIColor {
+        if #available(iOS 13, *) {  // 版本号大于等于13
+            return UIColor { (traitCollection: UITraitCollection) -> UIColor in
+                return traitCollection.userInterfaceStyle == UIUserInterfaceStyle.dark ?
+                    self.dark : self.light
+            }
+        }
+        return self.light
     }
 }

@@ -47,26 +47,26 @@
 <table>
   <tr>
     <td>
-	    <img width="200px" src="imgs/server.png">
+	    <img width="277px" src="imgs/server.png">
     </td>
     <td>
-	    <img width="200px" src="imgs/detail.png">
+	    <img width="277px" src="imgs/detail.png">
     </td>
     <td>
-	    <img width="200px" src="imgs/sftp.png">
+	    <img width="277px" src="imgs/sftp.png">
     </td>
   </tr>
 </table>
 <table>
   <tr>
     <td>
-	    <img width="200px" src="imgs/editor.png">
+	    <img width="277px" src="imgs/editor.png">
     </td>
     <td>
-	    <img width="200px" src="imgs/ssh.png">
+	    <img width="277px" src="imgs/ssh.png">
     </td>
     <td>
-	    <img width="200px" src="imgs/docker.png">
+	    <img width="277px" src="imgs/docker.png">
     </td>
   </tr>
 </table>

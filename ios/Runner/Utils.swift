@@ -7,6 +7,8 @@
 
 import Foundation
 
+let accessoryKey = "accessory_widget_url"
+
 extension Date {
     func toStr() -> String {
         let formatter = DateFormatter()

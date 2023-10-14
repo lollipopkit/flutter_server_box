@@ -329,10 +329,10 @@ class ServerProvider extends ChangeNotifier {
     }
 
     final systemType = SystemType.parse(segments[0]);
-    if (systemType == null || !systemType.isSegmentsLenMatch(segments.length)) {
+    if (!systemType.isSegmentsLenMatch(segments.length)) {
       _limiter.inc(sid);
       s.status.failedInfo =
-          'Segments not match: expect ${systemType?.segmentsLen}, got ${segments.length}';
+          'Segments not match: expect ${systemType.segmentsLen}, got ${segments.length}';
       _setServerState(s, ServerState.failed);
       return;
     }
