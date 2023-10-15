@@ -8,6 +8,7 @@
 import WidgetKit
 import SwiftUI
 import Intents
+import AppIntents
 import Foundation
 
 let demoStatus = Status(name: "Server", cpu: "31.7%", mem: "1.3g / 1.9g", disk: "7.1g / 30.0g", net: "712.3k / 1.2m")
@@ -95,7 +96,20 @@ struct StatusWidgetEntryView : View {
                         Text("\(data.name) \(data.cpu)").widgetBackground()
                     default:
                         VStack(alignment: .leading, spacing: 3.7) {
-                            Text(data.name).font(.system(.title3, design: .monospaced))
+                            if #available(iOS 17.0, *) {
+                                HStack {
+                                    Text(data.name).font(.system(.title3, design: .monospaced))
+                                    Spacer()
+                                    Button(intent: RefreshIntent()) {
+                                        Image(systemName: "arrow.clockwise")
+                                            .resizable()
+                                            .frame(width: 10, height: 12.7)
+                                    }
+                                    tint(.gray)
+                                }
+                            } else {
+                                Text(data.name).font(.system(.title3, design: .monospaced))
+                            }
                             Spacer()
                             DetailItem(icon: "cpu", text: data.cpu, color: sumColor)
                             DetailItem(icon: "memorychip", text: data.mem, color: sumColor)
@@ -147,16 +161,20 @@ struct StatusWidget: Widget {
     let kind: String = "StatusWidget"
 
     var body: some WidgetConfiguration {
-        let cfg = IntentConfiguration(kind: kind, intent: ConfigurationIntent.self, provider: Provider()) { entry in
-            StatusWidgetEntryView(entry: entry)
-        }
-        .configurationDisplayName("Status")
-        .description("Status of your servers.")
-        
         if #available(iOSApplicationExtension 16.0, *) {
-            return cfg.supportedFamilies([.systemSmall, .accessoryRectangular, .accessoryInline])
+            IntentConfiguration(kind: kind, intent: ConfigurationIntent.self, provider: Provider()) { entry in
+                StatusWidgetEntryView(entry: entry)
+            }
+            .configurationDisplayName("Status")
+            .description("Status of your servers.")
+            .supportedFamilies([.systemSmall, .accessoryRectangular, .accessoryInline])
         } else {
-            return cfg.supportedFamilies([.systemSmall])
+            IntentConfiguration(kind: kind, intent: ConfigurationIntent.self, provider: Provider()) { entry in
+                StatusWidgetEntryView(entry: entry)
+            }
+            .configurationDisplayName("Status")
+            .description("Status of your servers.")
+            .supportedFamilies([.systemSmall])
         }
     }
 }
@@ -236,21 +254,6 @@ struct DetailItem: View {
     }
 }
 
-struct DetailItemSmall: View {
-    let icon: String
-    let text: String
-    let color: Color
-    
-    var body: some View {
-        HStack(spacing: 6.7) {
-            Image(systemName: icon).resizable().foregroundColor(color).frame(width: 11, height: 11, alignment: .center)
-            Text(text)
-                .font(.system(size: 11, design: .monospaced))
-                .foregroundColor(color)
-        }
-    }
-}
-
 // 空心圆，显示百分比
 struct CirclePercent: View {
     // eg: 31.7%
@@ -279,5 +282,16 @@ struct DynamicColor {
             }
         }
         return self.light
+    }
+}
+
+@available(iOS 16.0, macOS 13.0, watchOS 9.0, tvOS 16.0, *)
+struct RefreshIntent: AppIntent {
+    static var title: LocalizedStringResource = "Refresh"
+    static var description = IntentDescription("Refresh status.")
+    
+    func perform() async throws -> some IntentResult {
+        
+        return .result()
     }
 }

@@ -30,16 +30,20 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 ## ⬇️ Download
 Platform | Support | Sign
 --- | --- | ---
-[iOS](https://apps.apple.com/app/id1586449703) / [Android](https://res.lolli.tech/serverbox/latest.apk) / [macOS](https://apps.apple.com/app/id1586449703) | Full | Signed with my own certificate
-[Linux](https://res.lolli.tech/serverbox/latest.AppImage) / [Windows](https://res.lolli.tech/serverbox/latest.7z) | Not tested | Signed with flutter default certificate. It's advised to build your own version.
+[iOS](https://apps.apple.com/app/id1586449703) / [Android](https://res.lolli.tech/serverbox/latest.apk) / [macOS](https://apps.apple.com/app/id1586449703) | Full | My own certificate
+[Linux](https://res.lolli.tech/serverbox/latest.AppImage) / [Windows](https://res.lolli.tech/serverbox/latest.7z) | Not tested | Flutter default certificate
 
-Due to Chinese government policy and the [BEIAN](https://github.com/lollipopkit/flutter_server_box/discussions/180) issue. iOS app is now free. Please download it from other regions of AppStore.
+- Due to Chinese government policy and the [BEIAN](https://github.com/lollipopkit/flutter_server_box/discussions/180) issue. iOS app is now free. Please download it from other regions of AppStore.
+- Security:
+  - To prevent injection attacks and etc., please don't download from untrusted sources.
+  - Since `Linux / Windows` is signed with flutter default certificate, it is recommended to **build it yourself**.
 
 
 ## 🆘 Help
 - In order to push  server status to your portable device without opening ServerBox app (Such as **message push** and **home widget**), you need to install [ServerBoxMonitor](https://github.com/lollipopkit/server_box_monitor) on your servers, and config it correctly. See [wiki](https://github.com/lollipopkit/server_box_monitor/wiki) for more details.
-- If you have any question or feature request, please open a [discussion](https://github.com/lollipopkit/flutter_server_box/discussions/new/choose).  
--  If ServerBox app has any bug, please open an [issue](https://github.com/lollipopkit/flutter_server_box/issues/new).
+- **Common issues** can be found in [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki).
+- If you have **any question or feature request**, please open a [discussion](https://github.com/lollipopkit/flutter_server_box/discussions/new/choose).  
+-  If ServerBox app has **any bug**, please open an [issue](https://github.com/lollipopkit/flutter_server_box/issues/new).
 
 
 ## 🏙️ ScreenShots
