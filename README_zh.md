@@ -31,7 +31,7 @@
 平台 | 支持 | 签名
 :-: | :-: | :-:
 [iOS](https://apps.apple.com/app/id1586449703) / [Android](https://res.lolli.tech/serverbox/latest.apk) / [macOS](https://apps.apple.com/app/id1586449703) | 完整 | 个人可信签名
-[Linux](https://res.lolli.tech/serverbox/latest.AppImage) / [Windows](https://res.lolli.tech/serverbox/latest.7z) | 未测试 | Flutter 默认签名
+[Linux](https://res.lolli.tech/serverbox/latest.AppImage) / [Windows](https://res.lolli.tech/serverbox/latest.win.zip) | 未测试 | Flutter 默认签名
 
 - 由于中国政策原因，且**目前**无法完成[备案](https://github.com/lollipopkit/flutter_server_box/discussions/180)。iOS 端现已转为免费，请移步 AppStore 其他区下载。
 - 关于安全：
