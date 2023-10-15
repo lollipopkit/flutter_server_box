@@ -41,13 +41,19 @@ struct PageView: View {
                 ProgressView().padding().onAppear {
                     getStatus(url: url!)
                 }
-            case .error(let string):
-                VStack {
-                    Spacer()
-                    Image(systemName: "exclamationmark.triangle.fill").foregroundColor(.red)
-                    Spacer()
-                    Text(string).padding()
-                    Spacer()
+            case .error(let err):
+                switch err {
+                case .http(let description):
+                    VStack(alignment: .center) {
+                        Text(description)
+                        Button(action: {
+                            state = .loading
+                        }){
+                            Image(systemName: "arrow.clockwise")
+                        }.buttonStyle(.plain)
+                    }
+                case .emptyUrl, .invalidUrl:
+                    Link("View help", destination: helpUrl)
                 }
             case .normal(let status):
                 VStack(alignment: .leading) {
@@ -73,33 +79,33 @@ struct PageView: View {
     func getStatus(url: String) {
         state = .loading
         if url.count < 12 {
-            state = .error("url is too short")
+            state = .error(.url("url len < 12"))
             return
         }
         guard let url = URL(string: url) else {
-            state = .error("url is invalid")
+            state = .error(.url("parse url failed"))
             return
         }
         let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
             guard error == nil else {
-                state = .error(error!.localizedDescription)
+                state = .error(.http(error!.localizedDescription))
                 return
             }
             guard let data = data else {
-                state = .error("data is nil")
+                state = .error(.http("empty data"))
                 return
             }
             guard let jsonAll = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
-                state = .error("json parse fail")
+                state = .error(.http("json parse fail"))
                 return
             }
             guard let code = jsonAll["code"] as? Int else {
-                state = .error("code is nil")
+                state = .error(.http("code is nil"))
                 return
             }
             if (code != 0) {
                 let msg = jsonAll["msg"] as? String ?? ""
-                state = .error(msg)
+                state = .error(.http(msg))
                 return
             }
 

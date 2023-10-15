@@ -36,22 +36,57 @@ struct Provider: IntentTimelineProvider {
         }
 
         let currentDate = Date()
-        let refreshDate = Calendar.current.date(byAdding: .minute, value: 30, to: currentDate)!
-        StatusLoader.fetch(url: url) { result in
-            let entry: SimpleEntry
-            switch result {
-            case .success(let status):
-                entry = SimpleEntry(
-                    date: currentDate,
-                    configuration: configuration,
-                    state: .normal(status)
-                )
-            case .failure(let err):
-                entry = SimpleEntry(date: currentDate, configuration: configuration, state: .error(err.localizedDescription))
-            }
+        let refreshDate = Calendar.current.date(byAdding: .minute, value: 15, to: currentDate)!
+        fetch(url: url) { result in
+            let entry: SimpleEntry = SimpleEntry(
+                date: currentDate,
+                configuration: configuration,
+                state: result
+            )
             let timeline = Timeline(entries: [entry], policy: .after(refreshDate))
             completion(timeline)
         }
+    }
+    
+    func fetch(url: String?, completion: @escaping (ContentState) -> Void) {
+        guard let url = url, url.count >= 12 else {
+            completion(.error(.url("url is nil OR len < 12")))
+            return
+        }
+        guard let url = URL(string: url) else {
+            completion(.error(.url("parse url failed")))
+            return
+        }
+        completion(.loading)
+        
+        UserDefaults.standard.set(url.absoluteString, forKey: accessoryKey)
+
+        let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
+            if error != nil {
+                completion(.error(.http(error?.localizedDescription ?? "unknown http err")))
+                return
+            }
+            guard let data = data else {
+                completion(.error(.http("empty http data")))
+                return
+            }
+            let jsonAll = try! JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] ?? [:]
+            let code = jsonAll["code"] as? Int ?? 1
+            if (code != 0) {
+                let msg = jsonAll["msg"] as? String ?? "Empty err"
+                completion(.error(.http(msg)))
+                return
+            }
+
+            let json = jsonAll["data"] as? [String: Any] ?? [:]
+            let name = json["name"] as? String ?? ""
+            let disk = json["disk"] as? String ?? ""
+            let cpu = json["cpu"] as? String ?? ""
+            let mem = json["mem"] as? String ?? ""
+            let net = json["net"] as? String ?? ""
+            completion(.normal(Status(name: name, cpu: cpu, mem: mem, disk: disk, net: net)))
+        }
+        task.resume()
     }
 }
 
@@ -70,8 +105,25 @@ struct StatusWidgetEntryView : View {
         switch entry.state {
             case .loading:
                 ProgressView().widgetBackground()
-            case .error(let descriotion):
-                Text(descriotion).widgetBackground()
+            case .error(let err):
+                switch err {
+                case .http(let description):
+                    VStack(alignment: .center) {
+                        Text(description)
+                        if #available(iOS 17.0, *) {
+                            Button(intent: RefreshIntent()) {
+                                Image(systemName: "arrow.clockwise")
+                                    .resizable()
+                                    .frame(width: 10, height: 12.7)
+                            }
+                            tint(.gray)
+                        }
+                    }
+                    .widgetBackground()
+                case .url(let _):
+                    Link("Open wiki ⬅️", destination: helpUrl)
+                    .widgetBackground()
+                }
             case .normal(let data):
                 let sumColor: Color = .primary.opacity(0.7)
                 switch family {
@@ -133,14 +185,8 @@ extension View {
         // Set bg to black in Night, white in Day
         let backgroundView = Color(bgColor.resolve())
         if #available(iOS 17.0, *) {
-            @Environment(\.showsWidgetContainerBackground) var showsWidgetContainerBackground
             containerBackground(for: .widget) {
-                // If it's show in StandBy
-                if showsWidgetContainerBackground {
-                    backgroundView
-                } else {
-                    self
-                }
+                backgroundView
             }
         } else {
             background(backgroundView)
@@ -161,20 +207,15 @@ struct StatusWidget: Widget {
     let kind: String = "StatusWidget"
 
     var body: some WidgetConfiguration {
-        if #available(iOSApplicationExtension 16.0, *) {
-            IntentConfiguration(kind: kind, intent: ConfigurationIntent.self, provider: Provider()) { entry in
-                StatusWidgetEntryView(entry: entry)
-            }
-            .configurationDisplayName("Status")
-            .description("Status of your servers.")
-            .supportedFamilies([.systemSmall, .accessoryRectangular, .accessoryInline])
+        let cfg = IntentConfiguration(kind: kind, intent: ConfigurationIntent.self, provider: Provider()) { entry in
+            StatusWidgetEntryView(entry: entry)
+        }
+        .configurationDisplayName("Status")
+        .description("Status of your servers.")
+        if #available(iOSApplicationExtension 16.0, *) {            
+            return cfg.supportedFamilies([.systemSmall, .accessoryRectangular, .accessoryInline])
         } else {
-            IntentConfiguration(kind: kind, intent: ConfigurationIntent.self, provider: Provider()) { entry in
-                StatusWidgetEntryView(entry: entry)
-            }
-            .configurationDisplayName("Status")
-            .description("Status of your servers.")
-            .supportedFamilies([.systemSmall])
+            return cfg.supportedFamilies([.systemSmall])
         }
     }
 }
@@ -183,59 +224,6 @@ struct StatusWidget_Previews: PreviewProvider {
     static var previews: some View {
         StatusWidgetEntryView(entry: SimpleEntry(date: Date(), configuration: ConfigurationIntent(), state: .normal(demoStatus)))
             .previewContext(WidgetPreviewContext(family: .systemSmall))
-    }
-}
-
-struct StatusLoader {
-    static func fetch(url: String?, completion: @escaping (Result<Status, Error>) -> Void) {
-        guard let url = url, url.count >= 12 else {
-            completion(.failure(NSError(domain: domain, code: 0, userInfo: [NSLocalizedDescriptionKey: "https://github.com/lollipopkit/server_box_monitor/wiki"])))
-            return
-        }
-        guard let url = URL(string: url) else {
-            completion(.failure(NSError(domain: domain, code: 1, userInfo: [NSLocalizedDescriptionKey: "url is invalid"])))
-            return
-        }
-        
-        UserDefaults.standard.set(url.absoluteString, forKey: accessoryKey)
-
-        let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
-            if error != nil {
-                completion(.failure(error!))
-                return
-            }
-            guard let data = data else {
-                completion(.failure(NSError(domain: domain, code: 2, userInfo: [NSLocalizedDescriptionKey: "empty network data."])))
-                return
-            }
-            switch getStatus(fromData: data) {
-            case .success(let status):
-                completion(.success(status))
-            case .failure(let error):
-                completion(.failure(error))
-            }
-        }
-        task.resume()
-    }
-
-    static func getStatus(fromData data: Foundation.Data) -> Result<Status, Error> {
-        let jsonAll = try! JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] ?? [:]
-        let code = jsonAll["code"] as? Int ?? 1
-        if (code != 0) {
-            switch (code) {
-            default:
-                let msg = jsonAll["msg"] as? String ?? "Empty err"
-                return .failure(NSError(domain: domain, code: code, userInfo: [NSLocalizedDescriptionKey: msg]))
-            }
-        }
-
-        let json = jsonAll["data"] as? [String: Any] ?? [:]
-        let name = json["name"] as? String ?? ""
-        let disk = json["disk"] as? String ?? ""
-        let cpu = json["cpu"] as? String ?? ""
-        let mem = json["mem"] as? String ?? ""
-        let net = json["net"] as? String ?? ""
-        return .success(Status(name: name, cpu: cpu, mem: mem, disk: disk, net: net))
     }
 }
 
@@ -291,7 +279,6 @@ struct RefreshIntent: AppIntent {
     static var description = IntentDescription("Refresh status.")
     
     func perform() async throws -> some IntentResult {
-        
         return .result()
     }
 }

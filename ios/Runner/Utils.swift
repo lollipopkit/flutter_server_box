@@ -9,6 +9,8 @@ import Foundation
 
 let accessoryKey = "accessory_widget_url"
 
+let helpUrl = URL(string: "https://github.com/lollipopkit/flutter_server_box/wiki#home-widget--watchos-app")!
+
 extension Date {
     func toStr() -> String {
         let formatter = DateFormatter()
@@ -19,9 +21,14 @@ extension Date {
     }
 }
 
+enum ErrType: Error {
+    case url(String)
+    case http(String)
+}
+
 enum ContentState {
     case loading
-    case error(String)
+    case error(ErrType)
     case normal(Status)
 }
 
