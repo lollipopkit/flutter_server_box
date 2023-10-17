@@ -2,6 +2,8 @@ import '../../core/persistant_store.dart';
 import '../model/server/server_private_info.dart';
 
 class ServerStore extends PersistentStore<ServerPrivateInfo> {
+  ServerStore() : super('server');
+
   void put(ServerPrivateInfo info) {
     box.put(info.id, info);
   }

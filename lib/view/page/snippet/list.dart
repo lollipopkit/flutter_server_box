@@ -13,7 +13,7 @@ import '../../../data/res/ui.dart';
 import '../../widget/tag.dart';
 import '/core/route.dart';
 import '/data/provider/snippet.dart';
-import '/view/widget/round_rect_card.dart';
+import '../../widget/cardx.dart';
 
 class SnippetListPage extends StatefulWidget {
   const SnippetListPage({Key? key}) : super(key: key);
@@ -94,7 +94,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
   }
 
   Widget _buildSnippetItem(Snippet snippet) {
-    return RoundRectCard(
+    return CardX(
       ListTile(
         contentPadding: const EdgeInsets.only(left: 23, right: 17),
         title: Text(

@@ -15,7 +15,7 @@ import '../../data/model/server/proc.dart';
 import '../../data/model/server/server_private_info.dart';
 import '../../data/res/ui.dart';
 import '../widget/custom_appbar.dart';
-import '../widget/round_rect_card.dart';
+import '../widget/cardx.dart';
 import '../widget/two_line_text.dart';
 
 class ProcessPage extends StatefulWidget {
@@ -142,7 +142,7 @@ class _ProcessPageState extends State<ProcessPage> {
     final leading = proc.user == null
         ? Text(proc.pid.toString())
         : TwoLineText(up: proc.pid.toString(), down: proc.user!);
-    return RoundRectCard(
+    return CardX(
       ListTile(
         leading: SizedBox(
           width: _media.size.width / 6,

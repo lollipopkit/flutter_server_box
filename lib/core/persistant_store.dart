@@ -1,14 +1,43 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:toolbox/data/res/path.dart';
 
 class PersistentStore<E> {
-  late Box<E> box;
+  late final Box<E> box;
 
-  Future<PersistentStore<E>> init({String boxName = 'defaultBox'}) async {
-    box = await Hive.openBox(boxName);
-    return this;
+  final String boxName;
+
+  PersistentStore(this.boxName);
+
+  Future<void> init() async => box = await Hive.openBox(boxName);
+
+  /// Get all db filenames.
+  ///
+  /// - [suffixs] defaults to ['.hive']
+  ///
+  /// - If [hideSetting] is true, hide 'setting.hive'
+  static Future<List<String>> getFileNames({
+    bool hideSetting = false,
+    List<String>? suffixs,
+  }) async {
+    final docPath = await Paths.doc;
+    final dir = Directory(docPath);
+    final files = await dir.list().toList();
+    if (suffixs != null) {
+      files.removeWhere((e) => !suffixs.contains(e.path.split('.').last));
+    } else {
+      // filter out non-hive(db) files
+      files.removeWhere((e) => !e.path.endsWith('.hive'));
+    }
+    if (hideSetting) {
+      files.removeWhere((e) => e.path.endsWith('setting.hive'));
+    }
+    final paths =
+        files.map((e) => e.path.replaceFirst('$docPath/', '')).toList();
+    return paths;
   }
 }
 

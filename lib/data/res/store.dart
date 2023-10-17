@@ -1,3 +1,4 @@
+import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/data/store/docker.dart';
 import 'package:toolbox/data/store/first.dart';
 import 'package:toolbox/data/store/history.dart';
@@ -17,4 +18,14 @@ class Stores {
   static final key = locator<PrivateKeyStore>();
   static final snippet = locator<SnippetStore>();
   static final first = locator<FirstStore>();
+
+  static final List<PersistentStore> all = [
+    setting,
+    server,
+    docker,
+    history,
+    key,
+    snippet,
+    first,
+  ];
 }

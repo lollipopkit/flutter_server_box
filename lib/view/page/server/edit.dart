@@ -13,7 +13,7 @@ import '../../../data/provider/private_key.dart';
 import '../../../data/res/ui.dart';
 import '../../widget/custom_appbar.dart';
 import '../../widget/input_field.dart';
-import '../../widget/round_rect_card.dart';
+import '../../widget/cardx.dart';
 import '../../widget/tag.dart';
 import '../../widget/value_notifier.dart';
 
@@ -283,7 +283,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
             ),
           ),
         );
-        return RoundRectCard(
+        return CardX(
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 17),
             child: Column(

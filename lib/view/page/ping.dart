@@ -14,7 +14,7 @@ import '../../data/model/server/ping_result.dart';
 import '../../data/res/color.dart';
 import '../../data/res/ui.dart';
 import '../widget/input_field.dart';
-import '../widget/round_rect_card.dart';
+import '../widget/cardx.dart';
 
 /// Only permit ipv4 / ipv6 / domain chars
 final targetReg = RegExp(r'[a-zA-Z0-9\.-_:]+');
@@ -103,7 +103,7 @@ class _PingPageState extends State<PingPage>
       return Center(
         child: Text(
           l10n.noResult,
-          style: const TextStyle(fontSize: 18),
+          style: const TextStyle(fontSize: 15),
         ),
       );
     }
@@ -118,7 +118,7 @@ class _PingPageState extends State<PingPage>
   Widget _buildResultItem(PingResult result) {
     final unknown = l10n.unknown;
     final ms = l10n.ms;
-    return RoundRectCard(
+    return CardX(
       ListTile(
         contentPadding: const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
         title: Text(

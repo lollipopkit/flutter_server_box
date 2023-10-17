@@ -26,7 +26,7 @@ import '../../data/res/misc.dart';
 import '../../data/res/ui.dart';
 import '../../data/res/url.dart';
 import '../widget/custom_appbar.dart';
-import '../widget/round_rect_card.dart';
+import '../widget/cardx.dart';
 import '../widget/url_text.dart';
 import '../widget/value_notifier.dart';
 
@@ -256,7 +256,7 @@ class _HomePageState extends State<HomePage>
             title: Text('${l10n.about} & ${l10n.feedback}'),
             onTap: _showAboutDialog,
           )
-        ].map((e) => RoundRectCard(e)).toList(),
+        ].map((e) => CardX(e)).toList(),
       ),
     );
   }

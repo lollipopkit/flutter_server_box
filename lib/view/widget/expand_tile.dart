@@ -8,5 +8,6 @@ class ExpandTile extends ExpansionTile {
     required super.title,
     super.children,
     super.subtitle,
+    super.initiallyExpanded,
   }) : super(shape: _shape, collapsedShape: _shape);
 }

@@ -14,7 +14,7 @@ import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/page/setting/platform_pub.dart';
 import 'package:toolbox/view/widget/custom_appbar.dart';
 import 'package:toolbox/view/widget/future_widget.dart';
-import 'package:toolbox/view/widget/round_rect_card.dart';
+import 'package:toolbox/view/widget/cardx.dart';
 import 'package:toolbox/view/widget/store_switch.dart';
 import 'package:watch_connectivity/watch_connectivity.dart';
 
@@ -44,7 +44,7 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
           _buildWatchApp(),
           if (BioAuth.isPlatformSupported)
             PlatformPublicSettings.buildBioAuth(),
-        ].map((e) => RoundRectCard(e)).toList(),
+        ].map((e) => CardX(e)).toList(),
       ),
     );
   }

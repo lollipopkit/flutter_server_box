@@ -13,7 +13,6 @@ import 'package:toolbox/data/res/store.dart';
 
 import 'app.dart';
 import 'core/analysis.dart';
-import 'core/utils/icloud.dart';
 import 'core/utils/ui.dart';
 import 'data/model/app/net_view.dart';
 import 'data/model/server/private_key_info.dart';
@@ -77,9 +76,6 @@ Future<void> initApp() async {
   // Load font
   primaryColor = Color(Stores.setting.primaryColor.fetch());
   loadFontFile(Stores.setting.fontPath.fetch());
-
-  // Don't call it via `await`, it will block the main thread.
-  if (Stores.setting.icloudSync.fetch()) ICloud.syncDb();
 
   if (isAndroid) {
     // Only start service when [bgRun] is true.

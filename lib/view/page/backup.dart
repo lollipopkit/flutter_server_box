@@ -7,6 +7,8 @@ import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
+import 'package:toolbox/core/persistant_store.dart';
+import 'package:toolbox/core/utils/icloud.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/rebuild.dart';
 import 'package:toolbox/data/model/app/backup.dart';
@@ -14,15 +16,19 @@ import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/path.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/view/widget/round_rect_card.dart';
+import 'package:toolbox/view/widget/expand_tile.dart';
+import 'package:toolbox/view/widget/cardx.dart';
+import 'package:toolbox/view/widget/store_switch.dart';
+import 'package:toolbox/view/widget/value_notifier.dart';
 
 import '../../core/utils/misc.dart';
 import '../../data/res/ui.dart';
 import '../widget/custom_appbar.dart';
-import '../widget/store_switch.dart';
 
 class BackupPage extends StatelessWidget {
-  const BackupPage({Key? key}) : super(key: key);
+  BackupPage({Key? key}) : super(key: key);
+
+  final icloudLoading = ValueNotifier(false);
 
   @override
   Widget build(BuildContext context) {
@@ -35,66 +41,38 @@ class BackupPage extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context) {
-    final tip = () {
-      if (isMacOS || isIOS) {
-        return '${l10n.syncTip}\n${l10n.backupTip}';
-      }
-      return l10n.backupTip;
-    }();
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
+    return ListView(
+      padding: const EdgeInsets.all(17),
       children: [
         if (isMacOS || isIOS) _buildIcloudSync(context),
-        UIs.height13,
-        Padding(
-          padding: const EdgeInsets.all(37),
-          child: Text(
-            tip,
-            textAlign: TextAlign.center,
-          ),
-        ),
-        UIs.height77,
-        _buildCard(
-          l10n.restore,
-          Icons.download,
-          () => _onRestore(context),
-        ),
-        UIs.height13,
-        const SizedBox(
-          width: 37,
-          child: Divider(),
-        ),
-        UIs.height13,
-        _buildCard(
-          l10n.backup,
-          Icons.save,
-          () async {
-            await Backup.backup();
-            await shareFiles([await Paths.bak]);
-          },
-        )
+        _buildManual(context),
       ],
     );
   }
 
-  Widget _buildCard(
-    String text,
-    IconData icon,
-    FutureOr Function() onTap,
-  ) {
-    return RoundRectCard(
-      InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
+  Widget _buildManual(BuildContext context) {
+    return CardX(
+      ListTile(
+        title: Text(l10n.files),
+        subtitle: Text(
+          l10n.backupTip,
+          style: UIs.textGrey,
+        ),
+        trailing: SizedBox(
+          width: 120,
           child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 20),
-              UIs.width7,
-              Text(text),
+              TextButton(
+                onPressed: () => _onRestore(context),
+                child: Text(l10n.restore),
+              ),
+              TextButton(
+                onPressed: () async {
+                  await Backup.backup();
+                  await shareFiles([await Paths.bak]);
+                },
+                child: Text(l10n.backup),
+              ),
             ],
           ),
         ),
@@ -103,27 +81,72 @@ class BackupPage extends StatelessWidget {
   }
 
   Widget _buildIcloudSync(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Text(
-          'iCloud',
-          textAlign: TextAlign.center,
+    return CardX(
+      ExpandTile(
+        title: const Text('iCloud'),
+        initiallyExpanded: true,
+        subtitle: Text(
+          l10n.syncTip,
+          style: UIs.textGrey,
         ),
-        UIs.width13,
-        // Hive db only save data into local file after app exit,
-        // so this button is useless
-        // IconButton(
-        //     onPressed: () async {
-        //       showLoadingDialog(context);
-        //       await ICloud.syncDb();
-        //       context.pop();
-        //       showRestartSnackbar(context, btn: s.restart, msg: s.icloudSynced);
-        //     },
-        //     icon: const Icon(Icons.sync)),
-        // width13,
-        StoreSwitch(prop: Stores.setting.icloudSync)
-      ],
+        children: [
+          ListTile(
+            title: Text(l10n.auto),
+            subtitle: const Text(
+              'Please wait for optimization :)',
+              style: UIs.textGrey,
+            ),
+            trailing: StoreSwitch(
+              prop: Stores.setting.icloudSync,
+              func: (val) async {
+                if (val) {
+                  final relativePaths = await PersistentStore.getFileNames();
+                  await ICloud.sync(relativePaths: relativePaths);
+                }
+              },
+            ),
+          ),
+          ListTile(
+            title: Text('Manual'),
+            trailing: ValueBuilder(
+              listenable: icloudLoading,
+              build: () {
+                if (icloudLoading.value) {
+                  return UIs.centerSizedLoading;
+                }
+                return SizedBox(
+                  width: 120,
+                  child: Row(
+                    children: [
+                      TextButton(
+                        onPressed: () async {
+                          icloudLoading.value = true;
+                          final files = await PersistentStore.getFileNames();
+                          for (final file in files) {
+                            await ICloud.download(relativePath: file);
+                          }
+                        },
+                        child: Text(l10n.download),
+                      ),
+                      UIs.width7,
+                      TextButton(
+                        onPressed: () async {
+                          icloudLoading.value = true;
+                          final files = await PersistentStore.getFileNames();
+                          for (final file in files) {
+                            await ICloud.upload(relativePath: file);
+                          }
+                        },
+                        child: Text(l10n.upload),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 

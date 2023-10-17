@@ -36,31 +36,31 @@ void _setupLocatorForProviders() {
 
 Future<void> _setupLocatorForStores() async {
   final setting = SettingStore();
-  await setting.init(boxName: 'setting');
+  await setting.init();
   locator.registerSingleton(setting);
 
   final server = ServerStore();
-  await server.init(boxName: 'server');
+  await server.init();
   locator.registerSingleton(server);
 
   final key = PrivateKeyStore();
-  await key.init(boxName: 'key');
+  await key.init();
   locator.registerSingleton(key);
 
   final snippet = SnippetStore();
-  await snippet.init(boxName: 'snippet');
+  await snippet.init();
   locator.registerSingleton(snippet);
 
   final docker = DockerStore();
-  await docker.init(boxName: 'docker');
+  await docker.init();
   locator.registerSingleton(docker);
 
   final history = HistoryStore();
-  await history.init(boxName: 'history');
+  await history.init();
   locator.registerSingleton(history);
 
   final first = FirstStore();
-  await first.init(boxName: 'first');
+  await first.init();
   locator.registerSingleton(first);
 }
 

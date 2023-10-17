@@ -23,7 +23,7 @@ import '../../../data/model/server/server_status.dart';
 import '../../../data/provider/server.dart';
 import '../../../data/res/color.dart';
 import '../../../data/res/ui.dart';
-import '../../widget/round_rect_card.dart';
+import '../../widget/cardx.dart';
 import '../../widget/server_func_btns.dart';
 import '../../widget/tag.dart';
 
@@ -173,7 +173,7 @@ class _ServerPageState extends State<ServerPage>
       return UIs.placeholder;
     }
 
-    return RoundRectCard(
+    return CardX(
       key: Key(si.spi.id + (_tag ?? '')),
       InkWell(
         onTap: () {

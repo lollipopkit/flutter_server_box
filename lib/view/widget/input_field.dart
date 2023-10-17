@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'round_rect_card.dart';
+import 'cardx.dart';
 
 class Input extends StatelessWidget {
   final TextEditingController? controller;
@@ -41,7 +41,7 @@ class Input extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    return RoundRectCard(
+    return CardX(
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 17),
         child: TextField(

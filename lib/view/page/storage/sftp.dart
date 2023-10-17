@@ -14,7 +14,7 @@ import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/omit_start_text.dart';
-import 'package:toolbox/view/widget/round_rect_card.dart';
+import 'package:toolbox/view/widget/cardx.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/route.dart';
@@ -277,7 +277,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       style: UIs.textGrey,
       textAlign: TextAlign.right,
     );
-    return RoundRectCard(ListTile(
+    return CardX(ListTile(
       leading: Icon(isDir ? Icons.folder : Icons.insert_drive_file),
       title: Text(file.filename),
       trailing: trailing,

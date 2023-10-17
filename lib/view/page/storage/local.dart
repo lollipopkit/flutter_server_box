@@ -11,7 +11,7 @@ import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/omit_start_text.dart';
-import 'package:toolbox/view/widget/round_rect_card.dart';
+import 'package:toolbox/view/widget/cardx.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/route.dart';
@@ -153,7 +153,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
         var stat = file.statSync();
         var isDir = stat.type == FileSystemEntityType.directory;
 
-        return RoundRectCard(ListTile(
+        return CardX(ListTile(
           leading: isDir
               ? const Icon(Icons.folder)
               : const Icon(Icons.insert_drive_file),

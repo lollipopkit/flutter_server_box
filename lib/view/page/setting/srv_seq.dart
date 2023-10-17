@@ -3,7 +3,7 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/view/widget/round_rect_card.dart';
+import 'package:toolbox/view/widget/cardx.dart';
 
 import '../../widget/custom_appbar.dart';
 
@@ -54,7 +54,7 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
     return ReorderableDelayedDragStartListener(
       key: ValueKey('$index'),
       index: index,
-      child: RoundRectCard(ListTile(
+      child: CardX(ListTile(
         title: Text(spi.name),
         subtitle: Text(spi.id),
         leading: CircleAvatar(

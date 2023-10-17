@@ -20,7 +20,7 @@ import '../../data/res/ui.dart';
 import '../../data/res/url.dart';
 import '../widget/custom_appbar.dart';
 import '../widget/popup_menu.dart';
-import '../widget/round_rect_card.dart';
+import '../widget/cardx.dart';
 import '../widget/two_line_text.dart';
 import '../widget/url_text.dart';
 
@@ -213,7 +213,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
       _buildPs(),
       _buildImage(),
       _buildEditHost(),
-    ].map((e) => RoundRectCard(e));
+    ].map((e) => CardX(e));
     return ListView(
       padding: const EdgeInsets.all(7),
       children: items.toList(),

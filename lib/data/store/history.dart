@@ -47,6 +47,8 @@ class _MapHistory {
 }
 
 class HistoryStore extends PersistentStore {
+  HistoryStore() : super('history');
+
   /// Paths that user has visited by 'Locate' button
   late final sftpGoPath = _ListHistory(box: box, name: 'sftpPath');
 

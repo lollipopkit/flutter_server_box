@@ -15,7 +15,7 @@ import '../../../data/model/server/private_key_info.dart';
 import '../../../data/provider/private_key.dart';
 import '../../../data/res/ui.dart';
 import '../../widget/custom_appbar.dart';
-import '../../../view/widget/round_rect_card.dart';
+import '../../widget/cardx.dart';
 
 class PrivateKeysListPage extends StatefulWidget {
   const PrivateKeysListPage({Key? key}) : super(key: key);
@@ -53,7 +53,7 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
           itemCount: key.pkis.length,
           itemBuilder: (context, idx) {
             final item = key.pkis[idx];
-            return RoundRectCard(
+            return CardX(
               ListTile(
                 leading: Text(
                   '#$idx',

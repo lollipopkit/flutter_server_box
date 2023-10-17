@@ -20,7 +20,7 @@ import '../../../data/res/color.dart';
 import '../../../data/res/default.dart';
 import '../../../data/res/ui.dart';
 import '../../widget/custom_appbar.dart';
-import '../../widget/round_rect_card.dart';
+import '../../widget/cardx.dart';
 
 class ServerDetailPage extends StatefulWidget {
   const ServerDetailPage({Key? key, required this.spi}) : super(key: key);
@@ -131,7 +131,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       ]);
     }
 
-    return RoundRectCard(
+    return CardX(
       Padding(
         padding: UIs.roundRectCardPadding,
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -201,7 +201,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildUpTimeAndSys(ServerStatus ss) {
-    return RoundRectCard(
+    return CardX(
       Padding(
         padding: UIs.roundRectCardPadding,
         child: Row(
@@ -229,7 +229,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     final used = ss.mem.usedPercent * 100;
     final usedStr = used.toStringAsFixed(0);
 
-    return RoundRectCard(
+    return CardX(
       Padding(
         padding: UIs.roundRectCardPadding,
         child: Column(
@@ -274,7 +274,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     if (ss.swap.total == 0) return UIs.placeholder;
     final used = ss.swap.usedPercent * 100;
     final cached = ss.swap.cached / ss.swap.total * 100;
-    return RoundRectCard(
+    return CardX(
       Padding(
         padding: UIs.roundRectCardPadding,
         child: Column(
@@ -339,7 +339,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               ),
             ))
         .toList();
-    return RoundRectCard(
+    return CardX(
       Padding(
         padding: UIs.roundRectCardPadding,
         child: Column(
@@ -351,7 +351,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildNetView(ServerStatus ss) {
-    return RoundRectCard(
+    return CardX(
       Padding(
         padding: UIs.roundRectCardPadding,
         child: ValueBuilder(
@@ -503,7 +503,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             ),
           ],
         )));
-    return RoundRectCard(
+    return CardX(
       Padding(
         padding: UIs.roundRectCardPadding,
         child: Column(children: children),

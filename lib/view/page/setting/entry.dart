@@ -30,7 +30,7 @@ import '../../../data/res/ui.dart';
 import '../../widget/color_picker.dart';
 import '../../widget/custom_appbar.dart';
 import '../../widget/input_field.dart';
-import '../../widget/round_rect_card.dart';
+import '../../widget/cardx.dart';
 import '../../widget/store_switch.dart';
 import '../../widget/value_notifier.dart';
 
@@ -194,7 +194,7 @@ class _SettingPageState extends State<SettingPage> {
       children.add(_buildPlatformSetting());
     }
     return Column(
-      children: children.map((e) => RoundRectCard(e)).toList(),
+      children: children.map((e) => CardX(e)).toList(),
     );
   }
 
@@ -204,7 +204,7 @@ class _SettingPageState extends State<SettingPage> {
         _buildFullScreenSwitch(),
         _buildFullScreenJitter(),
         _buildFulScreenRotateQuarter(),
-      ].map((e) => RoundRectCard(e)).toList(),
+      ].map((e) => CardX(e)).toList(),
     );
   }
 
@@ -219,7 +219,7 @@ class _SettingPageState extends State<SettingPage> {
         //_buildDiskIgnorePath(),
         _buildDeleteServers(),
         //if (isDesktop) _buildDoubleColumnServersPage(),
-      ].map((e) => RoundRectCard(e)).toList(),
+      ].map((e) => CardX(e)).toList(),
     );
   }
 
@@ -232,7 +232,7 @@ class _SettingPageState extends State<SettingPage> {
         // Use hardware keyboard on desktop, so there is no need to set it
         if (isMobile) _buildKeyboardType(),
         _buildSSHVirtKeys(),
-      ].map((e) => RoundRectCard(e)).toList(),
+      ].map((e) => CardX(e)).toList(),
     );
   }
 
@@ -243,7 +243,7 @@ class _SettingPageState extends State<SettingPage> {
         _buildEditorTheme(),
         _buildEditorDarkTheme(),
         _buildEditorHighlight(),
-      ].map((e) => RoundRectCard(e)).toList(),
+      ].map((e) => CardX(e)).toList(),
     );
   }
 
@@ -848,7 +848,7 @@ class _SettingPageState extends State<SettingPage> {
       children: [
         _buildSftpRmrDir(),
         _buildSftpOpenLastPath(),
-      ].map((e) => RoundRectCard(e)).toList(),
+      ].map((e) => CardX(e)).toList(),
     );
   }
 

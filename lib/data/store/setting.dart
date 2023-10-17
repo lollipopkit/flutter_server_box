@@ -6,6 +6,8 @@ import '../model/app/net_view.dart';
 import '../res/default.dart';
 
 class SettingStore extends PersistentStore {
+  SettingStore() : super('setting');
+
   /// Convert all settings into json
   Map<String, dynamic> toJson() => {for (var e in box.keys) e: box.get(e)};
 

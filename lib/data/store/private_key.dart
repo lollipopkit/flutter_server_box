@@ -2,6 +2,8 @@ import '../../core/persistant_store.dart';
 import '../model/server/private_key_info.dart';
 
 class PrivateKeyStore extends PersistentStore<PrivateKeyInfo> {
+  PrivateKeyStore() : super('key');
+
   void put(PrivateKeyInfo info) {
     box.put(info.id, info);
   }

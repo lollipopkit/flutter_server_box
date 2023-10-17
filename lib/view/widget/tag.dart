@@ -4,7 +4,7 @@ import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/widget/input_field.dart';
-import 'package:toolbox/view/widget/round_rect_card.dart';
+import 'package:toolbox/view/widget/cardx.dart';
 
 import '../../data/res/color.dart';
 
@@ -57,7 +57,7 @@ class TagEditor extends StatefulWidget {
 class _TagEditorState extends State<TagEditor> {
   @override
   Widget build(BuildContext context) {
-    return RoundRectCard(ListTile(
+    return CardX(ListTile(
       leading: const Icon(Icons.tag),
       title: _buildTags(widget.tags),
       trailing: InkWell(
