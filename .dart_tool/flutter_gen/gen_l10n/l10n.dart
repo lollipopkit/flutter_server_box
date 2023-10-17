@@ -806,6 +806,12 @@ abstract class S {
   /// **'Made with ❤️ by {myGithub}'**
   String madeWithLove(Object myGithub);
 
+  /// No description provided for @manual.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual'**
+  String get manual;
+
   /// No description provided for @max.
   ///
   /// In en, this message translates to:
@@ -1325,7 +1331,7 @@ abstract class S {
   /// No description provided for @syncTip.
   ///
   /// In en, this message translates to:
-  /// **'After auto sync, a restart may be required for some changes to take effect.'**
+  /// **'A restart may be required for some changes to take effect.'**
   String get syncTip;
 
   /// No description provided for @system.

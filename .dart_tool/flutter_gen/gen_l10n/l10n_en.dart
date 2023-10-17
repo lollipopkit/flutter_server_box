@@ -381,6 +381,9 @@ class SEn extends S {
   }
 
   @override
+  String get manual => 'Manual';
+
+  @override
   String get max => 'max';
 
   @override
@@ -647,7 +650,7 @@ class SEn extends S {
   String get suspendTip => 'The suspend function requires root privileges and systemd support.';
 
   @override
-  String get syncTip => 'After auto sync, a restart may be required for some changes to take effect.';
+  String get syncTip => 'A restart may be required for some changes to take effect.';
 
   @override
   String get system => 'System';

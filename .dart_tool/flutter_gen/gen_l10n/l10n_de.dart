@@ -381,6 +381,9 @@ class SDe extends S {
   }
 
   @override
+  String get manual => 'Handbuch';
+
+  @override
   String get max => 'max';
 
   @override
@@ -647,7 +650,7 @@ class SDe extends S {
   String get suspendTip => 'Die Suspend-Funktion erfordert Root-Rechte und systemd-Unterstützung.';
 
   @override
-  String get syncTip => 'Nach der automatischen Synchronisierung kann es erforderlich sein, die App neu zu starten, damit bestimmte Änderungen wirksam werden.';
+  String get syncTip => 'Damit einige Änderungen wirksam werden, kann ein Neustart erforderlich sein.';
 
   @override
   String get system => 'Systeme';

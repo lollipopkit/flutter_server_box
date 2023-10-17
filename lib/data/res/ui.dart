@@ -47,6 +47,14 @@ class UIs {
 
   static const centerLoading = Center(child: CircularProgressIndicator());
 
+  static const centerSizedLoadingSmall = SizedBox(
+    width: 23,
+    height: 23,
+    child: Center(
+      child: CircularProgressIndicator(),
+    ),
+  );
+
   static const centerSizedLoading = SizedBox(
     width: 77,
     height: 77,

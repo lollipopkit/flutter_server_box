@@ -52,30 +52,28 @@ class BackupPage extends StatelessWidget {
 
   Widget _buildManual(BuildContext context) {
     return CardX(
-      ListTile(
+      ExpandTile(
         title: Text(l10n.files),
-        subtitle: Text(
-          l10n.backupTip,
-          style: UIs.textGrey,
-        ),
-        trailing: SizedBox(
-          width: 120,
-          child: Row(
-            children: [
-              TextButton(
-                onPressed: () => _onRestore(context),
-                child: Text(l10n.restore),
-              ),
-              TextButton(
-                onPressed: () async {
-                  await Backup.backup();
-                  await shareFiles([await Paths.bak]);
-                },
-                child: Text(l10n.backup),
-              ),
-            ],
+        initiallyExpanded: true,
+        children: [
+          ListTile(
+            title: Text(l10n.backup),
+            trailing: const Icon(Icons.save),
+            subtitle: Text(
+              l10n.backupTip,
+              style: UIs.textGrey,
+            ),
+            onTap: () async {
+              await Backup.backup();
+              await shareFiles([await Paths.bak]);
+            },
           ),
-        ),
+          ListTile(
+            trailing: const Icon(Icons.restore),
+            title: Text(l10n.restore),
+            onTap: () => _onRestore(context),
+          ),
+        ],
       ),
     );
   }
@@ -93,7 +91,7 @@ class BackupPage extends StatelessWidget {
           ListTile(
             title: Text(l10n.auto),
             subtitle: const Text(
-              'Please wait for optimization :)',
+              'Unavailable, please wait for optimization :)',
               style: UIs.textGrey,
             ),
             trailing: StoreSwitch(
@@ -107,12 +105,12 @@ class BackupPage extends StatelessWidget {
             ),
           ),
           ListTile(
-            title: Text('Manual'),
+            title: Text(l10n.manual),
             trailing: ValueBuilder(
               listenable: icloudLoading,
               build: () {
                 if (icloudLoading.value) {
-                  return UIs.centerSizedLoading;
+                  return UIs.centerSizedLoadingSmall;
                 }
                 return SizedBox(
                   width: 120,
@@ -125,6 +123,7 @@ class BackupPage extends StatelessWidget {
                           for (final file in files) {
                             await ICloud.download(relativePath: file);
                           }
+                          icloudLoading.value = false;
                         },
                         child: Text(l10n.download),
                       ),
@@ -136,6 +135,7 @@ class BackupPage extends StatelessWidget {
                           for (final file in files) {
                             await ICloud.upload(relativePath: file);
                           }
+                          icloudLoading.value = false;
                         },
                         child: Text(l10n.upload),
                       ),

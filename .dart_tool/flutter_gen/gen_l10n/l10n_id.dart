@@ -381,6 +381,9 @@ class SId extends S {
   }
 
   @override
+  String get manual => 'Manual';
+
+  @override
   String get max => 'Max';
 
   @override
@@ -647,7 +650,7 @@ class SId extends S {
   String get suspendTip => 'Fungsi penangguhan memerlukan hak akses root dan dukungan systemd.';
 
   @override
-  String get syncTip => 'Setelah sinkronisasi otomatis, mungkin perlu memulai ulang aplikasi agar perubahan tertentu dapat diterapkan.';
+  String get syncTip => 'Pengaktifan ulang mungkin diperlukan agar beberapa perubahan dapat diterapkan.';
 
   @override
   String get system => 'Sistem';
