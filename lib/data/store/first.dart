@@ -4,9 +4,6 @@ import 'package:toolbox/core/persistant_store.dart';
 class FirstStore extends PersistentStore<bool> {
   FirstStore() : super('first');
 
-  /// Add Snippet `Install ServerBoxMonitor`
-  late final iSSBM = StoreProperty(box, 'installMonitorSnippet', true);
-
   /// Show tip of suspend
   late final showSuspendTip = StoreProperty(box, 'showSuspendTip', true);
 }

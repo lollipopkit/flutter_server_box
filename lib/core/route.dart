@@ -11,6 +11,7 @@ import 'package:toolbox/view/page/private_key/list.dart';
 import 'package:toolbox/view/page/server/detail.dart';
 import 'package:toolbox/view/page/setting/android.dart';
 import 'package:toolbox/view/page/setting/ios.dart';
+import 'package:toolbox/view/page/snippet/result.dart';
 import 'package:toolbox/view/page/ssh_term.dart';
 import 'package:toolbox/view/page/setting/virt_key.dart';
 import 'package:toolbox/view/page/storage/local.dart';
@@ -206,5 +207,14 @@ class AppRoute {
 
   static AppRoute androidSettings({Key? key}) {
     return AppRoute(AndroidSettingsPage(key: key), 'android_setting');
+  }
+
+  static AppRoute snippetResult({Key? key, required Map<String, String?> results}) {
+    return AppRoute(
+        SnippetResultPage(
+          key: key,
+          results: results,
+        ),
+        'snippet_result');
   }
 }

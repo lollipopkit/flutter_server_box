@@ -26,18 +26,7 @@ class SnippetProvider extends ChangeNotifier {
         Stores.setting.snippetOrder.put(order);
       }
     }
-    _addInternal();
     _updateTags();
-  }
-
-  void _addInternal() {
-    if (!Stores.first.iSSBM.fetch() ||
-        _snippets.any((e) => e.name == installSBM.name)) {
-      return;
-    }
-    _snippets.add(installSBM);
-    Stores.snippet.put(installSBM);
-    Stores.first.iSSBM.put(false);
   }
 
   void _updateTags() {

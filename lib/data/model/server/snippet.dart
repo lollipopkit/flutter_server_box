@@ -45,12 +45,3 @@ class Snippet implements TagPickable {
   @override
   String get tagName => name;
 }
-
-/// Snippet for installing ServerBoxMonitor
-const installSBM = Snippet(
-  name: 'Install ServerBoxMonitor',
-  script:
-      'curl -fsSL https://raw.githubusercontent.com/lollipopkit/server_box_monitor/main/install.sh | sh -s -- install',
-  tags: ['ServerBoxMonitor'],
-  note: 'One click script to install ServerBoxMonitor',
-);

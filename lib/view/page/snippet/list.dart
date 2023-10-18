@@ -6,7 +6,6 @@ import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 
-import '../../../core/utils/misc.dart';
 import '../../../data/model/server/server.dart';
 import '../../../data/model/server/snippet.dart';
 import '../../../data/res/ui.dart';
@@ -135,23 +134,15 @@ class _SnippetListPageState extends State<SnippetListPage> {
       return;
     }
     final ids = servers.map((e) => e.spi.id).toList();
+    final names = servers.map((e) => e.spi.name).toList();
     final results = await Pros.server.runSnippetsMulti(ids, [snippet]);
     if (results.isNotEmpty) {
       // SERVER_NAME: RESULT
       final result = Map.fromIterables(
-        ids,
+        names,
         results,
-      ).entries.map((e) => '${e.key}:\n${e.value}').join('\n');
-      context.showRoundDialog(
-        title: Text(l10n.result),
-        child: Text(result),
-        actions: [
-          TextButton(
-            onPressed: () => copy2Clipboard(result),
-            child: Text(l10n.copy),
-          )
-        ],
       );
+      AppRoute.snippetResult(results: result).go(context);
     }
   }
 }
