@@ -14,12 +14,10 @@ import 'package:toolbox/data/model/server/dist.dart';
 import 'package:toolbox/data/res/provider.dart';
 
 import '../../core/route.dart';
-import '../../core/utils/misc.dart';
 import '../../core/utils/server.dart';
 import '../../data/model/app/menu.dart';
 import '../../data/model/pkg/upgrade_info.dart';
 import '../../data/model/server/server_private_info.dart';
-import '../../data/model/server/snippet.dart';
 import 'popup_menu.dart';
 
 class ServerFuncBtnsTopRight extends StatelessWidget {
@@ -94,28 +92,29 @@ void _onTapMoreBtns(
         check: () => _checkClient(context, spi.id),
       );
       break;
-    case ServerTabMenuType.snippet:
-      final snippets = await context.showPickDialog<Snippet>(
-        items: Pros.snippet.snippets,
-        name: (e) => e.name,
-      );
-      if (snippets == null) {
-        return;
-      }
-      final result = await Pros.server.runSnippets(spi.id, snippets);
-      if (result != null && result.isNotEmpty) {
-        context.showRoundDialog(
-          title: Text(l10n.result),
-          child: Text(result),
-          actions: [
-            TextButton(
-              onPressed: () => copy2Clipboard(result),
-              child: Text(l10n.copy),
-            )
-          ],
-        );
-      }
-      break;
+    // case ServerTabMenuType.snippet:
+    //   final snippets = await context.showPickDialog<Snippet>(
+    //     items: Pros.snippet.snippets,
+    //     name: (e) => e.name,
+    //     multi: false
+    //   );
+    //   if (snippets == null || snippets.isEmpty) {
+    //     return;
+    //   }
+    //   final result = await Pros.server.runSnippets(spi.id, snippets.first);
+    //   if (result != null && result.isNotEmpty) {
+    //     context.showRoundDialog(
+    //       title: Text(l10n.result),
+    //       child: Text(result),
+    //       actions: [
+    //         TextButton(
+    //           onPressed: () => copy2Clipboard(result),
+    //           child: Text(l10n.copy),
+    //         )
+    //       ],
+    //     );
+    //   }
+    //   break;
     case ServerTabMenuType.docker:
       AppRoute.docker(spi: spi).checkGo(
         context: context,

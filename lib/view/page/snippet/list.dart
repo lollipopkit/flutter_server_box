@@ -134,15 +134,9 @@ class _SnippetListPageState extends State<SnippetListPage> {
       return;
     }
     final ids = servers.map((e) => e.spi.id).toList();
-    final names = servers.map((e) => e.spi.name).toList();
-    final results = await Pros.server.runSnippetsMulti(ids, [snippet]);
+    final results = await Pros.server.runSnippetsMulti(ids, snippet);
     if (results.isNotEmpty) {
-      // SERVER_NAME: RESULT
-      final result = Map.fromIterables(
-        names,
-        results,
-      );
-      AppRoute.snippetResult(results: result).go(context);
+      AppRoute.snippetResult(results: results).go(context);
     }
   }
 }

@@ -3,6 +3,7 @@ import '../server/system.dart';
 
 const seperator = 'SrvBoxSep';
 
+/// The suffix `\t` is for formatting
 const _cmdDivider = '\necho $seperator\n\t';
 
 const _serverBoxDir = r'$HOME/.config/server_box';

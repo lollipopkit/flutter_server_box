@@ -45,3 +45,15 @@ class Snippet implements TagPickable {
   @override
   String get tagName => name;
 }
+
+class SnippetResult {
+  final String? dest;
+  final String result;
+  final Duration time;
+
+  SnippetResult({
+    required this.dest,
+    required this.result,
+    required this.time,
+  });
+}

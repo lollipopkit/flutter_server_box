@@ -362,18 +362,26 @@ class ServerProvider extends ChangeNotifier {
     _limiter.reset(sid);
   }
 
-  Future<String?> runSnippets(String id, List<Snippet> snippets) async {
+  Future<SnippetResult?> runSnippets(String id, Snippet snippet) async {
     final client = _servers[id]?.client;
     if (client == null) {
       return null;
     }
-    return await client.run(snippets.map((e) => e.script).join('&&')).string;
+    final watch = Stopwatch()..start();
+    final result = await client.run(snippet.script).string;
+    final time = watch.elapsed;
+    watch.stop();
+    return SnippetResult(
+      dest: _servers[id]?.spi.name,
+      result: result,
+      time: time,
+    );
   }
 
-  Future<List<String?>> runSnippetsMulti(
+  Future<List<SnippetResult?>> runSnippetsMulti(
     List<String> ids,
-    List<Snippet> snippets,
+    Snippet snippet,
   ) async {
-    return await Future.wait(ids.map((id) async => runSnippets(id, snippets)));
+    return await Future.wait(ids.map((id) async => runSnippets(id, snippet)));
   }
 }
