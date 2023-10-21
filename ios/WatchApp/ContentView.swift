@@ -52,7 +52,7 @@ struct PageView: View {
                             Image(systemName: "arrow.clockwise")
                         }.buttonStyle(.plain)
                     }
-                case .emptyUrl, .invalidUrl:
+                case .url(_):
                     Link("View help", destination: helpUrl)
                 }
             case .normal(let status):

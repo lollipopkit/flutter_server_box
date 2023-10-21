@@ -28,7 +28,7 @@ struct Provider: IntentTimelineProvider {
     func getTimeline(for configuration: ConfigurationIntent, in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
         var url = configuration.url
         
-        @Environment(\.widgetFamily) var family: WidgetFamily
+        let family = context.family
         if #available(iOSApplicationExtension 16.0, *) {
             if family == .accessoryInline || family == .accessoryRectangular {
                 url = UserDefaults.standard.string(forKey: accessoryKey)
@@ -57,9 +57,6 @@ struct Provider: IntentTimelineProvider {
             completion(.error(.url("parse url failed")))
             return
         }
-        completion(.loading)
-        
-        UserDefaults.standard.set(url.absoluteString, forKey: accessoryKey)
 
         let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
             if error != nil {
@@ -104,7 +101,7 @@ struct StatusWidgetEntryView : View {
     var body: some View {
         switch entry.state {
             case .loading:
-                ProgressView().widgetBackground()
+                Text("Loading").widgetBackground()
             case .error(let err):
                 switch err {
                 case .http(let description):
@@ -115,12 +112,11 @@ struct StatusWidgetEntryView : View {
                                 Image(systemName: "arrow.clockwise")
                                     .resizable()
                                     .frame(width: 10, height: 12.7)
-                            }
-                            tint(.gray)
+                            }.tint(.gray)
                         }
                     }
                     .widgetBackground()
-                case .url(let _):
+                case .url(_):
                     Link("Open wiki ⬅️", destination: helpUrl)
                     .widgetBackground()
                 }
@@ -156,8 +152,7 @@ struct StatusWidgetEntryView : View {
                                         Image(systemName: "arrow.clockwise")
                                             .resizable()
                                             .frame(width: 10, height: 12.7)
-                                    }
-                                    tint(.gray)
+                                    }.tint(.gray)
                                 }
                             } else {
                                 Text(data.name).font(.system(.title3, design: .monospaced))
