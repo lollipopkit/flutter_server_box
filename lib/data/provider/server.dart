@@ -279,35 +279,38 @@ class ServerProvider extends ChangeNotifier {
 
       _setServerState(s, ServerState.connected);
 
+      // Write script to server
+      // by ssh
       try {
         final writeResult = await s.client?.run(installShellCmd).string;
         if (writeResult == null || writeResult.isNotEmpty) {
           throw Exception('$writeResult');
         }
       } catch (e) {
-        var sftpFailed = false;
+        // by sftp
+        final localPath = joinPath(await Paths.doc, 'install.sh');
+        final file = File(localPath);
         try {
           Loggers.app.warning('Using SFTP to write script to ${spi.name}');
-          final localPath = joinPath(await Paths.doc, 'install.sh');
-          final file = File(localPath);
           file.writeAsString(ShellFunc.allScript);
           final sftp = Pros.sftp;
           final completer = Completer();
-          sftp.add(
+          final reqId = sftp.add(
             SftpReq(spi, installShellPath, localPath, SftpReqType.upload),
             completer: completer,
           );
           await completer.future;
-          await file.delete();
-        } catch (_) {
-          sftpFailed = true;
-        }
-        if (sftpFailed) {
+          final err = sftp.get(reqId)?.error;
+          if (err != null) {
+            throw err;
+          }
+        } catch (e) {
           _limiter.inc(sid);
           s.status.failedInfo = e.toString();
           _setServerState(s, ServerState.failed);
           Loggers.app.warning('Write script to ${spi.name} failed', e);
-          return;
+        } finally {
+          await file.delete();
         }
       }
     }
@@ -319,12 +322,23 @@ class ServerProvider extends ChangeNotifier {
       _setServerState(s, ServerState.loading);
     }
 
-    final raw = await s.client?.run(ShellFunc.status.exec).string;
-    final segments = raw?.split(seperator).map((e) => e.trim()).toList();
-    if (raw == null || raw.isEmpty || segments == null || segments.isEmpty) {
+    List<String>? segments;
+    String? raw;
+
+    try {
+      raw = await s.client?.run(ShellFunc.status.exec).string;
+      segments = raw?.split(seperator).map((e) => e.trim()).toList();
+      if (raw == null || raw.isEmpty || segments == null || segments.isEmpty) {
+        _limiter.inc(sid);
+        s.status.failedInfo = 'Seperate segments failed, raw:\n$raw';
+        _setServerState(s, ServerState.failed);
+        return;
+      }
+    } catch (e) {
       _limiter.inc(sid);
-      s.status.failedInfo = 'Seperate segments failed, raw:\n$raw';
+      s.status.failedInfo = e.toString();
       _setServerState(s, ServerState.failed);
+      Loggers.app.warning('Get status from ${spi.name} failed', e);
       return;
     }
 

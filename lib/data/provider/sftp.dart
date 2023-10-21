@@ -12,12 +12,14 @@ class SftpProvider extends ChangeNotifier {
     return _status.singleWhere((element) => element.id == id);
   }
 
-  void add(SftpReq req, {Completer? completer}) {
-    _status.add(SftpReqStatus(
+  int add(SftpReq req, {Completer? completer}) {
+    final status = SftpReqStatus(
       notifyListeners: notifyListeners,
       completer: completer,
       req: req,
-    ));
+    );
+    _status.add(status);
+    return status.id;
   }
 
   @override
