@@ -15,7 +15,7 @@ enum ServerTabMenuType {
       case ServerTabMenuType.sftp:
         return Icons.insert_drive_file;
       //case ServerTabMenuType.snippet:
-        //return Icons.code;
+      //return Icons.code;
       case ServerTabMenuType.pkg:
         return Icons.system_security_update;
       case ServerTabMenuType.docker:
@@ -32,7 +32,7 @@ enum ServerTabMenuType {
       case ServerTabMenuType.sftp:
         return 'SFTP';
       //case ServerTabMenuType.snippet:
-        //return l10n.snippet;
+      //return l10n.snippet;
       case ServerTabMenuType.pkg:
         return l10n.pkg;
       case ServerTabMenuType.docker:

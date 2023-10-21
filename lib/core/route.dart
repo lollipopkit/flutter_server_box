@@ -209,7 +209,8 @@ class AppRoute {
     return AppRoute(AndroidSettingsPage(key: key), 'android_setting');
   }
 
-  static AppRoute snippetResult({Key? key, required List<SnippetResult?> results}) {
+  static AppRoute snippetResult(
+      {Key? key, required List<SnippetResult?> results}) {
     return AppRoute(
         SnippetResultPage(
           key: key,

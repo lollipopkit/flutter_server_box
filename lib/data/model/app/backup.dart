@@ -69,6 +69,9 @@ class Backup {
   }
 
   Future<void> restore() async {
+    for (final s in settings.keys) {
+      Stores.setting.box.put(s, settings[s]);
+    }
     for (final s in snippets) {
       Stores.snippet.put(s);
     }

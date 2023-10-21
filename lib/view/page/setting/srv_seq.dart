@@ -3,6 +3,7 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
+import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/widget/cardx.dart';
 
 import '../../widget/custom_appbar.dart';
@@ -56,7 +57,7 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
       index: index,
       child: CardX(ListTile(
         title: Text(spi.name),
-        subtitle: Text(spi.id),
+        subtitle: Text(spi.id, style: UIs.textGrey),
         leading: CircleAvatar(
           child: Text(spi.name[0]),
         ),
