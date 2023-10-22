@@ -80,8 +80,11 @@ Future<SSHClient> genClient(
         timeout: timeout,
       );
       // Use `0.0.0.0` as localhost to use all interfaces.
-      return await jumpClient.forwardLocal(spi.ip, spi.port,
-          localHost: '0.0.0.0');
+      return await jumpClient.forwardLocal(
+        spi.ip,
+        spi.port,
+        localHost: '0.0.0.0',
+      );
     }
   }();
 

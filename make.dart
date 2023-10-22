@@ -67,7 +67,7 @@ Future<int> getGitModificationCount() async {
 }
 
 Future<String> getFlutterVersion() async {
-  final result = await Process.run('flutter', ['--version']);
+  final result = await Process.run('flutter', ['--version'], runInShell: true);
   final stdout = result.stdout as String;
   return stdout.split('\n')[0].split('•')[0].split(' ')[1].trim();
 }
@@ -97,7 +97,7 @@ Future<void> updateBuildData() async {
 }
 
 Future<void> dartFormat() async {
-  final result = await Process.run('dart', ['format', '.']);
+  final result = await Process.run('dart', ['format', '.'], runInShell: true);
   print(result.stdout);
   if (result.exitCode != 0) {
     print(result.stderr);
@@ -128,7 +128,7 @@ Future<void> flutterBuild(String buildType) async {
     args.add('--target-platform=android-arm64');
   }
   print('\n[$buildType]\nBuilding with args: ${args.join(' ')}');
-  final buildResult = await Process.run('flutter', args);
+  final buildResult = await Process.run('flutter', args, runInShell: true);
   final exitCode = buildResult.exitCode;
 
   if (exitCode != 0) {

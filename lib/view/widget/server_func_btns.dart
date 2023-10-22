@@ -11,6 +11,7 @@ import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/platform/path.dart';
 import 'package:toolbox/data/model/pkg/manager.dart';
 import 'package:toolbox/data/model/server/dist.dart';
+import 'package:toolbox/data/res/path.dart';
 import 'package:toolbox/data/res/provider.dart';
 
 import '../../core/route.dart';
@@ -149,9 +150,11 @@ Future<void> _gotoSSH(
     extraArgs.addAll(['-p', '${spi.port}']);
   }
 
-  final path = () {
+  final path = await () async {
     final tempKeyFileName = 'srvbox_pk_${spi.pubKeyId}';
-    return joinPath(Directory.systemTemp.path, tempKeyFileName);
+
+    /// For security reason, save the private key file to app doc path
+    return joinPath(await Paths.doc, tempKeyFileName);
   }();
   final file = File(path);
   final shouldGenKey = spi.pubKeyId != null;
@@ -175,7 +178,7 @@ Future<void> _gotoSSH(
     default:
       context.showSnackBar('Mismatch system: $system');
   }
-  // For security reason, delete the private key file after use
+
   if (shouldGenKey) {
     if (!await file.exists()) return;
     await Future.delayed(const Duration(seconds: 2), file.delete);

@@ -10,6 +10,10 @@ class Server implements TagPickable {
   SSHClient? client;
   ServerState state;
 
+  /// Whether is generating client. 
+  /// Use this to avoid reconnecting if last connect try not finished.
+  bool isGenerating = false;
+
   Server(this.spi, this.status, this.client, this.state);
 
   @override

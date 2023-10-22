@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 
 // ignore: prefer_void_to_null
-class _RebuildNode implements ValueListenable<Null> {
+class RebuildNode implements ValueListenable<Null> {
   final List<VoidCallback> _listeners = [];
 
-  _RebuildNode();
+  RebuildNode();
 
   @override
   void addListener(VoidCallback listener) {
@@ -24,10 +24,4 @@ class _RebuildNode implements ValueListenable<Null> {
 
   @override
   Null get value => null;
-}
-
-class RebuildNodes {
-  const RebuildNodes._();
-
-  static final _RebuildNode app = _RebuildNode();
 }

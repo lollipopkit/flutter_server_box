@@ -267,7 +267,9 @@ class ServerProvider extends ChangeNotifier {
 
       final time1 = DateTime.now();
 
-      try {
+      try { 
+        if (s.isGenerating) return;
+        s.isGenerating = true;
         s.client = await genClient(
           spi,
           timeout: Stores.setting.timeoutD,
@@ -282,6 +284,8 @@ class ServerProvider extends ChangeNotifier {
         /// In order to keep privacy, print [spi.name] instead of [spi.id]
         Loggers.app.warning('Connect to ${spi.name} failed', e);
         return;
+      } finally {
+        s.isGenerating = false;
       }
 
       final time2 = DateTime.now();

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/locale.dart';
-import 'package:toolbox/core/utils/rebuild.dart';
+import 'package:toolbox/data/res/rebuild.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/value_notifier.dart';
 

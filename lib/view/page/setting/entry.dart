@@ -12,8 +12,8 @@ import 'package:toolbox/core/extension/locale.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
-import 'package:toolbox/core/utils/rebuild.dart';
 import 'package:toolbox/data/res/provider.dart';
+import 'package:toolbox/data/res/rebuild.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/expand_tile.dart';
 
