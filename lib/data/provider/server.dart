@@ -271,7 +271,8 @@ class ServerProvider extends ChangeNotifier {
         s.client = await genClient(
           spi,
           timeout: Stores.setting.timeoutD,
-          jumpSpi: spi.jumpId == null ? null : Stores.server.box.get(spi.jumpId),
+          jumpSpi:
+              spi.jumpId == null ? null : Stores.server.box.get(spi.jumpId),
         );
       } catch (e) {
         _limiter.inc(sid);

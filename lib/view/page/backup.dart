@@ -20,6 +20,7 @@ import 'package:toolbox/view/widget/expand_tile.dart';
 import 'package:toolbox/view/widget/cardx.dart';
 import 'package:toolbox/view/widget/store_switch.dart';
 import 'package:toolbox/view/widget/value_notifier.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/utils/misc.dart';
 import '../../data/res/ui.dart';
@@ -63,10 +64,7 @@ class BackupPage extends StatelessWidget {
               l10n.backupTip,
               style: UIs.textGrey,
             ),
-            onTap: () async {
-              await Backup.backup();
-              await shareFiles([await Paths.bak]);
-            },
+            onTap: _onBackup,
           ),
           ListTile(
             trailing: const Icon(Icons.restore),
@@ -148,6 +146,21 @@ class BackupPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _onBackup() async {
+    await Backup.backup();
+    final path = await Paths.bak;
+
+    /// Issue #188
+    if (isWindows) {
+      await launchUrl(
+        File(path).uri,
+        mode: LaunchMode.externalNonBrowserApplication,
+      );
+    } else {
+      await shareFiles([path]);
+    }
   }
 
   Future<void> _onRestore(BuildContext context) async {
