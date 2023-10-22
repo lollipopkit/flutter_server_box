@@ -104,6 +104,7 @@
   "invalidVersion": "Ungültige Version",
   "invalidVersionHelp": "Bitte stelle sicher, dass Docker korrekt installiert ist oder dass du eine nicht selbstkompilierte Version verwendest. Wenn du die oben genannten Probleme nicht hast, melde bitte einen Fehler auf {url}.",
   "isBusy": "Is busy now",
+  "jumpServer": "Server springen",
   "keepForeground": "Stelle sicher, dass die App geöffnet bleibt.",
   "keyAuth": "Schlüsselauthentifzierung",
   "keyboardCompatibility": "Mögliche Verbesserungen bei der Kompatibilität der Eingabemethoden",

@@ -117,7 +117,8 @@ class ServerProvider extends ChangeNotifier {
       await _getData(spi);
       return;
     }
-    await Future.wait(_servers.values.map((s) async {
+
+    Future<void> connectFn(Server s) async {
       if (onlyFailed) {
         if (s.state != ServerState.failed) return;
         _limiter.reset(s.spi.id);
@@ -133,7 +134,19 @@ class ServerProvider extends ChangeNotifier {
         return;
       }
       return await _getData(s.spi);
-    }));
+    }
+
+    final directServers = <Server>[];
+    final proxyServers = <Server>[];
+    for (final s in _servers.values) {
+      if (s.spi.jumpId == null) {
+        directServers.add(s);
+      } else {
+        proxyServers.add(s);
+      }
+    }
+    await Future.wait(directServers.map(connectFn));
+    await Future.wait(proxyServers.map(connectFn));
   }
 
   Future<void> startAutoRefresh() async {
@@ -223,10 +236,6 @@ class ServerProvider extends ChangeNotifier {
 
       // Only reconnect if neccessary
       if (newSpi.shouldReconnect(old)) {
-        _servers[newSpi.id]?.client = await genClient(
-          newSpi,
-          timeout: Stores.setting.timeoutD,
-        );
         refreshData(spi: newSpi);
       }
 
@@ -262,6 +271,7 @@ class ServerProvider extends ChangeNotifier {
         s.client = await genClient(
           spi,
           timeout: Stores.setting.timeoutD,
+          jumpSpi: spi.jumpId == null ? null : Stores.server.box.get(spi.jumpId),
         );
       } catch (e) {
         _limiter.inc(sid);

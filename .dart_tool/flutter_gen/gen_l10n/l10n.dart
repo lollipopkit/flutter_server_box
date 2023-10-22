@@ -722,6 +722,12 @@ abstract class S {
   /// **'Is busy now'**
   String get isBusy;
 
+  /// No description provided for @jumpServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Jump server'**
+  String get jumpServer;
+
   /// No description provided for @keepForeground.
   ///
   /// In en, this message translates to:

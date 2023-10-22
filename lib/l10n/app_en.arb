@@ -104,6 +104,7 @@
   "invalidVersion": "Invalid version",
   "invalidVersionHelp": "Please make sure that docker is installed correctly, or that you are using a non-self-compiled version. If you don't have the above issues, please submit an issue on {url}.",
   "isBusy": "Is busy now",
+  "jumpServer": "Jump server",
   "keepForeground": "Keep app foreground!",
   "keyAuth": "Key Auth",
   "keyboardCompatibility": "Possible to improve input method compatibility",

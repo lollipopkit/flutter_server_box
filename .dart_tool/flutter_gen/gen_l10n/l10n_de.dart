@@ -337,6 +337,9 @@ class SDe extends S {
   String get isBusy => 'Is busy now';
 
   @override
+  String get jumpServer => 'Server springen';
+
+  @override
   String get keepForeground => 'Stelle sicher, dass die App geöffnet bleibt.';
 
   @override

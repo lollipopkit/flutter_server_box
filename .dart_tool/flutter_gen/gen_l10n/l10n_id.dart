@@ -337,6 +337,9 @@ class SId extends S {
   String get isBusy => 'Sibuk sekarang';
 
   @override
+  String get jumpServer => 'Lompat server';
+
+  @override
   String get keepForeground => 'Simpan Aplikasi Foreground!';
 
   @override

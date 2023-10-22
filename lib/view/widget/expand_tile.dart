@@ -5,6 +5,7 @@ const _shape = Border();
 class ExpandTile extends ExpansionTile {
   const ExpandTile({
     super.key,
+    super.leading,
     required super.title,
     super.children,
     super.subtitle,

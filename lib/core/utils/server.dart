@@ -45,16 +45,18 @@ Future<SSHClient> genClient(
   ServerPrivateInfo spi, {
   void Function(GenSSHClientStatus)? onStatus,
   String? privateKey,
-  Duration? timeout,
+  Duration timeout = const Duration(seconds: 5),
+
+  /// [ServerPrivateInfo] of the jump server
+  ServerPrivateInfo? jumpSpi,
 }) async {
   onStatus?.call(GenSSHClientStatus.socket);
-  late SSHSocket socket;
-  final duration = timeout ?? const Duration(seconds: 5);
+  SSHSocket? socket;
   try {
     socket = await SSHSocket.connect(
       spi.ip,
       spi.port,
-      timeout: duration,
+      timeout: timeout,
     );
   } catch (e) {
     if (spi.alterUrl == null) rethrow;
@@ -63,17 +65,29 @@ Future<SSHClient> genClient(
       socket = await SSHSocket.connect(
         ipPort.ip,
         ipPort.port,
-        timeout: duration,
+        timeout: timeout,
       );
     } catch (e) {
       rethrow;
     }
   }
 
+  final forward = await () async {
+    if (jumpSpi != null) {
+      final jumpClient = await genClient(
+        jumpSpi,
+        privateKey: privateKey,
+        timeout: timeout,
+      );
+      // Use `0.0.0.0` as localhost to use all interfaces.
+      return await jumpClient.forwardLocal(spi.ip, spi.port, localHost: '0.0.0.0');
+    }
+  }();
+
   if (spi.pubKeyId == null) {
     onStatus?.call(GenSSHClientStatus.pwd);
     return SSHClient(
-      socket,
+      forward ?? socket,
       username: spi.user,
       onPasswordRequest: () => spi.pwd,
     );
@@ -82,7 +96,7 @@ Future<SSHClient> genClient(
 
   onStatus?.call(GenSSHClientStatus.key);
   return SSHClient(
-    socket,
+    forward ?? socket,
     username: spi.user,
     identities: await compute(loadIndentity, privateKey),
   );

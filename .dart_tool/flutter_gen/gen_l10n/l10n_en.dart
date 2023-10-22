@@ -337,6 +337,9 @@ class SEn extends S {
   String get isBusy => 'Is busy now';
 
   @override
+  String get jumpServer => 'Jump server';
+
+  @override
   String get keepForeground => 'Keep app foreground!';
 
   @override

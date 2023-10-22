@@ -337,6 +337,9 @@ class SZh extends S {
   String get isBusy => '当前正忙';
 
   @override
+  String get jumpServer => '跳板服务器';
+
+  @override
   String get keepForeground => '请保持应用处于前台！';
 
   @override
@@ -1094,6 +1097,9 @@ class SZhTw extends SZh {
 
   @override
   String get isBusy => '當前正忙';
+
+  @override
+  String get jumpServer => '跳板服務器';
 
   @override
   String get keepForeground => '請保持應用處於前台！';

@@ -95,11 +95,11 @@ void _setupProviders() {
 Future<void> _initHive() async {
   await Hive.initFlutter();
   // 以 typeId 为顺序
-  Hive.registerAdapter(PrivateKeyInfoAdapter());
-  Hive.registerAdapter(SnippetAdapter());
-  Hive.registerAdapter(ServerPrivateInfoAdapter());
-  Hive.registerAdapter(VirtKeyAdapter());
-  Hive.registerAdapter(NetViewTypeAdapter());
+  Hive.registerAdapter(PrivateKeyInfoAdapter()); // 1
+  Hive.registerAdapter(SnippetAdapter()); // 2
+  Hive.registerAdapter(ServerPrivateInfoAdapter()); // 3
+  Hive.registerAdapter(VirtKeyAdapter()); // 4
+  Hive.registerAdapter(NetViewTypeAdapter()); // 5
 }
 
 void _setupLogger() {

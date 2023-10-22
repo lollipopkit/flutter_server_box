@@ -5,6 +5,7 @@ import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/data/res/provider.dart';
+import 'package:toolbox/view/widget/expand_tile.dart';
 
 import '../../../core/route.dart';
 import '../../../data/model/server/private_key_info.dart';
@@ -43,6 +44,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
 
   final _keyIdx = ValueNotifier<int?>(null);
   final _autoConnect = ValueNotifier(true);
+  final _jumpServer = ValueNotifier<String?>(null);
 
   var _tags = <String>[];
 
@@ -71,6 +73,9 @@ class _ServerEditPageState extends State<ServerEditPage> {
       }
       if (widget.spi?.autoConnect != null) {
         _autoConnect.value = widget.spi!.autoConnect!;
+      }
+      if (widget.spi?.jumpId != null) {
+        _jumpServer.value = widget.spi!.jumpId;
       }
     }
   }
@@ -189,6 +194,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         onRenameTag: Pros.server.renameTag,
       ),
       _buildAuth(),
+      _buildJumpServer(),
       ListTile(
         title: Text(l10n.autoConnect),
         trailing: ValueBuilder(
@@ -316,6 +322,45 @@ class _ServerEditPageState extends State<ServerEditPage> {
     );
   }
 
+  Widget _buildJumpServer() {
+    return ValueBuilder(
+      listenable: _jumpServer,
+      build: () {
+        final children = Pros.server.servers
+            .where((element) => element.spi.jumpId == null)
+            .where((element) => element.spi.id != widget.spi?.id)
+            .map(
+              (e) => ListTile(
+                title: Text(e.spi.name),
+                subtitle: Text(e.spi.id, style: UIs.textGrey),
+                trailing: Radio<String>(
+                  groupValue: _jumpServer.value,
+                  value: e.spi.id,
+                  onChanged: (val) => _jumpServer.value = val,
+                ),
+                onTap: () {
+                  _jumpServer.value = e.spi.id;
+                },
+              ),
+            )
+            .toList();
+        children.add(ListTile(
+          title: Text(l10n.clear),
+          trailing: const Icon(Icons.clear),
+          onTap: () => _jumpServer.value = null,
+        ));
+        return CardX(
+          ExpandTile(
+            leading: const Icon(Icons.map),
+            initiallyExpanded: _jumpServer.value != null,
+            title: Text(l10n.jumpServer),
+            children: children,
+          ),
+        );
+      },
+    );
+  }
+
   void _onSave() async {
     if (_ipController.text.isEmpty) {
       context.showSnackBar(l10n.plzEnterHost);
@@ -364,6 +409,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
       tags: _tags,
       alterUrl: _altUrlController.text.isEmpty ? null : _altUrlController.text,
       autoConnect: _autoConnect.value,
+      jumpId: _jumpServer.value,
     );
 
     if (widget.spi == null) {

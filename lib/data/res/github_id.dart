@@ -39,5 +39,7 @@ class GithubIds {
     'fanzhebufan1',
     'wcbing',
     'balh55y',
+    'wc7086',
+    'michaelsara'
   };
 }

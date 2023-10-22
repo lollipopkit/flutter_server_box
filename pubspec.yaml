@@ -19,7 +19,10 @@ dependencies:
   after_layout: ^1.1.0
   url_launcher: ^6.1.8
   countly_flutter: ^23.6.0
-  dartssh2: ^2.8.2
+  dartssh2:
+    git:
+      ref: master
+      url: https://github.com/TerminalStudio/dartssh2
   logging: ^1.0.2
   circle_chart:
     git:

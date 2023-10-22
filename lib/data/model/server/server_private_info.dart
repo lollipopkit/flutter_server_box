@@ -27,6 +27,10 @@ class ServerPrivateInfo {
   @HiveField(8)
   final bool? autoConnect;
 
+  /// [id] of the jump server
+  @HiveField(9)
+  final String? jumpId;
+
   final String id;
 
   const ServerPrivateInfo({
@@ -39,9 +43,9 @@ class ServerPrivateInfo {
     this.tags,
     this.alterUrl,
     this.autoConnect,
+    this.jumpId,
   }) : id = '$user@$ip:$port';
 
-  /// TODO: if any field is changed, remember to update [id] [name]
   ServerPrivateInfo.fromJson(Map<String, dynamic> json)
       : ip = json["ip"].toString(),
         port = json["port"] ?? 22,
@@ -54,7 +58,8 @@ class ServerPrivateInfo {
         pubKeyId = json["pubKeyId"]?.toString(),
         tags = json["tags"]?.cast<String>(),
         alterUrl = json["alterUrl"]?.toString(),
-        autoConnect = json["autoConnect"];
+        autoConnect = json["autoConnect"],
+        jumpId = json["jumpId"];
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
@@ -67,16 +72,19 @@ class ServerPrivateInfo {
     data["tags"] = tags;
     data["alterUrl"] = alterUrl;
     data["autoConnect"] = autoConnect;
+    data["jumpId"] = jumpId;
     return data;
   }
 
   Server? get server => Pros.server.pick(spi: this);
+  Server? get jumpServer => Pros.server.pick(id: jumpId);
 
   bool shouldReconnect(ServerPrivateInfo old) {
     return id != old.id ||
         pwd != old.pwd ||
         pubKeyId != old.pubKeyId ||
-        alterUrl != old.alterUrl;
+        alterUrl != old.alterUrl ||
+        jumpId != old.jumpId;
   }
 
   _IpPort fromStringUrl() {

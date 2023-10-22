@@ -104,6 +104,7 @@
   "invalidVersion": "不支持的版本",
   "invalidVersionHelp": "请确保正确安装了docker，或者使用的非自编译版本。如果没有以上问题，请在 {url} 提交问题。",
   "isBusy": "当前正忙",
+  "jumpServer": "跳板服务器",
   "keepForeground": "请保持应用处于前台！",
   "keyAuth": "密钥认证",
   "keyboardCompatibility": "可能会改善输入法兼容性",

@@ -104,6 +104,7 @@
   "invalidVersion": "Versi tidak valid",
   "invalidVersionHelp": "Pastikan Docker diinstal dengan benar, atau Anda menggunakan versi yang tidak dikompilasi. Jika Anda tidak memiliki masalah di atas, silakan kirimkan masalah pada {url}.",
   "isBusy": "Sibuk sekarang",
+  "jumpServer": "Lompat server",
   "keepForeground": "Simpan Aplikasi Foreground!",
   "keyAuth": "Auth kunci",
   "keyboardCompatibility": "Mungkin untuk meningkatkan kompatibilitas metode input",
