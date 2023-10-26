@@ -1,34 +1,8 @@
-import 'dart:io';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/services.dart';
 import 'package:plain_notification_token/plain_notification_token.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/res/provider.dart';
 
-Future<bool> shareFiles(List<String> filePaths) async {
-  for (final filePath in filePaths) {
-    if (!await File(filePath).exists()) {
-      return false;
-    }
-  }
-  var text = '';
-  if (filePaths.length == 1) {
-    text = filePaths.first.split('/').last;
-  } else {
-    text = '${filePaths.length} ${l10n.files}';
-  }
-  Pros.app.moveBg = false;
-  // ignore: deprecated_member_use
-  await Share.shareFiles(filePaths, subject: text);
-  Pros.app.moveBg = true;
-  return filePaths.isNotEmpty;
-}
-
-void copy2Clipboard(String text) {
-  Clipboard.setData(ClipboardData(text: text));
-}
 
 Future<String?> pickOneFile() async {
   Pros.app.moveBg = false;

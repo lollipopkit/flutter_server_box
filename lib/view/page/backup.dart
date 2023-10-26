@@ -10,9 +10,9 @@ import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/core/utils/icloud.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
+import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/data/model/app/backup.dart';
 import 'package:toolbox/data/res/logger.dart';
-import 'package:toolbox/data/res/path.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/rebuild.dart';
 import 'package:toolbox/data/res/store.dart';
@@ -20,7 +20,6 @@ import 'package:toolbox/view/widget/expand_tile.dart';
 import 'package:toolbox/view/widget/cardx.dart';
 import 'package:toolbox/view/widget/store_switch.dart';
 import 'package:toolbox/view/widget/value_notifier.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/utils/misc.dart';
 import '../../data/res/ui.dart';
@@ -149,17 +148,14 @@ class BackupPage extends StatelessWidget {
   }
 
   Future<void> _onBackup() async {
-    await Backup.backup();
-    final path = await Paths.bak;
+    final path = await Backup.backup();
 
     /// Issue #188
     if (isWindows) {
-      await launchUrl(
-        File(path).uri,
-        mode: LaunchMode.externalNonBrowserApplication,
-      );
+      await Shares.text(await File(path).readAsString());
+
     } else {
-      await shareFiles([path]);
+      await Shares.files([path]);
     }
   }
 

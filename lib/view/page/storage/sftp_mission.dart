@@ -5,10 +5,10 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/datetime.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/route.dart';
+import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/data/res/provider.dart';
 
 import '../../../core/extension/numx.dart';
-import '../../../core/utils/misc.dart';
 import '../../../data/model/sftp/req.dart';
 import '../../../data/provider/sftp.dart';
 import '../../../data/res/ui.dart';
@@ -72,7 +72,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
                   },
                   icon: const Icon(Icons.file_open)),
               IconButton(
-                onPressed: () => shareFiles([status.req.localPath]),
+                onPressed: () => Shares.files([status.req.localPath]),
                 icon: const Icon(Icons.open_in_new),
               )
             ],

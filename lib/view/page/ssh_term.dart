@@ -11,6 +11,7 @@ import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
+import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/provider/virtual_keyboard.dart';
 import 'package:toolbox/data/res/provider.dart';
@@ -249,7 +250,7 @@ class _SSHPageState extends State<SSHPage> {
       case VirtualKeyFunc.clipboard:
         final selected = terminalSelected;
         if (selected != null) {
-          copy2Clipboard(selected);
+          Shares.copy(selected);
         } else {
           _paste();
         }

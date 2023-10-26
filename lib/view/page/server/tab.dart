@@ -9,12 +9,12 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/media_queryx.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
+import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 
 import '../../../core/route.dart';
-import '../../../core/utils/misc.dart';
 import '../../../data/model/app/net_view.dart';
 import '../../../data/model/server/disk.dart';
 import '../../../data/model/server/server.dart';
@@ -412,7 +412,7 @@ class _ServerPageState extends State<ServerPage>
       ),
       actions: [
         TextButton(
-          onPressed: () => copy2Clipboard(ss.failedInfo!),
+          onPressed: () => Shares.copy(ss.failedInfo!),
           child: Text(l10n.copy),
         )
       ],

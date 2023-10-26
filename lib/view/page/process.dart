@@ -7,7 +7,7 @@ import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
-import 'package:toolbox/core/utils/misc.dart';
+import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/data/res/store.dart';
 
 import '../../data/model/app/shell_func.dart';
@@ -111,7 +111,7 @@ class _ProcessPageState extends State<ProcessPage> {
           child: SingleChildScrollView(child: Text(_result.error!)),
           actions: [
             TextButton(
-              onPressed: () => copy2Clipboard(_result.error!),
+              onPressed: () => Shares.copy(_result.error!),
               child: Text(l10n.copy),
             ),
           ],

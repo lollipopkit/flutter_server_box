@@ -6,7 +6,7 @@ import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
-import 'package:toolbox/core/utils/misc.dart';
+import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/view/widget/value_notifier.dart';
 
@@ -89,7 +89,7 @@ class _PingPageState extends State<PingPage>
         child: Text(e.toString()),
         actions: [
           TextButton(
-            onPressed: () => copy2Clipboard(e.toString()),
+            onPressed: () => Shares.copy(e.toString()),
             child: Text(l10n.copy),
           ),
         ],

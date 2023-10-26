@@ -81,7 +81,7 @@ Platform | Support | Sign
 - In order to push  server status to your portable device without opening ServerBox app (Such as **message push** and **home widget**), you need to install [ServerBoxMonitor](https://github.com/lollipopkit/server_box_monitor) on your servers, and config it correctly. See [wiki](https://github.com/lollipopkit/server_box_monitor/wiki) for more details.
 - **Common issues** can be found in [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki).
 - If you have **any question or feature request**, please open a [discussion](https://github.com/lollipopkit/flutter_server_box/discussions/new/choose).  
--  If ServerBox app has **any bug**, please open an [issue](https://github.com/lollipopkit/flutter_server_box/issues/new).
+- If ServerBox app has **any bug**, please open an [issue](https://github.com/lollipopkit/flutter_server_box/issues/new) with **screenshots of ENTIRE LOG page** (at top right of home page). 
 
 
 ## 🧱 Contribution

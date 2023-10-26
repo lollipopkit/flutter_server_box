@@ -308,14 +308,13 @@ class ServerProvider extends ChangeNotifier {
         try {
           Loggers.app.warning('Using SFTP to write script to ${spi.name}');
           file.writeAsString(ShellFunc.allScript);
-          final sftp = Pros.sftp;
           final completer = Completer();
-          final reqId = sftp.add(
+          final reqId = Pros.sftp.add(
             SftpReq(spi, installShellPath, localPath, SftpReqType.upload),
             completer: completer,
           );
           await completer.future;
-          final err = sftp.get(reqId)?.error;
+          final err = Pros.sftp.get(reqId)?.error;
           if (err != null) {
             throw err;
           }

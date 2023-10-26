@@ -5,6 +5,7 @@ import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
+import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/sftp/req.dart';
 import 'package:toolbox/data/res/misc.dart';
@@ -303,7 +304,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
             leading: const Icon(Icons.open_in_new),
             title: Text(l10n.open),
             onTap: () {
-              shareFiles([file.absolute.path]);
+              Shares.files([file.absolute.path]);
             },
           ),
         ],

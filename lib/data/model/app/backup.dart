@@ -63,9 +63,11 @@ class Backup {
         dockerHosts = Stores.docker.fetchAll(),
         settings = Stores.setting.toJson();
 
-  static Future<void> backup() async {
+  static Future<String> backup() async {
     final result = _diyEncrtpt(json.encode(Backup.loadFromStore()));
-    await File(await Paths.bak).writeAsString(result);
+    final path = await Paths.bak;
+    await File(path).writeAsString(result);
+    return path;
   }
 
   Future<void> restore() async {

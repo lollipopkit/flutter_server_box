@@ -7,6 +7,7 @@ import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/core/utils/platform/auth.dart';
+import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/store.dart';
@@ -58,7 +59,7 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
         padding: EdgeInsets.zero,
         onPressed: () {
           if (_pushToken.value != null) {
-            copy2Clipboard(_pushToken.value!);
+            Shares.copy(_pushToken.value!);
             context.showSnackBar(l10n.success);
           } else {
             context.showSnackBar(l10n.getPushTokenFailed);
