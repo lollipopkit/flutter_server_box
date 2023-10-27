@@ -39,6 +39,9 @@ class PersistentStore<E> {
         files.map((e) => e.path.replaceFirst('$docPath/', '')).toList();
     return paths;
   }
+
+  /// Convert db to json
+  Map<String, dynamic> toJson() => {for (var e in box.keys) e: box.get(e)};
 }
 
 abstract class StorePropertyBase<T> {

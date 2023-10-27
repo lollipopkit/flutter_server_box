@@ -247,12 +247,12 @@ class _ServerPageState extends State<ServerPage>
           IconButton(
             onPressed: () => _askFor(
               func: () async {
-                if (Stores.first.showSuspendTip.fetch()) {
+                if (Stores.setting.showSuspendTip.fetch()) {
                   await context.showRoundDialog(
                     title: Text(l10n.attention),
                     child: Text(l10n.suspendTip),
                   );
-                  Stores.first.showSuspendTip.put(false);
+                  Stores.setting.showSuspendTip.put(false);
                 }
                 srv.client?.execWithPwd(
                   ShellFunc.suspend.exec,

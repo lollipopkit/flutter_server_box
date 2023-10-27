@@ -44,13 +44,13 @@ class BackupPage extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(17),
       children: [
-        if (isMacOS || isIOS) _buildIcloudSync(context),
-        _buildManual(context),
+        if (isMacOS || isIOS) _buildIcloud(context),
+        _buildFile(context),
       ],
     );
   }
 
-  Widget _buildManual(BuildContext context) {
+  Widget _buildFile(BuildContext context) {
     return CardX(
       ExpandTile(
         title: Text(l10n.files),
@@ -75,7 +75,7 @@ class BackupPage extends StatelessWidget {
     );
   }
 
-  Widget _buildIcloudSync(BuildContext context) {
+  Widget _buildIcloud(BuildContext context) {
     return CardX(
       ExpandTile(
         title: const Text('iCloud'),
@@ -109,8 +109,8 @@ class BackupPage extends StatelessWidget {
                 if (icloudLoading.value) {
                   return UIs.centerSizedLoadingSmall;
                 }
-                return SizedBox(
-                  width: 120,
+                return ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 137),
                   child: Row(
                     children: [
                       TextButton(
@@ -153,7 +153,6 @@ class BackupPage extends StatelessWidget {
     /// Issue #188
     if (isWindows) {
       await Shares.text(await File(path).readAsString());
-
     } else {
       await Shares.files([path]);
     }
@@ -195,10 +194,10 @@ class BackupPage extends StatelessWidget {
           ),
           TextButton(
             onPressed: () async {
-              backup.restore();
+              await backup.restore();
+              Pros.reload();
               context.pop();
               RebuildNodes.app.rebuild();
-              Pros.reload();
             },
             child: Text(l10n.ok),
           ),

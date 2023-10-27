@@ -1,5 +1,4 @@
 import 'package:get_it/get_it.dart';
-import 'package:toolbox/data/store/first.dart';
 
 import 'data/provider/app.dart';
 import 'data/provider/debug.dart';
@@ -58,10 +57,6 @@ Future<void> _setupLocatorForStores() async {
   final history = HistoryStore();
   await history.init();
   locator.registerSingleton(history);
-
-  final first = FirstStore();
-  await first.init();
-  locator.registerSingleton(first);
 }
 
 Future<void> setupLocator() async {

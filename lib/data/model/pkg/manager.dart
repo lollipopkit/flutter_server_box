@@ -68,7 +68,9 @@ enum PkgManager {
         list.removeWhere((element) => element.isEmpty);
         final endLine = list.lastIndexWhere(
             (element) => element.contains('Obsoleting Packages'));
-        list = list.sublist(0, endLine);
+        if (endLine != -1 && list.isNotEmpty) {
+          list = list.sublist(0, endLine);
+        }
         break;
       case PkgManager.apt:
         // avoid other outputs

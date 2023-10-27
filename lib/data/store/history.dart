@@ -1,12 +1,9 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:toolbox/core/persistant_store.dart';
 
-typedef _HistoryList = List<String>;
-typedef _HistoryMap = Map<String, String>;
-
 /// index from 0 -> n : latest -> oldest
 class _ListHistory {
-  final _HistoryList _history;
+  final List _history;
   final String _name;
   final Box _box;
 
@@ -15,7 +12,7 @@ class _ListHistory {
     required String name,
   })  : _box = box,
         _name = name,
-        _history = box.get(name, defaultValue: <String>[])!;
+        _history = box.get(name, defaultValue: [])!;
 
   void add(String path) {
     _history.remove(path);
@@ -23,11 +20,11 @@ class _ListHistory {
     _box.put(_name, _history);
   }
 
-  _HistoryList get all => _history;
+  List get all => _history;
 }
 
 class _MapHistory {
-  final _HistoryMap _history;
+  final Map _history;
   final String _name;
   final Box _box;
 
@@ -36,7 +33,7 @@ class _MapHistory {
     required String name,
   })  : _box = box,
         _name = name,
-        _history = box.get(name, defaultValue: <String, String>{})!;
+        _history = box.get(name, defaultValue: <dynamic, dynamic>{})!;
 
   void put(String id, String val) {
     _history[id] = val;

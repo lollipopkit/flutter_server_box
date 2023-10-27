@@ -208,8 +208,10 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
               if (!Stores.setting.recordHistory.fetch()) {
                 return [];
               }
-              return Stores.history.sftpGoPath.all.where(
-                (element) => element.contains(val.text),
+              return List<String>.from(
+                Stores.history.sftpGoPath.all.where(
+                  (element) => element.contains(val.text),
+                ),
               );
             },
             fieldViewBuilder: (_, controller, node, __) {

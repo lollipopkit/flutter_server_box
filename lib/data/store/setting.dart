@@ -8,9 +8,6 @@ import '../res/default.dart';
 class SettingStore extends PersistentStore {
   SettingStore() : super('setting');
 
-  /// Convert all settings into json
-  Map<String, dynamic> toJson() => {for (var e in box.keys) e: box.get(e)};
-
   // ------BEGIN------
   //
   // These settings are not displayed in the settings page
@@ -219,6 +216,9 @@ class SettingStore extends PersistentStore {
 
   /// Open SFTP with last viewed path
   late final sftpOpenLastPath = StoreProperty(box, 'sftpOpenLastPath', true);
+
+  /// Show tip of suspend
+  late final showSuspendTip = StoreProperty(box, 'showSuspendTip', true);
 
   // Never show these settings for users
   //

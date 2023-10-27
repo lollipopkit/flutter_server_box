@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toolbox/core/channel/bg_run.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
+import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 
@@ -59,7 +60,10 @@ void _runInZone(void Function() body) {
 
   runZonedGuarded(
     body,
-    (obj, trace) => Analysis.recordException(trace),
+    (obj, trace) {
+      Analysis.recordException(trace);
+      Loggers.root.warning(obj, trace);
+    },
     zoneSpecification: zoneSpec,
   );
 }
@@ -94,7 +98,7 @@ void _setupProviders() {
 
 Future<void> _initHive() async {
   await Hive.initFlutter();
-  // 以 typeId 为顺序
+  // Ordered by typeId
   Hive.registerAdapter(PrivateKeyInfoAdapter()); // 1
   Hive.registerAdapter(SnippetAdapter()); // 2
   Hive.registerAdapter(ServerPrivateInfoAdapter()); // 3
