@@ -3,7 +3,6 @@ import 'package:plain_notification_token/plain_notification_token.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/res/provider.dart';
 
-
 Future<String?> pickOneFile() async {
   Pros.app.moveBg = false;
   final result = await FilePicker.platform.pickFiles(type: FileType.any);

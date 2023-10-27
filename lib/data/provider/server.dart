@@ -267,7 +267,7 @@ class ServerProvider extends ChangeNotifier {
 
       final time1 = DateTime.now();
 
-      try { 
+      try {
         if (s.isGenerating) return;
         s.isGenerating = true;
         s.client = await genClient(
@@ -323,6 +323,7 @@ class ServerProvider extends ChangeNotifier {
           s.status.failedInfo = e.toString();
           _setServerState(s, ServerState.failed);
           Loggers.app.warning('Write script to ${spi.name} failed', e);
+          return;
         } finally {
           await file.delete();
         }

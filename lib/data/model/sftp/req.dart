@@ -78,14 +78,12 @@ class SftpReqStatus {
       case int:
         size = event;
         break;
-      case Exception:
-        error = event;
-        break;
       case Duration:
         spentTime = event;
         break;
       default:
-        error = Exception('unknown event: $event');
+        error = Exception('sftp worker event: $event');
+        dispose();
     }
     notifyListeners();
   }
