@@ -325,7 +325,7 @@ class ServerProvider extends ChangeNotifier {
           Loggers.app.warning('Write script to ${spi.name} failed', e);
           return;
         } finally {
-          await file.delete();
+          if (await file.exists()) await file.delete();
         }
       }
     }

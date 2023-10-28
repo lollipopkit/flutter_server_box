@@ -62,7 +62,7 @@ void _runInZone(void Function() body) {
     body,
     (obj, trace) {
       Analysis.recordException(trace);
-      Loggers.root.warning(obj, trace);
+      Loggers.root.warning(obj);
     },
     zoneSpecification: zoneSpec,
   );

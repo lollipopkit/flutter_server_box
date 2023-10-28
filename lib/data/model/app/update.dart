@@ -133,9 +133,7 @@ class AppUpdatePlatformSpecific<T> {
         return linux;
 
       /// Not implemented yet.
-      case OS.web:
-      case OS.fuchsia:
-      case OS.unknown:
+      case OS.web || OS.fuchsia || OS.unknown:
         return null;
     }
   }
