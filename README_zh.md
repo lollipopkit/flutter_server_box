@@ -77,6 +77,7 @@
 
 
 ## 🆘 帮助
+- 如果想要反馈问题 吹水 参与开发，QQ群 762870488
 - 为了可以在不使用 ServerBox app 时获取服务器状态（例如：桌面小部件、推送服务），你需要在你的服务器上安装 [ServerBoxMonitor](https://github.com/lollipopkit/server_box_monitor)，并且正确配置，详情可见 [wiki](https://github.com/lollipopkit/server_box_monitor/wiki/%E4%B8%BB%E9%A1%B5)。
 - **常见问题**可以在 [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki/主页) 查看。
 - 如果你有**任何问题或者功能请求**，请在 [讨论](https://github.com/lollipopkit/flutter_server_box/discussions/new/choose) 中交流。

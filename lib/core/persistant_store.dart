@@ -65,7 +65,11 @@ class StoreProperty<T> implements StorePropertyBase<T> {
 
   @override
   T fetch() {
-    return _box.get(_key, defaultValue: defaultValue)!;
+    final stored = _box.get(_key);
+    if (stored == null || stored is! T) {
+      return defaultValue;
+    }
+    return stored;
   }
 
   @override

@@ -34,3 +34,6 @@ String? getFileName(String? path) {
 String pathJoin(String path1, String path2) {
   return path1 + (path1.endsWith('/') ? '' : '/') + path2;
 }
+
+/// Check if a url is a file url (ends with a file extension)
+bool isFileUrl(String url) => url.split('/').last.contains('.');

@@ -6,6 +6,7 @@ import 'package:r_upgrade/r_upgrade.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
+import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/model/app/update.dart';
 import 'package:toolbox/data/res/logger.dart';
@@ -48,7 +49,7 @@ Future<void> doUpdate(BuildContext context, {bool force = false}) async {
 
   final url = update.url.current!;
 
-  if ((isAndroid || isMacOS) && !await isFileAvailable(url)) {
+  if (isFileUrl(url) && !await isFileAvailable(url)) {
     Loggers.app.warning('Update file not available');
     return;
   }
