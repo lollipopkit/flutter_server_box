@@ -263,7 +263,7 @@ class _SettingPageState extends State<SettingPage> {
         return ListTile(
           title: Text(l10n.autoCheckUpdate),
           subtitle: Text(display, style: UIs.textGrey),
-          onTap: () => doUpdate(ctx, force: true),
+          onTap: () => doUpdate(ctx),
           trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),
         );
       },

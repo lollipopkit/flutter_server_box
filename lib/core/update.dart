@@ -8,15 +8,14 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
+import 'package:toolbox/core/utils/ui.dart';
 import 'package:toolbox/data/model/app/update.dart';
+import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/path.dart';
 import 'package:toolbox/data/res/provider.dart';
-
-import '../data/res/build_data.dart';
-import '../data/service/app.dart';
-import '../locator.dart';
-import 'utils/ui.dart';
+import 'package:toolbox/data/service/app.dart';
+import 'package:toolbox/locator.dart';
 
 Future<bool> isFileAvailable(String url) async {
   try {
