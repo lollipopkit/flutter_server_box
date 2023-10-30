@@ -18,8 +18,9 @@ class ServerPrivateInfo {
   final String user;
   @HiveField(4)
   final String? pwd;
+  /// [id] of private key
   @HiveField(5)
-  final String? pubKeyId;
+  final String? keyId;
   @HiveField(6)
   final List<String>? tags;
   @HiveField(7)
@@ -39,7 +40,7 @@ class ServerPrivateInfo {
     required this.port,
     required this.user,
     required this.pwd,
-    this.pubKeyId,
+    this.keyId,
     this.tags,
     this.alterUrl,
     this.autoConnect,
@@ -55,7 +56,7 @@ class ServerPrivateInfo {
         name = json["name"]?.toString() ??
             '${json["user"]?.toString() ?? 'root'}@${json["ip"].toString()}:${json["port"] ?? 22}',
         pwd = json["authorization"]?.toString(),
-        pubKeyId = json["pubKeyId"]?.toString(),
+        keyId = json["pubKeyId"]?.toString(),
         tags = json["tags"]?.cast<String>(),
         alterUrl = json["alterUrl"]?.toString(),
         autoConnect = json["autoConnect"],
@@ -68,7 +69,7 @@ class ServerPrivateInfo {
     data["port"] = port;
     data["user"] = user;
     data["authorization"] = pwd;
-    data["pubKeyId"] = pubKeyId;
+    data["pubKeyId"] = keyId;
     data["tags"] = tags;
     data["alterUrl"] = alterUrl;
     data["autoConnect"] = autoConnect;
@@ -82,7 +83,7 @@ class ServerPrivateInfo {
   bool shouldReconnect(ServerPrivateInfo old) {
     return id != old.id ||
         pwd != old.pwd ||
-        pubKeyId != old.pubKeyId ||
+        keyId != old.keyId ||
         alterUrl != old.alterUrl ||
         jumpId != old.jumpId;
   }

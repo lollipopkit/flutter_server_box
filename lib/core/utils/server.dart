@@ -44,63 +44,78 @@ String getPrivateKey(String id) {
 Future<SSHClient> genClient(
   ServerPrivateInfo spi, {
   void Function(GenSSHClientStatus)? onStatus,
+
+  /// Must pass this param when use multi-thread and key login
   String? privateKey,
+
+  /// Must pass this param when use multi-thread and key login
+  String? jumpPrivateKey,
   Duration timeout = const Duration(seconds: 5),
 
   /// [ServerPrivateInfo] of the jump server
+  ///
+  /// Must pass this param when use multi-thread and key login
   ServerPrivateInfo? jumpSpi,
-  String? jumpPrivateKey,
 }) async {
   onStatus?.call(GenSSHClientStatus.socket);
-  SSHSocket? socket;
-  try {
-    socket = await SSHSocket.connect(
-      spi.ip,
-      spi.port,
-      timeout: timeout,
-    );
-  } catch (e) {
-    if (spi.alterUrl == null) rethrow;
-    try {
-      final ipPort = spi.fromStringUrl();
-      socket = await SSHSocket.connect(
-        ipPort.ip,
-        ipPort.port,
-        timeout: timeout,
-      );
-    } catch (e) {
-      rethrow;
-    }
-  }
 
-  final forward = await () async {
-    if (jumpSpi != null) {
+  final socket = await () async {
+    // Proxy
+    final jumpSpi_ = () {
+      // Multi-thread or key login
+      if (jumpSpi != null) return jumpSpi;
+      // Main thread
+      if (spi.jumpId != null) return Stores.server.box.get(spi.jumpId);
+    }();
+    if (jumpSpi_ != null) {
       final jumpClient = await genClient(
-        jumpSpi,
+        jumpSpi_,
         privateKey: jumpPrivateKey,
         timeout: timeout,
       );
-      // Use `0.0.0.0` as localhost to use all interfaces.
+      
       return await jumpClient.forwardLocal(
         spi.ip,
         spi.port,
       );
     }
+
+    // Direct
+    try {
+      return await SSHSocket.connect(
+        spi.ip,
+        spi.port,
+        timeout: timeout,
+      );
+    } catch (e) {
+      if (spi.alterUrl == null) rethrow;
+      try {
+        final ipPort = spi.fromStringUrl();
+        return await SSHSocket.connect(
+          ipPort.ip,
+          ipPort.port,
+          timeout: timeout,
+        );
+      } catch (e) {
+        rethrow;
+      }
+    }
   }();
 
-  if (spi.pubKeyId == null) {
+  final keyId = spi.keyId;
+  if (keyId == null) {
     onStatus?.call(GenSSHClientStatus.pwd);
     return SSHClient(
-      forward ?? socket,
+      socket,
       username: spi.user,
       onPasswordRequest: () => spi.pwd,
     );
   }
-  privateKey ??= getPrivateKey(spi.pubKeyId!);
+  privateKey ??= getPrivateKey(keyId);
 
   onStatus?.call(GenSSHClientStatus.key);
   return SSHClient(
-    forward ?? socket,
+    socket,
     username: spi.user,
     identities: await compute(loadIndentity, privateKey),
   );

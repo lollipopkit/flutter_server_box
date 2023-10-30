@@ -280,14 +280,11 @@ class ServerProvider extends ChangeNotifier {
       _setServerState(s, ServerState.connecting);
 
       final time1 = DateTime.now();
-      final jumpSpi =
-          spi.jumpId == null ? null : Stores.server.box.get(spi.jumpId);
 
       try {
         s.client = await genClient(
           spi,
           timeout: Stores.setting.timeoutD,
-          jumpSpi: jumpSpi,
         );
       } catch (e) {
         _limiter.inc(sid);
@@ -304,8 +301,8 @@ class ServerProvider extends ChangeNotifier {
       if (spi.jumpId == null) {
         Loggers.app.info('Connected to ${spi.name} in $spentTime ms.');
       } else {
-        Loggers.app.info(
-            'Connected to ${spi.name} via ${jumpSpi?.name} in $spentTime ms.');
+        Loggers.app
+            .info('Connected to ${spi.name} via jump server in $spentTime ms.');
       }
 
       _setServerState(s, ServerState.connected);

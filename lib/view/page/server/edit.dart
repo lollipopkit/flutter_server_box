@@ -52,31 +52,26 @@ class _ServerEditPageState extends State<ServerEditPage> {
   void initState() {
     super.initState();
 
-    if (widget.spi != null) {
-      _nameController.text = widget.spi?.name ?? '';
-      _ipController.text = widget.spi?.ip ?? '';
-      _portController.text = (widget.spi?.port ?? 22).toString();
-      _usernameController.text = widget.spi?.user ?? '';
-      if (widget.spi?.pubKeyId == null) {
-        _passwordController.text = widget.spi?.pwd ?? '';
+    final spi = widget.spi;
+    if (spi != null) {
+      _nameController.text = spi.name;
+      _ipController.text = spi.ip;
+      _portController.text = spi.port.toString();
+      _usernameController.text = spi.user;
+      if (spi.keyId == null) {
+        _passwordController.text = spi.pwd ?? '';
       } else {
         _keyIdx.value = Pros.key.pkis.indexWhere(
-          (e) => e.id == widget.spi!.pubKeyId,
+          (e) => e.id == widget.spi!.keyId,
         );
       }
-      if (widget.spi?.tags != null) {
-        /// List in dart is passed by pointer, so you need to copy it here
-        _tags.addAll(widget.spi!.tags!);
-      }
-      if (widget.spi?.alterUrl != null) {
-        _altUrlController.text = widget.spi!.alterUrl!;
-      }
-      if (widget.spi?.autoConnect != null) {
-        _autoConnect.value = widget.spi!.autoConnect!;
-      }
-      if (widget.spi?.jumpId != null) {
-        _jumpServer.value = widget.spi!.jumpId;
-      }
+
+      /// List in dart is passed by pointer, so you need to copy it here
+      _tags.addAll(spi.tags ?? []);
+      
+      _altUrlController.text = spi.alterUrl ?? '';
+      _autoConnect.value = spi.autoConnect ?? true;
+      _jumpServer.value = spi.jumpId;
     }
   }
 
@@ -403,7 +398,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
       port: int.parse(_portController.text),
       user: _usernameController.text,
       pwd: _passwordController.text.isEmpty ? null : _passwordController.text,
-      pubKeyId: _keyIdx.value != null
+      keyId: _keyIdx.value != null
           ? Pros.key.pkis.elementAt(_keyIdx.value!).id
           : null,
       tags: _tags,

@@ -151,18 +151,18 @@ Future<void> _gotoSSH(
   }
 
   final path = await () async {
-    final tempKeyFileName = 'srvbox_pk_${spi.pubKeyId}';
+    final tempKeyFileName = 'srvbox_pk_${spi.keyId}';
 
     /// For security reason, save the private key file to app doc path
     return joinPath(await Paths.doc, tempKeyFileName);
   }();
   final file = File(path);
-  final shouldGenKey = spi.pubKeyId != null;
+  final shouldGenKey = spi.keyId != null;
   if (shouldGenKey) {
     if (await file.exists()) {
       await file.delete();
     }
-    await file.writeAsString(getPrivateKey(spi.pubKeyId!));
+    await file.writeAsString(getPrivateKey(spi.keyId!));
     extraArgs.addAll(["-i", path]);
   }
 
