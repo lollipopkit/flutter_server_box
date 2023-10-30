@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -110,8 +112,8 @@ void _setupLogger() {
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
     Pros.debug.addLog(record);
-    // ignore: avoid_print
     print(record);
+    if (record.stackTrace != null) print(record.stackTrace);
   });
 }
 

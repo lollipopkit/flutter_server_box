@@ -5,13 +5,7 @@ const seperator = 'SrvBoxSep';
 
 /// The suffix `\t` is for formatting
 const _cmdDivider = '\necho $seperator\n\t';
-
-const _serverBoxDir = r'$HOME/.config/server_box';
-
-/// Issue #159
-/// Use script commit count as version of shell script.
-/// So different version of app can run at the same time.
-const installShellPath = '$_serverBoxDir/mobile_v${BuildData.script}.sh';
+const _homeVar = '\$HOME';
 
 enum ShellFunc {
   status,
@@ -21,6 +15,31 @@ enum ShellFunc {
   reboot,
   suspend,
   ;
+
+  static const _serverBoxDir = '.config/server_box';
+  static const _scriptFileName = 'mobile_v${BuildData.script}.sh';
+
+  /// Issue #159
+  ///
+  /// Use script commit count as version of shell script.
+  ///
+  /// So different version of app can run at the same time.
+  ///
+  /// **Can't** use it in SFTP, because SFTP can't recognize `$HOME`
+  static String getShellPath(String home) =>
+      '$home/$_serverBoxDir/$_scriptFileName';
+
+  static final _installShellPath = getShellPath(_homeVar);
+
+  /// Issue #168
+  /// Use `sh` for compatibility
+  static final installShellCmd = """
+mkdir -p $_homeVar/$_serverBoxDir
+cat << 'EOF' > $_installShellPath
+${ShellFunc.allScript}
+EOF
+chmod +x $_installShellPath
+""";
 
   String get flag {
     switch (this) {
@@ -39,7 +58,7 @@ enum ShellFunc {
     }
   }
 
-  String get exec => 'sh $installShellPath -$flag';
+  String get exec => 'sh $_installShellPath -$flag';
 
   String get name {
     switch (this) {
@@ -241,13 +260,3 @@ const _bsdStatusCmd = [
   //'sysctl -a | grep temperature',
   'hostname',
 ];
-
-/// Issue #168
-/// Use `sh` for compatibility
-final installShellCmd = """
-mkdir -p $_serverBoxDir
-cat << 'EOF' > $installShellPath
-${ShellFunc.allScript}
-EOF
-chmod +x $installShellPath
-""";

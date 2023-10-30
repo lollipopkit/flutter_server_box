@@ -5,8 +5,8 @@ import 'package:toolbox/data/res/ui.dart';
 import '../../data/res/misc.dart';
 
 const _level2Color = {
-  '[INFO]': Colors.blue,
-  '[WARNING]': Colors.yellow,
+  'INFO': Colors.blue,
+  'WARNING': Colors.yellow,
 };
 
 class DebugProvider extends ChangeNotifier {

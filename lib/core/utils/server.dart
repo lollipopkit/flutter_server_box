@@ -49,6 +49,7 @@ Future<SSHClient> genClient(
 
   /// [ServerPrivateInfo] of the jump server
   ServerPrivateInfo? jumpSpi,
+  String? jumpPrivateKey,
 }) async {
   onStatus?.call(GenSSHClientStatus.socket);
   SSHSocket? socket;
@@ -76,14 +77,13 @@ Future<SSHClient> genClient(
     if (jumpSpi != null) {
       final jumpClient = await genClient(
         jumpSpi,
-        privateKey: privateKey,
+        privateKey: jumpPrivateKey,
         timeout: timeout,
       );
       // Use `0.0.0.0` as localhost to use all interfaces.
       return await jumpClient.forwardLocal(
         spi.ip,
         spi.port,
-        localHost: '0.0.0.0',
       );
     }
   }();

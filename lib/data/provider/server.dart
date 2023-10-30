@@ -246,6 +246,15 @@ class ServerProvider extends ChangeNotifier {
 
   void _setServerState(Server s, ServerState ss) {
     s.state = ss;
+
+    /// Only set [Sever.isBusy] to false when err occurs or finished.
+    switch (ss) {
+      case ServerState.failed || ServerState.finished:
+        s.isBusy = false;
+        break;
+      default:
+        break;
+    }
     notifyListeners();
   }
 
@@ -262,19 +271,23 @@ class ServerProvider extends ChangeNotifier {
       return;
     }
 
+    /// If busy, it may be because of network reasons that the last request
+    /// has not been completed, and the request should not be made again at this time.
+    if (s.isBusy) return;
+    s.isBusy = true;
+
     if (s.state.shouldConnect || (s.client?.isClosed ?? true)) {
       _setServerState(s, ServerState.connecting);
 
       final time1 = DateTime.now();
+      final jumpSpi =
+          spi.jumpId == null ? null : Stores.server.box.get(spi.jumpId);
 
       try {
-        if (s.isGenerating) return;
-        s.isGenerating = true;
         s.client = await genClient(
           spi,
           timeout: Stores.setting.timeoutD,
-          jumpSpi:
-              spi.jumpId == null ? null : Stores.server.box.get(spi.jumpId),
+          jumpSpi: jumpSpi,
         );
       } catch (e) {
         _limiter.inc(sid);
@@ -284,33 +297,43 @@ class ServerProvider extends ChangeNotifier {
         /// In order to keep privacy, print [spi.name] instead of [spi.id]
         Loggers.app.warning('Connect to ${spi.name} failed', e);
         return;
-      } finally {
-        s.isGenerating = false;
       }
 
       final time2 = DateTime.now();
       final spentTime = time2.difference(time1).inMilliseconds;
-      Loggers.app.info('Connected to ${spi.name} in $spentTime ms.');
+      if (spi.jumpId == null) {
+        Loggers.app.info('Connected to ${spi.name} in $spentTime ms.');
+      } else {
+        Loggers.app.info(
+            'Connected to ${spi.name} via ${jumpSpi?.name} in $spentTime ms.');
+      }
 
       _setServerState(s, ServerState.connected);
 
       // Write script to server
       // by ssh
       try {
-        final writeResult = await s.client?.run(installShellCmd).string;
+        final writeResult =
+            await s.client?.run(ShellFunc.installShellCmd).string;
         if (writeResult == null || writeResult.isNotEmpty) {
           throw Exception('$writeResult');
         }
       } catch (e) {
+        Loggers.app.warning('Write script to ${spi.name} by shell', e);
         // by sftp
         final localPath = joinPath(await Paths.doc, 'install.sh');
         final file = File(localPath);
         try {
-          Loggers.app.warning('Using SFTP to write script to ${spi.name}');
+          Loggers.app.info('Using SFTP to write script to ${spi.name}');
           file.writeAsString(ShellFunc.allScript);
           final completer = Completer();
+          final homePath = (await s.client?.run('echo \$HOME').string)?.trim();
+          if (homePath == null || homePath.isEmpty) {
+            throw Exception('Got home path: $homePath');
+          }
+          final remotePath = ShellFunc.getShellPath(homePath);
           final reqId = Pros.sftp.add(
-            SftpReq(spi, installShellPath, localPath, SftpReqType.upload),
+            SftpReq(spi, remotePath, localPath, SftpReqType.upload),
             completer: completer,
           );
           await completer.future;
@@ -322,7 +345,7 @@ class ServerProvider extends ChangeNotifier {
           _limiter.inc(sid);
           s.status.failedInfo = e.toString();
           _setServerState(s, ServerState.failed);
-          Loggers.app.warning('Write script to ${spi.name} failed', e);
+          Loggers.app.warning('Write script to ${spi.name} by sftp', e);
           return;
         } finally {
           if (await file.exists()) await file.delete();
@@ -382,11 +405,8 @@ class ServerProvider extends ChangeNotifier {
       return;
     }
 
-    if (s.state != ServerState.finished) {
-      _setServerState(s, ServerState.finished);
-    } else {
-      notifyListeners();
-    }
+    /// Call this every time for setting [Server.isBusy] to false
+    _setServerState(s, ServerState.finished);
     // reset try times only after prepared successfully
     _limiter.reset(sid);
   }
