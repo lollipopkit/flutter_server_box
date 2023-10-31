@@ -212,7 +212,7 @@ class _SettingPageState extends State<SettingPage> {
     return Column(
       children: [
         _buildMoveOutServerFuncBtns(),
-        _buildServerOrder(),
+        _buildSequence(),
         _buildNetViewType(),
         _buildUpdateInterval(),
         _buildMaxRetry(),
@@ -934,11 +934,11 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  Widget _buildServerOrder() {
+  Widget _buildSequence() {
     return ExpandTile(
-      title: Text(l10n.serverOrder),
+      title: Text(l10n.sequence),
       subtitle: Text(
-        '${l10n.serverOrder} / ${l10n.serverDetailOrder}',
+        '${l10n.serverOrder} / ${l10n.serverDetailOrder} ...',
         style: UIs.textGrey,
       ),
       children: [

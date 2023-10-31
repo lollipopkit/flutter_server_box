@@ -577,6 +577,9 @@ class SDe extends S {
   String get second => 's';
 
   @override
+  String get sequence => 'Sequenz';
+
+  @override
   String get server => 'Server';
 
   @override

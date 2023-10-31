@@ -23,6 +23,7 @@ class Defaults {
     'overlay',
     'run',
     'none',
+    'shm',
   ];
 
   static const sshVirtKeys = [

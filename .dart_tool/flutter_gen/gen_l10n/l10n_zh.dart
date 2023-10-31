@@ -577,6 +577,9 @@ class SZh extends S {
   String get second => '秒';
 
   @override
+  String get sequence => '顺序';
+
+  @override
   String get server => '服务器';
 
   @override
@@ -1346,6 +1349,9 @@ class SZhTw extends SZh {
 
   @override
   String get second => '秒';
+
+  @override
+  String get sequence => '順序';
 
   @override
   String get server => '服務器';

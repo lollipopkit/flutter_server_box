@@ -577,6 +577,9 @@ class SEn extends S {
   String get second => 's';
 
   @override
+  String get sequence => 'Sequence';
+
+  @override
   String get server => 'Server';
 
   @override

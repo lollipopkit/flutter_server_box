@@ -577,6 +577,9 @@ class SId extends S {
   String get second => 'S';
 
   @override
+  String get sequence => 'Urutan';
+
+  @override
   String get server => 'Server';
 
   @override

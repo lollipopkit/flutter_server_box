@@ -1190,6 +1190,12 @@ abstract class S {
   /// **'s'**
   String get second;
 
+  /// No description provided for @sequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Sequence'**
+  String get sequence;
+
   /// No description provided for @server.
   ///
   /// In en, this message translates to:

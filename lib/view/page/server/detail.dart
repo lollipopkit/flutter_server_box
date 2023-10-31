@@ -329,6 +329,11 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildDiskItem(Disk disk, ServerStatus ss) {
     final (read, write) = ss.diskIO.getReadSpeed(disk.dev);
+    final text = () {
+      final use = '${disk.usedPercent}% of ${disk.size}';
+      if (read == null || write == null) return use;
+      return '$use\n↑ $read | ↓ $write';
+    }();
     return ListTile(
       title: Text(
         disk.dev,
@@ -337,7 +342,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       ),
       contentPadding: const EdgeInsets.symmetric(vertical: 3, horizontal: 17),
       subtitle: Text(
-        '${disk.usedPercent}% of ${disk.size}\n↑ $read | ↓ $write',
+        text,
         style: UIs.textSize11,
         textScaleFactor: _textFactor,
       ),
@@ -374,7 +379,27 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       build: () {
         return CardX(
           ExpandTile(
-            title: Text(l10n.net),
+            title: Row(
+              children: [
+                Text(l10n.net),
+                UIs.width13,
+                InkWell(
+                  onTap: () {
+                    _netSortType.value = _netSortType.value.next;
+                  },
+                  child: Row(
+                    children: [
+                      const Icon(Icons.sort, size: 17),
+                      UIs.width7,
+                      Text(
+                        _netSortType.value.name,
+                        style: UIs.textSize11Grey,
+                      ),
+                    ],
+                  ),
+                )
+              ],
+            ),
             leading: const Icon(Icons.device_hub, size: 17),
             initiallyExpanded: children.length <= 7,
             children: children,
@@ -457,6 +482,17 @@ enum _NetSortType {
   bool get isDevice => this == _NetSortType.device;
   bool get isIn => this == _NetSortType.recv;
   bool get isOut => this == _NetSortType.trans;
+
+  _NetSortType get next {
+    switch (this) {
+      case device:
+        return trans;
+      case _NetSortType.trans:
+        return recv;
+      case recv:
+        return device;
+    }
+  }
 
   int Function(String, String) getSortFunc(NetSpeed ns) {
     switch (this) {
