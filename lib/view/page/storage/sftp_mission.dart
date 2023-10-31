@@ -52,6 +52,20 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
   }
 
   Widget _buildItem(SftpReqStatus status) {
+    final err = status.error;
+    if (err != null) {
+      return _wrapInCard(
+        status: status,
+        subtitle: l10n.error,
+        trailing: IconButton(
+          onPressed: () => context.showRoundDialog(
+            title: Text(l10n.error),
+            child: Text(err.toString()),
+          ),
+          icon: const Icon(Icons.error),
+        ),
+      );
+    }
     switch (status.status) {
       case SftpWorkerStatus.finished:
         final time = status.spentTime.toString();

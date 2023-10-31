@@ -73,7 +73,7 @@ Future<SSHClient> genClient(
         privateKey: jumpPrivateKey,
         timeout: timeout,
       );
-      
+
       return await jumpClient.forwardLocal(
         spi.ip,
         spi.port,

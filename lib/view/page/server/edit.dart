@@ -68,7 +68,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
 
       /// List in dart is passed by pointer, so you need to copy it here
       _tags.addAll(spi.tags ?? []);
-      
+
       _altUrlController.text = spi.alterUrl ?? '';
       _autoConnect.value = spi.autoConnect ?? true;
       _jumpServer.value = spi.jumpId;

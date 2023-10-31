@@ -18,6 +18,7 @@ class ServerPrivateInfo {
   final String user;
   @HiveField(4)
   final String? pwd;
+
   /// [id] of private key
   @HiveField(5)
   final String? keyId;
