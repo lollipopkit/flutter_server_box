@@ -199,7 +199,7 @@ enum StatusCmdType {
   tempType,
   tempVal,
   host,
-  ;
+  diskio;
 }
 
 /// Cmds for linux server
@@ -216,6 +216,7 @@ const _statusCmds = [
   'cat /sys/class/thermal/thermal_zone*/type',
   'cat /sys/class/thermal/thermal_zone*/temp',
   'hostname',
+  'cat /proc/diskstats',
 ];
 
 enum DockerCmdType {

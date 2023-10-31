@@ -4,10 +4,12 @@ import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/data/model/server/cpu.dart';
+import 'package:toolbox/data/model/server/disk.dart';
 import 'package:toolbox/data/model/server/net_speed.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/system.dart';
 import 'package:toolbox/data/res/store.dart';
+import 'package:toolbox/view/widget/expand_tile.dart';
 import 'package:toolbox/view/widget/server_func_btns.dart';
 import 'package:toolbox/view/widget/value_notifier.dart';
 
@@ -306,208 +308,126 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildDiskView(ServerStatus ss) {
-    final disk = ss.disk;
-    disk.removeWhere((e) {
+    final disks = ss.disk;
+    disks.removeWhere((e) {
       for (final ingorePath in Stores.setting.diskIgnorePath.fetch()) {
-        if (e.path.startsWith(ingorePath)) return true;
+        if (e.dev.startsWith(ingorePath)) return true;
       }
       return false;
     });
-    final children = disk
-        .map((disk) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 3),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '${disk.usedPercent}% of ${disk.size}',
-                        style: UIs.textSize11,
-                        textScaleFactor: _textFactor,
-                      ),
-                      Text(
-                        disk.path,
-                        style: UIs.textSize11,
-                        textScaleFactor: _textFactor,
-                      )
-                    ],
-                  ),
-                  _buildProgress(disk.usedPercent.toDouble())
-                ],
-              ),
-            ))
-        .toList();
+    final children =
+        List.generate(disks.length, (idx) => _buildDiskItem(disks[idx], ss));
     return CardX(
-      Padding(
-        padding: UIs.roundRectCardPadding,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: children,
+      ExpandTile(
+        title: Text('Disk'),
+        leading: Icon(Icons.storage, size: 17),
+        initiallyExpanded: children.length <= 7,
+        children: children,
+      ),
+    );
+  }
+
+  Widget _buildDiskItem(Disk disk, ServerStatus ss) {
+    final (read, write) = ss.diskIO.getReadSpeed(disk.dev);
+    return ListTile(
+      title: Text(
+        disk.dev,
+        style: UIs.textSize13Bold,
+        textScaleFactor: _textFactor,
+      ),
+      contentPadding: const EdgeInsets.symmetric(vertical: 3, horizontal: 17),
+      subtitle: Text(
+        '${disk.usedPercent}% of ${disk.size}\n↑ $read | ↓ $write',
+        style: UIs.textSize11,
+        textScaleFactor: _textFactor,
+      ),
+      trailing: SizedBox(
+        height: 37,
+        width: 37,
+        child: CircularProgressIndicator(
+          value: disk.usedPercent / 100,
+          strokeWidth: 7,
+          backgroundColor: DynamicColors.progress.resolve(context),
+          valueColor: AlwaysStoppedAnimation(primaryColor),
         ),
       ),
     );
   }
 
   Widget _buildNetView(ServerStatus ss) {
-    return CardX(
-      Padding(
-        padding: UIs.roundRectCardPadding,
-        child: ValueBuilder(
-          listenable: _netSortType,
-          build: () {
-            final ns = ss.netSpeed;
-            final children = <Widget>[
-              _buildNetSpeedTop(),
-              const Divider(
-                height: 7,
-              )
-            ];
-            if (ns.devices.isEmpty) {
-              children.add(Center(
-                child: Text(
-                  l10n.noInterface,
-                  style: const TextStyle(color: Colors.grey, fontSize: 13),
-                ),
-              ));
-            } else {
-              final devices = ns.devices;
-              devices.sort(_netSortType.value.getSortFunc(ns));
-              children.addAll(devices.map((e) => _buildNetSpeedItem(ns, e)));
-            }
-            return Column(
-              children: children,
-            );
-          },
+    final ns = ss.netSpeed;
+    final children = <Widget>[];
+    if (ns.devices.isEmpty) {
+      children.add(Center(
+        child: Text(
+          l10n.noInterface,
+          style: const TextStyle(color: Colors.grey, fontSize: 13),
+        ),
+      ));
+    } else {
+      final devices = ns.devices;
+      devices.sort(_netSortType.value.getSortFunc(ns));
+      children.addAll(devices.map((e) => _buildNetSpeedItem(ns, e)));
+    }
+    return ValueBuilder(
+      listenable: _netSortType,
+      build: () {
+        return CardX(
+          ExpandTile(
+            title: Text('Net'),
+            leading: Icon(Icons.device_hub, size: 17),
+            initiallyExpanded: children.length <= 7,
+            children: children,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildNetSpeedItem(NetSpeed ns, String device) {
+    return ListTile(
+      title: Text(
+        device,
+        style: UIs.textSize13Bold,
+        textScaleFactor: _textFactor,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: Text(
+        '${ns.sizeIn(device: device)} | ${ns.sizeOut(device: device)}',
+        style: UIs.textSize11,
+        textScaleFactor: _textFactor,
+      ),
+      trailing: SizedBox(
+        width: 170,
+        child: Text(
+          '↑ ${ns.speedOut(device: device)}\n↓ ${ns.speedIn(device: device)}',
+          textAlign: TextAlign.end,
         ),
       ),
     );
   }
 
-  Widget _buildNetSpeedTop() {
-    const icon = Icon(Icons.arrow_downward, size: 13);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 3),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          GestureDetector(
-            child: _netSortType.value.isDevice
-                ? const Row(
-                    children: [
-                      Text('Iface'),
-                      icon,
-                    ],
-                  )
-                : const Text('Iface'),
-            onTap: () => _netSortType.value = _NetSortType.device,
-          ),
-          GestureDetector(
-            child: _netSortType.value.isIn
-                ? const Row(
-                    children: [
-                      Text('Recv'),
-                      icon,
-                    ],
-                  )
-                : const Text('Recv'),
-            onTap: () => _netSortType.value = _NetSortType.recv,
-          ),
-          GestureDetector(
-            child: _netSortType.value.isOut
-                ? const Row(
-                    children: [
-                      Text('Trans'),
-                      icon,
-                    ],
-                  )
-                : const Text('Trans'),
-            onTap: () => _netSortType.value = _NetSortType.trans,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNetSpeedItem(NetSpeed ns, String device) {
-    final width = (_media.size.width - 34 - 34) / 3;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          SizedBox(
-            width: width,
-            child: Text(
-              device,
-              style: UIs.textSize11,
-              textScaleFactor: _textFactor,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          SizedBox(
-            width: width,
-            child: Text(
-              '${ns.speedIn(device: device)} | ${ns.sizeIn(device: device)}',
-              style: UIs.textSize11,
-              textAlign: TextAlign.center,
-              textScaleFactor: 0.87 * _textFactor,
-            ),
-          ),
-          SizedBox(
-            width: width,
-            child: Text(
-              '${ns.speedOut(device: device)} | ${ns.sizeOut(device: device)}',
-              style: UIs.textSize11,
-              textAlign: TextAlign.right,
-              textScaleFactor: 0.87 * _textFactor,
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
   Widget _buildTemperature(ServerStatus ss) {
-    final temps = ss.temps;
-    if (temps.isEmpty) {
+    if (ss.temps.isEmpty) {
       return UIs.placeholder;
     }
-    final List<Widget> children = [
-      const Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Icon(Icons.device_hub, size: 17),
-          Icon(Icons.ac_unit, size: 17),
-        ],
-      ),
-      const Padding(
-        padding: EdgeInsets.symmetric(vertical: 3),
-        child: Divider(height: 7),
-      ),
-    ];
-    children.addAll(temps.devices.map((key) => Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              key,
-              style: UIs.textSize11,
-              textScaleFactor: _textFactor,
-            ),
-            Text(
-              '${temps.get(key)}°C',
-              style: UIs.textSize11,
-              textScaleFactor: _textFactor,
-            ),
-          ],
-        )));
     return CardX(
-      Padding(
-        padding: UIs.roundRectCardPadding,
-        child: Column(children: children),
+      ExpandTile(
+        title: Text('Temperature'),
+        leading: const Icon(Icons.ac_unit, size: 17),
+        initiallyExpanded: ss.temps.devices.length <= 7,
+        children: ss.temps.devices
+            .map((key) => _buildTemperatureItem(key, ss.temps.get(key)))
+            .toList(),
       ),
+    );
+  }
+
+  Widget _buildTemperatureItem(String key, double? val) {
+    return ListTile(
+      title: Text(key, style: UIs.textSize13Bold),
+      trailing: Text('${val?.toStringAsFixed(1)}°C'),
     );
   }
 

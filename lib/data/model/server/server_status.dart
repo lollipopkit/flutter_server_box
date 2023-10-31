@@ -19,6 +19,7 @@ class ServerStatus {
   Temperatures temps;
   SystemType system;
   String? failedInfo;
+  DiskIO diskIO;
 
   ServerStatus({
     required this.cpu,
@@ -31,6 +32,7 @@ class ServerStatus {
     required this.swap,
     required this.temps,
     required this.system,
+    required this.diskIO,
     this.failedInfo,
   });
 }

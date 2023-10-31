@@ -46,8 +46,8 @@ class InitStatus {
         uptime: '',
         disk: [
           const Disk(
-            path: '/',
-            loc: '/',
+            dev: '/',
+            mount: '/',
             usedPercent: 0,
             used: '0',
             size: '0',
@@ -63,5 +63,6 @@ class InitStatus {
         ),
         system: SystemType.linux,
         temps: Temperatures(),
+        diskIO: DiskIO([], []),
       );
 }

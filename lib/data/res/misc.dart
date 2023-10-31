@@ -6,6 +6,8 @@ class Miscs {
   /// RegExp for number
   static final numReg = RegExp(r'\s{1,}');
 
+  static final blankReg = RegExp(r'\s+');
+
   /// RegExp for password request
   static final pwdRequestWithUserReg = RegExp(r'\[sudo\] password for (.+):');
 
