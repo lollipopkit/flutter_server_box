@@ -392,6 +392,12 @@ abstract class S {
   /// **'Disconnected'**
   String get disconnected;
 
+  /// No description provided for @disk.
+  ///
+  /// In en, this message translates to:
+  /// **'Disk'**
+  String get disk;
+
   /// No description provided for @diskIgnorePath.
   ///
   /// In en, this message translates to:
@@ -878,6 +884,12 @@ abstract class S {
   /// **'Need to restart app'**
   String get needRestart;
 
+  /// No description provided for @net.
+  ///
+  /// In en, this message translates to:
+  /// **'Net'**
+  String get net;
+
   /// No description provided for @netViewType.
   ///
   /// In en, this message translates to:
@@ -1351,6 +1363,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Tags'**
   String get tag;
+
+  /// No description provided for @temperature.
+  ///
+  /// In en, this message translates to:
+  /// **'Temperature'**
+  String get temperature;
 
   /// No description provided for @terminal.
   ///

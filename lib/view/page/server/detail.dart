@@ -319,8 +319,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         List.generate(disks.length, (idx) => _buildDiskItem(disks[idx], ss));
     return CardX(
       ExpandTile(
-        title: Text('Disk'),
-        leading: Icon(Icons.storage, size: 17),
+        title: Text(l10n.disk),
+        leading: const Icon(Icons.storage, size: 17),
         initiallyExpanded: children.length <= 7,
         children: children,
       ),
@@ -374,8 +374,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       build: () {
         return CardX(
           ExpandTile(
-            title: Text('Net'),
-            leading: Icon(Icons.device_hub, size: 17),
+            title: Text(l10n.net),
+            leading: const Icon(Icons.device_hub, size: 17),
             initiallyExpanded: children.length <= 7,
             children: children,
           ),
@@ -414,7 +414,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     }
     return CardX(
       ExpandTile(
-        title: Text('Temperature'),
+        title: Text(l10n.temperature),
         leading: const Icon(Icons.ac_unit, size: 17),
         initiallyExpanded: ss.temps.devices.length <= 7,
         children: ss.temps.devices

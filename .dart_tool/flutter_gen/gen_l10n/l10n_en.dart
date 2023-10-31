@@ -154,6 +154,9 @@ class SEn extends S {
   String get disconnected => 'Disconnected';
 
   @override
+  String get disk => 'Disk';
+
+  @override
   String get diskIgnorePath => 'Ignore path for disk';
 
   @override
@@ -417,6 +420,9 @@ class SEn extends S {
   String get needRestart => 'Need to restart app';
 
   @override
+  String get net => 'Net';
+
+  @override
   String get netViewType => 'Net view type';
 
   @override
@@ -660,6 +666,9 @@ class SEn extends S {
 
   @override
   String get tag => 'Tags';
+
+  @override
+  String get temperature => 'Temperature';
 
   @override
   String get terminal => 'Terminal';

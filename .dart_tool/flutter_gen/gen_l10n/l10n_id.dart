@@ -154,6 +154,9 @@ class SId extends S {
   String get disconnected => 'Terputus';
 
   @override
+  String get disk => 'Disk';
+
+  @override
   String get diskIgnorePath => 'Abaikan jalan untuk disk';
 
   @override
@@ -417,6 +420,9 @@ class SId extends S {
   String get needRestart => 'Perlu memulai ulang aplikasi';
 
   @override
+  String get net => 'Net';
+
+  @override
   String get netViewType => 'Jenis tampilan bersih';
 
   @override
@@ -660,6 +666,9 @@ class SId extends S {
 
   @override
   String get tag => 'Tag';
+
+  @override
+  String get temperature => 'Suhu';
 
   @override
   String get terminal => 'Terminal';

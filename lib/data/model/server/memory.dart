@@ -95,7 +95,7 @@ Swap parseSwap(String raw) {
                 ?.group(2) ??
             '1',
       ) ??
-      1;
+      0;
   final free = int.tryParse(
         items
                 .firstWhere(
@@ -105,7 +105,7 @@ Swap parseSwap(String raw) {
                 ?.group(2) ??
             '1',
       ) ??
-      1;
+      0;
   final cached = int.tryParse(
         items
                 .firstWhere(

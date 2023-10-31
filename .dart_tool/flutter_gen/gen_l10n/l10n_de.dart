@@ -154,6 +154,9 @@ class SDe extends S {
   String get disconnected => 'Disconnected';
 
   @override
+  String get disk => 'Festplatte';
+
+  @override
   String get diskIgnorePath => 'Pfad für Datenträger ignorieren';
 
   @override
@@ -417,6 +420,9 @@ class SDe extends S {
   String get needRestart => 'App muss neugestartet werden';
 
   @override
+  String get net => 'Netz';
+
+  @override
   String get netViewType => 'Netzwerkansicht Typ';
 
   @override
@@ -660,6 +666,9 @@ class SDe extends S {
 
   @override
   String get tag => 'Tags';
+
+  @override
+  String get temperature => 'Temperatur';
 
   @override
   String get terminal => 'Terminal';

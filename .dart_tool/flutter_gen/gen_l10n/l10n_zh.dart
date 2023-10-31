@@ -154,6 +154,9 @@ class SZh extends S {
   String get disconnected => '连接断开';
 
   @override
+  String get disk => '硬盘';
+
+  @override
   String get diskIgnorePath => '忽略的磁盘路径';
 
   @override
@@ -417,6 +420,9 @@ class SZh extends S {
   String get needRestart => '需要重启 App';
 
   @override
+  String get net => '网络';
+
+  @override
   String get netViewType => '网络视图类型';
 
   @override
@@ -660,6 +666,9 @@ class SZh extends S {
 
   @override
   String get tag => '标签';
+
+  @override
+  String get temperature => '温度';
 
   @override
   String get terminal => '终端';
@@ -914,6 +923,9 @@ class SZhTw extends SZh {
 
   @override
   String get disconnected => '連接斷開';
+
+  @override
+  String get disk => '硬盤';
 
   @override
   String get diskIgnorePath => '忽略的磁盤路徑';
@@ -1179,6 +1191,9 @@ class SZhTw extends SZh {
   String get needRestart => '需要重啓 App';
 
   @override
+  String get net => '網絡';
+
+  @override
   String get netViewType => '網絡視圖類型';
 
   @override
@@ -1422,6 +1437,9 @@ class SZhTw extends SZh {
 
   @override
   String get tag => '标签';
+
+  @override
+  String get temperature => '溫度';
 
   @override
   String get terminal => '终端機';
