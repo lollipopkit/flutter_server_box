@@ -13,6 +13,17 @@ enum NetViewType {
   @HiveField(2)
   traffic;
 
+  NetViewType get next {
+    switch (this) {
+      case conn:
+        return speed;
+      case speed:
+        return traffic;
+      case traffic:
+        return conn;
+    }
+  }
+
   String get toStr {
     switch (this) {
       case NetViewType.conn:

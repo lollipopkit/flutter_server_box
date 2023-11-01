@@ -211,7 +211,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildServer() {
     return Column(
       children: [
-        _buildMoveOutServerFuncBtns(),
+        _buildServerFuncBtns(),
         _buildSequence(),
         _buildNetViewType(),
         _buildUpdateInterval(),
@@ -926,9 +926,13 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  Widget _buildMoveOutServerFuncBtns() {
+  Widget _buildServerFuncBtns() {
     return ExpandTile(
       title: Text(l10n.serverFuncBtns),
+      subtitle: Text(
+        '${l10n.location} / ${l10n.displayName}',
+        style: UIs.textSize13Grey,
+      ),
       children: [
         ListTile(
           title: Text(l10n.location),

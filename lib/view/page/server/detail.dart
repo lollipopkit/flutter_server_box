@@ -11,7 +11,6 @@ import 'package:toolbox/data/model/server/system.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/expand_tile.dart';
 import 'package:toolbox/view/widget/server_func_btns.dart';
-import 'package:toolbox/view/widget/value_notifier.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/route.dart';
@@ -53,7 +52,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     ],
   );
 
-  final _netSortType = ValueNotifier(_NetSortType.device);
+  var _netSortType = _NetSortType.device;
 
   @override
   void didChangeDependencies() {
@@ -328,7 +327,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildDiskItem(Disk disk, ServerStatus ss) {
-    final (read, write) = ss.diskIO.getReadSpeed(disk.dev);
+    final (read, write) = ss.diskIO.getSpeed(disk.dev);
     final text = () {
       final use = '${disk.used} / ${disk.size}';
       if (read == null || write == null) return use;
@@ -377,41 +376,46 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       ));
     } else {
       final devices = ns.devices;
-      devices.sort(_netSortType.value.getSortFunc(ns));
+      devices.sort(_netSortType.getSortFunc(ns));
       children.addAll(devices.map((e) => _buildNetSpeedItem(ns, e)));
     }
-    return ValueBuilder(
-      listenable: _netSortType,
-      build: () {
-        return CardX(
-          ExpandTile(
-            title: Row(
-              children: [
-                Text(l10n.net),
-                UIs.width13,
-                InkWell(
-                  onTap: () {
-                    _netSortType.value = _netSortType.value.next;
-                  },
-                  child: Row(
-                    children: [
-                      const Icon(Icons.sort, size: 17),
-                      UIs.width7,
-                      Text(
-                        _netSortType.value.name,
-                        style: UIs.textSize11Grey,
-                      ),
-                    ],
-                  ),
-                )
-              ],
-            ),
-            leading: const Icon(Icons.device_hub, size: 17),
-            initiallyExpanded: children.length <= 7,
-            children: children,
-          ),
-        );
-      },
+    return CardX(
+      ExpandTile(
+        title: Row(
+          children: [
+            Text(l10n.net),
+            UIs.width13,
+            IconButton(
+              onPressed: () {
+                setState(() {
+                  _netSortType = _netSortType.next;
+                });
+              },
+              icon: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 377),
+                transitionBuilder: (child, animation) => FadeTransition(
+                  opacity: animation,
+                  child: child,
+                ),
+                child: Row(
+                  key: ValueKey(_netSortType),
+                  children: [
+                    const Icon(Icons.sort, size: 17),
+                    UIs.width7,
+                    Text(
+                      _netSortType.name,
+                      style: UIs.textSize11Grey,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          ],
+        ),
+        leading: const Icon(Icons.device_hub, size: 17),
+        initiallyExpanded: children.length <= 7,
+        children: children,
+      ),
     );
   }
 

@@ -40,6 +40,8 @@ class _ServerPageState extends State<ServerPage>
 
   final _flipedCardIds = <String>{};
 
+  final _netViewType = <String, NetViewType>{};
+
   String? _tag;
   bool _useDoubleColumn = false;
 
@@ -310,7 +312,7 @@ class _ServerPageState extends State<ServerPage>
           children: [
             _wrapWithSizedbox(_buildPercentCircle(ss.cpu.usedPercent())),
             _wrapWithSizedbox(_buildPercentCircle(ss.mem.usedPercent * 100)),
-            _wrapWithSizedbox(_buildNet(ss)),
+            _wrapWithSizedbox(_buildNet(ss, spi.id)),
             _wrapWithSizedbox(_buildIOData(
               'Total:\n${rootDisk?.size}',
               'Used:\n${rootDisk?.usedPercent}%',
@@ -419,21 +421,29 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  Widget _buildNet(ServerStatus ss) {
-    return ValueListenableBuilder<NetViewType>(
-      valueListenable: Stores.setting.netViewType.listenable(),
-      builder: (_, val, __) {
-        final data = val.build(ss);
-        return AnimatedSwitcher(
-          duration: const Duration(milliseconds: 177),
-          child: _buildIOData(data.up, data.down),
-        );
+  Widget _buildNet(ServerStatus ss, String id) {
+    final type = _netViewType[id] ?? Stores.setting.netViewType.fetch();
+    final data = type.build(ss);
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 377),
+      transitionBuilder: (Widget child, Animation<double> animation) {
+        return FadeTransition(opacity: animation, child: child);
       },
+      child: _buildIOData(
+        data.up,
+        data.down,
+        onTap: () {
+          setState(() {
+            _netViewType[id] = type.next;
+          });
+        },
+        key: ValueKey(type)
+      ),
     );
   }
 
-  Widget _buildIOData(String up, String down) {
-    return Column(
+  Widget _buildIOData(String up, String down, {void Function()? onTap, Key? key}) {
+    final child = Column(
       children: [
         const SizedBox(height: 5),
         Text(
@@ -450,6 +460,13 @@ class _ServerPageState extends State<ServerPage>
           textScaleFactor: 1.0,
         )
       ],
+    );
+    if (onTap == null) return child;
+    return IconButton(
+      key: key,
+      padding: const EdgeInsets.symmetric(horizontal: 7),
+      onPressed: onTap,
+      icon: child,
     );
   }
 

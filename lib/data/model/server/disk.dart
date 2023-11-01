@@ -24,7 +24,7 @@ class Disk {
 class DiskIO extends TimeSeq<DiskIOPiece> {
   DiskIO(super.pre, super.now);
 
-  (String?, String?) getReadSpeed(String dev) {
+  (double?, double?) _getSpeed(String dev) {
     final pres = this.pre.where(
           (element) => element.dev == dev.replaceFirst('/dev/', ''),
         );
@@ -37,9 +37,29 @@ class DiskIO extends TimeSeq<DiskIOPiece> {
     final sectorsRead = now.sectorsRead - pre.sectorsRead;
     final sectorsWrite = now.sectorsWrite - pre.sectorsWrite;
     final time = now.time - pre.time;
-    final read = '${(sectorsRead / time * 512).convertBytes}/s';
-    final write = '${(sectorsWrite / time * 512).convertBytes}/s';
+    final read = (sectorsRead / time * 512);
+    final write = (sectorsWrite / time * 512);
     return (read, write);
+  }
+
+  (String?, String?) getSpeed(String dev) {
+    final (read_, write_) = _getSpeed(dev);
+    final read = '${read_?.convertBytes}/s';
+    final write = '${write_?.convertBytes}/s';
+    return (read, write);
+  }
+
+  (String?, String?) getAllSpeed() {
+    if (pre.isEmpty || now.isEmpty) return (null, null);
+    var (read, write) = (0.0, 0.0);
+    for (var pre in pre) {
+      final (read_, write_) = _getSpeed(pre.dev);
+      read += read_ ?? 0;
+      write += write_ ?? 0;
+    }
+    final readStr = '${read.convertBytes}/s';
+    final writeStr = '${write.convertBytes}/s';
+    return (readStr, writeStr);
   }
 
   // Raw:
