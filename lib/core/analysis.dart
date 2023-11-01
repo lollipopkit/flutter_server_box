@@ -1,10 +1,8 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:countly_flutter/countly_flutter.dart';
 import 'package:toolbox/core/build_mode.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
-import 'package:toolbox/data/res/logger.dart';
 
 class Analysis {
   static const _url = 'https://countly.xuty.cc';
@@ -23,8 +21,6 @@ class Analysis {
           .enableCrashReporting();
       await Countly.initWithConfig(config);
       await Countly.giveAllConsent();
-    } else {
-      Loggers.app.info('Countly unsupport: ${Platform.operatingSystem}');
     }
   }
 

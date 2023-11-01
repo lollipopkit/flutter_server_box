@@ -412,6 +412,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             )
           ],
         ),
+        childrenPadding: const EdgeInsets.only(bottom: 11),
         leading: const Icon(Icons.device_hub, size: 17),
         initiallyExpanded: children.length <= 7,
         children: children,
@@ -420,26 +421,38 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildNetSpeedItem(NetSpeed ns, String device) {
-    return ListTile(
-      title: Text(
-        device,
-        style: UIs.textSize11Bold,
-        textScaleFactor: _textFactor,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      subtitle: Text(
-        '${ns.sizeIn(device: device)} | ${ns.sizeOut(device: device)}',
-        style: UIs.textSize11Grey,
-        textScaleFactor: _textFactor,
-      ),
-      trailing: SizedBox(
-        width: 170,
-        child: Text(
-          '↑ ${ns.speedOut(device: device)}\n↓ ${ns.speedIn(device: device)}',
-          textAlign: TextAlign.end,
-          style: UIs.textSize11Grey,
-        ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 17),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                device,
+                style: UIs.textSize11Bold,
+                textScaleFactor: _textFactor,
+                maxLines: 1,
+                overflow: TextOverflow.fade,
+                textAlign: TextAlign.left,
+              ),
+              Text(
+                '${ns.sizeIn(device: device)} | ${ns.sizeOut(device: device)}',
+                style: UIs.textSize11Grey,
+                textScaleFactor: _textFactor,
+              )
+            ],
+          ),
+          SizedBox(
+            width: 170,
+            child: Text(
+              '↑ ${ns.speedOut(device: device)}\n↓ ${ns.speedIn(device: device)}',
+              textAlign: TextAlign.end,
+              style: UIs.textSize11Grey,
+            ),
+          )
+        ],
       ),
     );
   }
@@ -461,9 +474,15 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildTemperatureItem(String key, double? val) {
-    return ListTile(
-      title: Text(key, style: UIs.textSize13Bold),
-      trailing: Text('${val?.toStringAsFixed(1)}°C'),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(key, style: UIs.textSize13),
+          Text('${val?.toStringAsFixed(1)}°C', style: UIs.textSize11Grey),
+        ],
+      ),
     );
   }
 
