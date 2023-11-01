@@ -331,7 +331,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     final text = () {
       final use = '${disk.used} / ${disk.size}';
       if (read == null || write == null) return use;
-      return '$use\nR $read | W $write';
+      return '$use\n${l10n.read} $read | ${l10n.write} $write';
     }();
     return ListTile(
       title: Text(

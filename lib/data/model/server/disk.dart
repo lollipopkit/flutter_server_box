@@ -84,8 +84,10 @@ class DiskIO extends TimeSeq<DiskIOPiece> {
       final vals = item.split(Miscs.blankReg);
       if (vals.length < 10) continue;
       try {
+        final dev = vals[2];
+        if (dev.startsWith('loop')) continue;
         items.add(DiskIOPiece(
-          dev: vals[2],
+          dev: dev,
           sectorsRead: int.parse(vals[5]),
           sectorsWrite: int.parse(vals[9]),
           time: time,

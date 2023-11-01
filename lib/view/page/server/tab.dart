@@ -42,6 +42,9 @@ class _ServerPageState extends State<ServerPage>
 
   final _netViewType = <String, NetViewType>{};
 
+  /// If true, display IO speed
+  final _diskViewSpeed = <String, bool>{};
+
   String? _tag;
   bool _useDoubleColumn = false;
 
@@ -302,7 +305,6 @@ class _ServerPageState extends State<ServerPage>
   }
 
   List<Widget> _buildNormalCard(ServerStatus ss, ServerPrivateInfo spi) {
-    final rootDisk = findRootDisk(ss.disk);
     return [
       UIs.height13,
       Padding(
@@ -313,10 +315,7 @@ class _ServerPageState extends State<ServerPage>
             _wrapWithSizedbox(_buildPercentCircle(ss.cpu.usedPercent())),
             _wrapWithSizedbox(_buildPercentCircle(ss.mem.usedPercent * 100)),
             _wrapWithSizedbox(_buildNet(ss, spi.id)),
-            _wrapWithSizedbox(_buildIOData(
-              'Total:\n${rootDisk?.size}',
-              'Used:\n${rootDisk?.usedPercent}%',
-            )),
+            _wrapWithSizedbox(_buildDisk(ss, spi.id)),
           ],
         ),
       ),
@@ -421,28 +420,53 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  Widget _buildNet(ServerStatus ss, String id) {
-    final type = _netViewType[id] ?? Stores.setting.netViewType.fetch();
-    final data = type.build(ss);
+  Widget _buildDisk(ServerStatus ss, String id) {
+    final rootDisk = findRootDisk(ss.disk);
+    final isSpeed = _diskViewSpeed[id] ?? true;
+
+    final (r, w) = ss.diskIO.getAllSpeed();
+
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 377),
       transitionBuilder: (Widget child, Animation<double> animation) {
         return FadeTransition(opacity: animation, child: child);
       },
       child: _buildIOData(
-        data.up,
-        data.down,
+        isSpeed ? '${l10n.read}:\n$r' : 'Total:\n${rootDisk?.size}',
+        isSpeed ? '${l10n.write}:\n$w' : 'Used:\n${rootDisk?.usedPercent}%',
+        onTap: () {
+          setState(() {
+            _diskViewSpeed[id] = !isSpeed;
+          });
+        },
+        key: ValueKey(isSpeed),
+      ),
+    );
+  }
+
+  Widget _buildNet(ServerStatus ss, String id) {
+    final type = _netViewType[id] ?? Stores.setting.netViewType.fetch();
+    final (a, b) = type.build(ss);
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 377),
+      transitionBuilder: (Widget child, Animation<double> animation) {
+        return FadeTransition(opacity: animation, child: child);
+      },
+      child: _buildIOData(
+        a,
+        b,
         onTap: () {
           setState(() {
             _netViewType[id] = type.next;
           });
         },
-        key: ValueKey(type)
+        key: ValueKey(type),
       ),
     );
   }
 
-  Widget _buildIOData(String up, String down, {void Function()? onTap, Key? key}) {
+  Widget _buildIOData(String up, String down,
+      {void Function()? onTap, Key? key}) {
     final child = Column(
       children: [
         const SizedBox(height: 5),

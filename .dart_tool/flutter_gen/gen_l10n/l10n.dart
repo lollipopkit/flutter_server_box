@@ -1118,6 +1118,12 @@ abstract class S {
   /// **'Password'**
   String get pwd;
 
+  /// No description provided for @read.
+  ///
+  /// In en, this message translates to:
+  /// **'Read'**
+  String get read;
+
   /// No description provided for @reboot.
   ///
   /// In en, this message translates to:
@@ -1567,6 +1573,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Will take effect immediately'**
   String get willTakEeffectImmediately;
+
+  /// No description provided for @write.
+  ///
+  /// In en, this message translates to:
+  /// **'Write'**
+  String get write;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

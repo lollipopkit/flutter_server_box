@@ -295,10 +295,10 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
     return ValueListenableBuilder<NetViewType>(
       valueListenable: Stores.setting.netViewType.listenable(),
       builder: (_, val, __) {
-        final data = val.build(ss);
+        final (a, b) = val.build(ss);
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 177),
-          child: _buildIOData(data.up, data.down),
+          child: _buildIOData(a, b),
         );
       },
     );

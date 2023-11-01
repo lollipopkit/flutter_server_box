@@ -170,6 +170,7 @@
   "process": "Prozess",
   "pushToken": "Push Token",
   "pwd": "Passwort",
+  "read": "Lesen",
   "reboot": "Neustart",
   "remotePath": "Entfernte Pfade",
   "rename": "Umbenennen",
@@ -244,5 +245,6 @@
   "waitConnection": "Bitte warte, bis die Verbindung hergestellt wurde.",
   "watchNotPaired": "Keine gekoppelte Apple Watch",
   "whenOpenApp": "Beim Öffnen der App",
-  "willTakEeffectImmediately": "Wird sofort angewendet"
+  "willTakEeffectImmediately": "Wird sofort angewendet",
+  "write": "Schreiben"
 }

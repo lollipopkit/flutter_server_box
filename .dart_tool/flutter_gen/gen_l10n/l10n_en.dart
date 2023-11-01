@@ -539,6 +539,9 @@ class SEn extends S {
   String get pwd => 'Password';
 
   @override
+  String get read => 'Read';
+
+  @override
   String get reboot => 'Reboot';
 
   @override
@@ -778,4 +781,7 @@ class SEn extends S {
 
   @override
   String get willTakEeffectImmediately => 'Will take effect immediately';
+
+  @override
+  String get write => 'Write';
 }

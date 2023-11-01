@@ -170,6 +170,7 @@
   "process": "進程",
   "pushToken": "消息推送 Token",
   "pwd": "密碼",
+  "read": "读",
   "reboot": "重启",
   "remotePath": "遠端路徑",
   "rename": "重命名",
@@ -244,5 +245,6 @@
   "waitConnection": "請等待連接建立",
   "watchNotPaired": "沒有已配對的 Apple Watch",
   "whenOpenApp": "當打開 App 時",
-  "willTakEeffectImmediately": "更改將會立即生效"
+  "willTakEeffectImmediately": "更改將會立即生效",
+  "write": "写"
 }

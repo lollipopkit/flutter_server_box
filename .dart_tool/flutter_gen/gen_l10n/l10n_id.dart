@@ -539,6 +539,9 @@ class SId extends S {
   String get pwd => 'Kata sandi';
 
   @override
+  String get read => 'Baca';
+
+  @override
   String get reboot => 'Reboot';
 
   @override
@@ -778,4 +781,7 @@ class SId extends S {
 
   @override
   String get willTakEeffectImmediately => 'Akan segera berlaku';
+
+  @override
+  String get write => 'Tulis';
 }

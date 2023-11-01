@@ -170,6 +170,7 @@
   "process": "Proses",
   "pushToken": "Dorong token",
   "pwd": "Kata sandi",
+  "read": "Baca",
   "reboot": "Reboot",
   "remotePath": "Jalur jarak jauh",
   "rename": "Ganti nama",
@@ -244,5 +245,6 @@
   "waitConnection": "Harap tunggu koneksi akan dibuat.",
   "watchNotPaired": "Tidak ada Apple Watch yang dipasangkan",
   "whenOpenApp": "Saat membuka aplikasi",
-  "willTakEeffectImmediately": "Akan segera berlaku"
+  "willTakEeffectImmediately": "Akan segera berlaku",
+  "write": "Tulis"
 }

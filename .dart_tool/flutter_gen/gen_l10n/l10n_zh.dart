@@ -539,6 +539,9 @@ class SZh extends S {
   String get pwd => '密码';
 
   @override
+  String get read => '读';
+
+  @override
   String get reboot => '重启';
 
   @override
@@ -778,6 +781,9 @@ class SZh extends S {
 
   @override
   String get willTakEeffectImmediately => '更改将会立即生效';
+
+  @override
+  String get write => '写';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1319,6 +1325,9 @@ class SZhTw extends SZh {
   String get pwd => '密碼';
 
   @override
+  String get read => '读';
+
+  @override
   String get reboot => '重启';
 
   @override
@@ -1558,4 +1567,7 @@ class SZhTw extends SZh {
 
   @override
   String get willTakEeffectImmediately => '更改將會立即生效';
+
+  @override
+  String get write => '写';
 }

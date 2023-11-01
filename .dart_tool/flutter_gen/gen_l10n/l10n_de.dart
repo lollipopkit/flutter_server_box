@@ -539,6 +539,9 @@ class SDe extends S {
   String get pwd => 'Passwort';
 
   @override
+  String get read => 'Lesen';
+
+  @override
   String get reboot => 'Neustart';
 
   @override
@@ -778,4 +781,7 @@ class SDe extends S {
 
   @override
   String get willTakEeffectImmediately => 'Wird sofort angewendet';
+
+  @override
+  String get write => 'Schreiben';
 }
