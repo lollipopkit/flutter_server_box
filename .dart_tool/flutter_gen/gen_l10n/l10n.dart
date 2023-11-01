@@ -404,6 +404,12 @@ abstract class S {
   /// **'Ignore path for disk'**
   String get diskIgnorePath;
 
+  /// No description provided for @displayName.
+  ///
+  /// In en, this message translates to:
+  /// **'Display name'**
+  String get displayName;
+
   /// No description provided for @dl2Local.
   ///
   /// In en, this message translates to:
@@ -800,6 +806,12 @@ abstract class S {
   /// **'Loading files...'**
   String get loadingFiles;
 
+  /// No description provided for @location.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get location;
+
   /// No description provided for @log.
   ///
   /// In en, this message translates to:
@@ -853,12 +865,6 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Mission'**
   String get mission;
-
-  /// No description provided for @moveOutServerFuncBtns.
-  ///
-  /// In en, this message translates to:
-  /// **'Server function button location'**
-  String get moveOutServerFuncBtns;
 
   /// No description provided for @moveOutServerFuncBtnsHelp.
   ///
@@ -1207,6 +1213,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Detail page widget order'**
   String get serverDetailOrder;
+
+  /// No description provided for @serverFuncBtns.
+  ///
+  /// In en, this message translates to:
+  /// **'Server func buttons'**
+  String get serverFuncBtns;
 
   /// No description provided for @serverOrder.
   ///

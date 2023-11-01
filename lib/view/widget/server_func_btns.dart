@@ -13,6 +13,7 @@ import 'package:toolbox/data/model/pkg/manager.dart';
 import 'package:toolbox/data/model/server/dist.dart';
 import 'package:toolbox/data/res/path.dart';
 import 'package:toolbox/data/res/provider.dart';
+import 'package:toolbox/data/res/store.dart';
 
 import '../../core/route.dart';
 import '../../core/utils/server.dart';
@@ -64,15 +65,50 @@ class ServerFuncBtns extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // return Row(
+    //   mainAxisAlignment: MainAxisAlignment.spaceAround,
+    //   children: ServerTabMenuType.values
+    //       .map(
+    //         (e) => Stores.setting.serverFuncBtnsDisplayName.fetch()
+    //             ? Column(
+    //                 mainAxisSize: MainAxisSize.min,
+    //                 children: [
+    //                   IconButton(
+    //                     onPressed: () => _onTapMoreBtns(e, spi, context),
+    //                     padding: EdgeInsets.zero,
+    //                     tooltip: e.name,
+    //                     icon: Icon(e.icon, size: iconSize ?? 15),
+    //                   ),
+    //                   Text(e.toStr, style: UIs.textSize9Grey)
+    //                 ],
+    //               )
+    //             : IconButton(
+    //                 onPressed: () => _onTapMoreBtns(e, spi, context),
+    //                 padding: EdgeInsets.zero,
+    //                 tooltip: e.name,
+    //                 icon: Icon(e.icon, size: iconSize ?? 15),
+    //               ),
+    //       )
+    //       .toList(),
+    // );
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: ServerTabMenuType.values
-          .map((e) => IconButton(
-                onPressed: () => _onTapMoreBtns(e, spi, context),
-                padding: EdgeInsets.zero,
-                tooltip: e.name,
-                icon: Icon(e.icon, size: iconSize ?? 15),
-              ))
+          .map(
+            (e) => IconButton(
+              onPressed: () => _onTapMoreBtns(e, spi, context),
+              padding: EdgeInsets.zero,
+              tooltip: e.name,
+              icon: Stores.setting.serverFuncBtnsDisplayName.fetch()
+                  ? Column(
+                      children: [
+                        Icon(e.icon, size: iconSize ?? 15),
+                        Text(e.toStr, style: const TextStyle(fontSize: 7, color: Colors.grey))
+                      ],
+                    )
+                  : Icon(e.icon, size: iconSize ?? 15),
+            ),
+          )
           .toList(),
     );
   }

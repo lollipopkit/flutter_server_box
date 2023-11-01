@@ -220,6 +220,10 @@ class SettingStore extends PersistentStore {
   /// Show tip of suspend
   late final showSuspendTip = StoreProperty(box, 'showSuspendTip', true);
 
+  /// Server func btns display name
+  late final serverFuncBtnsDisplayName =
+      StoreProperty(box, 'serverFuncBtnsDisplayName', true);
+
   // Never show these settings for users
   //
   // ------BEGIN------

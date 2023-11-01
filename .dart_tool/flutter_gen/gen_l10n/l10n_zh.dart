@@ -160,6 +160,9 @@ class SZh extends S {
   String get diskIgnorePath => '忽略的磁盘路径';
 
   @override
+  String get displayName => '显示名称';
+
+  @override
   String dl2Local(Object fileName) {
     return '下载 $fileName 到本地？';
   }
@@ -376,6 +379,9 @@ class SZh extends S {
   String get loadingFiles => '正在加载目录。。。';
 
   @override
+  String get location => '位置';
+
+  @override
   String get log => '日志';
 
   @override
@@ -403,9 +409,6 @@ class SZh extends S {
 
   @override
   String get mission => '任务';
-
-  @override
-  String get moveOutServerFuncBtns => '服务器功能按钮位置';
 
   @override
   String get moveOutServerFuncBtnsHelp => '开启：可以在服务器 Tab 页的每个卡片下方显示。关闭：在服务器详情页顶部显示。';
@@ -584,6 +587,9 @@ class SZh extends S {
 
   @override
   String get serverDetailOrder => '详情页部件顺序';
+
+  @override
+  String get serverFuncBtns => '服务器功能按钮';
 
   @override
   String get serverOrder => '服务器顺序';
@@ -934,6 +940,9 @@ class SZhTw extends SZh {
   String get diskIgnorePath => '忽略的磁盤路徑';
 
   @override
+  String get displayName => '顯示名稱';
+
+  @override
   String dl2Local(Object fileName) {
     return '下載 $fileName 到本地？';
   }
@@ -1150,6 +1159,9 @@ class SZhTw extends SZh {
   String get loadingFiles => '正在加載目錄。。。';
 
   @override
+  String get location => '位置';
+
+  @override
   String get log => '日誌';
 
   @override
@@ -1177,9 +1189,6 @@ class SZhTw extends SZh {
 
   @override
   String get mission => '任務';
-
-  @override
-  String get moveOutServerFuncBtns => '服務器功能按鈕位置';
 
   @override
   String get moveOutServerFuncBtnsHelp => '開啟：可以在服務器 Tab 頁的每個卡片下方顯示。關閉：在服務器詳情頁頂部顯示。';
@@ -1358,6 +1367,9 @@ class SZhTw extends SZh {
 
   @override
   String get serverDetailOrder => '詳情頁部件順序';
+
+  @override
+  String get serverFuncBtns => '服務器功能按鈕';
 
   @override
   String get serverOrder => '服務器順序';

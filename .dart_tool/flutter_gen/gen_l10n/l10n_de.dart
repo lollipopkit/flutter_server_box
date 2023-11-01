@@ -160,6 +160,9 @@ class SDe extends S {
   String get diskIgnorePath => 'Pfad für Datenträger ignorieren';
 
   @override
+  String get displayName => 'Name anzeigen';
+
+  @override
   String dl2Local(Object fileName) {
     return 'Datei \"$fileName\" herunterladen?';
   }
@@ -376,6 +379,9 @@ class SDe extends S {
   String get loadingFiles => 'Lädt Dateien...';
 
   @override
+  String get location => 'Standort';
+
+  @override
   String get log => 'Log';
 
   @override
@@ -403,9 +409,6 @@ class SDe extends S {
 
   @override
   String get mission => 'Mission';
-
-  @override
-  String get moveOutServerFuncBtns => 'Position der Server-Funktionsschaltfläche';
 
   @override
   String get moveOutServerFuncBtnsHelp => 'Ein: kann unter jeder Karte auf der Registerkarte \"Server\" angezeigt werden. Aus: kann oben auf der Seite \"Serverdetails\" angezeigt werden.';
@@ -584,6 +587,9 @@ class SDe extends S {
 
   @override
   String get serverDetailOrder => 'Reihenfolge der Widgets auf der Detailseite';
+
+  @override
+  String get serverFuncBtns => 'Server-Funktionsschaltflächen';
 
   @override
   String get serverOrder => 'Server-Bestellung';

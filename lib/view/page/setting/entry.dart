@@ -927,10 +927,20 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildMoveOutServerFuncBtns() {
-    return ListTile(
-      title: Text(l10n.moveOutServerFuncBtns),
-      subtitle: Text(l10n.moveOutServerFuncBtnsHelp, style: UIs.textSize13Grey),
-      trailing: StoreSwitch(prop: _setting.moveOutServerTabFuncBtns),
+    return ExpandTile(
+      title: Text(l10n.serverFuncBtns),
+      children: [
+        ListTile(
+          title: Text(l10n.location),
+          subtitle:
+              Text(l10n.moveOutServerFuncBtnsHelp, style: UIs.textSize13Grey),
+          trailing: StoreSwitch(prop: _setting.moveOutServerTabFuncBtns),
+        ),
+        ListTile(
+          title: Text(l10n.displayName),
+          trailing: StoreSwitch(prop: _setting.serverFuncBtnsDisplayName),
+        ),
+      ],
     );
   }
 

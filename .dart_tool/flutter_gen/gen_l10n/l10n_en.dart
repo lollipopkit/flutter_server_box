@@ -160,6 +160,9 @@ class SEn extends S {
   String get diskIgnorePath => 'Ignore path for disk';
 
   @override
+  String get displayName => 'Display name';
+
+  @override
   String dl2Local(Object fileName) {
     return 'Download $fileName to local?';
   }
@@ -376,6 +379,9 @@ class SEn extends S {
   String get loadingFiles => 'Loading files...';
 
   @override
+  String get location => 'Location';
+
+  @override
   String get log => 'Log';
 
   @override
@@ -403,9 +409,6 @@ class SEn extends S {
 
   @override
   String get mission => 'Mission';
-
-  @override
-  String get moveOutServerFuncBtns => 'Server function button location';
 
   @override
   String get moveOutServerFuncBtnsHelp => 'On: can be displayed below each card on the Server Tab page. Off: can be displayed at the top of the Server Details page.';
@@ -584,6 +587,9 @@ class SEn extends S {
 
   @override
   String get serverDetailOrder => 'Detail page widget order';
+
+  @override
+  String get serverFuncBtns => 'Server func buttons';
 
   @override
   String get serverOrder => 'Server order';

@@ -160,6 +160,9 @@ class SId extends S {
   String get diskIgnorePath => 'Abaikan jalan untuk disk';
 
   @override
+  String get displayName => 'Nama tampilan';
+
+  @override
   String dl2Local(Object fileName) {
     return 'Unduh $fileName ke lokal?';
   }
@@ -376,6 +379,9 @@ class SId extends S {
   String get loadingFiles => 'Memuat file ...';
 
   @override
+  String get location => 'Lokasi';
+
+  @override
   String get log => 'Catatan';
 
   @override
@@ -403,9 +409,6 @@ class SId extends S {
 
   @override
   String get mission => 'Misi';
-
-  @override
-  String get moveOutServerFuncBtns => 'Lokasi tombol fungsi server';
 
   @override
   String get moveOutServerFuncBtnsHelp => 'Aktif: dapat ditampilkan di bawah setiap kartu pada halaman Tab Server. Nonaktif: dapat ditampilkan di bagian atas halaman Rincian Server.';
@@ -584,6 +587,9 @@ class SId extends S {
 
   @override
   String get serverDetailOrder => 'Detail pesanan widget halaman';
+
+  @override
+  String get serverFuncBtns => 'Tombol fungsi server';
 
   @override
   String get serverOrder => 'Pesanan server';
