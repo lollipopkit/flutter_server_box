@@ -134,25 +134,24 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     }
 
     return CardX(
-      Padding(
-        padding: UIs.roundRectCardPadding,
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildAnimatedText(
-                ValueKey(percent),
-                '$percent%',
-                UIs.textSize27,
-              ),
-              Row(
-                children: details,
-              )
-            ],
-          ),
-          UIs.height13,
-          _buildCPUProgress(ss.cpu)
-        ]),
+      ExpandTile(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildAnimatedText(
+              ValueKey(percent),
+              '$percent%',
+              UIs.textSize27,
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: details,
+            ),
+          ],
+        ),
+        childrenPadding: const EdgeInsets.symmetric(vertical: 13),
+        initiallyExpanded: ss.cpu.coresCount <= 8,
+        children: _buildCPUProgress(ss.cpu),
       ),
     );
   }
@@ -177,18 +176,18 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildCPUProgress(Cpus cs) {
+  List<Widget> _buildCPUProgress(Cpus cs) {
     final children = <Widget>[];
     for (var i = 0; i < cs.coresCount; i++) {
       if (i == 0) continue;
       children.add(
         Padding(
-          padding: const EdgeInsets.all(2),
+          padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 17),
           child: _buildProgress(cs.usedPercent(coreIdx: i)),
         ),
       );
     }
-    return Column(children: children);
+    return children;
   }
 
   Widget _buildProgress(double percent) {
@@ -320,6 +319,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     return CardX(
       ExpandTile(
         title: Text(l10n.disk),
+        childrenPadding: EdgeInsets.zero,
         leading: const Icon(Icons.storage, size: 17),
         initiallyExpanded: children.length <= 7,
         children: children,
@@ -330,30 +330,36 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   Widget _buildDiskItem(Disk disk, ServerStatus ss) {
     final (read, write) = ss.diskIO.getReadSpeed(disk.dev);
     final text = () {
-      final use = '${disk.usedPercent}% of ${disk.size}';
+      final use = '${disk.used} / ${disk.size}';
       if (read == null || write == null) return use;
-      return '$use\n↑ $read | ↓ $write';
+      return '$use\nR $read | W $write';
     }();
     return ListTile(
       title: Text(
         disk.dev,
-        style: UIs.textSize13Bold,
+        style: UIs.textSize11Bold,
         textScaleFactor: _textFactor,
       ),
-      contentPadding: const EdgeInsets.symmetric(vertical: 3, horizontal: 17),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 17),
       subtitle: Text(
         text,
-        style: UIs.textSize11,
+        style: UIs.textSize11Grey,
         textScaleFactor: _textFactor,
       ),
       trailing: SizedBox(
         height: 37,
         width: 37,
-        child: CircularProgressIndicator(
-          value: disk.usedPercent / 100,
-          strokeWidth: 7,
-          backgroundColor: DynamicColors.progress.resolve(context),
-          valueColor: AlwaysStoppedAnimation(primaryColor),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            CircularProgressIndicator(
+              value: disk.usedPercent / 100,
+              strokeWidth: 5,
+              backgroundColor: DynamicColors.progress.resolve(context),
+              color: primaryColor,
+            ),
+            Text('${disk.usedPercent}%', style: UIs.textSize9Grey)
+          ],
         ),
       ),
     );
@@ -413,14 +419,14 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     return ListTile(
       title: Text(
         device,
-        style: UIs.textSize13Bold,
+        style: UIs.textSize11Bold,
         textScaleFactor: _textFactor,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: Text(
         '${ns.sizeIn(device: device)} | ${ns.sizeOut(device: device)}',
-        style: UIs.textSize11,
+        style: UIs.textSize11Grey,
         textScaleFactor: _textFactor,
       ),
       trailing: SizedBox(
@@ -428,6 +434,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         child: Text(
           '↑ ${ns.speedOut(device: device)}\n↓ ${ns.speedIn(device: device)}',
           textAlign: TextAlign.end,
+          style: UIs.textSize11Grey,
         ),
       ),
     );
@@ -464,6 +471,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         text,
         style: style,
         textScaleFactor: _textFactor,
+        textAlign: TextAlign.left,
       ),
       transitionBuilder: (child, animation) => FadeTransition(
         opacity: animation,

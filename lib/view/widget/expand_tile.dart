@@ -10,5 +10,9 @@ class ExpandTile extends ExpansionTile {
     super.children,
     super.subtitle,
     super.initiallyExpanded,
+    super.tilePadding,
+    super.childrenPadding,
+    super.trailing,
+    super.controller,
   }) : super(shape: _shape, collapsedShape: _shape);
 }
