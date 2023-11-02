@@ -1,3 +1,4 @@
+import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/system.dart';
 import 'package:toolbox/data/res/logger.dart';
 
@@ -6,7 +7,6 @@ import 'cpu.dart';
 import 'disk.dart';
 import 'memory.dart';
 import 'net_speed.dart';
-import 'server_status.dart';
 import 'conn.dart';
 
 class ServerStatusUpdateReq {

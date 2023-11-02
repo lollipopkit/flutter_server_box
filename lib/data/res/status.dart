@@ -1,10 +1,10 @@
+import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/temp.dart';
 
 import '../model/server/cpu.dart';
 import '../model/server/disk.dart';
 import '../model/server/memory.dart';
 import '../model/server/net_speed.dart';
-import '../model/server/server_status.dart';
 import '../model/server/conn.dart';
 import '../model/server/system.dart';
 

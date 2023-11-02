@@ -15,7 +15,6 @@ import 'package:toolbox/view/widget/server_func_btns.dart';
 import '../../../core/extension/numx.dart';
 import '../../../core/route.dart';
 import '../../../data/model/server/server.dart';
-import '../../../data/model/server/server_status.dart';
 import '../../../data/provider/server.dart';
 import '../../../data/res/color.dart';
 import '../../../data/res/default.dart';

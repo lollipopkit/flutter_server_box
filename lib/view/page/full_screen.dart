@@ -20,7 +20,6 @@ import '../../core/utils/ui.dart';
 import '../../data/model/app/net_view.dart';
 import '../../data/model/server/server.dart';
 import '../../data/model/server/server_private_info.dart';
-import '../../data/model/server/server_status.dart';
 import '../../data/res/color.dart';
 
 class FullScreenPage extends StatefulWidget {

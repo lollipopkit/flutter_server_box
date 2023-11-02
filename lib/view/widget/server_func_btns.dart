@@ -103,7 +103,9 @@ class ServerFuncBtns extends StatelessWidget {
                   ? Column(
                       children: [
                         Icon(e.icon, size: iconSize ?? 15),
-                        Text(e.toStr, style: const TextStyle(fontSize: 7, color: Colors.grey))
+                        Text(e.toStr,
+                            style: const TextStyle(
+                                fontSize: 7, color: Colors.grey))
                       ],
                     )
                   : Icon(e.icon, size: iconSize ?? 15),
