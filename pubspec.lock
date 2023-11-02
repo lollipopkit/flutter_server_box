@@ -247,8 +247,8 @@ packages:
     description:
       path: "."
       ref: master
-      resolved-ref: "9e7d3eafb02de28e080be92a5db1761d8251aa66"
-      url: "https://github.com/TerminalStudio/dartssh2"
+      resolved-ref: c89ca0ae29baa94377dfcfc2b38fcb295c3ff316
+      url: "https://github.com/lollipopkit/dartssh2"
     source: git
     version: "2.9.1-pre"
   dio:

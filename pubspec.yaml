@@ -22,7 +22,7 @@ dependencies:
   dartssh2:
     git:
       ref: master
-      url: https://github.com/TerminalStudio/dartssh2
+      url: https://github.com/lollipopkit/dartssh2
   logging: ^1.0.2
   circle_chart:
     git:
