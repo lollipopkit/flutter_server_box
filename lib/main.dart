@@ -113,6 +113,7 @@ void _setupLogger() {
   Logger.root.onRecord.listen((record) {
     Pros.debug.addLog(record);
     print(record);
+    if (record.error != null) print(record.error);
     if (record.stackTrace != null) print(record.stackTrace);
   });
 }

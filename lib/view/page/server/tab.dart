@@ -173,37 +173,37 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  Widget _buildEachServerCard(Server? si) {
-    if (si == null) {
+  Widget _buildEachServerCard(Server? srv) {
+    if (srv == null) {
       return UIs.placeholder;
     }
 
     return CardX(
-      key: Key(si.spi.id + (_tag ?? '')),
+      key: Key(srv.spi.id + (_tag ?? '')),
       InkWell(
         onTap: () {
-          if (si.state.canViewDetails) {
-            AppRoute.serverDetail(spi: si.spi).go(context);
-          } else if (si.status.failedInfo != null) {
-            _showFailReason(si.status);
+          if (srv.canViewDetails) {
+            AppRoute.serverDetail(spi: srv.spi).go(context);
+          } else if (srv.status.failedInfo != null) {
+            _showFailReason(srv.status);
           }
         },
         onLongPress: () {
-          if (si.state == ServerState.finished) {
+          if (srv.state == ServerState.finished) {
             setState(() {
-              if (_flipedCardIds.contains(si.spi.id)) {
-                _flipedCardIds.remove(si.spi.id);
+              if (_flipedCardIds.contains(srv.spi.id)) {
+                _flipedCardIds.remove(srv.spi.id);
               } else {
-                _flipedCardIds.add(si.spi.id);
+                _flipedCardIds.add(srv.spi.id);
               }
             });
           } else {
-            AppRoute.serverEdit(spi: si.spi).go(context);
+            AppRoute.serverEdit(spi: srv.spi).go(context);
           }
         },
         child: Padding(
           padding: const EdgeInsets.all(13),
-          child: _buildRealServerCard(si),
+          child: _buildRealServerCard(srv),
         ),
       ),
     );
@@ -465,8 +465,12 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  Widget _buildIOData(String up, String down,
-      {void Function()? onTap, Key? key}) {
+  Widget _buildIOData(
+    String up,
+    String down, {
+    void Function()? onTap,
+    Key? key,
+  }) {
     final child = Column(
       children: [
         const SizedBox(height: 5),

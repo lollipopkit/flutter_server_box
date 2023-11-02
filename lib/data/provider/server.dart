@@ -118,35 +118,25 @@ class ServerProvider extends ChangeNotifier {
       return;
     }
 
-    Future<void> connectFn(Server s) async {
-      if (onlyFailed) {
-        if (s.state != ServerState.failed) return;
-        _limiter.reset(s.spi.id);
-      }
+    await Future.wait(_servers.values.map((s) => _connectFn(s, onlyFailed)));
+  }
 
-      /// If [spi.autoConnect] is false and server is disconnected, then skip.
-      ///
-      /// If [spi.autoConnect] is false and server is connected, then refresh.
-      /// If no this, the server will only refresh once by clicking refresh button.
-      ///
-      /// If [spi.autoConnect] is true, then refresh.
-      if (!(s.spi.autoConnect ?? true) && s.state == ServerState.disconnected) {
-        return;
-      }
-      return await _getData(s.spi);
+  Future<void> _connectFn(Server s, bool onlyFailed) async {
+    if (onlyFailed) {
+      if (s.state != ServerState.failed) return;
+      _limiter.reset(s.spi.id);
     }
 
-    final directServers = <Server>[];
-    final proxyServers = <Server>[];
-    for (final s in _servers.values) {
-      if (s.spi.jumpId == null) {
-        directServers.add(s);
-      } else {
-        proxyServers.add(s);
-      }
+    /// If [spi.autoConnect] is false and server is disconnected, then skip.
+    ///
+    /// If [spi.autoConnect] is false and server is connected, then refresh.
+    /// If no this, the server will only refresh once by clicking refresh button.
+    ///
+    /// If [spi.autoConnect] is true, then refresh.
+    if (!(s.spi.autoConnect ?? true) && s.state == ServerState.disconnected) {
+      return;
     }
-    await Future.wait(directServers.map(connectFn));
-    await Future.wait(proxyServers.map(connectFn));
+    return await _getData(s.spi);
   }
 
   Future<void> startAutoRefresh() async {
@@ -236,6 +226,8 @@ class ServerProvider extends ChangeNotifier {
 
       // Only reconnect if neccessary
       if (newSpi.shouldReconnect(old)) {
+        // Use [newSpi.id] instead of [old.id] because [old.id] may be changed
+        _limiter.reset(newSpi.id);
         refreshData(spi: newSpi);
       }
 
@@ -271,21 +263,31 @@ class ServerProvider extends ChangeNotifier {
       return;
     }
 
+    s.status.failedInfo = null;
+
     /// If busy, it may be because of network reasons that the last request
     /// has not been completed, and the request should not be made again at this time.
     if (s.isBusy) return;
     s.isBusy = true;
 
-    if (s.state.shouldConnect || (s.client?.isClosed ?? true)) {
+    if (s.needGenClient || (s.client?.isClosed ?? true)) {
       _setServerState(s, ServerState.connecting);
 
-      final time1 = DateTime.now();
-
       try {
+        final time1 = DateTime.now();
         s.client = await genClient(
           spi,
           timeout: Stores.setting.timeoutD,
         );
+        final time2 = DateTime.now();
+        final spentTime = time2.difference(time1).inMilliseconds;
+        if (spi.jumpId == null) {
+          Loggers.app.info('Connected to ${spi.name} in $spentTime ms.');
+        } else {
+          Loggers.app.info(
+            'Connected to ${spi.name} via jump server in $spentTime ms.',
+          );
+        }
       } catch (e) {
         _limiter.inc(sid);
         s.status.failedInfo = e.toString();
@@ -294,15 +296,6 @@ class ServerProvider extends ChangeNotifier {
         /// In order to keep privacy, print [spi.name] instead of [spi.id]
         Loggers.app.warning('Connect to ${spi.name} failed', e);
         return;
-      }
-
-      final time2 = DateTime.now();
-      final spentTime = time2.difference(time1).inMilliseconds;
-      if (spi.jumpId == null) {
-        Loggers.app.info('Connected to ${spi.name} in $spentTime ms.');
-      } else {
-        Loggers.app
-            .info('Connected to ${spi.name} via jump server in $spentTime ms.');
       }
 
       _setServerState(s, ServerState.connected);

@@ -22,6 +22,12 @@ class Server implements TagPickable {
 
   @override
   String get tagName => spi.id;
+
+  bool get needGenClient => state < ServerState.connecting;
+
+  bool get canViewDetails => state == ServerState.finished;
+
+  String get id => spi.id;
 }
 
 enum ServerState {
@@ -37,10 +43,6 @@ enum ServerState {
 
   /// Status parsing finished
   finished;
-
-  bool get shouldConnect => this < ServerState.connecting;
-
-  bool get canViewDetails => this == ServerState.finished;
 
   operator <(ServerState other) => index < other.index;
 }
