@@ -31,8 +31,6 @@ class ServerProvider extends ChangeNotifier {
   final List<String> _tags = [];
   List<String> get tags => _tags;
 
-  final _limiter = TryLimiter();
-
   Timer? _timer;
 
   Future<void> load() async {
@@ -124,7 +122,7 @@ class ServerProvider extends ChangeNotifier {
   Future<void> _connectFn(Server s, bool onlyFailed) async {
     if (onlyFailed) {
       if (s.state != ServerState.failed) return;
-      _limiter.reset(s.spi.id);
+      TryLimiter.reset(s.spi.id);
     }
 
     /// If [spi.autoConnect] is false and server is disconnected, then skip.
@@ -161,7 +159,7 @@ class ServerProvider extends ChangeNotifier {
     for (final s in _servers.values) {
       s.state = ServerState.disconnected;
     }
-    _limiter.clear();
+    //TryLimiter.clear();
     notifyListeners();
   }
 
@@ -227,7 +225,7 @@ class ServerProvider extends ChangeNotifier {
       // Only reconnect if neccessary
       if (newSpi.shouldReconnect(old)) {
         // Use [newSpi.id] instead of [old.id] because [old.id] may be changed
-        _limiter.reset(newSpi.id);
+        TryLimiter.reset(newSpi.id);
         refreshData(spi: newSpi);
       }
 
@@ -256,7 +254,7 @@ class ServerProvider extends ChangeNotifier {
 
     if (s == null) return;
 
-    if (!_limiter.canTry(sid)) {
+    if (!TryLimiter.canTry(sid)) {
       if (s.state != ServerState.failed) {
         _setServerState(s, ServerState.failed);
       }
@@ -289,7 +287,7 @@ class ServerProvider extends ChangeNotifier {
           );
         }
       } catch (e) {
-        _limiter.inc(sid);
+        TryLimiter.inc(sid);
         s.status.failedInfo = e.toString();
         _setServerState(s, ServerState.failed);
 
@@ -332,7 +330,7 @@ class ServerProvider extends ChangeNotifier {
             throw err;
           }
         } catch (e) {
-          _limiter.inc(sid);
+          TryLimiter.inc(sid);
           s.status.failedInfo = e.toString();
           _setServerState(s, ServerState.failed);
           Loggers.app.warning('Write script to ${spi.name} by sftp', e);
@@ -357,13 +355,13 @@ class ServerProvider extends ChangeNotifier {
       raw = await s.client?.run(ShellFunc.status.exec).string;
       segments = raw?.split(seperator).map((e) => e.trim()).toList();
       if (raw == null || raw.isEmpty || segments == null || segments.isEmpty) {
-        _limiter.inc(sid);
+        TryLimiter.inc(sid);
         s.status.failedInfo = 'Seperate segments failed, raw:\n$raw';
         _setServerState(s, ServerState.failed);
         return;
       }
     } catch (e) {
-      _limiter.inc(sid);
+      TryLimiter.inc(sid);
       s.status.failedInfo = e.toString();
       _setServerState(s, ServerState.failed);
       Loggers.app.warning('Get status from ${spi.name} failed', e);
@@ -372,7 +370,7 @@ class ServerProvider extends ChangeNotifier {
 
     final systemType = SystemType.parse(segments[0]);
     if (!systemType.isSegmentsLenMatch(segments.length)) {
-      _limiter.inc(sid);
+      TryLimiter.inc(sid);
       s.status.failedInfo =
           'Segments not match: expect ${systemType.segmentsLen}, got ${segments.length}';
       _setServerState(s, ServerState.failed);
@@ -388,7 +386,7 @@ class ServerProvider extends ChangeNotifier {
       );
       s.status = await compute(getStatus, req);
     } catch (e, trace) {
-      _limiter.inc(sid);
+      TryLimiter.inc(sid);
       s.status.failedInfo = 'Parse failed: $e\n\n$raw';
       _setServerState(s, ServerState.failed);
       Loggers.parse.warning('Server status', e, trace);
@@ -398,7 +396,7 @@ class ServerProvider extends ChangeNotifier {
     /// Call this every time for setting [Server.isBusy] to false
     _setServerState(s, ServerState.finished);
     // reset try times only after prepared successfully
-    _limiter.reset(sid);
+    TryLimiter.reset(sid);
   }
 
   Future<SnippetResult?> runSnippets(String id, Snippet snippet) async {

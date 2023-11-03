@@ -11,6 +11,7 @@ import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
+import 'package:toolbox/data/model/server/try_limiter.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 
@@ -335,7 +336,22 @@ class _ServerPageState extends State<ServerPage>
     ServerPrivateInfo spi,
   ) {
     Widget? rightCorner;
-    if (!(spi.autoConnect ?? true) && cs == ServerState.disconnected) {
+    if (cs == ServerState.failed) {
+      rightCorner = InkWell(
+        onTap: () {
+          TryLimiter.reset(spi.id);
+          Pros.server.refreshData(spi: spi);
+        },
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 7),
+          child: Icon(
+            Icons.refresh,
+            size: 21,
+            color: Colors.grey,
+          ),
+        ),
+      );
+    } else if (!(spi.autoConnect ?? true) && cs == ServerState.disconnected) {
       rightCorner = InkWell(
         onTap: () => Pros.server.refreshData(spi: spi),
         child: const Padding(
