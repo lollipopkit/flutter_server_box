@@ -328,19 +328,16 @@ class _DockerManagePageState extends State<DockerManagePage> {
   }
 
   Widget _buildPs() {
-    final items = <Widget>[
-      ListTile(
-        title: Text(l10n.containerStatus),
-        subtitle: Text(
-          _buildPsCardSubtitle(Pros.docker.items!),
-          style: UIs.textGrey,
-        ),
+    final items = Pros.docker.items;
+    if (items == null) return UIs.placeholder;
+    return ExpandTile(
+      title: Text(l10n.containerStatus),
+      subtitle: Text(
+        _buildPsCardSubtitle(items),
+        style: UIs.textGrey,
       ),
-    ];
-    items.addAll(Pros.docker.items!.map(_buildPsItem));
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: items,
+      initiallyExpanded: items.length <= 7,
+      children: items.map(_buildPsItem).toList(),
     );
   }
 

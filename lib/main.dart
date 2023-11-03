@@ -74,7 +74,7 @@ Future<void> initApp() async {
   await _initMacOSWindow();
 
   // Base of all data.
-  await _initHive();
+  await _initDb();
   await setupLocator();
   _setupLogger();
   _setupProviders();
@@ -98,7 +98,8 @@ void _setupProviders() {
   Pros.key.load();
 }
 
-Future<void> _initHive() async {
+Future<void> _initDb() async {
+  // await SecureStore.init();
   await Hive.initFlutter();
   // Ordered by typeId
   Hive.registerAdapter(PrivateKeyInfoAdapter()); // 1
