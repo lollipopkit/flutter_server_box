@@ -393,7 +393,9 @@ class _ServerEditPageState extends State<ServerEditPage> {
     }
 
     final spi = ServerPrivateInfo(
-      name: _nameController.text,
+      name: _nameController.text.isEmpty
+          ? _ipController.text
+          : _nameController.text,
       ip: _ipController.text,
       port: int.parse(_portController.text),
       user: _usernameController.text,

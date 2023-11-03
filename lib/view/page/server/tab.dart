@@ -212,8 +212,8 @@ class _ServerPageState extends State<ServerPage>
   Widget _wrapWithSizedbox(Widget child) {
     return SizedBox(
       width: _useDoubleColumn
-          ? (_media.size.width - 146) / 10
-          : (_media.size.width - 74) / 5,
+          ? (_media.size.width - 137) / 8
+          : (_media.size.width - 74) / 4,
       child: child,
     );
   }
@@ -307,17 +307,14 @@ class _ServerPageState extends State<ServerPage>
   List<Widget> _buildNormalCard(ServerStatus ss, ServerPrivateInfo spi) {
     return [
       UIs.height13,
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 13),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _wrapWithSizedbox(_buildPercentCircle(ss.cpu.usedPercent())),
-            _wrapWithSizedbox(_buildPercentCircle(ss.mem.usedPercent * 100)),
-            _wrapWithSizedbox(_buildNet(ss, spi.id)),
-            _wrapWithSizedbox(_buildDisk(ss, spi.id)),
-          ],
-        ),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _wrapWithSizedbox(_buildPercentCircle(ss.cpu.usedPercent())),
+          _wrapWithSizedbox(_buildPercentCircle(ss.mem.usedPercent * 100)),
+          _wrapWithSizedbox(_buildNet(ss, spi.id)),
+          _wrapWithSizedbox(_buildDisk(ss, spi.id)),
+        ],
       ),
       UIs.height13,
       if (Stores.setting.moveOutServerTabFuncBtns.fetch() &&

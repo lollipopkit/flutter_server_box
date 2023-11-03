@@ -44,8 +44,9 @@ class DiskIO extends TimeSeq<DiskIOPiece> {
 
   (String?, String?) getSpeed(String dev) {
     final (read_, write_) = _getSpeed(dev);
-    final read = '${read_?.convertBytes}/s';
-    final write = '${write_?.convertBytes}/s';
+    if (read_ == null || write_ == null) return (null, null);
+    final read = '${read_.convertBytes}/s';
+    final write = '${write_.convertBytes}/s';
     return (read, write);
   }
 
