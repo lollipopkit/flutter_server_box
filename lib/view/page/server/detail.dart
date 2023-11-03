@@ -133,22 +133,20 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
     return CardX(
       ExpandTile(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildAnimatedText(
-              ValueKey(percent),
-              '$percent%',
-              UIs.textSize27,
-            ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: details,
-            ),
-          ],
+        title: Align(
+          alignment: Alignment.centerLeft,
+          child: _buildAnimatedText(
+            ValueKey(percent),
+            '$percent%',
+            UIs.textSize27,
+          ),
         ),
         childrenPadding: const EdgeInsets.symmetric(vertical: 13),
         initiallyExpanded: ss.cpu.coresCount <= 8,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: details,
+        ),
         children: _buildCPUProgress(ss.cpu),
       ),
     );
@@ -317,7 +315,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     return CardX(
       ExpandTile(
         title: Text(l10n.disk),
-        childrenPadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(bottom: 7),
         leading: const Icon(Icons.storage, size: 17),
         initiallyExpanded: children.length <= 7,
         children: children,
@@ -421,7 +419,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildNetSpeedItem(NetSpeed ns, String device) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 17),
+      padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 17),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -493,7 +491,6 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         text,
         style: style,
         textScaleFactor: _textFactor,
-        textAlign: TextAlign.left,
       ),
       transitionBuilder: (child, animation) => FadeTransition(
         opacity: animation,

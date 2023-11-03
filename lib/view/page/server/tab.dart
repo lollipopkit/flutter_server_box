@@ -491,7 +491,7 @@ class _ServerPageState extends State<ServerPage>
     if (onTap == null) return child;
     return IconButton(
       key: key,
-      padding: const EdgeInsets.symmetric(horizontal: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 3),
       onPressed: onTap,
       icon: child,
     );
