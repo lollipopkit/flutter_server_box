@@ -480,7 +480,14 @@ class _SettingPageState extends State<SettingPage> {
         .toList();
     // Issue #57
     final len = ThemeMode.values.length;
+
+    /// Add AMOLED theme
     items.add(PopupMenuItem(value: len, child: Text(_buildThemeModeStr(len))));
+
+    /// Add AUTO-AMOLED theme
+    items.add(
+      PopupMenuItem(value: len + 1, child: Text(_buildThemeModeStr(len + 1))),
+    );
 
     return ListTile(
       title: Text(
@@ -518,6 +525,8 @@ class _SettingPageState extends State<SettingPage> {
         return l10n.dark;
       case 3:
         return 'AMOLED';
+      case 4:
+        return '${l10n.auto} AMOLED';
       default:
         return l10n.auto;
     }

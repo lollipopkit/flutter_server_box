@@ -142,7 +142,7 @@ class SId extends S {
   String get delete => 'Menghapus';
 
   @override
-  String get deleteScripts => 'Menghapus skrip';
+  String get deleteScripts => 'Menghapus skrip server secara bersamaan';
 
   @override
   String get deleteServers => 'Penghapusan server secara batch';

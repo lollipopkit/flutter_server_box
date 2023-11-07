@@ -39,10 +39,16 @@ class MyApp extends StatelessWidget {
       listenable: RebuildNodes.app,
       build: () {
         final tMode = Stores.setting.themeMode.fetch();
-        final isAMOLED = tMode >= 0 && tMode <= ThemeMode.values.length - 1;
         // Issue #57
-        // if not [ok] -> [AMOLED] mode, use [ThemeMode.dark]
-        final themeMode = isAMOLED ? ThemeMode.values[tMode] : ThemeMode.dark;
+        var themeMode = ThemeMode.system;
+        switch (tMode) {
+          case 1 || 2:
+            themeMode = ThemeMode.values[tMode];
+            break;
+          case 3:
+            themeMode = ThemeMode.dark;
+            break;
+        }
         final locale = Stores.setting.locale.fetch().toLocale;
         final darkTheme = ThemeData(
           useMaterial3: true,
@@ -62,7 +68,7 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
             colorSchemeSeed: primaryColor,
           ),
-          darkTheme: isAMOLED ? darkTheme : _getAmoledTheme(darkTheme),
+          darkTheme: tMode < 3 ? darkTheme : _getAmoledTheme(darkTheme),
           home: Stores.setting.fullScreen.fetch()
               ? const FullScreenPage()
               : const HomePage(),

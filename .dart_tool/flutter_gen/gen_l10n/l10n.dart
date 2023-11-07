@@ -371,7 +371,7 @@ abstract class S {
   /// No description provided for @deleteScripts.
   ///
   /// In en, this message translates to:
-  /// **'Delete scripts'**
+  /// **'Delete server scripts at the same time'**
   String get deleteScripts;
 
   /// No description provided for @deleteServers.

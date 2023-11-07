@@ -82,7 +82,7 @@ class SettingStore extends PersistentStore {
   // Max retry count when connect to server
   late final maxRetryCount = StoreProperty(box, 'maxRetryCount', 2);
 
-  // Night mode: 0 -> auto, 1 -> light, 2 -> dark
+  // Night mode: 0 -> auto, 1 -> light, 2 -> dark, 3 -> AMOLED, 4 -> AUTO-AMOLED
   late final themeMode = StoreProperty(box, 'themeMode', 0);
 
   // Font file path
