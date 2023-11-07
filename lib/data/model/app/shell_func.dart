@@ -16,8 +16,8 @@ enum ShellFunc {
   suspend,
   ;
 
-  static const _serverBoxDir = '.config/server_box';
-  static const _scriptFileName = 'mobile_v${BuildData.script}.sh';
+  static const _srvBoxDir = '.config/server_box';
+  static const _scriptFile = 'mobile_v${BuildData.script}.sh';
 
   /// Issue #159
   ///
@@ -26,15 +26,15 @@ enum ShellFunc {
   /// So different version of app can run at the same time.
   ///
   /// **Can't** use it in SFTP, because SFTP can't recognize `$HOME`
-  static String getShellPath(String home) =>
-      '$home/$_serverBoxDir/$_scriptFileName';
+  static String getShellPath(String home) => '$home/$_srvBoxDir/$_scriptFile';
 
-  static final _installShellPath = getShellPath(_homeVar);
+  static const srvBoxDir = '$_homeVar/$_srvBoxDir';
+  static const _installShellPath = '$_homeVar/$_srvBoxDir/$_scriptFile';
 
   /// Issue #168
   /// Use `sh` for compatibility
   static final installShellCmd = """
-mkdir -p $_homeVar/$_serverBoxDir
+mkdir -p $_homeVar/$_srvBoxDir
 cat << 'EOF' > $_installShellPath
 ${ShellFunc.allScript}
 EOF

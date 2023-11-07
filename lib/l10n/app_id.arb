@@ -45,6 +45,7 @@
   "decode": "Membaca sandi",
   "decompress": "Dekompresi",
   "delete": "Menghapus",
+  "deleteScripts": "Menghapus skrip server secara bersamaan",
   "deleteServers": "Penghapusan server secara batch",
   "dirEmpty": "Pastikan dir kosong.",
   "disabled": "Dengan disabilitas",

@@ -142,6 +142,9 @@ class SDe extends S {
   String get delete => 'Löschen';
 
   @override
+  String get deleteScripts => 'Skripte löschen';
+
+  @override
   String get deleteServers => 'Batch-Löschung von Servern';
 
   @override

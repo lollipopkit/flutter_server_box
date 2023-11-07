@@ -45,6 +45,7 @@
   "decode": "Decode",
   "decompress": "Decompress",
   "delete": "Delete",
+  "deleteScripts": "Delete server scripts at the same time",
   "deleteServers": "Batch delete servers",
   "dirEmpty": "Make sure dir is empty.",
   "disabled": "Disabled",

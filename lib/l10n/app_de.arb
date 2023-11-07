@@ -45,6 +45,7 @@
   "decode": "Decode",
   "decompress": "Dekomprimieren",
   "delete": "Löschen",
+  "deleteScripts": "Gleichzeitiges Löschen von Server-Skripten",
   "deleteServers": "Batch-Löschung von Servern",
   "dirEmpty": "Stelle sicher, dass der Ordner leer ist.",
   "disabled": "Behinderte",

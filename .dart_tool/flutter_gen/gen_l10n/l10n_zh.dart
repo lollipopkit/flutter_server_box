@@ -142,6 +142,9 @@ class SZh extends S {
   String get delete => '删除';
 
   @override
+  String get deleteScripts => '同时删除服务器脚本';
+
+  @override
   String get deleteServers => '批量删除服务器';
 
   @override
@@ -926,6 +929,9 @@ class SZhTw extends SZh {
 
   @override
   String get delete => '刪除';
+
+  @override
+  String get deleteScripts => '同時刪除服務器腳本';
 
   @override
   String get deleteServers => '批量刪除服務器';

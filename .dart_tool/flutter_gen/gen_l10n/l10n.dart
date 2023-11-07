@@ -368,6 +368,12 @@ abstract class S {
   /// **'Delete'**
   String get delete;
 
+  /// No description provided for @deleteScripts.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete scripts'**
+  String get deleteScripts;
+
   /// No description provided for @deleteServers.
   ///
   /// In en, this message translates to:

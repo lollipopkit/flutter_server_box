@@ -11,7 +11,7 @@ class SecureStore {
   SecureStore._();
 
   static const _secureStorage = FlutterSecureStorage();
-  
+
   static HiveAesCipher? _cipher;
 
   static const _hiveKey = 'hive_key';

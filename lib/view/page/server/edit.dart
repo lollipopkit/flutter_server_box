@@ -4,6 +4,7 @@ import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
+import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/view/widget/expand_tile.dart';
 
@@ -107,31 +108,59 @@ class _ServerEditPageState extends State<ServerEditPage> {
   }
 
   PreferredSizeWidget _buildAppBar() {
-    final delBtn = IconButton(
-      onPressed: () {
-        context.showRoundDialog(
-          title: Text(l10n.attention),
-          child: Text(l10n.askContinue(
-            '${l10n.delete} ${l10n.server}(${widget.spi!.name})',
-          )),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Pros.server.delServer(widget.spi!.id);
-                context.pop();
-                context.pop(true);
-              },
-              child: Text(l10n.ok, style: UIs.textRed),
-            ),
-          ],
-        );
-      },
-      icon: const Icon(Icons.delete),
-    );
-    final actions = widget.spi != null ? [delBtn] : null;
     return CustomAppBar(
       title: Text(l10n.edit, style: UIs.textSize18),
-      actions: actions,
+      actions: widget.spi != null
+          ? [
+              IconButton(
+                onPressed: () {
+                  var delScripts = false;
+                  context.showRoundDialog(
+                    title: Text(l10n.attention),
+                    child: StatefulBuilder(builder: (ctx, setState) {
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(l10n.askContinue(
+                            '${l10n.delete} ${l10n.server}(${widget.spi!.name})',
+                          )),
+                          UIs.height13,
+                          Row(
+                            children: [
+                              Checkbox(
+                                value: delScripts,
+                                onChanged: (_) => setState(
+                                  () => delScripts = !delScripts,
+                                ),
+                              ),
+                              Text(l10n.deleteScripts),
+                            ],
+                          )
+                        ],
+                      );
+                    }),
+                    actions: [
+                      TextButton(
+                        onPressed: () async {
+                          if (delScripts) {
+                            const cmd =
+                                'rm ${ShellFunc.srvBoxDir}/mobile_v*.sh';
+                            await widget.spi?.server?.client?.run(cmd);
+                          }
+                          Pros.server.delServer(widget.spi!.id);
+                          context.pop();
+                          context.pop(true);
+                        },
+                        child: Text(l10n.ok, style: UIs.textRed),
+                      ),
+                    ],
+                  );
+                },
+                icon: const Icon(Icons.delete),
+              ),
+            ]
+          : null,
     );
   }
 

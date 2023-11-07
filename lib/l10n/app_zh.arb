@@ -45,6 +45,7 @@
   "decode": "解码",
   "decompress": "解压缩",
   "delete": "删除",
+  "deleteScripts": "同时删除服务器脚本",
   "deleteServers": "批量删除服务器",
   "dirEmpty": "请确保文件夹为空",
   "disabled": "已禁用",

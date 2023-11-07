@@ -96,7 +96,7 @@ class _HomePageState extends State<HomePage>
             BgRunMC.moveToBg();
           }
         } else {
-          Pros.server.setDisconnected();
+          //Pros.server.setDisconnected();
           Pros.server.stopAutoRefresh();
         }
         break;
