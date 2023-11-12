@@ -21,7 +21,6 @@ class ChoiceChipX<T> extends StatelessWidget {
         label: Text(label),
         side: BorderSide.none,
         selected: state.selected(value),
-        selectedColor: Theme.of(context).colorScheme.primary,
         onSelected: state.onSelected(value),
       ),
     );

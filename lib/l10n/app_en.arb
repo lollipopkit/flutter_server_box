@@ -72,6 +72,7 @@
   "experimentalFeature": "Experimental feature",
   "export": "Export",
   "extraArgs": "Extra args",
+  "fabOpenSSHSession": "Click the FAB to open a session",
   "failed": "Failed",
   "feedback": "Feedback",
   "feedbackOnGithub": "If you have any questions, please feedback on Github.",

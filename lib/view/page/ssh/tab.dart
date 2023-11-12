@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/res/provider.dart';
+import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/page/ssh/page.dart';
 
 class SSHTabPage extends StatefulWidget {
@@ -13,7 +16,9 @@ class SSHTabPage extends StatefulWidget {
 
 class _SSHTabPageState extends State<SSHTabPage>
     with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
-  final _tabIds = <String, SSHPage>{};
+  late final _tabIds = <String, Widget>{
+    l10n.add: _addPage,
+  };
   final _tabKeys = <String, GlobalKey>{};
   late var _tabController = TabController(
     length: _tabIds.length,
@@ -30,22 +35,42 @@ class _SSHTabPageState extends State<SSHTabPage>
         isScrollable: true,
       ),
       body: _buildBody(),
-      floatingActionButton: _buildFAB(),
     );
   }
 
   Widget _buildTabItem(String e) {
+    if (e == l10n.add) {
+      return Tab(child: Text(e));
+    }
     return Tab(
       child: Row(
         children: [
           Text(e),
-          IconButton(
-            icon: const Icon(Icons.close),
-            padding: EdgeInsets.zero,
-            onPressed: () {
-              _tabKeys[e]?.currentState?.dispose();
+          UIs.width7,
+          InkWell(
+            borderRadius: BorderRadius.circular(17),
+            child: const Padding(padding: EdgeInsets.all(7), child: Icon(Icons.close, size: 17),),
+            onTap: () async {
+              final confirm = await context.showRoundDialog<bool>(
+                title: Text(l10n.attention),
+                child: Text('${l10n.close} SSH ${l10n.conn}($e) ?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => context.pop(true),
+                    child: Text(l10n.ok, style: UIs.textRed),
+                  ),
+                  TextButton(
+                    onPressed: () => context.pop(false),
+                    child: Text(l10n.cancel),
+                  ),
+                ],
+              );
+              if (confirm != true) {
+                return;
+              }
               _tabIds.remove(e);
               _refreshTabs();
+              //_tabKeys[e]?.currentState?.dispose();
             },
           ),
         ],
@@ -53,45 +78,55 @@ class _SSHTabPageState extends State<SSHTabPage>
     );
   }
 
-  Widget _buildFAB() {
-    return FloatingActionButton(
-      onPressed: () async {
-        final spi = (await context.showPickDialog<Server>(
-          items: Pros.server.servers.toList(),
-          name: (e) => e.spi.name,
-          multi: false,
-        ))
-            ?.first
-            .spi;
-        if (spi == null) {
-          return;
-        }
-        final name = () {
-          if (_tabIds.containsKey(spi.name)) {
-            return '${spi.name}(${_tabIds.length + 1})';
-          }
-          return spi.name;
-        }();
-        final key = GlobalKey(debugLabel: 'sshTabPage_$name');
-        _tabIds[name] = SSHPage(
-          key: key,
-          spi: spi,
-        );
-        _tabKeys[name] = key;
-        _refreshTabs();
-        _tabController.animateTo(_tabIds.length - 1);
-      },
-      child: const Icon(Icons.add),
-    );
-  }
+  late final Widget _addPage = Center(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(77),
+            color: Colors.white10,
+          ),
+          child: IconButton(
+            padding: const EdgeInsets.all(17),
+            onPressed: () async {
+              final spi = (await context.showPickDialog<Server>(
+                items: Pros.server.servers.toList(),
+                name: (e) => e.spi.name,
+                multi: false,
+              ))
+                  ?.first
+                  .spi;
+              if (spi == null) {
+                return;
+              }
+              final name = () {
+                if (_tabIds.containsKey(spi.name)) {
+                  return '${spi.name}(${_tabIds.length + 1})';
+                }
+                return spi.name;
+              }();
+              final key = GlobalKey(debugLabel: 'sshTabPage_$name');
+              _tabIds[name] = SSHPage(
+                key: key,
+                spi: spi,
+              );
+              _tabKeys[name] = key;
+              _refreshTabs();
+              _tabController.animateTo(_tabIds.length - 1);
+            },
+            icon: const Icon(Icons.add),
+          ),
+        ),
+        UIs.height13,
+        Text(l10n.add),
+      ],
+    ),
+  );
 
   Widget _buildBody() {
-    if (_tabIds.isEmpty) {
-      return const Center(
-        child: Text('Click the fab to open a session'),
-      );
-    }
     return TabBarView(
+      physics: const NeverScrollableScrollPhysics(),
       controller: _tabController,
       children: _tabIds.values.toList(),
     );

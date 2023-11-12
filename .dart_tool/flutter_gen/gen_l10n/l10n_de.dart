@@ -231,6 +231,9 @@ class SDe extends S {
   String get extraArgs => 'Extra args';
 
   @override
+  String get fabOpenSSHSession => 'Klicken Sie auf die FAB, um eine Sitzung zu öffnen';
+
+  @override
   String get failed => 'Failed';
 
   @override

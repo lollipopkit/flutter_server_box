@@ -16,7 +16,12 @@ class Server implements TagPickable {
   SSHClient? client;
   ServerState state;
 
-  Server(this.spi, this.status, this.client, this.state);
+  Server(
+    this.spi,
+    this.status,
+    this.state, {
+    this.client,
+  });
 
   @override
   bool containsTag(String tag) {
