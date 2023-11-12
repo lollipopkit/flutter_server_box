@@ -12,7 +12,7 @@ import 'package:toolbox/view/page/server/detail.dart';
 import 'package:toolbox/view/page/setting/android.dart';
 import 'package:toolbox/view/page/setting/ios.dart';
 import 'package:toolbox/view/page/snippet/result.dart';
-import 'package:toolbox/view/page/ssh_term.dart';
+import 'package:toolbox/view/page/ssh/page.dart';
 import 'package:toolbox/view/page/setting/virt_key.dart';
 import 'package:toolbox/view/page/storage/local.dart';
 

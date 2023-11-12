@@ -21,10 +21,8 @@ import '../model/server/snippet.dart';
 import '../model/server/try_limiter.dart';
 import '../res/status.dart';
 
-typedef ServersMap = Map<String, Server>;
-
 class ServerProvider extends ChangeNotifier {
-  final ServersMap _servers = {};
+  final Map<String, Server> _servers = {};
   Iterable<Server> get servers => _servers.values;
   final Order<String> _serverOrder = [];
   Order<String> get serverOrder => _serverOrder;
@@ -102,7 +100,7 @@ class ServerProvider extends ChangeNotifier {
   }
 
   Server genServer(ServerPrivateInfo spi) {
-    return Server(spi, InitStatus.status, null, ServerState.disconnected);
+    return Server(spi, InitStatus.status, ServerState.disconnected);
   }
 
   /// if [spi] is specificed then only refresh this server

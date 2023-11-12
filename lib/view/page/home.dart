@@ -111,7 +111,16 @@ class _HomePageState extends State<HomePage>
 
     return Scaffold(
       drawer: _buildDrawer(),
-      appBar: _buildAppBar(),
+      appBar: CustomAppBar(
+        title: const Text(BuildData.name),
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.developer_mode, size: 23),
+            tooltip: l10n.debug,
+            onPressed: () => AppRoute.debug().go(context),
+          ),
+        ],
+      ),
       body: PageView.builder(
         controller: _pageController,
         itemCount: AppTab.values.length,
@@ -126,37 +135,6 @@ class _HomePageState extends State<HomePage>
         listenable: _selectIndex,
         build: _buildBottomBar,
       ),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar() {
-    final actions = <Widget>[
-      IconButton(
-        icon: const Icon(Icons.developer_mode, size: 23),
-        tooltip: l10n.debug,
-        onPressed: () => AppRoute.debug().go(context),
-      ),
-    ];
-    if (isDesktop && _selectIndex.value == AppTab.server.index) {
-      actions.add(
-        ValueBuilder(
-          listenable: _selectIndex,
-          build: () {
-            if (_selectIndex.value != AppTab.server.index) {
-              return const SizedBox();
-            }
-            return IconButton(
-              icon: const Icon(Icons.refresh, size: 23),
-              tooltip: 'Refresh',
-              onPressed: () => Pros.server.refreshData(onlyFailed: true),
-            );
-          },
-        ),
-      );
-    }
-    return CustomAppBar(
-      title: const Text(BuildData.name),
-      actions: actions,
     );
   }
 
@@ -185,15 +163,15 @@ class _HomePageState extends State<HomePage>
           label: l10n.server,
           selectedIcon: const Icon(Icons.cloud),
         ),
+        const NavigationDestination(
+          icon: Icon(Icons.terminal_outlined),
+          label: 'SSH',
+          selectedIcon: Icon(Icons.terminal),
+        ),
         NavigationDestination(
           icon: const Icon(Icons.snippet_folder_outlined),
           label: l10n.snippet,
           selectedIcon: const Icon(Icons.snippet_folder),
-        ),
-        const NavigationDestination(
-          icon: Icon(Icons.network_check_outlined),
-          label: 'Ping',
-          selectedIcon: Icon(Icons.network_check),
         ),
       ],
     );

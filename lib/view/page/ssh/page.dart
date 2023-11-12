@@ -12,6 +12,7 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/share.dart';
+import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/provider/virtual_keyboard.dart';
 import 'package:toolbox/data/res/provider.dart';
@@ -19,13 +20,12 @@ import 'package:toolbox/data/res/store.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
 
-import '../../core/route.dart';
-import '../../core/utils/misc.dart';
-import '../../core/utils/server.dart';
-import '../../data/model/server/server_private_info.dart';
-import '../../data/model/ssh/virtual_key.dart';
-import '../../data/res/color.dart';
-import '../../data/res/terminal.dart';
+import '../../../core/route.dart';
+import '../../../core/utils/misc.dart';
+import '../../../data/model/server/server_private_info.dart';
+import '../../../data/model/ssh/virtual_key.dart';
+import '../../../data/res/color.dart';
+import '../../../data/res/terminal.dart';
 
 const echoPWD = 'echo \$PWD';
 
@@ -38,7 +38,7 @@ class SSHPage extends StatefulWidget {
   _SSHPageState createState() => _SSHPageState();
 }
 
-class _SSHPageState extends State<SSHPage> {
+class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   final _keyboard = VirtKeyProvider();
   late final _terminal = Terminal(inputHandler: _keyboard);
   final TerminalController _terminalController = TerminalController();
@@ -53,8 +53,9 @@ class _SSHPageState extends State<SSHPage> {
 
   bool _isDark = false;
   Timer? _virtKeyLongPressTimer;
-  SSHClient? _client;
-  SSHSession? _session;
+  late final Server? _server = widget.spi.server;
+  late final SSHClient? _client = _server?.client;
+  late final SSHSession? _session;
   Timer? _discontinuityTimer;
 
   @override
@@ -76,11 +77,13 @@ class _SSHPageState extends State<SSHPage> {
     super.dispose();
     _virtKeyLongPressTimer?.cancel();
     _terminalController.dispose();
-    if (_client?.isClosed == false) {
-      try {
-        _client?.close();
-      } catch (_) {}
-    }
+
+    /// Use the same [SSHClient], so don't close it
+    // if (_client?.isClosed == false) {
+    //   try {
+    //     _client?.close();
+    //   } catch (_) {}
+    // }
     _discontinuityTimer?.cancel();
   }
 
@@ -100,6 +103,7 @@ class _SSHPageState extends State<SSHPage> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     Widget child = Scaffold(
       backgroundColor: _terminalTheme.background,
       body: _buildBody(),
@@ -320,26 +324,26 @@ class _SSHPageState extends State<SSHPage> {
   Future<void> _initTerminal() async {
     _write('Connecting...\r\n');
 
-    _client = await genClient(
-      widget.spi,
-      onStatus: (p0) {
-        switch (p0) {
-          case GenSSHClientStatus.socket:
-            _write('Destination: ${widget.spi.id}');
-            return _write('Establishing socket...');
-          case GenSSHClientStatus.key:
-            return _write('Using private key to connect...');
-          case GenSSHClientStatus.pwd:
-            return _write('Sending password to auth...');
-        }
-      },
-      timeout: Stores.setting.timeoutD,
-    );
-    _write('Connected\r\n');
+    // _client = await genClient(
+    //   widget.spi,
+    //   onStatus: (p0) {
+    //     switch (p0) {
+    //       case GenSSHClientStatus.socket:
+    //         _write('Destination: ${widget.spi.id}');
+    //         return _write('Establishing socket...');
+    //       case GenSSHClientStatus.key:
+    //         return _write('Using private key to connect...');
+    //       case GenSSHClientStatus.pwd:
+    //         return _write('Sending password to auth...');
+    //     }
+    //   },
+    //   timeout: Stores.setting.timeoutD,
+    // );
+    // _write('Connected\r\n');
     _write('Terminal size: ${_terminal.viewWidth}x${_terminal.viewHeight}\r\n');
     _write('Starting shell...\r\n');
 
-    _session = await _client!.shell(
+    _session = await _client?.shell(
       pty: SSHPtyConfig(
         width: _terminal.viewWidth,
         height: _terminal.viewHeight,
@@ -353,8 +357,8 @@ class _SSHPageState extends State<SSHPage> {
       return;
     }
 
-    _terminal.buffer.clear();
-    _terminal.buffer.setCursor(0, 0);
+    // _terminal.buffer.clear();
+    // _terminal.buffer.setCursor(0, 0);
 
     _terminal.onOutput = (data) {
       _session?.write(utf8.encode(data) as Uint8List);
@@ -424,4 +428,7 @@ class _SSHPageState extends State<SSHPage> {
       ],
     );
   }
+  
+  @override
+  bool get wantKeepAlive => true;
 }
