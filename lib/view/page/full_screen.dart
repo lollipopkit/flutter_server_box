@@ -239,7 +239,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
       cs,
       ss.temps.first,
       ss.uptime,
-      ss.failedInfo,
+      ss.err,
     );
     return Text(
       topRightStr,

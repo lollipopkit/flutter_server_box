@@ -53,7 +53,7 @@ class ServerStatus {
   NetSpeed netSpeed;
   Temperatures temps;
   SystemType system;
-  String? failedInfo;
+  String? err;
   DiskIO diskIO;
 
   /// Whether is connectting, parsing and etc.
@@ -71,7 +71,7 @@ class ServerStatus {
     required this.temps,
     required this.system,
     required this.diskIO,
-    this.failedInfo,
+    this.err,
   });
 }
 

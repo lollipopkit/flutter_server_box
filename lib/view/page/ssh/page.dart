@@ -9,7 +9,6 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/data/model/server/server.dart';
@@ -27,7 +26,7 @@ import '../../../data/model/ssh/virtual_key.dart';
 import '../../../data/res/color.dart';
 import '../../../data/res/terminal.dart';
 
-const echoPWD = 'echo \$PWD';
+const _echoPWD = 'echo \$PWD';
 
 class SSHPage extends StatefulWidget {
   final ServerPrivateInfo spi;
@@ -55,7 +54,6 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   Timer? _virtKeyLongPressTimer;
   late final Server? _server = widget.spi.server;
   late final SSHClient? _client = _server?.client;
-  late final SSHSession? _session;
   Timer? _discontinuityTimer;
 
   @override
@@ -68,8 +66,11 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     );
     _terminalStyle = TerminalStyle.fromTextStyle(textStyle);
     _keyboardType = TextInputType.values[Stores.setting.keyboardType.fetch()];
-    _initTerminal();
     _initVirtKeys();
+
+    Future.delayed(const Duration(milliseconds: 77), () async {
+      await _initTerminal();
+    });
   }
 
   @override
@@ -270,13 +271,13 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
         break;
       case VirtualKeyFunc.file:
         // get $PWD from SSH session
-        _terminal.textInput(echoPWD);
+        _terminal.textInput(_echoPWD);
         _terminal.keyInput(TerminalKey.enter);
         final cmds = _terminal.buffer.lines.toList();
         // wait for the command to finish
         await Future.delayed(const Duration(milliseconds: 777));
         // the line below `echo $PWD` is the current path
-        final idx = cmds.lastIndexWhere((e) => e.toString().contains(echoPWD));
+        final idx = cmds.lastIndexWhere((e) => e.toString().contains(_echoPWD));
         final initPath = cmds[idx + 1].toString();
         if (initPath.isEmpty || !initPath.startsWith('/')) {
           context.showRoundDialog(
@@ -323,27 +324,12 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
 
   Future<void> _initTerminal() async {
     _write('Connecting...\r\n');
-
-    // _client = await genClient(
-    //   widget.spi,
-    //   onStatus: (p0) {
-    //     switch (p0) {
-    //       case GenSSHClientStatus.socket:
-    //         _write('Destination: ${widget.spi.id}');
-    //         return _write('Establishing socket...');
-    //       case GenSSHClientStatus.key:
-    //         return _write('Using private key to connect...');
-    //       case GenSSHClientStatus.pwd:
-    //         return _write('Sending password to auth...');
-    //     }
-    //   },
-    //   timeout: Stores.setting.timeoutD,
-    // );
-    // _write('Connected\r\n');
-    _write('Terminal size: ${_terminal.viewWidth}x${_terminal.viewHeight}\r\n');
+    if (_client == null) {
+      await Pros.server.refreshData(spi: widget.spi);
+    }
     _write('Starting shell...\r\n');
 
-    _session = await _client?.shell(
+    final session = await _client?.shell(
       pty: SSHPtyConfig(
         width: _terminal.viewWidth,
         height: _terminal.viewHeight,
@@ -352,30 +338,30 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
 
     _setupDiscontinuityTimer();
 
-    if (_session == null) {
-      context.showSnackBar('Null session');
+    if (session == null) {
+      _write(_server?.status.err ?? 'Null session');
       return;
     }
 
-    // _terminal.buffer.clear();
-    // _terminal.buffer.setCursor(0, 0);
+    _terminal.buffer.clear();
+    _terminal.buffer.setCursor(0, 0);
 
     _terminal.onOutput = (data) {
-      _session?.write(utf8.encode(data) as Uint8List);
+      session.write(utf8.encode(data) as Uint8List);
     };
     _terminal.onResize = (width, height, pixelWidth, pixelHeight) {
-      _session?.resizeTerminal(width, height);
+      session.resizeTerminal(width, height);
     };
 
-    _listen(_session?.stdout);
-    _listen(_session?.stderr);
+    _listen(session.stdout);
+    _listen(session.stderr);
 
     if (widget.initCmd != null) {
       _terminal.textInput(widget.initCmd!);
       _terminal.keyInput(TerminalKey.enter);
     }
 
-    await _session?.done;
+    await session.done;
     if (mounted) {
       context.pop();
     }
@@ -428,7 +414,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
       ],
     );
   }
-  
+
   @override
   bool get wantKeepAlive => true;
 }

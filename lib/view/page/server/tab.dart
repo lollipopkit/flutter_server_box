@@ -184,7 +184,7 @@ class _ServerPageState extends State<ServerPage>
         onTap: () {
           if (srv.canViewDetails) {
             AppRoute.serverDetail(spi: srv.spi).go(context);
-          } else if (srv.status.failedInfo != null) {
+          } else if (srv.status.err != null) {
             _showFailReason(srv.status);
           }
         },
@@ -398,9 +398,9 @@ class _ServerPageState extends State<ServerPage>
       cs,
       ss.temps.first,
       ss.uptime,
-      ss.failedInfo,
+      ss.err,
     );
-    if (cs == ServerState.failed && ss.failedInfo != null) {
+    if (cs == ServerState.failed && ss.err != null) {
       return GestureDetector(
         onTap: () => _showFailReason(ss),
         child: Text(
@@ -421,11 +421,11 @@ class _ServerPageState extends State<ServerPage>
     context.showRoundDialog(
       title: Text(l10n.error),
       child: SingleChildScrollView(
-        child: Text(ss.failedInfo ?? l10n.unknownError),
+        child: Text(ss.err ?? l10n.unknownError),
       ),
       actions: [
         TextButton(
-          onPressed: () => Shares.copy(ss.failedInfo!),
+          onPressed: () => Shares.copy(ss.err!),
           child: Text(l10n.copy),
         )
       ],

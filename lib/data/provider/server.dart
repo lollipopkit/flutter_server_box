@@ -259,7 +259,7 @@ class ServerProvider extends ChangeNotifier {
       return;
     }
 
-    s.status.failedInfo = null;
+    s.status.err = null;
 
     /// If busy, it may be because of network reasons that the last request
     /// has not been completed, and the request should not be made again at this time.
@@ -286,7 +286,7 @@ class ServerProvider extends ChangeNotifier {
         }
       } catch (e) {
         TryLimiter.inc(sid);
-        s.status.failedInfo = e.toString();
+        s.status.err = e.toString();
         _setServerState(s, ServerState.failed);
 
         /// In order to keep privacy, print [spi.name] instead of [spi.id]
@@ -329,7 +329,7 @@ class ServerProvider extends ChangeNotifier {
           }
         } catch (e) {
           TryLimiter.inc(sid);
-          s.status.failedInfo = e.toString();
+          s.status.err = e.toString();
           _setServerState(s, ServerState.failed);
           Loggers.app.warning('Write script to ${spi.name} by sftp', e);
           return;
@@ -354,13 +354,13 @@ class ServerProvider extends ChangeNotifier {
       segments = raw?.split(seperator).map((e) => e.trim()).toList();
       if (raw == null || raw.isEmpty || segments == null || segments.isEmpty) {
         TryLimiter.inc(sid);
-        s.status.failedInfo = 'Seperate segments failed, raw:\n$raw';
+        s.status.err = 'Seperate segments failed, raw:\n$raw';
         _setServerState(s, ServerState.failed);
         return;
       }
     } catch (e) {
       TryLimiter.inc(sid);
-      s.status.failedInfo = e.toString();
+      s.status.err = e.toString();
       _setServerState(s, ServerState.failed);
       Loggers.app.warning('Get status from ${spi.name} failed', e);
       return;
@@ -369,7 +369,7 @@ class ServerProvider extends ChangeNotifier {
     final systemType = SystemType.parse(segments[0]);
     if (!systemType.isSegmentsLenMatch(segments.length)) {
       TryLimiter.inc(sid);
-      s.status.failedInfo =
+      s.status.err =
           'Segments not match: expect ${systemType.segmentsLen}, got ${segments.length}';
       _setServerState(s, ServerState.failed);
       return;
@@ -385,7 +385,7 @@ class ServerProvider extends ChangeNotifier {
       s.status = await compute(getStatus, req);
     } catch (e, trace) {
       TryLimiter.inc(sid);
-      s.status.failedInfo = 'Parse failed: $e\n\n$raw';
+      s.status.err = 'Parse failed: $e\n\n$raw';
       _setServerState(s, ServerState.failed);
       Loggers.parse.warning('Server status', e, trace);
       return;
