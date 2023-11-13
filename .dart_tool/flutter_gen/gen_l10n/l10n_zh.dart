@@ -231,9 +231,6 @@ class SZh extends S {
   String get extraArgs => '额外参数';
 
   @override
-  String get fabOpenSSHSession => '点击右下FAB来开启新的SSH终端';
-
-  @override
   String get failed => '失败';
 
   @override
@@ -1021,9 +1018,6 @@ class SZhTw extends SZh {
 
   @override
   String get extraArgs => '額外參數';
-
-  @override
-  String get fabOpenSSHSession => '點擊右下FAB來開啟新的SSH終端';
 
   @override
   String get failed => '失敗';

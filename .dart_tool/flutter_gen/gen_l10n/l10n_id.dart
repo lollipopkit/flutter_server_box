@@ -231,9 +231,6 @@ class SId extends S {
   String get extraArgs => 'Args ekstra';
 
   @override
-  String get fabOpenSSHSession => 'Klik FAB untuk membuka sesi';
-
-  @override
   String get failed => 'Gagal';
 
   @override

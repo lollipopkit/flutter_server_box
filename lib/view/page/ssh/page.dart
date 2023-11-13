@@ -31,7 +31,13 @@ const _echoPWD = 'echo \$PWD';
 class SSHPage extends StatefulWidget {
   final ServerPrivateInfo spi;
   final String? initCmd;
-  const SSHPage({Key? key, required this.spi, this.initCmd}) : super(key: key);
+  final bool pop;
+  const SSHPage({
+    Key? key,
+    required this.spi,
+    this.initCmd,
+    this.pop = true,
+  }) : super(key: key);
 
   @override
   _SSHPageState createState() => _SSHPageState();
@@ -362,7 +368,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     }
 
     await session.done;
-    if (mounted) {
+    if (mounted && widget.pop) {
       context.pop();
     }
   }

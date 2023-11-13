@@ -530,12 +530,6 @@ abstract class S {
   /// **'Extra args'**
   String get extraArgs;
 
-  /// No description provided for @fabOpenSSHSession.
-  ///
-  /// In en, this message translates to:
-  /// **'Click the FAB to open a session'**
-  String get fabOpenSSHSession;
-
   /// No description provided for @failed.
   ///
   /// In en, this message translates to:

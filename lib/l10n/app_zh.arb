@@ -72,7 +72,6 @@
   "experimentalFeature": "实验性功能",
   "export": "导出",
   "extraArgs": "额外参数",
-  "fabOpenSSHSession": "点击右下FAB来开启新的SSH终端",
   "failed": "失败",
   "feedback": "反馈",
   "feedbackOnGithub": "如果你有任何问题，请在GitHub反馈",

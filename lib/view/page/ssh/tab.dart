@@ -49,7 +49,10 @@ class _SSHTabPageState extends State<SSHTabPage>
           UIs.width7,
           InkWell(
             borderRadius: BorderRadius.circular(17),
-            child: const Padding(padding: EdgeInsets.all(7), child: Icon(Icons.close, size: 17),),
+            child: const Padding(
+              padding: EdgeInsets.all(7),
+              child: Icon(Icons.close, size: 17),
+            ),
             onTap: () async {
               final confirm = await context.showRoundDialog<bool>(
                 title: Text(l10n.attention),
@@ -110,6 +113,7 @@ class _SSHTabPageState extends State<SSHTabPage>
               _tabIds[name] = SSHPage(
                 key: key,
                 spi: spi,
+                pop: false,
               );
               _tabKeys[name] = key;
               _refreshTabs();

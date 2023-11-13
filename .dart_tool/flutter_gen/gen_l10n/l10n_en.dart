@@ -231,9 +231,6 @@ class SEn extends S {
   String get extraArgs => 'Extra args';
 
   @override
-  String get fabOpenSSHSession => 'Click the FAB to open a session';
-
-  @override
   String get failed => 'Failed';
 
   @override
