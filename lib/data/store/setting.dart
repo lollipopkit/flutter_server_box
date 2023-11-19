@@ -224,6 +224,13 @@ class SettingStore extends PersistentStore {
   late final serverFuncBtnsDisplayName =
       StoreProperty(box, 'serverFuncBtnsDisplayName', true);
 
+  /// Disk view: amount / IO
+  late final serverTabPreferDiskAmount = StoreProperty(
+    box,
+    'serverTabPreferDiskAmount',
+    false,
+  );
+
   // Never show these settings for users
   //
   // ------BEGIN------

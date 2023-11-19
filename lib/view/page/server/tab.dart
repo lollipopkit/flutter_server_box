@@ -373,7 +373,6 @@ class _ServerPageState extends State<ServerPage>
               Text(
                 spi.name,
                 style: UIs.textSize13Bold,
-                textScaleFactor: 1.0,
               ),
               const Icon(
                 Icons.keyboard_arrow_right,
@@ -406,14 +405,12 @@ class _ServerPageState extends State<ServerPage>
         child: Text(
           l10n.viewErr,
           style: UIs.textSize11Grey,
-          textScaleFactor: 1.0,
         ),
       );
     }
     return Text(
       topRightStr,
       style: UIs.textSize11Grey,
-      textScaleFactor: 1.0,
     );
   }
 
@@ -434,7 +431,7 @@ class _ServerPageState extends State<ServerPage>
 
   Widget _buildDisk(ServerStatus ss, String id) {
     final rootDisk = findRootDisk(ss.disk);
-    final isSpeed = _diskViewSpeed[id] ?? true;
+    final isSpeed = _diskViewSpeed[id] ?? !Stores.setting.serverTabPreferDiskAmount.fetch();
 
     final (r, w) = ss.diskIO.getAllSpeed();
 
@@ -490,14 +487,12 @@ class _ServerPageState extends State<ServerPage>
           up,
           style: UIs.textSize9Grey,
           textAlign: TextAlign.center,
-          textScaleFactor: 1.0,
         ),
         const SizedBox(height: 3),
         Text(
           down,
           style: UIs.textSize9Grey,
           textAlign: TextAlign.center,
-          textScaleFactor: 1.0,
         )
       ],
     );
@@ -531,7 +526,6 @@ class _ServerPageState extends State<ServerPage>
               '${percent.toStringAsFixed(1)}%',
               textAlign: TextAlign.center,
               style: UIs.textSize11,
-              textScaleFactor: 1.0,
             ),
           ),
         ),

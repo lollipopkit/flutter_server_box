@@ -28,7 +28,6 @@ class TagBtn extends StatelessWidget {
       Text(
         content,
         textAlign: TextAlign.center,
-        textScaleFactor: 1.0,
         style: isEnable ? UIs.textSize13 : UIs.textSize13Grey,
       ),
       onTap: onTap,
@@ -106,7 +105,6 @@ class _TagEditorState extends State<TagEditor> {
             '#$tag',
             textAlign: TextAlign.center,
             style: isAdd ? UIs.textSize13Grey : UIs.textSize13,
-            textScaleFactor: 1.0,
           ),
           const SizedBox(width: 4.0),
           Icon(

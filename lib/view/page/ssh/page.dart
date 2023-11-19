@@ -353,7 +353,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     _terminal.buffer.setCursor(0, 0);
 
     _terminal.onOutput = (data) {
-      session.write(utf8.encode(data) as Uint8List);
+      session.write(utf8.encode(data));
     };
     _terminal.onResize = (width, height, pixelWidth, pixelHeight) {
       session.resizeTerminal(width, height);

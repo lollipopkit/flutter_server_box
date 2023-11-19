@@ -149,7 +149,7 @@ class DockerProvider extends ChangeNotifier {
 
     runLog = '';
     final errs = <String>[];
-    final code = await client!.execWithPwd(
+    final code = await client?.execWithPwd(
       _wrap(cmd),
       context: context,
       onStdout: (data, _) {

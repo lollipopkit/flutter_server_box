@@ -69,21 +69,8 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           ),
         ],
       ),
-      body: _buildBody(),
+      body: _buildFileView(),
       bottomNavigationBar: _buildBottom(),
-    );
-  }
-
-  Widget _buildBody() {
-    return WillPopScope(
-      onWillPop: () async {
-        if (_status.path == null || _status.path?.path == '/') {
-          return true;
-        }
-        await _backward();
-        return false;
-      },
-      child: _buildFileView(),
     );
   }
 

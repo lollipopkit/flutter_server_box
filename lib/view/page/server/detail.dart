@@ -36,7 +36,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   late MediaQueryData _media;
   final Order<String> _cardsOrder = [];
 
-  late final _textFactor = Stores.setting.textFactor.fetch();
+  late final _textFactor = TextScaler.linear(Stores.setting.textFactor.fetch());
 
   late final _cardBuildMap = Map.fromIterables(
     Defaults.detailCardOrder,
@@ -161,12 +161,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         Text(
           '${percent.toStringAsFixed(1)}%',
           style: const TextStyle(fontSize: 13),
-          textScaleFactor: _textFactor,
+          textScaler: _textFactor,
         ),
         Text(
           timeType,
           style: const TextStyle(fontSize: 10, color: Colors.grey),
-          textScaleFactor: _textFactor,
+          textScaler: _textFactor,
         ),
       ],
     );
@@ -207,12 +207,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             Text(
               ss.sysVer,
               style: UIs.textSize11,
-              textScaleFactor: _textFactor,
+              textScaler: _textFactor,
             ),
             Text(
               ss.uptime,
               style: UIs.textSize11,
-              textScaleFactor: _textFactor,
+              textScaler: _textFactor,
             ),
           ],
         ),
@@ -334,13 +334,13 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       title: Text(
         disk.dev,
         style: UIs.textSize11Bold,
-        textScaleFactor: _textFactor,
+        textScaler: _textFactor,
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 17),
       subtitle: Text(
         text,
         style: UIs.textSize11Grey,
-        textScaleFactor: _textFactor,
+        textScaler: _textFactor,
       ),
       trailing: SizedBox(
         height: 37,
@@ -429,7 +429,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               Text(
                 device,
                 style: UIs.textSize11Bold,
-                textScaleFactor: _textFactor,
+                textScaler: _textFactor,
                 maxLines: 1,
                 overflow: TextOverflow.fade,
                 textAlign: TextAlign.left,
@@ -437,7 +437,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               Text(
                 '${ns.sizeIn(device: device)} | ${ns.sizeOut(device: device)}',
                 style: UIs.textSize11Grey,
-                textScaleFactor: _textFactor,
+                textScaler: _textFactor,
               )
             ],
           ),
@@ -490,7 +490,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         key: key,
         text,
         style: style,
-        textScaleFactor: _textFactor,
+        textScaler: _textFactor,
       ),
       transitionBuilder: (child, animation) => FadeTransition(
         opacity: animation,

@@ -78,7 +78,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
       ),
       body: FadeIn(
         key: UniqueKey(),
-        child: _wrapPopScope(),
+        child: _buildBody(),
       ),
       bottomNavigationBar: SafeArea(child: _buildPath()),
     );
@@ -119,21 +119,6 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
           icon: const Icon(Icons.add),
         ),
       ],
-    );
-  }
-
-  Widget _wrapPopScope() {
-    return WillPopScope(
-      onWillPop: () async {
-        if (_path == null) return true;
-        if (_path!.canBack) {
-          _path!.update('..');
-          setState(() {});
-          return false;
-        }
-        return true;
-      },
-      child: _buildBody(),
     );
   }
 

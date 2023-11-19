@@ -216,8 +216,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
               Text(
                 spi.name,
                 style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 19),
-                textScaleFactor: 1.0,
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 19,),
                 textAlign: TextAlign.center,
               ),
               const Icon(
@@ -244,7 +243,6 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
     return Text(
       topRightStr,
       style: UIs.textSize11Grey,
-      textScaleFactor: 1.0,
     );
   }
 
@@ -255,7 +253,6 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
         text,
         style: const TextStyle(fontSize: 13),
         textAlign: TextAlign.center,
-        textScaleFactor: 1.0,
       ),
     );
   }
@@ -315,14 +312,12 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
             up,
             style: statusTextStyle,
             textAlign: TextAlign.center,
-            textScaleFactor: 1.0,
           ),
           const SizedBox(height: 3),
           Text(
             down,
             style: statusTextStyle,
             textAlign: TextAlign.center,
-            textScaleFactor: 1.0,
           )
         ],
       ),
@@ -352,7 +347,6 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
                 '${percent.toStringAsFixed(1)}%',
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 15),
-                textScaleFactor: 1.0,
               ),
             ),
           ),
