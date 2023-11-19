@@ -28,9 +28,6 @@ class SettingStore extends PersistentStore {
     5,
   );
 
-  /// Duration of [timeout]
-  Duration get timeoutD => Duration(seconds: timeout.fetch());
-
   /// Record history of SFTP path and etc.
   late final recordHistory = StoreProperty(
     box,
@@ -63,6 +60,13 @@ class SettingStore extends PersistentStore {
     box,
     'doubleColumnServersPage',
     isDesktop,
+  );
+
+  /// Disk view: amount / IO
+  late final serverTabPreferDiskAmount = StoreProperty(
+    box,
+    'serverTabPreferDiskAmount',
+    false,
   );
 
   // ------END------
@@ -223,13 +227,6 @@ class SettingStore extends PersistentStore {
   /// Server func btns display name
   late final serverFuncBtnsDisplayName =
       StoreProperty(box, 'serverFuncBtnsDisplayName', true);
-
-  /// Disk view: amount / IO
-  late final serverTabPreferDiskAmount = StoreProperty(
-    box,
-    'serverTabPreferDiskAmount',
-    false,
-  );
 
   // Never show these settings for users
   //

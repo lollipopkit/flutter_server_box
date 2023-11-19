@@ -215,8 +215,10 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
             children: [
               Text(
                 spi.name,
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 19,),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 19,
+                ),
                 textAlign: TextAlign.center,
               ),
               const Icon(

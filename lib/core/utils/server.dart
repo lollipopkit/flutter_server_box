@@ -60,25 +60,28 @@ Future<SSHClient> genClient(
   onStatus?.call(GenSSHClientStatus.socket);
 
   final socket = await () async {
-    // Proxy
-    final jumpSpi_ = () {
-      // Multi-thread or key login
-      if (jumpSpi != null) return jumpSpi;
-      // Main thread
-      if (spi.jumpId != null) return Stores.server.box.get(spi.jumpId);
-    }();
-    if (jumpSpi_ != null) {
-      final jumpClient = await genClient(
-        jumpSpi_,
-        privateKey: jumpPrivateKey,
-        timeout: timeout,
-      );
+    /// Issues #210
+    /// Temporarily comment out the proxy function
 
-      return await jumpClient.forwardLocal(
-        spi.ip,
-        spi.port,
-      );
-    }
+    // Proxy
+    // final jumpSpi_ = () {
+    //   // Multi-thread or key login
+    //   if (jumpSpi != null) return jumpSpi;
+    //   // Main thread
+    //   if (spi.jumpId != null) return Stores.server.box.get(spi.jumpId);
+    // }();
+    // if (jumpSpi_ != null) {
+    //   final jumpClient = await genClient(
+    //     jumpSpi_,
+    //     privateKey: jumpPrivateKey,
+    //     timeout: timeout,
+    //   );
+
+    //   return await jumpClient.forwardLocal(
+    //     spi.ip,
+    //     spi.port,
+    //   );
+    // }
 
     // Direct
     try {

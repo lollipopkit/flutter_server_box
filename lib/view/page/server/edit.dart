@@ -378,6 +378,10 @@ class _ServerEditPageState extends State<ServerEditPage> {
             leading: const Icon(Icons.map),
             initiallyExpanded: _jumpServer.value != null,
             title: Text(l10n.jumpServer),
+            subtitle: const Text(
+              "It was temporarily disabled because it has some bugs (Issues #210)",
+              style: UIs.textGrey,
+            ),
             children: children,
           ),
         );

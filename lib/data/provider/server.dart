@@ -273,7 +273,7 @@ class ServerProvider extends ChangeNotifier {
         final time1 = DateTime.now();
         s.client = await genClient(
           spi,
-          timeout: Stores.setting.timeoutD,
+          timeout: Duration(seconds: Stores.setting.timeout.fetch()),
         );
         final time2 = DateTime.now();
         final spentTime = time2.difference(time1).inMilliseconds;
