@@ -14,6 +14,7 @@ import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/try_limiter.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
+import 'package:toolbox/view/widget/value_notifier.dart';
 
 import '../../../core/route.dart';
 import '../../../data/model/app/net_view.dart';
@@ -430,26 +431,32 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildDisk(ServerStatus ss, String id) {
-    final rootDisk = findRootDisk(ss.disk);
-    final isSpeed = _diskViewSpeed[id] ?? !Stores.setting.serverTabPreferDiskAmount.fetch();
+    return ValueBuilder(
+      listenable: Stores.setting.serverTabPreferDiskAmount.listenable(),
+      build: () {
+        final rootDisk = findRootDisk(ss.disk);
+        final isSpeed = _diskViewSpeed[id] ??
+            !Stores.setting.serverTabPreferDiskAmount.fetch();
 
-    final (r, w) = ss.diskIO.getAllSpeed();
+        final (r, w) = ss.diskIO.getAllSpeed();
 
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 377),
-      transitionBuilder: (Widget child, Animation<double> animation) {
-        return FadeTransition(opacity: animation, child: child);
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 377),
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          child: _buildIOData(
+            isSpeed ? '${l10n.read}:\n$r' : 'Total:\n${rootDisk?.size}',
+            isSpeed ? '${l10n.write}:\n$w' : 'Used:\n${rootDisk?.usedPercent}%',
+            onTap: () {
+              setState(() {
+                _diskViewSpeed[id] = !isSpeed;
+              });
+            },
+            key: ValueKey(isSpeed),
+          ),
+        );
       },
-      child: _buildIOData(
-        isSpeed ? '${l10n.read}:\n$r' : 'Total:\n${rootDisk?.size}',
-        isSpeed ? '${l10n.write}:\n$w' : 'Used:\n${rootDisk?.usedPercent}%',
-        onTap: () {
-          setState(() {
-            _diskViewSpeed[id] = !isSpeed;
-          });
-        },
-        key: ValueKey(isSpeed),
-      ),
     );
   }
 
