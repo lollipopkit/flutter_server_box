@@ -64,7 +64,7 @@ class DockerProvider extends ChangeNotifier {
     final segments = raw.split(seperator);
     if (segments.length != DockerCmdType.values.length) {
       error = DockerErr(type: DockerErrType.segmentsNotMatch);
-      Loggers.parse.warning('Docker segments: ${segments.length}');
+      Loggers.parse.warning('Docker segments: ${segments.length}\n$raw');
       notifyListeners();
       return;
     }
@@ -171,16 +171,14 @@ class DockerProvider extends ChangeNotifier {
     return null;
   }
 
-  // wrap cmd with `docker host & sudo`
+  /// wrap cmd with `docker host`
   String _wrap(String cmd) {
-    final dockerHost = Stores.docker.fetch(hostId!);
-    if (dockerHost == null || dockerHost.isEmpty) {
-      if (userName != 'root') {
-        return 'sudo $cmd';
-      }
-    } else {
+    final dockerHost = Stores.docker.fetch(hostId);
+    cmd = 'export LANG=en_US.UTF-8 && $cmd';
+    final noDockerHost = dockerHost?.isEmpty ?? true;
+    if (!noDockerHost) {
       cmd = 'export DOCKER_HOST=$dockerHost && $cmd';
     }
-    return 'export LANG=en_US.UTF-8 && $cmd';
+    return cmd;
   }
 }

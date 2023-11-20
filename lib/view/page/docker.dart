@@ -459,7 +459,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
 
   Future<void> _showEditHostDialog() async {
     final id = widget.spi.id;
-    final host = Stores.docker.fetch(id) ?? 'unix:///run/user/1000/docker.sock';
+    final host = Stores.docker.fetch(id);
     final ctrl = TextEditingController(text: host);
     await context.showRoundDialog(
       title: Text(l10n.dockerEditHost),
@@ -467,6 +467,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
         maxLines: 2,
         controller: ctrl,
         onSubmitted: _onSaveDockerHost,
+        hint: 'unix:///run/user/1000/docker.sock',
       ),
       actions: [
         TextButton(
