@@ -126,17 +126,18 @@ class _ServerEditPageState extends State<ServerEditPage> {
                             '${l10n.delete} ${l10n.server}(${widget.spi!.name})',
                           )),
                           UIs.height13,
-                          if (widget.spi?.server?.canViewDetails ?? false) Row(
-                            children: [
-                              Checkbox(
-                                value: delScripts,
-                                onChanged: (_) => setState(
-                                  () => delScripts = !delScripts,
+                          if (widget.spi?.server?.canViewDetails ?? false)
+                            Row(
+                              children: [
+                                Checkbox(
+                                  value: delScripts,
+                                  onChanged: (_) => setState(
+                                    () => delScripts = !delScripts,
+                                  ),
                                 ),
-                              ),
-                              Text(l10n.deleteScripts),
-                            ],
-                          )
+                                Text(l10n.deleteScripts),
+                              ],
+                            )
                         ],
                       );
                     }),

@@ -48,8 +48,8 @@ class DockerProvider extends ChangeNotifier {
 
   Future<void> refresh() async {
     var raw = '';
-    await client!.execWithPwd(
-      ShellFunc.docker.exec,
+    await client?.execWithPwd(
+      _wrap(DockerCmdType.execAll),
       context: context,
       onStdout: (data, _) => raw = '$raw$data',
     );
@@ -171,13 +171,16 @@ class DockerProvider extends ChangeNotifier {
     return null;
   }
 
-  // judge whether to use DOCKER_HOST
+  // wrap cmd with `docker host & sudo`
   String _wrap(String cmd) {
     final dockerHost = Stores.docker.fetch(hostId!);
-    cmd = 'export LANG=en_US.UTF-8 && $cmd';
     if (dockerHost == null || dockerHost.isEmpty) {
-      return cmd;
+      if (userName != 'root') {
+        return 'sudo $cmd';
+      }
+    } else {
+      cmd = 'export DOCKER_HOST=$dockerHost && $cmd';
     }
-    return 'export DOCKER_HOST=$dockerHost && $cmd';
+    return 'export LANG=en_US.UTF-8 && $cmd';
   }
 }

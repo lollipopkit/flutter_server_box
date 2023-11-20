@@ -9,7 +9,7 @@ const _homeVar = '\$HOME';
 
 enum ShellFunc {
   status,
-  docker,
+  //docker,
   process,
   shutdown,
   reboot,
@@ -45,8 +45,8 @@ chmod +x $_installShellPath
     switch (this) {
       case ShellFunc.status:
         return 's';
-      case ShellFunc.docker:
-        return 'd';
+      // case ShellFunc.docker:
+      //   return 'd';
       case ShellFunc.process:
         return 'p';
       case ShellFunc.shutdown:
@@ -64,10 +64,10 @@ chmod +x $_installShellPath
     switch (this) {
       case ShellFunc.status:
         return 'status';
-      case ShellFunc.docker:
-        // `dockeR` -> avoid conflict with `docker` command
-        // 以防止循环递归
-        return 'dockeR';
+      // case ShellFunc.docker:
+      //   // `dockeR` -> avoid conflict with `docker` command
+      //   // 以防止循环递归
+      //   return 'dockeR';
       case ShellFunc.process:
         return 'process';
       case ShellFunc.shutdown:
@@ -88,14 +88,14 @@ if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 else
 \t${_bsdStatusCmd.join(_cmdDivider)}
 fi''';
-      case ShellFunc.docker:
-        return '''
-result=\$(docker version 2>&1 | grep "permission denied")
-if [ "\$result" != "" ]; then
-\t${_dockerCmds.join(_cmdDivider)}
-else
-\t${_dockerCmds.map((e) => "sudo -S $e").join(_cmdDivider)}
-fi''';
+//       case ShellFunc.docker:
+//         return '''
+// result=\$(docker version 2>&1 | grep "permission denied")
+// if [ "\$result" != "" ]; then
+// \t${_dockerCmds.join(_cmdDivider)}
+// else
+// \t${_dockerCmds.map((e) => "sudo -S $e").join(_cmdDivider)}
+// fi''';
       case ShellFunc.process:
         return '''
 if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
@@ -225,14 +225,22 @@ enum DockerCmdType {
   //stats,
   images,
   ;
-}
 
-const _dockerCmds = [
-  'docker version',
-  'docker ps -a',
-  //'docker stats --no-stream',
-  'docker image ls',
-];
+  String get exec {
+    switch (this) {
+      case DockerCmdType.version:
+        return 'docker version';
+      case DockerCmdType.ps:
+        return 'docker ps -a';
+      // case DockerCmdType.stats:
+      //   return 'docker stats --no-stream';
+      case DockerCmdType.images:
+        return 'docker image ls';
+    }
+  }
+
+  static final execAll = values.map((e) => e.exec).join(_cmdDivider);
+}
 
 enum BSDStatusCmdType {
   echo,

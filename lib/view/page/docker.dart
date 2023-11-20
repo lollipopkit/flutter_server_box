@@ -355,7 +355,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   Widget _buildMoreBtn(DockerPsItem dItem) {
     return PopupMenu(
       items: DockerMenuType.items(dItem.running).map((e) => e.widget).toList(),
-      onSelected: (DockerMenuType item) async {
+      onSelected: (item) async {
         switch (item) {
           case DockerMenuType.rm:
             context.showRoundDialog(
@@ -464,7 +464,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
     await context.showRoundDialog(
       title: Text(l10n.dockerEditHost),
       child: Input(
-        maxLines: 1,
+        maxLines: 2,
         controller: ctrl,
         onSubmitted: _onSaveDockerHost,
       ),
