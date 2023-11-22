@@ -173,6 +173,11 @@ class _HomePageState extends State<HomePage>
           label: l10n.snippet,
           selectedIcon: const Icon(Icons.snippet_folder),
         ),
+        const NavigationDestination(
+          icon: Icon(Icons.network_check_outlined),
+          label: 'Ping',
+          selectedIcon: Icon(Icons.network_check),
+        ),
       ],
     );
   }
