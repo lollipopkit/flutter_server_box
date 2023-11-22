@@ -34,6 +34,7 @@ class _SSHTabPageState extends State<SSHTabPage>
         controller: _tabController,
         tabs: _tabIds.keys.map(_buildTabItem).toList(),
         isScrollable: true,
+        dividerColor: Colors.transparent,
       ),
       body: _buildBody(),
     );

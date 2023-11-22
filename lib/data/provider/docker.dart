@@ -137,7 +137,12 @@ class DockerProvider extends ChangeNotifier {
 
   Future<DockerErr?> start(String id) async => await run('docker start $id');
 
-  Future<DockerErr?> delete(String id) async => await run('docker rm $id');
+  Future<DockerErr?> delete(String id, bool force) async {
+    if (force) {
+      return await run('docker rm -f $id');
+    }
+    return await run('docker rm $id');
+  }
 
   Future<DockerErr?> restart(String id) async =>
       await run('docker restart $id');

@@ -358,18 +358,38 @@ class _DockerManagePageState extends State<DockerManagePage> {
       onSelected: (item) async {
         switch (item) {
           case DockerMenuType.rm:
+            var force = false;
             context.showRoundDialog(
               title: Text(l10n.attention),
-              child: Text(l10n.askContinue(
-                '${l10n.delete} Container(${dItem.name})',
-              )),
+              child: Column(
+                children: [
+                  Text(l10n.askContinue(
+                    '${l10n.delete} Container(${dItem.name})',
+                  )),
+                  StatefulBuilder(builder: (_, setState) {
+                    return Checkbox(
+                      value: force,
+                      onChanged: (val) => setState(() => force = val ?? false),
+                    );
+                  }),
+                ],
+              ),
               actions: [
                 TextButton(
                   onPressed: () async {
                     context.pop();
                     context.showLoadingDialog();
-                    await Pros.docker.delete(dItem.containerId);
+                    final result = await Pros.docker.delete(
+                      dItem.containerId,
+                      force,
+                    );
                     context.pop();
+                    if (result != null) {
+                      context.showRoundDialog(
+                        title: Text(l10n.error),
+                        child: Text(result.message ?? l10n.unknownError),
+                      );
+                    }
                   },
                   child: Text(l10n.ok),
                 )
@@ -378,18 +398,36 @@ class _DockerManagePageState extends State<DockerManagePage> {
             break;
           case DockerMenuType.start:
             context.showLoadingDialog();
-            await Pros.docker.start(dItem.containerId);
+            final result = await Pros.docker.start(dItem.containerId);
             context.pop();
+            if (result != null) {
+              context.showRoundDialog(
+                title: Text(l10n.error),
+                child: Text(result.message ?? l10n.unknownError),
+              );
+            }
             break;
           case DockerMenuType.stop:
             context.showLoadingDialog();
-            await Pros.docker.stop(dItem.containerId);
+            final result = await Pros.docker.stop(dItem.containerId);
             context.pop();
+            if (result != null) {
+              context.showRoundDialog(
+                title: Text(l10n.error),
+                child: Text(result.message ?? l10n.unknownError),
+              );
+            }
             break;
           case DockerMenuType.restart:
             context.showLoadingDialog();
-            await Pros.docker.restart(dItem.containerId);
+            final result = await Pros.docker.restart(dItem.containerId);
             context.pop();
+            if (result != null) {
+              context.showRoundDialog(
+                title: Text(l10n.error),
+                child: Text(result.message ?? l10n.unknownError),
+              );
+            }
             break;
           case DockerMenuType.logs:
             AppRoute.ssh(

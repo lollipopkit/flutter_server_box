@@ -239,7 +239,8 @@ enum DockerCmdType {
     }
   }
 
-  static final execAll = values.map((e) => e.exec).join(' && echo $seperator && ');
+  static final execAll =
+      values.map((e) => e.exec).join(' && echo $seperator && ');
 }
 
 enum BSDStatusCmdType {
