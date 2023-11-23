@@ -40,6 +40,7 @@ class GithubIds {
     'wcbing',
     'balh55y',
     'wc7086',
-    'michaelsara'
+    'michaelsara',
+    'xingleiwu'
   };
 }

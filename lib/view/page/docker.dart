@@ -198,7 +198,8 @@ class _DockerManagePageState extends State<DockerManagePage> {
             Padding(
               padding: const EdgeInsets.all(17),
               child: _buildSolution(Pros.docker.error!),
-            )
+            ),
+            _buildEditHost(),
           ],
         ),
       );
@@ -475,7 +476,9 @@ class _DockerManagePageState extends State<DockerManagePage> {
 
   Widget _buildEditHost() {
     final children = <Widget>[];
-    if (Pros.docker.items!.isEmpty && Pros.docker.images!.isEmpty) {
+    final emptyImgs = Pros.docker.images?.isEmpty ?? false;
+    final emptyPs = Pros.docker.items?.isEmpty ?? false;
+    if (emptyPs && emptyImgs) {
       children.add(Padding(
         padding: const EdgeInsets.fromLTRB(17, 17, 17, 0),
         child: Text(
