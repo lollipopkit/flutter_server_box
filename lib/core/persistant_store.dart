@@ -1,38 +1,36 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:toolbox/data/res/path.dart';
 
-class SecureStore {
-  SecureStore._();
+// class SecureStore {
+//   SecureStore._();
 
-  static const _secureStorage = FlutterSecureStorage();
+//   static const _secureStorage = FlutterSecureStorage();
 
-  static HiveAesCipher? _cipher;
+//   static HiveAesCipher? _cipher;
 
-  static const _hiveKey = 'hive_key';
+//   static const _hiveKey = 'hive_key';
 
-  static Future<void> init() async {
-    final encryptionKeyString = await _secureStorage.read(key: _hiveKey);
-    if (encryptionKeyString == null) {
-      final key = Hive.generateSecureKey();
-      await _secureStorage.write(
-        key: _hiveKey,
-        value: base64UrlEncode(key),
-      );
-    }
-    final key = await _secureStorage.read(key: _hiveKey);
-    if (key == null) {
-      throw Exception('Failed to init SecureStore');
-    }
-    final encryptionKeyUint8List = base64Url.decode(key);
-    _cipher = HiveAesCipher(encryptionKeyUint8List);
-  }
-}
+//   static Future<void> init() async {
+//     final encryptionKeyString = await _secureStorage.read(key: _hiveKey);
+//     if (encryptionKeyString == null) {
+//       final key = Hive.generateSecureKey();
+//       await _secureStorage.write(
+//         key: _hiveKey,
+//         value: base64UrlEncode(key),
+//       );
+//     }
+//     final key = await _secureStorage.read(key: _hiveKey);
+//     if (key == null) {
+//       throw Exception('Failed to init SecureStore');
+//     }
+//     final encryptionKeyUint8List = base64Url.decode(key);
+//     _cipher = HiveAesCipher(encryptionKeyUint8List);
+//   }
+// }
 
 class PersistentStore<E> {
   late final Box<E> box;
@@ -43,7 +41,7 @@ class PersistentStore<E> {
 
   Future<void> init() async => box = await Hive.openBox(
         boxName,
-        encryptionCipher: SecureStore._cipher,
+        //encryptionCipher: SecureStore._cipher,
       );
 
   /// Get all db filenames.

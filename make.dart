@@ -11,6 +11,7 @@ const apkPath = 'build/app/outputs/flutter-apk/app-release.apk';
 const appleXCConfigPath = 'Runner.xcodeproj/project.pbxproj';
 const macOSArchievePath = 'build/macos/Build/Products/Release/server_box.app';
 const releaseDir = '/Volumes/pm981/release/serverbox';
+const shellScriptPath = 'lib/data/model/app/shell_func.dart';
 
 var regAppleProjectVer = RegExp(r'CURRENT_PROJECT_VERSION = .+;');
 var regAppleMarketVer = RegExp(r'MARKETING_VERSION = .+');
@@ -34,8 +35,12 @@ Future<void> getGitCommitCount() async {
 }
 
 Future<int> getScriptCommitCount() async {
-  final result = await Process.run(
-      'git', ['log', '--oneline', 'lib/data/model/app/shell_func.dart']);
+  if (!await File(shellScriptPath).exists()) {
+    print('File not found: $shellScriptPath');
+    exit(1);
+  }
+  final result =
+      await Process.run('git', ['log', '--oneline', shellScriptPath]);
   return (result.stdout as String)
       .split('\n')
       .where((line) => line.isNotEmpty)

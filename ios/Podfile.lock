@@ -6,8 +6,6 @@ PODS:
   - Flutter (1.0.0)
   - flutter_native_splash (0.0.1):
     - Flutter
-  - flutter_secure_storage (6.0.0):
-    - Flutter
   - icloud_storage (0.0.1):
     - Flutter
   - local_auth_ios (0.0.1):
@@ -34,7 +32,6 @@ DEPENDENCIES:
   - file_picker (from `.symlinks/plugins/file_picker/ios`)
   - Flutter (from `Flutter`)
   - flutter_native_splash (from `.symlinks/plugins/flutter_native_splash/ios`)
-  - flutter_secure_storage (from `.symlinks/plugins/flutter_secure_storage/ios`)
   - icloud_storage (from `.symlinks/plugins/icloud_storage/ios`)
   - local_auth_ios (from `.symlinks/plugins/local_auth_ios/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
@@ -54,8 +51,6 @@ EXTERNAL SOURCES:
     :path: Flutter
   flutter_native_splash:
     :path: ".symlinks/plugins/flutter_native_splash/ios"
-  flutter_secure_storage:
-    :path: ".symlinks/plugins/flutter_secure_storage/ios"
   icloud_storage:
     :path: ".symlinks/plugins/icloud_storage/ios"
   local_auth_ios:
@@ -80,7 +75,6 @@ SPEC CHECKSUMS:
   file_picker: 1d63c4949e05e386da864365f8c13e1e64787675
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
   flutter_native_splash: 52501b97d1c0a5f898d687f1646226c1f93c56ef
-  flutter_secure_storage: 23fc622d89d073675f2eaa109381aefbcf5a49be
   icloud_storage: d9ac7a33ced81df08ba7ea1bf3099cc0ee58f60a
   local_auth_ios: c6cf091ded637a88f24f86a8875d8b0f526e2605
   path_provider_foundation: 29f094ae23ebbca9d3d0cec13889cd9060c0e943
