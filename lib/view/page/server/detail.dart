@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
+import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/data/model/server/cpu.dart';
 import 'package:toolbox/data/model/server/disk.dart';
 import 'package:toolbox/data/model/server/net_speed.dart';
+import 'package:toolbox/data/model/server/nvdia.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/system.dart';
 import 'package:toolbox/data/res/store.dart';
@@ -45,6 +47,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       _buildCPUView,
       _buildMemView,
       _buildSwapView,
+      _buildGpuView,
       _buildDiskView,
       _buildNetView,
       _buildTemperature,
@@ -298,6 +301,114 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             _buildProgress(used)
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildGpuView(ServerStatus ss) {
+    if (ss.nvdia == null) return UIs.placeholder;
+    final children = ss.nvdia!.map((e) => _buildGpuItem(e)).toList();
+    return CardX(
+      ExpandTile(
+        title: const Text('GPU'),
+        leading: const Icon(Icons.memory, size: 17),
+        initiallyExpanded: children.length <= 3,
+        children: children,
+      ),
+    );
+  }
+
+  Widget _buildGpuItem(NvdiaSmiItem item) {
+    final mem = item.memory;
+    final processes = mem.processes;
+    final children = <Widget>[];
+    if (processes.isNotEmpty) {
+      children.addAll(processes.map((e) => _buildGpuProcessItem(e)));
+    }
+    return CardX(
+      ListTile(
+        title: Text(item.name, style: UIs.textSize13),
+        leading: Text(
+          '${item.temp}°C',
+          style: UIs.textSize11Grey,
+          textScaler: _textFactor,
+        ),
+        subtitle: Text(
+          '${item.power} - ${mem.used} / ${mem.total} ${mem.unit}',
+          style: UIs.textSize11Grey,
+          textScaler: _textFactor,
+        ),
+        trailing: InkWell(
+          onTap: () {
+            final height = () {
+              if (processes.length > 5) {
+                return 5 * 47.0;
+              }
+              return processes.length * 47.0;
+            }();
+            context.showRoundDialog(
+              title: Text(item.name),
+              child: SizedBox(
+                width: double.maxFinite,
+                height: height,
+                child: ListView.builder(
+                  itemCount: processes.length,
+                  itemBuilder: (_, idx) => _buildGpuProcessItem(processes[idx]),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => context.pop(),
+                  child: Text(l10n.close),
+                )
+              ],
+            );
+          },
+          child: const Icon(Icons.info_outline, size: 17),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGpuProcessItem(NvdiaSmiMemProcess process) {
+    return ListTile(
+      title: Text(
+        process.name,
+        style: UIs.textSize11,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textScaler: _textFactor,
+      ),
+      subtitle: Text(
+        'PID: ${process.pid} - ${process.memory} MiB',
+        style: UIs.textSize11Grey,
+        textScaler: _textFactor,
+      ),
+      trailing: InkWell(
+        onTap: () {
+          context.showRoundDialog(
+            title: SizedBox(
+              width: 377,
+              child: Text('${process.pid}', maxLines: 1),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Memory: ${process.memory} MiB'),
+                UIs.height13,
+                Text('Process: ${process.name}')
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => context.pop(),
+                child: Text(l10n.close),
+              )
+            ],
+          );
+        },
+        child: const Icon(Icons.info_outline, size: 17),
       ),
     );
   }

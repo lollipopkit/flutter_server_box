@@ -4,6 +4,7 @@ import 'package:toolbox/data/model/server/cpu.dart';
 import 'package:toolbox/data/model/server/disk.dart';
 import 'package:toolbox/data/model/server/memory.dart';
 import 'package:toolbox/data/model/server/net_speed.dart';
+import 'package:toolbox/data/model/server/nvdia.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/system.dart';
 import 'package:toolbox/data/model/server/temp.dart';
@@ -55,6 +56,7 @@ class ServerStatus {
   SystemType system;
   String? err;
   DiskIO diskIO;
+  List<NvdiaSmiItem>? nvdia;
 
   /// Whether is connectting, parsing and etc.
   bool _isBusy = false;
@@ -72,6 +74,7 @@ class ServerStatus {
     required this.system,
     required this.diskIO,
     this.err,
+    this.nvdia,
   });
 }
 

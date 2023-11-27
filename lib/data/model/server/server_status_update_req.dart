@@ -1,3 +1,4 @@
+import 'package:toolbox/data/model/server/nvdia.dart';
 import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/system.dart';
 import 'package:toolbox/data/res/logger.dart';
@@ -107,6 +108,13 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   try {
     final diskio = DiskIO.parse(StatusCmdType.diskio.find(segments), time);
     req.ss.diskIO.update(diskio);
+  } catch (e, s) {
+    Loggers.parse.warning(e, s);
+  }
+
+  try {
+    final nvdia = NvdiaSmi.fromXml(StatusCmdType.nvdia.find(segments));
+    req.ss.nvdia = nvdia;
   } catch (e, s) {
     Loggers.parse.warning(e, s);
   }

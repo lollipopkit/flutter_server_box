@@ -11,6 +11,7 @@ class Defaults {
     'cpu',
     'mem',
     'swap',
+    'gpu',
     'disk',
     'net',
     'temp'
