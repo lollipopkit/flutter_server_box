@@ -327,43 +327,53 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     }
     return ListTile(
       title: Text(item.name, style: UIs.textSize13),
-      leading: Text(
-        '${item.temp}°C',
-        style: UIs.textSize11Grey,
-        textScaler: _textFactor,
-      ),
       subtitle: Text(
-        '${item.power} - ${mem.used} / ${mem.total} ${mem.unit}',
+        '${item.power} - ${item.temp} °C\n${mem.used} / ${mem.total} ${mem.unit} - ${item.fanSpeed} RPM',
         style: UIs.textSize11Grey,
         textScaler: _textFactor,
       ),
-      trailing: InkWell(
-        onTap: () {
-          final height = () {
-            if (processes.length > 5) {
-              return 5 * 47.0;
-            }
-            return processes.length * 47.0;
-          }();
-          context.showRoundDialog(
-            title: Text(item.name),
-            child: SizedBox(
-              width: double.maxFinite,
-              height: height,
-              child: ListView.builder(
-                itemCount: processes.length,
-                itemBuilder: (_, idx) => _buildGpuProcessItem(processes[idx]),
-              ),
+      contentPadding: const EdgeInsets.only(left: 17, right: 17),
+      trailing: SizedBox(
+        width: 67,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Text(
+              '${item.percent}%',
+              style: UIs.textSize11Grey,
+              textScaler: _textFactor,
             ),
-            actions: [
-              TextButton(
-                onPressed: () => context.pop(),
-                child: Text(l10n.close),
-              )
-            ],
-          );
-        },
-        child: const Icon(Icons.info_outline, size: 17),
+            IconButton(
+              onPressed: () {
+                final height = () {
+                  if (processes.length > 5) {
+                    return 5 * 47.0;
+                  }
+                  return processes.length * 47.0;
+                }();
+                context.showRoundDialog(
+                  title: Text(item.name),
+                  child: SizedBox(
+                    width: double.maxFinite,
+                    height: height,
+                    child: ListView.builder(
+                      itemCount: processes.length,
+                      itemBuilder: (_, idx) =>
+                          _buildGpuProcessItem(processes[idx]),
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => context.pop(),
+                      child: Text(l10n.close),
+                    )
+                  ],
+                );
+              },
+              icon: const Icon(Icons.info_outline, size: 17),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -393,6 +403,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                UIs.height13,
                 Text('Memory: ${process.memory} MiB'),
                 UIs.height13,
                 Text('Process: ${process.name}')

@@ -66,21 +66,31 @@ class NvdiaSmi {
         return null;
       });
       memoryProcesses.removeWhere((element) => element == null);
+      final percent = gpu
+          .findElements('utilization')
+          .firstOrNull
+          ?.findElements('gpu_util')
+          .firstOrNull
+          ?.innerText;
+      final fanSpeed = gpu.findElements('fan_speed').firstOrNull?.innerText;
       if (name != null &&
           temp != null &&
           powerDraw != null &&
           powerLimit != null &&
           memory != null) {
         return NvdiaSmiItem(
-          name,
-          int.parse(temp.split(' ').firstOrNull ?? '0'),
-          '$powerDraw / $powerLimit',
-          NvdiaSmiMem(
+          name: name,
+          uuid: gpu.findElements('uuid').firstOrNull?.innerText ?? '',
+          temp: int.parse(temp.split(' ').firstOrNull ?? '0'),
+          percent: int.parse(percent?.split(' ').firstOrNull ?? '0'),
+          power: '$powerDraw / $powerLimit',
+          memory: NvdiaSmiMem(
             int.parse(memoryTotal?.split(' ').firstOrNull ?? '0'),
             int.parse(memoryUsed?.split(' ').firstOrNull ?? '0'),
             'MiB',
             List.from(memoryProcesses),
           ),
+          fanSpeed: int.parse(fanSpeed?.split(' ').firstOrNull ?? '0'),
         );
       }
       return null;
@@ -91,12 +101,23 @@ class NvdiaSmi {
 }
 
 class NvdiaSmiItem {
+  final String uuid;
   final String name;
   final int temp;
   final String power;
   final NvdiaSmiMem memory;
+  final int percent;
+  final int fanSpeed;
 
-  const NvdiaSmiItem(this.name, this.temp, this.power, this.memory);
+  const NvdiaSmiItem({
+    required this.uuid,
+    required this.name,
+    required this.temp,
+    required this.power,
+    required this.memory,
+    required this.percent,
+    required this.fanSpeed,
+  });
 
   @override
   String toString() {
