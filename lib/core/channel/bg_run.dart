@@ -1,9 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:toolbox/data/res/misc.dart';
 
-class BgRunMC {
-  const BgRunMC._();
-
+abstract final class BgRunMC {
   static const _channel = MethodChannel('${Miscs.pkgName}/app_retain');
 
   static void moveToBg() {

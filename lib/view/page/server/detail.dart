@@ -325,47 +325,45 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     if (processes.isNotEmpty) {
       children.addAll(processes.map((e) => _buildGpuProcessItem(e)));
     }
-    return CardX(
-      ListTile(
-        title: Text(item.name, style: UIs.textSize13),
-        leading: Text(
-          '${item.temp}°C',
-          style: UIs.textSize11Grey,
-          textScaler: _textFactor,
-        ),
-        subtitle: Text(
-          '${item.power} - ${mem.used} / ${mem.total} ${mem.unit}',
-          style: UIs.textSize11Grey,
-          textScaler: _textFactor,
-        ),
-        trailing: InkWell(
-          onTap: () {
-            final height = () {
-              if (processes.length > 5) {
-                return 5 * 47.0;
-              }
-              return processes.length * 47.0;
-            }();
-            context.showRoundDialog(
-              title: Text(item.name),
-              child: SizedBox(
-                width: double.maxFinite,
-                height: height,
-                child: ListView.builder(
-                  itemCount: processes.length,
-                  itemBuilder: (_, idx) => _buildGpuProcessItem(processes[idx]),
-                ),
+    return ListTile(
+      title: Text(item.name, style: UIs.textSize13),
+      leading: Text(
+        '${item.temp}°C',
+        style: UIs.textSize11Grey,
+        textScaler: _textFactor,
+      ),
+      subtitle: Text(
+        '${item.power} - ${mem.used} / ${mem.total} ${mem.unit}',
+        style: UIs.textSize11Grey,
+        textScaler: _textFactor,
+      ),
+      trailing: InkWell(
+        onTap: () {
+          final height = () {
+            if (processes.length > 5) {
+              return 5 * 47.0;
+            }
+            return processes.length * 47.0;
+          }();
+          context.showRoundDialog(
+            title: Text(item.name),
+            child: SizedBox(
+              width: double.maxFinite,
+              height: height,
+              child: ListView.builder(
+                itemCount: processes.length,
+                itemBuilder: (_, idx) => _buildGpuProcessItem(processes[idx]),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => context.pop(),
-                  child: Text(l10n.close),
-                )
-              ],
-            );
-          },
-          child: const Icon(Icons.info_outline, size: 17),
-        ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => context.pop(),
+                child: Text(l10n.close),
+              )
+            ],
+          );
+        },
+        child: const Icon(Icons.info_outline, size: 17),
       ),
     );
   }

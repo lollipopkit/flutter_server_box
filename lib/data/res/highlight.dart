@@ -32,9 +32,7 @@ import 'package:highlight/languages/vim.dart';
 import 'package:highlight/languages/xml.dart';
 import 'package:highlight/languages/yaml.dart';
 
-class Highlights {
-  const Highlights._();
-
+abstract final class Highlights {
   /// - KEY: fileNameSuffix
   /// - VAL: highlight
   static final all = {

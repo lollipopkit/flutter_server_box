@@ -25,10 +25,8 @@ class SyncResult<T, E> {
   }
 }
 
-class ICloud {
+abstract final class ICloud {
   static const _containerId = 'iCloud.tech.lolli.serverbox';
-
-  const ICloud._();
 
   /// Upload file to iCloud
   ///

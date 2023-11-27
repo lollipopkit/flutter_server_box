@@ -5,9 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/data/res/provider.dart';
 
-class Shares {
-  const Shares._();
-
+abstract final class Shares {
   static Future<bool> files(List<String> filePaths) async {
     for (final filePath in filePaths) {
       if (!await File(filePath).exists()) {

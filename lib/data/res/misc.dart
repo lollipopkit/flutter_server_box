@@ -1,8 +1,6 @@
 import 'dart:convert';
 
-class Miscs {
-  const Miscs._();
-
+abstract final class Miscs {
   /// RegExp for number
   static final numReg = RegExp(r'\s{1,}');
 

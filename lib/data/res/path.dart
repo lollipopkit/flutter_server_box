@@ -4,9 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/platform/path.dart';
 
-class Paths {
-  const Paths._();
-
+abstract final class Paths {
   static String? _docDir;
   static String? _sftpDir;
   static String? _fontDir;

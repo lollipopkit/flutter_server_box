@@ -5,9 +5,7 @@ import 'package:local_auth/local_auth.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:local_auth/error_codes.dart' as errs;
 
-class BioAuth {
-  const BioAuth._();
-
+abstract final class BioAuth {
   static final _auth = LocalAuthentication();
 
   static bool get isPlatformSupported => isAndroid || isIOS || isWindows;

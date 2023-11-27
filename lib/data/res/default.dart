@@ -2,9 +2,7 @@ import 'dart:ui';
 
 import 'package:toolbox/data/model/ssh/virtual_key.dart';
 
-class Defaults {
-  const Defaults._();
-
+abstract final class Defaults {
   // default server details page cards order
   static const detailCardOrder = [
     'uptime',

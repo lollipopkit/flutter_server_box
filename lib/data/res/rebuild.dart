@@ -1,7 +1,5 @@
 import 'package:toolbox/data/model/app/rebuild.dart';
 
-class RebuildNodes {
-  const RebuildNodes._();
-
+abstract final class RebuildNodes {
   static final app = RebuildNode();
 }

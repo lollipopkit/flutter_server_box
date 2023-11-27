@@ -8,9 +8,7 @@ import '../model/server/net_speed.dart';
 import '../model/server/conn.dart';
 import '../model/server/system.dart';
 
-class InitStatus {
-  const InitStatus._();
-
+abstract final class InitStatus {
   static OneTimeCpuStatus get _initOneTimeCpuStatus => OneTimeCpuStatus(
         'cpu',
         0,

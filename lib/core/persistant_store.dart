@@ -5,9 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:toolbox/data/res/path.dart';
 
-// class SecureStore {
-//   SecureStore._();
-
+// abstract final class SecureStore {
 //   static const _secureStorage = FlutterSecureStorage();
 
 //   static HiveAesCipher? _cipher;

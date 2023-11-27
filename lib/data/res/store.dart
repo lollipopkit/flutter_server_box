@@ -7,9 +7,7 @@ import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/data/store/snippet.dart';
 import 'package:toolbox/locator.dart';
 
-class Stores {
-  const Stores._();
-
+abstract final class Stores {
   static final setting = locator<SettingStore>();
   static final server = locator<ServerStore>();
   static final docker = locator<DockerStore>();

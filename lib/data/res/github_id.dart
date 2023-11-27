@@ -1,10 +1,8 @@
 import 'package:toolbox/data/model/app/github_id.dart';
 
-class GithubIds {
-  const GithubIds._();
-
+abstract final class GithubIds {
   // Thanks
-  // If you want to change the url, please open an issue.
+  // If you want to change your Github ID, please open an issue.
   static const contributors = <GhId>{
     'its-tom',
     'RainSunMe',
@@ -41,6 +39,8 @@ class GithubIds {
     'balh55y',
     'wc7086',
     'michaelsara',
-    'xingleiwu'
+    'xingleiwu',
+    'Cooper098',
+    'xushuojie',
   };
 }
