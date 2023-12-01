@@ -226,7 +226,7 @@ class SettingStore extends PersistentStore {
 
   /// Server func btns display name
   late final serverFuncBtnsDisplayName =
-      StoreProperty(box, 'serverFuncBtnsDisplayName', true);
+      StoreProperty(box, 'serverFuncBtnsDisplayName', false);
 
   // Never show these settings for users
   //

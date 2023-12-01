@@ -581,9 +581,6 @@ class _ServerPageState extends State<ServerPage>
         if (failedInfo == null) {
           return l10n.serverTabFailed;
         }
-        if (failedInfo.contains('encypted')) {
-          return l10n.serverTabPlzSave;
-        }
         return failedInfo;
     }
   }

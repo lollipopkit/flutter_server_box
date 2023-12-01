@@ -20,7 +20,6 @@ class _SSHTabPageState extends State<SSHTabPage>
   late final _tabIds = <String, Widget>{
     l10n.add: _buildAddPage(),
   };
-  final _tabKeys = <String, GlobalKey>{};
   late var _tabController = TabController(
     length: _tabIds.length,
     vsync: this,
@@ -34,6 +33,7 @@ class _SSHTabPageState extends State<SSHTabPage>
         controller: _tabController,
         tabs: _tabIds.keys.map(_buildTabItem).toList(),
         isScrollable: true,
+        tabAlignment: TabAlignment.start,
         dividerColor: Colors.transparent,
       ),
       body: _buildBody(),
@@ -75,7 +75,6 @@ class _SSHTabPageState extends State<SSHTabPage>
               }
               _tabIds.remove(e);
               _refreshTabs();
-              //_tabKeys[e]?.currentState?.dispose();
             },
           ),
         ],
@@ -107,7 +106,6 @@ class _SSHTabPageState extends State<SSHTabPage>
                   spi: spi,
                   pop: false,
                 );
-                _tabKeys[name] = key;
                 _refreshTabs();
                 _tabController.animateTo(_tabIds.length - 1);
               },

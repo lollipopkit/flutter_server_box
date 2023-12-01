@@ -26,7 +26,7 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(l10n.serverOrder),
+        title: Text(l10n.serverDetailOrder),
       ),
       body: _buildBody(),
     );

@@ -33,8 +33,7 @@ enum ShellFunc {
 
   /// Issue #168
   /// Use `sh` for compatibility
-  static final installShellCmd =
-      """
+  static final installShellCmd = """
 mkdir -p $_homeVar/$_srvBoxDir
 cat << 'EOF' > $_installShellPath
 ${ShellFunc.allScript}
@@ -135,8 +134,7 @@ fi''';
 
   static final String allScript = () {
     final sb = StringBuffer();
-    sb.write(
-        '''
+    sb.write('''
 #!/bin/sh
 # Script for ServerBox app v1.0.${BuildData.build}
 # DO NOT delete this file while app is running
@@ -155,8 +153,7 @@ userId=\$(id -u)
 ''');
     // Write each func
     for (final func in values) {
-      sb.write(
-          '''
+      sb.write('''
 ${func.name}() {
 ${func._cmd.split('\n').map((e) => '\t$e').join('\n')}
 }

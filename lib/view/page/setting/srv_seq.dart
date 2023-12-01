@@ -41,8 +41,7 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
       }),
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       buildDefaultDragHandles: false,
-      itemBuilder: (_, index) =>
-          _buildItem(index, Pros.server.serverOrder[index]),
+      itemBuilder: (_, idx) => _buildItem(idx, Pros.server.serverOrder[idx]),
       itemCount: Pros.server.serverOrder.length,
     );
   }

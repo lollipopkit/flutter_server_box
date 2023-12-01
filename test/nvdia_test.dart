@@ -2,8 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:toolbox/data/model/server/nvdia.dart';
 
-const _raw =
-    '''
+const _raw = '''
 <?xml version="1.0" ?>
 <!DOCTYPE nvidia_smi_log SYSTEM "nvsmi_device_v12.dtd">
 <nvidia_smi_log>
