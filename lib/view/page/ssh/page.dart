@@ -312,7 +312,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     return _terminal.buffer.getText(range);
   }
 
-  void _write(String p0) {
+  void _writeLn(String p0) {
     _terminal.write('$p0\r\n');
   }
 
@@ -329,11 +329,11 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   }
 
   Future<void> _initTerminal() async {
-    _write('Connecting...\r\n');
+    _writeLn('Connecting...\r\n');
     if (_client == null) {
       await Pros.server.refreshData(spi: widget.spi);
     }
-    _write('Starting shell...\r\n');
+    _writeLn('Starting shell...\r\n');
 
     final session = await _client?.shell(
       pty: SSHPtyConfig(
@@ -345,7 +345,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     _setupDiscontinuityTimer();
 
     if (session == null) {
-      _write(_server?.status.err ?? 'Null session');
+      _writeLn(_server?.status.err ?? 'Null session');
       return;
     }
 
@@ -402,7 +402,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   void _catchTimeout() {
     _discontinuityTimer?.cancel();
     if (!mounted) return;
-    _write('\n\nConnection lost\r\n');
+    _writeLn('\n\nConnection lost\r\n');
     context.showRoundDialog(
       title: Text(l10n.attention),
       child: Text('${l10n.disconnected}\n${l10n.goBackQ}'),

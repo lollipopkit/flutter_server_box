@@ -39,12 +39,7 @@ class _ServerPageState extends State<ServerPage>
     with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
   late MediaQueryData _media;
 
-  final _flipedCardIds = <String>{};
-
-  final _netViewType = <String, NetViewType>{};
-
-  /// If true, display IO speed
-  final _diskViewSpeed = <String, bool>{};
+  final _cardsStatus = <String, _CardNotifier>{};
 
   String? _tag;
   bool _useDoubleColumn = false;
@@ -88,7 +83,7 @@ class _ServerPageState extends State<ServerPage>
         final filtered = _filterServers(pro);
         if (_useDoubleColumn &&
             Stores.setting.doubleColumnServersPage.fetch()) {
-          return _buildBodyMedium(pro);
+          return _buildBodyMedium(pro: pro, filtered: filtered);
         }
         return _buildBodySmall(provider: pro, filtered: filtered);
       },
@@ -138,8 +133,10 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  Widget _buildBodyMedium(ServerProvider pro) {
-    final filtered = _filterServers(pro);
+  Widget _buildBodyMedium({
+    required ServerProvider pro,
+    required List<String> filtered,
+  }) {
     final left = filtered.where((e) => filtered.indexOf(e) % 2 == 0).toList();
     final right = filtered.where((e) => filtered.indexOf(e) % 2 == 1).toList();
     return Column(
@@ -191,13 +188,11 @@ class _ServerPageState extends State<ServerPage>
         },
         onLongPress: () {
           if (srv.state == ServerState.finished) {
-            setState(() {
-              if (_flipedCardIds.contains(srv.spi.id)) {
-                _flipedCardIds.remove(srv.spi.id);
-              } else {
-                _flipedCardIds.add(srv.spi.id);
-              }
-            });
+            final id = srv.spi.id;
+            final cardStatus = getCardNoti(id);
+            cardStatus.value = cardStatus.value.copyWith(
+              flip: !cardStatus.value.flip,
+            );
           } else {
             AppRoute.serverEdit(spi: srv.spi).go(context);
           }
@@ -220,26 +215,32 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildRealServerCard(Server srv) {
+    final id = srv.spi.id;
+    final cardStatus = getCardNoti(id);
     final title = _buildServerCardTitle(srv.status, srv.state, srv.spi);
-    final List<Widget> children = [title];
-
-    if (srv.state == ServerState.finished) {
-      if (_flipedCardIds.contains(srv.spi.id)) {
-        children.addAll(_buildFlipedCard(srv));
-      } else {
-        children.addAll(_buildNormalCard(srv.status, srv.spi));
-      }
-    }
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 377),
       curve: Curves.fastEaseInToSlowEaseOut,
-      height: _calcCardHeight(srv.state, srv.spi.id),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: children,
+      height: _calcCardHeight(srv.state, cardStatus.value.flip),
+      child: ValueBuilder(
+        listenable: cardStatus,
+        build: () {
+          final List<Widget> children = [title];
+          if (srv.state == ServerState.finished) {
+            if (cardStatus.value.flip) {
+              children.addAll(_buildFlipedCard(srv));
+            } else {
+              children.addAll(_buildNormalCard(srv.status, srv.spi));
+            }
+          }
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: children,
+          );
+        },
       ),
     );
   }
@@ -431,11 +432,12 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildDisk(ServerStatus ss, String id) {
+    final cardNoti = getCardNoti(id);
     return ValueBuilder(
-      listenable: Stores.setting.serverTabPreferDiskAmount.listenable(),
+      listenable: cardNoti,
       build: () {
         final rootDisk = findRootDisk(ss.disk);
-        final isSpeed = _diskViewSpeed[id] ??
+        final isSpeed = cardNoti.value.diskIO ??
             !Stores.setting.serverTabPreferDiskAmount.fetch();
 
         final (r, w) = ss.diskIO.getAllSpeed();
@@ -449,9 +451,7 @@ class _ServerPageState extends State<ServerPage>
             isSpeed ? '${l10n.read}:\n$r' : 'Total:\n${rootDisk?.size}',
             isSpeed ? '${l10n.write}:\n$w' : 'Used:\n${rootDisk?.usedPercent}%',
             onTap: () {
-              setState(() {
-                _diskViewSpeed[id] = !isSpeed;
-              });
+              cardNoti.value = cardNoti.value.copyWith(diskIO: !isSpeed);
             },
             key: ValueKey(isSpeed),
           ),
@@ -461,7 +461,8 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildNet(ServerStatus ss, String id) {
-    final type = _netViewType[id] ?? Stores.setting.netViewType.fetch();
+    final cardNoti = getCardNoti(id);
+    final type = cardNoti.value.net ?? Stores.setting.netViewType.fetch();
     final (a, b) = type.build(ss);
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 377),
@@ -472,9 +473,7 @@ class _ServerPageState extends State<ServerPage>
         a,
         b,
         onTap: () {
-          setState(() {
-            _netViewType[id] = type.next;
-          });
+          cardNoti.value = cardNoti.value.copyWith(net: type.next);
         },
         key: ValueKey(type),
       ),
@@ -585,11 +584,11 @@ class _ServerPageState extends State<ServerPage>
     }
   }
 
-  double _calcCardHeight(ServerState cs, String id) {
+  double _calcCardHeight(ServerState cs, bool flip) {
     if (cs != ServerState.finished) {
       return 23.0;
     }
-    if (_flipedCardIds.contains(id)) {
+    if (flip) {
       return 80.0;
     }
     if (Stores.setting.moveOutServerTabFuncBtns.fetch() &&
@@ -617,6 +616,37 @@ class _ServerPageState extends State<ServerPage>
           child: Text(l10n.ok),
         ),
       ],
+    );
+  }
+
+  _CardNotifier getCardNoti(String id) => _cardsStatus.putIfAbsent(
+        id,
+        () => _CardNotifier(const _CardStatus()),
+      );
+}
+
+typedef _CardNotifier = ValueNotifier<_CardStatus>;
+
+class _CardStatus {
+  final bool flip;
+  final bool? diskIO;
+  final NetViewType? net;
+
+  const _CardStatus({
+    this.flip = false,
+    this.diskIO,
+    this.net,
+  });
+
+  _CardStatus copyWith({
+    bool? flip,
+    bool? diskIO,
+    NetViewType? net,
+  }) {
+    return _CardStatus(
+      flip: flip ?? this.flip,
+      diskIO: diskIO ?? this.diskIO,
+      net: net ?? this.net,
     );
   }
 }
