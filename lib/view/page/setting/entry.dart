@@ -905,30 +905,36 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(l10n.deleteServers),
       trailing: const Icon(Icons.delete_forever),
       onTap: () async {
-        final all = Stores.server.box.keys.map(
-          (e) => TextButton(
-            onPressed: () => context.showRoundDialog(
-              title: Text(l10n.attention),
-              child: Text(l10n.askContinue(
-                '${l10n.delete} ${l10n.server}($e)',
-              )),
-              actions: [
-                TextButton(
-                  onPressed: () => Pros.server.delServer(e),
-                  child: Text(l10n.ok),
-                )
-              ],
-            ),
-            child: Text(e),
-          ),
-        );
         context.showRoundDialog<List<String>>(
           title: Text(l10n.choose),
           child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: all.toList(),
-            ),
+            child: StatefulBuilder(builder: (ctx, setState) {
+              final all = Stores.server.box.keys.map(
+                (e) => TextButton(
+                  onPressed: () => context.showRoundDialog(
+                    title: Text(l10n.attention),
+                    child: Text(l10n.askContinue(
+                      '${l10n.delete} ${l10n.server}($e)',
+                    )),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Pros.server.delServer(e);
+                          ctx.pop();
+                          setState(() {});
+                        },
+                        child: Text(l10n.ok),
+                      )
+                    ],
+                  ),
+                  child: Text(e),
+                ),
+              );
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: all.toList(),
+              );
+            }),
           ),
         );
       },
