@@ -37,3 +37,5 @@ String pathJoin(String path1, String path2) {
 
 /// Check if a url is a file url (ends with a file extension)
 bool isFileUrl(String url) => url.split('/').last.contains('.');
+
+int get timeStamp => DateTime.now().millisecondsSinceEpoch;

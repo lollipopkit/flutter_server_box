@@ -8,6 +8,7 @@ import 'package:toolbox/core/channel/bg_run.dart';
 import 'package:toolbox/core/channel/home_widget.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
+import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/core/utils/platform/auth.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/res/github_id.dart';
@@ -340,7 +341,7 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<void> _onLongPressSetting() async {
-    final map = Stores.setting.toJson();
+    final map = Stores.setting.box.toJson(includeInternal: false);
     final keys = map.keys;
 
     /// Encode [map] to String with indent `\t`

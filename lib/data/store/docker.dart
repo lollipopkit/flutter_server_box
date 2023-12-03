@@ -1,6 +1,6 @@
 import '../../core/persistant_store.dart';
 
-class DockerStore extends PersistentStore<String> {
+class DockerStore extends PersistentStore {
   DockerStore() : super('docker');
 
   String? fetch(String? id) {

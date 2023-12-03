@@ -1,7 +1,7 @@
 import '../../core/persistant_store.dart';
 import '../model/server/snippet.dart';
 
-class SnippetStore extends PersistentStore<Snippet> {
+class SnippetStore extends PersistentStore {
   SnippetStore() : super('snippet');
 
   void put(Snippet snippet) {

@@ -1,7 +1,7 @@
 import '../../core/persistant_store.dart';
 import '../model/server/server_private_info.dart';
 
-class ServerStore extends PersistentStore<ServerPrivateInfo> {
+class ServerStore extends PersistentStore {
   ServerStore() : super('server');
 
   void put(ServerPrivateInfo info) {

@@ -6,4 +6,12 @@ extension ListX<T> on List<T> {
     }
     return list;
   }
+
+  List<T> combine(List<T> other, [bool self = true]) {
+    final list = self ? this : List<T>.from(this);
+    for (var i = 0; i < length; i++) {
+      list[i] = other[i];
+    }
+    return list;
+  }
 }

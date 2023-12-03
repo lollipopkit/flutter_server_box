@@ -1,9 +1,8 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:toolbox/data/res/path.dart';
+import 'package:toolbox/core/utils/misc.dart';
 
 // abstract final class SecureStore {
 //   static const _secureStorage = FlutterSecureStorage();
@@ -30,8 +29,8 @@ import 'package:toolbox/data/res/path.dart';
 //   }
 // }
 
-class PersistentStore<E> {
-  late final Box<E> box;
+class PersistentStore {
+  late final Box box;
 
   final String boxName;
 
@@ -41,35 +40,48 @@ class PersistentStore<E> {
         boxName,
         //encryptionCipher: SecureStore._cipher,
       );
+}
 
-  /// Get all db filenames.
-  ///
-  /// - [suffixs] defaults to ['.hive']
-  ///
-  /// - If [hideSetting] is true, hide 'setting.hive'
-  static Future<List<String>> getFileNames({
-    bool hideSetting = false,
-    List<String>? suffixs,
-  }) async {
-    final docPath = await Paths.doc;
-    final dir = Directory(docPath);
-    final files = await dir.list().toList();
-    if (suffixs != null) {
-      files.removeWhere((e) => !suffixs.contains(e.path.split('.').last));
-    } else {
-      // filter out non-hive(db) files
-      files.removeWhere((e) => !e.path.endsWith('.hive'));
+extension BoxX on Box {
+  static const _internalPreffix = '_sbi_';
+
+  /// Last modified timestamp
+  static const String lastModifiedKey = '${_internalPreffix}lastModified';
+  int? get lastModified {
+    final val = get(lastModifiedKey);
+    if (val == null || val is! int) {
+      final time = timeStamp;
+      put(lastModifiedKey, time);
+      return time;
     }
-    if (hideSetting) {
-      files.removeWhere((e) => e.path.endsWith('setting.hive'));
-    }
-    final paths =
-        files.map((e) => e.path.replaceFirst('$docPath/', '')).toList();
-    return paths;
+    return val;
   }
 
+  Future<void> updateLastModified() => put(lastModifiedKey, timeStamp);
+
   /// Convert db to json
-  Map<String, dynamic> toJson() => {for (var e in box.keys) e: box.get(e)};
+  Map<String, dynamic> toJson({bool includeInternal = true}) {
+    final json = <String, dynamic>{};
+    for (final key in keys) {
+      if (key is String &&
+          key.startsWith(_internalPreffix) &&
+          !includeInternal) {
+        continue;
+      }
+      json[key] = get(key);
+    }
+    return json;
+  }
+}
+
+extension StoreX on PersistentStore {
+  _StoreProperty<T> property<T>(String key, T defaultValue) {
+    return _StoreProperty<T>(box, key, defaultValue);
+  }
+
+  _StoreListProperty<T> listProperty<T>(String key, List<T> defaultValue) {
+    return _StoreListProperty<T>(box, key, defaultValue);
+  }
 }
 
 abstract class StorePropertyBase<T> {
@@ -79,8 +91,8 @@ abstract class StorePropertyBase<T> {
   Future<void> delete();
 }
 
-class StoreProperty<T> implements StorePropertyBase<T> {
-  StoreProperty(this._box, this._key, this.defaultValue);
+class _StoreProperty<T> implements StorePropertyBase<T> {
+  _StoreProperty(this._box, this._key, this.defaultValue);
 
   final Box _box;
   final String _key;
@@ -102,6 +114,7 @@ class StoreProperty<T> implements StorePropertyBase<T> {
 
   @override
   Future<void> put(T value) {
+    _box.updateLastModified();
     return _box.put(_key, value);
   }
 
@@ -111,8 +124,8 @@ class StoreProperty<T> implements StorePropertyBase<T> {
   }
 }
 
-class StoreListProperty<T> implements StorePropertyBase<List<T>> {
-  StoreListProperty(this._box, this._key, this.defaultValue);
+class _StoreListProperty<T> implements StorePropertyBase<List<T>> {
+  _StoreListProperty(this._box, this._key, this.defaultValue);
 
   final Box _box;
   final String _key;

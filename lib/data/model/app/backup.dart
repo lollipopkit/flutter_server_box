@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/data/model/server/private_key_info.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
@@ -60,8 +61,8 @@ class Backup {
         spis = Stores.server.fetch(),
         snippets = Stores.snippet.fetch(),
         keys = Stores.key.fetch(),
-        dockerHosts = Stores.docker.toJson(),
-        settings = Stores.setting.toJson();
+        dockerHosts = Stores.docker.box.toJson(),
+        settings = Stores.setting.box.toJson();
 
   static Future<String> backup() async {
     final result = _diyEncrypt(json.encode(Backup.loadFromStore()));

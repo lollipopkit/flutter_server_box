@@ -95,8 +95,6 @@ class BackupPage extends StatelessWidget {
               prop: Stores.setting.icloudSync,
               func: (val) async {
                 if (val) {
-                  final relativePaths = await PersistentStore.getFileNames();
-                  await ICloud.sync(relativePaths: relativePaths);
                 }
               },
             ),
@@ -109,35 +107,25 @@ class BackupPage extends StatelessWidget {
                 if (icloudLoading.value) {
                   return UIs.centerSizedLoadingSmall;
                 }
-                return ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 137),
-                  child: Row(
-                    children: [
-                      TextButton(
-                        onPressed: () async {
-                          icloudLoading.value = true;
-                          final files = await PersistentStore.getFileNames();
-                          for (final file in files) {
-                            await ICloud.download(relativePath: file);
-                          }
-                          icloudLoading.value = false;
-                        },
-                        child: Text(l10n.download),
-                      ),
-                      UIs.width7,
-                      TextButton(
-                        onPressed: () async {
-                          icloudLoading.value = true;
-                          final files = await PersistentStore.getFileNames();
-                          for (final file in files) {
-                            await ICloud.upload(relativePath: file);
-                          }
-                          icloudLoading.value = false;
-                        },
-                        child: Text(l10n.upload),
-                      ),
-                    ],
-                  ),
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextButton(
+                      onPressed: () async {
+                        icloudLoading.value = true;
+                        icloudLoading.value = false;
+                      },
+                      child: Text(l10n.download),
+                    ),
+                    UIs.width7,
+                    TextButton(
+                      onPressed: () async {
+                        icloudLoading.value = true;
+                        icloudLoading.value = false;
+                      },
+                      child: Text(l10n.upload),
+                    ),
+                  ],
                 );
               },
             ),

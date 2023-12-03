@@ -219,29 +219,31 @@ class _ServerPageState extends State<ServerPage>
     final cardStatus = getCardNoti(id);
     final title = _buildServerCardTitle(srv.status, srv.state, srv.spi);
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 377),
-      curve: Curves.fastEaseInToSlowEaseOut,
-      height: _calcCardHeight(srv.state, cardStatus.value.flip),
-      child: ValueBuilder(
-        listenable: cardStatus,
-        build: () {
-          final List<Widget> children = [title];
-          if (srv.state == ServerState.finished) {
-            if (cardStatus.value.flip) {
-              children.addAll(_buildFlipedCard(srv));
-            } else {
-              children.addAll(_buildNormalCard(srv.status, srv.spi));
-            }
+    return ValueBuilder(
+      listenable: cardStatus,
+      build: () {
+        late final List<Widget> children;
+        if (srv.state == ServerState.finished) {
+          if (cardStatus.value.flip) {
+            children = [title, ..._buildFlipedCard(srv)];
+          } else {
+            children = [title, ..._buildNormalCard(srv.status, srv.spi)];
           }
-          return Column(
+        } else {
+          children = [title];
+        }
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 377),
+          curve: Curves.fastEaseInToSlowEaseOut,
+          height: _calcCardHeight(srv.state, cardStatus.value.flip),
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: children,
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 

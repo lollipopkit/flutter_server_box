@@ -2,28 +2,12 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:icloud_storage/icloud_storage.dart';
+import 'package:toolbox/data/model/app/sync.dart';
 import 'package:toolbox/data/res/logger.dart';
 
 import '../../data/model/app/error.dart';
 import '../../data/model/app/json.dart';
 import '../../data/res/path.dart';
-
-class SyncResult<T, E> {
-  final List<T> up;
-  final List<T> down;
-  final Map<T, E> err;
-
-  const SyncResult({
-    required this.up,
-    required this.down,
-    required this.err,
-  });
-
-  @override
-  String toString() {
-    return 'SyncResult{up: $up, down: $down, err: $err}';
-  }
-}
 
 abstract final class ICloud {
   static const _containerId = 'iCloud.tech.lolli.serverbox';
@@ -111,7 +95,7 @@ abstract final class ICloud {
   /// Return `null` if upload success, `ICloudErr` otherwise
   ///
   /// TODO: consider merge strategy, use [SyncAble] and [JsonSerializable]
-  static Future<SyncResult<String, ICloudErr>> sync({
+  static Future<SyncResult<String, ICloudErr>> syncFiles({
     required Iterable<String> relativePaths,
     String? bakPrefix,
   }) async {
@@ -196,4 +180,5 @@ abstract final class ICloud {
       Loggers.app.info('iCloud sync, up: $uploadFiles, down: $downloadFiles');
     }
   }
+
 }

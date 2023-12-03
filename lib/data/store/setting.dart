@@ -15,22 +15,19 @@ class SettingStore extends PersistentStore {
   // item in the drawer of the home page)
 
   /// Discussion #146
-  late final serverTabUseOldUI = StoreProperty(
-    box,
+  late final serverTabUseOldUI = property(
     'serverTabUseOldUI',
     false,
   );
 
   /// Time out for server connect and more...
-  late final timeout = StoreProperty(
-    box,
+  late final timeout = property(
     'timeOut',
     5,
   );
 
   /// Record history of SFTP path and etc.
-  late final recordHistory = StoreProperty(
-    box,
+  late final recordHistory = property(
     'recordHistory',
     true,
   );
@@ -38,142 +35,125 @@ class SettingStore extends PersistentStore {
   /// Bigger for bigger font size
   /// 1.0 means 100%
   /// Warning: This may cause some UI issues
-  late final textFactor = StoreProperty(
-    box,
+  late final textFactor = property(
     'textFactor',
     1.0,
   );
 
   /// Lanch page idx
-  late final launchPage = StoreProperty(
-    box,
+  late final launchPage = property(
     'launchPage',
     Defaults.launchPageIdx,
   );
 
   /// Server detail disk ignore path
   late final diskIgnorePath =
-      StoreListProperty(box, 'diskIgnorePath', Defaults.diskIgnorePath);
+      property('diskIgnorePath', Defaults.diskIgnorePath);
 
   /// Use double column servers page on Desktop
-  late final doubleColumnServersPage = StoreProperty(
-    box,
+  late final doubleColumnServersPage = property(
     'doubleColumnServersPage',
     isDesktop,
   );
 
   /// Disk view: amount / IO
-  late final serverTabPreferDiskAmount = StoreProperty(
-    box,
+  late final serverTabPreferDiskAmount = property(
     'serverTabPreferDiskAmount',
     false,
   );
 
   // ------END------
 
-  late final primaryColor = StoreProperty(
-    box,
+  late final primaryColor = property(
     'primaryColor',
     4287106639,
   );
 
-  late final serverStatusUpdateInterval = StoreProperty(
-    box,
+  late final serverStatusUpdateInterval = property(
     'serverStatusUpdateInterval',
     Defaults.updateInterval,
   );
 
   // Max retry count when connect to server
-  late final maxRetryCount = StoreProperty(box, 'maxRetryCount', 2);
+  late final maxRetryCount = property('maxRetryCount', 2);
 
   // Night mode: 0 -> auto, 1 -> light, 2 -> dark, 3 -> AMOLED, 4 -> AUTO-AMOLED
-  late final themeMode = StoreProperty(box, 'themeMode', 0);
+  late final themeMode = property('themeMode', 0);
 
   // Font file path
-  late final fontPath = StoreProperty(box, 'fontPath', '');
+  late final fontPath = property('fontPath', '');
 
   // Backgroud running (Android)
-  late final bgRun = StoreProperty(box, 'bgRun', isAndroid);
+  late final bgRun = property('bgRun', isAndroid);
 
   // Server order
-  late final serverOrder = StoreListProperty<String>(box, 'serverOrder', []);
+  late final serverOrder = listProperty<String>('serverOrder', []);
 
-  late final snippetOrder = StoreListProperty<String>(box, 'snippetOrder', []);
+  late final snippetOrder = listProperty<String>('snippetOrder', []);
 
   // Server details page cards order
   late final detailCardOrder =
-      StoreListProperty(box, 'detailCardPrder', Defaults.detailCardOrder);
+      listProperty('detailCardPrder', Defaults.detailCardOrder);
 
   // SSH term font size
-  late final termFontSize = StoreProperty(box, 'termFontSize', 13.0);
+  late final termFontSize = property('termFontSize', 13.0);
 
   // Locale
-  late final locale = StoreProperty<String>(box, 'locale', '');
+  late final locale = property<String>('locale', '');
 
   // SSH virtual key (ctrl | alt) auto turn off
-  late final sshVirtualKeyAutoOff =
-      StoreProperty(box, 'sshVirtualKeyAutoOff', true);
+  late final sshVirtualKeyAutoOff = property('sshVirtualKeyAutoOff', true);
 
-  late final editorFontSize = StoreProperty(box, 'editorFontSize', 13.0);
+  late final editorFontSize = property('editorFontSize', 13.0);
 
   // Editor theme
-  late final editorTheme = StoreProperty(
-    box,
+  late final editorTheme = property(
     'editorTheme',
     Defaults.editorTheme,
   );
 
-  late final editorDarkTheme = StoreProperty(
-    box,
+  late final editorDarkTheme = property(
     'editorDarkTheme',
     Defaults.editorDarkTheme,
   );
 
-  late final fullScreen = StoreProperty(
-    box,
+  late final fullScreen = property(
     'fullScreen',
     false,
   );
 
-  late final fullScreenJitter = StoreProperty(
-    box,
+  late final fullScreenJitter = property(
     'fullScreenJitter',
     true,
   );
 
-  late final fullScreenRotateQuarter = StoreProperty(
-    box,
+  late final fullScreenRotateQuarter = property(
     'fullScreenRotateQuarter',
     1,
   );
 
-  late final keyboardType = StoreProperty(
-    box,
+  late final keyboardType = property(
     'keyboardType',
     TextInputType.text.index,
   );
 
-  late final sshVirtKeys = StoreListProperty(
-    box,
+  late final sshVirtKeys = listProperty(
     'sshVirtKeys',
     Defaults.sshVirtKeys,
   );
 
-  late final netViewType = StoreProperty(
-    box,
+  late final netViewType = property(
     'netViewType',
     NetViewType.speed,
   );
 
   // Only valid on iOS
-  late final autoUpdateHomeWidget = StoreProperty(
-    box,
+  late final autoUpdateHomeWidget = property(
     'autoUpdateHomeWidget',
     isIOS,
   );
 
-  late final autoCheckAppUpdate = StoreProperty(
-    box,
+  late final autoCheckAppUpdate = property(
     'autoCheckAppUpdate',
     true,
   );
@@ -181,59 +161,54 @@ class SettingStore extends PersistentStore {
   /// Display server tab function buttons on the bottom of each server card if [true]
   ///
   /// Otherwise, display them on the top of server detail page
-  late final moveOutServerTabFuncBtns = StoreProperty(
-    box,
+  late final moveOutServerTabFuncBtns = property(
     'moveOutServerTabFuncBtns',
     true,
   );
 
   /// Whether use `rm -r` to delete directory on SFTP
-  late final sftpRmrDir = StoreProperty(
-    box,
+  late final sftpRmrDir = property(
     'sftpRmrDir',
     false,
   );
 
   /// Whether use system's primary color as the app's primary color
-  late final useSystemPrimaryColor = StoreProperty(
-    box,
+  late final useSystemPrimaryColor = property(
     'useSystemPrimaryColor',
     false,
   );
 
   /// Only valid on iOS and macOS
-  late final icloudSync = StoreProperty(
-    box,
+  late final icloudSync = property(
     'icloudSync',
     false,
   );
 
   /// Only valid on iOS / Android / Windows
-  late final useBioAuth = StoreProperty(
-    box,
+  late final useBioAuth = property(
     'useBioAuth',
     false,
   );
 
   /// The performance of highlight is bad
-  late final editorHighlight = StoreProperty(box, 'editorHighlight', true);
+  late final editorHighlight = property('editorHighlight', true);
 
   /// Open SFTP with last viewed path
-  late final sftpOpenLastPath = StoreProperty(box, 'sftpOpenLastPath', true);
+  late final sftpOpenLastPath = property('sftpOpenLastPath', true);
 
   /// Show tip of suspend
-  late final showSuspendTip = StoreProperty(box, 'showSuspendTip', true);
+  late final showSuspendTip = property('showSuspendTip', true);
 
   /// Server func btns display name
   late final serverFuncBtnsDisplayName =
-      StoreProperty(box, 'serverFuncBtnsDisplayName', false);
+      property('serverFuncBtnsDisplayName', false);
 
   // Never show these settings for users
   //
   // ------BEGIN------
 
   /// Version of store db
-  late final storeVersion = StoreProperty(box, 'storeVersion', 0);
+  late final storeVersion = property('storeVersion', 0);
 
   // ------END------
 }
