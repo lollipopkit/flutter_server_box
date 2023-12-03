@@ -15,6 +15,7 @@ import 'package:toolbox/view/page/snippet/result.dart';
 import 'package:toolbox/view/page/ssh/page.dart';
 import 'package:toolbox/view/page/setting/virt_key.dart';
 import 'package:toolbox/view/page/storage/local.dart';
+import 'package:toolbox/view/page/vnc.dart';
 
 import '../data/model/server/snippet.dart';
 import '../view/page/debug.dart';
@@ -217,5 +218,9 @@ class AppRoute {
           results: results,
         ),
         'snippet_result');
+  }
+
+  static AppRoute vnc({Key? key}) {
+    return AppRoute(VNCPage(key: key), 'vnc');
   }
 }

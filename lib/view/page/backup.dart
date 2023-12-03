@@ -113,6 +113,10 @@ class BackupPage extends StatelessWidget {
                     TextButton(
                       onPressed: () async {
                         icloudLoading.value = true;
+                        final files = await PersistentStore.getFileNames();
+                        for (final file in files) {
+                          await ICloud.download(relativePath: file);
+                        }
                         icloudLoading.value = false;
                       },
                       child: Text(l10n.download),
@@ -121,6 +125,10 @@ class BackupPage extends StatelessWidget {
                     TextButton(
                       onPressed: () async {
                         icloudLoading.value = true;
+                        final files = await PersistentStore.getFileNames();
+                        for (final file in files) {
+                          await ICloud.upload(relativePath: file);
+                        }
                         icloudLoading.value = false;
                       },
                       child: Text(l10n.upload),
