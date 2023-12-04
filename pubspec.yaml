@@ -62,6 +62,10 @@ dependencies:
   #flutter_secure_storage: ^9.0.0
   xml: ^6.4.2
   flutter_rfb: ^0.6.2
+  webdav_client:
+    git:
+      ref: main
+      url: https://github.com/lollipopkit/webdav_client
 
 dev_dependencies:
   flutter_native_splash: ^2.1.6

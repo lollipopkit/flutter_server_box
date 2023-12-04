@@ -4,7 +4,9 @@ enum ErrFrom {
   docker,
   sftp,
   ssh,
-  status;
+  status,
+  icloud,
+  webdav,;
 }
 
 abstract class Err<T> {
@@ -61,10 +63,25 @@ enum ICloudErrType {
 
 class ICloudErr extends Err<ICloudErrType> {
   ICloudErr({required ICloudErrType type, String? message})
-      : super(from: ErrFrom.docker, type: type, message: message);
+      : super(from: ErrFrom.icloud, type: type, message: message);
 
   @override
   String toString() {
     return 'ICloudErr<$type>: $message';
+  }
+}
+
+enum WebdavErrType {
+  generic,
+  notFound,;
+}
+
+class WebdavErr extends Err<WebdavErrType> {
+  WebdavErr({required WebdavErrType type, String? message})
+      : super(from: ErrFrom.webdav, type: type, message: message);
+
+  @override
+  String toString() {
+    return 'WebdavErr<$type>: $message';
   }
 }

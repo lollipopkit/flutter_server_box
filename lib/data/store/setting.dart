@@ -203,6 +203,12 @@ class SettingStore extends PersistentStore {
   late final serverFuncBtnsDisplayName =
       property('serverFuncBtnsDisplayName', false);
 
+  /// Webdav sync
+  late final webdavSync = property('webdavSync', false);
+  late final webdavUrl = property('webdavUrl', '');
+  late final webdavUser = property('webdavUser', '');
+  late final webdavPwd = property('webdavPwd', '');
+
   // Never show these settings for users
   //
   // ------BEGIN------

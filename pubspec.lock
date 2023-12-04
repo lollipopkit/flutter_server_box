@@ -1164,6 +1164,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.0"
+  webdav_client:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: main
+      resolved-ref: "233b3ebaa01b7bb35a414c9cfd5e2933b3a008ba"
+      url: "https://github.com/lollipopkit/webdav_client"
+    source: git
+    version: "1.2.1"
   win32:
     dependency: transitive
     description:
