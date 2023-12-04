@@ -13,7 +13,7 @@ class ServerStore extends PersistentStore {
     final List<ServerPrivateInfo> ss = [];
     for (final id in ids) {
       final s = box.get(id);
-      if (s != null) {
+      if (s != null && s is ServerPrivateInfo) {
         ss.add(s);
       }
     }

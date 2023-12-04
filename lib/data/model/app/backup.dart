@@ -20,6 +20,7 @@ class Backup {
   final List<PrivateKeyInfo> keys;
   final Map<String, dynamic> dockerHosts;
   final Map<String, dynamic> settings;
+  final int? lastModTime;
 
   const Backup({
     required this.version,
@@ -29,6 +30,7 @@ class Backup {
     required this.keys,
     required this.dockerHosts,
     required this.settings,
+    this.lastModTime,
   });
 
   Backup.fromJson(Map<String, dynamic> json)
@@ -43,7 +45,8 @@ class Backup {
             .map((e) => PrivateKeyInfo.fromJson(e))
             .toList(),
         dockerHosts = json['dockerHosts'] ?? {},
-        settings = json['settings'] ?? {};
+        settings = json['settings'] ?? {},
+        lastModTime = json['lastModTime'];
 
   Map<String, dynamic> toJson() => {
         'version': version,
@@ -53,6 +56,7 @@ class Backup {
         'keys': keys,
         'dockerHosts': dockerHosts,
         'settings': settings,
+        'lastModTime': lastModTime,
       };
 
   Backup.loadFromStore()
@@ -62,7 +66,8 @@ class Backup {
         snippets = Stores.snippet.fetch(),
         keys = Stores.key.fetch(),
         dockerHosts = Stores.docker.box.toJson(),
-        settings = Stores.setting.box.toJson();
+        settings = Stores.setting.box.toJson(),
+        lastModTime = Stores.lastModTime;
 
   static Future<String> backup() async {
     final result = _diyEncrypt(json.encode(Backup.loadFromStore()));
@@ -71,7 +76,15 @@ class Backup {
     return path;
   }
 
-  Future<void> restore() async {
+  Future<bool?> restore({bool force = false}) async {
+    final curTime = Stores.lastModTime ?? 0;
+    final thisTime = lastModTime ?? 0;
+    if (curTime == thisTime) {
+      return null;
+    }
+    if (curTime > thisTime && !force) {
+      return false;
+    }
     for (final s in settings.keys) {
       Stores.setting.box.put(s, settings[s]);
     }
@@ -90,6 +103,7 @@ class Backup {
         Stores.docker.put(k, val);
       }
     }
+    return true;
   }
 
   Backup.fromJsonString(String raw)

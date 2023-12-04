@@ -13,7 +13,7 @@ class SnippetStore extends PersistentStore {
     final ss = <Snippet>[];
     for (final key in keys) {
       final s = box.get(key);
-      if (s != null) {
+      if (s != null && s is Snippet) {
         ss.add(s);
       }
     }

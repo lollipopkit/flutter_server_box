@@ -190,7 +190,8 @@ class BackupPage extends StatelessWidget {
           ),
           TextButton(
             onPressed: () async {
-              await backup.restore();
+              /// TODO: add checkbox for not force restore
+              await backup.restore(force: true);
               Pros.reload();
               context.pop();
               RebuildNodes.app.rebuild();

@@ -13,7 +13,7 @@ class PrivateKeyStore extends PersistentStore {
     final ps = <PrivateKeyInfo>[];
     for (final key in keys) {
       final s = box.get(key);
-      if (s != null) {
+      if (s != null && s is PrivateKeyInfo) {
         ps.add(s);
       }
     }

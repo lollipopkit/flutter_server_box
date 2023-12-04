@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:icloud_storage/icloud_storage.dart';
+import 'package:toolbox/data/model/app/backup.dart';
 import 'package:toolbox/data/model/app/sync.dart';
 import 'package:toolbox/data/res/logger.dart';
 
 import '../../data/model/app/error.dart';
-import '../../data/model/app/json.dart';
 import '../../data/res/path.dart';
 
 abstract final class ICloud {
@@ -93,8 +94,6 @@ abstract final class ICloud {
   /// All files downloaded from cloud will be suffixed with [bakSuffix].
   ///
   /// Return `null` if upload success, `ICloudErr` otherwise
-  ///
-  /// TODO: consider merge strategy, use [SyncAble] and [JsonSerializable]
   static Future<SyncResult<String, ICloudErr>> syncFiles({
     required Iterable<String> relativePaths,
     String? bakPrefix,
@@ -181,4 +180,35 @@ abstract final class ICloud {
     }
   }
 
+  static Future<void> sync() async {
+    try {
+      final result = await download(relativePath: Paths.bakName);
+      if (result != null) {
+        Loggers.app.warning('Download backup failed: $result');
+        return;
+      }
+    } catch (e, s) {
+      Loggers.app.warning('Download backup failed', e, s);
+    }
+    final dlFile = await File(await Paths.bak).readAsString();
+    final dlBak = await compute(Backup.fromJsonString, dlFile);
+    final restore = await dlBak.restore();
+    switch (restore) {
+      case true:
+        Loggers.app.info('Restore from iCloud (${dlBak.lastModTime}) success');
+        break;
+      case false:
+        await Backup.backup();
+        final uploadResult = await upload(relativePath: Paths.bakName);
+        if (uploadResult != null) {
+          Loggers.app.warning('Upload iCloud backup failed: $uploadResult');
+        } else {
+          Loggers.app.info('Upload iCloud backup success');
+        }
+        break;
+      case null:
+        Loggers.app.info('Skip iCloud sync');
+        break;
+    }
+  }
 }

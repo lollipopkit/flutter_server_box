@@ -23,4 +23,15 @@ abstract final class Stores {
     key,
     snippet,
   ];
+
+  static int? get lastModTime {
+    int? lastModTime = 0;
+    for (final store in all) {
+      final last = store.box.lastModified ?? 0;
+      if (last > (lastModTime ?? 0)) {
+        lastModTime = last;
+      }
+    }
+    return lastModTime;
+  }
 }

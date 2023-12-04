@@ -46,7 +46,9 @@ abstract final class Paths {
     return _fontDir!;
   }
 
-  static Future<String> get bak async => '${await doc}/srvbox_bak.json';
+  static const String bakName = 'srvbox_bak.json';
+
+  static Future<String> get bak async => '${await doc}/$bakName';
 
   static Future<String> get dl async => joinPath(await doc, 'dl');
 }
