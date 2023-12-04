@@ -49,6 +49,9 @@ class SZh extends S {
   String get auto => '自动';
 
   @override
+  String get autoBackupConflict => '只能同时开启一个自动备份';
+
+  @override
   String get autoCheckUpdate => '自动检查更新';
 
   @override
@@ -783,6 +786,9 @@ class SZh extends S {
   String get watchNotPaired => '没有已配对的 Apple Watch';
 
   @override
+  String get webdavSettingEmpty => 'Webdav 设置项为空';
+
+  @override
   String get whenOpenApp => '当打开 App 时';
 
   @override
@@ -839,6 +845,9 @@ class SZhTw extends SZh {
 
   @override
   String get auto => '自動';
+
+  @override
+  String get autoBackupConflict => '只能同時開啓壹個自動備份';
 
   @override
   String get autoCheckUpdate => '自動檢查更新';
@@ -1573,6 +1582,9 @@ class SZhTw extends SZh {
 
   @override
   String get watchNotPaired => '沒有已配對的 Apple Watch';
+
+  @override
+  String get webdavSettingEmpty => 'Webdav 設置項爲空';
 
   @override
   String get whenOpenApp => '當打開 App 時';

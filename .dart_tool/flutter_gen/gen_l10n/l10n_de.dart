@@ -49,6 +49,9 @@ class SDe extends S {
   String get auto => 'System folgen';
 
   @override
+  String get autoBackupConflict => 'Es kann nur eine automatische Sicherung gleichzeitig aktiviert werden.';
+
+  @override
   String get autoCheckUpdate => 'Aktualisierung automatisch prüfen';
 
   @override
@@ -781,6 +784,9 @@ class SDe extends S {
 
   @override
   String get watchNotPaired => 'Keine gekoppelte Apple Watch';
+
+  @override
+  String get webdavSettingEmpty => 'Webdav-Einstellungen sind leer';
 
   @override
   String get whenOpenApp => 'Beim Öffnen der App';

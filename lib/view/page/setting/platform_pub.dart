@@ -30,7 +30,7 @@ class PlatformPublicSettings {
           trailing: can == true
               ? StoreSwitch(
                   prop: Stores.setting.useBioAuth,
-                  func: (val) async {
+                  callback: (val) async {
                     if (val) {
                       Stores.setting.useBioAuth.put(false);
                       return;

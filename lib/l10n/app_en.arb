@@ -14,6 +14,7 @@
   "attention": "Attention",
   "authRequired": "Auth required",
   "auto": "Auto",
+  "autoBackupConflict": "Only one automatic backup can be turned on at the same time.",
   "autoCheckUpdate": "Auto check update",
   "autoConnect": "Auto connect",
   "autoUpdateHomeWidget": "Auto update home widget",
@@ -246,6 +247,7 @@
   "virtKeyHelpSFTP": "Open current directory in SFTP.",
   "waitConnection": "Please wait for the connection to be established.",
   "watchNotPaired": "No paired Apple Watch",
+  "webdavSettingEmpty": "Webdav setting is empty",
   "whenOpenApp": "When opening the app",
   "willTakEeffectImmediately": "Will take effect immediately",
   "write": "Write"

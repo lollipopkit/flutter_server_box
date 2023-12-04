@@ -49,6 +49,9 @@ class SEn extends S {
   String get auto => 'Auto';
 
   @override
+  String get autoBackupConflict => 'Only one automatic backup can be turned on at the same time.';
+
+  @override
   String get autoCheckUpdate => 'Auto check update';
 
   @override
@@ -781,6 +784,9 @@ class SEn extends S {
 
   @override
   String get watchNotPaired => 'No paired Apple Watch';
+
+  @override
+  String get webdavSettingEmpty => 'Webdav setting is empty';
 
   @override
   String get whenOpenApp => 'When opening the app';

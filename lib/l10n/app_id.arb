@@ -14,6 +14,7 @@
   "attention": "Perhatian",
   "authRequired": "Auth diperlukan",
   "auto": "Auto",
+  "autoBackupConflict": "Hanya satu pencadangan otomatis yang dapat diaktifkan pada saat yang bersamaan.",
   "autoCheckUpdate": "Periksa pembaruan otomatis",
   "autoConnect": "Hubungkan otomatis",
   "autoUpdateHomeWidget": "Widget Rumah Pembaruan Otomatis",
@@ -246,6 +247,7 @@
   "virtKeyHelpSFTP": "Buka direktori saat ini di SFTP.",
   "waitConnection": "Harap tunggu koneksi akan dibuat.",
   "watchNotPaired": "Tidak ada Apple Watch yang dipasangkan",
+  "webdavSettingEmpty": "Pengaturan webdav kosong",
   "whenOpenApp": "Saat membuka aplikasi",
   "willTakEeffectImmediately": "Akan segera berlaku",
   "write": "Tulis"

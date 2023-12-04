@@ -14,6 +14,7 @@
   "attention": "Achtung",
   "authRequired": "Autorisierung erforderlich",
   "auto": "System folgen",
+  "autoBackupConflict": "Es kann nur eine automatische Sicherung gleichzeitig aktiviert werden.",
   "autoCheckUpdate": "Aktualisierung automatisch prüfen",
   "autoConnect": "Automatisch verbinden",
   "autoUpdateHomeWidget": "Home-Widget automatisch aktualisieren",
@@ -246,6 +247,7 @@
   "virtKeyHelpSFTP": "Aktuelles Verzeichnis in SFTP öffnen.",
   "waitConnection": "Bitte warte, bis die Verbindung hergestellt wurde.",
   "watchNotPaired": "Keine gekoppelte Apple Watch",
+  "webdavSettingEmpty": "Webdav-Einstellungen sind leer",
   "whenOpenApp": "Beim Öffnen der App",
   "willTakEeffectImmediately": "Wird sofort angewendet",
   "write": "Schreiben"

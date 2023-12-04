@@ -150,7 +150,14 @@ class BackupPage extends StatelessWidget {
             title: Text(l10n.auto),
             trailing: StoreSwitch(
               prop: Stores.setting.icloudSync,
-              func: (val) async {
+              validator: (p0) {
+                if (p0 && Stores.setting.webdavSync.fetch()) {
+                  context.showSnackBar(l10n.autoBackupConflict);
+                  return false;
+                }
+                return true;
+              },
+              callback: (val) async {
                 if (val) {
                   icloudLoading.value = true;
                   await ICloud.sync();
@@ -273,24 +280,20 @@ class BackupPage extends StatelessWidget {
                     },
                     child: Text(l10n.ok),
                   ),
-                  TextButton(
-                    onPressed: () async {
-                      final result = await Webdav.test(
-                        urlCtrl.text,
-                        userCtrl.text,
-                        pwdCtrl.text,
-                      );
-                      if (result == null) {
-                        context.showSnackBar(l10n.success);
-                      } else {
-                        context.showSnackBar(result);
-                      }
-                    },
-                    child: Text(l10n.test),
-                  ),
                 ],
               );
               if (result == true) {
+                final result = await Webdav.test(
+                  urlCtrl.text,
+                  userCtrl.text,
+                  pwdCtrl.text,
+                );
+                if (result == null) {
+                  context.showSnackBar(l10n.success);
+                } else {
+                  context.showSnackBar(result);
+                  return;
+                }
                 Webdav.changeClient(
                   urlCtrl.text,
                   userCtrl.text,
@@ -306,7 +309,22 @@ class BackupPage extends StatelessWidget {
             title: Text(l10n.auto),
             trailing: StoreSwitch(
               prop: Stores.setting.webdavSync,
-              func: (val) async {
+              validator: (p0) {
+                if (p0) {
+                  if (Stores.setting.webdavUrl.fetch().isEmpty ||
+                      Stores.setting.webdavUser.fetch().isEmpty ||
+                      Stores.setting.webdavPwd.fetch().isEmpty) {
+                    context.showSnackBar(l10n.webdavSettingEmpty);
+                    return false;
+                  }
+                }
+                if (Stores.setting.icloudSync.fetch()) {
+                  context.showSnackBar(l10n.autoBackupConflict);
+                  return false;
+                }
+                return true;
+              },
+              callback: (val) async {
                 if (val) {
                   webdavLoading.value = true;
                   await Webdav.sync();

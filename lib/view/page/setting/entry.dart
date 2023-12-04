@@ -339,7 +339,7 @@ class _SettingPageState extends State<SettingPage> {
                   title: Text(l10n.followSystem),
                   trailing: StoreSwitch(
                     prop: _setting.useSystemPrimaryColor,
-                    func: (_) => setState(() {}),
+                    callback: (_) => setState(() {}),
                   ),
                 )
             ];
@@ -747,7 +747,7 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(l10n.fullScreen),
       trailing: StoreSwitch(
         prop: _setting.fullScreen,
-        func: (_) => RebuildNodes.app.rebuild(),
+        callback: (_) => RebuildNodes.app.rebuild(),
       ),
     );
   }

@@ -49,6 +49,9 @@ class SId extends S {
   String get auto => 'Auto';
 
   @override
+  String get autoBackupConflict => 'Hanya satu pencadangan otomatis yang dapat diaktifkan pada saat yang bersamaan.';
+
+  @override
   String get autoCheckUpdate => 'Periksa pembaruan otomatis';
 
   @override
@@ -781,6 +784,9 @@ class SId extends S {
 
   @override
   String get watchNotPaired => 'Tidak ada Apple Watch yang dipasangkan';
+
+  @override
+  String get webdavSettingEmpty => 'Pengaturan webdav kosong';
 
   @override
   String get whenOpenApp => 'Saat membuka aplikasi';

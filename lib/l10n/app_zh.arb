@@ -14,6 +14,7 @@
   "attention": "注意",
   "authRequired": "需要认证",
   "auto": "自动",
+  "autoBackupConflict": "只能同时开启一个自动备份",
   "autoCheckUpdate": "自动检查更新",
   "autoConnect": "自动连接",
   "autoUpdateHomeWidget": "自动更新桌面小部件",
@@ -246,6 +247,7 @@
   "virtKeyHelpSFTP": "在 SFTP 中打开当前路径。",
   "waitConnection": "请等待连接建立",
   "watchNotPaired": "没有已配对的 Apple Watch",
+  "webdavSettingEmpty": "Webdav 设置项为空",
   "whenOpenApp": "当打开 App 时",
   "willTakEeffectImmediately": "更改将会立即生效",
   "write": "写"

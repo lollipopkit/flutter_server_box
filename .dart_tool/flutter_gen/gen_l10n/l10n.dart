@@ -182,6 +182,12 @@ abstract class S {
   /// **'Auto'**
   String get auto;
 
+  /// No description provided for @autoBackupConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Only one automatic backup can be turned on at the same time.'**
+  String get autoBackupConflict;
+
   /// No description provided for @autoCheckUpdate.
   ///
   /// In en, this message translates to:
@@ -1573,6 +1579,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'No paired Apple Watch'**
   String get watchNotPaired;
+
+  /// No description provided for @webdavSettingEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Webdav setting is empty'**
+  String get webdavSettingEmpty;
 
   /// No description provided for @whenOpenApp.
   ///
