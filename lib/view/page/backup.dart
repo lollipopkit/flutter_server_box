@@ -54,7 +54,7 @@ class BackupPage extends StatelessWidget {
   Widget _buildFile(BuildContext context) {
     return CardX(
       ExpandTile(
-        leading: const Icon(Icons.file_open, size: 19),
+        leading: const Icon(Icons.file_open),
         title: Text(l10n.files),
         initiallyExpanded: true,
         children: [
@@ -139,7 +139,7 @@ class BackupPage extends StatelessWidget {
   Widget _buildIcloud(BuildContext context) {
     return CardX(
       ExpandTile(
-        leading: const Icon(Icons.cloud, size: 19),
+        leading: const Icon(Icons.cloud),
         title: const Text('iCloud'),
         initiallyExpanded: true,
         children: [
@@ -231,7 +231,7 @@ class BackupPage extends StatelessWidget {
   Widget _buildWebdav(BuildContext context) {
     return CardX(
       ExpandTile(
-        leading: const Icon(Icons.storage, size: 19),
+        leading: const Icon(Icons.storage),
         title: const Text('WebDAV'),
         initiallyExpanded: !(isIOS || isMacOS),
         children: [

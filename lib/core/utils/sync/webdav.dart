@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:logging/logging.dart';
 import 'package:toolbox/data/model/app/backup.dart';
 import 'package:toolbox/data/model/app/error.dart';
-import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/path.dart';
 import 'package:toolbox/data/res/store.dart';
 // ignore: implementation_imports
@@ -16,13 +16,15 @@ abstract final class Webdav {
     pwd: Stores.setting.webdavPwd.fetch(),
   );
 
+  static final _logger = Logger('Webdav');
+
   static Future<String?> test(String url, String user, String pwd) async {
     final client = WebdavClient(url: url, user: user, pwd: pwd);
     try {
       await client.ping();
       return null;
     } catch (e, s) {
-      Loggers.app.warning('Webdav test failed', e, s);
+      _logger.warning('Test failed', e, s);
       return e.toString();
     }
   }
@@ -37,7 +39,7 @@ abstract final class Webdav {
         relativePath,
       );
     } catch (e, s) {
-      Loggers.app.warning('Webdav upload failed', e, s);
+      _logger.warning('Upload $relativePath failed', e, s);
       return WebdavErr(type: WebdavErrType.generic, message: '$e');
     }
     return null;
@@ -47,7 +49,7 @@ abstract final class Webdav {
     try {
       await _client.remove(relativePath);
     } catch (e, s) {
-      Loggers.app.warning('Webdav delete failed', e, s);
+      _logger.warning('Delete $relativePath failed', e, s);
       return WebdavErr(type: WebdavErrType.generic, message: '$e');
     }
     return null;
@@ -62,8 +64,8 @@ abstract final class Webdav {
         relativePath,
         localPath ?? '${await Paths.doc}/$relativePath',
       );
-    } catch (e, s) {
-      Loggers.app.warning('Webdav download failed', e, s);
+    } catch (e) {
+      _logger.warning('Download $relativePath failed');
       return WebdavErr(type: WebdavErrType.generic, message: '$e');
     }
     return null;
@@ -74,34 +76,49 @@ abstract final class Webdav {
   }
 
   static Future<void> sync() async {
-    try {
-      final result = await download(relativePath: Paths.bakName);
-      if (result != null) {
-        Loggers.app.warning('Download backup failed: $result');
-        return;
-      }
-    } catch (e, s) {
-      Loggers.app.warning('Download backup failed', e, s);
+    final result = await download(relativePath: Paths.bakName);
+    if (result != null) {
+      await backup();
+      return;
     }
-    final dlFile = await File(await Paths.bak).readAsString();
-    final dlBak = await compute(Backup.fromJsonString, dlFile);
-    final restore = await dlBak.restore();
+    final dlFile = await compute(
+      (message) async {
+        try {
+          final file = await File(message).readAsString();
+          final bak = Backup.fromJsonString(file);
+          return bak;
+        } catch (_) {
+          return null;
+        }
+      },
+      await Paths.bak,
+    );
+    if (dlFile == null) {
+      await backup();
+      return;
+    }
+    final restore = await dlFile.restore();
     switch (restore) {
       case true:
-        Loggers.app.info('Restore from iCloud (${dlBak.lastModTime}) success');
+        _logger.info('Restore from ${dlFile.lastModTime} success');
         break;
       case false:
-        await Backup.backup();
-        final uploadResult = await upload(relativePath: Paths.bakName);
-        if (uploadResult != null) {
-          Loggers.app.warning('Upload iCloud backup failed: $uploadResult');
-        } else {
-          Loggers.app.info('Upload iCloud backup success');
-        }
+        await backup();
         break;
       case null:
-        Loggers.app.info('Skip iCloud sync');
+        _logger.info('Skip sync');
         break;
+    }
+  }
+
+  /// Create a local backup and upload it to WebDAV
+  static Future<void> backup() async {
+    await Backup.backup();
+    final uploadResult = await upload(relativePath: Paths.bakName);
+    if (uploadResult != null) {
+      _logger.warning('Upload failed: $uploadResult');
+    } else {
+      _logger.info('Upload success');
     }
   }
 }

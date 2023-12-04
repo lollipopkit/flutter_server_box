@@ -3,15 +3,17 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:icloud_storage/icloud_storage.dart';
+import 'package:logging/logging.dart';
 import 'package:toolbox/data/model/app/backup.dart';
 import 'package:toolbox/data/model/app/sync.dart';
-import 'package:toolbox/data/res/logger.dart';
 
 import '../../../data/model/app/error.dart';
 import '../../../data/res/path.dart';
 
 abstract final class ICloud {
   static const _containerId = 'iCloud.tech.lolli.serverbox';
+
+  static final _logger = Logger('iCloud');
 
   /// Upload file to iCloud
   ///
@@ -171,12 +173,12 @@ abstract final class ICloud {
 
       return SyncResult(up: uploadFiles, down: downloadFiles, err: errs);
     } catch (e, s) {
-      Loggers.app.warning('iCloud sync: $relativePaths failed', e, s);
+      _logger.warning('Sync: $relativePaths failed', e, s);
       return SyncResult(up: uploadFiles, down: downloadFiles, err: {
         'Generic': ICloudErr(type: ICloudErrType.generic, message: '$e')
       });
     } finally {
-      Loggers.app.info('iCloud sync, up: $uploadFiles, down: $downloadFiles');
+      _logger.info('Sync, up: $uploadFiles, down: $downloadFiles');
     }
   }
 
@@ -184,30 +186,30 @@ abstract final class ICloud {
     try {
       final result = await download(relativePath: Paths.bakName);
       if (result != null) {
-        Loggers.app.warning('Download backup failed: $result');
+        _logger.warning('Download backup failed: $result');
         return;
       }
     } catch (e, s) {
-      Loggers.app.warning('Download backup failed', e, s);
+      _logger.warning('Download backup failed', e, s);
     }
     final dlFile = await File(await Paths.bak).readAsString();
     final dlBak = await compute(Backup.fromJsonString, dlFile);
     final restore = await dlBak.restore();
     switch (restore) {
       case true:
-        Loggers.app.info('Restore from iCloud (${dlBak.lastModTime}) success');
+        _logger.info('Restore from ${dlBak.lastModTime} success');
         break;
       case false:
         await Backup.backup();
         final uploadResult = await upload(relativePath: Paths.bakName);
         if (uploadResult != null) {
-          Loggers.app.warning('Upload iCloud backup failed: $uploadResult');
+          _logger.warning('Upload backup failed: $uploadResult');
         } else {
-          Loggers.app.info('Upload iCloud backup success');
+          _logger.info('Upload backup success');
         }
         break;
       case null:
-        Loggers.app.info('Skip iCloud sync');
+        _logger.info('Skip sync');
         break;
     }
   }

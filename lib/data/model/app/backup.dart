@@ -78,6 +78,9 @@ class Backup {
     return path;
   }
 
+  /// - Return null if same time
+  /// - Return false if local is newer
+  /// - Return true if restore success
   Future<bool?> restore({bool force = false}) async {
     final curTime = Stores.lastModTime ?? 0;
     final thisTime = lastModTime ?? 0;
@@ -108,7 +111,7 @@ class Backup {
 
     Pros.reload();
     RebuildNodes.app.rebuild();
-    
+
     return true;
   }
 

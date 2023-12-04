@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toolbox/core/channel/bg_run.dart';
 import 'package:toolbox/core/utils/sync/icloud.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
+import 'package:toolbox/core/utils/sync/webdav.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
@@ -95,6 +96,7 @@ Future<void> initApp() async {
   if (isIOS || isMacOS) {
     if (Stores.setting.icloudSync.fetch()) ICloud.sync();
   }
+  if (Stores.setting.webdavSync.fetch()) Webdav.sync();
 }
 
 void _setupProviders() {
