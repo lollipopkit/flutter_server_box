@@ -13,8 +13,6 @@ import 'package:toolbox/core/utils/sync/webdav.dart';
 import 'package:toolbox/data/model/app/backup.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/path.dart';
-import 'package:toolbox/data/res/provider.dart';
-import 'package:toolbox/data/res/rebuild.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/expand_tile.dart';
 import 'package:toolbox/view/widget/cardx.dart';
@@ -120,7 +118,6 @@ class BackupPage extends StatelessWidget {
                       onPressed: () async {
                         await backup.restore(force: true);
                         context.pop();
-                        _reload();
                       },
                       child: Text(l10n.ok),
                     ),
@@ -162,7 +159,6 @@ class BackupPage extends StatelessWidget {
                   icloudLoading.value = true;
                   await ICloud.sync();
                   icloudLoading.value = false;
-                  _reload();
                 }
               },
             ),
@@ -202,7 +198,6 @@ class BackupPage extends StatelessWidget {
                             await compute(Backup.fromJsonString, dlFile);
                         await dlBak.restore(force: true);
                         icloudLoading.value = false;
-                        _reload();
                       },
                       child: Text(l10n.download),
                     ),
@@ -329,7 +324,6 @@ class BackupPage extends StatelessWidget {
                   webdavLoading.value = true;
                   await Webdav.sync();
                   webdavLoading.value = false;
-                  _reload();
                 }
               },
             ),
@@ -370,7 +364,6 @@ class BackupPage extends StatelessWidget {
                             await compute(Backup.fromJsonString, dlFile);
                         await dlBak.restore(force: true);
                         webdavLoading.value = false;
-                        _reload();
                       },
                       child: Text(l10n.download),
                     ),
@@ -399,10 +392,5 @@ class BackupPage extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  void _reload() {
-    Pros.reload();
-    RebuildNodes.app.rebuild();
   }
 }

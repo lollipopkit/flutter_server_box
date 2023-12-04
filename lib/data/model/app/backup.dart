@@ -7,6 +7,8 @@ import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/path.dart';
+import 'package:toolbox/data/res/provider.dart';
+import 'package:toolbox/data/res/rebuild.dart';
 import 'package:toolbox/data/res/store.dart';
 
 const backupFormatVersion = 1;
@@ -103,6 +105,10 @@ class Backup {
         Stores.docker.put(k, val);
       }
     }
+
+    Pros.reload();
+    RebuildNodes.app.rebuild();
+    
     return true;
   }
 
