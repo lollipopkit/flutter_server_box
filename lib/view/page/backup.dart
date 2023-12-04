@@ -119,9 +119,8 @@ class BackupPage extends StatelessWidget {
                     TextButton(
                       onPressed: () async {
                         await backup.restore(force: true);
-                        Pros.reload();
                         context.pop();
-                        RebuildNodes.app.rebuild();
+                        _reload();
                       },
                       child: Text(l10n.ok),
                     ),
@@ -156,6 +155,7 @@ class BackupPage extends StatelessWidget {
                   icloudLoading.value = true;
                   await ICloud.sync();
                   icloudLoading.value = false;
+                  _reload();
                 }
               },
             ),
@@ -195,6 +195,7 @@ class BackupPage extends StatelessWidget {
                             await compute(Backup.fromJsonString, dlFile);
                         await dlBak.restore(force: true);
                         icloudLoading.value = false;
+                        _reload();
                       },
                       child: Text(l10n.download),
                     ),
@@ -251,7 +252,8 @@ class BackupPage extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Input(
-                      label: 'url',
+                      label: 'URL',
+                      hint: 'https://example.com/webdav/',
                       controller: urlCtrl,
                     ),
                     Input(
@@ -270,6 +272,21 @@ class BackupPage extends StatelessWidget {
                       context.pop(true);
                     },
                     child: Text(l10n.ok),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      final result = await Webdav.test(
+                        urlCtrl.text,
+                        userCtrl.text,
+                        pwdCtrl.text,
+                      );
+                      if (result == null) {
+                        context.showSnackBar(l10n.success);
+                      } else {
+                        context.showSnackBar(result);
+                      }
+                    },
+                    child: Text(l10n.test),
                   ),
                 ],
               );
@@ -294,6 +311,7 @@ class BackupPage extends StatelessWidget {
                   webdavLoading.value = true;
                   await Webdav.sync();
                   webdavLoading.value = false;
+                  _reload();
                 }
               },
             ),
@@ -334,6 +352,7 @@ class BackupPage extends StatelessWidget {
                             await compute(Backup.fromJsonString, dlFile);
                         await dlBak.restore(force: true);
                         webdavLoading.value = false;
+                        _reload();
                       },
                       child: Text(l10n.download),
                     ),
@@ -362,5 +381,10 @@ class BackupPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _reload() {
+    Pros.reload();
+    RebuildNodes.app.rebuild();
   }
 }

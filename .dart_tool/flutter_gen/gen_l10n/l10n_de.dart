@@ -689,6 +689,9 @@ class SDe extends S {
   String get terminal => 'Terminal';
 
   @override
+  String get test => 'Prüfung';
+
+  @override
   String get theme => 'Themen';
 
   @override

@@ -6,7 +6,8 @@ enum ErrFrom {
   ssh,
   status,
   icloud,
-  webdav,;
+  webdav,
+  ;
 }
 
 abstract class Err<T> {
@@ -73,7 +74,8 @@ class ICloudErr extends Err<ICloudErrType> {
 
 enum WebdavErrType {
   generic,
-  notFound,;
+  notFound,
+  ;
 }
 
 class WebdavErr extends Err<WebdavErrType> {

@@ -43,7 +43,6 @@ class PersistentStore {
         //encryptionCipher: SecureStore._cipher,
       );
 
-  
   /// Get all db filenames.
   ///
   /// - [suffixs] defaults to ['.hive']
@@ -69,7 +68,6 @@ class PersistentStore {
         files.map((e) => e.path.replaceFirst('$docPath/', '')).toList();
     return paths;
   }
-
 }
 
 extension BoxX on Box {

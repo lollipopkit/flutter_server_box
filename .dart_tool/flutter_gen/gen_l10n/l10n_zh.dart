@@ -689,6 +689,9 @@ class SZh extends S {
   String get terminal => '终端';
 
   @override
+  String get test => '测试';
+
+  @override
   String get theme => '主题';
 
   @override
@@ -1476,6 +1479,9 @@ class SZhTw extends SZh {
 
   @override
   String get terminal => '终端機';
+
+  @override
+  String get test => '測試';
 
   @override
   String get theme => '主題';

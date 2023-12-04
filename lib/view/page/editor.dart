@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:code_text_field/code_text_field.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_highlight/themes/a11y-light.dart';
@@ -64,15 +65,25 @@ class _EditorPageState extends State<EditorPage> {
       language: Highlights.all[_langCode],
     );
 
-    /// TODO: This is a temporary solution to avoid the loading stuck
-    Future.delayed(const Duration(milliseconds: 377)).then((value) async {
-      if (widget.path != null) {
-        final code = await File(widget.path!).readAsString();
-        _controller.text = code;
-      } else if (widget.text != null) {
-        _controller.text = widget.text!;
-      }
-    });
+    if (_langCode == null) {
+      _setupCtrl();
+    } else {
+      Future.delayed(const Duration(milliseconds: 377)).then(
+        (value) async => await _setupCtrl(),
+      );
+    }
+  }
+
+  Future<void> _setupCtrl() async {
+    if (widget.path != null) {
+      final code = await compute(
+        (path) async => await File(path).readAsString(),
+        widget.path!,
+      );
+      _controller.text = code;
+    } else if (widget.text != null) {
+      _controller.text = widget.text!;
+    }
   }
 
   @override

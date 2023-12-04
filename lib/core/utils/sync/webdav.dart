@@ -16,6 +16,17 @@ abstract final class Webdav {
     pwd: Stores.setting.webdavPwd.fetch(),
   );
 
+  static Future<String?> test(String url, String user, String pwd) async {
+    final client = WebdavClient(url: url, user: user, pwd: pwd);
+    try {
+      await client.ping();
+      return null;
+    } catch (e, s) {
+      Loggers.app.warning('Webdav test failed', e, s);
+      return e.toString();
+    }
+  }
+
   static Future<WebdavErr?> upload({
     required String relativePath,
     String? localPath,

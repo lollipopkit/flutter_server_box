@@ -689,6 +689,9 @@ class SId extends S {
   String get terminal => 'Terminal';
 
   @override
+  String get test => 'pengujian';
+
+  @override
   String get theme => ' Tema';
 
   @override

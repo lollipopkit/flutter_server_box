@@ -1406,6 +1406,12 @@ abstract class S {
   /// **'Terminal'**
   String get terminal;
 
+  /// No description provided for @test.
+  ///
+  /// In en, this message translates to:
+  /// **'Test'**
+  String get test;
+
   /// No description provided for @theme.
   ///
   /// In en, this message translates to:
