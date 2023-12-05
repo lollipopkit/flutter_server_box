@@ -44,10 +44,21 @@ class BackupPage extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(17),
       children: [
+        _buildTip(),
         if (isMacOS || isIOS) _buildIcloud(context),
         _buildWebdav(context),
         _buildFile(context),
       ],
+    );
+  }
+
+  Widget _buildTip() {
+    return CardX(
+      ListTile(
+        leading: const Icon(Icons.warning),
+        title: Text(l10n.attention),
+        subtitle: Text(l10n.backupTip, style: UIs.textGrey),
+      ),
     );
   }
 
@@ -61,10 +72,6 @@ class BackupPage extends StatelessWidget {
           ListTile(
             title: Text(l10n.backup),
             trailing: const Icon(Icons.save),
-            subtitle: Text(
-              l10n.backupTip,
-              style: UIs.textGrey,
-            ),
             onTap: () async {
               final path = await Backup.backup();
 
