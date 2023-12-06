@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 
 class ChoiceChipX<T> extends StatelessWidget {
   const ChoiceChipX({
-    Key? key,
+    super.key,
     required this.label,
     required this.state,
     required this.value,
-  }) : super(key: key);
+  });
 
   final String label;
   final ChoiceController<T> state;

@@ -18,7 +18,7 @@ import '../../widget/custom_appbar.dart';
 import '../../widget/cardx.dart';
 
 class PrivateKeysListPage extends StatefulWidget {
-  const PrivateKeysListPage({Key? key}) : super(key: key);
+  const PrivateKeysListPage({super.key});
 
   @override
   _PrivateKeyListState createState() => _PrivateKeyListState();

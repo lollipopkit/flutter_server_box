@@ -16,7 +16,7 @@ import '../../widget/custom_appbar.dart';
 import '../../widget/cardx.dart';
 
 class SftpMissionPage extends StatefulWidget {
-  const SftpMissionPage({Key? key}) : super(key: key);
+  const SftpMissionPage({super.key});
 
   @override
   _SftpMissionPageState createState() => _SftpMissionPageState();

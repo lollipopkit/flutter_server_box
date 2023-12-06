@@ -15,7 +15,7 @@ import 'package:toolbox/view/widget/cardx.dart';
 import 'package:toolbox/view/widget/store_switch.dart';
 
 class AndroidSettingsPage extends StatefulWidget {
-  const AndroidSettingsPage({Key? key}) : super(key: key);
+  const AndroidSettingsPage({super.key});
 
   @override
   _AndroidSettingsPageState createState() => _AndroidSettingsPageState();

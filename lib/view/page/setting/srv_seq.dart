@@ -9,7 +9,7 @@ import 'package:toolbox/view/widget/cardx.dart';
 import '../../widget/custom_appbar.dart';
 
 class ServerOrderPage extends StatefulWidget {
-  const ServerOrderPage({Key? key}) : super(key: key);
+  const ServerOrderPage({super.key});
 
   @override
   _ServerOrderPageState createState() => _ServerOrderPageState();

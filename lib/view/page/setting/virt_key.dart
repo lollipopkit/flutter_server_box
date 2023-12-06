@@ -11,7 +11,7 @@ import 'package:toolbox/view/widget/cardx.dart';
 import '../../widget/custom_appbar.dart';
 
 class SSHVirtKeySettingPage extends StatefulWidget {
-  const SSHVirtKeySettingPage({Key? key}) : super(key: key);
+  const SSHVirtKeySettingPage({super.key});
 
   @override
   _SSHVirtKeySettingPageState createState() => _SSHVirtKeySettingPageState();

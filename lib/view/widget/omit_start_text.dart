@@ -8,11 +8,11 @@ class OmitStartText extends StatelessWidget {
 
   const OmitStartText(
     this.text, {
-    Key? key,
+    super.key,
     this.maxLines,
     this.style,
     this.overflow,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

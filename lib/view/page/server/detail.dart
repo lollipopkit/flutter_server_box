@@ -25,7 +25,7 @@ import '../../widget/custom_appbar.dart';
 import '../../widget/cardx.dart';
 
 class ServerDetailPage extends StatefulWidget {
-  const ServerDetailPage({Key? key, required this.spi}) : super(key: key);
+  const ServerDetailPage({super.key, required this.spi});
 
   final ServerPrivateInfo spi;
 

@@ -23,7 +23,7 @@ import '../../data/model/server/server_private_info.dart';
 import '../../data/res/color.dart';
 
 class FullScreenPage extends StatefulWidget {
-  const FullScreenPage({Key? key}) : super(key: key);
+  const FullScreenPage({super.key});
 
   @override
   _FullScreenPageState createState() => _FullScreenPageState();

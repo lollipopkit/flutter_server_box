@@ -36,11 +36,11 @@ class SftpPage extends StatefulWidget {
   final bool isSelect;
 
   const SftpPage({
-    Key? key,
+    super.key,
     required this.spi,
     required this.isSelect,
     this.initPath,
-  }) : super(key: key);
+  });
 
   @override
   _SftpPageState createState() => _SftpPageState();

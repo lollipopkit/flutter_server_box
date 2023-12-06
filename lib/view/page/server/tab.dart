@@ -29,7 +29,7 @@ import '../../widget/server_func_btns.dart';
 import '../../widget/tag.dart';
 
 class ServerPage extends StatefulWidget {
-  const ServerPage({Key? key}) : super(key: key);
+  const ServerPage({super.key});
 
   @override
   _ServerPageState createState() => _ServerPageState();

@@ -32,12 +32,12 @@ class EditorPage extends StatefulWidget {
   final String? title;
 
   const EditorPage({
-    Key? key,
+    super.key,
     this.path,
     this.text,
     this.langCode,
     this.title,
-  }) : super(key: key);
+  });
 
   @override
   _EditorPageState createState() => _EditorPageState();

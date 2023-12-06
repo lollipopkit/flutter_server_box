@@ -20,7 +20,7 @@ import 'package:toolbox/view/widget/store_switch.dart';
 import 'package:watch_connectivity/watch_connectivity.dart';
 
 class IOSSettingsPage extends StatefulWidget {
-  const IOSSettingsPage({Key? key}) : super(key: key);
+  const IOSSettingsPage({super.key});
 
   @override
   _IOSSettingsPageState createState() => _IOSSettingsPageState();

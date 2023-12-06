@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:toolbox/data/res/ui.dart';
 
 class TwoLineText extends StatelessWidget {
-  const TwoLineText({Key? key, required this.up, required this.down})
-      : super(key: key);
+  const TwoLineText({super.key, required this.up, required this.down});
   final String up;
   final String down;
 

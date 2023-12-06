@@ -184,13 +184,13 @@ class TagSwitcher extends StatelessWidget {
   final String all;
 
   const TagSwitcher({
-    Key? key,
+    super.key,
     required this.tags,
     required this.width,
     required this.onTagChanged,
     required this.all,
     this.initTag,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

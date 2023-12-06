@@ -20,7 +20,7 @@ import '../widget/cardx.dart';
 final targetReg = RegExp(r'[a-zA-Z0-9\.-_:]+');
 
 class PingPage extends StatefulWidget {
-  const PingPage({Key? key}) : super(key: key);
+  const PingPage({super.key});
 
   @override
   _PingPageState createState() => _PingPageState();

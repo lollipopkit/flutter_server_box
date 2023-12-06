@@ -15,7 +15,7 @@ import '/data/provider/snippet.dart';
 import '../../widget/cardx.dart';
 
 class SnippetListPage extends StatefulWidget {
-  const SnippetListPage({Key? key}) : super(key: key);
+  const SnippetListPage({super.key});
 
   @override
   _SnippetListPageState createState() => _SnippetListPageState();

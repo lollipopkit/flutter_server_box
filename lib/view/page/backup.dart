@@ -25,7 +25,7 @@ import '../../data/res/ui.dart';
 import '../widget/custom_appbar.dart';
 
 class BackupPage extends StatelessWidget {
-  BackupPage({Key? key}) : super(key: key);
+  BackupPage({super.key});
 
   final icloudLoading = ValueNotifier(false);
   final webdavLoading = ValueNotifier(false);

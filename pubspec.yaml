@@ -43,7 +43,7 @@ dependencies:
     git:
       ref: master
       url: https://github.com/lollipopkit/xterm.dart
-  file_picker: ^5.3.2
+  file_picker: ^6.1.1
   plain_notification_token: ^0.0.4
   highlight: ^0.7.0
   flutter_highlight: ^0.7.0
@@ -71,7 +71,7 @@ dev_dependencies:
   flutter_native_splash: ^2.1.6
   hive_generator: ^2.0.0
   build_runner: ^2.3.2
-  flutter_lints: ^2.0.0
+  flutter_lints: ^3.0.0
   flutter_test:
     sdk: flutter
 

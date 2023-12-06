@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dartssh2/dartssh2.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -33,11 +32,11 @@ class SSHPage extends StatefulWidget {
   final String? initCmd;
   final bool pop;
   const SSHPage({
-    Key? key,
+    super.key,
     required this.spi,
     this.initCmd,
     this.pop = true,
-  }) : super(key: key);
+  });
 
   @override
   _SSHPageState createState() => _SSHPageState();

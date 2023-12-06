@@ -14,12 +14,12 @@ class UrlText extends StatelessWidget {
   final TextStyle style;
 
   const UrlText({
-    Key? key,
+    super.key,
     required this.text,
     this.replace,
     this.textAlign,
     this.style = const TextStyle(),
-  }) : super(key: key);
+  });
 
   List<InlineSpan> _buildTextSpans(Color c) {
     final widgets = <InlineSpan>[];
@@ -69,9 +69,8 @@ class UrlText extends StatelessWidget {
 }
 
 class _LinkTextSpan extends TextSpan {
-  _LinkTextSpan({TextStyle? style, required String text, String? replace})
+  _LinkTextSpan({super.style, required String text, String? replace})
       : super(
-          style: style,
           text: replace ?? text,
           recognizer: TapGestureRecognizer()
             ..onTap = () {

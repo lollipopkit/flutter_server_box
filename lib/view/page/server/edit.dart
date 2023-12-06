@@ -20,7 +20,7 @@ import '../../widget/tag.dart';
 import '../../widget/value_notifier.dart';
 
 class ServerEditPage extends StatefulWidget {
-  const ServerEditPage({Key? key, this.spi}) : super(key: key);
+  const ServerEditPage({super.key, this.spi});
 
   final ServerPrivateInfo? spi;
 

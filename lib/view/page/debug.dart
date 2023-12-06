@@ -6,7 +6,7 @@ import 'package:toolbox/data/provider/debug.dart';
 import '../widget/custom_appbar.dart';
 
 class DebugPage extends StatefulWidget {
-  const DebugPage({Key? key}) : super(key: key);
+  const DebugPage({super.key});
 
   @override
   _DebugPageState createState() => _DebugPageState();

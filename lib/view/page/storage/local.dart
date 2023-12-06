@@ -27,10 +27,10 @@ class LocalStoragePage extends StatefulWidget {
   final bool isPickFile;
   final String? initDir;
   const LocalStoragePage({
-    Key? key,
+    super.key,
     required this.isPickFile,
     this.initDir,
-  }) : super(key: key);
+  });
 
   @override
   State<LocalStoragePage> createState() => _LocalStoragePageState();

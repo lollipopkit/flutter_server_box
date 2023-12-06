@@ -26,7 +26,7 @@ import '../widget/url_text.dart';
 
 class DockerManagePage extends StatefulWidget {
   final ServerPrivateInfo spi;
-  const DockerManagePage({required this.spi, Key? key}) : super(key: key);
+  const DockerManagePage({required this.spi, super.key});
 
   @override
   State<DockerManagePage> createState() => _DockerManagePageState();

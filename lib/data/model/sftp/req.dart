@@ -75,29 +75,30 @@ class SftpReqStatus {
   }
 
   void onNotify(dynamic event) {
-    switch (event.runtimeType) {
-      case SftpWorkerStatus:
-        status = event;
+    var shouldDispose = false;
+    switch (event) {
+      case SftpWorkerStatus val:
+        status = val;
         if (status == SftpWorkerStatus.finished) {
           dispose();
         }
         break;
-      case double:
-        progress = event;
+      case double val:
+        progress = val;
         break;
-      case int:
-        size = event;
+      case int val:
+        size = val;
         break;
-      case Duration:
-        spentTime = event;
+      case Duration d:
+        spentTime = d;
         break;
       default:
         error = Exception('sftp worker event: $event');
         Loggers.app.warning(error);
-        dispose();
-        break;
+        shouldDispose = true;
     }
     notifyListeners();
+    if (shouldDispose) dispose();
   }
 }
 
