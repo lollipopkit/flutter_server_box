@@ -61,7 +61,6 @@ dependencies:
   choice: ^2.0.0
   #flutter_secure_storage: ^9.0.0
   xml: ^6.4.2
-  flutter_rfb: ^0.6.2
   webdav_client:
     git:
       ref: main

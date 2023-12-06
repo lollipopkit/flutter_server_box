@@ -65,14 +65,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.11.0"
-  binary:
-    dependency: transitive
-    description:
-      name: binary
-      sha256: e40eff285745e241c25b21a464b1437cbf56bad99c681de3783ff36fad52b707
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.0.1"
   boolean_selector:
     dependency: transitive
     description:
@@ -250,22 +242,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
-  dart_des:
-    dependency: transitive
-    description:
-      name: dart_des
-      sha256: "0a66afb8883368c824497fd2a1fd67bdb1a785965a3956728382c03d40747c33"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.2"
-  dart_rfb:
-    dependency: transitive
-    description:
-      name: dart_rfb
-      sha256: cbd2301868febdac476fcb293ed69b6e2a3223e4f6f13ff58d1b258e9b6f037f
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.7.0"
   dart_style:
     dependency: transitive
     description:
@@ -396,14 +372,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.17"
-  flutter_rfb:
-    dependency: "direct main"
-    description:
-      name: flutter_rfb
-      sha256: "8982187776b9638152ac0689f6ccabf6cacdb5ffd37bb018609b9ca0e9f4f5ea"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.6.2"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -414,22 +382,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  fpdart:
-    dependency: transitive
-    description:
-      name: fpdart
-      sha256: "21053522d5a97347737525c84e8839340a0af3c0ef592f98fac37380fdd6a57b"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.4.1"
-  freezed_annotation:
-    dependency: transitive
-    description:
-      name: freezed_annotation
-      sha256: c3fd9336eb55a38cc1bbd79ab17573113a8deccd0ecbbf926cca3c62803b5c2d
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.4.1"
   frontend_server_client:
     dependency: transitive
     description:
@@ -638,14 +590,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.0"
-  matan:
-    dependency: transitive
-    description:
-      name: matan
-      sha256: "41e73fe0cd0e20ff22f4cdfdb66b1a02149e80b918fc43f3dc453ca5fb67830c"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.0"
   matcher:
     dependency: transitive
     description:
