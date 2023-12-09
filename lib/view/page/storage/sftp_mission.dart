@@ -12,7 +12,7 @@ import '../../../core/extension/numx.dart';
 import '../../../data/model/sftp/req.dart';
 import '../../../data/provider/sftp.dart';
 import '../../../data/res/ui.dart';
-import '../../widget/custom_appbar.dart';
+import '../../widget/appbar.dart';
 import '../../widget/cardx.dart';
 
 class SftpMissionPage extends StatefulWidget {

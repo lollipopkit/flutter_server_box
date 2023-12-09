@@ -21,7 +21,7 @@ import '../../../data/provider/server.dart';
 import '../../../data/res/color.dart';
 import '../../../data/res/default.dart';
 import '../../../data/res/ui.dart';
-import '../../widget/custom_appbar.dart';
+import '../../widget/appbar.dart';
 import '../../widget/cardx.dart';
 
 class ServerDetailPage extends StatefulWidget {

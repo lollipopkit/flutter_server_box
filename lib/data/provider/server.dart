@@ -315,7 +315,7 @@ class ServerProvider extends ChangeNotifier {
           final completer = Completer();
           final homePath = (await s.client?.run('echo \$HOME').string)?.trim();
           if (homePath == null || homePath.isEmpty) {
-            throw Exception('Got home path: $homePath');
+            throw Exception('Got empty home path');
           }
           final remotePath = ShellFunc.getShellPath(homePath);
           final reqId = Pros.sftp.add(

@@ -26,7 +26,7 @@ import '../../data/res/build_data.dart';
 import '../../data/res/misc.dart';
 import '../../data/res/ui.dart';
 import '../../data/res/url.dart';
-import '../widget/custom_appbar.dart';
+import '../widget/appbar.dart';
 import '../widget/cardx.dart';
 import '../widget/url_text.dart';
 import '../widget/value_notifier.dart';

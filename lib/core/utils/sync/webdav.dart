@@ -6,8 +6,7 @@ import 'package:toolbox/data/model/app/backup.dart';
 import 'package:toolbox/data/model/app/error.dart';
 import 'package:toolbox/data/res/path.dart';
 import 'package:toolbox/data/res/store.dart';
-// ignore: implementation_imports
-import 'package:webdav_client/src/client.dart';
+import 'package:webdav_client/webdav_client.dart';
 
 abstract final class Webdav {
   static var _client = WebdavClient(
@@ -73,6 +72,9 @@ abstract final class Webdav {
 
   static void changeClient(String url, String user, String pwd) {
     _client = WebdavClient(url: url, user: user, pwd: pwd);
+    Stores.setting.webdavUrl.put(url);
+    Stores.setting.webdavUser.put(user);
+    Stores.setting.webdavPwd.put(pwd);
   }
 
   static Future<void> sync() async {

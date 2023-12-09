@@ -33,7 +33,7 @@ import 'data/provider/sftp.dart';
 import 'data/provider/snippet.dart';
 import 'data/res/color.dart';
 import 'locator.dart';
-import 'view/widget/custom_appbar.dart';
+import 'view/widget/appbar.dart';
 
 Future<void> main() async {
   _runInZone(() async {

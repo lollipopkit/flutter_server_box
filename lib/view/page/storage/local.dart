@@ -20,7 +20,7 @@ import '../../../core/utils/misc.dart';
 import '../../../data/model/app/path_with_prefix.dart';
 import '../../../data/res/path.dart';
 import '../../../data/res/ui.dart';
-import '../../widget/custom_appbar.dart';
+import '../../widget/appbar.dart';
 import '../../widget/fade_in.dart';
 
 class LocalStoragePage extends StatefulWidget {

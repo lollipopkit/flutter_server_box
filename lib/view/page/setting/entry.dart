@@ -29,7 +29,7 @@ import '../../../data/res/color.dart';
 import '../../../data/res/path.dart';
 import '../../../data/res/ui.dart';
 import '../../widget/color_picker.dart';
-import '../../widget/custom_appbar.dart';
+import '../../widget/appbar.dart';
 import '../../widget/input_field.dart';
 import '../../widget/cardx.dart';
 import '../../widget/store_switch.dart';

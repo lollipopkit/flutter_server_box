@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/data/provider/debug.dart';
 
-import '../widget/custom_appbar.dart';
+import '../widget/appbar.dart';
 
 class DebugPage extends StatefulWidget {
   const DebugPage({super.key});

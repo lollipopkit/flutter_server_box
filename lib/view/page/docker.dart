@@ -18,7 +18,7 @@ import '../../data/model/app/error.dart';
 import '../../data/model/app/menu.dart';
 import '../../data/res/ui.dart';
 import '../../data/res/url.dart';
-import '../widget/custom_appbar.dart';
+import '../widget/appbar.dart';
 import '../widget/popup_menu.dart';
 import '../widget/cardx.dart';
 import '../widget/two_line_text.dart';

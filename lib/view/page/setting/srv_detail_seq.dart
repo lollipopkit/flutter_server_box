@@ -3,7 +3,7 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/data/res/store.dart';
 
 import '../../../core/extension/order.dart';
-import '../../widget/custom_appbar.dart';
+import '../../widget/appbar.dart';
 import '../../widget/cardx.dart';
 
 class ServerDetailOrderPage extends StatefulWidget {

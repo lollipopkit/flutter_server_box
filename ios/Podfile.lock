@@ -72,7 +72,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   countly_flutter: d880b352f212d4f6453a87c85f0455f3b4b9c611
-  file_picker: 1d63c4949e05e386da864365f8c13e1e64787675
+  file_picker: 880e54928ebe4aa405aaf4577f29a76a078341c6
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
   flutter_native_splash: 52501b97d1c0a5f898d687f1646226c1f93c56ef
   icloud_storage: d9ac7a33ced81df08ba7ea1bf3099cc0ee58f60a

@@ -25,7 +25,7 @@ import '../../../data/model/sftp/browser_status.dart';
 import '../../../data/model/sftp/req.dart';
 import '../../../data/res/path.dart';
 import '../../../data/res/ui.dart';
-import '../../widget/custom_appbar.dart';
+import '../../widget/appbar.dart';
 import '../../widget/fade_in.dart';
 import '../../widget/input_field.dart';
 import '../../widget/two_line_text.dart';

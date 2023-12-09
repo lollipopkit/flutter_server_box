@@ -14,7 +14,7 @@ import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/data/res/highlight.dart';
 import 'package:toolbox/data/res/store.dart';
 
-import '../widget/custom_appbar.dart';
+import '../widget/appbar.dart';
 import '../widget/two_line_text.dart';
 
 class EditorPage extends StatefulWidget {

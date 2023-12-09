@@ -14,7 +14,7 @@ import '../../../core/route.dart';
 import '../../../data/model/server/private_key_info.dart';
 import '../../../data/provider/private_key.dart';
 import '../../../data/res/ui.dart';
-import '../../widget/custom_appbar.dart';
+import '../../widget/appbar.dart';
 import '../../widget/cardx.dart';
 
 class PrivateKeysListPage extends StatefulWidget {

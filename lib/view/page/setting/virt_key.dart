@@ -8,7 +8,7 @@ import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/widget/cardx.dart';
 
-import '../../widget/custom_appbar.dart';
+import '../../widget/appbar.dart';
 
 class SSHVirtKeySettingPage extends StatefulWidget {
   const SSHVirtKeySettingPage({super.key});

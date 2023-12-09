@@ -14,7 +14,7 @@ import '../../data/model/app/shell_func.dart';
 import '../../data/model/server/proc.dart';
 import '../../data/model/server/server_private_info.dart';
 import '../../data/res/ui.dart';
-import '../widget/custom_appbar.dart';
+import '../widget/appbar.dart';
 import '../widget/cardx.dart';
 import '../widget/two_line_text.dart';
 
