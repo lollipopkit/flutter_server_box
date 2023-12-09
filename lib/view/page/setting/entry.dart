@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/core/build_mode.dart';
 import 'package:toolbox/core/extension/colorx.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
@@ -123,25 +124,28 @@ class _SettingPageState extends State<SettingPage> {
               ),
 
               /// Only for debug, this will cause the app to crash
-              // onDoubleTap: () => context.showRoundDialog(
-              //   title: Text(l10n.attention),
-              //   child: Text(l10n.sureDelete(l10n.all)),
-              //   actions: [
-              //     TextButton(
-              //       onPressed: () {
-              //         Stores.docker.box.deleteFromDisk();
-              //         Stores.server.box.deleteFromDisk();
-              //         Stores.setting.box.deleteFromDisk();
-              //         Stores.history.box.deleteFromDisk();
-              //         Stores.snippet.box.deleteFromDisk();
-              //         Stores.key.box.deleteFromDisk();
-              //         exit(0);
-              //       },
-              //       child: Text(l10n.ok,
-              //           style: const TextStyle(color: Colors.red)),
-              //     ),
-              //   ],
-              // ),
+              onDoubleTap: () => context.showRoundDialog(
+                title: Text(l10n.attention),
+                child: Text(l10n.askContinue(
+                  'Delete all data from disk, and exit the app?',
+                )),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      if (!BuildMode.isDebug) return;
+                      Stores.docker.box.deleteFromDisk();
+                      Stores.server.box.deleteFromDisk();
+                      Stores.setting.box.deleteFromDisk();
+                      Stores.history.box.deleteFromDisk();
+                      Stores.snippet.box.deleteFromDisk();
+                      Stores.key.box.deleteFromDisk();
+                      exit(0);
+                    },
+                    child: Text(l10n.ok,
+                        style: const TextStyle(color: Colors.red)),
+                  ),
+                ],
+              ),
               child: const Icon(Icons.delete),
             ),
           ),
@@ -160,8 +164,8 @@ class _SettingPageState extends State<SettingPage> {
           _buildSFTP(),
           _buildTitle(l10n.editor),
           _buildEditor(),
-          _buildTitle(l10n.fullScreen),
-          _buildFullScreen(),
+          if (isDesktop) _buildTitle(l10n.fullScreen),
+          if (isDesktop) _buildFullScreen(),
           const SizedBox(height: 37),
         ],
       ),

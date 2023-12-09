@@ -33,8 +33,8 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-        title: const Text('Android'),
+      appBar: const CustomAppBar(
+        title: Text('Android'),
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 17),

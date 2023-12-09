@@ -5,7 +5,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
-import 'package:macos_window_utils/window_manipulator.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toolbox/core/channel/bg_run.dart';
@@ -15,6 +14,7 @@ import 'package:toolbox/core/utils/sync/webdav.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
 import 'core/analysis.dart';
@@ -66,14 +66,15 @@ void _runInZone(void Function() body) {
     body,
     (obj, trace) {
       Analysis.recordException(trace);
-      Loggers.root.warning(obj);
+      Loggers.root.warning(obj, null, trace);
     },
     zoneSpecification: zoneSpec,
   );
 }
 
 Future<void> initApp() async {
-  await _initMacOSWindow();
+  WidgetsFlutterBinding.ensureInitialized();
+  await _initDesktopWindow();
 
   // Base of all data.
   await _initDb();
@@ -125,12 +126,19 @@ void _setupLogger() {
   });
 }
 
-Future<void> _initMacOSWindow() async {
-  if (!isMacOS) return;
-  WidgetsFlutterBinding.ensureInitialized();
-  await WindowManipulator.initialize();
-  WindowManipulator.makeTitlebarTransparent();
-  WindowManipulator.enableFullSizeContentView();
-  WindowManipulator.hideTitle();
-  await CustomAppBar.updateTitlebarHeight();
+Future<void> _initDesktopWindow() async {
+  if (!isDesktop) return;
+  await windowManager.ensureInitialized();
+  const windowOptions = WindowOptions(
+    size: Size(400, 777),
+    center: true,
+    backgroundColor: Colors.transparent,
+    skipTaskbar: false,
+    titleBarStyle: TitleBarStyle.hidden,
+  );
+  if (isMacOS) await CustomAppBar.updateTitlebarHeight();
+  windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.show();
+    await windowManager.focus();
+  });
 }

@@ -25,8 +25,7 @@ enum SSHErrType {
 }
 
 class SSHErr extends Err<SSHErrType> {
-  SSHErr({required super.type, super.message})
-      : super(from: ErrFrom.ssh);
+  SSHErr({required super.type, super.message}) : super(from: ErrFrom.ssh);
 
   @override
   String toString() {
@@ -47,8 +46,7 @@ enum DockerErrType {
 }
 
 class DockerErr extends Err<DockerErrType> {
-  DockerErr({required super.type, super.message})
-      : super(from: ErrFrom.docker);
+  DockerErr({required super.type, super.message}) : super(from: ErrFrom.docker);
 
   @override
   String toString() {
@@ -63,8 +61,7 @@ enum ICloudErrType {
 }
 
 class ICloudErr extends Err<ICloudErrType> {
-  ICloudErr({required super.type, super.message})
-      : super(from: ErrFrom.icloud);
+  ICloudErr({required super.type, super.message}) : super(from: ErrFrom.icloud);
 
   @override
   String toString() {
@@ -79,8 +76,7 @@ enum WebdavErrType {
 }
 
 class WebdavErr extends Err<WebdavErrType> {
-  WebdavErr({required super.type, super.message})
-      : super(from: ErrFrom.webdav);
+  WebdavErr({required super.type, super.message}) : super(from: ErrFrom.webdav);
 
   @override
   String toString() {
