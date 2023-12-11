@@ -93,6 +93,7 @@ class _HomePageState extends State<HomePage>
       case AppLifecycleState.paused:
         // Keep running in background on Android device
         if (isAndroid && Stores.setting.bgRun.fetch()) {
+          // Keep this if statement single
           if (Pros.app.moveBg) {
             BgRunMC.moveToBg();
           }

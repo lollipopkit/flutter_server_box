@@ -90,10 +90,10 @@ class _ServerPageState extends State<ServerPage>
     );
 
     // Desktop doesn't support pull to refresh
-    if (isDesktop) {
-      return child;
-    }
+    if (isDesktop) return child;
+    
     return RefreshIndicator(
+      key: ServerProvider.refreshKey,
       onRefresh: () async => await Pros.server.refreshData(onlyFailed: true),
       child: child,
     );

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:toolbox/core/utils/platform/path.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/system.dart';
@@ -135,10 +136,13 @@ class ServerProvider extends ChangeNotifier {
     return await _getData(s.spi);
   }
 
+  static final refreshKey = GlobalKey<RefreshIndicatorState>();
+
   Future<void> startAutoRefresh() async {
     final duration = Stores.setting.serverStatusUpdateInterval.fetch();
     stopAutoRefresh();
     if (duration == 0) return;
+    refreshKey.currentState?.show();
     _timer = Timer.periodic(Duration(seconds: duration), (_) async {
       await refreshData();
     });
@@ -149,6 +153,16 @@ class ServerProvider extends ChangeNotifier {
       _timer!.cancel();
       _timer = null;
     }
+  }
+
+  void setNotBusy([String? id]) {
+    if (id == null) {
+      for (final s in _servers.values) {
+        s.isBusy = false;
+      }
+      return;
+    }
+    _servers[id]?.isBusy = false;
   }
 
   bool get isAutoRefreshOn => _timer != null;

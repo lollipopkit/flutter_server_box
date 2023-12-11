@@ -170,12 +170,12 @@ class BackupPage extends StatelessWidget {
                   children: [
                     TextButton(
                       onPressed: () async => _onTapWebdavDl(context),
-                      child: Text(l10n.download),
+                      child: Text(l10n.restore),
                     ),
                     UIs.width7,
                     TextButton(
                       onPressed: () async => _onTapWebdavUp(context),
-                      child: Text(l10n.upload),
+                      child: Text(l10n.backup),
                     ),
                   ],
                 );

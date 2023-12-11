@@ -136,8 +136,9 @@ Future<void> _initDesktopWindow() async {
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.hidden,
   );
-  if (isMacOS) await CustomAppBar.updateTitlebarHeight();
+
   windowManager.waitUntilReadyToShow(windowOptions, () async {
+    if (isMacOS) await CustomAppBar.updateTitlebarHeight();
     await windowManager.show();
     await windowManager.focus();
   });
