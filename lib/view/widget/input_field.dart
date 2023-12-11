@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'cardx.dart';
 
-class Input extends StatelessWidget {
+class Input extends StatefulWidget {
   final TextEditingController? controller;
   final int maxLines;
   final int? minLines;
@@ -19,6 +19,7 @@ class Input extends StatelessWidget {
   final String? errorText;
   final Widget? prefix;
   final bool autoFocus;
+  final void Function(bool)? onViewPwdTap;
 
   const Input({
     super.key,
@@ -38,32 +39,60 @@ class Input extends StatelessWidget {
     this.errorText,
     this.prefix,
     this.autoFocus = false,
+    this.onViewPwdTap,
   });
+  
+  @override
+  State<StatefulWidget> createState() => _InputState();
+}
+
+class _InputState extends State<Input> {
+  bool _obscureText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _obscureText = widget.obscureText;
+  }
+
   @override
   Widget build(BuildContext context) {
     return CardX(
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 17),
         child: TextField(
-          maxLines: maxLines,
-          minLines: minLines,
-          onSubmitted: onSubmitted,
-          onChanged: onChanged,
-          keyboardType: type,
-          focusNode: node,
-          autofocus: autoFocus,
-          autocorrect: autoCorrect,
-          enableSuggestions: suggestiion,
+          controller: widget.controller,
+          maxLines: widget.maxLines,
+          minLines: widget.minLines,
+          obscureText: _obscureText,
           decoration: InputDecoration(
-            label: label != null ? Text(label!) : null,
-            hintText: hint,
-            icon: icon != null ? Icon(icon) : null,
+            hintText: widget.hint,
+            labelText: widget.label,
+            errorText: widget.errorText,
             border: InputBorder.none,
-            errorText: errorText,
-            prefix: prefix,
+            prefixIcon: widget.icon == null ? null : Icon(widget.icon),
+            prefix: widget.prefix,
+            suffixIcon: widget.obscureText
+                ? IconButton(
+                    icon: Icon(_obscureText ? Icons.visibility : Icons.visibility_off),
+                    onPressed: () {
+                      setState(() {
+                        _obscureText = !_obscureText;
+                      });
+                      if (widget.onViewPwdTap != null) {
+                        widget.onViewPwdTap?.call(_obscureText);
+                      }
+                    },
+                  )
+                : null,
           ),
-          controller: controller,
-          obscureText: obscureText,
+          keyboardType: widget.type,
+          focusNode: widget.node,
+          autocorrect: widget.autoCorrect,
+          enableSuggestions: widget.suggestiion,
+          autofocus: widget.autoFocus,
+          onSubmitted: widget.onSubmitted,
+          onChanged: widget.onChanged,
         ),
       ),
     );
