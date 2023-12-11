@@ -22,6 +22,7 @@ class Backup {
   final List<PrivateKeyInfo> keys;
   final Map<String, dynamic> dockerHosts;
   final Map<String, dynamic> settings;
+  final Map<String, dynamic> history;
   final int? lastModTime;
 
   const Backup({
@@ -32,6 +33,7 @@ class Backup {
     required this.keys,
     required this.dockerHosts,
     required this.settings,
+    required this.history,
     this.lastModTime,
   });
 
@@ -48,7 +50,8 @@ class Backup {
             .toList(),
         dockerHosts = json['dockerHosts'] ?? {},
         settings = json['settings'] ?? {},
-        lastModTime = json['lastModTime'];
+        lastModTime = json['lastModTime'],
+        history = json['history'] ?? {};
 
   Map<String, dynamic> toJson() => {
         'version': version,
@@ -59,6 +62,7 @@ class Backup {
         'dockerHosts': dockerHosts,
         'settings': settings,
         'lastModTime': lastModTime,
+        'history': history,
       };
 
   Backup.loadFromStore()
@@ -69,7 +73,8 @@ class Backup {
         keys = Stores.key.fetch(),
         dockerHosts = Stores.docker.box.toJson(),
         settings = Stores.setting.box.toJson(),
-        lastModTime = Stores.lastModTime;
+        lastModTime = Stores.lastModTime,
+        history = Stores.history.box.toJson();
 
   static Future<String> backup() async {
     final result = _diyEncrypt(json.encode(Backup.loadFromStore()));
@@ -83,11 +88,11 @@ class Backup {
   /// - Return true if restore success
   Future<bool?> restore({bool force = false}) async {
     final curTime = Stores.lastModTime ?? 0;
-    final thisTime = lastModTime ?? 0;
-    if (curTime == thisTime) {
+    final bakTime = lastModTime ?? 0;
+    if (curTime == bakTime) {
       return null;
     }
-    if (curTime > thisTime && !force) {
+    if (curTime > bakTime && !force) {
       return false;
     }
     for (final s in settings.keys) {
@@ -101,6 +106,9 @@ class Backup {
     }
     for (final s in keys) {
       Stores.key.put(s);
+    }
+    for (final s in history.keys) {
+      Stores.history.box.put(s, history[s]);
     }
     for (final k in dockerHosts.keys) {
       final val = dockerHosts[k];
