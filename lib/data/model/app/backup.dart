@@ -117,6 +117,9 @@ class Backup {
       }
     }
 
+    // update last modified time, avoid restore again
+    Stores.setting.box.updateLastModified(lastModTime);
+
     Pros.reload();
     RebuildNodes.app.rebuild();
 

@@ -13,14 +13,6 @@ import 'data/res/color.dart';
 import 'view/page/full_screen.dart';
 import 'view/page/home.dart';
 
-/// After upgrading to flutter 3.13,
-/// the shadow color of the drawer is white (maybe a bug).
-/// Only on [iOS].
-/// TODO: remember to remove it after the bug is fixed.
-const _drawerTheme = DrawerThemeData(
-  shadowColor: Colors.black12,
-);
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -54,7 +46,6 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
           brightness: Brightness.dark,
           colorSchemeSeed: primaryColor,
-          drawerTheme: _drawerTheme,
         );
 
         return MaterialApp(
@@ -92,7 +83,7 @@ class MyApp extends StatelessWidget {
 ThemeData _getAmoledTheme(ThemeData darkTheme) => darkTheme.copyWith(
       scaffoldBackgroundColor: Colors.black,
       dialogBackgroundColor: Colors.black,
-      drawerTheme: _drawerTheme.copyWith(backgroundColor: Colors.black),
+      drawerTheme: const DrawerThemeData(backgroundColor: Colors.black),
       appBarTheme: const AppBarTheme(backgroundColor: Colors.black),
       dialogTheme: const DialogTheme(backgroundColor: Colors.black),
       bottomSheetTheme:

@@ -1,10 +1,8 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:toolbox/core/utils/misc.dart';
-import 'package:toolbox/data/res/path.dart';
 
 // abstract final class SecureStore {
 //   static const _secureStorage = FlutterSecureStorage();
@@ -42,32 +40,6 @@ class PersistentStore {
         boxName,
         //encryptionCipher: SecureStore._cipher,
       );
-
-  /// Get all db filenames.
-  ///
-  /// - [suffixs] defaults to ['.hive']
-  ///
-  /// - If [hideSetting] is true, hide 'setting.hive'
-  static Future<List<String>> getFileNames({
-    bool hideSetting = false,
-    List<String>? suffixs,
-  }) async {
-    final docPath = await Paths.doc;
-    final dir = Directory(docPath);
-    final files = await dir.list().toList();
-    if (suffixs != null) {
-      files.removeWhere((e) => !suffixs.contains(e.path.split('.').last));
-    } else {
-      // filter out non-hive(db) files
-      files.removeWhere((e) => !e.path.endsWith('.hive'));
-    }
-    if (hideSetting) {
-      files.removeWhere((e) => e.path.endsWith('setting.hive'));
-    }
-    final paths =
-        files.map((e) => e.path.replaceFirst('$docPath/', '')).toList();
-    return paths;
-  }
 }
 
 extension BoxX on Box {
@@ -85,7 +57,10 @@ extension BoxX on Box {
     return val;
   }
 
-  Future<void> updateLastModified() => put(lastModifiedKey, timeStamp);
+  Future<void> updateLastModified([int? time]) => put(
+        lastModifiedKey,
+        time ?? timeStamp,
+      );
 
   /// Convert db to json
   Map<String, dynamic> toJson({bool includeInternal = true}) {
