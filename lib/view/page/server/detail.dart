@@ -318,7 +318,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildGpuItem(NvdiaSmiItem item) {
+  Widget _buildGpuItem(NvidiaSmiItem item) {
     final mem = item.memory;
     final processes = mem.processes;
     final children = <Widget>[];
@@ -378,7 +378,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildGpuProcessItem(NvdiaSmiMemProcess process) {
+  Widget _buildGpuProcessItem(NvidiaSmiMemProcess process) {
     return ListTile(
       title: Text(
         process.name,

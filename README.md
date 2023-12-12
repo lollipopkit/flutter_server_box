@@ -74,7 +74,7 @@ Platform | Support | Sign
 - Due to Chinese government policy and the [BEIAN](https://github.com/lollipopkit/flutter_server_box/discussions/180) issue. iOS app is now free. Please download it from other regions of AppStore.
 - Security:
   - To prevent injection attacks and etc., please don't download from untrusted sources.
-  - Since `Linux / Windows` is signed with flutter default certificate, it is recommended to **build it yourself**.
+  - Since `Linux / Windows` is signed with flutter default certificate, it is recommended to [build it yourself](https://github.com/lollipopkit/flutter_server_box/wiki#compile-yourself).
 
 
 ## 🆘 Help

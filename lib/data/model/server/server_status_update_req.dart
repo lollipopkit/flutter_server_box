@@ -113,7 +113,7 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   }
 
   try {
-    final nvdia = NvdiaSmi.fromXml(StatusCmdType.nvdia.find(segments));
+    final nvdia = NvidiaSmi.fromXml(StatusCmdType.nvdia.find(segments));
     req.ss.nvdia = nvdia;
   } catch (e, s) {
     Loggers.parse.warning(e, s);

@@ -41,7 +41,7 @@ class Input extends StatefulWidget {
     this.autoFocus = false,
     this.onViewPwdTap,
   });
-  
+
   @override
   State<StatefulWidget> createState() => _InputState();
 }
@@ -74,7 +74,9 @@ class _InputState extends State<Input> {
             prefix: widget.prefix,
             suffixIcon: widget.obscureText
                 ? IconButton(
-                    icon: Icon(_obscureText ? Icons.visibility : Icons.visibility_off),
+                    icon: Icon(
+                      _obscureText ? Icons.visibility : Icons.visibility_off,
+                    ),
                     onPressed: () {
                       setState(() {
                         _obscureText = !_obscureText;

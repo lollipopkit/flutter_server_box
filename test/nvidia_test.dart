@@ -842,7 +842,7 @@ const _raw = '''
 void main() {
   test('nvdia-smi', () {
     if (kDebugMode) {
-      print(NvdiaSmi.fromXml(_raw).firstOrNull?.memory.processes);
+      print(NvidiaSmi.fromXml(_raw).firstOrNull?.memory.processes);
     }
   });
 }

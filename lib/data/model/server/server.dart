@@ -56,7 +56,7 @@ class ServerStatus {
   SystemType system;
   String? err;
   DiskIO diskIO;
-  List<NvdiaSmiItem>? nvdia;
+  List<NvidiaSmiItem>? nvdia;
 
   /// Whether is connectting, parsing and etc.
   bool _isBusy = false;

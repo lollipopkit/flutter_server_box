@@ -21,11 +21,11 @@ import 'package:xml/xml.dart';
 /// ]
 ///
 
-class NvdiaSmi {
-  static List<NvdiaSmiItem> fromXml(String raw) {
+class NvidiaSmi {
+  static List<NvidiaSmiItem> fromXml(String raw) {
     final xmlData = XmlDocument.parse(raw);
     final gpus = xmlData.findAllElements('gpu');
-    final result = List<NvdiaSmiItem?>.generate(gpus.length, (index) {
+    final result = List<NvidiaSmiItem?>.generate(gpus.length, (index) {
       final gpu = gpus.elementAt(index);
       final name = gpu.findElements('product_name').firstOrNull?.innerText;
       final temp = gpu
@@ -47,7 +47,7 @@ class NvdiaSmi {
           .firstOrNull
           ?.findElements('process_info');
       final memoryProcesses =
-          List<NvdiaSmiMemProcess?>.generate(processes?.length ?? 0, (index) {
+          List<NvidiaSmiMemProcess?>.generate(processes?.length ?? 0, (index) {
         final process = processes?.elementAt(index);
         final pid = process?.findElements('pid').firstOrNull?.innerText;
         final name =
@@ -55,7 +55,7 @@ class NvdiaSmi {
         final memory =
             process?.findElements('used_memory').firstOrNull?.innerText;
         if (pid != null && name != null && memory != null) {
-          return NvdiaSmiMemProcess(
+          return NvidiaSmiMemProcess(
             int.parse(pid),
             name,
             int.parse(
@@ -78,13 +78,13 @@ class NvdiaSmi {
           powerDraw != null &&
           powerLimit != null &&
           memory != null) {
-        return NvdiaSmiItem(
+        return NvidiaSmiItem(
           name: name,
           uuid: gpu.findElements('uuid').firstOrNull?.innerText ?? '',
           temp: int.parse(temp.split(' ').firstOrNull ?? '0'),
           percent: int.parse(percent?.split(' ').firstOrNull ?? '0'),
           power: '$powerDraw / $powerLimit',
-          memory: NvdiaSmiMem(
+          memory: NvidiaSmiMem(
             int.parse(memoryTotal?.split(' ').firstOrNull ?? '0'),
             int.parse(memoryUsed?.split(' ').firstOrNull ?? '0'),
             'MiB',
@@ -100,16 +100,16 @@ class NvdiaSmi {
   }
 }
 
-class NvdiaSmiItem {
+class NvidiaSmiItem {
   final String uuid;
   final String name;
   final int temp;
   final String power;
-  final NvdiaSmiMem memory;
+  final NvidiaSmiMem memory;
   final int percent;
   final int fanSpeed;
 
-  const NvdiaSmiItem({
+  const NvidiaSmiItem({
     required this.uuid,
     required this.name,
     required this.temp,
@@ -125,13 +125,13 @@ class NvdiaSmiItem {
   }
 }
 
-class NvdiaSmiMem {
+class NvidiaSmiMem {
   final int total;
   final int used;
   final String unit;
-  final List<NvdiaSmiMemProcess> processes;
+  final List<NvidiaSmiMemProcess> processes;
 
-  const NvdiaSmiMem(this.total, this.used, this.unit, this.processes);
+  const NvidiaSmiMem(this.total, this.used, this.unit, this.processes);
 
   @override
   String toString() {
@@ -139,12 +139,12 @@ class NvdiaSmiMem {
   }
 }
 
-class NvdiaSmiMemProcess {
+class NvidiaSmiMemProcess {
   final int pid;
   final String name;
   final int memory;
 
-  const NvdiaSmiMemProcess(this.pid, this.name, this.memory);
+  const NvidiaSmiMemProcess(this.pid, this.name, this.memory);
 
   @override
   String toString() {
