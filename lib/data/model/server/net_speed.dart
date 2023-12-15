@@ -105,14 +105,18 @@ List<NetSpeedPart> parseNetSpeed(String raw, int time) {
   }
 
   final results = <NetSpeedPart>[];
-  for (final item in split.sublist(2, split.length - 1)) {
-    final data = item.trim().split(':');
-    final device = data.first;
-    final bytes = data.last.trim().split(' ');
-    bytes.removeWhere((element) => element == '');
-    final bytesIn = BigInt.parse(bytes.first);
-    final bytesOut = BigInt.parse(bytes[8]);
-    results.add(NetSpeedPart(device, bytesIn, bytesOut, time));
+  for (final item in split.sublist(2)) {
+    try {
+      final data = item.trim().split(':');
+      final device = data.first;
+      final bytes = data.last.trim().split(' ');
+      bytes.removeWhere((element) => element == '');
+      final bytesIn = BigInt.parse(bytes.first);
+      final bytesOut = BigInt.parse(bytes[8]);
+      results.add(NetSpeedPart(device, bytesIn, bytesOut, time));
+    } catch (_) {
+      continue;
+    }
   }
   return results;
 }
