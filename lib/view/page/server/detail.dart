@@ -593,7 +593,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildTemperatureItem(String key, double? val) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 13),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
