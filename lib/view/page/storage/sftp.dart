@@ -264,26 +264,28 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       style: UIs.textGrey,
       textAlign: TextAlign.right,
     );
-    return CardX(ListTile(
-      leading: Icon(isDir ? Icons.folder : Icons.insert_drive_file),
-      title: Text(file.filename),
-      trailing: trailing,
-      subtitle: isDir
-          ? null
-          : Text(
-              (file.attr.size ?? 0).convertBytes,
-              style: UIs.textGrey,
-            ),
-      onTap: () {
-        if (isDir) {
-          _status.path?.update(file.filename);
-          _listDir();
-        } else {
-          _onItemPress(file, true);
-        }
-      },
-      onLongPress: () => _onItemPress(file, !isDir),
-    ));
+    return CardX(
+      child: ListTile(
+        leading: Icon(isDir ? Icons.folder : Icons.insert_drive_file),
+        title: Text(file.filename),
+        trailing: trailing,
+        subtitle: isDir
+            ? null
+            : Text(
+                (file.attr.size ?? 0).convertBytes,
+                style: UIs.textGrey,
+              ),
+        onTap: () {
+          if (isDir) {
+            _status.path?.update(file.filename);
+            _listDir();
+          } else {
+            _onItemPress(file, true);
+          }
+        },
+        onLongPress: () => _onItemPress(file, !isDir),
+      ),
+    );
   }
 
   void _onItemPress(SftpName file, bool notDir) {

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
+import 'package:toolbox/core/extension/widget.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/page/ssh/page.dart';
@@ -49,12 +50,9 @@ class _SSHTabPageState extends State<SSHTabPage>
         children: [
           Text(e),
           UIs.width7,
-          InkWell(
-            borderRadius: BorderRadius.circular(17),
-            child: const Padding(
-              padding: EdgeInsets.all(7),
-              child: Icon(Icons.close, size: 17),
-            ),
+          const Icon(Icons.close, size: 17)
+              .padding(const EdgeInsets.all(7))
+              .tap(
             onTap: () async {
               final confirm = await context.showRoundDialog<bool>(
                 title: Text(l10n.attention),
@@ -89,27 +87,29 @@ class _SSHTabPageState extends State<SSHTabPage>
           padding: const EdgeInsets.all(7),
           itemBuilder: (_, idx) {
             final spi = pro.servers.toList()[idx].spi;
-            return CardX(ListTile(
-              title: Text(spi.name),
-              subtitle: Text(spi.id, style: UIs.textGrey),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                final name = () {
-                  if (_tabIds.containsKey(spi.name)) {
-                    return '${spi.name}(${_tabIds.length + 1})';
-                  }
-                  return spi.name;
-                }();
-                final key = GlobalKey(debugLabel: 'sshTabPage_$name');
-                _tabIds[name] = SSHPage(
-                  key: key,
-                  spi: spi,
-                  pop: false,
-                );
-                _refreshTabs();
-                _tabController.animateTo(_tabIds.length - 1);
-              },
-            ));
+            return CardX(
+              child: ListTile(
+                title: Text(spi.name),
+                subtitle: Text(spi.id, style: UIs.textGrey),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  final name = () {
+                    if (_tabIds.containsKey(spi.name)) {
+                      return '${spi.name}(${_tabIds.length + 1})';
+                    }
+                    return spi.name;
+                  }();
+                  final key = GlobalKey(debugLabel: 'sshTabPage_$name');
+                  _tabIds[name] = SSHPage(
+                    key: key,
+                    spi: spi,
+                    pop: false,
+                  );
+                  _refreshTabs();
+                  _tabController.animateTo(_tabIds.length - 1);
+                },
+              ),
+            );
           },
           itemCount: pro.servers.length,
         );

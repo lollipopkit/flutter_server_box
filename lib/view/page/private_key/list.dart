@@ -54,7 +54,7 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
           itemBuilder: (context, idx) {
             final item = key.pkis[idx];
             return CardX(
-              ListTile(
+              child: ListTile(
                 leading: Text(
                   '#$idx',
                   style: const TextStyle(

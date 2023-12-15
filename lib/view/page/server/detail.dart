@@ -4,6 +4,7 @@ import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/order.dart';
+import 'package:toolbox/core/extension/widget.dart';
 import 'package:toolbox/data/model/server/cpu.dart';
 import 'package:toolbox/data/model/server/disk.dart';
 import 'package:toolbox/data/model/server/net_speed.dart';
@@ -135,7 +136,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     }
 
     return CardX(
-      ExpandTile(
+      child: ExpandTile(
         title: Align(
           alignment: Alignment.centerLeft,
           child: _buildAnimatedText(
@@ -202,7 +203,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildUpTimeAndSys(ServerStatus ss) {
     return CardX(
-      Padding(
+      child: Padding(
         padding: UIs.roundRectCardPadding,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -230,7 +231,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     final usedStr = used.toStringAsFixed(0);
 
     return CardX(
-      Padding(
+      child: Padding(
         padding: UIs.roundRectCardPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -275,7 +276,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     final used = ss.swap.usedPercent * 100;
     final cached = ss.swap.cached / ss.swap.total * 100;
     return CardX(
-      Padding(
+      child: Padding(
         padding: UIs.roundRectCardPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -309,7 +310,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     if (ss.nvdia == null) return UIs.placeholder;
     final children = ss.nvdia!.map((e) => _buildGpuItem(e)).toList();
     return CardX(
-      ExpandTile(
+      child: ExpandTile(
         title: const Text('GPU'),
         leading: const Icon(Icons.memory, size: 17),
         initiallyExpanded: children.length <= 3,
@@ -392,7 +393,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         style: UIs.textSize11Grey,
         textScaler: _textFactor,
       ),
-      trailing: InkWell(
+      trailing: const Icon(Icons.info_outline, size: 17).tap(
         onTap: () {
           context.showRoundDialog(
             title: SizedBox(
@@ -417,7 +418,6 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             ],
           );
         },
-        child: const Icon(Icons.info_outline, size: 17),
       ),
     );
   }
@@ -433,7 +433,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     final children =
         List.generate(disks.length, (idx) => _buildDiskItem(disks[idx], ss));
     return CardX(
-      ExpandTile(
+      child: ExpandTile(
         title: Text(l10n.disk),
         childrenPadding: const EdgeInsets.only(bottom: 7),
         leading: const Icon(Icons.storage, size: 17),
@@ -497,7 +497,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       children.addAll(devices.map((e) => _buildNetSpeedItem(ns, e)));
     }
     return CardX(
-      ExpandTile(
+      child: ExpandTile(
         title: Row(
           children: [
             Text(l10n.net),
@@ -579,10 +579,11 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       return UIs.placeholder;
     }
     return CardX(
-      ExpandTile(
+      child: ExpandTile(
         title: Text(l10n.temperature),
         leading: const Icon(Icons.ac_unit, size: 17),
         initiallyExpanded: ss.temps.devices.length <= 7,
+        childrenPadding: EdgeInsets.zero,
         children: ss.temps.devices
             .map((key) => _buildTemperatureItem(key, ss.temps.get(key)))
             .toList(),

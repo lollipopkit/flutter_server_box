@@ -54,14 +54,16 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
     return ReorderableDelayedDragStartListener(
       key: ValueKey('$index'),
       index: index,
-      child: CardX(ListTile(
-        title: Text(spi.name),
-        subtitle: Text(spi.id, style: UIs.textGrey),
-        leading: CircleAvatar(
-          child: Text(spi.name[0]),
+      child: CardX(
+        child: ListTile(
+          title: Text(spi.name),
+          subtitle: Text(spi.id, style: UIs.textGrey),
+          leading: CircleAvatar(
+            child: Text(spi.name[0]),
+          ),
+          trailing: const Icon(Icons.drag_handle),
         ),
-        trailing: const Icon(Icons.drag_handle),
-      )),
+      ),
     );
   }
 }

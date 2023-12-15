@@ -9,6 +9,7 @@ import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
+import 'package:toolbox/core/utils/server.dart';
 import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
@@ -58,7 +59,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   bool _isDark = false;
   Timer? _virtKeyLongPressTimer;
   late final Server? _server = widget.spi.server;
-  late final SSHClient? _client = _server?.client;
+  late SSHClient? _client = _server?.client;
   Timer? _discontinuityTimer;
 
   @override
@@ -329,9 +330,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
 
   Future<void> _initTerminal() async {
     _writeLn('Connecting...\r\n');
-    if (_client == null) {
-      await Pros.server.refreshData(spi: widget.spi);
-    }
+    _client ??= await genClient(widget.spi);
     _writeLn('Starting shell...\r\n');
 
     final session = await _client?.shell(

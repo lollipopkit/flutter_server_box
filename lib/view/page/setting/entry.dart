@@ -12,6 +12,8 @@ import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/locale.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/stringx.dart';
+import 'package:toolbox/core/extension/widget.dart';
+import 'package:toolbox/core/utils/function.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/rebuild.dart';
@@ -100,55 +102,53 @@ class _SettingPageState extends State<SettingPage> {
       appBar: CustomAppBar(
         title: Text(l10n.setting),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 17),
-            child: InkWell(
-              onTap: () => context.showRoundDialog(
-                title: Text(l10n.attention),
-                child: Text(l10n.askContinue(
-                  '${l10n.delete}: **${l10n.all}** ${l10n.setting}',
-                )),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      _setting.box.deleteAll(_setting.box.keys);
-                      context.pop();
-                      context.showSnackBar(l10n.success);
-                    },
-                    child: Text(
-                      l10n.ok,
-                      style: const TextStyle(color: Colors.red),
+          const Icon(Icons.delete)
+              .tap(
+                onTap: () => context.showRoundDialog(
+                  title: Text(l10n.attention),
+                  child: Text(l10n.askContinue(
+                    '${l10n.delete}: **${l10n.all}** ${l10n.setting}',
+                  )),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        _setting.box.deleteAll(_setting.box.keys);
+                        context.pop();
+                        context.showSnackBar(l10n.success);
+                      },
+                      child: Text(
+                        l10n.ok,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
 
-              /// Only for debug, this will cause the app to crash
-              onDoubleTap: () => context.showRoundDialog(
-                title: Text(l10n.attention),
-                child: Text(l10n.askContinue(
-                  'Delete all data from disk, and exit the app?',
-                )),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      if (!BuildMode.isDebug) return;
-                      Stores.docker.box.deleteFromDisk();
-                      Stores.server.box.deleteFromDisk();
-                      Stores.setting.box.deleteFromDisk();
-                      Stores.history.box.deleteFromDisk();
-                      Stores.snippet.box.deleteFromDisk();
-                      Stores.key.box.deleteFromDisk();
-                      exit(0);
-                    },
-                    child: Text(l10n.ok,
-                        style: const TextStyle(color: Colors.red)),
-                  ),
-                ],
-              ),
-              child: const Icon(Icons.delete),
-            ),
-          ),
+                /// Only for debug, this will cause the app to crash
+                onDoubleTap: () => context.showRoundDialog(
+                  title: Text(l10n.attention),
+                  child: Text(l10n.askContinue(
+                    'Delete all data from disk, and exit the app?',
+                  )),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        if (!BuildMode.isDebug) return;
+                        Stores.docker.box.deleteFromDisk();
+                        Stores.server.box.deleteFromDisk();
+                        Stores.setting.box.deleteFromDisk();
+                        Stores.history.box.deleteFromDisk();
+                        Stores.snippet.box.deleteFromDisk();
+                        Stores.key.box.deleteFromDisk();
+                        exit(0);
+                      },
+                      child: Text(l10n.ok,
+                          style: const TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
+              )
+              .padding(const EdgeInsets.only(right: 17)),
         ],
       ),
       body: ListView(
@@ -198,7 +198,7 @@ class _SettingPageState extends State<SettingPage> {
       children.add(_buildPlatformSetting());
     }
     return Column(
-      children: children.map((e) => CardX(e)).toList(),
+      children: children.map((e) => CardX(child: e)).toList(),
     );
   }
 
@@ -208,7 +208,7 @@ class _SettingPageState extends State<SettingPage> {
         _buildFullScreenSwitch(),
         _buildFullScreenJitter(),
         _buildFulScreenRotateQuarter(),
-      ].map((e) => CardX(e)).toList(),
+      ].map((e) => CardX(child: e)).toList(),
     );
   }
 
@@ -223,7 +223,7 @@ class _SettingPageState extends State<SettingPage> {
         //_buildDiskIgnorePath(),
         _buildDeleteServers(),
         //if (isDesktop) _buildDoubleColumnServersPage(),
-      ].map((e) => CardX(e)).toList(),
+      ].map((e) => CardX(child: e)).toList(),
     );
   }
 
@@ -236,7 +236,7 @@ class _SettingPageState extends State<SettingPage> {
         // Use hardware keyboard on desktop, so there is no need to set it
         if (isMobile) _buildKeyboardType(),
         _buildSSHVirtKeys(),
-      ].map((e) => CardX(e)).toList(),
+      ].map((e) => CardX(child: e)).toList(),
     );
   }
 
@@ -247,7 +247,7 @@ class _SettingPageState extends State<SettingPage> {
         _buildEditorTheme(),
         _buildEditorDarkTheme(),
         _buildEditorHighlight(),
-      ].map((e) => CardX(e)).toList(),
+      ].map((e) => CardX(child: e)).toList(),
     );
   }
 
@@ -267,7 +267,7 @@ class _SettingPageState extends State<SettingPage> {
         return ListTile(
           title: Text(l10n.autoCheckUpdate),
           subtitle: Text(display, style: UIs.textGrey),
-          onTap: () => doUpdate(ctx),
+          onTap: () => Funcs.throttle(() => doUpdate(ctx)),
           trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),
         );
       },
@@ -861,7 +861,7 @@ class _SettingPageState extends State<SettingPage> {
       children: [
         _buildSftpRmrDir(),
         _buildSftpOpenLastPath(),
-      ].map((e) => CardX(e)).toList(),
+      ].map((e) => CardX(child: e)).toList(),
     );
   }
 

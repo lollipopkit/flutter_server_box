@@ -43,7 +43,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
         final help = key.help;
         return CardX(
           key: ValueKey(idx),
-          ListTile(
+          child: ListTile(
             title: _buildTitle(key),
             subtitle: help == null ? null : Text(help, style: UIs.textGrey),
             leading: _buildCheckBox(keys, key, idx, idx < keys.length),

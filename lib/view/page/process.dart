@@ -143,7 +143,8 @@ class _ProcessPageState extends State<ProcessPage> {
         ? Text(proc.pid.toString())
         : TwoLineText(up: proc.pid.toString(), down: proc.user!);
     return CardX(
-      ListTile(
+      key: ValueKey(proc.pid),
+      child: ListTile(
         leading: SizedBox(
           width: _media.size.width / 6,
           child: leading,
@@ -178,7 +179,6 @@ class _ProcessPageState extends State<ProcessPage> {
         selected: _lastFocusId == proc.pid,
         autofocus: _lastFocusId == proc.pid,
       ),
-      key: ValueKey(proc.pid),
     );
   }
 

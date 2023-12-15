@@ -29,7 +29,7 @@ class SnippetResultPage extends StatelessWidget {
         final item = results[index];
         if (item == null) return UIs.placeholder;
         return CardX(
-          ExpandTile(
+          child: ExpandTile(
             initiallyExpanded: results.length == 1,
             title: Text(item.dest ?? ''),
             subtitle: Text(item.time.toString(), style: UIs.textGrey),

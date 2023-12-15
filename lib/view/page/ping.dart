@@ -119,7 +119,7 @@ class _PingPageState extends State<PingPage>
     final unknown = l10n.unknown;
     final ms = l10n.ms;
     return CardX(
-      ListTile(
+      child: ListTile(
         contentPadding: const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
         title: Text(
           result.serverName,

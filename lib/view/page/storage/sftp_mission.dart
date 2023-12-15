@@ -134,7 +134,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
   }) {
     final time = DateTime.fromMicrosecondsSinceEpoch(status.id);
     return CardX(
-      ListTile(
+      child: ListTile(
         leading: Text(time.hourMinute),
         title: Text(
           status.fileName,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
+import 'package:toolbox/core/extension/widget.dart';
 import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/cardx.dart';
@@ -56,16 +57,17 @@ class TagEditor extends StatefulWidget {
 class _TagEditorState extends State<TagEditor> {
   @override
   Widget build(BuildContext context) {
-    return CardX(ListTile(
-      leading: const Icon(Icons.tag),
-      title: _buildTags(widget.tags),
-      trailing: InkWell(
-        child: const Icon(Icons.add),
-        onTap: () {
-          _showAddTagDialog();
-        },
+    return CardX(
+      child: ListTile(
+        leading: const Icon(Icons.tag),
+        title: _buildTags(widget.tags),
+        trailing: const Icon(Icons.add).tap(
+          onTap: () {
+            _showAddTagDialog();
+          },
+        ),
       ),
-    ));
+    );
   }
 
   Widget _buildTags(List<String> tags) {
@@ -176,7 +178,7 @@ class _TagEditorState extends State<TagEditor> {
   }
 }
 
-class TagSwitcher extends StatelessWidget {
+class TagSwitcher extends StatelessWidget implements PreferredSizeWidget {
   final List<String> tags;
   final double width;
   final void Function(String?) onTagChanged;
@@ -199,6 +201,7 @@ class TagSwitcher extends StatelessWidget {
     return Container(
       height: _kTagBtnHeight,
       width: width,
+      padding: const EdgeInsets.symmetric(horizontal: 7),
       alignment: Alignment.center,
       color: Colors.transparent,
       child: ListView.builder(
@@ -215,6 +218,9 @@ class TagSwitcher extends StatelessWidget {
       ),
     );
   }
+  
+  @override
+  Size get preferredSize => const Size.fromHeight(_kTagBtnHeight);
 }
 
 Widget _wrap(
@@ -228,16 +234,10 @@ Widget _wrap(
       borderRadius: const BorderRadius.all(Radius.circular(20.0)),
       child: Material(
         color: primaryColor.withAlpha(20),
-        child: InkWell(
-          onTap: onTap,
-          onLongPress: onLongPress,
-          child: Padding(
-            /// Hard coded padding
-            /// For centering the text
-            padding: const EdgeInsets.fromLTRB(11.7, 2.7, 11.7, 0),
-            child: child,
-          ),
-        ),
+        child: child.padding(const EdgeInsets.fromLTRB(11.7, 2.7, 11.7, 0)).tap(
+              onTap: onTap,
+              onLongTap: onLongPress,
+            ),
       ),
     ),
   );

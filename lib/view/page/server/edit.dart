@@ -127,16 +127,15 @@ class _ServerEditPageState extends State<ServerEditPage> {
                           )),
                           UIs.height13,
                           if (widget.spi?.server?.canViewDetails ?? false)
-                            Row(
-                              children: [
-                                Checkbox(
-                                  value: delScripts,
-                                  onChanged: (_) => setState(
-                                    () => delScripts = !delScripts,
-                                  ),
-                                ),
-                                Text(l10n.deleteScripts),
-                              ],
+                            CheckboxListTile(
+                              value: delScripts,
+                              onChanged: (_) => setState(
+                                () => delScripts = !delScripts,
+                              ),
+                              controlAffinity: ListTileControlAffinity.leading,
+                              subtitle: Text(l10n.deleteScripts),
+                              tileColor: Colors.transparent,
+                              contentPadding: EdgeInsets.zero,
                             )
                         ],
                       );
@@ -315,7 +314,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
           ),
         );
         return CardX(
-          Padding(
+          child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 17),
             child: Column(
               children: tiles,
@@ -375,7 +374,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
           onTap: () => _jumpServer.value = null,
         ));
         return CardX(
-          ExpandTile(
+          child: ExpandTile(
             leading: const Icon(Icons.map),
             initiallyExpanded: _jumpServer.value != null,
             title: Text(l10n.jumpServer),

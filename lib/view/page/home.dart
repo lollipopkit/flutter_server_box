@@ -241,7 +241,7 @@ class _HomePageState extends State<HomePage>
             title: Text('${l10n.about} & ${l10n.feedback}'),
             onTap: _showAboutDialog,
           )
-        ].map((e) => CardX(e)).toList(),
+        ].map((e) => CardX(child: e)).toList(),
       ),
     );
   }

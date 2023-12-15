@@ -43,7 +43,7 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
           _buildAndroidWidgetSharedPreference(),
           if (BioAuth.isPlatformSupported)
             PlatformPublicSettings.buildBioAuth(),
-        ].map((e) => CardX(e)).toList(),
+        ].map((e) => CardX(child: e)).toList(),
       ),
     );
   }

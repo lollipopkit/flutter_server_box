@@ -214,7 +214,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
       _buildPs(),
       _buildImage(),
       _buildEditHost(),
-    ].map((e) => CardX(e));
+    ].map((e) => CardX(child: e));
     return ListView(
       padding: const EdgeInsets.all(7),
       children: items.toList(),

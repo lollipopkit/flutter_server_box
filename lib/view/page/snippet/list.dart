@@ -94,7 +94,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
 
   Widget _buildSnippetItem(Snippet snippet) {
     return CardX(
-      ListTile(
+      child: ListTile(
         contentPadding: const EdgeInsets.only(left: 23, right: 17),
         title: Text(
           snippet.name,

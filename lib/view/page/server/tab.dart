@@ -8,6 +8,7 @@ import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/media_queryx.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
+import 'package:toolbox/core/extension/widget.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
@@ -55,6 +56,7 @@ class _ServerPageState extends State<ServerPage>
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
+      appBar: _buildTagsSwitcher(Pros.server),
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
         onPressed: () => AppRoute.serverEdit().go(context),
@@ -81,10 +83,10 @@ class _ServerPageState extends State<ServerPage>
         }
 
         final filtered = _filterServers(pro);
-        if (_useDoubleColumn &&
-            Stores.setting.doubleColumnServersPage.fetch()) {
-          return _buildBodyMedium(pro: pro, filtered: filtered);
-        }
+        // if (_useDoubleColumn &&
+        //     Stores.setting.doubleColumnServersPage.fetch()) {
+        //   return _buildBodyMedium(pro: pro, filtered: filtered);
+        // }
         return _buildBodySmall(provider: pro, filtered: filtered);
       },
     );
@@ -99,7 +101,7 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  Widget _buildTagsSwitcher(ServerProvider provider) {
+  TagSwitcher _buildTagsSwitcher(ServerProvider provider) {
     return TagSwitcher(
       tags: provider.tags,
       width: _media.size.width,
@@ -115,61 +117,33 @@ class _ServerPageState extends State<ServerPage>
     required ServerProvider provider,
     required List<String> filtered,
     EdgeInsets? padding = const EdgeInsets.fromLTRB(7, 0, 7, 7),
-    bool buildTags = true,
   }) {
-    final count = buildTags ? filtered.length + 2 : filtered.length + 1;
+    final count = filtered.length + 1;
     return ListView.builder(
       padding: padding,
       itemCount: count,
       itemBuilder: (_, index) {
-        if (index == 0 && buildTags) return _buildTagsSwitcher(provider);
-
         // Issue #130
         if (index == count - 1) return UIs.height77;
-
-        if (buildTags) index--;
         return _buildEachServerCard(provider.pick(id: filtered[index]));
       },
     );
   }
 
-  Widget _buildBodyMedium({
-    required ServerProvider pro,
-    required List<String> filtered,
-  }) {
-    final left = filtered.where((e) => filtered.indexOf(e) % 2 == 0).toList();
-    final right = filtered.where((e) => filtered.indexOf(e) % 2 == 1).toList();
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 7),
-          child: _buildTagsSwitcher(pro),
-        ),
-        Expanded(
-            child: Row(
-          children: [
-            Expanded(
-              child: _buildBodySmall(
-                provider: pro,
-                filtered: left,
-                padding: const EdgeInsets.fromLTRB(7, 0, 0, 7),
-                buildTags: false,
-              ),
-            ),
-            Expanded(
-              child: _buildBodySmall(
-                provider: pro,
-                filtered: right,
-                padding: const EdgeInsets.fromLTRB(0, 0, 7, 7),
-                buildTags: false,
-              ),
-            ),
-          ],
-        ))
-      ],
-    );
-  }
+  // Widget _buildBodyMedium({
+  //   required ServerProvider pro,
+  //   required List<String> filtered,
+  // }) {
+  //   return GridView.builder(
+  //     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+  //       crossAxisCount: 2,
+  //     ),
+  //     itemCount: filtered.length,
+  //     itemBuilder: (context, index) {
+  //       return _buildEachServerCard(pro.pick(id: filtered[index]));
+  //     },
+  //   );
+  // }
 
   Widget _buildEachServerCard(Server? srv) {
     if (srv == null) {
@@ -178,7 +152,7 @@ class _ServerPageState extends State<ServerPage>
 
     return CardX(
       key: Key(srv.spi.id + (_tag ?? '')),
-      InkWell(
+      child: _buildRealServerCard(srv).padding(const EdgeInsets.all(13)).tap(
         onTap: () {
           if (srv.canViewDetails) {
             AppRoute.serverDetail(spi: srv.spi).go(context);
@@ -186,7 +160,7 @@ class _ServerPageState extends State<ServerPage>
             _showFailReason(srv.status);
           }
         },
-        onLongPress: () {
+        onLongTap: () {
           if (srv.state == ServerState.finished) {
             final id = srv.spi.id;
             final cardStatus = getCardNoti(id);
@@ -197,10 +171,6 @@ class _ServerPageState extends State<ServerPage>
             AppRoute.serverEdit(spi: srv.spi).go(context);
           }
         },
-        child: Padding(
-          padding: const EdgeInsets.all(13),
-          child: _buildRealServerCard(srv),
-        ),
       ),
     );
   }

@@ -139,32 +139,35 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
         var stat = file.statSync();
         var isDir = stat.type == FileSystemEntityType.directory;
 
-        return CardX(ListTile(
-          leading: isDir
-              ? const Icon(Icons.folder)
-              : const Icon(Icons.insert_drive_file),
-          title: Text(fileName),
-          subtitle:
-              isDir ? null : Text(stat.size.convertBytes, style: UIs.textGrey),
-          trailing: Text(
-            stat.modified
-                .toString()
-                .substring(0, stat.modified.toString().length - 4),
-            style: UIs.textGrey,
+        return CardX(
+          child: ListTile(
+            leading: isDir
+                ? const Icon(Icons.folder)
+                : const Icon(Icons.insert_drive_file),
+            title: Text(fileName),
+            subtitle: isDir
+                ? null
+                : Text(stat.size.convertBytes, style: UIs.textGrey),
+            trailing: Text(
+              stat.modified
+                  .toString()
+                  .substring(0, stat.modified.toString().length - 4),
+              style: UIs.textGrey,
+            ),
+            onLongPress: () {
+              if (!isDir) return;
+              _showDirActionDialog(file);
+            },
+            onTap: () async {
+              if (!isDir) {
+                await _showFileActionDialog(file);
+                return;
+              }
+              _path!.update(fileName);
+              setState(() {});
+            },
           ),
-          onLongPress: () {
-            if (!isDir) return;
-            _showDirActionDialog(file);
-          },
-          onTap: () async {
-            if (!isDir) {
-              await _showFileActionDialog(file);
-              return;
-            }
-            _path!.update(fileName);
-            setState(() {});
-          },
-        ));
+        );
       },
     );
   }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class CardX extends StatelessWidget {
-  const CardX(this.child, {super.key, this.color});
+  const CardX({super.key, required this.child, this.color});
 
   final Widget child;
   final Color? color;
