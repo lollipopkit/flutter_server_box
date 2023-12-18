@@ -144,18 +144,15 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           if (path == null) {
             return;
           }
-          final remotePath = _status.path?.path;
-          if (remotePath == null) {
+          final remoteDir = _status.path?.path;
+          if (remoteDir == null) {
             context.showSnackBar('remote path is null');
             return;
           }
+          final remotePath = '$remoteDir/${path.split('/').last}';
+          Loggers.app.info('SFTP upload local: $path, remote: $remotePath');
           Pros.sftp.add(
-            SftpReq(
-              widget.spi,
-              '$remotePath/${path.split('/').last}',
-              path,
-              SftpReqType.upload,
-            ),
+            SftpReq(widget.spi, remotePath, path, SftpReqType.upload),
           );
         },
         icon: const Icon(Icons.upload_file));

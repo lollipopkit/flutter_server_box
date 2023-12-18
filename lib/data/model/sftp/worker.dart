@@ -154,9 +154,12 @@ Future<void> _upload(
     mainSendPort.send(SftpWorkerStatus.loading);
     final localFile = local.openRead().cast<Uint8List>();
     final sftp = await client.sftp();
+    // If remote exists, overwrite it
     final file = await sftp.open(
       req.remotePath,
-      mode: SftpFileOpenMode.write | SftpFileOpenMode.create,
+      mode: SftpFileOpenMode.truncate |
+          SftpFileOpenMode.create |
+          SftpFileOpenMode.write,
     );
     final writer = file.write(
       localFile,

@@ -56,7 +56,7 @@ class ServerStatus {
   SystemType system;
   String? err;
   DiskIO diskIO;
-  List<NvidiaSmiItem>? nvdia;
+  List<NvidiaSmiItem>? nvidia;
 
   /// Whether is connectting, parsing and etc.
   bool _isBusy = false;
@@ -74,7 +74,7 @@ class ServerStatus {
     required this.system,
     required this.diskIO,
     this.err,
-    this.nvdia,
+    this.nvidia,
   });
 }
 

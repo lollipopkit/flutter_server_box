@@ -307,8 +307,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildGpuView(ServerStatus ss) {
-    if (ss.nvdia == null) return UIs.placeholder;
-    final children = ss.nvdia!.map((e) => _buildGpuItem(e)).toList();
+    if (ss.nvidia == null) return UIs.placeholder;
+    final children = ss.nvidia!.map((e) => _buildGpuItem(e)).toList();
     return CardX(
       child: ExpandTile(
         title: const Text('GPU'),

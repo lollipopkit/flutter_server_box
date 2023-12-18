@@ -42,5 +42,7 @@ abstract final class GithubIds {
     'xingleiwu',
     'Cooper098',
     'xushuojie',
+    'AniberMokie',
+    'LucaLin233',
   };
 }
