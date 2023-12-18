@@ -73,6 +73,9 @@ class SEn extends S {
   String get backupVersionNotMatch => 'Backup version is not match.';
 
   @override
+  String get battery => 'Battery';
+
+  @override
   String get bgRun => 'Run in backgroud';
 
   @override
@@ -745,6 +748,9 @@ class SEn extends S {
 
   @override
   String get upsideDown => 'Upside Down';
+
+  @override
+  String get uptime => 'Uptime';
 
   @override
   String get urlOrJson => 'URL or JSON';

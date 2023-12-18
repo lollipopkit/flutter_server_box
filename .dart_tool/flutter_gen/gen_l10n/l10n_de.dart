@@ -73,6 +73,9 @@ class SDe extends S {
   String get backupVersionNotMatch => 'Die Backup-Version stimmt nicht überein.';
 
   @override
+  String get battery => 'Batterie';
+
+  @override
   String get bgRun => 'Hintergrundaktualisierung';
 
   @override
@@ -745,6 +748,9 @@ class SDe extends S {
 
   @override
   String get upsideDown => 'Upside Down';
+
+  @override
+  String get uptime => 'Uptime';
 
   @override
   String get urlOrJson => 'URL oder JSON';

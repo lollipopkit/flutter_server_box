@@ -8,6 +8,7 @@ import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/route.dart';
+import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/disk.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/provider.dart';
@@ -239,7 +240,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
     final topRightStr = _getTopRightStr(
       cs,
       ss.temps.first,
-      ss.uptime,
+      ss.more[StatusCmdType.uptime] ?? '',
       ss.err,
     );
     return Text(

@@ -200,7 +200,8 @@ enum StatusCmdType {
   tempVal,
   host,
   diskio,
-  nvdia,
+  battery,
+  nvidia,
   ;
 }
 
@@ -219,6 +220,7 @@ const _statusCmds = [
   'cat /sys/class/thermal/thermal_zone*/temp',
   'hostname',
   'cat /proc/diskstats',
+  'cat /sys/class/power_supply/*/capacity',
   'nvidia-smi -q -x',
 ];
 

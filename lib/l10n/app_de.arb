@@ -22,6 +22,7 @@
   "backupAndRestore": "Backup und Wiederherstellung",
   "backupTip": "Das Backup wird nur einfach verschlüsselt.\nBitte bewahre die Datei sicher auf.",
   "backupVersionNotMatch": "Die Backup-Version stimmt nicht überein.",
+  "battery": "Batterie",
   "bgRun": "Hintergrundaktualisierung",
   "bioAuth": "Biozertifizierung",
   "canPullRefresh": "Danach: herunterziehen zum Aktualisieren",

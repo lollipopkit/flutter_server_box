@@ -9,6 +9,7 @@ import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/platform/path.dart';
+import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/pkg/manager.dart';
 import 'package:toolbox/data/model/server/dist.dart';
 import 'package:toolbox/data/res/path.dart';
@@ -238,7 +239,11 @@ Future<void> _onPkg(BuildContext context, ServerPrivateInfo spi) async {
     context.showSnackBar(l10n.noClient);
     return;
   }
-  final sys = server.status.sysVer;
+  final sys = server.status.more[StatusCmdType.sys];
+  if (sys == null) {
+    context.showSnackBar(l10n.noResult);
+    return;
+  }
   final pkg = PkgManager.fromDist(sys.dist);
 
   // Update pkg list

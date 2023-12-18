@@ -370,7 +370,7 @@ class _ServerPageState extends State<ServerPage>
     final topRightStr = _getTopRightStr(
       cs,
       ss.temps.first,
-      ss.uptime,
+      ss.more[StatusCmdType.uptime] ?? '',
       ss.err,
     );
     if (cs == ServerState.failed && ss.err != null) {

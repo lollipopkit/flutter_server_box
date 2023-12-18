@@ -73,6 +73,9 @@ class SZh extends S {
   String get backupVersionNotMatch => '备份版本不匹配，无法恢复';
 
   @override
+  String get battery => '电池';
+
+  @override
   String get bgRun => '后台运行';
 
   @override
@@ -747,6 +750,9 @@ class SZh extends S {
   String get upsideDown => '上下交换';
 
   @override
+  String get uptime => '启动时长';
+
+  @override
   String get urlOrJson => '链接或JSON';
 
   @override
@@ -869,6 +875,9 @@ class SZhTw extends SZh {
 
   @override
   String get backupVersionNotMatch => '備份版本不匹配，無法還原';
+
+  @override
+  String get battery => '電池';
 
   @override
   String get bgRun => '背景運行';
@@ -1543,6 +1552,9 @@ class SZhTw extends SZh {
 
   @override
   String get upsideDown => '上下交換';
+
+  @override
+  String get uptime => '啟動時長';
 
   @override
   String get urlOrJson => '鏈接或JSON';

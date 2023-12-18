@@ -40,8 +40,6 @@ abstract final class InitStatus {
           free: 1,
           avail: 1,
         ),
-        sysVer: 'Loading...',
-        uptime: '',
         disk: [
           const Disk(
             dev: '/',

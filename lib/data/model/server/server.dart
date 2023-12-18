@@ -1,4 +1,5 @@
 import 'package:dartssh2/dartssh2.dart';
+import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/conn.dart';
 import 'package:toolbox/data/model/server/cpu.dart';
 import 'package:toolbox/data/model/server/disk.dart';
@@ -47,8 +48,6 @@ class ServerStatus {
   Cpus cpu;
   Memory mem;
   Swap swap;
-  String sysVer;
-  String uptime;
   List<Disk> disk;
   Conn tcp;
   NetSpeed netSpeed;
@@ -57,6 +56,7 @@ class ServerStatus {
   String? err;
   DiskIO diskIO;
   List<NvidiaSmiItem>? nvidia;
+  final Map<StatusCmdType, String> more = {};
 
   /// Whether is connectting, parsing and etc.
   bool _isBusy = false;
@@ -64,8 +64,6 @@ class ServerStatus {
   ServerStatus({
     required this.cpu,
     required this.mem,
-    required this.sysVer,
-    required this.uptime,
     required this.disk,
     required this.tcp,
     required this.netSpeed,

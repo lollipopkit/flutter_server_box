@@ -49,10 +49,18 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   try {
     final sys = _parseSysVer(
       StatusCmdType.sys.find(segments),
-      StatusCmdType.host.find(segments),
     );
     if (sys != null) {
-      req.ss.sysVer = sys;
+      req.ss.more[StatusCmdType.sys] = sys;
+    }
+  } catch (e, s) {
+    Loggers.parse.warning(e, s);
+  }
+
+  try {
+    final host = StatusCmdType.host.find(segments);
+    if (host.isNotEmpty) {
+      req.ss.more[StatusCmdType.host] = host;
     }
   } catch (e, s) {
     Loggers.parse.warning(e, s);
@@ -93,7 +101,7 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   try {
     final uptime = _parseUpTime(StatusCmdType.uptime.find(segments));
     if (uptime != null) {
-      req.ss.uptime = uptime;
+      req.ss.more[StatusCmdType.uptime] = uptime;
     }
   } catch (e, s) {
     Loggers.parse.warning(e, s);
@@ -118,6 +126,16 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   } catch (e, s) {
     Loggers.parse.warning(e, s);
   }
+
+  try {
+    final battery = StatusCmdType.battery.find(segments);
+    if (battery.isNotEmpty && !battery.contains('No such')) {
+      req.ss.more[StatusCmdType.battery] = battery;
+    }
+  } catch (e, s) {
+    Loggers.parse.warning(e, s);
+  }
+
   return req.ss;
 }
 
@@ -134,7 +152,7 @@ Future<ServerStatus> _getBsdStatus(ServerStatusUpdateReq req) async {
   }
 
   try {
-    req.ss.sysVer = BSDStatusCmdType.sys.find(segments);
+    req.ss.more[StatusCmdType.sys] = BSDStatusCmdType.sys.find(segments);
   } catch (e, s) {
     Loggers.parse.warning(e, s);
   }
@@ -154,7 +172,7 @@ Future<ServerStatus> _getBsdStatus(ServerStatusUpdateReq req) async {
   try {
     final uptime = _parseUpTime(BSDStatusCmdType.uptime.find(segments));
     if (uptime != null) {
-      req.ss.uptime = uptime;
+      req.ss.more[StatusCmdType.uptime] = uptime;
     }
   } catch (e, s) {
     Loggers.parse.warning(e, s);
@@ -181,10 +199,10 @@ String? _parseUpTime(String raw) {
   return null;
 }
 
-String? _parseSysVer(String raw, String hostname) {
+String? _parseSysVer(String raw) {
   final s = raw.split('=');
   if (s.length == 2) {
     return s[1].replaceAll('"', '').replaceFirst('\n', '');
   }
-  return hostname.isEmpty ? null : hostname;
+  return null;
 }

@@ -230,6 +230,12 @@ abstract class S {
   /// **'Backup version is not match.'**
   String get backupVersionNotMatch;
 
+  /// No description provided for @battery.
+  ///
+  /// In en, this message translates to:
+  /// **'Battery'**
+  String get battery;
+
   /// No description provided for @bgRun.
   ///
   /// In en, this message translates to:
@@ -1513,6 +1519,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Upside Down'**
   String get upsideDown;
+
+  /// No description provided for @uptime.
+  ///
+  /// In en, this message translates to:
+  /// **'Uptime'**
+  String get uptime;
 
   /// No description provided for @urlOrJson.
   ///

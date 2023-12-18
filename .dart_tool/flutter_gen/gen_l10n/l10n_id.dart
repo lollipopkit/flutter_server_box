@@ -73,6 +73,9 @@ class SId extends S {
   String get backupVersionNotMatch => 'Versi cadangan tidak cocok.';
 
   @override
+  String get battery => 'Baterai';
+
+  @override
   String get bgRun => 'Jalankan di Backgroud';
 
   @override
@@ -745,6 +748,9 @@ class SId extends S {
 
   @override
   String get upsideDown => 'Terbalik';
+
+  @override
+  String get uptime => 'Uptime';
 
   @override
   String get urlOrJson => 'URL atau JSON';

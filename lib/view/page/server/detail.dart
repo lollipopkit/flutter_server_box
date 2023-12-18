@@ -4,6 +4,7 @@ import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/order.dart';
+import 'package:toolbox/core/extension/status_cmd_type.dart';
 import 'package:toolbox/core/extension/widget.dart';
 import 'package:toolbox/data/model/server/cpu.dart';
 import 'package:toolbox/data/model/server/disk.dart';
@@ -203,23 +204,25 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildUpTimeAndSys(ServerStatus ss) {
     return CardX(
-      child: Padding(
-        padding: UIs.roundRectCardPadding,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              ss.sysVer,
-              style: UIs.textSize11,
-              textScaler: _textFactor,
-            ),
-            Text(
-              ss.uptime,
-              style: UIs.textSize11,
-              textScaler: _textFactor,
-            ),
-          ],
+      child: ExpandTile(
+        leading: const Icon(Icons.computer),
+        initiallyExpanded: ss.more.entries.length < 7,
+        title: Text(l10n.about),
+        childrenPadding: const EdgeInsets.symmetric(
+          horizontal: 17,
+          vertical: 7,
         ),
+        children: ss.more.entries
+            .map(
+              (e) => Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(e.key.i18n, style: UIs.textSize13),
+                  Text(e.value, style: UIs.textSize11Grey)
+                ],
+              ).padding(const EdgeInsets.symmetric(vertical: 1)),
+            )
+            .toList(),
       ),
     );
   }
