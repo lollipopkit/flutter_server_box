@@ -698,6 +698,12 @@ class SDe extends S {
   String get test => 'Prüfung';
 
   @override
+  String get textScaler => 'Skalierung der Schriftart';
+
+  @override
+  String get textScalerTip => '1.0 => 100% (Originalgröße), funktioniert nur auf der Serverseite Teil der Schrift, nicht empfohlen zu ändern.';
+
+  @override
   String get theme => 'Themen';
 
   @override

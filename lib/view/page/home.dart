@@ -200,7 +200,7 @@ class _HomePageState extends State<HomePage>
             child: Text(
               '${BuildData.name}\n$_versionStr',
               textAlign: TextAlign.center,
-              style: UIs.textSize13,
+              style: UIs.textSize15,
             ),
           ),
           const SizedBox(height: 37),

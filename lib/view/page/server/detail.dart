@@ -120,6 +120,31 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
+  Widget _buildUpTimeAndSys(ServerStatus ss) {
+    return CardX(
+      child: ExpandTile(
+        leading: const Icon(Icons.computer),
+        initiallyExpanded: ss.more.entries.length < 7,
+        title: Text(l10n.about),
+        childrenPadding: const EdgeInsets.symmetric(
+          horizontal: 17,
+          vertical: 11,
+        ),
+        children: ss.more.entries
+            .map(
+              (e) => Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(e.key.i18n, style: UIs.textSize15),
+                  Text(e.value, style: UIs.textSize13Grey)
+                ],
+              ).padding(const EdgeInsets.symmetric(vertical: 2)),
+            )
+            .toList(),
+      ),
+    );
+  }
+
   Widget _buildCPUView(ServerStatus ss) {
     final percent = ss.cpu.usedPercent(coreIdx: 0).toInt();
     final details = [
@@ -165,12 +190,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       children: [
         Text(
           '${percent.toStringAsFixed(1)}%',
-          style: const TextStyle(fontSize: 13),
+          style: UIs.text12,
           textScaler: _textFactor,
         ),
         Text(
           timeType,
-          style: const TextStyle(fontSize: 10, color: Colors.grey),
+          style: UIs.text12Grey,
           textScaler: _textFactor,
         ),
       ],
@@ -199,31 +224,6 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       minHeight: 7,
       backgroundColor: DynamicColors.progress.resolve(context),
       color: primaryColor,
-    );
-  }
-
-  Widget _buildUpTimeAndSys(ServerStatus ss) {
-    return CardX(
-      child: ExpandTile(
-        leading: const Icon(Icons.computer),
-        initiallyExpanded: ss.more.entries.length < 7,
-        title: Text(l10n.about),
-        childrenPadding: const EdgeInsets.symmetric(
-          horizontal: 17,
-          vertical: 7,
-        ),
-        children: ss.more.entries
-            .map(
-              (e) => Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(e.key.i18n, style: UIs.textSize13),
-                  Text(e.value, style: UIs.textSize11Grey)
-                ],
-              ).padding(const EdgeInsets.symmetric(vertical: 1)),
-            )
-            .toList(),
-      ),
     );
   }
 
@@ -333,51 +333,49 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       title: Text(item.name, style: UIs.textSize13),
       subtitle: Text(
         '${item.power} - ${item.temp} °C\n${mem.used} / ${mem.total} ${mem.unit} - ${item.fanSpeed} RPM',
-        style: UIs.textSize11Grey,
+        style: UIs.text12Grey,
         textScaler: _textFactor,
       ),
       contentPadding: const EdgeInsets.only(left: 17, right: 17),
-      trailing: SizedBox(
-        width: 67,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Text(
-              '${item.percent}%',
-              style: UIs.textSize11Grey,
-              textScaler: _textFactor,
-            ),
-            IconButton(
-              onPressed: () {
-                final height = () {
-                  if (processes.length > 5) {
-                    return 5 * 47.0;
-                  }
-                  return processes.length * 47.0;
-                }();
-                context.showRoundDialog(
-                  title: Text(item.name),
-                  child: SizedBox(
-                    width: double.maxFinite,
-                    height: height,
-                    child: ListView.builder(
-                      itemCount: processes.length,
-                      itemBuilder: (_, idx) =>
-                          _buildGpuProcessItem(processes[idx]),
-                    ),
+      trailing: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '${item.percent}%',
+            style: UIs.text12Grey,
+            textScaler: _textFactor,
+          ),
+          IconButton(
+            onPressed: () {
+              final height = () {
+                if (processes.length > 5) {
+                  return 5 * 47.0;
+                }
+                return processes.length * 47.0;
+              }();
+              context.showRoundDialog(
+                title: Text(item.name),
+                child: SizedBox(
+                  width: double.maxFinite,
+                  height: height,
+                  child: ListView.builder(
+                    itemCount: processes.length,
+                    itemBuilder: (_, idx) =>
+                        _buildGpuProcessItem(processes[idx]),
                   ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => context.pop(),
-                      child: Text(l10n.close),
-                    )
-                  ],
-                );
-              },
-              icon: const Icon(Icons.info_outline, size: 17),
-            ),
-          ],
-        ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => context.pop(),
+                    child: Text(l10n.close),
+                  )
+                ],
+              );
+            },
+            icon: const Icon(Icons.info_outline, size: 17),
+          ),
+        ],
       ),
     );
   }
@@ -386,14 +384,14 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     return ListTile(
       title: Text(
         process.name,
-        style: UIs.textSize11,
+        style: UIs.text12,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         textScaler: _textFactor,
       ),
       subtitle: Text(
         'PID: ${process.pid} - ${process.memory} MiB',
-        style: UIs.textSize11Grey,
+        style: UIs.text12Grey,
         textScaler: _textFactor,
       ),
       trailing: const Icon(Icons.info_outline, size: 17).tap(
@@ -453,35 +451,44 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       if (read == null || write == null) return use;
       return '$use\n${l10n.read} $read | ${l10n.write} $write';
     }();
-    return ListTile(
-      title: Text(
-        disk.dev,
-        style: UIs.textSize11Bold,
-        textScaler: _textFactor,
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 17),
-      subtitle: Text(
-        text,
-        style: UIs.textSize11Grey,
-        textScaler: _textFactor,
-      ),
-      trailing: SizedBox(
-        height: 37,
-        width: 37,
-        child: Stack(
-          alignment: Alignment.center,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CircularProgressIndicator(
-              value: disk.usedPercent / 100,
-              strokeWidth: 5,
-              backgroundColor: DynamicColors.progress.resolve(context),
-              color: primaryColor,
+            Text(
+              disk.dev,
+              style: UIs.text12Bold,
+              textScaler: _textFactor,
             ),
-            Text('${disk.usedPercent}%', style: UIs.textSize9Grey)
+            Text(
+              text,
+              style: UIs.text12Grey,
+              textScaler: _textFactor,
+            )
           ],
         ),
-      ),
-    );
+        SizedBox(
+          height: 41,
+          width: 41,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              CircularProgressIndicator(
+                value: disk.usedPercent / 100,
+                strokeWidth: 5,
+                backgroundColor: DynamicColors.progress.resolve(context),
+                color: primaryColor,
+              ),
+              Text('${disk.usedPercent}%', style: UIs.textSize13Grey)
+            ],
+          ),
+        )
+      ],
+    ).padding(const EdgeInsets.symmetric(horizontal: 17, vertical: 5));
   }
 
   Widget _buildNetView(ServerStatus ss) {
@@ -491,7 +498,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       children.add(Center(
         child: Text(
           l10n.noInterface,
-          style: const TextStyle(color: Colors.grey, fontSize: 13),
+          style: UIs.textSize13Grey,
         ),
       ));
     } else {
@@ -524,7 +531,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                     UIs.width7,
                     Text(
                       _netSortType.name,
-                      style: UIs.textSize11Grey,
+                      style: UIs.textSize13Grey,
                     ),
                   ],
                 ),
@@ -542,7 +549,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildNetSpeedItem(NetSpeed ns, String device) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 17),
+      padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -551,7 +558,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             children: [
               Text(
                 device,
-                style: UIs.textSize11Bold,
+                style: UIs.text12Bold,
                 textScaler: _textFactor,
                 maxLines: 1,
                 overflow: TextOverflow.fade,
@@ -559,7 +566,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               ),
               Text(
                 '${ns.sizeIn(device: device)} | ${ns.sizeOut(device: device)}',
-                style: UIs.textSize11Grey,
+                style: UIs.text12Grey,
                 textScaler: _textFactor,
               )
             ],
@@ -569,7 +576,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             child: Text(
               '↑ ${ns.speedOut(device: device)}\n↓ ${ns.speedIn(device: device)}',
               textAlign: TextAlign.end,
-              style: UIs.textSize11Grey,
+              style: UIs.textSize13Grey,
             ),
           )
         ],
@@ -586,7 +593,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         title: Text(l10n.temperature),
         leading: const Icon(Icons.ac_unit, size: 17),
         initiallyExpanded: ss.temps.devices.length <= 7,
-        childrenPadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(bottom: 7),
         children: ss.temps.devices
             .map((key) => _buildTemperatureItem(key, ss.temps.get(key)))
             .toList(),
@@ -596,12 +603,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildTemperatureItem(String key, double? val) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 13),
+      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(key, style: UIs.textSize13),
-          Text('${val?.toStringAsFixed(1)}°C', style: UIs.textSize11Grey),
+          Text(key, style: UIs.textSize15),
+          Text('${val?.toStringAsFixed(1)}°C', style: UIs.textSize13Grey),
         ],
       ),
     );

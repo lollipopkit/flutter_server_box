@@ -698,6 +698,12 @@ class SEn extends S {
   String get test => 'Test';
 
   @override
+  String get textScaler => 'Text scaler';
+
+  @override
+  String get textScalerTip => '1.0 => 100% (original size), only works on server page part of the font, not recommended to change.';
+
+  @override
   String get theme => 'Theme';
 
   @override

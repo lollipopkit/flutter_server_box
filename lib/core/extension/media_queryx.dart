@@ -1,5 +1,5 @@
-import 'package:flutter/widgets.dart';
+// import 'package:flutter/widgets.dart';
 
-extension MideaQueryX on MediaQueryData {
-  bool get useDoubleColumn => size.width > 639;
-}
+// extension MideaQueryX on MediaQueryData {
+//   bool get useDoubleColumn => size.width > 639;
+// }

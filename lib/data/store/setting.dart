@@ -32,13 +32,6 @@ class SettingStore extends PersistentStore {
     true,
   );
 
-  /// Bigger for bigger font size
-  /// 1.0 means 100%
-  /// Warning: This may cause some UI issues
-  late final textFactor = property(
-    'textFactor',
-    1.0,
-  );
 
   /// Lanch page idx
   late final launchPage = property(
@@ -64,6 +57,14 @@ class SettingStore extends PersistentStore {
 
   // ------END------
 
+  /// Bigger for bigger font size
+  /// 1.0 means 100%
+  /// Warning: This may cause some UI issues
+  late final textFactor = property(
+    'textFactor',
+    1.0,
+  );
+  
   late final primaryColor = property(
     'primaryColor',
     4287106639,

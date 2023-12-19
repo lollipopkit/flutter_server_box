@@ -698,6 +698,12 @@ class SId extends S {
   String get test => 'pengujian';
 
   @override
+  String get textScaler => 'Penskalaan font';
+
+  @override
+  String get textScalerTip => '1.0 => 100% (ukuran asli), hanya berfungsi pada bagian halaman server font, tidak disarankan untuk diubah.';
+
+  @override
   String get theme => ' Tema';
 
   @override

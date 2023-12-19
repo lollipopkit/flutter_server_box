@@ -221,6 +221,8 @@
   "temperature": "温度",
   "terminal": "终端",
   "test": "测试",
+  "textScaler": "字体缩放",
+  "textScalerTip": "1.0 => 100%（原大小），仅作用于服务器页面部分字体，不建议修改。",
   "theme": "主题",
   "themeMode": "主题模式",
   "times": "次",

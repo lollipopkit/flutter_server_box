@@ -221,6 +221,8 @@
   "temperature": "Suhu",
   "terminal": "Terminal",
   "test": "pengujian",
+  "textScaler": "Penskalaan font",
+  "textScalerTip": "1.0 => 100% (ukuran asli), hanya berfungsi pada bagian halaman server font, tidak disarankan untuk diubah.",
   "theme": " Tema",
   "themeMode": "Mode tema",
   "times": "Waktu",

@@ -50,7 +50,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             child: Row(
               mainAxisSize: MainAxisSize.max,
               children: [
-                const SizedBox(width: 8),
                 IconButton(
                   icon: Transform.translate(
                     offset: const Offset(0, -3.5),
@@ -58,7 +57,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   ),
                   onPressed: () => windowManager.minimize(),
                 ),
-                const SizedBox(width: 8),
                 IconButton(
                   icon: const Icon(Icons.crop_square, size: 13),
                   onPressed: () async {
@@ -69,7 +67,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     }
                   },
                 ),
-                const SizedBox(width: 8),
                 IconButton(
                   icon: const Icon(Icons.close, size: 14),
                   onPressed: () => windowManager.close(),

@@ -698,6 +698,12 @@ class SZh extends S {
   String get test => '测试';
 
   @override
+  String get textScaler => '字体缩放';
+
+  @override
+  String get textScalerTip => '1.0 => 100%（原大小），仅作用于服务器页面部分字体，不建议修改。';
+
+  @override
   String get theme => '主题';
 
   @override
@@ -1500,6 +1506,12 @@ class SZhTw extends SZh {
 
   @override
   String get test => '測試';
+
+  @override
+  String get textScaler => '字體縮放';
+
+  @override
+  String get textScalerTip => '1.0 => 100%（原大小），僅作用於伺服器頁面部分字體，不建議修改。';
 
   @override
   String get theme => '主題';

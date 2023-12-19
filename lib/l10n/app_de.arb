@@ -221,6 +221,8 @@
   "temperature": "Temperatur",
   "terminal": "Terminal",
   "test": "Prüfung",
+  "textScaler": "Skalierung der Schriftart",
+  "textScalerTip": "1.0 => 100% (Originalgröße), funktioniert nur auf der Serverseite Teil der Schrift, nicht empfohlen zu ändern.",
   "theme": "Themen",
   "themeMode": "Themen-Modus",
   "times": "x",

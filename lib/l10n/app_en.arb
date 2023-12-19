@@ -221,6 +221,8 @@
   "temperature": "Temperature",
   "terminal": "Terminal",
   "test": "Test",
+  "textScaler": "Text scaler",
+  "textScalerTip": "1.0 => 100% (original size), only works on server page part of the font, not recommended to change.",
   "theme": "Theme",
   "themeMode": "Theme mode",
   "times": "Times",

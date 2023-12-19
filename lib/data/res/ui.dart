@@ -10,6 +10,12 @@ abstract final class UIs {
     fontWeight: FontWeight.w500,
   );
   static const textSize11Grey = TextStyle(color: Colors.grey, fontSize: 11);
+  static const text12 = TextStyle(fontSize: 12);
+  static const text12Bold = TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.bold,
+  );
+  static const text12Grey = TextStyle(color: Colors.grey, fontSize: 12);
   static const textSize13 = TextStyle(fontSize: 13);
   static const textSize13Bold = TextStyle(
     fontSize: 13,

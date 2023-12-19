@@ -68,6 +68,7 @@ class _SettingPageState extends State<SettingPage> {
   final _keyboardType = ValueNotifier(0);
   final _rotateQuarter = ValueNotifier(0);
   final _netViewType = ValueNotifier(NetViewType.speed);
+  late final _textScaler = ValueNotifier(_setting.textFactor.fetch());
 
   @override
   void didChangeDependencies() {
@@ -165,7 +166,7 @@ class _SettingPageState extends State<SettingPage> {
           _buildTitle(l10n.editor),
           _buildEditor(),
           if (isDesktop) _buildTitle(l10n.fullScreen),
-          if (isDesktop) _buildFullScreen(),
+          if (!isDesktop) _buildFullScreen(),
           const SizedBox(height: 37),
         ],
       ),
@@ -222,6 +223,7 @@ class _SettingPageState extends State<SettingPage> {
         _buildMaxRetry(),
         //_buildDiskIgnorePath(),
         _buildDeleteServers(),
+        _buildTextScaler(),
         //if (isDesktop) _buildDoubleColumnServersPage(),
       ].map((e) => CardX(child: e)).toList(),
     );
@@ -943,6 +945,50 @@ class _SettingPageState extends State<SettingPage> {
         );
       },
     );
+  }
+
+  Widget _buildTextScaler() {
+    final ctrl = TextEditingController(text: _textScaler.value.toString());
+    return ListTile(
+      title: Text(l10n.textScaler),
+      subtitle: Text(l10n.textScalerTip, style: UIs.textGrey),
+      trailing: ValueBuilder(
+        listenable: _textScaler,
+        build: () => Text(
+          _textScaler.value.toString(),
+          style: UIs.textSize15,
+        ),
+      ),
+      onTap: () => context.showRoundDialog(
+        title: Text(l10n.textScaler),
+        child: Input(
+          autoFocus: true,
+          type: TextInputType.number,
+          hint: '1.0',
+          icon: Icons.format_size,
+          controller: ctrl,
+          onSubmitted: _onSaveTextScaler,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => _onSaveTextScaler(ctrl.text),
+            child: Text(l10n.ok),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _onSaveTextScaler(String s) {
+    final val = double.tryParse(s);
+    if (val == null) {
+      context.showSnackBar(l10n.failed);
+      return;
+    }
+    _textScaler.value = val;
+    _setting.textFactor.put(val);
+    RebuildNodes.app.rebuild();
+    context.pop();
   }
 
   Widget _buildServerFuncBtns() {

@@ -1424,6 +1424,18 @@ abstract class S {
   /// **'Test'**
   String get test;
 
+  /// No description provided for @textScaler.
+  ///
+  /// In en, this message translates to:
+  /// **'Text scaler'**
+  String get textScaler;
+
+  /// No description provided for @textScalerTip.
+  ///
+  /// In en, this message translates to:
+  /// **'1.0 => 100% (original size), only works on server page part of the font, not recommended to change.'**
+  String get textScalerTip;
+
   /// No description provided for @theme.
   ///
   /// In en, this message translates to:

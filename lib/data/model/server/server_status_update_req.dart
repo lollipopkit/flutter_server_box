@@ -129,7 +129,7 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
 
   try {
     final battery = StatusCmdType.battery.find(segments);
-    if (battery.isNotEmpty && !battery.contains('No such')) {
+    if (battery.isNotEmpty && !battery.contains('/sys/class/power_supply')) {
       req.ss.more[StatusCmdType.battery] = battery;
     }
   } catch (e, s) {
