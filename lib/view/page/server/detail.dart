@@ -135,7 +135,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               (e) => Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(e.key.i18n, style: UIs.textSize15),
+                  Text(e.key.i18n, style: UIs.textSize13),
                   Text(e.value, style: UIs.textSize13Grey)
                 ],
               ).padding(const EdgeInsets.symmetric(vertical: 2)),

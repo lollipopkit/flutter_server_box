@@ -56,18 +56,20 @@ class _SettingPageState extends State<SettingPage> {
   final _netViewTypeKey = GlobalKey<PopupMenuButtonState<NetViewType>>();
   final _setting = Stores.setting;
 
-  final _selectedColorValue = ValueNotifier(0);
-  final _nightMode = ValueNotifier(0);
-  final _maxRetryCount = ValueNotifier(0);
-  final _updateInterval = ValueNotifier(0);
-  final _termFontSize = ValueNotifier(0.0);
-  final _editorFontSize = ValueNotifier(0.0);
-  final _localeCode = ValueNotifier('');
-  final _editorTheme = ValueNotifier('');
-  final _editorDarkTheme = ValueNotifier('');
-  final _keyboardType = ValueNotifier(0);
-  final _rotateQuarter = ValueNotifier(0);
-  final _netViewType = ValueNotifier(NetViewType.speed);
+  late final _selectedColorValue = ValueNotifier(_setting.primaryColor.fetch());
+  late final _nightMode = ValueNotifier(_setting.themeMode.fetch());
+  late final _maxRetryCount = ValueNotifier(_setting.maxRetryCount.fetch());
+  late final _updateInterval =
+      ValueNotifier(_setting.serverStatusUpdateInterval.fetch());
+  late final _termFontSize = ValueNotifier(_setting.termFontSize.fetch());
+  late final _editorFontSize = ValueNotifier(_setting.editorFontSize.fetch());
+  late final _localeCode = ValueNotifier('');
+  late final _editorTheme = ValueNotifier(_setting.editorTheme.fetch());
+  late final _editorDarkTheme = ValueNotifier(_setting.editorDarkTheme.fetch());
+  late final _keyboardType = ValueNotifier(_setting.keyboardType.fetch());
+  late final _rotateQuarter =
+      ValueNotifier(_setting.fullScreenRotateQuarter.fetch());
+  late final _netViewType = ValueNotifier(_setting.netViewType.fetch());
   late final _textScaler = ValueNotifier(_setting.textFactor.fetch());
 
   @override
@@ -79,22 +81,6 @@ class _SettingPageState extends State<SettingPage> {
     } else {
       _localeCode.value = localeSettingVal;
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _nightMode.value = _setting.themeMode.fetch();
-    _updateInterval.value = _setting.serverStatusUpdateInterval.fetch();
-    _maxRetryCount.value = _setting.maxRetryCount.fetch();
-    _selectedColorValue.value = _setting.primaryColor.fetch();
-    _termFontSize.value = _setting.termFontSize.fetch();
-    _editorFontSize.value = _setting.editorFontSize.fetch();
-    _editorTheme.value = _setting.editorTheme.fetch();
-    _editorDarkTheme.value = _setting.editorDarkTheme.fetch();
-    _keyboardType.value = _setting.keyboardType.fetch();
-    _rotateQuarter.value = _setting.fullScreenRotateQuarter.fetch();
-    _netViewType.value = _setting.netViewType.fetch();
   }
 
   @override

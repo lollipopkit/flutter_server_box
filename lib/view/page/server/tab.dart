@@ -296,7 +296,8 @@ class _ServerPageState extends State<ServerPage>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _wrapWithSizedbox(_buildPercentCircle(ss.cpu.usedPercent()), true),
-          _wrapWithSizedbox(_buildPercentCircle(ss.mem.usedPercent * 100), true),
+          _wrapWithSizedbox(
+              _buildPercentCircle(ss.mem.usedPercent * 100), true),
           _wrapWithSizedbox(_buildNet(ss, spi.id)),
           _wrapWithSizedbox(_buildDisk(ss, spi.id)),
         ],
@@ -357,10 +358,7 @@ class _ServerPageState extends State<ServerPage>
             children: [
               Text(
                 spi.name,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: UIs.textSize13Bold,
               ),
               const Icon(
                 Icons.keyboard_arrow_right,
@@ -584,7 +582,7 @@ class _ServerPageState extends State<ServerPage>
         !Stores.setting.serverTabUseOldUI.fetch()) {
       return 135;
     }
-    return 105;
+    return 106;
   }
 
   void _askFor({

@@ -9,6 +9,8 @@ import 'package:toolbox/data/res/store.dart';
 import 'package:webdav_client/webdav_client.dart';
 
 abstract final class Webdav {
+  static const _prefix = 'srvbox/';
+
   static var _client = WebdavClient(
     url: Stores.setting.webdavUrl.fetch(),
     user: Stores.setting.webdavUser.fetch(),
@@ -35,7 +37,7 @@ abstract final class Webdav {
     try {
       await _client.writeFile(
         localPath ?? '${await Paths.doc}/$relativePath',
-        relativePath,
+        _prefix + relativePath,
       );
     } catch (e, s) {
       _logger.warning('Upload $relativePath failed', e, s);
@@ -46,7 +48,7 @@ abstract final class Webdav {
 
   static Future<WebdavErr?> delete(String relativePath) async {
     try {
-      await _client.remove(relativePath);
+      await _client.remove(_prefix + relativePath);
     } catch (e, s) {
       _logger.warning('Delete $relativePath failed', e, s);
       return WebdavErr(type: WebdavErrType.generic, message: '$e');
@@ -60,7 +62,7 @@ abstract final class Webdav {
   }) async {
     try {
       await _client.readFile(
-        relativePath,
+        _prefix + relativePath,
         localPath ?? '${await Paths.doc}/$relativePath',
       );
     } catch (e) {

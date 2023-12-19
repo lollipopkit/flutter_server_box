@@ -37,7 +37,7 @@ import 'view/widget/appbar.dart';
 
 Future<void> main() async {
   _runInZone(() async {
-    await initApp();
+    await _initApp();
     runApp(
       MultiProvider(
         providers: [
@@ -72,7 +72,7 @@ void _runInZone(void Function() body) {
   );
 }
 
-Future<void> initApp() async {
+Future<void> _initApp() async {
   WidgetsFlutterBinding.ensureInitialized();
   await _initDesktopWindow();
 
@@ -128,7 +128,7 @@ void _setupLogger() {
 
 Future<void> _initDesktopWindow() async {
   if (!isDesktop) return;
-  
+
   await windowManager.ensureInitialized();
   await CustomAppBar.updateTitlebarHeight();
 

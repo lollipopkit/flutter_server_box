@@ -32,7 +32,6 @@ class SettingStore extends PersistentStore {
     true,
   );
 
-
   /// Lanch page idx
   late final launchPage = property(
     'launchPage',
@@ -64,7 +63,7 @@ class SettingStore extends PersistentStore {
     'textFactor',
     1.0,
   );
-  
+
   late final primaryColor = property(
     'primaryColor',
     4287106639,

@@ -123,7 +123,8 @@ class BackupPage extends StatelessWidget {
       child: ExpandTile(
         leading: const Icon(Icons.storage),
         title: const Text('WebDAV'),
-        initiallyExpanded: !(isIOS || isMacOS),
+        initiallyExpanded:
+            !(isIOS || isMacOS) && Stores.setting.webdavSync.fetch(),
         children: [
           ListTile(
             title: Text(l10n.setting),
