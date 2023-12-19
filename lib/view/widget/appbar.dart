@@ -40,31 +40,42 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         Positioned(
           right: 0,
           top: 0,
-          child: Row(
-            children: [
-              const SizedBox(width: 8),
-              IconButton(
-                icon: const Icon(Icons.minimize),
-                onPressed: () => windowManager.minimize(),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                icon: const Icon(Icons.crop_square),
-                onPressed: () async {
-                  if (await windowManager.isMaximized()) {
-                    windowManager.unmaximize();
-                  } else {
-                    windowManager.maximize();
-                  }
-                },
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => windowManager.close(),
-              ),
-              const SizedBox(width: 8),
-            ],
+          child: GestureDetector(
+            onVerticalDragStart: (_) {
+              windowManager.startDragging();
+            },
+            onHorizontalDragStart: (_) {
+              windowManager.startDragging();
+            },
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: Transform.translate(
+                    offset: const Offset(0, -3.5),
+                    child: const Icon(Icons.minimize, size: 13),
+                  ),
+                  onPressed: () => windowManager.minimize(),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.crop_square, size: 13),
+                  onPressed: () async {
+                    if (await windowManager.isMaximized()) {
+                      windowManager.unmaximize();
+                    } else {
+                      windowManager.maximize();
+                    }
+                  },
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 14),
+                  onPressed: () => windowManager.close(),
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -78,7 +89,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         break;
       // Draw a titlebar on Linux
       case 'linux' || 'windows':
-        _titlebarHeight = 27;
+        _titlebarHeight = 37;
         _drawTitlebar = true;
         break;
       default:

@@ -128,7 +128,10 @@ void _setupLogger() {
 
 Future<void> _initDesktopWindow() async {
   if (!isDesktop) return;
+  
   await windowManager.ensureInitialized();
+  await CustomAppBar.updateTitlebarHeight();
+
   const windowOptions = WindowOptions(
     size: Size(400, 777),
     center: true,
@@ -136,9 +139,7 @@ Future<void> _initDesktopWindow() async {
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.hidden,
   );
-
   windowManager.waitUntilReadyToShow(windowOptions, () async {
-    if (isMacOS) await CustomAppBar.updateTitlebarHeight();
     await windowManager.show();
     await windowManager.focus();
   });
