@@ -5,14 +5,15 @@ import 'package:toolbox/data/model/ssh/virtual_key.dart';
 abstract final class Defaults {
   // default server details page cards order
   static const detailCardOrder = [
-    'uptime',
+    'sys',
     'cpu',
     'mem',
     'swap',
     'gpu',
     'disk',
     'net',
-    'temp'
+    'temp',
+    'battery'
   ];
 
   static const diskIgnorePath = [

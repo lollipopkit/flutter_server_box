@@ -6,7 +6,7 @@ import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/widget/future_widget.dart';
 import 'package:toolbox/view/widget/store_switch.dart';
 
-class PlatformPublicSettings {
+abstract final class PlatformPublicSettings {
   static Widget buildBioAuth() {
     return FutureWidget<bool>(
       future: BioAuth.isAvail,

@@ -109,7 +109,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
 
   PreferredSizeWidget _buildAppBar() {
     return CustomAppBar(
-      title: Text(l10n.edit, style: UIs.textSize18),
+      title: Text(l10n.edit, style: UIs.text18),
       actions: widget.spi != null
           ? [
               IconButton(

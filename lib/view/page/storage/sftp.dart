@@ -161,22 +161,22 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   Widget _buildAddBtn() {
     return IconButton(
       onPressed: () => context.showRoundDialog(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.folder),
-                  title: Text(l10n.createFolder),
-                  onTap: _mkdir,
-                ),
-                ListTile(
-                  leading: const Icon(Icons.insert_drive_file),
-                  title: Text(l10n.createFile),
-                  onTap: _newFile,
-                ),
-              ],
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.folder),
+              title: Text(l10n.createFolder),
+              onTap: _mkdir,
             ),
-          ),
+            ListTile(
+              leading: const Icon(Icons.insert_drive_file),
+              title: Text(l10n.createFile),
+              onTap: _newFile,
+            ),
+          ],
+        ),
+      ),
       icon: const Icon(Icons.add),
     );
   }

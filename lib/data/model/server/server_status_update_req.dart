@@ -1,3 +1,4 @@
+import 'package:toolbox/data/model/server/battery.dart';
 import 'package:toolbox/data/model/server/nvdia.dart';
 import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/system.dart';
@@ -129,8 +130,10 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
 
   try {
     final battery = StatusCmdType.battery.find(segments);
-    if (battery.isNotEmpty && !battery.contains('/sys/class/power_supply')) {
-      req.ss.more[StatusCmdType.battery] = battery;
+    final batteries = Batteries.parse(battery);
+    req.ss.batteries.clear();
+    if (batteries.isNotEmpty) {
+      req.ss.batteries.addAll(batteries);
     }
   } catch (e, s) {
     Loggers.parse.warning(e, s);

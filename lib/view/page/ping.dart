@@ -131,7 +131,7 @@ class _PingPageState extends State<PingPage>
         ),
         subtitle: Text(
           _buildPingSummary(result, unknown, ms),
-          style: UIs.textSize11,
+          style: UIs.text11,
         ),
         trailing: Text(
           '${l10n.pingAvg}${result.statistic?.avg?.toStringAsFixed(2) ?? l10n.unknown} $ms',

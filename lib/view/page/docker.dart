@@ -349,7 +349,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
       title: Text(item.image),
       subtitle: Text(
         '${item.name} - ${item.status}',
-        style: UIs.textSize13Grey,
+        style: UIs.text13Grey,
       ),
       trailing: _buildMoreBtn(item),
     );

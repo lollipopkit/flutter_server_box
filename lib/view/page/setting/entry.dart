@@ -151,7 +151,8 @@ class _SettingPageState extends State<SettingPage> {
           _buildSFTP(),
           _buildTitle(l10n.editor),
           _buildEditor(),
-          /// Fullscreen Mode is designed for old mobile phone which can be 
+
+          /// Fullscreen Mode is designed for old mobile phone which can be
           /// used as a status screen, so it's only available on mobile phone.
           if (!isDesktop) _buildTitle(l10n.fullScreen),
           if (!isDesktop) _buildFullScreen(),
@@ -301,7 +302,7 @@ class _SettingPageState extends State<SettingPage> {
           },
           child: Text(
             '${_updateInterval.value} ${l10n.second}',
-            style: UIs.textSize15,
+            style: UIs.text15,
           ),
         ),
       ),
@@ -455,7 +456,7 @@ class _SettingPageState extends State<SettingPage> {
           },
           child: Text(
             '${_maxRetryCount.value} ${l10n.times}',
-            style: UIs.textSize15,
+            style: UIs.text15,
           ),
         ),
         listenable: _maxRetryCount,
@@ -504,7 +505,7 @@ class _SettingPageState extends State<SettingPage> {
           },
           child: Text(
             _buildThemeModeStr(_nightMode.value),
-            style: UIs.textSize15,
+            style: UIs.text15,
           ),
         ),
       ),
@@ -532,7 +533,7 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(l10n.font),
       trailing: Text(
         fontName ?? l10n.notSelected,
-        style: UIs.textSize15,
+        style: UIs.text15,
       ),
       onTap: () {
         context.showRoundDialog(
@@ -583,7 +584,7 @@ class _SettingPageState extends State<SettingPage> {
         title: Text(l10n.fontSize),
         trailing: Text(
           _termFontSize.value.toString(),
-          style: UIs.textSize15,
+          style: UIs.text15,
         ),
         onTap: () => _showFontSizeDialog(_termFontSize, _setting.termFontSize),
       ),
@@ -655,7 +656,7 @@ class _SettingPageState extends State<SettingPage> {
           },
           child: Text(
             l10n.languageName,
-            style: UIs.textSize15,
+            style: UIs.text15,
           ),
         ),
       ),
@@ -693,7 +694,7 @@ class _SettingPageState extends State<SettingPage> {
           },
           child: Text(
             _editorTheme.value,
-            style: UIs.textSize15,
+            style: UIs.text15,
           ),
         ),
       ),
@@ -726,7 +727,7 @@ class _SettingPageState extends State<SettingPage> {
           },
           child: Text(
             _editorDarkTheme.value,
-            style: UIs.textSize15,
+            style: UIs.text15,
           ),
         ),
       ),
@@ -780,7 +781,7 @@ class _SettingPageState extends State<SettingPage> {
           },
           child: Text(
             degrees[_rotateQuarter.value],
-            style: UIs.textSize15,
+            style: UIs.text15,
           ),
         ),
       ),
@@ -828,7 +829,7 @@ class _SettingPageState extends State<SettingPage> {
           },
           child: Text(
             names[_keyboardType.value],
-            style: UIs.textSize15,
+            style: UIs.text15,
           ),
         ),
       ),
@@ -884,7 +885,7 @@ class _SettingPageState extends State<SettingPage> {
           },
           child: Text(
             _netViewType.value.toStr,
-            style: UIs.textSize15,
+            style: UIs.text15,
           ),
         ),
       ),
@@ -946,7 +947,7 @@ class _SettingPageState extends State<SettingPage> {
         listenable: _textScaler,
         build: () => Text(
           _textScaler.value.toString(),
-          style: UIs.textSize15,
+          style: UIs.text15,
         ),
       ),
       onTap: () => context.showRoundDialog(
@@ -984,7 +985,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildServerFuncBtns() {
     return ListTile(
       title: Text(l10n.location),
-      subtitle: Text(l10n.moveOutServerFuncBtnsHelp, style: UIs.textSize13Grey),
+      subtitle: Text(l10n.moveOutServerFuncBtnsHelp, style: UIs.text13Grey),
       trailing: StoreSwitch(prop: _setting.moveOutServerTabFuncBtns),
     );
   }
@@ -1018,7 +1019,7 @@ class _SettingPageState extends State<SettingPage> {
         title: Text(l10n.fontSize),
         trailing: Text(
           _editorFontSize.value.toString(),
-          style: UIs.textSize15,
+          style: UIs.text15,
         ),
         onTap: () =>
             _showFontSizeDialog(_editorFontSize, _setting.editorFontSize),

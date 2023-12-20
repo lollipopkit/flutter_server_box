@@ -1,5 +1,6 @@
 import 'package:dartssh2/dartssh2.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
+import 'package:toolbox/data/model/server/battery.dart';
 import 'package:toolbox/data/model/server/conn.dart';
 import 'package:toolbox/data/model/server/cpu.dart';
 import 'package:toolbox/data/model/server/disk.dart';
@@ -38,10 +39,6 @@ class Server implements TagPickable {
   bool get canViewDetails => state == ServerState.finished;
 
   String get id => spi.id;
-
-  bool get isBusy => status._isBusy;
-
-  set isBusy(bool value) => status._isBusy = value;
 }
 
 class ServerStatus {
@@ -56,10 +53,8 @@ class ServerStatus {
   String? err;
   DiskIO diskIO;
   List<NvidiaSmiItem>? nvidia;
+  final List<Battery> batteries = [];
   final Map<StatusCmdType, String> more = {};
-
-  /// Whether is connectting, parsing and etc.
-  bool _isBusy = false;
 
   ServerStatus({
     required this.cpu,

@@ -113,7 +113,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
       )
     ];
     return CustomAppBar(
-      title: Text(l10n.edit, style: UIs.textSize18),
+      title: Text(l10n.edit, style: UIs.text18),
       actions: widget.pki == null ? null : actions,
     );
   }

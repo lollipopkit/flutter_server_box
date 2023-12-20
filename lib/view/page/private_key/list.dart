@@ -30,7 +30,7 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(l10n.privateKey, style: UIs.textSize18),
+        title: Text(l10n.privateKey, style: UIs.text18),
       ),
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(

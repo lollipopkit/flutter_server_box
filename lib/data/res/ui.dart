@@ -3,28 +3,27 @@ import 'package:flutter/material.dart';
 abstract final class UIs {
   /// Font style
 
-  static const textSize9Grey = TextStyle(color: Colors.grey, fontSize: 9);
-  static const textSize11 = TextStyle(fontSize: 11);
-  static const textSize11Bold = TextStyle(
+  static const text11 = TextStyle(fontSize: 11);
+  static const text11Bold = TextStyle(
     fontSize: 11,
     fontWeight: FontWeight.w500,
   );
-  static const textSize11Grey = TextStyle(color: Colors.grey, fontSize: 11);
+  static const text11Grey = TextStyle(color: Colors.grey, fontSize: 11);
   static const text12 = TextStyle(fontSize: 12);
   static const text12Bold = TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.bold,
   );
   static const text12Grey = TextStyle(color: Colors.grey, fontSize: 12);
-  static const textSize13 = TextStyle(fontSize: 13);
-  static const textSize13Bold = TextStyle(
+  static const text13 = TextStyle(fontSize: 13);
+  static const text13Bold = TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.bold,
   );
-  static const textSize13Grey = TextStyle(color: Colors.grey, fontSize: 13);
-  static const textSize15 = TextStyle(fontSize: 15);
-  static const textSize18 = TextStyle(fontSize: 18);
-  static const textSize27 = TextStyle(fontSize: 27);
+  static const text13Grey = TextStyle(color: Colors.grey, fontSize: 13);
+  static const text15 = TextStyle(fontSize: 15);
+  static const text18 = TextStyle(fontSize: 18);
+  static const text27 = TextStyle(fontSize: 27);
   static const textGrey = TextStyle(color: Colors.grey);
   static const textRed = TextStyle(color: Colors.red);
 

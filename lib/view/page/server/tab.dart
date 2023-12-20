@@ -358,7 +358,7 @@ class _ServerPageState extends State<ServerPage>
             children: [
               Text(
                 spi.name,
-                style: UIs.textSize13Bold,
+                style: UIs.text13Bold,
               ),
               const Icon(
                 Icons.keyboard_arrow_right,
@@ -390,13 +390,13 @@ class _ServerPageState extends State<ServerPage>
         onTap: () => _showFailReason(ss),
         child: Text(
           l10n.viewErr,
-          style: UIs.textSize13Grey,
+          style: UIs.text13Grey,
         ),
       );
     }
     return Text(
       topRightStr,
-      style: UIs.textSize13Grey,
+      style: UIs.text13Grey,
     );
   }
 
@@ -500,25 +500,20 @@ class _ServerPageState extends State<ServerPage>
     if (percent <= 0) percent = 0.01;
     if (percent >= 100) percent = 99.9;
     return Stack(
+      alignment: Alignment.center,
       children: [
-        Center(
-          child: CircleChart(
-            progressColor: primaryColor,
-            progressNumber: percent,
-            maxNumber: 100,
-            width: 57,
-            height: 57,
-            animationDuration: const Duration(milliseconds: 777),
-          ),
+        CircleChart(
+          progressColor: primaryColor,
+          progressNumber: percent,
+          maxNumber: 100,
+          width: 57,
+          height: 57,
+          animationDuration: const Duration(milliseconds: 777),
         ),
-        Positioned.fill(
-          child: Center(
-            child: Text(
-              '${percent.toStringAsFixed(1)}%',
-              textAlign: TextAlign.center,
-              style: UIs.textSize13,
-            ),
-          ),
+        Text(
+          '${percent.toStringAsFixed(1)}%',
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 12.7),
         ),
       ],
     );

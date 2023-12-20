@@ -42,7 +42,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(l10n.edit, style: UIs.textSize18),
+        title: Text(l10n.edit, style: UIs.text18),
         actions: _buildAppBarActions(),
       ),
       body: _buildBody(),

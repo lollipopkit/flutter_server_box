@@ -6,6 +6,7 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/core/extension/status_cmd_type.dart';
 import 'package:toolbox/core/extension/widget.dart';
+import 'package:toolbox/data/model/server/battery.dart';
 import 'package:toolbox/data/model/server/cpu.dart';
 import 'package:toolbox/data/model/server/disk.dart';
 import 'package:toolbox/data/model/server/net_speed.dart';
@@ -53,6 +54,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       _buildDiskView,
       _buildNetView,
       _buildTemperature,
+      _buildBatteries,
     ],
   );
 
@@ -89,7 +91,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     final buildFuncs = !Stores.setting.moveOutServerTabFuncBtns.fetch();
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(si.spi.name, style: UIs.textSize18),
+        title: Text(si.spi.name, style: UIs.text18),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
@@ -135,8 +137,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               (e) => Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(e.key.i18n, style: UIs.textSize13),
-                  Text(e.value, style: UIs.textSize13Grey)
+                  Text(e.key.i18n, style: UIs.text13),
+                  Text(e.value, style: UIs.text13Grey)
                 ],
               ).padding(const EdgeInsets.symmetric(vertical: 2)),
             )
@@ -168,7 +170,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           child: _buildAnimatedText(
             ValueKey(percent),
             '$percent%',
-            UIs.textSize27,
+            UIs.text27,
           ),
         ),
         childrenPadding: const EdgeInsets.symmetric(vertical: 13),
@@ -248,12 +250,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                     _buildAnimatedText(
                       ValueKey(usedStr),
                       '$usedStr%',
-                      UIs.textSize27,
+                      UIs.text27,
                     ),
                     UIs.width7,
                     Text(
                       'of ${(ss.mem.total * 1024).convertBytes}',
-                      style: UIs.textSize13Grey,
+                      style: UIs.text13Grey,
                     )
                   ],
                 ),
@@ -290,11 +292,11 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               children: [
                 Row(
                   children: [
-                    Text('${used.toStringAsFixed(0)}%', style: UIs.textSize27),
+                    Text('${used.toStringAsFixed(0)}%', style: UIs.text27),
                     UIs.width7,
                     Text(
                       'of ${(ss.swap.total * 1024).convertBytes} ',
-                      style: UIs.textSize13Grey,
+                      style: UIs.text13Grey,
                     )
                   ],
                 ),
@@ -330,7 +332,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       children.addAll(processes.map((e) => _buildGpuProcessItem(e)));
     }
     return ListTile(
-      title: Text(item.name, style: UIs.textSize13),
+      title: Text(item.name, style: UIs.text13),
       subtitle: Text(
         '${item.power} - ${item.temp} °C\n${mem.used} / ${mem.total} ${mem.unit} - ${item.fanSpeed} RPM',
         style: UIs.text12Grey,
@@ -483,7 +485,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                 backgroundColor: DynamicColors.progress.resolve(context),
                 color: primaryColor,
               ),
-              Text('${disk.usedPercent}%', style: UIs.textSize13Grey)
+              Text('${disk.usedPercent}%', style: UIs.text13Grey)
             ],
           ),
         )
@@ -498,7 +500,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       children.add(Center(
         child: Text(
           l10n.noInterface,
-          style: UIs.textSize13Grey,
+          style: UIs.text13Grey,
         ),
       ));
     } else {
@@ -531,7 +533,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                     UIs.width7,
                     Text(
                       _netSortType.name,
-                      style: UIs.textSize13Grey,
+                      style: UIs.text13Grey,
                     ),
                   ],
                 ),
@@ -576,7 +578,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             child: Text(
               '↑ ${ns.speedOut(device: device)}\n↓ ${ns.speedIn(device: device)}',
               textAlign: TextAlign.end,
-              style: UIs.textSize13Grey,
+              style: UIs.text13Grey,
             ),
           )
         ],
@@ -607,8 +609,43 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(key, style: UIs.textSize15),
-          Text('${val?.toStringAsFixed(1)}°C', style: UIs.textSize13Grey),
+          Text(key, style: UIs.text15),
+          Text('${val?.toStringAsFixed(1)}°C', style: UIs.text13Grey),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBatteries(ServerStatus ss) {
+    if (ss.batteries.isEmpty) {
+      return UIs.placeholder;
+    }
+    return CardX(
+      child: ExpandTile(
+        title: Text(l10n.battery),
+        leading: const Icon(Icons.battery_charging_full, size: 17),
+        childrenPadding: const EdgeInsets.only(bottom: 7),
+        children: ss.batteries.map(_buildBatteryItem).toList(),
+      ),
+    );
+  }
+
+  Widget _buildBatteryItem(Battery battery) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 5),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${battery.name}', style: UIs.text15),
+              Text('${battery.status.name} - ${battery.cycle} - ${battery.powerNow}', style: UIs.text13Grey),
+            ],
+          ),
+          Text('${battery.percent?.toStringAsFixed(0)}%',
+              style: UIs.text13Grey),
         ],
       ),
     );

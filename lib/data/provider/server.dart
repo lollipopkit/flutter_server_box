@@ -155,16 +155,6 @@ class ServerProvider extends ChangeNotifier {
     }
   }
 
-  void setNotBusy([String? id]) {
-    if (id == null) {
-      for (final s in _servers.values) {
-        s.isBusy = false;
-      }
-      return;
-    }
-    _servers[id]?.isBusy = false;
-  }
-
   bool get isAutoRefreshOn => _timer != null;
 
   void setDisconnected() {
@@ -248,15 +238,6 @@ class ServerProvider extends ChangeNotifier {
 
   void _setServerState(Server s, ServerState ss) {
     s.state = ss;
-
-    /// Only set [Sever.isBusy] to false when err occurs or finished.
-    switch (ss) {
-      case ServerState.failed || ServerState.finished:
-        s.isBusy = false;
-        break;
-      default:
-        break;
-    }
     notifyListeners();
   }
 
@@ -274,11 +255,6 @@ class ServerProvider extends ChangeNotifier {
     }
 
     s.status.err = null;
-
-    /// If busy, it may be because of network reasons that the last request
-    /// has not been completed, and the request should not be made again at this time.
-    if (s.isBusy) return;
-    s.isBusy = true;
 
     if (s.needGenClient || (s.client?.isClosed ?? true)) {
       _setServerState(s, ServerState.connecting);

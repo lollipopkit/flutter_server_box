@@ -245,7 +245,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
     );
     return Text(
       topRightStr,
-      style: UIs.textSize11Grey,
+      style: UIs.text11Grey,
     );
   }
 
