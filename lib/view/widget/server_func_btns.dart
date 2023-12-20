@@ -14,7 +14,6 @@ import 'package:toolbox/data/model/pkg/manager.dart';
 import 'package:toolbox/data/model/server/dist.dart';
 import 'package:toolbox/data/res/path.dart';
 import 'package:toolbox/data/res/provider.dart';
-import 'package:toolbox/data/res/store.dart';
 
 import '../../core/route.dart';
 import '../../core/utils/server.dart';
@@ -100,16 +99,7 @@ class ServerFuncBtns extends StatelessWidget {
               onPressed: () => _onTapMoreBtns(e, spi, context),
               padding: EdgeInsets.zero,
               tooltip: e.name,
-              icon: Stores.setting.serverFuncBtnsDisplayName.fetch()
-                  ? Column(
-                      children: [
-                        Icon(e.icon, size: iconSize ?? 15),
-                        Text(e.toStr,
-                            style: const TextStyle(
-                                fontSize: 7, color: Colors.grey))
-                      ],
-                    )
-                  : Icon(e.icon, size: iconSize ?? 15),
+              icon: Icon(e.icon, size: iconSize ?? 15),
             ),
           )
           .toList(),

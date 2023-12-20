@@ -163,7 +163,7 @@ class SettingStore extends PersistentStore {
   /// Otherwise, display them on the top of server detail page
   late final moveOutServerTabFuncBtns = property(
     'moveOutServerTabFuncBtns',
-    true,
+    false,
   );
 
   /// Whether use `rm -r` to delete directory on SFTP
@@ -198,10 +198,6 @@ class SettingStore extends PersistentStore {
 
   /// Show tip of suspend
   late final showSuspendTip = property('showSuspendTip', true);
-
-  /// Server func btns display name
-  late final serverFuncBtnsDisplayName =
-      property('serverFuncBtnsDisplayName', false);
 
   /// Webdav sync
   late final webdavSync = property('webdavSync', false);

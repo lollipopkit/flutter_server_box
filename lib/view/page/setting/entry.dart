@@ -151,7 +151,9 @@ class _SettingPageState extends State<SettingPage> {
           _buildSFTP(),
           _buildTitle(l10n.editor),
           _buildEditor(),
-          if (isDesktop) _buildTitle(l10n.fullScreen),
+          /// Fullscreen Mode is designed for old mobile phone which can be 
+          /// used as a status screen, so it's only available on mobile phone.
+          if (!isDesktop) _buildTitle(l10n.fullScreen),
           if (!isDesktop) _buildFullScreen(),
           const SizedBox(height: 37),
         ],
@@ -901,7 +903,9 @@ class _SettingPageState extends State<SettingPage> {
           title: Text(l10n.choose),
           child: SingleChildScrollView(
             child: StatefulBuilder(builder: (ctx, setState) {
-              final all = Stores.server.box.keys.map(
+              final keys = Stores.server.box.keys.toList();
+              keys.removeWhere((element) => element == BoxX.lastModifiedKey);
+              final all = keys.map(
                 (e) => TextButton(
                   onPressed: () => context.showRoundDialog(
                     title: Text(l10n.attention),
@@ -978,24 +982,10 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildServerFuncBtns() {
-    return ExpandTile(
-      title: Text(l10n.serverFuncBtns),
-      subtitle: Text(
-        '${l10n.location} / ${l10n.displayName}',
-        style: UIs.textSize13Grey,
-      ),
-      children: [
-        ListTile(
-          title: Text(l10n.location),
-          subtitle:
-              Text(l10n.moveOutServerFuncBtnsHelp, style: UIs.textSize13Grey),
-          trailing: StoreSwitch(prop: _setting.moveOutServerTabFuncBtns),
-        ),
-        ListTile(
-          title: Text(l10n.displayName),
-          trailing: StoreSwitch(prop: _setting.serverFuncBtnsDisplayName),
-        ),
-      ],
+    return ListTile(
+      title: Text(l10n.location),
+      subtitle: Text(l10n.moveOutServerFuncBtnsHelp, style: UIs.textSize13Grey),
+      trailing: StoreSwitch(prop: _setting.moveOutServerTabFuncBtns),
     );
   }
 
