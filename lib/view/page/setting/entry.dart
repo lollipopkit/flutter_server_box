@@ -181,7 +181,7 @@ class _SettingPageState extends State<SettingPage> {
     ];
 
     /// Platform specific settings
-    if (OS.hasSettings) {
+    if (OS.hasSpecSetting) {
       children.add(_buildPlatformSetting());
     }
     return Column(

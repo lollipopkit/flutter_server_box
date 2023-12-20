@@ -37,8 +37,8 @@ class DiskIO extends TimeSeq<DiskIOPiece> {
     final sectorsRead = now.sectorsRead - pre.sectorsRead;
     final sectorsWrite = now.sectorsWrite - pre.sectorsWrite;
     final time = now.time - pre.time;
-    final read = (sectorsRead / time * 512);
-    final write = (sectorsWrite / time * 512);
+    final read = sectorsRead / time * 512;
+    final write = sectorsWrite / time * 512;
     return (read, write);
   }
 

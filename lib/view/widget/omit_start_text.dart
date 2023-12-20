@@ -21,13 +21,13 @@ class OmitStartText extends StatelessWidget {
       int len = 0;
       for (; !exceeded && len < text.length; len++) {
         // Build the textspan
-        var span = TextSpan(
+        final span = TextSpan(
           text: 'A' * 7 + text.substring(text.length - len),
           style: style ?? Theme.of(context).textTheme.bodyMedium,
         );
 
         // Use a textpainter to determine if it will exceed max lines
-        var tp = TextPainter(
+        final tp = TextPainter(
           maxLines: maxLines ?? 1,
           textDirection: TextDirection.ltr,
           text: span,

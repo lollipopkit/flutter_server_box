@@ -134,10 +134,10 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
       itemCount: files.length,
       padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 7),
       itemBuilder: (context, index) {
-        var file = files[index];
-        var fileName = file.path.split('/').last;
-        var stat = file.statSync();
-        var isDir = stat.type == FileSystemEntityType.directory;
+        final file = files[index];
+        final fileName = file.path.split('/').last;
+        final stat = file.statSync();
+        final isDir = stat.type == FileSystemEntityType.directory;
 
         return CardX(
           child: ListTile(

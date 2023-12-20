@@ -205,7 +205,7 @@ Future<void> _gotoSSH(
     extraArgs.addAll(["-i", path]);
   }
 
-  List<String> sshCommand = ["ssh", "${spi.user}@${spi.ip}"] + extraArgs;
+  final sshCommand = ["ssh", "${spi.user}@${spi.ip}"] + extraArgs;
   final system = Platform.operatingSystem;
   switch (system) {
     case "windows":

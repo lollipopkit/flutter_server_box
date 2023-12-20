@@ -580,7 +580,7 @@ class _ServerPageState extends State<ServerPage>
     if (Stores.setting.moveOutServerTabFuncBtns.fetch() &&
         // Discussion #146
         !Stores.setting.serverTabUseOldUI.fetch()) {
-      return 135;
+      return 132;
     }
     return 106;
   }

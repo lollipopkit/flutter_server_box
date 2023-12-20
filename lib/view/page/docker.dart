@@ -34,11 +34,12 @@ class DockerManagePage extends StatefulWidget {
 
 class _DockerManagePageState extends State<DockerManagePage> {
   final _textController = TextEditingController();
+  final _docker = Pros.docker;
 
   @override
   void dispose() {
     super.dispose();
-    Pros.docker.clear();
+    _docker.clear();
     _textController.dispose();
   }
 
@@ -49,7 +50,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
     if (client == null) {
       return;
     }
-    Pros.docker
+    _docker
       ..init(
         client,
         widget.spi.user,
@@ -71,7 +72,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
             IconButton(
               onPressed: () async {
                 context.showLoadingDialog();
-                await Pros.docker.refresh();
+                await _docker.refresh();
                 context.pop();
               },
               icon: const Icon(Icons.refresh),
@@ -79,7 +80,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
           ],
         ),
         body: _buildMain(),
-        floatingActionButton: Pros.docker.error == null ? _buildFAB() : null,
+        floatingActionButton: _docker.error == null ? _buildFAB() : null,
       );
     });
   }
@@ -156,7 +157,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
           onPressed: () async {
             context.pop();
             context.showLoadingDialog();
-            final result = await Pros.docker.run(cmd);
+            final result = await _docker.run(cmd);
             context.pop();
             if (result != null) {
               context.showSnackBar(result.message ?? l10n.unknownError);
@@ -182,7 +183,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
   }
 
   Widget _buildMain() {
-    if (Pros.docker.error != null && Pros.docker.items == null) {
+    if (_docker.error != null && _docker.items == null) {
       return SizedBox.expand(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -193,18 +194,18 @@ class _DockerManagePageState extends State<DockerManagePage> {
               size: 37,
             ),
             const SizedBox(height: 27),
-            Text(Pros.docker.error?.message ?? l10n.unknownError),
+            Text(_docker.error?.message ?? l10n.unknownError),
             const SizedBox(height: 27),
             Padding(
               padding: const EdgeInsets.all(17),
-              child: _buildSolution(Pros.docker.error!),
+              child: _buildSolution(_docker.error!),
             ),
             _buildEditHost(),
           ],
         ),
       );
     }
-    if (Pros.docker.items == null || Pros.docker.images == null) {
+    if (_docker.items == null || _docker.images == null) {
       return UIs.centerLoading;
     }
 
@@ -225,10 +226,11 @@ class _DockerManagePageState extends State<DockerManagePage> {
     return ExpandTile(
       title: Text(l10n.imagesList),
       subtitle: Text(
-        l10n.dockerImagesFmt(Pros.docker.images!.length),
+        l10n.dockerImagesFmt(_docker.images!.length),
         style: UIs.textGrey,
       ),
-      children: Pros.docker.images?.map(_buildImageItem).toList() ?? [],
+      initiallyExpanded: (_docker.images?.length ?? 0) <= 3,
+      children: _docker.images?.map(_buildImageItem).toList() ?? [],
     );
   }
 
@@ -280,7 +282,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
             child: CircularProgressIndicator(),
           ),
           UIs.height13,
-          Text(Pros.docker.runLog ?? '...'),
+          Text(_docker.runLog ?? '...'),
         ],
       ),
     );
@@ -321,8 +323,8 @@ class _DockerManagePageState extends State<DockerManagePage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(Pros.docker.edition ?? l10n.unknown),
-          Text(Pros.docker.version ?? l10n.unknown),
+          Text(_docker.edition ?? l10n.unknown),
+          Text(_docker.version ?? l10n.unknown),
         ],
       ),
     );
@@ -380,7 +382,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
                   onPressed: () async {
                     context.pop();
                     context.showLoadingDialog();
-                    final result = await Pros.docker.delete(
+                    final result = await _docker.delete(
                       dItem.containerId,
                       force,
                     );
@@ -399,7 +401,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
             break;
           case DockerMenuType.start:
             context.showLoadingDialog();
-            final result = await Pros.docker.start(dItem.containerId);
+            final result = await _docker.start(dItem.containerId);
             context.pop();
             if (result != null) {
               context.showRoundDialog(
@@ -410,7 +412,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
             break;
           case DockerMenuType.stop:
             context.showLoadingDialog();
-            final result = await Pros.docker.stop(dItem.containerId);
+            final result = await _docker.stop(dItem.containerId);
             context.pop();
             if (result != null) {
               context.showRoundDialog(
@@ -421,7 +423,7 @@ class _DockerManagePageState extends State<DockerManagePage> {
             break;
           case DockerMenuType.restart:
             context.showLoadingDialog();
-            final result = await Pros.docker.restart(dItem.containerId);
+            final result = await _docker.restart(dItem.containerId);
             context.pop();
             if (result != null) {
               context.showRoundDialog(
@@ -476,8 +478,8 @@ class _DockerManagePageState extends State<DockerManagePage> {
 
   Widget _buildEditHost() {
     final children = <Widget>[];
-    final emptyImgs = Pros.docker.images?.isEmpty ?? false;
-    final emptyPs = Pros.docker.items?.isEmpty ?? false;
+    final emptyImgs = _docker.images?.isEmpty ?? false;
+    final emptyPs = _docker.items?.isEmpty ?? false;
     if (emptyPs && emptyImgs) {
       children.add(Padding(
         padding: const EdgeInsets.fromLTRB(17, 17, 17, 0),
@@ -522,6 +524,6 @@ class _DockerManagePageState extends State<DockerManagePage> {
   void _onSaveDockerHost(String val) {
     context.pop();
     Stores.docker.put(widget.spi.id, val.trim());
-    Pros.docker.refresh();
+    _docker.refresh();
   }
 }

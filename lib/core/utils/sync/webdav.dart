@@ -9,6 +9,7 @@ import 'package:toolbox/data/res/store.dart';
 import 'package:webdav_client/webdav_client.dart';
 
 abstract final class Webdav {
+  /// Some WebDAV provider only support non-root path
   static const _prefix = 'srvbox/';
 
   static var _client = WebdavClient(

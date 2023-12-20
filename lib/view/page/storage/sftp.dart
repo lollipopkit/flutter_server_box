@@ -160,7 +160,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
   Widget _buildAddBtn() {
     return IconButton(
-      onPressed: (() => context.showRoundDialog(
+      onPressed: () => context.showRoundDialog(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -176,7 +176,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
                 ),
               ],
             ),
-          )),
+          ),
       icon: const Icon(Icons.add),
     );
   }

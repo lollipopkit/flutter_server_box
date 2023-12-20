@@ -77,19 +77,19 @@ class SftpReqStatus {
   void onNotify(dynamic event) {
     var shouldDispose = false;
     switch (event) {
-      case SftpWorkerStatus val:
+      case final SftpWorkerStatus val:
         status = val;
         if (status == SftpWorkerStatus.finished) {
           dispose();
         }
         break;
-      case double val:
+      case final double val:
         progress = val;
         break;
-      case int val:
+      case final int val:
         size = val;
         break;
-      case Duration d:
+      case final Duration d:
         spentTime = d;
         break;
       default:

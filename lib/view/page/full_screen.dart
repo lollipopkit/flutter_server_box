@@ -69,7 +69,7 @@ class _FullScreenPageState extends State<FullScreenPage> with AfterLayoutMixin {
   double get _offset {
     // based on screen width
     final x = _screenWidth * 0.03;
-    var r = Random().nextDouble();
+    final r = Random().nextDouble();
     final n = Random().nextBool() ? -1 : 1;
     return n * x * r;
   }

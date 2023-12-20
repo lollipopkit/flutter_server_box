@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:toolbox/core/extension/stringx.dart';
 
 enum OS {
   android,
@@ -12,7 +13,7 @@ enum OS {
   fuchsia,
   unknown;
 
-  static final _os = () {
+  static final type = () {
     if (kIsWeb) {
       return OS.web;
     }
@@ -37,48 +38,26 @@ enum OS {
     return OS.unknown;
   }();
 
-  static OS get type => _os;
-
   @override
-  String toString() {
-    switch (this) {
-      case OS.android:
-        return 'Android';
-      case OS.ios:
-        return 'iOS';
-      case OS.linux:
-        return 'Linux';
-      case OS.macos:
-        return 'macOS';
-      case OS.windows:
-        return 'Windows';
-      case OS.web:
-        return 'Web';
-      case OS.fuchsia:
-        return 'Fuchsia';
-      case OS.unknown:
-        return 'Unknown';
-    }
-  }
+  String toString() => switch (this) {
+        OS.macos => 'macOS',
+        OS.ios => 'iOS',
+        final val => val.name.upperFirst,
+      };
 
   /// Whether has platform specific settings.
-  static bool get hasSettings {
-    switch (type) {
-      case OS.android:
-      case OS.ios:
-        return true;
-      default:
-        return false;
-    }
-  }
+  static final hasSpecSetting = switch (type) {
+    OS.android || OS.ios => true,
+    _ => false,
+  };
 }
 
-bool get isAndroid => OS.type == OS.android;
-bool get isIOS => OS.type == OS.ios;
-bool get isLinux => OS.type == OS.linux;
-bool get isMacOS => OS.type == OS.macos;
-bool get isWindows => OS.type == OS.windows;
-bool get isWeb => OS.type == OS.web;
-bool get isMobile => OS.type == OS.ios || OS.type == OS.android;
-bool get isDesktop =>
+final isAndroid = OS.type == OS.android;
+final isIOS = OS.type == OS.ios;
+final isLinux = OS.type == OS.linux;
+final isMacOS = OS.type == OS.macos;
+final isWindows = OS.type == OS.windows;
+final isWeb = OS.type == OS.web;
+final isMobile = OS.type == OS.ios || OS.type == OS.android;
+final isDesktop =
     OS.type == OS.linux || OS.type == OS.macos || OS.type == OS.windows;

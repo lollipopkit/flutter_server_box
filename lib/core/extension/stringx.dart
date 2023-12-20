@@ -15,4 +15,18 @@ extension StringX on String {
   }
 
   Uint8List get uint8List => Uint8List.fromList(utf8.encode(this));
+
+  /// Upper the first letter.
+  String get upperFirst {
+    if (isEmpty) {
+      return this;
+    }
+    final runes = codeUnits;
+    if (runes[0] >= 97 && runes[0] <= 122) {
+      final origin = String.fromCharCode(runes[0]);
+      final upper = origin.toUpperCase();
+      return replaceFirst(origin, upper);
+    }
+    return this;
+  }
 }

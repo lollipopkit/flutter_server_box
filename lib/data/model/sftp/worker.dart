@@ -56,7 +56,7 @@ Future<void> isolateMessageHandler(
   SendErrorFunction sendError,
 ) async {
   switch (data) {
-    case SftpReq val:
+    case final SftpReq val:
       switch (val.type) {
         case SftpReqType.download:
           await _download(data, mainSendPort, sendError);

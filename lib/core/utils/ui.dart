@@ -30,7 +30,7 @@ Future<void> loadFontFile(String localPath) async {
   if (name == null) return;
   final file = File(localPath);
   if (!await file.exists()) return;
-  var fontLoader = FontLoader(name);
+  final fontLoader = FontLoader(name);
   fontLoader.addFont(file.readAsBytes().byteData);
   await fontLoader.load();
 }
