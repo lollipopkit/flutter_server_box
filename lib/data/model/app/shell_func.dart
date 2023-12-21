@@ -220,7 +220,7 @@ const _statusCmds = [
   'cat /sys/class/thermal/thermal_zone*/temp',
   'hostname',
   'cat /proc/diskstats',
-  'cat /sys/class/power_supply/*/uevent',
+  'for f in /sys/class/power_supply/*/uevent; do cat "\$f"; echo; done',
   'nvidia-smi -q -x',
 ];
 

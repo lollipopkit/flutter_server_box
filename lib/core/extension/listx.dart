@@ -14,4 +14,24 @@ extension ListX<T> on List<T> {
     }
     return list;
   }
+
+  T? get firstOrNull => isEmpty ? null : first;
+
+  T? get lastOrNull => isEmpty ? null : last;
+
+  T? firstWhereOrNull(bool Function(T element) test) {
+    try {
+      return firstWhere(test);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  T? lastWhereOrNull(bool Function(T element) test) {
+    try {
+      return lastWhere(test);
+    } catch (_) {
+      return null;
+    }
+  }
 }

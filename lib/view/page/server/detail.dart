@@ -463,7 +463,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           children: [
             Text(
               disk.dev,
-              style: UIs.text12Bold,
+              style: UIs.text12,
               textScaler: _textFactor,
             ),
             Text(
@@ -485,7 +485,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                 backgroundColor: DynamicColors.progress.resolve(context),
                 color: primaryColor,
               ),
-              Text('${disk.usedPercent}%', style: UIs.text13Grey)
+              Text('${disk.usedPercent}%', style: UIs.text12Grey)
             ],
           ),
         )
@@ -560,7 +560,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             children: [
               Text(
                 device,
-                style: UIs.text12Bold,
+                style: UIs.text12,
                 textScaler: _textFactor,
                 maxLines: 1,
                 overflow: TextOverflow.fade,
@@ -642,7 +642,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             children: [
               Text('${battery.name}', style: UIs.text15),
               Text(
-                '${battery.status.name} - ${battery.cycle} - ${battery.powerNow}',
+                '${battery.status.name} - ${battery.cycle}',
                 style: UIs.text13Grey,
               ),
             ],

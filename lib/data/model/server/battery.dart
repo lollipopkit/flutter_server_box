@@ -17,14 +17,14 @@ class Battery {
   final BatteryStatus status;
   final String? name;
   final int? cycle;
-  final int? powerNow;
+  final String? tech;
 
   const Battery({
     required this.status,
     this.percent,
     this.name,
     this.cycle,
-    this.powerNow,
+    this.tech,
   });
 
   factory Battery.fromRaw(String raw) {
@@ -38,16 +38,25 @@ class Battery {
 
     final capacity = map['POWER_SUPPLY_CAPACITY']; // 30%
     final cycle = map['POWER_SUPPLY_CYCLE_COUNT']; // 30
-    final powerNow = map['POWER_SUPPLY_POWER_NOW']; // 30W
+
+    var name = map['POWER_SUPPLY_MODEL_NAME'];
+    name ??= map['POWER_SUPPLY_NAME'];
 
     return Battery(
       percent: capacity == null ? null : int.tryParse(capacity),
       status: BatteryStatus.parse(map['POWER_SUPPLY_STATUS']),
-      name: map['POWER_SUPPLY_MODEL_NAME'],
+      name: name,
       cycle: cycle == null ? null : int.tryParse(cycle),
-      powerNow: powerNow == null ? null : int.tryParse(powerNow),
+      tech: map['POWER_SUPPLY_TECHNOLOGY'],
     );
   }
+
+  @override
+  String toString() {
+    return 'Battery{$percent, $status, $name, $cycle}';
+  }
+
+  bool get isLiPoly => tech == 'Li-poly';
 }
 
 enum BatteryStatus {
@@ -72,14 +81,16 @@ enum BatteryStatus {
 }
 
 abstract final class Batteries {
-  static List<Battery> parse(String raw) {
+  static List<Battery> parse(String raw, [bool onlyLiPoly = false]) {
     final lines = raw.split('\n');
     final batteries = <Battery>[];
     final oneBatLines = <String>[];
     for (final line in lines) {
       if (line.isEmpty) {
         try {
-          batteries.add(Battery.fromRaw(oneBatLines.join('\n')));
+          final bat = Battery.fromRaw(oneBatLines.join('\n'));
+          if (onlyLiPoly && !bat.isLiPoly) continue;
+          batteries.add(bat);
         } catch (e, s) {
           Loggers.parse.warning(e, s);
         }

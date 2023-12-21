@@ -24,12 +24,10 @@ class ServerStatusUpdateReq {
 }
 
 Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
-  switch (req.system) {
-    case SystemType.linux:
-      return _getLinuxStatus(req);
-    case SystemType.bsd:
-      return _getBsdStatus(req);
-  }
+  return switch (req.system) {
+    SystemType.linux => _getLinuxStatus(req),
+    SystemType.bsd => _getBsdStatus(req),
+  };
 }
 
 // Wrap each operation with a try-catch, so that if one operation fails,
@@ -130,7 +128,9 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
 
   try {
     final battery = StatusCmdType.battery.find(segments);
-    final batteries = Batteries.parse(battery);
+
+    /// Only collect li-poly batteries
+    final batteries = Batteries.parse(battery, true);
     req.ss.batteries.clear();
     if (batteries.isNotEmpty) {
       req.ss.batteries.addAll(batteries);
