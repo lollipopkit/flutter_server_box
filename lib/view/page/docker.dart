@@ -365,16 +365,25 @@ class _DockerManagePageState extends State<DockerManagePage> {
             context.showRoundDialog(
               title: Text(l10n.attention),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(l10n.askContinue(
                     '${l10n.delete} Container(${dItem.name})',
                   )),
-                  StatefulBuilder(builder: (_, setState) {
-                    return Checkbox(
-                      value: force,
-                      onChanged: (val) => setState(() => force = val ?? false),
-                    );
-                  }),
+                  UIs.height13,
+                  Row(
+                    children: [
+                      StatefulBuilder(builder: (_, setState) {
+                        return Checkbox(
+                          value: force,
+                          onChanged: (val) => setState(
+                            () => force = val ?? false,
+                          ),
+                        );
+                      }),
+                      Text(l10n.force),
+                    ],
+                  )
                 ],
               ),
               actions: [

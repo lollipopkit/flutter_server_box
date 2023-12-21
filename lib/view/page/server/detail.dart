@@ -641,11 +641,16 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('${battery.name}', style: UIs.text15),
-              Text('${battery.status.name} - ${battery.cycle} - ${battery.powerNow}', style: UIs.text13Grey),
+              Text(
+                '${battery.status.name} - ${battery.cycle} - ${battery.powerNow}',
+                style: UIs.text13Grey,
+              ),
             ],
           ),
-          Text('${battery.percent?.toStringAsFixed(0)}%',
-              style: UIs.text13Grey),
+          Text(
+            '${battery.percent?.toStringAsFixed(0)}%',
+            style: UIs.text13Grey,
+          ),
         ],
       ),
     );

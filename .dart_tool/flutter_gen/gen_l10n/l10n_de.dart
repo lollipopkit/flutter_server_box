@@ -274,6 +274,9 @@ class SDe extends S {
   String get fontSize => 'Schriftgröße';
 
   @override
+  String get force => 'freiwillig';
+
+  @override
   String foundNUpdate(Object count) {
     return 'Update $count gefunden';
   }

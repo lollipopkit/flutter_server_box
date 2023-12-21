@@ -85,6 +85,7 @@
   "followSystem": "Ikuti sistem",
   "font": "Font",
   "fontSize": "Ukuran huruf",
+  "force": "sukarela",
   "foundNUpdate": "Menemukan {count} pembaruan",
   "fullScreen": "Mode Layar Penuh",
   "fullScreenJitter": "Jitter layar penuh",

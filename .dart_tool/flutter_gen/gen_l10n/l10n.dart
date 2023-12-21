@@ -608,6 +608,12 @@ abstract class S {
   /// **'Font size'**
   String get fontSize;
 
+  /// No description provided for @force.
+  ///
+  /// In en, this message translates to:
+  /// **'Force'**
+  String get force;
+
   /// No description provided for @foundNUpdate.
   ///
   /// In en, this message translates to:

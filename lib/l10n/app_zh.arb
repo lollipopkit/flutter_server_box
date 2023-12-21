@@ -85,6 +85,7 @@
   "followSystem": "跟随系统",
   "font": "字体",
   "fontSize": "字体大小",
+  "force": "强制",
   "foundNUpdate": "找到 {count} 个更新",
   "fullScreen": "全屏模式",
   "fullScreenJitter": "全屏模式抖动",

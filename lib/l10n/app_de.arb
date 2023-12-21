@@ -85,6 +85,7 @@
   "followSystem": "System verfolgen",
   "font": "Schriftarten",
   "fontSize": "Schriftgröße",
+  "force": "freiwillig",
   "foundNUpdate": "Update {count} gefunden",
   "fullScreen": "Vollbildmodus",
   "fullScreenJitter": "Jitter im Vollbildmodus",

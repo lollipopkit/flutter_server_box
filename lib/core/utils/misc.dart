@@ -24,7 +24,7 @@ Future<String?> getToken() async {
 }
 
 String? getFileName(String? path) {
-  if (path == null) {
+  if (path == null || path.isEmpty) {
     return null;
   }
   return path.split('/').last;

@@ -85,6 +85,7 @@
   "followSystem": "Follow system",
   "font": "Font",
   "fontSize": "Font size",
+  "force": "Force",
   "foundNUpdate": "Found {count} update",
   "fullScreen": "Full screen mode",
   "fullScreenJitter": "Full screen jitter",

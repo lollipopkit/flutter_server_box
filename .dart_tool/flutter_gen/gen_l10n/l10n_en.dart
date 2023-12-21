@@ -274,6 +274,9 @@ class SEn extends S {
   String get fontSize => 'Font size';
 
   @override
+  String get force => 'Force';
+
+  @override
   String foundNUpdate(Object count) {
     return 'Found $count update';
   }

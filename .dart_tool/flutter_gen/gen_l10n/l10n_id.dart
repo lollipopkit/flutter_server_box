@@ -274,6 +274,9 @@ class SId extends S {
   String get fontSize => 'Ukuran huruf';
 
   @override
+  String get force => 'sukarela';
+
+  @override
   String foundNUpdate(Object count) {
     return 'Menemukan $count pembaruan';
   }

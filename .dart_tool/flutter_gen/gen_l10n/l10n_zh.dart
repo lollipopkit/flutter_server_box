@@ -274,6 +274,9 @@ class SZh extends S {
   String get fontSize => '字体大小';
 
   @override
+  String get force => '强制';
+
+  @override
   String foundNUpdate(Object count) {
     return '找到 $count 个更新';
   }
@@ -1082,6 +1085,9 @@ class SZhTw extends SZh {
 
   @override
   String get fontSize => '字體大小';
+
+  @override
+  String get force => '強制';
 
   @override
   String foundNUpdate(Object count) {
