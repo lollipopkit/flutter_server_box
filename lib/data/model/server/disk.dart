@@ -19,6 +19,40 @@ class Disk {
     required this.size,
     required this.avail,
   });
+
+  static List<Disk> parse(String raw) {
+    final list = <Disk>[];
+    final items = raw.split('\n');
+    items.removeAt(0);
+    var pathCache = '';
+    for (var item in items) {
+      if (item.isEmpty) {
+        continue;
+      }
+      final vals = item.split(Miscs.numReg);
+      if (vals.length == 1) {
+        pathCache = vals[0];
+        continue;
+      }
+      if (pathCache != '') {
+        vals[0] = pathCache;
+        pathCache = '';
+      }
+      try {
+        list.add(Disk(
+          dev: vals[0],
+          mount: vals[5],
+          usedPercent: int.parse(vals[4].replaceFirst('%', '')),
+          used: vals[2],
+          size: vals[1],
+          avail: vals[3],
+        ));
+      } catch (e) {
+        continue;
+      }
+    }
+    return list;
+  }
 }
 
 class DiskIO extends TimeSeq<DiskIOPiece> {
@@ -116,40 +150,6 @@ class DiskIOPiece extends TimeSeqIface<DiskIOPiece> {
 
   @override
   bool same(DiskIOPiece other) => dev == other.dev;
-}
-
-List<Disk> parseDisk(String raw) {
-  final list = <Disk>[];
-  final items = raw.split('\n');
-  items.removeAt(0);
-  var pathCache = '';
-  for (var item in items) {
-    if (item.isEmpty) {
-      continue;
-    }
-    final vals = item.split(Miscs.numReg);
-    if (vals.length == 1) {
-      pathCache = vals[0];
-      continue;
-    }
-    if (pathCache != '') {
-      vals[0] = pathCache;
-      pathCache = '';
-    }
-    try {
-      list.add(Disk(
-        dev: vals[0],
-        mount: vals[5],
-        usedPercent: int.parse(vals[4].replaceFirst('%', '')),
-        used: vals[2],
-        size: vals[1],
-        avail: vals[3],
-      ));
-    } catch (e) {
-      continue;
-    }
-  }
-  return list;
 }
 
 /// Issue 88

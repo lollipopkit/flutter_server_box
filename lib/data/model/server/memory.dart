@@ -1,3 +1,5 @@
+import 'package:toolbox/core/extension/listx.dart';
+
 class Memory {
   final int total;
   final int free;
@@ -17,50 +19,35 @@ class Memory {
   }
 
   double get usedPercent => 1 - availPercent;
+
+  static Memory parse(String raw) {
+    final items = raw.split('\n').map((e) => memItemReg.firstMatch(e)).toList();
+
+    final total = int.tryParse(items
+                .firstWhereOrNull((e) => e?.group(1) == 'MemTotal:')
+                ?.group(2) ??
+            '1') ??
+        1;
+    final free = int.tryParse(items
+                .firstWhereOrNull((e) => e?.group(1) == 'MemFree:')
+                ?.group(2) ??
+            '0') ??
+        0;
+    final available = int.tryParse(items
+                .firstWhereOrNull((e) => e?.group(1) == 'MemAvailable:')
+                ?.group(2) ??
+            '0') ??
+        0;
+
+    return Memory(
+      total: total,
+      free: free,
+      avail: available,
+    );
+  }
 }
 
 final memItemReg = RegExp(r'([A-Z].+:)\s+([0-9]+) kB');
-
-Memory parseMem(String raw) {
-  final items = raw.split('\n').map((e) => memItemReg.firstMatch(e)).toList();
-
-  final total = int.tryParse(
-        items
-                .firstWhere(
-                  (e) => e?.group(1) == 'MemTotal:',
-                  orElse: () => null,
-                )
-                ?.group(2) ??
-            '1',
-      ) ??
-      1;
-  final free = int.tryParse(
-        items
-                .firstWhere(
-                  (e) => e?.group(1) == 'MemFree:',
-                  orElse: () => null,
-                )
-                ?.group(2) ??
-            '0',
-      ) ??
-      0;
-  final available = int.tryParse(
-        items
-                .firstWhere(
-                  (e) => e?.group(1) == 'MemAvailable:',
-                  orElse: () => null,
-                )
-                ?.group(2) ??
-            '0',
-      ) ??
-      0;
-
-  return Memory(
-    total: total,
-    free: free,
-    avail: available,
-  );
-}
 
 class Swap {
   final int total;
@@ -81,45 +68,30 @@ class Swap {
   String toString() {
     return 'Swap{total: $total, free: $free, cached: $cached}';
   }
-}
 
-Swap parseSwap(String raw) {
-  final items = raw.split('\n').map((e) => memItemReg.firstMatch(e)).toList();
+  static Swap parse(String raw) {
+    final items = raw.split('\n').map((e) => memItemReg.firstMatch(e)).toList();
 
-  final total = int.tryParse(
-        items
-                .firstWhere(
-                  (e) => e?.group(1) == 'SwapTotal:',
-                  orElse: () => null,
-                )
+    final total = int.tryParse(items
+                .firstWhereOrNull((e) => e?.group(1) == 'SwapTotal:')
                 ?.group(2) ??
-            '1',
-      ) ??
-      0;
-  final free = int.tryParse(
-        items
-                .firstWhere(
-                  (e) => e?.group(1) == 'SwapFree:',
-                  orElse: () => null,
-                )
+            '1') ??
+        0;
+    final free = int.tryParse(items
+                .firstWhereOrNull((e) => e?.group(1) == 'SwapFree:')
                 ?.group(2) ??
-            '1',
-      ) ??
-      0;
-  final cached = int.tryParse(
-        items
-                .firstWhere(
-                  (e) => e?.group(1) == 'SwapCached:',
-                  orElse: () => null,
-                )
+            '1') ??
+        0;
+    final cached = int.tryParse(items
+                .firstWhereOrNull((e) => e?.group(1) == 'SwapCached:')
                 ?.group(2) ??
-            '0',
-      ) ??
-      0;
+            '0') ??
+        0;
 
-  return Swap(
-    total: total,
-    free: free,
-    cached: cached,
-  );
+    return Swap(
+      total: total,
+      free: free,
+      cached: cached,
+    );
+  }
 }

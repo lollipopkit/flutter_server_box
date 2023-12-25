@@ -39,7 +39,7 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
       DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
   try {
-    final net = parseNetSpeed(StatusCmdType.net.find(segments), time);
+    final net = NetSpeed.parse(StatusCmdType.net.find(segments), time);
     req.ss.netSpeed.update(net);
   } catch (e, s) {
     Loggers.parse.warning(e, s);
@@ -66,7 +66,7 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   }
 
   try {
-    final cpus = parseCPU(StatusCmdType.cpu.find(segments));
+    final cpus = OneTimeCpuStatus.parse(StatusCmdType.cpu.find(segments));
     req.ss.cpu.update(cpus);
     req.ss.temps.parse(
       StatusCmdType.tempType.find(segments),
@@ -77,7 +77,7 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   }
 
   try {
-    final tcp = parseConn(StatusCmdType.conn.find(segments));
+    final tcp = Conn.parse(StatusCmdType.conn.find(segments));
     if (tcp != null) {
       req.ss.tcp = tcp;
     }
@@ -86,13 +86,13 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   }
 
   try {
-    req.ss.disk = parseDisk(StatusCmdType.disk.find(segments));
+    req.ss.disk = Disk.parse(StatusCmdType.disk.find(segments));
   } catch (e, s) {
     Loggers.parse.warning(e, s);
   }
 
   try {
-    req.ss.mem = parseMem(StatusCmdType.mem.find(segments));
+    req.ss.mem = Memory.parse(StatusCmdType.mem.find(segments));
   } catch (e, s) {
     Loggers.parse.warning(e, s);
   }
@@ -107,7 +107,7 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   }
 
   try {
-    req.ss.swap = parseSwap(StatusCmdType.mem.find(segments));
+    req.ss.swap = Swap.parse(StatusCmdType.mem.find(segments));
   } catch (e, s) {
     Loggers.parse.warning(e, s);
   }
@@ -120,8 +120,7 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   }
 
   try {
-    final nvidia = NvidiaSmi.fromXml(StatusCmdType.nvidia.find(segments));
-    req.ss.nvidia = nvidia;
+    req.ss.nvidia = NvidiaSmi.fromXml(StatusCmdType.nvidia.find(segments));
   } catch (e, s) {
     Loggers.parse.warning(e, s);
   }
@@ -148,7 +147,7 @@ Future<ServerStatus> _getBsdStatus(ServerStatusUpdateReq req) async {
 
   try {
     final time = int.parse(BSDStatusCmdType.time.find(segments));
-    final net = parseBsdNetSpeed(BSDStatusCmdType.net.find(segments), time);
+    final net = NetSpeed.parseBsd(BSDStatusCmdType.net.find(segments), time);
     req.ss.netSpeed.update(net);
   } catch (e, s) {
     Loggers.parse.warning(e, s);
@@ -182,7 +181,7 @@ Future<ServerStatus> _getBsdStatus(ServerStatusUpdateReq req) async {
   }
 
   try {
-    req.ss.disk = parseDisk(BSDStatusCmdType.disk.find(segments));
+    req.ss.disk = Disk.parse(BSDStatusCmdType.disk.find(segments));
   } catch (e, s) {
     Loggers.parse.warning(e, s);
   }

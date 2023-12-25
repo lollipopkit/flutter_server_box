@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/utils/platform/path.dart';
@@ -294,13 +295,18 @@ class ServerProvider extends ChangeNotifier {
         if (writeResult == null || writeResult.isNotEmpty) {
           throw Exception('$writeResult');
         }
+      } on SSHAuthAbortError catch (e) {
+        TryLimiter.inc(sid);
+        s.status.err = e.toString();
+        _setServerState(s, ServerState.failed);
+        return;
       } catch (e) {
         Loggers.app.warning('Write script to ${spi.name} by shell', e);
-        // by sftp
+
+        /// by sftp
         final localPath = joinPath(await Paths.doc, 'install.sh');
         final file = File(localPath);
         try {
-          Loggers.app.info('Using SFTP to write script to ${spi.name}');
           file.writeAsString(ShellFunc.allScript);
           final completer = Completer();
           final homePath = (await s.client?.run('echo \$HOME').string)?.trim();

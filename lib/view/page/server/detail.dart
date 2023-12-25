@@ -69,7 +69,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   @override
   void initState() {
     super.initState();
-    _cardsOrder.addAll(Stores.setting.detailCardOrder.fetch());
+    //_cardsOrder.addAll(Stores.setting.detailCardOrder.fetch());
+    _cardsOrder.addAll(_cardBuildMap.keys);
   }
 
   @override
@@ -313,7 +314,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildGpuView(ServerStatus ss) {
     if (ss.nvidia == null) return UIs.placeholder;
-    final children = ss.nvidia!.map((e) => _buildGpuItem(e)).toList();
+    final children = ss.nvidia?.map((e) => _buildGpuItem(e)).toList() ?? [];
     return CardX(
       child: ExpandTile(
         title: const Text('GPU'),
@@ -333,8 +334,25 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     }
     return ListTile(
       title: Text(item.name, style: UIs.text13),
+      leading: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            '${item.percent}%',
+            style: UIs.text12Grey,
+            textScaler: _textFactor,
+          ),
+          const Divider(),
+          Text(
+            '${item.temp} °C',
+            style: UIs.text12Grey,
+            textScaler: _textFactor,
+          ),
+        ],
+      ),
       subtitle: Text(
-        '${item.power} - ${item.temp} °C\n${mem.used} / ${mem.total} ${mem.unit} - ${item.fanSpeed} RPM',
+        '${item.power} - ${item.fanSpeed} RPM\n${mem.used} / ${mem.total} ${mem.unit}',
         style: UIs.text12Grey,
         textScaler: _textFactor,
       ),
@@ -343,11 +361,6 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         mainAxisAlignment: MainAxisAlignment.end,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            '${item.percent}%',
-            style: UIs.text12Grey,
-            textScaler: _textFactor,
-          ),
           IconButton(
             onPressed: () {
               final height = () {
