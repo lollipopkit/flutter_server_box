@@ -34,7 +34,6 @@ import '../../widget/appbar.dart';
 import '../../widget/input_field.dart';
 import '../../widget/cardx.dart';
 import '../../widget/store_switch.dart';
-import '../../widget/value_notifier.dart';
 
 class SettingPage extends StatefulWidget {
   const SettingPage({super.key});
@@ -285,9 +284,9 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () {
         _updateIntervalKey.currentState?.showButtonMenu();
       },
-      trailing: ValueBuilder(
+      trailing: ListenableBuilder(
         listenable: _updateInterval,
-        build: () => PopupMenuButton(
+        builder: (_, __) => PopupMenuButton(
           key: _updateIntervalKey,
           itemBuilder: (_) => items,
           initialValue: _updateInterval.value,
@@ -311,9 +310,9 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildAppColor() {
     return ListTile(
       trailing: ClipOval(
-        child: ValueBuilder(
+        child: ListenableBuilder(
           listenable: _selectedColorValue,
-          build: () => Container(
+          builder: (_, __) => Container(
             color: primaryColor,
             height: 27,
             width: 27,
@@ -444,8 +443,8 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () {
         _maxRetryKey.currentState?.showButtonMenu();
       },
-      trailing: ValueBuilder(
-        build: () => PopupMenuButton(
+      trailing: ListenableBuilder(
+        builder: (_, __) => PopupMenuButton(
           key: _maxRetryKey,
           itemBuilder: (BuildContext context) => items,
           initialValue: _maxRetryCount.value,
@@ -490,9 +489,9 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () {
         _themeKey.currentState?.showButtonMenu();
       },
-      trailing: ValueBuilder(
+      trailing: ListenableBuilder(
         listenable: _nightMode,
-        build: () => PopupMenuButton(
+        builder: (_, __) => PopupMenuButton(
           key: _themeKey,
           itemBuilder: (BuildContext context) => items,
           initialValue: _nightMode.value,
@@ -577,9 +576,9 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildTermFontSize() {
-    return ValueBuilder(
+    return ListenableBuilder(
       listenable: _termFontSize,
-      build: () => ListTile(
+      builder: (_, __) => ListTile(
         title: Text(l10n.fontSize),
         trailing: Text(
           _termFontSize.value.toString(),
@@ -641,9 +640,9 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () {
         _localeKey.currentState?.showButtonMenu();
       },
-      trailing: ValueBuilder(
+      trailing: ListenableBuilder(
         listenable: _localeCode,
-        build: () => PopupMenuButton(
+        builder: (_, __) => PopupMenuButton(
           key: _localeKey,
           itemBuilder: (BuildContext context) => items,
           initialValue: _localeCode.value,
@@ -681,9 +680,9 @@ class _SettingPageState extends State<SettingPage> {
     ).toList();
     return ListTile(
       title: Text('${l10n.light} ${l10n.theme.toLowerCase()}'),
-      trailing: ValueBuilder(
+      trailing: ListenableBuilder(
         listenable: _editorTheme,
-        build: () => PopupMenuButton(
+        builder: (_, __) => PopupMenuButton(
           key: _editorThemeKey,
           itemBuilder: (BuildContext context) => items,
           initialValue: _editorTheme.value,
@@ -714,9 +713,9 @@ class _SettingPageState extends State<SettingPage> {
     ).toList();
     return ListTile(
       title: Text('${l10n.dark} ${l10n.theme.toLowerCase()}'),
-      trailing: ValueBuilder(
+      trailing: ListenableBuilder(
         listenable: _editorDarkTheme,
-        build: () => PopupMenuButton(
+        builder: (_, __) => PopupMenuButton(
           key: _editorDarkThemeKey,
           itemBuilder: (BuildContext context) => items,
           initialValue: _editorDarkTheme.value,
@@ -768,9 +767,9 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () {
         _rotateQuarterKey.currentState?.showButtonMenu();
       },
-      trailing: ValueBuilder(
+      trailing: ListenableBuilder(
         listenable: _rotateQuarter,
-        build: () => PopupMenuButton(
+        builder: (_, __) => PopupMenuButton(
           key: _rotateQuarterKey,
           itemBuilder: (BuildContext context) => items,
           initialValue: _rotateQuarter.value,
@@ -816,9 +815,9 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       title: Text(l10n.keyboardType),
       subtitle: Text(l10n.keyboardCompatibility, style: UIs.textGrey),
-      trailing: ValueBuilder(
+      trailing: ListenableBuilder(
         listenable: _keyboardType,
-        build: () => PopupMenuButton<int>(
+        builder: (_, __) => PopupMenuButton<int>(
           key: _keyboardTypeKey,
           itemBuilder: (BuildContext context) => items,
           initialValue: _keyboardType.value,
@@ -872,9 +871,9 @@ class _SettingPageState extends State<SettingPage> {
         .toList();
     return ListTile(
       title: Text(l10n.netViewType),
-      trailing: ValueBuilder(
+      trailing: ListenableBuilder(
         listenable: _netViewType,
-        build: () => PopupMenuButton<NetViewType>(
+        builder: (_, __) => PopupMenuButton<NetViewType>(
           key: _netViewTypeKey,
           itemBuilder: (BuildContext context) => items,
           initialValue: _netViewType.value,
@@ -942,9 +941,9 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       title: Text(l10n.textScaler),
       subtitle: Text(l10n.textScalerTip, style: UIs.textGrey),
-      trailing: ValueBuilder(
+      trailing: ListenableBuilder(
         listenable: _textScaler,
-        build: () => Text(
+        builder: (_, __) => Text(
           _textScaler.value.toString(),
           style: UIs.text15,
         ),
@@ -1013,9 +1012,9 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildEditorFontSize() {
-    return ValueBuilder(
+    return ListenableBuilder(
       listenable: _editorFontSize,
-      build: () => ListTile(
+      builder: (_, __) => ListTile(
         title: Text(l10n.fontSize),
         trailing: Text(
           _editorFontSize.value.toString(),

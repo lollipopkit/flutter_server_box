@@ -81,7 +81,7 @@ Overlay 3.0T 1.4t 1.6T 48%/Share/CacheDev1_data/Container/Container-SATA/LIB/DOC
 /dev/mapper/vg1-snap10016
                           3.0T 1.4T 1.6T 48% /mnt/snapshot/1/10016
 ''';
-    final disks = parseDisk(raw);
+    final disks = Disk.parse(raw);
     print(disks.map((e) => '${e.mount} ${e.used}').join('\n'));
   });
 }

@@ -14,7 +14,6 @@ import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/try_limiter.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/view/widget/value_notifier.dart';
 
 import '../../../core/route.dart';
 import '../../../data/model/app/net_view.dart';
@@ -61,9 +60,9 @@ class _ServerPageState extends State<ServerPage>
     super.build(context);
     return Scaffold(
       appBar: _buildTagsSwitcher(Pros.server),
-      body: ValueBuilder(
+      body: ListenableBuilder(
         listenable: Stores.setting.textFactor.listenable(),
-        build: () {
+        builder: (_, __) {
           _textFactorDouble = Stores.setting.textFactor.fetch();
           _textFactor = TextScaler.linear(_textFactorDouble);
           return _buildBody();
@@ -200,9 +199,9 @@ class _ServerPageState extends State<ServerPage>
     final cardStatus = _getCardNoti(id);
     final title = _buildServerCardTitle(srv.status, srv.state, srv.spi);
 
-    return ValueBuilder(
+    return ListenableBuilder(
       listenable: cardStatus,
-      build: () {
+      builder: (_, __) {
         late final List<Widget> children;
         if (srv.state == ServerState.finished) {
           if (cardStatus.value.flip) {
@@ -417,9 +416,9 @@ class _ServerPageState extends State<ServerPage>
 
   Widget _buildDisk(ServerStatus ss, String id) {
     final cardNoti = _getCardNoti(id);
-    return ValueBuilder(
+    return ListenableBuilder(
       listenable: cardNoti,
-      build: () {
+      builder: (_, __) {
         final rootDisk = findRootDisk(ss.disk);
         final isSpeed = cardNoti.value.diskIO ??
             !Stores.setting.serverTabPreferDiskAmount.fetch();

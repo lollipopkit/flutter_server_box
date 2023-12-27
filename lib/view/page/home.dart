@@ -29,7 +29,6 @@ import '../../data/res/url.dart';
 import '../widget/appbar.dart';
 import '../widget/cardx.dart';
 import '../widget/url_text.dart';
-import '../widget/value_notifier.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -114,6 +113,7 @@ class _HomePageState extends State<HomePage>
     return Scaffold(
       drawer: _buildDrawer(),
       appBar: CustomAppBar(
+        centerTitle: false,
         title: const Text(BuildData.name),
         actions: <Widget>[
           IconButton(
@@ -133,9 +133,9 @@ class _HomePageState extends State<HomePage>
           }
         },
       ),
-      bottomNavigationBar: ValueBuilder(
+      bottomNavigationBar: ListenableBuilder(
         listenable: _selectIndex,
-        build: _buildBottomBar,
+        builder: (_, __) => _buildBottomBar(),
       ),
     );
   }

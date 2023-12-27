@@ -17,7 +17,6 @@ import '../../widget/appbar.dart';
 import '../../widget/input_field.dart';
 import '../../widget/cardx.dart';
 import '../../widget/tag.dart';
-import '../../widget/value_notifier.dart';
 
 class ServerEditPage extends StatefulWidget {
   const ServerEditPage({super.key, this.spi});
@@ -221,9 +220,9 @@ class _ServerEditPageState extends State<ServerEditPage> {
       _buildJumpServer(),
       ListTile(
         title: Text(l10n.autoConnect),
-        trailing: ValueBuilder(
+        trailing: ListenableBuilder(
           listenable: _autoConnect,
-          build: () => Switch(
+          builder: (_, __) => Switch(
             value: _autoConnect.value,
             onChanged: (val) {
               _autoConnect.value = val;
@@ -245,9 +244,9 @@ class _ServerEditPageState extends State<ServerEditPage> {
   Widget _buildAuth() {
     final switch_ = ListTile(
       title: Text(l10n.keyAuth),
-      trailing: ValueBuilder(
+      trailing: ListenableBuilder(
         listenable: _keyIdx,
-        build: () => Switch(
+        builder: (_, __) => Switch(
           value: _keyIdx.value != null,
           onChanged: (val) {
             if (val) {
@@ -261,9 +260,9 @@ class _ServerEditPageState extends State<ServerEditPage> {
     );
 
     /// Put [switch_] out of [ValueBuilder] to avoid rebuild
-    return ValueBuilder(
+    return ListenableBuilder(
       listenable: _keyIdx,
-      build: () {
+      builder: (_, __) {
         final children = <Widget>[switch_];
         if (_keyIdx.value != null) {
           children.add(_buildKeyAuth());
@@ -334,9 +333,9 @@ class _ServerEditPageState extends State<ServerEditPage> {
   }
 
   Widget _buildRadio(int index, PrivateKeyInfo pki) {
-    return ValueBuilder(
+    return ListenableBuilder(
       listenable: _keyIdx,
-      build: () => Radio<int>(
+      builder: (_, __) => Radio<int>(
         value: index,
         groupValue: _keyIdx.value,
         onChanged: (value) {
@@ -347,9 +346,9 @@ class _ServerEditPageState extends State<ServerEditPage> {
   }
 
   Widget _buildJumpServer() {
-    return ValueBuilder(
+    return ListenableBuilder(
       listenable: _jumpServer,
-      build: () {
+      builder: (_, __) {
         final children = Pros.server.servers
             .where((element) => element.spi.jumpId == null)
             .where((element) => element.spi.id != widget.spi?.id)

@@ -21,7 +21,6 @@ import 'package:toolbox/view/widget/expand_tile.dart';
 import 'package:toolbox/view/widget/cardx.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/store_switch.dart';
-import 'package:toolbox/view/widget/value_notifier.dart';
 
 class BackupPage extends StatelessWidget {
   BackupPage({super.key});
@@ -161,9 +160,9 @@ class BackupPage extends StatelessWidget {
           ),
           ListTile(
             title: Text(l10n.manual),
-            trailing: ValueBuilder(
+            trailing: ListenableBuilder(
               listenable: webdavLoading,
-              build: () {
+              builder: (_, __) {
                 if (webdavLoading.value) {
                   return UIs.centerSizedLoadingSmall;
                 }

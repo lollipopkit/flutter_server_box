@@ -5,7 +5,6 @@ import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/locale.dart';
 import 'package:toolbox/data/res/rebuild.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/view/widget/value_notifier.dart';
 
 import 'core/utils/ui.dart';
 import 'data/res/build_data.dart';
@@ -27,20 +26,16 @@ class MyApp extends StatelessWidget {
   }
 
   Widget _wrapTheme(BuildContext context) {
-    return ValueBuilder(
+    return ListenableBuilder(
       listenable: RebuildNodes.app,
-      build: () {
+      builder: (_, __) {
         final tMode = Stores.setting.themeMode.fetch();
         // Issue #57
-        var themeMode = ThemeMode.system;
-        switch (tMode) {
-          case 1 || 2:
-            themeMode = ThemeMode.values[tMode];
-            break;
-          case 3:
-            themeMode = ThemeMode.dark;
-            break;
-        }
+        final themeMode = switch (tMode) {
+          1 || 2 => ThemeMode.values[tMode],
+          3 => ThemeMode.dark,
+          _ => ThemeMode.system,
+        };
         final locale = Stores.setting.locale.fetch().toLocale;
         final darkTheme = ThemeData(
           useMaterial3: true,
