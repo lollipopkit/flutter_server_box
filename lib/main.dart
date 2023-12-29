@@ -3,6 +3,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
@@ -93,6 +94,8 @@ Future<void> _initApp() async {
     }
     // SharedPreferences is only used on Android for saving home widgets settings.
     SharedPreferences.setPrefix('');
+    // try switch to highest refresh rate
+    await FlutterDisplayMode.setHighRefreshRate();
   }
   if (isIOS || isMacOS) {
     if (Stores.setting.icloudSync.fetch()) ICloud.sync();
