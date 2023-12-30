@@ -7,6 +7,7 @@ import 'package:intl/intl.dart' as intl;
 
 import 'l10n_de.dart';
 import 'l10n_en.dart';
+import 'l10n_fr.dart';
 import 'l10n_id.dart';
 import 'l10n_zh.dart';
 
@@ -93,6 +94,7 @@ abstract class S {
   static const List<Locale> supportedLocales = <Locale>[
     Locale('de'),
     Locale('en'),
+    Locale('fr'),
     Locale('id'),
     Locale('zh'),
     Locale('zh', 'TW')
@@ -1644,7 +1646,7 @@ class _SDelegate extends LocalizationsDelegate<S> {
   }
 
   @override
-  bool isSupported(Locale locale) => <String>['de', 'en', 'id', 'zh'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>['de', 'en', 'fr', 'id', 'zh'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_SDelegate old) => false;
@@ -1666,6 +1668,7 @@ S lookupS(Locale locale) {
   switch (locale.languageCode) {
     case 'de': return SDe();
     case 'en': return SEn();
+    case 'fr': return SFr();
     case 'id': return SId();
     case 'zh': return SZh();
   }
