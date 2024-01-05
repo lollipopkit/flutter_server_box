@@ -79,6 +79,9 @@ class SEn extends S {
   String get bgRun => 'Run in backgroud';
 
   @override
+  String get bgRunTip => 'This switch only means the program will try to run in the background, whether it can run in the background depends on whether the permission is enabled or not. For native Android, please disable \"Battery Optimization\" in this app, and for miui, please change the power saving policy to \"Unlimited\".';
+
+  @override
   String get bioAuth => 'Biometric auth';
 
   @override

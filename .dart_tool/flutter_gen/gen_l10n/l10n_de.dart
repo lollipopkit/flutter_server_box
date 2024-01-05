@@ -79,6 +79,9 @@ class SDe extends S {
   String get bgRun => 'Hintergrundaktualisierung';
 
   @override
+  String get bgRunTip => 'Dieser Schalter bedeutet nur, dass die App versuchen wird, im Hintergrund zu laufen. Ob sie im Hintergrund laufen kann, hängt davon ab, ob die Berechtigungen aktiviert sind oder nicht. Bei nativem Android deaktivieren Sie bitte \"Batterieoptimierung\" in dieser App, und bei miui ändern Sie bitte die Energiesparrichtlinie auf \"Unbegrenzt\".';
+
+  @override
   String get bioAuth => 'Biozertifizierung';
 
   @override

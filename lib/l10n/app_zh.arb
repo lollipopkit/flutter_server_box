@@ -24,6 +24,7 @@
   "backupVersionNotMatch": "备份版本不匹配，无法恢复",
   "battery": "电池",
   "bgRun": "后台运行",
+  "bgRunTip": "此开关只代表程序会尝试在后台运行，具体能否后台运行取决于是否开启了权限。原生 Android 请关闭本 App 的“电池优化”，MIUI 请修改省电策略为“无限制”。",
   "bioAuth": "生物认证",
   "canPullRefresh": "可以下拉刷新",
   "cancel": "取消",

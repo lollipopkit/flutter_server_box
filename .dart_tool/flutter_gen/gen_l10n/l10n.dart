@@ -244,6 +244,12 @@ abstract class S {
   /// **'Run in backgroud'**
   String get bgRun;
 
+  /// No description provided for @bgRunTip.
+  ///
+  /// In en, this message translates to:
+  /// **'This switch only means the program will try to run in the background, whether it can run in the background depends on whether the permission is enabled or not. For native Android, please disable \"Battery Optimization\" in this app, and for miui, please change the power saving policy to \"Unlimited\".'**
+  String get bgRunTip;
+
   /// No description provided for @bioAuth.
   ///
   /// In en, this message translates to:

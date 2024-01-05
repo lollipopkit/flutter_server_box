@@ -8,6 +8,7 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/utils/platform/auth.dart';
 import 'package:toolbox/data/res/store.dart';
+import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/page/setting/platform_pub.dart';
 import 'package:toolbox/view/widget/appbar.dart';
 import 'package:toolbox/view/widget/input_field.dart';
@@ -51,6 +52,7 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
   Widget _buildBgRun() {
     return ListTile(
       title: Text(l10n.bgRun),
+      subtitle: Text(l10n.bgRunTip, style: UIs.textGrey),
       trailing: StoreSwitch(prop: Stores.setting.bgRun),
     );
   }

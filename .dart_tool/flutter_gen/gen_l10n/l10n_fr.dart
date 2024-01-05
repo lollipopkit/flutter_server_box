@@ -79,6 +79,9 @@ class SFr extends S {
   String get bgRun => 'Exécuter en arrière-plan';
 
   @override
+  String get bgRunTip => 'Ce commutateur signifie seulement que l\'application essaiera de fonctionner en arrière-plan. La possibilité de fonctionner en arrière-plan dépend de l\'activation ou non des autorisations. Pour Android, veuillez désactiver l\'option \"Optimisation de la batterie\" dans cette application, et pour Miui, veuillez changer la politique d\'économie d\'énergie en \"Illimité\".';
+
+  @override
   String get bioAuth => 'Authentification biométrique';
 
   @override

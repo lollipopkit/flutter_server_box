@@ -139,7 +139,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
           keyboardType: _keyboardType,
           textStyle: _terminalStyle,
           theme: _terminalTheme,
-          deleteDetection: isIOS,
+          deleteDetection: isMobile,
           autofocus: true,
           keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,
           hideScrollBar: false,

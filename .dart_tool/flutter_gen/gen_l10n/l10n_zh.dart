@@ -79,6 +79,9 @@ class SZh extends S {
   String get bgRun => '后台运行';
 
   @override
+  String get bgRunTip => '此开关只代表程序会尝试在后台运行，具体能否后台运行取决于是否开启了权限。原生 Android 请关闭本 App 的“电池优化”，MIUI 请修改省电策略为“无限制”。';
+
+  @override
   String get bioAuth => '生物认证';
 
   @override
@@ -896,6 +899,9 @@ class SZhTw extends SZh {
 
   @override
   String get bgRun => '背景運行';
+
+  @override
+  String get bgRunTip => '此開關只代表程式會嘗試在背景執行，具體能否背景運行取決於是否開啟了權限。 原生 Android 請關閉本 App 的“電池優化”，MIUI 請修改省電策略為“無限制”。';
 
   @override
   String get bioAuth => '生物認證';
