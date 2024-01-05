@@ -33,6 +33,8 @@
   "clear": "Entfernen",
   "close": "Schließen",
   "cmd": "Command",
+  "collapseUI": "Zusammenbrechen",
+  "collapseUITip": "Ob lange Listen in der Benutzeroberfläche standardmäßig eingeklappt werden sollen oder nicht",
   "conn": "Verbindung",
   "connected": "in Verbindung gebracht",
   "containerName": "Container Name",

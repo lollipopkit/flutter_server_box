@@ -106,6 +106,12 @@ class SDe extends S {
   String get cmd => 'Command';
 
   @override
+  String get collapseUI => 'Zusammenbrechen';
+
+  @override
+  String get collapseUITip => 'Ob lange Listen in der Benutzeroberfläche standardmäßig eingeklappt werden sollen oder nicht';
+
+  @override
   String get conn => 'Verbindung';
 
   @override

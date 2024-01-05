@@ -298,6 +298,18 @@ abstract class S {
   /// **'Command'**
   String get cmd;
 
+  /// No description provided for @collapseUI.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse'**
+  String get collapseUI;
+
+  /// No description provided for @collapseUITip.
+  ///
+  /// In en, this message translates to:
+  /// **'Whether to collapse long lists present in the UI by default'**
+  String get collapseUITip;
+
   /// No description provided for @conn.
   ///
   /// In en, this message translates to:

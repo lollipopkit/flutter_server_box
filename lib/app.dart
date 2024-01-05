@@ -1,23 +1,24 @@
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:toolbox/core/analysis.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/locale.dart';
+import 'package:toolbox/core/update.dart';
+import 'package:toolbox/core/utils/ui.dart';
+import 'package:toolbox/data/res/build_data.dart';
+import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/rebuild.dart';
 import 'package:toolbox/data/res/store.dart';
-
-import 'core/utils/ui.dart';
-import 'data/res/build_data.dart';
-import 'data/res/color.dart';
-import 'view/page/full_screen.dart';
-import 'view/page/home.dart';
+import 'package:toolbox/view/page/full_screen.dart';
+import 'package:toolbox/view/page/home.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    setTransparentNavigationBar(context);
+    _setup(context);
     return ListenableBuilder(
       listenable: RebuildNodes.app,
       builder: (_, __) {
@@ -81,6 +82,14 @@ class MyApp extends StatelessWidget {
           : const HomePage(),
     );
   }
+}
+
+void _setup(BuildContext context) async {
+  setTransparentNavigationBar(context);
+  if (Stores.setting.autoCheckAppUpdate.fetch()) {
+    doUpdate(context);
+  }
+  Analysis.init();
 }
 
 ThemeData _getAmoledTheme(ThemeData darkTheme) => darkTheme.copyWith(

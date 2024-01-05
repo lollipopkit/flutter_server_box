@@ -106,6 +106,12 @@ class SEn extends S {
   String get cmd => 'Command';
 
   @override
+  String get collapseUI => 'Collapse';
+
+  @override
+  String get collapseUITip => 'Whether to collapse long lists present in the UI by default';
+
+  @override
   String get conn => 'Connection';
 
   @override

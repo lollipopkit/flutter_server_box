@@ -33,6 +33,8 @@
   "clear": "Jernih",
   "close": "Menutup",
   "cmd": "Memerintah",
+  "collapseUI": "Runtuh",
+  "collapseUITip": "Apakah akan menciutkan daftar panjang yang ada di UI secara default atau tidak",
   "conn": "Koneksi",
   "connected": "Terhubung",
   "containerName": "Nama kontainer",

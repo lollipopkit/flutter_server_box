@@ -106,6 +106,12 @@ class SId extends S {
   String get cmd => 'Memerintah';
 
   @override
+  String get collapseUI => 'Runtuh';
+
+  @override
+  String get collapseUITip => 'Apakah akan menciutkan daftar panjang yang ada di UI secara default atau tidak';
+
+  @override
   String get conn => 'Koneksi';
 
   @override

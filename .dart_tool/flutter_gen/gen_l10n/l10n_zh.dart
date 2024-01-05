@@ -106,6 +106,12 @@ class SZh extends S {
   String get cmd => '命令';
 
   @override
+  String get collapseUI => '折叠';
+
+  @override
+  String get collapseUITip => '是否默认折叠UI中存在的长列表';
+
+  @override
   String get conn => '连接';
 
   @override
@@ -917,6 +923,12 @@ class SZhTw extends SZh {
 
   @override
   String get cmd => '命令';
+
+  @override
+  String get collapseUI => '折疊';
+
+  @override
+  String get collapseUITip => '是否預設折疊UI中存在的長列表';
 
   @override
   String get conn => '連接';

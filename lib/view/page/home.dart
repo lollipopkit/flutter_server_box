@@ -16,9 +16,7 @@ import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 
-import '../../core/analysis.dart';
 import '../../core/route.dart';
-import '../../core/update.dart';
 import '../../core/utils/ui.dart';
 import '../../data/model/app/github_id.dart';
 import '../../data/model/app/tab.dart';
@@ -87,7 +85,7 @@ class _HomePageState extends State<HomePage>
         if (!Pros.server.isAutoRefreshOn) {
           Pros.server.startAutoRefresh();
         }
-        updateHomeWidget();
+        HomeWidgetMC.update();
         break;
       case AppLifecycleState.paused:
         // Keep running in background on Android device
@@ -323,22 +321,10 @@ class _HomePageState extends State<HomePage>
   Future<void> afterFirstLayout(BuildContext context) async {
     // Auth required for first launch
     _auth();
-    if (Stores.setting.autoCheckAppUpdate.fetch()) {
-      doUpdate(context);
-    }
-    updateHomeWidget();
+    HomeWidgetMC.update();
     await GetIt.I.allReady();
     await Pros.server.load();
     await Pros.server.refreshData();
-    if (!Analysis.enabled) {
-      Analysis.init();
-    }
-  }
-
-  void updateHomeWidget() {
-    if (Stores.setting.autoUpdateHomeWidget.fetch()) {
-      HomeWidgetMC.update();
-    }
   }
 
   Future<void> _onLongPressSetting() async {

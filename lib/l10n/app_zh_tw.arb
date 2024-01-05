@@ -33,6 +33,8 @@
   "clear": "清除",
   "close": "關閉",
   "cmd": "命令",
+  "collapseUI": "折疊",
+  "collapseUITip": "是否預設折疊UI中存在的長列表",
   "conn": "連接",
   "connected": "已連接",
   "containerName": "容器名稱",

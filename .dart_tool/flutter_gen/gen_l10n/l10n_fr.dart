@@ -106,6 +106,12 @@ class SFr extends S {
   String get cmd => 'Commande';
 
   @override
+  String get collapseUI => 'обвал';
+
+  @override
+  String get collapseUITip => 'Réduction ou non des longues listes présentes dans l\'interface utilisateur par défaut';
+
+  @override
   String get conn => 'Connexion';
 
   @override

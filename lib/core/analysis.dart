@@ -11,6 +11,7 @@ class Analysis {
   static bool enabled = false;
 
   static Future<void> init() async {
+    if (enabled) return;
     if (!BuildMode.isRelease) {
       return;
     }

@@ -139,6 +139,7 @@ class _SettingPageState extends State<SettingPage> {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 17),
         children: [
+          /// TODO: Remember add new items in front of the each list, so the user can easily find the new items
           _buildTitle('App'),
           _buildApp(),
           _buildTitle(l10n.server),
@@ -203,6 +204,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildServer() {
     return Column(
       children: [
+        _buildCollapseUI(),
         _buildServerFuncBtns(),
         _buildSequence(),
         _buildNetViewType(),
@@ -1102,6 +1104,14 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(l10n.highlight),
       subtitle: Text(l10n.editorHighlightTip, style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.editorHighlight),
+    );
+  }
+
+  Widget _buildCollapseUI() {
+    return ListTile(
+      title: Text(l10n.collapseUI),
+      subtitle: Text(l10n.collapseUITip, style: UIs.textGrey),
+      trailing: StoreSwitch(prop: _setting.collapseUIDefault),
     );
   }
 }

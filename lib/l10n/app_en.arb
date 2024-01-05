@@ -33,6 +33,8 @@
   "clear": "Clear",
   "close": "Close",
   "cmd": "Command",
+  "collapseUI": "Collapse",
+  "collapseUITip": "Whether to collapse long lists present in the UI by default",
   "conn": "Connection",
   "connected": "Connected",
   "containerName": "Container name",

@@ -38,11 +38,6 @@ class ServerDetailPage extends StatefulWidget {
 
 class _ServerDetailPageState extends State<ServerDetailPage>
     with SingleTickerProviderStateMixin {
-  late MediaQueryData _media;
-  final Order<String> _cardsOrder = [];
-
-  late final _textFactor = TextScaler.linear(Stores.setting.textFactor.fetch());
-
   late final _cardBuildMap = Map.fromIterables(
     Defaults.detailCardOrder,
     [
@@ -58,7 +53,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     ],
   );
 
-  var _netSortType = _NetSortType.device;
+  late MediaQueryData _media;
+  final Order<String> _cardsOrder = [];
+
+  final _netSortType = ValueNotifier(_NetSortType.device);
+  late final _collapse = Stores.setting.collapseUIDefault.fetch();
+  late final _textFactor = TextScaler.linear(Stores.setting.textFactor.fetch());
 
   @override
   void didChangeDependencies() {
@@ -127,7 +127,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     return CardX(
       child: ExpandTile(
         leading: const Icon(Icons.computer),
-        initiallyExpanded: ss.more.entries.length < 7,
+        initiallyExpanded: _getInitExpand(ss.more.entries.length),
         title: Text(l10n.about),
         childrenPadding: const EdgeInsets.symmetric(
           horizontal: 17,
@@ -175,7 +175,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           ),
         ),
         childrenPadding: const EdgeInsets.symmetric(vertical: 13),
-        initiallyExpanded: ss.cpu.coresCount <= 8,
+        initiallyExpanded: _getInitExpand(ss.cpu.coresCount),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: details,
@@ -319,7 +319,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       child: ExpandTile(
         title: const Text('GPU'),
         leading: const Icon(Icons.memory, size: 17),
-        initiallyExpanded: children.length <= 3,
+        initiallyExpanded: _getInitExpand(children.length, 3),
         children: children,
       ),
     );
@@ -453,7 +453,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         title: Text(l10n.disk),
         childrenPadding: const EdgeInsets.only(bottom: 7),
         leading: const Icon(Icons.storage, size: 17),
-        initiallyExpanded: children.length <= 7,
+        initiallyExpanded: _getInitExpand(children.length),
         children: children,
       ),
     );
@@ -518,7 +518,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       ));
     } else {
       final devices = ns.devices;
-      devices.sort(_netSortType.getSortFunc(ns));
+      devices.sort(_netSortType.value.getSortFunc(ns));
       children.addAll(devices.map((e) => _buildNetSpeedItem(ns, e)));
     }
     return CardX(
@@ -527,36 +527,31 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           children: [
             Text(l10n.net),
             UIs.width13,
-            IconButton(
-              onPressed: () {
-                setState(() {
-                  _netSortType = _netSortType.next;
-                });
-              },
-              icon: AnimatedSwitcher(
+            ValueListenableBuilder(
+              valueListenable: _netSortType,
+              builder: (_, val, __) => AnimatedSwitcher(
                 duration: const Duration(milliseconds: 377),
                 transitionBuilder: (child, animation) => FadeTransition(
                   opacity: animation,
                   child: child,
                 ),
                 child: Row(
-                  key: ValueKey(_netSortType),
                   children: [
                     const Icon(Icons.sort, size: 17),
                     UIs.width7,
                     Text(
-                      _netSortType.name,
+                      val.name,
                       style: UIs.text13Grey,
                     ),
                   ],
                 ),
-              ),
-            )
+              ).tap(onTap: () => _netSortType.value = val.next),
+            ),
           ],
         ),
         childrenPadding: const EdgeInsets.only(bottom: 11),
         leading: const Icon(Icons.device_hub, size: 17),
-        initiallyExpanded: children.length <= 7,
+        initiallyExpanded: _getInitExpand(children.length),
         children: children,
       ),
     );
@@ -589,7 +584,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           SizedBox(
             width: 170,
             child: Text(
-              '↑ ${ns.speedOut(device: device)}\n↓ ${ns.speedIn(device: device)}',
+              '${ns.speedOut(device: device)} ↑\n${ns.speedIn(device: device)} ↓',
               textAlign: TextAlign.end,
               style: UIs.text13Grey,
             ),
@@ -607,7 +602,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       child: ExpandTile(
         title: Text(l10n.temperature),
         leading: const Icon(Icons.ac_unit, size: 17),
-        initiallyExpanded: ss.temps.devices.length <= 7,
+        initiallyExpanded: _getInitExpand(ss.temps.devices.length),
         childrenPadding: const EdgeInsets.only(bottom: 7),
         children: ss.temps.devices
             .map((key) => _buildTemperatureItem(key, ss.temps.get(key)))
@@ -638,6 +633,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         title: Text(l10n.battery),
         leading: const Icon(Icons.battery_charging_full, size: 17),
         childrenPadding: const EdgeInsets.only(bottom: 7),
+        initiallyExpanded: _getInitExpand(ss.batteries.length),
         children: ss.batteries.map(_buildBatteryItem).toList(),
       ),
     );
@@ -683,6 +679,11 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         child: child,
       ),
     );
+  }
+
+  bool _getInitExpand(int len, [int? max]) {
+    if (_collapse && len <= (max ?? 7)) return true;
+    return false;
   }
 }
 

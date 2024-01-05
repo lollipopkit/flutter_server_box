@@ -205,6 +205,9 @@ class SettingStore extends PersistentStore {
   late final webdavUser = property('webdavUser', '');
   late final webdavPwd = property('webdavPwd', '');
 
+  /// Whether collapse UI items by default
+  late final collapseUIDefault = property('collapseUIDefault', true);
+
   // Never show these settings for users
   //
   // ------BEGIN------
