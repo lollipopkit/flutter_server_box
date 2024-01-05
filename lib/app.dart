@@ -18,60 +18,68 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     setTransparentNavigationBar(context);
-    final child = _wrapTheme(context);
-    if (Stores.setting.useSystemPrimaryColor.fetch()) {
-      return _wrapSystemColor(context, child);
-    }
-    return child;
-  }
-
-  Widget _wrapTheme(BuildContext context) {
     return ListenableBuilder(
       listenable: RebuildNodes.app,
       builder: (_, __) {
-        final tMode = Stores.setting.themeMode.fetch();
-        // Issue #57
-        final themeMode = switch (tMode) {
-          1 || 2 => ThemeMode.values[tMode],
-          3 => ThemeMode.dark,
-          _ => ThemeMode.system,
-        };
-        final locale = Stores.setting.locale.fetch().toLocale;
-        final darkTheme = ThemeData(
-          useMaterial3: true,
-          brightness: Brightness.dark,
-          colorSchemeSeed: primaryColor,
-        );
-
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          locale: locale,
-          localizationsDelegates: S.localizationsDelegates,
-          supportedLocales: S.supportedLocales,
-          title: BuildData.name,
-          themeMode: themeMode,
-          theme: ThemeData(
-            useMaterial3: true,
-            colorSchemeSeed: primaryColor,
-          ),
-          darkTheme: tMode < 3 ? darkTheme : _getAmoledTheme(darkTheme),
-          home: Stores.setting.fullScreen.fetch()
-              ? const FullScreenPage()
-              : const HomePage(),
+        if (!Stores.setting.useSystemPrimaryColor.fetch()) {
+          primaryColor = Color(Stores.setting.primaryColor.fetch());
+          return _buildApp();
+        }
+        return DynamicColorBuilder(
+          builder: (light, dark) {
+            final lightTheme = ThemeData(
+              useMaterial3: true,
+              colorScheme: light,
+            );
+            final darkTheme = ThemeData(
+              useMaterial3: true,
+              brightness: Brightness.dark,
+              colorScheme: dark,
+            );
+            if (context.isDark && light != null) {
+              primaryColor = light.primary;
+            } else if (!context.isDark && dark != null) {
+              primaryColor = dark.primary;
+            }
+            return _buildApp(light: lightTheme, dark: darkTheme);
+          },
         );
       },
     );
   }
 
-  Widget _wrapSystemColor(BuildContext context, Widget child) {
-    return DynamicColorBuilder(builder: (light, dark) {
-      if (context.isDark && light != null) {
-        primaryColor = light.primary;
-      } else if (!context.isDark && dark != null) {
-        primaryColor = dark.primary;
-      }
-      return child;
-    });
+  Widget _buildApp({ThemeData? light, ThemeData? dark}) {
+    final tMode = Stores.setting.themeMode.fetch();
+    // Issue #57
+    final themeMode = switch (tMode) {
+      1 || 2 => ThemeMode.values[tMode],
+      3 => ThemeMode.dark,
+      _ => ThemeMode.system,
+    };
+    final locale = Stores.setting.locale.fetch().toLocale;
+
+    light ??= ThemeData(
+      useMaterial3: true,
+      colorSchemeSeed: primaryColor,
+    );
+    dark ??= ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      colorSchemeSeed: primaryColor,
+    );
+
+    return MaterialApp(
+      locale: locale,
+      localizationsDelegates: S.localizationsDelegates,
+      supportedLocales: S.supportedLocales,
+      title: BuildData.name,
+      themeMode: themeMode,
+      theme: light,
+      darkTheme: tMode < 3 ? dark : _getAmoledTheme(dark),
+      home: Stores.setting.fullScreen.fetch()
+          ? const FullScreenPage()
+          : const HomePage(),
+    );
   }
 }
 
@@ -83,7 +91,7 @@ ThemeData _getAmoledTheme(ThemeData darkTheme) => darkTheme.copyWith(
       dialogTheme: const DialogTheme(backgroundColor: Colors.black),
       bottomSheetTheme:
           const BottomSheetThemeData(backgroundColor: Colors.black),
-      listTileTheme: const ListTileThemeData(tileColor: Colors.black12),
+      listTileTheme: const ListTileThemeData(tileColor: Colors.transparent),
       cardTheme: const CardTheme(color: Colors.black12),
       navigationBarTheme:
           const NavigationBarThemeData(backgroundColor: Colors.black),

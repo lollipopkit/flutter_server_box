@@ -12,6 +12,7 @@ import 'package:toolbox/core/channel/bg_run.dart';
 import 'package:toolbox/core/utils/sync/icloud.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/sync/webdav.dart';
+import 'package:toolbox/core/utils/ui.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
@@ -19,7 +20,6 @@ import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
 import 'core/analysis.dart';
-import 'core/utils/ui.dart';
 import 'data/model/app/net_view.dart';
 import 'data/model/server/private_key_info.dart';
 import 'data/model/server/server_private_info.dart';
@@ -32,7 +32,6 @@ import 'data/provider/private_key.dart';
 import 'data/provider/server.dart';
 import 'data/provider/sftp.dart';
 import 'data/provider/snippet.dart';
-import 'data/res/color.dart';
 import 'locator.dart';
 import 'view/widget/appbar.dart';
 
@@ -84,7 +83,6 @@ Future<void> _initApp() async {
   _setupProviders();
 
   // Load font
-  primaryColor = Color(Stores.setting.primaryColor.fetch());
   loadFontFile(Stores.setting.fontPath.fetch());
 
   if (isAndroid) {

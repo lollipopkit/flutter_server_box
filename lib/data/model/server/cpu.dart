@@ -75,29 +75,28 @@ class OneTimeCpuStatus extends TimeSeqIface<OneTimeCpuStatus> {
   bool same(OneTimeCpuStatus other) => id == other.id;
 
   static List<OneTimeCpuStatus> parse(String raw) {
-  final List<OneTimeCpuStatus> cpus = [];
+    final List<OneTimeCpuStatus> cpus = [];
 
-  for (var item in raw.split('\n')) {
-    if (item == '') break;
-    final id = item.split(' ').first;
-    final matches = item.replaceFirst(id, '').trim().split(' ');
-    cpus.add(
-      OneTimeCpuStatus(
-        id,
-        int.parse(matches[0]),
-        int.parse(matches[1]),
-        int.parse(matches[2]),
-        int.parse(matches[3]),
-        int.parse(matches[4]),
-        int.parse(matches[5]),
-        int.parse(matches[6]),
-      ),
-    );
+    for (var item in raw.split('\n')) {
+      if (item == '') break;
+      final id = item.split(' ').first;
+      final matches = item.replaceFirst(id, '').trim().split(' ');
+      cpus.add(
+        OneTimeCpuStatus(
+          id,
+          int.parse(matches[0]),
+          int.parse(matches[1]),
+          int.parse(matches[2]),
+          int.parse(matches[3]),
+          int.parse(matches[4]),
+          int.parse(matches[5]),
+          int.parse(matches[6]),
+        ),
+      );
+    }
+    return cpus;
   }
-  return cpus;
 }
-}
-
 
 final _bsdCpuPercentReg = RegExp(r'(\d+\.\d+)%');
 
