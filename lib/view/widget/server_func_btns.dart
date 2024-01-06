@@ -163,14 +163,9 @@ void _onTapMoreBtns(
   }
 }
 
-Future<void> _gotoSSH(
-  ServerPrivateInfo spi,
-  BuildContext context,
-) async {
-  // as a `Mobile first` app -> handle mobile first
-  //
+void _gotoSSH(ServerPrivateInfo spi, BuildContext context) async {
   // run built-in ssh on macOS due to incompatibility
-  if (!isDesktop || isMacOS) {
+  if (isMobile || isMacOS) {
     AppRoute.ssh(spi: spi).go(context);
     return;
   }
@@ -196,12 +191,12 @@ Future<void> _gotoSSH(
   }
 
   final sshCommand = ["ssh", "${spi.user}@${spi.ip}"] + extraArgs;
-  final system = Platform.operatingSystem;
+  final system = OS.type;
   switch (system) {
-    case "windows":
+    case OS.windows:
       await Process.start("cmd", ["/c", "start"] + sshCommand);
       break;
-    case "linux":
+    case OS.linux:
       await Process.start("x-terminal-emulator", ["-e"] + sshCommand);
       break;
     default:
