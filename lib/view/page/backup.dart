@@ -6,6 +6,7 @@ import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
+import 'package:toolbox/core/extension/datetime.dart';
 import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/core/utils/sync/icloud.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
@@ -122,8 +123,7 @@ class BackupPage extends StatelessWidget {
       child: ExpandTile(
         leading: const Icon(Icons.storage),
         title: const Text('WebDAV'),
-        initiallyExpanded:
-            !(isIOS || isMacOS) && Stores.setting.webdavSync.fetch(),
+        initiallyExpanded: true,
         children: [
           ListTile(
             title: Text(l10n.setting),
@@ -241,21 +241,48 @@ class BackupPage extends StatelessWidget {
 
   Future<void> _onTapWebdavDl(BuildContext context) async {
     webdavLoading.value = true;
-    try {
-      final result = await Webdav.download(
-        relativePath: Paths.bakName,
-      );
-      if (result != null) {
-        Loggers.app.warning('Download webdav backup failed: $result');
-        return;
-      }
-    } catch (e, s) {
-      Loggers.app.warning('Download webdav backup failed', e, s);
-      context.showSnackBar(e.toString());
+    final files = await Webdav.list();
+    if (files.isEmpty) {
+      context.showSnackBar(l10n.dirEmpty);
       webdavLoading.value = false;
       return;
     }
-    final dlFile = await File(await Paths.bak).readAsString();
+
+    final fileName = await context.showRoundDialog<String>(
+      title: Text(l10n.restore),
+      child: SizedBox(
+        width: 300,
+        height: 300,
+        child: ListView.builder(
+          itemCount: files.length,
+          itemBuilder: (_, index) {
+            final file = files[index];
+            return ListTile(
+              title: Text(file),
+              onTap: () => context.pop(file),
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => context.pop(),
+          child: Text(l10n.cancel),
+        ),
+      ],
+    );
+    if (fileName == null) {
+      webdavLoading.value = false;
+      return;
+    }
+
+    final result = await Webdav.download(relativePath: fileName);
+    if (result != null) {
+      Loggers.app.warning('Download webdav backup failed: $result');
+      webdavLoading.value = false;
+      return;
+    }
+    final dlFile = await File(fileName).readAsString();
     final dlBak = await compute(Backup.fromJsonString, dlFile);
     await dlBak.restore(force: true);
     webdavLoading.value = false;
@@ -263,8 +290,9 @@ class BackupPage extends StatelessWidget {
 
   Future<void> _onTapWebdavUp(BuildContext context) async {
     webdavLoading.value = true;
-    await Backup.backup();
-    final uploadResult = await Webdav.upload(relativePath: Paths.bakName);
+    final bakName = '${DateTime.now().numStr}-${Paths.bakName}';
+    await Backup.backup(bakName);
+    final uploadResult = await Webdav.upload(relativePath: bakName);
     if (uploadResult != null) {
       Loggers.app.warning('Upload webdav backup failed: $uploadResult');
     } else {

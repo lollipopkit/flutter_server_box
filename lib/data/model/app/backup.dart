@@ -76,9 +76,9 @@ class Backup {
         lastModTime = Stores.lastModTime,
         history = Stores.history.box.toJson();
 
-  static Future<String> backup() async {
+  static Future<String> backup([String? name]) async {
     final result = _diyEncrypt(json.encode(Backup.loadFromStore()));
-    final path = await Paths.bak;
+    final path = '${await Paths.doc}/${name ?? Paths.bakName}';
     await File(path).writeAsString(result);
     return path;
   }

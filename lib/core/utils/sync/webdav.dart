@@ -73,6 +73,21 @@ abstract final class Webdav {
     return null;
   }
 
+  static Future<List<String>> list() async {
+    try {
+      final list = await _client.readDir(_prefix);
+      final names = <String>[];
+      for (final item in list) {
+        if ((item.isDir ?? true) || item.name == null) continue;
+        names.add(item.name!);
+      }
+      return names;
+    } catch (e, s) {
+      _logger.warning('List failed', e, s);
+      return [];
+    }
+  }
+
   static void changeClient(String url, String user, String pwd) {
     _client = WebdavClient(url: url, user: user, pwd: pwd);
     Stores.setting.webdavUrl.put(url);
