@@ -84,7 +84,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
+  CustomAppBar _buildAppBar() {
     final actions = [
       IconButton(
         tooltip: l10n.delete,
@@ -181,10 +181,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
         TextButton(
           onPressed: () async {
             final path = await pickOneFile();
-            if (path == null) {
-              context.showSnackBar(l10n.fieldMustNotEmpty);
-              return;
-            }
+            if (path == null) return;
 
             final file = File(path);
             if (!file.existsSync()) {
@@ -203,7 +200,12 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
               return;
             }
 
-            _keyController.text = await file.readAsString();
+            final content = await file.readAsString();
+
+            /// Issue #7
+            /// Replace all CRLF to LF
+            content.replaceAll('\r\n', '\n');
+            _keyController.text = content;
           },
           child: Text(l10n.pickFile),
         ),
