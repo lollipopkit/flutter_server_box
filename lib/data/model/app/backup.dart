@@ -89,7 +89,7 @@ class Backup {
   Future<bool?> restore({bool force = false}) async {
     final curTime = Stores.lastModTime ?? 0;
     final bakTime = lastModTime ?? 0;
-    if (curTime == bakTime) {
+    if (curTime == bakTime && !force) {
       return null;
     }
     if (curTime > bakTime && !force) {

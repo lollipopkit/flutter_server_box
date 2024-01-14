@@ -276,6 +276,12 @@ class _HomePageState extends State<HomePage>
             replace: 'lollipopkit',
           ),
           UIs.height13,
+          const Text('My apps:'),
+          const UrlText(
+            text: 'https://github.com/lollipopkit/flutter_gpt_box',
+            replace: 'GPT Box',
+          ),
+          UIs.height13,
           // Use [UrlText] for same text style
           Text(l10n.aboutThanks),
           UIs.height13,
