@@ -52,6 +52,11 @@ class HomeWidget : AppWidgetProvider() {
             views.setTextViewText(R.id.widget_name, "ID: $appWidgetId")
             appWidgetManager.updateAppWidget(appWidgetId, views)
             return
+        } else {
+            views.setViewVisibility(R.id.widget_cpu_label, View.VISIBLE)
+            views.setViewVisibility(R.id.widget_mem_label, View.VISIBLE)
+            views.setViewVisibility(R.id.widget_disk_label, View.VISIBLE)
+            views.setViewVisibility(R.id.widget_net_label, View.VISIBLE)
         }
 
         GlobalScope.launch(Dispatchers.IO) {
