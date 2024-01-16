@@ -1,11 +1,7 @@
 简体中文 | [English](README.md)
 
-<!-- Title-->
-<p align="center">
-  <img src="https://socialify.git.ci/lollipopkit/flutter_server_box/image?description=1&font=Raleway&logo=https%3A%2F%2Fgithub.com%2Flollipopkit%2Fflutter_server_box%2Fblob%2Fmain%2Fassets%2Fapp_icon.png%3Fraw%3Dtrue&name=1&owner=1&pattern=Solid&theme=Auto" alt="flutter_server_box" width="640" height="320" />
-</p>
+<h2 align="center">Flutter Server Box</h2>
 
-<!-- Badges-->
 <p align="center">
   <img alt="lang" src="https://img.shields.io/badge/lang-dart-pink">
   <img alt="countly" src="https://img.shields.io/badge/analysis-countly-pink">
@@ -18,20 +14,12 @@
 特别感谢 <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a> & <a href="https://github.com/TerminalStudio/xterm.dart">xterm.dart</a>。
 </p>
 
-- [🔖 特点](#-特点)
-- [🏙️ 截屏](#️-截屏)
-- [⬇️ 下载](#️-下载)
-- [🆘 帮助](#-帮助)
-- [🧱 贡献](#-贡献)
-  - [🌍 l10n](#-l10n)
-- [📝 协议](#-协议)
-
 
 ## 🔖 特点
 - [x] 功能
   - [x] `SSH` 终端, `SFTP`, `Docker & 包 & 进程` 管理器, 状态图表, 代码编辑器...
   - [x] 特殊支持：`生物认证`、`推送`、`桌面小部件`、`watchOS App`、`跟随系统颜色`...
-- [x] 本地化 ( English, 简体中文, Deutsch, 繁體中文, Indonesian。 [如何贡献？](#l10n))
+- [x] 本地化 ( English, 简体中文, Deutsch, 繁體中文, Indonesian, Français )
 - [x] 全平台支持（除 `Web`）
 
 
@@ -93,16 +81,14 @@
 
 
 ## 🧱 贡献
-**任何正面的贡献都欢迎**。
+- 任何正面的贡献都欢迎。
+- [本地化翻译指南](https://blog.lolli.tech/faq/) 可在我的博客中找到。
 
-### 🌍 l10n
-1. Fork 本项目，并 Clone 你 Fork 的项目至你的电脑
-2. 在 `lib/l10n/` 文件夹内创建 `.arb` 本地化文件
-   - 文件名应该类似 `intl_XX.arb`,  `XX` 是语言标识码。 例如 `intl_en.arb` 是给英语的， `intl_zh.arb` 是给中文的
-3. 向 `.arb` 本地化文件添加内容。 你可以查看 `intl_en.arb` 和 `intl_zh.arb` 的内容，并理解其含义，来创建新的本地化文件
-4. 运行 `flutter gen-l10n` 来生成所需文件
-5. Commit 变更到你 Fork 的 Repo
-6. 在我的项目中发起 Pull Request
+
+## 💡 我的其它 Apps
+- [GPT Box](https://github.com/lollipopkit/flutter_gpt_box) - 一个支持 OpenAI API 的 第三方全平台客户端。
+- [2fa Box](https://github.com/lollipopkit/flutter_2fa) - 开源的 2FA 应用，支持 Android、iOS 和 Web。
+- [更多](https://github.com/lollipopkit) - 工具 & etc.
 
 
 ## 📝 协议

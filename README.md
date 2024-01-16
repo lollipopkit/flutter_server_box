@@ -1,11 +1,7 @@
 English | [简体中文](README_zh.md)
 
-<!-- Title-->
-<p align="center">
-  <img src="https://socialify.git.ci/lollipopkit/flutter_server_box/image?description=1&font=Raleway&logo=https%3A%2F%2Fgithub.com%2Flollipopkit%2Fflutter_server_box%2Fblob%2Fmain%2Fassets%2Fapp_icon.png%3Fraw%3Dtrue&name=1&owner=1&pattern=Solid&theme=Auto" alt="flutter_server_box" width="640" height="320" />
-</p>
+<h2 align="center">Flutter Server Box</h2>
 
-<!-- Badges-->
 <p align="center">
   <img alt="lang" src="https://img.shields.io/badge/lang-dart-pink">
   <img alt="countly" src="https://img.shields.io/badge/analysis-countly-pink">
@@ -19,20 +15,11 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 </p>
 
 
-- [🔖 Feature](#-feature)
-- [🏙️ ScreenShots](#️-screenshots)
-- [⬇️ Download](#️-download)
-- [🆘 Help](#-help)
-- [🧱 Contribution](#-contribution)
-  - [🌍 l10n](#-l10n)
-- [📝 License](#-license)
-
-
 ## 🔖 Feature
 - [x] Functions
   - [x] `SSH` Terminal, `SFTP`, `Docker & Pkg & Process`, Status chart, Code editor...
   - [x] Platform specific: `Bio auth`、`Msg push`、`Home widget`、`watchOS App`...
-- [x] Localization ( English, 简体中文, Deutsch, 繁體中文, Indonesian. [l10n guide](#l10n-guide) )
+- [x] Localization ( English, 简体中文, Deutsch, 繁體中文, Indonesian, Français )
 - [x] Platform support: `iOS / Android / macOS / Windows / Linux`
 
 
@@ -92,16 +79,14 @@ After you read the above, you can:
 
 
 ## 🧱 Contribution
-**Any positive contribution is welcome**.
+- Any positive contribution is welcome.
+- [l10n guide](https://blog.lolli.tech/faq/) can be found in my blog.
 
-### 🌍 l10n
-1. Fork this repo and clone forked repo to your local machine.
-2. Create `arb` file in `lib/l10n/` directory
-   - File name should be `intl_XX.arb`, where `XX` is the language code. Such as `intl_en.arb` for English and `intl_zh.arb` for Chinese.
-3. Add content to the file. You can refer to `intl_en.arb` and `intl_zh.arb` for the format.
-4. Run `flutter gen-l10n` to generate files.
-5. Pull commit to your forked repo.
-6. Request a pull request on my repo.
+
+## 💡 My other apps
+- [GPT Box](https://github.com/lollipopkit/flutter_gpt_box) - A third-party GPT Client for OpenAI API on all platforms.
+- [2fa Box](https://github.com/lollipopkit/flutter_2fa) - Open source 2FA app for Android, iOS and the web.
+- [More](https://github.com/lollipopkit) - Tools & etc.
 
 
 ## 📝 License
