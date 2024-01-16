@@ -655,6 +655,9 @@ class SZh extends S {
   String get shutdown => '关机';
 
   @override
+  String get size => '大小';
+
+  @override
   String get snippet => '代码片段';
 
   @override
@@ -720,6 +723,9 @@ class SZh extends S {
 
   @override
   String get themeMode => '主题模式';
+
+  @override
+  String get time => '时间';
 
   @override
   String get times => '次';
@@ -1477,6 +1483,9 @@ class SZhTw extends SZh {
   String get shutdown => '关机';
 
   @override
+  String get size => '大小';
+
+  @override
   String get snippet => '程式片段';
 
   @override
@@ -1542,6 +1551,9 @@ class SZhTw extends SZh {
 
   @override
   String get themeMode => '主題模式';
+
+  @override
+  String get time => '時間';
 
   @override
   String get times => '次';

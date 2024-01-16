@@ -50,6 +50,8 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   final _status = SftpBrowserStatus();
   late final _client = widget.spi.server?.client;
 
+  final _sortType = ValueNotifier(_SortType.name);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,6 +68,33 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           IconButton(
             icon: const Icon(Icons.downloading),
             onPressed: () => AppRoute.sftpMission().go(context),
+          ),
+          ValueListenableBuilder<_SortType>(
+            valueListenable: _sortType,
+            builder: (context, value, child) {
+              return PopupMenuButton<_SortType>(
+                icon: const Icon(Icons.sort),
+                itemBuilder: (context) {
+                  return [
+                    PopupMenuItem(
+                      value: _SortType.name,
+                      child: Text(l10n.name),
+                    ),
+                    PopupMenuItem(
+                      value: _SortType.size,
+                      child: Text(l10n.size),
+                    ),
+                    PopupMenuItem(
+                      value: _SortType.time,
+                      child: Text(l10n.time),
+                    ),
+                  ];
+                },
+                onSelected: (value) {
+                  _sortType.value = value;
+                },
+              );
+            },
           ),
         ],
       ),
@@ -244,10 +273,16 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     return RefreshIndicator(
       child: FadeIn(
         key: Key(widget.spi.name + _status.path!.path),
-        child: ListView.builder(
-          itemCount: _status.files!.length,
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-          itemBuilder: (_, index) => _buildItem(_status.files![index]),
+        child: ValueListenableBuilder(
+          valueListenable: _sortType,
+          builder: (_, sortType, __) {
+            final files = sortType.sort(_status.files!);
+            return ListView.builder(
+              itemCount: files.length,
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              itemBuilder: (_, index) => _buildItem(files[index]),
+            );
+          },
         ),
       ),
       onRefresh: () => _listDir(),
@@ -263,7 +298,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     );
     return CardX(
       child: ListTile(
-        leading: Icon(isDir ? Icons.folder : Icons.insert_drive_file),
+        leading: Icon(isDir ? Icons.folder_outlined : Icons.insert_drive_file),
         title: Text(file.filename),
         trailing: trailing,
         subtitle: isDir
@@ -754,4 +789,28 @@ String _getTime(int? unixMill) {
   return DateTime.fromMillisecondsSinceEpoch((unixMill ?? 0) * 1000)
       .toString()
       .replaceFirst('.000', '');
+}
+
+enum _SortType {
+  name,
+  time,
+  size,
+  ;
+
+  List<SftpName> sort(List<SftpName> files) {
+    switch (this) {
+      case _SortType.name:
+        files.sort((a, b) => a.filename.compareTo(b.filename));
+        break;
+      case _SortType.time:
+        files.sort(
+          (a, b) => (a.attr.modifyTime ?? 0).compareTo(b.attr.modifyTime ?? 0),
+        );
+        break;
+      case _SortType.size:
+        files.sort((a, b) => (a.attr.size ?? 0).compareTo(b.attr.size ?? 0));
+        break;
+    }
+    return files;
+  }
 }

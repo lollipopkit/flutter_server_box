@@ -39,6 +39,8 @@ class LocalStoragePage extends StatefulWidget {
 class _LocalStoragePageState extends State<LocalStoragePage> {
   LocalPath? _path;
 
+  final _sortType = ValueNotifier(_SortType.name);
+
   @override
   void initState() {
     super.initState();
@@ -73,12 +75,44 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
           IconButton(
             icon: const Icon(Icons.downloading),
             onPressed: () => AppRoute.sftpMission().go(context),
-          )
+          ),
+          ValueListenableBuilder<_SortType>(
+            valueListenable: _sortType,
+            builder: (context, value, child) {
+              return PopupMenuButton<_SortType>(
+                icon: const Icon(Icons.sort),
+                itemBuilder: (context) {
+                  return [
+                    PopupMenuItem(
+                      value: _SortType.name,
+                      child: Text(l10n.name),
+                    ),
+                    PopupMenuItem(
+                      value: _SortType.size,
+                      child: Text(l10n.size),
+                    ),
+                    PopupMenuItem(
+                      value: _SortType.time,
+                      child: Text(l10n.time),
+                    ),
+                  ];
+                },
+                onSelected: (value) {
+                  _sortType.value = value;
+                },
+              );
+            },
+          ),
         ],
       ),
       body: FadeIn(
         key: UniqueKey(),
-        child: _buildBody(),
+        child: ValueListenableBuilder(
+          valueListenable: _sortType,
+          builder: (_, val, __) {
+            return _buildBody();
+          },
+        ),
       ),
       bottomNavigationBar: SafeArea(child: _buildPath()),
     );
@@ -129,7 +163,8 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
       );
     }
     final dir = Directory(_path!.path);
-    final files = dir.listSync();
+    final tempFiles = dir.listSync();
+    final files = _sortType.value.sort(tempFiles);
     return ListView.builder(
       itemCount: files.length,
       padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 7),
@@ -142,7 +177,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
         return CardX(
           child: ListTile(
             leading: isDir
-                ? const Icon(Icons.folder)
+                ? const Icon(Icons.folder_open)
                 : const Icon(Icons.insert_drive_file),
             title: Text(fileName),
             subtitle: isDir
@@ -348,5 +383,28 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
         ),
       ],
     );
+  }
+}
+
+enum _SortType {
+  name,
+  size,
+  time,
+  ;
+
+  List<FileSystemEntity> sort(List<FileSystemEntity> files) {
+    switch (this) {
+      case _SortType.name:
+        files.sort((a, b) => a.path.compareTo(b.path));
+        break;
+      case _SortType.size:
+        files.sort((a, b) => a.statSync().size.compareTo(b.statSync().size));
+        break;
+      case _SortType.time:
+        files.sort(
+            (a, b) => a.statSync().modified.compareTo(b.statSync().modified));
+        break;
+    }
+    return files;
   }
 }

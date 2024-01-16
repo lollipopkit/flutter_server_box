@@ -655,6 +655,9 @@ class SFr extends S {
   String get shutdown => 'Éteindre';
 
   @override
+  String get size => 'Taille';
+
+  @override
   String get snippet => 'Extrait';
 
   @override
@@ -720,6 +723,9 @@ class SFr extends S {
 
   @override
   String get themeMode => 'Mode du thème';
+
+  @override
+  String get time => 'L\'heure';
 
   @override
   String get times => 'Fois';

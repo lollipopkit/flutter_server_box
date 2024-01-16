@@ -655,6 +655,9 @@ class SId extends S {
   String get shutdown => 'Matikan';
 
   @override
+  String get size => 'Ukuran';
+
+  @override
   String get snippet => 'Snippet';
 
   @override
@@ -720,6 +723,9 @@ class SId extends S {
 
   @override
   String get themeMode => 'Mode tema';
+
+  @override
+  String get time => 'Waktu';
 
   @override
   String get times => 'Waktu';

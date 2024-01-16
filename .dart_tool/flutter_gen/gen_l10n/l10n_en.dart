@@ -655,6 +655,9 @@ class SEn extends S {
   String get shutdown => 'Shutdown';
 
   @override
+  String get size => 'Size';
+
+  @override
   String get snippet => 'Snippet';
 
   @override
@@ -720,6 +723,9 @@ class SEn extends S {
 
   @override
   String get themeMode => 'Theme mode';
+
+  @override
+  String get time => 'Time';
 
   @override
   String get times => 'Times';

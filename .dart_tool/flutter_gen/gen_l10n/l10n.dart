@@ -1348,6 +1348,12 @@ abstract class S {
   /// **'Shutdown'**
   String get shutdown;
 
+  /// No description provided for @size.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get size;
+
   /// No description provided for @snippet.
   ///
   /// In en, this message translates to:
@@ -1473,6 +1479,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Theme mode'**
   String get themeMode;
+
+  /// No description provided for @time.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get time;
 
   /// No description provided for @times.
   ///

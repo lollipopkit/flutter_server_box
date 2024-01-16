@@ -132,7 +132,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
                                 () => delScripts = !delScripts,
                               ),
                               controlAffinity: ListTileControlAffinity.leading,
-                              subtitle: Text(l10n.deleteScripts),
+                              title: Text(l10n.deleteScripts),
                               tileColor: Colors.transparent,
                               contentPadding: EdgeInsets.zero,
                             )
@@ -142,13 +142,15 @@ class _ServerEditPageState extends State<ServerEditPage> {
                     actions: [
                       TextButton(
                         onPressed: () async {
+                          context.pop();
                           if (delScripts) {
+                            context.showLoadingDialog();
                             const cmd =
                                 'rm ${ShellFunc.srvBoxDir}/mobile_v*.sh';
                             await widget.spi?.server?.client?.run(cmd);
+                            context.pop();
                           }
                           Pros.server.delServer(widget.spi!.id);
-                          context.pop();
                           context.pop(true);
                         },
                         child: Text(l10n.ok, style: UIs.textRed),

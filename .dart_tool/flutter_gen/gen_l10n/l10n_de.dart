@@ -655,6 +655,9 @@ class SDe extends S {
   String get shutdown => 'Abschaltung';
 
   @override
+  String get size => 'Größe';
+
+  @override
   String get snippet => 'Snippet';
 
   @override
@@ -720,6 +723,9 @@ class SDe extends S {
 
   @override
   String get themeMode => 'Themen-Modus';
+
+  @override
+  String get time => 'Zeit';
 
   @override
   String get times => 'x';

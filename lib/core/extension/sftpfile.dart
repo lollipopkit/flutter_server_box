@@ -1,6 +1,6 @@
 import 'package:dartssh2/dartssh2.dart';
 
-extension SftpFile on SftpFileMode {
+extension SftpFileX on SftpFileMode {
   String get str {
     final user = _getRoleMode(userRead, userWrite, userExecute);
     final group = _getRoleMode(groupRead, groupWrite, groupExecute);
