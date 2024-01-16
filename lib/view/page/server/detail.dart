@@ -334,22 +334,11 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     }
     return ListTile(
       title: Text(item.name, style: UIs.text13),
-      leading: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            '${item.percent}%',
-            style: UIs.text12Grey,
-            textScaler: _textFactor,
-          ),
-          const Divider(),
-          Text(
-            '${item.temp} °C',
-            style: UIs.text12Grey,
-            textScaler: _textFactor,
-          ),
-        ],
+      leading: Text(
+        '${item.percent}%\n${item.temp} °C',
+        style: UIs.text12Grey,
+        textScaler: _textFactor,
+        textAlign: TextAlign.center,
       ),
       subtitle: Text(
         '${item.power} - ${item.fanSpeed} RPM\n${mem.used} / ${mem.total} ${mem.unit}',
