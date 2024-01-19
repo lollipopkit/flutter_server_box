@@ -66,6 +66,7 @@ dependencies:
       url: https://github.com/lollipopkit/webdav_client
   window_manager: ^0.3.7
   flutter_displaymode: ^0.6.0
+  flutter_markdown: ^0.6.18+2
 
 dev_dependencies:
   flutter_native_splash: ^2.1.6

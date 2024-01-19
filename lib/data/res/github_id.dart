@@ -46,5 +46,11 @@ abstract final class GithubIds {
     'xushuojie',
     'AniberMokie',
     'LucaLin233',
+    'lalasou',
+    'ohyoxo',
+    'lovechang1986',
+    'luckyreny',
+    'aliuzzz',
+    '58fly',
   };
 }

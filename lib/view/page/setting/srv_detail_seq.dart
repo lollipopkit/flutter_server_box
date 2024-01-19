@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
+import 'package:toolbox/core/extension/context/snackbar.dart';
+import 'package:toolbox/core/utils/platform/base.dart';
+import 'package:toolbox/data/res/default.dart';
 import 'package:toolbox/data/res/store.dart';
 
 import '../../../core/extension/order.dart';
@@ -14,14 +17,6 @@ class ServerDetailOrderPage extends StatefulWidget {
 }
 
 class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
-  final Order<String> _cardsOrder = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _cardsOrder.addAll(Stores.setting.detailCardOrder.fetch());
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -33,32 +28,55 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
   }
 
   Widget _buildBody() {
+    final keys_ = Stores.setting.detailCardOrder.fetch();
+    final keys = <String>[];
+    for (final key in keys_) {
+      keys.add(key);
+    }
+    final disabled = Defaults.detailCardOrder.where((e) => !keys.contains(e)).toList();
+    final allKeys = [...keys, ...disabled];
     return ReorderableListView.builder(
-      footer: const SizedBox(height: 77),
-      onReorder: (oldIndex, newIndex) => setState(() {
-        _cardsOrder.move(
-          oldIndex,
-          newIndex,
-          property: Stores.setting.detailCardOrder,
+      padding: const EdgeInsets.all(7),
+      itemBuilder: (_, idx) {
+        final key = allKeys[idx];
+        return CardX(
+          key: ValueKey(idx),
+          child: ListTile(
+            title: Text(key),
+            leading: _buildCheckBox(keys, key, idx, idx < keys.length),
+            trailing: isDesktop ? null : const Icon(Icons.drag_handle),
+          ),
         );
-      }),
-      padding: const EdgeInsets.all(17),
-      buildDefaultDragHandles: false,
-      itemBuilder: (_, index) => _buildItem(index, _cardsOrder[index]),
-      itemCount: _cardsOrder.length,
+      },
+      itemCount: allKeys.length,
+      onReorder: (o, n) {
+        if (o >= keys.length || n >= keys.length) {
+          context.showSnackBar(l10n.disabled);
+          return;
+        }
+        keys.moveByItem(keys, o, n, property: Stores.setting.detailCardOrder);
+        setState(() {});
+      },
     );
   }
 
-  Widget _buildItem(int index, String id) {
-    return ReorderableDelayedDragStartListener(
-      key: ValueKey('$index'),
-      index: index,
-      child: CardX(
-        child: ListTile(
-          title: Text(id),
-          trailing: const Icon(Icons.drag_handle),
-        ),
-      ),
+  Widget _buildCheckBox(List<String> keys, String key, int idx, bool value) {
+    return Checkbox(
+      value: value,
+      onChanged: (val) {
+        if (val == null) return;
+        if (val) {
+          if (idx >= keys.length) {
+            keys.add(key);
+          } else {
+            keys.insert(idx - 1, key);
+          }
+        } else {
+          keys.remove(key);
+        }
+        Stores.setting.detailCardOrder.put(keys);
+        setState(() {});
+      },
     );
   }
 }

@@ -5,8 +5,8 @@ import 'package:toolbox/core/build_mode.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 
 class Analysis {
-  static const _url = 'https://countly.xuty.cc';
-  static const _key = '80372a2a66424b32d0ac8991bfa1ef058bd36b1f';
+  static const _url = 'https://countly.lolli.tech';
+  static const _key = '0772e65c696709f879d87db77ae1a811259e3eb9';
 
   static bool enabled = false;
 

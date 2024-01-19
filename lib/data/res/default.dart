@@ -5,7 +5,7 @@ import 'package:toolbox/data/model/ssh/virtual_key.dart';
 abstract final class Defaults {
   // default server details page cards order
   static const detailCardOrder = [
-    'sys',
+    'about',
     'cpu',
     'mem',
     'swap',

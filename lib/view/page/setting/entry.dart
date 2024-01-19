@@ -18,6 +18,7 @@ import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/rebuild.dart';
 import 'package:toolbox/data/res/store.dart';
+import 'package:toolbox/view/widget/expand_tile.dart';
 
 import '../../../core/persistant_store.dart';
 import '../../../core/route.dart';
@@ -991,26 +992,25 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildSequence() {
-    return ListTile(
-      title: Text(l10n.serverOrder),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => AppRoute.serverOrder().go(context),
+    return ExpandTile(
+      title: Text(l10n.sequence),
+      subtitle: Text(
+        '${l10n.serverOrder} / ${l10n.serverDetailOrder} ...',
+        style: UIs.textGrey,
+      ),
+      children: [
+        ListTile(
+          title: Text(l10n.serverOrder),
+          trailing: const Icon(Icons.keyboard_arrow_right),
+          onTap: () => AppRoute.serverOrder().go(context),
+        ),
+        ListTile(
+          title: Text(l10n.serverDetailOrder),
+          trailing: const Icon(Icons.keyboard_arrow_right),
+          onTap: () => AppRoute.serverDetailOrder().go(context),
+        ),
+      ],
     );
-    // return ExpandTile(
-    //   title: Text(l10n.sequence),
-    //   subtitle: Text(
-    //     '${l10n.serverOrder} / ${l10n.serverDetailOrder} ...',
-    //     style: UIs.textGrey,
-    //   ),
-    //   children: [
-    //     ,
-    //     ListTile(
-    //       title: Text(l10n.serverDetailOrder),
-    //       trailing: const Icon(Icons.keyboard_arrow_right),
-    //       onTap: () => AppRoute.serverDetailOrder().go(context),
-    //     ),
-    //   ],
-    // );
   }
 
   Widget _buildEditorFontSize() {

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:get_it/get_it.dart';
 import 'package:toolbox/core/channel/bg_run.dart';
 import 'package:toolbox/core/channel/home_widget.dart';
@@ -11,6 +12,7 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/core/utils/platform/auth.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
+import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/github_id.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/provider.dart';
@@ -26,7 +28,6 @@ import '../../data/res/ui.dart';
 import '../../data/res/url.dart';
 import '../widget/appbar.dart';
 import '../widget/cardx.dart';
-import '../widget/url_text.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -267,40 +268,28 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildAboutContent() {
     return SingleChildScrollView(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          UrlText(
-            text: l10n.madeWithLove(Urls.myGithub),
-            replace: 'lollipopkit',
-          ),
-          UIs.height13,
-          const Text('My apps:'),
-          const UrlText(
-            text: 'https://github.com/lollipopkit/flutter_gpt_box',
-            replace: 'GPT Box',
-          ),
-          UIs.height13,
-          // Use [UrlText] for same text style
-          Text(l10n.aboutThanks),
-          UIs.height13,
-          const Text('Contributors:'),
-          ...GithubIds.contributors.map(
-            (name) => UrlText(
-              text: name.url,
-              replace: name,
-            ),
-          ),
-          UIs.height13,
-          const Text('Participants:'),
-          ...GithubIds.participants.map(
-            (name) => UrlText(
-              text: name.url,
-              replace: name,
-            ),
-          )
-        ],
+      child: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.8,
+        child: MarkdownBody(
+          styleSheet: MarkdownStyleSheet(a: TextStyle(color: primaryColor)),
+          onTapLink: (text, href, title) {
+            if (href != null) {
+              openUrl(href);
+            }
+          },
+          data: '''
+${l10n.madeWithLove('[lollipopkit](${Urls.myGithub})')}
+
+#### Contributors
+${GithubIds.contributors.map((e) => '[$e](${e.url})').join(' ')}
+
+#### Participants
+${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
+
+#### My apps
+- [GPT Box](https://github.com/lollipopkit/flutter_gpt_box)
+''',
+        ),
       ),
     );
   }

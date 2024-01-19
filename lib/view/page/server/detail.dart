@@ -41,7 +41,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   late final _cardBuildMap = Map.fromIterables(
     Defaults.detailCardOrder,
     [
-      _buildUpTimeAndSys,
+      _buildAbout,
       _buildCPUView,
       _buildMemView,
       _buildSwapView,
@@ -69,8 +69,9 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   @override
   void initState() {
     super.initState();
-    //_cardsOrder.addAll(Stores.setting.detailCardOrder.fetch());
-    _cardsOrder.addAll(_cardBuildMap.keys);
+    final order = Stores.setting.detailCardOrder.fetch();
+    order.removeWhere((element) => !_cardBuildMap.containsKey(element));
+    _cardsOrder.addAll(order);
   }
 
   @override
@@ -123,7 +124,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildUpTimeAndSys(ServerStatus ss) {
+  Widget _buildAbout(ServerStatus ss) {
     return CardX(
       child: ExpandTile(
         leading: const Icon(Icons.computer),

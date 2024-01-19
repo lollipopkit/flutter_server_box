@@ -93,7 +93,7 @@ class SettingStore extends PersistentStore {
 
   // Server details page cards order
   late final detailCardOrder =
-      listProperty('detailCardPrder', Defaults.detailCardOrder);
+      listProperty('detailCardOrder', Defaults.detailCardOrder);
 
   // SSH term font size
   late final termFontSize = property('termFontSize', 13.0);
