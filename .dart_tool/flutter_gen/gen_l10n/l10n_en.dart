@@ -692,6 +692,9 @@ class SEn extends S {
   String get success => 'Success';
 
   @override
+  String get supportFmtArgs => 'The following formatting parameters are supported:';
+
+  @override
   String get suspend => 'Suspend';
 
   @override

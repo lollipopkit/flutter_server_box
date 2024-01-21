@@ -9,15 +9,16 @@ import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/platform/path.dart';
+import 'package:toolbox/data/model/app/menu/server_func.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/pkg/manager.dart';
 import 'package:toolbox/data/model/server/dist.dart';
+import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/res/path.dart';
 import 'package:toolbox/data/res/provider.dart';
 
 import '../../core/route.dart';
 import '../../core/utils/server.dart';
-import '../../data/model/app/menu.dart';
 import '../../data/model/pkg/upgrade_info.dart';
 import '../../data/model/server/server_private_info.dart';
 import 'popup_menu.dart';
@@ -98,7 +99,7 @@ class ServerFuncBtns extends StatelessWidget {
             (e) => IconButton(
               onPressed: () => _onTapMoreBtns(e, spi, context),
               padding: EdgeInsets.zero,
-              tooltip: e.name,
+              tooltip: e.toStr,
               icon: Icon(e.icon, size: iconSize ?? 15),
             ),
           )
@@ -122,29 +123,18 @@ void _onTapMoreBtns(
         check: () => _checkClient(context, spi.id),
       );
       break;
-    // case ServerTabMenuType.snippet:
-    //   final snippets = await context.showPickDialog<Snippet>(
-    //     items: Pros.snippet.snippets,
-    //     name: (e) => e.name,
-    //     multi: false
-    //   );
-    //   if (snippets == null || snippets.isEmpty) {
-    //     return;
-    //   }
-    //   final result = await Pros.server.runSnippets(spi.id, snippets.first);
-    //   if (result != null && result.isNotEmpty) {
-    //     context.showRoundDialog(
-    //       title: Text(l10n.result),
-    //       child: Text(result),
-    //       actions: [
-    //         TextButton(
-    //           onPressed: () => copy2Clipboard(result),
-    //           child: Text(l10n.copy),
-    //         )
-    //       ],
-    //     );
-    //   }
-    //   break;
+    case ServerTabMenu.snippet:
+      final snippet = await context.showPickSingleDialog<Snippet>(
+        items: Pros.snippet.snippets,
+        name: (e) => e.name,
+      );
+      if (snippet == null) return;
+
+      AppRoute.ssh(spi: spi, initCmd: snippet.fmtWith(spi)).checkGo(
+        context: context,
+        check: () => _checkClient(context, spi.id),
+      );
+      break;
     case ServerTabMenu.container:
       AppRoute.docker(spi: spi).checkGo(
         context: context,

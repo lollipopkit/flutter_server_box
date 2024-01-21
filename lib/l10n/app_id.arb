@@ -219,6 +219,7 @@
   "stats": "Statistik",
   "stop": "Berhenti",
   "success": "Kesuksesan",
+  "supportFmtArgs": "Parameter pemformatan berikut ini didukung:",
   "suspend": "Suspend",
   "suspendTip": "Fungsi penangguhan memerlukan hak akses root dan dukungan systemd.",
   "switchTo": "Beralih ke {val}",

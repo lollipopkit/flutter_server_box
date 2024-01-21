@@ -219,6 +219,7 @@
   "stats": "Statistik",
   "stop": "Stop",
   "success": "Erfolgreich",
+  "supportFmtArgs": "Die folgenden Formatierungsparameter werden unterstützt:",
   "suspend": "Suspend",
   "suspendTip": "Die Suspend-Funktion erfordert Root-Rechte und systemd-Unterstützung.",
   "switchTo": "Wechseln zu {val}",

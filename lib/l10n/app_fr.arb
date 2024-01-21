@@ -219,6 +219,7 @@
   "stats": "Statistiques",
   "stop": "Arrêter",
   "success": "Succès",
+  "supportFmtArgs": "Les paramètres de formatage suivants sont pris en charge:",
   "suspend": "Suspendre",
   "suspendTip": "La fonction de suspension nécessite des privilèges root et la prise en charge de systemd.",
   "switchTo": "Passer à {val}",

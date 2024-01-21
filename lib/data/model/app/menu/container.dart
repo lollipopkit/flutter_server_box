@@ -1,49 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-
-enum ServerTabMenu {
-  terminal,
-  sftp,
-  container,
-  process,
-  pkg,
-  //snippet,
-  ;
-
-  IconData get icon {
-    switch (this) {
-      case ServerTabMenu.sftp:
-        return Icons.insert_drive_file;
-      //case ServerTabMenuType.snippet:
-      //return Icons.code;
-      case ServerTabMenu.pkg:
-        return Icons.system_security_update;
-      case ServerTabMenu.container:
-        return Icons.view_agenda;
-      case ServerTabMenu.process:
-        return Icons.list_alt_outlined;
-      case ServerTabMenu.terminal:
-        return Icons.terminal;
-    }
-  }
-
-  String get toStr {
-    switch (this) {
-      case ServerTabMenu.sftp:
-        return 'SFTP';
-      //case ServerTabMenuType.snippet:
-      //return l10n.snippet;
-      case ServerTabMenu.pkg:
-        return l10n.pkg;
-      case ServerTabMenu.container:
-        return l10n.container;
-      case ServerTabMenu.process:
-        return l10n.process;
-      case ServerTabMenu.terminal:
-        return l10n.terminal;
-    }
-  }
-}
+import 'package:toolbox/data/model/app/menu/base.dart';
 
 enum ContainerMenu {
   start,
@@ -108,20 +65,9 @@ enum ContainerMenu {
     }
   }
 
-  PopupMenuItem<ContainerMenu> get widget => _build(this, icon, toStr);
-}
-
-PopupMenuItem<T> _build<T>(T t, IconData icon, String text) {
-  return PopupMenuItem<T>(
-    value: t,
-    child: Row(
-      children: [
-        Icon(icon),
-        const SizedBox(
-          width: 10,
-        ),
-        Text(text),
-      ],
-    ),
-  );
+  PopupMenuItem<ContainerMenu> get widget => PopMenu.build(
+        this,
+        icon,
+        toStr,
+      );
 }

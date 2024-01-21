@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/order.dart';
-import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 
-import '../../../data/model/server/server.dart';
 import '../../../data/model/server/snippet.dart';
 import '../../../data/res/ui.dart';
 import '../../widget/tag.dart';
@@ -115,28 +112,24 @@ class _SnippetListPageState extends State<SnippetListPage> {
                   AppRoute.snippetEdit(snippet: snippet).go(context),
               icon: const Icon(Icons.edit),
             ),
-            IconButton(
-              onPressed: () => _runSnippet(snippet),
-              icon: const Icon(Icons.play_arrow),
-            ),
           ],
         ),
       ),
     );
   }
 
-  Future<void> _runSnippet(Snippet snippet) async {
-    final servers = await context.showPickDialog<Server>(
-      items: Pros.server.servers.toList(),
-      name: (e) => e.spi.name,
-    );
-    if (servers == null) {
-      return;
-    }
-    final ids = servers.map((e) => e.spi.id).toList();
-    final results = await Pros.server.runSnippetsMulti(ids, snippet);
-    if (results.isNotEmpty) {
-      AppRoute.snippetResult(results: results).go(context);
-    }
-  }
+  // Future<void> _runSnippet(Snippet snippet) async {
+  //   final servers = await context.showPickDialog<Server>(
+  //     items: Pros.server.servers.toList(),
+  //     name: (e) => e.spi.name,
+  //   );
+  //   if (servers == null) {
+  //     return;
+  //   }
+  //   final ids = servers.map((e) => e.spi.id).toList();
+  //   final results = await Pros.server.runSnippetsMulti(ids, snippet);
+  //   if (results.isNotEmpty) {
+  //     AppRoute.snippetResult(results: results).go(context);
+  //   }
+  // }
 }

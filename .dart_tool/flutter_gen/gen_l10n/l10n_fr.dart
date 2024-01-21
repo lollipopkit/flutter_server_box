@@ -692,6 +692,9 @@ class SFr extends S {
   String get success => 'Succès';
 
   @override
+  String get supportFmtArgs => 'Les paramètres de formatage suivants sont pris en charge:';
+
+  @override
   String get suspend => 'Suspendre';
 
   @override

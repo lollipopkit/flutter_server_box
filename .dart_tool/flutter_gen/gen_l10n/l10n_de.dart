@@ -692,6 +692,9 @@ class SDe extends S {
   String get success => 'Erfolgreich';
 
   @override
+  String get supportFmtArgs => 'Die folgenden Formatierungsparameter werden unterstützt:';
+
+  @override
   String get suspend => 'Suspend';
 
   @override

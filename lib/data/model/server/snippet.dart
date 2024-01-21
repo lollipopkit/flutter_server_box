@@ -1,4 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:toolbox/data/model/server/server_private_info.dart';
 
 import '../app/tag_pickable.dart';
 
@@ -44,6 +45,30 @@ class Snippet implements TagPickable {
 
   @override
   String get tagName => name;
+
+  String fmtWith(ServerPrivateInfo spi) {
+    final fmted = script.replaceAllMapped(
+      RegExp(r'\${.+?}'),
+      (match) {
+        final key = match.group(0);
+        final func = fmtArgs[key];
+        if (func == null) {
+          return key!;
+        }
+        return func(spi);
+      },
+    );
+    return fmted;
+  }
+
+  static final fmtArgs = {
+    r'${host}': (ServerPrivateInfo spi) => spi.ip,
+    r'${port}': (ServerPrivateInfo spi) => spi.port.toString(),
+    r'${user}': (ServerPrivateInfo spi) => spi.user,
+    r'${pwd}': (ServerPrivateInfo spi) => spi.pwd ?? '',
+    r'${id}': (ServerPrivateInfo spi) => spi.id,
+    r'${name}': (ServerPrivateInfo spi) => spi.name,
+  };
 }
 
 class SnippetResult {

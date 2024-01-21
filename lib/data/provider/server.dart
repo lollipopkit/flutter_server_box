@@ -393,15 +393,14 @@ class ServerProvider extends ChangeNotifier {
     TryLimiter.reset(sid);
   }
 
-  Future<SnippetResult?> runSnippets(String id, Snippet snippet) async {
-    final client = _servers[id]?.client;
-    if (client == null) {
-      return null;
-    }
+  Future<SnippetResult?> runSnippet(String id, Snippet snippet) async {
+    final server = _servers[id];
+    if (server == null) return null;
     final watch = Stopwatch()..start();
-    final result = await client.run(snippet.script).string;
+    final result = await server.client?.run(snippet.fmtWith(server.spi)).string;
     final time = watch.elapsed;
     watch.stop();
+    if (result == null) return null;
     return SnippetResult(
       dest: _servers[id]?.spi.name,
       result: result,
@@ -409,10 +408,10 @@ class ServerProvider extends ChangeNotifier {
     );
   }
 
-  Future<List<SnippetResult?>> runSnippetsMulti(
-    List<String> ids,
-    Snippet snippet,
-  ) async {
-    return await Future.wait(ids.map((id) async => runSnippets(id, snippet)));
-  }
+  // Future<List<SnippetResult?>> runSnippetsMulti(
+  //   List<String> ids,
+  //   Snippet snippet,
+  // ) async {
+  //   return await Future.wait(ids.map((id) async => runSnippet(id, snippet)));
+  // }
 }

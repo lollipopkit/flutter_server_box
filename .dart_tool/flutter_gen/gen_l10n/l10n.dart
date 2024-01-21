@@ -1414,6 +1414,12 @@ abstract class S {
   /// **'Success'**
   String get success;
 
+  /// No description provided for @supportFmtArgs.
+  ///
+  /// In en, this message translates to:
+  /// **'The following formatting parameters are supported:'**
+  String get supportFmtArgs;
+
   /// No description provided for @suspend.
   ///
   /// In en, this message translates to:

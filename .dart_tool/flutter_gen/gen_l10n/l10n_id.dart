@@ -692,6 +692,9 @@ class SId extends S {
   String get success => 'Kesuksesan';
 
   @override
+  String get supportFmtArgs => 'Parameter pemformatan berikut ini didukung:';
+
+  @override
   String get suspend => 'Suspend';
 
   @override

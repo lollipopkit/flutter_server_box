@@ -692,6 +692,9 @@ class SZh extends S {
   String get success => '成功';
 
   @override
+  String get supportFmtArgs => '支持以下格式化参数：';
+
+  @override
   String get suspend => '挂起';
 
   @override
@@ -1526,6 +1529,9 @@ class SZhTw extends SZh {
 
   @override
   String get success => '成功';
+
+  @override
+  String get supportFmtArgs => '支援以下格式化參數：';
 
   @override
   String get suspend => '挂起';

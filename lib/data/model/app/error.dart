@@ -46,7 +46,8 @@ enum ContainerErrType {
 }
 
 class ContainerErr extends Err<ContainerErrType> {
-  ContainerErr({required super.type, super.message}) : super(from: ErrFrom.docker);
+  ContainerErr({required super.type, super.message})
+      : super(from: ErrFrom.docker);
 
   @override
   String toString() {

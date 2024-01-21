@@ -219,6 +219,7 @@
   "stats": "統計",
   "stop": "停止",
   "success": "成功",
+  "supportFmtArgs": "支援以下格式化參數：",
   "suspend": "挂起",
   "suspendTip": "suspend 功能需要 root 權限及 systemd 支持。",
   "switchTo": "切換到 {val}",
