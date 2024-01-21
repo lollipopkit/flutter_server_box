@@ -123,17 +123,20 @@ class _ContainerPageState extends State<ContainerPage> {
       _buildVersion(),
       _buildPs(),
       _buildImage(),
+      // ignore: unnecessary_cast
+    ].map((e) => CardX(child: e) as Widget).toList();
+    items.add(
       Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _buildEditHost(),
           _buildSwitchProvider(),
         ],
       ),
-    ].map((e) => CardX(child: e));
+    );
     return ListView(
-      padding: const EdgeInsets.all(7),
-      children: items.toList(),
+      padding: const EdgeInsets.only(left: 13, right: 13, top: 13, bottom: 37),
+      children: items,
     );
   }
 
@@ -209,7 +212,7 @@ class _ContainerPageState extends State<ContainerPage> {
     return ListTile(
       title: Text(item.name ?? l10n.unknown),
       subtitle: Text(
-        item.image ?? l10n.unknown,
+        '${item.image ?? l10n.unknown} - ${item.running ? l10n.running : l10n.stopped}',
         style: UIs.text13Grey,
       ),
       trailing: _buildMoreBtn(item),

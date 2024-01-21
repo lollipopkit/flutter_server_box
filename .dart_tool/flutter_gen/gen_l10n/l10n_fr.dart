@@ -595,6 +595,9 @@ class SFr extends S {
   String get run => 'Exécuter';
 
   @override
+  String get running => 'en cours d\'exécution';
+
+  @override
   String get save => 'Enregistrer';
 
   @override
@@ -684,6 +687,9 @@ class SFr extends S {
 
   @override
   String get stop => 'Arrêter';
+
+  @override
+  String get stopped => 'interrompue';
 
   @override
   String get success => 'Succès';

@@ -595,6 +595,9 @@ class SEn extends S {
   String get run => 'Run';
 
   @override
+  String get running => 'Running';
+
+  @override
   String get save => 'Save';
 
   @override
@@ -684,6 +687,9 @@ class SEn extends S {
 
   @override
   String get stop => 'Stop';
+
+  @override
+  String get stopped => 'Stopped';
 
   @override
   String get success => 'Success';

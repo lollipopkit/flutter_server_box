@@ -595,6 +595,9 @@ class SId extends S {
   String get run => 'Berlari';
 
   @override
+  String get running => 'berlari';
+
+  @override
   String get save => 'Menyimpan';
 
   @override
@@ -684,6 +687,9 @@ class SId extends S {
 
   @override
   String get stop => 'Berhenti';
+
+  @override
+  String get stopped => 'dihentikan';
 
   @override
   String get success => 'Kesuksesan';

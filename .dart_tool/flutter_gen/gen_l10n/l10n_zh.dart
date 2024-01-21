@@ -595,6 +595,9 @@ class SZh extends S {
   String get run => '运行';
 
   @override
+  String get running => '运行中';
+
+  @override
   String get save => '保存';
 
   @override
@@ -684,6 +687,9 @@ class SZh extends S {
 
   @override
   String get stop => '停止';
+
+  @override
+  String get stopped => '已停止';
 
   @override
   String get success => '成功';
@@ -1437,6 +1443,9 @@ class SZhTw extends SZh {
   String get run => '運行';
 
   @override
+  String get running => '運作中';
+
+  @override
   String get save => '保存';
 
   @override
@@ -1526,6 +1535,9 @@ class SZhTw extends SZh {
 
   @override
   String get stop => '停止';
+
+  @override
+  String get stopped => '已停止';
 
   @override
   String get success => '成功';

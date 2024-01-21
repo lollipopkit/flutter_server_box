@@ -595,6 +595,9 @@ class SDe extends S {
   String get run => 'Ausführen';
 
   @override
+  String get running => 'läuft';
+
+  @override
   String get save => 'Speichern';
 
   @override
@@ -684,6 +687,9 @@ class SDe extends S {
 
   @override
   String get stop => 'Stop';
+
+  @override
+  String get stopped => 'Ausgelaufen';
 
   @override
   String get success => 'Erfolgreich';

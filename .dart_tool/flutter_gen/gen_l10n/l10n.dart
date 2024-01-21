@@ -1228,6 +1228,12 @@ abstract class S {
   /// **'Run'**
   String get run;
 
+  /// No description provided for @running.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get running;
+
   /// No description provided for @save.
   ///
   /// In en, this message translates to:
@@ -1401,6 +1407,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Stop'**
   String get stop;
+
+  /// No description provided for @stopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get stopped;
 
   /// No description provided for @success.
   ///
