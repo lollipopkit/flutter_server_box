@@ -2,7 +2,6 @@ import 'package:get_it/get_it.dart';
 
 import 'data/provider/app.dart';
 import 'data/provider/debug.dart';
-import 'data/provider/container.dart';
 import 'data/provider/private_key.dart';
 import 'data/provider/server.dart';
 import 'data/provider/sftp.dart';
@@ -25,7 +24,6 @@ void _setupLocatorForServices() {
 void _setupLocatorForProviders() {
   locator.registerSingleton(AppProvider());
   locator.registerSingleton(DebugProvider());
-  locator.registerSingleton(ContainerProvider());
   locator.registerSingleton(ServerProvider());
   locator.registerSingleton(VirtKeyProvider());
   locator.registerSingleton(SnippetProvider());

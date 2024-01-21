@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/data/provider/debug.dart';
+import 'package:toolbox/data/res/provider.dart';
 
 import '../widget/appbar.dart';
 
@@ -40,14 +41,17 @@ class _DebugPageState extends State<DebugPage> {
           fontWeight: FontWeight.bold,
         ),
         child: SingleChildScrollView(
-          child: Consumer<DebugProvider>(
-            builder: (_, debug, __) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: debug.widgets,
-              );
-            },
+          child: ChangeNotifierProvider(
+            create: (_) => Pros.debug,
+            child: Consumer<DebugProvider>(
+              builder: (_, debug, __) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: debug.widgets,
+                );
+              },
+            ),
           ),
         ),
       ),

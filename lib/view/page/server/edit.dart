@@ -6,7 +6,6 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/res/provider.dart';
-import 'package:toolbox/view/widget/expand_tile.dart';
 
 import '../../../core/route.dart';
 import '../../../data/model/server/private_key_info.dart';
@@ -219,7 +218,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         onRenameTag: Pros.server.renameTag,
       ),
       _buildAuth(),
-      _buildJumpServer(),
+      //_buildJumpServer(),
       ListTile(
         title: Text(l10n.autoConnect),
         trailing: ListenableBuilder(
@@ -347,48 +346,48 @@ class _ServerEditPageState extends State<ServerEditPage> {
     );
   }
 
-  Widget _buildJumpServer() {
-    return ListenableBuilder(
-      listenable: _jumpServer,
-      builder: (_, __) {
-        final children = Pros.server.servers
-            .where((element) => element.spi.jumpId == null)
-            .where((element) => element.spi.id != widget.spi?.id)
-            .map(
-              (e) => ListTile(
-                title: Text(e.spi.name),
-                subtitle: Text(e.spi.id, style: UIs.textGrey),
-                trailing: Radio<String>(
-                  groupValue: _jumpServer.value,
-                  value: e.spi.id,
-                  onChanged: (val) => _jumpServer.value = val,
-                ),
-                onTap: () {
-                  _jumpServer.value = e.spi.id;
-                },
-              ),
-            )
-            .toList();
-        children.add(ListTile(
-          title: Text(l10n.clear),
-          trailing: const Icon(Icons.clear),
-          onTap: () => _jumpServer.value = null,
-        ));
-        return CardX(
-          child: ExpandTile(
-            leading: const Icon(Icons.map),
-            initiallyExpanded: _jumpServer.value != null,
-            title: Text(l10n.jumpServer),
-            subtitle: const Text(
-              "It was temporarily disabled because it has some bugs (Issues #210)",
-              style: UIs.textGrey,
-            ),
-            children: children,
-          ),
-        );
-      },
-    );
-  }
+  // Widget _buildJumpServer() {
+  //   return ListenableBuilder(
+  //     listenable: _jumpServer,
+  //     builder: (_, __) {
+  //       final children = Pros.server.servers
+  //           .where((element) => element.spi.jumpId == null)
+  //           .where((element) => element.spi.id != widget.spi?.id)
+  //           .map(
+  //             (e) => ListTile(
+  //               title: Text(e.spi.name),
+  //               subtitle: Text(e.spi.id, style: UIs.textGrey),
+  //               trailing: Radio<String>(
+  //                 groupValue: _jumpServer.value,
+  //                 value: e.spi.id,
+  //                 onChanged: (val) => _jumpServer.value = val,
+  //               ),
+  //               onTap: () {
+  //                 _jumpServer.value = e.spi.id;
+  //               },
+  //             ),
+  //           )
+  //           .toList();
+  //       children.add(ListTile(
+  //         title: Text(l10n.clear),
+  //         trailing: const Icon(Icons.clear),
+  //         onTap: () => _jumpServer.value = null,
+  //       ));
+  //       return CardX(
+  //         child: ExpandTile(
+  //           leading: const Icon(Icons.map),
+  //           initiallyExpanded: _jumpServer.value != null,
+  //           title: Text(l10n.jumpServer),
+  //           subtitle: const Text(
+  //             "It was temporarily disabled because it has some bugs (Issues #210)",
+  //             style: UIs.textGrey,
+  //           ),
+  //           children: children,
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 
   void _onSave() async {
     if (_ipController.text.isEmpty) {

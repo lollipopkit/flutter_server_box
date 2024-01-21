@@ -28,7 +28,6 @@ import 'data/model/server/server_private_info.dart';
 import 'data/model/server/snippet.dart';
 import 'data/model/ssh/virtual_key.dart';
 import 'data/provider/app.dart';
-import 'data/provider/debug.dart';
 import 'data/provider/private_key.dart';
 import 'data/provider/server.dart';
 import 'data/provider/sftp.dart';
@@ -43,7 +42,6 @@ Future<void> main() async {
       MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (_) => locator<AppProvider>()),
-          ChangeNotifierProvider(create: (_) => locator<DebugProvider>()),
           ChangeNotifierProvider(create: (_) => locator<ServerProvider>()),
           ChangeNotifierProvider(create: (_) => locator<SnippetProvider>()),
           ChangeNotifierProvider(create: (_) => locator<PrivateKeyProvider>()),
