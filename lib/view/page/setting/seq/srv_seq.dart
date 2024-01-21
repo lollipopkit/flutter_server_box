@@ -6,7 +6,7 @@ import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/widget/cardx.dart';
 
-import '../../widget/appbar.dart';
+import '../../../widget/appbar.dart';
 
 class ServerOrderPage extends StatefulWidget {
   const ServerOrderPage({super.key});

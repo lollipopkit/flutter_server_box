@@ -12,7 +12,7 @@ import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/data/res/ui.dart';
-import 'package:toolbox/view/page/setting/platform_pub.dart';
+import 'package:toolbox/view/page/setting/platform/platform_pub.dart';
 import 'package:toolbox/view/widget/appbar.dart';
 import 'package:toolbox/view/widget/future_widget.dart';
 import 'package:toolbox/view/widget/cardx.dart';

@@ -64,9 +64,6 @@ class SFr extends S {
   String get backup => 'Sauvegarder';
 
   @override
-  String get backupAndRestore => 'Sauvegarde et restauration';
-
-  @override
   String get backupTip => 'Les données exportées sont simplement chiffrées. \nVeuillez les conserver en lieu sûr.';
 
   @override
@@ -742,6 +739,9 @@ class SFr extends S {
   String get times => 'Fois';
 
   @override
+  String get total => 'Total';
+
+  @override
   String get traffic => 'Trafic';
 
   @override
@@ -792,6 +792,9 @@ class SFr extends S {
 
   @override
   String get useNoPwd => 'Aucun mot de passe ne sera utilisé.';
+
+  @override
+  String get used => 'Utilisé';
 
   @override
   String get user => 'Utilisateur';

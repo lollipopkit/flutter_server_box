@@ -64,9 +64,6 @@ class SDe extends S {
   String get backup => 'Backup';
 
   @override
-  String get backupAndRestore => 'Backup und Wiederherstellung';
-
-  @override
   String get backupTip => 'Das Backup wird nur einfach verschlüsselt.\nBitte bewahre die Datei sicher auf.';
 
   @override
@@ -742,6 +739,9 @@ class SDe extends S {
   String get times => 'x';
 
   @override
+  String get total => 'Total';
+
+  @override
   String get traffic => 'Durchflussmenge';
 
   @override
@@ -792,6 +792,9 @@ class SDe extends S {
 
   @override
   String get useNoPwd => 'Es wird kein Passwort verwendet.';
+
+  @override
+  String get used => 'Gebraucht';
 
   @override
   String get user => 'Benutzer';

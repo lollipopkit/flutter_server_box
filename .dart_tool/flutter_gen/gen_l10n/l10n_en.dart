@@ -64,9 +64,6 @@ class SEn extends S {
   String get backup => 'Backup';
 
   @override
-  String get backupAndRestore => 'Backup and Restore';
-
-  @override
   String get backupTip => 'The exported data is simply encrypted. \nPlease keep it safe.';
 
   @override
@@ -742,6 +739,9 @@ class SEn extends S {
   String get times => 'Times';
 
   @override
+  String get total => 'Total';
+
+  @override
   String get traffic => 'Traffic';
 
   @override
@@ -792,6 +792,9 @@ class SEn extends S {
 
   @override
   String get useNoPwd => 'No password will be used.';
+
+  @override
+  String get used => 'Used';
 
   @override
   String get user => 'User';

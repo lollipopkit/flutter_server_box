@@ -214,12 +214,6 @@ abstract class S {
   /// **'Backup'**
   String get backup;
 
-  /// No description provided for @backupAndRestore.
-  ///
-  /// In en, this message translates to:
-  /// **'Backup and Restore'**
-  String get backupAndRestore;
-
   /// No description provided for @backupTip.
   ///
   /// In en, this message translates to:
@@ -1510,6 +1504,12 @@ abstract class S {
   /// **'Times'**
   String get times;
 
+  /// No description provided for @total.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get total;
+
   /// No description provided for @traffic.
   ///
   /// In en, this message translates to:
@@ -1605,6 +1605,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'No password will be used.'**
   String get useNoPwd;
+
+  /// No description provided for @used.
+  ///
+  /// In en, this message translates to:
+  /// **'Used'**
+  String get used;
 
   /// No description provided for @user.
   ///

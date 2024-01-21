@@ -64,9 +64,6 @@ class SId extends S {
   String get backup => 'Cadangan';
 
   @override
-  String get backupAndRestore => 'Cadangan dan Pulihkan';
-
-  @override
   String get backupTip => 'Data yang diekspor hanya dienkripsi.\nTolong jaga keamanannya.';
 
   @override
@@ -742,6 +739,9 @@ class SId extends S {
   String get times => 'Waktu';
 
   @override
+  String get total => 'Total';
+
+  @override
   String get traffic => 'Lalu lintas';
 
   @override
@@ -792,6 +792,9 @@ class SId extends S {
 
   @override
   String get useNoPwd => 'Tidak ada kata sandi yang akan digunakan.';
+
+  @override
+  String get used => 'Digunakan';
 
   @override
   String get user => 'Username';

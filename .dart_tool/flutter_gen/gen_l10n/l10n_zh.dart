@@ -64,9 +64,6 @@ class SZh extends S {
   String get backup => '备份';
 
   @override
-  String get backupAndRestore => '备份和恢复';
-
-  @override
   String get backupTip => '导出的数据仅进行了简单加密，请妥善保管。';
 
   @override
@@ -742,6 +739,9 @@ class SZh extends S {
   String get times => '次';
 
   @override
+  String get total => '总共';
+
+  @override
   String get traffic => '流量';
 
   @override
@@ -792,6 +792,9 @@ class SZh extends S {
 
   @override
   String get useNoPwd => '将会使用无密码。';
+
+  @override
+  String get used => '已用';
 
   @override
   String get user => '用户';
@@ -901,9 +904,6 @@ class SZhTw extends SZh {
 
   @override
   String get backup => '備份';
-
-  @override
-  String get backupAndRestore => '備份和還原';
 
   @override
   String get backupTip => '導出的數據僅進行了簡單加密，請妥善保管。';
@@ -1581,6 +1581,9 @@ class SZhTw extends SZh {
   String get times => '次';
 
   @override
+  String get total => '總共';
+
+  @override
   String get traffic => '流量';
 
   @override
@@ -1631,6 +1634,9 @@ class SZhTw extends SZh {
 
   @override
   String get useNoPwd => '将使用無密碼。';
+
+  @override
+  String get used => '已用';
 
   @override
   String get user => '用戶';

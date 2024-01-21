@@ -33,7 +33,7 @@ class BackupPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(l10n.backupAndRestore, style: UIs.text18),
+        title: Text(l10n.backup, style: UIs.text18),
       ),
       body: _buildBody(context),
     );

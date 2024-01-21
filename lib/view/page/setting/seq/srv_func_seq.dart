@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
-import 'package:toolbox/data/res/default.dart';
+import 'package:toolbox/data/model/app/menu/server_func.dart';
 import 'package:toolbox/data/res/store.dart';
 
-import '../../../core/extension/order.dart';
-import '../../widget/appbar.dart';
-import '../../widget/cardx.dart';
+import '../../../../core/extension/order.dart';
+import '../../../widget/appbar.dart';
+import '../../../widget/cardx.dart';
 
-class ServerDetailOrderPage extends StatefulWidget {
-  const ServerDetailOrderPage({super.key});
+class ServerFuncBtnsOrderPage extends StatefulWidget {
+  const ServerFuncBtnsOrderPage({super.key});
 
   @override
-  State<ServerDetailOrderPage> createState() => _ServerDetailOrderPageState();
+  State<ServerFuncBtnsOrderPage> createState() => _ServerDetailOrderPageState();
 }
 
-class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
+class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,13 +28,13 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
   }
 
   Widget _buildBody() {
-    final keys_ = Stores.setting.detailCardOrder.fetch();
-    final keys = <String>[];
+    final keys_ = Stores.setting.serverFuncBtns.fetch();
+    final keys = <ServerFuncBtn>[];
     for (final key in keys_) {
       keys.add(key);
     }
     final disabled =
-        Defaults.detailCardOrder.where((e) => !keys.contains(e)).toList();
+        ServerFuncBtn.values.where((e) => !keys.contains(e)).toList();
     final allKeys = [...keys, ...disabled];
     return ReorderableListView.builder(
       padding: const EdgeInsets.all(7),
@@ -43,7 +43,7 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
         return CardX(
           key: ValueKey(idx),
           child: ListTile(
-            title: Text(key),
+            title: Text(key.toStr),
             leading: _buildCheckBox(keys, key, idx, idx < keys.length),
             trailing: isDesktop ? null : const Icon(Icons.drag_handle),
           ),
@@ -55,13 +55,18 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
           context.showSnackBar(l10n.disabled);
           return;
         }
-        keys.moveByItem(keys, o, n, property: Stores.setting.detailCardOrder);
+        keys.moveByItem(keys, o, n, property: Stores.setting.serverFuncBtns);
         setState(() {});
       },
     );
   }
 
-  Widget _buildCheckBox(List<String> keys, String key, int idx, bool value) {
+  Widget _buildCheckBox(
+    List<ServerFuncBtn> keys,
+    ServerFuncBtn key,
+    int idx,
+    bool value,
+  ) {
     return Checkbox(
       value: value,
       onChanged: (val) {
@@ -75,7 +80,7 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
         } else {
           keys.remove(key);
         }
-        Stores.setting.detailCardOrder.put(keys);
+        Stores.setting.serverFuncBtns.put(keys);
         setState(() {});
       },
     );

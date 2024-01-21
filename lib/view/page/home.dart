@@ -232,7 +232,7 @@ class _HomePageState extends State<HomePage>
           ),
           ListTile(
             leading: const Icon(Icons.import_export),
-            title: Text(l10n.backupAndRestore),
+            title: Text(l10n.backup),
             onTap: () => AppRoute.backup().go(context),
           ),
           ListTile(
@@ -286,7 +286,7 @@ ${GithubIds.contributors.map((e) => '[$e](${e.url})').join(' ')}
 #### Participants
 ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
 
-#### My apps
+#### My other apps
 - [GPT Box](https://github.com/lollipopkit/flutter_gpt_box)
 ''',
         ),

@@ -16,6 +16,7 @@ import 'package:toolbox/data/model/server/dist.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/res/path.dart';
 import 'package:toolbox/data/res/provider.dart';
+import 'package:toolbox/data/res/store.dart';
 
 import '../../core/route.dart';
 import '../../core/utils/server.dart';
@@ -33,9 +34,9 @@ class ServerFuncBtnsTopRight extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PopupMenu<ServerTabMenu>(
-      items: ServerTabMenu.values
-          .map((e) => PopupMenuItem<ServerTabMenu>(
+    return PopupMenu<ServerFuncBtn>(
+      items: ServerFuncBtn.values
+          .map((e) => PopupMenuItem<ServerFuncBtn>(
                 value: e,
                 child: Row(
                   children: [
@@ -94,7 +95,7 @@ class ServerFuncBtns extends StatelessWidget {
     // );
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: ServerTabMenu.values
+      children: Stores.setting.serverFuncBtns.fetch()
           .map(
             (e) => IconButton(
               onPressed: () => _onTapMoreBtns(e, spi, context),
@@ -109,21 +110,21 @@ class ServerFuncBtns extends StatelessWidget {
 }
 
 void _onTapMoreBtns(
-  ServerTabMenu value,
+  ServerFuncBtn value,
   ServerPrivateInfo spi,
   BuildContext context,
 ) async {
   switch (value) {
-    case ServerTabMenu.pkg:
+    case ServerFuncBtn.pkg:
       _onPkg(context, spi);
       break;
-    case ServerTabMenu.sftp:
+    case ServerFuncBtn.sftp:
       AppRoute.sftp(spi: spi).checkGo(
         context: context,
         check: () => _checkClient(context, spi.id),
       );
       break;
-    case ServerTabMenu.snippet:
+    case ServerFuncBtn.snippet:
       final snippet = await context.showPickSingleDialog<Snippet>(
         items: Pros.snippet.snippets,
         name: (e) => e.name,
@@ -135,20 +136,26 @@ void _onTapMoreBtns(
         check: () => _checkClient(context, spi.id),
       );
       break;
-    case ServerTabMenu.container:
+    case ServerFuncBtn.container:
       AppRoute.docker(spi: spi).checkGo(
         context: context,
         check: () => _checkClient(context, spi.id),
       );
       break;
-    case ServerTabMenu.process:
+    case ServerFuncBtn.process:
       AppRoute.process(spi: spi).checkGo(
         context: context,
         check: () => _checkClient(context, spi.id),
       );
       break;
-    case ServerTabMenu.terminal:
+    case ServerFuncBtn.terminal:
       _gotoSSH(spi, context);
+      break;
+    case ServerFuncBtn.iperf:
+      AppRoute.iperf(spi: spi).checkGo(
+        context: context,
+        check: () => _checkClient(context, spi.id),
+      );
       break;
   }
 }

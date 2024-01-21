@@ -452,7 +452,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   Widget _buildDiskItem(Disk disk, ServerStatus ss) {
     final (read, write) = ss.diskIO.getSpeed(disk.dev);
     final text = () {
-      final use = '${disk.used.kb2Str} / ${disk.size.kb2Str}';
+      final use = '${l10n.used} ${disk.avail.kb2Str} / ${disk.size.kb2Str}';
       if (read == null || write == null) return use;
       return '$use\n${l10n.read} $read | ${l10n.write} $write';
     }();

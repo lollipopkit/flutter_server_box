@@ -140,9 +140,13 @@ class ServerProvider extends ChangeNotifier {
   static final refreshKey = GlobalKey<RefreshIndicatorState>();
 
   Future<void> startAutoRefresh() async {
-    final duration = Stores.setting.serverStatusUpdateInterval.fetch();
+    var duration = Stores.setting.serverStatusUpdateInterval.fetch();
     stopAutoRefresh();
     if (duration == 0) return;
+    if (duration < 0 || duration > 10 || duration == 1) {
+      duration = 3;
+      Loggers.app.warning('Invalid duration: $duration, use default 3');
+    }
     refreshKey.currentState?.show();
     _timer = Timer.periodic(Duration(seconds: duration), (_) async {
       await refreshData();

@@ -15,6 +15,7 @@ import 'package:toolbox/core/utils/sync/icloud.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/sync/webdav.dart';
 import 'package:toolbox/core/utils/ui.dart';
+import 'package:toolbox/data/model/app/menu/server_func.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
@@ -118,6 +119,7 @@ Future<void> _initDb() async {
   Hive.registerAdapter(ServerPrivateInfoAdapter()); // 3
   Hive.registerAdapter(VirtKeyAdapter()); // 4
   Hive.registerAdapter(NetViewTypeAdapter()); // 5
+  Hive.registerAdapter(ServerFuncBtnAdapter()); // 6
 }
 
 void _setupLogger() {

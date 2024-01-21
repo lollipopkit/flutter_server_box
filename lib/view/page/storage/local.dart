@@ -180,9 +180,8 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
                 ? const Icon(Icons.folder_open)
                 : const Icon(Icons.insert_drive_file),
             title: Text(fileName),
-            subtitle: isDir
-                ? null
-                : Text(stat.size.bytes2Str, style: UIs.textGrey),
+            subtitle:
+                isDir ? null : Text(stat.size.bytes2Str, style: UIs.textGrey),
             trailing: Text(
               stat.modified
                   .toString()

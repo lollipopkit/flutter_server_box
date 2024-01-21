@@ -206,7 +206,8 @@ class _SettingPageState extends State<SettingPage> {
       children: [
         _buildCollapseUI(),
         _buildServerFuncBtns(),
-        _buildSequence(),
+        _buildServerSeq(),
+        _buildServerDetailCardSeq(),
         _buildNetViewType(),
         _buildUpdateInterval(),
         _buildMaxRetry(),
@@ -985,6 +986,16 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildServerFuncBtns() {
+    return ExpandTile(
+      title: Text(l10n.serverFuncBtns),
+      children: [
+        _buildServerFuncBtnsSwitch(),
+        _buildServerFuncBtnsOrder(),
+      ],
+    );
+  }
+
+  Widget _buildServerFuncBtnsSwitch() {
     return ListTile(
       title: Text(l10n.location),
       subtitle: Text(l10n.moveOutServerFuncBtnsHelp, style: UIs.text13Grey),
@@ -992,26 +1003,28 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  Widget _buildSequence() {
-    return ExpandTile(
+  Widget _buildServerFuncBtnsOrder() {
+    return ListTile(
       title: Text(l10n.sequence),
-      subtitle: Text(
-        '${l10n.serverOrder} / ${l10n.serverDetailOrder} ...',
-        style: UIs.textGrey,
-      ),
-      children: [
-        ListTile(
-          title: Text(l10n.serverOrder),
-          trailing: const Icon(Icons.keyboard_arrow_right),
-          onTap: () => AppRoute.serverOrder().go(context),
-        ),
-        ListTile(
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: () => AppRoute.serverFuncBtnsOrder().go(context),
+    );
+  }
+
+  Widget _buildServerSeq() {
+    return ListTile(
+      title: Text(l10n.serverOrder),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: () => AppRoute.serverOrder().go(context),
+    );
+  }
+
+  Widget _buildServerDetailCardSeq() {
+    return ListTile(
           title: Text(l10n.serverDetailOrder),
           trailing: const Icon(Icons.keyboard_arrow_right),
           onTap: () => AppRoute.serverDetailOrder().go(context),
-        ),
-      ],
-    );
+        );
   }
 
   Widget _buildEditorFontSize() {
