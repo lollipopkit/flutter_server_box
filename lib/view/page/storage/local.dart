@@ -182,7 +182,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
             title: Text(fileName),
             subtitle: isDir
                 ? null
-                : Text(stat.size.convertBytes, style: UIs.textGrey),
+                : Text(stat.size.bytes2Str, style: UIs.textGrey),
             trailing: Text(
               stat.modified
                   .toString()

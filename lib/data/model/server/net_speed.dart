@@ -47,10 +47,10 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
       for (var i = 0; i < now.length; i++) {
         size += sizeInBytes(i);
       }
-      return size.convertBytes;
+      return size.bytes2Str;
     }
     final idx = deviceIdx(device);
-    return sizeInBytes(idx).convertBytes;
+    return sizeInBytes(idx).bytes2Str;
   }
 
   String speedOut({String? device, bool all = false}) {
@@ -73,10 +73,10 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
       for (var i = 0; i < now.length; i++) {
         size += sizeOutBytes(i);
       }
-      return size.convertBytes;
+      return size.bytes2Str;
     }
     final idx = deviceIdx(device);
-    return sizeOutBytes(idx).convertBytes;
+    return sizeOutBytes(idx).bytes2Str;
   }
 
   int deviceIdx(String? device) {
@@ -90,7 +90,7 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
     return 0;
   }
 
-  String buildStandardOutput(double speed) => '${speed.convertBytes}/s';
+  String buildStandardOutput(double speed) => '${speed.bytes2Str}/s';
 
   /// [raw] example:
   /// Inter-|   Receive                                                |  Transmit

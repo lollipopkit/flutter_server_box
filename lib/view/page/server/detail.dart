@@ -256,7 +256,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                     ),
                     UIs.width7,
                     Text(
-                      'of ${(ss.mem.total * 1024).convertBytes}',
+                      'of ${(ss.mem.total * 1024).bytes2Str}',
                       style: UIs.text13Grey,
                     )
                   ],
@@ -297,7 +297,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                     Text('${used.toStringAsFixed(0)}%', style: UIs.text27),
                     UIs.width7,
                     Text(
-                      'of ${(ss.swap.total * 1024).convertBytes} ',
+                      'of ${(ss.swap.total * 1024).bytes2Str} ',
                       style: UIs.text13Grey,
                     )
                   ],
@@ -452,7 +452,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   Widget _buildDiskItem(Disk disk, ServerStatus ss) {
     final (read, write) = ss.diskIO.getSpeed(disk.dev);
     final text = () {
-      final use = '${disk.used} / ${disk.size}';
+      final use = '${disk.used.kb2Str} / ${disk.size.kb2Str}';
       if (read == null || write == null) return use;
       return '$use\n${l10n.read} $read | ${l10n.write} $write';
     }();

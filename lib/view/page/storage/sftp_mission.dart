@@ -94,7 +94,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
         );
       case SftpWorkerStatus.loading:
         final percentStr = (status.progress ?? 0.0).toStringAsFixed(2);
-        final size = (status.size ?? 0).convertBytes;
+        final size = (status.size ?? 0).bytes2Str;
         return _wrapInCard(
           status: status,
           subtitle: l10n.percentOfSize(percentStr, size),

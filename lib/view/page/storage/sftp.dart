@@ -304,7 +304,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         subtitle: isDir
             ? null
             : Text(
-                (file.attr.size ?? 0).convertBytes,
+                (file.attr.size ?? 0).bytes2Str,
                 style: UIs.textGrey,
               ),
         onTap: () {

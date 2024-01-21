@@ -193,8 +193,8 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
               context.showSnackBar(
                 l10n.fileTooLarge(
                   path,
-                  size.convertBytes,
-                  Miscs.privateKeyMaxSize.convertBytes,
+                  size.bytes2Str,
+                  Miscs.privateKeyMaxSize.bytes2Str,
                 ),
               );
               return;

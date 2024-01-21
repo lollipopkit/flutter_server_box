@@ -34,7 +34,7 @@ final class PodmanImg implements ContainerImg {
   });
 
   @override
-  String? get sizeMB => size?.convertBytes;
+  String? get sizeMB => size?.bytes2Str;
 
   @override
   int? get containersCount => containers;

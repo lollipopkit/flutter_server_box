@@ -1,5 +1,5 @@
 extension NumX on num {
-  String get convertBytes {
+  String get bytes2Str {
     const suffix = ['B', 'KB', 'MB', 'GB', 'TB'];
     double value = toDouble();
     int squareTimes = 0;
@@ -12,10 +12,12 @@ extension NumX on num {
     }
     return '$finalValue ${suffix[squareTimes]}';
   }
+
+  String get kb2Str => (this * 1024).bytes2Str;
 }
 
 extension BigIntX on BigInt {
-  String get convertBytes {
+  String get bytes2Str {
     const suffix = ['B', 'KB', 'MB', 'GB', 'TB'];
     double value = toDouble();
     int squareTimes = 0;
@@ -28,4 +30,6 @@ extension BigIntX on BigInt {
     }
     return '$finalValue ${suffix[squareTimes]}';
   }
+
+  String get kb2Str => (this * BigInt.from(1024)).bytes2Str;
 }
