@@ -202,6 +202,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.18.0"
+  computer:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: master
+      resolved-ref: b0819c8a939e1fa6858f1a0e12ee8122db0df390
+      url: "https://github.com/lollipopkit/dart_computer"
+    source: git
+    version: "3.2.1"
   convert:
     dependency: transitive
     description:

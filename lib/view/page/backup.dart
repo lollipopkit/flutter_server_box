@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
+import 'package:computer/computer.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
@@ -206,7 +206,7 @@ class BackupPage extends StatelessWidget {
 
     try {
       context.showLoadingDialog();
-      final backup = await compute(Backup.fromJsonString, text.trim());
+      final backup = await Computer.shared.start(Backup.fromJsonString, text.trim());
       if (backupFormatVersion != backup.version) {
         context.showSnackBar(l10n.backupVersionNotMatch);
         return;
@@ -283,7 +283,7 @@ class BackupPage extends StatelessWidget {
       return;
     }
     final dlFile = await File(fileName).readAsString();
-    final dlBak = await compute(Backup.fromJsonString, dlFile);
+    final dlBak = await Computer.shared.start(Backup.fromJsonString, dlFile);
     await dlBak.restore(force: true);
     webdavLoading.value = false;
   }

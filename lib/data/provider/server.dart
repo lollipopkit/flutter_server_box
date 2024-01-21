@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/utils/platform/path.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
@@ -378,7 +378,7 @@ class ServerProvider extends ChangeNotifier {
         segments: segments,
         system: systemType,
       );
-      s.status = await compute(getStatus, req);
+      s.status = await Computer.shared.start(getStatus, req);
     } catch (e, trace) {
       TryLimiter.inc(sid);
       s.status.err = 'Parse failed: $e\n\n$raw';

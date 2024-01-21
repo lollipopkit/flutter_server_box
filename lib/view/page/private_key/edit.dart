@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
+import 'package:computer/computer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:toolbox/core/extension/context/common.dart';
@@ -134,7 +134,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
           _loading = UIs.centerSizedLoading;
         });
         try {
-          final decrypted = await compute(decyptPem, [key, pwd]);
+          final decrypted = await Computer.shared.start(decyptPem, [key, pwd]);
           final pki = PrivateKeyInfo(id: name, key: decrypted);
           if (widget.pki != null) {
             Pros.key.update(widget.pki!, pki);

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:code_text_field/code_text_field.dart';
-import 'package:flutter/foundation.dart';
+import 'package:computer/computer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_highlight/themes/a11y-light.dart';
@@ -76,7 +76,7 @@ class _EditorPageState extends State<EditorPage> {
 
   Future<void> _setupCtrl() async {
     if (widget.path != null) {
-      final code = await compute(
+      final code = await Computer.shared.start(
         (path) async => await File(path).readAsString(),
         widget.path!,
       );
