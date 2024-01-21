@@ -20,7 +20,7 @@ class Backup {
   final List<ServerPrivateInfo> spis;
   final List<Snippet> snippets;
   final List<PrivateKeyInfo> keys;
-  final Map<String, dynamic> dockerHosts;
+  final Map<String, dynamic> container;
   final Map<String, dynamic> settings;
   final Map<String, dynamic> history;
   final int? lastModTime;
@@ -31,7 +31,7 @@ class Backup {
     required this.spis,
     required this.snippets,
     required this.keys,
-    required this.dockerHosts,
+    required this.container,
     required this.settings,
     required this.history,
     this.lastModTime,
@@ -48,7 +48,7 @@ class Backup {
         keys = (json['keys'] as List)
             .map((e) => PrivateKeyInfo.fromJson(e))
             .toList(),
-        dockerHosts = json['dockerHosts'] ?? {},
+        container = json['container'] ?? {},
         settings = json['settings'] ?? {},
         lastModTime = json['lastModTime'],
         history = json['history'] ?? {};
@@ -59,7 +59,7 @@ class Backup {
         'spis': spis,
         'snippets': snippets,
         'keys': keys,
-        'dockerHosts': dockerHosts,
+        'container': container,
         'settings': settings,
         'lastModTime': lastModTime,
         'history': history,
@@ -71,7 +71,7 @@ class Backup {
         spis = Stores.server.fetch(),
         snippets = Stores.snippet.fetch(),
         keys = Stores.key.fetch(),
-        dockerHosts = Stores.docker.box.toJson(),
+        container = Stores.docker.box.toJson(),
         settings = Stores.setting.box.toJson(),
         lastModTime = Stores.lastModTime,
         history = Stores.history.box.toJson();
@@ -110,8 +110,8 @@ class Backup {
     for (final s in history.keys) {
       Stores.history.box.put(s, history[s]);
     }
-    for (final k in dockerHosts.keys) {
-      final val = dockerHosts[k];
+    for (final k in container.keys) {
+      final val = container[k];
       if (val != null && val is String && val.isNotEmpty) {
         Stores.docker.put(k, val);
       }

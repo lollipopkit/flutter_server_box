@@ -121,6 +121,9 @@ class SDe extends S {
   String get connected => 'in Verbindung gebracht';
 
   @override
+  String get container => 'Container';
+
+  @override
   String get containerName => 'Container Name';
 
   @override
@@ -693,6 +696,11 @@ class SDe extends S {
 
   @override
   String get suspendTip => 'Die Suspend-Funktion erfordert Root-Rechte und systemd-Unterstützung.';
+
+  @override
+  String switchTo(Object val) {
+    return 'Wechseln zu $val';
+  }
 
   @override
   String get syncTip => 'Damit einige Änderungen wirksam werden, kann ein Neustart erforderlich sein.';

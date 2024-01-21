@@ -121,6 +121,9 @@ class SZh extends S {
   String get connected => '已连接';
 
   @override
+  String get container => '容器';
+
+  @override
   String get containerName => '容器名';
 
   @override
@@ -695,6 +698,11 @@ class SZh extends S {
   String get suspendTip => 'suspend 功能需要 root 权限及 systemd 支持。';
 
   @override
+  String switchTo(Object val) {
+    return '切换到 $val';
+  }
+
+  @override
   String get syncTip => '可能需要重新启动，某些更改才能生效。';
 
   @override
@@ -947,6 +955,9 @@ class SZhTw extends SZh {
 
   @override
   String get connected => '已連接';
+
+  @override
+  String get container => '容器';
 
   @override
   String get containerName => '容器名稱';
@@ -1521,6 +1532,11 @@ class SZhTw extends SZh {
 
   @override
   String get suspendTip => 'suspend 功能需要 root 權限及 systemd 支持。';
+
+  @override
+  String switchTo(Object val) {
+    return '切換到 $val';
+  }
 
   @override
   String get syncTip => '可能需要重新啟動，某些更改才能生效。';

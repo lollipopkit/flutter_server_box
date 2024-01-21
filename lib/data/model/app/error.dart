@@ -33,7 +33,7 @@ class SSHErr extends Err<SSHErrType> {
   }
 }
 
-enum DockerErrType {
+enum ContainerErrType {
   unknown,
   noClient,
   notInstalled,
@@ -45,12 +45,12 @@ enum DockerErrType {
   parseStats,
 }
 
-class DockerErr extends Err<DockerErrType> {
-  DockerErr({required super.type, super.message}) : super(from: ErrFrom.docker);
+class ContainerErr extends Err<ContainerErrType> {
+  ContainerErr({required super.type, super.message}) : super(from: ErrFrom.docker);
 
   @override
   String toString() {
-    return 'DockerErr<$type>: $message';
+    return 'ContainerErr<$type>: $message';
   }
 }
 

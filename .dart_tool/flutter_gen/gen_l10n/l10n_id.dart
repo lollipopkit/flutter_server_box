@@ -121,6 +121,9 @@ class SId extends S {
   String get connected => 'Terhubung';
 
   @override
+  String get container => 'Wadah';
+
+  @override
   String get containerName => 'Nama kontainer';
 
   @override
@@ -693,6 +696,11 @@ class SId extends S {
 
   @override
   String get suspendTip => 'Fungsi penangguhan memerlukan hak akses root dan dukungan systemd.';
+
+  @override
+  String switchTo(Object val) {
+    return 'Beralih ke $val';
+  }
 
   @override
   String get syncTip => 'Pengaktifan ulang mungkin diperlukan agar beberapa perubahan dapat diterapkan.';

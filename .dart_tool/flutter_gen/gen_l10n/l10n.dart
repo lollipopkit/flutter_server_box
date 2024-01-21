@@ -328,6 +328,12 @@ abstract class S {
   /// **'Connected'**
   String get connected;
 
+  /// No description provided for @container.
+  ///
+  /// In en, this message translates to:
+  /// **'Container'**
+  String get container;
+
   /// No description provided for @containerName.
   ///
   /// In en, this message translates to:
@@ -1419,6 +1425,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'The suspend function requires root privileges and systemd support.'**
   String get suspendTip;
+
+  /// No description provided for @switchTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to {val}'**
+  String switchTo(Object val);
 
   /// No description provided for @syncTip.
   ///

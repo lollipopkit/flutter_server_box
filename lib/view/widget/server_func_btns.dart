@@ -32,9 +32,9 @@ class ServerFuncBtnsTopRight extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PopupMenu<ServerTabMenuType>(
-      items: ServerTabMenuType.values
-          .map((e) => PopupMenuItem<ServerTabMenuType>(
+    return PopupMenu<ServerTabMenu>(
+      items: ServerTabMenu.values
+          .map((e) => PopupMenuItem<ServerTabMenu>(
                 value: e,
                 child: Row(
                   children: [
@@ -93,7 +93,7 @@ class ServerFuncBtns extends StatelessWidget {
     // );
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: ServerTabMenuType.values
+      children: ServerTabMenu.values
           .map(
             (e) => IconButton(
               onPressed: () => _onTapMoreBtns(e, spi, context),
@@ -108,15 +108,15 @@ class ServerFuncBtns extends StatelessWidget {
 }
 
 void _onTapMoreBtns(
-  ServerTabMenuType value,
+  ServerTabMenu value,
   ServerPrivateInfo spi,
   BuildContext context,
 ) async {
   switch (value) {
-    case ServerTabMenuType.pkg:
+    case ServerTabMenu.pkg:
       _onPkg(context, spi);
       break;
-    case ServerTabMenuType.sftp:
+    case ServerTabMenu.sftp:
       AppRoute.sftp(spi: spi).checkGo(
         context: context,
         check: () => _checkClient(context, spi.id),
@@ -145,19 +145,19 @@ void _onTapMoreBtns(
     //     );
     //   }
     //   break;
-    case ServerTabMenuType.docker:
+    case ServerTabMenu.container:
       AppRoute.docker(spi: spi).checkGo(
         context: context,
         check: () => _checkClient(context, spi.id),
       );
       break;
-    case ServerTabMenuType.process:
+    case ServerTabMenu.process:
       AppRoute.process(spi: spi).checkGo(
         context: context,
         check: () => _checkClient(context, spi.id),
       );
       break;
-    case ServerTabMenuType.terminal:
+    case ServerTabMenu.terminal:
       _gotoSSH(spi, context);
       break;
   }

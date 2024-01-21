@@ -121,6 +121,9 @@ class SEn extends S {
   String get connected => 'Connected';
 
   @override
+  String get container => 'Container';
+
+  @override
   String get containerName => 'Container name';
 
   @override
@@ -693,6 +696,11 @@ class SEn extends S {
 
   @override
   String get suspendTip => 'The suspend function requires root privileges and systemd support.';
+
+  @override
+  String switchTo(Object val) {
+    return 'Switch to $val';
+  }
 
   @override
   String get syncTip => 'A restart may be required for some changes to take effect.';

@@ -121,6 +121,9 @@ class SFr extends S {
   String get connected => 'Connecté';
 
   @override
+  String get container => 'Conteneurs';
+
+  @override
   String get containerName => 'Nom du conteneur';
 
   @override
@@ -693,6 +696,11 @@ class SFr extends S {
 
   @override
   String get suspendTip => 'La fonction de suspension nécessite des privilèges root et la prise en charge de systemd.';
+
+  @override
+  String switchTo(Object val) {
+    return 'Passer à $val';
+  }
 
   @override
   String get syncTip => 'Un redémarrage peut être nécessaire pour que certains changements prennent effet.';

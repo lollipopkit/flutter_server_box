@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 
-enum ServerTabMenuType {
+enum ServerTabMenu {
   terminal,
   sftp,
-  docker,
+  container,
   process,
   pkg,
   //snippet,
@@ -12,40 +12,40 @@ enum ServerTabMenuType {
 
   IconData get icon {
     switch (this) {
-      case ServerTabMenuType.sftp:
+      case ServerTabMenu.sftp:
         return Icons.insert_drive_file;
       //case ServerTabMenuType.snippet:
       //return Icons.code;
-      case ServerTabMenuType.pkg:
+      case ServerTabMenu.pkg:
         return Icons.system_security_update;
-      case ServerTabMenuType.docker:
+      case ServerTabMenu.container:
         return Icons.view_agenda;
-      case ServerTabMenuType.process:
+      case ServerTabMenu.process:
         return Icons.list_alt_outlined;
-      case ServerTabMenuType.terminal:
+      case ServerTabMenu.terminal:
         return Icons.terminal;
     }
   }
 
   String get toStr {
     switch (this) {
-      case ServerTabMenuType.sftp:
+      case ServerTabMenu.sftp:
         return 'SFTP';
       //case ServerTabMenuType.snippet:
       //return l10n.snippet;
-      case ServerTabMenuType.pkg:
+      case ServerTabMenu.pkg:
         return l10n.pkg;
-      case ServerTabMenuType.docker:
-        return 'Docker';
-      case ServerTabMenuType.process:
+      case ServerTabMenu.container:
+        return l10n.container;
+      case ServerTabMenu.process:
         return l10n.process;
-      case ServerTabMenuType.terminal:
+      case ServerTabMenu.terminal:
         return l10n.terminal;
     }
   }
 }
 
-enum DockerMenuType {
+enum ContainerMenu {
   start,
   stop,
   restart,
@@ -55,7 +55,7 @@ enum DockerMenuType {
   //stats,
   ;
 
-  static List<DockerMenuType> items(bool running) {
+  static List<ContainerMenu> items(bool running) {
     if (running) {
       return [
         stop,
@@ -72,17 +72,17 @@ enum DockerMenuType {
 
   IconData get icon {
     switch (this) {
-      case DockerMenuType.start:
+      case ContainerMenu.start:
         return Icons.play_arrow;
-      case DockerMenuType.stop:
+      case ContainerMenu.stop:
         return Icons.stop;
-      case DockerMenuType.restart:
+      case ContainerMenu.restart:
         return Icons.restart_alt;
-      case DockerMenuType.rm:
+      case ContainerMenu.rm:
         return Icons.delete;
-      case DockerMenuType.logs:
+      case ContainerMenu.logs:
         return Icons.logo_dev;
-      case DockerMenuType.terminal:
+      case ContainerMenu.terminal:
         return Icons.terminal;
       // case DockerMenuType.stats:
       //   return Icons.bar_chart;
@@ -91,24 +91,24 @@ enum DockerMenuType {
 
   String get toStr {
     switch (this) {
-      case DockerMenuType.start:
+      case ContainerMenu.start:
         return l10n.start;
-      case DockerMenuType.stop:
+      case ContainerMenu.stop:
         return l10n.stop;
-      case DockerMenuType.restart:
+      case ContainerMenu.restart:
         return l10n.restart;
-      case DockerMenuType.rm:
+      case ContainerMenu.rm:
         return l10n.delete;
-      case DockerMenuType.logs:
+      case ContainerMenu.logs:
         return l10n.log;
-      case DockerMenuType.terminal:
+      case ContainerMenu.terminal:
         return l10n.terminal;
       // case DockerMenuType.stats:
       //   return s.stats;
     }
   }
 
-  PopupMenuItem<DockerMenuType> get widget => _build(this, icon, toStr);
+  PopupMenuItem<ContainerMenu> get widget => _build(this, icon, toStr);
 }
 
 PopupMenuItem<T> _build<T>(T t, IconData icon, String text) {

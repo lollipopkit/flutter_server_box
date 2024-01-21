@@ -224,30 +224,6 @@ const _statusCmds = [
   'nvidia-smi -q -x',
 ];
 
-enum DockerCmdType {
-  version,
-  ps,
-  //stats,
-  images,
-  ;
-
-  String get exec {
-    switch (this) {
-      case DockerCmdType.version:
-        return 'docker version';
-      case DockerCmdType.ps:
-        return 'docker ps -a';
-      // case DockerCmdType.stats:
-      //   return 'docker stats --no-stream';
-      case DockerCmdType.images:
-        return 'docker image ls';
-    }
-  }
-
-  static final execAll =
-      values.map((e) => e.exec).join(' && echo $seperator && ');
-}
-
 enum BSDStatusCmdType {
   echo,
   time,
