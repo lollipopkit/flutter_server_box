@@ -140,7 +140,6 @@ class _SettingPageState extends State<SettingPage> {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 17),
         children: [
-          /// TODO: Remember add new items in front of the each list, so the user can easily find the new items
           _buildTitle('App'),
           _buildApp(),
           _buildTitle(l10n.server),
@@ -271,10 +270,12 @@ class _SettingPageState extends State<SettingPage> {
       10,
       (index) => PopupMenuItem(
         value: index,
-        child: Text('$index ${l10n.second}'),
+        child: Text(index == 0 ? l10n.manual : '$index ${l10n.second}'),
       ),
       growable: false,
     ).toList();
+    // 1 second is too fast, so remove it
+    items.removeAt(1);
 
     return ListTile(
       title: Text(
