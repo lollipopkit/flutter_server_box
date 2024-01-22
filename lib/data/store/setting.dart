@@ -164,7 +164,7 @@ class SettingStore extends PersistentStore {
   /// Otherwise, display them on the top of server detail page
   late final moveOutServerTabFuncBtns = property(
     'moveOutServerTabFuncBtns',
-    false,
+    true,
   );
 
   /// Whether use `rm -r` to delete directory on SFTP

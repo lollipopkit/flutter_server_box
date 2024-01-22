@@ -190,19 +190,15 @@ exec ./$appName
 [Desktop Entry]
 Name=$appName
 Exec=$appName
-Icon=app_icon
+Icon=app_icon.png
 Type=Application
-Categories=Network;
+Categories=Network;Utility;
 ''';
   await File('$appDirName/$appName.desktop').writeAsString(desktop);
   // Run appimagetool
-  await Process.run('appimagetool', [appDirName]);
+  await Process.run('sh', ['-c', 'ARCH=x86_64 appimagetool $appDirName']);
 
   await scpLinux2CDN();
-
-  // Clean build files
-  await Process.run('rm', ['-r', appDirName]);
-  await Process.run('rm', ['$appName-x86_64.AppImage']);
 }
 
 Future<void> flutterBuildWin() async {

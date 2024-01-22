@@ -95,7 +95,8 @@ class ServerFuncBtns extends StatelessWidget {
     // );
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: Stores.setting.serverFuncBtns.fetch()
+      children: Stores.setting.serverFuncBtns
+          .fetch()
           .map(
             (e) => IconButton(
               onPressed: () => _onTapMoreBtns(e, spi, context),

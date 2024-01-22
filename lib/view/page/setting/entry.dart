@@ -1021,10 +1021,10 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildServerDetailCardSeq() {
     return ListTile(
-          title: Text(l10n.serverDetailOrder),
-          trailing: const Icon(Icons.keyboard_arrow_right),
-          onTap: () => AppRoute.serverDetailOrder().go(context),
-        );
+      title: Text(l10n.serverDetailOrder),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: () => AppRoute.serverDetailOrder().go(context),
+    );
   }
 
   Widget _buildEditorFontSize() {
