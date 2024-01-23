@@ -382,7 +382,11 @@ class ServerProvider extends ChangeNotifier {
         segments: segments,
         system: systemType,
       );
-      s.status = await Computer.shared.start(getStatus, req);
+      s.status = await Computer.shared.start(
+        getStatus,
+        req,
+        taskName: 'StatusUpdateReq<${s.id}>',
+      );
     } catch (e, trace) {
       TryLimiter.inc(sid);
       s.status.err = 'Parse failed: $e\n\n$raw';

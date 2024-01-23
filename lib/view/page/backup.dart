@@ -283,7 +283,7 @@ class BackupPage extends StatelessWidget {
       webdavLoading.value = false;
       return;
     }
-    final dlFile = await File(fileName).readAsString();
+    final dlFile = await File('${await Paths.doc}/$fileName').readAsString();
     final dlBak = await Computer.shared.start(Backup.fromJsonString, dlFile);
     await dlBak.restore(force: true);
     webdavLoading.value = false;

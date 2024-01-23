@@ -102,13 +102,8 @@ class _ContainerPageState extends State<ContainerPage> {
               child: Text(_container.error?.toString() ?? l10n.unknownError),
             ),
             const Spacer(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildEditHost(),
-                _buildSwitchProvider(),
-              ],
-            ),
+            _buildEditHost(),
+            _buildSwitchProvider(),
             UIs.height13,
           ],
         ),
@@ -123,17 +118,9 @@ class _ContainerPageState extends State<ContainerPage> {
       _buildVersion(),
       _buildPs(),
       _buildImage(),
-      // ignore: unnecessary_cast
-    ].map((e) => CardX(child: e) as Widget).toList();
-    items.add(
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _buildEditHost(),
-          _buildSwitchProvider(),
-        ],
-      ),
-    );
+      _buildEditHost(),
+      _buildSwitchProvider(),
+    ].map((e) => CardX(child: e)).toList();
     return ListView(
       padding: const EdgeInsets.only(left: 13, right: 13, top: 13, bottom: 37),
       children: items,
