@@ -189,7 +189,7 @@ class SEn extends S {
   String get dockerEditHost => 'Edit DOCKER_HOST';
 
   @override
-  String get dockerEmptyRunningItems => 'No running container. \nIt may be that the env DOCKER_HOST is not read correctly. You can found it by running `echo \$DOCKER_HOST` in terminal.';
+  String get dockerEmptyRunningItems => 'There are no running containers.\nThis could be because:\n- The Docker installation user is not the same as the username configured within the App.\n- The environment variable DOCKER_HOST was not read correctly. You can get it by running `echo \$DOCKER_HOST` in the terminal.';
 
   @override
   String dockerImagesFmt(Object count) {

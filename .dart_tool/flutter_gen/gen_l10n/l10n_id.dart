@@ -189,7 +189,7 @@ class SId extends S {
   String get dockerEditHost => 'Edit Docker_host';
 
   @override
-  String get dockerEmptyRunningItems => 'Tidak ada wadah yang berjalan.\nMungkin saja env DOCKER_HOST tidak dibaca dengan benar. Anda dapat menemukannya dengan menjalankan `echo \$DOCKER_HOST` di terminal.';
+  String get dockerEmptyRunningItems => 'Tidak ada wadah yang sedang berjalan.\nHal ini dapat terjadi karena:\n- Pengguna instalasi Docker tidak sama dengan nama pengguna yang dikonfigurasi di dalam Aplikasi.\n- Variabel lingkungan DOCKER_HOST tidak terbaca dengan benar. Anda bisa mendapatkannya dengan menjalankan `echo \$DOCKER_HOST` di terminal.';
 
   @override
   String dockerImagesFmt(Object count) {

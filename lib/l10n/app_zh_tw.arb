@@ -60,7 +60,7 @@
   "displayName": "顯示名稱",
   "dl2Local": "下載 {fileName} 到本地？",
   "dockerEditHost": "編輯 DOCKER_HOST",
-  "dockerEmptyRunningItems": "沒有正在運行的容器。\n這可能是因為環境變量 DOCKER_HOST 沒有被正確讀取。你可以通過在終端內運行 `echo $DOCKER_HOST` 來獲取。",
+  "dockerEmptyRunningItems": "沒有正在運行的容器。\n這可能是因為：\n- Docker 安裝使用者與 App 內配置的使用者名稱不同\n- 環境變量 DOCKER_HOST 沒有被正確讀取。你可以通過在終端內運行 `echo $DOCKER_HOST` 來獲取。",
   "dockerImagesFmt": "共 {count} 個鏡像",
   "dockerNotInstalled": "Docker 未安裝",
   "dockerStatusRunningAndStoppedFmt": "{runningCount}個正在運行, {stoppedCount}個已停止",

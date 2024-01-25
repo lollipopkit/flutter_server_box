@@ -163,11 +163,11 @@ class _SnippetEditPageState extends State<SnippetEditPage>
 
 ${Snippet.fmtArgs.keys.map((e) => '`$e`').join(', ')}
 ''',
-styleSheet: MarkdownStyleSheet(
-  codeblockDecoration: const BoxDecoration(
-    color: Colors.transparent,
-  ),
-),
+        styleSheet: MarkdownStyleSheet(
+          codeblockDecoration: const BoxDecoration(
+            color: Colors.transparent,
+          ),
+        ),
       ).padding(const EdgeInsets.all(13)),
     );
   }

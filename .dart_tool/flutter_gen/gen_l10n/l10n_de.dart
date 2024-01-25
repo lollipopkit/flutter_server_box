@@ -189,7 +189,7 @@ class SDe extends S {
   String get dockerEditHost => 'DOCKER_HOST bearbeiten';
 
   @override
-  String get dockerEmptyRunningItems => 'Keine aktiven Container.\n\nWomöglich wird die Umgebungsvariable DOCKER_HOST nicht richtig erkannt. Du kannst sie finden, indem du `echo \$DOCKER_HOST` im Terminal ausführst.';
+  String get dockerEmptyRunningItems => 'Es gibt keine laufenden Container.\nDas könnte daran liegen:\n- Der Docker-Installationsbenutzer ist nicht mit dem in der App konfigurierten Benutzernamen identisch.\n- Die Umgebungsvariable DOCKER_HOST wurde nicht korrekt gelesen. Sie können sie ermitteln, indem Sie `echo \$DOCKER_HOST` im Terminal ausführen.';
 
   @override
   String dockerImagesFmt(Object count) {
@@ -791,7 +791,7 @@ class SDe extends S {
   String get upsideDown => 'Upside Down';
 
   @override
-  String get uptime => 'Uptime';
+  String get uptime => 'Betriebszeit';
 
   @override
   String get urlOrJson => 'URL oder JSON';

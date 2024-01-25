@@ -463,7 +463,7 @@ abstract class S {
   /// No description provided for @dockerEmptyRunningItems.
   ///
   /// In en, this message translates to:
-  /// **'No running container. \nIt may be that the env DOCKER_HOST is not read correctly. You can found it by running `echo \$DOCKER_HOST` in terminal.'**
+  /// **'There are no running containers.\nThis could be because:\n- The Docker installation user is not the same as the username configured within the App.\n- The environment variable DOCKER_HOST was not read correctly. You can get it by running `echo \$DOCKER_HOST` in the terminal.'**
   String get dockerEmptyRunningItems;
 
   /// No description provided for @dockerImagesFmt.

@@ -189,7 +189,7 @@ class SZh extends S {
   String get dockerEditHost => '编辑 DOCKER_HOST';
 
   @override
-  String get dockerEmptyRunningItems => '没有正在运行的容器。\n这可能是因为环境变量 DOCKER_HOST 没有被正确读取。你可以通过在终端内运行 `echo \$DOCKER_HOST` 来获取。';
+  String get dockerEmptyRunningItems => '没有正在运行的容器。\n这可能是因为：\n- Docker 安装用户与 App 内配置的用户名不同\n- 环境变量 DOCKER_HOST 没有被正确读取。你可以通过在终端内运行 `echo \$DOCKER_HOST` 来获取。';
 
   @override
   String dockerImagesFmt(Object count) {
@@ -1037,7 +1037,7 @@ class SZhTw extends SZh {
   String get dockerEditHost => '編輯 DOCKER_HOST';
 
   @override
-  String get dockerEmptyRunningItems => '沒有正在運行的容器。\n這可能是因為環境變量 DOCKER_HOST 沒有被正確讀取。你可以通過在終端內運行 `echo \$DOCKER_HOST` 來獲取。';
+  String get dockerEmptyRunningItems => '沒有正在運行的容器。\n這可能是因為：\n- Docker 安裝使用者與 App 內配置的使用者名稱不同\n- 環境變量 DOCKER_HOST 沒有被正確讀取。你可以通過在終端內運行 `echo \$DOCKER_HOST` 來獲取。';
 
   @override
   String dockerImagesFmt(Object count) {

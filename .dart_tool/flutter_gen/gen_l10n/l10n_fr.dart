@@ -189,7 +189,7 @@ class SFr extends S {
   String get dockerEditHost => 'Modifier DOCKER_HOST';
 
   @override
-  String get dockerEmptyRunningItems => 'Aucun conteneur en cours d\'exécution. \nIl se peut que l\'environnement DOCKER_HOST ne soit pas lu correctement. Vous pouvez le trouver en exécutant `echo \$DOCKER_HOST` dans le terminal.';
+  String get dockerEmptyRunningItems => 'Il n\'y a pas de conteneurs en cours d\'exécution.\nCela peut être dû au fait que :\n- L\'utilisateur de l\'installation Docker n\'est pas le même que le nom d\'utilisateur configuré dans l\'App.\n- La variable d\'environnement DOCKER_HOST n\'a pas été lue correctement. Vous pouvez l\'obtenir en exécutant `echo \$DOCKER_HOST` dans le terminal.';
 
   @override
   String dockerImagesFmt(Object count) {

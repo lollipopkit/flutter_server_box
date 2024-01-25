@@ -432,9 +432,7 @@ class _ServerPageState extends State<ServerPage>
             return FadeTransition(opacity: animation, child: child);
           },
           child: _buildIOData(
-            isSpeed
-                ? '${l10n.read}:\n$r'
-                : 'Total:\n${rootDisk?.size.kb2Str}',
+            isSpeed ? '${l10n.read}:\n$r' : 'Total:\n${rootDisk?.size.kb2Str}',
             isSpeed ? '${l10n.write}:\n$w' : 'Used:\n${rootDisk?.usedPercent}%',
             onTap: () {
               cardNoti.value = cardNoti.value.copyWith(diskIO: !isSpeed);
