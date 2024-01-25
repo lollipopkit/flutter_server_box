@@ -86,34 +86,116 @@ class Backup {
   /// - Return null if same time
   /// - Return false if local is newer
   /// - Return true if restore success
-  Future<bool?> restore({bool force = false}) async {
+  Future<void> restore({bool force = false}) async {
     final curTime = Stores.lastModTime ?? 0;
     final bakTime = lastModTime ?? 0;
-    if (curTime == bakTime && !force) {
-      return null;
+    final shouldRestore = force || curTime < bakTime;
+
+    // Settings
+    final nowSettingsKeys = Stores.setting.box.keys.toSet();
+    final bakSettingsKeys = settings.keys.toSet();
+    final newSettingsKeys = bakSettingsKeys.difference(nowSettingsKeys);
+    final delSettingsKeys = nowSettingsKeys.difference(bakSettingsKeys);
+    final updateSettingsKeys = nowSettingsKeys.intersection(bakSettingsKeys);
+    for (final k in newSettingsKeys) {
+      Stores.setting.box.put(k, settings[k]);
     }
-    if (curTime > bakTime && !force) {
-      return false;
+    if (shouldRestore) {
+      for (final k in delSettingsKeys) {
+        Stores.setting.box.delete(k);
+      }
+      for (final k in updateSettingsKeys) {
+        Stores.setting.box.put(k, settings[k]);
+      }
     }
-    for (final s in settings.keys) {
-      Stores.setting.box.put(s, settings[s]);
-    }
-    for (final s in snippets) {
+
+    // Snippets
+    final nowSnippets = Stores.snippet.fetch().toSet();
+    final bakSnippets = snippets.toSet();
+    final newSnippets = bakSnippets.difference(nowSnippets);
+    final delSnippets = nowSnippets.difference(bakSnippets);
+    final updateSnippets = nowSnippets.intersection(bakSnippets);
+    for (final s in newSnippets) {
       Stores.snippet.put(s);
     }
-    for (final s in spis) {
+    if (shouldRestore) {
+      for (final s in delSnippets) {
+        Stores.snippet.delete(s);
+      }
+      for (final s in updateSnippets) {
+        Stores.snippet.put(s);
+      }
+    }
+    
+    // ServerPrivateInfo
+    final nowSpis = Stores.server.fetch().toSet();
+    final bakSpis = spis.toSet();
+    final newSpis = bakSpis.difference(nowSpis);
+    final delSpis = nowSpis.difference(bakSpis);
+    final updateSpis = nowSpis.intersection(bakSpis);
+    for (final s in newSpis) {
       Stores.server.put(s);
     }
-    for (final s in keys) {
+    if (shouldRestore) {
+      for (final s in delSpis) {
+        Stores.server.delete(s.id);
+      }
+      for (final s in updateSpis) {
+        Stores.server.put(s);
+      }
+    }
+    
+    // PrivateKeyInfo
+    final nowKeys = Stores.key.fetch().toSet();
+    final bakKeys = keys.toSet();
+    final newKeys = bakKeys.difference(nowKeys);
+    final delKeys = nowKeys.difference(bakKeys);
+    final updateKeys = nowKeys.intersection(bakKeys);
+    for (final s in newKeys) {
       Stores.key.put(s);
     }
-    for (final s in history.keys) {
+    if (shouldRestore) {
+      for (final s in delKeys) {
+        Stores.key.delete(s);
+      }
+      for (final s in updateKeys) {
+        Stores.key.put(s);
+      }
+    }
+    
+    // History
+    final nowHistory = Stores.history.box.keys.toSet();
+    final bakHistory = history.keys.toSet();
+    final newHistory = bakHistory.difference(nowHistory);
+    final delHistory = nowHistory.difference(bakHistory);
+    final updateHistory = nowHistory.intersection(bakHistory);
+    for (final s in newHistory) {
       Stores.history.box.put(s, history[s]);
     }
-    for (final k in container.keys) {
-      final val = container[k];
-      if (val != null && val is String && val.isNotEmpty) {
-        Stores.docker.put(k, val);
+    if (shouldRestore) {
+      for (final s in delHistory) {
+        Stores.history.box.delete(s);
+      }
+      for (final s in updateHistory) {
+        Stores.history.box.put(s, history[s]);
+      }
+    }
+    
+    // Container
+    final nowContainer = Stores.docker.box.keys.toSet();
+    final bakContainer = container.keys.toSet();
+    final newContainer = bakContainer.difference(nowContainer);
+    final delContainer = nowContainer.difference(bakContainer);
+    final updateContainer = nowContainer.intersection(bakContainer);
+    for (final s in newContainer) {
+      Stores.docker.put(s, container[s]);
+    }
+    if (shouldRestore) {
+      for (final s in delContainer) {
+        Stores.docker.box.delete(s);
+      }
+      for (final s in updateContainer) {
+        Stores.docker.put(s, container[s]);
       }
     }
 
@@ -122,8 +204,6 @@ class Backup {
 
     Pros.reload();
     RebuildNodes.app.rebuild();
-
-    return true;
   }
 
   Backup.fromJsonString(String raw)

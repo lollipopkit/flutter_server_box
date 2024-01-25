@@ -205,23 +205,13 @@ abstract final class ICloud {
     }
     final dlFile = await File(await Paths.bak).readAsString();
     final dlBak = await Computer.shared.start(Backup.fromJsonString, dlFile);
-    final restore = await dlBak.restore();
-    switch (restore) {
-      case true:
-        _logger.info('Restore from ${dlBak.lastModTime} success');
-        break;
-      case false:
-        await Backup.backup();
-        final uploadResult = await upload(relativePath: Paths.bakName);
-        if (uploadResult != null) {
-          _logger.warning('Upload backup failed: $uploadResult');
-        } else {
-          _logger.info('Upload backup success');
-        }
-        break;
-      case null:
-        _logger.info('Skip sync');
-        break;
+    await dlBak.restore();
+    await Backup.backup();
+    final uploadResult = await upload(relativePath: Paths.bakName);
+    if (uploadResult != null) {
+      _logger.warning('Upload backup failed: $uploadResult');
+    } else {
+      _logger.info('Upload backup success');
     }
   }
 }

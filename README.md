@@ -85,7 +85,7 @@ After you read the above, you can:
 
 ## 💡 My other apps
 - [GPT Box](https://github.com/lollipopkit/flutter_gpt_box) - A third-party GPT Client for OpenAI API on all platforms.
-- [2fa Box](https://github.com/lollipopkit/flutter_2fa) - Open source 2FA app for Android, iOS and the web.
+- [2FA Box](https://github.com/lollipopkit/flutter_2fa) - Open source 2FA app for Android, iOS and the web.
 - [More](https://github.com/lollipopkit) - Tools & etc.
 
 

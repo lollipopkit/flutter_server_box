@@ -117,18 +117,8 @@ abstract final class Webdav {
       await backup();
       return;
     }
-    final restore = await dlFile.restore();
-    switch (restore) {
-      case true:
-        _logger.info('Restore from ${dlFile.lastModTime} success');
-        break;
-      case false:
-        await backup();
-        break;
-      case null:
-        _logger.info('Skip sync');
-        break;
-    }
+    await dlFile.restore();
+    await backup();
   }
 
   /// Create a local backup and upload it to WebDAV

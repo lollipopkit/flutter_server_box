@@ -78,12 +78,30 @@ extension BoxX on Box {
 }
 
 extension StoreX on PersistentStore {
-  _StoreProperty<T> property<T>(String key, T defaultValue) {
-    return _StoreProperty<T>(box, key, defaultValue);
+  _StoreProperty<T> property<T>(
+    String key,
+    T defaultValue, {
+    bool updateLastModified = true,
+  }) {
+    return _StoreProperty<T>(
+      box,
+      key,
+      defaultValue,
+      updateLastModified: updateLastModified,
+    );
   }
 
-  _StoreListProperty<T> listProperty<T>(String key, List<T> defaultValue) {
-    return _StoreListProperty<T>(box, key, defaultValue);
+  _StoreListProperty<T> listProperty<T>(
+    String key,
+    List<T> defaultValue, {
+    bool updateLastModified = true,
+  }) {
+    return _StoreListProperty<T>(
+      box,
+      key,
+      defaultValue,
+      updateLastModified: updateLastModified,
+    );
   }
 }
 
@@ -95,11 +113,17 @@ abstract class StorePropertyBase<T> {
 }
 
 class _StoreProperty<T> implements StorePropertyBase<T> {
-  _StoreProperty(this._box, this._key, this.defaultValue);
+  _StoreProperty(
+    this._box,
+    this._key,
+    this.defaultValue, {
+    this.updateLastModified = true,
+  });
 
   final Box _box;
   final String _key;
   T defaultValue;
+  bool updateLastModified;
 
   @override
   ValueListenable<T> listenable() {
@@ -117,7 +141,7 @@ class _StoreProperty<T> implements StorePropertyBase<T> {
 
   @override
   Future<void> put(T value) {
-    _box.updateLastModified();
+    if (updateLastModified) _box.updateLastModified();
     return _box.put(_key, value);
   }
 
@@ -128,11 +152,17 @@ class _StoreProperty<T> implements StorePropertyBase<T> {
 }
 
 class _StoreListProperty<T> implements StorePropertyBase<List<T>> {
-  _StoreListProperty(this._box, this._key, this.defaultValue);
+  _StoreListProperty(
+    this._box,
+    this._key,
+    this.defaultValue, {
+    this.updateLastModified = true,
+  });
 
   final Box _box;
   final String _key;
   List<T> defaultValue;
+  bool updateLastModified;
 
   @override
   ValueListenable<List<T>> listenable() {
@@ -152,6 +182,7 @@ class _StoreListProperty<T> implements StorePropertyBase<List<T>> {
 
   @override
   Future<void> put(List<T> value) {
+    if (updateLastModified) _box.updateLastModified();
     return _box.put(_key, value);
   }
 
