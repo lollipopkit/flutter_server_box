@@ -201,10 +201,10 @@ class SettingStore extends PersistentStore {
   late final showSuspendTip = property('showSuspendTip', true);
 
   /// Webdav sync
-  late final webdavSync = property('webdavSync', false, updateLastModified: false);
-  late final webdavUrl = property('webdavUrl', '', updateLastModified: false);
-  late final webdavUser = property('webdavUser', '', updateLastModified: false);
-  late final webdavPwd = property('webdavPwd', '', updateLastModified: false);
+  late final webdavSync = property('webdavSync', false);
+  late final webdavUrl = property('webdavUrl', '');
+  late final webdavUser = property('webdavUser', '');
+  late final webdavPwd = property('webdavPwd', '');
 
   /// Whether collapse UI items by default
   late final collapseUIDefault = property('collapseUIDefault', true);

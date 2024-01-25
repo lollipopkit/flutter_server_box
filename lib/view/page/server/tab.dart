@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
+import 'package:toolbox/core/extension/numx.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/extension/widget.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
@@ -431,7 +432,9 @@ class _ServerPageState extends State<ServerPage>
             return FadeTransition(opacity: animation, child: child);
           },
           child: _buildIOData(
-            isSpeed ? '${l10n.read}:\n$r' : 'Total:\n${rootDisk?.size}',
+            isSpeed
+                ? '${l10n.read}:\n$r'
+                : 'Total:\n${rootDisk?.size.kb2Str}',
             isSpeed ? '${l10n.write}:\n$w' : 'Used:\n${rootDisk?.usedPercent}%',
             onTap: () {
               cardNoti.value = cardNoti.value.copyWith(diskIO: !isSpeed);

@@ -126,7 +126,7 @@ class Backup {
         Stores.snippet.put(s);
       }
     }
-    
+
     // ServerPrivateInfo
     final nowSpis = Stores.server.fetch().toSet();
     final bakSpis = spis.toSet();
@@ -144,7 +144,7 @@ class Backup {
         Stores.server.put(s);
       }
     }
-    
+
     // PrivateKeyInfo
     final nowKeys = Stores.key.fetch().toSet();
     final bakKeys = keys.toSet();
@@ -162,7 +162,7 @@ class Backup {
         Stores.key.put(s);
       }
     }
-    
+
     // History
     final nowHistory = Stores.history.box.keys.toSet();
     final bakHistory = history.keys.toSet();
@@ -180,7 +180,7 @@ class Backup {
         Stores.history.box.put(s, history[s]);
       }
     }
-    
+
     // Container
     final nowContainer = Stores.docker.box.keys.toSet();
     final bakContainer = container.keys.toSet();

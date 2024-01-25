@@ -136,9 +136,9 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           onChanged: (p0) => setState(() {
             _tags = p0;
           }),
-          allTags: [...Pros.server.tags],
+          allTags: [...Pros.snippet.tags],
           onRenameTag: (old, n) => setState(() {
-            Pros.server.renameTag(old, n);
+            Pros.snippet.renameTag(old, n);
           }),
         ),
         Input(
@@ -157,11 +157,18 @@ class _SnippetEditPageState extends State<SnippetEditPage>
 
   Widget _buildTip() {
     return CardX(
-      child: MarkdownBody(data: '''
+      child: MarkdownBody(
+        data: '''
 📌 ${l10n.supportFmtArgs}
 
 ${Snippet.fmtArgs.keys.map((e) => '`$e`').join(', ')}
-''').padding(const EdgeInsets.all(13)),
+''',
+styleSheet: MarkdownStyleSheet(
+  codeblockDecoration: const BoxDecoration(
+    color: Colors.transparent,
+  ),
+),
+      ).padding(const EdgeInsets.all(13)),
     );
   }
 
