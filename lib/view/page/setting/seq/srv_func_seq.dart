@@ -21,7 +21,7 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(l10n.serverDetailOrder),
+        title: Text(l10n.sequence),
       ),
       body: _buildBody(),
     );

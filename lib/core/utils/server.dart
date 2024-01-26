@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:toolbox/data/model/app/error.dart';
@@ -121,6 +120,7 @@ Future<SSHClient> genClient(
   return SSHClient(
     socket,
     username: spi.user,
-    identities: await Computer.shared.start(loadIndentity, privateKey),
+    // Must use [compute] here, instead of [Computer.shared.start]
+    identities: await compute(loadIndentity, privateKey),
   );
 }
