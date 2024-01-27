@@ -190,10 +190,9 @@ abstract final class ICloud {
       return;
     }
 
-      final dlFile = await File(await Paths.bak).readAsString();
-      final dlBak = await Computer.shared.start(Backup.fromJsonString, dlFile);
-      await dlBak.restore();
-    
+    final dlFile = await File(await Paths.bak).readAsString();
+    final dlBak = await Computer.shared.start(Backup.fromJsonString, dlFile);
+    await dlBak.restore();
 
     await backup();
   }

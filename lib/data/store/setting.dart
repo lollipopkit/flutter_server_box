@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/model/app/menu/server_func.dart';
+import 'package:toolbox/data/model/ssh/virtual_key.dart';
 
 import '../model/app/net_view.dart';
 import '../res/default.dart';
@@ -141,6 +142,8 @@ class SettingStore extends PersistentStore {
   late final sshVirtKeys = listProperty(
     'sshVirtKeys',
     Defaults.sshVirtKeys,
+    encoder: (val) => val.index,
+    decoder: (val) => VirtKey.values[val],
   );
 
   late final netViewType = property(
@@ -209,14 +212,19 @@ class SettingStore extends PersistentStore {
   /// Whether collapse UI items by default
   late final collapseUIDefault = property('collapseUIDefault', true);
 
-  late final serverFuncBtns = listProperty<ServerFuncBtn>('serverBtns', [
-    ServerFuncBtn.terminal,
-    ServerFuncBtn.sftp,
-    ServerFuncBtn.container,
-    ServerFuncBtn.process,
-    ServerFuncBtn.pkg,
-    ServerFuncBtn.snippet,
-  ]);
+  late final serverFuncBtns = listProperty<ServerFuncBtn>(
+    'serverBtns',
+    [
+      ServerFuncBtn.terminal,
+      ServerFuncBtn.sftp,
+      ServerFuncBtn.container,
+      ServerFuncBtn.process,
+      ServerFuncBtn.pkg,
+      ServerFuncBtn.snippet,
+    ],
+    encoder: (val) => val.index,
+    decoder: (val) => ServerFuncBtn.values[val],
+  );
 
   // Never show these settings for users
   //

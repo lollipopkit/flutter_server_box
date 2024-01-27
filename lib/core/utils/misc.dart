@@ -39,3 +39,12 @@ String pathJoin(String path1, String path2) {
 bool isFileUrl(String url) => url.split('/').last.contains('.');
 
 int get timeStamp => DateTime.now().millisecondsSinceEpoch;
+
+bool isBaseType(Object? obj) {
+  return obj is String ||
+      obj is int ||
+      obj is double ||
+      obj is bool ||
+      obj is List ||
+      obj is Map;
+}

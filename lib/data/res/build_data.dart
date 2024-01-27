@@ -2,9 +2,9 @@
 
 class BuildData {
   static const String name = "ServerBox";
-  static const int build = 724;
+  static const int build = 725;
   static const String engine = "3.16.8";
-  static const String buildAt = "2024-01-26 21:05:29";
-  static const int modifications = 2;
+  static const String buildAt = "2024-01-27 21:27:49";
+  static const int modifications = 4;
   static const int script = 36;
 }
