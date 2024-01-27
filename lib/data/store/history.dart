@@ -18,6 +18,7 @@ class _ListHistory {
     _history.remove(path);
     _history.insert(0, path);
     _box.put(_name, _history);
+    _box.updateLastModified();
   }
 
   List get all => _history;
@@ -38,6 +39,7 @@ class _MapHistory {
   void put(String id, String val) {
     _history[id] = val;
     _box.put(_name, _history);
+    _box.updateLastModified();
   }
 
   String? fetch(String id) => _history[id];

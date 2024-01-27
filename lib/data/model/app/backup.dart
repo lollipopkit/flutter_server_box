@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:logging/logging.dart';
 import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/data/model/server/private_key_info.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
@@ -12,6 +13,8 @@ import 'package:toolbox/data/res/rebuild.dart';
 import 'package:toolbox/data/res/store.dart';
 
 const backupFormatVersion = 1;
+
+final _logger = Logger('Backup');
 
 class Backup {
   // backup format version
@@ -77,19 +80,20 @@ class Backup {
         history = Stores.history.box.toJson();
 
   static Future<String> backup([String? name]) async {
-    final result = _diyEncrypt(json.encode(Backup.loadFromStore()));
+    final result = _diyEncrypt(json.encode(Backup.loadFromStore().toJson()));
     final path = '${await Paths.doc}/${name ?? Paths.bakName}';
     await File(path).writeAsString(result);
     return path;
   }
 
-  /// - Return null if same time
-  /// - Return false if local is newer
-  /// - Return true if restore success
   Future<void> restore({bool force = false}) async {
     final curTime = Stores.lastModTime ?? 0;
     final bakTime = lastModTime ?? 0;
     final shouldRestore = force || curTime < bakTime;
+    if (!shouldRestore) {
+      _logger.info('No need to restore, local is newer');
+      return;
+    }
 
     // Settings
     final nowSettingsKeys = Stores.setting.box.keys.toSet();
@@ -100,67 +104,59 @@ class Backup {
     for (final k in newSettingsKeys) {
       Stores.setting.box.put(k, settings[k]);
     }
-    if (shouldRestore) {
-      for (final k in delSettingsKeys) {
-        Stores.setting.box.delete(k);
-      }
-      for (final k in updateSettingsKeys) {
-        Stores.setting.box.put(k, settings[k]);
-      }
+    for (final k in delSettingsKeys) {
+      Stores.setting.box.delete(k);
+    }
+    for (final k in updateSettingsKeys) {
+      Stores.setting.box.put(k, settings[k]);
     }
 
     // Snippets
-    final nowSnippets = Stores.snippet.fetch().toSet();
-    final bakSnippets = snippets.toSet();
+    final nowSnippets = Stores.snippet.box.keys.toSet();
+    final bakSnippets = snippets.map((e) => e.name).toSet();
     final newSnippets = bakSnippets.difference(nowSnippets);
     final delSnippets = nowSnippets.difference(bakSnippets);
     final updateSnippets = nowSnippets.intersection(bakSnippets);
     for (final s in newSnippets) {
-      Stores.snippet.put(s);
+      Stores.snippet.box.put(s, snippets.firstWhere((e) => e.name == s));
     }
-    if (shouldRestore) {
-      for (final s in delSnippets) {
-        Stores.snippet.delete(s);
-      }
-      for (final s in updateSnippets) {
-        Stores.snippet.put(s);
-      }
+    for (final s in delSnippets) {
+      Stores.snippet.box.delete(s);
+    }
+    for (final s in updateSnippets) {
+      Stores.snippet.box.put(s, snippets.firstWhere((e) => e.name == s));
     }
 
     // ServerPrivateInfo
-    final nowSpis = Stores.server.fetch().toSet();
-    final bakSpis = spis.toSet();
+    final nowSpis = Stores.server.box.keys.toSet();
+    final bakSpis = spis.map((e) => e.id).toSet();
     final newSpis = bakSpis.difference(nowSpis);
     final delSpis = nowSpis.difference(bakSpis);
     final updateSpis = nowSpis.intersection(bakSpis);
     for (final s in newSpis) {
-      Stores.server.put(s);
+      Stores.server.box.put(s, spis.firstWhere((e) => e.id == s));
     }
-    if (shouldRestore) {
-      for (final s in delSpis) {
-        Stores.server.delete(s.id);
-      }
-      for (final s in updateSpis) {
-        Stores.server.put(s);
-      }
+    for (final s in delSpis) {
+      Stores.server.box.delete(s);
+    }
+    for (final s in updateSpis) {
+      Stores.server.box.put(s, spis.firstWhere((e) => e.id == s));
     }
 
     // PrivateKeyInfo
-    final nowKeys = Stores.key.fetch().toSet();
-    final bakKeys = keys.toSet();
+    final nowKeys = Stores.key.box.keys.toSet();
+    final bakKeys = keys.map((e) => e.id).toSet();
     final newKeys = bakKeys.difference(nowKeys);
     final delKeys = nowKeys.difference(bakKeys);
     final updateKeys = nowKeys.intersection(bakKeys);
     for (final s in newKeys) {
-      Stores.key.put(s);
+      Stores.key.box.put(s, keys.firstWhere((e) => e.id == s));
     }
-    if (shouldRestore) {
-      for (final s in delKeys) {
-        Stores.key.delete(s);
-      }
-      for (final s in updateKeys) {
-        Stores.key.put(s);
-      }
+    for (final s in delKeys) {
+      Stores.key.box.delete(s);
+    }
+    for (final s in updateKeys) {
+      Stores.key.box.put(s, keys.firstWhere((e) => e.id == s));
     }
 
     // History
@@ -172,13 +168,11 @@ class Backup {
     for (final s in newHistory) {
       Stores.history.box.put(s, history[s]);
     }
-    if (shouldRestore) {
-      for (final s in delHistory) {
-        Stores.history.box.delete(s);
-      }
-      for (final s in updateHistory) {
-        Stores.history.box.put(s, history[s]);
-      }
+    for (final s in delHistory) {
+      Stores.history.box.delete(s);
+    }
+    for (final s in updateHistory) {
+      Stores.history.box.put(s, history[s]);
     }
 
     // Container
@@ -188,22 +182,19 @@ class Backup {
     final delContainer = nowContainer.difference(bakContainer);
     final updateContainer = nowContainer.intersection(bakContainer);
     for (final s in newContainer) {
-      Stores.docker.put(s, container[s]);
+      Stores.docker.box.put(s, container[s]);
     }
-    if (shouldRestore) {
-      for (final s in delContainer) {
-        Stores.docker.box.delete(s);
-      }
-      for (final s in updateContainer) {
-        Stores.docker.put(s, container[s]);
-      }
+    for (final s in delContainer) {
+      Stores.docker.box.delete(s);
     }
-
-    // update last modified time, avoid restore again
-    Stores.setting.box.updateLastModified(lastModTime);
+    for (final s in updateContainer) {
+      Stores.docker.box.put(s, container[s]);
+    }
 
     Pros.reload();
     RebuildNodes.app.rebuild();
+
+    _logger.info('Restore success');
   }
 
   Backup.fromJsonString(String raw)

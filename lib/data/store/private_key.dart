@@ -6,6 +6,7 @@ class PrivateKeyStore extends PersistentStore {
 
   void put(PrivateKeyInfo info) {
     box.put(info.id, info);
+    box.updateLastModified();
   }
 
   List<PrivateKeyInfo> fetch() {
@@ -27,5 +28,6 @@ class PrivateKeyStore extends PersistentStore {
 
   void delete(PrivateKeyInfo s) {
     box.delete(s.id);
+    box.updateLastModified();
   }
 }

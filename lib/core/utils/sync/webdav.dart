@@ -98,26 +98,19 @@ abstract final class Webdav {
   static Future<void> sync() async {
     final result = await download(relativePath: Paths.bakName);
     if (result != null) {
+      _logger.warning('Download failed: $result');
       await backup();
       return;
     }
-    final dlFile = await Computer.shared.start(
-      (message) async {
-        try {
-          final file = await File(message).readAsString();
-          final bak = Backup.fromJsonString(file);
-          return bak;
-        } catch (_) {
-          return null;
-        }
-      },
-      await Paths.bak,
-    );
-    if (dlFile == null) {
-      await backup();
-      return;
+
+    try {
+      final dlFile = await File(await Paths.bak).readAsString();
+      final dlBak = await Computer.shared.start(Backup.fromJsonString, dlFile);
+      await dlBak.restore();
+    } catch (e) {
+      _logger.warning('Restore failed: $e');
     }
-    await dlFile.restore();
+
     await backup();
   }
 

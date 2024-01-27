@@ -13,6 +13,7 @@ class DockerStore extends PersistentStore {
 
   void put(String id, String host) {
     box.put(id, host);
+    box.updateLastModified();
   }
 
   ContainerType getType([String? id]) {
@@ -26,5 +27,6 @@ class DockerStore extends PersistentStore {
 
   void setType(String? id, ContainerType type) {
     box.put(_keyConfig + (id ?? ''), type.toString());
+    box.updateLastModified();
   }
 }

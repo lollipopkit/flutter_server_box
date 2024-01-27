@@ -41,4 +41,8 @@ enum ServerFuncBtn {
         terminal => l10n.terminal,
         iperf => 'iperf',
       };
+
+  int toJson() => index;
+
+  static ServerFuncBtn fromJson(int i) => values[i];
 }

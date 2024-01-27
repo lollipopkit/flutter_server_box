@@ -6,6 +6,7 @@ class SnippetStore extends PersistentStore {
 
   void put(Snippet snippet) {
     box.put(snippet.name, snippet);
+    box.updateLastModified();
   }
 
   List<Snippet> fetch() {
@@ -22,5 +23,6 @@ class SnippetStore extends PersistentStore {
 
   void delete(Snippet s) {
     box.delete(s.name);
+    box.updateLastModified();
   }
 }

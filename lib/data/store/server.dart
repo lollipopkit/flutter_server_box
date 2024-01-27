@@ -6,6 +6,7 @@ class ServerStore extends PersistentStore {
 
   void put(ServerPrivateInfo info) {
     box.put(info.id, info);
+    box.updateLastModified();
   }
 
   List<ServerPrivateInfo> fetch() {
@@ -22,10 +23,12 @@ class ServerStore extends PersistentStore {
 
   void delete(String id) {
     box.delete(id);
+    box.updateLastModified();
   }
 
   void deleteAll() {
     box.clear();
+    box.updateLastModified();
   }
 
   void update(ServerPrivateInfo old, ServerPrivateInfo newInfo) {
