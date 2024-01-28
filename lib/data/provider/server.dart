@@ -36,12 +36,22 @@ class ServerProvider extends ChangeNotifier {
   Future<void> load() async {
     // Issue #147
     // Clear all servers because of restarting app will cause duplicate servers
+    final oldServers = Map<String, Server>.from(_servers);
     _servers.clear();
     _serverOrder.clear();
 
     final spis = Stores.server.fetch();
     for (int idx = 0; idx < spis.length; idx++) {
-      _servers[spis[idx].id] = genServer(spis[idx]);
+      final spi = spis[idx];
+      final originServer = oldServers[spi.id];
+      final newServer = genServer(spi);
+
+      /// Issues #258
+      /// If not [shouldReconnect], then keep the old state.
+      if (originServer != null && !originServer.spi.shouldReconnect(spi)) {
+        newServer.state = originServer.state;
+      }
+      _servers[spi.id] = newServer;
     }
     final serverOrder_ = Stores.setting.serverOrder.fetch();
     if (serverOrder_.isNotEmpty) {
@@ -107,7 +117,7 @@ class ServerProvider extends ChangeNotifier {
 
   /// if [spi] is specificed then only refresh this server
   /// [onlyFailed] only refresh failed servers
-  Future<void> refreshData({
+  Future<void> refresh({
     ServerPrivateInfo? spi,
     bool onlyFailed = false,
   }) async {
@@ -149,7 +159,7 @@ class ServerProvider extends ChangeNotifier {
     }
     refreshKey.currentState?.show();
     _timer = Timer.periodic(Duration(seconds: duration), (_) async {
-      await refreshData();
+      await refresh();
     });
   }
 
@@ -192,7 +202,7 @@ class ServerProvider extends ChangeNotifier {
     _serverOrder.add(spi.id);
     Stores.setting.serverOrder.put(_serverOrder);
     _updateTags();
-    refreshData(spi: spi);
+    refresh(spi: spi);
   }
 
   void delServer(String id) {
@@ -233,7 +243,7 @@ class ServerProvider extends ChangeNotifier {
       if (newSpi.shouldReconnect(old)) {
         // Use [newSpi.id] instead of [old.id] because [old.id] may be changed
         TryLimiter.reset(newSpi.id);
-        refreshData(spi: newSpi);
+        refresh(spi: newSpi);
       }
 
       // Only update if [spi.tags] changed

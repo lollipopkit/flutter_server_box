@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:logging/logging.dart';
 import 'package:toolbox/core/utils/misc.dart';
 
 // abstract final class SecureStore {
@@ -28,6 +29,8 @@ import 'package:toolbox/core/utils/misc.dart';
 //     _cipher = HiveAesCipher(encryptionKeyUint8List);
 //   }
 // }
+
+final _logger = Logger('Store');
 
 class PersistentStore {
   late final Box box;
@@ -142,8 +145,12 @@ class _StoreProperty<T> implements StorePropertyBase<T> {
   T fetch() {
     final stored = _box.get(_key);
     if (stored == null || stored is! T) {
-      if (decoder != null) {
-        return decoder!(stored);
+      try {
+        if (decoder != null) {
+          return decoder!(stored);
+        }
+      } catch (_) {
+        _logger.warning('Failed to decode "$_key"');
       }
       return defaultValue;
     }
@@ -193,9 +200,15 @@ class _StoreListProperty<T> implements StorePropertyBase<List<T>> {
     if (val is! List) {
       throw Exception('StoreListProperty("$_key") is: ${val.runtimeType}');
     }
-    return decoder == null
-        ? List<T>.from(val)
-        : val.map((e) => decoder!.call(e)).toList();
+    if (decoder != null) {
+      try {
+        return List<T>.from(val.map(decoder!));
+      } catch (_) {
+        _logger.warning('Failed to decode "$_key"');
+        return defaultValue;
+      }
+    }
+    return List<T>.from(val);
   }
 
   @override

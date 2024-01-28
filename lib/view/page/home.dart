@@ -319,7 +319,7 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
     HomeWidgetMC.update();
     await GetIt.I.allReady();
     await Pros.server.load();
-    await Pros.server.refreshData();
+    await Pros.server.refresh();
   }
 
   Future<void> _onLongPressSetting() async {

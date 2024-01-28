@@ -107,7 +107,7 @@ class _ServerPageState extends State<ServerPage>
 
     return RefreshIndicator(
       key: ServerProvider.refreshKey,
-      onRefresh: () async => await Pros.server.refreshData(onlyFailed: true),
+      onRefresh: () async => await Pros.server.refresh(onlyFailed: true),
       child: child,
     );
   }
@@ -323,7 +323,7 @@ class _ServerPageState extends State<ServerPage>
       rightCorner = InkWell(
         onTap: () {
           TryLimiter.reset(spi.id);
-          Pros.server.refreshData(spi: spi);
+          Pros.server.refresh(spi: spi);
         },
         child: const Padding(
           padding: EdgeInsets.symmetric(horizontal: 7),
@@ -336,7 +336,7 @@ class _ServerPageState extends State<ServerPage>
       );
     } else if (!(spi.autoConnect ?? true) && cs == ServerState.disconnected) {
       rightCorner = InkWell(
-        onTap: () => Pros.server.refreshData(spi: spi),
+        onTap: () => Pros.server.refresh(spi: spi),
         child: const Padding(
           padding: EdgeInsets.symmetric(horizontal: 7),
           child: Icon(
