@@ -53,5 +53,6 @@ abstract final class GithubIds {
     'aliuzzz',
     '58fly',
     'Potterli20',
+    'Seifon',
   };
 }

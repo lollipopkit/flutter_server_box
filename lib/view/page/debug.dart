@@ -6,14 +6,9 @@ import 'package:toolbox/data/res/provider.dart';
 
 import '../widget/appbar.dart';
 
-class DebugPage extends StatefulWidget {
+class DebugPage extends StatelessWidget {
   const DebugPage({super.key});
 
-  @override
-  _DebugPageState createState() => _DebugPageState();
-}
-
-class _DebugPageState extends State<DebugPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,6 +19,12 @@ class _DebugPageState extends State<DebugPage> {
         ),
         title: const Text('Logs', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.black,
+        actions: [
+          IconButton(
+            onPressed: () => Pros.debug.clear(),
+            icon: const Icon(Icons.delete, color: Colors.white),
+          ),
+        ],
       ),
       body: _buildTerminal(context),
       backgroundColor: Colors.black,
@@ -36,22 +37,18 @@ class _DebugPageState extends State<DebugPage> {
       color: Colors.black,
       child: DefaultTextStyle(
         style: const TextStyle(
-          fontFamily: 'monospace',
           color: Colors.white,
-          fontWeight: FontWeight.bold,
         ),
-        child: SingleChildScrollView(
-          child: ChangeNotifierProvider(
-            create: (_) => Pros.debug,
-            child: Consumer<DebugProvider>(
-              builder: (_, debug, __) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: debug.widgets,
-                );
-              },
-            ),
+        child: ChangeNotifierProvider.value(
+          value: Pros.debug,
+          child: Consumer<DebugProvider>(
+            builder: (_, provider, __) {
+              return ListView(
+                key: ValueKey(provider.widgets.length),
+                reverse: true,
+                children: provider.widgets,
+              );
+            },
           ),
         ),
       ),

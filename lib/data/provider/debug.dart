@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
+import 'package:toolbox/core/extension/datetime.dart';
 import 'package:toolbox/data/res/ui.dart';
 
 import '../../data/res/misc.dart';
@@ -17,7 +18,7 @@ class DebugProvider extends ChangeNotifier {
     widgets.add(Text.rich(TextSpan(
       children: [
         TextSpan(
-          text: '[${record.loggerName}]',
+          text: '[${DateTime.now().hourMinute}][${record.loggerName}]',
           style: const TextStyle(color: Colors.cyan),
         ),
         TextSpan(

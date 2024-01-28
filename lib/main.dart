@@ -9,7 +9,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:toolbox/core/build_mode.dart';
 import 'package:toolbox/core/channel/bg_run.dart';
 import 'package:toolbox/core/utils/sync/icloud.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
@@ -81,7 +80,6 @@ Future<void> _initApp() async {
   Computer.shared.turnOn(
     // Plus 1 to avoid 0.
     workersCount: (Stores.server.box.keys.length / 3).round() + 1,
-    verbose: !BuildMode.isRelease,
   );
   _setupLogger();
   _setupProviders();
