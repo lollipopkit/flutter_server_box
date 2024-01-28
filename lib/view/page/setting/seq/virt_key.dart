@@ -30,21 +30,22 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
 
   Widget _buildBody() {
     final keys_ = Stores.setting.sshVirtKeys.fetch();
-    final keys = <VirtKey>[];
+    final keys = <int>[];
     for (final key in keys_) {
       keys.add(key);
     }
-    final disabled = VirtKey.values.where((e) => !keys.contains(e)).toList();
+    final disabled = VirtKey.values.map((e) => e.index).where((e) => !keys.contains(e)).toList();
     final allKeys = [...keys, ...disabled];
     return ReorderableListView.builder(
       padding: const EdgeInsets.all(7),
       itemBuilder: (_, idx) {
         final key = allKeys[idx];
-        final help = key.help;
+        final item = VirtKey.values[key];
+        final help = item.help;
         return CardX(
           key: ValueKey(idx),
           child: ListTile(
-            title: _buildTitle(key),
+            title: _buildTitle(item),
             subtitle: help == null ? null : Text(help, style: UIs.textGrey),
             leading: _buildCheckBox(keys, key, idx, idx < keys.length),
             trailing: isDesktop ? null : const Icon(Icons.drag_handle),
@@ -75,7 +76,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
           );
   }
 
-  Widget _buildCheckBox(List<VirtKey> keys, VirtKey key, int idx, bool value) {
+  Widget _buildCheckBox(List<int> keys, int key, int idx, bool value) {
     return Checkbox(
       value: value,
       onChanged: (val) {

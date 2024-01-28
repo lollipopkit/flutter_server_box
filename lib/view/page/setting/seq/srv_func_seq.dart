@@ -29,12 +29,12 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
 
   Widget _buildBody() {
     final keys_ = Stores.setting.serverFuncBtns.fetch();
-    final keys = <ServerFuncBtn>[];
+    final keys = <int>[];
     for (final key in keys_) {
       keys.add(key);
     }
     final disabled =
-        ServerFuncBtn.values.where((e) => !keys.contains(e)).toList();
+        ServerFuncBtn.values.map((e) => e.index).where((e) => !keys.contains(e)).toList();
     final allKeys = [...keys, ...disabled];
     return ReorderableListView.builder(
       padding: const EdgeInsets.all(7),
@@ -43,7 +43,7 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
         return CardX(
           key: ValueKey(idx),
           child: ListTile(
-            title: Text(key.toStr),
+            title: Text(ServerFuncBtn.values[key].toStr),
             leading: _buildCheckBox(keys, key, idx, idx < keys.length),
             trailing: isDesktop ? null : const Icon(Icons.drag_handle),
           ),
@@ -62,8 +62,8 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
   }
 
   Widget _buildCheckBox(
-    List<ServerFuncBtn> keys,
-    ServerFuncBtn key,
+    List<int> keys,
+    int key,
     int idx,
     bool value,
   ) {

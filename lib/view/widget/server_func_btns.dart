@@ -7,6 +7,7 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
+import 'package:toolbox/core/extension/widget.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/platform/path.dart';
 import 'package:toolbox/data/model/app/menu/server_func.dart';
@@ -17,6 +18,7 @@ import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/res/path.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
+import 'package:toolbox/data/res/ui.dart';
 
 import '../../core/route.dart';
 import '../../core/utils/server.dart';
@@ -67,43 +69,30 @@ class ServerFuncBtns extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // return Row(
-    //   mainAxisAlignment: MainAxisAlignment.spaceAround,
-    //   children: ServerTabMenuType.values
-    //       .map(
-    //         (e) => Stores.setting.serverFuncBtnsDisplayName.fetch()
-    //             ? Column(
-    //                 mainAxisSize: MainAxisSize.min,
-    //                 children: [
-    //                   IconButton(
-    //                     onPressed: () => _onTapMoreBtns(e, spi, context),
-    //                     padding: EdgeInsets.zero,
-    //                     tooltip: e.name,
-    //                     icon: Icon(e.icon, size: iconSize ?? 15),
-    //                   ),
-    //                   Text(e.toStr, style: UIs.textSize9Grey)
-    //                 ],
-    //               )
-    //             : IconButton(
-    //                 onPressed: () => _onTapMoreBtns(e, spi, context),
-    //                 padding: EdgeInsets.zero,
-    //                 tooltip: e.name,
-    //                 icon: Icon(e.icon, size: iconSize ?? 15),
-    //               ),
-    //       )
-    //       .toList(),
-    // );
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: Stores.setting.serverFuncBtns
           .fetch()
+          .map((e) => ServerFuncBtn.values[e])
           .map(
-            (e) => IconButton(
-              onPressed: () => _onTapMoreBtns(e, spi, context),
-              padding: EdgeInsets.zero,
-              tooltip: e.toStr,
-              icon: Icon(e.icon, size: iconSize ?? 15),
-            ),
+            (e) => Stores.setting.moveOutServerTabFuncBtns.fetch()
+                ? IconButton(
+                    onPressed: () => _onTapMoreBtns(e, spi, context),
+                    padding: EdgeInsets.zero,
+                    tooltip: e.toStr,
+                    icon: Icon(e.icon, size: iconSize ?? 15),
+                  )
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        onPressed: () => _onTapMoreBtns(e, spi, context),
+                        padding: EdgeInsets.zero,
+                        icon: Icon(e.icon, size: iconSize ?? 15),
+                      ),
+                      Text(e.toStr, style: UIs.text11Grey)
+                    ],
+                  ).padding(const EdgeInsets.only(bottom: 13)),
           )
           .toList(),
     );
