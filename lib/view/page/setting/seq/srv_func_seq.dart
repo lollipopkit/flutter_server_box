@@ -33,8 +33,10 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
     for (final key in keys_) {
       keys.add(key);
     }
-    final disabled =
-        ServerFuncBtn.values.map((e) => e.index).where((e) => !keys.contains(e)).toList();
+    final disabled = ServerFuncBtn.values
+        .map((e) => e.index)
+        .where((e) => !keys.contains(e))
+        .toList();
     final allKeys = [...keys, ...disabled];
     return ReorderableListView.builder(
       padding: const EdgeInsets.all(7),

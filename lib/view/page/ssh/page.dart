@@ -317,7 +317,10 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   }
 
   void _initVirtKeys() {
-    final virtKeys = List<VirtKey>.from(Stores.setting.sshVirtKeys.fetch());
+    final virtKeys = Stores.setting.sshVirtKeys
+        .fetch()
+        .map((e) => VirtKey.values[e])
+        .toList();
 
     for (int len = 0; len < virtKeys.length; len += 7) {
       if (len + 7 > virtKeys.length) {
