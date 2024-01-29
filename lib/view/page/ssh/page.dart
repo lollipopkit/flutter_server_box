@@ -413,7 +413,9 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
           onPressed: () {
             if (mounted) {
               context.pop();
-              context.pop();
+              if (widget.pop) {
+                context.pop();
+              }
             }
           },
           child: Text(l10n.ok),
