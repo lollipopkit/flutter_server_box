@@ -58,11 +58,6 @@ Platform | Support | Sign
 [iOS](https://apps.apple.com/app/id1586449703) / [Android](https://res.lolli.tech/serverbox/latest.apk) / [macOS](https://apps.apple.com/app/id1586449703) | Full | My own certificate
 [Linux](https://res.lolli.tech/serverbox/latest.AppImage) / [Windows](https://res.lolli.tech/serverbox/latest.win.zip) | Not tested | Flutter default certificate
 
-- Due to Chinese government policy and the [BEIAN](https://github.com/lollipopkit/flutter_server_box/discussions/180) issue. iOS app is now free. Please download it from other regions of AppStore.
-- Security:
-  - To prevent injection attacks and etc., please don't download from untrusted sources.
-  - Since `Linux / Windows` is signed with flutter default certificate, it is recommended to [build it yourself](https://github.com/lollipopkit/flutter_server_box/wiki#compile-yourself).
-
 
 ## 🆘 Help
 - In order to push  server status to your portable device without opening ServerBox app (Such as **message push** and **home widget**), you need to install [ServerBoxMonitor](https://github.com/lollipopkit/server_box_monitor) on your servers, and config it correctly. See [wiki](https://github.com/lollipopkit/server_box_monitor/wiki) for more details.
