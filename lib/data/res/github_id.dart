@@ -54,5 +54,8 @@ abstract final class GithubIds {
     '58fly',
     'Potterli20',
     'Seifon',
+    'bxoooooo',
+    'KatharsisKing',
+    'mervinniu',
   };
 }
