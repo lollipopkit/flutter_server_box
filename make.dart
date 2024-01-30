@@ -13,6 +13,7 @@ const appleXCConfigPath = 'Runner.xcodeproj/project.pbxproj';
 const macOSArchievePath = 'build/macos/Build/Products/Release/server_box.app';
 const releaseDir = '/Volumes/pm981/release/serverbox';
 const shellScriptPath = 'lib/data/model/app/shell_func.dart';
+const uploadPathPrefix = 'cda:/var/www/res/';
 
 var regAppleProjectVer = RegExp(r'CURRENT_PROJECT_VERSION = .+;');
 var regAppleMarketVer = RegExp(r'MARKETING_VERSION = .+');
@@ -192,7 +193,7 @@ Name=$appName
 Exec=$appName
 Icon=app_icon.png
 Type=Application
-Categories=Network;Utility;
+Categories=Utility;
 ''';
   await File('$appDirName/$appName.desktop').writeAsString(desktop);
   // Run appimagetool
@@ -207,17 +208,16 @@ Future<void> flutterBuildWin() async {
 }
 
 Future<void> scpApk2CDN() async {
-  final sha256 = await getFileSha256(apkPath);
-  print('SHA256: $sha256');
   final result = await Process.run(
     'scp',
-    [apkPath, 'hk:/var/www/res/$appNameLower/$sha256.apk'],
+    [apkPath, '$uploadPathPrefix$appNameLower/$appName-$build.apk'],
     runInShell: true,
   );
   if (result.exitCode != 0) {
     print(result.stderr);
     exit(1);
   }
+  print('Upload $build.apk finished.');
 }
 
 Future<void> scpLinux2CDN() async {
@@ -225,7 +225,7 @@ Future<void> scpLinux2CDN() async {
     'scp',
     [
       '$appName-x86_64.AppImage',
-      'hk:/var/www/res/$appNameLower/$build.AppImage',
+      '$uploadPathPrefix$appNameLower/$appName-$build.AppImage',
     ],
     runInShell: true,
   );
@@ -241,7 +241,7 @@ Future<void> scpWindows2CDN() async {
     'scp',
     [
       './build/windows/runner/Release/$appName.zip',
-      'hk:/var/www/res/$appNameLower/$build.zip',
+      '$uploadPathPrefix$appNameLower/$appName-$build.zip',
     ],
     runInShell: true,
   );
@@ -249,7 +249,7 @@ Future<void> scpWindows2CDN() async {
     print(result.stderr);
     exit(1);
   }
-  print('Upload Windows $build.zip finished.');
+  print('Upload $build.zip finished.');
 }
 
 Future<void> changeAppleVersion() async {
