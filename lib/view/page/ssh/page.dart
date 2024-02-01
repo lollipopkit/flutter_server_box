@@ -437,9 +437,9 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   bool get wantKeepAlive => true;
 
   Future<void> _initService() async {
-    final service = FlutterBackgroundService();
+    if (!isAndroid) return;
 
-    await service.configure(
+    await FlutterBackgroundService().configure(
       androidConfiguration: AndroidConfiguration(
         onStart: _onStart,
         autoStart: true,

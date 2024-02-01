@@ -214,7 +214,7 @@ const _statusCmds = [
   'cat /proc/stat | grep cpu',
   'uptime',
   'cat /proc/net/snmp',
-  'df -B 1K',
+  'df',
   "cat /proc/meminfo | grep -E 'Mem|Swap'",
   'cat /sys/class/thermal/thermal_zone*/type',
   'cat /sys/class/thermal/thermal_zone*/temp',
