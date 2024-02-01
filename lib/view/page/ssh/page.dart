@@ -349,7 +349,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
       ),
     );
 
-    _setupDiscontinuityTimer();
+    //_setupDiscontinuityTimer();
 
     if (session == null) {
       _writeLn(_server?.status.err ?? 'Null session');
@@ -390,45 +390,45 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
         .listen(_terminal.write);
   }
 
-  void _setupDiscontinuityTimer() {
-    _discontinuityTimer = Timer.periodic(
-      const Duration(seconds: 5),
-      (_) async {
-        var throwTimeout = true;
-        Future.delayed(const Duration(seconds: 3), () {
-          if (throwTimeout) {
-            _catchTimeout();
-          }
-        });
-        await _client?.ping();
-        throwTimeout = false;
-      },
-    );
-  }
+  // void _setupDiscontinuityTimer() {
+  //   _discontinuityTimer = Timer.periodic(
+  //     const Duration(seconds: 5),
+  //     (_) async {
+  //       var throwTimeout = true;
+  //       Future.delayed(const Duration(seconds: 3), () {
+  //         if (throwTimeout) {
+  //           _catchTimeout();
+  //         }
+  //       });
+  //       await _client?.ping();
+  //       throwTimeout = false;
+  //     },
+  //   );
+  // }
 
-  void _catchTimeout() {
-    _discontinuityTimer?.cancel();
-    if (!mounted) return;
-    _writeLn('\n\nConnection lost\r\n');
-    context.showRoundDialog(
-      title: Text(l10n.attention),
-      child: Text('${l10n.disconnected}\n${l10n.goBackQ}'),
-      barrierDismiss: false,
-      actions: [
-        TextButton(
-          onPressed: () {
-            if (mounted) {
-              context.pop();
-              if (widget.pop) {
-                context.pop();
-              }
-            }
-          },
-          child: Text(l10n.ok),
-        ),
-      ],
-    );
-  }
+  // void _catchTimeout() {
+  //   _discontinuityTimer?.cancel();
+  //   if (!mounted) return;
+  //   _writeLn('\n\nConnection lost\r\n');
+  //   context.showRoundDialog(
+  //     title: Text(l10n.attention),
+  //     child: Text('${l10n.disconnected}\n${l10n.goBackQ}'),
+  //     barrierDismiss: false,
+  //     actions: [
+  //       TextButton(
+  //         onPressed: () {
+  //           if (mounted) {
+  //             context.pop();
+  //             if (widget.pop) {
+  //               context.pop();
+  //             }
+  //           }
+  //         },
+  //         child: Text(l10n.ok),
+  //       ),
+  //     ],
+  //   );
+  // }
 
   @override
   bool get wantKeepAlive => true;

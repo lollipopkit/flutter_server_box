@@ -69,11 +69,18 @@ class ServerFuncBtns extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final btns = () {
+      try {
+        return Stores.setting.serverFuncBtns
+            .fetch()
+            .map((e) => ServerFuncBtn.values[e]);
+      } catch (e) {
+        return ServerFuncBtn.values;
+      }
+    }();
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: Stores.setting.serverFuncBtns
-          .fetch()
-          .map((e) => ServerFuncBtn.values[e])
+      children: btns
           .map(
             (e) => Stores.setting.moveOutServerTabFuncBtns.fetch()
                 ? IconButton(
