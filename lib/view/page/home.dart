@@ -10,6 +10,7 @@ import 'package:toolbox/core/channel/home_widget.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/persistant_store.dart';
+import 'package:toolbox/core/update.dart';
 import 'package:toolbox/core/utils/platform/auth.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/res/color.dart';
@@ -316,6 +317,10 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
   Future<void> afterFirstLayout(BuildContext context) async {
     // Auth required for first launch
     _auth();
+
+    if (Stores.setting.autoCheckAppUpdate.fetch()) {
+      doUpdate(context);
+    }
     HomeWidgetMC.update();
     await GetIt.I.allReady();
     await Pros.server.load();

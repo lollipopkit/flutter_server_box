@@ -45,7 +45,6 @@ class DebugPage extends StatelessWidget {
             builder: (_, provider, __) {
               return ListView(
                 key: ValueKey(provider.widgets.length),
-                reverse: true,
                 children: provider.widgets,
               );
             },

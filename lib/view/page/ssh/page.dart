@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
@@ -369,6 +370,8 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     _listen(session.stdout);
     _listen(session.stderr);
 
+    _initService();
+
     if (widget.initCmd != null) {
       _terminal.textInput(widget.initCmd!);
       _terminal.keyInput(TerminalKey.enter);
@@ -432,4 +435,21 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
 
   @override
   bool get wantKeepAlive => true;
+
+  Future<void> _initService() async {
+    final service = FlutterBackgroundService();
+
+    await service.configure(
+      androidConfiguration: AndroidConfiguration(
+        onStart: _onStart,
+        autoStart: true,
+        isForegroundMode: true,
+        initialNotificationTitle: 'SSH',
+        initialNotificationContent: l10n.bgRun,
+      ),
+      iosConfiguration: IosConfiguration(),
+    );
+  }
 }
+
+Future<void> _onStart(ServiceInstance service) async {}

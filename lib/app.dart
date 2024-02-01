@@ -4,7 +4,6 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/core/analysis.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/locale.dart';
-import 'package:toolbox/core/update.dart';
 import 'package:toolbox/core/utils/ui.dart';
 import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/res/color.dart';
@@ -86,9 +85,6 @@ class MyApp extends StatelessWidget {
 
 void _setup(BuildContext context) async {
   setTransparentNavigationBar(context);
-  if (Stores.setting.autoCheckAppUpdate.fetch()) {
-    doUpdate(context);
-  }
   Analysis.init();
 }
 
