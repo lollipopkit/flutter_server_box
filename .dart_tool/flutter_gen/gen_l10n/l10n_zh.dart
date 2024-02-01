@@ -100,6 +100,9 @@ class SZh extends S {
   String get clear => '清除';
 
   @override
+  String get clipboard => '剪切板';
+
+  @override
   String get close => '关闭';
 
   @override
@@ -946,6 +949,9 @@ class SZhTw extends SZh {
 
   @override
   String get clear => '清除';
+
+  @override
+  String get clipboard => '剪切板';
 
   @override
   String get close => '關閉';

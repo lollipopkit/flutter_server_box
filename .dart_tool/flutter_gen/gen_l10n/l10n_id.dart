@@ -100,6 +100,9 @@ class SId extends S {
   String get clear => 'Jernih';
 
   @override
+  String get clipboard => 'papan klip';
+
+  @override
   String get close => 'Menutup';
 
   @override

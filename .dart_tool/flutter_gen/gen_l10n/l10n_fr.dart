@@ -100,6 +100,9 @@ class SFr extends S {
   String get clear => 'Effacer';
 
   @override
+  String get clipboard => 'presse-papiers';
+
+  @override
   String get close => 'Fermer';
 
   @override

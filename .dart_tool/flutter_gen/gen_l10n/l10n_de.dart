@@ -100,6 +100,9 @@ class SDe extends S {
   String get clear => 'Entfernen';
 
   @override
+  String get clipboard => 'Zwischenablage';
+
+  @override
   String get close => 'Schließen';
 
   @override

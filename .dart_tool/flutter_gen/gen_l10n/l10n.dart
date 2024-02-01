@@ -286,6 +286,12 @@ abstract class S {
   /// **'Clear'**
   String get clear;
 
+  /// No description provided for @clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Clipboard'**
+  String get clipboard;
+
   /// No description provided for @close.
   ///
   /// In en, this message translates to:

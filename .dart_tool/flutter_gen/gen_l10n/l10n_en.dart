@@ -100,6 +100,9 @@ class SEn extends S {
   String get clear => 'Clear';
 
   @override
+  String get clipboard => 'Clipboard';
+
+  @override
   String get close => 'Close';
 
   @override
