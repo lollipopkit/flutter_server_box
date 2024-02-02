@@ -175,10 +175,13 @@ class _ServerEditPageState extends State<ServerEditPage> {
         hint: l10n.exampleName,
         label: l10n.name,
         icon: Icons.info,
+        obscureText: false,
+        autoCorrect: true,
+        suggestiion: true,
       ),
       Input(
         controller: _ipController,
-        type: TextInputType.text,
+        type: TextInputType.url,
         onSubmitted: (_) => _focusScope.requestFocus(_portFocus),
         node: _ipFocus,
         label: l10n.host,
@@ -205,7 +208,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
       ),
       Input(
         controller: _altUrlController,
-        type: TextInputType.text,
+        type: TextInputType.url,
         node: _alterUrlFocus,
         label: l10n.alterUrl,
         icon: Icons.computer,

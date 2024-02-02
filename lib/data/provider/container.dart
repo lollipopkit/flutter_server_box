@@ -89,7 +89,6 @@ class ContainerProvider extends ChangeNotifier {
 
     final lines = psRaw.split('\n');
     lines.removeWhere((element) => element.isEmpty);
-    if (lines.isNotEmpty) lines.removeAt(0);
     items = lines.map((e) => ContainerPs.fromRawJson(e, type)).toList();
 
     // Parse docker images
