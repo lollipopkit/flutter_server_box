@@ -71,20 +71,25 @@ abstract final class ICloud {
     String? localPath,
   }) async {
     final completer = Completer<ICloudErr?>();
-    await ICloudStorage.download(
-      containerId: _containerId,
-      relativePath: relativePath,
-      destinationFilePath: localPath ?? '${await Paths.doc}/$relativePath',
-      onProgress: (stream) {
-        stream.listen(
-          null,
-          onDone: () => completer.complete(null),
-          onError: (e) => completer.complete(
-            ICloudErr(type: ICloudErrType.generic, message: '$e'),
-          ),
-        );
-      },
-    );
+    try {
+      await ICloudStorage.download(
+        containerId: _containerId,
+        relativePath: relativePath,
+        destinationFilePath: localPath ?? '${await Paths.doc}/$relativePath',
+        onProgress: (stream) {
+          stream.listen(
+            null,
+            onDone: () => completer.complete(null),
+            onError: (e) => completer.complete(
+              ICloudErr(type: ICloudErrType.generic, message: '$e'),
+            ),
+          );
+        },
+      );
+    } catch (e, s) {
+      _logger.warning('Download $relativePath failed', e, s);
+      completer.complete(ICloudErr(type: ICloudErrType.generic, message: '$e'));
+    }
     return completer.future;
   }
 
