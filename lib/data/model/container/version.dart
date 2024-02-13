@@ -49,7 +49,7 @@ class ContainerdClient {
 
   factory ContainerdClient.fromJson(Map<String, dynamic> json) =>
       ContainerdClient(
-        apiVersion: json["APIVersion"],
+        apiVersion: json["ApiVersion"], // should be ApiVersion?
         version: json["Version"],
         goVersion: json["GoVersion"],
         gitCommit: json["GitCommit"],

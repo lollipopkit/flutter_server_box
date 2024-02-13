@@ -12,7 +12,8 @@ import 'package:toolbox/data/model/container/version.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/store.dart';
 
-final _dockerNotFound = RegExp(r'command not found|Unknown command');
+final _dockerNotFound =
+    RegExp(r"command not found|Unknown command|Command '\w+' not found");
 
 class ContainerProvider extends ChangeNotifier {
   SSHClient? client;
@@ -43,15 +44,44 @@ class ContainerProvider extends ChangeNotifier {
     await refresh();
   }
 
+  Future<bool> _checkDockerInstalled(SSHClient client) async {
+    final session = await client.execute("docker");
+    await session.done;
+    // print('docker code: ${session.exitCode}');
+    return session.exitCode == 0;
+  }
+
+  String _removeSudoPrompts(String value) {
+    final regex = RegExp(r"\[sudo\] password for \w+:");
+    if (value.startsWith(regex)){
+      return value.replaceFirstMapped(regex, (match) => "");
+    }
+    return value;
+  }
+
   Future<void> refresh() async {
     var raw = '';
+    var rawErr = '';
+    print('exec: ${_wrap(ContainerCmdType.execAll(type))}');
+
     await client?.execWithPwd(
       _wrap(ContainerCmdType.execAll(type)),
       context: context,
       onStdout: (data, _) => raw = '$raw$data',
+      onStderr: (data, _) => raw = '$rawErr$data',
     );
 
-    if (raw.contains(_dockerNotFound)) {
+    raw = _removeSudoPrompts(raw);
+    rawErr = _removeSudoPrompts(rawErr);
+
+    print('result raw [$raw, $rawErr]');
+
+    final dockerInstalled = await _checkDockerInstalled(client!);
+    // print("docker installed = $dockerInstalled");
+
+    if (!dockerInstalled ||
+        raw.contains(_dockerNotFound) ||
+        rawErr.contains(_dockerNotFound)) {
       error = ContainerErr(type: ContainerErrType.notInstalled);
       notifyListeners();
       return;
@@ -71,6 +101,7 @@ class ContainerProvider extends ChangeNotifier {
 
     // Parse docker version
     final verRaw = ContainerCmdType.version.find(segments);
+    print('version raw = $verRaw\n');
     try {
       final containerVersion = Containerd.fromRawJson(verRaw);
       version = containerVersion.client.version;
