@@ -118,12 +118,16 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
     );
   }
 
+  String _standardizeLineSeparators(String value) {
+    return value.replaceAll("\r\n", "\n").replaceAll("\r", "\n");
+  }
+
   Widget _buildFAB() {
     return FloatingActionButton(
       tooltip: l10n.save,
       onPressed: () async {
         final name = _nameController.text;
-        final key = _keyController.text.trim();
+        final key = _standardizeLineSeparators(_keyController.text.trim());
         final pwd = _pwdController.text;
         if (name.isEmpty || key.isEmpty) {
           context.showSnackBar(l10n.fieldMustNotEmpty);
@@ -201,11 +205,8 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
             }
 
             final content = await file.readAsString();
-
-            /// Issue #7
-            /// Replace all CRLF to LF
-            content.replaceAll('\r\n', '\n');
-            _keyController.text = content;
+            // dartssh2 accepts only LF (but not CRLF or CR)
+            _keyController.text = _standardizeLineSeparators(content.trim());
           },
           child: Text(l10n.pickFile),
         ),
