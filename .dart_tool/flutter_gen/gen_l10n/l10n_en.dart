@@ -36,7 +36,7 @@ class SEn extends S {
 
   @override
   String askContinue(Object msg) {
-    return '$msg, continue?';
+    return '$msg. Continue?';
   }
 
   @override
@@ -800,7 +800,7 @@ class SEn extends S {
   String get urlOrJson => 'URL or JSON';
 
   @override
-  String get useNoPwd => 'No password will be used.';
+  String get useNoPwd => 'No password will be used';
 
   @override
   String get used => 'Used';

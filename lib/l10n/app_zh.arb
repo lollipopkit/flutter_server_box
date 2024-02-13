@@ -253,7 +253,7 @@
   "upsideDown": "上下交换",
   "uptime": "启动时长",
   "urlOrJson": "链接或JSON",
-  "useNoPwd": "将会使用无密码。",
+  "useNoPwd": "将会使用无密码",
   "used": "已用",
   "user": "用户",
   "versionHaveUpdate": "找到新版本：v1.0.{build}, 点击更新",

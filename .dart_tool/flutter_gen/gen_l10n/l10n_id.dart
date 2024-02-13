@@ -800,7 +800,7 @@ class SId extends S {
   String get urlOrJson => 'URL atau JSON';
 
   @override
-  String get useNoPwd => 'Tidak ada kata sandi yang akan digunakan.';
+  String get useNoPwd => 'Tidak ada kata sandi yang akan digunakan';
 
   @override
   String get used => 'Digunakan';

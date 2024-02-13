@@ -36,7 +36,7 @@ class SDe extends S {
 
   @override
   String askContinue(Object msg) {
-    return '$msg, weiter?';
+    return '$msg. Weiter?';
   }
 
   @override
@@ -800,7 +800,7 @@ class SDe extends S {
   String get urlOrJson => 'URL oder JSON';
 
   @override
-  String get useNoPwd => 'Es wird kein Passwort verwendet.';
+  String get useNoPwd => 'Es wird kein Passwort verwendet';
 
   @override
   String get used => 'Gebraucht';
