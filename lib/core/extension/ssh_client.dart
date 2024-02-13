@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/foundation.dart';
@@ -84,5 +85,43 @@ extension SSHClientX on SSHClient {
       onStdout: onStdout,
       stdin: stdin,
     );
+  }
+
+  Future<Uint8List> runWithSessionAction(
+    String command, {
+    bool runInPty = false,
+    bool stdout = true,
+    bool stderr = true,
+    Map<String, String>? environment,
+    Future<void> Function(SSHSession)? action,
+  }) async {
+    final session = await execute(
+      command,
+      pty: runInPty ? const SSHPtyConfig() : null,
+      environment: environment,
+    );
+
+    final result = BytesBuilder(copy: false);
+    final stdoutDone = Completer<void>();
+    final stderrDone = Completer<void>();
+
+    session.stdout.listen(
+      stdout ? result.add : (_) {},
+      onDone: stdoutDone.complete,
+      onError: stderrDone.completeError,
+    );
+
+    session.stderr.listen(
+      stderr ? result.add : (_) {},
+      onDone: stderrDone.complete,
+      onError: stderrDone.completeError,
+    );
+
+    if (action != null) await action(session);
+
+    await stdoutDone.future;
+    await stderrDone.future;
+
+    return result.takeBytes();
   }
 }
