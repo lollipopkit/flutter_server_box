@@ -36,7 +36,7 @@ class SFr extends S {
 
   @override
   String askContinue(Object msg) {
-    return '$msg, continuer?';
+    return '$msg. Continuer?';
   }
 
   @override
@@ -800,7 +800,7 @@ class SFr extends S {
   String get urlOrJson => 'URL ou JSON';
 
   @override
-  String get useNoPwd => 'Aucun mot de passe ne sera utilisé.';
+  String get useNoPwd => 'Aucun mot de passe ne sera utilisé';
 
   @override
   String get used => 'Utilisé';

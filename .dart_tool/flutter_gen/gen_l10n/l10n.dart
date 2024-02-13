@@ -163,7 +163,7 @@ abstract class S {
   /// No description provided for @askContinue.
   ///
   /// In en, this message translates to:
-  /// **'{msg}, continue?'**
+  /// **'{msg}. Continue?'**
   String askContinue(Object msg);
 
   /// No description provided for @attention.
@@ -1621,7 +1621,7 @@ abstract class S {
   /// No description provided for @useNoPwd.
   ///
   /// In en, this message translates to:
-  /// **'No password will be used.'**
+  /// **'No password will be used'**
   String get useNoPwd;
 
   /// No description provided for @used.

@@ -800,7 +800,7 @@ class SZh extends S {
   String get urlOrJson => '链接或JSON';
 
   @override
-  String get useNoPwd => '将会使用无密码。';
+  String get useNoPwd => '将会使用无密码';
 
   @override
   String get used => '已用';
@@ -1651,7 +1651,7 @@ class SZhTw extends SZh {
   String get urlOrJson => '鏈接或JSON';
 
   @override
-  String get useNoPwd => '将使用無密碼。';
+  String get useNoPwd => '将使用無密碼';
 
   @override
   String get used => '已用';
