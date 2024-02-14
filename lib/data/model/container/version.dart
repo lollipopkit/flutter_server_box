@@ -26,9 +26,9 @@ class ContainerdClient {
   final String version;
   final String goVersion;
   final String gitCommit;
-  final String builtTime;
-  final int built;
-  final String osArch;
+  final String? builtTime;
+  final int? built; // more fields should be marked nullable
+  final String? osArch;
   final String os;
 
   ContainerdClient({
@@ -49,22 +49,22 @@ class ContainerdClient {
 
   factory ContainerdClient.fromJson(Map<String, dynamic> json) =>
       ContainerdClient(
-        apiVersion: json["ApiVersion"], // should be ApiVersion?
+        apiVersion: json["ApiVersion"], 
         version: json["Version"],
         goVersion: json["GoVersion"],
         gitCommit: json["GitCommit"],
-        builtTime: json["BuiltTime"],
-        built: json["Built"],
+        builtTime: json["BuildTime"],
+        built: json["Built"], // should be Build?
         osArch: json["OsArch"],
         os: json["Os"],
       );
 
   Map<String, dynamic> toJson() => {
-        "APIVersion": apiVersion,
+        "ApiVersion": apiVersion,
         "Version": version,
         "GoVersion": goVersion,
         "GitCommit": gitCommit,
-        "BuiltTime": builtTime,
+        "BuildTime": builtTime,
         "Built": built,
         "OsArch": osArch,
         "Os": os,

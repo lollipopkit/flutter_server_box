@@ -11,6 +11,7 @@ import 'package:toolbox/data/model/container/type.dart';
 import 'package:toolbox/data/model/container/version.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/store.dart';
+import 'package:toolbox/core/extension/uint8list.dart';
 
 final _dockerNotFound =
     RegExp(r"command not found|Unknown command|Command '\w+' not found");
@@ -47,25 +48,36 @@ class ContainerProvider extends ChangeNotifier {
   Future<bool> _checkDockerInstalled(SSHClient client) async {
     final session = await client.execute("docker");
     await session.done;
-    // print('docker code: ${session.exitCode}');
+    // debugPrint('docker code: ${session.exitCode}');
     return session.exitCode == 0;
   }
 
   String _removeSudoPrompts(String value) {
     final regex = RegExp(r"\[sudo\] password for \w+:");
-    if (value.startsWith(regex)){
+    if (value.startsWith(regex)) {
       return value.replaceFirstMapped(regex, (match) => "");
     }
     return value;
   }
 
+  Future<bool> _requiresSudo() async {
+    final psResult = await client?.run(_wrap(ContainerCmdType.ps.exec(type)));
+    if (psResult == null) return true;
+    if (psResult.string.toLowerCase().contains("permission denied")) {
+      return true;
+    }
+    return false;
+  }
+
   Future<void> refresh() async {
     var raw = '';
     var rawErr = '';
-    print('exec: ${_wrap(ContainerCmdType.execAll(type))}');
+    debugPrint('exec: ${_wrap(ContainerCmdType.execAll(type))}');
+
+    final sudo = await _requiresSudo();
 
     await client?.execWithPwd(
-      _wrap(ContainerCmdType.execAll(type)),
+      _wrap(ContainerCmdType.execAll(type, sudo: sudo)),
       context: context,
       onStdout: (data, _) => raw = '$raw$data',
       onStderr: (data, _) => raw = '$rawErr$data',
@@ -74,10 +86,10 @@ class ContainerProvider extends ChangeNotifier {
     raw = _removeSudoPrompts(raw);
     rawErr = _removeSudoPrompts(rawErr);
 
-    print('result raw [$raw, $rawErr]');
+    debugPrint('result raw [$raw, $rawErr]');
 
     final dockerInstalled = await _checkDockerInstalled(client!);
-    // print("docker installed = $dockerInstalled");
+    // debugPrint("docker installed = $dockerInstalled");
 
     if (!dockerInstalled ||
         raw.contains(_dockerNotFound) ||
@@ -101,7 +113,7 @@ class ContainerProvider extends ChangeNotifier {
 
     // Parse docker version
     final verRaw = ContainerCmdType.version.find(segments);
-    print('version raw = $verRaw\n');
+    debugPrint('version raw = $verRaw\n');
     try {
       final containerVersion = Containerd.fromRawJson(verRaw);
       version = containerVersion.client.version;
@@ -228,8 +240,8 @@ enum ContainerCmdType {
   images,
   ;
 
-  String exec(ContainerType type) {
-    final prefix = type.name;
+  String exec(ContainerType type, {bool sudo = false}) {
+    final prefix = sudo ? 'sudo -S ${type.name}' : type.name;
     return switch (this) {
       ContainerCmdType.version => '$prefix version $_jsonFmt',
       ContainerCmdType.ps => '$prefix ps -a $_jsonFmt',
@@ -238,6 +250,7 @@ enum ContainerCmdType {
     };
   }
 
-  static String execAll(ContainerType type) =>
-      values.map((e) => e.exec(type)).join(' && echo $seperator && ');
+  static String execAll(ContainerType type, {bool sudo = false}) => values
+      .map((e) => e.exec(type, sudo: sudo))
+      .join(' && echo $seperator && ');
 }
