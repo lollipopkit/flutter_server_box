@@ -4,6 +4,7 @@ abstract final class GithubIds {
   // Thanks
   // If you want to change your Github ID, please open an issue.
   static const contributors = <GhId>{
+    'PaperCube',
     'its-tom',
     'azkadev',
     'kalashnikov',
@@ -57,5 +58,6 @@ abstract final class GithubIds {
     'bxoooooo',
     'KatharsisKing',
     'mervinniu',
+    'L-Super',
   };
 }

@@ -21,7 +21,6 @@ import 'package:toolbox/view/page/storage/local.dart';
 import '../data/model/server/snippet.dart';
 import '../view/page/debug.dart';
 import '../view/page/editor.dart';
-import '../view/page/full_screen.dart';
 import '../view/page/process.dart';
 import '../view/page/server/edit.dart';
 import '../view/page/server/tab.dart';
@@ -175,9 +174,9 @@ class AppRoute {
         'editor');
   }
 
-  static AppRoute fullscreen({Key? key}) {
-    return AppRoute(FullScreenPage(key: key), 'fullscreen');
-  }
+  // static AppRoute fullscreen({Key? key}) {
+  //   return AppRoute(FullScreenPage(key: key), 'fullscreen');
+  // }
 
   static AppRoute home({Key? key}) {
     return AppRoute(HomePage(key: key), 'home');

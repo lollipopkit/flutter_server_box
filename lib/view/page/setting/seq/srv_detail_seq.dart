@@ -17,6 +17,8 @@ class ServerDetailOrderPage extends StatefulWidget {
 }
 
 class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
+  final prop = Stores.setting.detailCardOrder;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,35 +30,35 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
   }
 
   Widget _buildBody() {
-    final keys_ = Stores.setting.detailCardOrder.fetch();
-    final keys = <String>[];
-    for (final key in keys_) {
-      keys.add(key);
-    }
-    final disabled =
-        Defaults.detailCardOrder.where((e) => !keys.contains(e)).toList();
-    final allKeys = [...keys, ...disabled];
-    return ReorderableListView.builder(
-      padding: const EdgeInsets.all(7),
-      itemBuilder: (_, idx) {
-        final key = allKeys[idx];
-        return CardX(
-          key: ValueKey(idx),
-          child: ListTile(
-            title: Text(key),
-            leading: _buildCheckBox(keys, key, idx, idx < keys.length),
-            trailing: isDesktop ? null : const Icon(Icons.drag_handle),
-          ),
+    return ValueListenableBuilder(
+      valueListenable: prop.listenable(),
+      builder: (_, vals, __) {
+        final keys = List<String>.from(vals);
+        final disabled =
+            Defaults.detailCardOrder.where((e) => !keys.contains(e)).toList();
+        final allKeys = [...keys, ...disabled];
+        return ReorderableListView.builder(
+          padding: const EdgeInsets.all(7),
+          itemBuilder: (_, idx) {
+            final key = allKeys[idx];
+            return CardX(
+              key: ValueKey(idx),
+              child: ListTile(
+                title: Text(key),
+                leading: _buildCheckBox(keys, key, idx, idx < keys.length),
+                trailing: isDesktop ? null : const Icon(Icons.drag_handle),
+              ),
+            );
+          },
+          itemCount: allKeys.length,
+          onReorder: (o, n) {
+            if (o >= keys.length || n >= keys.length) {
+              context.showSnackBar(l10n.disabled);
+              return;
+            }
+            keys.moveByItem(keys, o, n, property: prop);
+          },
         );
-      },
-      itemCount: allKeys.length,
-      onReorder: (o, n) {
-        if (o >= keys.length || n >= keys.length) {
-          context.showSnackBar(l10n.disabled);
-          return;
-        }
-        keys.moveByItem(keys, o, n, property: Stores.setting.detailCardOrder);
-        setState(() {});
       },
     );
   }
@@ -75,8 +77,7 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
         } else {
           keys.remove(key);
         }
-        Stores.setting.detailCardOrder.put(keys);
-        setState(() {});
+        prop.put(keys);
       },
     );
   }

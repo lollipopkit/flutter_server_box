@@ -100,7 +100,7 @@ class SettingStore extends PersistentStore {
   late final termFontSize = property('termFontSize', 13.0);
 
   // Locale
-  late final locale = property<String>('locale', '');
+  late final locale = property('locale', '');
 
   // SSH virtual key (ctrl | alt) auto turn off
   late final sshVirtualKeyAutoOff = property('sshVirtualKeyAutoOff', true);
@@ -118,20 +118,20 @@ class SettingStore extends PersistentStore {
     Defaults.editorDarkTheme,
   );
 
-  late final fullScreen = property(
-    'fullScreen',
-    false,
-  );
+  // late final fullScreen = property(
+  //   'fullScreen',
+  //   false,
+  // );
 
-  late final fullScreenJitter = property(
-    'fullScreenJitter',
-    true,
-  );
+  // late final fullScreenJitter = property(
+  //   'fullScreenJitter',
+  //   true,
+  // );
 
-  late final fullScreenRotateQuarter = property(
-    'fullScreenRotateQuarter',
-    1,
-  );
+  // late final fullScreenRotateQuarter = property(
+  //   'fullScreenRotateQuarter',
+  //   1,
+  // );
 
   late final keyboardType = property(
     'keyboardType',

@@ -9,7 +9,6 @@ import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/rebuild.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/view/page/full_screen.dart';
 import 'package:toolbox/view/page/home.dart';
 
 class MyApp extends StatelessWidget {
@@ -76,9 +75,7 @@ class MyApp extends StatelessWidget {
       themeMode: themeMode,
       theme: light,
       darkTheme: tMode < 3 ? dark : _getAmoledTheme(dark),
-      home: Stores.setting.fullScreen.fetch()
-          ? const FullScreenPage()
-          : const HomePage(),
+      home: const HomePage(),
     );
   }
 }

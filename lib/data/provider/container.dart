@@ -139,7 +139,6 @@ class ContainerProvider extends ChangeNotifier {
     try {
       final imgLines = imageRaw.split('\n');
       imgLines.removeWhere((element) => element.isEmpty);
-      if (imgLines.isNotEmpty) imgLines.removeAt(0);
       images = imgLines.map((e) => ContainerImg.fromRawJson(e, type)).toList();
     } catch (e, trace) {
       error = ContainerErr(

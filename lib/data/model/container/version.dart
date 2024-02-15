@@ -26,9 +26,7 @@ class ContainerdClient {
   final String version;
   final String goVersion;
   final String gitCommit;
-  final String? builtTime;
-  final int? built; // more fields should be marked nullable
-  final String? osArch;
+  final String builtTime;
   final String os;
 
   ContainerdClient({
@@ -37,8 +35,6 @@ class ContainerdClient {
     required this.goVersion,
     required this.gitCommit,
     required this.builtTime,
-    required this.built,
-    required this.osArch,
     required this.os,
   });
 
@@ -49,13 +45,11 @@ class ContainerdClient {
 
   factory ContainerdClient.fromJson(Map<String, dynamic> json) =>
       ContainerdClient(
-        apiVersion: json["ApiVersion"], 
+        apiVersion: json["ApiVersion"],
         version: json["Version"],
         goVersion: json["GoVersion"],
         gitCommit: json["GitCommit"],
         builtTime: json["BuildTime"],
-        built: json["Built"], // should be Build?
-        osArch: json["OsArch"],
         os: json["Os"],
       );
 
@@ -65,8 +59,6 @@ class ContainerdClient {
         "GoVersion": goVersion,
         "GitCommit": gitCommit,
         "BuildTime": builtTime,
-        "Built": built,
-        "OsArch": osArch,
         "Os": os,
       };
 }
