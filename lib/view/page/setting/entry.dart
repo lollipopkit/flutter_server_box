@@ -51,7 +51,7 @@ class _SettingPageState extends State<SettingPage> {
   final _editorThemeKey = GlobalKey<PopupMenuButtonState<String>>();
   final _editorDarkThemeKey = GlobalKey<PopupMenuButtonState<String>>();
   final _keyboardTypeKey = GlobalKey<PopupMenuButtonState<int>>();
-  final _rotateQuarterKey = GlobalKey<PopupMenuButtonState<int>>();
+  //final _rotateQuarterKey = GlobalKey<PopupMenuButtonState<int>>();
   final _netViewTypeKey = GlobalKey<PopupMenuButtonState<NetViewType>>();
   final _setting = Stores.setting;
 
@@ -66,8 +66,8 @@ class _SettingPageState extends State<SettingPage> {
   late final _editorTheme = ValueNotifier(_setting.editorTheme.fetch());
   late final _editorDarkTheme = ValueNotifier(_setting.editorDarkTheme.fetch());
   late final _keyboardType = ValueNotifier(_setting.keyboardType.fetch());
-  late final _rotateQuarter =
-      ValueNotifier(_setting.fullScreenRotateQuarter.fetch());
+  // late final _rotateQuarter =
+  //     ValueNotifier(_setting.fullScreenRotateQuarter.fetch());
   late final _netViewType = ValueNotifier(_setting.netViewType.fetch());
   late final _textScaler = ValueNotifier(_setting.textFactor.fetch());
 
@@ -153,8 +153,8 @@ class _SettingPageState extends State<SettingPage> {
 
           /// Fullscreen Mode is designed for old mobile phone which can be
           /// used as a status screen, so it's only available on mobile phone.
-          if (!isDesktop) _buildTitle(l10n.fullScreen),
-          if (!isDesktop) _buildFullScreen(),
+          // if (!isDesktop) _buildTitle(l10n.fullScreen),
+          // if (!isDesktop) _buildFullScreen(),
           const SizedBox(height: 37),
         ],
       ),
@@ -191,15 +191,15 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  Widget _buildFullScreen() {
-    return Column(
-      children: [
-        _buildFullScreenSwitch(),
-        _buildFullScreenJitter(),
-        _buildFulScreenRotateQuarter(),
-      ].map((e) => CardX(child: e)).toList(),
-    );
-  }
+  // Widget _buildFullScreen() {
+  //   return Column(
+  //     children: [
+  //       _buildFullScreenSwitch(),
+  //       _buildFullScreenJitter(),
+  //       _buildFulScreenRotateQuarter(),
+  //     ].map((e) => CardX(child: e)).toList(),
+  //   );
+  // }
 
   Widget _buildServer() {
     return Column(
@@ -740,56 +740,56 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  Widget _buildFullScreenSwitch() {
-    return ListTile(
-      title: Text(l10n.fullScreen),
-      trailing: StoreSwitch(
-        prop: _setting.fullScreen,
-        callback: (_) => RebuildNodes.app.rebuild(),
-      ),
-    );
-  }
+  // Widget _buildFullScreenSwitch() {
+  //   return ListTile(
+  //     title: Text(l10n.fullScreen),
+  //     trailing: StoreSwitch(
+  //       prop: _setting.fullScreen,
+  //       callback: (_) => RebuildNodes.app.rebuild(),
+  //     ),
+  //   );
+  // }
 
-  Widget _buildFullScreenJitter() {
-    return ListTile(
-      title: Text(l10n.fullScreenJitter),
-      subtitle: Text(l10n.fullScreenJitterHelp, style: UIs.textGrey),
-      trailing: StoreSwitch(prop: _setting.fullScreenJitter),
-    );
-  }
+  // Widget _buildFullScreenJitter() {
+  //   return ListTile(
+  //     title: Text(l10n.fullScreenJitter),
+  //     subtitle: Text(l10n.fullScreenJitterHelp, style: UIs.textGrey),
+  //     trailing: StoreSwitch(prop: _setting.fullScreenJitter),
+  //   );
+  // }
 
-  Widget _buildFulScreenRotateQuarter() {
-    final degrees = List.generate(4, (idx) => '${idx * 90}°').toList();
-    final items = List.generate(4, (idx) {
-      return PopupMenuItem<int>(
-        value: idx,
-        child: Text(degrees[idx]),
-      );
-    }).toList();
+  // Widget _buildFulScreenRotateQuarter() {
+  //   final degrees = List.generate(4, (idx) => '${idx * 90}°').toList();
+  //   final items = List.generate(4, (idx) {
+  //     return PopupMenuItem<int>(
+  //       value: idx,
+  //       child: Text(degrees[idx]),
+  //     );
+  //   }).toList();
 
-    return ListTile(
-      title: Text(l10n.rotateAngel),
-      onTap: () {
-        _rotateQuarterKey.currentState?.showButtonMenu();
-      },
-      trailing: ListenableBuilder(
-        listenable: _rotateQuarter,
-        builder: (_, __) => PopupMenuButton(
-          key: _rotateQuarterKey,
-          itemBuilder: (BuildContext context) => items,
-          initialValue: _rotateQuarter.value,
-          onSelected: (int idx) {
-            _rotateQuarter.value = idx;
-            _setting.fullScreenRotateQuarter.put(idx);
-          },
-          child: Text(
-            degrees[_rotateQuarter.value],
-            style: UIs.text15,
-          ),
-        ),
-      ),
-    );
-  }
+  //   return ListTile(
+  //     title: Text(l10n.rotateAngel),
+  //     onTap: () {
+  //       _rotateQuarterKey.currentState?.showButtonMenu();
+  //     },
+  //     trailing: ListenableBuilder(
+  //       listenable: _rotateQuarter,
+  //       builder: (_, __) => PopupMenuButton(
+  //         key: _rotateQuarterKey,
+  //         itemBuilder: (BuildContext context) => items,
+  //         initialValue: _rotateQuarter.value,
+  //         onSelected: (int idx) {
+  //           _rotateQuarter.value = idx;
+  //           _setting.fullScreenRotateQuarter.put(idx);
+  //         },
+  //         child: Text(
+  //           degrees[_rotateQuarter.value],
+  //           style: UIs.text15,
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildKeyboardType() {
     const List<String> names = <String>[
