@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
+import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/utils/platform/path.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/system.dart';
@@ -256,6 +258,29 @@ class ServerProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> _writeInstallerScript(Server s) async {
+    void ensure(String? writeResult) {
+      if (writeResult == null || writeResult.isNotEmpty) {
+        throw Exception("Failed to write installer script: $writeResult");
+      }
+    }
+
+    final client = s.client;
+    if (client == null) {
+      throw Exception("Invalid state: s.client cannot be null");
+    }
+
+    ensure(await client.run(ShellFunc.installerMkdirs).string);
+
+    ensure(await client.runWithSessionAction(ShellFunc.installerShellWriter,
+            action: (session) async {
+              session.stdin.add(utf8.encode(ShellFunc.allScript));
+            })
+        .string);
+
+    ensure(await client.run(ShellFunc.installerPermissionModifier).string);
+  }
+
   Future<void> _getData(ServerPrivateInfo spi) async {
     final sid = spi.id;
     final s = _servers[sid];
@@ -304,11 +329,7 @@ class ServerProvider extends ChangeNotifier {
       // Write script to server
       // by ssh
       try {
-        final writeResult =
-            await s.client?.run(ShellFunc.installShellCmd).string;
-        if (writeResult == null || writeResult.isNotEmpty) {
-          throw Exception('$writeResult');
-        }
+        await _writeInstallerScript(s);
       } on SSHAuthAbortError catch (e) {
         TryLimiter.inc(sid);
         s.status.err = e.toString();
