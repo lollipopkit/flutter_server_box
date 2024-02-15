@@ -27,8 +27,6 @@ class ContainerdClient {
   final String goVersion;
   final String gitCommit;
   final String builtTime;
-  final int built;
-  final String osArch;
   final String os;
 
   ContainerdClient({
@@ -37,8 +35,6 @@ class ContainerdClient {
     required this.goVersion,
     required this.gitCommit,
     required this.builtTime,
-    required this.built,
-    required this.osArch,
     required this.os,
   });
 
@@ -49,24 +45,20 @@ class ContainerdClient {
 
   factory ContainerdClient.fromJson(Map<String, dynamic> json) =>
       ContainerdClient(
-        apiVersion: json["APIVersion"],
+        apiVersion: json["ApiVersion"],
         version: json["Version"],
         goVersion: json["GoVersion"],
         gitCommit: json["GitCommit"],
-        builtTime: json["BuiltTime"],
-        built: json["Built"],
-        osArch: json["OsArch"],
+        builtTime: json["BuildTime"],
         os: json["Os"],
       );
 
   Map<String, dynamic> toJson() => {
-        "APIVersion": apiVersion,
+        "ApiVersion": apiVersion,
         "Version": version,
         "GoVersion": goVersion,
         "GitCommit": gitCommit,
-        "BuiltTime": builtTime,
-        "Built": built,
-        "OsArch": osArch,
+        "BuildTime": builtTime,
         "Os": os,
       };
 }
