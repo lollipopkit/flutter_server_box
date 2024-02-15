@@ -100,7 +100,7 @@ class SettingStore extends PersistentStore {
   late final termFontSize = property('termFontSize', 13.0);
 
   // Locale
-  late final locale = property<String>('locale', '');
+  late final locale = property('locale', '');
 
   // SSH virtual key (ctrl | alt) auto turn off
   late final sshVirtualKeyAutoOff = property('sshVirtualKeyAutoOff', true);

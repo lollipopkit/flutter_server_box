@@ -227,7 +227,7 @@ class _SettingPageState extends State<SettingPage> {
         _buildSSHVirtualKeyAutoOff(),
         // Use hardware keyboard on desktop, so there is no need to set it
         if (isMobile) _buildKeyboardType(),
-        _buildSSHVirtKeys(),
+        if (isMobile) _buildSSHVirtKeys(),
       ].map((e) => CardX(child: e)).toList(),
     );
   }

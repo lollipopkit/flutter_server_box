@@ -39,7 +39,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
 
   late FocusScopeNode _focusScope;
 
-  Widget? _loading;
+  final _loading = ValueNotifier<Widget?>(null);
 
   @override
   void initState() {
@@ -134,9 +134,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
           return;
         }
         FocusScope.of(context).unfocus();
-        setState(() {
-          _loading = UIs.centerSizedLoading;
-        });
+        _loading.value = UIs.centerSizedLoading;
         try {
           final decrypted = await Computer.shared.start(decyptPem, [key, pwd]);
           final pki = PrivateKeyInfo(id: name, key: decrypted);
@@ -149,9 +147,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
           context.showSnackBar(e.toString());
           rethrow;
         } finally {
-          setState(() {
-            _loading = null;
-          });
+          _loading.value = null;
         }
         context.pop();
       },
@@ -219,7 +215,10 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
           icon: Icons.password,
         ),
         SizedBox(height: MediaQuery.of(context).size.height * 0.1),
-        _loading ?? UIs.placeholder,
+        ValueListenableBuilder(
+          valueListenable: _loading,
+          builder: (_, val, __) => val ?? UIs.placeholder,
+        ),
       ],
     );
   }

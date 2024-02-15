@@ -18,6 +18,8 @@ class SSHVirtKeySettingPage extends StatefulWidget {
 }
 
 class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
+  final prop = Stores.setting.sshVirtKeys;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,40 +31,40 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
   }
 
   Widget _buildBody() {
-    final keys_ = Stores.setting.sshVirtKeys.fetch();
-    final keys = <int>[];
-    for (final key in keys_) {
-      keys.add(key);
-    }
-    final disabled = VirtKey.values
-        .map((e) => e.index)
-        .where((e) => !keys.contains(e))
-        .toList();
-    final allKeys = [...keys, ...disabled];
-    return ReorderableListView.builder(
-      padding: const EdgeInsets.all(7),
-      itemBuilder: (_, idx) {
-        final key = allKeys[idx];
-        final item = VirtKey.values[key];
-        final help = item.help;
-        return CardX(
-          key: ValueKey(idx),
-          child: ListTile(
-            title: _buildTitle(item),
-            subtitle: help == null ? null : Text(help, style: UIs.textGrey),
-            leading: _buildCheckBox(keys, key, idx, idx < keys.length),
-            trailing: isDesktop ? null : const Icon(Icons.drag_handle),
-          ),
+    return ValueListenableBuilder(
+      valueListenable: prop.listenable(),
+      builder: (_, vals, __) {
+        final keys = List<int>.from(vals);
+        final disabled = VirtKey.values
+            .map((e) => e.index)
+            .where((e) => !keys.contains(e))
+            .toList();
+        final allKeys = [...keys, ...disabled];
+        return ReorderableListView.builder(
+          padding: const EdgeInsets.all(7),
+          itemBuilder: (_, idx) {
+            final key = allKeys[idx];
+            final item = VirtKey.values[key];
+            final help = item.help;
+            return CardX(
+              key: ValueKey(idx),
+              child: ListTile(
+                title: _buildTitle(item),
+                subtitle: help == null ? null : Text(help, style: UIs.textGrey),
+                leading: _buildCheckBox(keys, key, idx, idx < keys.length),
+                trailing: isDesktop ? null : const Icon(Icons.drag_handle),
+              ),
+            );
+          },
+          itemCount: allKeys.length,
+          onReorder: (o, n) {
+            if (o >= keys.length || n >= keys.length) {
+              context.showSnackBar(l10n.disabled);
+              return;
+            }
+            keys.moveByItem(keys, o, n, property: prop);
+          },
         );
-      },
-      itemCount: allKeys.length,
-      onReorder: (o, n) {
-        if (o >= keys.length || n >= keys.length) {
-          context.showSnackBar(l10n.disabled);
-          return;
-        }
-        keys.moveByItem(keys, o, n, property: Stores.setting.sshVirtKeys);
-        setState(() {});
       },
     );
   }
@@ -93,8 +95,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
         } else {
           keys.remove(key);
         }
-        Stores.setting.sshVirtKeys.put(keys);
-        setState(() {});
+        prop.put(keys);
       },
     );
   }
