@@ -8,6 +8,7 @@ import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/sftpfile.dart';
+import 'package:toolbox/core/utils/comparator.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/misc.dart';
@@ -800,15 +801,30 @@ enum _SortType {
   List<SftpName> sort(List<SftpName> files) {
     switch (this) {
       case _SortType.name:
-        files.sort((a, b) => a.filename.compareTo(b.filename));
+        files.sort(
+          ChainComparator<SftpName>.create()
+              .thenTrueFirst((x) => x.attr.isDirectory)
+              .thenWithComparator((a, b) =>
+                  Comparators.compareStringCaseInsensitive()(
+                      a.filename, b.filename))
+              .compare,
+        );
         break;
       case _SortType.time:
         files.sort(
-          (a, b) => (a.attr.modifyTime ?? 0).compareTo(b.attr.modifyTime ?? 0),
+          ChainComparator<SftpName>.create()
+              .thenTrueFirst((x) => x.attr.isDirectory)
+              .thenCompareBy<num>((x) => x.attr.modifyTime ?? 0)
+              .compare,
         );
         break;
       case _SortType.size:
-        files.sort((a, b) => (a.attr.size ?? 0).compareTo(b.attr.size ?? 0));
+        files.sort(
+          ChainComparator<SftpName>.create()
+              .thenTrueFirst((x) => x.attr.isDirectory)
+              .thenCompareBy<num>((x) => x.attr.size ?? 0)
+              .compare,
+        );
         break;
     }
     return files;
