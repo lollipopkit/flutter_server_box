@@ -106,7 +106,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     _terminalTheme = _isDark ? TerminalThemes.dark : TerminalThemes.light;
 
     // Because the virtual keyboard only displayed on mobile devices
-    if (isMobile) {
+    if (isMobile || isDebuggingMobileLayoutOnDesktop) {
       _virtKeyWidth = _media.size.width / 7;
       _virtKeysHeight = _media.size.height * 0.043 * _virtKeysList.length;
     }
@@ -118,7 +118,9 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     Widget child = Scaffold(
       backgroundColor: _terminalTheme.background,
       body: _buildBody(),
-      bottomNavigationBar: isDesktop ? null : _buildBottom(),
+      bottomNavigationBar: isDesktop && !isDebuggingMobileLayoutOnDesktop
+          ? null
+          : _buildBottom(),
     );
     if (isIOS) {
       child = AnnotatedRegion(
@@ -232,10 +234,12 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
 
   void _doVirtualKey(VirtKey item) {
     if (item.func != null) {
+      HapticFeedback.mediumImpact();
       _doVirtualKeyFunc(item.func!);
       return;
     }
     if (item.key != null) {
+      HapticFeedback.mediumImpact();
       _doVirtualKeyInput(item.key!);
     }
   }
