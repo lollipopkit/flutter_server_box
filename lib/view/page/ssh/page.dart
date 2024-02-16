@@ -33,11 +33,14 @@ class SSHPage extends StatefulWidget {
   final ServerPrivateInfo spi;
   final String? initCmd;
   final bool pop;
+  final Function()? onSessionEnd;
+
   const SSHPage({
     super.key,
     required this.spi,
     this.initCmd,
     this.pop = true,
+    this.onSessionEnd,
   });
 
   @override
@@ -381,6 +384,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     if (mounted && widget.pop) {
       context.pop();
     }
+    widget.onSessionEnd?.call();
   }
 
   void _listen(Stream<Uint8List>? stream) {

@@ -206,7 +206,7 @@ class _ServerPageState extends State<ServerPage>
         late final List<Widget> children;
         if (srv.state == ServerState.finished) {
           if (cardStatus.value.flip) {
-            children = [title, ..._buildFlipedCard(srv)];
+            children = [title, ..._buildFlippedCard(srv)];
           } else {
             children = [title, ..._buildNormalCard(srv.status, srv.spi)];
           }
@@ -228,7 +228,7 @@ class _ServerPageState extends State<ServerPage>
     );
   }
 
-  List<Widget> _buildFlipedCard(Server srv) {
+  List<Widget> _buildFlippedCard(Server srv) {
     return [
       UIs.height13,
       Row(
