@@ -197,6 +197,9 @@ class SettingStore extends PersistentStore {
   /// Open SFTP with last viewed path
   late final sftpOpenLastPath = property('sftpOpenLastPath', true);
 
+  /// Show folders first in SFTP file browser
+  late final sftpShowFoldersFirst = property('sftpShowFoldersFirst', true);
+
   /// Show tip of suspend
   late final showSuspendTip = property('showSuspendTip', true);
 

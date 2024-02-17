@@ -652,6 +652,9 @@ class SZh extends S {
   String get sftpRmrDirSummary => '在 SFTP 中使用 `rm -r` 来删除文件夹';
 
   @override
+  String get sftpShowFoldersFirst => '排序时文件夹显示在前';
+
+  @override
   String get sftpSSHConnected => 'SFTP 已连接...';
 
   @override
@@ -1501,6 +1504,9 @@ class SZhTw extends SZh {
 
   @override
   String get sftpRmrDirSummary => '在 SFTP 中使用 `rm -r` 來刪除文件夾';
+
+  @override
+  String get sftpShowFoldersFirst => '排序時文件夾顯示在前';
 
   @override
   String get sftpSSHConnected => 'SFTP 已連接...';

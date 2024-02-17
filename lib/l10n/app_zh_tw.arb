@@ -207,6 +207,7 @@
   "setting": "設置",
   "sftpDlPrepare": "準備連接至服務器...",
   "sftpRmrDirSummary": "在 SFTP 中使用 `rm -r` 來刪除文件夾",
+  "sftpShowFoldersFirst": "排序時文件夾顯示在前", 
   "sftpSSHConnected": "SFTP 已連接...",
   "showDistLogo": "顯示發行版 Logo",
   "shutdown": "关机",

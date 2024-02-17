@@ -207,6 +207,7 @@
   "setting": "Einstellungen",
   "sftpDlPrepare": "Verbindung vorbereiten...",
   "sftpRmrDirSummary": "Verwenden Sie \"rm -r\", um das Verzeichnis in SFTP zu löschen.",
+  "sftpShowFoldersFirst": "Ordner zuerst anzeigen",
   "sftpSSHConnected": "SFTP Verbunden",
   "showDistLogo": "Distributionslogo anzeigen",
   "shutdown": "Abschaltung",

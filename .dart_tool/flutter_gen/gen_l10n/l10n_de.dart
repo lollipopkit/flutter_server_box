@@ -652,6 +652,9 @@ class SDe extends S {
   String get sftpRmrDirSummary => 'Verwenden Sie \"rm -r\", um das Verzeichnis in SFTP zu löschen.';
 
   @override
+  String get sftpShowFoldersFirst => 'Ordner zuerst anzeigen';
+
+  @override
   String get sftpSSHConnected => 'SFTP Verbunden';
 
   @override

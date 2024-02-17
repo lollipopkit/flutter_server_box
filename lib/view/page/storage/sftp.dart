@@ -15,6 +15,7 @@ import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
+import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/view/widget/omit_start_text.dart';
 import 'package:toolbox/view/widget/cardx.dart';
 
@@ -820,11 +821,14 @@ enum _SortType {
   ;
 
   List<SftpName> sort(List<SftpName> files, {bool reversed = false}) {
+    var comparator = ChainComparator<SftpName>.create();
+    if (Stores.setting.sftpShowFoldersFirst.fetch()) {
+      comparator = comparator.thenTrueFirst((x) => x.attr.isDirectory);
+    }
     switch (this) {
       case _SortType.name:
         files.sort(
-          ChainComparator<SftpName>.create()
-              .thenTrueFirst((x) => x.attr.isDirectory)
+          comparator
               .thenWithComparator(
                 (a, b) => Comparators.compareStringCaseInsensitive()(
                     a.filename, b.filename),
@@ -835,8 +839,7 @@ enum _SortType {
         break;
       case _SortType.time:
         files.sort(
-          ChainComparator<SftpName>.create()
-              .thenTrueFirst((x) => x.attr.isDirectory)
+          comparator
               .thenCompareBy<num>(
                 (x) => x.attr.modifyTime ?? 0,
                 reversed: reversed,
@@ -846,8 +849,7 @@ enum _SortType {
         break;
       case _SortType.size:
         files.sort(
-          ChainComparator<SftpName>.create()
-              .thenTrueFirst((x) => x.attr.isDirectory)
+          comparator
               .thenCompareBy<num>(
                 (x) => x.attr.size ?? 0,
                 reversed: reversed,

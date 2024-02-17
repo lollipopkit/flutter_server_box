@@ -207,6 +207,7 @@
   "setting": "Pengaturan",
   "sftpDlPrepare": "Bersiap untuk terhubung ...",
   "sftpRmrDirSummary": "Gunakan `rm -r` untuk menghapus dir di SFTP",
+  "sftpShowFoldersFirst": "Folder ditampilkan lebih dulu", 
   "sftpSSHConnected": "Sftp terhubung",
   "showDistLogo": "Tampilkan logo distribusi",
   "shutdown": "Matikan",
