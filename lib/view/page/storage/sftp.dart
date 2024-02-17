@@ -10,6 +10,7 @@ import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/sftpfile.dart';
 import 'package:toolbox/core/utils/comparator.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
+import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/provider.dart';
@@ -51,7 +52,8 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   final _status = SftpBrowserStatus();
   late final _client = widget.spi.server?.client;
 
-  final _sortType = ValueNotifier(_SortType.name);
+  final _sortOption =
+      ValueNotifier(_SortOption(sortBy: _SortType.name, reversed: false));
 
   @override
   Widget build(BuildContext context) {
@@ -70,29 +72,47 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
             icon: const Icon(Icons.downloading),
             onPressed: () => AppRoute.sftpMission().go(context),
           ),
-          ValueListenableBuilder<_SortType>(
-            valueListenable: _sortType,
+          ValueListenableBuilder(
+            valueListenable: _sortOption,
             builder: (context, value, child) {
               return PopupMenuButton<_SortType>(
                 icon: const Icon(Icons.sort),
                 itemBuilder: (context) {
-                  return [
-                    PopupMenuItem(
-                      value: _SortType.name,
-                      child: Text(l10n.name),
-                    ),
-                    PopupMenuItem(
-                      value: _SortType.size,
-                      child: Text(l10n.size),
-                    ),
-                    PopupMenuItem(
-                      value: _SortType.time,
-                      child: Text(l10n.time),
-                    ),
+                  final currentSelectedOption = _sortOption.value;
+                  final options = [
+                    (_SortType.name, l10n.name),
+                    (_SortType.size, l10n.size),
+                    (_SortType.time, l10n.time),
                   ];
+                  return options.map((r) {
+                    final (type, name) = r;
+                    return PopupMenuItem(
+                      value: type,
+                      child: Text(
+                        type == currentSelectedOption.sortBy
+                            ? "$name (${currentSelectedOption.reversed ? '-' : '+'})"
+                            : name,
+                        style: TextStyle(
+                          color: type == currentSelectedOption.sortBy
+                              ? primaryColor
+                              : null,
+                          fontWeight: type == currentSelectedOption.sortBy
+                              ? FontWeight.bold
+                              : null,
+                        ),
+                      ),
+                    );
+                  }).toList();
                 },
-                onSelected: (value) {
-                  _sortType.value = value;
+                onSelected: (sortBy) {
+                  final oldValue = _sortOption.value;
+                  if (oldValue.sortBy == sortBy) {
+                    _sortOption.value = _SortOption(
+                        sortBy: sortBy, reversed: !oldValue.reversed);
+                  } else {
+                    _sortOption.value =
+                        _SortOption(sortBy: sortBy, reversed: false);
+                  }
                 },
               );
             },
@@ -275,9 +295,10 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       child: FadeIn(
         key: Key(widget.spi.name + _status.path!.path),
         child: ValueListenableBuilder(
-          valueListenable: _sortType,
-          builder: (_, sortType, __) {
-            final files = sortType.sort(_status.files!);
+          valueListenable: _sortOption,
+          builder: (_, sortOption, __) {
+            final files = sortOption.sortBy
+                .sort(_status.files!, reversed: sortOption.reversed);
             return ListView.builder(
               itemCount: files.length,
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
@@ -798,15 +819,17 @@ enum _SortType {
   size,
   ;
 
-  List<SftpName> sort(List<SftpName> files) {
+  List<SftpName> sort(List<SftpName> files, {bool reversed = false}) {
     switch (this) {
       case _SortType.name:
         files.sort(
           ChainComparator<SftpName>.create()
               .thenTrueFirst((x) => x.attr.isDirectory)
-              .thenWithComparator((a, b) =>
-                  Comparators.compareStringCaseInsensitive()(
-                      a.filename, b.filename))
+              .thenWithComparator(
+                (a, b) => Comparators.compareStringCaseInsensitive()(
+                    a.filename, b.filename),
+                reversed: reversed,
+              )
               .compare,
         );
         break;
@@ -814,7 +837,10 @@ enum _SortType {
         files.sort(
           ChainComparator<SftpName>.create()
               .thenTrueFirst((x) => x.attr.isDirectory)
-              .thenCompareBy<num>((x) => x.attr.modifyTime ?? 0)
+              .thenCompareBy<num>(
+                (x) => x.attr.modifyTime ?? 0,
+                reversed: reversed,
+              )
               .compare,
         );
         break;
@@ -822,11 +848,21 @@ enum _SortType {
         files.sort(
           ChainComparator<SftpName>.create()
               .thenTrueFirst((x) => x.attr.isDirectory)
-              .thenCompareBy<num>((x) => x.attr.size ?? 0)
+              .thenCompareBy<num>(
+                (x) => x.attr.size ?? 0,
+                reversed: reversed,
+              )
               .compare,
         );
         break;
     }
     return files;
   }
+}
+
+class _SortOption {
+  final _SortType sortBy;
+  final bool reversed;
+
+  _SortOption({required this.sortBy, required this.reversed});
 }
