@@ -272,7 +272,7 @@ class ServerProvider extends ChangeNotifier {
 
     ensure(await client.run(ShellFunc.installerMkdirs).string);
 
-    ensure(await client.runWithSessionAction(ShellFunc.installerShellWriter,
+    ensure(await client.runForOutput(ShellFunc.installerShellWriter,
             action: (session) async {
               session.stdin.add(utf8.encode(ShellFunc.allScript));
             })

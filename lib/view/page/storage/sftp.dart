@@ -15,7 +15,6 @@ import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/view/widget/omit_start_text.dart';
 import 'package:toolbox/view/widget/cardx.dart';
 
