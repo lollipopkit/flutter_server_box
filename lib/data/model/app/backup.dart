@@ -74,7 +74,7 @@ class Backup {
         spis = Stores.server.fetch(),
         snippets = Stores.snippet.fetch(),
         keys = Stores.key.fetch(),
-        container = Stores.docker.box.toJson(),
+        container = Stores.container.box.toJson(),
         settings = Stores.setting.box.toJson(),
         lastModTime = Stores.lastModTime,
         history = Stores.history.box.toJson();
@@ -176,19 +176,19 @@ class Backup {
     }
 
     // Container
-    final nowContainer = Stores.docker.box.keys.toSet();
+    final nowContainer = Stores.container.box.keys.toSet();
     final bakContainer = container.keys.toSet();
     final newContainer = bakContainer.difference(nowContainer);
     final delContainer = nowContainer.difference(bakContainer);
     final updateContainer = nowContainer.intersection(bakContainer);
     for (final s in newContainer) {
-      Stores.docker.box.put(s, container[s]);
+      Stores.container.box.put(s, container[s]);
     }
     for (final s in delContainer) {
-      Stores.docker.box.delete(s);
+      Stores.container.box.delete(s);
     }
     for (final s in updateContainer) {
-      Stores.docker.box.put(s, container[s]);
+      Stores.container.box.put(s, container[s]);
     }
 
     Pros.reload();

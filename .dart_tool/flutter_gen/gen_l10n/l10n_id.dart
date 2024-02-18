@@ -133,6 +133,9 @@ class SId extends S {
   String get containerStatus => 'Status wadah';
 
   @override
+  String get containerTrySudoTip => 'Contohnya: Di dalam aplikasi, pengguna diatur sebagai aaa, tetapi Docker diinstal di bawah pengguna root. Dalam kasus ini, Anda perlu mengaktifkan opsi ini.';
+
+  @override
   String get convert => 'Mengubah';
 
   @override
@@ -760,6 +763,9 @@ class SId extends S {
   String get traffic => 'Lalu lintas';
 
   @override
+  String get trySudo => 'Cobalah menggunakan sudo';
+
+  @override
   String get ttl => 'ttl';
 
   @override
@@ -807,6 +813,9 @@ class SId extends S {
 
   @override
   String get useNoPwd => 'Tidak ada kata sandi yang akan digunakan';
+
+  @override
+  String get usePodmanByDefault => 'Menggunakan Podman sebagai bawaan';
 
   @override
   String get used => 'Digunakan';

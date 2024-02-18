@@ -133,6 +133,9 @@ class SFr extends S {
   String get containerStatus => 'Statut du conteneur';
 
   @override
+  String get containerTrySudoTip => 'Par exemple : dans l\'application, l\'utilisateur est défini comme aaa, mais Docker est installé en tant qu\'utilisateur root. Dans ce cas, vous devez activer cette option.';
+
+  @override
   String get convert => 'Convertir';
 
   @override
@@ -760,6 +763,9 @@ class SFr extends S {
   String get traffic => 'Trafic';
 
   @override
+  String get trySudo => 'Essayez d\'utiliser sudo';
+
+  @override
   String get ttl => 'ttl';
 
   @override
@@ -807,6 +813,9 @@ class SFr extends S {
 
   @override
   String get useNoPwd => 'Aucun mot de passe ne sera utilisé';
+
+  @override
+  String get usePodmanByDefault => 'Utiliser Podman par défaut';
 
   @override
   String get used => 'Utilisé';

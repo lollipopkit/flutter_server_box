@@ -133,6 +133,9 @@ class SDe extends S {
   String get containerStatus => 'Container Status';
 
   @override
+  String get containerTrySudoTip => 'Zum Beispiel: In der App ist der Benutzer auf aaa eingestellt, aber Docker ist unter dem Root-Benutzer installiert. In diesem Fall müssen Sie diese Option aktivieren';
+
+  @override
   String get convert => 'Konvertieren';
 
   @override
@@ -760,6 +763,9 @@ class SDe extends S {
   String get traffic => 'Durchflussmenge';
 
   @override
+  String get trySudo => 'Versuche es mit sudo';
+
+  @override
   String get ttl => 'ttl';
 
   @override
@@ -807,6 +813,9 @@ class SDe extends S {
 
   @override
   String get useNoPwd => 'Es wird kein Passwort verwendet';
+
+  @override
+  String get usePodmanByDefault => 'Standardmäßige Verwendung von Podman';
 
   @override
   String get used => 'Gebraucht';

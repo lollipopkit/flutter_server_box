@@ -48,7 +48,7 @@ Future<void> _setupLocatorForStores() async {
   await snippet.init();
   locator.registerSingleton(snippet);
 
-  final docker = DockerStore();
+  final docker = ContainerStore();
   await docker.init();
   locator.registerSingleton(docker);
 

@@ -59,7 +59,7 @@ class _ContainerPageState extends State<ContainerPage> {
           return Scaffold(
             appBar: CustomAppBar(
               centerTitle: true,
-              title: TwoLineText(up: 'Container', down: widget.spi.name),
+              title: TwoLineText(up: l10n.container, down: widget.spi.name),
               actions: [
                 IconButton(
                   onPressed: () async {
@@ -358,7 +358,7 @@ class _ContainerPageState extends State<ContainerPage> {
 
   Future<void> _showEditHostDialog() async {
     final id = widget.spi.id;
-    final host = Stores.docker.fetch(id);
+    final host = Stores.container.fetch(id);
     final ctrl = TextEditingController(text: host);
     await context.showRoundDialog(
       title: Text(l10n.dockerEditHost),
@@ -379,7 +379,7 @@ class _ContainerPageState extends State<ContainerPage> {
 
   void _onSaveDockerHost(String val) {
     context.pop();
-    Stores.docker.put(widget.spi.id, val.trim());
+    Stores.container.put(widget.spi.id, val.trim());
     _container.refresh();
   }
 

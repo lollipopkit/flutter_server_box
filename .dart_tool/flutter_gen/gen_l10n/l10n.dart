@@ -352,6 +352,12 @@ abstract class S {
   /// **'Container status'**
   String get containerStatus;
 
+  /// No description provided for @containerTrySudoTip.
+  ///
+  /// In en, this message translates to:
+  /// **'For example: In the app, the user is set to aaa, but Docker is installed under the root user. In this case, you need to enable this option.'**
+  String get containerTrySudoTip;
+
   /// No description provided for @convert.
   ///
   /// In en, this message translates to:
@@ -1357,7 +1363,7 @@ abstract class S {
   /// No description provided for @sftpShowFoldersFirst.
   ///
   /// In en, this message translates to:
-  /// **'Disply folders first'**
+  /// **'Display folders first'**
   String get sftpShowFoldersFirst;
 
   /// No description provided for @showDistLogo.
@@ -1546,6 +1552,12 @@ abstract class S {
   /// **'Traffic'**
   String get traffic;
 
+  /// No description provided for @trySudo.
+  ///
+  /// In en, this message translates to:
+  /// **'Try using sudo'**
+  String get trySudo;
+
   /// No description provided for @ttl.
   ///
   /// In en, this message translates to:
@@ -1635,6 +1647,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'No password will be used'**
   String get useNoPwd;
+
+  /// No description provided for @usePodmanByDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Defaulting to Podman'**
+  String get usePodmanByDefault;
 
   /// No description provided for @used.
   ///

@@ -17,48 +17,48 @@ final _dockerNotFound =
     RegExp(r"command not found|Unknown command|Command '\w+' not found");
 
 class ContainerProvider extends ChangeNotifier {
-  SSHClient? client;
-  String? userName;
+  final SSHClient? client;
+  final String userName;
+  final String hostId;
+  final BuildContext context;
   List<ContainerPs>? items;
   List<ContainerImg>? images;
   String? version;
   ContainerErr? error;
-  String? hostId;
   String? runLog;
-  BuildContext? context;
   ContainerType type;
 
   ContainerProvider({
-    this.client,
-    this.userName,
-    this.hostId,
-    this.context,
-  }) : type = Stores.docker.getType(hostId) {
+    required this.client,
+    required this.userName,
+    required this.hostId,
+    required this.context,
+  }) : type = Stores.container.getType(hostId) {
     refresh();
   }
 
   Future<void> setType(ContainerType type) async {
     this.type = type;
-    Stores.docker.setType(hostId, type);
+    Stores.container.setType(type, hostId);
     error = runLog = items = images = version = null;
     notifyListeners();
     await refresh();
   }
 
-  Future<bool> _checkDockerInstalled(SSHClient client) async {
-    final session = await client.execute("docker");
-    await session.done;
-    // debugPrint('docker code: ${session.exitCode}');
-    return session.exitCode == 0;
-  }
+  // Future<bool> _checkDockerInstalled(SSHClient client) async {
+  //   final session = await client.execute("docker");
+  //   await session.done;
+  //   // debugPrint('docker code: ${session.exitCode}');
+  //   return session.exitCode == 0;
+  // }
 
-  String _removeSudoPrompts(String value) {
-    final regex = RegExp(r"\[sudo\] password for \w+:");
-    if (value.startsWith(regex)) {
-      return value.replaceFirstMapped(regex, (match) => "");
-    }
-    return value;
-  }
+  // String _removeSudoPrompts(String value) {
+  //   final regex = RegExp(r"\[sudo\] password for \w+:");
+  //   if (value.startsWith(regex)) {
+  //     return value.replaceFirstMapped(regex, (match) => "");
+  //   }
+  //   return value;
+  // }
 
   Future<bool> _requiresSudo() async {
     final psResult = await client?.run(_wrap(ContainerCmdType.ps.exec(type)));
@@ -69,31 +69,22 @@ class ContainerProvider extends ChangeNotifier {
     return false;
   }
 
+  /// Docker Logic:
+  /// - Check if docker is installed, if not, return error, if yes, continue
+  /// - Check permission, if permission denied and no DOCKER_HOST, return error
   Future<void> refresh() async {
     var raw = '';
-    var rawErr = '';
-    debugPrint('exec: ${_wrap(ContainerCmdType.execAll(type))}');
 
-    final sudo = await _requiresSudo();
+    final sudo =
+        await _requiresSudo() && Stores.setting.containerTrySudo.fetch();
 
     await client?.execWithPwd(
       _wrap(ContainerCmdType.execAll(type, sudo: sudo)),
       context: context,
       onStdout: (data, _) => raw = '$raw$data',
-      onStderr: (data, _) => raw = '$rawErr$data',
     );
 
-    raw = _removeSudoPrompts(raw);
-    rawErr = _removeSudoPrompts(rawErr);
-
-    debugPrint('result raw [$raw, $rawErr]');
-
-    final dockerInstalled = await _checkDockerInstalled(client!);
-    // debugPrint("docker installed = $dockerInstalled");
-
-    if (!dockerInstalled ||
-        raw.contains(_dockerNotFound) ||
-        rawErr.contains(_dockerNotFound)) {
+    if (raw.contains(_dockerNotFound)) {
       error = ContainerErr(type: ContainerErrType.notInstalled);
       notifyListeners();
       return;
@@ -188,7 +179,7 @@ class ContainerProvider extends ChangeNotifier {
 
   Future<ContainerErr?> restart(String id) async => await run('restart $id');
 
-  Future<ContainerErr?> run(String cmd) async {
+  Future<ContainerErr?> run(String cmd, {bool autoRefresh = true}) async {
     cmd = switch (type) {
       ContainerType.docker => 'docker $cmd',
       ContainerType.podman => 'podman $cmd',
@@ -214,13 +205,13 @@ class ContainerProvider extends ChangeNotifier {
         message: errs.join('\n').trim(),
       );
     }
-    await refresh();
+    if (autoRefresh) await refresh();
     return null;
   }
 
   /// wrap cmd with `docker host`
   String _wrap(String cmd) {
-    final dockerHost = Stores.docker.fetch(hostId);
+    final dockerHost = Stores.container.fetch(hostId);
     cmd = 'export LANG=en_US.UTF-8 && $cmd';
     final noDockerHost = dockerHost?.isEmpty ?? true;
     if (!noDockerHost) {

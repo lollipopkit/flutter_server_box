@@ -224,6 +224,12 @@ class SettingStore extends PersistentStore {
     ].map((e) => e.index).toList(),
   );
 
+  /// Docker is more popular than podman, set to `false` to use docker
+  late final usePodman = property('usePodman', false);
+
+  /// Try to use `sudo` to run docker command
+  late final containerTrySudo = property('containerTrySudo', true);
+
   // Never show these settings for users
   //
   // ------BEGIN------

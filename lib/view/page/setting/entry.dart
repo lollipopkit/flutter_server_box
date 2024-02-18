@@ -120,12 +120,7 @@ class _SettingPageState extends State<SettingPage> {
                     TextButton(
                       onPressed: () {
                         if (!BuildMode.isDebug) return;
-                        Stores.docker.box.deleteFromDisk();
-                        Stores.server.box.deleteFromDisk();
-                        Stores.setting.box.deleteFromDisk();
-                        Stores.history.box.deleteFromDisk();
-                        Stores.snippet.box.deleteFromDisk();
-                        Stores.key.box.deleteFromDisk();
+                        Stores.all.map((e) => e.box.deleteFromDisk());
                         exit(0);
                       },
                       child: Text(l10n.ok,
@@ -144,6 +139,8 @@ class _SettingPageState extends State<SettingPage> {
           _buildApp(),
           _buildTitle(l10n.server),
           _buildServer(),
+          _buildTitle(l10n.container),
+          _buildContainer(),
           _buildTitle('SSH'),
           _buildSSH(),
           _buildTitle('SFTP'),
@@ -180,6 +177,7 @@ class _SettingPageState extends State<SettingPage> {
       _buildAppColor(),
       //_buildLaunchPage(),
       _buildCheckUpdate(),
+      _buildCollapseUI(),
     ];
 
     /// Platform specific settings
@@ -204,7 +202,6 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildServer() {
     return Column(
       children: [
-        _buildCollapseUI(),
         _buildServerFuncBtns(),
         _buildServerSeq(),
         _buildServerDetailCardSeq(),
@@ -215,6 +212,15 @@ class _SettingPageState extends State<SettingPage> {
         _buildDeleteServers(),
         _buildTextScaler(),
         //if (isDesktop) _buildDoubleColumnServersPage(),
+      ].map((e) => CardX(child: e)).toList(),
+    );
+  }
+
+  Widget _buildContainer() {
+    return Column(
+      children: [
+        _buildUsePodman(),
+        _buildContainerTrySudo(),
       ].map((e) => CardX(child: e)).toList(),
     );
   }
@@ -1134,6 +1140,21 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(l10n.collapseUI),
       subtitle: Text(l10n.collapseUITip, style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.collapseUIDefault),
+    );
+  }
+
+  Widget _buildUsePodman() {
+    return ListTile(
+      title: Text(l10n.usePodmanByDefault),
+      trailing: StoreSwitch(prop: _setting.usePodman),
+    );
+  }
+
+  Widget _buildContainerTrySudo() {
+    return ListTile(
+      title: Text(l10n.trySudo),
+      subtitle: Text(l10n.containerTrySudoTip, style: UIs.textGrey),
+      trailing: StoreSwitch(prop: _setting.containerTrySudo),
     );
   }
 }

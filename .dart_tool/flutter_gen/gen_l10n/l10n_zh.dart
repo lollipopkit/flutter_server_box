@@ -133,6 +133,9 @@ class SZh extends S {
   String get containerStatus => '容器状态';
 
   @override
+  String get containerTrySudoTip => '例如：在应用内将用户设置为aaa，但是Docker安装在root用户下，这时就需要启用此选项';
+
+  @override
   String get convert => '转换';
 
   @override
@@ -658,7 +661,7 @@ class SZh extends S {
   String get sftpSSHConnected => 'SFTP 已连接...';
 
   @override
-  String get sftpShowFoldersFirst => '排序时文件夹显示在前';
+  String get sftpShowFoldersFirst => '文件夹显示在前';
 
   @override
   String get showDistLogo => '显示发行版 Logo';
@@ -760,6 +763,9 @@ class SZh extends S {
   String get traffic => '流量';
 
   @override
+  String get trySudo => '尝试使用sudo';
+
+  @override
   String get ttl => '缓存时间';
 
   @override
@@ -807,6 +813,9 @@ class SZh extends S {
 
   @override
   String get useNoPwd => '将会使用无密码';
+
+  @override
+  String get usePodmanByDefault => '默认使用 Podman';
 
   @override
   String get used => '已用';
@@ -988,6 +997,9 @@ class SZhTw extends SZh {
 
   @override
   String get containerStatus => '容器狀態';
+
+  @override
+  String get containerTrySudoTip => '例如：App内设置用户为aaa，但是Docker安装在root用户，这时就需要开启此选项';
 
   @override
   String get convert => '轉換';
@@ -1515,7 +1527,7 @@ class SZhTw extends SZh {
   String get sftpSSHConnected => 'SFTP 已連接...';
 
   @override
-  String get sftpShowFoldersFirst => '排序時文件夾顯示在前';
+  String get sftpShowFoldersFirst => '文件夾顯示在前';
 
   @override
   String get showDistLogo => '顯示發行版 Logo';
@@ -1617,6 +1629,9 @@ class SZhTw extends SZh {
   String get traffic => '流量';
 
   @override
+  String get trySudo => '嘗試使用sudo';
+
+  @override
   String get ttl => '緩存時間';
 
   @override
@@ -1664,6 +1679,9 @@ class SZhTw extends SZh {
 
   @override
   String get useNoPwd => '将使用無密碼';
+
+  @override
+  String get usePodmanByDefault => '默認使用 Podman';
 
   @override
   String get used => '已用';

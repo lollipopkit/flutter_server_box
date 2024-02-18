@@ -133,6 +133,9 @@ class SEn extends S {
   String get containerStatus => 'Container status';
 
   @override
+  String get containerTrySudoTip => 'For example: In the app, the user is set to aaa, but Docker is installed under the root user. In this case, you need to enable this option.';
+
+  @override
   String get convert => 'Convert';
 
   @override
@@ -658,7 +661,7 @@ class SEn extends S {
   String get sftpSSHConnected => 'SFTP Connected';
 
   @override
-  String get sftpShowFoldersFirst => 'Disply folders first';
+  String get sftpShowFoldersFirst => 'Display folders first';
 
   @override
   String get showDistLogo => 'Show distribution logo';
@@ -760,6 +763,9 @@ class SEn extends S {
   String get traffic => 'Traffic';
 
   @override
+  String get trySudo => 'Try using sudo';
+
+  @override
   String get ttl => 'ttl';
 
   @override
@@ -807,6 +813,9 @@ class SEn extends S {
 
   @override
   String get useNoPwd => 'No password will be used';
+
+  @override
+  String get usePodmanByDefault => 'Defaulting to Podman';
 
   @override
   String get used => 'Used';
