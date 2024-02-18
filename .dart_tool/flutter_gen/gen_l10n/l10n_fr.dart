@@ -58,6 +58,9 @@ class SFr extends S {
   String get autoConnect => 'Connexion automatique';
 
   @override
+  String get autoRun => 'Exécution automatique';
+
+  @override
   String get autoUpdateHomeWidget => 'Mise à jour automatique du widget d\'accueil';
 
   @override
@@ -652,10 +655,10 @@ class SFr extends S {
   String get sftpRmrDirSummary => 'Utilisez `rm -r` pour supprimer un dossier dans SFTP.';
 
   @override
-  String get sftpShowFoldersFirst => 'Dossiers d\'abord lors du tri';
+  String get sftpSSHConnected => 'SFTP connecté';
 
   @override
-  String get sftpSSHConnected => 'SFTP connecté';
+  String get sftpShowFoldersFirst => 'Dossiers d\'abord lors du tri';
 
   @override
   String get showDistLogo => 'Afficher le logo de la distribution';

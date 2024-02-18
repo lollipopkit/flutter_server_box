@@ -107,7 +107,7 @@ extension SSHClientX on SSHClient {
     bool stdout = true,
     bool stderr = true,
     Map<String, String>? environment,
-    Future<void> Function(SSHSession)? action, 
+    Future<void> Function(SSHSession)? action,
   }) async {
     final session = await execute(
       command,

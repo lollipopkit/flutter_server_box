@@ -58,6 +58,9 @@ class SDe extends S {
   String get autoConnect => 'Automatisch verbinden';
 
   @override
+  String get autoRun => 'Automatischer Start';
+
+  @override
   String get autoUpdateHomeWidget => 'Home-Widget automatisch aktualisieren';
 
   @override
@@ -652,10 +655,10 @@ class SDe extends S {
   String get sftpRmrDirSummary => 'Verwenden Sie \"rm -r\", um das Verzeichnis in SFTP zu löschen.';
 
   @override
-  String get sftpShowFoldersFirst => 'Ordner zuerst anzeigen';
+  String get sftpSSHConnected => 'SFTP Verbunden';
 
   @override
-  String get sftpSSHConnected => 'SFTP Verbunden';
+  String get sftpShowFoldersFirst => 'Ordner zuerst anzeigen';
 
   @override
   String get showDistLogo => 'Distributionslogo anzeigen';

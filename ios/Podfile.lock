@@ -1,5 +1,5 @@
 PODS:
-  - countly_flutter (23.8.4):
+  - countly_flutter (23.12.1):
     - Flutter
   - file_picker (0.0.1):
     - Flutter
@@ -76,19 +76,19 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/watch_connectivity/ios"
 
 SPEC CHECKSUMS:
-  countly_flutter: d880b352f212d4f6453a87c85f0455f3b4b9c611
+  countly_flutter: 0b87be283b3ecef341b5f8d45ff97dd33ee966b9
   file_picker: 880e54928ebe4aa405aaf4577f29a76a078341c6
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   flutter_background_service_ios: e30e0d3ee69e4cee66272d0c78eacd48c2e94aac
   flutter_native_splash: 52501b97d1c0a5f898d687f1646226c1f93c56ef
   icloud_storage: d9ac7a33ced81df08ba7ea1bf3099cc0ee58f60a
-  local_auth_ios: c6cf091ded637a88f24f86a8875d8b0f526e2605
-  path_provider_foundation: 29f094ae23ebbca9d3d0cec13889cd9060c0e943
+  local_auth_ios: 5046a18c018dd973247a0564496c8898dbb5adf9
+  path_provider_foundation: 3784922295ac71e43754bd15e0653ccfd36a147c
   plain_notification_token: b36467dc91939a7b6754267c701bbaca14996ee1
   r_upgrade: 44d715c61914cce3d01ea225abffe894fd51c114
   share_plus: c3fef564749587fc939ef86ffb283ceac0baf9f5
-  shared_preferences_foundation: 5b919d13b803cadd15ed2dc053125c68730e5126
-  url_launcher_ios: bf5ce03e0e2088bad9cc378ea97fa0ed5b49673b
+  shared_preferences_foundation: b4c3b4cddf1c21f02770737f147a3f5da9d39695
+  url_launcher_ios: bbd758c6e7f9fd7b5b1d4cde34d2b95fcce5e812
   watch_connectivity: 715eb484685e05846eab74795348a44bb2809b82
 
 PODFILE CHECKSUM: ec6ef69056f066e8b21a3391082f23b5ad2d37f8

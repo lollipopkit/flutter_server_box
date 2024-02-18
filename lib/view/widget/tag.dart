@@ -59,7 +59,8 @@ class _TagEditorState extends State<TagEditor> {
   Widget build(BuildContext context) {
     return CardX(
       child: ListTile(
-        leading: const Icon(Icons.tag),
+        // Align the place of TextField.prefixIcon
+        leading: const Icon(Icons.tag).padding(const EdgeInsets.only(left: 6)),
         title: _buildTags(widget.tags),
         trailing: const Icon(Icons.add).tap(
           onTap: () {

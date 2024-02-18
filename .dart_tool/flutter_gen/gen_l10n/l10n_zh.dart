@@ -58,6 +58,9 @@ class SZh extends S {
   String get autoConnect => '自动连接';
 
   @override
+  String get autoRun => '自动运行';
+
+  @override
   String get autoUpdateHomeWidget => '自动更新桌面小部件';
 
   @override
@@ -652,10 +655,10 @@ class SZh extends S {
   String get sftpRmrDirSummary => '在 SFTP 中使用 `rm -r` 来删除文件夹';
 
   @override
-  String get sftpShowFoldersFirst => '排序时文件夹显示在前';
+  String get sftpSSHConnected => 'SFTP 已连接...';
 
   @override
-  String get sftpSSHConnected => 'SFTP 已连接...';
+  String get sftpShowFoldersFirst => '排序时文件夹显示在前';
 
   @override
   String get showDistLogo => '显示发行版 Logo';
@@ -910,6 +913,9 @@ class SZhTw extends SZh {
 
   @override
   String get autoConnect => '自動連接';
+
+  @override
+  String get autoRun => '自動運行';
 
   @override
   String get autoUpdateHomeWidget => '自動更新桌面小部件';
@@ -1506,10 +1512,10 @@ class SZhTw extends SZh {
   String get sftpRmrDirSummary => '在 SFTP 中使用 `rm -r` 來刪除文件夾';
 
   @override
-  String get sftpShowFoldersFirst => '排序時文件夾顯示在前';
+  String get sftpSSHConnected => 'SFTP 已連接...';
 
   @override
-  String get sftpSSHConnected => 'SFTP 已連接...';
+  String get sftpShowFoldersFirst => '排序時文件夾顯示在前';
 
   @override
   String get showDistLogo => '顯示發行版 Logo';

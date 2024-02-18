@@ -202,6 +202,12 @@ abstract class S {
   /// **'Auto connect'**
   String get autoConnect;
 
+  /// No description provided for @autoRun.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic Run'**
+  String get autoRun;
+
   /// No description provided for @autoUpdateHomeWidget.
   ///
   /// In en, this message translates to:
@@ -1342,17 +1348,17 @@ abstract class S {
   /// **'Use `rm -r` to delete a folder in SFTP.'**
   String get sftpRmrDirSummary;
 
-  /// No description provided for @sftpShowFoldersFirst.
-  ///
-  /// In en, this message translates to:
-  /// **'Disply folders first'**
-  String get sftpShowFoldersFirst;
-
   /// No description provided for @sftpSSHConnected.
   ///
   /// In en, this message translates to:
   /// **'SFTP Connected'**
   String get sftpSSHConnected;
+
+  /// No description provided for @sftpShowFoldersFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Disply folders first'**
+  String get sftpShowFoldersFirst;
 
   /// No description provided for @showDistLogo.
   ///

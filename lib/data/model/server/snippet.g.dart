@@ -21,13 +21,14 @@ class SnippetAdapter extends TypeAdapter<Snippet> {
       script: fields[1] as String,
       tags: (fields[2] as List?)?.cast<String>(),
       note: fields[3] as String?,
+      autoRunOn: (fields[4] as List?)?.cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, Snippet obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -35,7 +36,9 @@ class SnippetAdapter extends TypeAdapter<Snippet> {
       ..writeByte(2)
       ..write(obj.tags)
       ..writeByte(3)
-      ..write(obj.note);
+      ..write(obj.note)
+      ..writeByte(4)
+      ..write(obj.autoRunOn);
   }
 
   @override

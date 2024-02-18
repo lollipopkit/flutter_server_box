@@ -16,18 +16,24 @@ class Snippet implements TagPickable {
   @HiveField(3)
   final String? note;
 
+  /// List of server id that this snippet should be auto run on
+  @HiveField(4)
+  final List<String>? autoRunOn;
+
   const Snippet({
     required this.name,
     required this.script,
     this.tags,
     this.note,
+    this.autoRunOn,
   });
 
   Snippet.fromJson(Map<String, dynamic> json)
       : name = json['name'].toString(),
         script = json['script'].toString(),
         tags = json['tags']?.cast<String>(),
-        note = json['note']?.toString();
+        note = json['note']?.toString(),
+        autoRunOn = json['autoRunOn']?.cast<String>();
 
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
@@ -35,6 +41,7 @@ class Snippet implements TagPickable {
     data['script'] = script;
     data['tags'] = tags;
     data['note'] = note;
+    data['autoRunOn'] = autoRunOn;
     return data;
   }
 

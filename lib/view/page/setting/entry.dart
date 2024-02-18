@@ -855,7 +855,7 @@ class _SettingPageState extends State<SettingPage> {
       children: [
         _buildSftpRmrDir(),
         _buildSftpOpenLastPath(),
-        _buildSftpShowFoldersFirst(), 
+        _buildSftpShowFoldersFirst(),
       ].map((e) => CardX(child: e)).toList(),
     );
   }
@@ -870,7 +870,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildSftpShowFoldersFirst() {
     return ListTile(
-      title: Text(l10n.sftpShowFoldersFirst), 
+      title: Text(l10n.sftpShowFoldersFirst),
       trailing: StoreSwitch(prop: _setting.sftpShowFoldersFirst),
     );
   }

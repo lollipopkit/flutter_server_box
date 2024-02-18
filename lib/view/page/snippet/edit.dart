@@ -30,8 +30,8 @@ class _SnippetEditPageState extends State<SnippetEditPage>
   final _scriptController = TextEditingController();
   final _noteController = TextEditingController();
   final _scriptNode = FocusNode();
-
-  List<String> _tags = [];
+  final _autoRunOn = ValueNotifier(<String>[]);
+  final _tags = ValueNotifier(<String>[]);
 
   @override
   void dispose() {
@@ -98,8 +98,9 @@ class _SnippetEditPageState extends State<SnippetEditPage>
         final snippet = Snippet(
           name: name,
           script: script,
-          tags: _tags.isEmpty ? null : _tags,
+          tags: _tags.value.isEmpty ? null : _tags.value,
           note: note.isEmpty ? null : note,
+          autoRunOn: _autoRunOn.value.isEmpty ? null : _autoRunOn.value,
         );
         if (widget.snippet != null) {
           Pros.snippet.update(widget.snippet!, snippet);
@@ -131,15 +132,20 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           label: l10n.note,
           icon: Icons.note,
         ),
-        TagEditor(
-          tags: _tags,
-          onChanged: (p0) => setState(() {
-            _tags = p0;
-          }),
-          allTags: [...Pros.snippet.tags],
-          onRenameTag: (old, n) => setState(() {
-            Pros.snippet.renameTag(old, n);
-          }),
+        ValueListenableBuilder(
+          valueListenable: _tags,
+          builder: (_, vals, __) {
+            return TagEditor(
+              tags: _tags.value,
+              onChanged: (p0) => setState(() {
+                _tags.value = p0;
+              }),
+              allTags: [...Pros.snippet.tags],
+              onRenameTag: (old, n) => setState(() {
+                Pros.snippet.renameTag(old, n);
+              }),
+            );
+          },
         ),
         Input(
           controller: _scriptController,
@@ -150,9 +156,39 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           label: l10n.snippet,
           icon: Icons.code,
         ),
+        _buildAutoRunOn(),
         _buildTip(),
       ],
     );
+  }
+
+  Widget _buildAutoRunOn() {
+    return CardX(
+        child: ValueListenableBuilder(
+      valueListenable: _autoRunOn,
+      builder: (_, vals, __) {
+        return ListTile(
+          title: Text(l10n.autoRun),
+          trailing: const Icon(Icons.keyboard_arrow_right),
+          subtitle: vals.isEmpty
+              ? null
+              : Text(
+                  vals.join(', '),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+          onTap: () async {
+            final serverIds = await context.showPickDialog(
+              items: Pros.server.serverOrder,
+              initial: vals,
+            );
+            if (serverIds != null) {
+              _autoRunOn.value = serverIds;
+            }
+          },
+        );
+      },
+    ));
   }
 
   Widget _buildTip() {
@@ -174,16 +210,20 @@ ${Snippet.fmtArgs.keys.map((e) => '`$e`').join(', ')}
 
   @override
   void afterFirstLayout(BuildContext context) {
-    if (widget.snippet != null) {
-      _nameController.text = widget.snippet!.name;
-      _scriptController.text = widget.snippet!.script;
-      if (widget.snippet!.note != null) {
-        _noteController.text = widget.snippet!.note!;
+    final snippet = widget.snippet;
+    if (snippet != null) {
+      _nameController.text = snippet.name;
+      _scriptController.text = snippet.script;
+      if (snippet.note != null) {
+        _noteController.text = snippet.note!;
       }
 
-      if (widget.snippet!.tags != null) {
-        _tags = widget.snippet!.tags!;
-        setState(() {});
+      if (snippet.tags != null) {
+        _tags.value = snippet.tags!;
+      }
+
+      if (snippet.autoRunOn != null) {
+        _autoRunOn.value = snippet.autoRunOn!;
       }
     }
   }

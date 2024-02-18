@@ -58,6 +58,9 @@ class SId extends S {
   String get autoConnect => 'Hubungkan otomatis';
 
   @override
+  String get autoRun => 'Berjalan Otomatis';
+
+  @override
   String get autoUpdateHomeWidget => 'Widget Rumah Pembaruan Otomatis';
 
   @override
@@ -652,10 +655,10 @@ class SId extends S {
   String get sftpRmrDirSummary => 'Gunakan `rm -r` untuk menghapus dir di SFTP';
 
   @override
-  String get sftpShowFoldersFirst => 'Folder ditampilkan lebih dulu';
+  String get sftpSSHConnected => 'Sftp terhubung';
 
   @override
-  String get sftpSSHConnected => 'Sftp terhubung';
+  String get sftpShowFoldersFirst => 'Folder ditampilkan lebih dulu';
 
   @override
   String get showDistLogo => 'Tampilkan logo distribusi';

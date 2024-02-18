@@ -382,6 +382,13 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     if (widget.initCmd != null) {
       _terminal.textInput(widget.initCmd!);
       _terminal.keyInput(TerminalKey.enter);
+    } else {
+      for (final snippet in Pros.snippet.snippets) {
+        if (snippet.autoRunOn?.contains(widget.spi.id) == true) {
+          _terminal.textInput(snippet.script);
+          _terminal.keyInput(TerminalKey.enter);
+        }
+      }
     }
 
     await session.done;

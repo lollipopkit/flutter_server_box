@@ -53,34 +53,41 @@ extension DialogX on BuildContext {
 
   Future<List<T>?> showPickDialog<T>({
     required List<T?> items,
-    required String Function(T) name,
+    String Function(T)? name,
     bool multi = true,
+    List<T>? initial,
+    bool clearable = false,
+    List<Widget>? actions,
   }) async {
-    var vals = <T>[];
+    var vals = initial ?? <T>[];
     final sure = await showRoundDialog<bool>(
       title: Text(l10n.choose),
-      child: Choice<T>(
-        onChanged: (value) => vals = value,
-        multiple: multi,
-        clearable: true,
-        builder: (state, _) {
-          return Wrap(
-            children: List<Widget>.generate(
-              items.length,
-              (index) {
-                final item = items[index];
-                if (item == null) return UIs.placeholder;
-                return ChoiceChipX<T>(
-                  label: name(item),
-                  state: state,
-                  value: item,
-                );
-              },
-            ),
-          );
-        },
+      child: SingleChildScrollView(
+        child: Choice<T>(
+          onChanged: (value) => vals = value,
+          multiple: multi,
+          clearable: clearable,
+          value: vals,
+          builder: (state, _) {
+            return Wrap(
+              children: List<Widget>.generate(
+                items.length,
+                (index) {
+                  final item = items[index];
+                  if (item == null) return UIs.placeholder;
+                  return ChoiceChipX<T>(
+                    label: name?.call(item) ?? item.toString(),
+                    state: state,
+                    value: item,
+                  );
+                },
+              ),
+            );
+          },
+        ),
       ),
       actions: [
+        if (actions != null) ...actions,
         TextButton(
           onPressed: () => pop(true),
           child: Text(l10n.ok),
@@ -95,12 +102,17 @@ extension DialogX on BuildContext {
 
   Future<T?> showPickSingleDialog<T>({
     required List<T?> items,
-    required String Function(T) name,
+    String Function(T)? name,
+    T? initial,
+    bool clearable = false,
+    List<Widget>? actions,
   }) async {
     final vals = await showPickDialog<T>(
       items: items,
       name: name,
       multi: false,
+      initial: initial == null ? null : [initial],
+      actions: actions,
     );
     if (vals != null && vals.isNotEmpty) {
       return vals.first;

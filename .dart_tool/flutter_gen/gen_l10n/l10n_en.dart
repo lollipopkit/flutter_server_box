@@ -58,6 +58,9 @@ class SEn extends S {
   String get autoConnect => 'Auto connect';
 
   @override
+  String get autoRun => 'Automatic Run';
+
+  @override
   String get autoUpdateHomeWidget => 'Auto update home widget';
 
   @override
@@ -652,10 +655,10 @@ class SEn extends S {
   String get sftpRmrDirSummary => 'Use `rm -r` to delete a folder in SFTP.';
 
   @override
-  String get sftpShowFoldersFirst => 'Disply folders first';
+  String get sftpSSHConnected => 'SFTP Connected';
 
   @override
-  String get sftpSSHConnected => 'SFTP Connected';
+  String get sftpShowFoldersFirst => 'Disply folders first';
 
   @override
   String get showDistLogo => 'Show distribution logo';
