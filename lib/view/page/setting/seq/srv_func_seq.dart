@@ -3,6 +3,7 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/model/app/menu/server_func.dart';
+import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/store.dart';
 
 import '../../../../core/extension/order.dart';
@@ -33,7 +34,14 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
     return ValueListenableBuilder(
       valueListenable: prop.listenable(),
       builder: (_, vals, __) {
-        final keys = List<int>.from(vals);
+        final keys = () {
+          try {
+            return List<int>.from(vals);
+          } catch (e) {
+            Loggers.app.info('ServerFuncBtnsOrderPage: $e');
+            return ServerFuncBtn.values.map((e) => e.index).toList();
+          }
+        }();
         final disabled = ServerFuncBtn.values
             .map((e) => e.index)
             .where((e) => !keys.contains(e))

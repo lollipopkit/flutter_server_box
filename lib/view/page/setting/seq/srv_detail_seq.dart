@@ -3,6 +3,7 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/res/default.dart';
+import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/store.dart';
 
 import '../../../../core/extension/order.dart';
@@ -33,7 +34,14 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
     return ValueListenableBuilder(
       valueListenable: prop.listenable(),
       builder: (_, vals, __) {
-        final keys = List<String>.from(vals);
+        final keys = () {
+          try {
+            return List<String>.from(vals);
+          } catch (e) {
+            Loggers.app.info('ServerDetailOrderPage: $e');
+            return Defaults.detailCardOrder;
+          }
+        }();
         final disabled =
             Defaults.detailCardOrder.where((e) => !keys.contains(e)).toList();
         final allKeys = [...keys, ...disabled];

@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:convert';
 
 import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
+import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/utils/platform/path.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/system.dart';
@@ -274,7 +274,7 @@ class ServerProvider extends ChangeNotifier {
 
     ensure(await client.runWithSessionAction(ShellFunc.installerShellWriter,
             action: (session) async {
-              session.stdin.add(utf8.encode(ShellFunc.allScript));
+              session.stdin.add(ShellFunc.allScript.uint8List);
             })
         .string);
 

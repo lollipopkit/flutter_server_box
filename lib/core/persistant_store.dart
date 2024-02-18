@@ -43,6 +43,36 @@ class PersistentStore {
         boxName,
         //encryptionCipher: SecureStore._cipher,
       );
+
+  _StoreProperty<T> property<T>(
+    String key,
+    T defaultValue, {
+    bool updateLastModified = true,
+  }) {
+    return _StoreProperty<T>(
+      box,
+      key,
+      defaultValue,
+      updateLastModified: updateLastModified,
+    );
+  }
+
+  _StoreListProperty<T> listProperty<T>(
+    String key,
+    List<T> defaultValue, {
+    bool updateLastModified = true,
+    T Function(dynamic val)? decoder,
+    dynamic Function(T val)? encoder,
+  }) {
+    return _StoreListProperty<T>(
+      box,
+      key,
+      defaultValue,
+      updateLastModified: updateLastModified,
+      encoder: encoder,
+      decoder: decoder,
+    );
+  }
 }
 
 extension BoxX on Box {
@@ -77,38 +107,6 @@ extension BoxX on Box {
       json[key] = get(key);
     }
     return json;
-  }
-}
-
-extension StoreX on PersistentStore {
-  _StoreProperty<T> property<T>(
-    String key,
-    T defaultValue, {
-    bool updateLastModified = true,
-  }) {
-    return _StoreProperty<T>(
-      box,
-      key,
-      defaultValue,
-      updateLastModified: updateLastModified,
-    );
-  }
-
-  _StoreListProperty<T> listProperty<T>(
-    String key,
-    List<T> defaultValue, {
-    bool updateLastModified = true,
-    T Function(dynamic val)? decoder,
-    dynamic Function(T val)? encoder,
-  }) {
-    return _StoreListProperty<T>(
-      box,
-      key,
-      defaultValue,
-      updateLastModified: updateLastModified,
-      encoder: encoder,
-      decoder: decoder,
-    );
   }
 }
 

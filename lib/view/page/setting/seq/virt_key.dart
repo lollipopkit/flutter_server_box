@@ -4,6 +4,7 @@ import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/model/ssh/virtual_key.dart';
+import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/widget/cardx.dart';
@@ -34,7 +35,14 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
     return ValueListenableBuilder(
       valueListenable: prop.listenable(),
       builder: (_, vals, __) {
-        final keys = List<int>.from(vals);
+        final keys = () {
+          try {
+            return List<int>.from(vals);
+          } catch (e) {
+            Loggers.app.info('SSHVirtKeySettingPage: $e');
+            return VirtKey.values.map((e) => e.index).toList();
+          }
+        }();
         final disabled = VirtKey.values
             .map((e) => e.index)
             .where((e) => !keys.contains(e))
