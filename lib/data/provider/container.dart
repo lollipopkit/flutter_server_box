@@ -69,9 +69,6 @@ class ContainerProvider extends ChangeNotifier {
     return false;
   }
 
-  /// Docker Logic:
-  /// - Check if docker is installed, if not, return error, if yes, continue
-  /// - Check permission, if permission denied and no DOCKER_HOST, return error
   Future<void> refresh() async {
     var raw = '';
 
