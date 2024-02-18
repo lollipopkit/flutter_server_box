@@ -652,6 +652,9 @@ class SFr extends S {
   String get sftpRmrDirSummary => 'Utilisez `rm -r` pour supprimer un dossier dans SFTP.';
 
   @override
+  String get sftpShowFoldersFirst => 'Dossiers d\'abord lors du tri';
+
+  @override
   String get sftpSSHConnected => 'SFTP connecté';
 
   @override

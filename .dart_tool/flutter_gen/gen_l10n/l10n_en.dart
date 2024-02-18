@@ -652,6 +652,9 @@ class SEn extends S {
   String get sftpRmrDirSummary => 'Use `rm -r` to delete a folder in SFTP.';
 
   @override
+  String get sftpShowFoldersFirst => 'Disply folders first';
+
+  @override
   String get sftpSSHConnected => 'SFTP Connected';
 
   @override

@@ -1342,6 +1342,12 @@ abstract class S {
   /// **'Use `rm -r` to delete a folder in SFTP.'**
   String get sftpRmrDirSummary;
 
+  /// No description provided for @sftpShowFoldersFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Disply folders first'**
+  String get sftpShowFoldersFirst;
+
   /// No description provided for @sftpSSHConnected.
   ///
   /// In en, this message translates to:

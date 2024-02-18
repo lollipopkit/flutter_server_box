@@ -652,6 +652,9 @@ class SId extends S {
   String get sftpRmrDirSummary => 'Gunakan `rm -r` untuk menghapus dir di SFTP';
 
   @override
+  String get sftpShowFoldersFirst => 'Folder ditampilkan lebih dulu';
+
+  @override
   String get sftpSSHConnected => 'Sftp terhubung';
 
   @override

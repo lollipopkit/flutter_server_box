@@ -207,6 +207,7 @@
   "setting": "Settings",
   "sftpDlPrepare": "Preparing to connect...",
   "sftpRmrDirSummary": "Use `rm -r` to delete a folder in SFTP.",
+  "sftpShowFoldersFirst": "Disply folders first",
   "sftpSSHConnected": "SFTP Connected",
   "showDistLogo": "Show distribution logo",
   "shutdown": "Shutdown",

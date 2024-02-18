@@ -71,6 +71,7 @@ class _SSHTabPageState extends State<SSHTabPage>
               if (confirm != true) {
                 return;
               }
+              // debugPrint("Removing a tab whose tabId = $e");
               _tabIds.remove(e);
               _refreshTabs();
             },
@@ -104,6 +105,12 @@ class _SSHTabPageState extends State<SSHTabPage>
                     key: key,
                     spi: spi,
                     pop: false,
+                    onSessionEnd: () {
+                      // debugPrint("Session done received on page whose tabId = $name");
+                      // debugPrint("key = $key");
+                      _tabIds.remove(name);
+                      _refreshTabs();
+                    },
                   );
                   _refreshTabs();
                   _tabController.animateTo(_tabIds.length - 1);

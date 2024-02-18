@@ -207,6 +207,7 @@
   "setting": "Paramètres",
   "sftpDlPrepare": "Préparation de la connexion...",
   "sftpRmrDirSummary": "Utilisez `rm -r` pour supprimer un dossier dans SFTP.",
+  "sftpShowFoldersFirst": "Dossiers d'abord lors du tri", 
   "sftpSSHConnected": "SFTP connecté",
   "showDistLogo": "Afficher le logo de la distribution",
   "shutdown": "Éteindre",
