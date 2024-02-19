@@ -191,7 +191,7 @@ exec ./$appName
 [Desktop Entry]
 Name=$appName
 Exec=$appName
-Icon=app_icon.png
+Icon=app_icon
 Type=Application
 Categories=Utility;
 ''';
