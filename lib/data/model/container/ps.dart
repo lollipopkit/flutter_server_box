@@ -32,9 +32,13 @@ final class PodmanPs implements ContainerPs {
   final List<String>? names;
   final int? startedAt;
 
+  @override
   String? cpu;
+  @override
   String? mem;
+  @override
   String? net;
+  @override
   String? disk;
 
   PodmanPs({
@@ -115,9 +119,13 @@ final class DockerPs implements ContainerPs {
   final String? names;
   final String? state;
 
+  @override
   String? cpu;
+  @override
   String? mem;
+  @override
   String? net;
+  @override
   String? disk;
 
   DockerPs({

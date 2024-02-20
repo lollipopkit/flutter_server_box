@@ -81,7 +81,7 @@ class _ServerPageState extends State<ServerPage>
   Widget _buildBody() {
     final child = Consumer<ServerProvider>(
       builder: (_, pro, __) {
-        if (!pro.tags.contains(_tag)) {
+        if (!pro.tags.value.contains(_tag)) {
           _tag = null;
         }
         if (pro.serverOrder.isEmpty) {

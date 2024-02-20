@@ -180,7 +180,7 @@ class _TagEditorState extends State<TagEditor> {
 }
 
 class TagSwitcher extends StatelessWidget implements PreferredSizeWidget {
-  final List<String> tags;
+  final ValueNotifier<List<String>> tags;
   final double width;
   final void Function(String?) onTagChanged;
   final String? initTag;
@@ -197,26 +197,31 @@ class TagSwitcher extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (tags.isEmpty) return UIs.placeholder;
-    final items = <String?>[null, ...tags];
-    return Container(
-      height: _kTagBtnHeight,
-      width: width,
-      padding: const EdgeInsets.symmetric(horizontal: 7),
-      alignment: Alignment.center,
-      color: Colors.transparent,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemBuilder: (context, index) {
-          final item = items[index];
-          return TagBtn(
-            content: item == null ? all : '#$item',
-            isEnable: initTag == item,
-            onTap: () => onTagChanged(item),
-          );
-        },
-        itemCount: items.length,
-      ),
+    return ValueListenableBuilder(
+      valueListenable: tags,
+      builder: (_, vals, __) {
+        if (vals.isEmpty) return UIs.placeholder;
+        final items = <String?>[null, ...vals];
+        return Container(
+          height: _kTagBtnHeight,
+          width: width,
+          padding: const EdgeInsets.symmetric(horizontal: 7),
+          alignment: Alignment.center,
+          color: Colors.transparent,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemBuilder: (context, index) {
+              final item = items[index];
+              return TagBtn(
+                content: item == null ? all : '#$item',
+                isEnable: initTag == item,
+                onTap: () => onTagChanged(item),
+              );
+            },
+            itemCount: items.length,
+          ),
+        );
+      },
     );
   }
 

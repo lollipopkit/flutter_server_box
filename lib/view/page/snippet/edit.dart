@@ -140,7 +140,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
               onChanged: (p0) => setState(() {
                 _tags.value = p0;
               }),
-              allTags: [...Pros.snippet.tags],
+              allTags: [...Pros.snippet.tags.value],
               onRenameTag: (old, n) => setState(() {
                 Pros.snippet.renameTag(old, n);
               }),

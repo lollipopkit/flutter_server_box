@@ -30,8 +30,8 @@ class ServerProvider extends ChangeNotifier {
   Iterable<Server> get servers => _servers.values;
   final Order<String> _serverOrder = [];
   Order<String> get serverOrder => _serverOrder;
-  final List<String> _tags = [];
-  List<String> get tags => _tags;
+  final _tags = ValueNotifier(<String>[]);
+  ValueNotifier<List<String>> get tags => _tags;
 
   Timer? _timer;
 
@@ -87,17 +87,17 @@ class ServerProvider extends ChangeNotifier {
   }
 
   void _updateTags() {
-    _tags.clear();
+    _tags.value.clear();
     for (final s in _servers.values) {
       if (s.spi.tags == null) continue;
       for (final t in s.spi.tags!) {
-        if (!_tags.contains(t)) {
-          _tags.add(t);
+        if (!_tags.value.contains(t)) {
+          _tags.value.add(t);
         }
       }
     }
-    _tags.sort();
-    notifyListeners();
+    _tags.value.sort();
+    _tags.notifyListeners();
   }
 
   void renameTag(String old, String new_) {

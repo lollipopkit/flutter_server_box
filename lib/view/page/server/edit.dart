@@ -217,7 +217,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
       TagEditor(
         tags: _tags,
         onChanged: (p0) => _tags = p0,
-        allTags: [...Pros.server.tags],
+        allTags: [...Pros.server.tags.value],
         onRenameTag: Pros.server.renameTag,
       ),
       _buildAuth(),
