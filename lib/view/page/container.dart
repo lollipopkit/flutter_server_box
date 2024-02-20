@@ -38,6 +38,7 @@ class _ContainerPageState extends State<ContainerPage> {
     hostId: widget.spi.id,
     context: context,
   );
+  late Size _size;
 
   @override
   void dispose() {
@@ -48,6 +49,12 @@ class _ContainerPageState extends State<ContainerPage> {
   @override
   void initState() {
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _size = MediaQuery.of(context).size;
   }
 
   @override
@@ -113,22 +120,22 @@ class _ContainerPageState extends State<ContainerPage> {
       return UIs.centerLoading;
     }
 
-    final items = <Widget>[
-      _buildLoading(),
-      _buildVersion(),
-      _buildPs(),
-      _buildImage(),
-      _buildEditHost(),
-      _buildSwitchProvider(),
-    ].map((e) => CardX(child: e)).toList();
     return ListView(
       padding: const EdgeInsets.only(left: 13, right: 13, top: 13, bottom: 37),
-      children: items,
+      children: <Widget>[
+        _buildLoading(),
+        _buildVersion(),
+        _buildPs(),
+        _buildImage(),
+        _buildEditHost(),
+        _buildSwitchProvider(),
+      ],
     );
   }
 
   Widget _buildImage() {
-    return ExpandTile(
+    return CardX(
+        child: ExpandTile(
       title: Text(l10n.imagesList),
       subtitle: Text(
         l10n.dockerImagesFmt(_container.images!.length),
@@ -136,7 +143,7 @@ class _ContainerPageState extends State<ContainerPage> {
       ),
       initiallyExpanded: (_container.images?.length ?? 0) <= 3,
       children: _container.images?.map(_buildImageItem).toList() ?? [],
-    );
+    ));
   }
 
   Widget _buildImageItem(ContainerImg e) {
@@ -169,7 +176,8 @@ class _ContainerPageState extends State<ContainerPage> {
   }
 
   Widget _buildVersion() {
-    return Padding(
+    return CardX(
+        child: Padding(
       padding: const EdgeInsets.all(17),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -178,31 +186,82 @@ class _ContainerPageState extends State<ContainerPage> {
           Text(_container.version ?? l10n.unknown),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildPs() {
     final items = _container.items;
     if (items == null) return UIs.placeholder;
-    return ExpandTile(
-      title: Text(l10n.containerStatus),
-      subtitle: Text(
-        _buildPsCardSubtitle(items),
-        style: UIs.textGrey,
-      ),
-      initiallyExpanded: items.length <= 7,
+    return Column(
       children: items.map(_buildPsItem).toList(),
     );
   }
 
   Widget _buildPsItem(ContainerPs item) {
-    return ListTile(
-      title: Text(item.name ?? l10n.unknown),
-      subtitle: Text(
-        '${item.image ?? l10n.unknown} - ${item.running ? l10n.running : l10n.stopped}',
-        style: UIs.text13Grey,
+    return CardX(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(item.name ?? l10n.unknown, style: UIs.text15),
+                const SizedBox(height: 3),
+                _buildMoreBtn(item),
+              ],
+            ),
+            Text(
+              '${item.image ?? l10n.unknown} - ${item.running ? l10n.running : l10n.stopped}',
+              style: UIs.text13Grey,
+            ),
+            _buildPsItemStats(item),
+          ],
+        ),
       ),
-      trailing: _buildMoreBtn(item),
+    );
+  }
+
+  Widget _buildPsItemStats(ContainerPs item) {
+    if (item.cpu == null || item.mem == null) return UIs.placeholder;
+    return Column(
+      children: [
+        UIs.height13,
+        Row(
+          children: [
+            _buildPsItemStatsItem('CPU', item.cpu, Icons.memory),
+            UIs.width13,
+            _buildPsItemStatsItem('Net', item.net, Icons.network_cell),
+          ],
+        ),
+        Row(
+          children: [
+            _buildPsItemStatsItem(
+                'Mem', item.mem, Icons.settings_input_component),
+            UIs.width13,
+            _buildPsItemStatsItem('Disk', item.disk, Icons.storage),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPsItemStatsItem(String title, String? value, IconData icon) {
+    return SizedBox(
+      width: _size.width / 2 - 41,
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 12, color: Colors.grey),
+              UIs.width7,
+              Text(value ?? l10n.unknown, style: UIs.text11Grey),
+            ],
+          )
+        ],
+      ),
     );
   }
 
@@ -213,14 +272,14 @@ class _ContainerPageState extends State<ContainerPage> {
     );
   }
 
-  String _buildPsCardSubtitle(List<ContainerPs> running) {
-    final runningCount = running.where((element) => element.running).length;
-    final stoped = running.length - runningCount;
-    if (stoped == 0) {
-      return l10n.dockerStatusRunningFmt(runningCount);
-    }
-    return l10n.dockerStatusRunningAndStoppedFmt(runningCount, stoped);
-  }
+  // String _buildPsCardSubtitle(List<ContainerPs> running) {
+  //   final runningCount = running.where((element) => element.running).length;
+  //   final stoped = running.length - runningCount;
+  //   if (stoped == 0) {
+  //     return l10n.dockerStatusRunningFmt(runningCount);
+  //   }
+  //   return l10n.dockerStatusRunningAndStoppedFmt(runningCount, stoped);
+  // }
 
   Widget _buildEditHost() {
     final children = <Widget>[];
@@ -241,9 +300,9 @@ class _ContainerPageState extends State<ContainerPage> {
         child: Text(l10n.dockerEditHost),
       ),
     );
-    return Column(
+    return CardX(child: Column(
       children: children,
-    );
+    ));
   }
 
   Widget _buildSwitchProvider() {
@@ -263,7 +322,7 @@ class _ContainerPageState extends State<ContainerPage> {
         child: Text(l10n.switchTo('Podman')),
       );
     }
-    return child;
+    return CardX(child: child);
   }
 
   Future<void> _showAddFAB() async {

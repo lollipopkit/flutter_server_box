@@ -164,6 +164,8 @@
   "open": "Ouvrir",
   "openLastPath": "Ouvrir le dernier chemin",
   "openLastPathTip": "Les serveurs différents auront des journaux différents, et le journal est le chemin de sortie",
+  "parseContainerStats": "Analyser l'état d'occupation du conteneur",
+  "parseContainerStatsTip": "L'analyse de l'état d'occupation par Docker est relativement lente.",
   "paste": "Coller",
   "path": "Chemin",
   "percentOfSize": "{percent}% de {size}",

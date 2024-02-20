@@ -519,6 +519,12 @@ class SEn extends S {
   String get openLastPathTip => 'Different servers will have different logs, and the log is the path to the exit';
 
   @override
+  String get parseContainerStats => 'Parse the container occupancy status';
+
+  @override
+  String get parseContainerStatsTip => 'Docker parsing the occupancy status is relatively slow.';
+
+  @override
   String get paste => 'Paste';
 
   @override

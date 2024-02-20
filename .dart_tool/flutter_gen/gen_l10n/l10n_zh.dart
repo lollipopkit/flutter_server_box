@@ -519,6 +519,12 @@ class SZh extends S {
   String get openLastPathTip => '不同的服务器会有不同的记录，且记录的是退出时的路径';
 
   @override
+  String get parseContainerStats => '解析容器占用状态';
+
+  @override
+  String get parseContainerStatsTip => 'Docker解析占用状态较为缓慢';
+
+  @override
   String get paste => '粘贴';
 
   @override
@@ -1389,6 +1395,12 @@ class SZhTw extends SZh {
 
   @override
   String get openLastPathTip => '不同的服務器會有不同的記錄，且記錄的是退出時的路徑';
+
+  @override
+  String get parseContainerStats => '解析容器佔用狀態';
+
+  @override
+  String get parseContainerStatsTip => 'Docker解析佔用狀態較為緩慢';
 
   @override
   String get paste => '貼上';

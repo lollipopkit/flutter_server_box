@@ -519,6 +519,12 @@ class SId extends S {
   String get openLastPathTip => 'Server yang berbeda akan memiliki catatan yang berbeda, dan catatan tersebut adalah jalur menuju pintu keluar';
 
   @override
+  String get parseContainerStats => 'Memecahkan status okupansi kontainer';
+
+  @override
+  String get parseContainerStatsTip => 'Parsing status okupansi oleh Docker agak lambat';
+
+  @override
   String get paste => 'Tempel';
 
   @override

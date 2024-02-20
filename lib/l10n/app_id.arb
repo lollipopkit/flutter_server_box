@@ -164,6 +164,8 @@
   "open": "Membuka",
   "openLastPath": "Buka jalur terakhir",
   "openLastPathTip": "Server yang berbeda akan memiliki catatan yang berbeda, dan catatan tersebut adalah jalur menuju pintu keluar",
+  "parseContainerStats": "Memecahkan status okupansi kontainer",
+  "parseContainerStatsTip": "Parsing status okupansi oleh Docker agak lambat",
   "paste": "Tempel",
   "path": "Jalur",
   "percentOfSize": "{percent}% dari {size}",

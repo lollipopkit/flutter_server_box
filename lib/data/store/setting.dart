@@ -233,6 +233,9 @@ class SettingStore extends PersistentStore {
   /// Keep previous server status when err occurs
   late final keepStatusWhenErr = property('keepStatusWhenErr', false);
 
+  /// Parse container stat
+  late final containerParseStat = property('containerParseStat', true);
+
   // Never show these settings for users
   //
   // ------BEGIN------

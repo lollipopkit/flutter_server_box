@@ -1084,6 +1084,18 @@ abstract class S {
   /// **'Different servers will have different logs, and the log is the path to the exit'**
   String get openLastPathTip;
 
+  /// No description provided for @parseContainerStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Parse the container occupancy status'**
+  String get parseContainerStats;
+
+  /// No description provided for @parseContainerStatsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Docker parsing the occupancy status is relatively slow.'**
+  String get parseContainerStatsTip;
+
   /// No description provided for @paste.
   ///
   /// In en, this message translates to:

@@ -519,6 +519,12 @@ class SDe extends S {
   String get openLastPathTip => 'Verschiedene Server haben unterschiedliche Einträge, und der Eintrag ist der Pfad zum Ausgang';
 
   @override
+  String get parseContainerStats => 'Den Status der Container-Belegung analysieren';
+
+  @override
+  String get parseContainerStatsTip => 'Das Analysieren des Belegungsstatus durch Docker ist relativ langsam';
+
+  @override
   String get paste => 'Einfügen';
 
   @override

@@ -40,7 +40,7 @@ enum ContainerErrType {
   invalidVersion,
   cmdNoPrefix,
   segmentsNotMatch,
-  parsePsItem,
+  parsePs,
   parseImages,
   parseStats,
 }

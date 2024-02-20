@@ -519,6 +519,12 @@ class SFr extends S {
   String get openLastPathTip => 'Les serveurs différents auront des journaux différents, et le journal est le chemin de sortie';
 
   @override
+  String get parseContainerStats => 'Analyser l\'état d\'occupation du conteneur';
+
+  @override
+  String get parseContainerStatsTip => 'L\'analyse de l\'état d\'occupation par Docker est relativement lente.';
+
+  @override
   String get paste => 'Coller';
 
   @override

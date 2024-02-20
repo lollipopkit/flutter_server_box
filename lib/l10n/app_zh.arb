@@ -164,6 +164,8 @@
   "open": "打开",
   "openLastPath": "打开上次的路径",
   "openLastPathTip": "不同的服务器会有不同的记录，且记录的是退出时的路径",
+  "parseContainerStats": "解析容器占用状态",
+  "parseContainerStatsTip": "Docker解析占用状态较为缓慢",
   "paste": "粘贴",
   "path": "路径",
   "percentOfSize": "{size} 的 {percent}%",

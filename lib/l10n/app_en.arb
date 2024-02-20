@@ -164,6 +164,8 @@
   "open": "Open",
   "openLastPath": "Open the last path",
   "openLastPathTip": "Different servers will have different logs, and the log is the path to the exit",
+  "parseContainerStats": "Parse the container occupancy status",
+  "parseContainerStatsTip": "Docker parsing the occupancy status is relatively slow.",
   "paste": "Paste",
   "path": "Path",
   "percentOfSize": "{percent}% of {size}",

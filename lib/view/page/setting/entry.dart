@@ -222,6 +222,7 @@ class _SettingPageState extends State<SettingPage> {
       children: [
         _buildUsePodman(),
         _buildContainerTrySudo(),
+        _buildContainerParseStat(),
       ].map((e) => CardX(child: e)).toList(),
     );
   }
@@ -1164,6 +1165,14 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(l10n.keepStatusWhenErr),
       subtitle: Text(l10n.keepStatusWhenErrTip, style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.keepStatusWhenErr),
+    );
+  }
+
+  Widget _buildContainerParseStat() {
+    return ListTile(
+      title: Text(l10n.parseContainerStats),
+      subtitle: Text(l10n.parseContainerStatsTip, style: UIs.textGrey),
+      trailing: StoreSwitch(prop: _setting.containerParseStat),
     );
   }
 }

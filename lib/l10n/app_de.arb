@@ -164,6 +164,8 @@
   "open": "Öffnen",
   "openLastPath": "Öffnen Sie den letzten Pfad",
   "openLastPathTip": "Verschiedene Server haben unterschiedliche Einträge, und der Eintrag ist der Pfad zum Ausgang",
+  "parseContainerStats": "Den Status der Container-Belegung analysieren",
+  "parseContainerStatsTip": "Das Analysieren des Belegungsstatus durch Docker ist relativ langsam",
   "paste": "Einfügen",
   "path": "Pfad",
   "percentOfSize": "{percent}% von {size}",
