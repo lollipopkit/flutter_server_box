@@ -236,6 +236,9 @@ class SettingStore extends PersistentStore {
   /// Parse container stat
   late final containerParseStat = property('containerParseStat', true);
 
+  /// Auto refresh container status
+  late final contaienrAutoRefresh = property('contaienrAutoRefresh', true);
+
   // Never show these settings for users
   //
   // ------BEGIN------

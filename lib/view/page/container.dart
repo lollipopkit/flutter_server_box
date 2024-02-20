@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
@@ -49,6 +51,7 @@ class _ContainerPageState extends State<ContainerPage> {
   @override
   void initState() {
     super.initState();
+    _initAutoRefresh();
   }
 
   @override
@@ -300,7 +303,8 @@ class _ContainerPageState extends State<ContainerPage> {
         child: Text(l10n.dockerEditHost),
       ),
     );
-    return CardX(child: Column(
+    return CardX(
+        child: Column(
       children: children,
     ));
   }
@@ -580,6 +584,21 @@ class _ContainerPageState extends State<ContainerPage> {
       //     ],
       //   );
       //   break;
+    }
+  }
+
+  void _initAutoRefresh() {
+    if (Stores.setting.contaienrAutoRefresh.fetch()) {
+      Timer.periodic(
+        Duration(seconds: Stores.setting.serverStatusUpdateInterval.fetch()),
+        (timer) {
+          if (mounted) {
+            _container.refresh();
+          } else {
+            timer.cancel();
+          }
+        },
+      );
     }
   }
 }
