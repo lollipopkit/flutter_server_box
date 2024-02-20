@@ -168,6 +168,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
       valueListenable: _autoRunOn,
       builder: (_, vals, __) {
         return ListTile(
+          leading: const Icon(Icons.settings_remote, size: 19),
           title: Text(l10n.autoRun),
           trailing: const Icon(Icons.keyboard_arrow_right),
           subtitle: vals.isEmpty
@@ -178,6 +179,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
                   overflow: TextOverflow.ellipsis,
                 ),
           onTap: () async {
+            vals.removeWhere((e) => !Pros.server.serverOrder.contains(e));
             final serverIds = await context.showPickDialog(
               items: Pros.server.serverOrder,
               initial: vals,
