@@ -379,6 +379,12 @@ class SDe extends S {
   String get keepForeground => 'Stelle sicher, dass die App geöffnet bleibt.';
 
   @override
+  String get keepStatusWhenErr => 'Den letzten Serverstatus beibehalten';
+
+  @override
+  String get keepStatusWhenErrTip => 'Nur im Fehlerfall während der Ausführung des Skripts';
+
+  @override
   String get keyAuth => 'Schlüsselauthentifzierung';
 
   @override

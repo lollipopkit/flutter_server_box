@@ -202,6 +202,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildServer() {
     return Column(
       children: [
+        _buildKeepStatusWhenErr(),
         _buildServerFuncBtns(),
         _buildServerSeq(),
         _buildServerDetailCardSeq(),
@@ -1155,6 +1156,14 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(l10n.trySudo),
       subtitle: Text(l10n.containerTrySudoTip, style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.containerTrySudo),
+    );
+  }
+
+  Widget _buildKeepStatusWhenErr() {
+    return ListTile(
+      title: Text(l10n.keepStatusWhenErr),
+      subtitle: Text(l10n.keepStatusWhenErrTip, style: UIs.textGrey),
+      trailing: StoreSwitch(prop: _setting.keepStatusWhenErr),
     );
   }
 }

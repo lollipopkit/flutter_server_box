@@ -118,6 +118,8 @@
   "isBusy": "Is busy now",
   "jumpServer": "Jump server",
   "keepForeground": "Keep app foreground!",
+  "keepStatusWhenErr": "Preserve the last server state",
+  "keepStatusWhenErrTip": "Only in the event of an error during script execution",
   "keyAuth": "Key Auth",
   "keyboardCompatibility": "Possible to improve input method compatibility",
   "keyboardType": "Keyborad type",

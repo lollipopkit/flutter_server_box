@@ -118,6 +118,8 @@
   "isBusy": "Sibuk sekarang",
   "jumpServer": "Lompat server",
   "keepForeground": "Simpan Aplikasi Foreground!",
+  "keepStatusWhenErr": "Menyimpan status server terakhir",
+  "keepStatusWhenErrTip": "Hanya ketika terjadi kesalahan saat menjalankan skrip",
   "keyAuth": "Auth kunci",
   "keyboardCompatibility": "Mungkin untuk meningkatkan kompatibilitas metode input",
   "keyboardType": "Tipe Keyborad",

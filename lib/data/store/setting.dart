@@ -230,6 +230,9 @@ class SettingStore extends PersistentStore {
   /// Try to use `sudo` to run docker command
   late final containerTrySudo = property('containerTrySudo', true);
 
+  /// Keep previous server status when err occurs
+  late final keepStatusWhenErr = property('keepStatusWhenErr', false);
+
   // Never show these settings for users
   //
   // ------BEGIN------

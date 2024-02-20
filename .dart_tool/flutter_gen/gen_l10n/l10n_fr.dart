@@ -379,6 +379,12 @@ class SFr extends S {
   String get keepForeground => 'Laisser l\'application au premier plan !';
 
   @override
+  String get keepStatusWhenErr => 'Conserver le dernier état du serveur';
+
+  @override
+  String get keepStatusWhenErrTip => 'Uniquement en cas d\'erreur lors de l\'exécution du script';
+
+  @override
   String get keyAuth => 'Authentification par clé';
 
   @override

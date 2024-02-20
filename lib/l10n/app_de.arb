@@ -118,6 +118,8 @@
   "isBusy": "Is busy now",
   "jumpServer": "Server springen",
   "keepForeground": "Stelle sicher, dass die App geöffnet bleibt.",
+  "keepStatusWhenErr": "Den letzten Serverstatus beibehalten",
+  "keepStatusWhenErrTip": "Nur im Fehlerfall während der Ausführung des Skripts",
   "keyAuth": "Schlüsselauthentifzierung",
   "keyboardCompatibility": "Mögliche Verbesserungen bei der Kompatibilität der Eingabemethoden",
   "keyboardType": "Tastatur Typ",

@@ -388,6 +388,12 @@ class ServerProvider extends ChangeNotifier {
       raw = await s.client?.run(ShellFunc.status.exec).string;
       segments = raw?.split(seperator).map((e) => e.trim()).toList();
       if (raw == null || raw.isEmpty || segments == null || segments.isEmpty) {
+        if (Stores.setting.keepStatusWhenErr.fetch()) {
+          // Keep previous server status when err occurs
+          if (s.state != ServerState.failed && s.status.more.isNotEmpty) {
+            return;
+          }
+        }
         TryLimiter.inc(sid);
         s.status.err = 'Seperate segments failed, raw:\n$raw';
         _setServerState(s, ServerState.failed);

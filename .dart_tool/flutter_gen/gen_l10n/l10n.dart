@@ -808,6 +808,18 @@ abstract class S {
   /// **'Keep app foreground!'**
   String get keepForeground;
 
+  /// No description provided for @keepStatusWhenErr.
+  ///
+  /// In en, this message translates to:
+  /// **'Preserve the last server state'**
+  String get keepStatusWhenErr;
+
+  /// No description provided for @keepStatusWhenErrTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Only in the event of an error during script execution'**
+  String get keepStatusWhenErrTip;
+
   /// No description provided for @keyAuth.
   ///
   /// In en, this message translates to:

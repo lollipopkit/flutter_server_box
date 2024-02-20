@@ -379,6 +379,12 @@ class SEn extends S {
   String get keepForeground => 'Keep app foreground!';
 
   @override
+  String get keepStatusWhenErr => 'Preserve the last server state';
+
+  @override
+  String get keepStatusWhenErrTip => 'Only in the event of an error during script execution';
+
+  @override
   String get keyAuth => 'Key Auth';
 
   @override

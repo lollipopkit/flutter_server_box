@@ -118,6 +118,8 @@
   "isBusy": "Est occupé maintenant",
   "jumpServer": "Serveur de saut",
   "keepForeground": "Laisser l'application au premier plan !",
+  "keepStatusWhenErr": "Conserver le dernier état du serveur",
+  "keepStatusWhenErrTip": "Uniquement en cas d'erreur lors de l'exécution du script",
   "keyAuth": "Authentification par clé",
   "keyboardCompatibility": "Possibilité d'améliorer la compatibilité avec les méthodes de saisie",
   "keyboardType": "Type de clavier",

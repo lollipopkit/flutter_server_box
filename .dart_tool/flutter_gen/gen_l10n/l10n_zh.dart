@@ -379,6 +379,12 @@ class SZh extends S {
   String get keepForeground => '请保持应用处于前台！';
 
   @override
+  String get keepStatusWhenErr => '保留上次的服务器状态';
+
+  @override
+  String get keepStatusWhenErrTip => '仅限于执行脚本出错';
+
+  @override
   String get keyAuth => '密钥认证';
 
   @override
@@ -1243,6 +1249,12 @@ class SZhTw extends SZh {
 
   @override
   String get keepForeground => '請保持應用處於前台！';
+
+  @override
+  String get keepStatusWhenErr => '保留上次的伺服器狀態';
+
+  @override
+  String get keepStatusWhenErrTip => '仅在执行脚本时出错时';
 
   @override
   String get keyAuth => '密鑰認證';

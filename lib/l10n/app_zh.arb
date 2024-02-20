@@ -118,6 +118,8 @@
   "isBusy": "当前正忙",
   "jumpServer": "跳板服务器",
   "keepForeground": "请保持应用处于前台！",
+  "keepStatusWhenErr": "保留上次的服务器状态",
+  "keepStatusWhenErrTip": "仅限于执行脚本出错",
   "keyAuth": "密钥认证",
   "keyboardCompatibility": "可能会改善输入法兼容性",
   "keyboardType": "键盘类型",

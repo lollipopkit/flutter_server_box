@@ -379,6 +379,12 @@ class SId extends S {
   String get keepForeground => 'Simpan Aplikasi Foreground!';
 
   @override
+  String get keepStatusWhenErr => 'Menyimpan status server terakhir';
+
+  @override
+  String get keepStatusWhenErrTip => 'Hanya ketika terjadi kesalahan saat menjalankan skrip';
+
+  @override
   String get keyAuth => 'Auth kunci';
 
   @override
