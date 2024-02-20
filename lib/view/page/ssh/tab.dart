@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/widget.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/page/ssh/page.dart';
@@ -50,10 +49,9 @@ class _SSHTabPageState extends State<SSHTabPage>
         children: [
           Text(e),
           UIs.width7,
-          const Icon(Icons.close, size: 17)
-              .padding(const EdgeInsets.all(7))
-              .tap(
-            onTap: () async {
+          IconButton(
+            icon: const Icon(Icons.close, size: 17),
+            onPressed: () async {
               final confirm = await context.showRoundDialog<bool>(
                 title: Text(l10n.attention),
                 child: Text('${l10n.close} SSH ${l10n.conn}($e) ?'),

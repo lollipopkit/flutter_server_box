@@ -44,10 +44,10 @@ class SettingStore extends PersistentStore {
       property('diskIgnorePath', Defaults.diskIgnorePath);
 
   /// Use double column servers page on Desktop
-  // late final doubleColumnServersPage = property(
-  //   'doubleColumnServersPage',
-  //   isDesktop,
-  // );
+  late final doubleColumnServersPage = property(
+    'doubleColumnServersPage',
+    isDesktop,
+  );
 
   /// Disk view: amount / IO
   late final serverTabPreferDiskAmount = property(

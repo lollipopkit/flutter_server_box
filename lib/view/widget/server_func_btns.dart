@@ -7,7 +7,6 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/extension/uint8list.dart';
-import 'package:toolbox/core/extension/widget.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/platform/path.dart';
 import 'package:toolbox/data/model/app/menu/server_func.dart';
@@ -89,17 +88,20 @@ class ServerFuncBtns extends StatelessWidget {
                     tooltip: e.toStr,
                     icon: Icon(e.icon, size: iconSize ?? 15),
                   )
-                : Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        onPressed: () => _onTapMoreBtns(e, spi, context),
-                        padding: EdgeInsets.zero,
-                        icon: Icon(e.icon, size: iconSize ?? 15),
-                      ),
-                      Text(e.toStr, style: UIs.text11Grey)
-                    ],
-                  ).padding(const EdgeInsets.only(bottom: 13)),
+                : Padding(
+                    padding: const EdgeInsets.only(bottom: 13),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          onPressed: () => _onTapMoreBtns(e, spi, context),
+                          padding: EdgeInsets.zero,
+                          icon: Icon(e.icon, size: iconSize ?? 15),
+                        ),
+                        Text(e.toStr, style: UIs.text11Grey)
+                      ],
+                    ),
+                  ),
           )
           .toList(),
     );

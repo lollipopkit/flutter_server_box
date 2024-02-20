@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/widget.dart';
 import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/cardx.dart';
@@ -60,12 +59,14 @@ class _TagEditorState extends State<TagEditor> {
     return CardX(
       child: ListTile(
         // Align the place of TextField.prefixIcon
-        leading: const Icon(Icons.tag).padding(const EdgeInsets.only(left: 6)),
+        leading: const Padding(
+          padding: EdgeInsets.only(left: 6),
+          child: Icon(Icons.tag),
+        ),
         title: _buildTags(widget.tags),
-        trailing: const Icon(Icons.add).tap(
-          onTap: () {
-            _showAddTagDialog();
-          },
+        trailing: IconButton(
+          icon: const Icon(Icons.add),
+          onPressed: () => _showAddTagDialog(),
         ),
       ),
     );
@@ -238,10 +239,14 @@ Widget _wrap(
       borderRadius: const BorderRadius.all(Radius.circular(20.0)),
       child: Material(
         color: primaryColor.withAlpha(20),
-        child: child.padding(const EdgeInsets.fromLTRB(11.7, 2.7, 11.7, 0)).tap(
-              onTap: onTap,
-              onLongTap: onLongPress,
-            ),
+        child: InkWell(
+          onTap: onTap,
+          onLongPress: onLongPress,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(11.7, 2.7, 11.7, 0),
+            child: child,
+          ),
+        ),
       ),
     ),
   );

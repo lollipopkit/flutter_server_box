@@ -6,9 +6,9 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
+import 'package:toolbox/core/extension/media_queryx.dart';
 import 'package:toolbox/core/extension/numx.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
-import 'package:toolbox/core/extension/widget.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
@@ -45,15 +45,13 @@ class _ServerPageState extends State<ServerPage>
   final _cardsStatus = <String, _CardNotifier>{};
 
   String? _tag;
-  // bool _useDoubleColumn = false;
+  bool _useDoubleColumn = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
-    // _useDoubleColumn = _media.useDoubleColumn;
-    _textFactorDouble = Stores.setting.textFactor.fetch();
-    _textFactor = TextScaler.linear(_textFactorDouble);
+    _useDoubleColumn = _media.useDoubleColumn;
   }
 
   @override
@@ -94,11 +92,11 @@ class _ServerPageState extends State<ServerPage>
         }
 
         final filtered = _filterServers(pro);
-        // if (_useDoubleColumn &&
-        //     Stores.setting.doubleColumnServersPage.fetch()) {
-        //   return _buildBodyMedium(pro: pro, filtered: filtered);
-        // }
-        return _buildBodySmall(provider: pro, filtered: filtered);
+        if (_useDoubleColumn &&
+            Stores.setting.doubleColumnServersPage.fetch()) {
+          return _buildBodyMedium(pro: pro, filtered: filtered);
+        }
+        return _buildBodySmall(pro: pro, filtered: filtered);
       },
     );
 
@@ -124,7 +122,7 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildBodySmall({
-    required ServerProvider provider,
+    required ServerProvider pro,
     required List<String> filtered,
     EdgeInsets? padding = const EdgeInsets.fromLTRB(7, 0, 7, 7),
   }) {
@@ -135,25 +133,37 @@ class _ServerPageState extends State<ServerPage>
       itemBuilder: (_, index) {
         // Issue #130
         if (index == count - 1) return UIs.height77;
-        return _buildEachServerCard(provider.pick(id: filtered[index]));
+        return _buildEachServerCard(pro.pick(id: filtered[index]));
       },
     );
   }
 
-  // Widget _buildBodyMedium({
-  //   required ServerProvider pro,
-  //   required List<String> filtered,
-  // }) {
-  //   return GridView.builder(
-  //     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-  //       crossAxisCount: 2,
-  //     ),
-  //     itemCount: filtered.length,
-  //     itemBuilder: (context, index) {
-  //       return _buildEachServerCard(pro.pick(id: filtered[index]));
-  //     },
-  //   );
-  // }
+  Widget _buildBodyMedium({
+    required ServerProvider pro,
+    required List<String> filtered,
+  }) {
+    final mid = (filtered.length / 2).ceil();
+    final filteredLeft = filtered.sublist(0, mid);
+    final filteredRight = filtered.sublist(mid);
+    return Row(
+      children: [
+        Expanded(
+          child: _buildBodySmall(
+            pro: pro,
+            filtered: filteredLeft,
+            padding: const EdgeInsets.only(left: 7),
+          ),
+        ),
+        Expanded(
+          child: _buildBodySmall(
+            pro: pro,
+            filtered: filteredRight,
+            padding: const EdgeInsets.only(right: 7),
+          ),
+        )
+      ],
+    );
+  }
 
   Widget _buildEachServerCard(Server? srv) {
     if (srv == null) {
@@ -162,7 +172,7 @@ class _ServerPageState extends State<ServerPage>
 
     return CardX(
       key: Key(srv.spi.id + (_tag ?? '')),
-      child: _buildRealServerCard(srv).padding(const EdgeInsets.all(13)).tap(
+      child: InkWell(
         onTap: () {
           if (srv.canViewDetails) {
             AppRoute.serverDetail(spi: srv.spi).go(context);
@@ -170,7 +180,7 @@ class _ServerPageState extends State<ServerPage>
             _showFailReason(srv.status);
           }
         },
-        onLongTap: () {
+        onLongPress: () {
           if (srv.state == ServerState.finished) {
             final id = srv.spi.id;
             final cardStatus = _getCardNoti(id);
@@ -181,6 +191,10 @@ class _ServerPageState extends State<ServerPage>
             AppRoute.serverEdit(spi: srv.spi).go(context);
           }
         },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 7),
+          child: _buildRealServerCard(srv),
+        ),
       ),
     );
   }
@@ -188,8 +202,10 @@ class _ServerPageState extends State<ServerPage>
   /// The child's width mat not equal to 1/4 of the screen width,
   /// so we need to wrap it with a SizedBox.
   Widget _wrapWithSizedbox(Widget child, [bool circle = false]) {
+    var width = (_media.size.width - 74) / (circle ? 4 : 4.3);
+    if (_useDoubleColumn) width /= 2;
     return SizedBox(
-      width: (_media.size.width - 74) / (circle ? 4 : 4.3),
+      width: width,
       child: child,
     );
   }
@@ -202,16 +218,15 @@ class _ServerPageState extends State<ServerPage>
     return ListenableBuilder(
       listenable: cardStatus,
       builder: (_, __) {
-        late final List<Widget> children;
+        final List<Widget> children = [title];
         if (srv.state == ServerState.finished) {
           if (cardStatus.value.flip) {
-            children = [title, ..._buildFlippedCard(srv)];
+            children.addAll(_buildFlippedCard(srv));
           } else {
-            children = [title, ..._buildNormalCard(srv.status, srv.spi)];
+            children.addAll(_buildNormalCard(srv.status, srv.spi));
           }
-        } else {
-          children = [title];
         }
+
         return AnimatedContainer(
           duration: const Duration(milliseconds: 377),
           curve: Curves.fastEaseInToSlowEaseOut,
@@ -317,7 +332,7 @@ class _ServerPageState extends State<ServerPage>
     ServerState cs,
     ServerPrivateInfo spi,
   ) {
-    Widget? rightCorner;
+    Widget rightCorner = UIs.placeholder;
     if (cs == ServerState.failed) {
       rightCorner = InkWell(
         onTap: () {
@@ -369,7 +384,7 @@ class _ServerPageState extends State<ServerPage>
           Row(
             children: [
               _buildTopRightText(ss, cs),
-              if (rightCorner != null) rightCorner,
+              rightCorner,
             ],
           )
         ],

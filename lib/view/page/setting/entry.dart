@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/build_mode.dart';
 import 'package:toolbox/core/extension/colorx.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
@@ -12,7 +11,6 @@ import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/locale.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/stringx.dart';
-import 'package:toolbox/core/extension/widget.dart';
 import 'package:toolbox/core/utils/function.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/res/provider.dart';
@@ -88,48 +86,28 @@ class _SettingPageState extends State<SettingPage> {
       appBar: CustomAppBar(
         title: Text(l10n.setting),
         actions: [
-          const Icon(Icons.delete)
-              .tap(
-                onTap: () => context.showRoundDialog(
-                  title: Text(l10n.attention),
-                  child: Text(l10n.askContinue(
-                    '${l10n.delete}: **${l10n.all}** ${l10n.setting}',
-                  )),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        _setting.box.deleteAll(_setting.box.keys);
-                        context.pop();
-                        context.showSnackBar(l10n.success);
-                      },
-                      child: Text(
-                        l10n.ok,
-                        style: const TextStyle(color: Colors.red),
-                      ),
-                    ),
-                  ],
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: () => context.showRoundDialog(
+              title: Text(l10n.attention),
+              child: Text(l10n.askContinue(
+                '${l10n.delete}: **${l10n.all}** ${l10n.setting}',
+              )),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    _setting.box.deleteAll(_setting.box.keys);
+                    context.pop();
+                    context.showSnackBar(l10n.success);
+                  },
+                  child: Text(
+                    l10n.ok,
+                    style: const TextStyle(color: Colors.red),
+                  ),
                 ),
-
-                /// Only for debug, this will cause the app to crash
-                onDoubleTap: () => context.showRoundDialog(
-                  title: Text(l10n.attention),
-                  child: Text(l10n.askContinue(
-                    'Delete all data from disk, and exit the app?',
-                  )),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        if (!BuildMode.isDebug) return;
-                        Stores.all.map((e) => e.box.deleteFromDisk());
-                        exit(0);
-                      },
-                      child: Text(l10n.ok,
-                          style: const TextStyle(color: Colors.red)),
-                    ),
-                  ],
-                ),
-              )
-              .padding(const EdgeInsets.only(right: 17)),
+              ],
+            ),
+          ),
         ],
       ),
       body: ListView(

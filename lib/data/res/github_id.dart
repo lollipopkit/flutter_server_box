@@ -59,5 +59,7 @@ abstract final class GithubIds {
     'KatharsisKing',
     'mervinniu',
     'L-Super',
+    'Tridays',
+    'Nebulosa-Cat',
   };
 }

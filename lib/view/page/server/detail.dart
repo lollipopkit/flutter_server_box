@@ -5,7 +5,6 @@ import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/core/extension/status_cmd_type.dart';
-import 'package:toolbox/core/extension/widget.dart';
 import 'package:toolbox/data/model/server/battery.dart';
 import 'package:toolbox/data/model/server/cpu.dart';
 import 'package:toolbox/data/model/server/disk.dart';
@@ -136,13 +135,16 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         ),
         children: ss.more.entries
             .map(
-              (e) => Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(e.key.i18n, style: UIs.text13),
-                  Text(e.value, style: UIs.text13Grey)
-                ],
-              ).padding(const EdgeInsets.symmetric(vertical: 2)),
+              (e) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(e.key.i18n, style: UIs.text13),
+                    Text(e.value, style: UIs.text13Grey)
+                  ],
+                ),
+              ),
             )
             .toList(),
       ),
@@ -399,7 +401,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         style: UIs.text12Grey,
         textScaler: _textFactor,
       ),
-      trailing: const Icon(Icons.info_outline, size: 17).tap(
+      trailing: InkWell(
         onTap: () {
           context.showRoundDialog(
             title: SizedBox(
@@ -424,6 +426,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             ],
           );
         },
+        child: const Icon(Icons.info_outline, size: 17),
       ),
     );
   }
@@ -456,44 +459,47 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       if (read == null || write == null) return use;
       return '$use\n${l10n.read} $read | ${l10n.write} $write';
     }();
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              disk.dev,
-              style: UIs.text12,
-              textScaler: _textFactor,
-            ),
-            Text(
-              text,
-              style: UIs.text12Grey,
-              textScaler: _textFactor,
-            )
-          ],
-        ),
-        SizedBox(
-          height: 41,
-          width: 41,
-          child: Stack(
-            alignment: Alignment.center,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 5),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircularProgressIndicator(
-                value: disk.usedPercent / 100,
-                strokeWidth: 5,
-                backgroundColor: DynamicColors.progress.resolve(context),
-                color: primaryColor,
+              Text(
+                disk.dev,
+                style: UIs.text12,
+                textScaler: _textFactor,
               ),
-              Text('${disk.usedPercent}%', style: UIs.text12Grey)
+              Text(
+                text,
+                style: UIs.text12Grey,
+                textScaler: _textFactor,
+              )
             ],
           ),
-        )
-      ],
-    ).padding(const EdgeInsets.symmetric(horizontal: 17, vertical: 5));
+          SizedBox(
+            height: 41,
+            width: 41,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CircularProgressIndicator(
+                  value: disk.usedPercent / 100,
+                  strokeWidth: 5,
+                  backgroundColor: DynamicColors.progress.resolve(context),
+                  color: primaryColor,
+                ),
+                Text('${disk.usedPercent}%', style: UIs.text12Grey)
+              ],
+            ),
+          )
+        ],
+      ),
+    );
   }
 
   Widget _buildNetView(ServerStatus ss) {
@@ -519,23 +525,26 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             UIs.width13,
             ValueListenableBuilder(
               valueListenable: _netSortType,
-              builder: (_, val, __) => AnimatedSwitcher(
-                duration: const Duration(milliseconds: 377),
-                transitionBuilder: (child, animation) => FadeTransition(
-                  opacity: animation,
-                  child: child,
+              builder: (_, val, __) => InkWell(
+                onTap: () => _netSortType.value = val.next,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 377),
+                  transitionBuilder: (child, animation) => FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.sort, size: 17),
+                      UIs.width7,
+                      Text(
+                        val.name,
+                        style: UIs.text13Grey,
+                      ),
+                    ],
+                  ),
                 ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.sort, size: 17),
-                    UIs.width7,
-                    Text(
-                      val.name,
-                      style: UIs.text13Grey,
-                    ),
-                  ],
-                ),
-              ).tap(onTap: () => _netSortType.value = val.next),
+              ),
             ),
           ],
         ),

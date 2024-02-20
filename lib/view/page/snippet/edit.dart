@@ -5,7 +5,6 @@ import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
-import 'package:toolbox/core/extension/widget.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/view/widget/cardx.dart';
 import 'package:toolbox/view/widget/input_field.dart';
@@ -195,18 +194,21 @@ class _SnippetEditPageState extends State<SnippetEditPage>
 
   Widget _buildTip() {
     return CardX(
-      child: MarkdownBody(
-        data: '''
+      child: Padding(
+        padding: const EdgeInsets.all(13),
+        child: MarkdownBody(
+          data: '''
 📌 ${l10n.supportFmtArgs}
 
 ${Snippet.fmtArgs.keys.map((e) => '`$e`').join(', ')}
 ''',
-        styleSheet: MarkdownStyleSheet(
-          codeblockDecoration: const BoxDecoration(
-            color: Colors.transparent,
+          styleSheet: MarkdownStyleSheet(
+            codeblockDecoration: const BoxDecoration(
+              color: Colors.transparent,
+            ),
           ),
         ),
-      ).padding(const EdgeInsets.all(13)),
+      ),
     );
   }
 
