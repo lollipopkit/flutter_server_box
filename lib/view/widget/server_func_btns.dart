@@ -122,11 +122,18 @@ void _onTapMoreBtns(
       );
       break;
     case ServerFuncBtn.snippet:
-      final snippet = await context.showPickSingleDialog<Snippet>(
-        items: Pros.snippet.snippets,
+      final snippets = await context.showPickWithTagDialog<Snippet>(
+        tags: Pros.snippet.tags,
+        itemsBuilder: (e) {
+          if (e == null) return Pros.snippet.snippets;
+          return Pros.snippet.snippets
+              .where((element) => element.tags?.contains(e) ?? false)
+              .toList();
+        },
         name: (e) => e.name,
       );
-      if (snippet == null) return;
+      if (snippets == null || snippets.isEmpty) return;
+      final snippet = snippets.first;
 
       AppRoute.ssh(spi: spi, initCmd: snippet.fmtWith(spi)).checkGo(
         context: context,

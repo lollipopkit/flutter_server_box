@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/view/widget/choice_chip.dart';
+import 'package:toolbox/view/widget/tag.dart';
 
 import '../../../data/res/ui.dart';
 import '../../../view/widget/input_field.dart';
@@ -116,6 +117,79 @@ extension DialogX on BuildContext {
     );
     if (vals != null && vals.isNotEmpty) {
       return vals.first;
+    }
+    return null;
+  }
+
+  Future<List<T>?> showPickWithTagDialog<T>({
+    required List<T?> Function(String? tag) itemsBuilder,
+    required ValueNotifier<List<String>> tags,
+    String Function(T)? name,
+    List<T>? initial,
+    bool clearable = false,
+    bool multi = false,
+    List<Widget>? actions,
+  }) async {
+    var vals = initial ?? <T>[];
+    final tag = ValueNotifier<String?>(null);
+    final sure = await showRoundDialog<bool>(
+      title: Text(l10n.choose),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ListenableBuilder(
+            listenable: tag,
+            builder: (_, __) => TagSwitcher(
+              tags: tags,
+              width: 300,
+              initTag: tag.value,
+              onTagChanged: (e) => tag.value = e,
+            ),
+          ),
+          const Divider(),
+          SingleChildScrollView(
+            child: ValueListenableBuilder(
+              valueListenable: tag,
+              builder: (_, val, __) {
+                final items = itemsBuilder(val);
+                return Choice<T>(
+                  onChanged: (value) => vals = value,
+                  multiple: multi,
+                  clearable: clearable,
+                  value: vals,
+                  builder: (state, _) {
+                    return Wrap(
+                      children: List<Widget>.generate(
+                        items.length,
+                        (index) {
+                          final item = items[index];
+                          if (item == null) return UIs.placeholder;
+                          return ChoiceChipX<T>(
+                            label: name?.call(item) ?? item.toString(),
+                            state: state,
+                            value: item,
+                          );
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          )
+        ],
+      ),
+      actions: [
+        if (actions != null) ...actions,
+        TextButton(
+          onPressed: () => pop(true),
+          child: Text(l10n.ok),
+        ),
+      ],
+    );
+    if (sure == true && vals.isNotEmpty) {
+      return vals;
     }
     return null;
   }

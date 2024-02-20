@@ -120,7 +120,6 @@ class _ServerPageState extends State<ServerPage>
         _tag = p0;
       }),
       initTag: _tag,
-      all: l10n.all,
     );
   }
 

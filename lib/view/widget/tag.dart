@@ -184,14 +184,12 @@ class TagSwitcher extends StatelessWidget implements PreferredSizeWidget {
   final double width;
   final void Function(String?) onTagChanged;
   final String? initTag;
-  final String all;
 
   const TagSwitcher({
     super.key,
     required this.tags,
     required this.width,
     required this.onTagChanged,
-    required this.all,
     this.initTag,
   });
 
@@ -213,7 +211,7 @@ class TagSwitcher extends StatelessWidget implements PreferredSizeWidget {
             itemBuilder: (context, index) {
               final item = items[index];
               return TagBtn(
-                content: item == null ? all : '#$item',
+                content: item == null ? l10n.all : '#$item',
                 isEnable: initTag == item,
                 onTap: () => onTagChanged(item),
               );

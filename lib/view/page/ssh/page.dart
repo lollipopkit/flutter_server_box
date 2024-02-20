@@ -275,12 +275,20 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
         }
         break;
       case VirtualKeyFunc.snippet:
-        final s = await context.showPickSingleDialog<Snippet>(
-          items: Pros.snippet.snippets,
-          name: (p0) => p0.name,
+        final snippets = await context.showPickWithTagDialog<Snippet>(
+          tags: Pros.snippet.tags,
+          itemsBuilder: (e) {
+            if (e == null) return Pros.snippet.snippets;
+            return Pros.snippet.snippets
+                .where((element) => element.tags?.contains(e) ?? false)
+                .toList();
+          },
+          name: (e) => e.name,
         );
-        if (s == null) return;
-        _terminal.textInput(s.script);
+        if (snippets == null || snippets.isEmpty) return;
+
+        final snippet = snippets.first;
+        _terminal.textInput(snippet.script);
         _terminal.keyInput(TerminalKey.enter);
         break;
       case VirtualKeyFunc.file:

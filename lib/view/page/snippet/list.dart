@@ -71,7 +71,6 @@ class _SnippetListPageState extends State<SnippetListPage> {
             tags: provider.tags,
             onTagChanged: (tag) => setState(() => _tag = tag),
             initTag: _tag,
-            all: l10n.all,
             width: _media.size.width,
           ),
           footer: UIs.height77,
