@@ -16,6 +16,12 @@ def keystoreProperties = new Properties()
 def keystorePropertiesFile = rootProject.file('key.properties')
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+} else {
+    System.err.printf(" [!] key.properties not found in %s (%s). Build will fail. \n", rootProject, rootProject.file('.'))
+}
+
+if (keystoreProperties['storeFile'] == null || !file(keystoreProperties['storeFile']).exists()) {
+    System.err.printf(" [!] storeFile defined in key.properties does not exist in %s. Build will fail. \n", file('.'))
 }
 
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
@@ -57,7 +63,9 @@ android {
         versionName flutterVersionName
         
         ndk {
-            abiFilters 'arm64-v8a'
+            if(!splits.abi.enable) { // abiFilters cannot be present when splits abi filters are set
+                abiFilters 'arm64-v8a', 'armeabi-v7a'
+            }
         }
     }
 

@@ -21,6 +21,7 @@ var regAppleMarketVer = RegExp(r'MARKETING_VERSION = .+');
 const buildFuncs = {
   'ios': flutterBuildIOS,
   'android': flutterBuildAndroid,
+  'apk': flutterBuildAndroid,
   'mac': flutterBuildMacOS,
   'linux': flutterBuildLinux,
   'win': flutterBuildWin,
@@ -29,7 +30,7 @@ const buildFuncs = {
 int? build;
 
 Future<void> getGitCommitCount() async {
-  final result = await Process.run('git', ['log', '--oneline']);
+  final result = await Process.run('git', ['log', '--format=format:%h']);
   build = (result.stdout as String)
       .split('\n')
       .where((line) => line.isNotEmpty)
@@ -42,7 +43,7 @@ Future<int> getScriptCommitCount() async {
     exit(1);
   }
   final result =
-      await Process.run('git', ['log', '--oneline', shellScriptPath]);
+      await Process.run('git', ['log', '--format=format:%h', shellScriptPath]);
   return (result.stdout as String)
       .split('\n')
       .where((line) => line.isNotEmpty)
