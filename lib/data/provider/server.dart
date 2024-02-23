@@ -258,33 +258,6 @@ class ServerProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _writeInstallerScript(Server s) async {
-    /// TODO: Find a better way to judge if the write is successful
-
-    // Issues #275
-    // Can't use writeResult to judge if the write is successful
-
-    // void ensure(String? writeResult) {
-    //   if (writeResult == null || writeResult.isNotEmpty) {
-    //     throw Exception("Failed to write installer script: $writeResult");
-    //   }
-    // }
-
-    final client = s.client;
-    if (client == null) {
-      throw Exception("Invalid state: s.client cannot be null");
-    }
-
-    await client.run(ShellFunc.installerMkdirs).string;
-
-    await client.runForOutput(ShellFunc.installerShellWriter,
-        action: (session) async {
-      session.stdin.add(ShellFunc.allScript.uint8List);
-    }).string;
-
-    await client.run(ShellFunc.installerPermissionModifier).string;
-  }
-
   Future<void> _getData(ServerPrivateInfo spi) async {
     final sid = spi.id;
     final s = _servers[sid];
@@ -333,7 +306,10 @@ class ServerProvider extends ChangeNotifier {
       // Write script to server
       // by ssh
       try {
-        await _writeInstallerScript(s);
+        await s.client?.runForOutput(ShellFunc.installShellCmd,
+            action: (session) async {
+          session.stdin.add(ShellFunc.allScript.uint8List);
+        }).string;
       } on SSHAuthAbortError catch (e) {
         TryLimiter.inc(sid);
         s.status.err = e.toString();

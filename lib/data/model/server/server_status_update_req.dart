@@ -68,6 +68,11 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   try {
     final cpus = OneTimeCpuStatus.parse(StatusCmdType.cpu.find(segments));
     req.ss.cpu.update(cpus);
+  } catch (e, s) {
+    Loggers.parse.warning(e, s);
+  }
+
+  try {
     req.ss.temps.parse(
       StatusCmdType.tempType.find(segments),
       StatusCmdType.tempVal.find(segments),

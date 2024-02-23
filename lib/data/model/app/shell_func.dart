@@ -33,17 +33,11 @@ enum ShellFunc {
 
   /// Issue #168
   /// Use `sh` for compatibility
-  // static final installShellCmd = """
-// mkdir -p $_homeVar/$_srvBoxDir
-// cat << 'EOF' > $_installShellPath
-// ${ShellFunc.allScript}
-// EOF
-// chmod +x $_installShellPath
-// """;
-
-  static const installerMkdirs = "mkdir -p $_homeVar/$_srvBoxDir";
-  static const installerShellWriter = "cat > $_installShellPath";
-  static const installerPermissionModifier = "chmod +x $_installShellPath";
+  static const installShellCmd = """
+mkdir -p $_homeVar/$_srvBoxDir
+cat > $_installShellPath
+chmod +x $_installShellPath
+""";
 
   String get flag {
     switch (this) {
