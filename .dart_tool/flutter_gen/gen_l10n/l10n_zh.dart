@@ -628,6 +628,9 @@ class SZh extends S {
   String get second => '秒';
 
   @override
+  String get sensors => '传感器';
+
+  @override
   String get sequence => '顺序';
 
   @override
@@ -1504,6 +1507,9 @@ class SZhTw extends SZh {
 
   @override
   String get second => '秒';
+
+  @override
+  String get sensors => '传感器';
 
   @override
   String get sequence => '順序';

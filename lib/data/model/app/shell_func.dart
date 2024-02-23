@@ -200,6 +200,7 @@ enum StatusCmdType {
   diskio,
   battery,
   nvidia,
+  sensors,
   ;
 }
 
@@ -220,6 +221,7 @@ const _statusCmds = [
   'cat /proc/diskstats',
   'for f in /sys/class/power_supply/*/uevent; do cat "\$f"; echo; done',
   'nvidia-smi -q -x',
+  'sensors -j',
 ];
 
 enum BSDStatusCmdType {

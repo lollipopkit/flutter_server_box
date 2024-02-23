@@ -1,5 +1,6 @@
 import 'package:toolbox/data/model/server/battery.dart';
 import 'package:toolbox/data/model/server/nvdia.dart';
+import 'package:toolbox/data/model/server/sensors.dart';
 import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/system.dart';
 import 'package:toolbox/data/res/logger.dart';
@@ -138,6 +139,16 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
     req.ss.batteries.clear();
     if (batteries.isNotEmpty) {
       req.ss.batteries.addAll(batteries);
+    }
+  } catch (e, s) {
+    Loggers.parse.warning(e, s);
+  }
+
+  try {
+    final sensors = SensorItem.parse(StatusCmdType.sensors.find(segments));
+    if (sensors.isNotEmpty) {
+      req.ss.sensors.clear();
+      req.ss.sensors.addAll(sensors);
     }
   } catch (e, s) {
     Loggers.parse.warning(e, s);

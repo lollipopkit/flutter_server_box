@@ -12,6 +12,7 @@ abstract final class Defaults {
     'gpu',
     'disk',
     'net',
+    'sensor',
     'temp',
     'battery'
   ];

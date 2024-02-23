@@ -1294,6 +1294,12 @@ abstract class S {
   /// **'s'**
   String get second;
 
+  /// No description provided for @sensors.
+  ///
+  /// In en, this message translates to:
+  /// **'Sensor'**
+  String get sensors;
+
   /// No description provided for @sequence.
   ///
   /// In en, this message translates to:

@@ -10,6 +10,7 @@ import 'package:toolbox/data/model/server/cpu.dart';
 import 'package:toolbox/data/model/server/disk.dart';
 import 'package:toolbox/data/model/server/net_speed.dart';
 import 'package:toolbox/data/model/server/nvdia.dart';
+import 'package:toolbox/data/model/server/sensors.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/system.dart';
 import 'package:toolbox/data/res/store.dart';
@@ -47,6 +48,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       _buildGpuView,
       _buildDiskView,
       _buildNetView,
+      _buildSensors,
       _buildTemperature,
       _buildBatteries,
     ],
@@ -316,7 +318,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildGpuView(ServerStatus ss) {
-    if (ss.nvidia == null) return UIs.placeholder;
+    if (ss.nvidia == null || ss.nvidia?.isEmpty == true) return UIs.placeholder;
     final children = ss.nvidia?.map((e) => _buildGpuItem(e)).toList() ?? [];
     return CardX(
       child: ExpandTile(
@@ -331,10 +333,6 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   Widget _buildGpuItem(NvidiaSmiItem item) {
     final mem = item.memory;
     final processes = mem.processes;
-    final children = <Widget>[];
-    if (processes.isNotEmpty) {
-      children.addAll(processes.map((e) => _buildGpuProcessItem(e)));
-    }
     return ListTile(
       title: Text(item.name, style: UIs.text13),
       leading: Text(
@@ -661,6 +659,51 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSensors(ServerStatus ss) {
+    if (ss.sensors.isEmpty) return UIs.placeholder;
+    return CardX(
+      child: ExpandTile(
+        title: Text(l10n.sensors),
+        leading: const Icon(Icons.thermostat, size: 17),
+        childrenPadding: const EdgeInsets.only(bottom: 7),
+        initiallyExpanded: _getInitExpand(ss.sensors.length, 3),
+        children: ss.sensors.map(_buildSensorItem).toList(),
+      ),
+    );
+  }
+
+  Widget _buildSensorItem(SensorItem si) {
+    if (si.props.isEmpty) return UIs.placeholder;
+    return ListTile(
+      title: Text(si.device, style: UIs.text15),
+      subtitle: Column(
+        children: si.props.keys
+            .map((e) => _buildSensorDetailItem(e, si.props[e]))
+            .toList(),
+      ),
+    );
+  }
+
+  Widget _buildSensorDetailItem(String key, SensorTemp? st) {
+    if (st == null) return UIs.placeholder;
+    final text = () {
+      final current = st.current?.toStringAsFixed(1);
+      final max = st.max?.toStringAsFixed(1);
+      final min = st.min?.toStringAsFixed(1);
+      final currentText = current == null ? '' : '$current°C';
+      final maxText = max == null ? '' : ' | ${l10n.max}:$max';
+      final minText = min == null ? '' : ' | ${l10n.min}:$min';
+      return '$currentText$maxText$minText';
+    }();
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(key, style: UIs.text13),
+        Text(text, style: UIs.text13Grey),
+      ],
     );
   }
 

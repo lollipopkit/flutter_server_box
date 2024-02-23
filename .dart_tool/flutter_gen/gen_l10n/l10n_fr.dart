@@ -628,6 +628,9 @@ class SFr extends S {
   String get second => 's';
 
   @override
+  String get sensors => 'Capteur';
+
+  @override
   String get sequence => 'Séquence';
 
   @override

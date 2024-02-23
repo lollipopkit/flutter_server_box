@@ -258,5 +258,11 @@ class PropertyListenable<T> extends ValueListenable<T> {
   }
 
   @override
-  T get value => box.get(key, defaultValue: defaultValue);
+  T get value {
+    final val = box.get(key, defaultValue: defaultValue);
+    if (val == null || val is! T) {
+      return defaultValue!;
+    }
+    return val;
+  }
 }

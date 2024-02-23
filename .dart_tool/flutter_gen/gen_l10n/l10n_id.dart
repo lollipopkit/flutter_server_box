@@ -628,6 +628,9 @@ class SId extends S {
   String get second => 'S';
 
   @override
+  String get sensors => 'Sensor';
+
+  @override
   String get sequence => 'Urutan';
 
   @override

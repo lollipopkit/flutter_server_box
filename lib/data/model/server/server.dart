@@ -7,6 +7,7 @@ import 'package:toolbox/data/model/server/disk.dart';
 import 'package:toolbox/data/model/server/memory.dart';
 import 'package:toolbox/data/model/server/net_speed.dart';
 import 'package:toolbox/data/model/server/nvdia.dart';
+import 'package:toolbox/data/model/server/sensors.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/system.dart';
 import 'package:toolbox/data/model/server/temp.dart';
@@ -55,6 +56,7 @@ class ServerStatus {
   List<NvidiaSmiItem>? nvidia;
   final List<Battery> batteries = [];
   final Map<StatusCmdType, String> more = {};
+  final List<SensorItem> sensors = [];
 
   ServerStatus({
     required this.cpu,

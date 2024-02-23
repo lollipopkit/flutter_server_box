@@ -628,6 +628,9 @@ class SEn extends S {
   String get second => 's';
 
   @override
+  String get sensors => 'Sensor';
+
+  @override
   String get sequence => 'Sequence';
 
   @override
