@@ -563,6 +563,12 @@ class SZh extends S {
   String get port => '端口';
 
   @override
+  String get preferTemperatureDeviceList => '优先显示温度的列表';
+
+  @override
+  String get preferTemperatureDeviceListTip => '例如：设备支持显示温度的设备有[\'a\',\'b\']，此设置为[\'b\',\'c\']，则显示设备b的温度';
+
+  @override
   String get preview => '预览';
 
   @override
@@ -1442,6 +1448,12 @@ class SZhTw extends SZh {
 
   @override
   String get port => '端口';
+
+  @override
+  String get preferTemperatureDeviceList => '優先顯示溫度的列表';
+
+  @override
+  String get preferTemperatureDeviceListTip => '例如：支持顯示溫度的設備有[\'a\', \'b\']，此設置為[\'b\', \'c\']，則顯示設備b的溫度';
 
   @override
   String get preview => '預覽';

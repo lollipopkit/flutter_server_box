@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:toolbox/core/extension/listx.dart';
 import 'package:toolbox/data/res/logger.dart';
+import 'package:toolbox/data/res/store.dart';
 
 final class SensorAdaptor {
   final String raw;
@@ -99,6 +100,22 @@ final class SensorItem {
       }
     }
     return items;
+  }
+
+  static double? findPreferTempVal(List<SensorItem> items) {
+    if (items.isEmpty) {
+      return null;
+    }
+    final preferTemperatureDevs = Stores.setting.preferTemperatureDevs.fetch();
+    if (preferTemperatureDevs.isNotEmpty) {
+      for (final key in preferTemperatureDevs) {
+        final item = items.firstWhereOrNull((e) => e.device == key);
+        if (item != null) {
+          return item.props.values.firstOrNull?.current;
+        }
+      }
+    }
+    return items.first.props.values.firstOrNull?.current;
   }
 
   static const sensorsRaw = '''

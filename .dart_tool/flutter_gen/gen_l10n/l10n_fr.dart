@@ -563,6 +563,12 @@ class SFr extends S {
   String get port => 'Port';
 
   @override
+  String get preferTemperatureDeviceList => 'Liste d\'affichage prioritaire de la température';
+
+  @override
+  String get preferTemperatureDeviceListTip => 'Par exemple : Les appareils prenant en charge l\'affichage de la température sont [\'a\', \'b\'], cette configuration est [\'b\', \'c\'], donc afficher la température de l\'appareil b';
+
+  @override
   String get preview => 'Aperçu';
 
   @override

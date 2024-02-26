@@ -178,6 +178,8 @@
   "plzEnterHost": "请输入主机",
   "plzSelectKey": "请选择私钥",
   "port": "端口",
+  "preferTemperatureDeviceList": "优先显示温度的列表",
+  "preferTemperatureDeviceListTip": "例如：设备支持显示温度的设备有['a','b']，此设置为['b','c']，则显示设备b的温度",
   "preview": "预览",
   "primaryColorSeed": "主题色种子",
   "privateKey": "私钥",

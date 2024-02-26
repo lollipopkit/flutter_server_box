@@ -563,6 +563,12 @@ class SId extends S {
   String get port => 'Port';
 
   @override
+  String get preferTemperatureDeviceList => 'Daftar prioritas tampilan suhu';
+
+  @override
+  String get preferTemperatureDeviceListTip => 'Contohnya: Perangkat yang mendukung tampilan suhu adalah [\'a\', \'b\'], pengaturan ini adalah [\'b\', \'c\'], maka tampilkan suhu perangkat b';
+
+  @override
   String get preview => 'Pratinjau';
 
   @override

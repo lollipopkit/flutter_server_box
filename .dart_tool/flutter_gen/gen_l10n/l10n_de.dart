@@ -563,6 +563,12 @@ class SDe extends S {
   String get port => 'Port';
 
   @override
+  String get preferTemperatureDeviceList => 'Liste mit Priorität für die Anzeige der Temperatur';
+
+  @override
+  String get preferTemperatureDeviceListTip => 'Zum Beispiel: Geräte, die die Anzeige der Temperatur unterstützen, sind [\'a\', \'b\'], diese Einstellung ist [\'b\', \'c\'], daher wird die Temperatur des Geräts b angezeigt';
+
+  @override
   String get preview => 'Vorschau';
 
   @override

@@ -178,6 +178,8 @@
   "plzEnterHost": "Harap masukkan host.",
   "plzSelectKey": "Pilih kunci.",
   "port": "Port",
+  "preferTemperatureDeviceList": "Daftar prioritas tampilan suhu",
+  "preferTemperatureDeviceListTip": "Contohnya: Perangkat yang mendukung tampilan suhu adalah ['a', 'b'], pengaturan ini adalah ['b', 'c'], maka tampilkan suhu perangkat b",
   "preview": "Pratinjau",
   "primaryColorSeed": "Warna utama",
   "privateKey": "Kunci Pribadi",

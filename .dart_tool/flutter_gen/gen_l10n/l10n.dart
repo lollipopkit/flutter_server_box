@@ -1168,6 +1168,18 @@ abstract class S {
   /// **'Port'**
   String get port;
 
+  /// No description provided for @preferTemperatureDeviceList.
+  ///
+  /// In en, this message translates to:
+  /// **'List prioritizing the display of temperature'**
+  String get preferTemperatureDeviceList;
+
+  /// No description provided for @preferTemperatureDeviceListTip.
+  ///
+  /// In en, this message translates to:
+  /// **'For example: Devices supporting temperature display include [\'a\', \'b\'], this configuration is [\'b\', \'c\'], so display the temperature of device b'**
+  String get preferTemperatureDeviceListTip;
+
   /// No description provided for @preview.
   ///
   /// In en, this message translates to:

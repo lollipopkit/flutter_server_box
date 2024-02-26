@@ -563,6 +563,12 @@ class SEn extends S {
   String get port => 'Port';
 
   @override
+  String get preferTemperatureDeviceList => 'List prioritizing the display of temperature';
+
+  @override
+  String get preferTemperatureDeviceListTip => 'For example: Devices supporting temperature display include [\'a\', \'b\'], this configuration is [\'b\', \'c\'], so display the temperature of device b';
+
+  @override
   String get preview => 'Preview';
 
   @override

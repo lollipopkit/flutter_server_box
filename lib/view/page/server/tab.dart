@@ -12,6 +12,7 @@ import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
+import 'package:toolbox/data/model/server/sensors.dart';
 import 'package:toolbox/data/model/server/try_limiter.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
@@ -393,12 +394,6 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildTopRightText(ServerStatus ss, ServerState cs) {
-    final topRightStr = _getTopRightStr(
-      cs,
-      ss.temps.first,
-      ss.more[StatusCmdType.uptime] ?? '',
-      ss.err,
-    );
     if (cs == ServerState.failed && ss.err != null) {
       return GestureDetector(
         onTap: () => _showFailReason(ss),
@@ -408,6 +403,7 @@ class _ServerPageState extends State<ServerPage>
         ),
       );
     }
+    final topRightStr = _getTopRightStr(ss, cs);
     return Text(
       topRightStr,
       style: UIs.text13Grey,
@@ -549,19 +545,21 @@ class _ServerPageState extends State<ServerPage>
           _tag == null || (pro.pick(id: e)?.spi.tags?.contains(_tag) ?? false))
       .toList();
 
-  String _getTopRightStr(
-    ServerState cs,
-    double? temp,
-    String upTime,
-    String? failedInfo,
-  ) {
+  String _getTopRightStr(ServerStatus ss, ServerState cs) {
     switch (cs) {
       case ServerState.disconnected:
         return l10n.disconnected;
       case ServerState.finished:
-        final tempStr = temp == null ? '' : '${temp.toStringAsFixed(1)}°C';
+        final temp = ss.temps.first;
+        final sensorTemp = SensorItem.findPreferTempVal(ss.sensors);
+        final tempStr = switch ((temp, sensorTemp)) {
+          (_, final double val) => '${val.toStringAsFixed(1)}°C',
+          (final double val, _) => '${val.toStringAsFixed(1)}°C',
+          _ => null,
+        };
+        final upTime = ss.more[StatusCmdType.uptime];
         final items = [tempStr, upTime];
-        final str = items.where((element) => element.isNotEmpty).join(' | ');
+        final str = items.where((e) => e != null && e.isNotEmpty).join(' | ');
         if (str.isEmpty) return l10n.noResult;
         return str;
       case ServerState.loading:
@@ -571,10 +569,7 @@ class _ServerPageState extends State<ServerPage>
       case ServerState.connecting:
         return l10n.serverTabConnecting;
       case ServerState.failed:
-        if (failedInfo == null) {
-          return l10n.serverTabFailed;
-        }
-        return failedInfo;
+        return ss.err ?? l10n.serverTabFailed;
     }
   }
 

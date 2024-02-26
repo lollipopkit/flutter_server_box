@@ -178,6 +178,8 @@
   "plzEnterHost": "Please enter host.",
   "plzSelectKey": "Please select a key.",
   "port": "Port",
+  "preferTemperatureDeviceList": "List prioritizing the display of temperature",
+  "preferTemperatureDeviceListTip": "For example: Devices supporting temperature display include ['a', 'b'], this configuration is ['b', 'c'], so display the temperature of device b",
   "preview": "Preview",
   "primaryColorSeed": "Primary color seed",
   "privateKey": "Private Key",

@@ -1,3 +1,5 @@
+import 'package:toolbox/data/res/store.dart';
+
 class Temperatures {
   final Map<String, double> _map = {};
 
@@ -35,8 +37,16 @@ class Temperatures {
     if (_map.isEmpty) {
       return null;
     }
-    for (final key in _map.keys) {
-      if (cpuTempReg.hasMatch(key)) {
+    final preferTemperatureDevs = Stores.setting.preferTemperatureDevs.fetch();
+    if (preferTemperatureDevs.isNotEmpty) {
+      for (final key in preferTemperatureDevs) {
+        if (_map.containsKey(key)) {
+          return _map[key];
+        }
+      }
+    }
+    for (final key in _cpuTemp) {
+      if (_map.containsKey(key)) {
         return _map[key];
       }
     }
@@ -45,5 +55,5 @@ class Temperatures {
 }
 
 /// soc: mobile phone
-/// cpu_thermal / x86_pkg_temp: x86
-final cpuTempReg = RegExp(r'(x86_pkg_temp|cpu_thermal|soc)');
+/// cpu_thermal / x86_pkg_temp / coretemp / zenpower: x86
+const _cpuTemp = ['x86_pkg_temp', 'coretemp', 'zenpower', 'cpu_thermal', 'soc'];
