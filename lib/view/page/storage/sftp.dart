@@ -406,9 +406,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       SftpReqType.download,
     );
     Pros.sftp.add(req, completer: completer);
-    context.showLoadingDialog();
-    await completer.future;
-    context.pop();
+    await context.showLoadingDialog(fn: () => completer.future);
 
     final result = await AppRoute.editor(path: localPath).go<bool>(context);
     if (result != null && result) {
@@ -471,19 +469,18 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         TextButton(
           onPressed: () async {
             context.pop();
-            context.showLoadingDialog();
-            final remotePath = _getRemotePath(file);
             try {
-              if (useRmr) {
-                await _client!.run('rm -r "$remotePath"');
-              } else if (file.attr.isDirectory) {
-                await _status.client!.rmdir(remotePath);
-              } else {
-                await _status.client!.remove(remotePath);
-              }
-              context.pop();
+              await context.showLoadingDialog(fn: () async {
+                final remotePath = _getRemotePath(file);
+                if (useRmr) {
+                  await _client!.run('rm -r "$remotePath"');
+                } else if (file.attr.isDirectory) {
+                  await _status.client!.rmdir(remotePath);
+                } else {
+                  await _status.client!.remove(remotePath);
+                }
+              });
             } catch (e) {
-              context.pop();
               context.showRoundDialog(
                 title: Text(l10n.error),
                 child: Text(e.toString()),
@@ -574,9 +571,8 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
             }
             context.pop();
             final path = '${_status.path!.path}/${textController.text}';
-            context.showLoadingDialog();
-            await _client!.run('touch "$path"');
-            context.pop();
+            await context.showLoadingDialog(
+                fn: () => _client!.run('touch "$path"'));
             _listDir();
           },
           child: Text(l10n.ok, style: UIs.textRed),
@@ -640,9 +636,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       );
       return;
     }
-    context.showLoadingDialog();
-    await _client?.run(cmd);
-    context.pop();
+    await context.showLoadingDialog(fn: () async => _client?.run(cmd));
     _listDir();
   }
 
@@ -657,67 +651,65 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
   /// Only return true if the path is changed
   Future<bool> _listDir() async {
-    // Allow dismiss, because may this op will take a long time
-    context.showLoadingDialog(barrierDismiss: true);
-    if (_status.client == null) {
-      final sftpc = await _client?.sftp();
-      _status.client = sftpc;
-    }
-    try {
-      final listPath = _status.path?.path ?? '/';
-      final fs = await _status.client?.listdir(listPath);
-      if (fs == null) {
-        return false;
-      }
-      fs.sort((a, b) => a.filename.compareTo(b.filename));
+    return context.showLoadingDialog(
+      fn: () async {
+        _status.client ??= await _client?.sftp();
+        try {
+          final listPath = _status.path?.path ?? '/';
+          final fs = await _status.client?.listdir(listPath);
+          if (fs == null) {
+            return false;
+          }
+          fs.sort((a, b) => a.filename.compareTo(b.filename));
 
-      /// Issue #97
-      /// In order to compatible with the Synology NAS
-      /// which not has '.' and '..' in listdir
-      if (fs.isNotEmpty && fs.first.filename == '.') {
-        fs.removeAt(0);
-      }
+          /// Issue #97
+          /// In order to compatible with the Synology NAS
+          /// which not has '.' and '..' in listdir
+          if (fs.isNotEmpty && fs.first.filename == '.') {
+            fs.removeAt(0);
+          }
 
-      /// Issue #96
-      /// Due to [WillPopScope] added in this page
-      /// There is no need to keep '..' folder in listdir
-      /// So remove it
-      if (fs.isNotEmpty && fs.first.filename == '..') {
-        fs.removeAt(0);
-      }
-      if (mounted) {
-        setState(() {
-          _status.files = fs;
-        });
-        context.pop();
+          /// Issue #96
+          /// Due to [WillPopScope] added in this page
+          /// There is no need to keep '..' folder in listdir
+          /// So remove it
+          if (fs.isNotEmpty && fs.first.filename == '..') {
+            fs.removeAt(0);
+          }
+          if (mounted) {
+            setState(() {
+              _status.files = fs;
+            });
 
-        // Only update history when success
-        if (Stores.setting.sftpOpenLastPath.fetch()) {
-          Stores.history.sftpLastPath.put(widget.spi.id, listPath);
+            // Only update history when success
+            if (Stores.setting.sftpOpenLastPath.fetch()) {
+              Stores.history.sftpLastPath.put(widget.spi.id, listPath);
+            }
+
+            return true;
+          }
+          return false;
+        } catch (e, trace) {
+          Loggers.app.warning('List dir failed', e, trace);
+          await _backward();
+          Future.delayed(
+            const Duration(milliseconds: 177),
+            () => context.showRoundDialog(
+              title: Text(l10n.error),
+              child: Text(e.toString()),
+              actions: [
+                TextButton(
+                  onPressed: () => context.pop(),
+                  child: Text(l10n.ok),
+                )
+              ],
+            ),
+          );
+          return false;
         }
-
-        return true;
-      }
-      return false;
-    } catch (e, trace) {
-      context.pop();
-      Loggers.app.warning('List dir failed', e, trace);
-      await _backward();
-      Future.delayed(
-        const Duration(milliseconds: 177),
-        () => context.showRoundDialog(
-          title: Text(l10n.error),
-          child: Text(e.toString()),
-          actions: [
-            TextButton(
-              onPressed: () => context.pop(),
-              child: Text(l10n.ok),
-            )
-          ],
-        ),
-      );
-      return false;
-    }
+      },
+      barrierDismiss: true,
+    );
   }
 
   Future<void> _backward() async {

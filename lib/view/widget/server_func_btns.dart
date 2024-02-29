@@ -223,7 +223,8 @@ bool _checkClient(BuildContext context, String id) {
 
 Future<void> _onPkg(BuildContext context, ServerPrivateInfo spi) async {
   final server = spi.server;
-  if (server == null) {
+  final client = server?.client;
+  if (server == null || client == null) {
     context.showSnackBar(l10n.noClient);
     return;
   }
@@ -232,42 +233,43 @@ Future<void> _onPkg(BuildContext context, ServerPrivateInfo spi) async {
     context.showSnackBar(l10n.noResult);
     return;
   }
+
   final pkg = PkgManager.fromDist(sys.dist);
+  if (pkg == null) {
+    context.showSnackBar('Unsupported dist: $sys');
+    return;
+  }
 
   // Update pkg list
-  context.showLoadingDialog();
-  final updateCmd = pkg?.update;
-  if (updateCmd != null) {
-    await server.client!.execWithPwd(
-      updateCmd,
-      context: context,
-    );
-  }
-  context.pop();
+  await context.showLoadingDialog(
+    fn: () async {
+      final updateCmd = pkg.update;
+      if (updateCmd != null) {
+        await client.execWithPwd(updateCmd, context: context);
+      }
+    },
+    barrierDismiss: true,
+  );
 
-  final listCmd = pkg?.listUpdate;
+  final listCmd = pkg.listUpdate;
   if (listCmd == null) {
     context.showSnackBar('Unsupported dist: $sys');
     return;
   }
 
   // Get upgrade list
-  context.showLoadingDialog();
-  final result = await server.client?.run(listCmd).string;
-  context.pop();
-  if (result == null) {
-    context.showSnackBar(l10n.noResult);
-    return;
-  }
-  final list = pkg?.updateListRemoveUnused(result.split('\n'));
-  final upgradeable = list?.map((e) => UpgradePkgInfo(e, pkg)).toList();
-  if (upgradeable == null || upgradeable.isEmpty) {
+  final result = await context.showLoadingDialog(fn: () async {
+    return await client.run(listCmd).string;
+  });
+  final list = pkg.updateListRemoveUnused(result.split('\n'));
+  final upgradeable = list.map((e) => UpgradePkgInfo(e, pkg)).toList();
+  if (upgradeable.isEmpty) {
     context.showSnackBar(l10n.noUpdateAvailable);
     return;
   }
   final args = upgradeable.map((e) => e.package).join(' ');
   final isSU = server.spi.user == 'root';
-  final upgradeCmd = isSU ? pkg?.upgrade(args) : 'sudo ${pkg?.upgrade(args)}';
+  final upgradeCmd = isSU ? pkg.upgrade(args) : 'sudo ${pkg.upgrade(args)}';
 
   // Confirm upgrade
   final gotoUpgrade = await context.showRoundDialog<bool>(

@@ -306,10 +306,13 @@ class ServerProvider extends ChangeNotifier {
       // Write script to server
       // by ssh
       try {
-        await s.client?.runForOutput(ShellFunc.installShellCmd,
-            action: (session) async {
-          session.stdin.add(ShellFunc.allScript.uint8List);
-        }).string;
+        await s.client?.runForOutput(
+          ShellFunc.installShellCmd,
+          action: (session) async {
+            session.stdin.add(ShellFunc.allScript.uint8List);
+            session.stdin.close();
+          },
+        );
       } on SSHAuthAbortError catch (e) {
         TryLimiter.inc(sid);
         s.status.err = e.toString();
@@ -387,7 +390,7 @@ class ServerProvider extends ChangeNotifier {
     if (!systemType.isSegmentsLenMatch(segments.length)) {
       TryLimiter.inc(sid);
       s.status.err =
-          'Segments not match: expect ${systemType.segmentsLen}, got ${segments.length}';
+          'Segments not match: expect ${systemType.segmentsLen}, got ${segments.length}, raw:\n\n$raw';
       _setServerState(s, ServerState.failed);
       return;
     }

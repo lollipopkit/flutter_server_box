@@ -72,11 +72,8 @@ class _ContainerPageState extends State<ContainerPage> {
               title: TwoLineText(up: l10n.container, down: widget.spi.name),
               actions: [
                 IconButton(
-                  onPressed: () async {
-                    context.showLoadingDialog();
-                    await _container.refresh();
-                    context.pop();
-                  },
+                  onPressed: () =>
+                      context.showLoadingDialog(fn: () => _container.refresh()),
                   icon: const Icon(Icons.refresh),
                 )
               ],
@@ -393,9 +390,10 @@ class _ContainerPageState extends State<ContainerPage> {
         TextButton(
           onPressed: () async {
             context.pop();
-            context.showLoadingDialog();
-            final result = await _container.run(cmd);
-            context.pop();
+
+            final result = await context.showLoadingDialog(
+              fn: () => _container.run(cmd),
+            );
             if (result != null) {
               context.showSnackBar(result.message ?? l10n.unknownError);
             }
@@ -506,9 +504,10 @@ class _ContainerPageState extends State<ContainerPage> {
             TextButton(
               onPressed: () async {
                 context.pop();
-                context.showLoadingDialog();
-                final result = await _container.delete(id, force);
-                context.pop();
+
+                final result = await context.showLoadingDialog(
+                  fn: () => _container.delete(id, force),
+                );
                 if (result != null) {
                   context.showRoundDialog(
                     title: Text(l10n.error),
@@ -522,9 +521,9 @@ class _ContainerPageState extends State<ContainerPage> {
         );
         break;
       case ContainerMenu.start:
-        context.showLoadingDialog();
-        final result = await _container.start(id);
-        context.pop();
+        final result = await context.showLoadingDialog(
+          fn: () => _container.start(id),
+        );
         if (result != null) {
           context.showRoundDialog(
             title: Text(l10n.error),
@@ -533,9 +532,9 @@ class _ContainerPageState extends State<ContainerPage> {
         }
         break;
       case ContainerMenu.stop:
-        context.showLoadingDialog();
-        final result = await _container.stop(id);
-        context.pop();
+        final result = await context.showLoadingDialog(
+          fn: () => _container.stop(id),
+        );
         if (result != null) {
           context.showRoundDialog(
             title: Text(l10n.error),
@@ -544,9 +543,9 @@ class _ContainerPageState extends State<ContainerPage> {
         }
         break;
       case ContainerMenu.restart:
-        context.showLoadingDialog();
-        final result = await _container.restart(id);
-        context.pop();
+        final result = await context.showLoadingDialog(
+          fn: () => _container.restart(id),
+        );
         if (result != null) {
           context.showRoundDialog(
             title: Text(l10n.error),

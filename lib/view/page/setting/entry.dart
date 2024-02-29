@@ -1161,6 +1161,7 @@ class _SettingPageState extends State<SettingPage> {
       _setting.preferTemperatureDevs.put(list);
       context.pop();
     }
+
     return ListTile(
       title: Text(l10n.preferTemperatureDeviceList),
       subtitle: Text(l10n.preferTemperatureDeviceListTip, style: UIs.textGrey),

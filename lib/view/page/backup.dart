@@ -231,9 +231,9 @@ class BackupPage extends StatelessWidget {
     }
 
     try {
-      context.showLoadingDialog();
-      final backup =
-          await Computer.shared.start(Backup.fromJsonString, text.trim());
+      final backup = await context.showLoadingDialog(
+        fn: () => Computer.shared.start(Backup.fromJsonString, text.trim()),
+      );
       if (backupFormatVersion != backup.version) {
         context.showSnackBar(l10n.backupVersionNotMatch);
         return;
@@ -261,8 +261,6 @@ class BackupPage extends StatelessWidget {
     } catch (e, trace) {
       Loggers.app.warning('Import backup failed', e, trace);
       context.showSnackBar(e.toString());
-    } finally {
-      context.pop();
     }
   }
 
@@ -388,9 +386,10 @@ class BackupPage extends StatelessWidget {
     }
 
     try {
-      context.showLoadingDialog();
-      final backup =
-          await Computer.shared.start(Backup.fromJsonString, text.trim());
+      final backup = await context.showLoadingDialog(
+        fn: () => Computer.shared.start(Backup.fromJsonString, text.trim()),
+      );
+      
       if (backupFormatVersion != backup.version) {
         context.showSnackBar(l10n.backupVersionNotMatch);
         return;
@@ -418,8 +417,6 @@ class BackupPage extends StatelessWidget {
     } catch (e, trace) {
       Loggers.app.warning('Import backup failed', e, trace);
       context.showSnackBar(e.toString());
-    } finally {
-      context.pop();
     }
   }
 }

@@ -108,59 +108,60 @@ class _ServerEditPageState extends State<ServerEditPage> {
   PreferredSizeWidget _buildAppBar() {
     return CustomAppBar(
       title: Text(l10n.edit, style: UIs.text18),
-      actions: widget.spi != null
-          ? [
-              IconButton(
-                onPressed: () {
-                  var delScripts = false;
-                  context.showRoundDialog(
-                    title: Text(l10n.attention),
-                    child: StatefulBuilder(builder: (ctx, setState) {
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(l10n.askContinue(
-                            '${l10n.delete} ${l10n.server}(${widget.spi!.name})',
-                          )),
-                          UIs.height13,
-                          if (widget.spi?.server?.canViewDetails ?? false)
-                            CheckboxListTile(
-                              value: delScripts,
-                              onChanged: (_) => setState(
-                                () => delScripts = !delScripts,
-                              ),
-                              controlAffinity: ListTileControlAffinity.leading,
-                              title: Text(l10n.deleteScripts),
-                              tileColor: Colors.transparent,
-                              contentPadding: EdgeInsets.zero,
-                            )
-                        ],
-                      );
-                    }),
-                    actions: [
-                      TextButton(
-                        onPressed: () async {
-                          context.pop();
-                          if (delScripts) {
-                            context.showLoadingDialog();
-                            const cmd =
-                                'rm ${ShellFunc.srvBoxDir}/mobile_v*.sh';
-                            await widget.spi?.server?.client?.run(cmd);
-                            context.pop();
-                          }
-                          Pros.server.delServer(widget.spi!.id);
-                          context.pop(true);
-                        },
-                        child: Text(l10n.ok, style: UIs.textRed),
-                      ),
-                    ],
+      actions: widget.spi != null ? [_buildDelBtn()] : null,
+    );
+  }
+
+  Widget _buildDelBtn() {
+    return IconButton(
+      onPressed: () {
+        var delScripts = false;
+        context.showRoundDialog(
+          title: Text(l10n.attention),
+          child: StatefulBuilder(builder: (ctx, setState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.askContinue(
+                  '${l10n.delete} ${l10n.server}(${widget.spi!.name})',
+                )),
+                UIs.height13,
+                if (widget.spi?.server?.canViewDetails ?? false)
+                  CheckboxListTile(
+                    value: delScripts,
+                    onChanged: (_) => setState(
+                      () => delScripts = !delScripts,
+                    ),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    title: Text(l10n.deleteScripts),
+                    tileColor: Colors.transparent,
+                    contentPadding: EdgeInsets.zero,
+                  )
+              ],
+            );
+          }),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                context.pop();
+                if (delScripts) {
+                  await context.showLoadingDialog(
+                    fn: () async {
+                      const cmd = 'rm ${ShellFunc.srvBoxDir}/mobile_v*.sh';
+                      return widget.spi?.server?.client?.run(cmd);
+                    },
                   );
-                },
-                icon: const Icon(Icons.delete),
-              ),
-            ]
-          : null,
+                }
+                Pros.server.delServer(widget.spi!.id);
+                context.pop(true);
+              },
+              child: Text(l10n.ok, style: UIs.textRed),
+            ),
+          ],
+        );
+      },
+      icon: const Icon(Icons.delete),
     );
   }
 
