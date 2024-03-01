@@ -17,12 +17,12 @@ abstract final class ICloud {
 
   /// Upload file to iCloud
   ///
-  /// - [relativePath] is the path relative to [docDir],
+  /// - [relativePath] is the path relative to [Paths.doc],
   /// must not starts with `/`
   /// - [localPath] has higher priority than [relativePath], but only apply
   /// to the local path instead of iCloud path
   ///
-  /// Return `null` if upload success, `ICloudErr` otherwise
+  /// Return [null] if upload success, [ICloudErr] otherwise
   static Future<ICloudErr?> upload({
     required String relativePath,
     String? localPath,
@@ -70,12 +70,12 @@ abstract final class ICloud {
 
   /// Download file from iCloud
   ///
-  /// - [relativePath] is the path relative to [docDir],
+  /// - [relativePath] is the path relative to [Paths.doc],
   /// must not starts with `/`
   /// - [localPath] has higher priority than [relativePath], but only apply
   /// to the local path instead of iCloud path
   ///
-  /// Return `null` if upload success, `ICloudErr` otherwise
+  /// Return `null` if upload success, [ICloudErr] otherwise
   static Future<ICloudErr?> download({
     required String relativePath,
     String? localPath,
@@ -105,12 +105,12 @@ abstract final class ICloud {
 
   /// Sync file between iCloud and local
   ///
-  /// - [relativePath] is the path relative to [docDir],
+  /// - [relativePaths] is the path relative to [Paths.doc],
   /// must not starts with `/`
-  /// - [bakSuffix] is the suffix of backup file, default to [null].
-  /// All files downloaded from cloud will be suffixed with [bakSuffix].
+  /// - [bakPrefix] is the suffix of backup file, default to [null].
+  /// All files downloaded from cloud will be suffixed with [bakPrefix].
   ///
-  /// Return `null` if upload success, `ICloudErr` otherwise
+  /// Return `null` if upload success, [ICloudErr] otherwise
   static Future<SyncResult<String, ICloudErr>> syncFiles({
     required Iterable<String> relativePaths,
     String? bakPrefix,

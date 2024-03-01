@@ -105,7 +105,6 @@ class _ServerPageState extends State<ServerPage>
     if (isDesktop) return child;
 
     return RefreshIndicator(
-      key: ServerProvider.refreshKey,
       onRefresh: () async => await Pros.server.refresh(onlyFailed: true),
       child: child,
     );

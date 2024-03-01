@@ -149,8 +149,6 @@ class ServerProvider extends ChangeNotifier {
     return await _getData(s.spi);
   }
 
-  static final refreshKey = GlobalKey<RefreshIndicatorState>();
-
   Future<void> startAutoRefresh() async {
     var duration = Stores.setting.serverStatusUpdateInterval.fetch();
     stopAutoRefresh();
@@ -159,7 +157,6 @@ class ServerProvider extends ChangeNotifier {
       duration = 3;
       Loggers.app.warning('Invalid duration: $duration, use default 3');
     }
-    refreshKey.currentState?.show();
     _timer = Timer.periodic(Duration(seconds: duration), (_) async {
       await refresh();
     });
