@@ -389,7 +389,7 @@ class BackupPage extends StatelessWidget {
       final backup = await context.showLoadingDialog(
         fn: () => Computer.shared.start(Backup.fromJsonString, text.trim()),
       );
-      
+
       if (backupFormatVersion != backup.version) {
         context.showSnackBar(l10n.backupVersionNotMatch);
         return;

@@ -946,6 +946,12 @@ abstract class S {
   /// **'Mission'**
   String get mission;
 
+  /// No description provided for @more.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get more;
+
   /// No description provided for @moveOutServerFuncBtnsHelp.
   ///
   /// In en, this message translates to:

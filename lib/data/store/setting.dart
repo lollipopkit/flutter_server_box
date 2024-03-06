@@ -239,12 +239,16 @@ class SettingStore extends PersistentStore {
   /// Result: use x86pkg_temp's temperature as the temperature
   late final preferTemperatureDevs =
       listProperty('preferTemperatureDevs', <String>[]);
-  
+
   /// Use double column servers page on Desktop
   late final doubleColumnServersPage = property(
     'doubleColumnServersPage',
     true,
   );
+
+  /// Ignore local network device (eg: br-xxx, ovs-system...)
+  /// when building traffic view on server tab
+  late final ignoreLocalNet = property('ignoreLocalNetIface', true);
 
   // Never show these settings for users
   //

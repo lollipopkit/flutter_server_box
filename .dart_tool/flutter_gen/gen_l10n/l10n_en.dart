@@ -450,6 +450,9 @@ class SEn extends S {
   String get mission => 'Mission';
 
   @override
+  String get more => 'More';
+
+  @override
   String get moveOutServerFuncBtnsHelp => 'On: can be displayed below each card on the Server Tab page. Off: can be displayed at the top of the Server Details page.';
 
   @override

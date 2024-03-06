@@ -450,6 +450,9 @@ class SDe extends S {
   String get mission => 'Mission';
 
   @override
+  String get more => 'Mehr';
+
+  @override
   String get moveOutServerFuncBtnsHelp => 'Ein: kann unter jeder Karte auf der Registerkarte \"Server\" angezeigt werden. Aus: kann oben auf der Seite \"Serverdetails\" angezeigt werden.';
 
   @override

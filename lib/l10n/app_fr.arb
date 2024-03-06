@@ -141,6 +141,7 @@
   "maxRetryCountEqual0": "Réessayera encore et encore.",
   "min": "min",
   "mission": "Mission",
+  "more": "Plus",
   "moveOutServerFuncBtnsHelp": "Activé : peut être affiché sous chaque carte sur la page de l'onglet Serveur. Désactivé : peut être affiché en haut de la page Détails du serveur.",
   "ms": "ms",
   "name": "Nom",

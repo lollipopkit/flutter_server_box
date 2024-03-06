@@ -450,6 +450,9 @@ class SZh extends S {
   String get mission => '任务';
 
   @override
+  String get more => '更多';
+
+  @override
   String get moveOutServerFuncBtnsHelp => '开启：可以在服务器 Tab 页的每个卡片下方显示。关闭：在服务器详情页顶部显示。';
 
   @override
@@ -1338,6 +1341,9 @@ class SZhTw extends SZh {
 
   @override
   String get mission => '任務';
+
+  @override
+  String get more => '更多';
 
   @override
   String get moveOutServerFuncBtnsHelp => '開啟：可以在服務器 Tab 頁的每個卡片下方顯示。關閉：在服務器詳情頁頂部顯示。';

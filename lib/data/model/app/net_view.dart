@@ -1,6 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/data/model/server/server.dart';
+import 'package:toolbox/data/res/store.dart';
 
 part 'net_view.g.dart';
 
@@ -36,6 +37,7 @@ enum NetViewType {
   }
 
   (String, String) build(ServerStatus ss) {
+    final ignoreLocal = Stores.setting.ignoreLocalNet.fetch();
     switch (this) {
       case NetViewType.conn:
         return (
@@ -43,14 +45,26 @@ enum NetViewType {
           '${l10n.failed}:\n${ss.tcp.fail}',
         );
       case NetViewType.speed:
+        if (ignoreLocal) {
+          return (
+            '↓:\n${ss.netSpeed.cachedRealVals.speedIn}',
+            '↑:\n${ss.netSpeed.cachedRealVals.speedOut}',
+          );
+        }
         return (
-          '↓:\n${ss.netSpeed.speedIn(all: true)}',
-          '↑:\n${ss.netSpeed.speedOut(all: true)}',
+          '↓:\n${ss.netSpeed.speedIn()}',
+          '↑:\n${ss.netSpeed.speedOut()}',
         );
       case NetViewType.traffic:
+        if (ignoreLocal) {
+          return (
+            '↓:\n${ss.netSpeed.cachedRealVals.sizeIn}',
+            '↑:\n${ss.netSpeed.cachedRealVals.sizeOut}',
+          );
+        }
         return (
-          '↓:\n${ss.netSpeed.sizeIn(all: true)}',
-          '↑:\n${ss.netSpeed.sizeOut(all: true)}',
+          '↓:\n${ss.netSpeed.sizeIn()}',
+          '↑:\n${ss.netSpeed.sizeOut()}',
         );
     }
   }

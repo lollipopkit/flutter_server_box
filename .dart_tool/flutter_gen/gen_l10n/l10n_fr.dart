@@ -450,6 +450,9 @@ class SFr extends S {
   String get mission => 'Mission';
 
   @override
+  String get more => 'Plus';
+
+  @override
   String get moveOutServerFuncBtnsHelp => 'Activé : peut être affiché sous chaque carte sur la page de l\'onglet Serveur. Désactivé : peut être affiché en haut de la page Détails du serveur.';
 
   @override

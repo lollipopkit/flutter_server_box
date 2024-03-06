@@ -64,6 +64,11 @@ class Disk {
 class DiskIO extends TimeSeq<DiskIOPiece> {
   DiskIO(super.pre, super.now);
 
+  @override
+  void onUpdate() {
+    
+  }
+
   (double?, double?) _getSpeed(String dev) {
     final pres = this.pre.where(
           (element) => element.dev == dev.replaceFirst('/dev/', ''),

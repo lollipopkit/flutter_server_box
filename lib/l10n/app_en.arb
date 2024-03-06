@@ -141,6 +141,7 @@
   "maxRetryCountEqual0": "Will retry again and again.",
   "min": "min",
   "mission": "Mission",
+  "more": "More",
   "moveOutServerFuncBtnsHelp": "On: can be displayed below each card on the Server Tab page. Off: can be displayed at the top of the Server Details page.",
   "ms": "ms",
   "name": "Name",

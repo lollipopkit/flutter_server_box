@@ -180,18 +180,13 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildServer() {
     return Column(
       children: [
-        _buildKeepStatusWhenErr(),
         _buildServerFuncBtns(),
+        _buildNetViewType(),
         _buildServerSeq(),
         _buildServerDetailCardSeq(),
-        _buildNetViewType(),
-        _buildUpdateInterval(),
-        _buildMaxRetry(),
         //_buildDiskIgnorePath(),
         _buildDeleteServers(),
-        _buildTextScaler(),
-        _buildPreferTemperatureDeviceList(),
-        _buildDoubleColumnServersPage(),
+        _buildServerMore(),
       ].map((e) => CardX(child: e)).toList(),
     );
   }
@@ -1187,6 +1182,20 @@ class _SettingPageState extends State<SettingPage> {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildServerMore() {
+    return ExpandTile(
+      title: Text(l10n.more),
+      children: [
+        _buildTextScaler(),
+        _buildPreferTemperatureDeviceList(),
+        _buildKeepStatusWhenErr(),
+        _buildDoubleColumnServersPage(),
+        _buildUpdateInterval(),
+        _buildMaxRetry(),
+      ],
     );
   }
 }

@@ -141,6 +141,7 @@
   "maxRetryCountEqual0": "會無限重試",
   "min": "最小",
   "mission": "任務",
+  "more": "更多",
   "moveOutServerFuncBtnsHelp": "開啟：可以在服務器 Tab 頁的每個卡片下方顯示。關閉：在服務器詳情頁頂部顯示。",
   "ms": "毫秒",
   "name": "名稱",

@@ -5,6 +5,16 @@ import 'time_seq.dart';
 class Cpus extends TimeSeq<OneTimeCpuStatus> {
   Cpus(super.pre, super.now);
 
+  @override
+  void onUpdate() {
+    _coresCount = now.length;
+    _totalDelta = now[0].total - pre[0].total;
+    _user = _getUser();
+    _sys = _getSys();
+    _iowait = _getIowait();
+    _idle = _getIdle();
+  }
+
   double usedPercent({int coreIdx = 0}) {
     if (now.length != pre.length) return 0;
     final idleDelta = now[coreIdx].idle - pre[coreIdx].idle;
@@ -13,39 +23,42 @@ class Cpus extends TimeSeq<OneTimeCpuStatus> {
     return used.isNaN ? 0 : 100 - used * 100;
   }
 
-  int get coresCount => now.length;
+  int _coresCount = 0;
+  int get coresCount => _coresCount;
 
-  int get totalDelta => now[0].total - pre[0].total;
+  int _totalDelta = 0;
+  int get totalDelta => _totalDelta;
 
-  double get user {
+  double _user = 0;
+  double get user => _user;
+  double _getUser() {
     if (now.length != pre.length) return 0;
     final delta = now[0].user - pre[0].user;
     final used = delta / totalDelta;
     return used.isNaN ? 0 : used * 100;
   }
 
-  double get sys {
+  double _sys = 0;
+  double get sys => _sys;
+  double _getSys() {
     if (now.length != pre.length) return 0;
     final delta = now[0].sys - pre[0].sys;
     final used = delta / totalDelta;
     return used.isNaN ? 0 : used * 100;
   }
 
-  double get nice {
-    if (now.length != pre.length) return 0;
-    final delta = now[0].nice - pre[0].nice;
-    final used = delta / totalDelta;
-    return used.isNaN ? 0 : used * 100;
-  }
-
-  double get iowait {
+  double _iowait = 0;
+  double get iowait => _iowait;
+  double _getIowait() {
     if (now.length != pre.length) return 0;
     final delta = now[0].iowait - pre[0].iowait;
     final used = delta / totalDelta;
     return used.isNaN ? 0 : used * 100;
   }
 
-  double get idle => 100 - usedPercent();
+  double _idle = 0;
+  double get idle => _idle;
+  double _getIdle() => 100 - usedPercent();
 }
 
 class OneTimeCpuStatus extends TimeSeqIface<OneTimeCpuStatus> {
