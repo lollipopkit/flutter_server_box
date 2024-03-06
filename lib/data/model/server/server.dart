@@ -57,6 +57,7 @@ class ServerStatus {
   final List<Battery> batteries = [];
   final Map<StatusCmdType, String> more = {};
   final List<SensorItem> sensors = [];
+  DiskUsage? diskUsage;
 
   ServerStatus({
     required this.cpu,
@@ -70,6 +71,7 @@ class ServerStatus {
     required this.diskIO,
     this.err,
     this.nvidia,
+    this.diskUsage,
   });
 }
 

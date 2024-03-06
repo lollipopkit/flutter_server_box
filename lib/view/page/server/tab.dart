@@ -19,7 +19,6 @@ import 'package:toolbox/data/res/store.dart';
 
 import '../../../core/route.dart';
 import '../../../data/model/app/net_view.dart';
-import '../../../data/model/server/disk.dart';
 import '../../../data/model/server/server.dart';
 import '../../../data/model/server/server_private_info.dart';
 import '../../../data/provider/server.dart';
@@ -430,11 +429,10 @@ class _ServerPageState extends State<ServerPage>
     return ListenableBuilder(
       listenable: cardNoti,
       builder: (_, __) {
-        final rootDisk = findRootDisk(ss.disk);
         final isSpeed = cardNoti.value.diskIO ??
             !Stores.setting.serverTabPreferDiskAmount.fetch();
 
-        final (r, w) = ss.diskIO.getAllSpeed();
+        final (r, w) = ss.diskIO.cachedAllSpeed;
 
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 377),
@@ -442,8 +440,12 @@ class _ServerPageState extends State<ServerPage>
             return FadeTransition(opacity: animation, child: child);
           },
           child: _buildIOData(
-            isSpeed ? '${l10n.read}:\n$r' : 'Total:\n${rootDisk?.size.kb2Str}',
-            isSpeed ? '${l10n.write}:\n$w' : 'Used:\n${rootDisk?.usedPercent}%',
+            isSpeed
+                ? '${l10n.read}:\n$r'
+                : 'Total:\n${ss.diskUsage?.size.kb2Str}',
+            isSpeed
+                ? '${l10n.write}:\n$w'
+                : 'Used:\n${ss.diskUsage?.used.kb2Str}',
             onTap: () {
               cardNoti.value = cardNoti.value.copyWith(diskIO: !isSpeed);
             },

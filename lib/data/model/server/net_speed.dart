@@ -44,7 +44,7 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
 
   /// Issue #295
   /// Non-virtual network device prefix
-  static const List<String> realIfacePrefixs = ['eth', 'wlan', 'en', 'ww', 'wl'];
+  static const realIfacePrefixs = ['eth', 'wlan', 'en', 'ww', 'wl'];
 
   /// Cached non-virtual network device prefix
   final realIfaces = <String>[];
@@ -166,7 +166,8 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
     for (final item in split.sublist(2)) {
       try {
         final data = item.trim().split(':');
-        final device = data.first;
+        final device = data.firstOrNull;
+        if (device == null) continue;
         final bytes = data.last.trim().split(' ');
         bytes.removeWhere((element) => element == '');
         final bytesIn = BigInt.parse(bytes.first);

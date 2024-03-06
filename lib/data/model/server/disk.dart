@@ -1,3 +1,4 @@
+import 'package:toolbox/core/extension/listx.dart';
 import 'package:toolbox/core/extension/numx.dart';
 import 'package:toolbox/data/model/server/time_seq.dart';
 
@@ -20,12 +21,6 @@ class Disk {
     required this.avail,
   });
 
-  /// raw:
-  /// ```
-  /// Filesystem           1K-blocks      Used Available Use% Mounted on
-  /// overlay              959122528 154470540 755857572  17% /
-  /// tmpfs                    65536         0     65536   0% /dev
-  /// ```
   static List<Disk> parse(String raw) {
     final list = <Disk>[];
     final items = raw.split('\n');
@@ -66,22 +61,16 @@ class DiskIO extends TimeSeq<DiskIOPiece> {
 
   @override
   void onUpdate() {
-    
+    cachedAllSpeed = _getAllSpeed();
   }
 
   (double?, double?) _getSpeed(String dev) {
-    final pres = this.pre.where(
-          (element) => element.dev == dev.replaceFirst('/dev/', ''),
-        );
-    final nows = this.now.where(
-          (element) => element.dev == dev.replaceFirst('/dev/', ''),
-        );
-    if (pres.isEmpty || nows.isEmpty) return (null, null);
-    final pre = pres.first;
-    final now = nows.first;
-    final sectorsRead = now.sectorsRead - pre.sectorsRead;
-    final sectorsWrite = now.sectorsWrite - pre.sectorsWrite;
-    final time = now.time - pre.time;
+    final old = pre.firstWhereOrNull((e) => e.dev == '/dev/$dev');
+    final new_ = now.firstWhereOrNull((e) => e.dev == '/dev/$dev');
+    if (old == null || new_ == null) return (null, null);
+    final sectorsRead = new_.sectorsRead - old.sectorsRead;
+    final sectorsWrite = new_.sectorsWrite - old.sectorsWrite;
+    final time = new_.time - old.time;
     final read = sectorsRead / time * 512;
     final write = sectorsWrite / time * 512;
     return (read, write);
@@ -95,7 +84,8 @@ class DiskIO extends TimeSeq<DiskIOPiece> {
     return (read, write);
   }
 
-  (String?, String?) getAllSpeed() {
+  (String?, String?) cachedAllSpeed = (null, null);
+  (String?, String?) _getAllSpeed() {
     if (pre.isEmpty || now.isEmpty) return (null, null);
     var (read, write) = (0.0, 0.0);
     for (var pre in pre) {
@@ -108,18 +98,6 @@ class DiskIO extends TimeSeq<DiskIOPiece> {
     return (readStr, writeStr);
   }
 
-  // Raw:
-  //  254       0 vda 584193 186416 40419294 845790 5024458 2028159 92899586 6997559 0 5728372 8143590 0 0 0 0 2006112 300240
-  //  254       1 vda1 584029 186416 40412734 845668 5024453 2028159 92899586 6997558 0 5728264 7843226 0 0 0 0 0 0
-  //   11       0 sr0 36 0 280 49 0 0 0 0 0 56 49 0 0 0 0 0 0
-  //    7       0 loop0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-  //    7       1 loop1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-  //    7       2 loop2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-  //    7       3 loop3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-  //    7       4 loop4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-  //    7       5 loop5 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-  //    7       6 loop6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-  //    7       7 loop7 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
   static List<DiskIOPiece> parse(String raw, int time) {
     final lines = raw.split('\n');
     if (lines.isEmpty) return [];
@@ -163,25 +141,29 @@ class DiskIOPiece extends TimeSeqIface<DiskIOPiece> {
   bool same(DiskIOPiece other) => dev == other.dev;
 }
 
-/// Issue 88
-///
-/// Due to performance issues,
-/// if there is no `Disk.loc == '/' || Disk.loc == '/sysroot'`,
-/// return the first [Disk] of [disks].
-///
-/// If we find out the biggest [Disk] of [disks],
-/// the fps may lower than 60.
-Disk? findRootDisk(List<Disk> disks) {
-  if (disks.isEmpty) return null;
-  final roots = disks.where((element) => element.mount == '/');
-  if (roots.isEmpty) {
-    final sysRoots = disks.where((element) => element.mount == '/sysroot');
-    if (sysRoots.isEmpty) {
-      return disks.first;
-    } else {
-      return sysRoots.first;
+class DiskUsage {
+  final BigInt used;
+  final BigInt size;
+
+  DiskUsage({
+    required this.used,
+    required this.size,
+  });
+
+  double get usedPercent => used / size * 100;
+
+  /// Find all devs, add their used and size
+  static DiskUsage parse(List<Disk> disks) {
+    final devs = <String>{};
+    var used = BigInt.zero;
+    var size = BigInt.zero;
+    for (var disk in disks) {
+      if (!disk.dev.startsWith('/dev')) continue;
+      if (devs.contains(disk.dev)) continue;
+      devs.add(disk.dev);
+      used += disk.used;
+      size += disk.size;
     }
-  } else {
-    return roots.first;
+    return DiskUsage(used: used, size: size);
   }
 }
