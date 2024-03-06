@@ -70,7 +70,7 @@ class Backup {
 
   Backup.loadFromStore()
       : version = backupFormatVersion,
-        date = DateTime.now().toString().split('.').first,
+        date = DateTime.now().toString().split('.').firstOrNull ?? '',
         spis = Stores.server.fetch(),
         snippets = Stores.snippet.fetch(),
         keys = Stores.key.fetch(),

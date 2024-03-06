@@ -50,7 +50,7 @@ class Temperatures {
         return _map[key];
       }
     }
-    return _map.values.first;
+    return _map.values.firstOrNull;
   }
 }
 

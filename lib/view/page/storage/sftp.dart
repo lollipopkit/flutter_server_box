@@ -665,7 +665,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           /// Issue #97
           /// In order to compatible with the Synology NAS
           /// which not has '.' and '..' in listdir
-          if (fs.isNotEmpty && fs.first.filename == '.') {
+          if (fs.isNotEmpty && fs.firstOrNull?.filename == '.') {
             fs.removeAt(0);
           }
 
@@ -673,7 +673,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           /// Due to [WillPopScope] added in this page
           /// There is no need to keep '..' folder in listdir
           /// So remove it
-          if (fs.isNotEmpty && fs.first.filename == '..') {
+          if (fs.isNotEmpty && fs.firstOrNull?.filename == '..') {
             fs.removeAt(0);
           }
           if (mounted) {

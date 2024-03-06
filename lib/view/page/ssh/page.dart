@@ -287,7 +287,8 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
         );
         if (snippets == null || snippets.isEmpty) return;
 
-        final snippet = snippets.first;
+        final snippet = snippets.firstOrNull;
+        if (snippet == null) return;
         _terminal.textInput(snippet.script);
         _terminal.keyInput(TerminalKey.enter);
         break;

@@ -92,7 +92,8 @@ class OneTimeCpuStatus extends TimeSeqIface<OneTimeCpuStatus> {
 
     for (var item in raw.split('\n')) {
       if (item == '') break;
-      final id = item.split(' ').first;
+      final id = item.split(' ').firstOrNull;
+      if (id == null) continue;
       final matches = item.replaceFirst(id, '').trim().split(' ');
       cpus.add(
         OneTimeCpuStatus(

@@ -135,8 +135,8 @@ void _onTapMoreBtns(
         name: (e) => e.name,
       );
       if (snippets == null || snippets.isEmpty) return;
-      final snippet = snippets.first;
-
+      final snippet = snippets.firstOrNull;
+      if (snippet == null) return;
       AppRoute.ssh(spi: spi, initCmd: snippet.fmtWith(spi)).checkGo(
         context: context,
         check: () => _checkClient(context, spi.id),

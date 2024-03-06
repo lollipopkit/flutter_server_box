@@ -148,7 +148,7 @@ class _PingPageState extends State<PingPage>
     if (result.results == null || result.results!.isEmpty) {
       return '$ip - ${l10n.noResult}';
     }
-    final ttl = result.results?.first.ttl ?? unknown;
+    final ttl = result.results?.firstOrNull?.ttl ?? unknown;
     final loss = result.statistic?.loss ?? unknown;
     final min = result.statistic?.min ?? unknown;
     final max = result.statistic?.max ?? unknown;
