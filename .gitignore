@@ -50,8 +50,10 @@ app.*.map.json
 test.dart
 
 # Keep generated l10n files
-/.dart_tool/*
-!/.dart_tool/flutter_gen
+# /.dart_tool/*
+# !/.dart_tool/flutter_gen
+
+.dart_tool
 
 # Linux release
 ServerBox.AppDir
