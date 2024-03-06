@@ -222,6 +222,9 @@ class SZh extends S {
   String get doubleColumnMode => '双列模式';
 
   @override
+  String get doubleColumnTip => '此选项仅开启功能，实际是否能开启还取决于设备的宽度';
+
+  @override
   String get download => '下载';
 
   @override
@@ -1107,6 +1110,9 @@ class SZhTw extends SZh {
 
   @override
   String get doubleColumnMode => '雙列模式';
+
+  @override
+  String get doubleColumnTip => '此選項僅開啟功能，實際是否能開啟還取決於設備的寬度';
 
   @override
   String get download => '下載';

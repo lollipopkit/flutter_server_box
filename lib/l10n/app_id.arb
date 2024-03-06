@@ -69,6 +69,7 @@
   "dockerStatusRunningAndStoppedFmt": "{runningCount} running, {stoppedCount} container stopped.",
   "dockerStatusRunningFmt": "{count} wadah berjalan.",
   "doubleColumnMode": "Mode kolom ganda",
+  "doubleColumnTip": "Opsi ini hanya mengaktifkan fitur, apakah itu benar-benar dapat diaktifkan tergantung pada lebar perangkat",
   "download": "Unduh",
   "edit": "Edit",
   "editVirtKeys": "Edit kunci virtual",

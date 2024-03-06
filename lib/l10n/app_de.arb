@@ -69,6 +69,7 @@
   "dockerStatusRunningAndStoppedFmt": "{runningCount} aktiv, {stoppedCount} container gestoppt.",
   "dockerStatusRunningFmt": "{count} Container aktiv",
   "doubleColumnMode": "Doppelspaltiger Modus",
+  "doubleColumnTip": "Diese Option aktiviert nur die Funktion, ob sie tatsächlich aktiviert werden kann, hängt auch von der Breite des Geräts ab",
   "download": "Download",
   "edit": "Bearbeiten",
   "editVirtKeys": "Virtuelle Tasten bearbeiten",

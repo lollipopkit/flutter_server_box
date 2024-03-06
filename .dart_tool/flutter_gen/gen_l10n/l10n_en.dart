@@ -222,6 +222,9 @@ class SEn extends S {
   String get doubleColumnMode => 'Double column mode';
 
   @override
+  String get doubleColumnTip => 'This option only enables the feature, whether it can actually be enabled depends on the width of the device';
+
+  @override
   String get download => 'Download';
 
   @override

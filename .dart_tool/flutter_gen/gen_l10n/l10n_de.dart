@@ -222,6 +222,9 @@ class SDe extends S {
   String get doubleColumnMode => 'Doppelspaltiger Modus';
 
   @override
+  String get doubleColumnTip => 'Diese Option aktiviert nur die Funktion, ob sie tatsächlich aktiviert werden kann, hängt auch von der Breite des Geräts ab';
+
+  @override
   String get download => 'Download';
 
   @override

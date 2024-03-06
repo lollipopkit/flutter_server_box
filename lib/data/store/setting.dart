@@ -43,12 +43,6 @@ class SettingStore extends PersistentStore {
   late final diskIgnorePath =
       property('diskIgnorePath', Defaults.diskIgnorePath);
 
-  /// Use double column servers page on Desktop
-  late final doubleColumnServersPage = property(
-    'doubleColumnServersPage',
-    isDesktop,
-  );
-
   /// Disk view: amount / IO
   late final serverTabPreferDiskAmount = property(
     'serverTabPreferDiskAmount',
@@ -245,6 +239,12 @@ class SettingStore extends PersistentStore {
   /// Result: use x86pkg_temp's temperature as the temperature
   late final preferTemperatureDevs =
       listProperty('preferTemperatureDevs', <String>[]);
+  
+  /// Use double column servers page on Desktop
+  late final doubleColumnServersPage = property(
+    'doubleColumnServersPage',
+    true,
+  );
 
   // Never show these settings for users
   //

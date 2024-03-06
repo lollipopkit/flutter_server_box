@@ -162,13 +162,13 @@ Future<void> flutterBuildAndroid() async {
 
 Future<void> flutterBuildLinux() async {
   await flutterBuild('linux');
-  const appDirName = '$appName.AppDir';
+  const appDirName = 'linux.AppDir';
   // mkdir appName.AppDir
   await Process.run('mkdir', [appDirName]);
   // cp -r build/linux/x64/release/bundle/* appName.AppDir
   await Process.run('cp', [
     '-r',
-    './build/linux/x64/release/bundle/*',
+    'build/linux/x64/release/bundle/*',
     appDirName,
   ]);
   // cp -r assets/app_icon.png ServerBox.AppDir
@@ -196,7 +196,7 @@ Icon=app_icon
 Type=Application
 Categories=Utility;
 ''';
-  await File('$appDirName/$appName.desktop').writeAsString(desktop);
+  await File('$appDirName/default.desktop').writeAsString(desktop);
   // Run appimagetool
   await Process.run('sh', ['-c', 'ARCH=x86_64 appimagetool $appDirName']);
 

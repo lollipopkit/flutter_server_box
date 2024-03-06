@@ -69,6 +69,7 @@
   "dockerStatusRunningAndStoppedFmt": "{runningCount} running, {stoppedCount} container stopped.",
   "dockerStatusRunningFmt": "{count} container running.",
   "doubleColumnMode": "Double column mode",
+  "doubleColumnTip": "This option only enables the feature, whether it can actually be enabled depends on the width of the device",
   "download": "Download",
   "edit": "Edit",
   "editVirtKeys": "Edit virtual keys",

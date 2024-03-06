@@ -222,6 +222,9 @@ class SId extends S {
   String get doubleColumnMode => 'Mode kolom ganda';
 
   @override
+  String get doubleColumnTip => 'Opsi ini hanya mengaktifkan fitur, apakah itu benar-benar dapat diaktifkan tergantung pada lebar perangkat';
+
+  @override
   String get download => 'Unduh';
 
   @override

@@ -52,7 +52,8 @@ class _ServerPageState extends State<ServerPage>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
-    _useDoubleColumn = _media.useDoubleColumn;
+    _useDoubleColumn = _media.useDoubleColumn &&
+        Stores.setting.doubleColumnServersPage.fetch();
   }
 
   @override

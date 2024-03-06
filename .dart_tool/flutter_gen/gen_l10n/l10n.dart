@@ -514,6 +514,12 @@ abstract class S {
   /// **'Double column mode'**
   String get doubleColumnMode;
 
+  /// No description provided for @doubleColumnTip.
+  ///
+  /// In en, this message translates to:
+  /// **'This option only enables the feature, whether it can actually be enabled depends on the width of the device'**
+  String get doubleColumnTip;
+
   /// No description provided for @download.
   ///
   /// In en, this message translates to:

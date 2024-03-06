@@ -69,6 +69,7 @@
   "dockerStatusRunningAndStoppedFmt": "{runningCount} en cours d'exécution, {stoppedCount} conteneurs arrêtés.",
   "dockerStatusRunningFmt": "{count} conteneurs en cours d'exécution.",
   "doubleColumnMode": "Mode double colonne",
+  "doubleColumnTip": "Cette option ne fait que activer la fonction, sa réalisation dépend également de la largeur de l'appareil.",
   "download": "Télécharger",
   "edit": "Modifier",
   "editVirtKeys": "Modifier les touches virtuelles",

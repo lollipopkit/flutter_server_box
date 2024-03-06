@@ -222,6 +222,9 @@ class SFr extends S {
   String get doubleColumnMode => 'Mode double colonne';
 
   @override
+  String get doubleColumnTip => 'Cette option ne fait que activer la fonction, sa réalisation dépend également de la largeur de l\'appareil.';
+
+  @override
   String get download => 'Télécharger';
 
   @override

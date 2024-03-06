@@ -69,6 +69,7 @@
   "dockerStatusRunningAndStoppedFmt": "{runningCount}個正在運行, {stoppedCount}個已停止",
   "dockerStatusRunningFmt": "{count}個容器正在運行",
   "doubleColumnMode": "雙列模式",
+  "doubleColumnTip": "此選項僅開啟功能，實際是否能開啟還取決於設備的寬度",
   "download": "下載",
   "edit": "編輯",
   "editVirtKeys": "編輯虛擬按鍵",

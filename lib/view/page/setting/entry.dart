@@ -191,7 +191,7 @@ class _SettingPageState extends State<SettingPage> {
         _buildDeleteServers(),
         _buildTextScaler(),
         _buildPreferTemperatureDeviceList(),
-        //if (isDesktop) _buildDoubleColumnServersPage(),
+        _buildDoubleColumnServersPage(),
       ].map((e) => CardX(child: e)).toList(),
     );
   }
@@ -1082,12 +1082,13 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  // Widget _buildDoubleColumnServersPage() {
-  //   return ListTile(
-  //     title: Text(l10n.doubleColumnMode),
-  //     trailing: StoreSwitch(prop: _setting.doubleColumnServersPage),
-  //   );
-  // }
+  Widget _buildDoubleColumnServersPage() {
+    return ListTile(
+      title: Text(l10n.doubleColumnMode),
+      subtitle: Text(l10n.doubleColumnTip, style: UIs.textGrey),
+      trailing: StoreSwitch(prop: _setting.doubleColumnServersPage),
+    );
+  }
 
   Widget _buildPlatformSetting() {
     return ListTile(
