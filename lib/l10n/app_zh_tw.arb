@@ -48,6 +48,7 @@
   "copyPath": "複製路徑",
   "createFile": "創建文件",
   "createFolder": "創建文件夾",
+  "cursorType": "光標類型",
   "dark": "暗",
   "debug": "調試",
   "decode": "解碼",

@@ -48,6 +48,7 @@
   "copyPath": "Pfad kopieren",
   "createFile": "Datei erstellen",
   "createFolder": "Ordner erstellen",
+  "cursorType": "Cursor-Typ",
   "dark": "Dunkel",
   "debug": "Debug",
   "decode": "Decode",

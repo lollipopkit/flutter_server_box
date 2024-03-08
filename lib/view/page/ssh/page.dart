@@ -13,7 +13,6 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/server.dart';
 import 'package:toolbox/core/utils/share.dart';
-import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/provider/virtual_keyboard.dart';
 import 'package:toolbox/data/res/provider.dart';
@@ -61,11 +60,11 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   late double _originTextSize;
   double _virtKeyWidth = 0;
   double _virtKeysHeight = 0;
+  late final TerminalCursorType _termCursor;
 
   bool _isDark = false;
   Timer? _virtKeyLongPressTimer;
-  late final Server? _server = widget.spi.server;
-  late SSHClient? _client = _server?.client;
+  late SSHClient? _client = widget.spi.server?.client;
   Timer? _discontinuityTimer;
 
   @override
@@ -84,13 +83,6 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     super.dispose();
     _virtKeyLongPressTimer?.cancel();
     _terminalController.dispose();
-
-    /// Use the same [SSHClient], so don't close it
-    // if (_client?.isClosed == false) {
-    //   try {
-    //     _client?.close();
-    //   } catch (_) {}
-    // }
     _discontinuityTimer?.cancel();
   }
 
@@ -157,6 +149,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
             deleteDetection: isMobile,
             autofocus: true,
             keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,
+            cursorType: _termCursor,
             //hideScrollBar: false,
           ),
         ),
@@ -377,7 +370,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     //_setupDiscontinuityTimer();
 
     if (session == null) {
-      _writeLn(_server?.status.err ?? 'Null session');
+      _writeLn('Null session');
       return;
     }
 
@@ -494,6 +487,15 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
 
     _terminalStyle = TerminalStyle.fromTextStyle(textStyle);
     _keyboardType = TextInputType.values[Stores.setting.keyboardType.fetch()];
+
+    final termCursor = Stores.setting.termCursor.fetch();
+    _termCursor = () {
+      try {
+        return TerminalCursorType.values[termCursor];
+      } catch (_) {
+        return TerminalCursorType.block;
+      }
+    }();
   }
 }
 

@@ -48,6 +48,7 @@
   "copyPath": "Path Copy",
   "createFile": "Buat file",
   "createFolder": "Membuat folder",
+  "cursorType": "Jenis kursor",
   "dark": "Gelap",
   "debug": "Debug",
   "decode": "Membaca sandi",

@@ -48,6 +48,7 @@
   "copyPath": "パスをコピー",
   "createFile": "ファイルを作成",
   "createFolder": "フォルダーを作成",
+  "cursorType": "カーソルタイプ",
   "dark": "ダーク",
   "debug": "デバッグ",
   "decode": "デコード",

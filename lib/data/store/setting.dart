@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/model/app/menu/server_func.dart';
+import 'package:xterm/ui.dart';
 
 import '../model/app/net_view.dart';
 import '../res/default.dart';
@@ -254,6 +255,10 @@ class SettingStore extends PersistentStore {
   /// It's recommended to use cdn for non-China users
   /// 0: unset, 1: use, 2: not use
   late final useCdn = property('useCdn', 0);
+
+  /// Index of terminal cursor type
+  late final termCursor =
+      property('termCursor', TerminalCursorType.block.index);
 
   // Never show these settings for users
   //

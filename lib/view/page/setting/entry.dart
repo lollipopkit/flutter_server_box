@@ -8,6 +8,7 @@ import 'package:toolbox/core/extension/colorx.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
+import 'package:toolbox/core/extension/enum.dart';
 import 'package:toolbox/core/extension/locale.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/stringx.dart';
@@ -17,6 +18,7 @@ import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/rebuild.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/expand_tile.dart';
+import 'package:xterm/ui.dart';
 
 import '../../../core/persistant_store.dart';
 import '../../../core/route.dart';
@@ -42,43 +44,7 @@ class SettingPage extends StatefulWidget {
 }
 
 class _SettingPageState extends State<SettingPage> {
-  final _themeKey = GlobalKey<PopupMenuButtonState<int>>();
-  final _updateIntervalKey = GlobalKey<PopupMenuButtonState<int>>();
-  final _maxRetryKey = GlobalKey<PopupMenuButtonState<int>>();
-  final _localeKey = GlobalKey<PopupMenuButtonState<String>>();
-  final _editorThemeKey = GlobalKey<PopupMenuButtonState<String>>();
-  final _editorDarkThemeKey = GlobalKey<PopupMenuButtonState<String>>();
-  final _keyboardTypeKey = GlobalKey<PopupMenuButtonState<int>>();
-  //final _rotateQuarterKey = GlobalKey<PopupMenuButtonState<int>>();
-  final _netViewTypeKey = GlobalKey<PopupMenuButtonState<NetViewType>>();
   final _setting = Stores.setting;
-
-  late final _selectedColorValue = ValueNotifier(_setting.primaryColor.fetch());
-  late final _nightMode = ValueNotifier(_setting.themeMode.fetch());
-  late final _maxRetryCount = ValueNotifier(_setting.maxRetryCount.fetch());
-  late final _updateInterval =
-      ValueNotifier(_setting.serverStatusUpdateInterval.fetch());
-  late final _termFontSize = ValueNotifier(_setting.termFontSize.fetch());
-  late final _editorFontSize = ValueNotifier(_setting.editorFontSize.fetch());
-  late final _localeCode = ValueNotifier('');
-  late final _editorTheme = ValueNotifier(_setting.editorTheme.fetch());
-  late final _editorDarkTheme = ValueNotifier(_setting.editorDarkTheme.fetch());
-  late final _keyboardType = ValueNotifier(_setting.keyboardType.fetch());
-  // late final _rotateQuarter =
-  //     ValueNotifier(_setting.fullScreenRotateQuarter.fetch());
-  late final _netViewType = ValueNotifier(_setting.netViewType.fetch());
-  late final _textScaler = ValueNotifier(_setting.textFactor.fetch());
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final localeSettingVal = _setting.locale.fetch();
-    if (localeSettingVal.isEmpty) {
-      _localeCode.value = l10n.localeName;
-    } else {
-      _localeCode.value = localeSettingVal;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -206,6 +172,7 @@ class _SettingPageState extends State<SettingPage> {
       children: [
         _buildFont(),
         _buildTermFontSize(),
+        _buildTermCursor(),
         _buildSSHVirtualKeyAutoOff(),
         // Use hardware keyboard on desktop, so there is no need to set it
         if (isMobile) _buildKeyboardType(),
@@ -249,17 +216,6 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildUpdateInterval() {
-    final items = List.generate(
-      10,
-      (index) => PopupMenuItem(
-        value: index,
-        child: Text(index == 0 ? l10n.manual : '$index ${l10n.second}'),
-      ),
-      growable: false,
-    ).toList();
-    // 1 second is too fast, so remove it
-    items.removeAt(1);
-
     return ListTile(
       title: Text(
         l10n.updateServerStatusInterval,
@@ -268,27 +224,21 @@ class _SettingPageState extends State<SettingPage> {
         l10n.willTakEeffectImmediately,
         style: UIs.textGrey,
       ),
-      onTap: () {
-        _updateIntervalKey.currentState?.showButtonMenu();
+      onTap: () async {
+        final val = await context.showPickSingleDialog(
+          items: List.generate(10, (idx) => idx == 1 ? null : idx),
+          initial: _setting.serverStatusUpdateInterval.fetch(),
+          name: (p0) => p0 == 0 ? l10n.manual : '$p0 ${l10n.second}',
+        );
+        if (val != null) {
+          _setting.serverStatusUpdateInterval.put(val);
+        }
       },
-      trailing: ListenableBuilder(
-        listenable: _updateInterval,
-        builder: (_, __) => PopupMenuButton(
-          key: _updateIntervalKey,
-          itemBuilder: (_) => items,
-          initialValue: _updateInterval.value,
-          onSelected: (int val) {
-            _updateInterval.value = val;
-            _setting.serverStatusUpdateInterval.put(val);
-            Pros.server.startAutoRefresh();
-            if (val == 0) {
-              context.showSnackBar(l10n.updateIntervalEqual0);
-            }
-          },
-          child: Text(
-            '${_updateInterval.value} ${l10n.second}',
-            style: UIs.text15,
-          ),
+      trailing: ValueListenableBuilder(
+        valueListenable: _setting.serverStatusUpdateInterval.listenable(),
+        builder: (_, val, __) => Text(
+          '$val ${l10n.second}',
+          style: UIs.text15,
         ),
       ),
     );
@@ -297,10 +247,10 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildAppColor() {
     return ListTile(
       trailing: ClipOval(
-        child: ListenableBuilder(
-          listenable: _selectedColorValue,
-          builder: (_, __) => Container(
-            color: primaryColor,
+        child: ValueListenableBuilder(
+          valueListenable: _setting.primaryColor.listenable(),
+          builder: (_, val, __) => Container(
+            color: Color(val),
             height: 27,
             width: 27,
           ),
@@ -362,8 +312,7 @@ class _SettingPageState extends State<SettingPage> {
     // Change [primaryColor] first, then change [_selectedColorValue],
     // So the [ValueBuilder] will be triggered with the new value
     primaryColor = color;
-    _selectedColorValue.value = color.value;
-    _setting.primaryColor.put(_selectedColorValue.value);
+    _setting.primaryColor.put(color.value);
     context.pop();
     RebuildNodes.app.rebuild();
   }
@@ -409,89 +358,57 @@ class _SettingPageState extends State<SettingPage> {
   // }
 
   Widget _buildMaxRetry() {
-    final items = List.generate(
-      10,
-      (index) => PopupMenuItem(
-        value: index,
-        child: Text('$index ${l10n.times}'),
-      ),
-      growable: false,
-    ).toList();
-    final help = _maxRetryCount.value == 0
-        ? l10n.maxRetryCountEqual0
-        : l10n.canPullRefresh;
-
-    return ListTile(
-      title: Text(
-        l10n.maxRetryCount,
-        textAlign: TextAlign.start,
-      ),
-      subtitle: Text(help, style: UIs.textGrey),
-      onTap: () {
-        _maxRetryKey.currentState?.showButtonMenu();
-      },
-      trailing: ListenableBuilder(
-        builder: (_, __) => PopupMenuButton(
-          key: _maxRetryKey,
-          itemBuilder: (BuildContext context) => items,
-          initialValue: _maxRetryCount.value,
-          onSelected: (int val) {
-            _maxRetryCount.value = val;
-            _setting.maxRetryCount.put(_maxRetryCount.value);
-          },
-          child: Text(
-            '${_maxRetryCount.value} ${l10n.times}',
-            style: UIs.text15,
-          ),
+    return ValueListenableBuilder(
+      valueListenable: _setting.maxRetryCount.listenable(),
+      builder: (_, val, __) => ListTile(
+        title: Text(
+          l10n.maxRetryCount,
+          textAlign: TextAlign.start,
         ),
-        listenable: _maxRetryCount,
+        subtitle: Text(
+            val == 0 ? l10n.maxRetryCountEqual0 : l10n.canPullRefresh,
+            style: UIs.textGrey),
+        onTap: () async {
+          final selected = await context.showPickSingleDialog(
+            items: List.generate(10, (index) => index),
+            name: (p0) => '$p0 ${l10n.times}',
+            initial: val,
+          );
+          if (selected != null) {
+            _setting.maxRetryCount.put(selected);
+          }
+        },
+        trailing: Text(
+          '$val ${l10n.times}',
+          style: UIs.text15,
+        ),
       ),
     );
   }
 
   Widget _buildThemeMode() {
-    final items = ThemeMode.values
-        .map(
-          (e) => PopupMenuItem(
-            value: e.index,
-            child: Text(_buildThemeModeStr(e.index)),
-          ),
-        )
-        .toList();
     // Issue #57
     final len = ThemeMode.values.length;
-
-    /// Add AMOLED theme
-    items.add(PopupMenuItem(value: len, child: Text(_buildThemeModeStr(len))));
-
-    /// Add AUTO-AMOLED theme
-    items.add(
-      PopupMenuItem(value: len + 1, child: Text(_buildThemeModeStr(len + 1))),
-    );
-
     return ListTile(
       title: Text(
         l10n.themeMode,
       ),
-      onTap: () {
-        _themeKey.currentState?.showButtonMenu();
+      onTap: () async {
+        final selected = await context.showPickSingleDialog(
+          items: List.generate(len + 2, (index) => index),
+          name: (p0) => _buildThemeModeStr(p0),
+          initial: _setting.themeMode.fetch(),
+        );
+        if (selected != null) {
+          _setting.themeMode.put(selected);
+          RebuildNodes.app.rebuild();
+        }
       },
-      trailing: ListenableBuilder(
-        listenable: _nightMode,
-        builder: (_, __) => PopupMenuButton(
-          key: _themeKey,
-          itemBuilder: (BuildContext context) => items,
-          initialValue: _nightMode.value,
-          onSelected: (int idx) {
-            _nightMode.value = idx;
-            _setting.themeMode.put(_nightMode.value);
-
-            RebuildNodes.app.rebuild();
-          },
-          child: Text(
-            _buildThemeModeStr(_nightMode.value),
-            style: UIs.text15,
-          ),
+      trailing: ValueListenableBuilder(
+        valueListenable: _setting.themeMode.listenable(),
+        builder: (_, val, __) => Text(
+          _buildThemeModeStr(val),
+          style: UIs.text15,
         ),
       ),
     );
@@ -573,7 +490,7 @@ class _SettingPageState extends State<SettingPage> {
           style: UIs.text15,
         ),
       ),
-      onTap: () => _showFontSizeDialog(_termFontSize, _setting.termFontSize),
+      onTap: () => _showFontSizeDialog(_setting.termFontSize),
     );
   }
 
@@ -615,35 +532,25 @@ class _SettingPageState extends State<SettingPage> {
   // }
 
   Widget _buildLocale() {
-    final items = S.supportedLocales
-        .map(
-          (e) => PopupMenuItem<String>(
-            value: e.code,
-            child: Text(e.code),
-          ),
-        )
-        .toList();
     return ListTile(
       title: Text(l10n.language),
-      onTap: () {
-        _localeKey.currentState?.showButtonMenu();
+      onTap: () async {
+        final selected = await context.showPickSingleDialog(
+          items: S.supportedLocales,
+          name: (p0) => p0.code,
+          initial: _setting.locale.fetch().toLocale,
+        );
+        if (selected != null) {
+          _setting.locale.put(selected.code);
+          context.pop();
+          RebuildNodes.app.rebuild();
+        }
       },
-      trailing: ListenableBuilder(
-        listenable: _localeCode,
-        builder: (_, __) => PopupMenuButton(
-          key: _localeKey,
-          itemBuilder: (BuildContext context) => items,
-          initialValue: _localeCode.value,
-          onSelected: (String idx) {
-            _localeCode.value = idx;
-            _setting.locale.put(idx);
-            RebuildNodes.app.rebuild();
-            context.pop();
-          },
-          child: Text(
-            l10n.languageName,
-            style: UIs.text15,
-          ),
+      trailing: ValueListenableBuilder(
+        valueListenable: _setting.locale.listenable(),
+        builder: (_, ___, __) => Text(
+          l10n.languageName,
+          style: UIs.text15,
         ),
       ),
     );
@@ -658,67 +565,41 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildEditorTheme() {
-    final items = themeMap.keys.map(
-      (key) {
-        return PopupMenuItem<String>(
-          value: key,
-          child: Text(key),
-        );
-      },
-    ).toList();
     return ListTile(
       title: Text('${l10n.light} ${l10n.theme.toLowerCase()}'),
-      trailing: ListenableBuilder(
-        listenable: _editorTheme,
-        builder: (_, __) => PopupMenuButton(
-          key: _editorThemeKey,
-          itemBuilder: (BuildContext context) => items,
-          initialValue: _editorTheme.value,
-          onSelected: (String idx) {
-            _editorTheme.value = idx;
-            _setting.editorTheme.put(idx);
-          },
-          child: Text(
-            _editorTheme.value,
-            style: UIs.text15,
-          ),
-        ),
+      trailing: ValueListenableBuilder(
+        valueListenable: _setting.editorTheme.listenable(),
+        builder: (_, val, __) => Text(val, style: UIs.text15),
       ),
-      onTap: () {
-        _editorThemeKey.currentState?.showButtonMenu();
+      onTap: () async {
+        final selected = await context.showPickSingleDialog(
+          items: themeMap.keys.toList(),
+          name: (p0) => p0,
+          initial: _setting.editorTheme.fetch(),
+        );
+        if (selected != null) {
+          _setting.editorTheme.put(selected);
+        }
       },
     );
   }
 
   Widget _buildEditorDarkTheme() {
-    final items = themeMap.keys.map(
-      (key) {
-        return PopupMenuItem<String>(
-          value: key,
-          child: Text(key),
-        );
-      },
-    ).toList();
     return ListTile(
       title: Text('${l10n.dark} ${l10n.theme.toLowerCase()}'),
-      trailing: ListenableBuilder(
-        listenable: _editorDarkTheme,
-        builder: (_, __) => PopupMenuButton(
-          key: _editorDarkThemeKey,
-          itemBuilder: (BuildContext context) => items,
-          initialValue: _editorDarkTheme.value,
-          onSelected: (String idx) {
-            _editorDarkTheme.value = idx;
-            _setting.editorDarkTheme.put(idx);
-          },
-          child: Text(
-            _editorDarkTheme.value,
-            style: UIs.text15,
-          ),
-        ),
+      trailing: ValueListenableBuilder(
+        valueListenable: _setting.editorDarkTheme.listenable(),
+        builder: (_, val, __) => Text(val, style: UIs.text15),
       ),
-      onTap: () {
-        _editorDarkThemeKey.currentState?.showButtonMenu();
+      onTap: () async {
+        final selected = await context.showPickSingleDialog(
+          items: themeMap.keys.toList(),
+          name: (p0) => p0,
+          initial: _setting.editorDarkTheme.fetch(),
+        );
+        if (selected != null) {
+          _setting.editorDarkTheme.put(selected);
+        }
       },
     );
   }
@@ -788,39 +669,28 @@ class _SettingPageState extends State<SettingPage> {
       'address',
       'none',
     ];
-    if (names.length != TextInputType.values.length) {
-      // This notify me to update the code
-      throw Exception('names.length != TextInputType.values.length');
-    }
-    final items = TextInputType.values.map(
-      (key) {
-        return PopupMenuItem<int>(
-          value: key.index,
-          child: Text(names[key.index]),
-        );
-      },
-    ).toList();
     return ListTile(
       title: Text(l10n.keyboardType),
       subtitle: Text(l10n.keyboardCompatibility, style: UIs.textGrey),
-      trailing: ListenableBuilder(
-        listenable: _keyboardType,
-        builder: (_, __) => PopupMenuButton<int>(
-          key: _keyboardTypeKey,
-          itemBuilder: (BuildContext context) => items,
-          initialValue: _keyboardType.value,
-          onSelected: (idx) {
-            _keyboardType.value = idx;
-            _setting.keyboardType.put(idx);
-          },
-          child: Text(
-            names[_keyboardType.value],
-            style: UIs.text15,
-          ),
+      trailing: ValueListenableBuilder(
+        valueListenable: _setting.keyboardType.listenable(),
+        builder: (_, val, __) => Text(
+          names[val],
+          style: UIs.text15,
         ),
       ),
-      onTap: () {
-        _keyboardTypeKey.currentState?.showButtonMenu();
+      onTap: () async {
+        if (names.length != TextInputType.values.length) {
+          // This notify me to update the code
+          context.showSnackBar('names.length != TextInputType.values.length');
+        }
+        final selected = await context.showPickSingleDialog(
+          items: names,
+          initial: names.fromIndex(_setting.keyboardType.fetch()),
+        );
+        if (selected != null) {
+          _setting.keyboardType.put(names.indexOf(selected));
+        }
       },
     );
   }
@@ -859,32 +729,24 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildNetViewType() {
-    final items = NetViewType.values
-        .map((e) => PopupMenuItem(
-              value: e,
-              child: Text(e.toStr),
-            ))
-        .toList();
     return ListTile(
       title: Text(l10n.netViewType),
-      trailing: ListenableBuilder(
-        listenable: _netViewType,
-        builder: (_, __) => PopupMenuButton<NetViewType>(
-          key: _netViewTypeKey,
-          itemBuilder: (BuildContext context) => items,
-          initialValue: _netViewType.value,
-          onSelected: (idx) {
-            _netViewType.value = idx;
-            _setting.netViewType.put(idx);
-          },
-          child: Text(
-            _netViewType.value.toStr,
-            style: UIs.text15,
-          ),
+      trailing: ValueListenableBuilder(
+        valueListenable: _setting.netViewType.listenable(),
+        builder: (_, val, __) => Text(
+          val.toStr,
+          style: UIs.text15,
         ),
       ),
-      onTap: () {
-        _netViewTypeKey.currentState?.showButtonMenu();
+      onTap: () async {
+        final selected = await context.showPickSingleDialog(
+          items: NetViewType.values,
+          name: (p0) => p0.toStr,
+          initial: _setting.netViewType.fetch(),
+        );
+        if (selected != null) {
+          _setting.netViewType.put(selected);
+        }
       },
     );
   }
@@ -933,14 +795,14 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildTextScaler() {
-    final ctrl = TextEditingController(text: _textScaler.value.toString());
+    final ctrl = TextEditingController(text: _setting.textFactor.toString());
     return ListTile(
       title: Text(l10n.textScaler),
       subtitle: Text(l10n.textScalerTip, style: UIs.textGrey),
-      trailing: ListenableBuilder(
-        listenable: _textScaler,
-        builder: (_, __) => Text(
-          _textScaler.value.toString(),
+      trailing: ValueListenableBuilder(
+        valueListenable: _setting.textFactor.listenable(),
+        builder: (_, val, __) => Text(
+          val.toString(),
           style: UIs.text15,
         ),
       ),
@@ -970,7 +832,6 @@ class _SettingPageState extends State<SettingPage> {
       context.showSnackBar(l10n.failed);
       return;
     }
-    _textScaler.value = val;
     _setting.textFactor.put(val);
     RebuildNodes.app.rebuild();
     context.pop();
@@ -1019,25 +880,23 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildEditorFontSize() {
-    return ListenableBuilder(
-      listenable: _editorFontSize,
-      builder: (_, __) => ListTile(
-        title: Text(l10n.fontSize),
-        trailing: Text(
-          _editorFontSize.value.toString(),
+    return ListTile(
+      title: Text(l10n.fontSize),
+      trailing: ValueListenableBuilder(
+        valueListenable: _setting.editorFontSize.listenable(),
+        builder: (_, val, __) => Text(
+          val.toString(),
           style: UIs.text15,
         ),
-        onTap: () =>
-            _showFontSizeDialog(_editorFontSize, _setting.editorFontSize),
       ),
+      onTap: () => _showFontSizeDialog(_setting.editorFontSize),
     );
   }
 
   void _showFontSizeDialog(
-    ValueNotifier<double> notifier,
     StorePropertyBase<double> property,
   ) {
-    final ctrller = TextEditingController(text: notifier.value.toString());
+    final ctrller = TextEditingController(text: property.fetch().toString());
     void onSave() {
       context.pop();
       final fontSize = double.tryParse(ctrller.text);
@@ -1048,7 +907,6 @@ class _SettingPageState extends State<SettingPage> {
         );
         return;
       }
-      notifier.value = fontSize;
       property.put(fontSize);
     }
 
@@ -1197,6 +1055,30 @@ class _SettingPageState extends State<SettingPage> {
         _buildUpdateInterval(),
         _buildMaxRetry(),
       ],
+    );
+  }
+
+  Widget _buildTermCursor() {
+    return ListTile(
+      title: Text(l10n.cursorType),
+      trailing: ValueListenableBuilder(
+        valueListenable: _setting.termCursor.listenable(),
+        builder: (_, val, __) => Text(
+          TerminalCursorType.values.fromIndex(val).name,
+          style: UIs.text15,
+        ),
+      ),
+      onTap: () async {
+        final selected = await context.showPickSingleDialog(
+          items: TerminalCursorType.values,
+          name: (p0) => p0.name,
+          initial:
+              TerminalCursorType.values.fromIndex(_setting.termCursor.fetch()),
+        );
+        if (selected != null) {
+          _setting.termCursor.put(selected.index);
+        }
+      },
     );
   }
 }
