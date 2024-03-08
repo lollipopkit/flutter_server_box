@@ -267,6 +267,8 @@
   "upsideDown": "上下交換",
   "uptime": "啟動時長",
   "urlOrJson": "鏈接或JSON",
+  "useCdn": "使用CDN",
+  "useCdnTip": "非中國大陆用戶建議使用CDN，是否使用？",
   "useNoPwd": "将使用無密碼",
   "usePodmanByDefault": "默認使用 Podman",
   "used": "已用",

@@ -250,6 +250,11 @@ class SettingStore extends PersistentStore {
   /// when building traffic view on server tab
   late final ignoreLocalNet = property('ignoreLocalNetIface', true);
 
+  /// Use cdn
+  /// It's recommended to use cdn for non-China users
+  /// 0: unset, 1: use, 2: not use
+  late final useCdn = property('useCdn', 0);
+
   // Never show these settings for users
   //
   // ------BEGIN------

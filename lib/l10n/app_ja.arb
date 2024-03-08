@@ -267,6 +267,8 @@
   "upsideDown": "上下逆転",
   "uptime": "稼働時間",
   "urlOrJson": "URLまたはJSON",
+  "useCdn": "CDNの使用",
+  "useCdnTip": "中国以外のユーザーにはCDNの使用が推奨されています。ご利用しますか？",
   "useNoPwd": "パスワードなしで使用します",
   "usePodmanByDefault": "デフォルトでPodmanを使用",
   "used": "使用済み",

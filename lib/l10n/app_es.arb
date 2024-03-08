@@ -267,6 +267,8 @@
   "upsideDown": "Invertir arriba por abajo",
   "uptime": "Tiempo de actividad",
   "urlOrJson": "URL o JSON",
+  "useCdn": "Usando CDN",
+  "useCdnTip": "Se recomienda a los usuarios no chinos utilizar CDN. ¿Le gustaría utilizarlo?",
   "useNoPwd": "Se usará sin contraseña",
   "usePodmanByDefault": "Usar Podman por defecto",
   "used": "Usado",
