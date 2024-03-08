@@ -4,6 +4,7 @@ import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/data/provider/server.dart';
+import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/page/ssh/page.dart';
 import 'package:toolbox/view/widget/cardx.dart';
@@ -85,7 +86,8 @@ class _SSHTabPageState extends State<SSHTabPage>
         return ListView.builder(
           padding: const EdgeInsets.all(7),
           itemBuilder: (_, idx) {
-            final spi = pro.servers.toList()[idx].spi;
+            final spi = Pros.server.pick(id: pro.serverOrder[idx])?.spi;
+            if (spi == null) return UIs.placeholder;
             return CardX(
               child: ListTile(
                 title: Text(spi.name),
