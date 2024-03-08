@@ -70,13 +70,16 @@ class ContainerProvider extends ChangeNotifier {
     return false;
   }
 
-  Future<void> refresh() async {
-    var raw = '';
-
+  Future<void> refresh({bool isAuto = false}) async {
     final sudo =
         await _requiresSudo() && Stores.setting.containerTrySudo.fetch();
+
+    /// If sudo is required and auto refresh is enabled, skip the refresh.
+    /// Or this will ask for pwd again and again.
+    if (sudo && isAuto) return;
     final includeStats = Stores.setting.containerParseStat.fetch();
 
+    var raw = '';
     final code = await client?.execWithPwd(
       _wrap(ContainerCmdType.execAll(
         type,
@@ -264,7 +267,7 @@ enum ContainerCmdType {
     bool includeStats = false,
   }) {
     return ContainerCmdType.values
-        .map((e) => e.exec(type, sudo: sudo))
+        .map((e) => e.exec(type, sudo: sudo, includeStats: includeStats))
         .join(' && echo $seperator && ');
   }
 }

@@ -592,7 +592,7 @@ class _ContainerPageState extends State<ContainerPage> {
         Duration(seconds: Stores.setting.serverStatusUpdateInterval.fetch()),
         (timer) {
           if (mounted) {
-            _container.refresh();
+            _container.refresh(isAuto: true);
           } else {
             timer.cancel();
           }
