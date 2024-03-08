@@ -61,5 +61,6 @@ abstract final class GithubIds {
     'L-Super',
     'Tridays',
     'Nebulosa-Cat',
+    'dani7959',
   };
 }

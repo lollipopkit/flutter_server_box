@@ -368,25 +368,23 @@ class _ServerPageState extends State<ServerPage>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Text(
-                spi.name,
-                style: UIs.text13Bold,
-              ),
-              const Icon(
-                Icons.keyboard_arrow_right,
-                size: 17,
-                color: Colors.grey,
-              )
-            ],
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: _media.size.width / 2.3),
+            child: Text(
+              spi.name,
+              style: UIs.text13Bold,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-          Row(
-            children: [
-              _buildTopRightText(ss, cs),
-              rightCorner,
-            ],
-          )
+          const Icon(
+            Icons.keyboard_arrow_right,
+            size: 17,
+            color: Colors.grey,
+          ),
+          const Spacer(),
+          _buildTopRightText(ss, cs),
+          rightCorner,
         ],
       ),
     );
