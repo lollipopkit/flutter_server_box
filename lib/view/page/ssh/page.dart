@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
@@ -57,6 +58,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   late TerminalStyle _terminalStyle;
   late TerminalTheme _terminalTheme;
   late TextInputType _keyboardType;
+  late double _originTextSize;
   double _virtKeyWidth = 0;
   double _virtKeysHeight = 0;
 
@@ -69,13 +71,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   @override
   void initState() {
     super.initState();
-    final fontFamilly = getFileName(Stores.setting.fontPath.fetch());
-    final textStyle = TextStyle(
-      fontFamily: fontFamilly,
-      fontSize: Stores.setting.termFontSize.fetch(),
-    );
-    _terminalStyle = TerminalStyle.fromTextStyle(textStyle);
-    _keyboardType = TextInputType.values[Stores.setting.keyboardType.fetch()];
+    _initStoredCfg();
     _initVirtKeys();
 
     Future.delayed(const Duration(milliseconds: 77), () async {
@@ -138,17 +134,31 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
           _media.padding.bottom -
           _media.padding.top,
       child: Padding(
-        padding: EdgeInsets.only(top: _media.padding.top),
-        child: TerminalView(
-          _terminal,
-          controller: _terminalController,
-          keyboardType: _keyboardType,
-          textStyle: _terminalStyle,
-          theme: _terminalTheme,
-          deleteDetection: isMobile,
-          autofocus: true,
-          keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,
-          //hideScrollBar: false,
+        padding: EdgeInsets.only(top: _media.padding.top, left: 7, right: 7),
+        child: GestureDetector(
+          onScaleUpdate: (details) {
+            if (details.scale == 1) {
+              return;
+            }
+            final scale = math.pow(details.scale, 0.3);
+            final fontSize = _originTextSize * scale;
+            if (fontSize < 7 || fontSize > 17) {
+              return;
+            }
+            _terminalStyle = _terminalStyle.copyWith(fontSize: fontSize);
+            setState(() {});
+          },
+          child: TerminalView(
+            _terminal,
+            controller: _terminalController,
+            keyboardType: _keyboardType,
+            textStyle: _terminalStyle,
+            theme: _terminalTheme,
+            deleteDetection: isMobile,
+            autofocus: true,
+            keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,
+            //hideScrollBar: false,
+          ),
         ),
       ),
     );
@@ -225,9 +235,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
       child: SizedBox(
         width: _virtKeyWidth,
         height: _virtKeysHeight / _virtKeysList.length,
-        child: Center(
-          child: child,
-        ),
+        child: Center(child: child),
       ),
     );
   }
@@ -473,6 +481,19 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
       ),
       iosConfiguration: IosConfiguration(),
     );
+  }
+
+  void _initStoredCfg() {
+    final fontFamilly = getFileName(Stores.setting.fontPath.fetch());
+    final textSize = Stores.setting.termFontSize.fetch();
+    _originTextSize = textSize;
+    final textStyle = TextStyle(
+      fontFamily: fontFamilly,
+      fontSize: textSize,
+    );
+
+    _terminalStyle = TerminalStyle.fromTextStyle(textStyle);
+    _keyboardType = TextInputType.values[Stores.setting.keyboardType.fetch()];
   }
 }
 

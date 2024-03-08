@@ -241,6 +241,7 @@
   "system": "System",
   "tag": "Tags",
   "temperature": "Temperature",
+  "termFontSizeTip": "This setting will affect the terminal size (width and height).",
   "terminal": "Terminal",
   "test": "Test",
   "textScaler": "Text scaler",

@@ -241,6 +241,7 @@
   "system": "システム",
   "tag": "タグ",
   "temperature": "温度",
+  "termFontSizeTip": "この設定は端末のサイズ（幅と高さ）に影響します",
   "terminal": "ターミナル",
   "test": "テスト",
   "textScaler": "テキストスケーラー",

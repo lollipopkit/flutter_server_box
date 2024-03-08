@@ -241,6 +241,7 @@
   "system": "Sistema",
   "tag": "Etiqueta",
   "temperature": "Temperatura",
+  "termFontSizeTip": "Este ajuste afectará el tamaño del terminal (ancho y alto).",
   "terminal": "Terminal",
   "test": "Prueba",
   "textScaler": "Escalar texto",

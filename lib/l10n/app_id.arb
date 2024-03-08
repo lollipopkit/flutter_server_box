@@ -241,6 +241,7 @@
   "system": "Sistem",
   "tag": "Tag",
   "temperature": "Suhu",
+  "termFontSizeTip": "Pengaturan ini akan memengaruhi ukuran terminal (lebar dan tinggi).",
   "terminal": "Terminal",
   "test": "pengujian",
   "textScaler": "Penskalaan font",

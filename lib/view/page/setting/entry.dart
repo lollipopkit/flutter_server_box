@@ -563,16 +563,17 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildTermFontSize() {
-    return ListenableBuilder(
-      listenable: _termFontSize,
-      builder: (_, __) => ListTile(
-        title: Text(l10n.fontSize),
-        trailing: Text(
-          _termFontSize.value.toString(),
+    return ListTile(
+      title: Text(l10n.fontSize),
+      subtitle: Text(l10n.termFontSizeTip, style: UIs.textGrey),
+      trailing: ValueListenableBuilder(
+        valueListenable: _setting.termFontSize.listenable(),
+        builder: (_, val, __) => Text(
+          val.toString(),
           style: UIs.text15,
         ),
-        onTap: () => _showFontSizeDialog(_termFontSize, _setting.termFontSize),
       ),
+      onTap: () => _showFontSizeDialog(_termFontSize, _setting.termFontSize),
     );
   }
 
