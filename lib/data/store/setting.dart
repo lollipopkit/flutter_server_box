@@ -251,11 +251,6 @@ class SettingStore extends PersistentStore {
   /// when building traffic view on server tab
   late final ignoreLocalNet = property('ignoreLocalNetIface', true);
 
-  /// Use cdn
-  /// It's recommended to use cdn for non-China users
-  /// 0: unset, 1: use, 2: not use
-  late final useCdn = property('useCdn', 0);
-
   /// Index of terminal cursor type
   late final termCursor =
       property('termCursor', TerminalCursorType.block.index);

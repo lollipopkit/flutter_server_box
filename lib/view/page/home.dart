@@ -7,7 +7,6 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:get_it/get_it.dart';
 import 'package:toolbox/core/channel/bg_run.dart';
 import 'package:toolbox/core/channel/home_widget.dart';
-import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/persistant_store.dart';
@@ -326,32 +325,6 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
     await GetIt.I.allReady();
     await Pros.server.load();
     await Pros.server.refresh();
-
-    _notifyUseCDN();
-  }
-
-  Future<void> _notifyUseCDN() async {
-    final useCDN = Stores.setting.useCdn.fetch();
-    if (useCDN != 0) return;
-    final use = await context.showRoundDialog(
-      title: Text(l10n.useCdn),
-      child: Text(l10n.useCdnTip),
-      actions: [
-        TextButton(
-          onPressed: () => context.pop(true),
-          child: Text(l10n.ok),
-        ),
-        TextButton(
-          onPressed: () => context.pop(false),
-          child: Text(l10n.cancel, style: UIs.textRed),
-        ),
-      ],
-    );
-    if (use == true) {
-      Stores.setting.useCdn.put(1);
-    } else if (use == false) {
-      Stores.setting.useCdn.put(2);
-    }
   }
 
   Future<void> _onLongPressSetting() async {
