@@ -17,9 +17,9 @@
 		E33A3E392A626DCD009744AB /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E33A3E382A626DCD009744AB /* SwiftUI.framework */; };
 		E33A3E3C2A626DCE009744AB /* StatusWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E33A3E3B2A626DCE009744AB /* StatusWidgetBundle.swift */; };
 		E33A3E402A626DCE009744AB /* StatusWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = E33A3E3F2A626DCE009744AB /* StatusWidget.swift */; };
-		E33A3E452A626DD0009744AB /* StatusWidget.intentdefinition in Sources */ = {isa = PBXBuildFile; fileRef = E33A3E412A626DCE009744AB /* StatusWidget.intentdefinition */; };
-		E33A3E462A626DD0009744AB /* StatusWidget.intentdefinition in Sources */ = {isa = PBXBuildFile; fileRef = E33A3E412A626DCE009744AB /* StatusWidget.intentdefinition */; };
 		E33A3E492A626DD0009744AB /* StatusWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E33A3E352A626DCD009744AB /* StatusWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E37C48EA2B9C30EE00E542D2 /* StatusWidget.intentdefinition in Sources */ = {isa = PBXBuildFile; fileRef = E37C48ED2B9C30EE00E542D2 /* StatusWidget.intentdefinition */; };
+		E37C48EB2B9C30EE00E542D2 /* StatusWidget.intentdefinition in Sources */ = {isa = PBXBuildFile; fileRef = E37C48ED2B9C30EE00E542D2 /* StatusWidget.intentdefinition */; };
 		E39515CA2AB5AD62003602C1 /* WatchEndApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E39515C92AB5AD62003602C1 /* WatchEndApp.swift */; };
 		E39515CC2AB5AD62003602C1 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E39515CB2AB5AD62003602C1 /* ContentView.swift */; };
 		E39515D42AB5AD64003602C1 /* ServerBox.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = E39515C72AB5AD62003602C1 /* ServerBox.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -108,8 +108,18 @@
 		E33A3E382A626DCD009744AB /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		E33A3E3B2A626DCE009744AB /* StatusWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusWidgetBundle.swift; sourceTree = "<group>"; };
 		E33A3E3F2A626DCE009744AB /* StatusWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusWidget.swift; sourceTree = "<group>"; };
-		E33A3E412A626DCE009744AB /* StatusWidget.intentdefinition */ = {isa = PBXFileReference; lastKnownFileType = file.intentdefinition; path = StatusWidget.intentdefinition; sourceTree = "<group>"; };
 		E33A3E442A626DD0009744AB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E37C48EC2B9C30EE00E542D2 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.intentdefinition; name = Base; path = Base.lproj/StatusWidget.intentdefinition; sourceTree = "<group>"; };
+		E37C48F02B9C5E0C00E542D2 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/StatusWidget.strings; sourceTree = "<group>"; };
+		E37C48F22B9C5E0D00E542D2 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/StatusWidget.strings"; sourceTree = "<group>"; };
+		E37C48F42B9C5E1000E542D2 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/StatusWidget.strings"; sourceTree = "<group>"; };
+		E37C48F62B9C5E1500E542D2 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/StatusWidget.strings; sourceTree = "<group>"; };
+		E37C48F82B9C5E1700E542D2 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/StatusWidget.strings; sourceTree = "<group>"; };
+		E37C48FA2B9C5E1700E542D2 /* id */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = id; path = id.lproj/StatusWidget.strings; sourceTree = "<group>"; };
+		E37C48FC2B9C5E1800E542D2 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/StatusWidget.strings; sourceTree = "<group>"; };
+		E37C48FE2B9C5E1800E542D2 /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/StatusWidget.strings"; sourceTree = "<group>"; };
+		E37C49002B9C5E1900E542D2 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/StatusWidget.strings; sourceTree = "<group>"; };
+		E37C49022B9C5E1900E542D2 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/StatusWidget.strings; sourceTree = "<group>"; };
 		E39515C72AB5AD62003602C1 /* ServerBox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ServerBox.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E39515C92AB5AD62003602C1 /* WatchEndApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchEndApp.swift; sourceTree = "<group>"; };
 		E39515CB2AB5AD62003602C1 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -248,7 +258,7 @@
 			children = (
 				E33A3E3B2A626DCE009744AB /* StatusWidgetBundle.swift */,
 				E33A3E3F2A626DCE009744AB /* StatusWidget.swift */,
-				E33A3E412A626DCE009744AB /* StatusWidget.intentdefinition */,
+				E37C48ED2B9C30EE00E542D2 /* StatusWidget.intentdefinition */,
 				E33A3E442A626DD0009744AB /* Info.plist */,
 			);
 			path = StatusWidget;
@@ -492,7 +502,7 @@
 			files = (
 				74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */,
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
-				E33A3E462A626DD0009744AB /* StatusWidget.intentdefinition in Sources */,
+				E37C48EA2B9C30EE00E542D2 /* StatusWidget.intentdefinition in Sources */,
 				E3AE8AEA2AB601DB000A6459 /* Utils.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -502,7 +512,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E33A3E402A626DCE009744AB /* StatusWidget.swift in Sources */,
-				E33A3E452A626DD0009744AB /* StatusWidget.intentdefinition in Sources */,
+				E37C48EB2B9C30EE00E542D2 /* StatusWidget.intentdefinition in Sources */,
 				E33A3E3C2A626DCE009744AB /* StatusWidgetBundle.swift in Sources */,
 				E3AE8AEB2AB601DB000A6459 /* Utils.swift in Sources */,
 			);
@@ -551,6 +561,24 @@
 				E3D26BD22B9966EC00D83425 /* ja */,
 			);
 			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		E37C48ED2B9C30EE00E542D2 /* StatusWidget.intentdefinition */ = {
+			isa = PBXVariantGroup;
+			children = (
+				E37C48EC2B9C30EE00E542D2 /* Base */,
+				E37C48F02B9C5E0C00E542D2 /* en */,
+				E37C48F22B9C5E0D00E542D2 /* zh-Hans */,
+				E37C48F42B9C5E1000E542D2 /* zh-Hant */,
+				E37C48F62B9C5E1500E542D2 /* fr */,
+				E37C48F82B9C5E1700E542D2 /* de */,
+				E37C48FA2B9C5E1700E542D2 /* id */,
+				E37C48FC2B9C5E1800E542D2 /* ja */,
+				E37C48FE2B9C5E1800E542D2 /* pt-BR */,
+				E37C49002B9C5E1900E542D2 /* ru */,
+				E37C49022B9C5E1900E542D2 /* es */,
+			);
+			name = StatusWidget.intentdefinition;
 			sourceTree = "<group>";
 		};
 		E3DB67EB2A31FE200027B8CB /* LaunchScreen.storyboard */ = {
@@ -632,7 +660,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
-				CURRENT_PROJECT_VERSION = 793;
+				CURRENT_PROJECT_VERSION = 796;
 				DEVELOPMENT_TEAM = BA88US33G6;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "Runner/Info-$(CONFIGURATION).plist";
@@ -642,7 +670,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.793;
+				MARKETING_VERSION = 1.0.796;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
@@ -768,7 +796,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
-				CURRENT_PROJECT_VERSION = 793;
+				CURRENT_PROJECT_VERSION = 796;
 				DEVELOPMENT_TEAM = BA88US33G6;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "Runner/Info-$(CONFIGURATION).plist";
@@ -778,7 +806,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.793;
+				MARKETING_VERSION = 1.0.796;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
@@ -796,7 +824,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
-				CURRENT_PROJECT_VERSION = 793;
+				CURRENT_PROJECT_VERSION = 796;
 				DEVELOPMENT_TEAM = BA88US33G6;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "Runner/Info-$(CONFIGURATION).plist";
@@ -806,7 +834,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.793;
+				MARKETING_VERSION = 1.0.796;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
@@ -827,7 +855,7 @@
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 793;
+				CURRENT_PROJECT_VERSION = 796;
 				DEVELOPMENT_TEAM = BA88US33G6;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -840,7 +868,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.793;
+				MARKETING_VERSION = 1.0.796;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox.StatusWidget;
@@ -866,7 +894,7 @@
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 793;
+				CURRENT_PROJECT_VERSION = 796;
 				DEVELOPMENT_TEAM = BA88US33G6;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -879,7 +907,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.793;
+				MARKETING_VERSION = 1.0.796;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox.StatusWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -902,7 +930,7 @@
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 793;
+				CURRENT_PROJECT_VERSION = 796;
 				DEVELOPMENT_TEAM = BA88US33G6;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -915,7 +943,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.793;
+				MARKETING_VERSION = 1.0.796;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox.StatusWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -938,7 +966,7 @@
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 793;
+				CURRENT_PROJECT_VERSION = 796;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = BA88US33G6;
 				ENABLE_PREVIEWS = YES;
@@ -950,7 +978,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.793;
+				MARKETING_VERSION = 1.0.796;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox.WatchEnd;
@@ -979,7 +1007,7 @@
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 793;
+				CURRENT_PROJECT_VERSION = 796;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = BA88US33G6;
 				ENABLE_PREVIEWS = YES;
@@ -991,7 +1019,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.793;
+				MARKETING_VERSION = 1.0.796;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox.WatchEnd;
 				PRODUCT_NAME = ServerBox;
@@ -1017,7 +1045,7 @@
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 793;
+				CURRENT_PROJECT_VERSION = 796;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = BA88US33G6;
 				ENABLE_PREVIEWS = YES;
@@ -1029,7 +1057,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.793;
+				MARKETING_VERSION = 1.0.796;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox.WatchEnd;
 				PRODUCT_NAME = ServerBox;
