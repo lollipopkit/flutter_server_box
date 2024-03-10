@@ -163,12 +163,10 @@ Future<void> flutterBuildAndroid() async {
 Future<void> flutterBuildLinux() async {
   await flutterBuild('linux');
   const appDirName = 'linux.AppDir';
-  // mkdir appName.AppDir
-  await Process.run('mkdir', [appDirName]);
   // cp -r build/linux/x64/release/bundle/* appName.AppDir
   await Process.run('cp', [
     '-r',
-    'build/linux/x64/release/bundle/*',
+    'build/linux/x64/release/bundle',
     appDirName,
   ]);
   // cp -r assets/app_icon.png ServerBox.AppDir

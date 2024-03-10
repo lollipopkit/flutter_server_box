@@ -26,6 +26,8 @@
   "bgRun": "后台运行",
   "bgRunTip": "此开关只代表程序会尝试在后台运行，具体能否后台运行取决于是否开启了权限。原生 Android 请关闭本 App 的“电池优化”，MIUI 请修改省电策略为“无限制”。",
   "bioAuth": "生物认证",
+  "bulkImportServers": "批量导入服务器",
+  "bulkImportServersTip": "可以在这里找到[格式]({url})",
   "canPullRefresh": "可以下拉刷新",
   "cancel": "取消",
   "choose": "选择",

@@ -26,6 +26,8 @@
   "bgRun": "Exécuter en arrière-plan",
   "bgRunTip": "Ce commutateur signifie seulement que l'application essaiera de fonctionner en arrière-plan. La possibilité de fonctionner en arrière-plan dépend de l'activation ou non des autorisations. Pour Android, veuillez désactiver l'option \"Optimisation de la batterie\" dans cette application, et pour Miui, veuillez changer la politique d'économie d'énergie en \"Illimité\".",
   "bioAuth": "Authentification biométrique",
+  "bulkImportServers": "Importer des serveurs en lot",
+  "bulkImportServersTip": "Vous pouvez trouver le [format]({url}) ici.",
   "canPullRefresh": "Vous pouvez tirer pour actualiser.",
   "cancel": "Annuler",
   "choose": "Choisir",

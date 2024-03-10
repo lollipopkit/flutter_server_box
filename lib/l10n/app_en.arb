@@ -26,6 +26,8 @@
   "bgRun": "Run in backgroud",
   "bgRunTip": "This switch only means the program will try to run in the background, whether it can run in the background depends on whether the permission is enabled or not. For native Android, please disable \"Battery Optimization\" in this app, and for miui, please change the power saving policy to \"Unlimited\".",
   "bioAuth": "Biometric auth",
+  "bulkImportServers": "Batch import servers",
+  "bulkImportServersTip": "You can find the [format]({url}) here.",
   "canPullRefresh": "You can pull to refresh.",
   "cancel": "Cancel",
   "choose": "Choose",

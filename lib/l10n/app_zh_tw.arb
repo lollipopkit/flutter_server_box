@@ -26,6 +26,8 @@
   "bgRun": "背景運行",
   "bgRunTip": "此開關只代表程式會嘗試在背景執行，具體能否背景運行取決於是否開啟了權限。 原生 Android 請關閉本 App 的“電池優化”，MIUI 請修改省電策略為“無限制”。",
   "bioAuth": "生物認證",
+  "bulkImportServers": "批量導入伺服器",
+  "bulkImportServersTip": "您可以在此處找到[格式]({url})",
   "canPullRefresh": "可以下拉更新",
   "cancel": "取消",
   "choose": "選擇",

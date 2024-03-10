@@ -26,6 +26,8 @@
   "bgRun": "Ejecución en segundo plano",
   "bgRunTip": "Este interruptor solo indica que la aplicación intentará correr en segundo plano, si puede hacerlo o no depende de si tiene el permiso correspondiente. En Android puro, por favor desactiva la “optimización de batería” para esta app, en MIUI por favor cambia la estrategia de ahorro de energía a “Sin restricciones”.",
   "bioAuth": "Autenticación biométrica",
+  "bulkImportServers": "Importar servidores en masa",
+  "bulkImportServersTip": "Puede encontrar el [formato]]({url}) aquí.",
   "canPullRefresh": "Se puede deslizar hacia abajo para refrescar",
   "cancel": "Cancelar",
   "choose": "Elegir",
