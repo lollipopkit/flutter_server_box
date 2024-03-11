@@ -261,6 +261,7 @@ class _ServerPageState extends State<ServerPage>
                 srv.client?.execWithPwd(
                   ShellFunc.suspend.exec,
                   context: context,
+                  id: srv.id,
                 );
               },
               typ: l10n.suspend,
@@ -274,6 +275,7 @@ class _ServerPageState extends State<ServerPage>
               func: () => srv.client?.execWithPwd(
                 ShellFunc.shutdown.exec,
                 context: context,
+                id: srv.id,
               ),
               typ: l10n.shutdown,
               name: srv.spi.name,
@@ -286,6 +288,7 @@ class _ServerPageState extends State<ServerPage>
               func: () => srv.client?.execWithPwd(
                 ShellFunc.reboot.exec,
                 context: context,
+                id: srv.id,
               ),
               typ: l10n.reboot,
               name: srv.spi.name,

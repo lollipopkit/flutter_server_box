@@ -193,6 +193,8 @@
   "pwd": "Senha",
   "read": "Leitura",
   "reboot": "Reiniciar",
+  "rememberPwdInMem": "Lembrar senha na memória",
+  "rememberPwdInMemTip": "Usado para contêineres, suspensão, etc.",
   "remotePath": "Caminho remoto",
   "rename": "Renomear",
   "reportBugsOnGithubIssue": "Por favor, reporte problemas em {url}",

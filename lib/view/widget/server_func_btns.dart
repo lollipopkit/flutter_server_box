@@ -245,7 +245,11 @@ Future<void> _onPkg(BuildContext context, ServerPrivateInfo spi) async {
     fn: () async {
       final updateCmd = pkg.update;
       if (updateCmd != null) {
-        await client.execWithPwd(updateCmd, context: context);
+        await client.execWithPwd(
+          updateCmd,
+          context: context,
+          id: spi.id,
+        );
       }
     },
     barrierDismiss: true,

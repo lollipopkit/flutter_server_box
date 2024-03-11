@@ -193,6 +193,8 @@
   "pwd": "パスワード",
   "read": "読み取り",
   "reboot": "再起動",
+  "rememberPwdInMem": "メモリにパスワードを記憶する",
+  "rememberPwdInMemTip": "コンテナ、一時停止などに使用されます。",
   "remotePath": "リモートパス",
   "rename": "名前を変更",
   "reportBugsOnGithubIssue": "{url}で問題を報告してください",

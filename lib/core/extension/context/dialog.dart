@@ -4,6 +4,7 @@ import 'package:choice/choice.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
+import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/choice_chip.dart';
 import 'package:toolbox/view/widget/tag.dart';
 
@@ -57,17 +58,27 @@ extension DialogX on BuildContext {
     }
   }
 
-  Future<String?> showPwdDialog(
+  static final _recoredPwd = <String, String>{};
+
+  Future<String?> showPwdDialog({
     String? user,
-  ) async {
+    required String hostId,
+    void Function()? onCorrectPwd,
+  }) async {
     if (!mounted) return null;
     return await showRoundDialog<String>(
       title: Text(user ?? l10n.pwd),
       child: Input(
+        controller: TextEditingController(text: _recoredPwd[hostId]),
         autoFocus: true,
         type: TextInputType.visiblePassword,
         obscureText: true,
-        onSubmitted: (val) => pop(val.trim()),
+        onSubmitted: (val) {
+          pop(val);
+          if (Stores.setting.rememberPwdInMem.fetch()) {
+            _recoredPwd[hostId] = val;
+          }
+        },
         label: l10n.pwd,
       ),
     );

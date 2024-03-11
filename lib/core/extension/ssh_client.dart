@@ -67,6 +67,7 @@ extension SSHClientX on SSHClient {
     _OnStdout? onStderr,
     _OnStdin? stdin,
     bool redirectToBash = false, // not working yet. do not use
+    required String id,
   }) async {
     var isRequestingPwd = false;
     final session = await exec(
@@ -80,7 +81,7 @@ extension SSHClientX on SSHClient {
           isRequestingPwd = true;
           final user = Miscs.pwdRequestWithUserReg.firstMatch(data)?.group(1);
           if (context == null) return;
-          final pwd = await context.showPwdDialog(user);
+          final pwd = await context.showPwdDialog(user: user, hostId: id);
           if (pwd == null || pwd.isEmpty) {
             session.kill(SSHSignal.INT);
           } else {

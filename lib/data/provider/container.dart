@@ -28,6 +28,7 @@ class ContainerProvider extends ChangeNotifier {
   ContainerErr? error;
   String? runLog;
   ContainerType type;
+  bool sudo = false;
 
   ContainerProvider({
     required this.client,
@@ -71,8 +72,7 @@ class ContainerProvider extends ChangeNotifier {
   }
 
   Future<void> refresh({bool isAuto = false}) async {
-    final sudo =
-        await _requiresSudo() && Stores.setting.containerTrySudo.fetch();
+    sudo = await _requiresSudo() && Stores.setting.containerTrySudo.fetch();
 
     /// If sudo is required and auto refresh is enabled, skip the refresh.
     /// Or this will ask for pwd again and again.
@@ -88,6 +88,7 @@ class ContainerProvider extends ChangeNotifier {
       )),
       context: context,
       onStdout: (data, _) => raw = '$raw$data',
+      id: hostId,
     );
 
     /// Code 127 means command not found
@@ -204,13 +205,14 @@ class ContainerProvider extends ChangeNotifier {
     runLog = '';
     final errs = <String>[];
     final code = await client?.execWithPwd(
-      _wrap(cmd),
+      _wrap(sudo ? 'sudo -S $cmd' : cmd),
       context: context,
       onStdout: (data, _) {
         runLog = '$runLog$data';
         notifyListeners();
       },
       onStderr: (data, _) => errs.add(data),
+      id: hostId,
     );
     runLog = null;
     notifyListeners();

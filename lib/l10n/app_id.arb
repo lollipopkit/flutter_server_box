@@ -193,6 +193,8 @@
   "pwd": "Kata sandi",
   "read": "Baca",
   "reboot": "Reboot",
+  "rememberPwdInMem": "Ingat kata sandi di dalam memori",
+  "rememberPwdInMemTip": "Digunakan untuk kontainer, menangguhkan, dll.",
   "remotePath": "Jalur jarak jauh",
   "rename": "Ganti nama",
   "reportBugsOnGithubIssue": "Harap laporkan bug di {url}",

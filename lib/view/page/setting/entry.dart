@@ -1048,6 +1048,7 @@ class _SettingPageState extends State<SettingPage> {
     return ExpandTile(
       title: Text(l10n.more),
       children: [
+        _buildRememberPwdInMem(),
         _buildTextScaler(),
         _buildPreferTemperatureDeviceList(),
         _buildKeepStatusWhenErr(),
@@ -1079,6 +1080,14 @@ class _SettingPageState extends State<SettingPage> {
           _setting.termCursor.put(selected.index);
         }
       },
+    );
+  }
+
+  Widget _buildRememberPwdInMem() {
+    return ListTile(
+      title: Text(l10n.rememberPwdInMem),
+      subtitle: Text(l10n.rememberPwdInMemTip, style: UIs.textGrey),
+      trailing: StoreSwitch(prop: _setting.rememberPwdInMem),
     );
   }
 }

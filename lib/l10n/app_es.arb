@@ -193,6 +193,8 @@
   "pwd": "Contraseña",
   "read": "Leer",
   "reboot": "Reiniciar",
+  "rememberPwdInMem": "Recordar contraseña en la memoria",
+  "rememberPwdInMemTip": "Utilizado para contenedores, suspensión, etc.",
   "remotePath": "Ruta remota",
   "rename": "Renombrar",
   "reportBugsOnGithubIssue": "Por favor, informa los problemas en {url}",

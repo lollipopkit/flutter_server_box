@@ -255,6 +255,10 @@ class SettingStore extends PersistentStore {
   late final termCursor =
       property('termCursor', TerminalCursorType.block.index);
 
+  /// Remerber pwd in memory
+  /// Used for [DialogX.showPwdDialog]
+  late final rememberPwdInMem = property('rememberPwdInMem', true);
+
   // Never show these settings for users
   //
   // ------BEGIN------

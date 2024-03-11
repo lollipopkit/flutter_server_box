@@ -193,6 +193,8 @@
   "pwd": "Passwort",
   "read": "Lesen",
   "reboot": "Neustart",
+  "rememberPwdInMem": "Passwort im Speicher behalten",
+  "rememberPwdInMemTip": "Für Container, Aufhängen usw.",
   "remotePath": "Entfernte Pfade",
   "rename": "Umbenennen",
   "reportBugsOnGithubIssue": "Bitte Bugs auf {url} melden",

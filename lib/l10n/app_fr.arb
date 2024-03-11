@@ -193,6 +193,8 @@
   "pwd": "Mot de passe",
   "read": "Lire",
   "reboot": "Redémarrer",
+  "rememberPwdInMem": "Mémoriser le mot de passe en mémoire",
+  "rememberPwdInMemTip": "Utilisé pour les conteneurs, la suspension, etc.",
   "remotePath": "Chemin distant",
   "rename": "Renommer",
   "reportBugsOnGithubIssue": "Veuillez signaler les bogues sur {url}",

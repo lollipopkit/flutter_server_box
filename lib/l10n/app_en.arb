@@ -193,6 +193,8 @@
   "pwd": "Password",
   "read": "Read",
   "reboot": "Reboot",
+  "rememberPwdInMem": "Remember password in memory",
+  "rememberPwdInMemTip": "Used for containers, suspending, etc.",
   "remotePath": "Remote path",
   "rename": "Rename",
   "reportBugsOnGithubIssue": "Please report bugs on {url}",

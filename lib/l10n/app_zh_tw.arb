@@ -193,6 +193,8 @@
   "pwd": "密碼",
   "read": "读",
   "reboot": "重启",
+  "rememberPwdInMem": "在記憶體中記住密碼",
+  "rememberPwdInMemTip": "用於容器、暫停等",
   "remotePath": "遠端路徑",
   "rename": "重命名",
   "reportBugsOnGithubIssue": "請到 {url} 提交問題",
