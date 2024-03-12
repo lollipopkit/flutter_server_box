@@ -9,7 +9,9 @@ enum Dist {
   armbian,
   arch,
   alpine,
-  rocky;
+  rocky,
+  deepin,
+  ;
 }
 
 extension StringX on String {
