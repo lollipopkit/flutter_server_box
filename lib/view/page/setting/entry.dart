@@ -170,6 +170,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildSSH() {
     return Column(
       children: [
+        _buildTermTheme(),
         _buildFont(),
         _buildTermFontSize(),
         _buildTermCursor(),
@@ -1088,6 +1089,42 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(l10n.rememberPwdInMem),
       subtitle: Text(l10n.rememberPwdInMemTip, style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.rememberPwdInMem),
+    );
+  }
+
+  Widget _buildTermTheme() {
+    String index2Str(int index) {
+      switch (index) {
+        case 0:
+          return l10n.system;
+        case 1:
+          return l10n.light;
+        case 2:
+          return l10n.dark;
+        default:
+          return l10n.error;
+      }
+    }
+
+    return ListTile(
+      title: Text(l10n.theme),
+      trailing: ValueListenableBuilder(
+        valueListenable: _setting.termTheme.listenable(),
+        builder: (_, val, __) => Text(
+          index2Str(val),
+          style: UIs.text15,
+        ),
+      ),
+      onTap: () async {
+        final selected = await context.showPickSingleDialog(
+          items: List.generate(3, (index) => index),
+          name: (p0) => index2Str(p0),
+          initial: _setting.termTheme.fetch(),
+        );
+        if (selected != null) {
+          _setting.termTheme.put(selected);
+        }
+      },
     );
   }
 }

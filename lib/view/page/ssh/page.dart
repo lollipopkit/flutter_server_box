@@ -91,7 +91,11 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     super.didChangeDependencies();
     _isDark = context.isDark;
     _media = MediaQuery.of(context);
-    _terminalTheme = _isDark ? TerminalThemes.dark : TerminalThemes.light;
+    _terminalTheme = switch (Stores.setting.termTheme.fetch()) {
+      1 => TerminalThemes.light,
+      2 => TerminalThemes.dark,
+      _ => _isDark ? TerminalThemes.dark : TerminalThemes.light,
+    };
 
     // Because the virtual keyboard only displayed on mobile devices
     if (isMobile || isDebuggingMobileLayoutOnDesktop) {

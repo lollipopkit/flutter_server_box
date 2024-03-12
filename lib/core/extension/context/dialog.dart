@@ -63,7 +63,6 @@ extension DialogX on BuildContext {
   Future<String?> showPwdDialog({
     String? user,
     required String hostId,
-    void Function()? onCorrectPwd,
   }) async {
     if (!mounted) return null;
     return await showRoundDialog<String>(

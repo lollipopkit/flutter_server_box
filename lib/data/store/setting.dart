@@ -259,6 +259,10 @@ class SettingStore extends PersistentStore {
   /// Used for [DialogX.showPwdDialog]
   late final rememberPwdInMem = property('rememberPwdInMem', true);
 
+  /// SSH Term Theme
+  /// 0: follow app theme, 1: light, 2: dark
+  late final termTheme = property('termTheme', 0);
+
   // Never show these settings for users
   //
   // ------BEGIN------
