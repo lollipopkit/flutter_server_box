@@ -65,8 +65,8 @@ class DiskIO extends TimeSeq<DiskIOPiece> {
   }
 
   (double?, double?) _getSpeed(String dev) {
-    final old = pre.firstWhereOrNull((e) => e.dev == '/dev/$dev');
-    final new_ = now.firstWhereOrNull((e) => e.dev == '/dev/$dev');
+    final old = pre.firstWhereOrNull((e) => e.dev == dev);
+    final new_ = now.firstWhereOrNull((e) => e.dev == dev);
     if (old == null || new_ == null) return (null, null);
     final sectorsRead = new_.sectorsRead - old.sectorsRead;
     final sectorsWrite = new_.sectorsWrite - old.sectorsWrite;
