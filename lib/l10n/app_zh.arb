@@ -246,7 +246,7 @@
   "system": "系统",
   "tag": "标签",
   "temperature": "温度",
-  "termFontSizeTip": "此设置会影响终端大小（宽高）",
+  "termFontSizeTip": "此设置会影响终端大小（宽高）。可以在终端页面缩放来调整当前会话的字体大小",
   "terminal": "终端",
   "test": "测试",
   "textScaler": "字体缩放",

@@ -129,7 +129,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
           _media.padding.top,
       child: Padding(
         padding: EdgeInsets.only(
-          top: CustomAppBar.barHeight ?? _media.padding.top,
+          top: CustomAppBar.barHeight ?? 0,
           left: _horizonPadding,
           right: _horizonPadding,
         ),
@@ -137,7 +137,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
           _terminal,
           controller: _terminalController,
           keyboardType: TextInputType.emailAddress,
-          enableSuggestions: Stores.setting.cnKeyboardComp.fetch(),
+          enableSuggestions: true,
           textStyle: _terminalStyle,
           theme: _terminalTheme,
           deleteDetection: isMobile,
@@ -148,7 +148,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
             2 * _horizonPadding,
             CustomAppBar.barHeight ?? _media.padding.top,
           ),
-          //hideScrollBar: false,
+          hideScrollBar: false,
         ),
       ),
     );

@@ -98,7 +98,7 @@ class SettingStore extends PersistentStore {
   // SSH virtual key (ctrl | alt) auto turn off
   late final sshVirtualKeyAutoOff = property('sshVirtualKeyAutoOff', true);
 
-  late final editorFontSize = property('editorFontSize', 13.0);
+  late final editorFontSize = property('editorFontSize', 12.5);
 
   // Editor theme
   late final editorTheme = property(

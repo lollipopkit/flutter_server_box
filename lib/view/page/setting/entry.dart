@@ -172,8 +172,7 @@ class _SettingPageState extends State<SettingPage> {
         _buildFont(),
         _buildTermFontSize(),
         _buildSSHVirtualKeyAutoOff(),
-        // Use hardware keyboard on desktop, so there is no need to set it
-        if (isAndroid) _buildCNKeyboardComp(),
+        //if (isAndroid) _buildCNKeyboardComp(),
         if (isMobile) _buildSSHVirtKeys(),
       ].map((e) => CardX(child: e)).toList(),
     );
@@ -653,13 +652,13 @@ class _SettingPageState extends State<SettingPage> {
   //   );
   // }
 
-  Widget _buildCNKeyboardComp() {
-    return ListTile(
-      title: Text(l10n.cnKeyboardComp),
-      subtitle: Text(l10n.cnKeyboardCompTip, style: UIs.textGrey),
-      trailing: StoreSwitch(prop: _setting.cnKeyboardComp),
-    );
-  }
+  // Widget _buildCNKeyboardComp() {
+  //   return ListTile(
+  //     title: Text(l10n.cnKeyboardComp),
+  //     subtitle: Text(l10n.cnKeyboardCompTip, style: UIs.textGrey),
+  //     trailing: StoreSwitch(prop: _setting.cnKeyboardComp),
+  //   );
+  // }
 
   Widget _buildSSHVirtKeys() {
     return ListTile(

@@ -246,7 +246,7 @@
   "system": "Systeme",
   "tag": "Tags",
   "temperature": "Temperatur",
-  "termFontSizeTip": "Diese Einstellung beeinflusst die Größe des Terminals (Breite und Höhe).",
+  "termFontSizeTip": "Diese Einstellung beeinflusst die Größe des Terminals (Breite und Höhe). Sie können die Terminalseite zoomen, um die Schriftgröße der aktuellen Sitzung anzupassen.",
   "terminal": "Terminal",
   "test": "Prüfung",
   "textScaler": "Skalierung der Schriftart",

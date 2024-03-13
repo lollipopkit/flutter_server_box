@@ -246,7 +246,7 @@
   "system": "System",
   "tag": "Tags",
   "temperature": "Temperature",
-  "termFontSizeTip": "This setting will affect the terminal size (width and height).",
+  "termFontSizeTip": "This setting will affect the terminal size (width and height). You can zoom in on the terminal page to adjust the font size of the current session.",
   "terminal": "Terminal",
   "test": "Test",
   "textScaler": "Text scaler",

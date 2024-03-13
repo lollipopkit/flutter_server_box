@@ -1259,7 +1259,7 @@ packages:
     description:
       path: "."
       ref: master
-      resolved-ref: ee64dc1541a18f513856de0f554d8227fdbf29da
+      resolved-ref: "8f17dcbcafa9dc1b56cb3d7075dedfe0487d6a9b"
       url: "https://github.com/lollipopkit/xterm.dart"
     source: git
     version: "4.0.0"
