@@ -39,7 +39,7 @@ dependencies:
   intl: ^0.18.0
   # xterm: ^3.5.0
   xterm:
-    #path: ../xterm.dart
+    # path: ../xterm.dart
     git:
       ref: master
       url: https://github.com/lollipopkit/xterm.dart

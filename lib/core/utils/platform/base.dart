@@ -61,4 +61,3 @@ final isWeb = OS.type == OS.web;
 final isMobile = OS.type == OS.ios || OS.type == OS.android;
 final isDesktop =
     OS.type == OS.linux || OS.type == OS.macos || OS.type == OS.windows;
-const isDebuggingMobileLayoutOnDesktop = kDebugMode;

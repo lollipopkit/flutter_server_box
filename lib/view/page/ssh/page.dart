@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math' as math;
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +16,7 @@ import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/provider/virtual_keyboard.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
+import 'package:toolbox/view/widget/appbar.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
 
@@ -47,6 +47,8 @@ class SSHPage extends StatefulWidget {
   _SSHPageState createState() => _SSHPageState();
 }
 
+const _horizonPadding = 7.0;
+
 class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   final _keyboard = VirtKeyProvider();
   late final _terminal = Terminal(inputHandler: _keyboard);
@@ -57,7 +59,6 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   late TerminalStyle _terminalStyle;
   late TerminalTheme _terminalTheme;
   late TextInputType _keyboardType;
-  late double _originTextSize;
   double _virtKeyWidth = 0;
   double _virtKeysHeight = 0;
   late final TerminalCursorType _termCursor;
@@ -89,16 +90,17 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _isDark = context.isDark;
-    _media = MediaQuery.of(context);
-    _terminalTheme = switch (Stores.setting.termTheme.fetch()) {
-      1 => TerminalThemes.light,
-      2 => TerminalThemes.dark,
-      _ => _isDark ? TerminalThemes.dark : TerminalThemes.light,
+    _isDark = switch (Stores.setting.termTheme.fetch()) {
+      1 => false,
+      2 => true,
+      _ => context.isDark,
     };
+    _media = MediaQuery.of(context);
+
+    _terminalTheme = _isDark ? TerminalThemes.dark : TerminalThemes.light;
 
     // Because the virtual keyboard only displayed on mobile devices
-    if (isMobile || isDebuggingMobileLayoutOnDesktop) {
+    if (isMobile) {
       _virtKeyWidth = _media.size.width / 7;
       _virtKeysHeight = _media.size.height * 0.043 * _virtKeysList.length;
     }
@@ -110,9 +112,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     Widget child = Scaffold(
       backgroundColor: _terminalTheme.background,
       body: _buildBody(),
-      bottomNavigationBar: isDesktop && !isDebuggingMobileLayoutOnDesktop
-          ? null
-          : _buildBottom(),
+      bottomNavigationBar: isDesktop ? null : _buildBottom(),
     );
     if (isIOS) {
       child = AnnotatedRegion(
@@ -130,32 +130,27 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
           _media.padding.bottom -
           _media.padding.top,
       child: Padding(
-        padding: EdgeInsets.only(top: _media.padding.top, left: 7, right: 7),
-        child: GestureDetector(
-          onScaleUpdate: (details) {
-            if (details.scale == 1) {
-              return;
-            }
-            final scale = math.pow(details.scale, 0.3);
-            final fontSize = _originTextSize * scale;
-            if (fontSize < 7 || fontSize > 17) {
-              return;
-            }
-            _terminalStyle = _terminalStyle.copyWith(fontSize: fontSize);
-            setState(() {});
-          },
-          child: TerminalView(
-            _terminal,
-            controller: _terminalController,
-            keyboardType: _keyboardType,
-            textStyle: _terminalStyle,
-            theme: _terminalTheme,
-            deleteDetection: isMobile,
-            autofocus: true,
-            keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,
-            cursorType: _termCursor,
-            //hideScrollBar: false,
+        padding: EdgeInsets.only(
+          top: CustomAppBar.barHeight ?? _media.padding.top,
+          left: _horizonPadding,
+          right: _horizonPadding,
+        ),
+        child: TerminalView(
+          _terminal,
+          controller: _terminalController,
+          keyboardType: _keyboardType,
+          textStyle: _terminalStyle,
+          theme: _terminalTheme,
+          deleteDetection: false,
+          autofocus: true,
+          keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,
+          cursorType: _termCursor,
+          showToolbar: isMobile,
+          viewOffset: Offset(
+            2 * _horizonPadding,
+            CustomAppBar.barHeight ?? _media.padding.top,
           ),
+          //hideScrollBar: false,
         ),
       ),
     );
@@ -483,7 +478,6 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   void _initStoredCfg() {
     final fontFamilly = getFileName(Stores.setting.fontPath.fetch());
     final textSize = Stores.setting.termFontSize.fetch();
-    _originTextSize = textSize;
     final textStyle = TextStyle(
       fontFamily: fontFamilly,
       fontSize: textSize,

@@ -1259,10 +1259,10 @@ packages:
     description:
       path: "."
       ref: master
-      resolved-ref: aad22a50bf09b2d87b20e2e45c1c9ca5ff0037f7
+      resolved-ref: b81b303040729b866f844dd46b25c9f6be582962
       url: "https://github.com/lollipopkit/xterm.dart"
     source: git
-    version: "3.6.1-pre"
+    version: "4.0.0"
   yaml:
     dependency: transitive
     description:
@@ -1281,4 +1281,4 @@ packages:
     version: "0.0.6"
 sdks:
   dart: ">=3.3.0-279.1.beta <4.0.0"
-  flutter: ">=3.16.6"
+  flutter: ">=3.19.0"
