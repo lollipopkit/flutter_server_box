@@ -58,10 +58,8 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   late MediaQueryData _media;
   late TerminalStyle _terminalStyle;
   late TerminalTheme _terminalTheme;
-  late TextInputType _keyboardType;
   double _virtKeyWidth = 0;
   double _virtKeysHeight = 0;
-  late final TerminalCursorType _termCursor;
 
   bool _isDark = false;
   Timer? _virtKeyLongPressTimer;
@@ -138,13 +136,13 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
         child: TerminalView(
           _terminal,
           controller: _terminalController,
-          keyboardType: _keyboardType,
+          keyboardType: TextInputType.emailAddress,
+          enableSuggestions: Stores.setting.cnKeyboardComp.fetch(),
           textStyle: _terminalStyle,
           theme: _terminalTheme,
-          deleteDetection: false,
+          deleteDetection: isMobile,
           autofocus: true,
           keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,
-          cursorType: _termCursor,
           showToolbar: isMobile,
           viewOffset: Offset(
             2 * _horizonPadding,
@@ -484,16 +482,6 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     );
 
     _terminalStyle = TerminalStyle.fromTextStyle(textStyle);
-    _keyboardType = TextInputType.values[Stores.setting.keyboardType.fetch()];
-
-    final termCursor = Stores.setting.termCursor.fetch();
-    _termCursor = () {
-      try {
-        return TerminalCursorType.values[termCursor];
-      } catch (_) {
-        return TerminalCursorType.block;
-      }
-    }();
   }
 }
 

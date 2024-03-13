@@ -1,8 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/model/app/menu/server_func.dart';
-import 'package:xterm/ui.dart';
 
 import '../model/app/net_view.dart';
 import '../res/default.dart';
@@ -128,10 +126,10 @@ class SettingStore extends PersistentStore {
   //   1,
   // );
 
-  late final keyboardType = property(
-    'keyboardType',
-    TextInputType.text.index,
-  );
+  // late final keyboardType = property(
+  //   'keyboardType',
+  //   TextInputType.text.index,
+  // );
 
   late final sshVirtKeys = listProperty(
     'sshVirtKeys',
@@ -251,10 +249,6 @@ class SettingStore extends PersistentStore {
   /// when building traffic view on server tab
   late final ignoreLocalNet = property('ignoreLocalNetIface', true);
 
-  /// Index of terminal cursor type
-  late final termCursor =
-      property('termCursor', TerminalCursorType.block.index);
-
   /// Remerber pwd in memory
   /// Used for [DialogX.showPwdDialog]
   late final rememberPwdInMem = property('rememberPwdInMem', true);
@@ -262,6 +256,10 @@ class SettingStore extends PersistentStore {
   /// SSH Term Theme
   /// 0: follow app theme, 1: light, 2: dark
   late final termTheme = property('termTheme', 0);
+
+  /// Compatiablity for Chinese Android.  
+  /// Set it to true, if you use Safe Keyboard on Chinese Android
+  late final cnKeyboardComp = property('cnKeyboardComp', false);
 
   // Never show these settings for users
   //

@@ -8,7 +8,6 @@ import 'package:toolbox/core/extension/colorx.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
-import 'package:toolbox/core/extension/enum.dart';
 import 'package:toolbox/core/extension/locale.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/stringx.dart';
@@ -18,7 +17,6 @@ import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/rebuild.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/expand_tile.dart';
-import 'package:xterm/ui.dart';
 
 import '../../../core/persistant_store.dart';
 import '../../../core/route.dart';
@@ -173,10 +171,9 @@ class _SettingPageState extends State<SettingPage> {
         _buildTermTheme(),
         _buildFont(),
         _buildTermFontSize(),
-        _buildTermCursor(),
         _buildSSHVirtualKeyAutoOff(),
         // Use hardware keyboard on desktop, so there is no need to set it
-        if (isMobile) _buildKeyboardType(),
+        if (isAndroid) _buildCNKeyboardComp(),
         if (isMobile) _buildSSHVirtKeys(),
       ].map((e) => CardX(child: e)).toList(),
     );
@@ -656,43 +653,11 @@ class _SettingPageState extends State<SettingPage> {
   //   );
   // }
 
-  Widget _buildKeyboardType() {
-    const List<String> names = <String>[
-      'text',
-      'multiline',
-      'number',
-      'phone',
-      'datetime',
-      'emailAddress',
-      'url',
-      'visiblePassword',
-      'name',
-      'address',
-      'none',
-    ];
+  Widget _buildCNKeyboardComp() {
     return ListTile(
-      title: Text(l10n.keyboardType),
-      subtitle: Text(l10n.keyboardCompatibility, style: UIs.textGrey),
-      trailing: ValueListenableBuilder(
-        valueListenable: _setting.keyboardType.listenable(),
-        builder: (_, val, __) => Text(
-          names[val],
-          style: UIs.text15,
-        ),
-      ),
-      onTap: () async {
-        if (names.length != TextInputType.values.length) {
-          // This notify me to update the code
-          context.showSnackBar('names.length != TextInputType.values.length');
-        }
-        final selected = await context.showPickSingleDialog(
-          items: names,
-          initial: names.fromIndex(_setting.keyboardType.fetch()),
-        );
-        if (selected != null) {
-          _setting.keyboardType.put(names.indexOf(selected));
-        }
-      },
+      title: Text(l10n.cnKeyboardComp),
+      subtitle: Text(l10n.cnKeyboardCompTip, style: UIs.textGrey),
+      trailing: StoreSwitch(prop: _setting.cnKeyboardComp),
     );
   }
 
@@ -1057,30 +1022,6 @@ class _SettingPageState extends State<SettingPage> {
         _buildUpdateInterval(),
         _buildMaxRetry(),
       ],
-    );
-  }
-
-  Widget _buildTermCursor() {
-    return ListTile(
-      title: Text(l10n.cursorType),
-      trailing: ValueListenableBuilder(
-        valueListenable: _setting.termCursor.listenable(),
-        builder: (_, val, __) => Text(
-          TerminalCursorType.values.fromIndex(val).name,
-          style: UIs.text15,
-        ),
-      ),
-      onTap: () async {
-        final selected = await context.showPickSingleDialog(
-          items: TerminalCursorType.values,
-          name: (p0) => p0.name,
-          initial:
-              TerminalCursorType.values.fromIndex(_setting.termCursor.fetch()),
-        );
-        if (selected != null) {
-          _setting.termCursor.put(selected.index);
-        }
-      },
     );
   }
 
