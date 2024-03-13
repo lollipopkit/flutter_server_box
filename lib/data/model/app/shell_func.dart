@@ -206,7 +206,7 @@ enum StatusCmdType {
 
 /// Cmds for linux server
 const _statusCmds = [
-  'echo $linuxSign',
+  'echo ${SystemType.linuxSign}',
   'date +%s',
   'cat /proc/net/dev',
   'cat /etc/*-release | grep PRETTY_NAME',
@@ -240,7 +240,7 @@ enum BSDStatusCmdType {
 
 /// Cmds for BSD server
 const _bsdStatusCmd = [
-  'echo $bsdSign',
+  'echo ${SystemType.bsdSign}',
   'date +%s',
   'netstat -ibn',
   'uname -or',

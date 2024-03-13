@@ -9,16 +9,14 @@ enum SystemType {
 
   const SystemType._(this.value);
 
+  static const linuxSign = '__linux';
+  static const bsdSign = '__bsd';
+
   static SystemType parse(String value) {
-    switch (value.trim()) {
-      case linuxSign:
-        return SystemType.linux;
-      case bsdSign:
-        return SystemType.bsd;
-      default:
-        // Fallback to linux
-        return SystemType.linux;
+    if (value.contains(bsdSign)) {
+      return SystemType.bsd;
     }
+    return SystemType.linux;
   }
 
   bool isSegmentsLenMatch(int len) => len == segmentsLen;
@@ -32,6 +30,3 @@ enum SystemType {
     }
   }
 }
-
-const linuxSign = 'linux';
-const bsdSign = 'bsd';
