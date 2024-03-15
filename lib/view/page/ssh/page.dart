@@ -136,7 +136,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
         child: TerminalView(
           _terminal,
           controller: _terminalController,
-          keyboardType: TextInputType.emailAddress,
+          keyboardType: TextInputType.text,
           enableSuggestions: true,
           textStyle: _terminalStyle,
           theme: _terminalTheme,
