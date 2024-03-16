@@ -430,15 +430,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildDiskView(ServerStatus ss) {
-    final disks = ss.disk;
-    disks.removeWhere((e) {
-      for (final ingorePath in Stores.setting.diskIgnorePath.fetch()) {
-        if (e.dev.startsWith(ingorePath)) return true;
-      }
-      return false;
-    });
-    final children =
-        List.generate(disks.length, (idx) => _buildDiskItem(disks[idx], ss));
+    final children = List.generate(
+        ss.disk.length, (idx) => _buildDiskItem(ss.disk[idx], ss));
     return CardX(
       child: ExpandTile(
         title: Text(l10n.disk),

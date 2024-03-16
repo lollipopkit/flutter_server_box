@@ -38,10 +38,6 @@ class SettingStore extends PersistentStore {
     Defaults.launchPageIdx,
   );
 
-  /// Server detail disk ignore path
-  late final diskIgnorePath =
-      property('diskIgnorePath', Defaults.diskIgnorePath);
-
   /// Disk view: amount / IO
   late final serverTabPreferDiskAmount = property(
     'serverTabPreferDiskAmount',

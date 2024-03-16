@@ -17,16 +17,6 @@ abstract final class Defaults {
     'battery'
   ];
 
-  static const diskIgnorePath = [
-    'udev',
-    'tmpfs',
-    'devtmpfs',
-    'overlay',
-    'run',
-    'none',
-    'shm',
-  ];
-
   static const sshVirtKeys = [
     VirtKey.esc,
     VirtKey.alt,

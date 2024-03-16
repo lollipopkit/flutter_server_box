@@ -40,8 +40,10 @@ class Disk {
         pathCache = '';
       }
       try {
+        final dev = vals[0];
+        if (!dev.startsWith('/dev')) continue;
         list.add(Disk(
-          dev: vals[0],
+          dev: dev,
           mount: vals[5],
           usedPercent: int.parse(vals[4].replaceFirst('%', '')),
           used: BigInt.tryParse(vals[2]) ?? BigInt.zero,
