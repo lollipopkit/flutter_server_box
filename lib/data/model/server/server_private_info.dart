@@ -48,20 +48,31 @@ class ServerPrivateInfo {
     this.jumpId,
   }) : id = '$user@$ip:$port';
 
-  ServerPrivateInfo.fromJson(Map<String, dynamic> json)
-      : ip = json["ip"].toString(),
-        port = json["port"] ?? 22,
-        user = json["user"]?.toString() ?? 'root',
-        id =
-            '${json["user"]?.toString() ?? "root"}@${json["ip"].toString()}:${json["port"] ?? 22}',
-        name = json["name"]?.toString() ??
-            '${json["user"]?.toString() ?? 'root'}@${json["ip"].toString()}:${json["port"] ?? 22}',
-        pwd = json["authorization"]?.toString(),
-        keyId = json["pubKeyId"]?.toString(),
-        tags = json["tags"]?.cast<String>(),
-        alterUrl = json["alterUrl"]?.toString(),
-        autoConnect = json["autoConnect"],
-        jumpId = json["jumpId"];
+  static ServerPrivateInfo fromJson(Map<String, dynamic> json) {
+    final ip = json["ip"] as String? ?? '';
+    final port = json["port"] as int? ?? 22;
+    final user = json["user"] as String? ?? 'root';
+    final name = json["name"] as String? ?? '';
+    final pwd = json["authorization"] as String?;
+    final keyId = json["pubKeyId"] as String?;
+    final tags = (json["tags"] as List?)?.cast<String>();
+    final alterUrl = json["alterUrl"] as String?;
+    final autoConnect = json["autoConnect"] as bool?;
+    final jumpId = json["jumpId"] as String?;
+
+    return ServerPrivateInfo(
+      name: name,
+      ip: ip,
+      port: port,
+      user: user,
+      pwd: pwd,
+      keyId: keyId,
+      tags: tags,
+      alterUrl: alterUrl,
+      autoConnect: autoConnect,
+      jumpId: jumpId,
+    );
+  }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};

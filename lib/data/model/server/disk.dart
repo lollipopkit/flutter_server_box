@@ -41,7 +41,8 @@ class Disk {
       }
       try {
         final dev = vals[0];
-        if (!dev.startsWith('/dev')) continue;
+        // Some NAS may have mounted path like this `//192.168.1.2/`
+        if (!_shouldCalc(dev)) continue;
         list.add(Disk(
           dev: dev,
           mount: vals[5],
@@ -161,7 +162,7 @@ class DiskUsage {
     var used = BigInt.zero;
     var size = BigInt.zero;
     for (var disk in disks) {
-      if (!disk.dev.startsWith('/dev')) continue;
+      if (!_shouldCalc(disk.dev)) continue;
       if (devs.contains(disk.dev)) continue;
       devs.add(disk.dev);
       used += disk.used;
@@ -169,4 +170,10 @@ class DiskUsage {
     }
     return DiskUsage(used: used, size: size);
   }
+}
+
+bool _shouldCalc(String dev) {
+  if (dev.startsWith('/dev')) return true;
+  if (dev.startsWith('//')) return true;
+  return false;
 }
