@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
+import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/ui.dart';
@@ -25,6 +26,7 @@ class _SSHTabPageState extends State<SSHTabPage>
     length: _tabIds.length,
     vsync: this,
   );
+  final _fabRN = ValueNotifier(0);
 
   @override
   Widget build(BuildContext context) {
@@ -36,8 +38,21 @@ class _SSHTabPageState extends State<SSHTabPage>
         isScrollable: true,
         tabAlignment: TabAlignment.start,
         dividerColor: Colors.transparent,
+        onTap: (value) => _fabRN.value = value,
       ),
       body: _buildBody(),
+      floatingActionButton: ListenableBuilder(
+        listenable: _fabRN,
+        builder: (_, __) {
+          if (_fabRN.value == 0) return const SizedBox();
+          return FloatingActionButton(
+            onPressed: () => AppRoute.serverEdit().go(context),
+            tooltip: l10n.addAServer,
+            heroTag: 'server',
+            child: const Icon(Icons.add),
+          );
+        },
+      ),
     );
   }
 
@@ -83,6 +98,14 @@ class _SSHTabPageState extends State<SSHTabPage>
   Widget _buildAddPage() {
     return Center(
       child: Consumer<ServerProvider>(builder: (_, pro, __) {
+        if (pro.serverOrder.isEmpty) {
+          return Center(
+            child: Text(
+              l10n.serverTabEmpty,
+              textAlign: TextAlign.center,
+            ),
+          );
+        }
         return ListView.builder(
           padding: const EdgeInsets.all(7),
           itemBuilder: (_, idx) {

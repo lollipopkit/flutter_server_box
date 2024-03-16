@@ -15,14 +15,13 @@ class ChoiceChipX<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(3),
-      child: ChoiceChip(
+    return ChoiceChip(
         label: Text(label),
         side: BorderSide.none,
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+        labelPadding: const EdgeInsets.symmetric(horizontal: 5),
         selected: state.selected(value),
         onSelected: state.onSelected(value),
-      ),
-    );
+      );
   }
 }
