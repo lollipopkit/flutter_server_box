@@ -176,8 +176,8 @@ class _ServerPageState extends State<ServerPage>
         onTap: () {
           if (srv.canViewDetails) {
             AppRoute.serverDetail(spi: srv.spi).go(context);
-          } else if (srv.status.err != null) {
-            _showFailReason(srv.status);
+          } else {
+            AppRoute.serverEdit(spi: srv.spi).go(context);
           }
         },
         onLongPress: () {

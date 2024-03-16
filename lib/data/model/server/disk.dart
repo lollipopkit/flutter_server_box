@@ -41,7 +41,6 @@ class Disk {
       }
       try {
         final dev = vals[0];
-        // Some NAS may have mounted path like this `//192.168.1.2/`
         if (!_shouldCalc(dev)) continue;
         list.add(Disk(
           dev: dev,
@@ -172,6 +171,7 @@ class DiskUsage {
   }
 }
 
+// Some NAS may have mounted path like this `//192.168.1.2/`
 bool _shouldCalc(String dev) {
   if (dev.startsWith('/dev')) return true;
   if (dev.startsWith('//')) return true;

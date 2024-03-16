@@ -253,7 +253,7 @@ class SettingStore extends PersistentStore {
   /// 0: follow app theme, 1: light, 2: dark
   late final termTheme = property('termTheme', 0);
 
-  /// Compatiablity for Chinese Android.  
+  /// Compatiablity for Chinese Android.
   /// Set it to true, if you use Safe Keyboard on Chinese Android
   late final cnKeyboardComp = property('cnKeyboardComp', false);
 
