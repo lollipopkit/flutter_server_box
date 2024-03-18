@@ -20,6 +20,8 @@ enum ServerFuncBtn {
   snippet,
   @HiveField(6)
   iperf,
+  @HiveField(7)
+  pve,
   ;
 
   IconData get icon => switch (this) {
@@ -30,6 +32,7 @@ enum ServerFuncBtn {
         process => Icons.list_alt_outlined,
         terminal => Icons.terminal,
         iperf => Icons.speed,
+        pve => Icons.computer,
       };
 
   String get toStr => switch (this) {
@@ -40,6 +43,7 @@ enum ServerFuncBtn {
         process => l10n.process,
         terminal => l10n.terminal,
         iperf => 'iperf',
+        pve => 'PVE',
       };
 
   int toJson() => index;

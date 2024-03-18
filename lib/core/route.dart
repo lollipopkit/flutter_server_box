@@ -9,6 +9,7 @@ import 'package:toolbox/view/page/iperf.dart';
 import 'package:toolbox/view/page/ping.dart';
 import 'package:toolbox/view/page/private_key/edit.dart';
 import 'package:toolbox/view/page/private_key/list.dart';
+import 'package:toolbox/view/page/pve.dart';
 import 'package:toolbox/view/page/server/detail.dart';
 import 'package:toolbox/view/page/setting/platform/android.dart';
 import 'package:toolbox/view/page/setting/platform/ios.dart';
@@ -226,5 +227,9 @@ class AppRoute {
 
   static AppRoute serverFuncBtnsOrder({Key? key}) {
     return AppRoute(ServerFuncBtnsOrderPage(key: key), 'server_func_btns_seq');
+  }
+
+  static AppRoute pve({Key? key, required ServerPrivateInfo spi}) {
+    return AppRoute(PvePage(key: key, spi: spi), 'pve');
   }
 }

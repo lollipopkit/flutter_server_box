@@ -163,6 +163,12 @@ void _onTapMoreBtns(
         check: () => _checkClient(context, spi.id),
       );
       break;
+    case ServerFuncBtn.pve:
+      AppRoute.pve(spi: spi).checkGo(
+        context: context,
+        check: () => _checkClient(context, spi.id),
+      );
+      break;
   }
 }
 

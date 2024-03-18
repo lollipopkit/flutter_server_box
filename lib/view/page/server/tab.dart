@@ -1,5 +1,4 @@
 import 'package:after_layout/after_layout.dart';
-import 'package:circle_chart/circle_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
@@ -16,13 +15,13 @@ import 'package:toolbox/data/model/server/sensors.dart';
 import 'package:toolbox/data/model/server/try_limiter.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
+import 'package:toolbox/view/widget/percent_circle.dart';
 
 import '../../../core/route.dart';
 import '../../../data/model/app/net_view.dart';
 import '../../../data/model/server/server.dart';
 import '../../../data/model/server/server_private_info.dart';
 import '../../../data/provider/server.dart';
-import '../../../data/res/color.dart';
 import '../../../data/res/ui.dart';
 import '../../widget/cardx.dart';
 import '../../widget/server_func_btns.dart';
@@ -312,9 +311,11 @@ class _ServerPageState extends State<ServerPage>
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _wrapWithSizedbox(_buildPercentCircle(ss.cpu.usedPercent()), true),
+          _wrapWithSizedbox(PercentCircle(percent: ss.cpu.usedPercent()), true),
           _wrapWithSizedbox(
-              _buildPercentCircle(ss.mem.usedPercent * 100), true),
+            PercentCircle(percent: ss.mem.usedPercent * 100),
+            true,
+          ),
           _wrapWithSizedbox(_buildNet(ss, spi.id)),
           _wrapWithSizedbox(_buildDisk(ss, spi.id)),
         ],
@@ -506,29 +507,6 @@ class _ServerPageState extends State<ServerPage>
       padding: const EdgeInsets.symmetric(horizontal: 3),
       onPressed: onTap,
       icon: child,
-    );
-  }
-
-  Widget _buildPercentCircle(double percent) {
-    if (percent <= 0) percent = 0.01;
-    if (percent >= 100) percent = 99.9;
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        CircleChart(
-          progressColor: primaryColor,
-          progressNumber: percent,
-          maxNumber: 100,
-          width: 57,
-          height: 57,
-          animationDuration: const Duration(milliseconds: 777),
-        ),
-        Text(
-          '${percent.toStringAsFixed(1)}%',
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 12.7),
-        ),
-      ],
     );
   }
 

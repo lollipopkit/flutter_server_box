@@ -223,22 +223,22 @@ class BackupPage extends StatelessWidget {
 
   Widget _buildBulkImportServers(BuildContext context) {
     return CardX(
-        child: ListTile(
-      title: Text(l10n.bulkImportServers),
-      subtitle: MarkdownBody(
-        data: l10n.bulkImportServersTip(Urls.appWiki),
-        styleSheet: MarkdownStyleSheet(
+      child: ListTile(
+        title: Text(l10n.bulkImportServers),
+        subtitle: MarkdownBody(
+          data: l10n.bulkImportServersTip(Urls.appWiki),
+          styleSheet: MarkdownStyleSheet(
             p: UIs.textGrey,
-            a: TextStyle(
-              color: primaryColor,
-            )),
-        onTapLink: (text, href, title) {
-          if (href != null) openUrl(href);
-        },
+            a: TextStyle(color: primaryColor),
+          ),
+          onTapLink: (text, href, title) {
+            if (href != null) openUrl(href);
+          },
+        ),
+        leading: const Icon(Icons.import_export),
+        onTap: () => _onBulkImportServers(context),
       ),
-      trailing: const Icon(Icons.import_export),
-      onTap: () => _onBulkImportServers(context),
-    ));
+    );
   }
 
   Future<void> _onTapFileRestore(BuildContext context) async {

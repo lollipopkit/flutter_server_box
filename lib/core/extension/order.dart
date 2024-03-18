@@ -1,3 +1,4 @@
+import 'package:toolbox/core/extension/listx.dart';
 import 'package:toolbox/core/persistant_store.dart';
 
 typedef Order<T> = List<T>;
@@ -52,7 +53,7 @@ extension OrderX<T> on Order<T> {
     move(index, newIndex, property: property, onMove: onMove);
   }
 
-  /// order: ['d', 'b', 'e']\
+  /// order: ['d', 'b', 'e']
   /// this: ['a', 'b', 'c', 'd']\
   /// result: ['d', 'b', 'a', 'c']\
   /// return: ['e']
@@ -64,11 +65,11 @@ extension OrderX<T> on Order<T> {
     final missed = <T>[];
     final surplus = <String>[];
     for (final id in order.toSet()) {
-      try {
-        final item = firstWhere((e) => finder(e, id));
-        newOrder.add(item);
-      } catch (e) {
+      final item = firstWhereOrNull((element) => finder(element, id));
+      if (item == null) {
         surplus.add(id);
+      } else {
+        newOrder.add(item);
       }
     }
     for (final item in this) {

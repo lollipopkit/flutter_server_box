@@ -5,7 +5,9 @@ import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
+import 'package:toolbox/data/model/server/custom.dart';
 import 'package:toolbox/data/res/provider.dart';
+import 'package:toolbox/view/widget/expand_tile.dart';
 
 import '../../../core/route.dart';
 import '../../../data/model/server/private_key_info.dart';
@@ -33,6 +35,8 @@ class _ServerEditPageState extends State<ServerEditPage> {
   final _portController = TextEditingController();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _pveAddrCtrl = TextEditingController();
+
   final _nameFocus = FocusNode();
   final _ipFocus = FocusNode();
   final _alterUrlFocus = FocusNode();
@@ -71,6 +75,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
       _altUrlController.text = spi.alterUrl ?? '';
       _autoConnect.value = spi.autoConnect ?? true;
       _jumpServer.value = spi.jumpId;
+      _pveAddrCtrl.text = spi.custom?.pveAddr ?? '';
     }
   }
 
@@ -221,8 +226,6 @@ class _ServerEditPageState extends State<ServerEditPage> {
         allTags: [...Pros.server.tags.value],
         onRenameTag: Pros.server.renameTag,
       ),
-      _buildAuth(),
-      //_buildJumpServer(),
       ListTile(
         title: Text(l10n.autoConnect),
         trailing: ListenableBuilder(
@@ -235,6 +238,9 @@ class _ServerEditPageState extends State<ServerEditPage> {
           ),
         ),
       ),
+      _buildAuth(),
+      //_buildJumpServer(),
+      _buildPVE(),
     ];
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(17, 17, 17, 47),
@@ -327,6 +333,17 @@ class _ServerEditPageState extends State<ServerEditPage> {
         );
       },
     );
+  }
+
+  Widget _buildPVE() {
+    return ExpandTile(title: const Text('PVE'), children: [
+      Input(
+        controller: _pveAddrCtrl,
+        type: TextInputType.url,
+        label: l10n.addr,
+        hint: 'https://example.com:8006',
+      ),
+    ]);
   }
 
   Widget _buildFAB() {
@@ -428,6 +445,8 @@ class _ServerEditPageState extends State<ServerEditPage> {
     if (_portController.text.isEmpty) {
       _portController.text = '22';
     }
+    final pveAddr = _pveAddrCtrl.text.isEmpty ? null : _pveAddrCtrl.text;
+    final custom = pveAddr == null ? null : ServerCustom(pveAddr: pveAddr);
 
     final spi = ServerPrivateInfo(
       name: _nameController.text.isEmpty
@@ -444,6 +463,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
       alterUrl: _altUrlController.text.isEmpty ? null : _altUrlController.text,
       autoConnect: _autoConnect.value,
       jumpId: _jumpServer.value,
+      custom: custom,
     );
 
     if (widget.spi == null) {

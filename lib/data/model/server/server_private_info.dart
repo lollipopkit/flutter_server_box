@@ -1,4 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:toolbox/data/model/server/custom.dart';
 import 'package:toolbox/data/model/server/server.dart';
 import 'package:toolbox/data/res/provider.dart';
 
@@ -6,6 +7,7 @@ import '../app/error.dart';
 
 part 'server_private_info.g.dart';
 
+/// In former version, it's called `ServerPrivateInfo`.
 @HiveType(typeId: 3)
 class ServerPrivateInfo {
   @HiveField(0)
@@ -33,6 +35,9 @@ class ServerPrivateInfo {
   @HiveField(9)
   final String? jumpId;
 
+  @HiveField(10)
+  final ServerCustom? custom;
+
   final String id;
 
   const ServerPrivateInfo({
@@ -46,6 +51,7 @@ class ServerPrivateInfo {
     this.alterUrl,
     this.autoConnect,
     this.jumpId,
+    this.custom,
   }) : id = '$user@$ip:$port';
 
   static ServerPrivateInfo fromJson(Map<String, dynamic> json) {
@@ -59,6 +65,9 @@ class ServerPrivateInfo {
     final alterUrl = json["alterUrl"] as String?;
     final autoConnect = json["autoConnect"] as bool?;
     final jumpId = json["jumpId"] as String?;
+    final custom = json["customCmd"] == null
+        ? null
+        : ServerCustom.fromJson(json["custom"].cast<String, dynamic>());
 
     return ServerPrivateInfo(
       name: name,
@@ -71,6 +80,7 @@ class ServerPrivateInfo {
       alterUrl: alterUrl,
       autoConnect: autoConnect,
       jumpId: jumpId,
+      custom: custom,
     );
   }
 
@@ -80,12 +90,27 @@ class ServerPrivateInfo {
     data["ip"] = ip;
     data["port"] = port;
     data["user"] = user;
-    data["authorization"] = pwd;
-    data["pubKeyId"] = keyId;
-    data["tags"] = tags;
-    data["alterUrl"] = alterUrl;
-    data["autoConnect"] = autoConnect;
-    data["jumpId"] = jumpId;
+    if (pwd != null) {
+      data["authorization"] = pwd;
+    }
+    if (keyId != null) {
+      data["pubKeyId"] = keyId;
+    }
+    if (tags != null) {
+      data["tags"] = tags;
+    }
+    if (alterUrl != null) {
+      data["alterUrl"] = alterUrl;
+    }
+    if (autoConnect != null) {
+      data["autoConnect"] = autoConnect;
+    }
+    if (jumpId != null) {
+      data["jumpId"] = jumpId;
+    }
+    if (custom != null) {
+      data["custom"] = custom?.toJson();
+    }
     return data;
   }
 

@@ -33,3 +33,8 @@ extension BigIntX on BigInt {
 
   String get kb2Str => (this * BigInt.from(1024)).bytes2Str;
 }
+
+extension IntX on int {
+  Duration secondsToDuration() => Duration(seconds: this);
+  DateTime get tsToDateTime => DateTime.fromMillisecondsSinceEpoch(this * 1000);
+}
