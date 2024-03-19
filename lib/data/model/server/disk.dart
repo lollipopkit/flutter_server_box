@@ -91,8 +91,16 @@ class DiskIO extends TimeSeq<DiskIOPiece> {
   (String?, String?) _getAllSpeed() {
     if (pre.isEmpty || now.isEmpty) return (null, null);
     var (read, write) = (0.0, 0.0);
-    for (var pre in pre) {
-      final (read_, write_) = _getSpeed(pre.dev);
+    for (var item in pre) {
+      /// Issue #314
+      /// Only calc nvme, sd, vd, hd, mmcblk, sr
+      if (!item.dev.startsWith('nvme') &&
+          !item.dev.startsWith('sd') &&
+          !item.dev.startsWith('vd') &&
+          !item.dev.startsWith('hd') &&
+          !item.dev.startsWith('mmcblk') &&
+          !item.dev.startsWith('sr')) continue;
+      final (read_, write_) = _getSpeed(item.dev);
       read += read_ ?? 0;
       write += write_ ?? 0;
     }
