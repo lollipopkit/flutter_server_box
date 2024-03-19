@@ -1,21 +1,20 @@
 import 'dart:async';
 
+import 'package:computer/computer.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/data/model/server/pve.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
+import 'package:toolbox/data/res/logger.dart';
+
+typedef PveCtrlFunc = Future<bool> Function(String node, String id);
 
 final class PveProvider extends ChangeNotifier {
   final ServerPrivateInfo spi;
   late final String addr;
   //late final SSHClient _client;
 
-  final data = ValueNotifier<PveRes?>(null);
-
-  PveProvider({
-    required this.spi,
-  }) {
+  PveProvider({required this.spi}) {
     // final client = _spi.server?.client;
     // if (client == null) {
     //   throw Exception('Server client is null');
@@ -27,19 +26,31 @@ final class PveProvider extends ChangeNotifier {
       return;
     }
     this.addr = addr;
-    _init().then((_) => connected.complete());
+    _init();
   }
 
   final err = ValueNotifier<String?>(null);
   final connected = Completer<void>();
   final session = Dio();
+  final data = ValueNotifier<PveRes?>(null);
+  bool get onlyOneNode => data.value?.nodes.length == 1;
+  String? release;
+  bool isBusy = false;
 
   // int _localPort = 0;
   // String get addr => 'http://127.0.0.1:$_localPort';
 
   Future<void> _init() async {
-    //await _forward();
-    await _login();
+    try {
+      //await _forward();
+      await _login();
+      await _release;
+    } catch (e) {
+      Loggers.app.warning('PVE init failed', e);
+      err.value = e.toString();
+    } finally {
+      connected.complete();
+    }
   }
 
   // Future<void> _forward() async {
@@ -75,65 +86,30 @@ final class PveProvider extends ChangeNotifier {
     session.options.headers['Cookie'] = 'PVEAuthCookie=$ticket';
   }
 
-  Future<PveRes> list() async {
+  /// Returns true if the PVE version is 8.0 or later
+  Future<void> get _release async {
+    final resp = await session.get('$addr/api2/extjs/version');
+    final version = resp.data['data']['release'] as String?;
+    if (version != null) {
+      release = version;
+    }
+  }
+
+  Future<void> list() async {
     await connected.future;
-    final resp = await session.get('$addr/api2/json/cluster/resources');
-    final list = resp.data['data'] as List;
-    final items = list.map((e) => PveResIface.fromJson(e)).toList();
-
-    final Order<PveQemu> qemus = [];
-    final Order<PveLxc> lxcs = [];
-    final Order<PveNode> nodes = [];
-    final Order<PveStorage> storages = [];
-    final Order<PveSdn> sdns = [];
-    for (final item in items) {
-      switch (item.type) {
-        case PveResType.lxc:
-          lxcs.add(item as PveLxc);
-          break;
-        case PveResType.qemu:
-          qemus.add(item as PveQemu);
-          break;
-        case PveResType.node:
-          nodes.add(item as PveNode);
-          break;
-        case PveResType.storage:
-          storages.add(item as PveStorage);
-          break;
-        case PveResType.sdn:
-          sdns.add(item as PveSdn);
-          break;
-      }
+    if (isBusy) return;
+    isBusy = true;
+    try {
+      final resp = await session.get('$addr/api2/json/cluster/resources');
+      final res = resp.data['data'] as List;
+      final result = await Computer.shared.start(PveRes.parse, (res, data.value));
+      data.value = result;
+    } catch (e) {
+      Loggers.app.warning('PVE list failed', e);
+      err.value = e.toString();
+    } finally {
+      isBusy = false;
     }
-
-    final old = data.value;
-    if (old != null) {
-      qemus.reorder(
-          order: old.qemus.map((e) => e.id).toList(),
-          finder: (e, s) => e.id == s);
-      lxcs.reorder(
-          order: old.lxcs.map((e) => e.id).toList(),
-          finder: (e, s) => e.id == s);
-      nodes.reorder(
-          order: old.nodes.map((e) => e.id).toList(),
-          finder: (e, s) => e.id == s);
-      storages.reorder(
-          order: old.storages.map((e) => e.id).toList(),
-          finder: (e, s) => e.id == s);
-      sdns.reorder(
-          order: old.sdns.map((e) => e.id).toList(),
-          finder: (e, s) => e.id == s);
-    }
-
-    final res = PveRes(
-      qemus: qemus,
-      lxcs: lxcs,
-      nodes: nodes,
-      storages: storages,
-      sdns: sdns,
-    );
-    data.value = res;
-    return res;
   }
 
   Future<bool> reboot(String node, String id) async {

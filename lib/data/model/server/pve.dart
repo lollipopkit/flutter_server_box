@@ -1,6 +1,7 @@
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/duration.dart';
 import 'package:toolbox/core/extension/numx.dart';
+import 'package:toolbox/core/extension/order.dart';
 
 enum PveResType {
   lxc,
@@ -61,8 +62,9 @@ sealed class PveResIface {
 abstract interface class PveCtrlIface {
   String get node;
   String get id;
-  bool get isRunning;
+  bool get available;
   String get summary;
+  String get name;
 }
 
 final class PveLxc extends PveResIface implements PveCtrlIface {
@@ -73,6 +75,7 @@ final class PveLxc extends PveResIface implements PveCtrlIface {
   final int vmid;
   @override
   final String node;
+  @override
   final String name;
   @override
   final String status;
@@ -131,11 +134,11 @@ final class PveLxc extends PveResIface implements PveCtrlIface {
   }
 
   @override
-  bool get isRunning => status == 'running';
+  bool get available => status == 'running';
 
   @override
   String get summary {
-    if (isRunning) {
+    if (available) {
       return uptime.secondsToDuration().toStr;
     }
     return l10n.stopped;
@@ -150,6 +153,7 @@ final class PveQemu extends PveResIface implements PveCtrlIface {
   final int vmid;
   @override
   final String node;
+  @override
   final String name;
   @override
   final String status;
@@ -208,11 +212,11 @@ final class PveQemu extends PveResIface implements PveCtrlIface {
   }
 
   @override
-  bool get isRunning => status == 'running';
+  bool get available => status == 'running';
 
   @override
   String get summary {
-    if (isRunning) {
+    if (available) {
       return uptime.secondsToDuration().toStr;
     }
     return l10n.stopped;
@@ -269,12 +273,13 @@ final class PveNode extends PveResIface {
   }
 }
 
-final class PveStorage extends PveResIface {
+final class PveStorage extends PveResIface implements PveCtrlIface {
   @override
   final String id;
   @override
   final PveResType type;
   final String storage;
+  @override
   final String node;
   @override
   final String status;
@@ -311,14 +316,29 @@ final class PveStorage extends PveResIface {
       maxdisk: json['maxdisk'],
     );
   }
+
+  @override
+  bool get available => status == 'available';
+
+  @override
+  String get name => storage;
+
+  @override
+  String get summary {
+    if (available) {
+      return '${l10n.used}: ${disk.bytes2Str} / ${l10n.total}: ${maxdisk.bytes2Str}';
+    }
+    return l10n.notAvailable;
+  }
 }
 
-final class PveSdn extends PveResIface {
+final class PveSdn extends PveResIface implements PveCtrlIface {
   @override
   final String id;
   @override
   final PveResType type;
   final String sdn;
+  @override
   final String node;
   @override
   final String status;
@@ -340,6 +360,15 @@ final class PveSdn extends PveResIface {
       status: json['status'],
     );
   }
+
+  @override
+  bool get available => status == 'ok';
+
+  @override
+  String get name => sdn;
+
+  @override
+  String get summary => available ? status : l10n.notAvailable;
 }
 
 final class PveRes {
@@ -356,6 +385,8 @@ final class PveRes {
     required this.storages,
     required this.sdns,
   });
+
+  bool get onlyOneNode => nodes.length == 1;
 
   int get length =>
       qemus.length + lxcs.length + nodes.length + storages.length + sdns.length;
@@ -378,5 +409,60 @@ final class PveRes {
     }
     index -= storages.length;
     return sdns[index];
+  }
+
+  static Future<PveRes> parse((List list, PveRes? old) val) async {
+    final (list, old) = val;
+    final items = list.map((e) => PveResIface.fromJson(e)).toList();
+    final Order<PveQemu> qemus = [];
+    final Order<PveLxc> lxcs = [];
+    final Order<PveNode> nodes = [];
+    final Order<PveStorage> storages = [];
+    final Order<PveSdn> sdns = [];
+    for (final item in items) {
+      switch (item.type) {
+        case PveResType.lxc:
+          lxcs.add(item as PveLxc);
+          break;
+        case PveResType.qemu:
+          qemus.add(item as PveQemu);
+          break;
+        case PveResType.node:
+          nodes.add(item as PveNode);
+          break;
+        case PveResType.storage:
+          storages.add(item as PveStorage);
+          break;
+        case PveResType.sdn:
+          sdns.add(item as PveSdn);
+          break;
+      }
+    }
+
+    if (old != null) {
+      qemus.reorder(
+          order: old.qemus.map((e) => e.id).toList(),
+          finder: (e, s) => e.id == s);
+      lxcs.reorder(
+          order: old.lxcs.map((e) => e.id).toList(),
+          finder: (e, s) => e.id == s);
+      nodes.reorder(
+          order: old.nodes.map((e) => e.id).toList(),
+          finder: (e, s) => e.id == s);
+      storages.reorder(
+          order: old.storages.map((e) => e.id).toList(),
+          finder: (e, s) => e.id == s);
+      sdns.reorder(
+          order: old.sdns.map((e) => e.id).toList(),
+          finder: (e, s) => e.id == s);
+    }
+
+    return PveRes(
+      qemus: qemus,
+      lxcs: lxcs,
+      nodes: nodes,
+      storages: storages,
+      sdns: sdns,
+    );
   }
 }

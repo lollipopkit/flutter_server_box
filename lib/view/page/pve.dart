@@ -17,6 +17,7 @@ import 'package:toolbox/view/widget/appbar.dart';
 import 'package:toolbox/view/widget/icon_btn.dart';
 import 'package:toolbox/view/widget/kv_row.dart';
 import 'package:toolbox/view/widget/percent_circle.dart';
+import 'package:toolbox/view/widget/row.dart';
 import 'package:toolbox/view/widget/two_line_text.dart';
 
 final class PvePage extends StatefulWidget {
@@ -48,6 +49,7 @@ final class _PvePageState extends State<PvePage> {
   void initState() {
     super.initState();
     _initRefreshTimer();
+    _afterInit();
   }
 
   @override
@@ -61,23 +63,46 @@ final class _PvePageState extends State<PvePage> {
     return Scaffold(
       appBar: CustomAppBar(
         title: TwoLineText(up: 'PVE', down: widget.spi.name),
+        actions: [
+          ValueListenableBuilder(
+            valueListenable: _pve.err,
+            builder: (_, val, __) => val == null
+                ? UIs.placeholder
+                : IconBtn(
+                    icon: Icons.refresh,
+                    onTap: () {
+                      _pve.err.value = null;
+                      _pve.list();
+                      _initRefreshTimer();
+                    },
+                  ),
+          ),
+        ],
       ),
       body: ValueListenableBuilder(
-        valueListenable: _pve.data,
+        valueListenable: _pve.err,
         builder: (_, val, __) {
-          return _buildBody(val);
+          if (val != null) {
+            _timer?.cancel();
+            return Padding(
+              padding: const EdgeInsets.all(13),
+              child: Center(
+                child: Text(val),
+              ),
+            );
+          }
+          return ValueListenableBuilder(
+            valueListenable: _pve.data,
+            builder: (_, val, __) {
+              return _buildBody(val);
+            },
+          );
         },
       ),
     );
   }
 
   Widget _buildBody(PveRes? data) {
-    if (_pve.err.value != null) {
-      return Center(
-        child: Text('Failed to connect to PVE: ${_pve.err.value}'),
-      );
-    }
-
     if (data == null) {
       return UIs.centerLoading;
     }
@@ -113,6 +138,7 @@ final class _PvePageState extends State<PvePage> {
                   fontWeight: FontWeight.bold,
                   color: Colors.grey,
                 ),
+                textAlign: TextAlign.start,
               ),
             ),
           );
@@ -193,9 +219,9 @@ final class _PvePageState extends State<PvePage> {
   }
 
   Widget _buildQemu(PveQemu item) {
-    if (!item.isRunning) {
+    if (!item.available) {
       return ListTile(
-        title: Text(item.name, style: UIs.text13Bold),
+        title: Text(_wrapNodeName(item), style: UIs.text13Bold),
         trailing: _buildCtrlBtns(item),
       ).card;
     }
@@ -209,7 +235,7 @@ final class _PvePageState extends State<PvePage> {
             text: TextSpan(
               children: [
                 TextSpan(
-                  text: item.name,
+                  text: _wrapNodeName(item),
                   style: UIs.text13Bold,
                 ),
                 TextSpan(
@@ -225,49 +251,46 @@ final class _PvePageState extends State<PvePage> {
         ],
       ),
       UIs.height7,
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+      AvgWidthRow(
+        width: _media.size.width,
+        padding: _kHorziPadding * 2 + 26,
         children: [
-          _wrap(PercentCircle(percent: (item.cpu / item.maxcpu) * 100), 4),
-          _wrap(PercentCircle(percent: (item.mem / item.maxmem) * 100), 4),
-          _wrap(
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    '${l10n.read}:\n${item.diskread.bytes2Str}',
-                    style: UIs.text11Grey,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    '${l10n.write}:\n${item.diskwrite.bytes2Str}',
-                    style: UIs.text11Grey,
-                    textAlign: TextAlign.center,
-                  )
-                ],
+          PercentCircle(percent: (item.cpu / item.maxcpu) * 100),
+          PercentCircle(percent: (item.mem / item.maxmem) * 100),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '${l10n.read}:\n${item.diskread.bytes2Str}',
+                style: UIs.text11Grey,
+                textAlign: TextAlign.center,
               ),
-              4),
-          _wrap(
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    '↓:\n${item.netin.bytes2Str}',
-                    style: UIs.text11Grey,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    '↑:\n${item.netout.bytes2Str}',
-                    style: UIs.text11Grey,
-                    textAlign: TextAlign.center,
-                  )
-                ],
+              const SizedBox(height: 3),
+              Text(
+                '${l10n.write}:\n${item.diskwrite.bytes2Str}',
+                style: UIs.text11Grey,
+                textAlign: TextAlign.center,
+              )
+            ],
+          ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '↓:\n${item.netin.bytes2Str}',
+                style: UIs.text11Grey,
+                textAlign: TextAlign.center,
               ),
-              4),
+              const SizedBox(height: 3),
+              Text(
+                '↑:\n${item.netout.bytes2Str}',
+                style: UIs.text11Grey,
+                textAlign: TextAlign.center,
+              )
+            ],
+          ),
         ],
       ),
       const SizedBox(height: 21)
@@ -279,9 +302,9 @@ final class _PvePageState extends State<PvePage> {
   }
 
   Widget _buildLxc(PveLxc item) {
-    if (!item.isRunning) {
+    if (!item.available) {
       return ListTile(
-        title: Text(item.name, style: UIs.text13Bold),
+        title: Text(_wrapNodeName(item), style: UIs.text13Bold),
         trailing: _buildCtrlBtns(item),
       ).card;
     }
@@ -295,7 +318,7 @@ final class _PvePageState extends State<PvePage> {
             text: TextSpan(
               children: [
                 TextSpan(
-                  text: item.name,
+                  text: _wrapNodeName(item),
                   style: UIs.text13Bold,
                 ),
                 TextSpan(
@@ -311,49 +334,46 @@ final class _PvePageState extends State<PvePage> {
         ],
       ),
       UIs.height7,
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+      AvgWidthRow(
+        width: _media.size.width,
+        padding: _kHorziPadding * 2 + 26,
         children: [
-          _wrap(PercentCircle(percent: (item.cpu / item.maxcpu) * 100), 4),
-          _wrap(PercentCircle(percent: (item.mem / item.maxmem) * 100), 4),
-          _wrap(
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    '${l10n.read}:\n${item.diskread.bytes2Str}',
-                    style: UIs.text11Grey,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    '${l10n.write}:\n${item.diskwrite.bytes2Str}',
-                    style: UIs.text11Grey,
-                    textAlign: TextAlign.center,
-                  )
-                ],
+          PercentCircle(percent: (item.cpu / item.maxcpu) * 100),
+          PercentCircle(percent: (item.mem / item.maxmem) * 100),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '${l10n.read}:\n${item.diskread.bytes2Str}',
+                style: UIs.text11Grey,
+                textAlign: TextAlign.center,
               ),
-              4),
-          _wrap(
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    '↓:\n${item.netin.bytes2Str}',
-                    style: UIs.text11Grey,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    '↑:\n${item.netout.bytes2Str}',
-                    style: UIs.text11Grey,
-                    textAlign: TextAlign.center,
-                  )
-                ],
+              const SizedBox(height: 3),
+              Text(
+                '${l10n.write}:\n${item.diskwrite.bytes2Str}',
+                style: UIs.text11Grey,
+                textAlign: TextAlign.center,
+              )
+            ],
+          ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '↓:\n${item.netin.bytes2Str}',
+                style: UIs.text11Grey,
+                textAlign: TextAlign.center,
               ),
-              4),
+              const SizedBox(height: 3),
+              Text(
+                '↑:\n${item.netout.bytes2Str}',
+                style: UIs.text11Grey,
+                textAlign: TextAlign.center,
+              )
+            ],
+          ),
         ],
       ),
       const SizedBox(height: 21)
@@ -369,12 +389,13 @@ final class _PvePageState extends State<PvePage> {
       padding: const EdgeInsets.all(13),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Text(item.storage, style: UIs.text13Bold),
+              Text(_wrapNodeName(item), style: UIs.text13Bold),
               const Spacer(),
-              Text(item.status, style: UIs.text12Grey),
+              Text(item.summary, style: UIs.text11Grey),
             ],
           ),
           UIs.height7,
@@ -387,90 +408,41 @@ final class _PvePageState extends State<PvePage> {
 
   Widget _buildSdn(PveSdn item) {
     return ListTile(
-      title: Text(item.sdn),
-      trailing: Text(item.status),
+      title: Text(_wrapNodeName(item)),
+      trailing: Text(item.summary),
     ).card;
   }
 
   Widget _buildCtrlBtns(PveCtrlIface item) {
-    if (!item.isRunning) {
+    if (!item.available) {
       return IconBtn(
-        icon: Icons.play_arrow,
-        color: Colors.grey,
-        onTap: () async {
-          bool? suc;
-          await context.showLoadingDialog(fn: () async {
-            suc = await _pve.start(item.node, item.id);
-          });
-          if (suc == true) {
-            context.showSnackBar(l10n.success);
-          } else {
-            context.showSnackBar(l10n.failed);
-          }
-        },
-      );
+          icon: Icons.play_arrow,
+          color: Colors.grey,
+          onTap: () => _onCtrl(_pve.start, l10n.start, item));
     }
     return Row(
       children: [
         IconBtn(
-          icon: Icons.stop,
-          color: Colors.grey,
-          onTap: () async {
-            final sure = await _ask(l10n.stop, item.id);
-            if (!sure) return;
-            bool? suc;
-            await context.showLoadingDialog(fn: () async {
-              suc = await _pve.stop(item.node, item.id);
-            });
-            if (suc == true) {
-              context.showSnackBar(l10n.success);
-            } else {
-              context.showSnackBar(l10n.failed);
-            }
-          },
-        ),
+            icon: Icons.stop,
+            color: Colors.grey,
+            onTap: () => _onCtrl(_pve.stop, l10n.stop, item)),
         IconBtn(
-          icon: Icons.refresh,
-          color: Colors.grey,
-          onTap: () async {
-            final sure = await _ask(l10n.reboot, item.id);
-            if (!sure) return;
-            bool? suc;
-            await context.showLoadingDialog(fn: () async {
-              suc = await _pve.reboot(item.node, item.id);
-            });
-            if (suc == true) {
-              context.showSnackBar(l10n.success);
-            } else {
-              context.showSnackBar(l10n.failed);
-            }
-          },
-        ),
+            icon: Icons.refresh,
+            color: Colors.grey,
+            onTap: () => _onCtrl(_pve.reboot, l10n.reboot, item)),
         IconBtn(
           icon: Icons.power_off,
           color: Colors.grey,
-          onTap: () async {
-            final sure = await _ask(l10n.shutdown, item.id);
-            if (!sure) return;
-            bool? suc;
-            await context.showLoadingDialog(fn: () async {
-              suc = await _pve.shutdown(item.node, item.id);
-            });
-            if (suc == true) {
-              context.showSnackBar(l10n.success);
-            } else {
-              context.showSnackBar(l10n.failed);
-            }
-          },
+          onTap: () => _onCtrl(_pve.shutdown, l10n.shutdown, item),
         ),
       ],
     );
   }
 
-  Future<bool> _ask(String action, String id) async {
-    final sure = await context.showRoundDialog(
+  void _onCtrl(PveCtrlFunc func, String action, PveCtrlIface item) async {
+    final sure = await context.showRoundDialog<bool>(
       title: Text(l10n.attention),
-      child: Text(l10n.askContinue('$action $id')),
+      child: Text(l10n.askContinue('$action ${item.id}')),
       actions: [
         TextButton(
           onPressed: () => context.pop(true),
@@ -478,14 +450,24 @@ final class _PvePageState extends State<PvePage> {
         ),
       ],
     );
-    return sure == true;
+    if (sure != true) return;
+    bool? suc;
+    await context.showLoadingDialog(fn: () async {
+      suc = await func(item.node, item.id);
+    });
+    if (suc == true) {
+      context.showSnackBar(l10n.success);
+    } else {
+      context.showSnackBar(l10n.failed);
+    }
   }
 
-  Widget _wrap(Widget child, int count) {
-    return SizedBox(
-      width: (_media.size.width - 2 * _kHorziPadding - 26) / count,
-      child: child,
-    );
+  /// Add PveNode if [PveProvider.onlyOneNode] is false
+  String _wrapNodeName(PveCtrlIface item) {
+    if (_pve.onlyOneNode) {
+      return item.name;
+    }
+    return '${item.node} / ${item.name}';
   }
 
   void _initRefreshTimer() {
@@ -496,5 +478,14 @@ final class _PvePageState extends State<PvePage> {
         _pve.list();
       }
     });
+  }
+
+  void _afterInit() async {
+    await _pve.connected.future;
+    if (_pve.release != null && _pve.release!.compareTo('8.0') < 0) {
+      if (mounted) {
+        context.showSnackBar(l10n.pveVersionLow);
+      }
+    }
   }
 }
