@@ -135,4 +135,36 @@ final class PveProvider extends ChangeNotifier {
     data.value = res;
     return res;
   }
+
+  Future<bool> reboot(String node, String id) async {
+    await connected.future;
+    final resp =
+        await session.post('$addr/api2/json/nodes/$node/$id/status/reboot');
+    return _isCtrlSuc(resp);
+  }
+
+  Future<bool> start(String node, String id) async {
+    await connected.future;
+    final resp =
+        await session.post('$addr/api2/json/nodes/$node/$id/status/start');
+    return _isCtrlSuc(resp);
+  }
+
+  Future<bool> stop(String node, String id) async {
+    await connected.future;
+    final resp =
+        await session.post('$addr/api2/json/nodes/$node/$id/status/stop');
+    return _isCtrlSuc(resp);
+  }
+
+  Future<bool> shutdown(String node, String id) async {
+    await connected.future;
+    final resp =
+        await session.post('$addr/api2/json/nodes/$node/$id/status/shutdown');
+    return _isCtrlSuc(resp);
+  }
+
+  bool _isCtrlSuc(Response resp) {
+    return resp.statusCode == 200;
+  }
 }

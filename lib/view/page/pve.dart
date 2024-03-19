@@ -1,7 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:toolbox/core/extension/context/common.dart';
+import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
+import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/numx.dart';
 import 'package:toolbox/core/extension/widget.dart';
 import 'package:toolbox/data/model/server/pve.dart';
@@ -11,6 +14,7 @@ import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/widget/appbar.dart';
+import 'package:toolbox/view/widget/icon_btn.dart';
 import 'package:toolbox/view/widget/kv_row.dart';
 import 'package:toolbox/view/widget/percent_circle.dart';
 import 'package:toolbox/view/widget/two_line_text.dart';
@@ -189,132 +193,174 @@ final class _PvePageState extends State<PvePage> {
   }
 
   Widget _buildQemu(PveQemu item) {
+    if (!item.isRunning) {
+      return ListTile(
+        title: Text(item.name, style: UIs.text13Bold),
+        trailing: _buildCtrlBtns(item),
+      ).card;
+    }
+    final children = <Widget>[
+      const SizedBox(height: 5),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          const SizedBox(width: 15),
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: item.name,
+                  style: UIs.text13Bold,
+                ),
+                TextSpan(
+                  text: '  /  ${item.summary}',
+                  style: UIs.text12Grey,
+                ),
+              ],
+            ),
+          ),
+          const Spacer(),
+          _buildCtrlBtns(item),
+          UIs.width13,
+        ],
+      ),
+      UIs.height7,
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _wrap(PercentCircle(percent: (item.cpu / item.maxcpu) * 100), 4),
+          _wrap(PercentCircle(percent: (item.mem / item.maxmem) * 100), 4),
+          _wrap(
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '${l10n.read}:\n${item.diskread.bytes2Str}',
+                    style: UIs.text11Grey,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '${l10n.write}:\n${item.diskwrite.bytes2Str}',
+                    style: UIs.text11Grey,
+                    textAlign: TextAlign.center,
+                  )
+                ],
+              ),
+              4),
+          _wrap(
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '↓:\n${item.netin.bytes2Str}',
+                    style: UIs.text11Grey,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '↑:\n${item.netout.bytes2Str}',
+                    style: UIs.text11Grey,
+                    textAlign: TextAlign.center,
+                  )
+                ],
+              ),
+              4),
+        ],
+      ),
+      const SizedBox(height: 21)
+    ];
     return Column(
       mainAxisSize: MainAxisSize.min,
-      children: [
-        UIs.height13,
-        Row(
-          children: [
-            UIs.width13,
-            Text(item.name, style: UIs.text13Bold),
-            const Spacer(),
-            Text(item.topRight, style: UIs.text12Grey),
-            UIs.width13,
-          ],
-        ),
-        if (item.isRunning)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _wrap(PercentCircle(percent: (item.cpu / item.maxcpu) * 100), 4),
-              _wrap(PercentCircle(percent: (item.mem / item.maxmem) * 100), 4),
-              _wrap(
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '${l10n.read}:\n${item.diskread.bytes2Str}',
-                        style: UIs.text11Grey,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        '${l10n.write}:\n${item.diskwrite.bytes2Str}',
-                        style: UIs.text11Grey,
-                        textAlign: TextAlign.center,
-                      )
-                    ],
-                  ),
-                  4),
-              _wrap(
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '↓:\n${item.netin.bytes2Str}',
-                        style: UIs.text11Grey,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        '↑:\n${item.netout.bytes2Str}',
-                        style: UIs.text11Grey,
-                        textAlign: TextAlign.center,
-                      )
-                    ],
-                  ),
-                  4),
-            ],
-          ),
-        UIs.height13,
-      ],
+      children: children,
     ).card;
   }
 
   Widget _buildLxc(PveLxc item) {
+    if (!item.isRunning) {
+      return ListTile(
+        title: Text(item.name, style: UIs.text13Bold),
+        trailing: _buildCtrlBtns(item),
+      ).card;
+    }
+    final children = <Widget>[
+      const SizedBox(height: 5),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          const SizedBox(width: 15),
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: item.name,
+                  style: UIs.text13Bold,
+                ),
+                TextSpan(
+                  text: '  /  ${item.summary}',
+                  style: UIs.text12Grey,
+                ),
+              ],
+            ),
+          ),
+          const Spacer(),
+          _buildCtrlBtns(item),
+          UIs.width13,
+        ],
+      ),
+      UIs.height7,
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _wrap(PercentCircle(percent: (item.cpu / item.maxcpu) * 100), 4),
+          _wrap(PercentCircle(percent: (item.mem / item.maxmem) * 100), 4),
+          _wrap(
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '${l10n.read}:\n${item.diskread.bytes2Str}',
+                    style: UIs.text11Grey,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '${l10n.write}:\n${item.diskwrite.bytes2Str}',
+                    style: UIs.text11Grey,
+                    textAlign: TextAlign.center,
+                  )
+                ],
+              ),
+              4),
+          _wrap(
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '↓:\n${item.netin.bytes2Str}',
+                    style: UIs.text11Grey,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '↑:\n${item.netout.bytes2Str}',
+                    style: UIs.text11Grey,
+                    textAlign: TextAlign.center,
+                  )
+                ],
+              ),
+              4),
+        ],
+      ),
+      const SizedBox(height: 21)
+    ];
     return Column(
       mainAxisSize: MainAxisSize.min,
-      children: [
-        UIs.height13,
-        Row(
-          children: [
-            UIs.width13,
-            Text(item.name, style: UIs.text13Bold),
-            const Spacer(),
-            Text(item.topRight, style: UIs.text12Grey),
-            UIs.width13,
-          ],
-        ),
-        UIs.height7,
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _wrap(PercentCircle(percent: (item.cpu / item.maxcpu) * 100), 4),
-            _wrap(PercentCircle(percent: (item.mem / item.maxmem) * 100), 4),
-            _wrap(
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '${l10n.read}:\n${item.diskread.bytes2Str}',
-                      style: UIs.text11Grey,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      '${l10n.write}:\n${item.diskwrite.bytes2Str}',
-                      style: UIs.text11Grey,
-                      textAlign: TextAlign.center,
-                    )
-                  ],
-                ),
-                4),
-            _wrap(
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '↓:\n${item.netin.bytes2Str}',
-                      style: UIs.text11Grey,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      '↑:\n${item.netout.bytes2Str}',
-                      style: UIs.text11Grey,
-                      textAlign: TextAlign.center,
-                    )
-                  ],
-                ),
-                4),
-          ],
-        ),
-        UIs.height13,
-      ],
+      children: children,
     ).card;
   }
 
@@ -346,9 +392,98 @@ final class _PvePageState extends State<PvePage> {
     ).card;
   }
 
+  Widget _buildCtrlBtns(PveCtrlIface item) {
+    if (!item.isRunning) {
+      return IconBtn(
+        icon: Icons.play_arrow,
+        color: Colors.grey,
+        onTap: () async {
+          bool? suc;
+          await context.showLoadingDialog(fn: () async {
+            suc = await _pve.start(item.node, item.id);
+          });
+          if (suc == true) {
+            context.showSnackBar(l10n.success);
+          } else {
+            context.showSnackBar(l10n.failed);
+          }
+        },
+      );
+    }
+    return Row(
+      children: [
+        IconBtn(
+          icon: Icons.stop,
+          color: Colors.grey,
+          onTap: () async {
+            final sure = await _ask(l10n.stop, item.id);
+            if (!sure) return;
+            bool? suc;
+            await context.showLoadingDialog(fn: () async {
+              suc = await _pve.stop(item.node, item.id);
+            });
+            if (suc == true) {
+              context.showSnackBar(l10n.success);
+            } else {
+              context.showSnackBar(l10n.failed);
+            }
+          },
+        ),
+        IconBtn(
+          icon: Icons.refresh,
+          color: Colors.grey,
+          onTap: () async {
+            final sure = await _ask(l10n.reboot, item.id);
+            if (!sure) return;
+            bool? suc;
+            await context.showLoadingDialog(fn: () async {
+              suc = await _pve.reboot(item.node, item.id);
+            });
+            if (suc == true) {
+              context.showSnackBar(l10n.success);
+            } else {
+              context.showSnackBar(l10n.failed);
+            }
+          },
+        ),
+        IconBtn(
+          icon: Icons.power_off,
+          color: Colors.grey,
+          onTap: () async {
+            final sure = await _ask(l10n.shutdown, item.id);
+            if (!sure) return;
+            bool? suc;
+            await context.showLoadingDialog(fn: () async {
+              suc = await _pve.shutdown(item.node, item.id);
+            });
+            if (suc == true) {
+              context.showSnackBar(l10n.success);
+            } else {
+              context.showSnackBar(l10n.failed);
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Future<bool> _ask(String action, String id) async {
+    final sure = await context.showRoundDialog(
+      title: Text(l10n.attention),
+      child: Text(l10n.askContinue('$action $id')),
+      actions: [
+        TextButton(
+          onPressed: () => context.pop(true),
+          child: Text(l10n.ok, style: UIs.textRed),
+        ),
+      ],
+    );
+    return sure == true;
+  }
+
   Widget _wrap(Widget child, int count) {
     return SizedBox(
-      height: (_media.size.width - 2 * _kHorziPadding) / count,
+      width: (_media.size.width - 2 * _kHorziPadding - 26) / count,
       child: child,
     );
   }

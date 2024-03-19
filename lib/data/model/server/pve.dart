@@ -58,12 +58,20 @@ sealed class PveResIface {
   }
 }
 
-final class PveLxc extends PveResIface {
+abstract interface class PveCtrlIface {
+  String get node;
+  String get id;
+  bool get isRunning;
+  String get summary;
+}
+
+final class PveLxc extends PveResIface implements PveCtrlIface {
   @override
   final String id;
   @override
   final PveResType type;
   final int vmid;
+  @override
   final String node;
   final String name;
   @override
@@ -122,9 +130,11 @@ final class PveLxc extends PveResIface {
     );
   }
 
+  @override
   bool get isRunning => status == 'running';
 
-  String get topRight {
+  @override
+  String get summary {
     if (isRunning) {
       return uptime.secondsToDuration().toStr;
     }
@@ -132,12 +142,13 @@ final class PveLxc extends PveResIface {
   }
 }
 
-final class PveQemu extends PveResIface {
+final class PveQemu extends PveResIface implements PveCtrlIface {
   @override
   final String id;
   @override
   final PveResType type;
   final int vmid;
+  @override
   final String node;
   final String name;
   @override
@@ -196,9 +207,11 @@ final class PveQemu extends PveResIface {
     );
   }
 
+  @override
   bool get isRunning => status == 'running';
 
-  String get topRight {
+  @override
+  String get summary {
     if (isRunning) {
       return uptime.secondsToDuration().toStr;
     }
