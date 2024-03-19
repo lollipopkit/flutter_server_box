@@ -22,6 +22,10 @@ abstract final class UIs {
   );
   static const text13Grey = TextStyle(color: Colors.grey, fontSize: 13);
   static const text15 = TextStyle(fontSize: 15);
+  static const text15Bold = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.bold,
+  );
   static const text18 = TextStyle(fontSize: 18);
   static const text27 = TextStyle(fontSize: 27);
   static const textGrey = TextStyle(color: Colors.grey);
@@ -39,6 +43,7 @@ abstract final class UIs {
   /// SizedBox
 
   static const placeholder = SizedBox();
+  static const height7 = SizedBox(height: 7);
   static const height13 = SizedBox(height: 13);
   static const height77 = SizedBox(height: 77);
   static const width13 = SizedBox(width: 13);

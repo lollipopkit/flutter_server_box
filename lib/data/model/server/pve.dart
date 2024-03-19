@@ -28,12 +28,12 @@ enum PveResType {
   }
 
   String get toStr => switch (this) {
-    PveResType.node => l10n.node,
-    PveResType.qemu => 'QEMU',
-    PveResType.lxc => 'LXC',
-    PveResType.storage => l10n.storage,
-    PveResType.sdn => 'SDN',
-  };
+        PveResType.node => l10n.node,
+        PveResType.qemu => 'QEMU',
+        PveResType.lxc => 'LXC',
+        PveResType.storage => l10n.storage,
+        PveResType.sdn => 'SDN',
+      };
 }
 
 sealed class PveResIface {
@@ -121,6 +121,15 @@ final class PveLxc extends PveResIface {
       netout: json['netout'],
     );
   }
+
+  bool get isRunning => status == 'running';
+
+  String get topRight {
+    if (isRunning) {
+      return uptime.secondsToDuration().toStr;
+    }
+    return l10n.stopped;
+  }
 }
 
 final class PveQemu extends PveResIface {
@@ -190,7 +199,7 @@ final class PveQemu extends PveResIface {
   bool get isRunning => status == 'running';
 
   String get topRight {
-    if (!isRunning) {
+    if (isRunning) {
       return uptime.secondsToDuration().toStr;
     }
     return l10n.stopped;
@@ -235,6 +244,15 @@ final class PveNode extends PveResIface {
       cpu: (json['cpu'] as num).toDouble(),
       maxcpu: json['maxcpu'],
     );
+  }
+
+  bool get isRunning => status == 'online';
+
+  String get topRight {
+    if (isRunning) {
+      return uptime.secondsToDuration().toStr;
+    }
+    return l10n.stopped;
   }
 }
 

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/data/model/server/pve.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 
@@ -9,6 +10,8 @@ final class PveProvider extends ChangeNotifier {
   final ServerPrivateInfo spi;
   late final String addr;
   //late final SSHClient _client;
+
+  final data = ValueNotifier<PveRes?>(null);
 
   PveProvider({
     required this.spi,
@@ -77,11 +80,12 @@ final class PveProvider extends ChangeNotifier {
     final resp = await session.get('$addr/api2/json/cluster/resources');
     final list = resp.data['data'] as List;
     final items = list.map((e) => PveResIface.fromJson(e)).toList();
-    final qemus = <PveQemu>[];
-    final lxcs = <PveLxc>[];
-    final nodes = <PveNode>[];
-    final storages = <PveStorage>[];
-    final sdns = <PveSdn>[];
+
+    final Order<PveQemu> qemus = [];
+    final Order<PveLxc> lxcs = [];
+    final Order<PveNode> nodes = [];
+    final Order<PveStorage> storages = [];
+    final Order<PveSdn> sdns = [];
     for (final item in items) {
       switch (item.type) {
         case PveResType.lxc:
@@ -101,12 +105,34 @@ final class PveProvider extends ChangeNotifier {
           break;
       }
     }
-    return PveRes(
+
+    final old = data.value;
+    if (old != null) {
+      qemus.reorder(
+          order: old.qemus.map((e) => e.id).toList(),
+          finder: (e, s) => e.id == s);
+      lxcs.reorder(
+          order: old.lxcs.map((e) => e.id).toList(),
+          finder: (e, s) => e.id == s);
+      nodes.reorder(
+          order: old.nodes.map((e) => e.id).toList(),
+          finder: (e, s) => e.id == s);
+      storages.reorder(
+          order: old.storages.map((e) => e.id).toList(),
+          finder: (e, s) => e.id == s);
+      sdns.reorder(
+          order: old.sdns.map((e) => e.id).toList(),
+          finder: (e, s) => e.id == s);
+    }
+
+    final res = PveRes(
       qemus: qemus,
       lxcs: lxcs,
       nodes: nodes,
       storages: storages,
       sdns: sdns,
     );
+    data.value = res;
+    return res;
   }
 }
