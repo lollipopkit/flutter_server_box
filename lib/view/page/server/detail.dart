@@ -116,7 +116,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         itemCount: buildFuncs ? _cardsOrder.length + 1 : _cardsOrder.length,
         itemBuilder: (context, index) {
           if (index == 0 && buildFuncs) {
-            return ServerFuncBtns(spi: widget.spi, iconSize: 19);
+            return ServerFuncBtns(spi: widget.spi);
           }
           if (buildFuncs) index--;
           return _cardBuildMap[_cardsOrder[index]]?.call(si.status);

@@ -41,7 +41,7 @@ class ServerFuncBtnsTopRight extends StatelessWidget {
                 value: e,
                 child: Row(
                   children: [
-                    Icon(e.icon),
+                    e.icon,
                     const SizedBox(
                       width: 10,
                     ),
@@ -60,11 +60,9 @@ class ServerFuncBtns extends StatelessWidget {
   const ServerFuncBtns({
     super.key,
     required this.spi,
-    this.iconSize,
   });
 
   final ServerPrivateInfo spi;
-  final double? iconSize;
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +84,7 @@ class ServerFuncBtns extends StatelessWidget {
                     onPressed: () => _onTapMoreBtns(e, spi, context),
                     padding: EdgeInsets.zero,
                     tooltip: e.toStr,
-                    icon: Icon(e.icon, size: iconSize ?? 15),
+                    icon: e.icon,
                   )
                 : Padding(
                     padding: const EdgeInsets.only(bottom: 13),
@@ -96,7 +94,7 @@ class ServerFuncBtns extends StatelessWidget {
                         IconButton(
                           onPressed: () => _onTapMoreBtns(e, spi, context),
                           padding: EdgeInsets.zero,
-                          icon: Icon(e.icon, size: iconSize ?? 15),
+                          icon: e.icon,
                         ),
                         Text(e.toStr, style: UIs.text11Grey)
                       ],

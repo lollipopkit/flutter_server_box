@@ -102,7 +102,8 @@ final class PveProvider extends ChangeNotifier {
     try {
       final resp = await session.get('$addr/api2/json/cluster/resources');
       final res = resp.data['data'] as List;
-      final result = await Computer.shared.start(PveRes.parse, (res, data.value));
+      final result =
+          await Computer.shared.start(PveRes.parse, (res, data.value));
       data.value = result;
     } catch (e) {
       Loggers.app.warning('PVE list failed', e);

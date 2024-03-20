@@ -72,6 +72,7 @@ dependencies:
       ref: master
       url: https://github.com/lollipopkit/dart_computer
   flutter_background_service: ^5.0.5
+  icons_plus: ^5.0.0
 
 dev_dependencies:
   flutter_native_splash: ^2.1.6

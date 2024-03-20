@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 
 part 'server_func.g.dart';
@@ -24,15 +25,25 @@ enum ServerFuncBtn {
   pve,
   ;
 
-  IconData get icon => switch (this) {
-        sftp => Icons.insert_drive_file,
-        snippet => Icons.code,
-        pkg => Icons.system_security_update,
-        container => Icons.view_agenda,
-        process => Icons.list_alt_outlined,
-        terminal => Icons.terminal,
-        iperf => Icons.speed,
-        pve => Icons.computer,
+  static const defaultFuncs = [
+    terminal,
+    sftp,
+    container,
+    process,
+    pkg,
+    snippet,
+    pve,
+  ];
+
+  Icon get icon => switch (this) {
+        sftp => const Icon(Icons.insert_drive_file, size: 15),
+        snippet => const Icon(Icons.code, size: 15),
+        pkg => const Icon(Icons.system_security_update, size: 15),
+        container => const Icon(FontAwesome.docker_brand, size: 14),
+        process => const Icon(Icons.list_alt_outlined, size: 15),
+        terminal => const Icon(Icons.terminal, size: 15),
+        iperf => const Icon(Icons.speed, size: 15),
+        pve => const Icon(FontAwesome.server_solid, size: 13),
       };
 
   String get toStr => switch (this) {
