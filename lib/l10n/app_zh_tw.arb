@@ -198,6 +198,7 @@
   "privateKey": "私鑰",
   "process": "進程",
   "pushToken": "消息推送 Token",
+  "pveLoginFailed": "登錄失敗。無法使用伺服器配置中的使用者名稱/密碼以Linux PAM方式登錄。",
   "pveVersionLow": "此功能目前處於測試階段，僅在PVE 8+上進行過測試。請謹慎使用。",
   "pwd": "密碼",
   "read": "读",

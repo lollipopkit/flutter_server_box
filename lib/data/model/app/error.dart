@@ -84,3 +84,19 @@ class WebdavErr extends Err<WebdavErrType> {
     return 'WebdavErr<$type>: $message';
   }
 }
+
+enum PveErrType {
+  unknown,
+  net,
+  loginFailed,
+  ;
+}
+
+class PveErr extends Err<PveErrType> {
+  PveErr({required super.type, super.message}) : super(from: ErrFrom.status);
+
+  @override
+  String toString() {
+    return 'PveErr<$type>: $message';
+  }
+}

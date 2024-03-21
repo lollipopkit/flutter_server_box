@@ -198,6 +198,7 @@
   "privateKey": "Llave privada",
   "process": "Proceso",
   "pushToken": "Token de notificaciones",
+  "pveLoginFailed": "Fallo al iniciar sesión. No se puede autenticar con el nombre de usuario/contraseña de la configuración del servidor para el inicio de sesión de Linux PAM.",
   "pveVersionLow": "Esta función está actualmente en fase de prueba y solo se ha probado en PVE 8+. Úsela con precaución.",
   "pwd": "Contraseña",
   "read": "Leer",

@@ -198,6 +198,7 @@
   "privateKey": "Private Key",
   "process": "Prozess",
   "pushToken": "Push Token",
+  "pveLoginFailed": "Anmeldung fehlgeschlagen. Kann nicht mit Benutzername/Passwort aus der Serverkonfiguration angemeldet werden, um sich über Linux PAM anzumelden.",
   "pveVersionLow": "Diese Funktion befindet sich derzeit in der Testphase und wurde nur auf PVE 8+ getestet. Bitte verwenden Sie sie mit Vorsicht.",
   "pwd": "Passwort",
   "read": "Lesen",

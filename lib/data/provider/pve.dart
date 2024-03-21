@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:computer/computer.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
+import 'package:toolbox/data/model/app/error.dart';
 import 'package:toolbox/data/model/server/pve.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/res/logger.dart';
@@ -45,6 +47,8 @@ final class PveProvider extends ChangeNotifier {
       //await _forward();
       await _login();
       await _release;
+    } on PveErr {
+      err.value = l10n.pveLoginFailed;
     } catch (e) {
       Loggers.app.warning('PVE init failed', e);
       err.value = e.toString();
@@ -80,10 +84,14 @@ final class PveProvider extends ChangeNotifier {
       'realm': 'pam',
       'new-format': '1'
     });
-    final ticket = resp.data['data']['ticket'];
-    session.options.headers['CSRFPreventionToken'] =
-        resp.data['data']['CSRFPreventionToken'];
-    session.options.headers['Cookie'] = 'PVEAuthCookie=$ticket';
+    try {
+      final ticket = resp.data['data']['ticket'];
+      session.options.headers['CSRFPreventionToken'] =
+          resp.data['data']['CSRFPreventionToken'];
+      session.options.headers['Cookie'] = 'PVEAuthCookie=$ticket';
+    } catch (e) {
+      throw PveErr(type: PveErrType.loginFailed, message: e.toString());
+    }
   }
 
   /// Returns true if the PVE version is 8.0 or later

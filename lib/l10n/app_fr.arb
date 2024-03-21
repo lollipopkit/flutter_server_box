@@ -198,6 +198,7 @@
   "privateKey": "Clé privée",
   "process": "Processus",
   "pushToken": "Jeton d'identification",
+  "pveLoginFailed": "Échec de la connexion. Impossible de s'authentifier avec le nom d'utilisateur/mot de passe de la configuration du serveur pour la connexion Linux PAM.",
   "pveVersionLow": "Cette fonctionnalité est actuellement en phase de test et n'a été testée que sur PVE 8+. Veuillez l'utiliser avec prudence.",
   "pwd": "Mot de passe",
   "read": "Lire",

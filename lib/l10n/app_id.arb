@@ -198,6 +198,7 @@
   "privateKey": "Kunci Pribadi",
   "process": "Proses",
   "pushToken": "Dorong token",
+  "pveLoginFailed": "Login gagal. Tidak dapat mengautentikasi dengan nama pengguna/kata sandi dari konfigurasi server untuk login Linux PAM.",
   "pveVersionLow": "Fitur ini saat ini sedang dalam tahap pengujian dan hanya diuji pada PVE 8+. Gunakan dengan hati-hati.",
   "pwd": "Kata sandi",
   "read": "Baca",
