@@ -41,10 +41,8 @@ class ServerFuncBtnsTopRight extends StatelessWidget {
                 value: e,
                 child: Row(
                   children: [
-                    e.icon,
-                    const SizedBox(
-                      width: 10,
-                    ),
+                    e.icon(),
+                    const SizedBox(width: 10),
                     Text(e.toStr),
                   ],
                 ),
@@ -68,9 +66,13 @@ class ServerFuncBtns extends StatelessWidget {
   Widget build(BuildContext context) {
     final btns = () {
       try {
-        return Stores.setting.serverFuncBtns
-            .fetch()
-            .map((e) => ServerFuncBtn.values[e]);
+        final vals = <ServerFuncBtn>[];
+        final list = Stores.setting.serverFuncBtns.fetch();
+        for (final idx in list) {
+          if (idx < 0 || idx >= ServerFuncBtn.values.length) continue;
+          vals.add(ServerFuncBtn.values[idx]);
+        }
+        return vals;
       } catch (e) {
         return ServerFuncBtn.values;
       }
@@ -84,7 +86,7 @@ class ServerFuncBtns extends StatelessWidget {
                     onPressed: () => _onTapMoreBtns(e, spi, context),
                     padding: EdgeInsets.zero,
                     tooltip: e.toStr,
-                    icon: e.icon,
+                    icon: e.icon(),
                   )
                 : Padding(
                     padding: const EdgeInsets.only(bottom: 13),
@@ -94,7 +96,7 @@ class ServerFuncBtns extends StatelessWidget {
                         IconButton(
                           onPressed: () => _onTapMoreBtns(e, spi, context),
                           padding: EdgeInsets.zero,
-                          icon: e.icon,
+                          icon: e.icon(),
                         ),
                         Text(e.toStr, style: UIs.text11Grey)
                       ],
@@ -157,12 +159,6 @@ void _onTapMoreBtns(
       break;
     case ServerFuncBtn.iperf:
       AppRoute.iperf(spi: spi).checkGo(
-        context: context,
-        check: () => _checkClient(context, spi.id),
-      );
-      break;
-    case ServerFuncBtn.pve:
-      AppRoute.pve(spi: spi).checkGo(
         context: context,
         check: () => _checkClient(context, spi.id),
       );

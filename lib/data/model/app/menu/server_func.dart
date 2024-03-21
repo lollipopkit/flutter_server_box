@@ -21,29 +21,27 @@ enum ServerFuncBtn {
   snippet,
   @HiveField(6)
   iperf,
-  @HiveField(7)
-  pve,
+  // @HiveField(7)
+  // pve,
   ;
 
-  static const defaultFuncs = [
+  static final defaultIdxs = [
     terminal,
     sftp,
     container,
     process,
     pkg,
     snippet,
-    pve,
-  ];
+  ].map((e) => e.index).toList();
 
-  Icon get icon => switch (this) {
-        sftp => const Icon(Icons.insert_drive_file, size: 15),
-        snippet => const Icon(Icons.code, size: 15),
-        pkg => const Icon(Icons.system_security_update, size: 15),
-        container => const Icon(FontAwesome.docker_brand, size: 14),
-        process => const Icon(Icons.list_alt_outlined, size: 15),
-        terminal => const Icon(Icons.terminal, size: 15),
-        iperf => const Icon(Icons.speed, size: 15),
-        pve => const Icon(FontAwesome.server_solid, size: 13),
+  Icon icon([double? sizeDiff]) => switch (this) {
+        sftp => Icon(Icons.insert_drive_file, size: 15 + (sizeDiff ?? 0)),
+        snippet => Icon(Icons.code, size: 15 + (sizeDiff ?? 0)),
+        pkg => Icon(Icons.system_security_update, size: 15 + (sizeDiff ?? 0)),
+        container => Icon(FontAwesome.docker_brand, size: 14 + (sizeDiff ?? 0)),
+        process => Icon(Icons.list_alt_outlined, size: 15 + (sizeDiff ?? 0)),
+        terminal => Icon(Icons.terminal, size: 15 + (sizeDiff ?? 0)),
+        iperf => Icon(Icons.speed, size: 15 + (sizeDiff ?? 0)),
       };
 
   String get toStr => switch (this) {
@@ -54,10 +52,5 @@ enum ServerFuncBtn {
         process => l10n.process,
         terminal => l10n.terminal,
         iperf => 'iperf',
-        pve => 'PVE',
       };
-
-  int toJson() => index;
-
-  static ServerFuncBtn fromJson(int i) => values[i];
 }

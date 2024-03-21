@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/core/extension/status_cmd_type.dart';
+import 'package:toolbox/data/model/app/server_detail_card.dart';
 import 'package:toolbox/data/model/server/battery.dart';
 import 'package:toolbox/data/model/server/cpu.dart';
 import 'package:toolbox/data/model/server/disk.dart';
@@ -22,7 +24,6 @@ import '../../../core/route.dart';
 import '../../../data/model/server/server.dart';
 import '../../../data/provider/server.dart';
 import '../../../data/res/color.dart';
-import '../../../data/res/default.dart';
 import '../../../data/res/ui.dart';
 import '../../widget/appbar.dart';
 import '../../widget/cardx.dart';
@@ -39,7 +40,7 @@ class ServerDetailPage extends StatefulWidget {
 class _ServerDetailPageState extends State<ServerDetailPage>
     with SingleTickerProviderStateMixin {
   late final _cardBuildMap = Map.fromIterables(
-    Defaults.detailCardOrder,
+    ServerDetailCards.names,
     [
       _buildAbout,
       _buildCPUView,
@@ -51,6 +52,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       _buildSensors,
       _buildTemperature,
       _buildBatteries,
+      _buildPve,
     ],
   );
 
@@ -623,7 +625,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         title: Text(l10n.battery),
         leading: const Icon(Icons.battery_charging_full, size: 17),
         childrenPadding: const EdgeInsets.only(bottom: 7),
-        initiallyExpanded: _getInitExpand(ss.batteries.length),
+        initiallyExpanded: _getInitExpand(ss.batteries.length, 2),
         children: ss.batteries.map(_buildBatteryItem).toList(),
       ),
     );
@@ -662,7 +664,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         title: Text(l10n.sensors),
         leading: const Icon(Icons.thermostat, size: 17),
         childrenPadding: const EdgeInsets.only(bottom: 7),
-        initiallyExpanded: _getInitExpand(ss.sensors.length, 3),
+        initiallyExpanded: _getInitExpand(ss.sensors.length, 2),
         children: ss.sensors.map(_buildSensorItem).toList(),
       ),
     );
@@ -700,6 +702,19 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
+  Widget _buildPve(_) {
+    if (widget.spi.custom?.pveAddr == null) return UIs.placeholder;
+    return CardX(
+      child: ListTile(
+        title: const Text('PVE'),
+        subtitle: Text(widget.spi.custom!.pveAddr!),
+        leading: const Icon(FontAwesome.server_solid, size: 17),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => AppRoute.pve(spi: widget.spi).go(context),
+      ),
+    );
+  }
+
   Widget _buildAnimatedText(Key key, String text, TextStyle style) {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 277),
@@ -717,8 +732,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   bool _getInitExpand(int len, [int? max]) {
-    if (_collapse && len <= (max ?? 7)) return true;
-    return false;
+    if (!_collapse) return true;
+    return len <= (max ?? 3);
   }
 }
 

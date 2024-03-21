@@ -54,6 +54,23 @@ enum VirtKey {
     }
   }
 
+  static final defaultOrder = [
+    VirtKey.esc,
+    VirtKey.alt,
+    VirtKey.home,
+    VirtKey.up,
+    VirtKey.end,
+    VirtKey.sftp,
+    VirtKey.snippet,
+    VirtKey.tab,
+    VirtKey.ctrl,
+    VirtKey.left,
+    VirtKey.down,
+    VirtKey.right,
+    VirtKey.clipboard,
+    VirtKey.ime,
+  ];
+
   TerminalKey? get key {
     switch (this) {
       case VirtKey.esc:

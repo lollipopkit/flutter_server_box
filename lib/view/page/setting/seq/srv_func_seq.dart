@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
-import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/model/app/menu/server_func.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/store.dart';
+import 'package:toolbox/data/res/ui.dart';
 
 import '../../../../core/extension/order.dart';
 import '../../../widget/appbar.dart';
@@ -51,12 +51,20 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
           padding: const EdgeInsets.all(7),
           itemBuilder: (_, idx) {
             final key = allKeys[idx];
+            final funcBtn = ServerFuncBtn.values[key];
             return CardX(
               key: ValueKey(idx),
               child: ListTile(
-                title: Text(ServerFuncBtn.values[key].toStr),
+                title: RichText(
+                  text: TextSpan(
+                    children: [
+                      WidgetSpan(child: funcBtn.icon(2)),
+                      const WidgetSpan(child: UIs.width7),
+                      TextSpan(text: funcBtn.toStr, style: UIs.textGrey),
+                    ],
+                  ),
+                ),
                 leading: _buildCheckBox(keys, key, idx, idx < keys.length),
-                trailing: isDesktop ? null : const Icon(Icons.drag_handle),
               ),
             );
           },

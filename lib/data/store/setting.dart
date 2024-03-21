@@ -1,6 +1,8 @@
 import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/model/app/menu/server_func.dart';
+import 'package:toolbox/data/model/app/server_detail_card.dart';
+import 'package:toolbox/data/model/ssh/virtual_key.dart';
 
 import '../model/app/net_view.dart';
 import '../res/default.dart';
@@ -82,8 +84,10 @@ class SettingStore extends PersistentStore {
   late final snippetOrder = listProperty<String>('snippetOrder', []);
 
   // Server details page cards order
-  late final detailCardOrder =
-      listProperty('detailCardOrder', Defaults.detailCardOrder);
+  late final detailCardOrder = listProperty(
+    'detailCardOrder',
+    ServerDetailCards.values.map((e) => e.name).toList(),
+  );
 
   // SSH term font size
   late final termFontSize = property('termFontSize', 13.0);
@@ -129,7 +133,7 @@ class SettingStore extends PersistentStore {
 
   late final sshVirtKeys = listProperty(
     'sshVirtKeys',
-    Defaults.sshVirtKeys.map((e) => e.index).toList(),
+    VirtKey.defaultOrder.map((e) => e.index).toList(),
   );
 
   late final netViewType = property(
@@ -203,14 +207,7 @@ class SettingStore extends PersistentStore {
 
   late final serverFuncBtns = listProperty(
     'serverBtns',
-    [
-      ServerFuncBtn.terminal,
-      ServerFuncBtn.sftp,
-      ServerFuncBtn.container,
-      ServerFuncBtn.process,
-      ServerFuncBtn.pkg,
-      ServerFuncBtn.snippet,
-    ].map((e) => e.index).toList(),
+    ServerFuncBtn.defaultIdxs,
   );
 
   /// Docker is more popular than podman, set to `false` to use docker
@@ -256,6 +253,8 @@ class SettingStore extends PersistentStore {
   /// Compatiablity for Chinese Android.
   /// Set it to true, if you use Safe Keyboard on Chinese Android
   late final cnKeyboardComp = property('cnKeyboardComp', false);
+
+  late final lastVer = property('lastVer', 0);
 
   // Never show these settings for users
   //

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
-import 'package:toolbox/data/res/default.dart';
+import 'package:toolbox/data/model/app/server_detail_card.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/store.dart';
 
@@ -39,11 +39,12 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
             return List<String>.from(vals);
           } catch (e) {
             Loggers.app.info('ServerDetailOrderPage: $e');
-            return Defaults.detailCardOrder;
+            return ServerDetailCards.names;
           }
         }();
-        final disabled =
-            Defaults.detailCardOrder.where((e) => !keys.contains(e)).toList();
+        final disabled = ServerDetailCards.names
+            .where((e) => !keys.contains(e))
+            .toList();
         final allKeys = [...keys, ...disabled];
         return ReorderableListView.builder(
           padding: const EdgeInsets.all(7),
