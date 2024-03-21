@@ -36,7 +36,7 @@ abstract final class PlatformPublicSettings {
                       return;
                     }
                     // Only auth when turn off (val == false)
-                    final result = await BioAuth.auth(l10n.authRequired);
+                    final result = await BioAuth.authWithResult();
                     // If failed, turn on again
                     if (result != AuthResult.success) {
                       Stores.setting.useBioAuth.put(true);

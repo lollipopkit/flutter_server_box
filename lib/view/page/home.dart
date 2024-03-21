@@ -47,7 +47,6 @@ class _HomePageState extends State<HomePage>
   final _selectIndex = ValueNotifier(0);
 
   bool _switchingPage = false;
-  bool _isAuthing = false;
 
   @override
   void initState() {
@@ -83,7 +82,7 @@ class _HomePageState extends State<HomePage>
 
     switch (state) {
       case AppLifecycleState.resumed:
-        _auth();
+        BioAuth.auth();
         if (!Pros.server.isAutoRefreshOn) {
           Pros.server.startAutoRefresh();
         }
@@ -316,7 +315,7 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
     // Auth required for first launch
-    _auth();
+    BioAuth.auth();
 
     if (Stores.setting.autoCheckAppUpdate.fetch()) {
       doUpdate(context);
@@ -355,34 +354,6 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
         child: Text('${l10n.save}:\n$e'),
       );
       Loggers.app.warning('Update json settings failed', e, trace);
-    }
-  }
-
-  void _auth() {
-    if (Stores.setting.useBioAuth.fetch()) {
-      if (!_isAuthing) {
-        _isAuthing = true;
-        BioAuth.auth(l10n.authRequired).then(
-          (val) {
-            switch (val) {
-              case AuthResult.success:
-                // wait for animation
-                Future.delayed(
-                    const Duration(seconds: 1), () => _isAuthing = false);
-                break;
-              case AuthResult.fail:
-              case AuthResult.cancel:
-                _isAuthing = false;
-                _auth();
-                break;
-              case AuthResult.notAvail:
-                _isAuthing = false;
-                Stores.setting.useBioAuth.put(false);
-                break;
-            }
-          },
-        );
-      }
     }
   }
 }
