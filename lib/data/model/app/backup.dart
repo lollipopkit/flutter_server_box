@@ -24,7 +24,6 @@ class Backup {
   final List<Snippet> snippets;
   final List<PrivateKeyInfo> keys;
   final Map<String, dynamic> container;
-  final Map<String, dynamic> settings;
   final Map<String, dynamic> history;
   final int? lastModTime;
 
@@ -35,7 +34,6 @@ class Backup {
     required this.snippets,
     required this.keys,
     required this.container,
-    required this.settings,
     required this.history,
     this.lastModTime,
   });
@@ -52,7 +50,6 @@ class Backup {
             .map((e) => PrivateKeyInfo.fromJson(e))
             .toList(),
         container = json['container'] ?? {},
-        settings = json['settings'] ?? {},
         lastModTime = json['lastModTime'],
         history = json['history'] ?? {};
 
@@ -63,7 +60,6 @@ class Backup {
         'snippets': snippets,
         'keys': keys,
         'container': container,
-        'settings': settings,
         'lastModTime': lastModTime,
         'history': history,
       };
@@ -75,7 +71,6 @@ class Backup {
         snippets = Stores.snippet.fetch(),
         keys = Stores.key.fetch(),
         container = Stores.container.box.toJson(),
-        settings = Stores.setting.box.toJson(),
         lastModTime = Stores.lastModTime,
         history = Stores.history.box.toJson();
 
@@ -93,22 +88,6 @@ class Backup {
     if (!shouldRestore) {
       _logger.info('No need to restore, local is newer');
       return;
-    }
-
-    // Settings
-    final nowSettingsKeys = Stores.setting.box.keys.toSet();
-    final bakSettingsKeys = settings.keys.toSet();
-    final newSettingsKeys = bakSettingsKeys.difference(nowSettingsKeys);
-    final delSettingsKeys = nowSettingsKeys.difference(bakSettingsKeys);
-    final updateSettingsKeys = nowSettingsKeys.intersection(bakSettingsKeys);
-    for (final k in newSettingsKeys) {
-      Stores.setting.box.put(k, settings[k]);
-    }
-    for (final k in delSettingsKeys) {
-      Stores.setting.box.delete(k);
-    }
-    for (final k in updateSettingsKeys) {
-      Stores.setting.box.put(k, settings[k]);
     }
 
     // Snippets

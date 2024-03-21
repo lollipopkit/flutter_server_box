@@ -42,9 +42,8 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
             return ServerDetailCards.names;
           }
         }();
-        final disabled = ServerDetailCards.names
-            .where((e) => !keys.contains(e))
-            .toList();
+        final disabled =
+            ServerDetailCards.names.where((e) => !keys.contains(e)).toList();
         final allKeys = [...keys, ...disabled];
         return ReorderableListView.builder(
           padding: const EdgeInsets.all(7),
