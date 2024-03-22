@@ -32,14 +32,14 @@ const _echoPWD = 'echo \$PWD';
 class SSHPage extends StatefulWidget {
   final ServerPrivateInfo spi;
   final String? initCmd;
-  final bool pop;
+  final bool notFromTab;
   final Function()? onSessionEnd;
 
   const SSHPage({
     super.key,
     required this.spi,
     this.initCmd,
-    this.pop = true,
+    this.notFromTab = true,
     this.onSessionEnd,
   });
 
@@ -129,7 +129,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
           _media.padding.top,
       child: Padding(
         padding: EdgeInsets.only(
-          top: CustomAppBar.barHeight ?? 0,
+          top: widget.notFromTab ? CustomAppBar.barHeight ?? 0 : 0,
           left: _horizonPadding,
           right: _horizonPadding,
         ),
@@ -177,9 +177,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
 
   Widget _buildVirtualKey() {
     final rows = _virtKeysList
-        .map((e) => Row(
-              children: e.map((ee) => _buildVirtualKeyItem(ee)).toList(),
-            ))
+        .map((e) => Row(children: e.map((f) => _buildVirtKeyItem(f)).toList()))
         .toList();
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -187,7 +185,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     );
   }
 
-  Widget _buildVirtualKeyItem(VirtKey item) {
+  Widget _buildVirtKeyItem(VirtKey item) {
     var selected = false;
     switch (item.key) {
       case TerminalKey.control:
@@ -399,7 +397,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     }
 
     await session.done;
-    if (mounted && widget.pop) {
+    if (mounted && widget.notFromTab) {
       context.pop();
     }
     widget.onSessionEnd?.call();

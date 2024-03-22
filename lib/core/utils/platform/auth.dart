@@ -41,7 +41,9 @@ abstract final class BioAuth {
           case AuthResult.success:
             // wait for animation
             Future.delayed(
-              count >= 3 ? const Duration(milliseconds: 500) : const Duration(seconds: 1),
+              count >= 3
+                  ? const Duration(milliseconds: 500)
+                  : const Duration(seconds: 1),
               () => _isAuthing = false,
             );
             break;

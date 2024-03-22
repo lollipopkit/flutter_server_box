@@ -111,7 +111,8 @@ class _HomePageState extends State<HomePage>
 
     return Scaffold(
       drawer: _buildDrawer(),
-      appBar: CustomAppBar(
+      appBar: _AppBar(
+        selectIndex: _selectIndex,
         centerTitle: false,
         title: const Text(BuildData.name),
         actions: <Widget>[
@@ -355,5 +356,29 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
       );
       Loggers.app.warning('Update json settings failed', e, trace);
     }
+  }
+}
+
+final class _AppBar extends CustomAppBar {
+  final ValueNotifier<int> selectIndex;
+
+  const _AppBar({
+    required this.selectIndex,
+    super.title,
+    super.actions,
+    super.centerTitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder(
+      valueListenable: selectIndex,
+      builder: (_, idx, __) {
+        if (idx == AppTab.ssh.index) {
+          return SizedBox(height: CustomAppBar.barHeight);
+        }
+        return super.build(context);
+      },
+    );
   }
 }

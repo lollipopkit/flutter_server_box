@@ -231,19 +231,13 @@ final class _PvePageState extends State<PvePage> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           const SizedBox(width: 15),
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: _wrapNodeName(item),
-                  style: UIs.text13Bold,
-                ),
-                TextSpan(
-                  text: '  /  ${item.summary}',
-                  style: UIs.text12Grey,
-                ),
-              ],
-            ),
+          Text(
+            _wrapNodeName(item),
+            style: UIs.text13Bold,
+          ),
+          Text(
+            '  /  ${item.summary}',
+            style: UIs.text12Grey,
           ),
           const Spacer(),
           _buildCtrlBtns(item),
@@ -314,19 +308,13 @@ final class _PvePageState extends State<PvePage> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           const SizedBox(width: 15),
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: _wrapNodeName(item),
-                  style: UIs.text13Bold,
-                ),
-                TextSpan(
-                  text: '  /  ${item.summary}',
-                  style: UIs.text12Grey,
-                ),
-              ],
-            ),
+          Text(
+            _wrapNodeName(item),
+            style: UIs.text13Bold,
+          ),
+          Text(
+            '  /  ${item.summary}',
+            style: UIs.text12Grey,
           ),
           const Spacer(),
           _buildCtrlBtns(item),

@@ -44,7 +44,7 @@ class _SSHTabPageState extends State<SSHTabPage>
       floatingActionButton: ListenableBuilder(
         listenable: _fabRN,
         builder: (_, __) {
-          if (_fabRN.value == 0) return const SizedBox();
+          if (_fabRN.value != 0) return const SizedBox();
           return FloatingActionButton(
             onPressed: () => AppRoute.serverEdit().go(context),
             tooltip: l10n.addAServer,
@@ -127,7 +127,7 @@ class _SSHTabPageState extends State<SSHTabPage>
                   _tabIds[name] = SSHPage(
                     key: key,
                     spi: spi,
-                    pop: false,
+                    notFromTab: false,
                     onSessionEnd: () {
                       // debugPrint("Session done received on page whose tabId = $name");
                       // debugPrint("key = $key");
