@@ -703,11 +703,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildPve(_) {
-    if (widget.spi.custom?.pveAddr == null) return UIs.placeholder;
+    final addr = widget.spi.custom?.pveAddr;
+    if (addr == null) return UIs.placeholder;
     return CardX(
       child: ListTile(
         title: const Text('PVE'),
-        subtitle: Text(widget.spi.custom!.pveAddr!),
+        subtitle: Text(addr, style: UIs.textGrey),
         leading: const Icon(FontAwesome.server_solid, size: 17),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => AppRoute.pve(spi: widget.spi).go(context),
