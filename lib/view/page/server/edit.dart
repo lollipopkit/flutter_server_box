@@ -4,6 +4,7 @@ import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
+import 'package:toolbox/core/extension/widget.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/custom.dart';
 import 'package:toolbox/data/res/provider.dart';
@@ -48,6 +49,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
   final _keyIdx = ValueNotifier<int?>(null);
   final _autoConnect = ValueNotifier(true);
   final _jumpServer = ValueNotifier<String?>(null);
+  final _pveIgnoreCert = ValueNotifier(false);
 
   var _tags = <String>[];
 
@@ -336,14 +338,30 @@ class _ServerEditPageState extends State<ServerEditPage> {
   }
 
   Widget _buildPVE() {
-    return ExpandTile(title: const Text('PVE'), children: [
-      Input(
-        controller: _pveAddrCtrl,
-        type: TextInputType.url,
-        label: l10n.addr,
-        hint: 'https://example.com:8006',
-      ),
-    ]);
+    return ExpandTile(
+      title: const Text('PVE'),
+      children: [
+        Input(
+          controller: _pveAddrCtrl,
+          type: TextInputType.url,
+          label: l10n.addr,
+          hint: 'https://example.com:8006',
+        ),
+        ListTile(
+          title: Text(l10n.ignoreCert),
+          subtitle: Text(l10n.pveIgnoreCertTip, style: UIs.text12Grey),
+          trailing: ListenableBuilder(
+            listenable: _pveIgnoreCert,
+            builder: (_, __) => Switch(
+              value: _pveIgnoreCert.value,
+              onChanged: (val) {
+                _pveIgnoreCert.value = val;
+              },
+            ),
+          ),
+        ).card,
+      ],
+    );
   }
 
   Widget _buildFAB() {

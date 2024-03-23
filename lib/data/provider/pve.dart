@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:computer/computer.dart';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/data/model/app/error.dart';
@@ -33,7 +34,12 @@ final class PveProvider extends ChangeNotifier {
 
   final err = ValueNotifier<String?>(null);
   final connected = Completer<void>();
-  final session = Dio();
+
+  late final _ignoreCert = spi.custom?.pveIgnoreCert ?? false;
+  late final session = Dio()
+    ..httpClientAdapter = IOHttpClientAdapter(
+      validateCertificate: _ignoreCert ? (_, __, ___) => true : null,
+    );
   final data = ValueNotifier<PveRes?>(null);
   bool get onlyOneNode => data.value?.nodes.length == 1;
   String? release;

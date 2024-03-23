@@ -19,17 +19,20 @@ class ServerCustomAdapter extends TypeAdapter<ServerCustom> {
     return ServerCustom(
       temperature: fields[0] as String?,
       pveAddr: fields[1] as String?,
+      pveIgnoreCert: fields[2] as bool?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ServerCustom obj) {
     writer
-      ..writeByte(2)
+      ..writeByte(3)
       ..writeByte(0)
       ..write(obj.temperature)
       ..writeByte(1)
-      ..write(obj.pveAddr);
+      ..write(obj.pveAddr)
+      ..writeByte(2)
+      ..write(obj.pveIgnoreCert);
   }
 
   @override
