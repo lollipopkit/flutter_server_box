@@ -14,7 +14,7 @@ import 'package:toolbox/data/res/store.dart';
 abstract final class BioAuth {
   static final _auth = LocalAuthentication();
 
-  static bool get isPlatformSupported => isAndroid || isIOS || isWindows;
+  static final isPlatformSupported = isAndroid || isIOS || isWindows;
 
   static bool _isAuthing = false;
 
@@ -41,8 +41,8 @@ abstract final class BioAuth {
           case AuthResult.success:
             // wait for animation
             Future.delayed(
-              count >= 3
-                  ? const Duration(milliseconds: 500)
+              isIOS
+                  ? const Duration(milliseconds: 1300)
                   : const Duration(seconds: 1),
               () => _isAuthing = false,
             );

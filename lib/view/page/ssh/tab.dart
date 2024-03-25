@@ -136,7 +136,9 @@ class _SSHTabPageState extends State<SSHTabPage>
                     },
                   );
                   _refreshTabs();
-                  _tabController.animateTo(_tabIds.length - 1);
+                  final idx = _tabIds.length - 1;
+                  _tabController.animateTo(idx);
+                  _fabRN.value = idx;
                 },
               ),
             );

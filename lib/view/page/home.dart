@@ -375,7 +375,10 @@ final class _AppBar extends CustomAppBar {
       valueListenable: selectIndex,
       builder: (_, idx, __) {
         if (idx == AppTab.ssh.index) {
-          return SizedBox(height: CustomAppBar.barHeight);
+          return SizedBox(
+            height: CustomAppBar.barHeight ??
+                0 + MediaQuery.of(context).padding.top,
+          );
         }
         return super.build(context);
       },
