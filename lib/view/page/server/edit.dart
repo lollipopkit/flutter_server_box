@@ -1,9 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
+import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/extension/widget.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/custom.dart';
@@ -37,6 +40,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _pveAddrCtrl = TextEditingController();
+  final _customCmdCtrl = TextEditingController();
 
   final _nameFocus = FocusNode();
   final _ipFocus = FocusNode();
@@ -77,7 +81,19 @@ class _ServerEditPageState extends State<ServerEditPage> {
       _altUrlController.text = spi.alterUrl ?? '';
       _autoConnect.value = spi.autoConnect ?? true;
       _jumpServer.value = spi.jumpId;
-      _pveAddrCtrl.text = spi.custom?.pveAddr ?? '';
+
+      final custom = spi.custom;
+      if (custom != null) {
+        _pveAddrCtrl.text = custom.pveAddr ?? '';
+        _pveIgnoreCert.value = custom.pveIgnoreCert;
+        try {
+          // Add a null check here to prevent setting `null` to the controller
+          final encoded = json.encode(custom.cmds!);
+          if (encoded.isNotEmpty) {
+            _customCmdCtrl.text = encoded;
+          }
+        } catch (_) {}
+      }
     }
   }
 
@@ -243,6 +259,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
       _buildAuth(),
       //_buildJumpServer(),
       _buildPVE(),
+      _buildCustomCmd(),
     ];
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(17, 17, 17, 47),
@@ -364,6 +381,17 @@ class _ServerEditPageState extends State<ServerEditPage> {
     );
   }
 
+  Widget _buildCustomCmd() {
+    return Input(
+      controller: _customCmdCtrl,
+      type: TextInputType.text,
+      maxLines: 3,
+      label: l10n.customCmd,
+      icon: Icons.code,
+      hint: '{${l10n.customCmdHint}}',
+    );
+  }
+
   Widget _buildFAB() {
     return FloatingActionButton(
       heroTag: 'server',
@@ -463,8 +491,21 @@ class _ServerEditPageState extends State<ServerEditPage> {
     if (_portController.text.isEmpty) {
       _portController.text = '22';
     }
-    final pveAddr = _pveAddrCtrl.text.isEmpty ? null : _pveAddrCtrl.text;
-    final custom = pveAddr == null ? null : ServerCustom(pveAddr: pveAddr);
+    final customCmds = () {
+      if (_customCmdCtrl.text.isEmpty) return null;
+      try {
+        return json.decode(_customCmdCtrl.text).cast<String, String>();
+      } catch (e) {
+        context.showSnackBar(l10n.invalidJson);
+        return null;
+      }
+    }();
+    final pveAddr = _pveAddrCtrl.text.selfIfNotNullEmpty;
+    final custom = ServerCustom(
+      pveAddr: pveAddr,
+      pveIgnoreCert: _pveIgnoreCert.value,
+      cmds: customCmds,
+    );
 
     final spi = ServerPrivateInfo(
       name: _nameController.text.isEmpty

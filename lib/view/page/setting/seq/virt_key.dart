@@ -4,7 +4,6 @@ import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/model/ssh/virtual_key.dart';
-import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/widget/cardx.dart';
@@ -34,15 +33,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
   Widget _buildBody() {
     return ValueListenableBuilder(
       valueListenable: prop.listenable(),
-      builder: (_, vals, __) {
-        final keys = () {
-          try {
-            return List<int>.from(vals);
-          } catch (e) {
-            Loggers.app.info('SSHVirtKeySettingPage: $e');
-            return VirtKey.values.map((e) => e.index).toList();
-          }
-        }();
+      builder: (_, keys, __) {
         final disabled = VirtKey.values
             .map((e) => e.index)
             .where((e) => !keys.contains(e))
@@ -70,7 +61,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
               context.showSnackBar(l10n.disabled);
               return;
             }
-            keys.moveByItem(keys, o, n, property: prop);
+            keys.moveByItem(o, n, property: prop);
           },
         );
       },

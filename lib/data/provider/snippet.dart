@@ -7,8 +7,8 @@ import 'package:toolbox/data/res/store.dart';
 import '../../core/extension/order.dart';
 
 class SnippetProvider extends ChangeNotifier {
-  late Order<Snippet> _snippets;
-  Order<Snippet> get snippets => _snippets;
+  late List<Snippet> _snippets;
+  List<Snippet> get snippets => _snippets;
 
   final _tags = ValueNotifier(<String>[]);
   ValueNotifier<List<String>> get tags => _tags;

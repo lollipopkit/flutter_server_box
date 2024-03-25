@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/core/extension/status_cmd_type.dart';
 import 'package:toolbox/data/model/app/server_detail_card.dart';
 import 'package:toolbox/data/model/server/battery.dart';
@@ -17,6 +16,7 @@ import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/system.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/expand_tile.dart';
+import 'package:toolbox/view/widget/kv_row.dart';
 import 'package:toolbox/view/widget/server_func_btns.dart';
 
 import '../../../core/extension/numx.dart';
@@ -53,11 +53,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       _buildTemperature,
       _buildBatteries,
       _buildPve,
+      _buildCustom,
     ],
   );
 
   late MediaQueryData _media;
-  final Order<String> _cardsOrder = [];
+  final List<String> _cardsOrder = [];
 
   final _netSortType = ValueNotifier(_NetSortType.device);
   late final _collapse = Stores.setting.collapseUIDefault.fetch();
@@ -73,7 +74,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   void initState() {
     super.initState();
     final order = Stores.setting.detailCardOrder.fetch();
-    order.removeWhere((element) => !_cardBuildMap.containsKey(element));
+    order.removeWhere((e) => !ServerDetailCards.names.contains(e));
     _cardsOrder.addAll(order);
   }
 
@@ -712,6 +713,23 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         leading: const Icon(FontAwesome.server_solid, size: 17),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => AppRoute.pve(spi: widget.spi).go(context),
+      ),
+    );
+  }
+
+  Widget _buildCustom(ServerStatus ss) {
+    return CardX(
+      child: ExpandTile(
+        leading: const Icon(MingCute.command_line, size: 17),
+        title: Text(l10n.customCmd),
+        initiallyExpanded: _getInitExpand(ss.customCmds.length),
+        children: [
+          for (final cmd in ss.customCmds.entries)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
+              child: KvRow(k: cmd.key, v: cmd.value),
+            ),
+        ],
       ),
     );
   }

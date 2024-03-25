@@ -1,12 +1,6 @@
 import '../../res/build_data.dart';
 import '../server/system.dart';
 
-const seperator = 'SrvBoxSep';
-
-/// The suffix `\t` is for formatting
-const _cmdDivider = '\necho $seperator\n\t';
-const _homeVar = '\$HOME';
-
 enum ShellFunc {
   status,
   //docker,
@@ -16,6 +10,11 @@ enum ShellFunc {
   suspend,
   ;
 
+  static const _homeVar = '\$HOME';
+  static const seperator = 'SrvBoxSep';
+
+  /// The suffix `\t` is for formatting
+  static const cmdDivider = '\necho $seperator\n\t';
   static const _srvBoxDir = '.config/server_box';
   static const _scriptFile = 'mobile_v${BuildData.script}.sh';
 
@@ -82,9 +81,9 @@ chmod +x $_installShellPath
       case ShellFunc.status:
         return '''
 if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
-\t${_statusCmds.join(_cmdDivider)}
+\t${_statusCmds.join(cmdDivider)}
 else
-\t${_bsdStatusCmd.join(_cmdDivider)}
+\t${_bsdStatusCmd.join(cmdDivider)}
 fi''';
 //       case ShellFunc.docker:
 //         return '''
@@ -130,7 +129,7 @@ fi''';
     }
   }
 
-  static final String allScript = () {
+  static String allScript(Map<String, String>? customCmds) {
     final sb = StringBuffer();
     sb.write('''
 #!/bin/sh
@@ -151,9 +150,18 @@ userId=\$(id -u)
 ''');
     // Write each func
     for (final func in values) {
+      final customCmdsStr = () {
+        if (func == ShellFunc.status &&
+            customCmds != null &&
+            customCmds.isNotEmpty) {
+          return '$cmdDivider\n\t${customCmds.values.join(cmdDivider)}';
+        }
+        return '';
+      }();
       sb.write('''
 ${func.name}() {
 ${func._cmd.split('\n').map((e) => '\t$e').join('\n')}
+$customCmdsStr
 }
 
 ''');
@@ -174,7 +182,7 @@ ${func._cmd.split('\n').map((e) => '\t$e').join('\n')}
     ;;
 esac''');
     return sb.toString();
-  }();
+  }
 }
 
 extension EnumX on Enum {

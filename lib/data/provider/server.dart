@@ -28,8 +28,8 @@ import '../res/status.dart';
 class ServerProvider extends ChangeNotifier {
   final Map<String, Server> _servers = {};
   Iterable<Server> get servers => _servers.values;
-  final Order<String> _serverOrder = [];
-  Order<String> get serverOrder => _serverOrder;
+  final List<String> _serverOrder = [];
+  List<String> get serverOrder => _serverOrder;
   final _tags = ValueNotifier(<String>[]);
   ValueNotifier<List<String>> get tags => _tags;
 
@@ -302,11 +302,12 @@ class ServerProvider extends ChangeNotifier {
 
       // Write script to server
       // by ssh
+      final scriptRaw = ShellFunc.allScript(spi.custom?.cmds).uint8List;
       try {
         await s.client?.runForOutput(
           ShellFunc.installShellCmd,
           action: (session) async {
-            session.stdin.add(ShellFunc.allScript.uint8List);
+            session.stdin.add(scriptRaw);
             session.stdin.close();
           },
         );
@@ -322,7 +323,7 @@ class ServerProvider extends ChangeNotifier {
         final localPath = joinPath(await Paths.doc, 'install.sh');
         final file = File(localPath);
         try {
-          file.writeAsString(ShellFunc.allScript);
+          file.writeAsBytes(scriptRaw);
           final completer = Completer();
           final homePath = (await s.client?.run('echo \$HOME').string)?.trim();
           if (homePath == null || homePath.isEmpty) {
@@ -362,7 +363,7 @@ class ServerProvider extends ChangeNotifier {
 
     try {
       raw = await s.client?.run(ShellFunc.status.exec).string;
-      segments = raw?.split(seperator).map((e) => e.trim()).toList();
+      segments = raw?.split(ShellFunc.seperator).map((e) => e.trim()).toList();
       if (raw == null || raw.isEmpty || segments == null || segments.isEmpty) {
         if (Stores.setting.keepStatusWhenErr.fetch()) {
           // Keep previous server status when err occurs
@@ -384,10 +385,13 @@ class ServerProvider extends ChangeNotifier {
     }
 
     final systemType = SystemType.parse(segments[0]);
-    if (!systemType.isSegmentsLenMatch(segments.length)) {
+    final customCmdLen = spi.custom?.cmds?.length ?? 0;
+    if (!systemType.isSegmentsLenMatch(segments.length - customCmdLen)) {
       TryLimiter.inc(sid);
-      s.status.err =
-          'Segments not match: expect ${systemType.segmentsLen}, got ${segments.length}, raw:\n\n$raw';
+      final expected = systemType.segmentsLen;
+      final actual = segments.length;
+      final err = 'Segments: expect $expected, got $actual, raw:\n\n$raw';
+      s.status.err = err;
       _setServerState(s, ServerState.failed);
       return;
     }
@@ -398,6 +402,7 @@ class ServerProvider extends ChangeNotifier {
         ss: s.status,
         segments: segments,
         system: systemType,
+        customCmds: spi.custom?.cmds ?? {},
       );
       s.status = await Computer.shared.start(
         getStatus,

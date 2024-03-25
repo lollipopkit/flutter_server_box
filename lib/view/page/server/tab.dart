@@ -11,7 +11,6 @@ import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
-import 'package:toolbox/data/model/server/sensors.dart';
 import 'package:toolbox/data/model/server/try_limiter.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
@@ -212,7 +211,7 @@ class _ServerPageState extends State<ServerPage>
   Widget _buildRealServerCard(Server srv) {
     final id = srv.spi.id;
     final cardStatus = _getCardNoti(id);
-    final title = _buildServerCardTitle(srv.status, srv.state, srv.spi);
+    final title = _buildServerCardTitle(srv);
 
     return ListenableBuilder(
       listenable: cardStatus,
@@ -331,17 +330,13 @@ class _ServerPageState extends State<ServerPage>
     ];
   }
 
-  Widget _buildServerCardTitle(
-    ServerStatus ss,
-    ServerState cs,
-    ServerPrivateInfo spi,
-  ) {
+  Widget _buildServerCardTitle(Server s) {
     Widget rightCorner = UIs.placeholder;
-    if (cs == ServerState.failed) {
+    if (s.state == ServerState.failed) {
       rightCorner = InkWell(
         onTap: () {
-          TryLimiter.reset(spi.id);
-          Pros.server.refresh(spi: spi);
+          TryLimiter.reset(s.spi.id);
+          Pros.server.refresh(spi: s.spi);
         },
         child: const Padding(
           padding: EdgeInsets.symmetric(horizontal: 7),
@@ -352,9 +347,9 @@ class _ServerPageState extends State<ServerPage>
           ),
         ),
       );
-    } else if (!(spi.autoConnect ?? true) && cs == ServerState.disconnected) {
+    } else if (!(s.spi.autoConnect ?? true) && s.state == ServerState.disconnected) {
       rightCorner = InkWell(
-        onTap: () => Pros.server.refresh(spi: spi),
+        onTap: () => Pros.server.refresh(spi: s.spi),
         child: const Padding(
           padding: EdgeInsets.symmetric(horizontal: 7),
           child: Icon(
@@ -365,7 +360,7 @@ class _ServerPageState extends State<ServerPage>
         ),
       );
     } else if (Stores.setting.serverTabUseOldUI.fetch()) {
-      rightCorner = ServerFuncBtnsTopRight(spi: spi);
+      rightCorner = ServerFuncBtnsTopRight(spi: s.spi);
     }
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 7),
@@ -375,7 +370,7 @@ class _ServerPageState extends State<ServerPage>
           ConstrainedBox(
             constraints: BoxConstraints(maxWidth: _media.size.width / 2.3),
             child: Text(
-              spi.name,
+              s.spi.name,
               style: UIs.text13Bold,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -387,26 +382,25 @@ class _ServerPageState extends State<ServerPage>
             color: Colors.grey,
           ),
           const Spacer(),
-          _buildTopRightText(ss, cs),
+          _buildTopRightText(s),
           rightCorner,
         ],
       ),
     );
   }
 
-  Widget _buildTopRightText(ServerStatus ss, ServerState cs) {
-    if (cs == ServerState.failed && ss.err != null) {
+  Widget _buildTopRightText(Server s) {
+    if (s.state == ServerState.failed && s.status.err != null) {
       return GestureDetector(
-        onTap: () => _showFailReason(ss),
+        onTap: () => _showFailReason(s.status),
         child: Text(
           l10n.viewErr,
           style: UIs.text13Grey,
         ),
       );
     }
-    final topRightStr = _getTopRightStr(ss, cs);
     return Text(
-      topRightStr,
+      s.topRightStr,
       style: UIs.text13Grey,
     );
   }
@@ -525,34 +519,6 @@ class _ServerPageState extends State<ServerPage>
       .where((e) =>
           _tag == null || (pro.pick(id: e)?.spi.tags?.contains(_tag) ?? false))
       .toList();
-
-  String _getTopRightStr(ServerStatus ss, ServerState cs) {
-    switch (cs) {
-      case ServerState.disconnected:
-        return l10n.disconnected;
-      case ServerState.finished:
-        final temp = ss.temps.first;
-        final sensorTemp = SensorItem.findPreferTempVal(ss.sensors);
-        final tempStr = switch ((temp, sensorTemp)) {
-          (_, final double val) => '${val.toStringAsFixed(1)}°C',
-          (final double val, _) => '${val.toStringAsFixed(1)}°C',
-          _ => null,
-        };
-        final upTime = ss.more[StatusCmdType.uptime];
-        final items = [tempStr, upTime];
-        final str = items.where((e) => e != null && e.isNotEmpty).join(' | ');
-        if (str.isEmpty) return l10n.noResult;
-        return str;
-      case ServerState.loading:
-        return l10n.serverTabLoading;
-      case ServerState.connected:
-        return l10n.connected;
-      case ServerState.connecting:
-        return l10n.serverTabConnecting;
-      case ServerState.failed:
-        return ss.err ?? l10n.serverTabFailed;
-    }
-  }
 
   double? _calcCardHeight(ServerState cs, bool flip) {
     if (_textFactorDouble != 1.0) return null;

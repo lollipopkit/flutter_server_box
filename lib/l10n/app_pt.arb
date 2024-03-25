@@ -55,6 +55,8 @@
   "createFile": "Criar arquivo",
   "createFolder": "Criar pasta",
   "cursorType": "Tipo de cursor",
+  "customCmd": "Comandos personalizados",
+  "customCmdHint": "\"Nome do comando\": \"Comando\"",
   "dark": "Escuro",
   "day": "Dia",
   "debug": "Debugar",

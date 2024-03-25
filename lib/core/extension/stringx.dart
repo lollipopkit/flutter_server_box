@@ -30,3 +30,7 @@ extension StringX on String {
     return this;
   }
 }
+
+extension StringXX on String? {
+  String? get selfIfNotNullEmpty => this?.isEmpty == true ? null : this;
+} 

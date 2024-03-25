@@ -55,6 +55,8 @@
   "createFile": "創建文件",
   "createFolder": "創建文件夾",
   "cursorType": "光標類型",
+  "customCmd": "自定義命令",
+  "customCmdHint": "\"命令名稱\": \"命令\"",
   "dark": "暗",
   "day": "日",
   "debug": "調試",

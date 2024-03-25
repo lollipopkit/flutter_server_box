@@ -55,6 +55,8 @@
   "createFile": "Buat file",
   "createFolder": "Membuat folder",
   "cursorType": "Jenis kursor",
+  "customCmd": "Perintah kustom",
+  "customCmdHint": "\"Nama Perintah\": \"Perintah\"",
   "dark": "Gelap",
   "day": "Hari",
   "debug": "Debug",

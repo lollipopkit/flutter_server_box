@@ -3,7 +3,6 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/model/app/server_detail_card.dart';
-import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/store.dart';
 
 import '../../../../core/extension/order.dart';
@@ -33,15 +32,7 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
   Widget _buildBody() {
     return ValueListenableBuilder(
       valueListenable: prop.listenable(),
-      builder: (_, vals, __) {
-        final keys = () {
-          try {
-            return List<String>.from(vals);
-          } catch (e) {
-            Loggers.app.info('ServerDetailOrderPage: $e');
-            return ServerDetailCards.names;
-          }
-        }();
+      builder: (_, keys, __) {
         final disabled =
             ServerDetailCards.names.where((e) => !keys.contains(e)).toList();
         final allKeys = [...keys, ...disabled];
@@ -64,7 +55,7 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
               context.showSnackBar(l10n.disabled);
               return;
             }
-            keys.moveByItem(keys, o, n, property: prop);
+            keys.moveByItem(o, n, property: prop);
           },
         );
       },

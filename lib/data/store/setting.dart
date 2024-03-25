@@ -240,7 +240,7 @@ class SettingStore extends PersistentStore {
 
   /// Ignore local network device (eg: br-xxx, ovs-system...)
   /// when building traffic view on server tab
-  late final ignoreLocalNet = property('ignoreLocalNetIface', true);
+  late final ignoreLocalNet = property('ignoreLocalNet', true);
 
   /// Remerber pwd in memory
   /// Used for [DialogX.showPwdDialog]

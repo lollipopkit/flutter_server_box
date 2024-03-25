@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/data/model/app/menu/server_func.dart';
-import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/data/res/ui.dart';
 
@@ -33,15 +32,7 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
   Widget _buildBody() {
     return ValueListenableBuilder(
       valueListenable: prop.listenable(),
-      builder: (_, vals, __) {
-        final keys = () {
-          try {
-            return List<int>.from(vals);
-          } catch (e) {
-            Loggers.app.info('ServerFuncBtnsOrderPage: $e');
-            return ServerFuncBtn.values.map((e) => e.index).toList();
-          }
-        }();
+      builder: (_, keys, __) {
         final disabled = ServerFuncBtn.values
             .map((e) => e.index)
             .where((e) => !keys.contains(e))
@@ -74,7 +65,7 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
               context.showSnackBar(l10n.disabled);
               return;
             }
-            keys.moveByItem(keys, o, n, property: prop);
+            keys.moveByItem(o, n, property: prop);
           },
         );
       },

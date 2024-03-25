@@ -16,11 +16,13 @@ class ServerStatusUpdateReq {
   final ServerStatus ss;
   final List<String> segments;
   final SystemType system;
+  final Map<String, String> customCmds;
 
   const ServerStatusUpdateReq({
     required this.system,
     required this.ss,
     required this.segments,
+    required this.customCmds,
   });
 }
 
@@ -150,6 +152,16 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
     if (sensors.isNotEmpty) {
       req.ss.sensors.clear();
       req.ss.sensors.addAll(sensors);
+    }
+  } catch (e, s) {
+    Loggers.parse.warning(e, s);
+  }
+
+  try {
+    for (int idx = 0; idx < req.customCmds.length; idx++) {
+      final key = req.customCmds.keys.elementAt(idx);
+      final value = req.segments[idx + req.system.segmentsLen];
+      req.ss.customCmds[key] = value;
     }
   } catch (e, s) {
     Loggers.parse.warning(e, s);

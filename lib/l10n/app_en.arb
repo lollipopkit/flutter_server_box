@@ -55,6 +55,8 @@
   "createFile": "Create file",
   "createFolder": "Create folder",
   "cursorType": "Cursor type",
+  "customCmd": "Custom commands",
+  "customCmdHint": "\"Command Name\": \"Command\"",
   "dark": "Dark",
   "day": "Day",
   "debug": "Debug",

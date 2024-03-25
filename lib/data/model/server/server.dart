@@ -1,4 +1,5 @@
 import 'package:dartssh2/dartssh2.dart';
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/battery.dart';
 import 'package:toolbox/data/model/server/conn.dart';
@@ -13,6 +14,8 @@ import 'package:toolbox/data/model/server/system.dart';
 import 'package:toolbox/data/model/server/temp.dart';
 
 import '../app/tag_pickable.dart';
+
+part 'server.ext.dart';
 
 class Server implements TagPickable {
   ServerPrivateInfo spi;
@@ -58,6 +61,7 @@ class ServerStatus {
   final Map<StatusCmdType, String> more = {};
   final List<SensorItem> sensors = [];
   DiskUsage? diskUsage;
+  final Map<String, String> customCmds = {};
 
   ServerStatus({
     required this.cpu,

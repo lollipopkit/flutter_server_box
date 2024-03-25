@@ -1,10 +1,9 @@
 import 'package:toolbox/core/extension/listx.dart';
 import 'package:toolbox/core/persistant_store.dart';
 
-typedef Order<T> = List<T>;
-typedef _OnMove<T> = void Function(Order<T>);
+typedef _OnMove<T> = void Function(List<T>);
 
-extension OrderX<T> on Order<T> {
+extension OrderX<T> on List<T> {
   void move(
     int oldIndex,
     int newIndex, {
@@ -33,9 +32,12 @@ extension OrderX<T> on Order<T> {
   }
 
   void moveByItem(
-    List<T> items,
     int o,
     int n, {
+    /// The list after filtering.
+    ///
+    /// It's used to find the index of the item.
+    List<T>? filtered,
     StorePropertyBase<List<T>>? property,
     _OnMove<T>? onMove,
   }) {
@@ -43,9 +45,9 @@ extension OrderX<T> on Order<T> {
     if (o < n) {
       n -= 1;
     }
-    final index = indexOf(items[o]);
+    final index = indexOf((filtered ?? this)[o]);
     if (index == -1) return;
-    var newIndex = indexOf(items[n]);
+    var newIndex = indexOf((filtered ?? this)[n]);
     if (newIndex == -1) return;
     if (o < n) {
       newIndex += 1;
@@ -85,7 +87,7 @@ extension OrderX<T> on Order<T> {
 
   /// Dart uses memory address to compare objects by default.
   /// This method compares the values of the objects.
-  bool equals(Order<T> other) {
+  bool equals(List<T> other) {
     if (length != other.length) return false;
     for (var i = 0; i < length; i++) {
       if (this[i] != other[i]) return false;

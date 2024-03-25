@@ -17,9 +17,9 @@ class ServerCustomAdapter extends TypeAdapter<ServerCustom> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return ServerCustom(
-      temperature: fields[0] as String?,
       pveAddr: fields[1] as String?,
-      pveIgnoreCert: fields[2] as bool?,
+      pveIgnoreCert: fields[2] == null ? false : fields[2] as bool,
+      cmds: (fields[3] as Map?)?.cast<String, String>(),
     );
   }
 
@@ -27,12 +27,12 @@ class ServerCustomAdapter extends TypeAdapter<ServerCustom> {
   void write(BinaryWriter writer, ServerCustom obj) {
     writer
       ..writeByte(3)
-      ..writeByte(0)
-      ..write(obj.temperature)
       ..writeByte(1)
       ..write(obj.pveAddr)
       ..writeByte(2)
-      ..write(obj.pveIgnoreCert);
+      ..write(obj.pveIgnoreCert)
+      ..writeByte(3)
+      ..write(obj.cmds);
   }
 
   @override

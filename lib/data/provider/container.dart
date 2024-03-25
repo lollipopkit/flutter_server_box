@@ -99,7 +99,7 @@ class ContainerProvider extends ChangeNotifier {
     }
 
     // Check result segments count
-    final segments = raw.split(seperator);
+    final segments = raw.split(ShellFunc.seperator);
     if (segments.length != ContainerCmdType.values.length) {
       error = ContainerErr(
         type: ContainerErrType.segmentsNotMatch,
@@ -270,6 +270,6 @@ enum ContainerCmdType {
   }) {
     return ContainerCmdType.values
         .map((e) => e.exec(type, sudo: sudo, includeStats: includeStats))
-        .join(' && echo $seperator && ');
+        .join(' && echo ${ShellFunc.seperator} && ');
   }
 }

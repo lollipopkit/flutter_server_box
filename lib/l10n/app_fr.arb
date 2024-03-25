@@ -55,6 +55,8 @@
   "createFile": "Créer un fichier",
   "createFolder": "Créer un dossier",
   "cursorType": "Type de curseur",
+  "customCmd": "Commandes personnalisées",
+  "customCmdHint": "\"Nom de la commande\": \"Commande\"",
   "dark": "Sombre",
   "day": "Jour",
   "debug": "Déboguer",

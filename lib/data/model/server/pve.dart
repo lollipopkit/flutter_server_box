@@ -414,11 +414,11 @@ final class PveRes {
   static Future<PveRes> parse((List list, PveRes? old) val) async {
     final (list, old) = val;
     final items = list.map((e) => PveResIface.fromJson(e)).toList();
-    final Order<PveQemu> qemus = [];
-    final Order<PveLxc> lxcs = [];
-    final Order<PveNode> nodes = [];
-    final Order<PveStorage> storages = [];
-    final Order<PveSdn> sdns = [];
+    final List<PveQemu> qemus = [];
+    final List<PveLxc> lxcs = [];
+    final List<PveNode> nodes = [];
+    final List<PveStorage> storages = [];
+    final List<PveSdn> sdns = [];
     for (final item in items) {
       switch (item.type) {
         case PveResType.lxc:

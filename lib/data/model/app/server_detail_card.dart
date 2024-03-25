@@ -15,6 +15,7 @@ enum ServerDetailCards implements VersionRelated {
   temp,
   battery,
   pve(sinceBuild: 818),
+  custom(sinceBuild: 825),
   ;
 
   @override
@@ -39,6 +40,7 @@ enum ServerDetailCards implements VersionRelated {
         temp => l10n.temperature,
         battery => l10n.battery,
         pve => 'PVE',
+        custom => l10n.cmd,
       };
 
   /// If:
@@ -48,9 +50,19 @@ enum ServerDetailCards implements VersionRelated {
     if (cur >= pve.sinceBuild!) {
       final prop = Stores.setting.detailCardOrder;
       final list = prop.fetch();
-      if (list.contains(pve.name)) return;
-      list.add(pve.name);
-      prop.put(list);
+      if (!list.contains(pve.name)) {
+        list.add(pve.name);
+        prop.put(list);
+      }
+    }
+
+    if (cur >= custom.sinceBuild!) {
+      final prop = Stores.setting.detailCardOrder;
+      final list = prop.fetch();
+      if (!list.contains(custom.name)) {
+        list.add(custom.name);
+        prop.put(list);
+      }
     }
   }
 }

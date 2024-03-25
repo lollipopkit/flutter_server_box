@@ -55,6 +55,8 @@
   "createFile": "Datei erstellen",
   "createFolder": "Ordner erstellen",
   "cursorType": "Cursor-Typ",
+  "customCmd": "Benutzerdefinierte Befehle",
+  "customCmdHint": "\"Befehlsname\": \"Befehl\"",
   "dark": "Dunkel",
   "day": "Tag",
   "debug": "Debug",
