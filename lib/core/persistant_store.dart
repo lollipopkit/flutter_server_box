@@ -61,16 +61,12 @@ class PersistentStore {
     String key,
     List<T> defaultValue, {
     bool updateLastModified = true,
-    T Function(dynamic val)? decoder,
-    dynamic Function(T val)? encoder,
   }) {
     return _StoreListProperty<T>(
       box,
       key,
       defaultValue,
       updateLastModified: updateLastModified,
-      encoder: encoder,
-      decoder: decoder,
     );
   }
 }
@@ -123,16 +119,12 @@ class _StoreProperty<T> implements StorePropertyBase<T> {
     this._key,
     this.defaultValue, {
     this.updateLastModified = true,
-    this.decoder,
-    this.encoder,
   });
 
   final Box _box;
   final String _key;
   T defaultValue;
   bool updateLastModified;
-  final T Function(dynamic val)? decoder;
-  final dynamic Function(T val)? encoder;
 
   @override
   ValueListenable<T> listenable() {
@@ -141,15 +133,9 @@ class _StoreProperty<T> implements StorePropertyBase<T> {
 
   @override
   T fetch() {
-    final stored = _box.get(_key);
-    if (stored == null || stored is! T) {
-      try {
-        if (decoder != null) {
-          return decoder!(stored);
-        }
-      } catch (_) {
-        _logger.warning('Failed to decode "$_key"');
-      }
+    final stored = _box.get(_key, defaultValue: defaultValue);
+    if (stored is! T) {
+      _logger.warning('StoreProperty("$_key") is: ${stored.runtimeType}');
       return defaultValue;
     }
     return stored;
@@ -158,9 +144,6 @@ class _StoreProperty<T> implements StorePropertyBase<T> {
   @override
   Future<void> put(T value) {
     if (updateLastModified) _box.updateLastModified();
-    if (encoder != null) {
-      return _box.put(_key, encoder!(value));
-    }
     return _box.put(_key, value);
   }
 
@@ -176,16 +159,12 @@ class _StoreListProperty<T> implements StorePropertyBase<List<T>> {
     this._key,
     this.defaultValue, {
     this.updateLastModified = true,
-    this.decoder,
-    this.encoder,
   });
 
   final Box _box;
   final String _key;
   List<T> defaultValue;
   bool updateLastModified;
-  final T Function(dynamic val)? decoder;
-  final dynamic Function(T val)? encoder;
 
   @override
   ValueListenable<List<T>> listenable() {
@@ -195,26 +174,21 @@ class _StoreListProperty<T> implements StorePropertyBase<List<T>> {
   @override
   List<T> fetch() {
     final val = _box.get(_key, defaultValue: defaultValue)!;
-    if (val is! List) {
-      throw Exception('StoreListProperty("$_key") is: ${val.runtimeType}');
-    }
-    if (decoder != null) {
-      try {
-        return List<T>.from(val.map(decoder!));
-      } catch (_) {
-        _logger.warning('Failed to decode "$_key"');
-        return defaultValue;
+    try {
+      if (val is! List) {
+        final exception = 'StoreListProperty("$_key") is: ${val.runtimeType}';
+        _logger.warning(exception);
+        throw Exception(exception);
       }
+      return List<T>.from(val);
+    } catch (_) {
+      return defaultValue;
     }
-    return List<T>.from(val);
   }
 
   @override
   Future<void> put(List<T> value) {
     if (updateLastModified) _box.updateLastModified();
-    if (encoder != null) {
-      return _box.put(_key, value.map(encoder!).toList());
-    }
     return _box.put(_key, value);
   }
 

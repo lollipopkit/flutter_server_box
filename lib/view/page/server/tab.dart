@@ -347,7 +347,8 @@ class _ServerPageState extends State<ServerPage>
           ),
         ),
       );
-    } else if (!(s.spi.autoConnect ?? true) && s.state == ServerState.disconnected) {
+    } else if (!(s.spi.autoConnect ?? true) &&
+        s.state == ServerState.disconnected) {
       rightCorner = InkWell(
         onTap: () => Pros.server.refresh(spi: s.spi),
         child: const Padding(

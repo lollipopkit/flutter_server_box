@@ -718,6 +718,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildCustom(ServerStatus ss) {
+    if (ss.customCmds.isEmpty) return UIs.placeholder;
     return CardX(
       child: ExpandTile(
         leading: const Icon(MingCute.command_line, size: 17),

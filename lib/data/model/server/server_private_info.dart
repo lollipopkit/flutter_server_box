@@ -122,7 +122,7 @@ class ServerPrivateInfo {
         pwd != old.pwd ||
         keyId != old.keyId ||
         alterUrl != old.alterUrl ||
-        jumpId != old.jumpId || 
+        jumpId != old.jumpId ||
         custom?.cmds != old.custom?.cmds;
   }
 

@@ -33,4 +33,4 @@ extension StringX on String {
 
 extension StringXX on String? {
   String? get selfIfNotNullEmpty => this?.isEmpty == true ? null : this;
-} 
+}
