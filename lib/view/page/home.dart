@@ -82,13 +82,13 @@ class _HomePageState extends State<HomePage>
 
     switch (state) {
       case AppLifecycleState.resumed:
-        BioAuth.auth();
         if (!Pros.server.isAutoRefreshOn) {
           Pros.server.startAutoRefresh();
         }
         HomeWidgetMC.update();
         break;
       case AppLifecycleState.paused:
+        BioAuth.go();
         // Keep running in background on Android device
         if (isAndroid && Stores.setting.bgRun.fetch()) {
           // Keep this if statement single
@@ -316,7 +316,7 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
     // Auth required for first launch
-    BioAuth.auth();
+    BioAuth.go();
 
     if (Stores.setting.autoCheckAppUpdate.fetch()) {
       doUpdate(context);

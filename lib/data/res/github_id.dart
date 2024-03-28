@@ -62,5 +62,8 @@ abstract final class GithubIds {
     'Tridays',
     'Nebulosa-Cat',
     'dani7959',
+    'MoMingRose',
+    'sakalakagg',
+    'cz32483490',
   };
 }

@@ -32,36 +32,28 @@ abstract final class BioAuth {
         biometrics.contains(BiometricType.fingerprint);
   }
 
-  static void auth([int count = 0]) async {
+  static Future<void> go([int count = 0]) async {
     if (Stores.setting.useBioAuth.fetch()) {
       if (!_isAuthing) {
         _isAuthing = true;
-        final val = await authWithResult();
+        final val = await goWithResult();
         switch (val) {
           case AuthResult.success:
-            // wait for animation
-            Future.delayed(
-              isIOS
-                  ? const Duration(milliseconds: 1300)
-                  : const Duration(seconds: 1),
-              () => _isAuthing = false,
-            );
             break;
           case AuthResult.fail:
           case AuthResult.cancel:
-            _isAuthing = false;
-            auth(count + 1);
+            go(count + 1);
             break;
           case AuthResult.notAvail:
-            _isAuthing = false;
             Stores.setting.useBioAuth.put(false);
             break;
         }
+        _isAuthing = false;
       }
     }
   }
 
-  static Future<AuthResult> authWithResult() async {
+  static Future<AuthResult> goWithResult() async {
     if (!await isAvail) return AuthResult.notAvail;
     try {
       await _auth.stopAuthentication();
