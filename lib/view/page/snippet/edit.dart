@@ -8,6 +8,7 @@ import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/view/widget/cardx.dart';
 import 'package:toolbox/view/widget/input_field.dart';
+import 'package:toolbox/view/widget/markdown.dart';
 
 import '../../../data/model/server/snippet.dart';
 import '../../../data/res/ui.dart';
@@ -196,7 +197,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
     return CardX(
       child: Padding(
         padding: const EdgeInsets.all(13),
-        child: MarkdownBody(
+        child: SimpleMarkdown(
           data: '''
 📌 ${l10n.supportFmtArgs}
 

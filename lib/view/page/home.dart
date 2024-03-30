@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:get_it/get_it.dart';
 import 'package:toolbox/core/channel/bg_run.dart';
 import 'package:toolbox/core/channel/home_widget.dart';
@@ -13,11 +12,11 @@ import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/core/update.dart';
 import 'package:toolbox/core/utils/platform/auth.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
-import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/github_id.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
+import 'package:toolbox/view/widget/markdown.dart';
 
 import '../../core/route.dart';
 import '../../core/utils/ui.dart';
@@ -47,6 +46,7 @@ class _HomePageState extends State<HomePage>
   final _selectIndex = ValueNotifier(0);
 
   bool _switchingPage = false;
+  bool _shouldAuth = false;
 
   @override
   void initState() {
@@ -82,13 +82,16 @@ class _HomePageState extends State<HomePage>
 
     switch (state) {
       case AppLifecycleState.resumed:
+        if (_shouldAuth) {
+          BioAuth.go().then((_) => _shouldAuth = false);
+        }
         if (!Pros.server.isAutoRefreshOn) {
           Pros.server.startAutoRefresh();
         }
         HomeWidgetMC.update();
         break;
       case AppLifecycleState.paused:
-        BioAuth.go();
+        _shouldAuth = true;
         // Keep running in background on Android device
         if (isAndroid && Stores.setting.bgRun.fetch()) {
           // Keep this if statement single
@@ -271,13 +274,7 @@ class _HomePageState extends State<HomePage>
     return SingleChildScrollView(
       child: SizedBox(
         width: MediaQuery.of(context).size.width * 0.8,
-        child: MarkdownBody(
-          styleSheet: MarkdownStyleSheet(a: TextStyle(color: primaryColor)),
-          onTapLink: (text, href, title) {
-            if (href != null) {
-              openUrl(href);
-            }
-          },
+        child: SimpleMarkdown(
           data: '''
 ${l10n.madeWithLove('[lollipopkit](${Urls.myGithub})')}
 

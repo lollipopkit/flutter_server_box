@@ -14,10 +14,8 @@ import 'package:toolbox/core/utils/sync/icloud.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/core/utils/sync/webdav.dart';
-import 'package:toolbox/core/utils/ui.dart';
 import 'package:toolbox/data/model/app/backup.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
-import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/path.dart';
 import 'package:toolbox/data/res/store.dart';
@@ -27,6 +25,7 @@ import 'package:toolbox/view/widget/appbar.dart';
 import 'package:toolbox/view/widget/expand_tile.dart';
 import 'package:toolbox/view/widget/cardx.dart';
 import 'package:toolbox/view/widget/input_field.dart';
+import 'package:toolbox/view/widget/markdown.dart';
 import 'package:toolbox/view/widget/store_switch.dart';
 
 class BackupPage extends StatelessWidget {
@@ -225,15 +224,11 @@ class BackupPage extends StatelessWidget {
     return CardX(
       child: ListTile(
         title: Text(l10n.bulkImportServers),
-        subtitle: MarkdownBody(
+        subtitle: SimpleMarkdown(
           data: l10n.bulkImportServersTip(Urls.appWiki),
           styleSheet: MarkdownStyleSheet(
             p: UIs.textGrey,
-            a: TextStyle(color: primaryColor),
           ),
-          onTapLink: (text, href, title) {
-            if (href != null) openUrl(href);
-          },
         ),
         leading: const Icon(Icons.import_export),
         onTap: () => _onBulkImportServers(context),

@@ -6,7 +6,7 @@ extension ServerX on Server {
       case ServerState.disconnected:
         return l10n.disconnected;
       case ServerState.finished:
-        final cmdTemp = status.customCmds['temperature'];
+        final cmdTemp = status.customCmds['server_card_top_right'];
         final temp = status.temps.first;
         final sensorTemp = SensorItem.findPreferTempVal(status.sensors);
         final temperatureVal = () {

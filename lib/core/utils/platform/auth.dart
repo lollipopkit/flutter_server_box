@@ -61,6 +61,7 @@ abstract final class BioAuth {
           localizedReason: l10n.authRequired,
           options: const AuthenticationOptions(
             biometricOnly: true,
+            stickyAuth: true,
           ),
           authMessages: [
             AndroidAuthMessages(

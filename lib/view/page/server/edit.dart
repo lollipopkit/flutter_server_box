@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
@@ -8,6 +9,7 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/extension/widget.dart';
+import 'package:toolbox/core/utils/ui.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/custom.dart';
 import 'package:toolbox/data/res/provider.dart';
@@ -198,7 +200,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         onSubmitted: (_) => _focusScope.requestFocus(_ipFocus),
         hint: l10n.exampleName,
         label: l10n.name,
-        icon: Icons.info,
+        icon: BoxIcons.bx_rename,
         obscureText: false,
         autoCorrect: true,
         suggestiion: true,
@@ -209,7 +211,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         onSubmitted: (_) => _focusScope.requestFocus(_portFocus),
         node: _ipFocus,
         label: l10n.host,
-        icon: Icons.computer,
+        icon: BoxIcons.bx_server,
         hint: 'example.com',
       ),
       Input(
@@ -218,7 +220,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         node: _portFocus,
         onSubmitted: (_) => _focusScope.requestFocus(_usernameFocus),
         label: l10n.port,
-        icon: Icons.format_list_numbered,
+        icon: Bootstrap.number_123,
         hint: '22',
       ),
       Input(
@@ -235,7 +237,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         type: TextInputType.url,
         node: _alterUrlFocus,
         label: l10n.alterUrl,
-        icon: Icons.computer,
+        icon: MingCute.link_line,
         hint: 'user@ip:port',
       ),
       TagEditor(
@@ -361,10 +363,12 @@ class _ServerEditPageState extends State<ServerEditPage> {
         Input(
           controller: _pveAddrCtrl,
           type: TextInputType.url,
+          icon: MingCute.web_line,
           label: l10n.addr,
           hint: 'https://example.com:8006',
         ),
         ListTile(
+          leading: const Icon(MingCute.certificate_line),
           title: Text(l10n.ignoreCert),
           subtitle: Text(l10n.pveIgnoreCertTip, style: UIs.text12Grey),
           trailing: ListenableBuilder(
@@ -382,13 +386,24 @@ class _ServerEditPageState extends State<ServerEditPage> {
   }
 
   Widget _buildCustomCmd() {
-    return Input(
-      controller: _customCmdCtrl,
-      type: TextInputType.text,
-      maxLines: 3,
-      label: l10n.customCmd,
-      icon: Icons.code,
-      hint: '{${l10n.customCmdHint}}',
+    return ExpandTile(
+      title: Text(l10n.customCmd),
+      children: [
+        Input(
+          controller: _customCmdCtrl,
+          type: TextInputType.text,
+          maxLines: 3,
+          label: 'Json',
+          icon: Icons.code,
+          hint: '{${l10n.customCmdHint}}',
+        ),
+        ListTile(
+          leading: const Icon(MingCute.doc_line),
+          title: Text(l10n.doc),
+          trailing: const Icon(Icons.open_in_new, size: 17),
+          onTap: () => openUrl(l10n.customCmdDocUrl),
+        ).card,
+      ],
     );
   }
 
