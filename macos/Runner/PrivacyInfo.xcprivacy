@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+   PrivacyInfo.xcprivacy
+   Runner
+
+   Created by lollipopkit on 31/3/2024.
+   Copyright (c) 2024 . All rights reserved.
+-->
 <plist version="1.0">
 <dict>
 	<key>NSPrivacyAccessedAPITypes</key>
 	<array>
-		<dict>
-			<key>NSPrivacyAccessedAPITypeReasons</key>
-			<array>
-				<string>CA92.1</string>
-			</array>
-			<key>NSPrivacyAccessedAPIType</key>
-			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
-		</dict>
 		<dict>
 			<key>NSPrivacyAccessedAPITypeReasons</key>
 			<array>
