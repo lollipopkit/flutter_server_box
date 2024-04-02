@@ -11,22 +11,14 @@ enum PveResType {
   sdn,
   ;
 
-  static PveResType fromString(String type) {
-    switch (type) {
-      case 'lxc':
-        return PveResType.lxc;
-      case 'qemu':
-        return PveResType.qemu;
-      case 'node':
-        return PveResType.node;
-      case 'storage':
-        return PveResType.storage;
-      case 'sdn':
-        return PveResType.sdn;
-      default:
-        throw Exception('Unknown PveResType: $type');
-    }
-  }
+  static PveResType? fromString(String type) => switch (type.toLowerCase()) {
+        'lxc' => PveResType.lxc,
+        'qemu' => PveResType.qemu,
+        'node' => PveResType.node,
+        'storage' => PveResType.storage,
+        'sdn' => PveResType.sdn,
+        _ => null,
+      };
 
   String get toStr => switch (this) {
         PveResType.node => l10n.node,
@@ -42,8 +34,9 @@ sealed class PveResIface {
   String get status;
   PveResType get type;
 
-  static PveResIface fromJson(Map<String, dynamic> json) {
+  static PveResIface? fromJson(Map<String, dynamic> json) {
     final type = PveResType.fromString(json['type']);
+    if (type == null) return null;
     switch (type) {
       case PveResType.lxc:
         return PveLxc.fromJson(json);
@@ -420,6 +413,7 @@ final class PveRes {
     final List<PveStorage> storages = [];
     final List<PveSdn> sdns = [];
     for (final item in items) {
+      if (item == null) continue;
       switch (item.type) {
         case PveResType.lxc:
           lxcs.add(item as PveLxc);
