@@ -1,3 +1,5 @@
+import 'package:toolbox/core/extension/context/locale.dart';
+
 import '../../res/build_data.dart';
 import '../server/system.dart';
 
@@ -30,9 +32,9 @@ enum ShellFunc {
   static const srvBoxDir = '$_homeVar/$_srvBoxDir';
   static const _installShellPath = '$_homeVar/$_srvBoxDir/$_scriptFile';
 
-  /// Issue #168
-  /// Use `sh` for compatibility
+  // Issue #299, chmod ~/.config to avoid permission issue
   static const installShellCmd = """
+chmod +x ~/.config &> /dev/null
 mkdir -p $_homeVar/$_srvBoxDir
 cat > $_installShellPath
 chmod +x $_installShellPath
@@ -63,7 +65,6 @@ chmod +x $_installShellPath
         return 'status';
       // case ShellFunc.docker:
       //   // `dockeR` -> avoid conflict with `docker` command
-      //   // 以防止循环递归
       //   return 'dockeR';
       case ShellFunc.process:
         return 'process';
@@ -259,3 +260,13 @@ const _bsdStatusCmd = [
   //'sysctl -a | grep temperature',
   'hostname',
 ];
+
+extension StatusCmdTypeX on StatusCmdType {
+  String get i18n => switch (this) {
+        StatusCmdType.sys => l10n.system,
+        StatusCmdType.host => l10n.host,
+        StatusCmdType.uptime => l10n.uptime,
+        StatusCmdType.battery => l10n.battery,
+        final val => val.name,
+      };
+}
