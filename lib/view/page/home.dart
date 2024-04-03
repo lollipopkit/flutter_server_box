@@ -4,14 +4,17 @@ import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:toolbox/core/channel/bg_run.dart';
 import 'package:toolbox/core/channel/home_widget.dart';
+import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/core/update.dart';
 import 'package:toolbox/core/utils/platform/auth.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
+import 'package:toolbox/core/utils/platform/perm.dart';
 import 'package:toolbox/data/res/github_id.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/provider.dart';
@@ -314,6 +317,26 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
   Future<void> afterFirstLayout(BuildContext context) async {
     // Auth required for first launch
     BioAuth.go();
+
+    PermUtils.request(Permission.notification).then((suc) {
+      if (!suc) {
+        final noNotiPerm = Stores.setting.noNotiPerm;
+        if (noNotiPerm.fetch()) return;
+        context.showRoundDialog(
+          title: Text(l10n.error),
+          child: Text(l10n.noNotiPerm),
+          actions: [
+            TextButton(
+              onPressed: () {
+                noNotiPerm.put(true);
+                context.pop();
+              },
+              child: Text(l10n.ok),
+            ),
+          ],
+        );
+      }
+    });
 
     if (Stores.setting.autoCheckAppUpdate.fetch()) {
       doUpdate(context);

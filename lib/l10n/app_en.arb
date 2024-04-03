@@ -164,6 +164,7 @@
   "newContainer": "New container",
   "noClient": "No client",
   "noInterface": "No interface",
+  "noNotiPerm": "No notification permissions, possibly no progress indication when downloading app updates.",
   "noOptions": "No options",
   "noResult": "No result",
   "noSavedPrivateKey": "No saved private keys.",

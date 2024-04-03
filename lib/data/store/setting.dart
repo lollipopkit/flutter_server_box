@@ -263,5 +263,8 @@ class SettingStore extends PersistentStore {
   /// Version of store db
   late final storeVersion = property('storeVersion', 0);
 
+  /// Have notified user for notificaiton permission or not
+  late final noNotiPerm = property('noNotiPerm', false);
+
   // ------END------
 }

@@ -164,6 +164,7 @@
   "newContainer": "Crear contenedor nuevo",
   "noClient": "No hay conexión SSH",
   "noInterface": "No hay interfaz disponible",
+  "noNotiPerm": "Sin permisos de notificación, posiblemente sin indicación de progreso al descargar actualizaciones de la aplicación.",
   "noOptions": "Sin opciones disponibles",
   "noResult": "Sin resultados",
   "noSavedPrivateKey": "No hay llaves privadas guardadas.",

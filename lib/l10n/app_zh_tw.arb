@@ -164,6 +164,7 @@
   "newContainer": "新建容器",
   "noClient": "沒有SSH連接",
   "noInterface": "沒有可用的接口",
+  "noNotiPerm": "無通知權限，可能在下載應用程式更新時沒有進度提示。",
   "noOptions": "無可選項",
   "noResult": "無結果",
   "noSavedPrivateKey": "沒有已保存的私鑰。",

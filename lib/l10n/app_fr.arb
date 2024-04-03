@@ -164,6 +164,7 @@
   "newContainer": "Nouveau conteneur",
   "noClient": "Aucun client",
   "noInterface": "Aucune interface",
+  "noNotiPerm": "Pas de permissions de notification, il est possible qu'il n'y ait pas de notification de progression lors du téléchargement des mises à jour des applications.",
   "noOptions": "Aucune option",
   "noResult": "Aucun résultat",
   "noSavedPrivateKey": "Aucune clé privée enregistrée.",

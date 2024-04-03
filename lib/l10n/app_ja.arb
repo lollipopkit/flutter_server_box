@@ -164,6 +164,7 @@
   "newContainer": "新しいコンテナを作成",
   "noClient": "SSH接続がありません",
   "noInterface": "使用可能なインターフェースがありません",
+  "noNotiPerm": "通知の権限がないため、アプリの更新のダウンロード中に進行状況が表示されない場合があります。",
   "noOptions": "選択肢がありません",
   "noResult": "結果なし",
   "noSavedPrivateKey": "保存されたプライベートキーがありません。",

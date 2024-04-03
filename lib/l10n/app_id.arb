@@ -164,6 +164,7 @@
   "newContainer": "Wadah baru",
   "noClient": "Tidak ada klien",
   "noInterface": "Tidak ada antarmuka",
+  "noNotiPerm": "Tidak ada izin notifikasi, mungkin tidak ada indikasi kemajuan saat mengunduh pembaruan aplikasi.",
   "noOptions": "Tidak ada opsi",
   "noResult": "Tidak ada hasil",
   "noSavedPrivateKey": "Tidak ada kunci pribadi yang disimpan.",

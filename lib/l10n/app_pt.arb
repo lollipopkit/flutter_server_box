@@ -164,6 +164,7 @@
   "newContainer": "Novo contêiner",
   "noClient": "Sem conexão SSH",
   "noInterface": "Sem interface disponível",
+  "noNotiPerm": "Sem permissão de notificação, possivelmente sem indicação de progresso ao baixar atualizações de aplicativos.",
   "noOptions": "Sem opções",
   "noResult": "Sem resultados",
   "noSavedPrivateKey": "Nenhuma chave privada salva.",
