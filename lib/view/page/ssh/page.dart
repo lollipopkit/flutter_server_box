@@ -203,7 +203,9 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
         : Text(
             item.text,
             style: TextStyle(
-              color: selected ? primaryColor : null,
+              color: selected
+                  ? primaryColor
+                  : (_isDark ? Colors.white : Colors.black),
               fontSize: 15,
             ),
           );
