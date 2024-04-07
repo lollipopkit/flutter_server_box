@@ -192,6 +192,7 @@
   "pingInputIP": "請輸入目標IP或域名",
   "pingNoServer": "沒有服務器可用於Ping\n請在服務器tab新增服務器後再試",
   "pkg": "包管理",
+  "pkgUpgradeTip": "請在更新前備份系統。",
   "platformNotSupportUpdate": "當前平台不支持更新，請編譯最新源碼後手動安裝",
   "plugInType": "插入類型",
   "plzEnterHost": "請輸入主機",

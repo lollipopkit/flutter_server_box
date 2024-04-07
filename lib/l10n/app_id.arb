@@ -192,6 +192,7 @@
   "pingInputIP": "Harap masukkan IP / domain target.",
   "pingNoServer": "Tidak ada server untuk melakukan ping.\nHarap tambahkan server di tab Server.",
   "pkg": "Pkg",
+  "pkgUpgradeTip": "Harap cadangkan sistem Anda sebelum memperbarui.",
   "platformNotSupportUpdate": "Platform saat ini tidak mendukung pembaruan aplikasi.\nSilakan bangun dari sumber dan instal.",
   "plugInType": "Jenis Penyisipan",
   "plzEnterHost": "Harap masukkan host.",

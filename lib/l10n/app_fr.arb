@@ -192,6 +192,7 @@
   "pingInputIP": "Veuillez saisir une adresse IP / un domaine cible.",
   "pingNoServer": "Aucun serveur pour ping.\nVeuillez ajouter un serveur dans l'onglet serveur.",
   "pkg": "Pkg",
+  "pkgUpgradeTip": "Veuillez sauvegarder votre système avant de mettre à jour.",
   "platformNotSupportUpdate": "La plateforme actuelle ne prend pas en charge la mise à jour dans l'application. \nVeuillez le compiler à partir de la source et l'installer.",
   "plugInType": "Type d'insertion",
   "plzEnterHost": "Veuillez saisir l'hôte.",

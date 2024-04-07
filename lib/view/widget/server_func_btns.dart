@@ -18,6 +18,7 @@ import 'package:toolbox/data/res/path.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/data/res/ui.dart';
+import 'package:toolbox/view/widget/count_down_btn.dart';
 
 import '../../core/route.dart';
 import '../../core/utils/server.dart';
@@ -279,12 +280,13 @@ Future<void> _onPkg(BuildContext context, ServerPrivateInfo spi) async {
   final gotoUpgrade = await context.showRoundDialog<bool>(
     title: Text(l10n.attention),
     child: SingleChildScrollView(
-      child: Text('${l10n.foundNUpdate(upgradeable.length)}\n\n$upgradeCmd'),
+      child: Text('${l10n.pkgUpgradeTip}\n${l10n.foundNUpdate(upgradeable.length)}\n\n$upgradeCmd'),
     ),
     actions: [
-      TextButton(
-        onPressed: () => context.pop(true),
-        child: Text(l10n.update),
+      CountDownBtn(
+        onTap: () => context.pop(true),
+        text: l10n.update,
+        afterColor: Colors.red,
       ),
     ],
   );

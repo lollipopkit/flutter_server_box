@@ -192,6 +192,7 @@
   "pingInputIP": "Please input a target IP / domain.",
   "pingNoServer": "No server to ping.\nPlease add a server in server tab.",
   "pkg": "Pkg",
+  "pkgUpgradeTip": "Please backup your system before updating.",
   "platformNotSupportUpdate": "Current platform does not support in app update.\nPlease build from source and install it.",
   "plugInType": "Insertion Type",
   "plzEnterHost": "Please enter host.",

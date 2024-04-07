@@ -192,6 +192,7 @@
   "pingInputIP": "Por favor, introduce la IP de destino o el dominio",
   "pingNoServer": "No hay servidores disponibles para hacer Ping\nPor favor, añade un servidor en la pestaña de servidores y vuelve a intentarlo",
   "pkg": "Gestión de paquetes",
+  "pkgUpgradeTip": "Realice una copia de seguridad de su sistema antes de actualizar.",
   "platformNotSupportUpdate": "La plataforma actual no soporta actualizaciones, por favor instala manualmente la última versión del código fuente",
   "plugInType": "Tipo de inserción",
   "plzEnterHost": "Por favor, introduce el host",

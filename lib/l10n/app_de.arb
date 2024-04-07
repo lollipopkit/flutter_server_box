@@ -192,6 +192,7 @@
   "pingInputIP": "Bitte gib eine Ziel-IP/Domain ein.",
   "pingNoServer": "Kein Server zum Anpingen.\nBitte füge einen Server hinzu.",
   "pkg": "Pkg",
+  "pkgUpgradeTip": "Bitte sichern Sie Ihr System vor dem Update.",
   "platformNotSupportUpdate": "Die aktuelle Plattform unterstützt keine In-App-Updates.\nBitte kompiliere vom Quellcode und installiere sie.",
   "plugInType": "Einfügetyp",
   "plzEnterHost": "Bitte Host eingeben.",
