@@ -14,8 +14,8 @@ class NetSpeedPart extends TimeSeqIface<NetSpeedPart> {
   bool same(NetSpeedPart other) => device == other.device;
 }
 
-class NetSpeed extends TimeSeq<NetSpeedPart> {
-  NetSpeed(super.pre, super.now);
+class NetSpeed extends TimeSeq<List<NetSpeedPart>> {
+  NetSpeed(super.init1, super.init2);
 
   @override
   void onUpdate() {
@@ -54,12 +54,8 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
     String sizeOut,
     String speedIn,
     String speedOut,
-  }) cachedRealVals = (
-    sizeIn: '0kb',
-    sizeOut: '0kb',
-    speedIn: '0kb/s',
-    speedOut: '0kb/s',
-  );
+  }) cachedRealVals =
+      (sizeIn: '0kb', sizeOut: '0kb', speedIn: '0kb/s', speedOut: '0kb/s');
 
   /// Time diff between [pre] and [now]
   BigInt get _timeDiff => BigInt.from(now[0].time - pre[0].time);

@@ -409,7 +409,6 @@ class _ServerEditPageState extends State<ServerEditPage> {
 
   Widget _buildFAB() {
     return FloatingActionButton(
-      heroTag: 'server',
       onPressed: _onSave,
       child: const Icon(Icons.save),
     );

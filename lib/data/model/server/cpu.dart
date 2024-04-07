@@ -1,9 +1,10 @@
+import 'dart:collection';
+
+import 'package:toolbox/data/model/server/time_seq.dart';
 import 'package:toolbox/data/res/status.dart';
 
-import 'time_seq.dart';
-
-class Cpus extends TimeSeq<OneTimeCpuStatus> {
-  Cpus(super.pre, super.now);
+class Cpus extends TimeSeq<List<OneTimeCpuStatus>> {
+  Cpus(super.init1, super.init2);
 
   @override
   void onUpdate() {
@@ -124,9 +125,11 @@ Cpus parseBsdCpu(String raw) {
       .map((e) => double.parse(e.group(1) ?? '0') * 100)
       .toList();
   if (percents.length != 3) return InitStatus.cpus;
-  return InitStatus.cpus
-    ..now = [
-      OneTimeCpuStatus('cpu', percents[0].toInt(), 0, 0,
-          percents[2].toInt() + percents[1].toInt(), 0, 0, 0)
-    ];
+
+  final init = InitStatus.cpus;
+  init.add([
+    OneTimeCpuStatus('cpu', percents[0].toInt(), 0, 0,
+        percents[2].toInt() + percents[1].toInt(), 0, 0, 0),
+  ]);
+  return init;
 }

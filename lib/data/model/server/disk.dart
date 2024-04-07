@@ -58,8 +58,8 @@ class Disk {
   }
 }
 
-class DiskIO extends TimeSeq<DiskIOPiece> {
-  DiskIO(super.pre, super.now);
+class DiskIO extends TimeSeq<List<DiskIOPiece>> {
+  DiskIO(super.init1, super.init2);
 
   @override
   void onUpdate() {

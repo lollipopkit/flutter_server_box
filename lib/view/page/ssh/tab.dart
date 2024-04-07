@@ -48,7 +48,6 @@ class _SSHTabPageState extends State<SSHTabPage>
           return FloatingActionButton(
             onPressed: () => AppRoute.serverEdit().go(context),
             tooltip: l10n.addAServer,
-            heroTag: 'server',
             child: const Icon(Icons.add),
           );
         },
