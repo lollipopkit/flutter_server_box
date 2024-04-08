@@ -75,11 +75,11 @@ void _runInZone(void Function() body) {
 
 Future<void> _initApp() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await _initDesktopWindow();
 
   // Base of all data.
   await _initDb();
   await setupLocator();
+  await _initDesktopWindow();
   Computer.shared.turnOn(
     // Plus 1 to avoid 0.
     workersCount: (Stores.server.box.keys.length / 3).round() + 1,

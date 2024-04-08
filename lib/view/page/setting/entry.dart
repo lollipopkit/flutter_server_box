@@ -856,9 +856,7 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  void _showFontSizeDialog(
-    StorePropertyBase<double> property,
-  ) {
+  void _showFontSizeDialog(StorePropertyBase<double> property) {
     final ctrller = TextEditingController(text: property.fetch().toString());
     void onSave() {
       context.pop();
