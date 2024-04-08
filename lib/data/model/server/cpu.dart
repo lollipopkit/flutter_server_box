@@ -7,7 +7,7 @@ import 'package:toolbox/data/res/status.dart';
 
 const _kCap = 30;
 
-class Cpus extends TimeSeq<List<SingleCoreCpu>> {
+class Cpus extends TimeSeq<List<SingleCpuCore>> {
   Cpus(super.init1, super.init2);
 
   @override
@@ -72,7 +72,10 @@ class Cpus extends TimeSeq<List<SingleCoreCpu>> {
   final _spots = <Fifo<FlSpot>>[];
   List<Fifo<FlSpot>> get spots => _spots;
   void _updateSpots() {
-    for (var i = 1; i < now.length; i++) {
+    /// Only update the entire core when [coresCount] > 4, or the chart will be too crowded
+    final onlyCalcSingle = coresCount > 4;
+    final maxIdx = onlyCalcSingle ? 1 : coresCount;
+    for (var i = onlyCalcSingle ? 0 : 1; i < maxIdx; i++) {
       if (i >= _spots.length) {
         _spots.add(Fifo(capacity: _kCap));
       } else {
@@ -112,7 +115,7 @@ class Cpus extends TimeSeq<List<SingleCoreCpu>> {
   }
 }
 
-class SingleCoreCpu extends TimeSeqIface<SingleCoreCpu> {
+class SingleCpuCore extends TimeSeqIface<SingleCpuCore> {
   final String id;
   final int user;
   final int sys;
@@ -122,7 +125,7 @@ class SingleCoreCpu extends TimeSeqIface<SingleCoreCpu> {
   final int irq;
   final int softirq;
 
-  SingleCoreCpu(
+  SingleCpuCore(
     this.id,
     this.user,
     this.sys,
@@ -136,10 +139,10 @@ class SingleCoreCpu extends TimeSeqIface<SingleCoreCpu> {
   int get total => user + sys + nice + idle + iowait + irq + softirq;
 
   @override
-  bool same(SingleCoreCpu other) => id == other.id;
+  bool same(SingleCpuCore other) => id == other.id;
 
-  static List<SingleCoreCpu> parse(String raw) {
-    final List<SingleCoreCpu> cpus = [];
+  static List<SingleCpuCore> parse(String raw) {
+    final List<SingleCpuCore> cpus = [];
 
     for (var item in raw.split('\n')) {
       if (item == '') break;
@@ -147,7 +150,7 @@ class SingleCoreCpu extends TimeSeqIface<SingleCoreCpu> {
       if (id == null) continue;
       final matches = item.replaceFirst(id, '').trim().split(' ');
       cpus.add(
-        SingleCoreCpu(
+        SingleCpuCore(
           id,
           int.parse(matches[0]),
           int.parse(matches[1]),
@@ -178,7 +181,7 @@ Cpus parseBsdCpu(String raw) {
 
   final init = InitStatus.cpus;
   init.add([
-    SingleCoreCpu('cpu', percents[0].toInt(), 0, 0,
+    SingleCpuCore('cpu', percents[0].toInt(), 0, 0,
         percents[2].toInt() + percents[1].toInt(), 0, 0, 0),
   ]);
   return init;

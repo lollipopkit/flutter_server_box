@@ -37,17 +37,24 @@ enum _NetSortType {
   }
 }
 
-Widget _buildLineChart(List<List<FlSpot>> spots, Range<double> x) {
+Widget _buildLineChart(
+  List<List<FlSpot>> spots,
+  Range<double> x, {
+  String? tooltipPrefix,
+  bool curve = false,
+}) {
   return LineChart(LineChartData(
     lineTouchData: LineTouchData(
       touchTooltipData: LineTouchTooltipData(
-        tooltipPadding: const EdgeInsets.all(8),
+        tooltipPadding: const EdgeInsets.all(5),
         tooltipRoundedRadius: 8,
+        tooltipMargin: 3,
         getTooltipItems: (List<LineBarSpot> touchedSpots) {
           return touchedSpots.map((e) {
             return LineTooltipItem(
-              'CPU${e.barIndex}: ${e.y.toStringAsFixed(2)}',
+              '$tooltipPrefix${e.barIndex}: ${e.y.toStringAsFixed(2)}',
               const TextStyle(
+                fontSize: 12,
                 fontWeight: FontWeight.bold,
               ),
             );
@@ -101,7 +108,7 @@ Widget _buildLineChart(List<List<FlSpot>> spots, Range<double> x) {
     lineBarsData: spots
         .map((e) => LineChartBarData(
               spots: e,
-              isCurved: false,
+              isCurved: curve,
               barWidth: 2,
               isStrokeCapRound: true,
               color: primaryColor,

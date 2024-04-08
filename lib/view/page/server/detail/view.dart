@@ -193,11 +193,16 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         ),
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
+            padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 13),
             child: SizedBox(
               height: 137,
               width: _media.size.width - 26 - 34,
-              child: _buildLineChart(ss.cpu.spots, ss.cpu.rangeX),
+              child: _buildLineChart(
+                ss.cpu.spots,
+                ss.cpu.rangeX,
+                tooltipPrefix: 'CPU',
+                curve: true,
+              ),
             ),
           ),
         ],
