@@ -9,7 +9,7 @@ import '../model/server/conn.dart';
 import '../model/server/system.dart';
 
 abstract final class InitStatus {
-  static OneTimeCpuStatus get _initOneTimeCpuStatus => OneTimeCpuStatus(
+  static SingleCoreCpu get _initOneTimeCpuStatus => SingleCoreCpu(
         'cpu',
         0,
         0,

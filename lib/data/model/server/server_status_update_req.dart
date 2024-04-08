@@ -69,7 +69,7 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   }
 
   try {
-    final cpus = OneTimeCpuStatus.parse(StatusCmdType.cpu.find(segments));
+    final cpus = SingleCoreCpu.parse(StatusCmdType.cpu.find(segments));
     req.ss.cpu.update(cpus);
   } catch (e, s) {
     Loggers.parse.warning(e, s);

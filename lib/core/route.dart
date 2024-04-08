@@ -10,7 +10,7 @@ import 'package:toolbox/view/page/ping.dart';
 import 'package:toolbox/view/page/private_key/edit.dart';
 import 'package:toolbox/view/page/private_key/list.dart';
 import 'package:toolbox/view/page/pve.dart';
-import 'package:toolbox/view/page/server/detail.dart';
+import 'package:toolbox/view/page/server/detail/view.dart';
 import 'package:toolbox/view/page/setting/platform/android.dart';
 import 'package:toolbox/view/page/setting/platform/ios.dart';
 import 'package:toolbox/view/page/setting/seq/srv_func_seq.dart';

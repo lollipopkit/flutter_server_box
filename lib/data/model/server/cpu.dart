@@ -1,9 +1,13 @@
 import 'dart:collection';
 
+import 'package:fl_chart/fl_chart.dart';
+import 'package:toolbox/data/model/app/range.dart';
 import 'package:toolbox/data/model/server/time_seq.dart';
 import 'package:toolbox/data/res/status.dart';
 
-class Cpus extends TimeSeq<List<OneTimeCpuStatus>> {
+const _kCap = 30;
+
+class Cpus extends TimeSeq<List<SingleCoreCpu>> {
   Cpus(super.init1, super.init2);
 
   @override
@@ -14,6 +18,8 @@ class Cpus extends TimeSeq<List<OneTimeCpuStatus>> {
     _sys = _getSys();
     _iowait = _getIowait();
     _idle = _getIdle();
+    _updateSpots();
+    _updateRange();
   }
 
   double usedPercent({int coreIdx = 0}) {
@@ -60,9 +66,53 @@ class Cpus extends TimeSeq<List<OneTimeCpuStatus>> {
   double _idle = 0;
   double get idle => _idle;
   double _getIdle() => 100 - usedPercent();
+
+  /// [core1, core2]
+  /// core1: [FlSpot(0, 10), FlSpot(1, 20), FlSpot(2, 30)]
+  final _spots = <Fifo<FlSpot>>[];
+  List<Fifo<FlSpot>> get spots => _spots;
+  void _updateSpots() {
+    for (var i = 1; i < now.length; i++) {
+      if (i >= _spots.length) {
+        _spots.add(Fifo(capacity: _kCap));
+      } else {
+        final item = _spots[i];
+        final spot = FlSpot(item.count.toDouble(), usedPercent(coreIdx: i));
+        item.add(spot);
+      }
+    }
+  }
+
+  var _rangeX = Range<double>(0.0, _kCap.toDouble());
+  Range<double> get rangeX => _rangeX;
+  // var _rangeY = Range<double>(0.0, 100.0);
+  // Range<double> get rangeY => _rangeY;
+  void _updateRange() {
+    double? minX, maxX;
+    for (var i = 1; i < now.length; i++) {
+      final item = _spots[i];
+      if (item.isEmpty) continue;
+      final first = item.first.x;
+      final last = item.last.x;
+      if (minX == null || first < minX) minX = first;
+      if (maxX == null || last > maxX) maxX = last;
+    }
+    if (minX != null && maxX != null) _rangeX = Range(minX, maxX);
+
+    // double? minY, maxY;
+    // for (var i = 1; i < now.length; i++) {
+    //   final item = _spots[i];
+    //   if (item.isEmpty) continue;
+    //   final first = item.first.y;
+    //   final last = item.last.y;
+    //   if (minY == null || first < minY) minY = first;
+    //   if (maxY == null || last > maxY) maxY = last;
+    // }
+    // if (minY != null && maxY != null) _rangeY = Range(minY, maxY);
+  }
 }
 
-class OneTimeCpuStatus extends TimeSeqIface<OneTimeCpuStatus> {
+class SingleCoreCpu extends TimeSeqIface<SingleCoreCpu> {
   final String id;
   final int user;
   final int sys;
@@ -72,7 +122,7 @@ class OneTimeCpuStatus extends TimeSeqIface<OneTimeCpuStatus> {
   final int irq;
   final int softirq;
 
-  OneTimeCpuStatus(
+  SingleCoreCpu(
     this.id,
     this.user,
     this.sys,
@@ -86,10 +136,10 @@ class OneTimeCpuStatus extends TimeSeqIface<OneTimeCpuStatus> {
   int get total => user + sys + nice + idle + iowait + irq + softirq;
 
   @override
-  bool same(OneTimeCpuStatus other) => id == other.id;
+  bool same(SingleCoreCpu other) => id == other.id;
 
-  static List<OneTimeCpuStatus> parse(String raw) {
-    final List<OneTimeCpuStatus> cpus = [];
+  static List<SingleCoreCpu> parse(String raw) {
+    final List<SingleCoreCpu> cpus = [];
 
     for (var item in raw.split('\n')) {
       if (item == '') break;
@@ -97,7 +147,7 @@ class OneTimeCpuStatus extends TimeSeqIface<OneTimeCpuStatus> {
       if (id == null) continue;
       final matches = item.replaceFirst(id, '').trim().split(' ');
       cpus.add(
-        OneTimeCpuStatus(
+        SingleCoreCpu(
           id,
           int.parse(matches[0]),
           int.parse(matches[1]),
@@ -128,7 +178,7 @@ Cpus parseBsdCpu(String raw) {
 
   final init = InitStatus.cpus;
   init.add([
-    OneTimeCpuStatus('cpu', percents[0].toInt(), 0, 0,
+    SingleCoreCpu('cpu', percents[0].toInt(), 0, 0,
         percents[2].toInt() + percents[1].toInt(), 0, 0, 0),
   ]);
   return init;

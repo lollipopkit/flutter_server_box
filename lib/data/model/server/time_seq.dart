@@ -1,21 +1,16 @@
 import 'dart:collection';
 
-/// A FIFO queue with fixed capacity.
-abstract class TimeSeq<T extends List<TimeSeqIface>> extends ListBase<T> {
+class Fifo<T> extends ListBase<T> {
   final int capacity;
   late final List<T> _list;
+  var _count = 0;
 
-  /// Due to the design, at least two elements are required, otherwise [pre] /
-  /// [now] will throw.
-  TimeSeq(
-    T init1,
-    T init2, {
-    this.capacity = 30,
-  }) : _list = [init1, init2];
+  Fifo({this.capacity = 30, List<T>? list}) : _list = list ?? <T>[];
 
   @override
   void add(element) {
-    if (length == capacity) {
+    _count++;
+    if (_list.length == capacity) {
       _list.removeAt(0);
     }
     _list.add(element);
@@ -23,6 +18,8 @@ abstract class TimeSeq<T extends List<TimeSeqIface>> extends ListBase<T> {
 
   @override
   int get length => _list.length;
+
+  int get count => _count;
 
   @override
   set length(int newLength) {
@@ -38,6 +35,16 @@ abstract class TimeSeq<T extends List<TimeSeqIface>> extends ListBase<T> {
   void operator []=(int index, value) {
     _list[index] = value;
   }
+}
+
+abstract class TimeSeq<T extends List<TimeSeqIface>> extends Fifo<T> {
+  /// Due to the design, at least two elements are required, otherwise [pre] /
+  /// [now] will throw.
+  TimeSeq(
+    T init1,
+    T init2, {
+    super.capacity,
+  }) : super(list: [init1, init2]);
 
   T get pre {
     return _list[length - 2];

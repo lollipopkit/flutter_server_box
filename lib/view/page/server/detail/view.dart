@@ -1,13 +1,14 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
+import 'package:toolbox/data/model/app/range.dart';
 import 'package:toolbox/data/model/app/server_detail_card.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/battery.dart';
-import 'package:toolbox/data/model/server/cpu.dart';
 import 'package:toolbox/data/model/server/disk.dart';
 import 'package:toolbox/data/model/server/net_speed.dart';
 import 'package:toolbox/data/model/server/nvdia.dart';
@@ -19,14 +20,16 @@ import 'package:toolbox/view/widget/expand_tile.dart';
 import 'package:toolbox/view/widget/kv_row.dart';
 import 'package:toolbox/view/widget/server_func_btns.dart';
 
-import '../../../core/extension/numx.dart';
-import '../../../core/route.dart';
-import '../../../data/model/server/server.dart';
-import '../../../data/provider/server.dart';
-import '../../../data/res/color.dart';
-import '../../../data/res/ui.dart';
-import '../../widget/appbar.dart';
-import '../../widget/cardx.dart';
+import '../../../../core/extension/numx.dart';
+import '../../../../core/route.dart';
+import '../../../../data/model/server/server.dart';
+import '../../../../data/provider/server.dart';
+import '../../../../data/res/color.dart';
+import '../../../../data/res/ui.dart';
+import '../../../widget/appbar.dart';
+import '../../../widget/cardx.dart';
+
+part 'misc.dart';
 
 class ServerDetailPage extends StatefulWidget {
   const ServerDetailPage({super.key, required this.spi});
@@ -183,12 +186,21 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           ),
         ),
         childrenPadding: const EdgeInsets.symmetric(vertical: 13),
-        initiallyExpanded: _getInitExpand(ss.cpu.coresCount),
+        initiallyExpanded: true,
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: details,
         ),
-        children: _buildCPUProgress(ss.cpu),
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
+            child: SizedBox(
+              height: 137,
+              width: _media.size.width - 26 - 34,
+              child: _buildLineChart(ss.cpu.spots, ss.cpu.rangeX),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -211,20 +223,6 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         ),
       ],
     );
-  }
-
-  List<Widget> _buildCPUProgress(Cpus cs) {
-    final children = <Widget>[];
-    for (var i = 0; i < cs.coresCount; i++) {
-      if (i == 0) continue;
-      children.add(
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 17),
-          child: _buildProgress(cs.usedPercent(coreIdx: i)),
-        ),
-      );
-    }
-    return children;
   }
 
   Widget _buildProgress(double percent) {
@@ -754,42 +752,5 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   bool _getInitExpand(int len, [int? max]) {
     if (!_collapse) return true;
     return len <= (max ?? 3);
-  }
-}
-
-enum _NetSortType {
-  device,
-  trans,
-  recv,
-  ;
-
-  bool get isDevice => this == _NetSortType.device;
-  bool get isIn => this == _NetSortType.recv;
-  bool get isOut => this == _NetSortType.trans;
-
-  _NetSortType get next {
-    switch (this) {
-      case device:
-        return trans;
-      case _NetSortType.trans:
-        return recv;
-      case recv:
-        return device;
-    }
-  }
-
-  int Function(String, String) getSortFunc(NetSpeed ns) {
-    switch (this) {
-      case _NetSortType.device:
-        return (b, a) => a.compareTo(b);
-      case _NetSortType.recv:
-        return (b, a) => ns
-            .speedInBytes(ns.deviceIdx(a))
-            .compareTo(ns.speedInBytes(ns.deviceIdx(b)));
-      case _NetSortType.trans:
-        return (b, a) => ns
-            .speedOutBytes(ns.deviceIdx(a))
-            .compareTo(ns.speedOutBytes(ns.deviceIdx(b)));
-    }
   }
 }
