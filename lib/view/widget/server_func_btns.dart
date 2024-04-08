@@ -280,7 +280,8 @@ Future<void> _onPkg(BuildContext context, ServerPrivateInfo spi) async {
   final gotoUpgrade = await context.showRoundDialog<bool>(
     title: Text(l10n.attention),
     child: SingleChildScrollView(
-      child: Text('${l10n.pkgUpgradeTip}\n${l10n.foundNUpdate(upgradeable.length)}\n\n$upgradeCmd'),
+      child: Text(
+          '${l10n.pkgUpgradeTip}\n${l10n.foundNUpdate(upgradeable.length)}\n\n$upgradeCmd'),
     ),
     actions: [
       CountDownBtn(

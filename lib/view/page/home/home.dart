@@ -11,26 +11,28 @@ import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/persistant_store.dart';
+import 'package:toolbox/core/route.dart';
 import 'package:toolbox/core/update.dart';
 import 'package:toolbox/core/utils/platform/auth.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/platform/perm.dart';
+import 'package:toolbox/core/utils/ui.dart';
+import 'package:toolbox/data/model/app/github_id.dart';
+import 'package:toolbox/data/model/app/tab.dart';
+import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/res/github_id.dart';
 import 'package:toolbox/data/res/logger.dart';
+import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
+import 'package:toolbox/data/res/ui.dart';
+import 'package:toolbox/data/res/url.dart';
+import 'package:toolbox/view/widget/appbar.dart';
+import 'package:toolbox/view/widget/cardx.dart';
 import 'package:toolbox/view/widget/markdown.dart';
 
-import '../../core/route.dart';
-import '../../core/utils/ui.dart';
-import '../../data/model/app/github_id.dart';
-import '../../data/model/app/tab.dart';
-import '../../data/res/build_data.dart';
-import '../../data/res/misc.dart';
-import '../../data/res/ui.dart';
-import '../../data/res/url.dart';
-import '../widget/appbar.dart';
-import '../widget/cardx.dart';
+
+part 'appbar.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -318,25 +320,7 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
     // Auth required for first launch
     BioAuth.go();
 
-    PermUtils.request(Permission.notification).then((suc) {
-      if (!suc) {
-        final noNotiPerm = Stores.setting.noNotiPerm;
-        if (noNotiPerm.fetch()) return;
-        context.showRoundDialog(
-          title: Text(l10n.error),
-          child: Text(l10n.noNotiPerm),
-          actions: [
-            TextButton(
-              onPressed: () {
-                noNotiPerm.put(true);
-                context.pop();
-              },
-              child: Text(l10n.ok),
-            ),
-          ],
-        );
-      }
-    });
+    _reqNotiPerm();
 
     if (Stores.setting.autoCheckAppUpdate.fetch()) {
       doUpdate(context);
@@ -345,6 +329,27 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
     await GetIt.I.allReady();
     await Pros.server.load();
     await Pros.server.refresh();
+  }
+
+  Future<void> _reqNotiPerm() async {
+    final suc = await PermUtils.request(Permission.notification);
+    if (!suc) {
+      final noNotiPerm = Stores.setting.noNotiPerm;
+      if (noNotiPerm.fetch()) return;
+      context.showRoundDialog(
+        title: Text(l10n.error),
+        child: Text(l10n.noNotiPerm),
+        actions: [
+          TextButton(
+            onPressed: () {
+              noNotiPerm.put(true);
+              context.pop();
+            },
+            child: Text(l10n.ok),
+          ),
+        ],
+      );
+    }
   }
 
   Future<void> _onLongPressSetting() async {
@@ -376,32 +381,5 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
       );
       Loggers.app.warning('Update json settings failed', e, trace);
     }
-  }
-}
-
-final class _AppBar extends CustomAppBar {
-  final ValueNotifier<int> selectIndex;
-
-  const _AppBar({
-    required this.selectIndex,
-    super.title,
-    super.actions,
-    super.centerTitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: selectIndex,
-      builder: (_, idx, __) {
-        if (idx == AppTab.ssh.index) {
-          return SizedBox(
-            height: CustomAppBar.barHeight ??
-                0 + MediaQuery.of(context).padding.top,
-          );
-        }
-        return super.build(context);
-      },
-    );
   }
 }

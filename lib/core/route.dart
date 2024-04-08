@@ -4,7 +4,7 @@ import 'package:toolbox/data/model/server/private_key_info.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/view/page/backup.dart';
 import 'package:toolbox/view/page/container.dart';
-import 'package:toolbox/view/page/home.dart';
+import 'package:toolbox/view/page/home/home.dart';
 import 'package:toolbox/view/page/iperf.dart';
 import 'package:toolbox/view/page/ping.dart';
 import 'package:toolbox/view/page/private_key/edit.dart';

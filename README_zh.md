@@ -58,8 +58,8 @@
 ## ⬇️ 下载
 平台 | 支持 | 签名
 :-: | :-: | :-:
-[iOS](https://apps.apple.com/app/id1586449703) / [Android](https://res.lolli.tech/serverbox/latest.apk) / [macOS](https://apps.apple.com/app/id1586449703) | 完整 | 个人可信签名
-[Linux](https://res.lolli.tech/serverbox/latest.AppImage) / [Windows](https://res.lolli.tech/serverbox/latest.win.zip) | 未测试 | Flutter 默认签名
+[iOS](https://apps.apple.com/app/id1586449703) / [Android](https://cdn.lolli.tech/serverbox/latest.apk) / [macOS](https://apps.apple.com/app/id1586449703) | 完整 | 个人可信签名
+[Linux](https://cdn.lolli.tech/serverbox/latest.AppImage) / [Windows](https://cdn.lolli.tech/serverbox/latest.win.zip) | 未测试 | Flutter 默认签名
 
 
 ## 🆘 帮助

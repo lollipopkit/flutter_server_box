@@ -58,8 +58,8 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 ## ⬇️ Download
 Platform | Support | Sign
 --- | --- | ---
-[iOS](https://apps.apple.com/app/id1586449703) / [Android](https://res.lolli.tech/serverbox/latest.apk) / [macOS](https://apps.apple.com/app/id1586449703) | Full | My own certificate
-[Linux](https://res.lolli.tech/serverbox/latest.AppImage) / [Windows](https://res.lolli.tech/serverbox/latest.win.zip) | Not tested | Flutter default certificate
+[iOS](https://apps.apple.com/app/id1586449703) / [Android](https://cdn.lolli.tech/serverbox/latest.apk) / [macOS](https://apps.apple.com/app/id1586449703) | Full | My own certificate
+[Linux](https://cdn.lolli.tech/serverbox/latest.AppImage) / [Windows](https://cdn.lolli.tech/serverbox/latest.win.zip) | Not tested | Flutter default certificate
 
 
 ## 🆘 Help

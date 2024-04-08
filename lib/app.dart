@@ -9,7 +9,7 @@ import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/rebuild.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/view/page/home.dart';
+import 'package:toolbox/view/page/home/home.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
