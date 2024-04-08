@@ -256,6 +256,12 @@ class SettingStore extends PersistentStore {
 
   late final lastVer = property('lastVer', 0);
 
+  /// Use CupertinoPageRoute for all routes
+  late final cupertinoRoute = property('cupertinoRoute', isIOS);
+
+  /// Hide title bar on desktop
+  late final hideTitleBar = property('hideTitleBar', isDesktop);
+
   // Never show these settings for users
   //
   // ------BEGIN------

@@ -142,11 +142,11 @@ Future<void> _initDesktopWindow() async {
   await windowManager.ensureInitialized();
   await CustomAppBar.updateTitlebarHeight();
 
-  const windowOptions = WindowOptions(
+  final windowOptions = WindowOptions(
     center: true,
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
-    titleBarStyle: TitleBarStyle.hidden,
+    titleBarStyle: CustomAppBar.barHeight != 0 ? TitleBarStyle.hidden : null,
   );
   windowManager.waitUntilReadyToShow(windowOptions, () async {
     await windowManager.show();

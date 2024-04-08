@@ -119,7 +119,7 @@ class _SettingPageState extends State<SettingPage> {
       _buildAppColor(),
       //_buildLaunchPage(),
       _buildCheckUpdate(),
-      _buildCollapseUI(),
+      _buildAppMore(),
     ];
 
     /// Platform specific settings
@@ -1063,6 +1063,31 @@ class _SettingPageState extends State<SettingPage> {
           _setting.termTheme.put(selected);
         }
       },
+    );
+  }
+
+  Widget _buildAppMore() {
+    return ExpandTile(
+      title: Text(l10n.more),
+      children: [
+        _buildCollapseUI(),
+        _buildCupertinoRoute(),
+        if (isDesktop) _buildHideTitleBar(),
+      ],
+    );
+  }
+
+  Widget _buildCupertinoRoute() {
+    return ListTile(
+      title: Text('Cupertino ${l10n.route}'),
+      trailing: StoreSwitch(prop: _setting.cupertinoRoute),
+    );
+  }
+
+  Widget _buildHideTitleBar() {
+    return ListTile(
+      title: Text(l10n.hideTitleBar),
+      trailing: StoreSwitch(prop: _setting.hideTitleBar),
     );
   }
 }

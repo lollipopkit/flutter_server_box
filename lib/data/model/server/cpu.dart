@@ -67,15 +67,21 @@ class Cpus extends TimeSeq<List<SingleCpuCore>> {
   double get idle => _idle;
   double _getIdle() => 100 - usedPercent();
 
+  void _coresLoop(void Function(int i) callback) {
+    /// Only update the entire core when [coresCount] > 4, or the chart will be too crowded
+    final onlyCalcSingle = coresCount > 4;
+    final maxIdx = onlyCalcSingle ? 1 : coresCount;
+    for (var i = onlyCalcSingle ? 0 : 1; i < maxIdx; i++) {
+      callback(i);
+    }
+  }
+
   /// [core1, core2]
   /// core1: [FlSpot(0, 10), FlSpot(1, 20), FlSpot(2, 30)]
   final _spots = <Fifo<FlSpot>>[];
   List<Fifo<FlSpot>> get spots => _spots;
   void _updateSpots() {
-    /// Only update the entire core when [coresCount] > 4, or the chart will be too crowded
-    final onlyCalcSingle = coresCount > 4;
-    final maxIdx = onlyCalcSingle ? 1 : coresCount;
-    for (var i = onlyCalcSingle ? 0 : 1; i < maxIdx; i++) {
+    _coresLoop((i) {
       if (i >= _spots.length) {
         _spots.add(Fifo(capacity: _kCap));
       } else {
@@ -83,7 +89,7 @@ class Cpus extends TimeSeq<List<SingleCpuCore>> {
         final spot = FlSpot(item.count.toDouble(), usedPercent(coreIdx: i));
         item.add(spot);
       }
-    }
+    });
   }
 
   var _rangeX = Range<double>(0.0, _kCap.toDouble());
@@ -91,16 +97,17 @@ class Cpus extends TimeSeq<List<SingleCpuCore>> {
   // var _rangeY = Range<double>(0.0, 100.0);
   // Range<double> get rangeY => _rangeY;
   void _updateRange() {
-    double? minX, maxX;
-    for (var i = 1; i < now.length; i++) {
-      final item = _spots[i];
-      if (item.isEmpty) continue;
-      final first = item.first.x;
-      final last = item.last.x;
-      if (minX == null || first < minX) minX = first;
-      if (maxX == null || last > maxX) maxX = last;
-    }
-    if (minX != null && maxX != null) _rangeX = Range(minX, maxX);
+    double minX = 0;
+    double maxX = 0;
+    _coresLoop((i) {
+      final fifo = _spots[i];
+      if (fifo.isEmpty) return;
+      final first = fifo.first.x;
+      final last = fifo.last.x;
+      if (first > minX) minX = first;
+      if (last > maxX) maxX = last;
+    });
+    _rangeX = Range(minX, maxX);
 
     // double? minY, maxY;
     // for (var i = 1; i < now.length; i++) {

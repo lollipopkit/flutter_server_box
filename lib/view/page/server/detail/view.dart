@@ -186,7 +186,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           ),
         ),
         childrenPadding: const EdgeInsets.symmetric(vertical: 13),
-        initiallyExpanded: true,
+        initiallyExpanded: _getInitExpand(1),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: details,
@@ -201,7 +201,6 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                 ss.cpu.spots,
                 ss.cpu.rangeX,
                 tooltipPrefix: 'CPU',
-                curve: true,
               ),
             ),
           ),

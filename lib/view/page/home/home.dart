@@ -31,7 +31,6 @@ import 'package:toolbox/view/widget/appbar.dart';
 import 'package:toolbox/view/widget/cardx.dart';
 import 'package:toolbox/view/widget/markdown.dart';
 
-
 part 'appbar.dart';
 
 class HomePage extends StatefulWidget {
@@ -332,6 +331,7 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
   }
 
   Future<void> _reqNotiPerm() async {
+    if (!isAndroid) return;
     final suc = await PermUtils.request(Permission.notification);
     if (!suc) {
       final noNotiPerm = Stores.setting.noNotiPerm;

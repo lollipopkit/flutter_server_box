@@ -1,7 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/analysis.dart';
 import 'package:toolbox/data/model/server/private_key_info.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
+import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/page/backup.dart';
 import 'package:toolbox/view/page/container.dart';
 import 'package:toolbox/view/page/home/home.dart';
@@ -43,7 +45,9 @@ class AppRoute {
     Analysis.recordView(title);
     return Navigator.push<T>(
       context,
-      MaterialPageRoute(builder: (context) => page),
+      Stores.setting.cupertinoRoute.fetch()
+          ? CupertinoPageRoute(builder: (context) => page)
+          : MaterialPageRoute(builder: (context) => page),
     );
   }
 

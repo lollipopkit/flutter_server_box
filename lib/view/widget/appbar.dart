@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:toolbox/data/res/store.dart';
 import 'package:window_manager/window_manager.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -84,8 +85,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       case 'macos':
         barHeight = 27;
         break;
-      // Draw a titlebar on Linux
       case 'linux' || 'windows':
+        if (!Stores.setting.hideTitleBar.fetch()) break;
         barHeight = 37;
         _drawTitlebar = true;
         break;

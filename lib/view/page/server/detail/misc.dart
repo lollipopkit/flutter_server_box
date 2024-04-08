@@ -42,13 +42,13 @@ Widget _buildLineChart(
   Range<double> x, {
   String? tooltipPrefix,
   bool curve = false,
+  int verticalInterval = 20,
 }) {
   return LineChart(LineChartData(
     lineTouchData: LineTouchData(
       touchTooltipData: LineTouchTooltipData(
         tooltipPadding: const EdgeInsets.all(5),
         tooltipRoundedRadius: 8,
-        tooltipMargin: 3,
         getTooltipItems: (List<LineBarSpot> touchedSpots) {
           return touchedSpots.map((e) {
             return LineTooltipItem(
@@ -66,11 +66,12 @@ Widget _buildLineChart(
     gridData: FlGridData(
       show: true,
       drawVerticalLine: false,
-      horizontalInterval: 20,
+      horizontalInterval: verticalInterval.toDouble(),
       getDrawingHorizontalLine: (value) {
         return const FlLine(
           color: Color(0xff37434d),
           strokeWidth: 1,
+          dashArray: [5, 17],
         );
       },
     ),
@@ -90,21 +91,22 @@ Widget _buildLineChart(
           showTitles: true,
           interval: 1,
           getTitlesWidget: (val, meta) {
-            if (val % 20 != 0) return UIs.placeholder;
+            if (val % verticalInterval != 0) return UIs.placeholder;
+            if (val == 0) return const Text('0 %', style: UIs.text12Grey);
             return Text(
               val.toInt().toString(),
               style: UIs.text12Grey,
             );
           },
-          reservedSize: 42,
+          reservedSize: 27,
         ),
       ),
     ),
     borderData: FlBorderData(show: false),
     minX: x.start,
     maxX: x.end,
-    minY: 0,
-    maxY: 100,
+    minY: -1,
+    maxY: 101,
     lineBarsData: spots
         .map((e) => LineChartBarData(
               spots: e,
