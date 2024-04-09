@@ -263,6 +263,10 @@ Future<void> changeAppleVersion() async {
 }
 
 Future<void> killJava() async {
+  /// Due to the high cost of Mac memory,
+  /// terminate Java processes to free up memory.
+  /// :)
+  if (!Platform.isMacOS) return;
   final result = await Process.run('ps', ['-A']);
   final lines = (result.stdout as String).split('\n');
   for (final line in lines) {

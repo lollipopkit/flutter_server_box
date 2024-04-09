@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:computer/computer.dart';
 import 'package:dio/dio.dart';
@@ -38,8 +39,16 @@ final class PveProvider extends ChangeNotifier {
   late final _ignoreCert = spi.custom?.pveIgnoreCert ?? false;
   late final session = Dio()
     ..httpClientAdapter = IOHttpClientAdapter(
+      createHttpClient: () {
+        final client = HttpClient();
+        if (_ignoreCert) {
+          client.badCertificateCallback = (_, __, ___) => true;
+        }
+        return client;
+      },
       validateCertificate: _ignoreCert ? (_, __, ___) => true : null,
     );
+
   final data = ValueNotifier<PveRes?>(null);
   bool get onlyOneNode => data.value?.nodes.length == 1;
   String? release;
