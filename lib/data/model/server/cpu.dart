@@ -1,7 +1,6 @@
 import 'dart:collection';
 
 import 'package:fl_chart/fl_chart.dart';
-import 'package:toolbox/data/model/app/range.dart';
 import 'package:toolbox/data/model/server/time_seq.dart';
 import 'package:toolbox/data/res/status.dart';
 
@@ -19,7 +18,7 @@ class Cpus extends TimeSeq<List<SingleCpuCore>> {
     _iowait = _getIowait();
     _idle = _getIdle();
     _updateSpots();
-    _updateRange();
+    //_updateRange();
   }
 
   double usedPercent({int coreIdx = 0}) {
@@ -68,12 +67,15 @@ class Cpus extends TimeSeq<List<SingleCpuCore>> {
   double _getIdle() => 100 - usedPercent();
 
   void _coresLoop(void Function(int i) callback) {
-    /// Only update the entire core when [coresCount] > 4, or the chart will be too crowded
-    final onlyCalcSingle = coresCount > 4;
-    final maxIdx = onlyCalcSingle ? 1 : coresCount;
-    for (var i = onlyCalcSingle ? 0 : 1; i < maxIdx; i++) {
-      callback(i);
-    }
+    /// Only update the entire cpu when [coresCount] > 4, or the chart will be too crowded
+    // final onlyCalcSingle = coresCount > 4;
+    // final maxIdx = onlyCalcSingle ? 1 : coresCount;
+    // for (var i = onlyCalcSingle ? 0 : 1; i < maxIdx; i++) {
+    //   callback(i);
+    // }
+
+    /// Only use cpu0
+    callback(0);
   }
 
   /// [core1, core2]
@@ -92,34 +94,34 @@ class Cpus extends TimeSeq<List<SingleCpuCore>> {
     });
   }
 
-  var _rangeX = Range<double>(0.0, _kCap.toDouble());
-  Range<double> get rangeX => _rangeX;
-  // var _rangeY = Range<double>(0.0, 100.0);
-  // Range<double> get rangeY => _rangeY;
-  void _updateRange() {
-    double minX = 0;
-    double maxX = 0;
-    _coresLoop((i) {
-      final fifo = _spots[i];
-      if (fifo.isEmpty) return;
-      final first = fifo.first.x;
-      final last = fifo.last.x;
-      if (first > minX) minX = first;
-      if (last > maxX) maxX = last;
-    });
-    _rangeX = Range(minX, maxX);
+  // var _rangeX = Range<double>(0.0, _kCap.toDouble());
+  // Range<double> get rangeX => _rangeX;
+  // // var _rangeY = Range<double>(0.0, 100.0);
+  // // Range<double> get rangeY => _rangeY;
+  // void _updateRange() {
+  //   double minX = 0;
+  //   double maxX = 0;
+  //   _coresLoop((i) {
+  //     final fifo = _spots[i];
+  //     if (fifo.isEmpty) return;
+  //     final first = fifo.first.x;
+  //     final last = fifo.last.x;
+  //     if (first > minX) minX = first;
+  //     if (last > maxX) maxX = last;
+  //   });
+  //   _rangeX = Range(minX, maxX);
 
-    // double? minY, maxY;
-    // for (var i = 1; i < now.length; i++) {
-    //   final item = _spots[i];
-    //   if (item.isEmpty) continue;
-    //   final first = item.first.y;
-    //   final last = item.last.y;
-    //   if (minY == null || first < minY) minY = first;
-    //   if (maxY == null || last > maxY) maxY = last;
-    // }
-    // if (minY != null && maxY != null) _rangeY = Range(minY, maxY);
-  }
+  //   // double? minY, maxY;
+  //   // for (var i = 1; i < now.length; i++) {
+  //   //   final item = _spots[i];
+  //   //   if (item.isEmpty) continue;
+  //   //   final first = item.first.y;
+  //   //   final last = item.last.y;
+  //   //   if (minY == null || first < minY) minY = first;
+  //   //   if (maxY == null || last > maxY) maxY = last;
+  //   // }
+  //   // if (minY != null && maxY != null) _rangeY = Range(minY, maxY);
+  // }
 }
 
 class SingleCpuCore extends TimeSeqIface<SingleCpuCore> {

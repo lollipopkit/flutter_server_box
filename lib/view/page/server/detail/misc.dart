@@ -38,8 +38,7 @@ enum _NetSortType {
 }
 
 Widget _buildLineChart(
-  List<List<FlSpot>> spots,
-  Range<double> x, {
+  List<List<FlSpot>> spots, {
   String? tooltipPrefix,
   bool curve = false,
   int verticalInterval = 20,
@@ -69,9 +68,8 @@ Widget _buildLineChart(
       horizontalInterval: verticalInterval.toDouble(),
       getDrawingHorizontalLine: (value) {
         return const FlLine(
-          color: Color(0xff37434d),
+          color: Color.fromARGB(43, 88, 91, 94),
           strokeWidth: 1,
-          dashArray: [5, 17],
         );
       },
     ),
@@ -89,7 +87,7 @@ Widget _buildLineChart(
       leftTitles: AxisTitles(
         sideTitles: SideTitles(
           showTitles: true,
-          interval: 1,
+          interval: 20,
           getTitlesWidget: (val, meta) {
             if (val % verticalInterval != 0) return UIs.placeholder;
             if (val == 0) return const Text('0 %', style: UIs.text12Grey);
@@ -103,8 +101,6 @@ Widget _buildLineChart(
       ),
     ),
     borderData: FlBorderData(show: false),
-    minX: x.start,
-    maxX: x.end,
     minY: -1,
     maxY: 101,
     lineBarsData: spots

@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/data/model/app/range.dart';
 import 'package:toolbox/data/model/app/server_detail_card.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/battery.dart';
@@ -199,7 +198,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
               width: _media.size.width - 26 - 34,
               child: _buildLineChart(
                 ss.cpu.spots,
-                ss.cpu.rangeX,
+                //ss.cpu.rangeX,
                 tooltipPrefix: 'CPU',
               ),
             ),
