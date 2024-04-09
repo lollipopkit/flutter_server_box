@@ -6,7 +6,7 @@ import 'package:window_manager/window_manager.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   static double? barHeight;
-  static bool _drawTitlebar = false;
+  static bool drawTitlebar = false;
 
   const CustomAppBar({
     super.key,
@@ -34,7 +34,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: backgroundColor,
       toolbarHeight: (barHeight ?? 0) + kToolbarHeight,
     );
-    if (!_drawTitlebar) return bar;
+    if (!drawTitlebar) return bar;
     return Stack(
       children: [
         bar,
@@ -88,7 +88,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       case 'linux' || 'windows':
         if (!Stores.setting.hideTitleBar.fetch()) break;
         barHeight = 37;
-        _drawTitlebar = true;
+        drawTitlebar = true;
         break;
       default:
         break;

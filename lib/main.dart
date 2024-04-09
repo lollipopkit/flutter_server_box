@@ -146,7 +146,8 @@ Future<void> _initDesktopWindow() async {
     center: true,
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
-    titleBarStyle: CustomAppBar.barHeight != 0 ? TitleBarStyle.hidden : null,
+    titleBarStyle: CustomAppBar.drawTitlebar ? TitleBarStyle.hidden : null,
+    minimumSize: const Size(300, 300),
   );
   windowManager.waitUntilReadyToShow(windowOptions, () async {
     await windowManager.show();
