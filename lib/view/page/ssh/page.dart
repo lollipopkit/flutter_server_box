@@ -199,7 +199,11 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     }
 
     final child = item.icon != null
-        ? Icon(item.icon, size: 17)
+        ? Icon(
+            item.icon,
+            size: 17,
+            color: _isDark ? Colors.white : Colors.black,
+          )
         : Text(
             item.text,
             style: TextStyle(
