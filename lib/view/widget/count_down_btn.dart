@@ -40,7 +40,6 @@ final class _CountDownBtnState extends State<CountDownBtn> {
   bool get isCounting => _seconds > 0;
 
   void _startCountDown() {
-    if (isCounting) return;
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!isCounting) {
         _timer?.cancel();

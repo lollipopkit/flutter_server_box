@@ -29,6 +29,7 @@ import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/data/res/url.dart';
 import 'package:toolbox/view/widget/appbar.dart';
 import 'package:toolbox/view/widget/cardx.dart';
+import 'package:toolbox/view/widget/count_down_btn.dart';
 import 'package:toolbox/view/widget/markdown.dart';
 
 part 'appbar.dart';
@@ -320,6 +321,7 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
     BioAuth.go();
 
     _reqNotiPerm();
+    context.showRoundDialog(child: CountDownBtn(onTap: context.pop));
 
     if (Stores.setting.autoCheckAppUpdate.fetch()) {
       doUpdate(context);
