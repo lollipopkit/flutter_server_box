@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.view.View
 import android.widget.RemoteViews
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -37,11 +38,16 @@ class HomeWidget : AppWidgetProvider() {
         val ids = intArrayOf(appWidgetId)
         intentUpdate.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
 
+        var flag = PendingIntent.FLAG_UPDATE_CURRENT
+        if (Build.VERSION_CODES.O <= Build.VERSION.SDK_INT) {    
+            flag = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        }
+
         val pendingUpdate: PendingIntent = PendingIntent.getBroadcast(
                 context,
                 appWidgetId,
                 intentUpdate,
-                PendingIntent.FLAG_UPDATE_CURRENT)
+                flag)
         views.setOnClickPendingIntent(R.id.widget_container, pendingUpdate)
 
         if (url.isNullOrEmpty()) {
@@ -69,11 +75,11 @@ class HomeWidget : AppWidgetProvider() {
             val disk = data.getString("disk")
             val net = data.getString("net")
 
-            GlobalScope.launch(Dispatchers.Main) {
+            GlobalScope.launch(Dispatchers.Main) main@ {
                 // mem or disk is empty -> get status failed
                 // (cpu | net) isEmpty -> data is not ready
                 if (mem.isEmpty() || disk.isEmpty()) {
-                    return@launch
+                    return@main
                 }
                 views.setTextViewText(R.id.widget_name, server)
 
@@ -82,7 +88,6 @@ class HomeWidget : AppWidgetProvider() {
                 views.setTextViewText(R.id.widget_disk, disk)
                 views.setTextViewText(R.id.widget_net, net)
 
-                // eg: 17:17
                 val timeStr = android.text.format.DateFormat.format("HH:mm", java.util.Date()).toString()
                 views.setTextViewText(R.id.widget_time, timeStr)
 
