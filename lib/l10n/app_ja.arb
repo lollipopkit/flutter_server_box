@@ -109,6 +109,7 @@
   "fullScreen": "フルスクリーンモード",
   "fullScreenJitter": "フルスクリーンモードのジッター",
   "fullScreenJitterHelp": "焼き付き防止",
+  "fullScreenTip": "デバイスが横向きに回転したときにフルスクリーンモードを有効にしますか？このオプションはサーバータブにのみ適用されます。",
   "getPushTokenFailed": "プッシュトークンを取得できませんでした",
   "gettingToken": "トークンを取得しています...",
   "goBackQ": "戻りますか？",

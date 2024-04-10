@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -5,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
+import 'package:toolbox/core/extension/listx.dart';
 import 'package:toolbox/core/extension/media_queryx.dart';
 import 'package:toolbox/core/extension/numx.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
@@ -38,17 +42,36 @@ class _ServerPageState extends State<ServerPage>
   late MediaQueryData _media;
 
   late double _textFactorDouble;
+  double _offset = 1;
   late TextScaler _textFactor;
 
   final _cardsStatus = <String, _CardNotifier>{};
+
+  Timer? _timer;
 
   String? _tag;
   bool _useDoubleColumn = false;
 
   @override
+  void initState() {
+    super.initState();
+    if (!Stores.setting.fullScreenJitter.fetch()) return;
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) {
+        _updateOffset();
+        setState(() {});
+      } else {
+        _timer?.cancel();
+      }
+    });
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
+    _updateOffset();
+    _updateTextScaler();
     _useDoubleColumn = _media.useDoubleColumn &&
         Stores.setting.doubleColumnServersPage.fetch();
   }
@@ -56,13 +79,22 @@ class _ServerPageState extends State<ServerPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    return OrientationBuilder(builder: (_, orientation) {
+      if (orientation == Orientation.landscape) {
+        final useFullScreen = Stores.setting.fullScreen.fetch();
+        if (useFullScreen) return _buildLandscape();
+      }
+      return _buildPortrait();
+    });
+  }
+
+  Widget _buildPortrait() {
     return Scaffold(
       appBar: _buildTagsSwitcher(Pros.server),
       body: ListenableBuilder(
         listenable: Stores.setting.textFactor.listenable(),
         builder: (_, __) {
-          _textFactorDouble = Stores.setting.textFactor.fetch();
-          _textFactor = TextScaler.linear(_textFactorDouble);
+          _updateTextScaler();
           return _buildBody();
         },
       ),
@@ -72,6 +104,75 @@ class _ServerPageState extends State<ServerPage>
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  Widget _buildLandscape() {
+    final offset = Offset(_offset, _offset);
+    return Padding(
+      // Avoid display cutout
+      padding: EdgeInsets.all(_offset.abs()),
+      child: Transform.translate(
+        offset: offset,
+        child: Stack(
+          children: [
+            _buildLandscapeBody(),
+            Positioned(
+              top: 0,
+              left: 0,
+              child: IconButton(
+                onPressed: () => AppRoute.settings().go(context),
+                icon: const Icon(Icons.settings, color: Colors.grey),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLandscapeBody() {
+    return Consumer<ServerProvider>(builder: (_, pro, __) {
+      if (pro.serverOrder.isEmpty) {
+        return Center(
+          child: Text(
+            l10n.serverTabEmpty,
+            textAlign: TextAlign.center,
+          ),
+        );
+      }
+
+      return PageView.builder(
+        itemCount: pro.serverOrder.length,
+        itemBuilder: (_, idx) {
+          final id = pro.serverOrder[idx];
+          final srv = pro.pick(id: id);
+          if (srv == null) return UIs.placeholder;
+
+          final title = _buildServerCardTitle(srv);
+          final List<Widget> children = [
+            title,
+            ..._buildNormalCard(srv.status, srv.spi).joinWith(SizedBox(
+              height: _media.size.height / 10,
+            ))
+          ];
+
+          return Padding(
+            padding: _media.padding,
+            child: ListenableBuilder(
+              listenable: _getCardNoti(id),
+              builder: (_, __) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: children,
+                );
+              },
+            ),
+          );
+        },
+      );
+    });
   }
 
   Widget _buildBody() {
@@ -560,6 +661,19 @@ class _ServerPageState extends State<ServerPage>
         id,
         () => _CardNotifier(const _CardStatus()),
       );
+
+  void _updateOffset() {
+    if (!Stores.setting.fullScreenJitter.fetch()) return;
+    final x = _media.size.height * 0.03;
+    final r = math.Random().nextDouble();
+    final n = math.Random().nextBool() ? 1 : -1;
+    _offset = x * r * n;
+  }
+
+  void _updateTextScaler() {
+    _textFactorDouble = Stores.setting.textFactor.fetch();
+    _textFactor = TextScaler.linear(_textFactorDouble);
+  }
 }
 
 typedef _CardNotifier = ValueNotifier<_CardStatus>;

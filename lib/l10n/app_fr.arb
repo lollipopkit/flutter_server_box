@@ -109,6 +109,7 @@
   "fullScreen": "Mode plein écran",
   "fullScreenJitter": "Tremblement plein écran",
   "fullScreenJitterHelp": "Pour éviter la rémanence d'écran",
+  "fullScreenTip": "Le mode plein écran doit-il être activé lorsque l'appareil est basculé en mode paysage ? Cette option s'applique uniquement à l'onglet du serveur.",
   "getPushTokenFailed": "Impossible de récupérer le jeton d'identification",
   "gettingToken": "Récupération du jeton...",
   "goBackQ": "Revenir en arrière ?",

@@ -109,6 +109,7 @@
   "fullScreen": "全屏模式",
   "fullScreenJitter": "全屏模式抖動",
   "fullScreenJitterHelp": "防止燒屏",
+  "fullScreenTip": "當設備旋轉為橫屏時，是否開啟全屏模式？此選項僅適用於伺服器選項卡。",
   "getPushTokenFailed": "未能獲取到推送token",
   "gettingToken": "正在獲取Token...",
   "goBackQ": "返回？",

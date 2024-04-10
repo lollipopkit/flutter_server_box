@@ -109,6 +109,7 @@
   "fullScreen": "Full screen mode",
   "fullScreenJitter": "Full screen jitter",
   "fullScreenJitterHelp": "To avoid screen burn-in",
+  "fullScreenTip": "Should full-screen mode be enabled when the device is rotated to landscape mode? This option only applies to the server tab.",
   "getPushTokenFailed": "Can't fetch push token",
   "gettingToken": "Getting token...",
   "goBackQ": "Go back?",

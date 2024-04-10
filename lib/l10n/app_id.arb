@@ -109,6 +109,7 @@
   "fullScreen": "Mode Layar Penuh",
   "fullScreenJitter": "Jitter layar penuh",
   "fullScreenJitterHelp": "Untuk menghindari pembakaran layar",
+  "fullScreenTip": "Apakah mode layar penuh diaktifkan ketika perangkat diputar ke modus lanskap? Opsi ini hanya berlaku untuk tab server.",
   "getPushTokenFailed": "Tidak bisa mengambil token dorong",
   "gettingToken": "Mendapatkan token ...",
   "goBackQ": "Datang kembali?",

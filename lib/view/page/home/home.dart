@@ -29,13 +29,14 @@ import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/data/res/url.dart';
 import 'package:toolbox/view/widget/appbar.dart';
 import 'package:toolbox/view/widget/cardx.dart';
-import 'package:toolbox/view/widget/count_down_btn.dart';
 import 'package:toolbox/view/widget/markdown.dart';
 
 part 'appbar.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final bool landscape;
+
+  const HomePage({super.key, this.landscape = false});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -119,18 +120,20 @@ class _HomePageState extends State<HomePage>
 
     return Scaffold(
       drawer: _buildDrawer(),
-      appBar: _AppBar(
-        selectIndex: _selectIndex,
-        centerTitle: false,
-        title: const Text(BuildData.name),
-        actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.developer_mode, size: 23),
-            tooltip: l10n.debug,
-            onPressed: () => AppRoute.debug().go(context),
-          ),
-        ],
-      ),
+      appBar: widget.landscape
+          ? null
+          : _AppBar(
+              selectIndex: _selectIndex,
+              centerTitle: false,
+              title: const Text(BuildData.name),
+              actions: <Widget>[
+                IconButton(
+                  icon: const Icon(Icons.developer_mode, size: 23),
+                  tooltip: l10n.debug,
+                  onPressed: () => AppRoute.debug().go(context),
+                ),
+              ],
+            ),
       body: PageView.builder(
         controller: _pageController,
         itemCount: AppTab.values.length,
@@ -141,10 +144,12 @@ class _HomePageState extends State<HomePage>
           }
         },
       ),
-      bottomNavigationBar: ListenableBuilder(
-        listenable: _selectIndex,
-        builder: (_, __) => _buildBottomBar(),
-      ),
+      bottomNavigationBar: widget.landscape
+          ? null
+          : ListenableBuilder(
+              listenable: _selectIndex,
+              builder: (_, __) => _buildBottomBar(),
+            ),
     );
   }
 
@@ -321,7 +326,6 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
     BioAuth.go();
 
     _reqNotiPerm();
-    context.showRoundDialog(child: CountDownBtn(onTap: context.pop));
 
     if (Stores.setting.autoCheckAppUpdate.fetch()) {
       doUpdate(context);

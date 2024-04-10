@@ -75,7 +75,13 @@ class MyApp extends StatelessWidget {
       themeMode: themeMode,
       theme: light,
       darkTheme: tMode < 3 ? dark : _getAmoledTheme(dark),
-      home: const HomePage(),
+      home: Stores.setting.fullScreen.fetch()
+          ? OrientationBuilder(
+              builder: (_, ori) {
+                return HomePage(landscape: ori == Orientation.landscape);
+              },
+            )
+          : const HomePage(),
     );
   }
 }

@@ -109,6 +109,7 @@
   "fullScreen": "全屏模式",
   "fullScreenJitter": "全屏模式抖动",
   "fullScreenJitterHelp": "防止烧屏",
+  "fullScreenTip": "当设备旋转为横屏时，是否开启全屏模式。此选项仅作用于服务器Tab页。",
   "getPushTokenFailed": "未能获取到推送token",
   "gettingToken": "正在获取Token...",
   "goBackQ": "返回？",

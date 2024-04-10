@@ -109,6 +109,7 @@
   "fullScreen": "Modo pantalla completa",
   "fullScreenJitter": "Temblores en modo pantalla completa",
   "fullScreenJitterHelp": "Prevención de quemaduras de pantalla",
+  "fullScreenTip": "¿Debe habilitarse el modo de pantalla completa cuando el dispositivo se rote al modo horizontal? Esta opción solo se aplica a la pestaña del servidor.",
   "getPushTokenFailed": "No se pudo obtener el token de notificación",
   "gettingToken": "Obteniendo Token...",
   "goBackQ": "¿Regresar?",

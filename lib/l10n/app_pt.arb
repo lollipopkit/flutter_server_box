@@ -109,6 +109,7 @@
   "fullScreen": "Modo tela cheia",
   "fullScreenJitter": "Tremulação em tela cheia",
   "fullScreenJitterHelp": "Prevenir burn-in de tela",
+  "fullScreenTip": "Deve ser ativado o modo de tela cheia quando o dispositivo é girado para o modo paisagem? Esta opção aplica-se apenas à aba do servidor.",
   "getPushTokenFailed": "Não foi possível obter token de notificação",
   "gettingToken": "Obtendo Token...",
   "goBackQ": "Voltar?",

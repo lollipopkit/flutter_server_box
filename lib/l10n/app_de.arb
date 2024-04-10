@@ -109,6 +109,7 @@
   "fullScreen": "Vollbildmodus",
   "fullScreenJitter": "Jitter im Vollbildmodus",
   "fullScreenJitterHelp": "Einbrennen des Bildschirms verhindern",
+  "fullScreenTip": "Soll der Vollbildmodus aktiviert werden, wenn das Gerät in den Quermodus gedreht wird? Diese Option gilt nur für die Server-Registerkarte.",
   "getPushTokenFailed": "Push-Token kann nicht abgerufen werden",
   "gettingToken": "Getting token...",
   "goBackQ": "Zurückkommen?",

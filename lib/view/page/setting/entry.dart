@@ -91,9 +91,9 @@ class _SettingPageState extends State<SettingPage> {
           _buildEditor(),
 
           /// Fullscreen Mode is designed for old mobile phone which can be
-          /// used as a status screen, so it's only available on mobile phone.
-          // if (!isDesktop) _buildTitle(l10n.fullScreen),
-          // if (!isDesktop) _buildFullScreen(),
+          /// used as a status screen.
+          if (isMobile) _buildTitle(l10n.fullScreen),
+          if (isMobile) _buildFullScreen(),
           const SizedBox(height: 37),
         ],
       ),
@@ -131,15 +131,15 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  // Widget _buildFullScreen() {
-  //   return Column(
-  //     children: [
-  //       _buildFullScreenSwitch(),
-  //       _buildFullScreenJitter(),
-  //       _buildFulScreenRotateQuarter(),
-  //     ].map((e) => CardX(child: e)).toList(),
-  //   );
-  // }
+  Widget _buildFullScreen() {
+    return Column(
+      children: [
+        _buildFullScreenSwitch(),
+        _buildFullScreenJitter(),
+        // _buildFulScreenRotateQuarter(),
+      ].map((e) => CardX(child: e)).toList(),
+    );
+  }
 
   Widget _buildServer() {
     return Column(
@@ -599,23 +599,29 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  // Widget _buildFullScreenSwitch() {
-  //   return ListTile(
-  //     title: Text(l10n.fullScreen),
-  //     trailing: StoreSwitch(
-  //       prop: _setting.fullScreen,
-  //       callback: (_) => RebuildNodes.app.rebuild(),
-  //     ),
-  //   );
-  // }
+  Widget _buildFullScreenSwitch() {
+    return ListTile(
+      title: Text(l10n.fullScreen),
+      subtitle: Text(l10n.fullScreenTip, style: UIs.textGrey),
+      trailing: StoreSwitch(
+        prop: _setting.fullScreen,
+        callback: (_) => RebuildNodes.app.rebuild(),
+      ),
+    );
+  }
 
-  // Widget _buildFullScreenJitter() {
-  //   return ListTile(
-  //     title: Text(l10n.fullScreenJitter),
-  //     subtitle: Text(l10n.fullScreenJitterHelp, style: UIs.textGrey),
-  //     trailing: StoreSwitch(prop: _setting.fullScreenJitter),
-  //   );
-  // }
+  Widget _buildFullScreenJitter() {
+    return ListTile(
+      title: Text(l10n.fullScreenJitter),
+      subtitle: Text(l10n.fullScreenJitterHelp, style: UIs.textGrey),
+      trailing: StoreSwitch(
+        prop: _setting.fullScreenJitter,
+        callback: (_) {
+          context.showSnackBar(l10n.needRestart);
+        },
+      ),
+    );
+  }
 
   // Widget _buildFulScreenRotateQuarter() {
   //   final degrees = List.generate(4, (idx) => '${idx * 90}°').toList();
