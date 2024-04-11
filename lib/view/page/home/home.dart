@@ -7,6 +7,7 @@ import 'package:get_it/get_it.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:toolbox/core/channel/bg_run.dart';
 import 'package:toolbox/core/channel/home_widget.dart';
+import 'package:toolbox/core/extension/build.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
@@ -206,12 +207,12 @@ class _HomePageState extends State<HomePage>
           _buildIcon(),
           TextButton(
             onPressed: () => context.showRoundDialog(
-              title: Text(_versionStr),
+              title: const Text(BuildDataX.versionStr),
               child: const Text(
                   '${BuildData.buildAt}\nFlutter ${BuildData.engine}'),
             ),
-            child: Text(
-              '${BuildData.name}\n$_versionStr',
+            child: const Text(
+              '${BuildData.name}\n${BuildDataX.versionStr}',
               textAlign: TextAlign.center,
               style: UIs.text15,
             ),
@@ -309,14 +310,6 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
     );
   }
 
-  String get _versionStr {
-    var mod = '';
-    if (BuildData.modifications != 0) {
-      mod = '(+${BuildData.modifications})';
-    }
-    return 'v1.0.${BuildData.build}$mod';
-  }
-
   @override
   bool get wantKeepAlive => true;
 
@@ -336,6 +329,7 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
     await Pros.server.refresh();
   }
 
+  // It's required by RUpgrade to send update progress
   Future<void> _reqNotiPerm() async {
     if (!isAndroid) return;
     final suc = await PermUtils.request(Permission.notification);
