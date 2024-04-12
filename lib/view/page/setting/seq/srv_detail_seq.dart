@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
-import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/model/app/server_detail_card.dart';
 import 'package:toolbox/data/res/store.dart';
 
@@ -38,14 +37,16 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
         final allKeys = [...keys, ...disabled];
         return ReorderableListView.builder(
           padding: const EdgeInsets.all(7),
+          buildDefaultDragHandles: false,
           itemBuilder: (_, idx) {
             final key = allKeys[idx];
             return CardX(
               key: ValueKey(idx),
               child: ListTile(
+                contentPadding: const EdgeInsets.only(left: 23, right: 11),
+                leading: Icon(ServerDetailCards.fromName(key)?.icon),
                 title: Text(key),
-                leading: _buildCheckBox(keys, key, idx, idx < keys.length),
-                trailing: isDesktop ? null : const Icon(Icons.drag_handle),
+                trailing: _buildCheckBox(keys, key, idx, idx < keys.length),
               ),
             );
           },

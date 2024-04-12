@@ -247,7 +247,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           final idx = i * kMaxColumn + j + 1;
           if (idx >= cs.coresCount) break;
           if (Stores.setting.displayCpuIndex.fetch()) {
-            rowChildren.add(Text('${idx + 1}', style: UIs.text13Grey));
+            rowChildren.add(Text('$idx', style: UIs.text13Grey));
           }
           rowChildren.add(
             Expanded(

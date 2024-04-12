@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/listx.dart';
 import 'package:toolbox/data/model/app/version_related.dart';
@@ -65,4 +67,19 @@ enum ServerDetailCards implements VersionRelated {
       }
     }
   }
+
+  IconData get icon => switch (this) {
+        about => Icons.info,
+        cpu => Icons.memory,
+        mem => Bootstrap.memory,
+        swap => Icons.swap_horiz,
+        gpu => Bootstrap.gpu_card,
+        disk => Icons.storage,
+        net => ZondIcons.network,
+        sensor => MingCute.dashboard_4_line,
+        temp => FontAwesome.temperature_empty_solid,
+        battery => Icons.battery_full,
+        pve => BoxIcons.bxs_dashboard,
+        custom => Icons.code,
+      };
 }
