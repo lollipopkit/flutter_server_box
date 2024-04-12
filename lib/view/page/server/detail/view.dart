@@ -5,9 +5,11 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
+import 'package:toolbox/core/extension/listx.dart';
 import 'package:toolbox/data/model/app/server_detail_card.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/battery.dart';
+import 'package:toolbox/data/model/server/cpu.dart';
 import 'package:toolbox/data/model/server/disk.dart';
 import 'package:toolbox/data/model/server/net_speed.dart';
 import 'package:toolbox/data/model/server/nvdia.dart';
@@ -190,20 +192,23 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           mainAxisSize: MainAxisSize.min,
           children: details,
         ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 13),
-            child: SizedBox(
-              height: 137,
-              width: _media.size.width - 26 - 34,
-              child: _buildLineChart(
-                ss.cpu.spots,
-                //ss.cpu.rangeX,
-                tooltipPrefix: 'CPU',
-              ),
-            ),
-          ),
-        ],
+        children: Stores.setting.cpuViewAsProgress.fetch()
+            ? _buildCPUProgress(ss.cpu)
+            : [
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 17, vertical: 13),
+                  child: SizedBox(
+                    height: 137,
+                    width: _media.size.width - 26 - 34,
+                    child: _buildLineChart(
+                      ss.cpu.spots,
+                      //ss.cpu.rangeX,
+                      tooltipPrefix: 'CPU',
+                    ),
+                  ),
+                ),
+              ],
       ),
     );
   }
@@ -226,6 +231,56 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         ),
       ],
     );
+  }
+
+  List<Widget> _buildCPUProgress(Cpus cs) {
+    const kMaxColumn = 2;
+    const kRowThreshold = 4;
+    const kCoresCount = kMaxColumn * kRowThreshold;
+    final children = <Widget>[];
+
+    if (cs.coresCount > kCoresCount) {
+      final rows = cs.coresCount ~/ kMaxColumn;
+      for (var i = 0; i < rows; i++) {
+        final rowChildren = <Widget>[];
+        for (var j = 0; j < kMaxColumn; j++) {
+          final idx = i * kMaxColumn + j + 1;
+          if (idx >= cs.coresCount) break;
+          if (Stores.setting.displayCpuIndex.fetch()) {
+            rowChildren.add(Text('${idx + 1}', style: UIs.text13Grey));
+          }
+          rowChildren.add(
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 3),
+                child: _buildProgress(cs.usedPercent(coreIdx: idx)),
+              ),
+            ),
+          );
+        }
+        rowChildren.joinWith(UIs.width7);
+        children.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 17),
+            child: Row(
+              children: rowChildren,
+            ),
+          ),
+        );
+      }
+    } else {
+      for (var i = 0; i < cs.coresCount; i++) {
+        if (i == 0) continue;
+        children.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 17),
+            child: _buildProgress(cs.usedPercent(coreIdx: i)),
+          ),
+        );
+      }
+    }
+
+    return children;
   }
 
   Widget _buildProgress(double percent) {

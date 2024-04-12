@@ -262,6 +262,11 @@ class SettingStore extends PersistentStore {
   /// Hide title bar on desktop
   late final hideTitleBar = property('hideTitleBar', isDesktop);
 
+  /// Display CPU view as progress, also called as old CPU view
+  late final cpuViewAsProgress = property('cpuViewAsProgress', false);
+
+  late final displayCpuIndex = property('displayCpuIndex', true);
+
   // Never show these settings for users
   //
   // ------BEGIN------

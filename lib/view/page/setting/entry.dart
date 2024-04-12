@@ -119,13 +119,12 @@ class _SettingPageState extends State<SettingPage> {
       _buildAppColor(),
       //_buildLaunchPage(),
       _buildCheckUpdate(),
+
+      /// Platform specific settings
+      if (OS.hasSpecSetting) _buildPlatformSetting(),
       _buildAppMore(),
     ];
 
-    /// Platform specific settings
-    if (OS.hasSpecSetting) {
-      children.add(_buildPlatformSetting());
-    }
     return Column(
       children: children.map((e) => CardX(child: e)).toList(),
     );
@@ -150,6 +149,7 @@ class _SettingPageState extends State<SettingPage> {
         _buildServerDetailCardSeq(),
         //_buildDiskIgnorePath(),
         _buildDeleteServers(),
+        _buildCpuView(),
         _buildServerMore(),
       ].map((e) => CardX(child: e)).toList(),
     );
@@ -1092,6 +1092,23 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       title: Text(l10n.hideTitleBar),
       trailing: StoreSwitch(prop: _setting.hideTitleBar),
+    );
+  }
+
+  Widget _buildCpuView() {
+    return ExpandTile(
+      title: Text('CPU ${l10n.view}'),
+      children: [
+        ListTile(
+          title: Text(l10n.noLineChart),
+          subtitle: Text(l10n.cpuViewAsProgressTip, style: UIs.textGrey),
+          trailing: StoreSwitch(prop: _setting.cpuViewAsProgress),
+        ),
+        ListTile(
+          title: Text(l10n.displayCpuIndex),
+          trailing: StoreSwitch(prop: _setting.displayCpuIndex),
+        ),
+      ],
     );
   }
 }

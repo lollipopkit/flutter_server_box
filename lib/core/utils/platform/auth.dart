@@ -27,7 +27,7 @@ abstract final class BioAuth {
 
     /// [biometrics] on Android and Windows is returned with error
     /// Handle it specially
-    if (isAndroid | isWindows) return biometrics.isNotEmpty;
+    if (isAndroid || isWindows) return biometrics.isNotEmpty;
     return biometrics.contains(BiometricType.face) ||
         biometrics.contains(BiometricType.fingerprint);
   }
