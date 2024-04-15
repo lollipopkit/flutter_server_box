@@ -15,7 +15,7 @@ abstract final class GithubIds {
     'dccif',
     'QazCetelic',
   };
-  
+
   static const participants = <GhId>{
     'jaychoubaby',
     'fecture',

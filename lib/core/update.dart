@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:r_upgrade/r_upgrade.dart';
+import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
@@ -14,6 +15,8 @@ import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/path.dart';
 import 'package:toolbox/data/res/provider.dart';
+import 'package:toolbox/data/res/store.dart';
+import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/data/service/app.dart';
 import 'package:toolbox/locator.dart';
 
@@ -83,6 +86,57 @@ Future<void> _doUpdate(AppUpdate update, BuildContext context) async {
   }
 
   if (isAndroid) {
+    final inAppUpdate = Stores.setting.inAppUpdate;
+    var remember = true;
+    if (inAppUpdate.fetch() == 0) {
+      final cancel = await context.showRoundDialog(
+        title: Text(l10n.attention),
+        child: StatefulBuilder(builder: (_, setState) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l10n.inAppUpdate, style: UIs.text15Bold),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                value: remember,
+                onChanged: (v) => setState(() => remember = v ?? true),
+                title: Text(l10n.rememberChoice),
+              ),
+            ],
+          );
+        }),
+        actions: [
+          TextButton(
+              onPressed: () => context.pop(true), child: Text(l10n.cancel)),
+          TextButton(
+            onPressed: () {
+              if (remember) {
+                inAppUpdate.put(1);
+              }
+              context.pop();
+            },
+            child: const Text('App'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (remember) {
+                inAppUpdate.put(2);
+              }
+              context.pop();
+            },
+            child: Text(l10n.browser),
+          ),
+        ],
+      );
+      if (cancel != false) {
+        return;
+      }
+    }
+    if (inAppUpdate.fetch() == 2) {
+      await openUrl(url);
+      return;
+    }
     final fileName = url.split('/').last;
     await RUpgrade.upgrade(url, fileName: fileName);
   } else if (isIOS) {

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:provider/provider.dart';
+import 'package:toolbox/core/build_mode.dart';
 import 'package:toolbox/core/extension/colorx.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
@@ -205,7 +206,9 @@ class _SettingPageState extends State<SettingPage> {
         return ListTile(
           title: Text(l10n.autoCheckUpdate),
           subtitle: Text(display, style: UIs.textGrey),
-          onTap: () => Funcs.throttle(() => doUpdate(ctx)),
+          onTap: () => Funcs.throttle(
+            () => doUpdate(ctx, force: BuildMode.isDebug),
+          ),
           trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),
         );
       },
