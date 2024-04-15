@@ -60,8 +60,8 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   }
 
   try {
-    final host = StatusCmdType.host.find(segments);
-    if (host.isNotEmpty) {
+    final host = _parseHostName(StatusCmdType.host.find(segments));
+    if (host != null) {
       req.ss.more[StatusCmdType.host] = host;
     }
   } catch (e, s) {
@@ -236,4 +236,10 @@ String? _parseSysVer(String raw) {
     return s[1].replaceAll('"', '').replaceFirst('\n', '');
   }
   return null;
+}
+
+String? _parseHostName(String raw) {
+  if (raw.isEmpty) return null;
+  if (raw.contains(ShellFunc.scriptFile)) return null;
+  return raw;
 }

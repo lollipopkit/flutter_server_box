@@ -18,7 +18,7 @@ enum ShellFunc {
   /// The suffix `\t` is for formatting
   static const cmdDivider = '\necho $seperator\n\t';
   static const _srvBoxDir = '.config/server_box';
-  static const _scriptFile = 'mobile_v${BuildData.script}.sh';
+  static const scriptFile = 'mobile_v${BuildData.script}.sh';
 
   /// Issue #159
   ///
@@ -27,10 +27,10 @@ enum ShellFunc {
   /// So different version of app can run at the same time.
   ///
   /// **Can't** use it in SFTP, because SFTP can't recognize `$HOME`
-  static String getShellPath(String home) => '$home/$_srvBoxDir/$_scriptFile';
+  static String getShellPath(String home) => '$home/$_srvBoxDir/$scriptFile';
 
   static const srvBoxDir = '$_homeVar/$_srvBoxDir';
-  static const _installShellPath = '$_homeVar/$_srvBoxDir/$_scriptFile';
+  static const _installShellPath = '$_homeVar/$_srvBoxDir/$scriptFile';
 
   // Issue #299, chmod ~/.config to avoid permission issue
   static const installShellCmd = """
@@ -226,7 +226,7 @@ const _statusCmds = [
   "cat /proc/meminfo | grep -E 'Mem|Swap'",
   'cat /sys/class/thermal/thermal_zone*/type',
   'cat /sys/class/thermal/thermal_zone*/temp',
-  'hostname',
+  'cat /etc/hostname',
   'cat /proc/diskstats',
   'for f in /sys/class/power_supply/*/uevent; do cat "\$f"; echo; done',
   'nvidia-smi -q -x',
