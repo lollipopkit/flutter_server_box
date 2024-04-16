@@ -40,13 +40,16 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
           buildDefaultDragHandles: false,
           itemBuilder: (_, idx) {
             final key = allKeys[idx];
-            return CardX(
+            return ReorderableDelayedDragStartListener(
               key: ValueKey(idx),
-              child: ListTile(
-                contentPadding: const EdgeInsets.only(left: 23, right: 11),
-                leading: Icon(ServerDetailCards.fromName(key)?.icon),
-                title: Text(key),
-                trailing: _buildCheckBox(keys, key, idx, idx < keys.length),
+              index: idx,
+              child: CardX(
+                child: ListTile(
+                  contentPadding: const EdgeInsets.only(left: 23, right: 11),
+                  leading: Icon(ServerDetailCards.fromName(key)?.icon),
+                  title: Text(key),
+                  trailing: _buildCheckBox(keys, key, idx, idx < keys.length),
+                ),
               ),
             );
           },
