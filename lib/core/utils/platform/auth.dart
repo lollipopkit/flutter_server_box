@@ -37,6 +37,7 @@ abstract final class BioAuth {
       if (!_isAuthing) {
         _isAuthing = true;
         final val = await goWithResult();
+        _isAuthing = false;
         switch (val) {
           case AuthResult.success:
             break;
@@ -48,7 +49,6 @@ abstract final class BioAuth {
             Stores.setting.useBioAuth.put(false);
             break;
         }
-        _isAuthing = false;
       }
     }
   }
