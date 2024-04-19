@@ -182,6 +182,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildEditor() {
     return Column(
       children: [
+        _buildEditorWrap(),
         _buildEditorFontSize(),
         _buildEditorTheme(),
         _buildEditorDarkTheme(),
@@ -1112,6 +1113,13 @@ class _SettingPageState extends State<SettingPage> {
           trailing: StoreSwitch(prop: _setting.displayCpuIndex),
         ),
       ],
+    );
+  }
+
+  Widget _buildEditorWrap() {
+    return ListTile(
+      title: Text(l10n.softWrap),
+      trailing: StoreSwitch(prop: _setting.editorSoftWrap),
     );
   }
 }

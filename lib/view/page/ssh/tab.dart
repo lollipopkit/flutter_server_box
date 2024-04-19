@@ -4,6 +4,7 @@ import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/route.dart';
+import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/ui.dart';
@@ -14,7 +15,7 @@ class SSHTabPage extends StatefulWidget {
   const SSHTabPage({super.key});
 
   @override
-  _SSHTabPageState createState() => _SSHTabPageState();
+  State<SSHTabPage> createState() => _SSHTabPageState();
 }
 
 class _SSHTabPageState extends State<SSHTabPage>
@@ -84,7 +85,6 @@ class _SSHTabPageState extends State<SSHTabPage>
               if (confirm != true) {
                 return;
               }
-              // debugPrint("Removing a tab whose tabId = $e");
               _tabIds.remove(e);
               _refreshTabs();
             },
@@ -115,30 +115,7 @@ class _SSHTabPageState extends State<SSHTabPage>
                 title: Text(spi.name),
                 subtitle: Text(spi.id, style: UIs.textGrey),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  final name = () {
-                    if (_tabIds.containsKey(spi.name)) {
-                      return '${spi.name}(${_tabIds.length + 1})';
-                    }
-                    return spi.name;
-                  }();
-                  final key = GlobalKey(debugLabel: 'sshTabPage_$name');
-                  _tabIds[name] = SSHPage(
-                    key: key,
-                    spi: spi,
-                    notFromTab: false,
-                    onSessionEnd: () {
-                      // debugPrint("Session done received on page whose tabId = $name");
-                      // debugPrint("key = $key");
-                      _tabIds.remove(name);
-                      _refreshTabs();
-                    },
-                  );
-                  _refreshTabs();
-                  final idx = _tabIds.length - 1;
-                  _tabController.animateTo(idx);
-                  _fabRN.value = idx;
-                },
+                onTap: () => _onTapInitCard(spi),
               ),
             );
           },
@@ -154,6 +131,31 @@ class _SSHTabPageState extends State<SSHTabPage>
       controller: _tabController,
       children: _tabIds.values.toList(),
     );
+  }
+
+  void _onTapInitCard(ServerPrivateInfo spi) {
+    final name = () {
+      if (_tabIds.containsKey(spi.name)) {
+        return '${spi.name}(${_tabIds.length + 1})';
+      }
+      return spi.name;
+    }();
+    final key = GlobalKey<State<SSHPage>>(debugLabel: 'sshTabPage_$name');
+    _tabIds[name] = SSHPage(
+      key: key,
+      spi: spi,
+      notFromTab: false,
+      onSessionEnd: () {
+        // debugPrint("Session done received on page whose tabId = $name");
+        // debugPrint("key = $key");
+        _tabIds.remove(name);
+        _refreshTabs();
+      },
+    );
+    _refreshTabs();
+    final idx = _tabIds.length - 1;
+    _tabController.animateTo(idx);
+    _fabRN.value = idx;
   }
 
   void _refreshTabs() {

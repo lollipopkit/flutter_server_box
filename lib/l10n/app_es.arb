@@ -257,6 +257,7 @@
   "shutdown": "Apagar",
   "size": "Tamaño",
   "snippet": "Fragmento de código",
+  "softWrap": "Salto de línea suave",
   "speed": "Velocidad",
   "spentTime": "Tiempo gastado: {time}",
   "sshTip": "Esta función está en fase de pruebas.\n\nPor favor, informa los problemas en {url}, o únete a nuestro desarrollo.",

@@ -272,6 +272,8 @@ class SettingStore extends PersistentStore {
   /// 0 -> unset, 1 -> true, 2 -> false
   late final inAppUpdate = property('inAppUpdate', 0);
 
+  late final editorSoftWrap = property('editorSoftWrap', isIOS);
+
   // Never show these settings for users
   //
   // ------BEGIN------

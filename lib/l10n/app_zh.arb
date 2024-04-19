@@ -257,6 +257,7 @@
   "shutdown": "关机",
   "size": "大小",
   "snippet": "代码片段",
+  "softWrap": "自动换行",
   "speed": "速度",
   "spentTime": "耗时: {time}",
   "sshTip": "该功能目前处于测试阶段。\n\n请在 {url} 反馈问题，或者加入我们开发。",

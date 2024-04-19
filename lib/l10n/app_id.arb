@@ -257,6 +257,7 @@
   "shutdown": "Matikan",
   "size": "Ukuran",
   "snippet": "Snippet",
+  "softWrap": "Pembungkus lembut",
   "speed": "Kecepatan",
   "spentTime": "Menghabiskan waktu: {time}",
   "sshTip": "Fungsi ini sekarang dalam tahap eksperimen.\n\nHarap laporkan bug di {url} atau bergabunglah dengan pengembangan kami.",

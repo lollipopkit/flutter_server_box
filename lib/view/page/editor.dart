@@ -171,6 +171,7 @@ class _EditorPageState extends State<EditorPage> {
         styles: _codeTheme,
       ),
       child: CodeField(
+        wrap: Stores.setting.editorSoftWrap.fetch(),
         focusNode: _focusNode,
         controller: _controller,
         textStyle: _textStyle,

@@ -257,6 +257,7 @@
   "shutdown": "关机",
   "size": "大小",
   "snippet": "程式片段",
+  "softWrap": "軟換行",
   "speed": "速度",
   "spentTime": "耗時: {time}",
   "sshTip": "該功能目前處於測試階段。\n\n請在 {url} 反饋問題，或者加入我們開發。",

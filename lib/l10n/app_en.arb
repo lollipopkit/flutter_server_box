@@ -257,6 +257,7 @@
   "shutdown": "Shutdown",
   "size": "Size",
   "snippet": "Snippet",
+  "softWrap": "Soft wrap",
   "speed": "Speed",
   "spentTime": "Spent time: {time}",
   "sshTip": "This function is now in the experimental stage.\n\nPlease report bugs on {url} or join our development.",

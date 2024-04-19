@@ -257,6 +257,7 @@
   "shutdown": "Desligar",
   "size": "Tamanho",
   "snippet": "Snippet",
+  "softWrap": "Quebra de linha suave",
   "speed": "Velocidade",
   "spentTime": "Tempo gasto: {time}",
   "sshTip": "Esta funcionalidade está em fase de teste.\n\nPor favor, reporte problemas em {url} ou junte-se a nós no desenvolvimento.",

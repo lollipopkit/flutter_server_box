@@ -257,6 +257,7 @@
   "shutdown": "Éteindre",
   "size": "Taille",
   "snippet": "Extrait",
+  "softWrap": "Retour à la ligne doux",
   "speed": "Vitesse",
   "spentTime": "Temps écoulé : {time}",
   "sshTip": "Cette fonction est actuellement au stade expérimental.\n\n Veuillez signaler les bogues sur {url} ou rejoignez notre développement.",

@@ -256,6 +256,7 @@
   "shutdown": "Afsluiten",
   "size": "Grootte",
   "snippet": "Fragment",
+  "softWrap": "Zachte wrap",
   "speed": "Snelheid",
   "spentTime": "Gebruikte tijd: {time}",
   "sshTip": "Deze functie bevindt zich momenteel in de experimentele fase.\n\nMeld alstublieft bugs op {url} of sluit je aan bij onze ontwikkeling.",
