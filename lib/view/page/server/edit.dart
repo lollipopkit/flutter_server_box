@@ -259,9 +259,8 @@ class _ServerEditPageState extends State<ServerEditPage> {
         ),
       ),
       _buildAuth(),
-      //_buildJumpServer(),
-      _buildPVE(),
-      _buildCustomCmd(),
+      _buildJumpServer(),
+      _buildMore(),
     ];
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(17, 17, 17, 47),
@@ -356,10 +355,13 @@ class _ServerEditPageState extends State<ServerEditPage> {
     );
   }
 
-  Widget _buildPVE() {
+  Widget _buildMore() {
     return ExpandTile(
-      title: const Text('PVE'),
+      title: Text(l10n.more),
       children: [
+        UIs.height7,
+        const Text('PVE', style: UIs.text13Grey),
+        UIs.height7,
         Input(
           controller: _pveAddrCtrl,
           type: TextInputType.url,
@@ -368,8 +370,11 @@ class _ServerEditPageState extends State<ServerEditPage> {
           hint: 'https://example.com:8006',
         ),
         ListTile(
-          leading: const Icon(MingCute.certificate_line),
-          title: Text(l10n.ignoreCert),
+          leading: const Padding(
+            padding: EdgeInsets.only(left: 10),
+            child: Icon(MingCute.certificate_line),
+          ),
+          title: Text('PVE ${l10n.ignoreCert}'),
           subtitle: Text(l10n.pveIgnoreCertTip, style: UIs.text12Grey),
           trailing: ListenableBuilder(
             listenable: _pveIgnoreCert,
@@ -381,24 +386,22 @@ class _ServerEditPageState extends State<ServerEditPage> {
             ),
           ),
         ).card,
-      ],
-    );
-  }
-
-  Widget _buildCustomCmd() {
-    return ExpandTile(
-      title: Text(l10n.customCmd),
-      children: [
+        UIs.height7,
+        Text(l10n.customCmd, style: UIs.text13Grey),
+        UIs.height7,
         Input(
           controller: _customCmdCtrl,
           type: TextInputType.text,
           maxLines: 3,
-          label: 'Json',
+          label: 'JSON',
           icon: Icons.code,
           hint: '{${l10n.customCmdHint}}',
         ),
         ListTile(
-          leading: const Icon(MingCute.doc_line),
+          leading: const Padding(
+            padding: EdgeInsets.only(left: 10),
+            child: Icon(MingCute.doc_line),
+          ),
           title: Text(l10n.doc),
           trailing: const Icon(Icons.open_in_new, size: 17),
           onTap: () => openUrl(l10n.customCmdDocUrl),
@@ -427,48 +430,44 @@ class _ServerEditPageState extends State<ServerEditPage> {
     );
   }
 
-  // Widget _buildJumpServer() {
-  //   return ListenableBuilder(
-  //     listenable: _jumpServer,
-  //     builder: (_, __) {
-  //       final children = Pros.server.servers
-  //           .where((element) => element.spi.jumpId == null)
-  //           .where((element) => element.spi.id != widget.spi?.id)
-  //           .map(
-  //             (e) => ListTile(
-  //               title: Text(e.spi.name),
-  //               subtitle: Text(e.spi.id, style: UIs.textGrey),
-  //               trailing: Radio<String>(
-  //                 groupValue: _jumpServer.value,
-  //                 value: e.spi.id,
-  //                 onChanged: (val) => _jumpServer.value = val,
-  //               ),
-  //               onTap: () {
-  //                 _jumpServer.value = e.spi.id;
-  //               },
-  //             ),
-  //           )
-  //           .toList();
-  //       children.add(ListTile(
-  //         title: Text(l10n.clear),
-  //         trailing: const Icon(Icons.clear),
-  //         onTap: () => _jumpServer.value = null,
-  //       ));
-  //       return CardX(
-  //         child: ExpandTile(
-  //           leading: const Icon(Icons.map),
-  //           initiallyExpanded: _jumpServer.value != null,
-  //           title: Text(l10n.jumpServer),
-  //           subtitle: const Text(
-  //             "It was temporarily disabled because it has some bugs (Issues #210)",
-  //             style: UIs.textGrey,
-  //           ),
-  //           children: children,
-  //         ),
-  //       );
-  //     },
-  //   );
-  // }
+  Widget _buildJumpServer() {
+    return ListenableBuilder(
+      listenable: _jumpServer,
+      builder: (_, __) {
+        final children = Pros.server.servers
+            .where((element) => element.spi.jumpId == null)
+            .where((element) => element.spi.id != widget.spi?.id)
+            .map(
+              (e) => ListTile(
+                title: Text(e.spi.name),
+                subtitle: Text(e.spi.id, style: UIs.textGrey),
+                trailing: Radio<String>(
+                  groupValue: _jumpServer.value,
+                  value: e.spi.id,
+                  onChanged: (val) => _jumpServer.value = val,
+                ),
+                onTap: () {
+                  _jumpServer.value = e.spi.id;
+                },
+              ),
+            )
+            .toList();
+        children.add(ListTile(
+          title: Text(l10n.clear),
+          trailing: const Icon(Icons.clear),
+          onTap: () => _jumpServer.value = null,
+        ));
+        return CardX(
+          child: ExpandTile(
+            leading: const Icon(Icons.map),
+            initiallyExpanded: _jumpServer.value != null,
+            title: Text(l10n.jumpServer),
+            children: children,
+          ),
+        );
+      },
+    );
+  }
 
   void _onSave() async {
     if (_ipController.text.isEmpty) {
