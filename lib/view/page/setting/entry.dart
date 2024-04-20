@@ -981,47 +981,12 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  Widget _buildPreferTemperatureDeviceList() {
-    void onSubmitted(String s) {
-      final list = s.split('\n');
-      _setting.preferTemperatureDevs.put(list);
-      context.pop();
-    }
-
-    return ListTile(
-      title: Text(l10n.preferTemperatureDeviceList),
-      subtitle: Text(l10n.preferTemperatureDeviceListTip, style: UIs.textGrey),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () {
-        final list = _setting.preferTemperatureDevs.fetch();
-        final listStr = list.join('\n');
-        final ctrl = TextEditingController(text: listStr);
-        context.showRoundDialog(
-          title: Text(l10n.preferTemperatureDeviceList),
-          child: Input(
-            autoFocus: true,
-            controller: ctrl,
-            maxLines: 3,
-            onSubmitted: onSubmitted,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => onSubmitted(ctrl.text),
-              child: Text(l10n.ok),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   Widget _buildServerMore() {
     return ExpandTile(
       title: Text(l10n.more),
       children: [
         _buildRememberPwdInMem(),
         _buildTextScaler(),
-        _buildPreferTemperatureDeviceList(),
         _buildKeepStatusWhenErr(),
         _buildDoubleColumnServersPage(),
         _buildUpdateInterval(),

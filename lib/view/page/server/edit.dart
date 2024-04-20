@@ -16,7 +16,6 @@ import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/view/widget/expand_tile.dart';
 
 import '../../../core/route.dart';
-import '../../../data/model/server/private_key_info.dart';
 import '../../../data/model/server/server_private_info.dart';
 import '../../../data/provider/private_key.dart';
 import '../../../data/res/ui.dart';
@@ -43,6 +42,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
   final _passwordController = TextEditingController();
   final _pveAddrCtrl = TextEditingController();
   final _customCmdCtrl = TextEditingController();
+  final _preferTempDevCtrl = TextEditingController();
 
   final _nameFocus = FocusNode();
   final _ipFocus = FocusNode();
@@ -95,6 +95,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
             _customCmdCtrl.text = encoded;
           }
         } catch (_) {}
+        _preferTempDevCtrl.text = custom.preferTempDev ?? '';
       }
     }
   }
@@ -113,6 +114,9 @@ class _ServerEditPageState extends State<ServerEditPage> {
     _alterUrlFocus.dispose();
     _portFocus.dispose();
     _usernameFocus.dispose();
+    _pveAddrCtrl.dispose();
+    _customCmdCtrl.dispose();
+    _preferTempDevCtrl.dispose();
   }
 
   @override
@@ -319,7 +323,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         final tiles = List<Widget>.generate(key.pkis.length, (index) {
           final e = key.pkis[index];
           return ListTile(
-            contentPadding: EdgeInsets.zero,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 17),
             leading: Text(
               '#${index + 1}',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
@@ -330,25 +334,29 @@ class _ServerEditPageState extends State<ServerEditPage> {
               textAlign: TextAlign.start,
               style: UIs.textGrey,
             ),
-            trailing: _buildRadio(index, e),
+            trailing: Radio<int>(
+              value: index,
+              groupValue: _keyIdx.value,
+              onChanged: (value) => _keyIdx.value = value,
+            ),
+            onTap: () => _keyIdx.value = index,
           );
         });
         tiles.add(
           ListTile(
             title: Text(l10n.addPrivateKey),
-            contentPadding: EdgeInsets.zero,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 17),
             trailing: IconButton(
               icon: const Icon(Icons.add),
-              onPressed: () => AppRoute.keyEdit().go(context),
+              onPressed: () {},
             ),
+            onTap: () => AppRoute.keyEdit().go(context),
           ),
         );
         return CardX(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 17),
-            child: Column(
-              children: tiles,
-            ),
+          child: ListenableBuilder(
+            listenable: _keyIdx,
+            builder: (_, __) => Column(children: tiles),
           ),
         );
       },
@@ -359,7 +367,6 @@ class _ServerEditPageState extends State<ServerEditPage> {
     return ExpandTile(
       title: Text(l10n.more),
       children: [
-        UIs.height7,
         const Text('PVE', style: UIs.text13Grey),
         UIs.height7,
         Input(
@@ -406,6 +413,16 @@ class _ServerEditPageState extends State<ServerEditPage> {
           trailing: const Icon(Icons.open_in_new, size: 17),
           onTap: () => openUrl(l10n.customCmdDocUrl),
         ).card,
+        UIs.height7,
+        Text(l10n.temperature, style: UIs.text13Grey),
+        UIs.height7,
+        Input(
+          controller: _preferTempDevCtrl,
+          type: TextInputType.text,
+          label: l10n.deviceName,
+          icon: MingCute.low_temperature_line,
+          hint: 'nvme-pci-0400',
+        ),
       ],
     );
   }
@@ -414,19 +431,6 @@ class _ServerEditPageState extends State<ServerEditPage> {
     return FloatingActionButton(
       onPressed: _onSave,
       child: const Icon(Icons.save),
-    );
-  }
-
-  Widget _buildRadio(int index, PrivateKeyInfo pki) {
-    return ListenableBuilder(
-      listenable: _keyIdx,
-      builder: (_, __) => Radio<int>(
-        value: index,
-        groupValue: _keyIdx.value,
-        onChanged: (value) {
-          _keyIdx.value = value;
-        },
-      ),
     );
   }
 
@@ -446,16 +450,16 @@ class _ServerEditPageState extends State<ServerEditPage> {
                   value: e.spi.id,
                   onChanged: (val) => _jumpServer.value = val,
                 ),
-                onTap: () {
-                  _jumpServer.value = e.spi.id;
-                },
+                onTap: () => _jumpServer.value = e.spi.id,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 17),
               ),
             )
             .toList();
         children.add(ListTile(
           title: Text(l10n.clear),
-          trailing: const Icon(Icons.clear),
+          trailing: IconButton(onPressed: () {}, icon: const Icon(Icons.clear)),
           onTap: () => _jumpServer.value = null,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 17),
         ));
         return CardX(
           child: ExpandTile(
@@ -513,11 +517,11 @@ class _ServerEditPageState extends State<ServerEditPage> {
         return null;
       }
     }();
-    final pveAddr = _pveAddrCtrl.text.selfIfNotNullEmpty;
     final custom = ServerCustom(
-      pveAddr: pveAddr,
+      pveAddr: _pveAddrCtrl.text.selfIfNotNullEmpty,
       pveIgnoreCert: _pveIgnoreCert.value,
       cmds: customCmds,
+      preferTempDev: _preferTempDevCtrl.text.selfIfNotNullEmpty,
     );
 
     final spi = ServerPrivateInfo(

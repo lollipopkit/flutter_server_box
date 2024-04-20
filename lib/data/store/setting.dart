@@ -225,13 +225,6 @@ class SettingStore extends PersistentStore {
   /// Auto refresh container status
   late final contaienrAutoRefresh = property('contaienrAutoRefresh', true);
 
-  /// eg:
-  /// Available devices: ['iwlwifi','x86pkg_temp']
-  /// Prefer list: ['x86pkg_temp','example']
-  /// Result: use x86pkg_temp's temperature as the temperature
-  late final preferTemperatureDevs =
-      listProperty('preferTemperatureDevs', <String>[]);
-
   /// Use double column servers page on Desktop
   late final doubleColumnServersPage = property(
     'doubleColumnServersPage',

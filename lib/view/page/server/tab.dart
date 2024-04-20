@@ -501,7 +501,7 @@ class _ServerPageState extends State<ServerPage>
       );
     }
     return Text(
-      s.topRightStr,
+      s.getTopRightStr(s.spi),
       style: UIs.text13Grey,
     );
   }

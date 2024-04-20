@@ -60,7 +60,7 @@ class _TagEditorState extends State<TagEditor> {
       child: ListTile(
         // Align the place of TextField.prefixIcon
         leading: const Padding(
-          padding: EdgeInsets.only(left: 6),
+          padding: EdgeInsets.only(left: 10),
           child: Icon(Icons.tag),
         ),
         title: _buildTags(widget.tags),

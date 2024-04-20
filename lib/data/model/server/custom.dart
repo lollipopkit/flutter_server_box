@@ -10,6 +10,8 @@ final class ServerCustom {
   final String? pveAddr;
   @HiveField(2, defaultValue: false)
   final bool pveIgnoreCert;
+  @HiveField(3)
+  final String? preferTempDev;
 
   /// {"title": "cmd"}
   @HiveField(3)
@@ -20,6 +22,7 @@ final class ServerCustom {
     this.pveAddr,
     this.pveIgnoreCert = false,
     this.cmds,
+    this.preferTempDev,
   });
 
   static ServerCustom fromJson(Map<String, dynamic> json) {
@@ -27,11 +30,13 @@ final class ServerCustom {
     final pveAddr = json["pveAddr"] as String?;
     final pveIgnoreCert = json["pveIgnoreCert"] as bool;
     final cmds = json["cmds"] as Map<String, dynamic>?;
+    final preferTempDev = json["preferTempDev"] as String?;
     return ServerCustom(
       //temperature: temperature,
       pveAddr: pveAddr,
       pveIgnoreCert: pveIgnoreCert,
       cmds: cmds?.cast<String, String>(),
+      preferTempDev: preferTempDev,
     );
   }
 
@@ -47,6 +52,9 @@ final class ServerCustom {
 
     if (cmds != null) {
       json["cmds"] = cmds;
+    }
+    if (preferTempDev != null) {
+      json["preferTempDev"] = preferTempDev;
     }
     return json;
   }
