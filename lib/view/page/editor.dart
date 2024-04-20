@@ -167,9 +167,7 @@ class _EditorPageState extends State<EditorPage> {
   Widget _buildBody() {
     return SingleChildScrollView(
         child: CodeTheme(
-      data: CodeThemeData(
-        styles: _codeTheme,
-      ),
+      data: CodeThemeData(styles: _codeTheme),
       child: CodeField(
         wrap: Stores.setting.editorSoftWrap.fetch(),
         focusNode: _focusNode,

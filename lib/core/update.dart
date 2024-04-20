@@ -86,64 +86,69 @@ Future<void> _doUpdate(AppUpdate update, BuildContext context) async {
   }
 
   if (isAndroid) {
-    final inAppUpdate = Stores.setting.inAppUpdate;
-    var remember = true;
-    if (inAppUpdate.fetch() == 0) {
-      final cancel = await context.showRoundDialog(
-        title: Text(l10n.attention),
-        child: StatefulBuilder(builder: (_, setState) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(l10n.inAppUpdate, style: UIs.text15Bold),
-              CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                value: remember,
-                onChanged: (v) => setState(() => remember = v ?? true),
-                title: Text(l10n.rememberChoice),
-              ),
-            ],
-          );
-        }),
-        actions: [
-          TextButton(
-              onPressed: () => context.pop(true), child: Text(l10n.cancel)),
-          TextButton(
-            onPressed: () {
-              if (remember) {
-                inAppUpdate.put(1);
-              }
-              context.pop();
-            },
-            child: const Text('App'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (remember) {
-                inAppUpdate.put(2);
-              }
-              context.pop();
-            },
-            child: Text(l10n.browser),
-          ),
-        ],
-      );
-      if (cancel != false) {
-        return;
-      }
-    }
-    if (inAppUpdate.fetch() == 2) {
-      await openUrl(url);
-      return;
-    }
-    final fileName = url.split('/').last;
-    await RUpgrade.upgrade(url, fileName: fileName);
+    final useBrowser = await _openUrlUpdate(context);
+    final _ = switch (useBrowser) {
+      1 => await RUpgrade.upgrade(url, fileName: url.split('/').last),
+      2 => await openUrl(url),
+      _ => null,
+    };
   } else if (isIOS) {
     await RUpgrade.upgradeFromAppStore('1586449703');
   } else {
     await openUrl(url);
   }
+}
+
+Future<int?> _openUrlUpdate(BuildContext context) async {
+  final inAppUpdate = Stores.setting.inAppUpdate;
+  final val = inAppUpdate.fetch();
+  if (val == 0) {
+    var remember = true;
+    final selection = await context.showRoundDialog<int>(
+      title: Text(l10n.attention),
+      child: StatefulBuilder(builder: (_, setState) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l10n.inAppUpdate, style: UIs.text15Bold),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: remember,
+              onChanged: (v) => setState(() => remember = v ?? true),
+              title: Text(l10n.rememberChoice),
+            ),
+          ],
+        );
+      }),
+      actions: [
+        TextButton(
+          onPressed: () => context.pop(0),
+          child: Text(l10n.cancel),
+        ),
+        TextButton(
+          onPressed: () {
+            if (remember) {
+              inAppUpdate.put(1);
+            }
+            context.pop(1);
+          },
+          child: const Text('App'),
+        ),
+        TextButton(
+          onPressed: () {
+            if (remember) {
+              inAppUpdate.put(2);
+            }
+            context.pop(2);
+          },
+          child: Text(l10n.browser),
+        ),
+      ],
+    );
+    return selection;
+  }
+  return val;
 }
 
 // rmdir Download
