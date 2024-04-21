@@ -10,12 +10,12 @@ final class ServerCustom {
   final String? pveAddr;
   @HiveField(2, defaultValue: false)
   final bool pveIgnoreCert;
-  @HiveField(3)
-  final String? preferTempDev;
 
   /// {"title": "cmd"}
   @HiveField(3)
   final Map<String, String>? cmds;
+  @HiveField(4)
+  final String? preferTempDev;
 
   const ServerCustom({
     //this.temperature,
@@ -57,5 +57,10 @@ final class ServerCustom {
       json["preferTempDev"] = preferTempDev;
     }
     return json;
+  }
+
+  @override
+  String toString() {
+    return toJson().toString();
   }
 }

@@ -346,9 +346,9 @@ class _ServerEditPageState extends State<ServerEditPage> {
           ListTile(
             title: Text(l10n.addPrivateKey),
             contentPadding: const EdgeInsets.symmetric(horizontal: 17),
-            trailing: IconButton(
-              icon: const Icon(Icons.add),
-              onPressed: () {},
+            trailing: const Padding(
+              padding: EdgeInsets.only(right: 13),
+              child: Icon(Icons.add),
             ),
             onTap: () => AppRoute.keyEdit().go(context),
           ),
@@ -457,7 +457,10 @@ class _ServerEditPageState extends State<ServerEditPage> {
             .toList();
         children.add(ListTile(
           title: Text(l10n.clear),
-          trailing: IconButton(onPressed: () {}, icon: const Icon(Icons.clear)),
+          trailing: const Padding(
+            padding: EdgeInsets.only(right: 13),
+            child: Icon(Icons.clear),
+          ),
           onTap: () => _jumpServer.value = null,
           contentPadding: const EdgeInsets.symmetric(horizontal: 17),
         ));
@@ -493,7 +496,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
           )
         ],
       );
-      if (cancel ?? true) {
+      if (cancel != false) {
         return;
       }
     }
@@ -531,12 +534,12 @@ class _ServerEditPageState extends State<ServerEditPage> {
       ip: _ipController.text,
       port: int.parse(_portController.text),
       user: _usernameController.text,
-      pwd: _passwordController.text.isEmpty ? null : _passwordController.text,
+      pwd: _passwordController.text.selfIfNotNullEmpty,
       keyId: _keyIdx.value != null
           ? Pros.key.pkis.elementAt(_keyIdx.value!).id
           : null,
       tags: _tags,
-      alterUrl: _altUrlController.text.isEmpty ? null : _altUrlController.text,
+      alterUrl: _altUrlController.text.selfIfNotNullEmpty,
       autoConnect: _autoConnect.value,
       jumpId: _jumpServer.value,
       custom: custom,
