@@ -4,6 +4,7 @@ import 'package:xterm/ui.dart';
 abstract final class TerminalThemes {
   static const dark = TerminalTheme(
     cursor: Color.fromARGB(137, 174, 175, 173),
+    selectionCursor: Color(0xff8b2252),
     selection: Color.fromARGB(147, 174, 175, 173),
     foreground: Color(0XFFCCCCCC),
     background: Colors.black,
@@ -29,6 +30,7 @@ abstract final class TerminalThemes {
   );
   static const light = TerminalTheme(
     cursor: Color.fromARGB(153, 174, 175, 173),
+    selectionCursor: Color(0xff8b2252),
     selection: Color.fromARGB(102, 174, 175, 173),
     foreground: Color(0XFF000000),
     background: Color(0XFFFFFFFF),
@@ -52,4 +54,61 @@ abstract final class TerminalThemes {
     brightWhite: Color.fromARGB(255, 233, 235, 235),
     black: Colors.black,
   );
+}
+
+extension TerminalThemeX on TerminalTheme {
+  TerminalTheme copyWith({
+    Color? cursor,
+    Color? selectionCursor,
+    Color? selection,
+    Color? foreground,
+    Color? background,
+    Color? searchHitBackground,
+    Color? searchHitBackgroundCurrent,
+    Color? searchHitForeground,
+    Color? red,
+    Color? green,
+    Color? yellow,
+    Color? blue,
+    Color? magenta,
+    Color? cyan,
+    Color? white,
+    Color? brightBlack,
+    Color? brightRed,
+    Color? brightGreen,
+    Color? brightYellow,
+    Color? brightBlue,
+    Color? brightMagenta,
+    Color? brightCyan,
+    Color? brightWhite,
+    Color? black,
+  }) {
+    return TerminalTheme(
+      cursor: cursor ?? this.cursor,
+      selectionCursor: selectionCursor ?? this.selectionCursor,
+      selection: selection ?? this.selection,
+      foreground: foreground ?? this.foreground,
+      background: background ?? this.background,
+      searchHitBackground: searchHitBackground ?? this.searchHitBackground,
+      searchHitBackgroundCurrent:
+          searchHitBackgroundCurrent ?? this.searchHitBackgroundCurrent,
+      searchHitForeground: searchHitForeground ?? this.searchHitForeground,
+      red: red ?? this.red,
+      green: green ?? this.green,
+      yellow: yellow ?? this.yellow,
+      blue: blue ?? this.blue,
+      magenta: magenta ?? this.magenta,
+      cyan: cyan ?? this.cyan,
+      white: white ?? this.white,
+      brightBlack: brightBlack ?? this.brightBlack,
+      brightRed: brightRed ?? this.brightRed,
+      brightGreen: brightGreen ?? this.brightGreen,
+      brightYellow: brightYellow ?? this.brightYellow,
+      brightBlue: brightBlue ?? this.brightBlue,
+      brightMagenta: brightMagenta ?? this.brightMagenta,
+      brightCyan: brightCyan ?? this.brightCyan,
+      brightWhite: brightWhite ?? this.brightWhite,
+      black: black ?? this.black,
+    );
+  }
 }

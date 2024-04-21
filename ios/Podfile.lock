@@ -1,5 +1,5 @@
 PODS:
-  - countly_flutter (23.12.1):
+  - countly_flutter (24.4.0):
     - Flutter
   - file_picker (0.0.1):
     - Flutter
@@ -15,6 +15,8 @@ PODS:
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
+  - permission_handler_apple (9.3.0):
+    - Flutter
   - plain_notification_token (0.0.1):
     - Flutter
   - r_upgrade (0.0.1):
@@ -38,6 +40,7 @@ DEPENDENCIES:
   - icloud_storage (from `.symlinks/plugins/icloud_storage/ios`)
   - local_auth_ios (from `.symlinks/plugins/local_auth_ios/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
+  - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - plain_notification_token (from `.symlinks/plugins/plain_notification_token/ios`)
   - r_upgrade (from `.symlinks/plugins/r_upgrade/ios`)
   - share_plus (from `.symlinks/plugins/share_plus/ios`)
@@ -62,6 +65,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/local_auth_ios/ios"
   path_provider_foundation:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
+  permission_handler_apple:
+    :path: ".symlinks/plugins/permission_handler_apple/ios"
   plain_notification_token:
     :path: ".symlinks/plugins/plain_notification_token/ios"
   r_upgrade:
@@ -76,17 +81,18 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/watch_connectivity/ios"
 
 SPEC CHECKSUMS:
-  countly_flutter: 0b87be283b3ecef341b5f8d45ff97dd33ee966b9
-  file_picker: 880e54928ebe4aa405aaf4577f29a76a078341c6
+  countly_flutter: 5d2febe00242796cf569662e5d47da241f31b115
+  file_picker: c79185e70b9b45728cde2a8d8da454e0cb43f287
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   flutter_background_service_ios: e30e0d3ee69e4cee66272d0c78eacd48c2e94aac
   flutter_native_splash: 52501b97d1c0a5f898d687f1646226c1f93c56ef
   icloud_storage: d9ac7a33ced81df08ba7ea1bf3099cc0ee58f60a
   local_auth_ios: 5046a18c018dd973247a0564496c8898dbb5adf9
   path_provider_foundation: 3784922295ac71e43754bd15e0653ccfd36a147c
+  permission_handler_apple: 9878588469a2b0d0fc1e048d9f43605f92e6cec2
   plain_notification_token: b36467dc91939a7b6754267c701bbaca14996ee1
   r_upgrade: 44d715c61914cce3d01ea225abffe894fd51c114
-  share_plus: c3fef564749587fc939ef86ffb283ceac0baf9f5
+  share_plus: 8875f4f2500512ea181eef553c3e27dba5135aad
   shared_preferences_foundation: b4c3b4cddf1c21f02770737f147a3f5da9d39695
   url_launcher_ios: bbd758c6e7f9fd7b5b1d4cde34d2b95fcce5e812
   watch_connectivity: 715eb484685e05846eab74795348a44bb2809b82

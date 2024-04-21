@@ -514,7 +514,7 @@ class _ServerPageState extends State<ServerPage>
       ),
       actions: [
         TextButton(
-          onPressed: () => Shares.copy(ss.err!),
+          onPressed: () => Shares.copy(ss.err ?? l10n.unknownError),
           child: Text(l10n.copy),
         )
       ],
