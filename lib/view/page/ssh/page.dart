@@ -54,6 +54,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   late final _terminal = Terminal(inputHandler: _keyboard);
   final TerminalController _terminalController = TerminalController();
   final List<List<VirtKey>> _virtKeysList = [];
+  final _focus = FocusNode();
 
   late MediaQueryData _media;
   late TerminalStyle _terminalStyle;
@@ -73,6 +74,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     _initVirtKeys();
 
     Future.delayed(const Duration(milliseconds: 77), () async {
+      _showHelp();
       await _initTerminal();
     });
   }
@@ -137,6 +139,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
         child: TerminalView(
           _terminal,
           controller: _terminalController,
+          focusNode: _focus,
           keyboardType: TextInputType.text,
           enableSuggestions: true,
           textStyle: _terminalStyle,
@@ -264,7 +267,11 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   Future<void> _doVirtualKeyFunc(VirtualKeyFunc type) async {
     switch (type) {
       case VirtualKeyFunc.toggleIME:
-        FocusScope.of(context).requestFocus(FocusNode());
+        if (!_focus.hasFocus) {
+          _focus.requestFocus();
+        } else {
+          _focus.unfocus();
+        }
         break;
       case VirtualKeyFunc.backspace:
         _terminal.keyInput(TerminalKey.backspace);
@@ -487,6 +494,24 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     );
 
     _terminalStyle = TerminalStyle.fromTextStyle(textStyle);
+  }
+
+  Future<void> _showHelp() async {
+    if (!Stores.setting.sshTermHelpShown.fetch()) {
+      await context.showRoundDialog(
+        title: Text(l10n.doc),
+        child: Text(l10n.sshTermHelp),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Stores.setting.sshTermHelpShown.put(true);
+              context.pop();
+            },
+            child: Text(l10n.noPromptAgain),
+          ),
+        ],
+      );
+    }
   }
 }
 

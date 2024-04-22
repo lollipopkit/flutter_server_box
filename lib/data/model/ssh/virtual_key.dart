@@ -119,7 +119,7 @@ enum VirtKey {
       case VirtKey.clipboard:
         return Icons.paste;
       case VirtKey.ime:
-        return Icons.keyboard_hide;
+        return Icons.keyboard;
       default:
         return null;
     }
@@ -165,16 +165,12 @@ enum VirtKey {
     }
   }
 
-  String? get help {
-    switch (this) {
-      case VirtKey.sftp:
-        return l10n.virtKeyHelpSFTP;
-      case VirtKey.clipboard:
-        return l10n.virtKeyHelpClipboard;
-      default:
-        return null;
-    }
-  }
+  String? get help => switch (this) {
+    VirtKey.sftp => l10n.virtKeyHelpSFTP,
+    VirtKey.clipboard => l10n.virtKeyHelpClipboard,
+    VirtKey.ime => l10n.virtKeyHelpIME,
+    _ => null,
+  };
 }
 
 enum VirtualKeyFunc { toggleIME, backspace, clipboard, snippet, file }

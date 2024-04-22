@@ -138,6 +138,7 @@ class _HomePageState extends State<HomePage>
       body: PageView.builder(
         controller: _pageController,
         itemCount: AppTab.values.length,
+        physics: const NeverScrollableScrollPhysics(),
         itemBuilder: (_, index) => AppTab.values[index].page,
         onPageChanged: (value) {
           if (!_switchingPage) {

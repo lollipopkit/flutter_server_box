@@ -267,6 +267,10 @@ class SettingStore extends PersistentStore {
 
   late final editorSoftWrap = property('editorSoftWrap', isIOS);
 
+  late final sshTermHelpShown = property('sshTermHelpShown', false);
+
+  late final horizonVirtKey = property('horizonVirtKey', false);
+
   // Never show these settings for users
   //
   // ------BEGIN------
