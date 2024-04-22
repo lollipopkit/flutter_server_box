@@ -271,6 +271,8 @@ class SettingStore extends PersistentStore {
 
   late final horizonVirtKey = property('horizonVirtKey', false);
 
+  late final collectUsage = property('collectUsage', true);
+
   // Never show these settings for users
   //
   // ------BEGIN------

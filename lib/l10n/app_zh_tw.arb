@@ -43,6 +43,7 @@
   "cnKeyboardCompTip": "如果終端彈出安全鍵盤，您可以啟用它。",
   "collapseUI": "折疊",
   "collapseUITip": "是否預設折疊UI中存在的長列表",
+  "collectUsage": "搜集使用信息（與隱私無關）",
   "conn": "連接",
   "connected": "已連接",
   "container": "容器",

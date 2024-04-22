@@ -43,6 +43,7 @@
   "cnKeyboardCompTip": "Wenn das Terminal ein sicheres Tastenfeld öffnet, können Sie es aktivieren.",
   "collapseUI": "Zusammenbrechen",
   "collapseUITip": "Ob lange Listen in der Benutzeroberfläche standardmäßig eingeklappt werden sollen oder nicht",
+  "collectUsage": "Nutzungsinformationen sammeln (unabhängig von der Privatsphäre).",
   "conn": "Verbindung",
   "connected": "in Verbindung gebracht",
   "container": "Container",

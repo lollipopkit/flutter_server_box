@@ -43,6 +43,7 @@
   "cnKeyboardCompTip": "Als de terminal een beveiligd toetsenbord weergeeft, kunt u dit inschakelen.",
   "collapseUI": "Inklappen",
   "collapseUITip": "Of lange lijsten in de UI standaard moeten worden ingeklapt",
+  "collectUsage": "Gebruiksinformatie verzamelen (niet gerelateerd aan privacy).",
   "conn": "Verbinding",
   "connected": "Verbonden",
   "container": "Container",

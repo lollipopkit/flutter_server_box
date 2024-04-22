@@ -43,6 +43,7 @@
   "cnKeyboardCompTip": "Si le terminal affiche un clavier sécurisé, vous pouvez l'activer.",
   "collapseUI": "обвал",
   "collapseUITip": "Réduction ou non des longues listes présentes dans l'interface utilisateur par défaut",
+  "collectUsage": "Collecter des informations d'utilisation (sans rapport avec la vie privée).",
   "conn": "Connexion",
   "connected": "Connecté",
   "container": "Conteneurs",

@@ -158,7 +158,7 @@ class _HomePageState extends State<HomePage>
   Widget _buildBottomBar() {
     return NavigationBar(
       selectedIndex: _selectIndex.value,
-      height: kBottomNavigationBarHeight * 1.2,
+      height: kBottomNavigationBarHeight * 1.1,
       animationDuration: const Duration(milliseconds: 250),
       onDestinationSelected: (int index) {
         if (_selectIndex.value == index) return;

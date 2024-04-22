@@ -43,6 +43,7 @@
   "cnKeyboardCompTip": "Se o terminal abrir um teclado seguro, você pode ativá-lo.",
   "collapseUI": "Colapsar",
   "collapseUITip": "Deve colapsar listas longas na UI por padrão?",
+  "collectUsage": "Coletar informações de uso (não relacionadas à privacidade).",
   "conn": "Conectar",
   "connected": "Conectado",
   "container": "Contêiner",

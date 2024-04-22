@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:countly_flutter/countly_flutter.dart';
 import 'package:toolbox/core/build_mode.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
+import 'package:toolbox/data/res/store.dart';
 
 class Analysis {
   static const _url = 'https://countly.lolli.tech';
@@ -12,9 +13,8 @@ class Analysis {
 
   static Future<void> init() async {
     if (enabled) return;
-    if (!BuildMode.isRelease) {
-      return;
-    }
+    if (!BuildMode.isRelease) return;
+    if (!Stores.setting.collectUsage.fetch()) return;
     if (isAndroid || isIOS) {
       enabled = true;
       final config = CountlyConfig(_url, _key)

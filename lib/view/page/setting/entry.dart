@@ -1043,6 +1043,7 @@ class _SettingPageState extends State<SettingPage> {
     return ExpandTile(
       title: Text(l10n.more),
       children: [
+        if (isAndroid || isIOS) _buildCollectUsage(),
         _buildCollapseUI(),
         _buildCupertinoRoute(),
         if (isDesktop) _buildHideTitleBar(),
@@ -1085,6 +1086,14 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       title: Text(l10n.softWrap),
       trailing: StoreSwitch(prop: _setting.editorSoftWrap),
+    );
+  }
+
+  Widget _buildCollectUsage() {
+    return ListTile(
+      title: const Text('Countly'),
+      subtitle: Text(l10n.collectUsage, style: UIs.textGrey),
+      trailing: StoreSwitch(prop: _setting.collectUsage),
     );
   }
 }

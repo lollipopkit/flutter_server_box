@@ -43,6 +43,7 @@
   "cnKeyboardCompTip": "Jika terminal munculkan keyboard aman, Anda bisa mengaktifkannya.",
   "collapseUI": "Runtuh",
   "collapseUITip": "Apakah akan menciutkan daftar panjang yang ada di UI secara default atau tidak",
+  "collectUsage": "Mengumpulkan informasi penggunaan (tidak terkait dengan privasi).",
   "conn": "Koneksi",
   "connected": "Terhubung",
   "container": "Wadah",

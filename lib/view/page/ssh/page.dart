@@ -189,7 +189,8 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
-          children: _virtKeysList.expand((e) => e).map(_buildVirtKeyItem).toList(),
+          children:
+              _virtKeysList.expand((e) => e).map(_buildVirtKeyItem).toList(),
         ),
       );
     }

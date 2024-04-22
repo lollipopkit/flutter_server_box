@@ -43,6 +43,7 @@
   "cnKeyboardCompTip": "ターミナルがセキュアキーボードを表示した場合、それを有効にできます。",
   "collapseUI": "UIを折りたたむ",
   "collapseUITip": "UIの長いリストをデフォルトで折りたたむかどうか",
+  "collectUsage": "使用情報を収集する（プライバシーとは関係ない）。",
   "conn": "接続",
   "connected": "接続済み",
   "container": "コンテナ",

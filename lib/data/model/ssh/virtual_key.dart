@@ -166,11 +166,11 @@ enum VirtKey {
   }
 
   String? get help => switch (this) {
-    VirtKey.sftp => l10n.virtKeyHelpSFTP,
-    VirtKey.clipboard => l10n.virtKeyHelpClipboard,
-    VirtKey.ime => l10n.virtKeyHelpIME,
-    _ => null,
-  };
+        VirtKey.sftp => l10n.virtKeyHelpSFTP,
+        VirtKey.clipboard => l10n.virtKeyHelpClipboard,
+        VirtKey.ime => l10n.virtKeyHelpIME,
+        _ => null,
+      };
 }
 
 enum VirtualKeyFunc { toggleIME, backspace, clipboard, snippet, file }
