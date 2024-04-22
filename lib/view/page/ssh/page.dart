@@ -61,6 +61,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   late TerminalTheme _terminalTheme;
   double _virtKeyWidth = 0;
   double _virtKeysHeight = 0;
+  late final _horizonVirtKeys = Stores.setting.horizonVirtKey.fetch();
 
   bool _isDark = false;
   Timer? _virtKeyLongPressTimer;
@@ -103,7 +104,11 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     // Because the virtual keyboard only displayed on mobile devices
     if (isMobile) {
       _virtKeyWidth = _media.size.width / 7;
-      _virtKeysHeight = _media.size.height * 0.043 * _virtKeysList.length;
+      if (_horizonVirtKeys) {
+        _virtKeysHeight = _media.size.height * 0.043;
+      } else {
+        _virtKeysHeight = _media.size.height * 0.043 * _virtKeysList.length;
+      }
     }
   }
 
@@ -180,6 +185,14 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   }
 
   Widget _buildVirtualKey() {
+    if (_horizonVirtKeys) {
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: _virtKeysList.expand((e) => e).map(_buildVirtKeyItem).toList(),
+        ),
+      );
+    }
     final rows = _virtKeysList
         .map((e) => Row(children: e.map((f) => _buildVirtKeyItem(f)).toList()))
         .toList();
