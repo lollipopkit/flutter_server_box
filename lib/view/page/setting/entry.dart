@@ -18,6 +18,7 @@ import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/rebuild.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/expand_tile.dart';
+import 'package:toolbox/view/widget/markdown.dart';
 
 import '../../../core/persistant_store.dart';
 import '../../../core/route.dart';
@@ -55,14 +56,15 @@ class _SettingPageState extends State<SettingPage> {
             icon: const Icon(Icons.delete),
             onPressed: () => context.showRoundDialog(
               title: Text(l10n.attention),
-              child: Text(l10n.askContinue(
-                '${l10n.delete}: **${l10n.all}** ${l10n.setting}',
+              child: SimpleMarkdown(
+                  data: l10n.askContinue(
+                '${l10n.delete} **${l10n.all}** ${l10n.setting}',
               )),
               actions: [
                 TextButton(
                   onPressed: () {
-                    _setting.box.deleteAll(_setting.box.keys);
                     context.pop();
+                    _setting.box.deleteAll(_setting.box.keys);
                     context.showSnackBar(l10n.success);
                   },
                   child: Text(
@@ -114,6 +116,7 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildApp() {
+    final specific = _buildPlatformSetting();
     final children = [
       _buildLocale(),
       _buildThemeMode(),
@@ -122,7 +125,7 @@ class _SettingPageState extends State<SettingPage> {
       _buildCheckUpdate(),
 
       /// Platform specific settings
-      if (OS.hasSpecSetting) _buildPlatformSetting(),
+      if (specific != null) specific,
       _buildAppMore(),
     ];
 
@@ -915,22 +918,17 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  Widget _buildPlatformSetting() {
+  Widget? _buildPlatformSetting() {
+    final func = switch (OS.type) {
+      OS.android => AppRoute.androidSettings().go,
+      OS.ios => AppRoute.iosSettings().go,
+      _ => null,
+    };
+    if (func == null) return null;
     return ListTile(
       title: Text('${OS.type} ${l10n.setting}'),
       trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () {
-        switch (OS.type) {
-          case OS.android:
-            AppRoute.androidSettings().go(context);
-            break;
-          case OS.ios:
-            AppRoute.iosSettings().go(context);
-            break;
-          default:
-            break;
-        }
-      },
+      onTap: () => func(context),
     );
   }
 

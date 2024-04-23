@@ -44,12 +44,6 @@ enum OS {
         OS.ios => 'iOS',
         final val => val.name.upperFirst,
       };
-
-  /// Whether has platform specific settings.
-  static final hasSpecSetting = switch (type) {
-    OS.android || OS.ios => true,
-    _ => false,
-  };
 }
 
 final isAndroid = OS.type == OS.android;

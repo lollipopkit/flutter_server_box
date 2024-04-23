@@ -41,7 +41,7 @@ dependencies:
   xterm:
     # path: ../xterm.dart
     git:
-      ref: 7d3c3e2
+      ref: a343bc2fdc11fbc7dbfc1f170692426a6fe01cb9
       url: https://github.com/lollipopkit/xterm.dart
   file_picker: ^8.0.1
   plain_notification_token: ^0.0.4
