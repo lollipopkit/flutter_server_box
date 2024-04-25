@@ -12,9 +12,9 @@ final class _AppBar extends CustomAppBar {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: selectIndex,
-      builder: (_, idx, __) {
+    return ValBuilder(
+      listenable: selectIndex,
+      builder: (idx) {
         if (idx == AppTab.ssh.index) {
           return SizedBox(
             height: CustomAppBar.barHeight ??

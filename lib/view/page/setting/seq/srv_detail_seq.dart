@@ -3,6 +3,7 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/data/model/app/server_detail_card.dart';
 import 'package:toolbox/data/res/store.dart';
+import 'package:toolbox/view/widget/val_builder.dart';
 
 import '../../../../core/extension/order.dart';
 import '../../../widget/appbar.dart';
@@ -29,9 +30,9 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
   }
 
   Widget _buildBody() {
-    return ValueListenableBuilder(
-      valueListenable: prop.listenable(),
-      builder: (_, keys, __) {
+    return ValBuilder(
+      listenable: prop.listenable(),
+      builder: (keys) {
         final disabled =
             ServerDetailCards.names.where((e) => !keys.contains(e)).toList();
         final allKeys = [...keys, ...disabled];

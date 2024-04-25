@@ -20,6 +20,7 @@ import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/expand_tile.dart';
 import 'package:toolbox/view/widget/kv_row.dart';
 import 'package:toolbox/view/widget/server_func_btns.dart';
+import 'package:toolbox/view/widget/val_builder.dart';
 
 import '../../../../core/extension/numx.dart';
 import '../../../../core/route.dart';
@@ -573,9 +574,9 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           children: [
             Text(l10n.net),
             UIs.width13,
-            ValueListenableBuilder(
-              valueListenable: _netSortType,
-              builder: (_, val, __) => InkWell(
+            ValBuilder(
+              listenable: _netSortType,
+              builder: (val) => InkWell(
                 onTap: () => _netSortType.value = val.next,
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 377),

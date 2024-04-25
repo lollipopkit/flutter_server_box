@@ -9,6 +9,7 @@ import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/widget/cardx.dart';
 import 'package:toolbox/view/widget/store_switch.dart';
+import 'package:toolbox/view/widget/val_builder.dart';
 
 import '../../../widget/appbar.dart';
 
@@ -48,9 +49,9 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
   }
 
   Widget _buildBody() {
-    return ValueListenableBuilder(
-      valueListenable: prop.listenable(),
-      builder: (_, keys, __) {
+    return ValBuilder(
+      listenable: prop.listenable(),
+      builder: (keys) {
         final disabled = VirtKey.values
             .map((e) => e.index)
             .where((e) => !keys.contains(e))

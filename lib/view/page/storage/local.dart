@@ -13,6 +13,7 @@ import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/omit_start_text.dart';
 import 'package:toolbox/view/widget/cardx.dart';
+import 'package:toolbox/view/widget/val_builder.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/route.dart';
@@ -76,9 +77,9 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
             icon: const Icon(Icons.downloading),
             onPressed: () => AppRoute.sftpMission().go(context),
           ),
-          ValueListenableBuilder<_SortType>(
-            valueListenable: _sortType,
-            builder: (context, value, child) {
+          ValBuilder<_SortType>(
+            listenable: _sortType,
+            builder: (value) {
               return PopupMenuButton<_SortType>(
                 icon: const Icon(Icons.sort),
                 itemBuilder: (context) {
@@ -107,9 +108,9 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
       ),
       body: FadeIn(
         key: UniqueKey(),
-        child: ValueListenableBuilder(
-          valueListenable: _sortType,
-          builder: (_, val, __) {
+        child: ValBuilder(
+          listenable: _sortType,
+          builder: (val) {
             return _buildBody();
           },
         ),

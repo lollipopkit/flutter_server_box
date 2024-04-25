@@ -466,7 +466,10 @@ class _ServerEditPageState extends State<ServerEditPage> {
         ));
         return CardX(
           child: ExpandTile(
-            leading: const Icon(Icons.map),
+            leading: const Padding(
+              padding: EdgeInsets.only(left: 10),
+              child: Icon(Icons.map),
+            ),
             initiallyExpanded: _jumpServer.value != null,
             title: Text(l10n.jumpServer),
             children: children,

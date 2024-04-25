@@ -5,6 +5,7 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/cardx.dart';
+import 'package:toolbox/view/widget/val_builder.dart';
 
 import '../../data/res/color.dart';
 
@@ -196,9 +197,9 @@ class TagSwitcher extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: tags,
-      builder: (_, vals, __) {
+    return ValBuilder(
+      listenable: tags,
+      builder: (vals) {
         if (vals.isEmpty) return UIs.placeholder;
         final items = <String?>[null, ...vals];
         return Container(

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:toolbox/view/widget/val_builder.dart';
 
 import '../../core/persistant_store.dart';
 
@@ -22,9 +23,9 @@ class StoreSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: prop.listenable(),
-      builder: (context, bool value, widget) {
+    return ValBuilder(
+      listenable: prop.listenable(),
+      builder: (value) {
         return Switch(
           value: value,
           onChanged: (value) async {

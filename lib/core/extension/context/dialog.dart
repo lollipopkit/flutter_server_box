@@ -7,6 +7,7 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/choice_chip.dart';
 import 'package:toolbox/view/widget/tag.dart';
+import 'package:toolbox/view/widget/val_builder.dart';
 
 import '../../../data/res/ui.dart';
 import '../../../view/widget/input_field.dart';
@@ -180,9 +181,9 @@ extension DialogX on BuildContext {
           ),
           const Divider(),
           SingleChildScrollView(
-            child: ValueListenableBuilder(
-              valueListenable: tag,
-              builder: (_, val, __) {
+            child: ValBuilder(
+              listenable: tag,
+              builder: (val) {
                 final items = itemsBuilder(val);
                 return Choice<T>(
                   onChanged: (value) => vals = value,

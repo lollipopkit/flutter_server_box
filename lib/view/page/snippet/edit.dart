@@ -9,6 +9,7 @@ import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/view/widget/cardx.dart';
 import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/markdown.dart';
+import 'package:toolbox/view/widget/val_builder.dart';
 
 import '../../../data/model/server/snippet.dart';
 import '../../../data/res/ui.dart';
@@ -132,9 +133,9 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           label: l10n.note,
           icon: Icons.note,
         ),
-        ValueListenableBuilder(
-          valueListenable: _tags,
-          builder: (_, vals, __) {
+        ValBuilder(
+          listenable: _tags,
+          builder: (vals) {
             return TagEditor(
               tags: _tags.value,
               onChanged: (p0) => setState(() {
@@ -164,33 +165,34 @@ class _SnippetEditPageState extends State<SnippetEditPage>
 
   Widget _buildAutoRunOn() {
     return CardX(
-        child: ValueListenableBuilder(
-      valueListenable: _autoRunOn,
-      builder: (_, vals, __) {
-        return ListTile(
-          leading: const Icon(Icons.settings_remote, size: 19),
-          title: Text(l10n.autoRun),
-          trailing: const Icon(Icons.keyboard_arrow_right),
-          subtitle: vals.isEmpty
-              ? null
-              : Text(
-                  vals.join(', '),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-          onTap: () async {
-            vals.removeWhere((e) => !Pros.server.serverOrder.contains(e));
-            final serverIds = await context.showPickDialog(
-              items: Pros.server.serverOrder,
-              initial: vals,
-            );
-            if (serverIds != null) {
-              _autoRunOn.value = serverIds;
-            }
-          },
-        );
-      },
-    ));
+      child: ValBuilder(
+        listenable: _autoRunOn,
+        builder: (vals) {
+          return ListTile(
+            leading: const Icon(Icons.settings_remote, size: 19),
+            title: Text(l10n.autoRun),
+            trailing: const Icon(Icons.keyboard_arrow_right),
+            subtitle: vals.isEmpty
+                ? null
+                : Text(
+                    vals.join(', '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+            onTap: () async {
+              vals.removeWhere((e) => !Pros.server.serverOrder.contains(e));
+              final serverIds = await context.showPickDialog(
+                items: Pros.server.serverOrder,
+                initial: vals,
+              );
+              if (serverIds != null) {
+                _autoRunOn.value = serverIds;
+              }
+            },
+          );
+        },
+      ),
+    );
   }
 
   Widget _buildTip() {

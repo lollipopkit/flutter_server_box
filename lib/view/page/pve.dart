@@ -19,6 +19,7 @@ import 'package:toolbox/view/widget/kv_row.dart';
 import 'package:toolbox/view/widget/percent_circle.dart';
 import 'package:toolbox/view/widget/row.dart';
 import 'package:toolbox/view/widget/two_line_text.dart';
+import 'package:toolbox/view/widget/val_builder.dart';
 
 final class PvePage extends StatefulWidget {
   final ServerPrivateInfo spi;
@@ -64,9 +65,9 @@ final class _PvePageState extends State<PvePage> {
       appBar: CustomAppBar(
         title: TwoLineText(up: 'PVE', down: widget.spi.name),
         actions: [
-          ValueListenableBuilder(
-            valueListenable: _pve.err,
-            builder: (_, val, __) => val == null
+          ValBuilder(
+            listenable: _pve.err,
+            builder: (val) => val == null
                 ? UIs.placeholder
                 : IconBtn(
                     icon: Icons.refresh,
@@ -79,9 +80,9 @@ final class _PvePageState extends State<PvePage> {
           ),
         ],
       ),
-      body: ValueListenableBuilder(
-        valueListenable: _pve.err,
-        builder: (_, val, __) {
+      body: ValBuilder(
+        listenable: _pve.err,
+        builder: (val) {
           if (val != null) {
             _timer?.cancel();
             return Padding(
@@ -91,9 +92,9 @@ final class _PvePageState extends State<PvePage> {
               ),
             );
           }
-          return ValueListenableBuilder(
-            valueListenable: _pve.data,
-            builder: (_, val, __) {
+          return ValBuilder(
+            listenable: _pve.data,
+            builder: (val) {
               return _buildBody(val);
             },
           );

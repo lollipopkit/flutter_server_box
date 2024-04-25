@@ -17,6 +17,7 @@ import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/omit_start_text.dart';
 import 'package:toolbox/view/widget/cardx.dart';
+import 'package:toolbox/view/widget/val_builder.dart';
 
 import '../../../core/extension/numx.dart';
 import '../../../core/route.dart';
@@ -72,9 +73,9 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
             icon: const Icon(Icons.downloading),
             onPressed: () => AppRoute.sftpMission().go(context),
           ),
-          ValueListenableBuilder(
-            valueListenable: _sortOption,
-            builder: (context, value, child) {
+          ValBuilder(
+            listenable: _sortOption,
+            builder: (value) {
               return PopupMenuButton<_SortType>(
                 icon: const Icon(Icons.sort),
                 itemBuilder: (context) {
@@ -294,11 +295,13 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     return RefreshIndicator(
       child: FadeIn(
         key: Key(widget.spi.name + _status.path!.path),
-        child: ValueListenableBuilder(
-          valueListenable: _sortOption,
-          builder: (_, sortOption, __) {
-            final files = sortOption.sortBy
-                .sort(_status.files!, reversed: sortOption.reversed);
+        child: ValBuilder(
+          listenable: _sortOption,
+          builder: (sortOption) {
+            final files = sortOption.sortBy.sort(
+              _status.files!,
+              reversed: sortOption.reversed,
+            );
             return ListView.builder(
               itemCount: files.length,
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),

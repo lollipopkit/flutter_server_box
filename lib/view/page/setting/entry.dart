@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/build_mode.dart';
 import 'package:toolbox/core/extension/colorx.dart';
@@ -19,6 +20,7 @@ import 'package:toolbox/data/res/rebuild.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/expand_tile.dart';
 import 'package:toolbox/view/widget/markdown.dart';
+import 'package:toolbox/view/widget/val_builder.dart';
 
 import '../../../core/persistant_store.dart';
 import '../../../core/route.dart';
@@ -35,6 +37,8 @@ import '../../widget/appbar.dart';
 import '../../widget/input_field.dart';
 import '../../widget/cardx.dart';
 import '../../widget/store_switch.dart';
+
+const _kIconSize = 23.0;
 
 class SettingPage extends StatefulWidget {
   const SettingPage({super.key});
@@ -195,27 +199,28 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildCheckUpdate() {
-    return Consumer<AppProvider>(
-      builder: (ctx, app, __) {
-        String display;
-        if (app.newestBuild != null) {
-          if (app.newestBuild! > BuildData.build) {
-            display = l10n.versionHaveUpdate(app.newestBuild!);
+    return ListTile(
+      leading: const Icon(Icons.update),
+      title: Text(l10n.autoCheckUpdate),
+      subtitle: Consumer<AppProvider>(
+        builder: (ctx, app, __) {
+          String display;
+          if (app.newestBuild != null) {
+            if (app.newestBuild! > BuildData.build) {
+              display = l10n.versionHaveUpdate(app.newestBuild!);
+            } else {
+              display = l10n.versionUpdated(BuildData.build);
+            }
           } else {
-            display = l10n.versionUpdated(BuildData.build);
+            display = l10n.versionUnknownUpdate(BuildData.build);
           }
-        } else {
-          display = l10n.versionUnknownUpdate(BuildData.build);
-        }
-        return ListTile(
-          title: Text(l10n.autoCheckUpdate),
-          subtitle: Text(display, style: UIs.textGrey),
-          onTap: () => Funcs.throttle(
-            () => doUpdate(ctx, force: BuildMode.isDebug),
-          ),
-          trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),
-        );
-      },
+          return Text(display, style: UIs.textGrey);
+        },
+      ),
+      onTap: () => Funcs.throttle(
+        () => doUpdate(context, force: BuildMode.isDebug),
+      ),
+      trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),
     );
   }
 
@@ -238,9 +243,9 @@ class _SettingPageState extends State<SettingPage> {
           _setting.serverStatusUpdateInterval.put(val);
         }
       },
-      trailing: ValueListenableBuilder(
-        valueListenable: _setting.serverStatusUpdateInterval.listenable(),
-        builder: (_, val, __) => Text(
+      trailing: ValBuilder(
+        listenable: _setting.serverStatusUpdateInterval.listenable(),
+        builder: (val) => Text(
           '$val ${l10n.second}',
           style: UIs.text15,
         ),
@@ -250,14 +255,11 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildAppColor() {
     return ListTile(
-      trailing: ClipOval(
-        child: Container(
-          color: primaryColor,
-          height: 27,
-          width: 27,
-        ),
-      ),
+      leading: const Icon(Icons.colorize),
       title: Text(l10n.primaryColorSeed),
+      trailing: ClipOval(
+        child: Container(color: primaryColor, height: 27, width: 27),
+      ),
       onTap: () async {
         final ctrl = TextEditingController(text: primaryColor.toHex);
         await context.showRoundDialog(
@@ -360,9 +362,9 @@ class _SettingPageState extends State<SettingPage> {
   // }
 
   Widget _buildMaxRetry() {
-    return ValueListenableBuilder(
-      valueListenable: _setting.maxRetryCount.listenable(),
-      builder: (_, val, __) => ListTile(
+    return ValBuilder(
+      listenable: _setting.maxRetryCount.listenable(),
+      builder: (val) => ListTile(
         title: Text(
           l10n.maxRetryCount,
           textAlign: TextAlign.start,
@@ -392,9 +394,8 @@ class _SettingPageState extends State<SettingPage> {
     // Issue #57
     final len = ThemeMode.values.length;
     return ListTile(
-      title: Text(
-        l10n.themeMode,
-      ),
+      leading: const Icon(MingCute.moon_stars_fill),
+      title: Text(l10n.themeMode),
       onTap: () async {
         final selected = await context.showPickSingleDialog(
           items: List.generate(len + 2, (index) => index),
@@ -406,9 +407,9 @@ class _SettingPageState extends State<SettingPage> {
           RebuildNodes.app.rebuild();
         }
       },
-      trailing: ValueListenableBuilder(
-        valueListenable: _setting.themeMode.listenable(),
-        builder: (_, val, __) => Text(
+      trailing: ValBuilder(
+        listenable: _setting.themeMode.listenable(),
+        builder: (val) => Text(
           _buildThemeModeStr(val),
           style: UIs.text15,
         ),
@@ -434,6 +435,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildFont() {
     final fontName = getFileName(_setting.fontPath.fetch());
     return ListTile(
+      leading: const Icon(MingCute.font_fill),
       title: Text(l10n.font),
       trailing: Text(
         fontName ?? l10n.notSelected,
@@ -483,11 +485,12 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildTermFontSize() {
     return ListTile(
+      leading: const Icon(MingCute.font_size_line),
       title: Text(l10n.fontSize),
       subtitle: Text(l10n.termFontSizeTip, style: UIs.textGrey),
-      trailing: ValueListenableBuilder(
-        valueListenable: _setting.termFontSize.listenable(),
-        builder: (_, val, __) => Text(
+      trailing: ValBuilder(
+        listenable: _setting.termFontSize.listenable(),
+        builder: (val) => Text(
           val.toString(),
           style: UIs.text15,
         ),
@@ -535,6 +538,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildLocale() {
     return ListTile(
+      leading: const Icon(IonIcons.language),
       title: Text(l10n.language),
       onTap: () async {
         final selected = await context.showPickSingleDialog(
@@ -548,9 +552,9 @@ class _SettingPageState extends State<SettingPage> {
           RebuildNodes.app.rebuild();
         }
       },
-      trailing: ValueListenableBuilder(
-        valueListenable: _setting.locale.listenable(),
-        builder: (_, ___, __) => Text(
+      trailing: ListenBuilder(
+        listenable: _setting.locale.listenable(),
+        builder: () => Text(
           l10n.languageName,
           style: UIs.text15,
         ),
@@ -560,6 +564,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildSSHVirtualKeyAutoOff() {
     return ListTile(
+      leading: const Icon(MingCute.hotkey_fill),
       title: Text(l10n.sshVirtualKeyAutoOff),
       subtitle: const Text('Ctrl & Alt', style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.sshVirtualKeyAutoOff),
@@ -568,10 +573,11 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildEditorTheme() {
     return ListTile(
+      leading: const Icon(MingCute.sun_fill),
       title: Text('${l10n.light} ${l10n.theme.toLowerCase()}'),
-      trailing: ValueListenableBuilder(
-        valueListenable: _setting.editorTheme.listenable(),
-        builder: (_, val, __) => Text(val, style: UIs.text15),
+      trailing: ValBuilder(
+        listenable: _setting.editorTheme.listenable(),
+        builder: (val) => Text(val, style: UIs.text15),
       ),
       onTap: () async {
         final selected = await context.showPickSingleDialog(
@@ -588,10 +594,11 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildEditorDarkTheme() {
     return ListTile(
+      leading: const Icon(MingCute.moon_stars_fill),
       title: Text('${l10n.dark} ${l10n.theme.toLowerCase()}'),
-      trailing: ValueListenableBuilder(
-        valueListenable: _setting.editorDarkTheme.listenable(),
-        builder: (_, val, __) => Text(val, style: UIs.text15),
+      trailing: ValBuilder(
+        listenable: _setting.editorDarkTheme.listenable(),
+        builder: (val) => Text(val, style: UIs.text15),
       ),
       onTap: () async {
         final selected = await context.showPickSingleDialog(
@@ -608,6 +615,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildFullScreenSwitch() {
     return ListTile(
+      leading: const Icon(Bootstrap.phone_landscape_fill),
       title: Text(l10n.fullScreen),
       subtitle: Text(l10n.fullScreenTip, style: UIs.textGrey),
       trailing: StoreSwitch(
@@ -619,6 +627,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildFullScreenJitter() {
     return ListTile(
+      leading: const Icon(AntDesign.shake_outline),
       title: Text(l10n.fullScreenJitter),
       subtitle: Text(l10n.fullScreenJitterHelp, style: UIs.textGrey),
       trailing: StoreSwitch(
@@ -673,6 +682,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildSSHVirtKeys() {
     return ListTile(
+      leading: const Icon(BoxIcons.bxs_keyboard),
       title: Text(l10n.editVirtKeys),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () => AppRoute.sshVirtKeySetting().go(context),
@@ -691,6 +701,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildSftpOpenLastPath() {
     return ListTile(
+      leading: const Icon(MingCute.history_line),
       title: Text(l10n.openLastPath),
       subtitle: Text(l10n.openLastPathTip, style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.sftpOpenLastPath),
@@ -699,6 +710,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildSftpShowFoldersFirst() {
     return ListTile(
+      leading: const Icon(MingCute.folder_fill),
       title: Text(l10n.sftpShowFoldersFirst),
       trailing: StoreSwitch(prop: _setting.sftpShowFoldersFirst),
     );
@@ -706,10 +718,11 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildNetViewType() {
     return ListTile(
+      leading: const Icon(ZondIcons.network, size: _kIconSize),
       title: Text(l10n.netViewType),
-      trailing: ValueListenableBuilder(
-        valueListenable: _setting.netViewType.listenable(),
-        builder: (_, val, __) => Text(
+      trailing: ValBuilder(
+        listenable: _setting.netViewType.listenable(),
+        builder: (val) => Text(
           val.toStr,
           style: UIs.text15,
         ),
@@ -730,7 +743,8 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildDeleteServers() {
     return ListTile(
       title: Text(l10n.deleteServers),
-      trailing: const Icon(Icons.delete_forever),
+      leading: const Icon(Icons.delete_forever),
+      trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () async {
         context.showRoundDialog<List<String>>(
           title: Text(l10n.choose),
@@ -775,9 +789,9 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       title: Text(l10n.textScaler),
       subtitle: Text(l10n.textScalerTip, style: UIs.textGrey),
-      trailing: ValueListenableBuilder(
-        valueListenable: _setting.textFactor.listenable(),
-        builder: (_, val, __) => Text(
+      trailing: ValBuilder(
+        listenable: _setting.textFactor.listenable(),
+        builder: (val) => Text(
           val.toString(),
           style: UIs.text15,
         ),
@@ -815,6 +829,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildServerFuncBtns() {
     return ExpandTile(
+      leading: const Icon(TeenyIcons.button, size: _kIconSize),
       title: Text(l10n.serverFuncBtns),
       children: [
         _buildServerFuncBtnsSwitch(),
@@ -841,6 +856,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildServerSeq() {
     return ListTile(
+      leading: const Icon(OctIcons.sort_desc, size: _kIconSize),
       title: Text(l10n.serverOrder),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () => AppRoute.serverOrder().go(context),
@@ -849,6 +865,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildServerDetailCardSeq() {
     return ListTile(
+      leading: const Icon(OctIcons.sort_desc, size: _kIconSize),
       title: Text(l10n.serverDetailOrder),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () => AppRoute.serverDetailOrder().go(context),
@@ -857,10 +874,11 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildEditorFontSize() {
     return ListTile(
+      leading: const Icon(MingCute.font_size_line),
       title: Text(l10n.fontSize),
-      trailing: ValueListenableBuilder(
-        valueListenable: _setting.editorFontSize.listenable(),
-        builder: (_, val, __) => Text(
+      trailing: ValBuilder(
+        listenable: _setting.editorFontSize.listenable(),
+        builder: (val) => Text(
           val.toString(),
           style: UIs.text15,
         ),
@@ -904,6 +922,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildSftpRmrDir() {
     return ListTile(
+      leading: const Icon(MingCute.delete_2_fill),
       title: const Text('rm -r'),
       subtitle: Text(l10n.sftpRmrDirSummary, style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.sftpRmrDir),
@@ -926,6 +945,7 @@ class _SettingPageState extends State<SettingPage> {
     };
     if (func == null) return null;
     return ListTile(
+      leading: const Icon(Icons.phone_android),
       title: Text('${OS.type} ${l10n.setting}'),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () => func(context),
@@ -934,6 +954,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildEditorHighlight() {
     return ListTile(
+      leading: const Icon(MingCute.code_line, size: _kIconSize),
       title: Text(l10n.highlight),
       subtitle: Text(l10n.editorHighlightTip, style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.editorHighlight),
@@ -950,6 +971,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildUsePodman() {
     return ListTile(
+      leading: const Icon(IonIcons.logo_docker),
       title: Text(l10n.usePodmanByDefault),
       trailing: StoreSwitch(prop: _setting.usePodman),
     );
@@ -957,6 +979,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildContainerTrySudo() {
     return ListTile(
+      leading: const Icon(Clarity.administrator_solid),
       title: Text(l10n.trySudo),
       subtitle: Text(l10n.containerTrySudoTip, style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.containerTrySudo),
@@ -973,6 +996,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildContainerParseStat() {
     return ListTile(
+      leading: const Icon(IonIcons.stats_chart, size: _kIconSize),
       title: Text(l10n.parseContainerStats),
       subtitle: Text(l10n.parseContainerStatsTip, style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.containerParseStat),
@@ -981,6 +1005,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildServerMore() {
     return ExpandTile(
+      leading: const Icon(MingCute.more_3_fill),
       title: Text(l10n.more),
       children: [
         _buildRememberPwdInMem(),
@@ -1016,10 +1041,11 @@ class _SettingPageState extends State<SettingPage> {
     }
 
     return ListTile(
+      leading: const Icon(MingCute.moon_stars_fill, size: _kIconSize),
       title: Text(l10n.theme),
-      trailing: ValueListenableBuilder(
-        valueListenable: _setting.termTheme.listenable(),
-        builder: (_, val, __) => Text(
+      trailing: ValBuilder(
+        listenable: _setting.termTheme.listenable(),
+        builder: (val) => Text(
           index2Str(val),
           style: UIs.text15,
         ),
@@ -1039,6 +1065,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildAppMore() {
     return ExpandTile(
+      leading: const Icon(MingCute.more_3_fill),
       title: Text(l10n.more),
       children: [
         if (isAndroid || isIOS) _buildCollectUsage(),
@@ -1065,6 +1092,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildCpuView() {
     return ExpandTile(
+      leading: const Icon(OctIcons.cpu, size: _kIconSize),
       title: Text('CPU ${l10n.view}'),
       children: [
         ListTile(
@@ -1082,6 +1110,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildEditorWrap() {
     return ListTile(
+      leading: const Icon(MingCute.align_center_line),
       title: Text(l10n.softWrap),
       trailing: StoreSwitch(prop: _setting.editorSoftWrap),
     );

@@ -12,6 +12,7 @@ import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/view/widget/input_field.dart';
+import 'package:toolbox/view/widget/val_builder.dart';
 
 import '../../../core/utils/server.dart';
 import '../../../data/model/server/private_key_info.dart';
@@ -215,9 +216,9 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
           icon: Icons.password,
         ),
         SizedBox(height: MediaQuery.of(context).size.height * 0.1),
-        ValueListenableBuilder(
-          valueListenable: _loading,
-          builder: (_, val, __) => val ?? UIs.placeholder,
+        ValBuilder(
+          listenable: _loading,
+          builder: (val) => val ?? UIs.placeholder,
         ),
       ],
     );

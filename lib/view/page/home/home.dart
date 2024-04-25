@@ -31,6 +31,7 @@ import 'package:toolbox/data/res/url.dart';
 import 'package:toolbox/view/widget/appbar.dart';
 import 'package:toolbox/view/widget/cardx.dart';
 import 'package:toolbox/view/widget/markdown.dart';
+import 'package:toolbox/view/widget/val_builder.dart';
 
 part 'appbar.dart';
 
