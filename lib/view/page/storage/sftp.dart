@@ -17,6 +17,7 @@ import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/omit_start_text.dart';
 import 'package:toolbox/view/widget/cardx.dart';
+import 'package:toolbox/view/widget/search.dart';
 import 'package:toolbox/view/widget/val_builder.dart';
 
 import '../../../core/extension/numx.dart';
@@ -129,8 +130,10 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     final children = widget.isSelect
         ? [
             IconButton(
-                onPressed: () => context.pop(_status.path?.path),
-                icon: const Icon(Icons.done))
+              onPressed: () => context.pop(_status.path?.path),
+              icon: const Icon(Icons.done),
+            ),
+            _buildSearchBtn(),
           ]
         : [
             IconButton(
@@ -143,6 +146,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
             _buildAddBtn(),
             _buildGotoBtn(),
             _buildUploadBtn(),
+            _buildSearchBtn(),
           ];
     if (isDesktop) children.add(_buildRefreshBtn());
     return SafeArea(
@@ -159,6 +163,28 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSearchBtn() {
+    return IconButton(
+      onPressed: () async {
+        Stream<SftpName> find(String query) async* {
+          final fs = _status.files;
+          if (fs == null) return;
+          for (final f in fs) {
+            if (f.filename.contains(query)) yield f;
+          }
+        }
+
+        final search = SearchPage(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+          future: (q) => find(q).toList(),
+          builder: (ctx, e) => _buildItem(e, beforeTap: () => ctx.pop()),
+        );
+        await showSearch(context: context, delegate: search);
+      },
+      icon: const Icon(Icons.search),
     );
   }
 
@@ -314,7 +340,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     );
   }
 
-  Widget _buildItem(SftpName file) {
+  Widget _buildItem(SftpName file, {VoidCallback? beforeTap}) {
     final isDir = file.attr.isDirectory;
     final trailing = Text(
       '${_getTime(file.attr.modifyTime)}\n${file.attr.mode?.str ?? ''}',
@@ -333,6 +359,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
                 style: UIs.textGrey,
               ),
         onTap: () {
+          beforeTap?.call();
           if (isDir) {
             _status.path?.update(file.filename);
             _listDir();
@@ -340,7 +367,10 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
             _onItemPress(file, true);
           }
         },
-        onLongPress: () => _onItemPress(file, !isDir),
+        onLongPress: () {
+          beforeTap?.call();
+          _onItemPress(file, !isDir);
+        },
       ),
     );
   }
