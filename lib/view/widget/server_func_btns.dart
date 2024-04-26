@@ -125,6 +125,10 @@ void _onTapMoreBtns(
       );
       break;
     case ServerFuncBtn.snippet:
+      if (Pros.snippet.snippets.isEmpty) {
+        context.showSnackBar(l10n.noSavedSnippet);
+        return;
+      }
       final snippets = await context.showPickWithTagDialog<Snippet>(
         tags: Pros.snippet.tags,
         itemsBuilder: (e) {

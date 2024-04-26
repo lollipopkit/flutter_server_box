@@ -47,6 +47,7 @@ class _SSHTabPageState extends State<SSHTabPage>
         builder: (_, __) {
           if (_fabRN.value != 0) return const SizedBox();
           return FloatingActionButton(
+            heroTag: 'sshAddServer',
             onPressed: () => AppRoute.serverEdit().go(context),
             tooltip: l10n.addAServer,
             child: const Icon(Icons.add),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../model/app/dynamic_color.dart';
 
-late Color primaryColor;
+var primaryColor = const Color(0xff8b2252);
 
 abstract final class DynamicColors {
   static const content = DynamicColor(Colors.black87, Colors.white70);

@@ -4,6 +4,7 @@ import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:get_it/get_it.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:toolbox/core/channel/bg_run.dart';
 import 'package:toolbox/core/channel/home_widget.dart';
@@ -130,7 +131,7 @@ class _HomePageState extends State<HomePage>
               title: const Text(BuildData.name),
               actions: <Widget>[
                 IconButton(
-                  icon: const Icon(Icons.developer_mode, size: 23),
+                  icon: const Icon(Icons.developer_mode, size: 21),
                   tooltip: l10n.debug,
                   onPressed: () => AppRoute.debug().go(context),
                 ),
@@ -177,9 +178,9 @@ class _HomePageState extends State<HomePage>
       labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
       destinations: [
         NavigationDestination(
-          icon: const Icon(Icons.cloud_outlined),
+          icon: const Icon(BoxIcons.bx_server),
           label: l10n.server,
-          selectedIcon: const Icon(Icons.cloud),
+          selectedIcon: const Icon(BoxIcons.bxs_server),
         ),
         const NavigationDestination(
           icon: Icon(Icons.terminal_outlined),
@@ -187,14 +188,14 @@ class _HomePageState extends State<HomePage>
           selectedIcon: Icon(Icons.terminal),
         ),
         NavigationDestination(
-          icon: const Icon(Icons.snippet_folder_outlined),
+          icon: const Icon(MingCute.file_code_line),
           label: l10n.snippet,
-          selectedIcon: const Icon(Icons.snippet_folder),
+          selectedIcon: const Icon(MingCute.file_code_fill),
         ),
         const NavigationDestination(
-          icon: Icon(Icons.network_check_outlined),
+          icon: Icon(MingCute.planet_line),
           label: 'Ping',
-          selectedIcon: Icon(Icons.network_check),
+          selectedIcon: Icon(MingCute.planet_fill),
         ),
       ],
     );
@@ -243,17 +244,17 @@ class _HomePageState extends State<HomePage>
             onTap: () => AppRoute.keyList().go(context),
           ),
           ListTile(
-            leading: const Icon(Icons.file_open),
+            leading: const Icon(BoxIcons.bxs_file_blank),
             title: Text(l10n.files),
             onTap: () => AppRoute.localStorage().go(context),
           ),
           ListTile(
-            leading: const Icon(Icons.import_export),
+            leading: const Icon(MingCute.file_import_fill),
             title: Text(l10n.backup),
             onTap: () => AppRoute.backup().go(context),
           ),
           ListTile(
-            leading: const Icon(Icons.text_snippet),
+            leading: const Icon(OctIcons.feed_discussion),
             title: Text('${l10n.about} & ${l10n.feedback}'),
             onTap: _showAboutDialog,
           )

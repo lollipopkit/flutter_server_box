@@ -6,24 +6,26 @@ import 'package:toolbox/data/model/app/version_related.dart';
 import 'package:toolbox/data/res/store.dart';
 
 enum ServerDetailCards implements VersionRelated {
-  about,
-  cpu,
-  mem,
-  swap,
-  gpu,
-  disk,
-  net,
-  sensor,
-  temp,
-  battery,
-  pve(sinceBuild: 818),
-  custom(sinceBuild: 825),
+  about(Icons.info),
+  cpu(Icons.memory),
+  mem(Bootstrap.memory),
+  swap(Icons.swap_horiz),
+  gpu(Bootstrap.gpu_card),
+  disk(Bootstrap.device_hdd_fill),
+  net(ZondIcons.network),
+  sensor(MingCute.dashboard_4_line),
+  temp(FontAwesome.temperature_empty_solid),
+  battery(Icons.battery_full),
+  pve(BoxIcons.bxs_dashboard, sinceBuild: 818),
+  custom(Icons.code, sinceBuild: 825),
   ;
 
   @override
   final int? sinceBuild;
 
-  const ServerDetailCards({this.sinceBuild});
+  final IconData icon;
+
+  const ServerDetailCards(this.icon, {this.sinceBuild});
 
   static ServerDetailCards? fromName(String str) =>
       ServerDetailCards.values.firstWhereOrNull((e) => e.name == str);
@@ -67,19 +69,4 @@ enum ServerDetailCards implements VersionRelated {
       }
     }
   }
-
-  IconData get icon => switch (this) {
-        about => Icons.info,
-        cpu => Icons.memory,
-        mem => Bootstrap.memory,
-        swap => Icons.swap_horiz,
-        gpu => Bootstrap.gpu_card,
-        disk => Icons.storage,
-        net => ZondIcons.network,
-        sensor => MingCute.dashboard_4_line,
-        temp => FontAwesome.temperature_empty_solid,
-        battery => Icons.battery_full,
-        pve => BoxIcons.bxs_dashboard,
-        custom => Icons.code,
-      };
 }

@@ -99,6 +99,7 @@ class _ServerPageState extends State<ServerPage>
         },
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'addServer',
         onPressed: () => AppRoute.serverEdit().go(context),
         tooltip: l10n.addAServer,
         child: const Icon(Icons.add),

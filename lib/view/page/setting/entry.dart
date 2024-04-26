@@ -753,29 +753,36 @@ class _SettingPageState extends State<SettingPage> {
               final keys = Stores.server.box.keys.toList();
               keys.removeWhere((element) => element == BoxX.lastModifiedKey);
               final all = keys.map(
-                (e) => TextButton(
-                  onPressed: () => context.showRoundDialog(
-                    title: Text(l10n.attention),
-                    child: Text(l10n.askContinue(
-                      '${l10n.delete} ${l10n.server}($e)',
-                    )),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Pros.server.delServer(e);
-                          ctx.pop();
-                          setState(() {});
-                        },
-                        child: Text(l10n.ok),
-                      )
-                    ],
-                  ),
-                  child: Text(e),
-                ),
+                (e) {
+                  final name = Pros.server.pick(id: e)?.spi.name;
+                  return ListTile(
+                    title: Text(name ?? e),
+                    subtitle: name != null ? Text(e) : null,
+                    onTap: () => context.showRoundDialog(
+                      title: Text(l10n.attention),
+                      child: Text(l10n.askContinue(
+                        '${l10n.delete} ${l10n.server}($e)',
+                      )),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Pros.server.delServer(e);
+                            ctx.pop();
+                            setState(() {});
+                          },
+                          child: Text(l10n.ok),
+                        )
+                      ],
+                    ),
+                  );
+                },
               );
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: all.toList(),
+              return ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 377),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: all.toList(),
+                ),
               );
             }),
           ),
@@ -829,7 +836,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildServerFuncBtns() {
     return ExpandTile(
-      leading: const Icon(TeenyIcons.button, size: _kIconSize),
+      leading: const Icon(BoxIcons.bxs_joystick_button, size: _kIconSize),
       title: Text(l10n.serverFuncBtns),
       children: [
         _buildServerFuncBtnsSwitch(),

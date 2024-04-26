@@ -136,7 +136,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   Widget _buildAbout(ServerStatus ss) {
     return CardX(
       child: ExpandTile(
-        leading: const Icon(Icons.computer),
+        leading: const Icon(MingCute.information_fill, size: 20),
         initiallyExpanded: _getInitExpand(ss.more.entries.length),
         title: Text(l10n.about),
         childrenPadding: const EdgeInsets.symmetric(
@@ -496,7 +496,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       child: ExpandTile(
         title: Text(l10n.disk),
         childrenPadding: const EdgeInsets.only(bottom: 7),
-        leading: const Icon(Icons.storage, size: 17),
+        leading: Icon(ServerDetailCards.disk.icon, size: 17),
         initiallyExpanded: _getInitExpand(children.length),
         children: children,
       ),
@@ -570,6 +570,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     }
     return CardX(
       child: ExpandTile(
+        leading: Icon(ServerDetailCards.net.icon, size: 17),
         title: Row(
           children: [
             Text(l10n.net),
@@ -600,7 +601,6 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           ],
         ),
         childrenPadding: const EdgeInsets.only(bottom: 11),
-        leading: const Icon(Icons.device_hub, size: 17),
         initiallyExpanded: _getInitExpand(children.length),
         children: children,
       ),
