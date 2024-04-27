@@ -320,6 +320,7 @@
   "virtKeyHelpIME": "キーボードのオン/オフ",
   "virtKeyHelpSFTP": "現在のパスでSFTPを開く。",
   "waitConnection": "接続の確立を待ってください",
+  "wakeLock": "起動を保つ",
   "watchNotPaired": "ペアリングされたApple Watchがありません",
   "webdavSettingEmpty": "Webdavの設定が空です",
   "whenOpenApp": "アプリを開くとき",

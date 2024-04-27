@@ -176,6 +176,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildSSH() {
     return Column(
       children: [
+        _buildWakeLock(),
         _buildTermTheme(),
         _buildFont(),
         _buildTermFontSize(),
@@ -1128,6 +1129,14 @@ class _SettingPageState extends State<SettingPage> {
       title: const Text('Countly'),
       subtitle: Text(l10n.collectUsage, style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.collectUsage),
+    );
+  }
+
+  Widget _buildWakeLock() {
+    return ListTile(
+      leading: const Icon(MingCute.lock_fill),
+      title: Text(l10n.wakeLock),
+      trailing: StoreSwitch(prop: _setting.wakeLock),
     );
   }
 }

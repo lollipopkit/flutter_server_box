@@ -320,6 +320,7 @@
   "virtKeyHelpIME": "打開/關閉鍵盤",
   "virtKeyHelpSFTP": "在 SFTP 中打開當前路徑。",
   "waitConnection": "請等待連接建立",
+  "wakeLock": "保持喚醒",
   "watchNotPaired": "沒有已配對的 Apple Watch",
   "webdavSettingEmpty": "Webdav 設置項爲空",
   "whenOpenApp": "當打開 App 時",

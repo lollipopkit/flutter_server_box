@@ -319,6 +319,7 @@
   "virtKeyHelpIME": "Toetsenbord aan/uit zetten",
   "virtKeyHelpSFTP": "Huidige map openen in SFTP.",
   "waitConnection": "Wacht alstublieft tot de verbinding tot stand is gebracht.",
+  "wakeLock": "Wakker houden",
   "watchNotPaired": "Geen gekoppelde Apple Watch",
   "webdavSettingEmpty": "Webdav-instelling is leeg",
   "whenOpenApp": "Bij het openen van de app",

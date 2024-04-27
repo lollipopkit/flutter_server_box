@@ -320,6 +320,7 @@
   "virtKeyHelpIME": "Encender/apagar el teclado",
   "virtKeyHelpSFTP": "Abrir la ruta actual en SFTP.",
   "waitConnection": "Por favor, espera a que la conexión se establezca",
+  "wakeLock": "Mantener despierto",
   "watchNotPaired": "No hay un Apple Watch emparejado",
   "webdavSettingEmpty": "La configuración de Webdav está vacía",
   "whenOpenApp": "Al abrir la App",

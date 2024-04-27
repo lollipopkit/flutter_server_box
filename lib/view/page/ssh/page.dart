@@ -17,6 +17,7 @@ import 'package:toolbox/data/provider/virtual_keyboard.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/appbar.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
 
@@ -77,6 +78,8 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     Future.delayed(const Duration(milliseconds: 77), () async {
       _showHelp();
       await _initTerminal();
+
+      if (Stores.setting.wakeLock.fetch()) WakelockPlus.enable();
     });
   }
 
@@ -86,6 +89,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     _virtKeyLongPressTimer?.cancel();
     _terminalController.dispose();
     _discontinuityTimer?.cancel();
+    WakelockPlus.disable();
   }
 
   @override
