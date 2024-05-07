@@ -33,6 +33,7 @@ import 'package:toolbox/view/widget/appbar.dart';
 import 'package:toolbox/view/widget/cardx.dart';
 import 'package:toolbox/view/widget/markdown.dart';
 import 'package:toolbox/view/widget/val_builder.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 part 'appbar.dart';
 
@@ -68,6 +69,9 @@ class _HomePageState extends State<HomePage>
       _selectIndex.value = 0;
     }
     _pageController = PageController(initialPage: _selectIndex.value);
+    if (Stores.setting.generalWakeLock.fetch()) {
+      WakelockPlus.enable();
+    }
   }
 
   @override
@@ -82,6 +86,7 @@ class _HomePageState extends State<HomePage>
     WidgetsBinding.instance.removeObserver(this);
     Pros.server.closeServer();
     _pageController.dispose();
+    WakelockPlus.disable();
   }
 
   @override

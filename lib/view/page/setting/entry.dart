@@ -176,7 +176,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildSSH() {
     return Column(
       children: [
-        _buildWakeLock(),
+        _buildSSHWakeLock(),
         _buildTermTheme(),
         _buildFont(),
         _buildTermFontSize(),
@@ -1076,6 +1076,7 @@ class _SettingPageState extends State<SettingPage> {
       leading: const Icon(MingCute.more_3_fill),
       title: Text(l10n.more),
       children: [
+        _buildWakeLock(),
         if (isAndroid || isIOS) _buildCollectUsage(),
         _buildCollapseUI(),
         _buildCupertinoRoute(),
@@ -1136,7 +1137,15 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       leading: const Icon(MingCute.lock_fill),
       title: Text(l10n.wakeLock),
-      trailing: StoreSwitch(prop: _setting.wakeLock),
+      trailing: StoreSwitch(prop: _setting.generalWakeLock),
+    );
+  }
+
+  Widget _buildSSHWakeLock() {
+    return ListTile(
+      leading: const Icon(MingCute.lock_fill),
+      title: Text(l10n.wakeLock),
+      trailing: StoreSwitch(prop: _setting.sshWakeLock),
     );
   }
 }

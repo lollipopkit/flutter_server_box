@@ -21,10 +21,10 @@ dependencies:
   countly_flutter: ^24.4.0
   dartssh2: #^2.9.1-pre
     # newer version has some issues
-    # git:
-    #   ref: master
-    #   url: https://github.com/lollipopkit/dartssh2
-    path: ../dartssh2
+    git:
+      ref: dev
+      url: https://github.com/lollipopkit/dartssh2
+    #path: ../dartssh2
   logging: ^1.0.2
   circle_chart:
     git:

@@ -262,9 +262,11 @@ packages:
   dartssh2:
     dependency: "direct main"
     description:
-      path: "../dartssh2"
-      relative: true
-    source: path
+      path: "."
+      ref: dev
+      resolved-ref: d62d7e64c99de62a52495f3dedbf6b8983e4ce77
+      url: "https://github.com/lollipopkit/dartssh2"
+    source: git
     version: "2.9.1-pre"
   dbus:
     dependency: transitive

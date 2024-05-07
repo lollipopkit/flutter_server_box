@@ -80,7 +80,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
       _showHelp();
       await _initTerminal();
 
-      if (Stores.setting.wakeLock.fetch()) WakelockPlus.enable();
+      if (Stores.setting.sshWakeLock.fetch()) WakelockPlus.enable();
     });
   }
 
@@ -90,7 +90,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     _virtKeyLongPressTimer?.cancel();
     _terminalController.dispose();
     _discontinuityTimer?.cancel();
-    WakelockPlus.disable();
+    if (!Stores.setting.generalWakeLock.fetch()) WakelockPlus.disable();
   }
 
   @override

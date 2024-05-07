@@ -273,8 +273,11 @@ class SettingStore extends PersistentStore {
 
   late final collectUsage = property('collectUsage', true);
 
-  /// eg: ssh page
-  late final wakeLock = property('wakeLock', true);
+  /// general wake lock
+  late final generalWakeLock = property('generalWakeLock', false);
+
+  /// ssh page
+  late final sshWakeLock = property('sshWakeLock', true);
 
   // Never show these settings for users
   //
