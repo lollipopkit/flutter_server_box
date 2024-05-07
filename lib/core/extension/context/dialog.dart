@@ -61,13 +61,16 @@ extension DialogX on BuildContext {
 
   static final _recoredPwd = <String, String>{};
 
+  /// Show a dialog to input password
+  ///
+  /// [hostId] set it to null to skip remembering the password
   Future<String?> showPwdDialog({
-    String? user,
-    required String hostId,
+    String? hostId,
+    String? title,
   }) async {
     if (!mounted) return null;
     return await showRoundDialog<String>(
-      title: Text(user ?? l10n.pwd),
+      title: Text(title ?? hostId ?? l10n.pwd),
       child: Input(
         controller: TextEditingController(text: _recoredPwd[hostId]),
         autoFocus: true,
@@ -75,7 +78,7 @@ extension DialogX on BuildContext {
         obscureText: true,
         onSubmitted: (val) {
           pop(val);
-          if (Stores.setting.rememberPwdInMem.fetch()) {
+          if (hostId != null && Stores.setting.rememberPwdInMem.fetch()) {
             _recoredPwd[hostId] = val;
           }
         },

@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
+import 'package:toolbox/core/utils/auth.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/server.dart';
 import 'package:toolbox/core/utils/share.dart';
@@ -384,9 +385,16 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
 
   Future<void> _initTerminal() async {
     _writeLn('Connecting...\r\n');
-    _client ??= await genClient(widget.spi);
-    _writeLn('Starting shell...\r\n');
+    _client ??= await genClient(
+      widget.spi,
+      onStatus: (p0) {
+        _writeLn(p0.toString());
+      },
+      onKeyboardInteractive: (_) =>
+          KeybordInteractive.defaultHandle(widget.spi),
+    );
 
+    _writeLn('Starting shell...\r\n');
     final session = await _client?.shell(
       pty: SSHPtyConfig(
         width: _terminal.viewWidth,

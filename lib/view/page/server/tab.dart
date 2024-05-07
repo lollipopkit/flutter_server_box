@@ -16,6 +16,7 @@ import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/try_limiter.dart';
+import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/percent_circle.dart';
@@ -432,8 +433,48 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildServerCardTitle(Server s) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 7),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: _media.size.width / 2.3),
+            child: Text(
+              s.spi.name,
+              style: UIs.text13Bold,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const Icon(
+            Icons.keyboard_arrow_right,
+            size: 17,
+            color: Colors.grey,
+          ),
+          const Spacer(),
+          _buildTopRightText(s),
+          _buildTopRightWidget(s),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopRightWidget(Server s) {
     Widget rightCorner = UIs.placeholder;
-    if (s.state == ServerState.failed) {
+    if (s.state == ServerState.connecting) {
+      rightCorner = Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 7),
+        child: SizedBox(
+          width: 21,
+          height: 21,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation(primaryColor),
+          ),
+        ),
+      );
+    } else if (s.state == ServerState.failed) {
       rightCorner = InkWell(
         onTap: () {
           TryLimiter.reset(s.spi.id);
@@ -464,31 +505,7 @@ class _ServerPageState extends State<ServerPage>
     } else if (Stores.setting.serverTabUseOldUI.fetch()) {
       rightCorner = ServerFuncBtnsTopRight(spi: s.spi);
     }
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 7),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: _media.size.width / 2.3),
-            child: Text(
-              s.spi.name,
-              style: UIs.text13Bold,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const Icon(
-            Icons.keyboard_arrow_right,
-            size: 17,
-            color: Colors.grey,
-          ),
-          const Spacer(),
-          _buildTopRightText(s),
-          rightCorner,
-        ],
-      ),
-    );
+    return rightCorner;
   }
 
   Widget _buildTopRightText(Server s) {

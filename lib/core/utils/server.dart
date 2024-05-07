@@ -56,6 +56,9 @@ Future<SSHClient> genClient(
   ///
   /// Must pass this param when use multi-thread and key login
   ServerPrivateInfo? jumpSpi,
+
+  /// Handle keyboard-interactive authentication
+  FutureOr<List<String>?> Function(SSHUserInfoRequest)? onKeyboardInteractive,
 }) async {
   onStatus?.call(GenSSHClientStatus.socket);
 
@@ -109,6 +112,9 @@ Future<SSHClient> genClient(
       socket,
       username: spi.user,
       onPasswordRequest: () => spi.pwd,
+      onUserInfoRequest: onKeyboardInteractive,
+      printDebug: debugPrint,
+      printTrace: debugPrint,
     );
   }
   privateKey ??= getPrivateKey(keyId);
@@ -119,5 +125,8 @@ Future<SSHClient> genClient(
     username: spi.user,
     // Must use [compute] here, instead of [Computer.shared.start]
     identities: await compute(loadIndentity, privateKey),
+    onUserInfoRequest: onKeyboardInteractive,
+    printDebug: debugPrint,
+    printTrace: debugPrint,
   );
 }

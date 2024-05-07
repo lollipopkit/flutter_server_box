@@ -70,5 +70,6 @@ abstract final class GithubIds {
     'zj1123581321',
     'pctoolsx',
     'pgs666',
+    'FHU-yezi',
   };
 }

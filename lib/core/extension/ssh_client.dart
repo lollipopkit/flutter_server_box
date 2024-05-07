@@ -81,9 +81,9 @@ extension SSHClientX on SSHClient {
           isRequestingPwd = true;
           final user = Miscs.pwdRequestWithUserReg.firstMatch(data)?.group(1);
           if (context == null) return;
-          final pwd = await context.showPwdDialog(user: user, hostId: id);
+          final pwd = await context.showPwdDialog(title: user, hostId: id);
           if (pwd == null || pwd.isEmpty) {
-            session.kill(SSHSignal.INT);
+            session.kill(SSHSignal.TERM);
           } else {
             session.stdin.add('$pwd\n'.uint8List);
           }

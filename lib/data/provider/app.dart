@@ -9,4 +9,6 @@ class AppProvider extends ChangeNotifier {
   }
 
   bool moveBg = true;
+
+  BuildContext? ctx;
 }

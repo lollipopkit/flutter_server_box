@@ -6,6 +6,7 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/extension/stringx.dart';
+import 'package:toolbox/core/utils/auth.dart';
 import 'package:toolbox/core/utils/platform/path.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/system.dart';
@@ -278,15 +279,14 @@ class ServerProvider extends ChangeNotifier {
         s.client = await genClient(
           spi,
           timeout: Duration(seconds: Stores.setting.timeout.fetch()),
+          onKeyboardInteractive: (_) => KeybordInteractive.defaultHandle(spi),
         );
         final time2 = DateTime.now();
         final spentTime = time2.difference(time1).inMilliseconds;
         if (spi.jumpId == null) {
           Loggers.app.info('Connected to ${spi.name} in $spentTime ms.');
         } else {
-          Loggers.app.info(
-            'Connected to ${spi.name} via jump server in $spentTime ms.',
-          );
+          Loggers.app.info('Jump to ${spi.name} in $spentTime ms.');
         }
       } catch (e) {
         TryLimiter.inc(sid);
@@ -312,6 +312,11 @@ class ServerProvider extends ChangeNotifier {
           },
         );
       } on SSHAuthAbortError catch (e) {
+        TryLimiter.inc(sid);
+        s.status.err = e.toString();
+        _setServerState(s, ServerState.failed);
+        return;
+      } on SSHAuthFailError catch (e) {
         TryLimiter.inc(sid);
         s.status.err = e.toString();
         _setServerState(s, ServerState.failed);
@@ -350,6 +355,8 @@ class ServerProvider extends ChangeNotifier {
         }
       }
     }
+
+    if (s.state == ServerState.connecting) return;
 
     /// Keep [finished] state, or the UI will be refreshed to [loading] state
     /// instead of the '$Temp | $Uptime'.

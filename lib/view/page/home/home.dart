@@ -120,6 +120,7 @@ class _HomePageState extends State<HomePage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    Pros.app.ctx = context;
 
     return Scaffold(
       drawer: _buildDrawer(),
