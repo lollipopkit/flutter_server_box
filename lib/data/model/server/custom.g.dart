@@ -21,13 +21,14 @@ class ServerCustomAdapter extends TypeAdapter<ServerCustom> {
       pveIgnoreCert: fields[2] == null ? false : fields[2] as bool,
       cmds: (fields[3] as Map?)?.cast<String, String>(),
       preferTempDev: fields[4] as String?,
+      logoUrl: fields[5] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ServerCustom obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(1)
       ..write(obj.pveAddr)
       ..writeByte(2)
@@ -35,7 +36,9 @@ class ServerCustomAdapter extends TypeAdapter<ServerCustom> {
       ..writeByte(3)
       ..write(obj.cmds)
       ..writeByte(4)
-      ..write(obj.preferTempDev);
+      ..write(obj.preferTempDev)
+      ..writeByte(5)
+      ..write(obj.logoUrl);
   }
 
   @override

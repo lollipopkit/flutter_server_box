@@ -1,3 +1,4 @@
+import 'package:extended_image/extended_image.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
@@ -11,6 +12,7 @@ import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/battery.dart';
 import 'package:toolbox/data/model/server/cpu.dart';
 import 'package:toolbox/data/model/server/disk.dart';
+import 'package:toolbox/data/model/server/dist.dart';
 import 'package:toolbox/data/model/server/net_speed.dart';
 import 'package:toolbox/data/model/server/nvdia.dart';
 import 'package:toolbox/data/model/server/sensors.dart';
@@ -100,6 +102,13 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildMainPage(Server si) {
     final buildFuncs = !Stores.setting.moveOutServerTabFuncBtns.fetch();
+    final logoUrl = si.spi.custom?.logoUrl;
+    final listLen = () {
+      var len = _cardsOrder.length;
+      if (buildFuncs) len++;
+      if (logoUrl != null) len++;
+      return len;
+    }();
     return Scaffold(
       appBar: CustomAppBar(
         title: Text(si.spi.name, style: UIs.text18),
@@ -121,14 +130,32 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           right: 13,
           bottom: _media.padding.bottom + 77,
         ),
-        itemCount: buildFuncs ? _cardsOrder.length + 1 : _cardsOrder.length,
+        itemCount: listLen,
         itemBuilder: (context, index) {
-          if (index == 0 && buildFuncs) {
+          if (index == 0 && logoUrl != null) {
+            return _buildLogo(logoUrl, si.status.more[StatusCmdType.sys]?.dist);
+          }
+          if (index == 1 && buildFuncs) {
             return ServerFuncBtns(spi: widget.spi);
           }
+          if (logoUrl != null) index--;
           if (buildFuncs) index--;
           return _cardBuildMap[_cardsOrder[index]]?.call(si.status);
         },
+      ),
+    );
+  }
+
+  Widget _buildLogo(String logoUrl, Dist? dist) {
+    if (dist != null) {
+      logoUrl = logoUrl.replaceFirst('{DIST}', dist.name);
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 13),
+      child: ExtendedImage.network(
+        logoUrl,
+        cache: true,
+        height: _media.size.height * 0.2,
       ),
     );
   }

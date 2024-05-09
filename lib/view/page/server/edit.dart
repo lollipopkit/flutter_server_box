@@ -43,6 +43,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
   final _pveAddrCtrl = TextEditingController();
   final _customCmdCtrl = TextEditingController();
   final _preferTempDevCtrl = TextEditingController();
+  final _logoUrlCtrl = TextEditingController();
 
   final _nameFocus = FocusNode();
   final _ipFocus = FocusNode();
@@ -96,6 +97,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
           }
         } catch (_) {}
         _preferTempDevCtrl.text = custom.preferTempDev ?? '';
+        _logoUrlCtrl.text = custom.logoUrl ?? '';
       }
     }
   }
@@ -117,6 +119,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
     _pveAddrCtrl.dispose();
     _customCmdCtrl.dispose();
     _preferTempDevCtrl.dispose();
+    _logoUrlCtrl.dispose();
   }
 
   @override
@@ -367,6 +370,16 @@ class _ServerEditPageState extends State<ServerEditPage> {
     return ExpandTile(
       title: Text(l10n.more),
       children: [
+        const Text('Logo', style: UIs.text13Grey),
+        UIs.height7,
+        Input(
+          controller: _logoUrlCtrl,
+          type: TextInputType.url,
+          icon: Icons.image,
+          label: 'Url',
+          hint: 'https://example.com/logo.png',
+        ),
+        UIs.height7,
         const Text('PVE', style: UIs.text13Grey),
         UIs.height7,
         Input(
@@ -528,6 +541,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
       pveIgnoreCert: _pveIgnoreCert.value,
       cmds: customCmds,
       preferTempDev: _preferTempDevCtrl.text.selfIfNotNullEmpty,
+      logoUrl: _logoUrlCtrl.text.selfIfNotNullEmpty,
     );
 
     final spi = ServerPrivateInfo(

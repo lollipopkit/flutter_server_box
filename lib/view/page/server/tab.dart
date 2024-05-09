@@ -281,7 +281,7 @@ class _ServerPageState extends State<ServerPage>
           }
         },
         onLongPress: () {
-          if (srv.state == ServerState.finished) {
+          if (srv.conn == ServerConn.finished) {
             final id = srv.spi.id;
             final cardStatus = _getCardNoti(id);
             cardStatus.value = cardStatus.value.copyWith(
@@ -319,7 +319,7 @@ class _ServerPageState extends State<ServerPage>
       listenable: cardStatus,
       builder: (_, __) {
         final List<Widget> children = [title];
-        if (srv.state == ServerState.finished) {
+        if (srv.conn == ServerConn.finished) {
           if (cardStatus.value.flip) {
             children.addAll(_buildFlippedCard(srv));
           } else {
@@ -330,7 +330,7 @@ class _ServerPageState extends State<ServerPage>
         return AnimatedContainer(
           duration: const Duration(milliseconds: 377),
           curve: Curves.fastEaseInToSlowEaseOut,
-          height: _calcCardHeight(srv.state, cardStatus.value.flip),
+          height: _calcCardHeight(srv.conn, cardStatus.value.flip),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.start,
@@ -461,10 +461,10 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildTopRightWidget(Server s) {
-    return switch (s.state) {
-      ServerState.connecting ||
-      ServerState.loading ||
-      ServerState.connected =>
+    return switch (s.conn) {
+      ServerConn.connecting ||
+      ServerConn.loading ||
+      ServerConn.connected =>
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 7),
           child: SizedBox(
@@ -476,7 +476,7 @@ class _ServerPageState extends State<ServerPage>
             ),
           ),
         ),
-      ServerState.failed => InkWell(
+      ServerConn.failed => InkWell(
           onTap: () {
             TryLimiter.reset(s.spi.id);
             Pros.server.refresh(spi: s.spi);
@@ -490,7 +490,7 @@ class _ServerPageState extends State<ServerPage>
             ),
           ),
         ),
-      ServerState.disconnected when !(s.spi.autoConnect ?? true) => InkWell(
+      ServerConn.disconnected when !(s.spi.autoConnect ?? true) => InkWell(
           onTap: () => Pros.server.refresh(spi: s.spi),
           child: const Padding(
             padding: EdgeInsets.symmetric(horizontal: 7),
@@ -508,7 +508,7 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildTopRightText(Server s) {
-    final hasErr = s.state == ServerState.failed && s.status.err != null;
+    final hasErr = s.conn == ServerConn.failed && s.status.err != null;
     return GestureDetector(
       onTap: () {
         if (!hasErr) return;
@@ -636,9 +636,9 @@ class _ServerPageState extends State<ServerPage>
           _tag == null || (pro.pick(id: e)?.spi.tags?.contains(_tag) ?? false))
       .toList();
 
-  double? _calcCardHeight(ServerState cs, bool flip) {
+  double? _calcCardHeight(ServerConn cs, bool flip) {
     if (_textFactorDouble != 1.0) return null;
-    if (cs != ServerState.finished) {
+    if (cs != ServerConn.finished) {
       return 23.0;
     }
     if (flip) {

@@ -16,6 +16,8 @@ final class ServerCustom {
   final Map<String, String>? cmds;
   @HiveField(4)
   final String? preferTempDev;
+  @HiveField(5)
+  final String? logoUrl;
 
   const ServerCustom({
     //this.temperature,
@@ -23,6 +25,7 @@ final class ServerCustom {
     this.pveIgnoreCert = false,
     this.cmds,
     this.preferTempDev,
+    this.logoUrl,
   });
 
   static ServerCustom fromJson(Map<String, dynamic> json) {
@@ -31,12 +34,14 @@ final class ServerCustom {
     final pveIgnoreCert = json["pveIgnoreCert"] as bool;
     final cmds = json["cmds"] as Map<String, dynamic>?;
     final preferTempDev = json["preferTempDev"] as String?;
+    final logoUrl = json["logoUrl"] as String?;
     return ServerCustom(
       //temperature: temperature,
       pveAddr: pveAddr,
       pveIgnoreCert: pveIgnoreCert,
       cmds: cmds?.cast<String, String>(),
       preferTempDev: preferTempDev,
+      logoUrl: logoUrl,
     );
   }
 
@@ -56,6 +61,9 @@ final class ServerCustom {
     if (preferTempDev != null) {
       json["preferTempDev"] = preferTempDev;
     }
+    if (logoUrl != null) {
+      json["logoUrl"] = logoUrl;
+    }
     return json;
   }
 
@@ -71,9 +79,16 @@ final class ServerCustom {
         other.pveAddr == pveAddr &&
         other.pveIgnoreCert == pveIgnoreCert &&
         other.cmds == cmds &&
-        other.preferTempDev == preferTempDev;
+        other.preferTempDev == preferTempDev &&
+        other.logoUrl == logoUrl;
   }
-  
+
   @override
-  int get hashCode => toString().hashCode;
+  int get hashCode =>
+      //temperature.hashCode ^
+      pveAddr.hashCode ^
+      pveIgnoreCert.hashCode ^
+      cmds.hashCode ^
+      preferTempDev.hashCode ^
+      logoUrl.hashCode;
 }

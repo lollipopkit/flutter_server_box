@@ -52,7 +52,7 @@ class ServerProvider extends ChangeNotifier {
       /// Issues #258
       /// If not [shouldReconnect], then keep the old state.
       if (originServer != null && !originServer.spi.shouldReconnect(spi)) {
-        newServer.state = originServer.state;
+        newServer.conn = originServer.conn;
       }
       _servers[spi.id] = newServer;
     }
@@ -115,7 +115,7 @@ class ServerProvider extends ChangeNotifier {
   }
 
   Server genServer(ServerPrivateInfo spi) {
-    return Server(spi, InitStatus.status, ServerState.disconnected);
+    return Server(spi, InitStatus.status, ServerConn.disconnected);
   }
 
   /// if [spi] is specificed then only refresh this server
@@ -134,7 +134,7 @@ class ServerProvider extends ChangeNotifier {
 
   Future<void> _connectFn(Server s, bool onlyFailed) async {
     if (onlyFailed) {
-      if (s.state != ServerState.failed) return;
+      if (s.conn != ServerConn.failed) return;
       TryLimiter.reset(s.spi.id);
     }
 
@@ -144,7 +144,7 @@ class ServerProvider extends ChangeNotifier {
     /// If no this, the server will only refresh once by clicking refresh button.
     ///
     /// If [spi.autoConnect] is true, then refresh.
-    if (!(s.spi.autoConnect ?? true) && s.state == ServerState.disconnected) {
+    if (!(s.spi.autoConnect ?? true) && s.conn == ServerConn.disconnected) {
       return;
     }
     return await _getData(s.spi);
@@ -174,7 +174,7 @@ class ServerProvider extends ChangeNotifier {
 
   void setDisconnected() {
     for (final s in _servers.values) {
-      s.state = ServerState.disconnected;
+      s.conn = ServerConn.disconnected;
     }
     //TryLimiter.clear();
     notifyListeners();
@@ -251,8 +251,8 @@ class ServerProvider extends ChangeNotifier {
     }
   }
 
-  void _setServerState(Server s, ServerState ss) {
-    s.state = ss;
+  void _setServerState(Server s, ServerConn ss) {
+    s.conn = ss;
     notifyListeners();
   }
 
@@ -263,8 +263,8 @@ class ServerProvider extends ChangeNotifier {
     if (s == null) return;
 
     if (!TryLimiter.canTry(sid)) {
-      if (s.state != ServerState.failed) {
-        _setServerState(s, ServerState.failed);
+      if (s.conn != ServerConn.failed) {
+        _setServerState(s, ServerConn.failed);
       }
       return;
     }
@@ -272,7 +272,7 @@ class ServerProvider extends ChangeNotifier {
     s.status.err = null;
 
     if (s.needGenClient || (s.client?.isClosed ?? true)) {
-      _setServerState(s, ServerState.connecting);
+      _setServerState(s, ServerConn.connecting);
 
       try {
         final time1 = DateTime.now();
@@ -291,14 +291,14 @@ class ServerProvider extends ChangeNotifier {
       } catch (e) {
         TryLimiter.inc(sid);
         s.status.err = e.toString();
-        _setServerState(s, ServerState.failed);
+        _setServerState(s, ServerConn.failed);
 
         /// In order to keep privacy, print [spi.name] instead of [spi.id]
         Loggers.app.warning('Connect to ${spi.name} failed', e);
         return;
       }
 
-      _setServerState(s, ServerState.connected);
+      _setServerState(s, ServerConn.connected);
 
       // Write script to server
       // by ssh
@@ -314,12 +314,12 @@ class ServerProvider extends ChangeNotifier {
       } on SSHAuthAbortError catch (e) {
         TryLimiter.inc(sid);
         s.status.err = e.toString();
-        _setServerState(s, ServerState.failed);
+        _setServerState(s, ServerConn.failed);
         return;
       } on SSHAuthFailError catch (e) {
         TryLimiter.inc(sid);
         s.status.err = e.toString();
-        _setServerState(s, ServerState.failed);
+        _setServerState(s, ServerConn.failed);
         return;
       } catch (e) {
         Loggers.app.warning('Write script to ${spi.name} by shell', e);
@@ -347,7 +347,7 @@ class ServerProvider extends ChangeNotifier {
         } catch (e) {
           TryLimiter.inc(sid);
           s.status.err = e.toString();
-          _setServerState(s, ServerState.failed);
+          _setServerState(s, ServerConn.failed);
           Loggers.app.warning('Write script to ${spi.name} by sftp', e);
           return;
         } finally {
@@ -356,13 +356,13 @@ class ServerProvider extends ChangeNotifier {
       }
     }
 
-    if (s.state == ServerState.connecting) return;
+    if (s.conn == ServerConn.connecting) return;
 
     /// Keep [finished] state, or the UI will be refreshed to [loading] state
     /// instead of the '$Temp | $Uptime'.
     /// eg: '32C | 7 days'
-    if (s.state != ServerState.finished) {
-      _setServerState(s, ServerState.loading);
+    if (s.conn != ServerConn.finished) {
+      _setServerState(s, ServerConn.loading);
     }
 
     List<String>? segments;
@@ -374,19 +374,19 @@ class ServerProvider extends ChangeNotifier {
       if (raw == null || raw.isEmpty || segments == null || segments.isEmpty) {
         if (Stores.setting.keepStatusWhenErr.fetch()) {
           // Keep previous server status when err occurs
-          if (s.state != ServerState.failed && s.status.more.isNotEmpty) {
+          if (s.conn != ServerConn.failed && s.status.more.isNotEmpty) {
             return;
           }
         }
         TryLimiter.inc(sid);
         s.status.err = 'Seperate segments failed, raw:\n$raw';
-        _setServerState(s, ServerState.failed);
+        _setServerState(s, ServerConn.failed);
         return;
       }
     } catch (e) {
       TryLimiter.inc(sid);
       s.status.err = e.toString();
-      _setServerState(s, ServerState.failed);
+      _setServerState(s, ServerConn.failed);
       Loggers.app.warning('Get status from ${spi.name} failed', e);
       return;
     }
@@ -399,7 +399,7 @@ class ServerProvider extends ChangeNotifier {
       final actual = segments.length;
       final err = 'Segments: expect $expected, got $actual, raw:\n\n$raw';
       s.status.err = err;
-      _setServerState(s, ServerState.failed);
+      _setServerState(s, ServerConn.failed);
       return;
     }
     s.status.system = systemType;
@@ -419,13 +419,13 @@ class ServerProvider extends ChangeNotifier {
     } catch (e, trace) {
       TryLimiter.inc(sid);
       s.status.err = 'Parse failed: $e\n\n$raw';
-      _setServerState(s, ServerState.failed);
+      _setServerState(s, ServerConn.failed);
       Loggers.parse.warning('Server status', e, trace);
       return;
     }
 
     /// Call this every time for setting [Server.isBusy] to false
-    _setServerState(s, ServerState.finished);
+    _setServerState(s, ServerConn.finished);
     // reset try times only after prepared successfully
     TryLimiter.reset(sid);
   }

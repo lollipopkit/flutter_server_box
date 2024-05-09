@@ -22,12 +22,12 @@ class Server implements TagPickable {
   ServerPrivateInfo spi;
   ServerStatus status;
   SSHClient? client;
-  ServerState state;
+  ServerConn conn;
 
   Server(
     this.spi,
     this.status,
-    this.state, {
+    this.conn, {
     this.client,
   });
 
@@ -39,9 +39,9 @@ class Server implements TagPickable {
   @override
   String get tagName => spi.id;
 
-  bool get needGenClient => state < ServerState.connecting;
+  bool get needGenClient => conn < ServerConn.connecting;
 
-  bool get canViewDetails => state == ServerState.finished;
+  bool get canViewDetails => conn == ServerConn.finished;
 
   String get id => spi.id;
 }
@@ -80,7 +80,7 @@ class ServerStatus {
   });
 }
 
-enum ServerState {
+enum ServerConn {
   failed,
   disconnected,
   connecting,
@@ -94,5 +94,5 @@ enum ServerState {
   /// Status parsing finished
   finished;
 
-  operator <(ServerState other) => index < other.index;
+  operator <(ServerConn other) => index < other.index;
 }

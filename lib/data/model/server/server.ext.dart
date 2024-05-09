@@ -2,10 +2,10 @@ part of 'server.dart';
 
 extension ServerX on Server {
   String getTopRightStr(ServerPrivateInfo spi) {
-    switch (state) {
-      case ServerState.disconnected:
+    switch (conn) {
+      case ServerConn.disconnected:
         return l10n.disconnected;
-      case ServerState.finished:
+      case ServerConn.finished:
         // Highest priority of temperature display
         final cmdTemp = () {
           final val = status.customCmds['server_card_top_right'];
@@ -46,13 +46,13 @@ extension ServerX on Server {
         final str = items.where((e) => e != null && e.isNotEmpty).join(' | ');
         if (str.isEmpty) return l10n.noResult;
         return str;
-      case ServerState.loading:
+      case ServerConn.loading:
         return l10n.serverTabLoading;
-      case ServerState.connected:
+      case ServerConn.connected:
         return l10n.connected;
-      case ServerState.connecting:
+      case ServerConn.connecting:
         return l10n.serverTabConnecting;
-      case ServerState.failed:
+      case ServerConn.failed:
         return status.err ?? l10n.serverTabFailed;
     }
   }
