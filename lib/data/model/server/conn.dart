@@ -18,7 +18,7 @@ class Conn {
     final idx = lines.lastWhere((element) => element.startsWith('Tcp:'),
         orElse: () => '');
     if (idx != '') {
-      final vals = idx.split(Miscs.numReg);
+      final vals = idx.split(Miscs.blankReg);
       return Conn(
         maxConn: int.tryParse(vals[5]) ?? 0,
         active: int.tryParse(vals[6]) ?? 0,

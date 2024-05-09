@@ -504,7 +504,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildDiskItem(Disk disk, ServerStatus ss) {
-    final (read, write) = ss.diskIO.getSpeed(disk.dev);
+    final (read, write) = ss.diskIO.getSpeed(disk.fs);
     final text = () {
       final use = '${l10n.used} ${disk.used.kb2Str} / ${disk.size.kb2Str}';
       if (read == null || write == null) return use;
@@ -521,7 +521,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                disk.dev,
+                disk.fs,
                 style: UIs.text12,
                 textScaler: _textFactor,
               ),

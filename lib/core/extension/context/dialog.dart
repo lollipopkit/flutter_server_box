@@ -67,6 +67,7 @@ extension DialogX on BuildContext {
   Future<String?> showPwdDialog({
     String? hostId,
     String? title,
+    String? label,
   }) async {
     if (!mounted) return null;
     return await showRoundDialog<String>(
@@ -82,7 +83,7 @@ extension DialogX on BuildContext {
             _recoredPwd[hostId] = val;
           }
         },
-        label: l10n.pwd,
+        label: label ?? l10n.pwd,
       ),
     );
   }

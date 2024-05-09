@@ -5,7 +5,7 @@ import 'package:toolbox/data/model/server/time_seq.dart';
 import '../../res/misc.dart';
 
 class Disk {
-  final String dev;
+  final String fs;
   final String mount;
   final int usedPercent;
   final BigInt used;
@@ -13,7 +13,7 @@ class Disk {
   final BigInt avail;
 
   const Disk({
-    required this.dev,
+    required this.fs,
     required this.mount,
     required this.usedPercent,
     required this.used,
@@ -30,7 +30,7 @@ class Disk {
       if (item.isEmpty) {
         continue;
       }
-      final vals = item.split(Miscs.numReg);
+      final vals = item.split(Miscs.blankReg);
       if (vals.length == 1) {
         pathCache = vals[0];
         continue;
@@ -40,21 +40,27 @@ class Disk {
         pathCache = '';
       }
       try {
-        final dev = vals[0];
-        if (!_shouldCalc(dev)) continue;
+        final fs = vals[0];
+        final mount = vals[5];
+        if (!_shouldCalc(fs, mount)) continue;
         list.add(Disk(
-          dev: dev,
-          mount: vals[5],
+          fs: fs,
+          mount: mount,
           usedPercent: int.parse(vals[4].replaceFirst('%', '')),
-          used: BigInt.tryParse(vals[2]) ?? BigInt.zero,
-          size: BigInt.tryParse(vals[1]) ?? BigInt.one,
-          avail: BigInt.tryParse(vals[3]) ?? BigInt.one,
+          used: BigInt.parse(vals[2]),
+          size: BigInt.parse(vals[1]),
+          avail: BigInt.parse(vals[3]),
         ));
       } catch (e) {
         continue;
       }
     }
     return list;
+  }
+
+  @override
+  String toString() {
+    return 'Disk{dev: $fs, mount: $mount, usedPercent: $usedPercent, used: $used, size: $size, avail: $avail}';
   }
 }
 
@@ -169,9 +175,9 @@ class DiskUsage {
     var used = BigInt.zero;
     var size = BigInt.zero;
     for (var disk in disks) {
-      if (!_shouldCalc(disk.dev)) continue;
-      if (devs.contains(disk.dev)) continue;
-      devs.add(disk.dev);
+      if (!_shouldCalc(disk.fs, disk.mount)) continue;
+      if (devs.contains(disk.fs)) continue;
+      devs.add(disk.fs);
       used += disk.used;
       size += disk.size;
     }
@@ -179,9 +185,13 @@ class DiskUsage {
   }
 }
 
-// Some NAS may have mounted path like this `//192.168.1.2/`
-bool _shouldCalc(String dev) {
-  if (dev.startsWith('/dev')) return true;
-  if (dev.startsWith('//')) return true;
+bool _shouldCalc(String fs, String mount) {
+  if (fs.startsWith('/dev')) return true;
+  // Some NAS may have mounted path like this `//192.168.1.2/`
+  if (fs.startsWith('//')) return true;
+  if (mount.startsWith('/mnt')) return true;
+  // if (fs.startsWith('shm') ||
+  //     fs.startsWith('overlay') ||
+  //     fs.startsWith('tmpfs')) return false;
   return false;
 }
