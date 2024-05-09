@@ -781,13 +781,41 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         leading: const Icon(MingCute.command_line, size: 17),
         title: Text(l10n.customCmd),
         initiallyExpanded: _getInitExpand(ss.customCmds.length),
-        children: [
-          for (final cmd in ss.customCmds.entries)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
-              child: KvRow(k: cmd.key, v: cmd.value),
+        children: ss.customCmds.entries.map(_buildCustomItem).toList(),
+      ),
+    );
+  }
+
+  Widget _buildCustomItem(MapEntry<String, String> cmd) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
+      child: KvRow(
+        k: cmd.key,
+        v: cmd.value,
+        vBuilder: () {
+          if (!cmd.value.contains('\n')) return null;
+          return GestureDetector(
+            onTap: () {
+              context.showRoundDialog(
+                title: Text(cmd.key),
+                child: SingleChildScrollView(
+                  child: Text(cmd.value, style: UIs.text13Grey),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => context.pop(),
+                    child: Text(l10n.close),
+                  ),
+                ],
+              );
+            },
+            child: const Icon(
+              Icons.info_outline,
+              size: 17,
+              color: Colors.grey,
             ),
-        ],
+          );
+        },
       ),
     );
   }

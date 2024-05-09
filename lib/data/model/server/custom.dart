@@ -63,4 +63,17 @@ final class ServerCustom {
   String toString() {
     return toJson().toString();
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ServerCustom &&
+        //other.temperature == temperature &&
+        other.pveAddr == pveAddr &&
+        other.pveIgnoreCert == pveIgnoreCert &&
+        other.cmds == cmds &&
+        other.preferTempDev == preferTempDev;
+  }
+  
+  @override
+  int get hashCode => toString().hashCode;
 }

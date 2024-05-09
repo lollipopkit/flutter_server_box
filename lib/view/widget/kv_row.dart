@@ -5,12 +5,16 @@ final class KvRow extends StatelessWidget {
   final String k;
   final String v;
   final void Function()? onTap;
+  final Widget? Function()? kBuilder;
+  final Widget? Function()? vBuilder;
 
   const KvRow({
     super.key,
     required this.k,
     required this.v,
     this.onTap,
+    this.kBuilder,
+    this.vBuilder,
   });
 
   @override
@@ -22,9 +26,9 @@ final class KvRow extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(k, style: UIs.text12),
+            kBuilder?.call() ?? Text(k, style: UIs.text12),
             UIs.width7,
-            Text(
+            vBuilder?.call() ?? Text(
               v,
               style: UIs.text11Grey,
               overflow: TextOverflow.ellipsis,

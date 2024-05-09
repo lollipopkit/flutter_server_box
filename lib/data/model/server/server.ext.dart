@@ -7,7 +7,13 @@ extension ServerX on Server {
         return l10n.disconnected;
       case ServerState.finished:
         // Highest priority of temperature display
-        final cmdTemp = status.customCmds['server_card_top_right'];
+        final cmdTemp = () {
+          final val = status.customCmds['server_card_top_right'];
+          if (val == null) return null;
+          // This returned value is used on server card top right, so it should 
+          // be a single line string.
+          return val.split('\n').lastOrNull;
+        }();
         final temperatureVal = () {
           // Second priority
           final preferTempDev = spi.custom?.preferTempDev;
