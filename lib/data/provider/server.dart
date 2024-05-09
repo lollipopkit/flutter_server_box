@@ -141,8 +141,7 @@ class ServerProvider extends ChangeNotifier {
       TryLimiter.reset(s.spi.id);
     }
 
-    if (!(s.spi.autoConnect ?? true) &&
-        s.conn == ServerConn.disconnected ||
+    if (!(s.spi.autoConnect ?? true) && s.conn == ServerConn.disconnected ||
         _manualDisconnectedIds.contains(s.spi.id)) {
       return;
     }
@@ -276,6 +275,23 @@ class ServerProvider extends ChangeNotifier {
 
     if (s.needGenClient || (s.client?.isClosed ?? true)) {
       _setServerState(s, ServerConn.connecting);
+
+      final wol = spi.wolCfg;
+      if (wol != null) {
+        /// TODO: test it
+        try {
+          await wol.wake();
+        } catch (e) {
+          // TryLimiter.inc(sid);
+          // s.status.err = SSHErr(
+          //   type: SSHErrType.connect,
+          //   message: 'Wake on lan failed: $e',
+          // );
+          // _setServerState(s, ServerConn.failed);
+          // Loggers.app.warning('Wake on lan failed', e);
+          // return;
+        }
+      }
 
       try {
         final time1 = DateTime.now();

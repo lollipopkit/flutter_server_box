@@ -78,6 +78,7 @@ dependencies:
   fl_chart: ^0.67.0
   wakelock_plus: ^1.2.4
   extended_image: ^8.2.0
+  wake_on_lan: ^4.1.1+3
 
 dev_dependencies:
   flutter_native_splash: ^2.1.6

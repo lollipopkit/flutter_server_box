@@ -327,6 +327,7 @@
   "webdavSettingEmpty": "Webdav-instelling is leeg",
   "whenOpenApp": "Bij het openen van de app",
   "willTakEeffectImmediately": "Zal onmiddellijk van kracht worden",
+  "wolTip": "Na het configureren van WOL (Wake-on-LAN), wordt elke keer dat de server wordt verbonden een WOL-verzoek verzonden.",
   "write": "Schrijven",
   "writeScriptFailTip": "Het schrijven naar het script is mislukt, mogelijk door gebrek aan rechten of omdat de map niet bestaat."
 }

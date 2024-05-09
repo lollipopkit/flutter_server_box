@@ -1,6 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:toolbox/data/model/server/custom.dart';
 import 'package:toolbox/data/model/server/server.dart';
+import 'package:toolbox/data/model/server/wol_cfg.dart';
 import 'package:toolbox/data/res/provider.dart';
 
 import '../app/error.dart';
@@ -38,6 +39,9 @@ class ServerPrivateInfo {
   @HiveField(10)
   final ServerCustom? custom;
 
+  @HiveField(11)
+  final WakeOnLanCfg? wolCfg;
+
   final String id;
 
   const ServerPrivateInfo({
@@ -52,6 +56,7 @@ class ServerPrivateInfo {
     this.autoConnect,
     this.jumpId,
     this.custom,
+    this.wolCfg,
   }) : id = '$user@$ip:$port';
 
   static ServerPrivateInfo fromJson(Map<String, dynamic> json) {
@@ -68,6 +73,9 @@ class ServerPrivateInfo {
     final custom = json["customCmd"] == null
         ? null
         : ServerCustom.fromJson(json["custom"].cast<String, dynamic>());
+    final wolCfg = json["wolCfg"] == null
+        ? null
+        : WakeOnLanCfg.fromJson(json["wolCfg"].cast<String, dynamic>());
 
     return ServerPrivateInfo(
       name: name,
@@ -81,6 +89,7 @@ class ServerPrivateInfo {
       autoConnect: autoConnect,
       jumpId: jumpId,
       custom: custom,
+      wolCfg: wolCfg,
     );
   }
 
@@ -110,6 +119,9 @@ class ServerPrivateInfo {
     }
     if (custom != null) {
       data["custom"] = custom?.toJson();
+    }
+    if (wolCfg != null) {
+      data["wolCfg"] = wolCfg?.toJson();
     }
     return data;
   }

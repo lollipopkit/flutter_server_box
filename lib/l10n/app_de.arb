@@ -328,6 +328,7 @@
   "webdavSettingEmpty": "Webdav-Einstellungen sind leer",
   "whenOpenApp": "Beim Öffnen der App",
   "willTakEeffectImmediately": "Wird sofort angewendet",
+  "wolTip": "Nach der Konfiguration von WOL (Wake-on-LAN) wird jedes Mal, wenn der Server verbunden wird, eine WOL-Anfrage gesendet.",
   "write": "Schreiben",
   "writeScriptFailTip": "Das Schreiben des Skripts ist fehlgeschlagen, möglicherweise aufgrund fehlender Berechtigungen oder das Verzeichnis existiert nicht."
 }

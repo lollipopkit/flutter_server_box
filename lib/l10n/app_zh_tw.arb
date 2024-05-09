@@ -328,6 +328,7 @@
   "webdavSettingEmpty": "Webdav 設置項爲空",
   "whenOpenApp": "當打開 App 時",
   "willTakEeffectImmediately": "更改將會立即生效",
+  "wolTip": "在配置WOL（網絡喚醒）後，每次連接伺服器都會先發送一次WOL請求。",
   "write": "写",
   "writeScriptFailTip": "寫入腳本失敗，可能是沒有權限/目錄不存在等。"
 }

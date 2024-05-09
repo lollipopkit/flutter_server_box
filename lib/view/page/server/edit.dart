@@ -12,6 +12,7 @@ import 'package:toolbox/core/extension/widget.dart';
 import 'package:toolbox/core/utils/ui.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/custom.dart';
+import 'package:toolbox/data/model/server/wol_cfg.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/view/widget/expand_tile.dart';
 
@@ -44,6 +45,9 @@ class _ServerEditPageState extends State<ServerEditPage> {
   final _customCmdCtrl = TextEditingController();
   final _preferTempDevCtrl = TextEditingController();
   final _logoUrlCtrl = TextEditingController();
+  final _wolMacCtrl = TextEditingController();
+  final _wolIpCtrl = TextEditingController();
+  final _wolPwdCtrl = TextEditingController();
 
   final _nameFocus = FocusNode();
   final _ipFocus = FocusNode();
@@ -99,6 +103,13 @@ class _ServerEditPageState extends State<ServerEditPage> {
         _preferTempDevCtrl.text = custom.preferTempDev ?? '';
         _logoUrlCtrl.text = custom.logoUrl ?? '';
       }
+
+      final wol = spi.wolCfg;
+      if (wol != null) {
+        _wolMacCtrl.text = wol.mac;
+        _wolIpCtrl.text = wol.ip;
+        _wolPwdCtrl.text = wol.pwd ?? '';
+      }
     }
   }
 
@@ -120,6 +131,9 @@ class _ServerEditPageState extends State<ServerEditPage> {
     _customCmdCtrl.dispose();
     _preferTempDevCtrl.dispose();
     _logoUrlCtrl.dispose();
+    _wolMacCtrl.dispose();
+    _wolIpCtrl.dispose();
+    _wolPwdCtrl.dispose();
   }
 
   @override
@@ -380,52 +394,9 @@ class _ServerEditPageState extends State<ServerEditPage> {
           hint: 'https://example.com/logo.png',
         ),
         UIs.height7,
-        const Text('PVE', style: UIs.text13Grey),
+        ..._buildPVEs(),
         UIs.height7,
-        Input(
-          controller: _pveAddrCtrl,
-          type: TextInputType.url,
-          icon: MingCute.web_line,
-          label: l10n.addr,
-          hint: 'https://example.com:8006',
-        ),
-        ListTile(
-          leading: const Padding(
-            padding: EdgeInsets.only(left: 10),
-            child: Icon(MingCute.certificate_line),
-          ),
-          title: Text('PVE ${l10n.ignoreCert}'),
-          subtitle: Text(l10n.pveIgnoreCertTip, style: UIs.text12Grey),
-          trailing: ListenableBuilder(
-            listenable: _pveIgnoreCert,
-            builder: (_, __) => Switch(
-              value: _pveIgnoreCert.value,
-              onChanged: (val) {
-                _pveIgnoreCert.value = val;
-              },
-            ),
-          ),
-        ).card,
-        UIs.height7,
-        Text(l10n.customCmd, style: UIs.text13Grey),
-        UIs.height7,
-        Input(
-          controller: _customCmdCtrl,
-          type: TextInputType.text,
-          maxLines: 3,
-          label: 'JSON',
-          icon: Icons.code,
-          hint: '{${l10n.customCmdHint}}',
-        ),
-        ListTile(
-          leading: const Padding(
-            padding: EdgeInsets.only(left: 10),
-            child: Icon(MingCute.doc_line),
-          ),
-          title: Text(l10n.doc),
-          trailing: const Icon(Icons.open_in_new, size: 17),
-          onTap: () => openUrl(l10n.customCmdDocUrl),
-        ).card,
+        ..._buildCustomCmds(),
         UIs.height7,
         Text(l10n.temperature, style: UIs.text13Grey),
         UIs.height7,
@@ -436,8 +407,99 @@ class _ServerEditPageState extends State<ServerEditPage> {
           icon: MingCute.low_temperature_line,
           hint: 'nvme-pci-0400',
         ),
+        UIs.height7,
+        ..._buildWOLs(),
       ],
     );
+  }
+
+  List<Widget> _buildPVEs() {
+    return [
+      const Text('PVE', style: UIs.text13Grey),
+      UIs.height7,
+      Input(
+        controller: _pveAddrCtrl,
+        type: TextInputType.url,
+        icon: MingCute.web_line,
+        label: l10n.addr,
+        hint: 'https://example.com:8006',
+      ),
+      ListTile(
+        leading: const Padding(
+          padding: EdgeInsets.only(left: 10),
+          child: Icon(MingCute.certificate_line),
+        ),
+        title: Text('PVE ${l10n.ignoreCert}'),
+        subtitle: Text(l10n.pveIgnoreCertTip, style: UIs.text12Grey),
+        trailing: ListenableBuilder(
+          listenable: _pveIgnoreCert,
+          builder: (_, __) => Switch(
+            value: _pveIgnoreCert.value,
+            onChanged: (val) {
+              _pveIgnoreCert.value = val;
+            },
+          ),
+        ),
+      ).card,
+    ];
+  }
+
+  List<Widget> _buildCustomCmds() {
+    return [
+      Text(l10n.customCmd, style: UIs.text13Grey),
+      UIs.height7,
+      Input(
+        controller: _customCmdCtrl,
+        type: TextInputType.text,
+        maxLines: 3,
+        label: 'JSON',
+        icon: Icons.code,
+        hint: '{${l10n.customCmdHint}}',
+      ),
+      ListTile(
+        leading: const Padding(
+          padding: EdgeInsets.only(left: 10),
+          child: Icon(MingCute.doc_line),
+        ),
+        title: Text(l10n.doc),
+        trailing: const Icon(Icons.open_in_new, size: 17),
+        onTap: () => openUrl(l10n.customCmdDocUrl),
+      ).card,
+    ];
+  }
+
+  List<Widget> _buildWOLs() {
+    return [
+      const Text('Wake On LAN', style: UIs.text13Grey),
+      UIs.height7,
+      ListTile(
+        leading: const Icon(BoxIcons.bxs_help_circle),
+        title: Text(l10n.about),
+        subtitle: Text(l10n.wolTip, style: UIs.text12Grey),
+      ).card,
+      Input(
+        controller: _wolMacCtrl,
+        type: TextInputType.text,
+        label: 'Mac ${l10n.addr}',
+        icon: Icons.computer,
+        hint: '00:11:22:33:44:55',
+      ),
+      Input(
+        controller: _wolIpCtrl,
+        type: TextInputType.text,
+        label: 'IP ${l10n.addr}',
+        icon: Icons.network_cell,
+        hint: '192.168.1.x',
+      ),
+      Input(
+        controller: _wolPwdCtrl,
+        type: TextInputType.text,
+        obscureText: true,
+        label: l10n.pwd,
+        icon: Icons.password,
+        hint: l10n.pwd,
+      ),
+    ];
   }
 
   Widget _buildFAB() {
@@ -544,6 +606,17 @@ class _ServerEditPageState extends State<ServerEditPage> {
       logoUrl: _logoUrlCtrl.text.selfIfNotNullEmpty,
     );
 
+    final wol = WakeOnLanCfg(
+      mac: _wolMacCtrl.text,
+      ip: _wolIpCtrl.text,
+      pwd: _wolPwdCtrl.text.selfIfNotNullEmpty,
+    );
+    final wolValidation = wol.validate();
+    if (!wolValidation.$2) {
+      context.showSnackBar('${l10n.failed}: ${wolValidation.$1}');
+      return;
+    }
+
     final spi = ServerPrivateInfo(
       name: _nameController.text.isEmpty
           ? _ipController.text
@@ -560,6 +633,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
       autoConnect: _autoConnect.value,
       jumpId: _jumpServer.value,
       custom: custom,
+      wolCfg: wol,
     );
 
     if (widget.spi == null) {

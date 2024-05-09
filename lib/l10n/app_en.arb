@@ -328,6 +328,7 @@
   "webdavSettingEmpty": "Webdav setting is empty",
   "whenOpenApp": "When opening the app",
   "willTakEeffectImmediately": "Will take effect immediately",
+  "wolTip": "After configuring WOL (Wake-on-LAN), a WOL request is sent each time the server is connected.",
   "write": "Write",
   "writeScriptFailTip": "Writing to the script failed, possibly due to lack of permissions or the directory does not exist."
 }

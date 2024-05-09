@@ -28,13 +28,14 @@ class ServerPrivateInfoAdapter extends TypeAdapter<ServerPrivateInfo> {
       autoConnect: fields[8] as bool?,
       jumpId: fields[9] as String?,
       custom: fields[10] as ServerCustom?,
+      wolCfg: fields[11] as WakeOnLanCfg?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ServerPrivateInfo obj) {
     writer
-      ..writeByte(11)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -56,7 +57,9 @@ class ServerPrivateInfoAdapter extends TypeAdapter<ServerPrivateInfo> {
       ..writeByte(9)
       ..write(obj.jumpId)
       ..writeByte(10)
-      ..write(obj.custom);
+      ..write(obj.custom)
+      ..writeByte(11)
+      ..write(obj.wolCfg);
   }
 
   @override

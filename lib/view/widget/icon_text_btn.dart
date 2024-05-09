@@ -18,21 +18,22 @@ final class IconTextBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      onPressed: onPressed,
-      tooltip: text,
-      icon: orientation == Orientation.landscape ? Row(
-        children: [
-          Icon(icon),
-          UIs.width7,
-          Text(text, style: UIs.text13Grey),
-        ],
-      ) : Column(
-        children: [
-          Icon(icon),
-          UIs.height7,
-          Text(text, style: UIs.text13Grey),
-        ],
-      )
-    );
+        onPressed: onPressed,
+        tooltip: text,
+        icon: orientation == Orientation.landscape
+            ? Row(
+                children: [
+                  Icon(icon),
+                  UIs.width7,
+                  Text(text, style: UIs.text13Grey),
+                ],
+              )
+            : Column(
+                children: [
+                  Icon(icon),
+                  UIs.height7,
+                  Text(text, style: UIs.text13Grey),
+                ],
+              ));
   }
 }

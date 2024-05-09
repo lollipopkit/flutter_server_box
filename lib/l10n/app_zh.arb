@@ -323,11 +323,12 @@
   "virtKeyHelpIME": "打开/关闭键盘",
   "virtKeyHelpSFTP": "在 SFTP 中打开当前路径。",
   "waitConnection": "请等待连接建立",
-  "wakeLock": "保持喚醒",
+  "wakeLock": "保持唤醒",
   "watchNotPaired": "没有已配对的 Apple Watch",
   "webdavSettingEmpty": "Webdav 设置项为空",
   "whenOpenApp": "当打开 App 时",
   "willTakEeffectImmediately": "更改将会立即生效",
+  "wolTip": "在配置 WOL 后，每次连接服务器都会先发送一次 WOl 请求",
   "write": "写",
   "writeScriptFailTip": "写入脚本失败，可能是没有权限/目录不存在等"
 }

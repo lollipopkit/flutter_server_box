@@ -1135,7 +1135,6 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildWakeLock() {
     return ListTile(
-      leading: const Icon(MingCute.lock_fill),
       title: Text(l10n.wakeLock),
       trailing: StoreSwitch(prop: _setting.generalWakeLock),
     );
