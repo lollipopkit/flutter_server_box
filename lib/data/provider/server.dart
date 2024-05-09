@@ -128,6 +128,7 @@ class ServerProvider extends ChangeNotifier {
     bool onlyFailed = false,
   }) async {
     if (spi != null) {
+      _manualDisconnectedIds.remove(spi.id);
       await _getData(spi);
       return;
     }
