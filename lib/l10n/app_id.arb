@@ -13,6 +13,7 @@
   "alterUrl": "Alter url",
   "askContinue": "{msg}, lanjutkan?",
   "attention": "Perhatian",
+  "authFailTip": "Otentikasi gagal, silakan periksa apakah kata sandi/kunci/host/pengguna, dll, salah.",
   "authRequired": "Auth diperlukan",
   "auto": "Auto",
   "autoBackupConflict": "Hanya satu pencadangan otomatis yang dapat diaktifkan pada saat yang bersamaan.",
@@ -166,6 +167,7 @@
   "moveOutServerFuncBtnsHelp": "Aktif: dapat ditampilkan di bawah setiap kartu pada halaman Tab Server. Nonaktif: dapat ditampilkan di bagian atas halaman Rincian Server.",
   "ms": "MS",
   "name": "Nama",
+  "needHomeDir": "Jika Anda pengguna Synology, [lihat di sini](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Pengguna sistem lain perlu mencari cara membuat direktori home.",
   "needRestart": "Perlu memulai ulang aplikasi",
   "net": "Net",
   "netViewType": "Jenis tampilan bersih",
@@ -175,6 +177,7 @@
   "noLineChart": "Jangan gunakan grafik garis",
   "noNotiPerm": "Tidak ada izin notifikasi, mungkin tidak ada indikasi kemajuan saat mengunduh pembaruan aplikasi.",
   "noOptions": "Tidak ada opsi",
+  "noPrivateKeyTip": "Kunci privat tidak ada, mungkin telah dihapus atau ada kesalahan konfigurasi.",
   "noPromptAgain": "Jangan tanya lagi",
   "noResult": "Tidak ada hasil",
   "noSavedPrivateKey": "Tidak ada kunci pribadi yang disimpan.",
@@ -325,5 +328,6 @@
   "webdavSettingEmpty": "Pengaturan webdav kosong",
   "whenOpenApp": "Saat membuka aplikasi",
   "willTakEeffectImmediately": "Akan segera berlaku",
-  "write": "Tulis"
+  "write": "Tulis",
+  "writeScriptFailTip": "Penulisan ke skrip gagal, mungkin karena tidak ada izin atau direktori tidak ada."
 }

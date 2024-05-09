@@ -13,6 +13,7 @@
   "alterUrl": "备选链接",
   "askContinue": "{msg}，继续吗？",
   "attention": "注意",
+  "authFailTip": "认证失败，请检查密码/密钥/主机/用户等是否错误",
   "authRequired": "需要认证",
   "auto": "自动",
   "autoBackupConflict": "只能同时开启一个自动备份",
@@ -166,6 +167,7 @@
   "moveOutServerFuncBtnsHelp": "开启：可以在服务器 Tab 页的每个卡片下方显示。关闭：在服务器详情页顶部显示。",
   "ms": "毫秒",
   "name": "名称",
+  "needHomeDir": "如果你是群晖用户，[看这里](https://kb.synology.cn/zh-cn/DSM/tutorial/ssh_could_not_chdir_to_home_directory)。其他系统用户，需搜索如何创建家目录（home directory）.",
   "needRestart": "需要重启 App",
   "net": "网络",
   "netViewType": "网络视图类型",
@@ -175,6 +177,7 @@
   "noLineChart": "不使用折线图",
   "noNotiPerm": "无通知权限，可能下载App更新时无进度提示。",
   "noOptions": "无可选项",
+  "noPrivateKeyTip": "私钥不存在，可能已被删除/配置错误",
   "noPromptAgain": "不再提示",
   "noResult": "无结果",
   "noSavedPrivateKey": "没有已保存的私钥。",
@@ -325,5 +328,6 @@
   "webdavSettingEmpty": "Webdav 设置项为空",
   "whenOpenApp": "当打开 App 时",
   "willTakEeffectImmediately": "更改将会立即生效",
-  "write": "写"
+  "write": "写",
+  "writeScriptFailTip": "写入脚本失败，可能是没有权限/目录不存在等"
 }

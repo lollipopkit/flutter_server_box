@@ -53,7 +53,7 @@ extension ServerX on Server {
       case ServerConn.connecting:
         return l10n.serverTabConnecting;
       case ServerConn.failed:
-        return status.err ?? l10n.serverTabFailed;
+        return status.err != null ? l10n.viewErr : l10n.serverTabFailed;
     }
   }
 }

@@ -13,6 +13,7 @@
   "alterUrl": "代替リンク",
   "askContinue": "{msg}、続行しますか？",
   "attention": "注意",
+  "authFailTip": "認証に失敗しました。パスワード/鍵/ホスト/ユーザーなどが間違っていないか確認してください。",
   "authRequired": "認証が必要",
   "auto": "自動",
   "autoBackupConflict": "自動バックアップは一度に一つしか開始できません",
@@ -166,6 +167,7 @@
   "moveOutServerFuncBtnsHelp": "有効にする：サーバータブの各カードの下に表示されます。無効にする：サーバーの詳細ページの上部に表示されます。",
   "ms": "ミリ秒",
   "name": "名前",
+  "needHomeDir": "Synologyユーザーの場合は、[こちらをご覧ください](https://kb.synology.com/DSM/tutorial/user_enable_home_service)。他のシステムのユーザーは、ホームディレクトリの作成方法を検索する必要があります。",
   "needRestart": "アプリを再起動する必要があります",
   "net": "ネットワーク",
   "netViewType": "ネットワークビュータイプ",
@@ -175,6 +177,7 @@
   "noLineChart": "折れ線グラフを使用しない",
   "noNotiPerm": "通知の権限がないため、アプリの更新のダウンロード中に進行状況が表示されない場合があります。",
   "noOptions": "選択肢がありません",
+  "noPrivateKeyTip": "私有鍵が存在しません。削除されたか、設定ミスがある可能性があります。",
   "noPromptAgain": "再度確認しない",
   "noResult": "結果なし",
   "noSavedPrivateKey": "保存されたプライベートキーがありません。",
@@ -325,5 +328,6 @@
   "webdavSettingEmpty": "Webdavの設定が空です",
   "whenOpenApp": "アプリを開くとき",
   "willTakEeffectImmediately": "変更は即座に有効になります",
-  "write": "書き込み"
+  "write": "書き込み",
+  "writeScriptFailTip": "スクリプトの書き込みに失敗しました。権限がないかディレクトリが存在しない可能性があります。"
 }

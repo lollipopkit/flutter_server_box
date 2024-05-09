@@ -1,3 +1,5 @@
+import 'package:toolbox/core/extension/context/locale.dart';
+
 enum ErrFrom {
   unknown,
   apt,
@@ -15,17 +17,34 @@ abstract class Err<T> {
   final T type;
   final String? message;
 
+  String? get solution;
+
   Err({required this.from, required this.type, this.message});
 }
 
 enum SSHErrType {
   unknown,
   connect,
-  noPrivateKey;
+  auth,
+  noPrivateKey,
+  chdir,
+  segements,
+  writeScript,
+  getStatus,
+  ;
 }
 
 class SSHErr extends Err<SSHErrType> {
   SSHErr({required super.type, super.message}) : super(from: ErrFrom.ssh);
+
+  @override
+  String? get solution => switch (type) {
+        SSHErrType.chdir => l10n.needHomeDir,
+        SSHErrType.auth => l10n.authFailTip,
+        SSHErrType.writeScript => l10n.writeScriptFailTip,
+        SSHErrType.noPrivateKey => l10n.noPrivateKeyTip,
+        _ => null,
+      };
 
   @override
   String toString() {
@@ -50,6 +69,9 @@ class ContainerErr extends Err<ContainerErrType> {
       : super(from: ErrFrom.docker);
 
   @override
+  String? get solution => null;
+
+  @override
   String toString() {
     return 'ContainerErr<$type>: $message';
   }
@@ -63,6 +85,9 @@ enum ICloudErrType {
 
 class ICloudErr extends Err<ICloudErrType> {
   ICloudErr({required super.type, super.message}) : super(from: ErrFrom.icloud);
+
+  @override
+  String? get solution => null;
 
   @override
   String toString() {
@@ -80,6 +105,9 @@ class WebdavErr extends Err<WebdavErrType> {
   WebdavErr({required super.type, super.message}) : super(from: ErrFrom.webdav);
 
   @override
+  String? get solution => null;
+
+  @override
   String toString() {
     return 'WebdavErr<$type>: $message';
   }
@@ -94,6 +122,9 @@ enum PveErrType {
 
 class PveErr extends Err<PveErrType> {
   PveErr({required super.type, super.message}) : super(from: ErrFrom.status);
+
+  @override
+  String? get solution => null;
 
   @override
   String toString() {

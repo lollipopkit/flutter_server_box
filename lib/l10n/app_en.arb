@@ -13,6 +13,7 @@
   "alterUrl": "Alter url",
   "askContinue": "{msg}. Continue?",
   "attention": "Attention",
+  "authFailTip": "Authentication failed, please check if the password/key/host/user, etc., are incorrect.",
   "authRequired": "Auth required",
   "auto": "Auto",
   "autoBackupConflict": "Only one automatic backup can be turned on at the same time.",
@@ -166,6 +167,7 @@
   "moveOutServerFuncBtnsHelp": "On: can be displayed below each card on the Server Tab page. Off: can be displayed at the top of the Server Details page.",
   "ms": "ms",
   "name": "Name",
+  "needHomeDir": "If you are a Synology user, [see here](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Users of other systems need to search for how to create a home directory.",
   "needRestart": "Need to restart app",
   "net": "Net",
   "netViewType": "Net view type",
@@ -175,6 +177,7 @@
   "noLineChart": "Do not use line charts",
   "noNotiPerm": "No notification permissions, possibly no progress indication when downloading app updates.",
   "noOptions": "No options",
+  "noPrivateKeyTip": "The private key does not exist, it may have been deleted or there is a configuration error.",
   "noPromptAgain": "Do not prompt again",
   "noResult": "No result",
   "noSavedPrivateKey": "No saved private keys.",
@@ -325,5 +328,6 @@
   "webdavSettingEmpty": "Webdav setting is empty",
   "whenOpenApp": "When opening the app",
   "willTakEeffectImmediately": "Will take effect immediately",
-  "write": "Write"
+  "write": "Write",
+  "writeScriptFailTip": "Writing to the script failed, possibly due to lack of permissions or the directory does not exist."
 }

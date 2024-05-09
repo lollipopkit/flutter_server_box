@@ -19,6 +19,7 @@ import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/auto_hide.dart';
+import 'package:toolbox/view/widget/markdown.dart';
 import 'package:toolbox/view/widget/percent_circle.dart';
 
 import '../../../core/route.dart';
@@ -516,21 +517,25 @@ class _ServerPageState extends State<ServerPage>
         _showFailReason(s.status);
       },
       child: Text(
-        hasErr ? l10n.viewErr : s.getTopRightStr(s.spi),
+        s.getTopRightStr(s.spi),
         style: UIs.text13Grey,
       ),
     );
   }
 
   void _showFailReason(ServerStatus ss) {
+    final md = '''
+${ss.err?.solution ?? l10n.unknown}
+
+```sh
+${ss.err?.message ?? l10n.unknownError}
+''';
     context.showRoundDialog(
       title: Text(l10n.error),
-      child: SingleChildScrollView(
-        child: Text(ss.err ?? l10n.unknownError),
-      ),
+      child: SingleChildScrollView(child: SimpleMarkdown(data: md)),
       actions: [
         TextButton(
-          onPressed: () => Shares.copy(ss.err ?? l10n.unknownError),
+          onPressed: () => Shares.copy(md),
           child: Text(l10n.copy),
         )
       ],

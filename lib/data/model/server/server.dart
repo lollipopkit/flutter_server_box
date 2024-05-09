@@ -1,6 +1,7 @@
 import 'package:dartssh2/dartssh2.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/listx.dart';
+import 'package:toolbox/data/model/app/error.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/battery.dart';
 import 'package:toolbox/data/model/server/conn.dart';
@@ -55,7 +56,7 @@ class ServerStatus {
   NetSpeed netSpeed;
   Temperatures temps;
   SystemType system;
-  String? err;
+  Err? err;
   DiskIO diskIO;
   List<NvidiaSmiItem>? nvidia;
   final List<Battery> batteries = [];

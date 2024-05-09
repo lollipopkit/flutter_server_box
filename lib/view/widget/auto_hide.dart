@@ -41,7 +41,6 @@ final class _AutoHideState extends State<AutoHide> {
   void _setupTimer() {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 3), (_) {
-      debugPrint('[AutoHideFab._timer] trigger timer');
       if (_isScrolling) return;
       if (!_visible) return;
       if (!widget.controller.positions.any((e) => e.maxScrollExtent >= 0)) {

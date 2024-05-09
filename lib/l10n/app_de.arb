@@ -13,6 +13,7 @@
   "alterUrl": "Url ändern",
   "askContinue": "{msg}. Weiter?",
   "attention": "Achtung",
+  "authFailTip": "Authentifizierung fehlgeschlagen, bitte überprüfen Sie, ob das Passwort/Schlüssel/Host/Benutzer usw. falsch sind.",
   "authRequired": "Autorisierung erforderlich",
   "auto": "System folgen",
   "autoBackupConflict": "Es kann nur eine automatische Sicherung gleichzeitig aktiviert werden.",
@@ -166,6 +167,7 @@
   "moveOutServerFuncBtnsHelp": "Ein: kann unter jeder Karte auf der Registerkarte \"Server\" angezeigt werden. Aus: kann oben auf der Seite \"Serverdetails\" angezeigt werden.",
   "ms": "ms",
   "name": "Name",
+  "needHomeDir": "Wenn Sie ein Synology-Benutzer sind, [sehen Sie hier](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Benutzer anderer Systeme müssen suchen, wie man ein Home-Verzeichnis erstellt.",
   "needRestart": "App muss neugestartet werden",
   "net": "Netz",
   "netViewType": "Netzwerkansicht Typ",
@@ -175,6 +177,7 @@
   "noLineChart": "Verwenden Sie keine Liniendiagramme",
   "noNotiPerm": "Keine Benachrichtigungsrechte, möglicherweise keine Fortschrittsanzeige beim Herunterladen von App-Updates.",
   "noOptions": "Keine Optionen verfügbar",
+  "noPrivateKeyTip": "Der private Schlüssel existiert nicht, möglicherweise wurde er gelöscht oder es liegt ein Konfigurationsfehler vor.",
   "noPromptAgain": "Nicht mehr nachfragen",
   "noResult": "Kein Ergebnis",
   "noSavedPrivateKey": "Keine gespeicherten Private Keys",
@@ -325,5 +328,6 @@
   "webdavSettingEmpty": "Webdav-Einstellungen sind leer",
   "whenOpenApp": "Beim Öffnen der App",
   "willTakEeffectImmediately": "Wird sofort angewendet",
-  "write": "Schreiben"
+  "write": "Schreiben",
+  "writeScriptFailTip": "Das Schreiben des Skripts ist fehlgeschlagen, möglicherweise aufgrund fehlender Berechtigungen oder das Verzeichnis existiert nicht."
 }

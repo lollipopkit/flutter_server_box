@@ -8,6 +8,7 @@ import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/utils/ssh_auth.dart';
 import 'package:toolbox/core/utils/platform/path.dart';
+import 'package:toolbox/data/model/app/error.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/system.dart';
 import 'package:toolbox/data/model/sftp/req.dart';
@@ -290,7 +291,7 @@ class ServerProvider extends ChangeNotifier {
         }
       } catch (e) {
         TryLimiter.inc(sid);
-        s.status.err = e.toString();
+        s.status.err = SSHErr(type: SSHErrType.connect, message: e.toString());
         _setServerState(s, ServerConn.failed);
 
         /// In order to keep privacy, print [spi.name] instead of [spi.id]
@@ -313,12 +314,12 @@ class ServerProvider extends ChangeNotifier {
         );
       } on SSHAuthAbortError catch (e) {
         TryLimiter.inc(sid);
-        s.status.err = e.toString();
+        s.status.err = SSHErr(type: SSHErrType.auth, message: e.toString());
         _setServerState(s, ServerConn.failed);
         return;
       } on SSHAuthFailError catch (e) {
         TryLimiter.inc(sid);
-        s.status.err = e.toString();
+        s.status.err = SSHErr(type: SSHErrType.auth, message: e.toString());
         _setServerState(s, ServerConn.failed);
         return;
       } catch (e) {
@@ -344,11 +345,14 @@ class ServerProvider extends ChangeNotifier {
           if (err != null) {
             throw err;
           }
-        } catch (e) {
+        } catch (ee) {
           TryLimiter.inc(sid);
-          s.status.err = e.toString();
+          s.status.err = SSHErr(
+            type: SSHErrType.writeScript,
+            message: '$e\n\n$ee',
+          );
           _setServerState(s, ServerConn.failed);
-          Loggers.app.warning('Write script to ${spi.name} by sftp', e);
+          Loggers.app.warning('Write script to ${spi.name} by sftp', ee);
           return;
         } finally {
           if (await file.exists()) await file.delete();
@@ -379,13 +383,16 @@ class ServerProvider extends ChangeNotifier {
           }
         }
         TryLimiter.inc(sid);
-        s.status.err = 'Seperate segments failed, raw:\n$raw';
+        s.status.err = SSHErr(
+          type: SSHErrType.segements,
+          message: 'Seperate segments failed, raw:\n$raw',
+        );
         _setServerState(s, ServerConn.failed);
         return;
       }
     } catch (e) {
       TryLimiter.inc(sid);
-      s.status.err = e.toString();
+      s.status.err = SSHErr(type: SSHErrType.getStatus, message: e.toString());
       _setServerState(s, ServerConn.failed);
       Loggers.app.warning('Get status from ${spi.name} failed', e);
       return;
@@ -395,10 +402,17 @@ class ServerProvider extends ChangeNotifier {
     final customCmdLen = spi.custom?.cmds?.length ?? 0;
     if (!systemType.isSegmentsLenMatch(segments.length - customCmdLen)) {
       TryLimiter.inc(sid);
+      if (raw.contains('Could not chdir to home directory /var/services/')) {
+        s.status.err = SSHErr(type: SSHErrType.chdir, message: raw);
+        _setServerState(s, ServerConn.failed);
+        return;
+      }
       final expected = systemType.segmentsLen;
       final actual = segments.length;
-      final err = 'Segments: expect $expected, got $actual, raw:\n\n$raw';
-      s.status.err = err;
+      s.status.err = SSHErr(
+        type: SSHErrType.segements,
+        message: 'Segments: expect $expected, got $actual, raw:\n\n$raw',
+      );
       _setServerState(s, ServerConn.failed);
       return;
     }
@@ -418,7 +432,10 @@ class ServerProvider extends ChangeNotifier {
       );
     } catch (e, trace) {
       TryLimiter.inc(sid);
-      s.status.err = 'Parse failed: $e\n\n$raw';
+      s.status.err = SSHErr(
+        type: SSHErrType.getStatus,
+        message: 'Parse failed: $e\n\n$raw',
+      );
       _setServerState(s, ServerConn.failed);
       Loggers.parse.warning('Server status', e, trace);
       return;

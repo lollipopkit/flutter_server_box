@@ -13,6 +13,7 @@
   "alterUrl": "Modifier l'URL",
   "askContinue": "{msg}. Continuer?",
   "attention": "Attention",
+  "authFailTip": "Échec de l'authentification, veuillez vérifier si le mot de passe/clé/hôte/utilisateur, etc., sont incorrects.",
   "authRequired": "Authentification requise",
   "auto": "Auto",
   "autoBackupConflict": "Une seule sauvegarde automatique peut être activée à la fois.",
@@ -166,6 +167,7 @@
   "moveOutServerFuncBtnsHelp": "Activé : peut être affiché sous chaque carte sur la page de l'onglet Serveur. Désactivé : peut être affiché en haut de la page Détails du serveur.",
   "ms": "ms",
   "name": "Nom",
+  "needHomeDir": "Si vous êtes utilisateur de Synology, [voir ici](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Les utilisateurs d'autres systèmes doivent rechercher comment créer un répertoire personnel.",
   "needRestart": "Redémarrage de l'application nécessaire",
   "net": "Réseau",
   "netViewType": "Type de vue réseau",
@@ -175,6 +177,7 @@
   "noLineChart": "N'utilisez pas de graphiques en ligne",
   "noNotiPerm": "Pas de permissions de notification, il est possible qu'il n'y ait pas de notification de progression lors du téléchargement des mises à jour des applications.",
   "noOptions": "Aucune option",
+  "noPrivateKeyTip": "La clé privée n'existe pas, elle a peut-être été supprimée ou il y a une erreur de configuration.",
   "noPromptAgain": "Ne plus demander",
   "noResult": "Aucun résultat",
   "noSavedPrivateKey": "Aucune clé privée enregistrée.",
@@ -325,5 +328,6 @@
   "webdavSettingEmpty": "La configuration Webdav est vide",
   "whenOpenApp": "À l'ouverture de l'application",
   "willTakEeffectImmediately": "Prendra effet immédiatement",
-  "write": "Écrire"
+  "write": "Écrire",
+  "writeScriptFailTip": "L'écriture du script a échoué, peut-être en raison d'un manque de permissions ou parce que le répertoire n'existe pas."
 }

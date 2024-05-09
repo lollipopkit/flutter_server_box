@@ -13,6 +13,7 @@
   "alterUrl": "Url wijzigen",
   "askContinue": "{msg}. Doorgaan?",
   "attention": "Let op",
+  "authFailTip": "Authenticatie mislukt, controleer of het wachtwoord/sleutel/host/gebruiker, enz., incorrect zijn.",
   "authRequired": "Authenticatie vereist",
   "auto": "Auto",
   "autoBackupConflict": "Er kan slechts één automatische back-up tegelijk worden ingeschakeld.",
@@ -166,6 +167,7 @@
   "moveOutServerFuncBtnsHelp": "Aan: kan worden weergegeven onder elke kaart op de Server-tabbladpagina. Uit: kan worden weergegeven bovenaan de Serverdetails-pagina.",
   "ms": "ms",
   "name": "Naam",
+  "needHomeDir": "Als u een Synology-gebruiker bent, [zie hier](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Gebruikers van andere systemen moeten zoeken hoe ze een home directory kunnen creëren.",
   "needRestart": "App moet opnieuw worden gestart",
   "net": "Netwerk",
   "netViewType": "Netweergavetype",
@@ -174,6 +176,7 @@
   "noInterface": "Geen interface",
   "noNotiPerm": "Geen meldingsmachtigingen, mogelijk geen voortgangsindicatie bij het downloaden van app-updates.",
   "noOptions": "Geen opties",
+  "noPrivateKeyTip": "De privésleutel bestaat niet, deze is mogelijk verwijderd of er is een configuratiefout.",
   "noPromptAgain": "Niet meer vragen",
   "noResult": "Geen resultaat",
   "noSavedPrivateKey": "Geen opgeslagen privésleutels.",
@@ -324,5 +327,6 @@
   "webdavSettingEmpty": "Webdav-instelling is leeg",
   "whenOpenApp": "Bij het openen van de app",
   "willTakEeffectImmediately": "Zal onmiddellijk van kracht worden",
-  "write": "Schrijven"
+  "write": "Schrijven",
+  "writeScriptFailTip": "Het schrijven naar het script is mislukt, mogelijk door gebrek aan rechten of omdat de map niet bestaat."
 }

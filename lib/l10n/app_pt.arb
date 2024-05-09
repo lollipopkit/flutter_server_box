@@ -13,6 +13,7 @@
   "alterUrl": "URL alternativa",
   "askContinue": "{msg}, continuar?",
   "attention": "Atenção",
+  "authFailTip": "Autenticação falhou, por favor verifique se a senha/chave/host/usuário, etc., estão incorretos.",
   "authRequired": "Autenticação necessária",
   "auto": "Automático",
   "autoBackupConflict": "Apenas um backup automático pode ser ativado por vez",
@@ -166,6 +167,7 @@
   "moveOutServerFuncBtnsHelp": "Ativado: Mostra abaixo de cada cartão na aba do servidor. Desativado: Mostra no topo da página de detalhes do servidor.",
   "ms": "ms",
   "name": "Nome",
+  "needHomeDir": "Se você é usuário de Synology, [veja aqui](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Usuários de outros sistemas precisam pesquisar como criar um diretório home.",
   "needRestart": "Necessita reiniciar o app",
   "net": "Rede",
   "netViewType": "Tipo de visualização de rede",
@@ -175,6 +177,7 @@
   "noLineChart": "Gebruik geen lijndiagrammen",
   "noNotiPerm": "Sem permissão de notificação, possivelmente sem indicação de progresso ao baixar atualizações de aplicativos.",
   "noOptions": "Sem opções",
+  "noPrivateKeyTip": "A chave privada não existe, pode ter sido deletada ou há um erro de configuração.",
   "noPromptAgain": "Não perguntar novamente",
   "noResult": "Sem resultados",
   "noSavedPrivateKey": "Nenhuma chave privada salva.",
@@ -325,5 +328,6 @@
   "webdavSettingEmpty": "Configurações de Webdav estão vazias",
   "whenOpenApp": "Ao abrir o app",
   "willTakEeffectImmediately": "As alterações serão aplicadas imediatamente",
-  "write": "Escrita"
+  "write": "Escrita",
+  "writeScriptFailTip": "Falha ao escrever no script, possivelmente devido à falta de permissões ou o diretório não existe."
 }
