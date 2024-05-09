@@ -175,20 +175,19 @@ class _HomePageState extends State<HomePage>
           : ValBuilder(
               listenable: _isLandscape,
               builder: (ls) {
-                if (ls) return const SizedBox();
                 return ListenableBuilder(
                   listenable: _selectIndex,
-                  builder: (_, __) => _buildBottomBar(),
+                  builder: (_, __) => _buildBottomBar(ls),
                 );
               },
             ),
     );
   }
 
-  Widget _buildBottomBar() {
+  Widget _buildBottomBar(bool ls) {
     return NavigationBar(
       selectedIndex: _selectIndex.value,
-      height: kBottomNavigationBarHeight * 1.1,
+      height: kBottomNavigationBarHeight * (ls ? 0.75 : 1.1),
       animationDuration: const Duration(milliseconds: 250),
       onDestinationSelected: (int index) {
         if (_selectIndex.value == index) return;
@@ -203,7 +202,9 @@ class _HomePageState extends State<HomePage>
           _switchingPage = false;
         });
       },
-      labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+      labelBehavior: ls
+          ? NavigationDestinationLabelBehavior.alwaysHide
+          : NavigationDestinationLabelBehavior.onlyShowSelected,
       destinations: [
         NavigationDestination(
           icon: const Icon(BoxIcons.bx_server),

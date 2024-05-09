@@ -28,11 +28,12 @@ final class KvRow extends StatelessWidget {
           children: [
             kBuilder?.call() ?? Text(k, style: UIs.text12),
             UIs.width7,
-            vBuilder?.call() ?? Text(
-              v,
-              style: UIs.text11Grey,
-              overflow: TextOverflow.ellipsis,
-            ),
+            vBuilder?.call() ??
+                Text(
+                  v,
+                  style: UIs.text11Grey,
+                  overflow: TextOverflow.ellipsis,
+                ),
             if (onTap != null) UIs.width7,
             if (onTap != null) const Icon(Icons.keyboard_arrow_right, size: 16),
           ],

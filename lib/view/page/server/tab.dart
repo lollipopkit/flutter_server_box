@@ -18,7 +18,7 @@ import 'package:toolbox/data/model/server/try_limiter.dart';
 import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/view/widget/auto_hide_fab.dart';
+import 'package:toolbox/view/widget/auto_hide.dart';
 import 'package:toolbox/view/widget/percent_circle.dart';
 
 import '../../../core/route.dart';
@@ -101,7 +101,8 @@ class _ServerPageState extends State<ServerPage>
           return _buildBody();
         },
       ),
-      floatingActionButton: AutoHideFab(
+      floatingActionButton: AutoHide(
+        direction: AxisDirection.right,
         controller: _scrollController,
         child: FloatingActionButton(
           heroTag: 'addServer',
