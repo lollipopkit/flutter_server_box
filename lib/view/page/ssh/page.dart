@@ -9,7 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/utils/auth.dart';
+import 'package:toolbox/core/utils/ssh_auth.dart';
 import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/server.dart';
 import 'package:toolbox/core/utils/share.dart';

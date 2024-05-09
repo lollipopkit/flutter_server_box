@@ -127,22 +127,37 @@ class _HomePageState extends State<HomePage>
     super.build(context);
     Pros.app.ctx = context;
 
+    final appBar = widget.landscape
+        ? null
+        : _AppBar(
+            selectIndex: _selectIndex,
+            centerTitle: false,
+            title: const Text(BuildData.name),
+            actions: <Widget>[
+              ValBuilder(
+                listenable:
+                    Stores.setting.serverStatusUpdateInterval.listenable(),
+                builder: (interval) {
+                  if (interval != 0) return UIs.placeholder;
+                  return IconButton(
+                    icon: const Icon(Icons.refresh),
+                    tooltip: 'Refresh',
+                    onPressed: () async {
+                      await Pros.server.refresh();
+                    },
+                  );
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.developer_mode, size: 21),
+                tooltip: l10n.debug,
+                onPressed: () => AppRoute.debug().go(context),
+              ),
+            ],
+          );
     return Scaffold(
       drawer: _buildDrawer(),
-      appBar: widget.landscape
-          ? null
-          : _AppBar(
-              selectIndex: _selectIndex,
-              centerTitle: false,
-              title: const Text(BuildData.name),
-              actions: <Widget>[
-                IconButton(
-                  icon: const Icon(Icons.developer_mode, size: 21),
-                  tooltip: l10n.debug,
-                  onPressed: () => AppRoute.debug().go(context),
-                ),
-              ],
-            ),
+      appBar: appBar,
       body: PageView.builder(
         controller: _pageController,
         itemCount: AppTab.values.length,

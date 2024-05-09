@@ -12,13 +12,13 @@ import 'package:toolbox/core/extension/listx.dart';
 import 'package:toolbox/core/extension/media_queryx.dart';
 import 'package:toolbox/core/extension/numx.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
-import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/try_limiter.dart';
 import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
+import 'package:toolbox/view/widget/auto_hide_fab.dart';
 import 'package:toolbox/view/widget/percent_circle.dart';
 
 import '../../../core/route.dart';
@@ -52,6 +52,8 @@ class _ServerPageState extends State<ServerPage>
 
   String? _tag;
   bool _useDoubleColumn = false;
+
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -99,11 +101,14 @@ class _ServerPageState extends State<ServerPage>
           return _buildBody();
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'addServer',
-        onPressed: () => AppRoute.serverEdit().go(context),
-        tooltip: l10n.addAServer,
-        child: const Icon(Icons.add),
+      floatingActionButton: AutoHideFab(
+        controller: _scrollController,
+        child: FloatingActionButton(
+          heroTag: 'addServer',
+          onPressed: () => AppRoute.serverEdit().go(context),
+          tooltip: l10n.addAServer,
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }
@@ -201,13 +206,7 @@ class _ServerPageState extends State<ServerPage>
       },
     );
 
-    // Desktop doesn't support pull to refresh
-    if (isDesktop) return child;
-
-    return RefreshIndicator(
-      onRefresh: () async => await Pros.server.refresh(onlyFailed: true),
-      child: child,
-    );
+    return child;
   }
 
   TagSwitcher _buildTagsSwitcher(ServerProvider provider) {
@@ -228,6 +227,7 @@ class _ServerPageState extends State<ServerPage>
   }) {
     final count = filtered.length + 1;
     return ListView.builder(
+      controller: _scrollController,
       padding: padding,
       itemCount: count,
       itemBuilder: (_, index) {
@@ -461,66 +461,63 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildTopRightWidget(Server s) {
-    Widget rightCorner = UIs.placeholder;
-    if (s.state == ServerState.connecting) {
-      rightCorner = Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 7),
-        child: SizedBox(
-          width: 21,
-          height: 21,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation(primaryColor),
+    return switch (s.state) {
+      ServerState.connecting ||
+      ServerState.loading ||
+      ServerState.connected =>
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 7),
+          child: SizedBox(
+            width: 19,
+            height: 19,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              valueColor: AlwaysStoppedAnimation(primaryColor),
+            ),
           ),
         ),
-      );
-    } else if (s.state == ServerState.failed) {
-      rightCorner = InkWell(
-        onTap: () {
-          TryLimiter.reset(s.spi.id);
-          Pros.server.refresh(spi: s.spi);
-        },
-        child: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 7),
-          child: Icon(
-            Icons.refresh,
-            size: 21,
-            color: Colors.grey,
+      ServerState.failed => InkWell(
+          onTap: () {
+            TryLimiter.reset(s.spi.id);
+            Pros.server.refresh(spi: s.spi);
+          },
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 7),
+            child: Icon(
+              Icons.refresh,
+              size: 21,
+              color: Colors.grey,
+            ),
           ),
         ),
-      );
-    } else if (!(s.spi.autoConnect ?? true) &&
-        s.state == ServerState.disconnected) {
-      rightCorner = InkWell(
-        onTap: () => Pros.server.refresh(spi: s.spi),
-        child: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 7),
-          child: Icon(
-            Icons.link,
-            size: 21,
-            color: Colors.grey,
+      ServerState.disconnected when !(s.spi.autoConnect ?? true) => InkWell(
+          onTap: () => Pros.server.refresh(spi: s.spi),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 7),
+            child: Icon(
+              Icons.link,
+              size: 21,
+              color: Colors.grey,
+            ),
           ),
         ),
-      );
-    } else if (Stores.setting.serverTabUseOldUI.fetch()) {
-      rightCorner = ServerFuncBtnsTopRight(spi: s.spi);
-    }
-    return rightCorner;
+      _ when Stores.setting.serverTabUseOldUI.fetch() =>
+        ServerFuncBtnsTopRight(spi: s.spi),
+      _ => UIs.placeholder,
+    };
   }
 
   Widget _buildTopRightText(Server s) {
-    if (s.state == ServerState.failed && s.status.err != null) {
-      return GestureDetector(
-        onTap: () => _showFailReason(s.status),
-        child: Text(
-          l10n.viewErr,
-          style: UIs.text13Grey,
-        ),
-      );
-    }
-    return Text(
-      s.getTopRightStr(s.spi),
-      style: UIs.text13Grey,
+    final hasErr = s.state == ServerState.failed && s.status.err != null;
+    return GestureDetector(
+      onTap: () {
+        if (!hasErr) return;
+        _showFailReason(s.status);
+      },
+      child: Text(
+        hasErr ? l10n.viewErr : s.getTopRightStr(s.spi),
+        style: UIs.text13Grey,
+      ),
     );
   }
 

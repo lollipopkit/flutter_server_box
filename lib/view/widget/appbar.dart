@@ -5,6 +5,7 @@ import 'package:toolbox/data/res/store.dart';
 import 'package:window_manager/window_manager.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
+  /// System status bar height
   static double? barHeight;
   static bool drawTitlebar = false;
 
