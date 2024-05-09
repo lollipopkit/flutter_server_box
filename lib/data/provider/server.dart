@@ -37,6 +37,8 @@ class ServerProvider extends ChangeNotifier {
 
   Timer? _timer;
 
+  final _manualDisconnectedIds = <String>{};
+
   Future<void> load() async {
     // Issue #147
     // Clear all servers because of restarting app will cause duplicate servers
@@ -139,13 +141,9 @@ class ServerProvider extends ChangeNotifier {
       TryLimiter.reset(s.spi.id);
     }
 
-    /// If [spi.autoConnect] is false and server is disconnected, then skip.
-    ///
-    /// If [spi.autoConnect] is false and server is connected, then refresh.
-    /// If no this, the server will only refresh once by clicking refresh button.
-    ///
-    /// If [spi.autoConnect] is true, then refresh.
-    if (!(s.spi.autoConnect ?? true) && s.conn == ServerConn.disconnected) {
+    if (!(s.spi.autoConnect ?? true) &&
+        s.conn == ServerConn.disconnected ||
+        _manualDisconnectedIds.contains(s.spi.id)) {
       return;
     }
     return await _getData(s.spi);
@@ -192,8 +190,12 @@ class ServerProvider extends ChangeNotifier {
   }
 
   void _closeOneServer(String id) {
-    _servers[id]?.client?.close();
-    _servers[id]?.client = null;
+    final item = _servers[id];
+    item?.client?.close();
+    item?.client = null;
+    item?.conn = ServerConn.disconnected;
+    _manualDisconnectedIds.add(id);
+    notifyListeners();
   }
 
   void addServer(ServerPrivateInfo spi) {

@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
@@ -19,6 +20,7 @@ import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/auto_hide.dart';
+import 'package:toolbox/view/widget/icon_text_btn.dart';
 import 'package:toolbox/view/widget/markdown.dart';
 import 'package:toolbox/view/widget/percent_circle.dart';
 
@@ -350,7 +352,7 @@ class _ServerPageState extends State<ServerPage>
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          IconButton(
+          IconTextBtn(
             onPressed: () => _askFor(
               func: () async {
                 if (Stores.setting.showSuspendTip.fetch()) {
@@ -369,10 +371,10 @@ class _ServerPageState extends State<ServerPage>
               typ: l10n.suspend,
               name: srv.spi.name,
             ),
-            icon: const Icon(Icons.stop),
-            tooltip: l10n.suspend,
+            icon: Icons.stop,
+            text: l10n.suspend,
           ),
-          IconButton(
+          IconTextBtn(
             onPressed: () => _askFor(
               func: () => srv.client?.execWithPwd(
                 ShellFunc.shutdown.exec,
@@ -382,10 +384,10 @@ class _ServerPageState extends State<ServerPage>
               typ: l10n.shutdown,
               name: srv.spi.name,
             ),
-            icon: const Icon(Icons.power_off),
-            tooltip: l10n.shutdown,
+            icon: Icons.power_off,
+            text: l10n.shutdown,
           ),
-          IconButton(
+          IconTextBtn(
             onPressed: () => _askFor(
               func: () => srv.client?.execWithPwd(
                 ShellFunc.reboot.exec,
@@ -395,13 +397,13 @@ class _ServerPageState extends State<ServerPage>
               typ: l10n.reboot,
               name: srv.spi.name,
             ),
-            icon: const Icon(Icons.restart_alt),
-            tooltip: l10n.reboot,
+            icon: Icons.restart_alt,
+            text: l10n.reboot,
           ),
-          IconButton(
+          IconTextBtn(
             onPressed: () => AppRoute.serverEdit(spi: srv.spi).go(context),
-            icon: const Icon(Icons.edit),
-            tooltip: l10n.edit,
+            icon: Icons.edit,
+            text: l10n.edit,
           )
         ],
       )
@@ -468,7 +470,7 @@ class _ServerPageState extends State<ServerPage>
       ServerConn.loading ||
       ServerConn.connected =>
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 7),
+          padding: const EdgeInsets.only(left: 11, right: 3),
           child: SizedBox(
             width: 19,
             height: 19,
@@ -484,7 +486,7 @@ class _ServerPageState extends State<ServerPage>
             Pros.server.refresh(spi: s.spi);
           },
           child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 7),
+            padding: EdgeInsets.only(left: 11, right: 3),
             child: Icon(
               Icons.refresh,
               size: 21,
@@ -492,20 +494,30 @@ class _ServerPageState extends State<ServerPage>
             ),
           ),
         ),
-      ServerConn.disconnected when !(s.spi.autoConnect ?? true) => InkWell(
+      ServerConn.disconnected => InkWell(
           onTap: () => Pros.server.refresh(spi: s.spi),
           child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 7),
+            padding: EdgeInsets.only(left: 11, right: 3),
             child: Icon(
-              Icons.link,
+              BoxIcons.bx_link,
               size: 21,
+              color: Colors.grey,
+            ),
+          ),
+        ),
+      ServerConn.finished => InkWell(
+          onTap: () => Pros.server.closeServer(id: s.spi.id),
+          child: const Padding(
+            padding: EdgeInsets.only(left: 11, right: 3),
+            child: Icon(
+              BoxIcons.bx_unlink,
+              size: 17,
               color: Colors.grey,
             ),
           ),
         ),
       _ when Stores.setting.serverTabUseOldUI.fetch() =>
         ServerFuncBtnsTopRight(spi: s.spi),
-      _ => UIs.placeholder,
     };
   }
 
@@ -648,7 +660,7 @@ ${ss.err?.message ?? l10n.unknownError}
       return 23.0;
     }
     if (flip) {
-      return 80.0;
+      return 97.0;
     }
     if (Stores.setting.moveOutServerTabFuncBtns.fetch() &&
         // Discussion #146
