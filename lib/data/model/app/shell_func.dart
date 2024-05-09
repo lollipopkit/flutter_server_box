@@ -148,6 +148,8 @@ isBusybox=\$(ls -l /bin/sh | grep "busybox")
 
 userId=\$(id -u)
 
+exec 2>/dev/null
+
 ''');
     // Write each func
     for (final func in values) {

@@ -78,7 +78,7 @@ class MyApp extends StatelessWidget {
       home: Stores.setting.fullScreen.fetch()
           ? OrientationBuilder(
               builder: (_, ori) {
-                return HomePage(landscape: ori == Orientation.landscape);
+                return HomePage(fullScreen: ori == Orientation.landscape);
               },
             )
           : const HomePage(),

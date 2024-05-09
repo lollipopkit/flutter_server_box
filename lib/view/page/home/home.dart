@@ -38,9 +38,9 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 part 'appbar.dart';
 
 class HomePage extends StatefulWidget {
-  final bool landscape;
+  final bool fullScreen;
 
-  const HomePage({super.key, this.landscape = false});
+  const HomePage({super.key, this.fullScreen = false});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -54,6 +54,7 @@ class _HomePageState extends State<HomePage>
   late final PageController _pageController;
 
   final _selectIndex = ValueNotifier(0);
+  final _isLandscape = ValueNotifier(false);
 
   bool _switchingPage = false;
   bool _shouldAuth = false;
@@ -78,6 +79,8 @@ class _HomePageState extends State<HomePage>
   void didChangeDependencies() {
     super.didChangeDependencies();
     l10n = S.of(context)!;
+    _isLandscape.value =
+        MediaQuery.of(context).orientation == Orientation.landscape;
   }
 
   @override
@@ -127,34 +130,32 @@ class _HomePageState extends State<HomePage>
     super.build(context);
     Pros.app.ctx = context;
 
-    final appBar = widget.landscape
-        ? null
-        : _AppBar(
-            selectIndex: _selectIndex,
-            centerTitle: false,
-            title: const Text(BuildData.name),
-            actions: <Widget>[
-              ValBuilder(
-                listenable:
-                    Stores.setting.serverStatusUpdateInterval.listenable(),
-                builder: (interval) {
-                  if (interval != 0) return UIs.placeholder;
-                  return IconButton(
-                    icon: const Icon(Icons.refresh),
-                    tooltip: 'Refresh',
-                    onPressed: () async {
-                      await Pros.server.refresh();
-                    },
-                  );
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.developer_mode, size: 21),
-                tooltip: l10n.debug,
-                onPressed: () => AppRoute.debug().go(context),
-              ),
-            ],
-          );
+    final appBar = _AppBar(
+      selectIndex: _selectIndex,
+      landscape: _isLandscape,
+      centerTitle: false,
+      title: const Text(BuildData.name),
+      actions: <Widget>[
+        ValBuilder(
+          listenable: Stores.setting.serverStatusUpdateInterval.listenable(),
+          builder: (interval) {
+            if (interval != 0) return UIs.placeholder;
+            return IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Refresh',
+              onPressed: () async {
+                await Pros.server.refresh();
+              },
+            );
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.developer_mode, size: 21),
+          tooltip: l10n.debug,
+          onPressed: () => AppRoute.debug().go(context),
+        ),
+      ],
+    );
     return Scaffold(
       drawer: _buildDrawer(),
       appBar: appBar,
@@ -169,11 +170,17 @@ class _HomePageState extends State<HomePage>
           }
         },
       ),
-      bottomNavigationBar: widget.landscape
+      bottomNavigationBar: widget.fullScreen
           ? null
-          : ListenableBuilder(
-              listenable: _selectIndex,
-              builder: (_, __) => _buildBottomBar(),
+          : ValBuilder(
+              listenable: _isLandscape,
+              builder: (ls) {
+                if (ls) return const SizedBox();
+                return ListenableBuilder(
+                  listenable: _selectIndex,
+                  builder: (_, __) => _buildBottomBar(),
+                );
+              },
             ),
     );
   }

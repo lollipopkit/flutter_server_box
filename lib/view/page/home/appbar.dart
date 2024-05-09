@@ -2,9 +2,11 @@ part of 'home.dart';
 
 final class _AppBar extends CustomAppBar {
   final ValueNotifier<int> selectIndex;
+  final ValueNotifier<bool> landscape;
 
   const _AppBar({
     required this.selectIndex,
+    required this.landscape,
     super.title,
     super.actions,
     super.centerTitle,
@@ -12,16 +14,21 @@ final class _AppBar extends CustomAppBar {
 
   @override
   Widget build(BuildContext context) {
+    final placeholder = SizedBox(
+      height: CustomAppBar.barHeight ?? 0 + MediaQuery.of(context).padding.top,
+    );
     return ValBuilder(
-      listenable: selectIndex,
-      builder: (idx) {
-        if (idx == AppTab.ssh.index) {
-          return SizedBox(
-            height: CustomAppBar.barHeight ??
-                0 + MediaQuery.of(context).padding.top,
-          );
-        }
-        return super.build(context);
+      listenable: landscape,
+      builder: (ls) {
+        if (ls) return placeholder;
+
+        return ValBuilder(
+          listenable: selectIndex,
+          builder: (idx) {
+            if (idx == AppTab.ssh.index) return placeholder;
+            return super.build(context);
+          },
+        );
       },
     );
   }
