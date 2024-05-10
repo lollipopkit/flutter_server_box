@@ -6,19 +6,21 @@ final class AutoHide extends StatefulWidget {
   final Widget child;
   final ScrollController controller;
   final AxisDirection direction;
+  final double offset;
 
   const AutoHide({
     super.key,
     required this.child,
     required this.controller,
     required this.direction,
+    this.offset = 55,
   });
 
   @override
-  State<AutoHide> createState() => _AutoHideState();
+  State<AutoHide> createState() => AutoHideState();
 }
 
-final class _AutoHideState extends State<AutoHide> {
+final class AutoHideState extends State<AutoHide> {
   bool _visible = true;
   bool _isScrolling = false;
   Timer? _timer;
@@ -36,6 +38,15 @@ final class _AutoHideState extends State<AutoHide> {
     _timer?.cancel();
     _timer = null;
     super.dispose();
+  }
+
+  void show() {
+    debugPrint('show');
+    if (_visible) return;
+    setState(() {
+      _visible = true;
+    });
+    _setupTimer();
   }
 
   void _setupTimer() {
@@ -84,19 +95,19 @@ final class _AutoHideState extends State<AutoHide> {
       case AxisDirection.down:
         return _visible
             ? Matrix4.identity()
-            : Matrix4.translationValues(0, 55, 0);
+            : Matrix4.translationValues(0, widget.offset, 0);
       case AxisDirection.up:
         return _visible
             ? Matrix4.identity()
-            : Matrix4.translationValues(0, -55, 0);
+            : Matrix4.translationValues(0, -widget.offset, 0);
       case AxisDirection.left:
         return _visible
             ? Matrix4.identity()
-            : Matrix4.translationValues(-55, 0, 0);
+            : Matrix4.translationValues(-widget.offset, 0, 0);
       case AxisDirection.right:
         return _visible
             ? Matrix4.identity()
-            : Matrix4.translationValues(55, 0, 0);
+            : Matrix4.translationValues(widget.offset, 0, 0);
     }
   }
 }

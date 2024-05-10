@@ -57,6 +57,7 @@ class _ServerPageState extends State<ServerPage>
   bool _useDoubleColumn = false;
 
   final _scrollController = ScrollController();
+  final _autoHideKey = GlobalKey<AutoHideState>();
 
   @override
   void initState() {
@@ -97,14 +98,19 @@ class _ServerPageState extends State<ServerPage>
   Widget _buildPortrait() {
     return Scaffold(
       appBar: _buildTagsSwitcher(Pros.server),
-      body: ListenableBuilder(
-        listenable: Stores.setting.textFactor.listenable(),
-        builder: (_, __) {
-          _updateTextScaler();
-          return _buildBody();
-        },
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _autoHideKey.currentState?.show(),
+        child: ListenableBuilder(
+          listenable: Stores.setting.textFactor.listenable(),
+          builder: (_, __) {
+            _updateTextScaler();
+            return _buildBody();
+          },
+        ),
       ),
       floatingActionButton: AutoHide(
+        key: _autoHideKey,
         direction: AxisDirection.right,
         controller: _scrollController,
         child: FloatingActionButton(
