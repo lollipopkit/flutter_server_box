@@ -1008,14 +1008,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.2.1"
-  r_upgrade:
-    dependency: "direct main"
-    description:
-      name: r_upgrade
-      sha256: be460ed1d2bf3b444a731aa2eeb38751faaef91097fed4bf9d138d3214b98999
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.3.8+2"
   screen_retriever:
     dependency: transitive
     description:

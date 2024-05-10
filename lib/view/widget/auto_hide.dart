@@ -43,9 +43,10 @@ final class _AutoHideState extends State<AutoHide> {
     _timer = Timer.periodic(const Duration(seconds: 3), (_) {
       if (_isScrolling) return;
       if (!_visible) return;
-      if (!widget.controller.positions.any((e) => e.maxScrollExtent >= 0)) {
-        return;
-      }
+      final canScroll =
+          widget.controller.positions.any((e) => e.maxScrollExtent >= 0);
+      if (!canScroll) return;
+
       setState(() {
         _visible = false;
       });

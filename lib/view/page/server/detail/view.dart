@@ -104,45 +104,44 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     final buildFuncs = !Stores.setting.moveOutServerTabFuncBtns.fetch();
     final logoUrl = si.spi.custom?.logoUrl;
     final buildLogo = logoUrl != null;
-    final moreLen = () {
-      var len = 0;
-      if (buildLogo) len++;
-      if (buildFuncs) len++;
-      return len;
-    }();
+    final children = [
+      if (buildLogo)
+        _buildLogo(logoUrl, si.status.more[StatusCmdType.sys]?.dist),
+      if (buildFuncs) ServerFuncBtns(spi: widget.spi),
+    ];
+    for (final card in _cardsOrder) {
+      final buildFunc = _cardBuildMap[card];
+      if (buildFunc != null) {
+        children.add(buildFunc(si.status));
+      }
+    }
     return Scaffold(
-      appBar: CustomAppBar(
-        title: Text(si.spi.name, style: UIs.text18),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () async {
-              final delete = await AppRoute.serverEdit(spi: si.spi).go(context);
-              if (delete == true) {
-                context.pop();
-              }
-            },
-          )
-        ],
-      ),
-      body: ListView.builder(
+      appBar: _buildAppBar(si),
+      body: ListView(
         padding: EdgeInsets.only(
           left: 13,
           right: 13,
           bottom: _media.padding.bottom + 77,
         ),
-        itemCount: _cardsOrder.length + moreLen,
-        itemBuilder: (context, index) {
-          index -= moreLen;
-          if (index == -2 && buildLogo) {
-            return _buildLogo(logoUrl, si.status.more[StatusCmdType.sys]?.dist);
-          }
-          if (index == -1 && buildFuncs) {
-            return ServerFuncBtns(spi: widget.spi);
-          }
-          return _cardBuildMap[_cardsOrder[index]]?.call(si.status);
-        },
+        children: children,
       ),
+    );
+  }
+
+  CustomAppBar _buildAppBar(Server si) {
+    return CustomAppBar(
+      title: Text(si.spi.name, style: UIs.text18),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.edit),
+          onPressed: () async {
+            final delete = await AppRoute.serverEdit(spi: si.spi).go(context);
+            if (delete == true) {
+              context.pop();
+            }
+          },
+        )
+      ],
     );
   }
 

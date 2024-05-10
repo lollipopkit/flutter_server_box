@@ -260,11 +260,6 @@ class SettingStore extends PersistentStore {
 
   late final displayCpuIndex = property('displayCpuIndex', true);
 
-  /// Some Android device are unable display the download progress notification,
-  /// open url in external browser.
-  /// 0 -> unset, 1 -> true, 2 -> false
-  late final inAppUpdate = property('inAppUpdate', 0);
-
   late final editorSoftWrap = property('editorSoftWrap', isIOS);
 
   late final sshTermHelpShown = property('sshTermHelpShown', false);
