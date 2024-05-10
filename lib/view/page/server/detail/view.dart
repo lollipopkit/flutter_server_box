@@ -755,34 +755,23 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildSensorItem(SensorItem si) {
-    if (si.props.isEmpty) return UIs.placeholder;
-    return ListTile(
-      title: Text(si.device, style: UIs.text15),
-      subtitle: Column(
-        children: si.props.keys
-            .map((e) => _buildSensorDetailItem(e, si.props[e]))
-            .toList(),
+    if (si.val.isEmpty) return UIs.placeholder;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Text(si.device, style: UIs.text15Bold),
+              const Spacer(),
+              Text(si.adapter.raw, style: UIs.text13Grey),
+            ],
+          ),
+          Text(si.val, style: UIs.text13Grey),
+        ],
       ),
-    );
-  }
-
-  Widget _buildSensorDetailItem(String key, SensorTemp? st) {
-    if (st == null) return UIs.placeholder;
-    final text = () {
-      final current = st.current?.toStringAsFixed(1);
-      final max = st.max?.toStringAsFixed(1);
-      final min = st.min?.toStringAsFixed(1);
-      final currentText = current == null ? '' : '$current°C';
-      final maxText = max == null ? '' : ' | ${l10n.max}:$max';
-      final minText = min == null ? '' : ' | ${l10n.min}:$min';
-      return '$currentText$maxText$minText';
-    }();
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(key, style: UIs.text13),
-        Text(text, style: UIs.text13Grey),
-      ],
     );
   }
 

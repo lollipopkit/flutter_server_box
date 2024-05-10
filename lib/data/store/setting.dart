@@ -245,7 +245,7 @@ class SettingStore extends PersistentStore {
 
   /// Compatiablity for Chinese Android.
   /// Set it to true, if you use Safe Keyboard on Chinese Android
-  late final cnKeyboardComp = property('cnKeyboardComp', false);
+  // late final cnKeyboardComp = property('cnKeyboardComp', false);
 
   late final lastVer = property('lastVer', 0);
 

@@ -279,7 +279,6 @@ class ServerProvider extends ChangeNotifier {
 
       final wol = spi.wolCfg;
       if (wol != null) {
-        /// TODO: test it
         try {
           await wol.wake();
         } catch (e) {

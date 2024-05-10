@@ -19,14 +19,13 @@ extension ServerX on Server {
           final preferTempDev = spi.custom?.preferTempDev;
           if (preferTempDev != null) {
             final preferTemp = status.sensors
-                .firstWhereOrNull(
-                  (e) => e.device == preferTempDev,
-                )
-                ?.props
-                .values
-                .firstOrNull
-                ?.current;
-            if (preferTemp != null) return preferTemp;
+                .firstWhereOrNull((e) => e.device == preferTempDev)
+                ?.val
+                .split(' ')
+                .firstOrNull;
+            if (preferTemp != null) {
+              return double.tryParse(preferTemp.replaceFirst('°C', ''));
+            }
           }
           // Last priority
           final temp = status.temps.first;

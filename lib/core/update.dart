@@ -1,4 +1,3 @@
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
@@ -19,7 +18,7 @@ Future<bool> isFileAvailable(String url) async {
     final resp = await Dio().head(url);
     return resp.statusCode == 200;
   } catch (e) {
-    Loggers.app.warning('HEAD update file failed', e); 
+    Loggers.app.warning('HEAD update file failed', e);
     return false;
   }
 }
@@ -27,7 +26,7 @@ Future<bool> isFileAvailable(String url) async {
 Future<void> doUpdate(BuildContext context, {bool force = false}) async {
   final update = await locator<AppService>().getUpdate();
 
-  final newest = update.build.last.current; 
+  final newest = update.build.last.current;
   if (newest == null) {
     Loggers.app.warning('Update not available on ${OS.type}');
     return;
