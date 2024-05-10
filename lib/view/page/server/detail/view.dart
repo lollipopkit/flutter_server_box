@@ -103,10 +103,11 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   Widget _buildMainPage(Server si) {
     final buildFuncs = !Stores.setting.moveOutServerTabFuncBtns.fetch();
     final logoUrl = si.spi.custom?.logoUrl;
-    final listLen = () {
-      var len = _cardsOrder.length;
+    final buildLogo = logoUrl != null;
+    final moreLen = () {
+      var len = 0;
+      if (buildLogo) len++;
       if (buildFuncs) len++;
-      if (logoUrl != null) len++;
       return len;
     }();
     return Scaffold(
@@ -130,16 +131,15 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           right: 13,
           bottom: _media.padding.bottom + 77,
         ),
-        itemCount: listLen,
+        itemCount: _cardsOrder.length + moreLen,
         itemBuilder: (context, index) {
-          if (index == 0 && logoUrl != null) {
+          index -= moreLen;
+          if (index == -2 && buildLogo) {
             return _buildLogo(logoUrl, si.status.more[StatusCmdType.sys]?.dist);
           }
-          if (index == 1 && buildFuncs) {
+          if (index == -1 && buildFuncs) {
             return ServerFuncBtns(spi: widget.spi);
           }
-          if (logoUrl != null) index--;
-          if (buildFuncs) index--;
           return _cardBuildMap[_cardsOrder[index]]?.call(si.status);
         },
       ),
