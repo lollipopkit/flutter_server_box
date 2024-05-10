@@ -20,8 +20,8 @@ extension ServerX on Server {
           if (preferTempDev != null) {
             final preferTemp = status.sensors
                 .firstWhereOrNull((e) => e.device == preferTempDev)
-                ?.val
-                .split(' ')
+                ?.summary
+                ?.split(' ')
                 .firstOrNull;
             if (preferTemp != null) {
               return double.tryParse(preferTemp.replaceFirst('°C', ''));

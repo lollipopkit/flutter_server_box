@@ -1,6 +1,7 @@
 import 'package:extended_image/extended_image.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/common.dart';
@@ -21,6 +22,7 @@ import 'package:toolbox/data/model/server/system.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/expand_tile.dart';
 import 'package:toolbox/view/widget/kv_row.dart';
+import 'package:toolbox/view/widget/markdown.dart';
 import 'package:toolbox/view/widget/server_func_btns.dart';
 import 'package:toolbox/view/widget/val_builder.dart';
 
@@ -755,22 +757,51 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildSensorItem(SensorItem si) {
-    if (si.val.isEmpty) return UIs.placeholder;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Text(si.device, style: UIs.text15Bold),
-              const Spacer(),
-              Text(si.adapter.raw, style: UIs.text13Grey),
-            ],
+    if (si.summary == null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
+        child: Text(si.device),
+      );
+    }
+    return InkWell(
+      onTap: () {
+        context.showRoundDialog(
+          title: Text(si.device),
+          child: SingleChildScrollView(
+            child: SimpleMarkdown(
+              data: si.toMarkdown,
+              styleSheet: MarkdownStyleSheet(
+                tableBorder: TableBorder.all(color: Colors.grey),
+                tableHead: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
           ),
-          Text(si.val, style: UIs.text13Grey),
-        ],
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+                child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Text(si.device, style: UIs.text15Bold),
+                    UIs.width7,
+                    Text('(${si.adapter.raw})', style: UIs.text13Grey),
+                  ],
+                ),
+                Text(si.summary ?? '', style: UIs.text13Grey),
+              ],
+            )),
+            UIs.width7,
+            const Icon(Icons.keyboard_arrow_right, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }

@@ -1,3 +1,4 @@
+import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/data/res/logger.dart';
 
 final class SensorAdaptor {
@@ -26,13 +27,27 @@ final class SensorAdaptor {
 final class SensorItem {
   final String device;
   final SensorAdaptor adapter;
-  final String val;
+  final Map<String, String> details;
 
   const SensorItem({
     required this.device,
     required this.adapter,
-    required this.val,
+    required this.details,
   });
+
+  String get toMarkdown {
+    final sb = StringBuffer();
+    sb.writeln('| ${l10n.name} | ${l10n.content} |');
+    sb.writeln('| --- | --- |');
+    for (final entry in details.entries) {
+      sb.writeln('| ${entry.key} | ${entry.value} |');
+    }
+    return sb.toString();
+  }
+
+  String? get summary {
+    return details.values.firstOrNull;
+  }
 
   static List<SensorItem> parse(String raw) {
     final eachSensorLines = <List<String>>[[]];
@@ -60,13 +75,23 @@ final class SensorItem {
       final device = sensorLines.first;
       final adapter =
           SensorAdaptor.parse(sensorLines[1].split(':').last.trim());
-      final line = sensorLines[2];
-      final parts = line.split(':');
-      if (parts.length < 2) {
-        continue;
+
+      final details = <String, String>{};
+      for (var idx = 2; idx < len; idx++) {
+        final part = sensorLines[idx];
+        final detailParts = part.split(':');
+        if (detailParts.length < 2) {
+          continue;
+        }
+        final key = detailParts[0].trim();
+        final value = detailParts[1].trim();
+        details[key] = value;
       }
-      final val = parts[1].trim();
-      sensors.add(SensorItem(device: device, adapter: adapter, val: val));
+      sensors.add(SensorItem(
+        device: device,
+        adapter: adapter,
+        details: details,
+      ));
     }
 
     return sensors;
