@@ -473,7 +473,10 @@ class _ServerEditPageState extends State<ServerEditPage> {
       const Text('Wake On LAN', style: UIs.text13Grey),
       UIs.height7,
       ListTile(
-        leading: const Icon(BoxIcons.bxs_help_circle),
+        leading: const Padding(
+          padding: EdgeInsets.only(left: 10),
+          child: Icon(BoxIcons.bxs_help_circle),
+        ),
         title: Text(l10n.about),
         subtitle: Text(l10n.wolTip, style: UIs.text12Grey),
       ).card,
@@ -606,15 +609,22 @@ class _ServerEditPageState extends State<ServerEditPage> {
       logoUrl: _logoUrlCtrl.text.selfIfNotNullEmpty,
     );
 
-    final wol = WakeOnLanCfg(
-      mac: _wolMacCtrl.text,
-      ip: _wolIpCtrl.text,
-      pwd: _wolPwdCtrl.text.selfIfNotNullEmpty,
-    );
-    final wolValidation = wol.validate();
-    if (!wolValidation.$2) {
-      context.showSnackBar('${l10n.failed}: ${wolValidation.$1}');
-      return;
+    final wolEmpty = _wolMacCtrl.text.isEmpty &&
+        _wolIpCtrl.text.isEmpty &&
+        _wolPwdCtrl.text.isEmpty;
+    final wol = wolEmpty
+        ? null
+        : WakeOnLanCfg(
+            mac: _wolMacCtrl.text,
+            ip: _wolIpCtrl.text,
+            pwd: _wolPwdCtrl.text.selfIfNotNullEmpty,
+          );
+    if (wol != null) {
+      final wolValidation = wol.validate();
+      if (!wolValidation.$2) {
+        context.showSnackBar('${l10n.failed}: ${wolValidation.$1}');
+        return;
+      }
     }
 
     final spi = ServerPrivateInfo(

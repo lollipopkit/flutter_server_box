@@ -12,6 +12,8 @@ PODS:
     - Flutter
   - local_auth_ios (0.0.1):
     - Flutter
+  - package_info_plus (0.4.5):
+    - Flutter
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -28,6 +30,8 @@ PODS:
     - FlutterMacOS
   - url_launcher_ios (0.0.1):
     - Flutter
+  - wakelock_plus (0.0.1):
+    - Flutter
   - watch_connectivity (0.0.1):
     - Flutter
 
@@ -39,6 +43,7 @@ DEPENDENCIES:
   - flutter_native_splash (from `.symlinks/plugins/flutter_native_splash/ios`)
   - icloud_storage (from `.symlinks/plugins/icloud_storage/ios`)
   - local_auth_ios (from `.symlinks/plugins/local_auth_ios/ios`)
+  - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - plain_notification_token (from `.symlinks/plugins/plain_notification_token/ios`)
@@ -46,6 +51,7 @@ DEPENDENCIES:
   - share_plus (from `.symlinks/plugins/share_plus/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
+  - wakelock_plus (from `.symlinks/plugins/wakelock_plus/ios`)
   - watch_connectivity (from `.symlinks/plugins/watch_connectivity/ios`)
 
 EXTERNAL SOURCES:
@@ -63,6 +69,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/icloud_storage/ios"
   local_auth_ios:
     :path: ".symlinks/plugins/local_auth_ios/ios"
+  package_info_plus:
+    :path: ".symlinks/plugins/package_info_plus/ios"
   path_provider_foundation:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
   permission_handler_apple:
@@ -77,6 +85,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
   url_launcher_ios:
     :path: ".symlinks/plugins/url_launcher_ios/ios"
+  wakelock_plus:
+    :path: ".symlinks/plugins/wakelock_plus/ios"
   watch_connectivity:
     :path: ".symlinks/plugins/watch_connectivity/ios"
 
@@ -88,6 +98,7 @@ SPEC CHECKSUMS:
   flutter_native_splash: 52501b97d1c0a5f898d687f1646226c1f93c56ef
   icloud_storage: d9ac7a33ced81df08ba7ea1bf3099cc0ee58f60a
   local_auth_ios: 5046a18c018dd973247a0564496c8898dbb5adf9
+  package_info_plus: 58f0028419748fad15bf008b270aaa8e54380b1c
   path_provider_foundation: 3784922295ac71e43754bd15e0653ccfd36a147c
   permission_handler_apple: 9878588469a2b0d0fc1e048d9f43605f92e6cec2
   plain_notification_token: b36467dc91939a7b6754267c701bbaca14996ee1
@@ -95,6 +106,7 @@ SPEC CHECKSUMS:
   share_plus: 8875f4f2500512ea181eef553c3e27dba5135aad
   shared_preferences_foundation: b4c3b4cddf1c21f02770737f147a3f5da9d39695
   url_launcher_ios: bbd758c6e7f9fd7b5b1d4cde34d2b95fcce5e812
+  wakelock_plus: 78ec7c5b202cab7761af8e2b2b3d0671be6c4ae1
   watch_connectivity: 715eb484685e05846eab74795348a44bb2809b82
 
 PODFILE CHECKSUM: ec6ef69056f066e8b21a3391082f23b5ad2d37f8
