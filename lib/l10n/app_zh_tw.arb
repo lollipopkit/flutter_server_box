@@ -136,6 +136,7 @@
   "inputDomainHere": "在這裡輸入域名",
   "install": "安裝",
   "installDockerWithUrl": "請先 https://docs.docker.com/engine/install docker",
+  "invalid": "無效",
   "invalidJson": "無效的 JSON",
   "invalidVersion": "不支持的版本",
   "invalidVersionHelp": "請確保正確安裝了docker，或者使用的非自編譯版本。如果沒有以上問題，請在 {url} 提交問題。",

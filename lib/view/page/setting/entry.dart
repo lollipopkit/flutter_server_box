@@ -151,6 +151,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildServer() {
     return Column(
       children: [
+        _buildServerLogoUrl(),
         _buildServerFuncBtns(),
         _buildNetViewType(),
         _buildServerSeq(),
@@ -1145,6 +1146,52 @@ class _SettingPageState extends State<SettingPage> {
       leading: const Icon(MingCute.lock_fill),
       title: Text(l10n.wakeLock),
       trailing: StoreSwitch(prop: _setting.sshWakeLock),
+    );
+  }
+
+  Widget _buildServerLogoUrl() {
+    void onSave(String url) {
+      if (url.isEmpty || !url.startsWith('http')) {
+        context.showRoundDialog(
+          title: Text(l10n.failed),
+          child: Text('${l10n.invalid} URL'),
+          actions: [
+            TextButton(
+              onPressed: () => context.pop(),
+              child: Text(l10n.ok),
+            ),
+          ],
+        );
+        return;
+      }
+      _setting.serverLogoUrl.put(url);
+      context.pop();
+    }
+
+    return ListTile(
+      title: Text('Logo ${l10n.addr}'),
+      subtitle: SimpleMarkdown(data: '${l10n.view} ${l10n.doc}'),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: () {
+        final ctrl =
+            TextEditingController(text: _setting.serverLogoUrl.fetch());
+        context.showRoundDialog(
+          title: Text('Logo ${l10n.addr}'),
+          child: Input(
+            controller: ctrl,
+            autoFocus: true,
+            hint: 'https://example.com/logo.png',
+            icon: Icons.link,
+            onSubmitted: onSave,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => onSave(ctrl.text),
+              child: Text(l10n.ok),
+            ),
+          ],
+        );
+      },
     );
   }
 }

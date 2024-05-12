@@ -8,6 +8,7 @@ import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/extension/listx.dart';
+import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/data/model/app/server_detail_card.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/battery.dart';
@@ -104,7 +105,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildMainPage(Server si) {
     final buildFuncs = !Stores.setting.moveOutServerTabFuncBtns.fetch();
-    final logoUrl = si.spi.custom?.logoUrl;
+    final logoUrl = si.spi.custom?.logoUrl ??
+        Stores.setting.serverLogoUrl.fetch().selfIfNotNullEmpty;
     final buildLogo = logoUrl != null;
     final children = [
       if (buildLogo)
@@ -149,7 +151,9 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildLogo(String logoUrl, Dist? dist) {
     if (dist != null) {
-      logoUrl = logoUrl.replaceFirst('{DIST}', dist.name);
+      logoUrl = logoUrl
+          .replaceFirst('{DIST}', dist.name)
+          .replaceFirst('{BRIGHT}', context.isDark ? 'dark' : 'light');
     }
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 13),

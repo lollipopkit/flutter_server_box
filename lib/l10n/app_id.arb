@@ -136,6 +136,7 @@
   "inputDomainHere": "Input domain di sini",
   "install": "Install",
   "installDockerWithUrl": "Silakan https://docs.docker.com/engine/install Docker pertama.",
+  "invalid": "Tidak valid",
   "invalidJson": "JSON tidak valid",
   "invalidVersion": "Versi tidak valid",
   "invalidVersionHelp": "Pastikan Docker diinstal dengan benar, atau Anda menggunakan versi yang tidak dikompilasi. Jika Anda tidak memiliki masalah di atas, silakan kirimkan masalah pada {url}.",

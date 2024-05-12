@@ -136,6 +136,7 @@
   "inputDomainHere": "Voer hier domein in",
   "install": "Installeren",
   "installDockerWithUrl": "Installeer eerst docker via https://docs.docker.com/engine/install.",
+  "invalid": "Ongeldig",
   "invalidJson": "Ongeldige JSON",
   "invalidVersion": "Ongeldige versie",
   "invalidVersionHelp": "Zorg ervoor dat docker correct is geïnstalleerd, of dat u een niet-zelf-gecompileerde versie gebruikt. Als dat niet het geval is, meld dan een probleem op {url}.",

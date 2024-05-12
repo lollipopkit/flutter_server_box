@@ -136,6 +136,7 @@
   "inputDomainHere": "ここにドメインを入力",
   "install": "インストール",
   "installDockerWithUrl": "最初に https://docs.docker.com/engine/install dockerをインストールしてください",
+  "invalid": "無効",
   "invalidJson": "無効なJSON",
   "invalidVersion": "サポートされていないバージョン",
   "invalidVersionHelp": "dockerが正しくインストールされていること、または自己コンパイルされたバージョンを使用していないことを確認してください。問題がない場合は、{url}で問題を報告してください。",

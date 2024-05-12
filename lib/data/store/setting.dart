@@ -274,6 +274,9 @@ class SettingStore extends PersistentStore {
   /// ssh page
   late final sshWakeLock = property('sshWakeLock', true);
 
+  /// fmt: https://example.com/{DIST}-{BRIGHT}.png
+  late final serverLogoUrl = property('serverLogoUrl', '');
+
   // Never show these settings for users
   //
   // ------BEGIN------

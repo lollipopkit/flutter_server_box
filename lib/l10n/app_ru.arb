@@ -136,6 +136,7 @@
   "inputDomainHere": "введите домен здесь",
   "install": "установить",
   "installDockerWithUrl": "Пожалуйста, сначала установите Docker по адресу https://docs.docker.com/engine/install",
+  "invalid": "Недействительный",
   "invalidJson": "неверный JSON",
   "invalidVersion": "неподдерживаемая версия",
   "invalidVersionHelp": "Пожалуйста, убедитесь, что docker установлен корректно, или что используется не собственно собранная версия. Если проблема не в этом, пожалуйста, отправьте отчет о проблеме на {url}.",
