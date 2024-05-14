@@ -19,7 +19,6 @@ import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
 
 import '../../../core/route.dart';
-import '../../../core/utils/misc.dart';
 import '../../../data/model/server/server_private_info.dart';
 import '../../../data/model/ssh/virtual_key.dart';
 import '../../../data/res/terminal.dart';
@@ -509,7 +508,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   }
 
   void _initStoredCfg() {
-    final fontFamilly = getFileName(Stores.setting.fontPath.fetch());
+    final fontFamilly = Stores.setting.fontPath.fetch().getFileName();
     final textSize = Stores.setting.termFontSize.fetch();
     final textStyle = TextStyle(
       fontFamily: fontFamilly,

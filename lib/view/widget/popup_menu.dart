@@ -22,9 +22,8 @@ class PopupMenu<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<T>(
-      itemBuilder: (_) => items
-          .map((e) => PopupMenuItem(value: e, child: builder(e)))
-          .toList(),
+      itemBuilder: (_) =>
+          items.map((e) => PopupMenuItem(value: e, child: builder(e))).toList(),
       onSelected: onSelected,
       initialValue: initialValue,
       padding: padding,

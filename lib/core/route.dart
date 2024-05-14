@@ -1,7 +1,9 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/data/model/server/private_key_info.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
+import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/page/backup.dart';
 import 'package:toolbox/view/page/container.dart';
@@ -21,7 +23,6 @@ import 'package:toolbox/view/page/setting/seq/virt_key.dart';
 import 'package:toolbox/view/page/storage/local.dart';
 
 import '../data/model/server/snippet.dart';
-import '../view/page/debug.dart';
 import '../view/page/editor.dart';
 import '../view/page/process.dart';
 import '../view/page/server/edit.dart';
@@ -150,7 +151,14 @@ class AppRoutes {
   }
 
   static AppRoutes debug({Key? key}) {
-    return AppRoutes(DebugPage(key: key), 'debug');
+    return AppRoutes(
+      DebugPage(
+        key: key,
+        notifier: Pros.debug.widgets,
+        onClear: Pros.debug.clear,
+      ),
+      'debug',
+    );
   }
 
   static AppRoutes docker({Key? key, required ServerPrivateInfo spi}) {

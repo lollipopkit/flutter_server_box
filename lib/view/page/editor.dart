@@ -9,7 +9,6 @@ import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_highlight/themes/a11y-light.dart';
 import 'package:flutter_highlight/themes/monokai.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/data/res/highlight.dart';
 import 'package:toolbox/data/res/store.dart';
 
@@ -118,7 +117,7 @@ class _EditorPageState extends State<EditorPage> {
     return CustomAppBar(
       centerTitle: true,
       title: TwoLineText(
-        up: widget.title ?? getFileName(widget.path) ?? l10n.unknown,
+        up: widget.title ?? widget.path?.getFileName() ?? l10n.unknown,
         down: l10n.editor,
       ),
       actions: [

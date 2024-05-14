@@ -4,7 +4,6 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/data/model/app/server_detail_card.dart';
 import 'package:toolbox/data/res/store.dart';
 
-
 class ServerDetailOrderPage extends StatefulWidget {
   const ServerDetailOrderPage({super.key});
 

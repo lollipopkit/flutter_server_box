@@ -13,7 +13,6 @@ import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/data/res/url.dart';
 
 import '../../../core/route.dart';
-import '../../../core/utils/misc.dart';
 import '../../../data/model/app/net_view.dart';
 import '../../../data/provider/app.dart';
 import '../../../data/res/build_data.dart';
@@ -424,7 +423,7 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildFont() {
-    final fontName = getFileName(_setting.fontPath.fetch());
+    final fontName = _setting.fontPath.fetch().getFileName();
     return ListTile(
       leading: const Icon(MingCute.font_fill),
       title: Text(l10n.font),
@@ -457,7 +456,7 @@ class _SettingPageState extends State<SettingPage> {
   Future<void> _pickFontFile() async {
     final path = await Pfs.pickFilePath();
     if (path == null) return;
-    
+
     // iOS can't copy file to app dir, so we need to use the original path
     if (isIOS) {
       _setting.fontPath.put(path);

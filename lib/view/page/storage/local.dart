@@ -10,7 +10,6 @@ import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/view/widget/omit_start_text.dart';
 
 import '../../../core/route.dart';
-import '../../../core/utils/misc.dart';
 import '../../../data/model/app/path_with_prefix.dart';
 
 class LocalStoragePage extends StatefulWidget {
@@ -134,7 +133,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
           onPressed: () async {
             final path = await Pfs.pickFilePath();
             if (path == null) return;
-            final name = getFileName(path) ?? 'imported';
+            final name = path.getFileName() ?? 'imported';
             await File(path).copy(_path!.path.joinPath(name));
             setState(() {});
           },

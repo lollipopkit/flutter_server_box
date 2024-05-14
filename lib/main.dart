@@ -10,23 +10,21 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:toolbox/app.dart';
 import 'package:toolbox/core/utils/sync/icloud.dart';
 import 'package:toolbox/core/utils/sync/webdav.dart';
-import 'package:toolbox/core/utils/ui.dart';
 import 'package:toolbox/data/model/app/menu/server_func.dart';
+import 'package:toolbox/data/model/app/net_view.dart';
 import 'package:toolbox/data/model/app/version_related.dart';
 import 'package:toolbox/data/model/server/custom.dart';
+import 'package:toolbox/data/model/server/private_key_info.dart';
+import 'package:toolbox/data/model/server/server_private_info.dart';
+import 'package:toolbox/data/model/server/snippet.dart';
+import 'package:toolbox/data/model/ssh/virtual_key.dart';
 import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:window_manager/window_manager.dart';
-
-import 'app.dart';
-import 'data/model/app/net_view.dart';
-import 'data/model/server/private_key_info.dart';
-import 'data/model/server/server_private_info.dart';
-import 'data/model/server/snippet.dart';
-import 'data/model/ssh/virtual_key.dart';
+import 'package:toolbox/data/res/url.dart';
 
 Future<void> main() async {
   _runInZone(() async {
@@ -71,11 +69,11 @@ Future<void> _initApp() async {
   // Base of all data.
   await _initDb();
 
-  _initDesktopWindow();
-  _setupLogger();
+  _setupDebug();
+  SystemUIs.initDesktopWindow(Stores.setting.hideTitleBar.fetch());
 
   // Load font
-  loadFontFile(Stores.setting.fontPath.fetch());
+  FontUtils.loadFrom(Stores.setting.fontPath.fetch());
 
   if (isAndroid) {
     // SharedPreferences is only used on Android for saving home widgets settings.
@@ -119,7 +117,7 @@ Future<void> _initDb() async {
   Pros.key.load();
 }
 
-void _setupLogger() {
+void _setupDebug() {
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
     Pros.debug.addLog(record);
@@ -127,25 +125,10 @@ void _setupLogger() {
     if (record.error != null) print(record.error);
     if (record.stackTrace != null) print(record.stackTrace);
   });
-}
 
-void _initDesktopWindow() async {
-  if (!isDesktop) return;
-
-  await windowManager.ensureInitialized();
-  await CustomAppBar.updateTitlebarHeight(Stores.setting.hideTitleBar.fetch());
-
-  final windowOptions = WindowOptions(
-    center: true,
-    backgroundColor: Colors.transparent,
-    skipTaskbar: false,
-    titleBarStyle: CustomAppBar.drawTitlebar ? TitleBarStyle.hidden : null,
-    minimumSize: const Size(300, 300),
-  );
-  windowManager.waitUntilReadyToShow(windowOptions, () async {
-    await windowManager.show();
-    await windowManager.focus();
-  });
+  if (Stores.setting.collectUsage.fetch()) {
+    Analysis.init(Urls.analysis, '0772e65c696709f879d87db77ae1a811259e3eb9');
+  }
 }
 
 Future<void> _doVersionRelated() async {

@@ -2,7 +2,6 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:toolbox/core/utils/ui.dart';
 import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/res/rebuild.dart';
 import 'package:toolbox/data/res/store.dart';
@@ -84,11 +83,7 @@ class MyApp extends StatelessWidget {
 }
 
 void _setup(BuildContext context) async {
-  setTransparentNavigationBar(context);
-  Analysis.init(
-    'https://countly.lolli.tech',
-    '0772e65c696709f879d87db77ae1a811259e3eb9',
-  );
+  SystemUIs.setTransparentNavigationBar(context);
 }
 
 ThemeData _getAmoledTheme(ThemeData darkTheme) => darkTheme.copyWith(

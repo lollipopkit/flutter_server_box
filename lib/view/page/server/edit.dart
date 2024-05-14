@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/utils/ui.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/custom.dart';
 import 'package:toolbox/data/model/server/wol_cfg.dart';
@@ -456,7 +455,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         ),
         title: Text(l10n.doc),
         trailing: const Icon(Icons.open_in_new, size: 17),
-        onTap: () => openUrl(l10n.customCmdDocUrl),
+        onTap: () => l10n.customCmdDocUrl.launch(),
       ).cardx,
     ];
   }

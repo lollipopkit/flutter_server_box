@@ -1,7 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:plain_notification_token/plain_notification_token.dart';
 
-
 Future<String?> getToken() async {
   if (isIOS) {
     final plainNotificationToken = PlainNotificationToken();
@@ -13,11 +12,4 @@ Future<String?> getToken() async {
     return await plainNotificationToken.getToken();
   }
   return null;
-}
-
-String? getFileName(String? path) {
-  if (path == null || path.isEmpty) {
-    return null;
-  }
-  return path.split('/').last;
 }

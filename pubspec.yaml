@@ -7,7 +7,6 @@ environment:
   sdk: ">=3.0.0"
 
 dependencies:
-  archive: ^3.3.8
   flutter:
     sdk: flutter
   flutter_localizations:
@@ -35,7 +34,6 @@ dependencies:
     git:
       ref: a343bc2fdc11fbc7dbfc1f170692426a6fe01cb9
       url: https://github.com/lollipopkit/xterm.dart
-  file_picker: ^8.0.1
   plain_notification_token: ^0.0.4
   highlight: ^0.7.0
   flutter_highlight: ^0.7.0
@@ -47,7 +45,6 @@ dependencies:
     git:
       ref: master
       url: https://github.com/lollipopkit/watch_connectivity
-  choice: ^2.0.0
   #flutter_secure_storage: ^9.0.0
   xml: ^6.4.2 # for parsing nvidia-smi
   flutter_displaymode: ^0.6.0
@@ -66,7 +63,7 @@ dependencies:
     git:
       url: https://github.com/lollipopkit/fl_lib
       ref: main
-    #path: ../fl_lib
+    # path: ../fl_lib
 
 dev_dependencies:
   flutter_native_splash: ^2.1.6

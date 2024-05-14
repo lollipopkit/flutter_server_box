@@ -34,7 +34,7 @@ packages:
     source: hosted
     version: "2.0.2"
   archive:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: archive
       sha256: ecf4273855368121b1caed0d10d4513c7241dfc813f7d3c8933b36622ae9b265
@@ -154,7 +154,7 @@ packages:
     source: hosted
     version: "2.0.3"
   choice:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: choice
       sha256: "52d07065e8056beba5b26cff7786134cbfa24927b1f5bf60a05d50058597b2d9"
@@ -349,7 +349,7 @@ packages:
     source: hosted
     version: "7.0.0"
   file_picker:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: file_picker
       sha256: "29c90806ac5f5fb896547720b73b17ee9aed9bba540dc5d91fe29f8c5745b10a"
@@ -377,7 +377,7 @@ packages:
     description:
       path: "."
       ref: main
-      resolved-ref: ff02a5d2b808a77f2f54528aece6b958cdc209a5
+      resolved-ref: d6f282b4883615cc5a31b5f3a720b6a74d5285f4
       url: "https://github.com/lollipopkit/fl_lib"
     source: git
     version: "0.0.1"
