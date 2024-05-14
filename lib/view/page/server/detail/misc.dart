@@ -109,7 +109,7 @@ Widget _buildLineChart(
               isCurved: curve,
               barWidth: 2,
               isStrokeCapRound: true,
-              color: primaryColor,
+              color: UIs.primaryColor,
               dotData: const FlDotData(show: false),
               belowBarData: BarAreaData(show: false),
             ))

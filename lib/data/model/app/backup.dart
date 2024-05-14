@@ -1,13 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:logging/logging.dart';
-import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/data/model/server/private_key_info.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
-import 'package:toolbox/data/res/logger.dart';
-import 'package:toolbox/data/res/path.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/rebuild.dart';
 import 'package:toolbox/data/res/store.dart';
@@ -76,7 +74,7 @@ class Backup {
 
   static Future<String> backup([String? name]) async {
     final result = _diyEncrypt(json.encode(Backup.loadFromStore().toJson()));
-    final path = '${await Paths.doc}/${name ?? Paths.bakName}';
+    final path = '${Paths.doc}/${name ?? 'srvbox_bak.json'}';
     await File(path).writeAsString(result);
     return path;
   }

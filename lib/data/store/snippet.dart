@@ -1,4 +1,5 @@
-import '../../core/persistant_store.dart';
+import 'package:fl_lib/fl_lib.dart';
+
 import '../model/server/snippet.dart';
 
 class SnippetStore extends PersistentStore {

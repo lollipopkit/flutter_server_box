@@ -2,26 +2,16 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:after_layout/after_layout.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:get_it/get_it.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/extension/context/common.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/listx.dart';
-import 'package:toolbox/core/extension/media_queryx.dart';
-import 'package:toolbox/core/extension/numx.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
-import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/try_limiter.dart';
-import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/view/widget/auto_hide.dart';
-import 'package:toolbox/view/widget/icon_text_btn.dart';
-import 'package:toolbox/view/widget/markdown.dart';
 import 'package:toolbox/view/widget/percent_circle.dart';
 
 import '../../../core/route.dart';
@@ -29,10 +19,7 @@ import '../../../data/model/app/net_view.dart';
 import '../../../data/model/server/server.dart';
 import '../../../data/model/server/server_private_info.dart';
 import '../../../data/provider/server.dart';
-import '../../../data/res/ui.dart';
-import '../../widget/cardx.dart';
 import '../../widget/server_func_btns.dart';
-import '../../widget/tag.dart';
 
 class ServerPage extends StatefulWidget {
   const ServerPage({super.key});
@@ -79,7 +66,7 @@ class _ServerPageState extends State<ServerPage>
     _media = MediaQuery.of(context);
     _updateOffset();
     _updateTextScaler();
-    _useDoubleColumn = _media.useDoubleColumn &&
+    _useDoubleColumn = _media.size.width > 639 &&
         Stores.setting.doubleColumnServersPage.fetch();
   }
 
@@ -115,7 +102,7 @@ class _ServerPageState extends State<ServerPage>
         controller: _scrollController,
         child: FloatingActionButton(
           heroTag: 'addServer',
-          onPressed: () => AppRoute.serverEdit().go(context),
+          onPressed: () => AppRoutes.serverEdit().go(context),
           tooltip: l10n.addAServer,
           child: const Icon(Icons.add),
         ),
@@ -137,7 +124,7 @@ class _ServerPageState extends State<ServerPage>
               top: 0,
               left: 0,
               child: IconButton(
-                onPressed: () => AppRoute.settings().go(context),
+                onPressed: () => AppRoutes.settings().go(context),
                 icon: const Icon(Icons.settings, color: Colors.grey),
               ),
             ),
@@ -227,6 +214,7 @@ class _ServerPageState extends State<ServerPage>
         _tag = p0;
       }),
       initTag: _tag,
+      allL10n: l10n.all,
     );
   }
 
@@ -285,9 +273,9 @@ class _ServerPageState extends State<ServerPage>
       child: InkWell(
         onTap: () {
           if (srv.canViewDetails) {
-            AppRoute.serverDetail(spi: srv.spi).go(context);
+            AppRoutes.serverDetail(spi: srv.spi).go(context);
           } else {
-            AppRoute.serverEdit(spi: srv.spi).go(context);
+            AppRoutes.serverEdit(spi: srv.spi).go(context);
           }
         },
         onLongPress: () {
@@ -298,7 +286,7 @@ class _ServerPageState extends State<ServerPage>
               flip: !cardStatus.value.flip,
             );
           } else {
-            AppRoute.serverEdit(spi: srv.spi).go(context);
+            AppRoutes.serverEdit(spi: srv.spi).go(context);
           }
         },
         child: Padding(
@@ -343,7 +331,7 @@ class _ServerPageState extends State<ServerPage>
           height: _calcCardHeight(srv.conn, cardStatus.value.flip),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: children,
           ),
@@ -363,7 +351,7 @@ class _ServerPageState extends State<ServerPage>
               func: () async {
                 if (Stores.setting.showSuspendTip.fetch()) {
                   await context.showRoundDialog(
-                    title: Text(l10n.attention),
+                    title: l10n.attention,
                     child: Text(l10n.suspendTip),
                   );
                   Stores.setting.showSuspendTip.put(false);
@@ -407,7 +395,7 @@ class _ServerPageState extends State<ServerPage>
             text: l10n.reboot,
           ),
           IconTextBtn(
-            onPressed: () => AppRoute.serverEdit(spi: srv.spi).go(context),
+            onPressed: () => AppRoutes.serverEdit(spi: srv.spi).go(context),
             icon: Icons.edit,
             text: l10n.edit,
           )
@@ -482,7 +470,7 @@ class _ServerPageState extends State<ServerPage>
             height: 19,
             child: CircularProgressIndicator(
               strokeWidth: 3,
-              valueColor: AlwaysStoppedAnimation(primaryColor),
+              valueColor: AlwaysStoppedAnimation(UIs.primaryColor),
             ),
           ),
         ),
@@ -549,11 +537,11 @@ ${ss.err?.solution ?? l10n.unknown}
 ${ss.err?.message ?? l10n.unknownError}
 ''';
     context.showRoundDialog(
-      title: Text(l10n.error),
+      title: l10n.error,
       child: SingleChildScrollView(child: SimpleMarkdown(data: md)),
       actions: [
         TextButton(
-          onPressed: () => Shares.copy(md),
+          onPressed: () => Pfs.copy(md),
           child: Text(l10n.copy),
         )
       ],
@@ -649,7 +637,6 @@ ${ss.err?.message ?? l10n.unknownError}
 
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
-    await GetIt.I.allReady();
     await Pros.server.load();
     Pros.server.startAutoRefresh();
   }
@@ -682,7 +669,7 @@ ${ss.err?.message ?? l10n.unknownError}
     required String name,
   }) {
     context.showRoundDialog(
-      title: Text(l10n.attention),
+      title: l10n.attention,
       child: Text(l10n.askContinue('$typ ${l10n.server}($name)')),
       actions: [
         TextButton(

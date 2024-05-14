@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:toolbox/core/analysis.dart';
 import 'package:toolbox/data/model/server/private_key_info.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/res/store.dart';
@@ -35,14 +34,13 @@ import '../view/page/snippet/list.dart';
 import '../view/page/storage/sftp.dart';
 import '../view/page/storage/sftp_mission.dart';
 
-class AppRoute {
+class AppRoutes {
   final Widget page;
   final String title;
 
-  AppRoute(this.page, this.title);
+  AppRoutes(this.page, this.title);
 
   Future<T?> go<T>(BuildContext context) {
-    Analysis.recordView(title);
     return Navigator.push<T>(
       context,
       Stores.setting.cupertinoRoute.fetch()
@@ -61,49 +59,49 @@ class AppRoute {
     return Future.value(null);
   }
 
-  static AppRoute serverDetail({Key? key, required ServerPrivateInfo spi}) {
-    return AppRoute(ServerDetailPage(key: key, spi: spi), 'server_detail');
+  static AppRoutes serverDetail({Key? key, required ServerPrivateInfo spi}) {
+    return AppRoutes(ServerDetailPage(key: key, spi: spi), 'server_detail');
   }
 
-  static AppRoute serverTab({Key? key}) {
-    return AppRoute(ServerPage(key: key), 'server_tab');
+  static AppRoutes serverTab({Key? key}) {
+    return AppRoutes(ServerPage(key: key), 'server_tab');
   }
 
-  static AppRoute serverEdit({Key? key, ServerPrivateInfo? spi}) {
-    return AppRoute(
+  static AppRoutes serverEdit({Key? key, ServerPrivateInfo? spi}) {
+    return AppRoutes(
       ServerEditPage(spi: spi),
       'server_${spi == null ? 'add' : 'edit'}',
     );
   }
 
-  static AppRoute keyEdit({Key? key, PrivateKeyInfo? pki}) {
-    return AppRoute(
+  static AppRoutes keyEdit({Key? key, PrivateKeyInfo? pki}) {
+    return AppRoutes(
       PrivateKeyEditPage(pki: pki),
       'key_${pki == null ? 'add' : 'edit'}',
     );
   }
 
-  static AppRoute keyList({Key? key}) {
-    return AppRoute(PrivateKeysListPage(key: key), 'key_detail');
+  static AppRoutes keyList({Key? key}) {
+    return AppRoutes(PrivateKeysListPage(key: key), 'key_detail');
   }
 
-  static AppRoute snippetEdit({Key? key, Snippet? snippet}) {
-    return AppRoute(
+  static AppRoutes snippetEdit({Key? key, Snippet? snippet}) {
+    return AppRoutes(
       SnippetEditPage(snippet: snippet),
       'snippet_${snippet == null ? 'add' : 'edit'}',
     );
   }
 
-  static AppRoute snippetList({Key? key}) {
-    return AppRoute(SnippetListPage(key: key), 'snippet_detail');
+  static AppRoutes snippetList({Key? key}) {
+    return AppRoutes(SnippetListPage(key: key), 'snippet_detail');
   }
 
-  static AppRoute ssh({
+  static AppRoutes ssh({
     Key? key,
     required ServerPrivateInfo spi,
     String? initCmd,
   }) {
-    return AppRoute(
+    return AppRoutes(
       SSHPage(
         key: key,
         spi: spi,
@@ -113,13 +111,13 @@ class AppRoute {
     );
   }
 
-  static AppRoute sshVirtKeySetting({Key? key}) {
-    return AppRoute(SSHVirtKeySettingPage(key: key), 'ssh_virt_key_setting');
+  static AppRoutes sshVirtKeySetting({Key? key}) {
+    return AppRoutes(SSHVirtKeySettingPage(key: key), 'ssh_virt_key_setting');
   }
 
-  static AppRoute localStorage(
+  static AppRoutes localStorage(
       {Key? key, bool isPickFile = false, String? initDir}) {
-    return AppRoute(
+    return AppRoutes(
         LocalStoragePage(
           key: key,
           isPickFile: isPickFile,
@@ -128,16 +126,16 @@ class AppRoute {
         'local_storage');
   }
 
-  static AppRoute sftpMission({Key? key}) {
-    return AppRoute(SftpMissionPage(key: key), 'sftp_mission');
+  static AppRoutes sftpMission({Key? key}) {
+    return AppRoutes(SftpMissionPage(key: key), 'sftp_mission');
   }
 
-  static AppRoute sftp(
+  static AppRoutes sftp(
       {Key? key,
       required ServerPrivateInfo spi,
       String? initPath,
       bool isSelect = false}) {
-    return AppRoute(
+    return AppRoutes(
         SftpPage(
           key: key,
           spi: spi,
@@ -147,28 +145,28 @@ class AppRoute {
         'sftp');
   }
 
-  static AppRoute backup({Key? key}) {
-    return AppRoute(BackupPage(key: key), 'backup');
+  static AppRoutes backup({Key? key}) {
+    return AppRoutes(BackupPage(key: key), 'backup');
   }
 
-  static AppRoute debug({Key? key}) {
-    return AppRoute(DebugPage(key: key), 'debug');
+  static AppRoutes debug({Key? key}) {
+    return AppRoutes(DebugPage(key: key), 'debug');
   }
 
-  static AppRoute docker({Key? key, required ServerPrivateInfo spi}) {
-    return AppRoute(ContainerPage(key: key, spi: spi), 'docker');
+  static AppRoutes docker({Key? key, required ServerPrivateInfo spi}) {
+    return AppRoutes(ContainerPage(key: key, spi: spi), 'docker');
   }
 
   /// - Pop true if the text is changed & [path] is not null
   /// - Pop text if [path] is null
-  static AppRoute editor({
+  static AppRoutes editor({
     Key? key,
     String? path,
     String? text,
     String? langCode,
     String? title,
   }) {
-    return AppRoute(
+    return AppRoutes(
         EditorPage(
           key: key,
           path: path,
@@ -179,45 +177,45 @@ class AppRoute {
         'editor');
   }
 
-  // static AppRoute fullscreen({Key? key}) {
-  //   return AppRoute(FullScreenPage(key: key), 'fullscreen');
+  // static AppRoutes fullscreen({Key? key}) {
+  //   return AppRoutes(FullScreenPage(key: key), 'fullscreen');
   // }
 
-  static AppRoute home({Key? key}) {
-    return AppRoute(HomePage(key: key), 'home');
+  static AppRoutes home({Key? key}) {
+    return AppRoutes(HomePage(key: key), 'home');
   }
 
-  static AppRoute ping({Key? key}) {
-    return AppRoute(PingPage(key: key), 'ping');
+  static AppRoutes ping({Key? key}) {
+    return AppRoutes(PingPage(key: key), 'ping');
   }
 
-  static AppRoute process({Key? key, required ServerPrivateInfo spi}) {
-    return AppRoute(ProcessPage(key: key, spi: spi), 'process');
+  static AppRoutes process({Key? key, required ServerPrivateInfo spi}) {
+    return AppRoutes(ProcessPage(key: key, spi: spi), 'process');
   }
 
-  static AppRoute settings({Key? key}) {
-    return AppRoute(SettingPage(key: key), 'setting');
+  static AppRoutes settings({Key? key}) {
+    return AppRoutes(SettingPage(key: key), 'setting');
   }
 
-  static AppRoute serverOrder({Key? key}) {
-    return AppRoute(ServerOrderPage(key: key), 'server_order');
+  static AppRoutes serverOrder({Key? key}) {
+    return AppRoutes(ServerOrderPage(key: key), 'server_order');
   }
 
-  static AppRoute serverDetailOrder({Key? key}) {
-    return AppRoute(ServerDetailOrderPage(key: key), 'server_detail_order');
+  static AppRoutes serverDetailOrder({Key? key}) {
+    return AppRoutes(ServerDetailOrderPage(key: key), 'server_detail_order');
   }
 
-  static AppRoute iosSettings({Key? key}) {
-    return AppRoute(IOSSettingsPage(key: key), 'ios_setting');
+  static AppRoutes iosSettings({Key? key}) {
+    return AppRoutes(IOSSettingsPage(key: key), 'ios_setting');
   }
 
-  static AppRoute androidSettings({Key? key}) {
-    return AppRoute(AndroidSettingsPage(key: key), 'android_setting');
+  static AppRoutes androidSettings({Key? key}) {
+    return AppRoutes(AndroidSettingsPage(key: key), 'android_setting');
   }
 
-  static AppRoute snippetResult(
+  static AppRoutes snippetResult(
       {Key? key, required List<SnippetResult?> results}) {
-    return AppRoute(
+    return AppRoutes(
         SnippetResultPage(
           key: key,
           results: results,
@@ -225,15 +223,15 @@ class AppRoute {
         'snippet_result');
   }
 
-  static AppRoute iperf({Key? key, required ServerPrivateInfo spi}) {
-    return AppRoute(IPerfPage(key: key, spi: spi), 'iperf');
+  static AppRoutes iperf({Key? key, required ServerPrivateInfo spi}) {
+    return AppRoutes(IPerfPage(key: key, spi: spi), 'iperf');
   }
 
-  static AppRoute serverFuncBtnsOrder({Key? key}) {
-    return AppRoute(ServerFuncBtnsOrderPage(key: key), 'server_func_btns_seq');
+  static AppRoutes serverFuncBtnsOrder({Key? key}) {
+    return AppRoutes(ServerFuncBtnsOrderPage(key: key), 'server_func_btns_seq');
   }
 
-  static AppRoute pve({Key? key, required ServerPrivateInfo spi}) {
-    return AppRoute(PvePage(key: key, spi: spi), 'pve');
+  static AppRoutes pve({Key? key, required ServerPrivateInfo spi}) {
+    return AppRoutes(PvePage(key: key, spi: spi), 'pve');
   }
 }

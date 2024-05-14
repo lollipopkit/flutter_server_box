@@ -1,10 +1,7 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/utils/platform/auth.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/data/res/ui.dart';
-import 'package:toolbox/view/widget/future_widget.dart';
-import 'package:toolbox/view/widget/store_switch.dart';
 
 abstract final class PlatformPublicSettings {
   static Widget buildBioAuth() {

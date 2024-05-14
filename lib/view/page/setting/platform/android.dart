@@ -1,19 +1,11 @@
 import 'dart:convert';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:toolbox/core/extension/context/common.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/context/snackbar.dart';
-import 'package:toolbox/core/utils/platform/auth.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/page/setting/platform/platform_pub.dart';
-import 'package:toolbox/view/widget/appbar.dart';
-import 'package:toolbox/view/widget/input_field.dart';
-import 'package:toolbox/view/widget/cardx.dart';
-import 'package:toolbox/view/widget/store_switch.dart';
 
 class AndroidSettingsPage extends StatefulWidget {
   const AndroidSettingsPage({super.key});
@@ -88,7 +80,7 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
         });
         final ctrl = TextEditingController(text: json.encode(data));
         context.showRoundDialog(
-          title: Text(l10n.homeWidgetUrlConfig),
+          title: l10n.homeWidgetUrlConfig,
           child: Input(
             autoFocus: true,
             controller: ctrl,

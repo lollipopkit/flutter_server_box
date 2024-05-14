@@ -1,4 +1,4 @@
-import 'package:toolbox/core/utils/platform/path.dart';
+import 'package:fl_lib/fl_lib.dart';
 
 /// It's used on platform's file system.
 /// So use [Platform.pathSeparator] to join path.
@@ -23,7 +23,7 @@ class LocalPath {
       _path = '/';
       return;
     }
-    _path = joinPath(_path, newPath);
+    _path = _path.joinPath(newPath);
   }
 
   bool get canBack => path != '$_prefixPath/';

@@ -1,17 +1,8 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/context/snackbar.dart';
-import 'package:toolbox/core/extension/order.dart';
-import 'package:toolbox/core/extension/widget.dart';
-import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/model/ssh/virtual_key.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/data/res/ui.dart';
-import 'package:toolbox/view/widget/cardx.dart';
-import 'package:toolbox/view/widget/store_switch.dart';
-import 'package:toolbox/view/widget/val_builder.dart';
-
-import '../../../widget/appbar.dart';
 
 class SSHVirtKeySettingPage extends StatefulWidget {
   const SSHVirtKeySettingPage({super.key});
@@ -33,7 +24,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
         children: [
           Padding(
             padding: const EdgeInsets.all(7),
-            child: _buildOneLineVirtKey().card,
+            child: _buildOneLineVirtKey().cardx,
           ),
           Expanded(child: _buildBody()),
         ],

@@ -1,38 +1,24 @@
 import 'dart:convert';
 
 import 'package:after_layout/after_layout.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:get_it/get_it.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:toolbox/core/channel/bg_run.dart';
 import 'package:toolbox/core/channel/home_widget.dart';
 import 'package:toolbox/core/extension/build.dart';
-import 'package:toolbox/core/extension/context/common.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/persistant_store.dart';
 import 'package:toolbox/core/route.dart';
-import 'package:toolbox/core/update.dart';
-import 'package:toolbox/core/utils/platform/auth.dart';
-import 'package:toolbox/core/utils/platform/base.dart';
-import 'package:toolbox/core/utils/platform/perm.dart';
 import 'package:toolbox/core/utils/ui.dart';
 import 'package:toolbox/data/model/app/github_id.dart';
 import 'package:toolbox/data/model/app/tab.dart';
 import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/res/github_id.dart';
-import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/data/res/url.dart';
-import 'package:toolbox/view/widget/appbar.dart';
-import 'package:toolbox/view/widget/cardx.dart';
-import 'package:toolbox/view/widget/markdown.dart';
-import 'package:toolbox/view/widget/val_builder.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 part 'appbar.dart';
@@ -100,7 +86,9 @@ class _HomePageState extends State<HomePage>
     switch (state) {
       case AppLifecycleState.resumed:
         if (_shouldAuth) {
-          BioAuth.go().then((_) => _shouldAuth = false);
+          if (Stores.setting.useBioAuth.fetch()) {
+            BioAuth.go().then((_) => _shouldAuth = false);
+          }
         }
         if (!Pros.server.isAutoRefreshOn) {
           Pros.server.startAutoRefresh();
@@ -112,9 +100,9 @@ class _HomePageState extends State<HomePage>
         // Keep running in background on Android device
         if (isAndroid && Stores.setting.bgRun.fetch()) {
           // Keep this if statement single
-          if (Pros.app.moveBg) {
-            BgRunMC.moveToBg();
-          }
+          // if (Pros.app.moveBg) {
+          //   BgRunMC.moveToBg();
+          // }
         } else {
           //Pros.server.setDisconnected();
           Pros.server.stopAutoRefresh();
@@ -152,7 +140,7 @@ class _HomePageState extends State<HomePage>
         IconButton(
           icon: const Icon(Icons.developer_mode, size: 21),
           tooltip: l10n.debug,
-          onPressed: () => AppRoute.debug().go(context),
+          onPressed: () => AppRoutes.debug().go(context),
         ),
       ],
     );
@@ -239,7 +227,7 @@ class _HomePageState extends State<HomePage>
           _buildIcon(),
           TextButton(
             onPressed: () => context.showRoundDialog(
-              title: const Text(BuildDataX.versionStr),
+              title: BuildDataX.versionStr,
               child: const Text(
                   '${BuildData.buildAt}\nFlutter ${BuildData.engine}'),
             ),
@@ -264,23 +252,23 @@ class _HomePageState extends State<HomePage>
           ListTile(
             leading: const Icon(Icons.settings),
             title: Text(l10n.setting),
-            onTap: () => AppRoute.settings().go(context),
+            onTap: () => AppRoutes.settings().go(context),
             onLongPress: _onLongPressSetting,
           ),
           ListTile(
             leading: const Icon(Icons.vpn_key),
             title: Text(l10n.privateKey),
-            onTap: () => AppRoute.keyList().go(context),
+            onTap: () => AppRoutes.keyList().go(context),
           ),
           ListTile(
             leading: const Icon(BoxIcons.bxs_file_blank),
             title: Text(l10n.files),
-            onTap: () => AppRoute.localStorage().go(context),
+            onTap: () => AppRoutes.localStorage().go(context),
           ),
           ListTile(
             leading: const Icon(MingCute.file_import_fill),
             title: Text(l10n.backup),
-            onTap: () => AppRoute.backup().go(context),
+            onTap: () => AppRoutes.backup().go(context),
           ),
           ListTile(
             leading: const Icon(OctIcons.feed_discussion),
@@ -294,7 +282,7 @@ class _HomePageState extends State<HomePage>
 
   void _showAboutDialog() {
     context.showRoundDialog(
-      title: Text(l10n.about),
+      title: l10n.about,
       child: _buildAboutContent(),
       actions: [
         TextButton(
@@ -348,15 +336,19 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
     // Auth required for first launch
-    BioAuth.go();
+    if (Stores.setting.useBioAuth.fetch()) BioAuth.go();
 
     _reqNotiPerm();
 
     if (Stores.setting.autoCheckAppUpdate.fetch()) {
-      doUpdate(context);
+      AppUpdateIface.doUpdate(
+        build: BuildData.build,
+        url: '${Urls.cdnBase}/update.json',
+        context: context,
+        updateL10n: l10n.update,
+      );
     }
     HomeWidgetMC.update();
-    await GetIt.I.allReady();
     await Pros.server.load();
     await Pros.server.refresh();
   }
@@ -369,7 +361,7 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
       final noNotiPerm = Stores.setting.noNotiPerm;
       if (noNotiPerm.fetch()) return;
       context.showRoundDialog(
-        title: Text(l10n.error),
+        title: l10n.error,
         child: Text(l10n.noNotiPerm),
         actions: [
           TextButton(
@@ -390,7 +382,7 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
 
     /// Encode [map] to String with indent `\t`
     final text = Miscs.jsonEncoder.convert(map);
-    final result = await AppRoute.editor(
+    final result = await AppRoutes.editor(
       text: text,
       langCode: 'json',
       title: l10n.setting,
@@ -408,7 +400,7 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
       }
     } catch (e, trace) {
       context.showRoundDialog(
-        title: Text(l10n.error),
+        title: l10n.error,
         child: Text('${l10n.save}:\n$e'),
       );
       Loggers.app.warning('Update json settings failed', e, trace);

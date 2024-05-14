@@ -1,4 +1,4 @@
-import 'package:toolbox/core/utils/misc.dart';
+import 'package:fl_lib/fl_lib.dart';
 
 class AbsolutePath {
   String _path;
@@ -24,7 +24,7 @@ class AbsolutePath {
       _path = newPath;
       return;
     }
-    _path = pathJoin(_path, newPath);
+    _path = _path.joinPath(newPath, seperator: '/');
   }
 
   bool undo() {

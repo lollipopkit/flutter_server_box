@@ -4,15 +4,14 @@ import 'package:toolbox/data/provider/private_key.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/provider/sftp.dart';
 import 'package:toolbox/data/provider/snippet.dart';
-import 'package:toolbox/locator.dart';
 
 abstract final class Pros {
-  static final app = locator<AppProvider>();
-  static final debug = locator<DebugProvider>();
-  static final key = locator<PrivateKeyProvider>();
-  static final server = locator<ServerProvider>();
-  static final sftp = locator<SftpProvider>();
-  static final snippet = locator<SnippetProvider>();
+  static final app = AppProvider();
+  static final debug = DebugProvider();
+  static final key = PrivateKeyProvider();
+  static final server = ServerProvider();
+  static final sftp = SftpProvider();
+  static final snippet = SnippetProvider();
 
   static void reload() {
     key.load();

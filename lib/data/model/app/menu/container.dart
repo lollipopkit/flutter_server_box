@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/data/model/app/menu/base.dart';
 
 enum ContainerMenu {
   start,
@@ -64,10 +63,4 @@ enum ContainerMenu {
       //   return s.stats;
     }
   }
-
-  PopupMenuItem<ContainerMenu> get widget => PopMenu.build(
-        this,
-        icon,
-        toStr,
-      );
 }

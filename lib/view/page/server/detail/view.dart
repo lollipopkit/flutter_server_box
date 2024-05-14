@@ -1,14 +1,11 @@
 import 'package:extended_image/extended_image.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/extension/context/common.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/listx.dart';
-import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/data/model/app/server_detail_card.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/battery.dart';
@@ -21,20 +18,11 @@ import 'package:toolbox/data/model/server/sensors.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/system.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/view/widget/expand_tile.dart';
-import 'package:toolbox/view/widget/kv_row.dart';
-import 'package:toolbox/view/widget/markdown.dart';
 import 'package:toolbox/view/widget/server_func_btns.dart';
-import 'package:toolbox/view/widget/val_builder.dart';
 
-import '../../../../core/extension/numx.dart';
 import '../../../../core/route.dart';
 import '../../../../data/model/server/server.dart';
 import '../../../../data/provider/server.dart';
-import '../../../../data/res/color.dart';
-import '../../../../data/res/ui.dart';
-import '../../../widget/appbar.dart';
-import '../../../widget/cardx.dart';
 
 part 'misc.dart';
 
@@ -139,7 +127,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         IconButton(
           icon: const Icon(Icons.edit),
           onPressed: () async {
-            final delete = await AppRoute.serverEdit(spi: si.spi).go(context);
+            final delete = await AppRoutes.serverEdit(spi: si.spi).go(context);
             if (delete == true) {
               context.pop();
             }
@@ -322,8 +310,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     return LinearProgressIndicator(
       value: percentWithinOne,
       minHeight: 7,
-      backgroundColor: DynamicColors.progress.resolve(context),
-      color: primaryColor,
+      backgroundColor: UIs.halfAlpha,
+      color: UIs.primaryColor,
     );
   }
 
@@ -452,7 +440,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                 return processes.length * 47.0;
               }();
               context.showRoundDialog(
-                title: Text(item.name),
+                title: item.name,
                 child: SizedBox(
                   width: double.maxFinite,
                   height: height,
@@ -494,10 +482,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       trailing: InkWell(
         onTap: () {
           context.showRoundDialog(
-            title: SizedBox(
-              width: 377,
-              child: Text('${process.pid}', maxLines: 1),
-            ),
+            title: '${process.pid}',
+            titleMaxLines: 1,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -573,8 +559,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                 CircularProgressIndicator(
                   value: disk.usedPercent / 100,
                   strokeWidth: 5,
-                  backgroundColor: DynamicColors.progress.resolve(context),
-                  color: primaryColor,
+                  backgroundColor: UIs.halfAlpha,
+                  color: UIs.primaryColor,
                 ),
                 Text('${disk.usedPercent}%', style: UIs.text12Grey)
               ],
@@ -770,7 +756,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     return InkWell(
       onTap: () {
         context.showRoundDialog(
-          title: Text(si.device),
+          title: si.device,
           child: SingleChildScrollView(
             child: SimpleMarkdown(
               data: si.toMarkdown,
@@ -819,7 +805,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         subtitle: Text(addr, style: UIs.textGrey),
         leading: const Icon(FontAwesome.server_solid, size: 17),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () => AppRoute.pve(spi: widget.spi).go(context),
+        onTap: () => AppRoutes.pve(spi: widget.spi).go(context),
       ),
     );
   }
@@ -847,7 +833,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           return GestureDetector(
             onTap: () {
               context.showRoundDialog(
-                title: Text(cmd.key),
+                title: cmd.key,
                 child: SingleChildScrollView(
                   child: Text(cmd.value, style: UIs.text13Grey),
                 ),

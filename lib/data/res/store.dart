@@ -1,19 +1,18 @@
-import 'package:toolbox/core/persistant_store.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:toolbox/data/store/container.dart';
 import 'package:toolbox/data/store/history.dart';
 import 'package:toolbox/data/store/private_key.dart';
 import 'package:toolbox/data/store/server.dart';
 import 'package:toolbox/data/store/setting.dart';
 import 'package:toolbox/data/store/snippet.dart';
-import 'package:toolbox/locator.dart';
 
 abstract final class Stores {
-  static final setting = locator<SettingStore>();
-  static final server = locator<ServerStore>();
-  static final container = locator<ContainerStore>();
-  static final history = locator<HistoryStore>();
-  static final key = locator<PrivateKeyStore>();
-  static final snippet = locator<SnippetStore>();
+  static final setting = SettingStore();
+  static final server = ServerStore();
+  static final container = ContainerStore();
+  static final history = HistoryStore();
+  static final key = PrivateKeyStore();
+  static final snippet = SnippetStore();
 
   static final List<PersistentStore> all = [
     setting,

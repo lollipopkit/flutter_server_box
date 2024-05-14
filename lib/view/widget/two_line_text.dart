@@ -1,5 +1,5 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:toolbox/data/res/ui.dart';
 
 class TwoLineText extends StatelessWidget {
   const TwoLineText({super.key, required this.up, required this.down});

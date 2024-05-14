@@ -1,4 +1,5 @@
-import 'package:toolbox/data/res/logger.dart';
+
+import 'package:fl_lib/fl_lib.dart';
 
 /// raw dat from server:
 /// ```text
@@ -92,7 +93,7 @@ abstract final class Batteries {
           if (onlyLiPoly && !bat.isLiPoly) continue;
           batteries.add(bat);
         } catch (e, s) {
-          Loggers.parse.warning(e, s);
+          Loggers.app.warning(e, s);
         }
         oneBatLines.clear();
       } else {

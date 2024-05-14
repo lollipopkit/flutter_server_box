@@ -1,15 +1,12 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/order.dart';
 import 'package:toolbox/data/res/store.dart';
 
 import '../../../data/model/server/snippet.dart';
-import '../../../data/res/ui.dart';
-import '../../widget/tag.dart';
 import '/core/route.dart';
 import '/data/provider/snippet.dart';
-import '../../widget/cardx.dart';
 
 class SnippetListPage extends StatefulWidget {
   const SnippetListPage({super.key});
@@ -36,7 +33,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
       floatingActionButton: FloatingActionButton(
         heroTag: 'snippetAdd',
         child: const Icon(Icons.add),
-        onPressed: () => AppRoute.snippetEdit().go(context),
+        onPressed: () => AppRoutes.snippetEdit().go(context),
       ),
     );
   }
@@ -72,6 +69,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
             onTagChanged: (tag) => setState(() => _tag = tag),
             initTag: _tag,
             width: _media.size.width,
+            allL10n: l10n.all,
           ),
           footer: UIs.height77,
           buildDefaultDragHandles: false,
@@ -108,7 +106,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
           children: [
             IconButton(
               onPressed: () =>
-                  AppRoute.snippetEdit(snippet: snippet).go(context),
+                  AppRoutes.snippetEdit(snippet: snippet).go(context),
               icon: const Icon(Icons.edit),
             ),
           ],
@@ -128,7 +126,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
   //   final ids = servers.map((e) => e.spi.id).toList();
   //   final results = await Pros.server.runSnippetsMulti(ids, snippet);
   //   if (results.isNotEmpty) {
-  //     AppRoute.snippetResult(results: results).go(context);
+  //     AppRoutes.snippetResult(results: results).go(context);
   //   }
   // }
 }

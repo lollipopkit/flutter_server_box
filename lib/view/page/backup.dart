@@ -2,31 +2,16 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:computer/computer.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:toolbox/core/extension/context/common.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/context/snackbar.dart';
-import 'package:toolbox/core/extension/datetime.dart';
-import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/core/utils/sync/icloud.dart';
-import 'package:toolbox/core/utils/platform/base.dart';
-import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/core/utils/sync/webdav.dart';
 import 'package:toolbox/data/model/app/backup.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
-import 'package:toolbox/data/res/logger.dart';
-import 'package:toolbox/data/res/path.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/data/res/url.dart';
-import 'package:toolbox/view/widget/appbar.dart';
-import 'package:toolbox/view/widget/expand_tile.dart';
-import 'package:toolbox/view/widget/cardx.dart';
-import 'package:toolbox/view/widget/input_field.dart';
-import 'package:toolbox/view/widget/markdown.dart';
-import 'package:toolbox/view/widget/store_switch.dart';
 
 class BackupPage extends StatelessWidget {
   BackupPage({super.key});
@@ -82,11 +67,12 @@ class BackupPage extends StatelessWidget {
               final path = await Backup.backup();
 
               /// Issue #188
-              if (isWindows) {
-                await Shares.text(await File(path).readAsString());
-              } else {
-                await Shares.files([path]);
-              }
+              final _ = switch (Pfs.type) {
+                Pfs.windows =>
+                  await Process.run('explorer', ['/select,', path]),
+                Pfs.linux => await Process.run('xdg-open', [path]),
+                _ => await Pfs.sharePath(path),
+              };
             },
           ),
           ListTile(
@@ -206,7 +192,7 @@ class BackupPage extends StatelessWidget {
             trailing: const Icon(Icons.save),
             onTap: () async {
               final path = await Backup.backup();
-              Shares.copy(await File(path).readAsString());
+              Pfs.copy(await File(path).readAsString());
               context.showSnackBar(l10n.success);
             },
           ),
@@ -232,25 +218,14 @@ class BackupPage extends StatelessWidget {
         ),
         leading: const Icon(Icons.import_export),
         onTap: () => _onBulkImportServers(context),
+        trailing: const Icon(Icons.keyboard_arrow_right),
       ),
     );
   }
 
   Future<void> _onTapFileRestore(BuildContext context) async {
-    final path = await pickOneFile();
-    if (path == null) return;
-
-    final file = File(path);
-    if (!await file.exists()) {
-      context.showSnackBar(l10n.fileNotExist(path));
-      return;
-    }
-
-    final text = await file.readAsString();
-    if (text.isEmpty) {
-      context.showSnackBar(l10n.fieldMustNotEmpty);
-      return;
-    }
+    final text = await Pfs.pickFileString();
+    if (text == null) return;
 
     try {
       final backup = await context.showLoadingDialog(
@@ -262,7 +237,7 @@ class BackupPage extends StatelessWidget {
       }
 
       await context.showRoundDialog(
-        title: Text(l10n.restore),
+        title: l10n.restore,
         child: Text(l10n.askContinue(
           '${l10n.restore} ${l10n.backup}(${backup.date})',
         )),
@@ -296,7 +271,7 @@ class BackupPage extends StatelessWidget {
     }
 
     final fileName = await context.showRoundDialog<String>(
-      title: Text(l10n.restore),
+      title: l10n.restore,
       child: SizedBox(
         width: 300,
         height: 300,
@@ -329,7 +304,7 @@ class BackupPage extends StatelessWidget {
       webdavLoading.value = false;
       return;
     }
-    final dlFile = await File('${await Paths.doc}/$fileName').readAsString();
+    final dlFile = await File('${Paths.doc}/$fileName').readAsString();
     final dlBak = await Computer.shared.start(Backup.fromJsonString, dlFile);
     await dlBak.restore(force: true);
     webdavLoading.value = false;
@@ -337,7 +312,7 @@ class BackupPage extends StatelessWidget {
 
   Future<void> _onTapWebdavUp(BuildContext context) async {
     webdavLoading.value = true;
-    final bakName = '${DateTime.now().numStr}-${Paths.bakName}';
+    final bakName = '${DateTime.now().ymdhms()}-${Paths.bakName}';
     await Backup.backup(bakName);
     final uploadResult = await Webdav.upload(relativePath: bakName);
     if (uploadResult != null) {
@@ -359,7 +334,7 @@ class BackupPage extends StatelessWidget {
       text: Stores.setting.webdavPwd.fetch(),
     );
     final result = await context.showRoundDialog<bool>(
-      title: const Text('WebDAV'),
+      title: 'WebDAV',
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -401,7 +376,7 @@ class BackupPage extends StatelessWidget {
   }
 
   void _onTapClipboardRestore(BuildContext context) async {
-    final text = await Shares.paste();
+    final text = await Pfs.paste();
     if (text == null || text.isEmpty) {
       context.showSnackBar(l10n.fieldMustNotEmpty);
       return;
@@ -418,7 +393,7 @@ class BackupPage extends StatelessWidget {
       }
 
       await context.showRoundDialog(
-        title: Text(l10n.restore),
+        title: l10n.restore,
         child: Text(l10n.askContinue(
           '${l10n.restore} ${l10n.backup}(${backup.date})',
         )),
@@ -443,26 +418,8 @@ class BackupPage extends StatelessWidget {
   }
 
   void _onBulkImportServers(BuildContext context) async {
-    final path = await pickOneFile();
-    if (path == null) return;
-
-    final file = File(path);
-    if (!await file.exists()) {
-      context.showRoundDialog(
-        title: Text(l10n.error),
-        child: Text(l10n.fileNotExist(path)),
-      );
-      return;
-    }
-
-    final text = await file.readAsString();
-    if (text.isEmpty) {
-      context.showRoundDialog(
-        title: Text(l10n.error),
-        child: Text(l10n.fieldMustNotEmpty),
-      );
-      return;
-    }
+    final text = await Pfs.pickFileString();
+    if (text == null) return;
 
     try {
       final spis = await context.showLoadingDialog(
@@ -472,7 +429,7 @@ class BackupPage extends StatelessWidget {
         }, text.trim()),
       );
       final sure = await context.showRoundDialog<bool>(
-        title: Text(l10n.import),
+        title: l10n.import,
         child: Text(l10n.askContinue('${spis.length} ${l10n.server}')),
         actions: [
           TextButton(
@@ -493,7 +450,7 @@ class BackupPage extends StatelessWidget {
       }
     } catch (e) {
       context.showRoundDialog(
-        title: Text(l10n.error),
+        title: l10n.error,
         child: Text(e.toString()),
       );
     }

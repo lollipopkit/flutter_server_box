@@ -24,6 +24,7 @@ linter:
   rules:
     library_private_types_in_public_api: false
     use_build_context_synchronously: false
+    depend_on_referenced_packages: false
     prefer_final_locals: true
     unnecessary_parenthesis: true
     implicit_call_tearoffs: true

@@ -1,28 +1,17 @@
 import 'dart:io';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:toolbox/core/extension/context/common.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/context/snackbar.dart';
-import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/sftp/req.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/provider.dart';
-import 'package:toolbox/view/widget/input_field.dart';
 import 'package:toolbox/view/widget/omit_start_text.dart';
-import 'package:toolbox/view/widget/cardx.dart';
-import 'package:toolbox/view/widget/val_builder.dart';
 
-import '../../../core/extension/numx.dart';
 import '../../../core/route.dart';
 import '../../../core/utils/misc.dart';
 import '../../../data/model/app/path_with_prefix.dart';
-import '../../../data/res/path.dart';
-import '../../../data/res/ui.dart';
-import '../../widget/appbar.dart';
-import '../../widget/fade_in.dart';
 
 class LocalStoragePage extends StatefulWidget {
   final bool isPickFile;
@@ -50,10 +39,8 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
         _path = LocalPath(widget.initDir!);
       });
     } else {
-      Paths.sftp.then((dir) {
-        setState(() {
-          _path = LocalPath(dir);
-        });
+      setState(() {
+        _path = LocalPath(Paths.file);
       });
     }
   }
@@ -75,7 +62,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.downloading),
-            onPressed: () => AppRoute.sftpMission().go(context),
+            onPressed: () => AppRoutes.sftpMission().go(context),
           ),
           ValBuilder<_SortType>(
             listenable: _sortType,
@@ -145,10 +132,10 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
         ),
         IconButton(
           onPressed: () async {
-            final path = await pickOneFile();
+            final path = await Pfs.pickFilePath();
             if (path == null) return;
             final name = getFileName(path) ?? 'imported';
-            await File(path).copy(pathJoin(_path!.path, name));
+            await File(path).copy(_path!.path.joinPath(name));
             setState(() {});
           },
           icon: const Icon(Icons.add),
@@ -237,7 +224,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
     final fileName = file.path.split('/').last;
     if (widget.isPickFile) {
       await context.showRoundDialog(
-          title: Text(l10n.pickFile),
+          title: l10n.pickFile,
           child: Text(fileName),
           actions: [
             TextButton(
@@ -262,12 +249,12 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
               final stat = await file.stat();
               if (stat.size > Miscs.editorMaxSize) {
                 context.showRoundDialog(
-                  title: Text(l10n.attention),
+                  title: l10n.attention,
                   child: Text(l10n.fileTooLarge(fileName, stat.size, '1m')),
                 );
                 return;
               }
-              final result = await AppRoute.editor(
+              final result = await AppRoutes.editor(
                 path: file.absolute.path,
               ).go<bool>(context);
               if (result == true) {
@@ -299,6 +286,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
               context.pop();
 
               final spi = await context.showPickSingleDialog<ServerPrivateInfo>(
+                title: l10n.choose,
                 items: Pros.server.serverOrder
                     .map((e) => Pros.server.pick(id: e)?.spi)
                     .toList(),
@@ -306,7 +294,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
               );
               if (spi == null) return;
 
-              final remotePath = await AppRoute.sftp(
+              final remotePath = await AppRoutes.sftp(
                 spi: spi,
                 isSelect: true,
               ).go<String>(context);
@@ -327,7 +315,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
             leading: const Icon(Icons.open_in_new),
             title: Text(l10n.open),
             onTap: () {
-              Shares.files([file.absolute.path]);
+              Pfs.sharePath(file.absolute.path);
             },
           ),
         ],
@@ -338,7 +326,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
   void _showRenameDialog(FileSystemEntity file) {
     final fileName = file.path.split('/').last;
     context.showRoundDialog(
-      title: Text(l10n.rename),
+      title: l10n.rename,
       child: Input(
         autoFocus: true,
         controller: TextEditingController(text: fileName),
@@ -361,7 +349,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
   void _showDeleteDialog(FileSystemEntity file) {
     final fileName = file.path.split('/').last;
     context.showRoundDialog(
-      title: Text(l10n.delete),
+      title: l10n.delete,
       child: Text(l10n.askContinue('${l10n.delete} $fileName')),
       actions: [
         TextButton(

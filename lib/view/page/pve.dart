@@ -1,25 +1,14 @@
 import 'dart:async';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:toolbox/core/extension/context/common.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/context/snackbar.dart';
-import 'package:toolbox/core/extension/numx.dart';
-import 'package:toolbox/core/extension/widget.dart';
 import 'package:toolbox/data/model/server/pve.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/provider/pve.dart';
-import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/data/res/ui.dart';
-import 'package:toolbox/view/widget/appbar.dart';
-import 'package:toolbox/view/widget/icon_btn.dart';
-import 'package:toolbox/view/widget/kv_row.dart';
 import 'package:toolbox/view/widget/percent_circle.dart';
-import 'package:toolbox/view/widget/row.dart';
 import 'package:toolbox/view/widget/two_line_text.dart';
-import 'package:toolbox/view/widget/val_builder.dart';
 
 final class PvePage extends StatefulWidget {
   final ServerPrivateInfo spi;
@@ -156,7 +145,7 @@ final class _PvePageState extends State<PvePage> {
   }
 
   Widget _buildNode(PveNode item) {
-    final valueAnim = AlwaysStoppedAnimation(primaryColor);
+    final valueAnim = AlwaysStoppedAnimation(UIs.primaryColor);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 13),
       child: Column(
@@ -216,7 +205,7 @@ final class _PvePageState extends State<PvePage> {
           ),
         ],
       ),
-    ).card;
+    ).cardx;
   }
 
   Widget _buildQemu(PveQemu item) {
@@ -224,7 +213,7 @@ final class _PvePageState extends State<PvePage> {
       return ListTile(
         title: Text(_wrapNodeName(item), style: UIs.text13Bold),
         trailing: _buildCtrlBtns(item),
-      ).card;
+      ).cardx;
     }
     final children = <Widget>[
       const SizedBox(height: 5),
@@ -293,7 +282,7 @@ final class _PvePageState extends State<PvePage> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: children,
-    ).card;
+    ).cardx;
   }
 
   Widget _buildLxc(PveLxc item) {
@@ -301,7 +290,7 @@ final class _PvePageState extends State<PvePage> {
       return ListTile(
         title: Text(_wrapNodeName(item), style: UIs.text13Bold),
         trailing: _buildCtrlBtns(item),
-      ).card;
+      ).cardx;
     }
     final children = <Widget>[
       const SizedBox(height: 5),
@@ -370,7 +359,7 @@ final class _PvePageState extends State<PvePage> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: children,
-    ).card;
+    ).cardx;
   }
 
   Widget _buildStorage(PveStorage item) {
@@ -392,14 +381,14 @@ final class _PvePageState extends State<PvePage> {
           KvRow(k: l10n.plugInType, v: item.plugintype),
         ],
       ),
-    ).card;
+    ).cardx;
   }
 
   Widget _buildSdn(PveSdn item) {
     return ListTile(
       title: Text(_wrapNodeName(item)),
       trailing: Text(item.summary),
-    ).card;
+    ).cardx;
   }
 
   Widget _buildCtrlBtns(PveCtrlIface item) {
@@ -430,7 +419,7 @@ final class _PvePageState extends State<PvePage> {
 
   void _onCtrl(PveCtrlFunc func, String action, PveCtrlIface item) async {
     final sure = await context.showRoundDialog<bool>(
-      title: Text(l10n.attention),
+      title: l10n.attention,
       child: Text(l10n.askContinue('$action ${item.id}')),
       actions: [
         TextButton(

@@ -1,4 +1,4 @@
-import 'package:toolbox/data/res/logger.dart';
+import 'package:fl_lib/fl_lib.dart';
 
 import '../../../data/res/misc.dart';
 
@@ -142,7 +142,7 @@ class PsResult {
         procs.add(Proc.parse(line, map));
       } catch (e, trace) {
         errs.add('$line: $e');
-        Loggers.parse.warning('Process failed', e, trace);
+        Loggers.app.warning('Process failed', e, trace);
       }
     }
 

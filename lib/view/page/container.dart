@@ -1,27 +1,20 @@
 import 'dart:async';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/extension/context/common.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/context/snackbar.dart';
-import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/route.dart';
+import 'package:toolbox/data/model/app/menu/base.dart';
 import 'package:toolbox/data/model/app/menu/container.dart';
 import 'package:toolbox/data/model/container/image.dart';
 import 'package:toolbox/data/model/container/type.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/view/widget/expand_tile.dart';
-import 'package:toolbox/view/widget/input_field.dart';
 
 import '../../data/model/container/ps.dart';
 import '../../data/model/server/server_private_info.dart';
 import '../../data/provider/container.dart';
-import '../../data/res/ui.dart';
-import '../widget/appbar.dart';
 import '../widget/popup_menu.dart';
-import '../widget/cardx.dart';
 import '../widget/two_line_text.dart';
 
 class ContainerPage extends StatefulWidget {
@@ -267,7 +260,8 @@ class _ContainerPageState extends State<ContainerPage> {
 
   Widget _buildMoreBtn(ContainerPs dItem) {
     return PopupMenu(
-      items: ContainerMenu.items(dItem.running).map((e) => e.widget).toList(),
+      items: ContainerMenu.items(dItem.running),
+      builder: (e) => PopMenu.build(e, e.icon, e.toStr),
       onSelected: (item) => _onTapMoreBtn(item, dItem),
     );
   }
@@ -331,7 +325,7 @@ class _ContainerPageState extends State<ContainerPage> {
     final nameCtrl = TextEditingController();
     final argsCtrl = TextEditingController();
     await context.showRoundDialog(
-      title: Text(l10n.newContainer),
+      title: l10n.newContainer,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -380,7 +374,7 @@ class _ContainerPageState extends State<ContainerPage> {
 
   Future<void> _showAddCmdPreview(String cmd) async {
     await context.showRoundDialog(
-      title: Text(l10n.preview),
+      title: l10n.preview,
       child: Text(cmd),
       actions: [
         TextButton(
@@ -422,7 +416,7 @@ class _ContainerPageState extends State<ContainerPage> {
     final host = Stores.container.fetch(id);
     final ctrl = TextEditingController(text: host);
     await context.showRoundDialog(
-      title: Text(l10n.dockerEditHost),
+      title: l10n.dockerEditHost,
       child: Input(
         maxLines: 2,
         controller: ctrl,
@@ -446,7 +440,7 @@ class _ContainerPageState extends State<ContainerPage> {
 
   void _showImageRmDialog(ContainerImg e) {
     context.showRoundDialog(
-      title: Text(l10n.attention),
+      title: l10n.attention,
       child: Text(l10n.askContinue('${l10n.delete} Image(${e.repository})')),
       actions: [
         TextButton(
@@ -477,7 +471,7 @@ class _ContainerPageState extends State<ContainerPage> {
       case ContainerMenu.rm:
         var force = false;
         context.showRoundDialog(
-          title: Text(l10n.attention),
+          title: l10n.attention,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -510,7 +504,7 @@ class _ContainerPageState extends State<ContainerPage> {
                 );
                 if (result != null) {
                   context.showRoundDialog(
-                    title: Text(l10n.error),
+                    title: l10n.error,
                     child: Text(result.message ?? l10n.unknownError),
                   );
                 }
@@ -526,7 +520,7 @@ class _ContainerPageState extends State<ContainerPage> {
         );
         if (result != null) {
           context.showRoundDialog(
-            title: Text(l10n.error),
+            title: l10n.error,
             child: Text(result.message ?? l10n.unknownError),
           );
         }
@@ -537,7 +531,7 @@ class _ContainerPageState extends State<ContainerPage> {
         );
         if (result != null) {
           context.showRoundDialog(
-            title: Text(l10n.error),
+            title: l10n.error,
             child: Text(result.message ?? l10n.unknownError),
           );
         }
@@ -548,19 +542,19 @@ class _ContainerPageState extends State<ContainerPage> {
         );
         if (result != null) {
           context.showRoundDialog(
-            title: Text(l10n.error),
+            title: l10n.error,
             child: Text(result.message ?? l10n.unknownError),
           );
         }
         break;
       case ContainerMenu.logs:
-        AppRoute.ssh(
+        AppRoutes.ssh(
           spi: widget.spi,
           initCmd: 'docker logs -f --tail 100 ${dItem.id}',
         ).go(context);
         break;
       case ContainerMenu.terminal:
-        AppRoute.ssh(
+        AppRoutes.ssh(
           spi: widget.spi,
           initCmd: 'docker exec -it ${dItem.id} sh',
         ).go(context);

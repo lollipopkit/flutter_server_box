@@ -2,36 +2,21 @@ import 'dart:async';
 
 import 'package:after_layout/after_layout.dart';
 import 'package:dartssh2/dartssh2.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:toolbox/core/extension/context/common.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/extension/sftpfile.dart';
 import 'package:toolbox/core/utils/comparator.dart';
-import 'package:toolbox/core/utils/platform/base.dart';
-import 'package:toolbox/data/res/color.dart';
-import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/widget/omit_start_text.dart';
-import 'package:toolbox/view/widget/cardx.dart';
-import 'package:toolbox/view/widget/search.dart';
-import 'package:toolbox/view/widget/val_builder.dart';
 
-import '../../../core/extension/numx.dart';
 import '../../../core/route.dart';
-import '../../../core/utils/misc.dart';
 import '../../../data/model/server/server_private_info.dart';
 import '../../../data/model/sftp/absolute_path.dart';
 import '../../../data/model/sftp/browser_status.dart';
 import '../../../data/model/sftp/req.dart';
-import '../../../data/res/path.dart';
-import '../../../data/res/ui.dart';
-import '../../widget/appbar.dart';
-import '../../widget/fade_in.dart';
-import '../../widget/input_field.dart';
 import '../../widget/two_line_text.dart';
 
 class SftpPage extends StatefulWidget {
@@ -72,7 +57,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         actions: [
           IconButton(
             icon: const Icon(Icons.downloading),
-            onPressed: () => AppRoute.sftpMission().go(context),
+            onPressed: () => AppRoutes.sftpMission().go(context),
           ),
           ValBuilder(
             listenable: _sortOption,
@@ -96,7 +81,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
                             : name,
                         style: TextStyle(
                           color: type == currentSelectedOption.sortBy
-                              ? primaryColor
+                              ? UIs.primaryColor
                               : null,
                           fontWeight: type == currentSelectedOption.sortBy
                               ? FontWeight.bold
@@ -210,10 +195,10 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           final path = await () async {
             switch (idx) {
               case 0:
-                return await AppRoute.localStorage(isPickFile: true)
+                return await AppRoutes.localStorage(isPickFile: true)
                     .go<String>(context);
               case 1:
-                return await pickOneFile();
+                return await Pfs.pickFilePath();
               default:
                 return null;
             }
@@ -263,7 +248,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       padding: const EdgeInsets.all(0),
       onPressed: () async {
         final p = await context.showRoundDialog<String>(
-          title: Text(l10n.goto),
+          title: l10n.goto,
           child: Autocomplete<String>(
             optionsBuilder: (val) {
               if (!Stores.setting.recordHistory.fetch()) {
@@ -441,7 +426,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     Pros.sftp.add(req, completer: completer);
     await context.showLoadingDialog(fn: () => completer.future);
 
-    final result = await AppRoute.editor(path: localPath).go<bool>(context);
+    final result = await AppRoutes.editor(path: localPath).go<bool>(context);
     if (result != null && result) {
       Pros.sftp
           .add(SftpReq(req.spi, remotePath, localPath, SftpReqType.upload));
@@ -451,7 +436,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
   void _download(SftpName name) {
     context.showRoundDialog(
-      title: Text(l10n.attention),
+      title: l10n.attention,
       child: Text('${l10n.dl2Local(name.filename)}\n${l10n.keepForeground}'),
       actions: [
         TextButton(
@@ -493,7 +478,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     }();
     context.showRoundDialog(
       child: Text(text),
-      title: Text(l10n.attention),
+      title: l10n.attention,
       actions: [
         TextButton(
           onPressed: () => context.pop(),
@@ -515,7 +500,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
               });
             } catch (e) {
               context.showRoundDialog(
-                title: Text(l10n.error),
+                title: l10n.error,
                 child: Text(e.toString()),
                 actions: [
                   TextButton(
@@ -538,7 +523,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     context.pop();
     final textController = TextEditingController();
     context.showRoundDialog(
-      title: Text(l10n.createFolder),
+      title: l10n.createFolder,
       child: Input(
         autoFocus: true,
         icon: Icons.folder,
@@ -579,7 +564,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     context.pop();
     final textController = TextEditingController();
     context.showRoundDialog(
-      title: Text(l10n.createFile),
+      title: l10n.createFile,
       child: Input(
         autoFocus: true,
         icon: Icons.insert_drive_file,
@@ -591,7 +576,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           onPressed: () async {
             if (textController.text.isEmpty) {
               context.showRoundDialog(
-                title: Text(l10n.attention),
+                title: l10n.attention,
                 child: Text(l10n.fieldMustNotEmpty),
                 actions: [
                   TextButton(
@@ -618,7 +603,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     context.pop();
     final textController = TextEditingController(text: file.filename);
     context.showRoundDialog(
-      title: Text(l10n.rename),
+      title: l10n.rename,
       child: Input(
         autoFocus: true,
         icon: Icons.abc,
@@ -631,7 +616,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           onPressed: () async {
             if (textController.text.isEmpty) {
               context.showRoundDialog(
-                title: Text(l10n.attention),
+                title: l10n.attention,
                 child: Text(l10n.fieldMustNotEmpty),
                 actions: [
                   TextButton(
@@ -658,7 +643,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     final cmd = _getDecompressCmd(absPath);
     if (cmd == null) {
       context.showRoundDialog(
-        title: Text(l10n.error),
+        title: l10n.error,
         child: Text('Unsupport file: ${name.filename}'),
         actions: [
           TextButton(
@@ -675,11 +660,12 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
   String _getRemotePath(SftpName name) {
     final prePath = _status.path!.path;
-    return pathJoin(prePath, name.filename);
+    // Only support Linux as remote now, so the seperator is '/'
+    return prePath.joinPath(name.filename, seperator: '/');
   }
 
   Future<String> _getLocalPath(String remotePath) async {
-    return '${await Paths.sftp}$remotePath';
+    return Paths.file.joinPath(remotePath);
   }
 
   /// Only return true if the path is changed
@@ -728,7 +714,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           Future.delayed(
             const Duration(milliseconds: 177),
             () => context.showRoundDialog(
-              title: Text(l10n.error),
+              title: l10n.error,
               child: Text(e.toString()),
               actions: [
                 TextButton(

@@ -1,19 +1,12 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/datetime.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/route.dart';
-import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/data/res/provider.dart';
 
-import '../../../core/extension/numx.dart';
 import '../../../data/model/sftp/req.dart';
 import '../../../data/provider/sftp.dart';
-import '../../../data/res/ui.dart';
-import '../../widget/appbar.dart';
-import '../../widget/cardx.dart';
 
 class SftpMissionPage extends StatefulWidget {
   const SftpMissionPage({super.key});
@@ -59,7 +52,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
         subtitle: l10n.error,
         trailing: IconButton(
           onPressed: () => context.showRoundDialog(
-            title: Text(l10n.error),
+            title: l10n.error,
             child: Text(err.toString()),
           ),
           icon: const Icon(Icons.error),
@@ -82,11 +75,11 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
                   onPressed: () {
                     final idx = status.req.localPath.lastIndexOf('/');
                     final dir = status.req.localPath.substring(0, idx);
-                    AppRoute.localStorage(initDir: dir).go(context);
+                    AppRoutes.localStorage(initDir: dir).go(context);
                   },
                   icon: const Icon(Icons.file_open)),
               IconButton(
-                onPressed: () => Shares.files([status.req.localPath]),
+                onPressed: () => Pfs.sharePath(status.req.localPath),
                 icon: const Icon(Icons.open_in_new),
               )
             ],
@@ -118,7 +111,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
           subtitle: l10n.unknown,
           trailing: IconButton(
             onPressed: () => context.showRoundDialog(
-              title: Text(l10n.error),
+              title: l10n.error,
               child: Text((status.error ?? l10n.unknown).toString()),
             ),
             icon: const Icon(Icons.error),
@@ -150,7 +143,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
   Widget _buildDelete(String name, int id) {
     return IconButton(
       onPressed: () => context.showRoundDialog(
-          title: Text(l10n.attention),
+          title: l10n.attention,
           child: Text(l10n.askContinue(
             '${l10n.delete} ${l10n.mission}($name)',
           )),

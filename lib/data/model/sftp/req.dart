@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:toolbox/data/res/logger.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:toolbox/data/res/store.dart';
 
 import '../../../core/utils/server.dart';

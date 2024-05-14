@@ -2,22 +2,18 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dartssh2/dartssh2.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/extension/context/common.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/utils/ssh_auth.dart';
-import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/server.dart';
-import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/provider/virtual_keyboard.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/view/widget/appbar.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
@@ -26,7 +22,6 @@ import '../../../core/route.dart';
 import '../../../core/utils/misc.dart';
 import '../../../data/model/server/server_private_info.dart';
 import '../../../data/model/ssh/virtual_key.dart';
-import '../../../data/res/color.dart';
 import '../../../data/res/terminal.dart';
 
 const _echoPWD = 'echo \$PWD';
@@ -104,7 +99,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     _media = MediaQuery.of(context);
 
     _terminalTheme = _isDark ? TerminalThemes.dark : TerminalThemes.light;
-    _terminalTheme = _terminalTheme.copyWith(selectionCursor: primaryColor);
+    _terminalTheme = _terminalTheme.copyWith(selectionCursor: UIs.primaryColor);
 
     // Because the virtual keyboard only displayed on mobile devices
     if (isMobile) {
@@ -231,7 +226,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
             item.text,
             style: TextStyle(
               color: selected
-                  ? primaryColor
+                  ? UIs.primaryColor
                   : (_isDark ? Colors.white : Colors.black),
               fontSize: 15,
             ),
@@ -298,13 +293,14 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
       case VirtualKeyFunc.clipboard:
         final selected = terminalSelected;
         if (selected != null) {
-          Shares.copy(selected);
+          Pfs.copy(selected);
         } else {
           _paste();
         }
         break;
       case VirtualKeyFunc.snippet:
         final snippets = await context.showPickWithTagDialog<Snippet>(
+          title: l10n.snippet,
           tags: Pros.snippet.tags,
           itemsBuilder: (e) {
             if (e == null) return Pros.snippet.snippets;
@@ -313,6 +309,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
                 .toList();
           },
           name: (e) => e.name,
+          all: l10n.all,
         );
         if (snippets == null || snippets.isEmpty) return;
 
@@ -333,12 +330,12 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
         final initPath = cmds[idx + 1].toString();
         if (initPath.isEmpty || !initPath.startsWith('/')) {
           context.showRoundDialog(
-            title: Text(l10n.error),
+            title: l10n.error,
             child: const Text('Failed to get current path'),
           );
           return;
         }
-        AppRoute.sftp(spi: widget.spi, initPath: initPath).go(context);
+        AppRoutes.sftp(spi: widget.spi, initPath: initPath).go(context);
     }
   }
 
@@ -525,7 +522,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   Future<void> _showHelp() async {
     if (!Stores.setting.sshTermHelpShown.fetch()) {
       await context.showRoundDialog(
-        title: Text(l10n.doc),
+        title: l10n.doc,
         child: Text(l10n.sshTermHelp),
         actions: [
           TextButton(

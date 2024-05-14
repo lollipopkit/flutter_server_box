@@ -1,21 +1,14 @@
 import 'dart:async';
 
 import 'package:dartssh2/dartssh2.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:toolbox/core/extension/context/common.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/context/snackbar.dart';
-import 'package:toolbox/core/extension/uint8list.dart';
-import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/data/res/store.dart';
 
 import '../../data/model/app/shell_func.dart';
 import '../../data/model/server/proc.dart';
 import '../../data/model/server/server_private_info.dart';
-import '../../data/res/ui.dart';
-import '../widget/appbar.dart';
-import '../widget/cardx.dart';
 import '../widget/two_line_text.dart';
 
 class ProcessPage extends StatefulWidget {
@@ -107,11 +100,11 @@ class _ProcessPageState extends State<ProcessPage> {
       actions.add(IconButton(
         icon: const Icon(Icons.error),
         onPressed: () => context.showRoundDialog(
-          title: Text(l10n.error),
+          title: l10n.error,
           child: SingleChildScrollView(child: Text(_result.error!)),
           actions: [
             TextButton(
-              onPressed: () => Shares.copy(_result.error!),
+              onPressed: () => Pfs.copy(_result.error!),
               child: Text(l10n.copy),
             ),
           ],
@@ -160,7 +153,7 @@ class _ProcessPageState extends State<ProcessPage> {
         onTap: () => _lastFocusId = proc.pid,
         onLongPress: () {
           context.showRoundDialog(
-            title: Text(l10n.attention),
+            title: l10n.attention,
             child: Text(l10n.askContinue(
               '${l10n.stop} ${l10n.process}(${proc.pid})',
             )),

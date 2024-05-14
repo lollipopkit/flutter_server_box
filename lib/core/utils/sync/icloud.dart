@@ -2,13 +2,13 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:computer/computer.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:icloud_storage/icloud_storage.dart';
 import 'package:logging/logging.dart';
 import 'package:toolbox/data/model/app/backup.dart';
 import 'package:toolbox/data/model/app/sync.dart';
 
 import '../../../data/model/app/error.dart';
-import '../../../data/res/path.dart';
 
 abstract final class ICloud {
   static const _containerId = 'iCloud.tech.lolli.serverbox';
@@ -31,7 +31,7 @@ abstract final class ICloud {
     try {
       await ICloudStorage.upload(
         containerId: _containerId,
-        filePath: localPath ?? '${await Paths.doc}/$relativePath',
+        filePath: localPath ?? '${Paths.doc}/$relativePath',
         destinationRelativePath: relativePath,
         onProgress: (stream) {
           stream.listen(
@@ -85,7 +85,7 @@ abstract final class ICloud {
       await ICloudStorage.download(
         containerId: _containerId,
         relativePath: relativePath,
-        destinationFilePath: localPath ?? '${await Paths.doc}/$relativePath',
+        destinationFilePath: localPath ?? '${Paths.doc}/$relativePath',
         onProgress: (stream) {
           stream.listen(
             null,
@@ -139,7 +139,7 @@ abstract final class ICloud {
         }
       }));
 
-      final docPath = await Paths.doc;
+      final docPath = Paths.doc;
 
       /// compare files in iCloud and local
       missions.addAll(allFiles.map((file) async {
@@ -205,7 +205,7 @@ abstract final class ICloud {
       return;
     }
 
-    final dlFile = await File(await Paths.bak).readAsString();
+    final dlFile = await File(Paths.bakPath).readAsString();
     final dlBak = await Computer.shared.start(Backup.fromJsonString, dlFile);
     await dlBak.restore();
 

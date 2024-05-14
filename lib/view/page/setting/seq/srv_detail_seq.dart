@@ -1,13 +1,9 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/data/model/app/server_detail_card.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/view/widget/val_builder.dart';
 
-import '../../../../core/extension/order.dart';
-import '../../../widget/appbar.dart';
-import '../../../widget/cardx.dart';
 
 class ServerDetailOrderPage extends StatefulWidget {
   const ServerDetailOrderPage({super.key});

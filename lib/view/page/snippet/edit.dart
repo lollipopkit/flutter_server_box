@@ -1,20 +1,11 @@
 import 'package:after_layout/after_layout.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:toolbox/core/extension/context/common.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/data/res/provider.dart';
-import 'package:toolbox/view/widget/cardx.dart';
-import 'package:toolbox/view/widget/input_field.dart';
-import 'package:toolbox/view/widget/markdown.dart';
-import 'package:toolbox/view/widget/val_builder.dart';
 
 import '../../../data/model/server/snippet.dart';
-import '../../../data/res/ui.dart';
-import '../../widget/appbar.dart';
-import '../../widget/tag.dart';
 
 class SnippetEditPage extends StatefulWidget {
   const SnippetEditPage({super.key, this.snippet});
@@ -62,7 +53,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
       IconButton(
         onPressed: () {
           context.showRoundDialog(
-            title: Text(l10n.attention),
+            title: l10n.attention,
             child: Text(l10n.askContinue(
               '${l10n.delete} ${l10n.snippet}(${widget.snippet!.name})',
             )),
@@ -145,6 +136,9 @@ class _SnippetEditPageState extends State<SnippetEditPage>
               onRenameTag: (old, n) => setState(() {
                 Pros.snippet.renameTag(old, n);
               }),
+              renameL10n: l10n.rename,
+              tagL10n: l10n.tag,
+              addL10n: l10n.add,
             );
           },
         ),
@@ -182,6 +176,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
             onTap: () async {
               vals.removeWhere((e) => !Pros.server.serverOrder.contains(e));
               final serverIds = await context.showPickDialog(
+                title: l10n.autoRun,
                 items: Pros.server.serverOrder,
                 initial: vals,
               );

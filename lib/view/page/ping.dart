@@ -1,19 +1,11 @@
 import 'dart:async';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:toolbox/core/extension/context/common.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/context/snackbar.dart';
-import 'package:toolbox/core/extension/uint8list.dart';
-import 'package:toolbox/core/utils/share.dart';
 import 'package:toolbox/data/res/provider.dart';
 
 import '../../data/model/server/ping_result.dart';
-import '../../data/res/color.dart';
-import '../../data/res/ui.dart';
-import '../widget/input_field.dart';
-import '../widget/cardx.dart';
 
 /// Only permit ipv4 / ipv6 / domain chars
 final targetReg = RegExp(r'[a-zA-Z0-9\.-_:]+');
@@ -61,7 +53,7 @@ class _PingPageState extends State<PingPage>
       heroTag: 'ping',
       onPressed: () {
         context.showRoundDialog(
-          title: Text(l10n.choose),
+          title: l10n.choose,
           child: Input(
             autoFocus: true,
             controller: _textEditingController,
@@ -84,11 +76,11 @@ class _PingPageState extends State<PingPage>
       await doPing();
     } catch (e) {
       context.showRoundDialog(
-        title: Text(l10n.error),
+        title: l10n.error,
         child: Text(e.toString()),
         actions: [
           TextButton(
-            onPressed: () => Shares.copy(e.toString()),
+            onPressed: () => Pfs.copy(e.toString()),
             child: Text(l10n.copy),
           ),
         ],
@@ -125,7 +117,7 @@ class _PingPageState extends State<PingPage>
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: primaryColor,
+            color: UIs.primaryColor,
           ),
         ),
         subtitle: Text(
@@ -136,7 +128,7 @@ class _PingPageState extends State<PingPage>
           '${l10n.pingAvg}${result.statistic?.avg?.toStringAsFixed(2) ?? l10n.unknown} $ms',
           style: TextStyle(
             fontSize: 14,
-            color: primaryColor,
+            color: UIs.primaryColor,
           ),
         ),
       ),

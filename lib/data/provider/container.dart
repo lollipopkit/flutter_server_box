@@ -2,17 +2,15 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dartssh2/dartssh2.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:toolbox/core/extension/listx.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/container/image.dart';
 import 'package:toolbox/data/model/container/ps.dart';
 import 'package:toolbox/data/model/app/error.dart';
 import 'package:toolbox/data/model/container/type.dart';
-import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/core/extension/uint8list.dart';
 
 final _dockerNotFound =
     RegExp(r"command not found|Unknown command|Command '\w+' not found");
@@ -105,7 +103,7 @@ class ContainerProvider extends ChangeNotifier {
         type: ContainerErrType.segmentsNotMatch,
         message: 'Container segments: ${segments.length}',
       );
-      Loggers.parse.warning('Container segments: ${segments.length}\n$raw');
+      Loggers.app.warning('Container segments: ${segments.length}\n$raw');
       notifyListeners();
       return;
     }
@@ -119,7 +117,7 @@ class ContainerProvider extends ChangeNotifier {
         type: ContainerErrType.invalidVersion,
         message: '$e',
       );
-      Loggers.parse.warning('Container version failed', e, trace);
+      Loggers.app.warning('Container version failed', e, trace);
     } finally {
       notifyListeners();
     }
@@ -135,7 +133,7 @@ class ContainerProvider extends ChangeNotifier {
         type: ContainerErrType.parsePs,
         message: '$e',
       );
-      Loggers.parse.warning('Container ps failed', e, trace);
+      Loggers.app.warning('Container ps failed', e, trace);
     } finally {
       notifyListeners();
     }
@@ -151,7 +149,7 @@ class ContainerProvider extends ChangeNotifier {
         type: ContainerErrType.parseImages,
         message: '$e',
       );
-      Loggers.parse.warning('Container images failed', e, trace);
+      Loggers.app.warning('Container images failed', e, trace);
     } finally {
       notifyListeners();
     }
@@ -177,7 +175,7 @@ class ContainerProvider extends ChangeNotifier {
         type: ContainerErrType.parseStats,
         message: '$e',
       );
-      Loggers.parse.warning('Parse docker stats: $statsRaw', e, trace);
+      Loggers.app.warning('Parse docker stats: $statsRaw', e, trace);
     } finally {
       notifyListeners();
     }

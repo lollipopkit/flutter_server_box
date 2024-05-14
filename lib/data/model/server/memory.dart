@@ -1,4 +1,4 @@
-import 'package:toolbox/core/extension/listx.dart';
+import 'package:fl_lib/fl_lib.dart';
 
 class Memory {
   final int total;

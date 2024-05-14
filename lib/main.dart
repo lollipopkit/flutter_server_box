@@ -3,40 +3,30 @@
 import 'dart:async';
 
 import 'package:computer/computer.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:toolbox/core/channel/bg_run.dart';
 import 'package:toolbox/core/utils/sync/icloud.dart';
-import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/core/utils/sync/webdav.dart';
 import 'package:toolbox/core/utils/ui.dart';
 import 'package:toolbox/data/model/app/menu/server_func.dart';
 import 'package:toolbox/data/model/app/version_related.dart';
 import 'package:toolbox/data/model/server/custom.dart';
 import 'package:toolbox/data/res/build_data.dart';
-import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
-import 'core/analysis.dart';
 import 'data/model/app/net_view.dart';
 import 'data/model/server/private_key_info.dart';
 import 'data/model/server/server_private_info.dart';
 import 'data/model/server/snippet.dart';
 import 'data/model/ssh/virtual_key.dart';
-import 'data/provider/app.dart';
-import 'data/provider/private_key.dart';
-import 'data/provider/server.dart';
-import 'data/provider/sftp.dart';
-import 'data/provider/snippet.dart';
-import 'locator.dart';
-import 'view/widget/appbar.dart';
 
 Future<void> main() async {
   _runInZone(() async {
@@ -44,11 +34,11 @@ Future<void> main() async {
     runApp(
       MultiProvider(
         providers: [
-          ChangeNotifierProvider(create: (_) => locator<AppProvider>()),
-          ChangeNotifierProvider(create: (_) => locator<ServerProvider>()),
-          ChangeNotifierProvider(create: (_) => locator<SnippetProvider>()),
-          ChangeNotifierProvider(create: (_) => locator<PrivateKeyProvider>()),
-          ChangeNotifierProvider(create: (_) => locator<SftpProvider>()),
+          ChangeNotifierProvider(create: (_) => Pros.app),
+          ChangeNotifierProvider(create: (_) => Pros.server),
+          ChangeNotifierProvider(create: (_) => Pros.snippet),
+          ChangeNotifierProvider(create: (_) => Pros.key),
+          ChangeNotifierProvider(create: (_) => Pros.sftp),
         ],
         child: const MyApp(),
       ),
@@ -76,41 +66,34 @@ void _runInZone(void Function() body) {
 Future<void> _initApp() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await Paths.init(BuildData.name);
+
   // Base of all data.
   await _initDb();
-  await setupLocator();
-  await _initDesktopWindow();
-  Computer.shared.turnOn(
-    // Plus 1 to avoid 0.
-    workersCount: (Stores.server.box.keys.length / 3).round() + 1,
-  );
+
+  _initDesktopWindow();
   _setupLogger();
-  _setupProviders();
 
   // Load font
   loadFontFile(Stores.setting.fontPath.fetch());
 
   if (isAndroid) {
-    // Only start service when [bgRun] is true.
-    if (Stores.setting.bgRun.fetch()) {
-      BgRunMC.startService();
-    }
     // SharedPreferences is only used on Android for saving home widgets settings.
     SharedPreferences.setPrefix('');
     // try switch to highest refresh rate
     await FlutterDisplayMode.setHighRefreshRate();
   }
+
+  final serversCount = Stores.server.box.keys.length;
+  // Plus 1 to avoid 0.
+  Computer.shared.turnOn(workersCount: (serversCount / 3).round() + 1);
+
   if (isIOS || isMacOS) {
     if (Stores.setting.icloudSync.fetch()) ICloud.sync();
   }
   if (Stores.setting.webdavSync.fetch()) Webdav.sync();
 
   _doVersionRelated();
-}
-
-void _setupProviders() {
-  Pros.snippet.load();
-  Pros.key.load();
 }
 
 Future<void> _initDb() async {
@@ -124,6 +107,16 @@ Future<void> _initDb() async {
   Hive.registerAdapter(NetViewTypeAdapter()); // 5
   Hive.registerAdapter(ServerFuncBtnAdapter()); // 6
   Hive.registerAdapter(ServerCustomAdapter()); // 7
+
+  await Stores.setting.init();
+  await Stores.server.init();
+  await Stores.key.init();
+  await Stores.snippet.init();
+  await Stores.container.init();
+  await Stores.history.init();
+
+  Pros.snippet.load();
+  Pros.key.load();
 }
 
 void _setupLogger() {
@@ -136,11 +129,11 @@ void _setupLogger() {
   });
 }
 
-Future<void> _initDesktopWindow() async {
+void _initDesktopWindow() async {
   if (!isDesktop) return;
 
   await windowManager.ensureInitialized();
-  await CustomAppBar.updateTitlebarHeight();
+  await CustomAppBar.updateTitlebarHeight(Stores.setting.hideTitleBar.fetch());
 
   final windowOptions = WindowOptions(
     center: true,

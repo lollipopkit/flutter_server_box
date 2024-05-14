@@ -1,6 +1,6 @@
 import 'package:circle_chart/circle_chart.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:toolbox/data/res/color.dart';
 
 final class PercentCircle extends StatelessWidget {
   final double percent;
@@ -23,7 +23,7 @@ final class PercentCircle extends StatelessWidget {
       alignment: Alignment.center,
       children: [
         CircleChart(
-          progressColor: primaryColor,
+          progressColor: UIs.primaryColor,
           progressNumber: percent,
           maxNumber: 100,
           width: 57,

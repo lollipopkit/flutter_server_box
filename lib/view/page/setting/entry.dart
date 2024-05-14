@@ -1,42 +1,22 @@
 import 'dart:io';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/build_mode.dart';
-import 'package:toolbox/core/extension/colorx.dart';
-import 'package:toolbox/core/extension/context/common.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/context/snackbar.dart';
-import 'package:toolbox/core/extension/locale.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
-import 'package:toolbox/core/extension/stringx.dart';
-import 'package:toolbox/core/utils/function.dart';
-import 'package:toolbox/core/utils/platform/base.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/rebuild.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/view/widget/expand_tile.dart';
-import 'package:toolbox/view/widget/markdown.dart';
-import 'package:toolbox/view/widget/val_builder.dart';
+import 'package:toolbox/data/res/url.dart';
 
-import '../../../core/persistant_store.dart';
 import '../../../core/route.dart';
 import '../../../core/utils/misc.dart';
-import '../../../core/update.dart';
 import '../../../data/model/app/net_view.dart';
 import '../../../data/provider/app.dart';
 import '../../../data/res/build_data.dart';
-import '../../../data/res/color.dart';
-import '../../../data/res/path.dart';
-import '../../../data/res/ui.dart';
-import '../../widget/color_picker.dart';
-import '../../widget/appbar.dart';
-import '../../widget/input_field.dart';
-import '../../widget/cardx.dart';
-import '../../widget/store_switch.dart';
 
 const _kIconSize = 23.0;
 
@@ -59,7 +39,7 @@ class _SettingPageState extends State<SettingPage> {
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: () => context.showRoundDialog(
-              title: Text(l10n.attention),
+              title: l10n.attention,
               child: SimpleMarkdown(
                   data: l10n.askContinue(
                 '${l10n.delete} **${l10n.all}** ${l10n.setting}',
@@ -220,7 +200,13 @@ class _SettingPageState extends State<SettingPage> {
         },
       ),
       onTap: () => Funcs.throttle(
-        () => doUpdate(context, force: BuildMode.isDebug),
+        () => AppUpdateIface.doUpdate(
+          context: context,
+          build: BuildData.build,
+          url: Urls.updateCfg,
+          force: BuildMode.isDebug,
+          updateL10n: l10n.update,
+        ),
       ),
       trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),
     );
@@ -237,6 +223,7 @@ class _SettingPageState extends State<SettingPage> {
       ),
       onTap: () async {
         final val = await context.showPickSingleDialog(
+          title: l10n.setting,
           items: List.generate(10, (idx) => idx == 1 ? null : idx),
           initial: _setting.serverStatusUpdateInterval.fetch(),
           name: (p0) => p0 == 0 ? l10n.manual : '$p0 ${l10n.second}',
@@ -260,12 +247,12 @@ class _SettingPageState extends State<SettingPage> {
       leading: const Icon(Icons.colorize),
       title: Text(l10n.primaryColorSeed),
       trailing: ClipOval(
-        child: Container(color: primaryColor, height: 27, width: 27),
+        child: Container(color: UIs.primaryColor, height: 27, width: 27),
       ),
       onTap: () async {
-        final ctrl = TextEditingController(text: primaryColor.toHex);
+        final ctrl = TextEditingController(text: UIs.primaryColor.toHex);
         await context.showRoundDialog(
-          title: Text(l10n.primaryColorSeed),
+          title: l10n.primaryColorSeed,
           child: StatefulBuilder(builder: (context, setState) {
             final children = <Widget>[
               /// Plugin [dynamic_color] is not supported on iOS
@@ -316,7 +303,7 @@ class _SettingPageState extends State<SettingPage> {
     }
     // Change [primaryColor] first, then change [_selectedColorValue],
     // So the [ValueBuilder] will be triggered with the new value
-    primaryColor = color;
+    UIs.colorSeed = color;
     _setting.primaryColor.put(color.value);
     context.pop();
     context.pop();
@@ -376,6 +363,7 @@ class _SettingPageState extends State<SettingPage> {
             style: UIs.textGrey),
         onTap: () async {
           final selected = await context.showPickSingleDialog(
+            title: l10n.maxRetryCount,
             items: List.generate(10, (index) => index),
             name: (p0) => '$p0 ${l10n.times}',
             initial: val,
@@ -400,6 +388,7 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(l10n.themeMode),
       onTap: () async {
         final selected = await context.showPickSingleDialog(
+          title: l10n.themeMode,
           items: List.generate(len + 2, (index) => index),
           name: (p0) => _buildThemeModeStr(p0),
           initial: _setting.themeMode.fetch(),
@@ -445,7 +434,7 @@ class _SettingPageState extends State<SettingPage> {
       ),
       onTap: () {
         context.showRoundDialog(
-          title: Text(l10n.font),
+          title: l10n.font,
           actions: [
             TextButton(
               onPressed: () async => await _pickFontFile(),
@@ -466,23 +455,22 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Future<void> _pickFontFile() async {
-    final path = await pickOneFile();
-    if (path != null) {
-      // iOS can't copy file to app dir, so we need to use the original path
-      if (isIOS) {
-        _setting.fontPath.put(path);
-      } else {
-        final fontFile = File(path);
-        final newPath = '${await Paths.font}/${path.split('/').last}';
-        await fontFile.copy(newPath);
-        _setting.fontPath.put(newPath);
-      }
-
-      context.pop();
-      RebuildNodes.app.rebuild();
-      return;
+    final path = await Pfs.pickFilePath();
+    if (path == null) return;
+    
+    // iOS can't copy file to app dir, so we need to use the original path
+    if (isIOS) {
+      _setting.fontPath.put(path);
+    } else {
+      final fontFile = File(path);
+      final newPath = '${Paths.fontPath}/${path.split('/').last}';
+      await fontFile.copy(newPath);
+      _setting.fontPath.put(newPath);
     }
-    context.showSnackBar(l10n.failed);
+
+    context.pop();
+    RebuildNodes.app.rebuild();
+    return;
   }
 
   Widget _buildTermFontSize() {
@@ -544,6 +532,7 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(l10n.language),
       onTap: () async {
         final selected = await context.showPickSingleDialog(
+          title: l10n.language,
           items: S.supportedLocales,
           name: (p0) => p0.code,
           initial: _setting.locale.fetch().toLocale,
@@ -583,6 +572,7 @@ class _SettingPageState extends State<SettingPage> {
       ),
       onTap: () async {
         final selected = await context.showPickSingleDialog(
+          title: l10n.theme,
           items: themeMap.keys.toList(),
           name: (p0) => p0,
           initial: _setting.editorTheme.fetch(),
@@ -604,6 +594,7 @@ class _SettingPageState extends State<SettingPage> {
       ),
       onTap: () async {
         final selected = await context.showPickSingleDialog(
+          title: l10n.theme,
           items: themeMap.keys.toList(),
           name: (p0) => p0,
           initial: _setting.editorDarkTheme.fetch(),
@@ -687,7 +678,7 @@ class _SettingPageState extends State<SettingPage> {
       leading: const Icon(BoxIcons.bxs_keyboard),
       title: Text(l10n.editVirtKeys),
       trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => AppRoute.sshVirtKeySetting().go(context),
+      onTap: () => AppRoutes.sshVirtKeySetting().go(context),
     );
   }
 
@@ -731,6 +722,7 @@ class _SettingPageState extends State<SettingPage> {
       ),
       onTap: () async {
         final selected = await context.showPickSingleDialog(
+          title: l10n.netViewType,
           items: NetViewType.values,
           name: (p0) => p0.toStr,
           initial: _setting.netViewType.fetch(),
@@ -749,7 +741,7 @@ class _SettingPageState extends State<SettingPage> {
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () async {
         context.showRoundDialog<List<String>>(
-          title: Text(l10n.choose),
+          title: l10n.choose,
           child: SingleChildScrollView(
             child: StatefulBuilder(builder: (ctx, setState) {
               final keys = Stores.server.box.keys.toList();
@@ -761,7 +753,7 @@ class _SettingPageState extends State<SettingPage> {
                     title: Text(name ?? e),
                     subtitle: name != null ? Text(e) : null,
                     onTap: () => context.showRoundDialog(
-                      title: Text(l10n.attention),
+                      title: l10n.attention,
                       child: Text(l10n.askContinue(
                         '${l10n.delete} ${l10n.server}($e)',
                       )),
@@ -806,7 +798,7 @@ class _SettingPageState extends State<SettingPage> {
         ),
       ),
       onTap: () => context.showRoundDialog(
-        title: Text(l10n.textScaler),
+        title: l10n.textScaler,
         child: Input(
           autoFocus: true,
           type: TextInputType.number,
@@ -859,7 +851,7 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       title: Text(l10n.sequence),
       trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => AppRoute.serverFuncBtnsOrder().go(context),
+      onTap: () => AppRoutes.serverFuncBtnsOrder().go(context),
     );
   }
 
@@ -868,7 +860,7 @@ class _SettingPageState extends State<SettingPage> {
       leading: const Icon(OctIcons.sort_desc, size: _kIconSize),
       title: Text(l10n.serverOrder),
       trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => AppRoute.serverOrder().go(context),
+      onTap: () => AppRoutes.serverOrder().go(context),
     );
   }
 
@@ -877,7 +869,7 @@ class _SettingPageState extends State<SettingPage> {
       leading: const Icon(OctIcons.sort_desc, size: _kIconSize),
       title: Text(l10n.serverDetailOrder),
       trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => AppRoute.serverDetailOrder().go(context),
+      onTap: () => AppRoutes.serverDetailOrder().go(context),
     );
   }
 
@@ -903,7 +895,7 @@ class _SettingPageState extends State<SettingPage> {
       final fontSize = double.tryParse(ctrller.text);
       if (fontSize == null) {
         context.showRoundDialog(
-          title: Text(l10n.failed),
+          title: l10n.failed,
           child: Text('Parsed failed: ${ctrller.text}'),
         );
         return;
@@ -912,7 +904,7 @@ class _SettingPageState extends State<SettingPage> {
     }
 
     context.showRoundDialog(
-      title: Text(l10n.fontSize),
+      title: l10n.fontSize,
       child: Input(
         controller: ctrller,
         autoFocus: true,
@@ -947,15 +939,15 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget? _buildPlatformSetting() {
-    final func = switch (OS.type) {
-      OS.android => AppRoute.androidSettings().go,
-      OS.ios => AppRoute.iosSettings().go,
+    final func = switch (Pfs.type) {
+      Pfs.android => AppRoutes.androidSettings().go,
+      Pfs.ios => AppRoutes.iosSettings().go,
       _ => null,
     };
     if (func == null) return null;
     return ListTile(
       leading: const Icon(Icons.phone_android),
-      title: Text('${OS.type} ${l10n.setting}'),
+      title: Text('${Pfs.type} ${l10n.setting}'),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () => func(context),
     );
@@ -1061,6 +1053,7 @@ class _SettingPageState extends State<SettingPage> {
       ),
       onTap: () async {
         final selected = await context.showPickSingleDialog(
+          title: l10n.theme,
           items: List.generate(3, (index) => index),
           name: (p0) => index2Str(p0),
           initial: _setting.termTheme.fetch(),
@@ -1153,7 +1146,7 @@ class _SettingPageState extends State<SettingPage> {
     void onSave(String url) {
       if (url.isEmpty || !url.startsWith('http')) {
         context.showRoundDialog(
-          title: Text(l10n.failed),
+          title: l10n.failed,
           child: Text('${l10n.invalid} URL'),
           actions: [
             TextButton(
@@ -1169,14 +1162,15 @@ class _SettingPageState extends State<SettingPage> {
     }
 
     return ListTile(
+      leading: const Icon(Icons.image),
       title: Text('Logo ${l10n.addr}'),
-      subtitle: SimpleMarkdown(data: '${l10n.view} ${l10n.doc}'),
+      subtitle: SimpleMarkdown(data: '[${l10n.doc}](${Urls.appWiki})'),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () {
         final ctrl =
             TextEditingController(text: _setting.serverLogoUrl.fetch());
         context.showRoundDialog(
-          title: Text('Logo ${l10n.addr}'),
+          title: 'Logo ${l10n.addr}',
           child: Input(
             controller: ctrl,
             autoFocus: true,

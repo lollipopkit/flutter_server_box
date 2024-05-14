@@ -1,29 +1,19 @@
 import 'dart:convert';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/extension/context/common.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/context/snackbar.dart';
-import 'package:toolbox/core/extension/stringx.dart';
-import 'package:toolbox/core/extension/widget.dart';
 import 'package:toolbox/core/utils/ui.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/custom.dart';
 import 'package:toolbox/data/model/server/wol_cfg.dart';
 import 'package:toolbox/data/res/provider.dart';
-import 'package:toolbox/view/widget/expand_tile.dart';
 
 import '../../../core/route.dart';
 import '../../../data/model/server/server_private_info.dart';
 import '../../../data/provider/private_key.dart';
-import '../../../data/res/ui.dart';
-import '../../widget/appbar.dart';
-import '../../widget/input_field.dart';
-import '../../widget/cardx.dart';
-import '../../widget/tag.dart';
 
 class ServerEditPage extends StatefulWidget {
   const ServerEditPage({super.key, this.spi});
@@ -163,7 +153,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
       onPressed: () {
         var delScripts = false;
         context.showRoundDialog(
-          title: Text(l10n.attention),
+          title: l10n.attention,
           child: StatefulBuilder(builder: (ctx, setState) {
             return Column(
               mainAxisSize: MainAxisSize.min,
@@ -224,7 +214,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         icon: BoxIcons.bx_rename,
         obscureText: false,
         autoCorrect: true,
-        suggestiion: true,
+        suggestion: true,
       ),
       Input(
         controller: _ipController,
@@ -266,6 +256,9 @@ class _ServerEditPageState extends State<ServerEditPage> {
         onChanged: (p0) => _tags = p0,
         allTags: [...Pros.server.tags.value],
         onRenameTag: Pros.server.renameTag,
+        renameL10n: l10n.rename,
+        tagL10n: l10n.tag,
+        addL10n: l10n.add,
       ),
       ListTile(
         title: Text(l10n.autoConnect),
@@ -367,7 +360,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
               padding: EdgeInsets.only(right: 13),
               child: Icon(Icons.add),
             ),
-            onTap: () => AppRoute.keyEdit().go(context),
+            onTap: () => AppRoutes.keyEdit().go(context),
           ),
         );
         return CardX(
@@ -440,7 +433,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
             },
           ),
         ),
-      ).card,
+      ).cardx,
     ];
   }
 
@@ -464,7 +457,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         title: Text(l10n.doc),
         trailing: const Icon(Icons.open_in_new, size: 17),
         onTap: () => openUrl(l10n.customCmdDocUrl),
-      ).card,
+      ).cardx,
     ];
   }
 
@@ -479,7 +472,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         ),
         title: Text(l10n.about),
         subtitle: Text(l10n.wolTip, style: UIs.text12Grey),
-      ).card,
+      ).cardx,
       Input(
         controller: _wolMacCtrl,
         type: TextInputType.text,
@@ -564,7 +557,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
     }
     if (_keyIdx.value == null && _passwordController.text.isEmpty) {
       final cancel = await context.showRoundDialog<bool>(
-        title: Text(l10n.attention),
+        title: l10n.attention,
         child: Text(l10n.askContinue(l10n.useNoPwd)),
         actions: [
           TextButton(

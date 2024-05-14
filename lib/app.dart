@@ -1,12 +1,9 @@
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
-import 'package:toolbox/core/analysis.dart';
-import 'package:toolbox/core/extension/context/common.dart';
-import 'package:toolbox/core/extension/locale.dart';
 import 'package:toolbox/core/utils/ui.dart';
 import 'package:toolbox/data/res/build_data.dart';
-import 'package:toolbox/data/res/color.dart';
 import 'package:toolbox/data/res/rebuild.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/page/home/home.dart';
@@ -21,7 +18,7 @@ class MyApp extends StatelessWidget {
       listenable: RebuildNodes.app,
       builder: (_, __) {
         if (!Stores.setting.useSystemPrimaryColor.fetch()) {
-          primaryColor = Color(Stores.setting.primaryColor.fetch());
+          UIs.colorSeed = Color(Stores.setting.primaryColor.fetch());
           return _buildApp();
         }
         return DynamicColorBuilder(
@@ -36,9 +33,9 @@ class MyApp extends StatelessWidget {
               colorScheme: dark,
             );
             if (context.isDark && light != null) {
-              primaryColor = light.primary;
+              UIs.primaryColor = light.primary;
             } else if (!context.isDark && dark != null) {
-              primaryColor = dark.primary;
+              UIs.primaryColor = dark.primary;
             }
             return _buildApp(light: lightTheme, dark: darkTheme);
           },
@@ -59,12 +56,12 @@ class MyApp extends StatelessWidget {
 
     light ??= ThemeData(
       useMaterial3: true,
-      colorSchemeSeed: primaryColor,
+      colorSchemeSeed: UIs.colorSeed,
     );
     dark ??= ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      colorSchemeSeed: primaryColor,
+      colorSchemeSeed: UIs.colorSeed,
     );
 
     return MaterialApp(
@@ -88,7 +85,10 @@ class MyApp extends StatelessWidget {
 
 void _setup(BuildContext context) async {
   setTransparentNavigationBar(context);
-  Analysis.init();
+  Analysis.init(
+    'https://countly.lolli.tech',
+    '0772e65c696709f879d87db77ae1a811259e3eb9',
+  );
 }
 
 ThemeData _getAmoledTheme(ThemeData darkTheme) => darkTheme.copyWith(

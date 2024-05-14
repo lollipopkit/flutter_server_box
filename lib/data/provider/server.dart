@@ -3,22 +3,17 @@ import 'dart:io';
 
 import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/ssh_client.dart';
-import 'package:toolbox/core/extension/stringx.dart';
 import 'package:toolbox/core/utils/ssh_auth.dart';
-import 'package:toolbox/core/utils/platform/path.dart';
 import 'package:toolbox/data/model/app/error.dart';
 import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/system.dart';
 import 'package:toolbox/data/model/sftp/req.dart';
-import 'package:toolbox/data/res/logger.dart';
-import 'package:toolbox/data/res/path.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 
-import '../../core/extension/order.dart';
-import '../../core/extension/uint8list.dart';
 import '../../core/utils/server.dart';
 import '../model/server/server.dart';
 import '../model/server/server_private_info.dart';
@@ -344,7 +339,7 @@ class ServerProvider extends ChangeNotifier {
         Loggers.app.warning('Write script to ${spi.name} by shell', e);
 
         /// by sftp
-        final localPath = joinPath(await Paths.doc, 'install.sh');
+        final localPath = Paths.doc.joinPath('install.sh');
         final file = File(localPath);
         try {
           file.writeAsBytes(scriptRaw);
@@ -455,7 +450,7 @@ class ServerProvider extends ChangeNotifier {
         message: 'Parse failed: $e\n\n$raw',
       );
       _setServerState(s, ServerConn.failed);
-      Loggers.parse.warning('Server status', e, trace);
+      Loggers.app.warning('Server status', e, trace);
       return;
     }
 

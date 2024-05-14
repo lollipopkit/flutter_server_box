@@ -1,14 +1,8 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/data/model/app/menu/server_func.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/data/res/ui.dart';
-import 'package:toolbox/view/widget/val_builder.dart';
-
-import '../../../../core/extension/order.dart';
-import '../../../widget/appbar.dart';
-import '../../../widget/cardx.dart';
 
 class ServerFuncBtnsOrderPage extends StatefulWidget {
   const ServerFuncBtnsOrderPage({super.key});
@@ -50,7 +44,7 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
                 title: RichText(
                   text: TextSpan(
                     children: [
-                      WidgetSpan(child: funcBtn.icon(2)),
+                      WidgetSpan(child: Icon(funcBtn.icon)),
                       const WidgetSpan(child: UIs.width7),
                       TextSpan(text: funcBtn.toStr, style: UIs.textGrey),
                     ],

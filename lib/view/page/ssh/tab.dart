@@ -1,15 +1,12 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/extension/context/common.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/provider/server.dart';
 import 'package:toolbox/data/res/provider.dart';
-import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/page/ssh/page.dart';
-import 'package:toolbox/view/widget/cardx.dart';
 
 class SSHTabPage extends StatefulWidget {
   const SSHTabPage({super.key});
@@ -48,7 +45,7 @@ class _SSHTabPageState extends State<SSHTabPage>
           if (_fabRN.value != 0) return const SizedBox();
           return FloatingActionButton(
             heroTag: 'sshAddServer',
-            onPressed: () => AppRoute.serverEdit().go(context),
+            onPressed: () => AppRoutes.serverEdit().go(context),
             tooltip: l10n.addAServer,
             child: const Icon(Icons.add),
           );
@@ -70,7 +67,7 @@ class _SSHTabPageState extends State<SSHTabPage>
             icon: const Icon(Icons.close, size: 17),
             onPressed: () async {
               final confirm = await context.showRoundDialog<bool>(
-                title: Text(l10n.attention),
+                title: l10n.attention,
                 child: Text('${l10n.close} SSH ${l10n.conn}($e) ?'),
                 actions: [
                   TextButton(

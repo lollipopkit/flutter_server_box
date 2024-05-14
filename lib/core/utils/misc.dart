@@ -1,14 +1,6 @@
-import 'package:file_picker/file_picker.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:plain_notification_token/plain_notification_token.dart';
-import 'package:toolbox/core/utils/platform/base.dart';
-import 'package:toolbox/data/res/provider.dart';
 
-Future<String?> pickOneFile() async {
-  Pros.app.moveBg = false;
-  final result = await FilePicker.platform.pickFiles(type: FileType.any);
-  Pros.app.moveBg = true;
-  return result?.files.single.path;
-}
 
 Future<String?> getToken() async {
   if (isIOS) {
@@ -28,23 +20,4 @@ String? getFileName(String? path) {
     return null;
   }
   return path.split('/').last;
-}
-
-/// Join two path with `/`
-String pathJoin(String path1, String path2) {
-  return path1 + (path1.endsWith('/') ? '' : '/') + path2;
-}
-
-/// Check if a url is a file url (ends with a file extension)
-bool isFileUrl(String url) => url.split('/').last.contains('.');
-
-int get timeStamp => DateTime.now().millisecondsSinceEpoch;
-
-bool isBaseType(Object? obj) {
-  return obj is String ||
-      obj is int ||
-      obj is double ||
-      obj is bool ||
-      obj is List ||
-      obj is Map;
 }

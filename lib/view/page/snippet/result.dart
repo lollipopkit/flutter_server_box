@@ -1,10 +1,7 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
-import 'package:toolbox/data/res/ui.dart';
-import 'package:toolbox/view/widget/cardx.dart';
-import 'package:toolbox/view/widget/appbar.dart';
-import 'package:toolbox/view/widget/expand_tile.dart';
 
 class SnippetResultPage extends StatelessWidget {
   final List<SnippetResult?> results;

@@ -34,14 +34,14 @@ enum ServerFuncBtn {
     snippet,
   ].map((e) => e.index).toList();
 
-  Icon icon([double? sizeDiff]) => switch (this) {
-        sftp => Icon(Icons.insert_drive_file, size: 15 + (sizeDiff ?? 0)),
-        snippet => Icon(Icons.code, size: 15 + (sizeDiff ?? 0)),
-        pkg => Icon(Icons.system_security_update, size: 15 + (sizeDiff ?? 0)),
-        container => Icon(FontAwesome.docker_brand, size: 14 + (sizeDiff ?? 0)),
-        process => Icon(Icons.list_alt_outlined, size: 15 + (sizeDiff ?? 0)),
-        terminal => Icon(Icons.terminal, size: 15 + (sizeDiff ?? 0)),
-        iperf => Icon(Icons.speed, size: 15 + (sizeDiff ?? 0)),
+  IconData get icon => switch (this) {
+        sftp => Icons.insert_drive_file,
+        snippet => Icons.code,
+        pkg => Icons.system_security_update,
+        container => FontAwesome.docker_brand,
+        process => Icons.list_alt_outlined,
+        terminal => Icons.terminal,
+        iperf => Icons.speed,
       };
 
   String get toStr => switch (this) {

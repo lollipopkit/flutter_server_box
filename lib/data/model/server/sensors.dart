@@ -1,5 +1,5 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/data/res/logger.dart';
 
 final class SensorAdaptor {
   final String raw;

@@ -1,7 +1,7 @@
 import 'dart:async';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/res/provider.dart';
@@ -14,6 +14,7 @@ abstract final class KeybordInteractive {
     try {
       final res = await (ctx ?? Pros.app.ctx)?.showPwdDialog(
         title: '2FA ${l10n.pwd}',
+        id: spi.id,
         label: spi.id,
       );
       return res == null ? null : [res];

@@ -1,22 +1,13 @@
 import 'dart:convert';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/context/snackbar.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/core/utils/misc.dart';
-import 'package:toolbox/core/utils/platform/auth.dart';
-import 'package:toolbox/core/utils/share.dart';
-import 'package:toolbox/data/res/logger.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/data/res/ui.dart';
 import 'package:toolbox/view/page/setting/platform/platform_pub.dart';
-import 'package:toolbox/view/widget/appbar.dart';
-import 'package:toolbox/view/widget/future_widget.dart';
-import 'package:toolbox/view/widget/cardx.dart';
-import 'package:toolbox/view/widget/store_switch.dart';
 import 'package:watch_connectivity/watch_connectivity.dart';
 
 class IOSSettingsPage extends StatefulWidget {
@@ -59,7 +50,7 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
         padding: EdgeInsets.zero,
         onPressed: () {
           if (_pushToken.value != null) {
-            Shares.copy(_pushToken.value!);
+            Pfs.copy(_pushToken.value!);
             context.showSnackBar(l10n.success);
           } else {
             context.showSnackBar(l10n.getPushTokenFailed);
@@ -126,7 +117,7 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
   void _onTapWatchApp(Map<String, dynamic> map) async {
     /// Encode [map] to String with indent `\t`
     final text = Miscs.jsonEncoder.convert(map);
-    final result = await AppRoute.editor(
+    final result = await AppRoutes.editor(
       text: text,
       langCode: 'json',
       title: 'Watch app',
@@ -139,7 +130,7 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
       await wc.updateApplicationContext(newCtx);
     } catch (e, trace) {
       context.showRoundDialog(
-        title: Text(l10n.error),
+        title: l10n.error,
         child: Text('${l10n.save}:\n$e'),
       );
       Loggers.app.warning('Update watch config failed', e, trace);

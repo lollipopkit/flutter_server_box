@@ -1,23 +1,15 @@
 import 'dart:io';
 
 import 'package:computer/computer.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:toolbox/core/extension/context/common.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/context/snackbar.dart';
-import 'package:toolbox/core/extension/numx.dart';
-import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/provider.dart';
-import 'package:toolbox/view/widget/input_field.dart';
-import 'package:toolbox/view/widget/val_builder.dart';
 
 import '../../../core/utils/server.dart';
 import '../../../data/model/server/private_key_info.dart';
-import '../../../data/res/ui.dart';
-import '../../widget/appbar.dart';
 
 const _format = 'text/plain';
 
@@ -91,7 +83,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
         tooltip: l10n.delete,
         onPressed: () {
           context.showRoundDialog(
-            title: Text(l10n.attention),
+            title: l10n.attention,
             child: Text(l10n.askContinue(
               '${l10n.delete} ${l10n.privateKey}(${widget.pki!.id})',
             )),
@@ -181,7 +173,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
         ),
         TextButton(
           onPressed: () async {
-            final path = await pickOneFile();
+            final path = await Pfs.pickFilePath();
             if (path == null) return;
 
             final file = File(path);

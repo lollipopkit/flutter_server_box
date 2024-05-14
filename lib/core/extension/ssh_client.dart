@@ -2,10 +2,8 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/widgets.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
-import 'package:toolbox/core/extension/stringx.dart';
-import 'package:toolbox/core/extension/uint8list.dart';
 
 import '../../data/res/misc.dart';
 
@@ -81,7 +79,7 @@ extension SSHClientX on SSHClient {
           isRequestingPwd = true;
           final user = Miscs.pwdRequestWithUserReg.firstMatch(data)?.group(1);
           if (context == null) return;
-          final pwd = await context.showPwdDialog(title: user, hostId: id);
+          final pwd = await context.showPwdDialog(title: user, id: id);
           if (pwd == null || pwd.isEmpty) {
             session.kill(SSHSignal.TERM);
           } else {

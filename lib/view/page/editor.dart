@@ -3,18 +3,16 @@ import 'dart:io';
 
 import 'package:code_text_field/code_text_field.dart';
 import 'package:computer/computer.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_highlight/themes/a11y-light.dart';
 import 'package:flutter_highlight/themes/monokai.dart';
-import 'package:toolbox/core/extension/context/common.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/utils/misc.dart';
 import 'package:toolbox/data/res/highlight.dart';
 import 'package:toolbox/data/res/store.dart';
 
-import '../widget/appbar.dart';
 import '../widget/two_line_text.dart';
 
 class EditorPage extends StatefulWidget {

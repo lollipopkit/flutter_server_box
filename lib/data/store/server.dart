@@ -1,4 +1,5 @@
-import '../../core/persistant_store.dart';
+import 'package:fl_lib/fl_lib.dart';
+
 import '../model/server/server_private_info.dart';
 
 class ServerStore extends PersistentStore {

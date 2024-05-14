@@ -1,21 +1,15 @@
 import 'dart:io';
 import 'dart:async';
 import 'package:after_layout/after_layout.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/extension/context/common.dart';
-import 'package:toolbox/core/extension/context/dialog.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/utils/platform/base.dart';
-import 'package:toolbox/core/utils/platform/path.dart';
 import 'package:toolbox/data/res/store.dart';
 
 import '../../../core/route.dart';
 import '../../../data/model/server/private_key_info.dart';
 import '../../../data/provider/private_key.dart';
-import '../../../data/res/ui.dart';
-import '../../widget/appbar.dart';
-import '../../widget/cardx.dart';
 
 class PrivateKeysListPage extends StatefulWidget {
   const PrivateKeysListPage({super.key});
@@ -35,7 +29,7 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
-        onPressed: () => AppRoute.keyEdit().go(context),
+        onPressed: () => AppRoutes.keyEdit().go(context),
       ),
     );
   }
@@ -64,7 +58,7 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
                 ),
                 title: Text(item.id),
                 subtitle: Text(item.type ?? l10n.unknown, style: UIs.textGrey),
-                onTap: () => AppRoute.keyEdit(pki: item).go(context),
+                onTap: () => AppRoutes.keyEdit(pki: item).go(context),
                 trailing: const Icon(Icons.edit),
               ),
             );
@@ -77,22 +71,22 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
   void autoAddSystemPriavteKey() {
     // Only trigger on desktop platform and no private key saved
     if (isDesktop && Stores.snippet.box.keys.isEmpty) {
-      final home = getHomeDir();
+      final home = Pfs.homeDir;
       if (home == null) return;
-      final idRsaFile = File(joinPath(home, '.ssh/id_rsa'));
+      final idRsaFile = File(home.joinPath('.ssh/id_rsa'));
       if (!idRsaFile.existsSync()) return;
       final sysPk = PrivateKeyInfo(
         id: 'system',
         key: idRsaFile.readAsStringSync(),
       );
       context.showRoundDialog(
-        title: Text(l10n.attention),
+        title: l10n.attention,
         child: Text(l10n.addSystemPrivateKeyTip),
         actions: [
           TextButton(
             onPressed: () {
               context.pop();
-              AppRoute.keyEdit(pki: sysPk).go(context);
+              AppRoutes.keyEdit(pki: sysPk).go(context);
             },
             child: Text(l10n.ok),
           ),
