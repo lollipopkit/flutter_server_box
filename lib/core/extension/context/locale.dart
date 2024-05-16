@@ -1,7 +1,4 @@
 import 'package:flutter_gen/gen_l10n/l10n.dart';
+import 'package:flutter_gen/gen_l10n/l10n_en.dart';
 
-late S _s;
-S get l10n => _s;
-set l10n(S s) {
-  _s = s;
-}
+AppLocalizations l10n = AppLocalizationsEn();

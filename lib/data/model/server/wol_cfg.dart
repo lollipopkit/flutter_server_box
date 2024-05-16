@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:wake_on_lan/wake_on_lan.dart';
 
+part 'wol_cfg.g.dart';
+
 @HiveType(typeId: 8)
 final class WakeOnLanCfg {
   @HiveField(0)

@@ -65,8 +65,8 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       locale: locale,
-      localizationsDelegates: S.localizationsDelegates,
-      supportedLocales: S.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       title: BuildData.name,
       themeMode: themeMode,
       theme: light,

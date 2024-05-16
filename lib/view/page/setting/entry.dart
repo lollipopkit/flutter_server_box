@@ -532,7 +532,7 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () async {
         final selected = await context.showPickSingleDialog(
           title: l10n.language,
-          items: S.supportedLocales,
+          items: AppLocalizations.supportedLocales,
           name: (p0) => p0.code,
           initial: _setting.locale.fetch().toLocale,
         );
