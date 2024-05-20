@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:toolbox/data/model/server/nvdia.dart';
 
@@ -859,5 +861,11 @@ void main() {
     expect(processes[1].memory, 34);
     expect(processes[2].pid, 16484);
     expect(processes[2].memory, 76);
+  });
+
+  test('nvidia-smi with N/A', () async {
+    final raw = await File('test/nvidia.txt').readAsString();
+    final items = NvidiaSmi.fromXml(raw);
+    expect(items.length, 4);
   });
 }

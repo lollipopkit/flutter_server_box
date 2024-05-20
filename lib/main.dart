@@ -15,7 +15,7 @@ import 'package:toolbox/core/utils/sync/icloud.dart';
 import 'package:toolbox/core/utils/sync/webdav.dart';
 import 'package:toolbox/data/model/app/menu/server_func.dart';
 import 'package:toolbox/data/model/app/net_view.dart';
-import 'package:toolbox/data/model/app/version_related.dart';
+import 'package:toolbox/data/model/app/server_detail_card.dart';
 import 'package:toolbox/data/model/server/custom.dart';
 import 'package:toolbox/data/model/server/private_key_info.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
@@ -131,12 +131,15 @@ void _setupDebug() {
   }
 }
 
+// It may contains some async heavy funcs.
 Future<void> _doVersionRelated() async {
   final curVer = Stores.setting.lastVer.fetch();
   const newVer = BuildData.build;
+  // It's only the version upgrade trigger logic.
+  // How to upgrade the data is inside each own func.
   if (curVer < newVer) {
-    /// Call [Iterable.toList] to consume the lazy iterable.
-    VersionRelated.funcs.map((e) => e(newVer)).toList();
+    // DO version check inside each func.
+    ServerDetailCards.autoAddNewCards(newVer);
     Stores.setting.lastVer.put(newVer);
   }
 }

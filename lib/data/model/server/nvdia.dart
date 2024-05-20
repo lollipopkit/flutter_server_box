@@ -56,11 +56,9 @@ class NvidiaSmi {
             process?.findElements('used_memory').firstOrNull?.innerText;
         if (pid != null && name != null && memory != null) {
           return NvidiaSmiMemProcess(
-            int.parse(pid),
+            int.tryParse(pid) ?? 0,
             name,
-            int.parse(
-              memory.split(' ').firstOrNull ?? '0',
-            ),
+            int.tryParse(memory.split(' ').firstOrNull ?? '0') ?? 0,
           );
         }
         return null;
@@ -81,16 +79,16 @@ class NvidiaSmi {
         return NvidiaSmiItem(
           name: name,
           uuid: gpu.findElements('uuid').firstOrNull?.innerText ?? '',
-          temp: int.parse(temp.split(' ').firstOrNull ?? '0'),
-          percent: int.parse(percent?.split(' ').firstOrNull ?? '0'),
+          temp: int.tryParse(temp.split(' ').firstOrNull ?? '0') ?? 0,
+          percent: int.tryParse(percent?.split(' ').firstOrNull ?? '0') ?? 0,
           power: '$powerDraw / $powerLimit',
           memory: NvidiaSmiMem(
-            int.parse(memoryTotal?.split(' ').firstOrNull ?? '0'),
-            int.parse(memoryUsed?.split(' ').firstOrNull ?? '0'),
+            int.tryParse(memoryTotal?.split(' ').firstOrNull ?? '0') ?? 0,
+            int.tryParse(memoryUsed?.split(' ').firstOrNull ?? '0') ?? 0,
             'MiB',
             List.from(memoryProcesses),
           ),
-          fanSpeed: int.parse(fanSpeed?.split(' ').firstOrNull ?? '0'),
+          fanSpeed: int.tryParse(fanSpeed?.split(' ').firstOrNull ?? '0') ?? 0,
         );
       }
       return null;
