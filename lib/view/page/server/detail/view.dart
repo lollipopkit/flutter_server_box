@@ -422,7 +422,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         textAlign: TextAlign.center,
       ),
       subtitle: Text(
-        '${item.power} - ${item.fanSpeed} RPM\n${mem.used} / ${mem.total} ${mem.unit}',
+        '${item.power} - FAN ${item.fanSpeed}%\n${mem.used} / ${mem.total} ${mem.unit}',
         style: UIs.text12Grey,
         textScaler: _textFactor,
       ),
