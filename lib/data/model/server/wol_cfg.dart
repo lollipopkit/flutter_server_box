@@ -28,7 +28,9 @@ final class WakeOnLanCfg {
           ? InternetAddressType.IPv6
           : InternetAddressType.IPv4,
     );
-    final pwdValidation = SecureONPassword.validate(pwd);
+    final pwdValidation = pwd != null
+        ? SecureONPassword.validate(pwd)
+        : (state: true, error: null);
 
     final valid =
         macValidation.state && ipValidation.state && pwdValidation.state;
