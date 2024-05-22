@@ -5,7 +5,6 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:toolbox/core/channel/home_widget.dart';
 import 'package:toolbox/core/extension/build.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
@@ -23,9 +22,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 part 'appbar.dart';
 
 class HomePage extends StatefulWidget {
-  final bool fullScreen;
-
-  const HomePage({super.key, this.fullScreen = false});
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -157,17 +154,17 @@ class _HomePageState extends State<HomePage>
           }
         },
       ),
-      bottomNavigationBar: widget.fullScreen
-          ? null
-          : ValBuilder(
-              listenable: _isLandscape,
-              builder: (ls) {
-                return ListenableBuilder(
+      bottomNavigationBar: ValBuilder(
+        listenable: _isLandscape,
+        builder: (ls) {
+          return Stores.setting.fullScreen.fetch()
+              ? UIs.placeholder
+              : ListenableBuilder(
                   listenable: _selectIndex,
                   builder: (_, __) => _buildBottomBar(ls),
                 );
-              },
-            ),
+        },
+      ),
     );
   }
 
@@ -337,7 +334,7 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
     // Auth required for first launch
     if (Stores.setting.useBioAuth.fetch()) BioAuth.go();
 
-    _reqNotiPerm();
+    //_reqNotiPerm();
 
     if (Stores.setting.autoCheckAppUpdate.fetch()) {
       AppUpdateIface.doUpdate(
@@ -352,28 +349,27 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
     await Pros.server.refresh();
   }
 
-  // It's required by RUpgrade to send update progress
-  Future<void> _reqNotiPerm() async {
-    if (!isAndroid) return;
-    final suc = await PermUtils.request(Permission.notification);
-    if (!suc) {
-      final noNotiPerm = Stores.setting.noNotiPerm;
-      if (noNotiPerm.fetch()) return;
-      context.showRoundDialog(
-        title: l10n.error,
-        child: Text(l10n.noNotiPerm),
-        actions: [
-          TextButton(
-            onPressed: () {
-              noNotiPerm.put(true);
-              context.pop();
-            },
-            child: Text(l10n.ok),
-          ),
-        ],
-      );
-    }
-  }
+  // Future<void> _reqNotiPerm() async {
+  //   if (!isAndroid) return;
+  //   final suc = await PermUtils.request(Permission.notification);
+  //   if (!suc) {
+  //     final noNotiPerm = Stores.setting.noNotiPerm;
+  //     if (noNotiPerm.fetch()) return;
+  //     context.showRoundDialog(
+  //       title: l10n.error,
+  //       child: Text(l10n.noNotiPerm),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () {
+  //             noNotiPerm.put(true);
+  //             context.pop();
+  //           },
+  //           child: Text(l10n.ok),
+  //         ),
+  //       ],
+  //     );
+  //   }
+  // }
 
   Future<void> _onLongPressSetting() async {
     final map = Stores.setting.box.toJson(includeInternal: false);

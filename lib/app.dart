@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
       builder: (_, __) {
         if (!Stores.setting.useSystemPrimaryColor.fetch()) {
           UIs.colorSeed = Color(Stores.setting.primaryColor.fetch());
-          return _buildApp();
+          return _buildApp(context);
         }
         return DynamicColorBuilder(
           builder: (light, dark) {
@@ -36,14 +36,14 @@ class MyApp extends StatelessWidget {
             } else if (!context.isDark && dark != null) {
               UIs.primaryColor = dark.primary;
             }
-            return _buildApp(light: lightTheme, dark: darkTheme);
+            return _buildApp(context, light: lightTheme, dark: darkTheme);
           },
         );
       },
     );
   }
 
-  Widget _buildApp({ThemeData? light, ThemeData? dark}) {
+  Widget _buildApp(BuildContext ctx, {ThemeData? light, ThemeData? dark}) {
     final tMode = Stores.setting.themeMode.fetch();
     // Issue #57
     final themeMode = switch (tMode) {
@@ -71,15 +71,17 @@ class MyApp extends StatelessWidget {
       themeMode: themeMode,
       theme: light,
       darkTheme: tMode < 3 ? dark : _getAmoledTheme(dark),
-      home: Stores.setting.fullScreen.fetch()
-          ? OrientationBuilder(
-              builder: (_, ori) {
-                return HomePage(fullScreen: ori == Orientation.landscape);
-              },
-            )
-          : const HomePage(),
+      home: _buildAppContent(ctx),
     );
   }
+
+  Widget _buildAppContent(BuildContext ctx) {
+    //if (Pros.app.isWearOS) return const WearHome();
+    return const HomePage();
+  }
+
+  // bool _isSmallDevice(BuildContext ctx) =>
+  //     MediaQuery.of(ctx).size.shortestSide < 600;
 }
 
 void _setup(BuildContext context) async {

@@ -82,9 +82,9 @@ chmod +x $_installShellPath
       case ShellFunc.status:
         return '''
 if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
-\t${_statusCmds.join(cmdDivider)}
+\t${StatusCmdType.values.map((e) => e.cmd).join(cmdDivider)}
 else
-\t${_bsdStatusCmd.join(cmdDivider)}
+\t${BSDStatusCmdType.values.map((e) => e.cmd).join(cmdDivider)}
 fi''';
 //       case ShellFunc.docker:
 //         return '''
@@ -196,72 +196,47 @@ extension EnumX on Enum {
 }
 
 enum StatusCmdType {
-  echo,
-  time,
-  net,
-  sys,
-  cpu,
-  uptime,
-  conn,
-  disk,
-  mem,
-  tempType,
-  tempVal,
-  host,
-  diskio,
-  battery,
-  nvidia,
-  sensors,
+  echo._('echo ${SystemType.linuxSign}'),
+  time._('date +%s'),
+  net._('cat /proc/net/dev'),
+  sys._('cat /etc/*-release | grep PRETTY_NAME'),
+  cpu._('cat /proc/stat | grep cpu'),
+  uptime._('uptime'),
+  conn._('cat /proc/net/snmp'),
+  disk._('df'),
+  mem._("cat /proc/meminfo | grep -E 'Mem|Swap'"),
+  tempType._('cat /sys/class/thermal/thermal_zone*/type'),
+  tempVal._('cat /sys/class/thermal/thermal_zone*/temp'),
+  host._('cat /etc/hostname'),
+  diskio._('cat /proc/diskstats'),
+  battery._(
+      'for f in /sys/class/power_supply/*/uevent; do cat "\$f"; echo; done'),
+  nvidia._('nvidia-smi -q -x'),
+  sensors._('sensors'),
   ;
-}
 
-/// Cmds for linux server
-const _statusCmds = [
-  'echo ${SystemType.linuxSign}',
-  'date +%s',
-  'cat /proc/net/dev',
-  'cat /etc/*-release | grep PRETTY_NAME',
-  'cat /proc/stat | grep cpu',
-  'uptime',
-  'cat /proc/net/snmp',
-  'df',
-  "cat /proc/meminfo | grep -E 'Mem|Swap'",
-  'cat /sys/class/thermal/thermal_zone*/type',
-  'cat /sys/class/thermal/thermal_zone*/temp',
-  'cat /etc/hostname',
-  'cat /proc/diskstats',
-  'for f in /sys/class/power_supply/*/uevent; do cat "\$f"; echo; done',
-  'nvidia-smi -q -x',
-  'sensors',
-];
+  final String cmd;
+
+  const StatusCmdType._(this.cmd);
+}
 
 enum BSDStatusCmdType {
-  echo,
-  time,
-  net,
-  sys,
-  cpu,
-  uptime,
-  disk,
-  mem,
+  echo._('echo ${SystemType.bsdSign}'),
+  time._('date +%s'),
+  net._('netstat -ibn'),
+  sys._('uname -or'),
+  cpu._('top -l 1 | grep "CPU usage"'),
+  uptime._('uptime'),
+  disk._('df -k'),
+  mem._('top -l 1 | grep PhysMem'),
   //temp,
-  host,
+  host._('hostname'),
   ;
-}
 
-/// Cmds for BSD server
-const _bsdStatusCmd = [
-  'echo ${SystemType.bsdSign}',
-  'date +%s',
-  'netstat -ibn',
-  'uname -or',
-  'top -l 1 | grep "CPU usage"',
-  'uptime',
-  'df -k',
-  'top -l 1 | grep PhysMem',
-  //'sysctl -a | grep temperature',
-  'hostname',
-];
+  final String cmd;
+
+  const BSDStatusCmdType._(this.cmd);
+}
 
 extension StatusCmdTypeX on StatusCmdType {
   String get i18n => switch (this) {

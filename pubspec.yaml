@@ -63,6 +63,7 @@ dependencies:
     git:
       url: https://github.com/lollipopkit/fl_lib
       ref: main
+  device_info_plus: ^10.1.0
     # path: ../fl_lib
 
 dev_dependencies:

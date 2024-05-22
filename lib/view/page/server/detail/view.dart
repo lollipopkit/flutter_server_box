@@ -802,7 +802,6 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     return CardX(
       child: ListTile(
         title: const Text('PVE'),
-        subtitle: Text(addr, style: UIs.textGrey),
         leading: const Icon(FontAwesome.server_solid, size: 17),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => AppRoutes.pve(spi: widget.spi).go(context),

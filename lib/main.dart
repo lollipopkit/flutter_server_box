@@ -65,36 +65,17 @@ Future<void> _initApp() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Paths.init(BuildData.name);
-
-  // Base of all data.
-  await _initDb();
-
+  await _initData();
   _setupDebug();
-  SystemUIs.initDesktopWindow(Stores.setting.hideTitleBar.fetch());
 
-  // Load font
+  SystemUIs.initDesktopWindow(Stores.setting.hideTitleBar.fetch());
   FontUtils.loadFrom(Stores.setting.fontPath.fetch());
 
-  if (isAndroid) {
-    // SharedPreferences is only used on Android for saving home widgets settings.
-    SharedPreferences.setPrefix('');
-    // try switch to highest refresh rate
-    await FlutterDisplayMode.setHighRefreshRate();
-  }
-
-  final serversCount = Stores.server.box.keys.length;
-  // Plus 1 to avoid 0.
-  Computer.shared.turnOn(workersCount: (serversCount / 3).round() + 1);
-
-  if (isIOS || isMacOS) {
-    if (Stores.setting.icloudSync.fetch()) ICloud.sync();
-  }
-  if (Stores.setting.webdavSync.fetch()) Webdav.sync();
-
+  _doPlatformRelated();
   _doVersionRelated();
 }
 
-Future<void> _initDb() async {
+Future<void> _initData() async {
   // await SecureStore.init();
   await Hive.initFlutter();
   // Ordered by typeId
@@ -115,6 +96,7 @@ Future<void> _initDb() async {
 
   Pros.snippet.load();
   Pros.key.load();
+  await Pros.app.init();
 }
 
 void _setupDebug() {
@@ -131,6 +113,24 @@ void _setupDebug() {
   }
 }
 
+void _doPlatformRelated() async {
+  if (isAndroid) {
+    // SharedPreferences is only used on Android for saving home widgets settings.
+    SharedPreferences.setPrefix('');
+    // try switch to highest refresh rate
+    FlutterDisplayMode.setHighRefreshRate();
+  }
+
+  final serversCount = Stores.server.box.keys.length;
+  // Plus 1 to avoid 0.
+  Computer.shared.turnOn(workersCount: (serversCount / 3).round() + 1);
+
+  if (isIOS || isMacOS) {
+    if (Stores.setting.icloudSync.fetch()) ICloud.sync();
+  }
+  if (Stores.setting.webdavSync.fetch()) Webdav.sync();
+}
+
 // It may contains some async heavy funcs.
 Future<void> _doVersionRelated() async {
   final curVer = Stores.setting.lastVer.fetch();
@@ -138,7 +138,6 @@ Future<void> _doVersionRelated() async {
   // It's only the version upgrade trigger logic.
   // How to upgrade the data is inside each own func.
   if (curVer < newVer) {
-    // DO version check inside each func.
     ServerDetailCards.autoAddNewCards(newVer);
     Stores.setting.lastVer.put(newVer);
   }
