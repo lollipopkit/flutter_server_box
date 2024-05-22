@@ -121,6 +121,7 @@
   "goBackQ": "Datang kembali?",
   "goto": "Pergi ke",
   "hideTitleBar": "Sembunyikan bilah judul",
+  "hideTitleBarTip": "Setelah dinyalakan, tekan dan tahan tiga tombol di sudut kanan atas untuk menyeret.",
   "highlight": "Sorotan kode",
   "homeWidgetUrlConfig": "Konfigurasi URL Widget Rumah",
   "host": "Host",

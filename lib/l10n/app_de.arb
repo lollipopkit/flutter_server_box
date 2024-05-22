@@ -121,6 +121,7 @@
   "goBackQ": "Zurückkommen?",
   "goto": "Pfad öffnen",
   "hideTitleBar": "Titelleiste ausblenden",
+  "hideTitleBarTip": "Nach dem Einschalten halten Sie bitte die drei Tasten in der oberen rechten Ecke gedrückt, um sie zu ziehen.",
   "highlight": "Code highlight",
   "homeWidgetUrlConfig": "Home-Widget-Link konfigurieren",
   "host": "Host",

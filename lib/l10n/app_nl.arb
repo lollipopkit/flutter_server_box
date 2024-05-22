@@ -121,6 +121,7 @@
   "goBackQ": "Terug gaan?",
   "goto": "Ga naar",
   "hideTitleBar": "Titelbalk verbergen",
+  "hideTitleBarTip": "Houd na het inschakelen de drie knoppen in de rechterbovenhoek ingedrukt om te slepen.",
   "highlight": "Code-highlight",
   "homeWidgetUrlConfig": "Home-widget-url configureren",
   "host": "Host",

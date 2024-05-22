@@ -1088,6 +1088,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildHideTitleBar() {
     return ListTile(
       title: Text(l10n.hideTitleBar),
+      subtitle: Text(l10n.hideTitleBarTip, style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.hideTitleBar),
     );
   }

@@ -121,6 +121,7 @@
   "goBackQ": "返回？",
   "goto": "前往",
   "hideTitleBar": "隐藏标题栏",
+  "hideTitleBarTip": "开启后请按住右上角三个按钮来拖动",
   "highlight": "代码高亮",
   "homeWidgetUrlConfig": "桌面部件链接配置",
   "host": "主机",

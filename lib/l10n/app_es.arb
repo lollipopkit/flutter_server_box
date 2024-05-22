@@ -121,6 +121,7 @@
   "goBackQ": "¿Regresar?",
   "goto": "Ir a",
   "hideTitleBar": "Ocultar barra de título",
+  "hideTitleBarTip": "Después de encenderlo, mantenga presionados los tres botones en la esquina superior derecha para arrastrar.",
   "highlight": "Resaltar código",
   "homeWidgetUrlConfig": "Configuración de URL del widget de inicio",
   "host": "Anfitrión",

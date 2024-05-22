@@ -66,32 +66,44 @@ class HomeWidget : AppWidgetProvider() {
         }
 
         GlobalScope.launch(Dispatchers.IO) {
-            val jsonStr = URL(url).readText()
-            val jsonObject = JSONObject(jsonStr)
-            val data = jsonObject.getJSONObject("data")
-            val server = data.getString("name")
-            val cpu = data.getString("cpu")
-            val mem = data.getString("mem")
-            val disk = data.getString("disk")
-            val net = data.getString("net")
+            try {
+                val jsonStr = URL(url).readText()
+                val jsonObject = JSONObject(jsonStr)
+                val data = jsonObject.getJSONObject("data")
+                val server = data.getString("name")
+                val cpu = data.getString("cpu")
+                val mem = data.getString("mem")
+                val disk = data.getString("disk")
+                val net = data.getString("net")
 
-            GlobalScope.launch(Dispatchers.Main) main@ {
-                // mem or disk is empty -> get status failed
-                // (cpu | net) isEmpty -> data is not ready
-                if (mem.isEmpty() || disk.isEmpty()) {
-                    return@main
+                GlobalScope.launch(Dispatchers.Main) main@ {
+                    // mem or disk is empty -> get status failed
+                    // (cpu | net) isEmpty -> data is not ready
+                    if (mem.isEmpty() || disk.isEmpty()) {
+                        return@main
+                    }
+                    views.setTextViewText(R.id.widget_name, server)
+
+                    views.setTextViewText(R.id.widget_cpu, cpu)
+                    views.setTextViewText(R.id.widget_mem, mem)
+                    views.setTextViewText(R.id.widget_disk, disk)
+                    views.setTextViewText(R.id.widget_net, net)
+
+                    val timeStr = android.text.format.DateFormat.format("HH:mm", java.util.Date()).toString()
+                    views.setTextViewText(R.id.widget_time, timeStr)
+
+                    appWidgetManager.updateAppWidget(appWidgetId, views)
                 }
-                views.setTextViewText(R.id.widget_name, server)
-
-                views.setTextViewText(R.id.widget_cpu, cpu)
-                views.setTextViewText(R.id.widget_mem, mem)
-                views.setTextViewText(R.id.widget_disk, disk)
-                views.setTextViewText(R.id.widget_net, net)
-
-                val timeStr = android.text.format.DateFormat.format("HH:mm", java.util.Date()).toString()
-                views.setTextViewText(R.id.widget_time, timeStr)
-
-                appWidgetManager.updateAppWidget(appWidgetId, views)
+            } catch (e: Exception) {
+                GlobalScope.launch(Dispatchers.Main) main@ {
+                    views.setViewVisibility(R.id.widget_cpu_label, View.INVISIBLE)
+                    views.setViewVisibility(R.id.widget_mem_label, View.INVISIBLE)
+                    views.setViewVisibility(R.id.widget_disk_label, View.INVISIBLE)
+                    views.setViewVisibility(R.id.widget_net_label, View.INVISIBLE)
+                    views.setTextViewText(R.id.widget_name, "ID: $appWidgetId")
+                    views.setTextViewText(R.id.widget_mem, e.localizedMessage)
+                    appWidgetManager.updateAppWidget(appWidgetId, views)
+                }
             }
         }
     }
