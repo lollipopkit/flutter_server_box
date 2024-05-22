@@ -5,6 +5,7 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
@@ -30,6 +31,7 @@ class SSHPage extends StatefulWidget {
   final String? initCmd;
   final bool notFromTab;
   final Function()? onSessionEnd;
+  final FocusNode? focus;
 
   const SSHPage({
     super.key,
@@ -37,6 +39,7 @@ class SSHPage extends StatefulWidget {
     this.initCmd,
     this.notFromTab = true,
     this.onSessionEnd,
+    this.focus,
   });
 
   @override
@@ -50,7 +53,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   late final _terminal = Terminal(inputHandler: _keyboard);
   final TerminalController _terminalController = TerminalController();
   final List<List<VirtKey>> _virtKeysList = [];
-  final _focus = FocusNode();
+  late final _focus = widget.focus ?? FocusNode();
 
   late MediaQueryData _media;
   late TerminalStyle _terminalStyle;

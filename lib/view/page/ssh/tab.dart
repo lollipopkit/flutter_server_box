@@ -25,6 +25,7 @@ class _SSHTabPageState extends State<SSHTabPage>
     vsync: this,
   );
   final _fabRN = ValueNotifier(0);
+  final _focusMap = <String, FocusNode>{};
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +37,10 @@ class _SSHTabPageState extends State<SSHTabPage>
         isScrollable: true,
         tabAlignment: TabAlignment.start,
         dividerColor: Colors.transparent,
-        onTap: (value) => _fabRN.value = value,
+        onTap: (value) {
+          _fabRN.value = value;
+          _focusMap[_tabIds.keys.elementAt(value)]?.requestFocus();
+        },
       ),
       body: _buildBody(),
       floatingActionButton: ListenableBuilder(
@@ -138,10 +142,10 @@ class _SSHTabPageState extends State<SSHTabPage>
       }
       return spi.name;
     }();
-    final key = GlobalKey<State<SSHPage>>(debugLabel: 'sshTabPage_$name');
+    final focus = _focusMap.putIfAbsent(name, () => FocusNode());
     _tabIds[name] = SSHPage(
-      key: key,
       spi: spi,
+      focus: focus,
       notFromTab: false,
       onSessionEnd: () {
         // debugPrint("Session done received on page whose tabId = $name");
