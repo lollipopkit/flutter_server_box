@@ -864,8 +864,14 @@ void main() {
   });
 
   test('nvidia-smi with N/A', () async {
-    final raw = await File('test/nvidia.txt').readAsString();
+    final raw = await File('test/nvidia.xml').readAsString();
     final items = NvidiaSmi.fromXml(raw);
     expect(items.length, 4);
+  });
+
+  test('nvidia-smi 2', () async {
+    final raw = await File('test/nvidia2.xml').readAsString();
+    final items = NvidiaSmi.fromXml(raw);
+    expect(items.length, 1);
   });
 }

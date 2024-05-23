@@ -59,13 +59,13 @@ dependencies:
       ref: main
   device_info_plus: ^10.1.0
 
-dependency_overrides:
-  dartssh2:
-    path: ../dartssh2
-  fl_lib:
-    path: ../fl_lib
-  xterm:
-    path: ../xterm.dart
+# dependency_overrides:
+#   dartssh2:
+#     path: ../dartssh2
+#   fl_lib:
+#     path: ../fl_lib
+#   xterm:
+#     path: ../xterm.dart
 
 dev_dependencies:
   flutter_native_splash: ^2.1.6

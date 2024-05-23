@@ -270,9 +270,11 @@ packages:
   dartssh2:
     dependency: "direct main"
     description:
-      path: "../dartssh2"
-      relative: true
-    source: path
+      path: "."
+      ref: dev
+      resolved-ref: d62d7e64c99de62a52495f3dedbf6b8983e4ce77
+      url: "https://github.com/lollipopkit/dartssh2"
+    source: git
     version: "2.9.1-pre"
   dbus:
     dependency: transitive
@@ -397,9 +399,11 @@ packages:
   fl_lib:
     dependency: "direct main"
     description:
-      path: "../fl_lib"
-      relative: true
-    source: path
+      path: "."
+      ref: main
+      resolved-ref: "4ffe5cb3a42f93b59f011fdedde601b9681a144f"
+      url: "https://github.com/lollipopkit/fl_lib"
+    source: git
     version: "0.0.1"
   flutter:
     dependency: "direct main"
@@ -1511,9 +1515,11 @@ packages:
   xterm:
     dependency: "direct main"
     description:
-      path: "../xterm.dart"
-      relative: true
-    source: path
+      path: "."
+      ref: a343bc2fdc11fbc7dbfc1f170692426a6fe01cb9
+      resolved-ref: a343bc2fdc11fbc7dbfc1f170692426a6fe01cb9
+      url: "https://github.com/lollipopkit/xterm.dart"
+    source: git
     version: "4.0.0"
   yaml:
     dependency: transitive
@@ -1532,5 +1538,5 @@ packages:
     source: hosted
     version: "0.0.6"
 sdks:
-  dart: ">=3.3.0 <4.0.0"
+  dart: ">=3.4.0 <4.0.0"
   flutter: ">=3.19.0"

@@ -71,11 +71,7 @@ class NvidiaSmi {
           .firstOrNull
           ?.innerText;
       final fanSpeed = gpu.findElements('fan_speed').firstOrNull?.innerText;
-      if (name != null &&
-          temp != null &&
-          powerDraw != null &&
-          powerLimit != null &&
-          memory != null) {
+      if (name != null && temp != null) {
         return NvidiaSmiItem(
           name: name,
           uuid: gpu.findElements('uuid').firstOrNull?.innerText ?? '',
