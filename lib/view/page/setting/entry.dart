@@ -204,7 +204,6 @@ class _SettingPageState extends State<SettingPage> {
           build: BuildData.build,
           url: Urls.updateCfg,
           force: BuildMode.isDebug,
-          updateL10n: l10n.update,
         ),
       ),
       trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),

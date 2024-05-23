@@ -255,9 +255,6 @@ class _ServerEditPageState extends State<ServerEditPage> {
         onChanged: (p0) => _tags = p0,
         allTags: [...Pros.server.tags.value],
         onRenameTag: Pros.server.renameTag,
-        renameL10n: l10n.rename,
-        tagL10n: l10n.tag,
-        addL10n: l10n.add,
       ),
       ListTile(
         title: Text(l10n.autoConnect),

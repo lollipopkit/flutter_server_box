@@ -130,12 +130,7 @@ final class PveLxc extends PveResIface implements PveCtrlIface {
   @override
   String get summary {
     if (available) {
-      return uptime.secondsToDuration().toAgoStr(
-            day: l10n.day,
-            hour: l10n.hour,
-            minute: l10n.minute,
-            second: l10n.second,
-          );
+      return uptime.secondsToDuration().toAgoStr;
     }
     return l10n.stopped;
   }
@@ -213,12 +208,7 @@ final class PveQemu extends PveResIface implements PveCtrlIface {
   @override
   String get summary {
     if (available) {
-      return uptime.secondsToDuration().toAgoStr(
-            day: l10n.day,
-            hour: l10n.hour,
-            minute: l10n.minute,
-            second: l10n.second,
-          );
+      return uptime.secondsToDuration().toAgoStr;
     }
     return l10n.stopped;
   }
@@ -268,12 +258,7 @@ final class PveNode extends PveResIface {
 
   String get topRight {
     if (isRunning) {
-      return uptime.secondsToDuration().toAgoStr(
-            day: l10n.day,
-            hour: l10n.hour,
-            minute: l10n.minute,
-            second: l10n.second,
-          );
+      return uptime.secondsToDuration().toAgoStr;
     }
     return l10n.stopped;
   }

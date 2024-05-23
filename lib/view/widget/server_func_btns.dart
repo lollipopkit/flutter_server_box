@@ -17,7 +17,6 @@ import '../../core/route.dart';
 import '../../core/utils/server.dart';
 import '../../data/model/pkg/upgrade_info.dart';
 import '../../data/model/server/server_private_info.dart';
-import 'popup_menu.dart';
 
 class ServerFuncBtnsTopRight extends StatelessWidget {
   final ServerPrivateInfo spi;
@@ -30,8 +29,9 @@ class ServerFuncBtnsTopRight extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PopupMenu<ServerFuncBtn>(
-      items: ServerFuncBtn.values,
-      builder: (e) => PopMenu.build(e, e.icon, e.toStr),
+      items: ServerFuncBtn.values
+          .map((e) => PopMenu.build(e, e.icon, e.toStr))
+          .toList(),
       padding: const EdgeInsets.symmetric(horizontal: 10),
       onSelected: (val) => _onTapMoreBtns(val, spi, context),
     );

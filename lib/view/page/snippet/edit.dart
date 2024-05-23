@@ -136,9 +136,6 @@ class _SnippetEditPageState extends State<SnippetEditPage>
               onRenameTag: (old, n) => setState(() {
                 Pros.snippet.renameTag(old, n);
               }),
-              renameL10n: l10n.rename,
-              tagL10n: l10n.tag,
-              addL10n: l10n.add,
             );
           },
         ),

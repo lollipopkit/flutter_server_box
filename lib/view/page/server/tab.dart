@@ -214,7 +214,6 @@ class _ServerPageState extends State<ServerPage>
         _tag = p0;
       }),
       initTag: _tag,
-      allL10n: l10n.all,
     );
   }
 

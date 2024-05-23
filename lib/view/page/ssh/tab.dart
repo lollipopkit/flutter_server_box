@@ -17,15 +17,14 @@ class SSHTabPage extends StatefulWidget {
 
 class _SSHTabPageState extends State<SSHTabPage>
     with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
-  late final _tabIds = <String, Widget>{
-    l10n.add: _buildAddPage(),
+  late final _tabMap = <String, ({Widget page, FocusNode? focus})>{
+    l10n.add: (page: _buildAddPage(), focus: null),
   };
   late var _tabController = TabController(
-    length: _tabIds.length,
+    length: _tabMap.length,
     vsync: this,
   );
   final _fabRN = ValueNotifier(0);
-  final _focusMap = <String, FocusNode>{};
 
   @override
   Widget build(BuildContext context) {
@@ -33,13 +32,14 @@ class _SSHTabPageState extends State<SSHTabPage>
     return Scaffold(
       appBar: TabBar(
         controller: _tabController,
-        tabs: _tabIds.keys.map(_buildTabItem).toList(),
+        tabs: _tabMap.keys.map(_buildTabItem).toList(),
         isScrollable: true,
         tabAlignment: TabAlignment.start,
         dividerColor: Colors.transparent,
         onTap: (value) {
           _fabRN.value = value;
-          _focusMap[_tabIds.keys.elementAt(value)]?.requestFocus();
+          final mapKey = _tabMap.keys.elementAt(value);
+          _tabMap[mapKey]?.focus?.requestFocus();
         },
       ),
       body: _buildBody(),
@@ -67,9 +67,9 @@ class _SSHTabPageState extends State<SSHTabPage>
         children: [
           Text(e),
           UIs.width7,
-          IconButton(
-            icon: const Icon(Icons.close, size: 17),
-            onPressed: () async {
+          IconBtn(
+            icon: Icons.close,
+            onTap: () async {
               final confirm = await context.showRoundDialog<bool>(
                 title: l10n.attention,
                 child: Text('${l10n.close} SSH ${l10n.conn}($e) ?'),
@@ -87,7 +87,7 @@ class _SSHTabPageState extends State<SSHTabPage>
               if (confirm != true) {
                 return;
               }
-              _tabIds.remove(e);
+              _tabMap.remove(e);
               _refreshTabs();
             },
           ),
@@ -131,38 +131,39 @@ class _SSHTabPageState extends State<SSHTabPage>
     return TabBarView(
       physics: const NeverScrollableScrollPhysics(),
       controller: _tabController,
-      children: _tabIds.values.toList(),
+      children: _tabMap.values.map((e) => e.page).toList(),
     );
   }
 
   void _onTapInitCard(ServerPrivateInfo spi) {
     final name = () {
-      if (_tabIds.containsKey(spi.name)) {
-        return '${spi.name}(${_tabIds.length + 1})';
+      if (_tabMap.containsKey(spi.name)) {
+        return '${spi.name}(${_tabMap.length + 1})';
       }
       return spi.name;
     }();
-    final focus = _focusMap.putIfAbsent(name, () => FocusNode());
-    _tabIds[name] = SSHPage(
-      spi: spi,
+    final focus = FocusNode();
+    _tabMap[name] = (
+      page: SSHPage(
+        spi: spi,
+        focus: focus,
+        notFromTab: false,
+        onSessionEnd: () {
+          _tabMap.remove(name);
+          _refreshTabs();
+        },
+      ),
       focus: focus,
-      notFromTab: false,
-      onSessionEnd: () {
-        // debugPrint("Session done received on page whose tabId = $name");
-        // debugPrint("key = $key");
-        _tabIds.remove(name);
-        _refreshTabs();
-      },
     );
     _refreshTabs();
-    final idx = _tabIds.length - 1;
+    final idx = _tabMap.length - 1;
     _tabController.animateTo(idx);
     _fabRN.value = idx;
   }
 
   void _refreshTabs() {
     _tabController = TabController(
-      length: _tabIds.length,
+      length: _tabMap.length,
       vsync: this,
     );
     setState(() {});

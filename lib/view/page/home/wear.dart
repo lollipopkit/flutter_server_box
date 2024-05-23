@@ -77,7 +77,6 @@ final class _WearHomeState extends State<WearHome> with AfterLayoutMixin {
         build: BuildData.build,
         url: '${Urls.cdnBase}/update.json',
         context: context,
-        updateL10n: l10n.update,
       );
     }
     await Pros.server.load();

@@ -95,6 +95,7 @@ class HomeWidget : AppWidgetProvider() {
                     appWidgetManager.updateAppWidget(appWidgetId, views)
                 }
             } catch (e: Exception) {
+                println("ServerBoxHomeWidget: ${e.localizedMessage}")
                 GlobalScope.launch(Dispatchers.Main) main@ {
                     views.setViewVisibility(R.id.widget_cpu_label, View.INVISIBLE)
                     views.setViewVisibility(R.id.widget_mem_label, View.INVISIBLE)

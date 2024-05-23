@@ -677,7 +677,15 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     Loggers.app.warning('$op failed', e, s);
     return ctx.showRoundDialog(
       title: l10n.error,
-      child: Text(e.toString()),
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            Text(e.toString()),
+            const SizedBox(height: 7),
+            SimpleMarkdown(data: s.toString()),
+          ],
+        ),
+      ),
       actions: [
         TextButton(
           onPressed: () => ctx.pop(),

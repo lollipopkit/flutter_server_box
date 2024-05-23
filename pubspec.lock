@@ -33,6 +33,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.2"
+  app_links:
+    dependency: transitive
+    description:
+      name: app_links
+      sha256: "96e677810b83707ff5e10fac11e4839daa0ea4e0123c35864c092699165eb3db"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.1.1"
   archive:
     dependency: transitive
     description:
@@ -262,11 +270,9 @@ packages:
   dartssh2:
     dependency: "direct main"
     description:
-      path: "."
-      ref: dev
-      resolved-ref: d62d7e64c99de62a52495f3dedbf6b8983e4ce77
-      url: "https://github.com/lollipopkit/dartssh2"
-    source: git
+      path: "../dartssh2"
+      relative: true
+    source: path
     version: "2.9.1-pre"
   dbus:
     dependency: transitive
@@ -391,11 +397,9 @@ packages:
   fl_lib:
     dependency: "direct main"
     description:
-      path: "."
-      ref: main
-      resolved-ref: d6f282b4883615cc5a31b5f3a720b6a74d5285f4
-      url: "https://github.com/lollipopkit/fl_lib"
-    source: git
+      path: "../fl_lib"
+      relative: true
+    source: path
     version: "0.0.1"
   flutter:
     dependency: "direct main"
@@ -553,6 +557,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.1"
+  gtk:
+    dependency: transitive
+    description:
+      name: gtk
+      sha256: e8ce9ca4b1df106e4d72dad201d345ea1a036cc12c360f1a7d5a758f78ffa42c
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.0"
   highlight:
     dependency: "direct main"
     description:
@@ -1145,6 +1157,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.4"
+  shortid:
+    dependency: transitive
+    description:
+      name: shortid
+      sha256: d0b40e3dbb50497dad107e19c54ca7de0d1a274eb9b4404991e443dadb9ebedb
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.2"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -1468,10 +1488,10 @@ packages:
     dependency: transitive
     description:
       name: window_manager
-      sha256: b3c895bdf936c77b83c5254bec2e6b3f066710c1f89c38b20b8acc382b525494
+      sha256: "8699323b30da4cdbe2aa2e7c9de567a6abd8a97d9a5c850a3c86dcd0b34bbfbf"
       url: "https://pub.dev"
     source: hosted
-    version: "0.3.8"
+    version: "0.3.9"
   xdg_directories:
     dependency: transitive
     description:
@@ -1491,11 +1511,9 @@ packages:
   xterm:
     dependency: "direct main"
     description:
-      path: "."
-      ref: a343bc2fdc11fbc7dbfc1f170692426a6fe01cb9
-      resolved-ref: a343bc2fdc11fbc7dbfc1f170692426a6fe01cb9
-      url: "https://github.com/lollipopkit/xterm.dart"
-    source: git
+      path: "../xterm.dart"
+      relative: true
+    source: path
     version: "4.0.0"
   yaml:
     dependency: transitive
@@ -1514,5 +1532,5 @@ packages:
     source: hosted
     version: "0.0.6"
 sdks:
-  dart: ">=3.3.3 <4.0.0"
+  dart: ">=3.3.0 <4.0.0"
   flutter: ">=3.19.0"

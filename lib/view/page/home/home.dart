@@ -341,7 +341,6 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
         build: BuildData.build,
         url: '${Urls.cdnBase}/update.json',
         context: context,
-        updateL10n: l10n.update,
       );
     }
     HomeWidgetMC.update();

@@ -283,7 +283,7 @@ class ServerProvider extends ChangeNotifier {
           //   message: 'Wake on lan failed: $e',
           // );
           // _setServerState(s, ServerConn.failed);
-          // Loggers.app.warning('Wake on lan failed', e);
+          Loggers.app.warning('Wake on lan failed', e);
           // return;
         }
       }

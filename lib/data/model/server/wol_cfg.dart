@@ -39,7 +39,7 @@ final class WakeOnLanCfg {
     return (err, valid);
   }
 
-  Future<void> wake() async {
+  Future<void> wake() {
     if (!validate().$2) {
       throw Exception('Invalid WakeOnLanCfg');
     }
@@ -48,7 +48,7 @@ final class WakeOnLanCfg {
     final mac_ = MACAddress(mac);
     final pwd_ = pwd != null ? SecureONPassword(pwd!) : null;
     final obj = WakeOnLAN(ip_, mac_, password: pwd_);
-    await obj.wake(
+    return obj.wake(
       repeat: 3,
       repeatDelay: const Duration(milliseconds: 500),
     );

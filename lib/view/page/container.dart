@@ -14,7 +14,6 @@ import 'package:toolbox/data/res/store.dart';
 import '../../data/model/container/ps.dart';
 import '../../data/model/server/server_private_info.dart';
 import '../../data/provider/container.dart';
-import '../widget/popup_menu.dart';
 import '../widget/two_line_text.dart';
 
 class ContainerPage extends StatefulWidget {
@@ -260,8 +259,9 @@ class _ContainerPageState extends State<ContainerPage> {
 
   Widget _buildMoreBtn(ContainerPs dItem) {
     return PopupMenu(
-      items: ContainerMenu.items(dItem.running),
-      builder: (e) => PopMenu.build(e, e.icon, e.toStr),
+      items: ContainerMenu.items(dItem.running)
+          .map((e) => PopMenu.build(e, e.icon, e.toStr))
+          .toList(),
       onSelected: (item) => _onTapMoreBtn(item, dItem),
     );
   }

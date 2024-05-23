@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/data/model/server/private_key_info.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
+import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/page/backup.dart';
@@ -154,8 +155,11 @@ class AppRoutes {
     return AppRoutes(
       DebugPage(
         key: key,
-        notifier: Pros.debug.widgets,
-        onClear: Pros.debug.clear,
+        args: DebugPageArgs(
+          notifier: Pros.debug.widgets,
+          onClear: Pros.debug.clear,
+          title: 'Logs(${BuildData.build})',
+        ),
       ),
       'debug',
     );
