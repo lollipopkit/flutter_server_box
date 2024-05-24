@@ -60,7 +60,9 @@ class _HomePageState extends State<HomePage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    l10n = AppLocalizations.of(context)!;
+    context.setLibL10n();
+    final appL10n = AppLocalizations.of(context);
+    if (appL10n != null) l10n = appL10n;
     _isLandscape.value =
         MediaQuery.of(context).orientation == Orientation.landscape;
   }

@@ -127,7 +127,22 @@ void _onTapMoreBtns(
       if (snippets == null || snippets.isEmpty) return;
       final snippet = snippets.firstOrNull;
       if (snippet == null) return;
-      AppRoutes.ssh(spi: spi, initCmd: snippet.fmtWith(spi)).checkGo(
+      final fmted = snippet.fmtWith(spi);
+      final sure = await context.showRoundDialog<bool>(
+        title: l10n.attention,
+        child: SingleChildScrollView(
+          child: SimpleMarkdown(data: '```shell\n$fmted\n```'),
+        ),
+        actions: [
+          CountDownBtn(
+            onTap: () => context.pop(true),
+            text: l10n.run,
+            afterColor: Colors.red,
+          ),
+        ],
+      );
+      if (sure != true) return;
+      AppRoutes.ssh(spi: spi, initCmd: fmted).checkGo(
         context: context,
         check: () => _checkClient(context, spi.id),
       );

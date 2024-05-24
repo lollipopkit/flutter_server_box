@@ -1,5 +1,6 @@
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_lib/l10n/gen/lib_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/data/res/build_data.dart';
@@ -65,7 +66,10 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       locale: locale,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: const [
+        LibLocalizations.delegate,
+        ...AppLocalizations.localizationsDelegates,
+      ],
       supportedLocales: AppLocalizations.supportedLocales,
       title: BuildData.name,
       themeMode: themeMode,
@@ -77,7 +81,6 @@ class MyApp extends StatelessWidget {
 
   Widget _buildAppContent(BuildContext ctx) {
     //if (Pros.app.isWearOS) return const WearHome();
-    ctx.setLibL10n();
     return const HomePage();
   }
 }
