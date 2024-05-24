@@ -159,14 +159,19 @@ class _SnippetEditPageState extends State<SnippetEditPage>
       child: ValBuilder(
         listenable: _autoRunOn,
         builder: (vals) {
+          final subtitle = vals.isEmpty
+              ? null
+              : vals
+                  .map((e) => Pros.server.pick(id: e)?.spi.name ?? e)
+                  .join(', ');
           return ListTile(
             leading: const Icon(Icons.settings_remote, size: 19),
             title: Text(l10n.autoRun),
             trailing: const Icon(Icons.keyboard_arrow_right),
-            subtitle: vals.isEmpty
+            subtitle: subtitle == null
                 ? null
                 : Text(
-                    vals.join(', '),
+                    subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -175,7 +180,9 @@ class _SnippetEditPageState extends State<SnippetEditPage>
               final serverIds = await context.showPickDialog(
                 title: l10n.autoRun,
                 items: Pros.server.serverOrder,
+                name: (e) => Pros.server.pick(id: e)?.spi.name ?? e,
                 initial: vals,
+                clearable: true,
               );
               if (serverIds != null) {
                 _autoRunOn.value = serverIds;

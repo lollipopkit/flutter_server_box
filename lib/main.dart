@@ -64,7 +64,7 @@ void _runInZone(void Function() body) {
 Future<void> _initApp() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Paths.init(BuildData.name);
+  await Paths.init(BuildData.name, bakName: 'srvbox');
   await _initData();
   _setupDebug();
 

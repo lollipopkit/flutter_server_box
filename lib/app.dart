@@ -77,11 +77,9 @@ class MyApp extends StatelessWidget {
 
   Widget _buildAppContent(BuildContext ctx) {
     //if (Pros.app.isWearOS) return const WearHome();
+    ctx.setLibL10n();
     return const HomePage();
   }
-
-  // bool _isSmallDevice(BuildContext ctx) =>
-  //     MediaQuery.of(ctx).size.shortestSide < 600;
 }
 
 void _setup(BuildContext context) async {

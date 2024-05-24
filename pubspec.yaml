@@ -59,11 +59,11 @@ dependencies:
       ref: main
   device_info_plus: ^10.1.0
 
-# dependency_overrides:
+dependency_overrides:
 #   dartssh2:
 #     path: ../dartssh2
-#   fl_lib:
-#     path: ../fl_lib
+  # fl_lib:
+  #   path: ../fl_lib
 #   xterm:
 #     path: ../xterm.dart
 
