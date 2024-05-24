@@ -65,14 +65,18 @@ class BackupPage extends StatelessWidget {
             trailing: const Icon(Icons.save),
             onTap: () async {
               final path = await Backup.backup();
+              debugPrint("Backup path: $path");
 
               /// Issue #188
-              final _ = switch (Pfs.type) {
-                Pfs.windows =>
-                  await Process.run('explorer', ['/select,', path]),
-                Pfs.linux => await Process.run('xdg-open', [path]),
-                _ => await Pfs.sharePath(path),
-              };
+              switch (Pfs.type) {
+                case Pfs.windows:
+                    final backslashPath = path.replaceAll('/', '\\');
+                    await Process.run('explorer', ['/select,$backslashPath']);
+                case Pfs.linux:
+                  await Process.run('xdg-open', [path]);
+                default:
+                  await Pfs.sharePath(path);
+              }
             },
           ),
           ListTile(
@@ -263,64 +267,79 @@ class BackupPage extends StatelessWidget {
 
   Future<void> _onTapWebdavDl(BuildContext context) async {
     webdavLoading.value = true;
-    final files = await Webdav.list();
-    if (files.isEmpty) {
-      context.showSnackBar(l10n.dirEmpty);
-      webdavLoading.value = false;
-      return;
-    }
+    try {
+      final files = await Webdav.list();
+      if (files.isEmpty) {
+        context.showSnackBar(l10n.dirEmpty);
+        webdavLoading.value = false;
+        return;
+      }
 
-    final fileName = await context.showRoundDialog<String>(
-      title: l10n.restore,
-      child: SizedBox(
-        width: 300,
-        height: 300,
-        child: ListView.builder(
-          itemCount: files.length,
-          itemBuilder: (_, index) {
-            final file = files[index];
-            return ListTile(
-              title: Text(file),
-              onTap: () => context.pop(file),
-            );
-          },
+      final fileName = await context.showRoundDialog<String>(
+        title: l10n.restore,
+        child: SizedBox(
+          width: 300,
+          height: 300,
+          child: ListView.builder(
+            itemCount: files.length,
+            itemBuilder: (_, index) {
+              final file = files[index];
+              return ListTile(
+                title: Text(file),
+                onTap: () => context.pop(file),
+              );
+            },
+          ),
         ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => context.pop(),
-          child: Text(l10n.cancel),
-        ),
-      ],
-    );
-    if (fileName == null) {
-      webdavLoading.value = false;
-      return;
-    }
+        actions: [
+          TextButton(
+            onPressed: () => context.pop(),
+            child: Text(l10n.cancel),
+          ),
+        ],
+      );
+      if (fileName == null) {
+        webdavLoading.value = false;
+        return;
+      }
 
-    final result = await Webdav.download(relativePath: fileName);
-    if (result != null) {
-      Loggers.app.warning('Download webdav backup failed: $result');
+      final result = await Webdav.download(relativePath: fileName);
+      if (result != null) {
+        Loggers.app.warning('Download webdav backup failed: $result');
+        webdavLoading.value = false;
+        return;
+      }
+      final dlFile = await File('${Paths.doc}/$fileName').readAsString();
+      final dlBak = await Computer.shared.start(Backup.fromJsonString, dlFile);
+      await dlBak.restore(force: true);
       webdavLoading.value = false;
-      return;
+    } catch (e) {
+      context.showSnackBar(e.toString());
+      rethrow;
+    } finally {
+      webdavLoading.value = false;
     }
-    final dlFile = await File('${Paths.doc}/$fileName').readAsString();
-    final dlBak = await Computer.shared.start(Backup.fromJsonString, dlFile);
-    await dlBak.restore(force: true);
-    webdavLoading.value = false;
   }
 
   Future<void> _onTapWebdavUp(BuildContext context) async {
-    webdavLoading.value = true;
-    final bakName = '${DateTime.now().ymdhms()}-${Paths.bakName}';
-    await Backup.backup(bakName);
-    final uploadResult = await Webdav.upload(relativePath: bakName);
-    if (uploadResult != null) {
-      Loggers.app.warning('Upload webdav backup failed: $uploadResult');
-    } else {
-      Loggers.app.info('Upload webdav backup success');
+    try {
+      webdavLoading.value = true;
+      final bakName =
+          '${DateTime.now().ymdhms(ymdSep: "-", hmsSep: "-", sep: "-")}-${Paths.bakName}';
+      await Backup.backup(bakName);
+      final uploadResult = await Webdav.upload(relativePath: bakName);
+      if (uploadResult != null) {
+        Loggers.app.warning('Upload webdav backup failed: $uploadResult');
+        context.showSnackBar(uploadResult.toString());
+      } else {
+        Loggers.app.info('Upload webdav backup success');
+      }
+    } catch (e) {
+      context.showSnackBar(e.toString());
+      rethrow;
+    } finally {
+      webdavLoading.value = false;
     }
-    webdavLoading.value = false;
   }
 
   Future<void> _onTapWebdavSetting(BuildContext context) async {
