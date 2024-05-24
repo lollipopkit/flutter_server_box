@@ -122,7 +122,6 @@ void _onTapMoreBtns(
               .toList();
         },
         name: (e) => e.name,
-        all: l10n.all,
       );
       if (snippets == null || snippets.isEmpty) return;
       final snippet = snippets.firstOrNull;

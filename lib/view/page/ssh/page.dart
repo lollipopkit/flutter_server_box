@@ -310,7 +310,6 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
                 .toList();
           },
           name: (e) => e.name,
-          all: l10n.all,
         );
         if (snippets == null || snippets.isEmpty) return;
 
