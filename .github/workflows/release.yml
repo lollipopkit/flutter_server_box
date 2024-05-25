@@ -1,0 +1,68 @@
+name: Flutter Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  releaseAL:
+    name: Release android and linux
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+      - name: Build
+        run: dart run fl_build -p android,linux
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_arm64.apk
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_arm.apk
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_amd64.apk
+            ${{ env.APP_NAME }}_amd64.AppImage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # releaseWin:
+  #   name: Release windows
+  #   runs-on: windows-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #     - name: Install Flutter
+  #       uses: subosito/flutter-action@v2
+  #     - name: Build
+  #       run: dart run fl_build -p windows
+  #     - name: Create Release
+  #       uses: softprops/action-gh-release@v1
+  #       with:
+  #         files: |
+  #           ${{ env.APP_NAME }}_amd64_windows.zip
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # releaseApple:
+  #   name: Release ios and macos
+  #   runs-on: macos-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #     - name: Install Flutter
+  #       uses: subosito/flutter-action@v2
+  #     - name: Build
+  #       run: dart run fl_build -p ios,mac
+  #     - name: Create Release
+  #       uses: softprops/action-gh-release@v1
+  #       with:
+  #         files: |
+  #           ${{ env.APP_NAME }}_universal_macos.zip
+  #           ${{ env.APP_NAME }}_universal.ipa
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

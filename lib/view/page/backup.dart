@@ -70,8 +70,8 @@ class BackupPage extends StatelessWidget {
               /// Issue #188
               switch (Pfs.type) {
                 case Pfs.windows:
-                    final backslashPath = path.replaceAll('/', '\\');
-                    await Process.run('explorer', ['/select,$backslashPath']);
+                  final backslashPath = path.replaceAll('/', '\\');
+                  await Process.run('explorer', ['/select,$backslashPath']);
                 case Pfs.linux:
                   await Process.run('xdg-open', [path]);
                 default:

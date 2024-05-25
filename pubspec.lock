@@ -388,6 +388,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.0"
+  fl_build:
+    dependency: "direct dev"
+    description:
+      path: "."
+      ref: "8e1e3500fac2a39a43bed68aeb3cbdf792a1bd35"
+      resolved-ref: "8e1e3500fac2a39a43bed68aeb3cbdf792a1bd35"
+      url: "https://github.com/lollipopkit/fl_build.git"
+    source: git
+    version: "1.0.0"
   fl_chart:
     dependency: "direct main"
     description:
@@ -650,7 +659,7 @@ packages:
     source: hosted
     version: "2.2.0"
   icons_plus:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: icons_plus
       sha256: "8e2f601b8605d45dd55b106a0da084a1809125077a49574ca22e8bcd5b6e86f0"

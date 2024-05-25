@@ -25,7 +25,9 @@ final class _AppBar extends CustomAppBar {
         return ValBuilder(
           listenable: selectIndex,
           builder: (idx) {
-            if (idx == AppTab.ssh.index && !isWindows && !isLinux) return placeholder;
+            if (idx == AppTab.ssh.index && !isWindows && !isLinux) {
+              return placeholder;
+            }
             return super.build(context);
           },
         );

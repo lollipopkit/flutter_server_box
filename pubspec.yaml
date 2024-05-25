@@ -47,7 +47,6 @@ dependencies:
       ref: master
       url: https://github.com/lollipopkit/dart_computer
   flutter_background_service: ^5.0.5
-  icons_plus: ^5.0.0
   fl_chart: ^0.67.0
   wakelock_plus: ^1.2.4
   extended_image: ^8.2.0
@@ -74,6 +73,11 @@ dev_dependencies:
   flutter_lints: ^3.0.0
   flutter_test:
     sdk: flutter
+  fl_build:
+    # path: ../fl_build
+    git:
+      url: https://github.com/lollipopkit/fl_build.git
+      ref: 8e1e3500fac2a39a43bed68aeb3cbdf792a1bd35
 
 flutter:
   generate: true

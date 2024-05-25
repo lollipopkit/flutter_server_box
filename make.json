@@ -1,0 +1,4 @@
+{
+    "appName": "ServerBox",
+    "beforeBuild": "./make.dart before"
+}
