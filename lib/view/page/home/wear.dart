@@ -16,7 +16,7 @@ final class WearHome extends StatefulWidget {
   const WearHome({super.key});
 
   @override
-  _WearHomeState createState() => _WearHomeState();
+  State<WearHome> createState() => _WearHomeState();
 }
 
 final class _WearHomeState extends State<WearHome> with AfterLayoutMixin {
@@ -61,11 +61,30 @@ final class _WearHomeState extends State<WearHome> with AfterLayoutMixin {
   }
 
   Widget _buildEachSever(Server srv) {
-    return const Padding(
-      padding: EdgeInsets.all(7),
+    final mem = () {
+      final total = srv.status.mem.total;
+      final used = srv.status.mem.total - srv.status.mem.avail;
+      return '${used.bytes2Str} / ${total.bytes2Str}';
+    }();
+    final disk = () {
+      final total = srv.status.diskUsage?.size.kb2Str;
+      final used = srv.status.diskUsage?.used.kb2Str;
+      return '$used / $total';
+    }();
+    final net = '↓ ${srv.status.netSpeed.cachedRealVals.speedIn}'
+        '↑ ${srv.status.netSpeed.cachedRealVals.speedOut}';
+    return Padding(
+      padding: const EdgeInsets.all(7),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [],
+        children: [
+          Text(srv.spi.name, style: UIs.text15Bold),
+          UIs.height7,
+          KvRow(k: 'CPU', v: '${srv.status.cpu.usedPercent()}%'),
+          KvRow(k: 'Mem', v: mem),
+          KvRow(k: 'Disk', v: disk),
+          KvRow(k: 'Net', v: net)
+        ],
       ),
     );
   }

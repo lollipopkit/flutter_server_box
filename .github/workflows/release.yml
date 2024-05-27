@@ -11,22 +11,32 @@ permissions:
 jobs:
   releaseAL:
     name: Release android and linux
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
       - name: Install Flutter
         uses: subosito/flutter-action@v2
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - name: Fetch secrets
+        run: |
+          curl -u ${{ secrets.BASIC_AUTH }} -o android/app/app.key ${{ secrets.URL_PREFIX }}app.key
+          curl -u ${{ secrets.BASIC_AUTH }} -o android/key.properties ${{ secrets.URL_PREFIX }}key.properties
       - name: Build
         run: dart run fl_build -p android,linux
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_arm64.apk
-            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_arm.apk
-            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_amd64.apk
-            ${{ env.APP_NAME }}_amd64.AppImage
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_arm64.apk
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_arm.apk
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.apk
+            ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

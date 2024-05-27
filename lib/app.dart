@@ -1,6 +1,6 @@
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:fl_lib/l10n/gen/lib_l10n.dart';
+import 'package:fl_lib/l10n/gen_l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:toolbox/data/res/build_data.dart';

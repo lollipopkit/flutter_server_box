@@ -1163,19 +1163,29 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       leading: const Icon(Icons.image),
       title: Text('Logo ${l10n.addr}'),
-      subtitle: SimpleMarkdown(data: '[${l10n.doc}](${Urls.appWiki})'),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () {
         final ctrl =
             TextEditingController(text: _setting.serverLogoUrl.fetch());
         context.showRoundDialog(
           title: 'Logo ${l10n.addr}',
-          child: Input(
-            controller: ctrl,
-            autoFocus: true,
-            hint: 'https://example.com/logo.png',
-            icon: Icons.link,
-            onSubmitted: onSave,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Input(
+                controller: ctrl,
+                autoFocus: true,
+                hint: 'https://example.com/logo.png',
+                icon: Icons.link,
+                maxLines: 3,
+                onSubmitted: onSave,
+              ),
+              ListTile(
+                title: Text(l10n.doc),
+                trailing: const Icon(Icons.open_in_new),
+                onTap: () => Urls.appWiki.launch(),
+              ),
+            ],
           ),
           actions: [
             TextButton(
