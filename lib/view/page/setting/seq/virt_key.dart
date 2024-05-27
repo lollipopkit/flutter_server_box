@@ -8,7 +8,7 @@ class SSHVirtKeySettingPage extends StatefulWidget {
   const SSHVirtKeySettingPage({super.key});
 
   @override
-  _SSHVirtKeySettingPageState createState() => _SSHVirtKeySettingPageState();
+  State<SSHVirtKeySettingPage> createState() => _SSHVirtKeySettingPageState();
 }
 
 class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {

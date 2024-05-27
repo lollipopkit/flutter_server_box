@@ -20,7 +20,7 @@ class ServerEditPage extends StatefulWidget {
   final ServerPrivateInfo? spi;
 
   @override
-  _ServerEditPageState createState() => _ServerEditPageState();
+  State<ServerEditPage> createState() => _ServerEditPageState();
 }
 
 class _ServerEditPageState extends State<ServerEditPage> {

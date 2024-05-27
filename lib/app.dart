@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
     _setup(context);
     return ListenableBuilder(
       listenable: RebuildNodes.app,
-      builder: (_, __) {
+      builder: (context, _) {
         if (!Stores.setting.useSystemPrimaryColor.fetch()) {
           UIs.colorSeed = Color(Stores.setting.primaryColor.fetch());
           return _buildApp(context);

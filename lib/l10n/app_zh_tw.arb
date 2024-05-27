@@ -280,6 +280,7 @@
   "suspend": "挂起",
   "suspendTip": "suspend 功能需要 root 權限及 systemd 支持。",
   "switchTo": "切換到 {val}",
+  "sync": "同步",
   "syncTip": "可能需要重新啟動，某些更改才能生效。",
   "system": "系統",
   "tag": "标签",

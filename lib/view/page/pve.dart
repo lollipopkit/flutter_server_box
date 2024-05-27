@@ -19,7 +19,7 @@ final class PvePage extends StatefulWidget {
   });
 
   @override
-  _PvePageState createState() => _PvePageState();
+  State<PvePage> createState() => _PvePageState();
 }
 
 const _kHorziPadding = 11.0;

@@ -280,6 +280,7 @@
   "suspend": "Suspend",
   "suspendTip": "Die Suspend-Funktion erfordert Root-Rechte und systemd-Unterstützung.",
   "switchTo": "Wechseln zu {val}",
+  "sync": "Sync",
   "syncTip": "Damit einige Änderungen wirksam werden, kann ein Neustart erforderlich sein.",
   "system": "Systeme",
   "tag": "Tags",

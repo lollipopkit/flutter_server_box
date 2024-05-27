@@ -280,6 +280,7 @@
   "suspend": "Suspend",
   "suspendTip": "The suspend function requires root privileges and systemd support.",
   "switchTo": "Switch to {val}",
+  "sync": "Sync",
   "syncTip": "A restart may be required for some changes to take effect.",
   "system": "System",
   "tag": "Tags",

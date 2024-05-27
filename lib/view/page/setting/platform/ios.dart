@@ -14,7 +14,7 @@ class IOSSettingsPage extends StatefulWidget {
   const IOSSettingsPage({super.key});
 
   @override
-  _IOSSettingsPageState createState() => _IOSSettingsPageState();
+  State<IOSSettingsPage> createState() => _IOSSettingsPageState();
 }
 
 class _IOSSettingsPageState extends State<IOSSettingsPage> {
@@ -83,7 +83,7 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
   }
 
   Widget _buildWatchApp() {
-    return FutureWidget<Map<String, dynamic>?>(
+    return FutureWidget(
       future: () async {
         if (!await wc.isPaired) {
           return null;
@@ -107,6 +107,7 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
         }
         return ListTile(
           title: const Text('Watch app'),
+          subtitle: Text(l10n.edit, style: UIs.textGrey),
           trailing: const Icon(Icons.keyboard_arrow_right),
           onTap: () async => _onTapWatchApp(ctx),
         );

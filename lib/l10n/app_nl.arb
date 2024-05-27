@@ -279,6 +279,7 @@
   "suspend": "Ophangen",
   "suspendTip": "De opschortfunctie vereist rootrechten en systemd-ondersteuning.",
   "switchTo": "Overschakelen naar {val}",
+  "sync": "Sync",
   "syncTip": "Een herstart kan nodig zijn voor sommige wijzigingen om van kracht te worden.",
   "system": "Systeem",
   "tag": "Labels",

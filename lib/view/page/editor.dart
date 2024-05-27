@@ -37,7 +37,7 @@ class EditorPage extends StatefulWidget {
   });
 
   @override
-  _EditorPageState createState() => _EditorPageState();
+  State<EditorPage> createState() => _EditorPageState();
 }
 
 class _EditorPageState extends State<EditorPage> {

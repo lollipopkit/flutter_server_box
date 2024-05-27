@@ -14,7 +14,7 @@ class PingPage extends StatefulWidget {
   const PingPage({super.key});
 
   @override
-  _PingPageState createState() => _PingPageState();
+  State<PingPage> createState() => _PingPageState();
 }
 
 class _PingPageState extends State<PingPage>

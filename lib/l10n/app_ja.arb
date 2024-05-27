@@ -280,6 +280,7 @@
   "suspend": "中断",
   "suspendTip": "suspend機能はroot権限とsystemdのサポートが必要です。",
   "switchTo": "{val}に切り替える",
+  "sync": "同期する",
   "syncTip": "再起動が必要な場合があります。一部の変更はその後に有効になります。",
   "system": "システム",
   "tag": "タグ",

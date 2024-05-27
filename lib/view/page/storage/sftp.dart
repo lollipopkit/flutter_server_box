@@ -32,7 +32,7 @@ class SftpPage extends StatefulWidget {
   });
 
   @override
-  _SftpPageState createState() => _SftpPageState();
+  State<SftpPage> createState() => _SftpPageState();
 }
 
 class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {

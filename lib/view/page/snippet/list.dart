@@ -12,7 +12,7 @@ class SnippetListPage extends StatefulWidget {
   const SnippetListPage({super.key});
 
   @override
-  _SnippetListPageState createState() => _SnippetListPageState();
+  State<SnippetListPage> createState() => _SnippetListPageState();
 }
 
 class _SnippetListPageState extends State<SnippetListPage> {

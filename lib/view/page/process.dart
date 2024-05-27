@@ -16,7 +16,7 @@ class ProcessPage extends StatefulWidget {
   const ProcessPage({super.key, required this.spi});
 
   @override
-  _ProcessPageState createState() => _ProcessPageState();
+  State<ProcessPage> createState() => _ProcessPageState();
 }
 
 class _ProcessPageState extends State<ProcessPage> {

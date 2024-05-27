@@ -13,7 +13,7 @@ class SnippetEditPage extends StatefulWidget {
   final Snippet? snippet;
 
   @override
-  _SnippetEditPageState createState() => _SnippetEditPageState();
+  State<SnippetEditPage> createState() => _SnippetEditPageState();
 }
 
 class _SnippetEditPageState extends State<SnippetEditPage>

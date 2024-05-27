@@ -280,6 +280,7 @@
   "suspend": "Suspendre",
   "suspendTip": "La fonction de suspension nécessite des privilèges root et le support de systemd.",
   "switchTo": "Passer à {val}",
+  "sync": "Sync",
   "syncTip": "Un redémarrage peut être nécessaire pour que certains changements prennent effet.",
   "system": "Système",
   "tag": "Étiquettes",

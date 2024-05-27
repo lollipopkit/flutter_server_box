@@ -30,7 +30,7 @@ class SSHPage extends StatefulWidget {
   final String? initCmd;
   final bool notFromTab;
   final Function()? onSessionEnd;
-  final FocusNode? focus;
+  final GlobalKey<TerminalViewState>? terminalKey;
 
   const SSHPage({
     super.key,
@@ -38,11 +38,11 @@ class SSHPage extends StatefulWidget {
     this.initCmd,
     this.notFromTab = true,
     this.onSessionEnd,
-    this.focus,
+    this.terminalKey,
   });
 
   @override
-  _SSHPageState createState() => _SSHPageState();
+  State<SSHPage> createState() => _SSHPageState();
 }
 
 const _horizonPadding = 7.0;
@@ -52,7 +52,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   late final _terminal = Terminal(inputHandler: _keyboard);
   final TerminalController _terminalController = TerminalController();
   final List<List<VirtKey>> _virtKeysList = [];
-  late final _focus = widget.focus ?? FocusNode();
+  late final _termKey = widget.terminalKey ?? GlobalKey<TerminalViewState>();
 
   late MediaQueryData _media;
   late TerminalStyle _terminalStyle;
@@ -144,8 +144,8 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
         ),
         child: TerminalView(
           _terminal,
+          key: _termKey,
           controller: _terminalController,
-          focusNode: _focus,
           keyboardType: TextInputType.text,
           enableSuggestions: true,
           textStyle: _terminalStyle,
@@ -282,11 +282,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   Future<void> _doVirtualKeyFunc(VirtualKeyFunc type) async {
     switch (type) {
       case VirtualKeyFunc.toggleIME:
-        if (!_focus.hasFocus) {
-          _focus.requestFocus();
-        } else {
-          _focus.unfocus();
-        }
+        _termKey.currentState?.toggleFocus();
         break;
       case VirtualKeyFunc.backspace:
         _terminal.keyInput(TerminalKey.backspace);

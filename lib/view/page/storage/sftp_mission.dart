@@ -12,7 +12,7 @@ class SftpMissionPage extends StatefulWidget {
   const SftpMissionPage({super.key});
 
   @override
-  _SftpMissionPageState createState() => _SftpMissionPageState();
+  State<SftpMissionPage> createState() => _SftpMissionPageState();
 }
 
 class _SftpMissionPageState extends State<SftpMissionPage> {

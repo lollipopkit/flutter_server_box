@@ -19,7 +19,7 @@ class PrivateKeyEditPage extends StatefulWidget {
   final PrivateKeyInfo? pki;
 
   @override
-  _PrivateKeyEditPageState createState() => _PrivateKeyEditPageState();
+  State<PrivateKeyEditPage> createState() => _PrivateKeyEditPageState();
 }
 
 class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {

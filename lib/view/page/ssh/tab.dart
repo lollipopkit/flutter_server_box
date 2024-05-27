@@ -17,8 +17,8 @@ class SSHTabPage extends StatefulWidget {
 
 class _SSHTabPageState extends State<SSHTabPage>
     with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
-  late final _tabMap = <String, ({Widget page, FocusNode? focus})>{
-    l10n.add: (page: _buildAddPage(), focus: null),
+  late final _tabMap = <String, ({Widget page})>{
+    l10n.add: (page: _buildAddPage()),
   };
   late var _tabController = TabController(
     length: _tabMap.length,
@@ -38,8 +38,7 @@ class _SSHTabPageState extends State<SSHTabPage>
         dividerColor: Colors.transparent,
         onTap: (value) {
           _fabRN.value = value;
-          final mapKey = _tabMap.keys.elementAt(value);
-          _tabMap[mapKey]?.focus?.requestFocus();
+          FocusScope.of(context).unfocus();
         },
       ),
       body: _buildBody(),
@@ -70,20 +69,27 @@ class _SSHTabPageState extends State<SSHTabPage>
           IconBtn(
             icon: Icons.close,
             onTap: () async {
-              final confirm = await context.showRoundDialog<bool>(
-                title: l10n.attention,
-                child: Text('${l10n.close} SSH ${l10n.conn}($e) ?'),
-                actions: [
-                  TextButton(
-                    onPressed: () => context.pop(true),
-                    child: Text(l10n.ok, style: UIs.textRed),
-                  ),
-                  TextButton(
-                    onPressed: () => context.pop(false),
-                    child: Text(l10n.cancel),
-                  ),
-                ],
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text(l10n.attention),
+                    content: Text('${l10n.close} SSH ${l10n.conn}($e) ?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => context.pop(true),
+                        child: Text(l10n.ok, style: UIs.textRed),
+                      ),
+                      TextButton(
+                        onPressed: () => context.pop(false),
+                        child: Text(l10n.cancel),
+                      ),
+                    ],
+                  );
+                },
               );
+              Future.delayed(const Duration(milliseconds: 50),
+                  FocusScope.of(context).unfocus);
               if (confirm != true) {
                 return;
               }
@@ -142,18 +148,15 @@ class _SSHTabPageState extends State<SSHTabPage>
       }
       return spi.name;
     }();
-    final focus = FocusNode();
     _tabMap[name] = (
       page: SSHPage(
         spi: spi,
-        focus: focus,
         notFromTab: false,
         onSessionEnd: () {
           _tabMap.remove(name);
           _refreshTabs();
         },
       ),
-      focus: focus,
     );
     _refreshTabs();
     final idx = _tabMap.length - 1;

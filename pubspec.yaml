@@ -27,7 +27,7 @@ dependencies:
   intl: ^0.19.0
   xterm:
     git:
-      ref: a343bc2fdc11fbc7dbfc1f170692426a6fe01cb9
+      ref: master
       url: https://github.com/lollipopkit/xterm.dart
   plain_notification_token: ^0.0.4
   highlight: ^0.7.0
@@ -35,10 +35,7 @@ dependencies:
   code_text_field: ^1.1.0
   shared_preferences: ^2.1.1
   dynamic_color: ^1.6.6
-  watch_connectivity:
-    git:
-      ref: master
-      url: https://github.com/lollipopkit/watch_connectivity
+  watch_connectivity: ^0.2.0
   #flutter_secure_storage: ^9.0.0
   xml: ^6.4.2 # for parsing nvidia-smi
   flutter_displaymode: ^0.6.0
@@ -63,8 +60,8 @@ dependency_overrides:
 #     path: ../dartssh2
   # fl_lib:
   #   path: ../fl_lib
-#   xterm:
-#     path: ../xterm.dart
+  # xterm:
+  #   path: ../xterm.dart
 
 dev_dependencies:
   flutter_native_splash: ^2.1.6

@@ -8,7 +8,7 @@ class ServerOrderPage extends StatefulWidget {
   const ServerOrderPage({super.key});
 
   @override
-  _ServerOrderPageState createState() => _ServerOrderPageState();
+  State<ServerOrderPage> createState() => _ServerOrderPageState();
 }
 
 class _ServerOrderPageState extends State<ServerOrderPage> {

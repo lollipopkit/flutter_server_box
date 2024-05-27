@@ -25,7 +25,7 @@ class ServerPage extends StatefulWidget {
   const ServerPage({super.key});
 
   @override
-  _ServerPageState createState() => _ServerPageState();
+  State<ServerPage> createState() => _ServerPageState();
 }
 
 class _ServerPageState extends State<ServerPage>

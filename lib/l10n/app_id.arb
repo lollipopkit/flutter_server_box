@@ -280,6 +280,7 @@
   "suspend": "Suspend",
   "suspendTip": "Fungsi penangguhan memerlukan hak akses root dan dukungan systemd.",
   "switchTo": "Beralih ke {val}",
+  "sync": "Sinkronisasi",
   "syncTip": "Pengaktifan ulang mungkin diperlukan agar beberapa perubahan dapat diterapkan.",
   "system": "Sistem",
   "tag": "Tag",

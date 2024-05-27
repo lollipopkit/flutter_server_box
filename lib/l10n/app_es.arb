@@ -280,6 +280,7 @@
   "suspend": "Suspender",
   "suspendTip": "La función de suspender necesita permisos de root y soporte de systemd.",
   "switchTo": "Cambiar a {val}",
+  "sync": "Sincronizar",
   "syncTip": "Puede que necesites reiniciar para que algunos cambios tengan efecto.",
   "system": "Sistema",
   "tag": "Etiqueta",

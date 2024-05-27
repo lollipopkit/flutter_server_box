@@ -15,7 +15,7 @@ class PrivateKeysListPage extends StatefulWidget {
   const PrivateKeysListPage({super.key});
 
   @override
-  _PrivateKeyListState createState() => _PrivateKeyListState();
+  State<PrivateKeysListPage> createState() => _PrivateKeyListState();
 }
 
 class _PrivateKeyListState extends State<PrivateKeysListPage>

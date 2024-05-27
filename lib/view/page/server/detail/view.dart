@@ -32,7 +32,7 @@ class ServerDetailPage extends StatefulWidget {
   final ServerPrivateInfo spi;
 
   @override
-  _ServerDetailPageState createState() => _ServerDetailPageState();
+  State<ServerDetailPage> createState() => _ServerDetailPageState();
 }
 
 class _ServerDetailPageState extends State<ServerDetailPage>
