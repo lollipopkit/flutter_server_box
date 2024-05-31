@@ -10,20 +10,24 @@ import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/data/model/app/error.dart';
 import 'package:toolbox/data/model/server/pve.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
+import 'package:dartssh2/dartssh2.dart';
 
 typedef PveCtrlFunc = Future<bool> Function(String node, String id);
 
 final class PveProvider extends ChangeNotifier {
   final ServerPrivateInfo spi;
-  late final String addr;
-  //late final SSHClient _client;
+  late String addr;
+  late final SSHClient _client;
+  late final ServerSocket _serverSocket;
+  final List<SSHForwardChannel> _forwards = [];
+  int _localPort = 0;
 
   PveProvider({required this.spi}) {
-    // final client = _spi.server?.client;
-    // if (client == null) {
-    //   throw Exception('Server client is null');
-    // }
-    // _client = client;
+    final client = spi.server?.client;
+    if (client == null) {
+      throw Exception('Server client is null');
+    }
+    _client = client;
     final addr = spi.custom?.pveAddr;
     if (addr == null) {
       err.value = 'PVE address is null';
@@ -36,11 +40,12 @@ final class PveProvider extends ChangeNotifier {
   final err = ValueNotifier<String?>(null);
   final connected = Completer<void>();
 
-  late final _ignoreCert = spi.custom?.pveIgnoreCert ?? false;
+  late bool _ignoreCert = spi.custom?.pveIgnoreCert ?? false;
   late final session = Dio()
     ..httpClientAdapter = IOHttpClientAdapter(
       createHttpClient: () {
         final client = HttpClient();
+        client.connectionFactory = cf;
         if (_ignoreCert) {
           client.badCertificateCallback = (_, __, ___) => true;
         }
@@ -50,16 +55,14 @@ final class PveProvider extends ChangeNotifier {
     );
 
   final data = ValueNotifier<PveRes?>(null);
+
   bool get onlyOneNode => data.value?.nodes.length == 1;
   String? release;
   bool isBusy = false;
 
-  // int _localPort = 0;
-  // String get addr => 'http://127.0.0.1:$_localPort';
-
   Future<void> _init() async {
     try {
-      //await _forward();
+      await _forward();
       await _login();
       await _release;
     } on PveErr {
@@ -72,33 +75,53 @@ final class PveProvider extends ChangeNotifier {
     }
   }
 
-  // Future<void> _forward() async {
-  //   var retries = 0;
-  //   while (retries < 3) {
-  //     try {
-  //       _localPort = Random().nextInt(1000) + 37000;
-  //       print('Forwarding local port $_localPort');
-  //       final serverSocket = await ServerSocket.bind('localhost', _localPort);
-  //       final forward = await _client.forwardLocal('127.0.0.1', 8006);
-  //       serverSocket.listen((socket) {
-  //         forward.stream.cast<List<int>>().pipe(socket);
-  //         socket.pipe(forward.sink);
-  //       });
-  //       return;
-  //     } on SocketException {
-  //       retries++;
-  //     }
-  //   }
-  //   throw Exception('Failed to bind local port');
-  // }
+  Future<void> _forward() async {
+    final url = Uri.parse(addr);
+    if (_localPort == 0) {
+      _serverSocket = await ServerSocket.bind('localhost', 0);
+      _localPort = _serverSocket.port;
+      _serverSocket.listen((socket) async {
+        final forward = await _client.forwardLocal(url.host, url.port);
+        _forwards.add(forward);
+        forward.stream.cast<List<int>>().pipe(socket);
+        socket.cast<List<int>>().pipe(forward.sink);
+      });
+      final newUrl = Uri.parse(addr)
+          .replace(host: 'localhost', port: _localPort)
+          .toString();
+      print('Forwarding $newUrl to $addr');
+    }
+  }
+
+  Future<ConnectionTask<Socket>> cf(
+      Uri url, String? proxyHost, int? proxyPort) async {
+    /* final serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, 0);
+    final _localPort = serverSocket.port;
+    serverSocket.listen((socket) async {
+      final forward = await _client.forwardLocal(url.host, url.port);
+      forwards.add(forward);
+      forward.stream.cast<List<int>>().pipe(socket);
+      socket.cast<List<int>>().pipe(forward.sink);
+    });*/
+
+    if (url.isScheme("https")) {
+      return SecureSocket.startConnect('localhost', _localPort,
+          onBadCertificate: (_) => true);
+    } else {
+      return Socket.startConnect('localhost', _localPort);
+    }
+  }
 
   Future<void> _login() async {
-    final resp = await session.post('$addr/api2/extjs/access/ticket', data: {
-      'username': spi.user,
-      'password': spi.pwd,
-      'realm': 'pam',
-      'new-format': '1'
-    });
+        final resp = await session.post('$addr/api2/extjs/access/ticket',
+        data: {
+          'username': spi.user,
+          'password': spi.pwd,
+          'realm': 'pam',
+          'new-format': '1'
+        },
+        options: Options(
+            headers: {HttpHeaders.contentTypeHeader: Headers.jsonContentType}));
     try {
       final ticket = resp.data['data']['ticket'];
       session.options.headers['CSRFPreventionToken'] =
@@ -166,5 +189,14 @@ final class PveProvider extends ChangeNotifier {
 
   bool _isCtrlSuc(Response resp) {
     return resp.statusCode == 200;
+  }
+
+  @override
+  Future<void> dispose() async {
+    super.dispose();
+    await _serverSocket.close();
+    for (final forward in _forwards) {
+      forward.close();
+    }
   }
 }

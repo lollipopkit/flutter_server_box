@@ -46,6 +46,7 @@ final class _PvePageState extends State<PvePage> {
   void dispose() {
     super.dispose();
     _timer?.cancel();
+    _pve.dispose();
   }
 
   @override
