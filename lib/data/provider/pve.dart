@@ -40,7 +40,7 @@ final class PveProvider extends ChangeNotifier {
   final err = ValueNotifier<String?>(null);
   final connected = Completer<void>();
 
-  late bool _ignoreCert = spi.custom?.pveIgnoreCert ?? false;
+  late final _ignoreCert = spi.custom?.pveIgnoreCert ?? false;
   late final session = Dio()
     ..httpClientAdapter = IOHttpClientAdapter(
       createHttpClient: () {
@@ -64,11 +64,11 @@ final class PveProvider extends ChangeNotifier {
     try {
       await _forward();
       await _login();
-      await _release;
+      await _getRelease();
     } on PveErr {
       err.value = l10n.pveLoginFailed;
-    } catch (e) {
-      Loggers.app.warning('PVE init failed', e);
+    } catch (e, s) {
+      Loggers.app.warning('PVE init failed', e, s);
       err.value = e.toString();
     } finally {
       connected.complete();
@@ -89,7 +89,7 @@ final class PveProvider extends ChangeNotifier {
       final newUrl = Uri.parse(addr)
           .replace(host: 'localhost', port: _localPort)
           .toString();
-      print('Forwarding $newUrl to $addr');
+      debugPrint('Forwarding $newUrl to $addr');
     }
   }
 
@@ -113,15 +113,18 @@ final class PveProvider extends ChangeNotifier {
   }
 
   Future<void> _login() async {
-        final resp = await session.post('$addr/api2/extjs/access/ticket',
-        data: {
-          'username': spi.user,
-          'password': spi.pwd,
-          'realm': 'pam',
-          'new-format': '1'
-        },
-        options: Options(
-            headers: {HttpHeaders.contentTypeHeader: Headers.jsonContentType}));
+    final resp = await session.post(
+      '$addr/api2/extjs/access/ticket',
+      data: {
+        'username': spi.user,
+        'password': spi.pwd,
+        'realm': 'pam',
+        'new-format': '1'
+      },
+      options: Options(
+        headers: {HttpHeaders.contentTypeHeader: Headers.jsonContentType},
+      ),
+    );
     try {
       final ticket = resp.data['data']['ticket'];
       session.options.headers['CSRFPreventionToken'] =
@@ -133,7 +136,7 @@ final class PveProvider extends ChangeNotifier {
   }
 
   /// Returns true if the PVE version is 8.0 or later
-  Future<void> get _release async {
+  Future<void> _getRelease() async {
     final resp = await session.get('$addr/api2/extjs/version');
     final version = resp.data['data']['release'] as String?;
     if (version != null) {

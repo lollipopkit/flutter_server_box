@@ -403,15 +403,27 @@ class _ServerEditPageState extends State<ServerEditPage> {
   }
 
   List<Widget> _buildPVEs() {
+    const addr = 'https://127.0.0.1:8006';
     return [
       const Text('PVE', style: UIs.text13Grey),
       UIs.height7,
-      Input(
-        controller: _pveAddrCtrl,
-        type: TextInputType.url,
-        icon: MingCute.web_line,
-        label: l10n.addr,
-        hint: 'https://example.com:8006',
+      Autocomplete<String>(
+        optionsBuilder: (val) {
+          final v = val.text;
+          if (v.startsWith(addr.substring(0, v.length))) {
+            return [addr];
+          }
+          return [];
+        },
+        onSelected: (val) => _pveAddrCtrl.text = val,
+        fieldViewBuilder: (_, ctrl, node, __) => Input(
+          controller: ctrl,
+          type: TextInputType.url,
+          icon: MingCute.web_line,
+          node: node,
+          label: l10n.addr,
+          hint: addr,
+        ),
       ),
       ListTile(
         leading: const Padding(

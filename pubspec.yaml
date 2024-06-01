@@ -52,7 +52,7 @@ dependencies:
   fl_lib:
     git:
       url: https://github.com/lollipopkit/fl_lib
-      ref: main
+      ref: v1.0.24
   device_info_plus: ^10.1.0
 
 dependency_overrides:
@@ -74,7 +74,7 @@ dev_dependencies:
     # path: ../fl_build
     git:
       url: https://github.com/lollipopkit/fl_build.git
-      ref: 8e1e3500fac2a39a43bed68aeb3cbdf792a1bd35
+      ref: v1.0.11
 
 flutter:
   generate: true
