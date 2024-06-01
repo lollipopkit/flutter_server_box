@@ -16,7 +16,7 @@ abstract final class ContainerPs {
   String? net;
   String? disk;
 
-  factory ContainerPs.fromRawJson(String s, ContainerType typ) => typ.ps(s);
+  factory ContainerPs.fromRaw(String s, ContainerType typ) => typ.ps(s);
 
   void parseStats(String s);
 }
@@ -110,8 +110,6 @@ final class PodmanPs implements ContainerPs {
 }
 
 final class DockerPs implements ContainerPs {
-  final String? command;
-  final String? createdAt;
   @override
   final String? id;
   @override
@@ -129,8 +127,6 @@ final class DockerPs implements ContainerPs {
   String? disk;
 
   DockerPs({
-    this.command,
-    this.createdAt,
     this.id,
     this.image,
     this.names,
@@ -141,10 +137,10 @@ final class DockerPs implements ContainerPs {
   String? get name => names;
 
   @override
-  String? get cmd => command;
+  String? get cmd => null;
 
   @override
-  bool get running => state == 'running';
+  bool get running => state?.contains('Up ') ?? false;
 
   @override
   void parseStats(String s) {
@@ -155,26 +151,15 @@ final class DockerPs implements ContainerPs {
     disk = stats['BlockIO'];
   }
 
-  factory DockerPs.fromRawJson(String str) =>
-      DockerPs.fromJson(json.decode(str));
-
-  String toRawJson() => json.encode(toJson());
-
-  factory DockerPs.fromJson(Map<String, dynamic> json) => DockerPs(
-        command: json["Command"],
-        createdAt: json["CreatedAt"],
-        id: json["ID"],
-        image: json["Image"],
-        names: json["Names"],
-        state: json["State"],
-      );
-
-  Map<String, dynamic> toJson() => {
-        "Command": command,
-        "CreatedAt": createdAt,
-        "ID": id,
-        "Image": image,
-        "Names": names,
-        "State": state,
-      };
+  /// CONTAINER ID                   NAMES                          IMAGE                          STATUS
+  /// a049d689e7a1                   aria2-pro                      p3terx/aria2-pro               Up 3 weeks
+  factory DockerPs.parse(String raw) {
+    final parts = raw.split(RegExp(r'\s{2,}'));
+    return DockerPs(
+      id: parts[0],
+      names: parts[1],
+      image: parts[2],
+      state: parts[3],
+    );
+  }
 }

@@ -79,7 +79,9 @@ extension SSHClientX on SSHClient {
           isRequestingPwd = true;
           final user = Miscs.pwdRequestWithUserReg.firstMatch(data)?.group(1);
           if (context == null) return;
-          final pwd = await context.showPwdDialog(title: user, id: id);
+          final pwd = context.mounted
+              ? await context.showPwdDialog(title: user, id: id)
+              : null;
           if (pwd == null || pwd.isEmpty) {
             session.kill(SSHSignal.TERM);
           } else {

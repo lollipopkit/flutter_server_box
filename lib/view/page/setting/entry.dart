@@ -461,14 +461,12 @@ class _SettingPageState extends State<SettingPage> {
       _setting.fontPath.put(path);
     } else {
       final fontFile = File(path);
-      final newPath = '${Paths.fontPath}/${path.split('/').last}';
-      await fontFile.copy(newPath);
-      _setting.fontPath.put(newPath);
+      await fontFile.copy(Paths.font);
+      _setting.fontPath.put(Paths.font);
     }
 
     context.pop();
     RebuildNodes.app.rebuild();
-    return;
   }
 
   Widget _buildTermFontSize() {

@@ -15,20 +15,8 @@ dependencies:
   hive_flutter: ^1.1.0
   dio: ^5.2.1
   after_layout: ^1.1.0
-  dartssh2:
-    git:
-      ref: dev
-      url: https://github.com/lollipopkit/dartssh2
-  circle_chart:
-    git:
-      url: https://github.com/lollipopkit/circle_chart
-      ref: main
   easy_isolate: ^1.3.0
   intl: ^0.19.0
-  xterm:
-    git:
-      ref: master
-      url: https://github.com/lollipopkit/xterm.dart
   plain_notification_token: ^0.0.4
   highlight: ^0.7.0
   flutter_highlight: ^0.7.0
@@ -39,21 +27,33 @@ dependencies:
   #flutter_secure_storage: ^9.0.0
   xml: ^6.4.2 # for parsing nvidia-smi
   flutter_displaymode: ^0.6.0
+  flutter_background_service: ^5.0.5
+  fl_chart: ^0.67.0
+  wakelock_plus: ^1.2.4
+  wake_on_lan: ^4.1.1+3
+  flutter_adaptive_scaffold: ^0.1.10+2
+  device_info_plus: ^10.1.0
+  extended_image: ^8.2.1
+  dartssh2:
+    git:
+      ref: dev
+      url: https://github.com/lollipopkit/dartssh2
+  circle_chart:
+    git:
+      url: https://github.com/lollipopkit/circle_chart
+      ref: main
+  xterm:
+    git:
+      ref: master
+      url: https://github.com/lollipopkit/xterm.dart
   computer:
     git:
       ref: master
       url: https://github.com/lollipopkit/dart_computer
-  flutter_background_service: ^5.0.5
-  fl_chart: ^0.67.0
-  wakelock_plus: ^1.2.4
-  extended_image: ^8.2.0
-  wake_on_lan: ^4.1.1+3
-  flutter_adaptive_scaffold: ^0.1.10+2
   fl_lib:
     git:
-      url: https://github.com/lollipopkit/fl_lib
-      ref: v1.0.24
-  device_info_plus: ^10.1.0
+      url: https://github.com/lppcg/fl_lib
+      ref: v1.0.27
 
 dependency_overrides:
 #   dartssh2:
@@ -73,7 +73,7 @@ dev_dependencies:
   fl_build:
     # path: ../fl_build
     git:
-      url: https://github.com/lollipopkit/fl_build.git
+      url: https://github.com/lppcg/fl_build.git
       ref: v1.0.11
 
 flutter:

@@ -74,7 +74,7 @@ class MyApp extends StatelessWidget {
       title: BuildData.name,
       themeMode: themeMode,
       theme: light,
-      darkTheme: tMode < 3 ? dark : _getAmoledTheme(dark),
+      darkTheme: tMode < 3 ? dark : dark.toAmoled,
       home: _buildAppContent(ctx),
     );
   }
@@ -88,18 +88,3 @@ class MyApp extends StatelessWidget {
 void _setup(BuildContext context) async {
   SystemUIs.setTransparentNavigationBar(context);
 }
-
-ThemeData _getAmoledTheme(ThemeData darkTheme) => darkTheme.copyWith(
-      scaffoldBackgroundColor: Colors.black,
-      dialogBackgroundColor: Colors.black,
-      drawerTheme: const DrawerThemeData(backgroundColor: Colors.black),
-      appBarTheme: const AppBarTheme(backgroundColor: Colors.black),
-      dialogTheme: const DialogTheme(backgroundColor: Colors.black),
-      bottomSheetTheme:
-          const BottomSheetThemeData(backgroundColor: Colors.black),
-      listTileTheme: const ListTileThemeData(tileColor: Colors.transparent),
-      cardTheme: const CardTheme(color: Colors.black12),
-      navigationBarTheme:
-          const NavigationBarThemeData(backgroundColor: Colors.black),
-      popupMenuTheme: const PopupMenuThemeData(color: Colors.black),
-    );

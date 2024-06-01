@@ -218,7 +218,7 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildDrawer() {
     return Drawer(
-      surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

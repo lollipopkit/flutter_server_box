@@ -10,6 +10,7 @@ import 'package:toolbox/core/utils/sync/icloud.dart';
 import 'package:toolbox/core/utils/sync/webdav.dart';
 import 'package:toolbox/data/model/app/backup.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
+import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/data/res/url.dart';
 
@@ -324,8 +325,8 @@ class BackupPage extends StatelessWidget {
   Future<void> _onTapWebdavUp(BuildContext context) async {
     try {
       webdavLoading.value = true;
-      final bakName =
-          '${DateTime.now().ymdhms(ymdSep: "-", hmsSep: "-", sep: "-")}-${Paths.bakName}';
+      final date = DateTime.now().ymdhms(ymdSep: "-", hmsSep: "-", sep: "-");
+      final bakName = '$date-${Miscs.bakFileName}';
       await Backup.backup(bakName);
       final uploadResult = await Webdav.upload(relativePath: bakName);
       if (uploadResult != null) {

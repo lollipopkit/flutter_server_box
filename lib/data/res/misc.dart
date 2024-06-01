@@ -18,4 +18,6 @@ abstract final class Miscs {
   static const pkgName = 'tech.lolli.toolbox';
 
   static const jsonEncoder = JsonEncoder.withIndent('  ');
+
+  static const bakFileName = 'srvbox_backup.json';
 }

@@ -5,6 +5,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:logging/logging.dart';
 import 'package:toolbox/data/model/app/backup.dart';
 import 'package:toolbox/data/model/app/error.dart';
+import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:webdav_client/webdav_client.dart';
 
@@ -96,7 +97,7 @@ abstract final class Webdav {
   }
 
   static Future<void> sync() async {
-    final result = await download(relativePath: Paths.bakName);
+    final result = await download(relativePath: Miscs.bakFileName);
     if (result != null) {
       _logger.warning('Download failed: $result');
       await backup();
@@ -104,7 +105,7 @@ abstract final class Webdav {
     }
 
     try {
-      final dlFile = await File(Paths.bakPath).readAsString();
+      final dlFile = await File(Paths.bak).readAsString();
       final dlBak = await Computer.shared.start(Backup.fromJsonString, dlFile);
       await dlBak.restore();
     } catch (e) {
@@ -117,7 +118,7 @@ abstract final class Webdav {
   /// Create a local backup and upload it to WebDAV
   static Future<void> backup() async {
     await Backup.backup();
-    final uploadResult = await upload(relativePath: Paths.bakName);
+    final uploadResult = await upload(relativePath: Miscs.bakFileName);
     if (uploadResult != null) {
       _logger.warning('Upload failed: $uploadResult');
     } else {

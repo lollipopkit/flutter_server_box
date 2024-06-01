@@ -7,7 +7,7 @@ enum ContainerType {
   ;
 
   ContainerPs Function(String str) get ps => switch (this) {
-        ContainerType.docker => DockerPs.fromRawJson,
+        ContainerType.docker => DockerPs.parse,
         ContainerType.podman => PodmanPs.fromRawJson,
       };
 

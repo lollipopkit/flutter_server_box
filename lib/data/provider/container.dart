@@ -26,7 +26,8 @@ class ContainerProvider extends ChangeNotifier {
   ContainerErr? error;
   String? runLog;
   ContainerType type;
-  bool sudo = false;
+  var sudoCompleter = Completer<bool>();
+  bool isBusy = false;
 
   ContainerProvider({
     required this.client,
@@ -41,6 +42,7 @@ class ContainerProvider extends ChangeNotifier {
     this.type = type;
     Stores.container.setType(type, hostId);
     error = runLog = items = images = version = null;
+    sudoCompleter = Completer<bool>();
     notifyListeners();
     await refresh();
   }
@@ -60,17 +62,27 @@ class ContainerProvider extends ChangeNotifier {
   //   return value;
   // }
 
-  Future<bool> _requiresSudo() async {
-    final psResult = await client?.run(_wrap(ContainerCmdType.ps.exec(type)));
-    if (psResult == null) return true;
-    if (psResult.string.toLowerCase().contains("permission denied")) {
-      return true;
+  void _requiresSudo() async {
+    /// Podman is rootless
+    if (type == ContainerType.podman) return sudoCompleter.complete(false);
+    if (!Stores.setting.containerTrySudo.fetch()) {
+      return sudoCompleter.complete(false);
     }
-    return false;
+
+    final res = await client?.run(_wrap(ContainerCmdType.images.exec(type)));
+    if (res?.string.toLowerCase().contains("permission denied") ?? false) {
+      return sudoCompleter.complete(true);
+    }
+    return sudoCompleter.complete(false);
   }
 
   Future<void> refresh({bool isAuto = false}) async {
-    sudo = await _requiresSudo() && Stores.setting.containerTrySudo.fetch();
+    if (isBusy) return;
+    isBusy = true;
+
+    if (!sudoCompleter.isCompleted) _requiresSudo();
+
+    final sudo = await sudoCompleter.future;
 
     /// If sudo is required and auto refresh is enabled, skip the refresh.
     /// Or this will ask for pwd again and again.
@@ -78,16 +90,21 @@ class ContainerProvider extends ChangeNotifier {
     final includeStats = Stores.setting.containerParseStat.fetch();
 
     var raw = '';
+    final cmd = _wrap(ContainerCmdType.execAll(
+      type,
+      sudo: sudo,
+      includeStats: includeStats,
+    ));
     final code = await client?.execWithPwd(
-      _wrap(ContainerCmdType.execAll(
-        type,
-        sudo: sudo,
-        includeStats: includeStats,
-      )),
+      cmd,
       context: context,
       onStdout: (data, _) => raw = '$raw$data',
       id: hostId,
     );
+
+    isBusy = false;
+
+    if (!context.mounted) return;
 
     /// Code 127 means command not found
     if (code == 127 || raw.contains(_dockerNotFound)) {
@@ -126,8 +143,12 @@ class ContainerProvider extends ChangeNotifier {
     final psRaw = ContainerCmdType.ps.find(segments);
     try {
       final lines = psRaw.split('\n');
+      if (type == ContainerType.docker) {
+        /// Due to the fetched data is not in json format, skip table header
+        lines.removeWhere((element) => element.contains('CONTAINER ID'));
+      }
       lines.removeWhere((element) => element.isEmpty);
-      items = lines.map((e) => ContainerPs.fromRawJson(e, type)).toList();
+      items = lines.map((e) => ContainerPs.fromRaw(e, type)).toList();
     } catch (e, trace) {
       error = ContainerErr(
         type: ContainerErrType.parsePs,
@@ -203,7 +224,7 @@ class ContainerProvider extends ChangeNotifier {
     runLog = '';
     final errs = <String>[];
     final code = await client?.execWithPwd(
-      _wrap(sudo ? 'sudo -S $cmd' : cmd),
+      _wrap((await sudoCompleter.future) ? 'sudo -S $cmd' : cmd),
       context: context,
       onStdout: (data, _) {
         runLog = '$runLog$data';
@@ -254,7 +275,12 @@ enum ContainerCmdType {
     final prefix = sudo ? 'sudo -S ${type.name}' : type.name;
     return switch (this) {
       ContainerCmdType.version => '$prefix version $_jsonFmt',
-      ContainerCmdType.ps => '$prefix ps -a $_jsonFmt',
+      ContainerCmdType.ps => switch (type) {
+          /// Use [_jsonFmt] in Docker will cause the operation to slow down.
+          ContainerType.docker => '$prefix ps -a --format "table '
+              '{{printf \\"${"%-30.30s " * 4}\\" .ID .Names .Image .Status}}"',
+          ContainerType.podman => '$prefix ps -a $_jsonFmt',
+        },
       ContainerCmdType.stats =>
         includeStats ? '$prefix stats --no-stream $_jsonFmt' : 'echo PASS',
       ContainerCmdType.images => '$prefix image ls $_jsonFmt',
