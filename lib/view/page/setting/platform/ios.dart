@@ -104,7 +104,6 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
         }
         return ListTile(
           title: const Text('Watch app'),
-          subtitle: Text(l10n.edit, style: UIs.textGrey),
           trailing: const Icon(Icons.keyboard_arrow_right),
           onTap: () async => _onTapWatchApp(ctx),
         );
@@ -113,7 +112,7 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
   }
 
   void _onTapWatchApp(Map<String, dynamic> map) async {
-    final urls = map['urls'] as Map<String, String>;
+    final urls = Map<String, String>.from(map['urls'] as Map? ?? {});
     final result = await AppRoutes.kvEditor(data: urls).go(context);
     if (result == null || result! is Map<String, String>) return;
 
