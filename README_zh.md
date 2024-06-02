@@ -16,8 +16,9 @@
 
 
 ## ⬇️ Download
-[iOS](https://apps.apple.com/app/id1586449703) / [Android](https://cdn.lolli.tech/serverbox/latest.apk) / [macOS](https://apps.apple.com/app/id1586449703): 经过测试，使用自签名证书  
-[Linux](https://cdn.lolli.tech/serverbox/latest.AppImage) / [Windows](https://cdn.lolli.tech/serverbox/latest.win.zip): 经过不完全测试，使用调试证书
+🎉 **现在 `Android / Linux / Windows` 版本使用 GitHub Actions 构建**。
+
+[iOS & macOS](https://apps.apple.com/app/id1586449703) / [Android & Linux & Windows](https://github.com/lollipopkit/flutter_gpt_box/releases)
 
 
 ## 🔖 特点

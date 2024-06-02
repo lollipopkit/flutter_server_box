@@ -15,8 +15,9 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 </p>
 
 ## ⬇️ Download
-[iOS](https://apps.apple.com/app/id1586449703) / [Android](https://cdn.lolli.tech/serverbox/latest.apk) / [macOS](https://apps.apple.com/app/id1586449703): Full support with my own certificate  
-[Linux](https://cdn.lolli.tech/serverbox/latest.AppImage) / [Windows](https://cdn.lolli.tech/serverbox/latest.win.zip): Basically tested, with debug certificate
+🎉 **The `Android / Linux / Windows` version are now built via GitHub Actions**
+
+[iOS & macOS](https://apps.apple.com/app/id6476033062) / [Android & Linux & Windows](https://github.com/lollipopkit/flutter_gpt_box/releases)
 
 
 ## 🔖 Feature

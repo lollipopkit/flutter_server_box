@@ -1175,7 +1175,7 @@ class _SettingPageState extends State<SettingPage> {
                 autoFocus: true,
                 hint: 'https://example.com/logo.png',
                 icon: Icons.link,
-                maxLines: 3,
+                maxLines: 2,
                 onSubmitted: onSave,
               ),
               ListTile(

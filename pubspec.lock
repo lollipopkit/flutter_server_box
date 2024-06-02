@@ -33,14 +33,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.2"
-  app_links:
-    dependency: transitive
-    description:
-      name: app_links
-      sha256: "96e677810b83707ff5e10fac11e4839daa0ea4e0123c35864c092699165eb3db"
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.1.1"
   archive:
     dependency: transitive
     description:
@@ -392,8 +384,8 @@ packages:
     dependency: "direct dev"
     description:
       path: "."
-      ref: "v1.0.11"
-      resolved-ref: ead58f6e985600c03cd27fb6563c10b6afa2d640
+      ref: "v1.0.13"
+      resolved-ref: baded8103bd046806929b8d6547d5bce38060b06
       url: "https://github.com/lppcg/fl_build.git"
     source: git
     version: "1.0.0"
@@ -409,8 +401,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v1.0.27"
-      resolved-ref: "7f329a63eff761bbb2013d4865515a4aeaecf3e8"
+      ref: "v1.0.29"
+      resolved-ref: "674d5b3fccd1ae29c2739f119e34719874186587"
       url: "https://github.com/lppcg/fl_lib"
     source: git
     version: "0.0.1"
@@ -570,14 +562,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.1"
-  gtk:
-    dependency: transitive
-    description:
-      name: gtk
-      sha256: e8ce9ca4b1df106e4d72dad201d345ea1a036cc12c360f1a7d5a758f78ffa42c
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.1.0"
   highlight:
     dependency: "direct main"
     description:

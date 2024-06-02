@@ -40,23 +40,25 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # releaseWin:
-  #   name: Release windows
-  #   runs-on: windows-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #     - name: Install Flutter
-  #       uses: subosito/flutter-action@v2
-  #     - name: Build
-  #       run: dart run fl_build -p windows
-  #     - name: Create Release
-  #       uses: softprops/action-gh-release@v1
-  #       with:
-  #         files: |
-  #           ${{ env.APP_NAME }}_amd64_windows.zip
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  releaseWin:
+    name: Release windows
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+      - name: Build
+        run: dart run fl_build -p windows
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_windows_amd64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # releaseApple:
   #   name: Release ios and macos
