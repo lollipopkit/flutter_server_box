@@ -1,11 +1,8 @@
-import 'dart:convert';
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/route.dart';
 import 'package:toolbox/core/utils/misc.dart';
-import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/view/page/setting/platform/platform_pub.dart';
 import 'package:watch_connectivity/watch_connectivity.dart';
@@ -116,19 +113,12 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
   }
 
   void _onTapWatchApp(Map<String, dynamic> map) async {
-    /// Encode [map] to String with indent `\t`
-    final text = Miscs.jsonEncoder.convert(map);
-    final result = await AppRoutes.editor(
-      text: text,
-      langCode: 'json',
-      title: 'Watch app',
-    ).go<String>(context);
-    if (result == null) {
-      return;
-    }
+    final urls = map['urls'] as Map<String, String>;
+    final result = await AppRoutes.kvEditor(data: urls).go(context);
+    if (result == null || result! is Map<String, String>) return;
+
     try {
-      final newCtx = json.decode(result) as Map<String, dynamic>;
-      await wc.updateApplicationContext(newCtx);
+      await wc.updateApplicationContext({'urls': result});
     } catch (e, trace) {
       context.showRoundDialog(
         title: l10n.error,
