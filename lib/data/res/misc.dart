@@ -19,5 +19,5 @@ abstract final class Miscs {
 
   static const jsonEncoder = JsonEncoder.withIndent('  ');
 
-  static const bakFileName = 'srvbox_backup.json';
+  static const bakFileName = 'srvbox_bak.json';
 }

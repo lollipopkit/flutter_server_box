@@ -22,6 +22,7 @@ import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
 import 'package:toolbox/data/model/ssh/virtual_key.dart';
 import 'package:toolbox/data/res/build_data.dart';
+import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/data/res/url.dart';
@@ -64,7 +65,7 @@ void _runInZone(void Function() body) {
 Future<void> _initApp() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Paths.init(BuildData.name, bakName: 'srvbox');
+  await Paths.init(BuildData.name, bakName: Miscs.bakFileName);
   await _initData();
   _setupDebug();
 

@@ -99,7 +99,6 @@ abstract final class Webdav {
   static Future<void> sync() async {
     final result = await download(relativePath: Miscs.bakFileName);
     if (result != null) {
-      _logger.warning('Download failed: $result');
       await backup();
       return;
     }

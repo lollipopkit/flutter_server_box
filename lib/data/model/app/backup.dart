@@ -6,6 +6,7 @@ import 'package:logging/logging.dart';
 import 'package:toolbox/data/model/server/private_key_info.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
+import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/rebuild.dart';
 import 'package:toolbox/data/res/store.dart';
@@ -74,7 +75,7 @@ class Backup {
 
   static Future<String> backup([String? name]) async {
     final result = _diyEncrypt(json.encode(Backup.loadFromStore().toJson()));
-    final path = '${Paths.doc}/${name ?? 'srvbox_bak.json'}';
+    final path = '${Paths.doc}/${name ?? Miscs.bakFileName}';
     await File(path).writeAsString(result);
     return path;
   }

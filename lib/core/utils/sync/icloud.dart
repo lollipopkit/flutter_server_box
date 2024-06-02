@@ -201,7 +201,6 @@ abstract final class ICloud {
   static Future<void> sync() async {
     final result = await download(relativePath: Miscs.bakFileName);
     if (result != null) {
-      _logger.warning('Download backup failed: $result');
       await backup();
       return;
     }
