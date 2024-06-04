@@ -18,7 +18,7 @@
 ## ⬇️ Download
 🎉 **现在 `Android / Linux / Windows` 版本使用 GitHub Actions 构建**。
 
-[iOS & macOS](https://apps.apple.com/app/id1586449703) / [Android & Linux & Windows](https://github.com/lollipopkit/flutter_gpt_box/releases)
+[iOS & macOS](https://apps.apple.com/app/id1586449703) / [Android & Linux & Windows](https://github.com/lollipopkit/flutter_server_box/releases)
 
 
 ## 🔖 特点
