@@ -30,7 +30,7 @@ jobs:
       - name: Build
         run: dart run fl_build -p android,linux
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_arm64.apk
@@ -53,7 +53,7 @@ jobs:
       - name: Build
         run: dart run fl_build -p windows
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_windows_amd64.zip
@@ -71,7 +71,7 @@ jobs:
   #     - name: Build
   #       run: dart run fl_build -p ios,mac
   #     - name: Create Release
-  #       uses: softprops/action-gh-release@v1
+  #       uses: softprops/action-gh-release@v2
   #       with:
   #         files: |
   #           ${{ env.APP_NAME }}_universal_macos.zip
