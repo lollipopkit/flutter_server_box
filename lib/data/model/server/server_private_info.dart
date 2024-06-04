@@ -64,7 +64,7 @@ class ServerPrivateInfo {
     final port = json["port"] as int? ?? 22;
     final user = json["user"] as String? ?? 'root';
     final name = json["name"] as String? ?? '';
-    final pwd = json["authorization"] as String?;
+    final pwd = json["pwd"] as String? ?? json["authorization"] as String?;
     final keyId = json["pubKeyId"] as String?;
     final tags = (json["tags"] as List?)?.cast<String>();
     final alterUrl = json["alterUrl"] as String?;
@@ -100,7 +100,7 @@ class ServerPrivateInfo {
     data["port"] = port;
     data["user"] = user;
     if (pwd != null) {
-      data["authorization"] = pwd;
+      data["pwd"] = pwd;
     }
     if (keyId != null) {
       data["pubKeyId"] = keyId;

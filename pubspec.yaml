@@ -36,24 +36,24 @@ dependencies:
   extended_image: ^8.2.1
   dartssh2:
     git:
-      ref: dev
       url: https://github.com/lollipopkit/dartssh2
+      ref: dev
   circle_chart:
     git:
       url: https://github.com/lollipopkit/circle_chart
       ref: main
   xterm:
     git:
-      ref: master
       url: https://github.com/lollipopkit/xterm.dart
+      ref: master
   computer:
     git:
-      ref: master
       url: https://github.com/lollipopkit/dart_computer
+      ref: master
   fl_lib:
     git:
       url: https://github.com/lppcg/fl_lib
-      ref: v1.0.29
+      ref: v1.0.31
 
 dependency_overrides:
 #   dartssh2:
