@@ -341,7 +341,7 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
     if (Stores.setting.autoCheckAppUpdate.fetch()) {
       AppUpdateIface.doUpdate(
         build: BuildData.build,
-        url: '${Urls.cdnBase}/update.json',
+        url: Urls.updateCfg,
         context: context,
       );
     }
