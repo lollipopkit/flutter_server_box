@@ -17,7 +17,7 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 ## ⬇️ Download
 🎉 **The `Android / Linux / Windows` version are now built via GitHub Actions**
 
-[iOS & macOS](https://apps.apple.com/app/id6476033062) / [Android & Linux & Windows](https://github.com/lollipopkit/flutter_gpt_box/releases)
+[iOS & macOS](https://apps.apple.com/app/id1586449703) / [Android & Linux & Windows](https://github.com/lollipopkit/flutter_server_box/releases)
 
 
 ## 🔖 Feature
