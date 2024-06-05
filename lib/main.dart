@@ -20,6 +20,7 @@ import 'package:toolbox/data/model/server/custom.dart';
 import 'package:toolbox/data/model/server/private_key_info.dart';
 import 'package:toolbox/data/model/server/server_private_info.dart';
 import 'package:toolbox/data/model/server/snippet.dart';
+import 'package:toolbox/data/model/server/wol_cfg.dart';
 import 'package:toolbox/data/model/ssh/virtual_key.dart';
 import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/res/misc.dart';
@@ -87,6 +88,7 @@ Future<void> _initData() async {
   Hive.registerAdapter(NetViewTypeAdapter()); // 5
   Hive.registerAdapter(ServerFuncBtnAdapter()); // 6
   Hive.registerAdapter(ServerCustomAdapter()); // 7
+  Hive.registerAdapter(WakeOnLanCfgAdapter()); // 8
 
   await Stores.setting.init();
   await Stores.server.init();
