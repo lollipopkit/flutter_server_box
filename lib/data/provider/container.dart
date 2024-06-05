@@ -277,8 +277,8 @@ enum ContainerCmdType {
       ContainerCmdType.version => '$prefix version $_jsonFmt',
       ContainerCmdType.ps => switch (type) {
           /// Use [_jsonFmt] in Docker will cause the operation to slow down.
-          ContainerType.docker => '$prefix ps -a --format "table '
-              '{{printf \\"${"%-30.30s " * 4}\\" .ID .Names .Image .Status}}"',
+          ContainerType.docker => '$prefix ps -a --format "table {{printf \\"'
+              '%-15.15s ${"%-30.30s " * 3}\\" .ID .Names .Image .Status}}"',
           ContainerType.podman => '$prefix ps -a $_jsonFmt',
         },
       ContainerCmdType.stats =>

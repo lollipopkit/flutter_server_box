@@ -206,7 +206,10 @@ class _ContainerPageState extends State<ContainerPage> {
               ],
             ),
             Text(
-              '${item.image ?? l10n.unknown} - ${item.running ? l10n.running : l10n.stopped}',
+              '${item.image ?? l10n.unknown} - ${switch (item) {
+                final PodmanPs ps => ps.running ? l10n.running : l10n.stopped,
+                final DockerPs ps => ps.state,
+              }}',
               style: UIs.text13Grey,
             ),
             _buildPsItemStats(item),
