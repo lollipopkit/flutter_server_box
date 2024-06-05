@@ -515,9 +515,9 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     _terminalStyle = TerminalStyle.fromTextStyle(textStyle);
   }
 
-  Future<void> _showHelp() async {
+  void _showHelp() {
     if (!Stores.setting.sshTermHelpShown.fetch()) {
-      await context.showRoundDialog(
+      context.showRoundDialog(
         title: l10n.doc,
         child: Text(l10n.sshTermHelp),
         actions: [
