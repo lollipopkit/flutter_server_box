@@ -2,6 +2,7 @@
   "@@locale": "zh",
   "about": "关于",
   "aboutThanks": "感谢以下参与的各位。",
+  "acceptBeta": "接受测试版更新推送",
   "add": "新增",
   "addAServer": "添加服务器",
   "addPrivateKey": "添加一个私钥",

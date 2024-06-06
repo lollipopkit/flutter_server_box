@@ -94,7 +94,7 @@ final class _WearHomeState extends State<WearHome> with AfterLayoutMixin {
     if (Stores.setting.autoCheckAppUpdate.fetch()) {
       AppUpdateIface.doUpdate(
         build: BuildData.build,
-        url: '${Urls.cdnBase}/update.json',
+        url: Urls.updateCfg,
         context: context,
       );
     }

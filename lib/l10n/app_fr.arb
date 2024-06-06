@@ -2,6 +2,7 @@
   "@@locale": "fr",
   "about": "À propos",
   "aboutThanks": "Merci aux personnes suivantes qui ont participé.",
+  "acceptBeta": "Accepter les mises à jour de la version de test",
   "add": "Ajouter",
   "addAServer": "Ajouter un serveur",
   "addPrivateKey": "Ajouter une clé privée",

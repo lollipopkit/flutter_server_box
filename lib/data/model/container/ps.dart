@@ -3,8 +3,9 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/data/model/container/type.dart';
+import 'package:toolbox/data/res/misc.dart';
 
-abstract final class ContainerPs {
+sealed class ContainerPs {
   final String? id = null;
   final String? image = null;
   String? get name;
@@ -140,7 +141,11 @@ final class DockerPs implements ContainerPs {
   String? get cmd => null;
 
   @override
-  bool get running => state?.contains('Up ') ?? false;
+  bool get running {
+    if (state?.contains('Exited') == true) return false;
+    if (state?.contains('Up') == true) return true;
+    return true;
+  }
 
   @override
   void parseStats(String s) {
@@ -154,12 +159,12 @@ final class DockerPs implements ContainerPs {
   /// CONTAINER ID                   NAMES                          IMAGE                          STATUS
   /// a049d689e7a1                   aria2-pro                      p3terx/aria2-pro               Up 3 weeks
   factory DockerPs.parse(String raw) {
-    final parts = raw.split(RegExp(r'\s{2,}'));
+    final parts = raw.split(Miscs.multiBlankreg);
     return DockerPs(
       id: parts[0],
       names: parts[1],
       image: parts[2],
-      state: parts[3],
+      state: parts[3].trim(),
     );
   }
 }

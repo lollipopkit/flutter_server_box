@@ -1066,6 +1066,7 @@ class _SettingPageState extends State<SettingPage> {
       leading: const Icon(MingCute.more_3_fill),
       title: Text(l10n.more),
       children: [
+        _buildBeta(),
         _buildWakeLock(),
         if (isAndroid || isIOS) _buildCollectUsage(),
         _buildCollapseUI(),
@@ -1193,6 +1194,14 @@ class _SettingPageState extends State<SettingPage> {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildBeta() {
+    return ListTile(
+      title: const Text('Beta Program'),
+      subtitle: Text(l10n.acceptBeta, style: UIs.textGrey),
+      trailing: StoreSwitch(prop: _setting.betaTest),
     );
   }
 }

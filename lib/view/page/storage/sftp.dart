@@ -472,19 +472,41 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   void _delete(SftpName file) {
     context.pop();
     final isDir = file.attr.isDirectory;
-    final useRmr = Stores.setting.sftpRmrDir.fetch();
+    var useRmr = Stores.setting.sftpRmrDir.fetch();
     final text = () {
       if (isDir && !useRmr) {
-        return l10n.askContinue(
-          '${l10n.dirEmpty}\n${l10n.delete} '
-          '${file.filename}',
-        );
+        return l10n.askContinue('${l10n.delete} ${file.filename}');
       }
       return l10n.askContinue('${l10n.delete} ${file.filename}');
     }();
+
+    // Most users don't know that SFTP can't delete a directory which is not
+    // empty, so we provide a checkbox to let user choose to use `rm -r` or not
     context.showRoundDialog(
-      child: Text(text),
       title: l10n.attention,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ListTile(
+            title: Text(text),
+          ),
+          if (!useRmr)
+            StatefulBuilder(
+              builder: (_, setState) {
+                return CheckboxListTile(
+                  title: Text(l10n.sftpRmrDirSummary),
+                  value: useRmr,
+                  onChanged: (val) {
+                    setState(() {
+                      useRmr = val ?? false;
+                    });
+                  },
+                );
+              },
+            ),
+        ],
+      ),
       actions: [
         TextButton(
           onPressed: () => context.pop(),

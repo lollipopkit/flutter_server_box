@@ -2,6 +2,7 @@
   "@@locale": "ja",
   "about": "約",
   "aboutThanks": "以下の参加者に感謝します。",
+  "acceptBeta": "テストバージョンの更新を受け入れる",
   "add": "追加",
   "addAServer": "サーバーを追加する",
   "addPrivateKey": "プライベートキーを追加",
