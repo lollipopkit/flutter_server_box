@@ -276,6 +276,8 @@ class SettingStore extends PersistentStore {
   /// fmt: https://example.com/{DIST}-{BRIGHT}.png
   late final serverLogoUrl = property('serverLogoUrl', '');
 
+  late final betaTest = property('betaTest', false);
+
   // Never show these settings for users
   //
   // ------BEGIN------

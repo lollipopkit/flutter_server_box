@@ -100,6 +100,8 @@ Future<void> _initData() async {
   Pros.snippet.load();
   Pros.key.load();
   await Pros.app.init();
+
+  if (Stores.setting.betaTest.fetch()) AppUpdate.chan = AppUpdateChan.beta;
 }
 
 void _setupDebug() {

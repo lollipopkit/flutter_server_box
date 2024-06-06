@@ -2,6 +2,7 @@
   "@@locale": "nl",
   "about": "Over",
   "aboutThanks": "Met dank aan de volgende mensen die hebben deelgenomen aan.",
+  "acceptBeta": "Accepteer testversie-updates",
   "add": "Toevoegen",
   "addAServer": "een server toevoegen",
   "addPrivateKey": "Privésleutel toevoegen",
