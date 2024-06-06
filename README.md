@@ -19,6 +19,8 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 
 [iOS & macOS](https://apps.apple.com/app/id1586449703) / [Android & Linux & Windows](https://github.com/lollipopkit/flutter_server_box/releases)
 
+All deprecated versions before `v930` can be found in [here](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid).
+
 
 ## 🔖 Feature
 - `Status chart` (CPU, Sensors, GPU...), `SSH` Term, `SFTP`, `Docker & Pkg & Process`...

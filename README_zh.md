@@ -20,6 +20,8 @@
 
 [iOS & macOS](https://apps.apple.com/app/id1586449703) / [Android & Linux & Windows](https://github.com/lollipopkit/flutter_server_box/releases)
 
+所有 `v930` 之前的版本可以在 [这里](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid) 找到。
+
 
 ## 🔖 特点
 - `状态图表`（CPU、传感器、GPU 等）, `SSH` 终端, `SFTP`, `Docker & 包 & 进程` 管理器...
