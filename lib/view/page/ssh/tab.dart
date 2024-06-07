@@ -86,8 +86,7 @@ class _SSHTabPageState extends State<SSHTabPage>
     Future.delayed(Durations.short1, FocusScope.of(context).unfocus);
     if (confirm != true) return;
 
-    final item = _tabMap.remove(name);
-    print(item?.key?.currentState);
+    _tabMap.remove(name);
     _tabRN.build();
   }
 
@@ -166,8 +165,10 @@ class _SSHTabPageState extends State<SSHTabPage>
       ),
       key: key,
     );
-    final idx = _tabMap.keys.toList().indexOf(name);
     _tabRN.build();
+    // Wait for the page to be built
+    await Future.delayed(Durations.short3);
+    final idx = _tabMap.keys.toList().indexOf(name);
     await _toPage(idx);
     _fabVN.value = idx;
   }
@@ -223,11 +224,6 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            SizedBox(
-              width: idx == 0 ? 35 : 85,
-              child: Text(name),
-            ),
-            if (idxVN.value == idx && idx != 0) FadeIn(child: UIs.dot()),
             idx == 0
                 // Use [IconBtn] for same size
                 ? IconBtn(icon: Icons.add, onTap: () {})
@@ -235,9 +231,16 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
                     icon: Icons.close,
                     onTap: () => onClose(name),
                   ),
+            SizedBox(
+              width: idx == 0 ? 35 : 85,
+              child: Text(name),
+            ),
+            (idxVN.value == idx && idx != 0)
+                ? FadeIn(child: UIs.dot())
+                : const SizedBox(width: 7),
           ],
         ),
-      ).paddingOnly(left: 17, right: 3),
+      ).paddingOnly(left: 3, right: 17),
     ).paddingSymmetric(horizontal: 3);
   }
 }
