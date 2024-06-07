@@ -15,37 +15,37 @@ class SSHTabPage extends StatefulWidget {
   State<SSHTabPage> createState() => _SSHTabPageState();
 }
 
+typedef _TabMap = Map<String, ({Widget page})>;
+
 class _SSHTabPageState extends State<SSHTabPage>
     with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
-  late final _tabMap = <String, ({Widget page})>{
+  late final _TabMap _tabMap = {
     l10n.add: (page: _buildAddPage()),
   };
-  late var _tabController = TabController(
-    length: _tabMap.length,
-    vsync: this,
-  );
-  final _fabRN = ValueNotifier(0);
+  final _pageCtrl = PageController();
+  final _fabVN = 0.vn;
+  final _tabRN = RNode();
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      appBar: TabBar(
-        controller: _tabController,
-        tabs: _tabMap.keys.map(_buildTabItem).toList(),
-        isScrollable: true,
-        tabAlignment: TabAlignment.start,
-        dividerColor: Colors.transparent,
-        onTap: (value) {
-          _fabRN.value = value;
-          FocusScope.of(context).unfocus();
+      appBar: PreferredSizeListenBuilder(
+        listenable: _tabRN,
+        builder: () {
+          return _TabBar(
+            idxVN: _fabVN,
+            map: _tabMap,
+            onTap: _onTapTab,
+            onClose: _onTapClose,
+          );
         },
       ),
       body: _buildBody(),
       floatingActionButton: ListenableBuilder(
-        listenable: _fabRN,
+        listenable: _fabVN,
         builder: (_, __) {
-          if (_fabRN.value != 0) return const SizedBox();
+          if (_fabVN.value != 0) return const SizedBox();
           return FloatingActionButton(
             heroTag: 'sshAddServer',
             onPressed: () => AppRoutes.serverEdit().go(context),
@@ -57,49 +57,40 @@ class _SSHTabPageState extends State<SSHTabPage>
     );
   }
 
-  Widget _buildTabItem(String e) {
-    if (e == l10n.add) {
-      return Tab(child: Text(e));
-    }
-    return Tab(
-      child: Row(
-        children: [
-          Text(e),
-          UIs.width7,
-          IconBtn(
-            icon: Icons.close,
-            onTap: () async {
-              final confirm = await showDialog<bool>(
-                context: context,
-                builder: (context) {
-                  return AlertDialog(
-                    title: Text(l10n.attention),
-                    content: Text('${l10n.close} SSH ${l10n.conn}($e) ?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => context.pop(true),
-                        child: Text(l10n.ok, style: UIs.textRed),
-                      ),
-                      TextButton(
-                        onPressed: () => context.pop(false),
-                        child: Text(l10n.cancel),
-                      ),
-                    ],
-                  );
-                },
-              );
-              Future.delayed(const Duration(milliseconds: 50),
-                  FocusScope.of(context).unfocus);
-              if (confirm != true) {
-                return;
-              }
-              _tabMap.remove(e);
-              _refreshTabs();
-            },
-          ),
-        ],
-      ),
+  void _onTapTab(int idx) async {
+    await _toPage(idx);
+    _fabVN.value = idx;
+    FocusScope.of(context).unfocus();
+  }
+
+  void _onTapClose(String name) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(l10n.attention),
+          content: Text('${l10n.close} SSH ${l10n.conn}($name) ?'),
+          actions: [
+            TextButton(
+              onPressed: () => context.pop(true),
+              child: Text(l10n.ok, style: UIs.textRed),
+            ),
+            TextButton(
+              onPressed: () => context.pop(false),
+              child: Text(l10n.cancel),
+            ),
+          ],
+        );
+      },
     );
+    Future.delayed(
+        const Duration(milliseconds: 50), FocusScope.of(context).unfocus);
+    if (confirm != true) {
+      return;
+    }
+
+    _tabMap.remove(name);
+    _tabRN.build();
   }
 
   Widget _buildAddPage() {
@@ -134,44 +125,113 @@ class _SSHTabPageState extends State<SSHTabPage>
   }
 
   Widget _buildBody() {
-    return TabBarView(
-      physics: const NeverScrollableScrollPhysics(),
-      controller: _tabController,
-      children: _tabMap.values.map((e) => e.page).toList(),
+    return ListenBuilder(
+      listenable: _tabRN,
+      builder: () {
+        return PageView.builder(
+          physics: const NeverScrollableScrollPhysics(),
+          controller: _pageCtrl,
+          itemCount: _tabMap.length,
+          itemBuilder: (_, idx) {
+            final name = _tabMap.keys.elementAt(idx);
+            return _tabMap[name]?.page ?? UIs.placeholder;
+          },
+        );
+      },
     );
   }
 
-  void _onTapInitCard(ServerPrivateInfo spi) {
+  void _onTapInitCard(ServerPrivateInfo spi) async {
     final name = () {
-      if (_tabMap.containsKey(spi.name)) {
-        return '${spi.name}(${_tabMap.length + 1})';
+      final count = _tabMap.keys.where((e) => e.contains(spi.name)).length;
+      if (count > 0) {
+        return '${spi.name}(${count + 1})';
       }
       return spi.name;
     }();
     _tabMap[name] = (
       page: SSHPage(
+        // Keep it, or the Flutter will works unexpectedly
+        key: ValueKey(spi.id),
         spi: spi,
         notFromTab: false,
         onSessionEnd: () {
           _tabMap.remove(name);
-          _refreshTabs();
         },
       ),
     );
-    _refreshTabs();
-    final idx = _tabMap.length - 1;
-    _tabController.animateTo(idx);
-    _fabRN.value = idx;
+    final idx = _tabMap.keys.toList().indexOf(name);
+    _tabRN.build();
+    await _toPage(idx);
+    _fabVN.value = idx;
   }
 
-  void _refreshTabs() {
-    _tabController = TabController(
-      length: _tabMap.length,
-      vsync: this,
-    );
-    setState(() {});
-  }
+  Future<void> _toPage(int idx) => _pageCtrl.animateToPage(idx,
+      duration: Durations.short3, curve: Curves.fastEaseInToSlowEaseOut);
 
   @override
   bool get wantKeepAlive => true;
+}
+
+final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
+  const _TabBar({
+    required this.idxVN,
+    required this.map,
+    required this.onTap,
+    required this.onClose,
+  });
+
+  final ValueNotifier<int> idxVN;
+  final _TabMap map;
+  final void Function(int idx) onTap;
+  final void Function(String name) onClose;
+
+  List<String> get names => map.keys.toList();
+
+  @override
+  Size get preferredSize => const Size.fromHeight(48);
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenBuilder(
+      listenable: idxVN,
+      builder: () {
+        return ListView.builder(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+          itemCount: names.length,
+          itemBuilder: (_, idx) => _buillItem(idx),
+        );
+      },
+    );
+  }
+
+  Widget _buillItem(int idx) {
+    final name = names[idx];
+    return InkWell(
+      borderRadius: BorderRadius.circular(13),
+      onTap: () => onTap(idx),
+      child: SizedBox(
+        width: idx == 0 ? 80 : 130,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            SizedBox(
+              width: idx == 0 ? 35 : 85,
+              child: Text(name),
+            ),
+            if (idxVN.value == idx && idx != 0) FadeIn(child: UIs.dot()),
+            idx == 0
+                // Use [IconBtn] for same size
+                ? IconBtn(icon: Icons.add, onTap: () {})
+                : IconBtn(
+                    icon: Icons.close,
+                    onTap: () => onClose(name),
+                  ),
+          ],
+        ),
+      ).paddingOnly(left: 17, right: 3),
+    ).paddingSymmetric(horizontal: 3);
+  }
 }
