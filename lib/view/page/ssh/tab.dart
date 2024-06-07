@@ -15,12 +15,12 @@ class SSHTabPage extends StatefulWidget {
   State<SSHTabPage> createState() => _SSHTabPageState();
 }
 
-typedef _TabMap = Map<String, ({Widget page})>;
+typedef _TabMap = Map<String, ({Widget page, GlobalKey<SSHPageState>? key})>;
 
 class _SSHTabPageState extends State<SSHTabPage>
     with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   late final _TabMap _tabMap = {
-    l10n.add: (page: _buildAddPage()),
+    l10n.add: (page: _buildAddPage(), key: null),
   };
   final _pageCtrl = PageController();
   final _fabVN = 0.vn;
@@ -83,13 +83,11 @@ class _SSHTabPageState extends State<SSHTabPage>
         );
       },
     );
-    Future.delayed(
-        const Duration(milliseconds: 50), FocusScope.of(context).unfocus);
-    if (confirm != true) {
-      return;
-    }
+    Future.delayed(Durations.short1, FocusScope.of(context).unfocus);
+    if (confirm != true) return;
 
-    _tabMap.remove(name);
+    final item = _tabMap.remove(name);
+    print(item?.key?.currentState);
     _tabRN.build();
   }
 
@@ -143,22 +141,30 @@ class _SSHTabPageState extends State<SSHTabPage>
 
   void _onTapInitCard(ServerPrivateInfo spi) async {
     final name = () {
-      final count = _tabMap.keys.where((e) => e.contains(spi.name)).length;
-      if (count > 0) {
-        return '${spi.name}(${count + 1})';
+      final reg = RegExp(r'\((\d+)\)');
+      final idxs = _tabMap.keys.map((e) => reg.firstMatch(e)).toList();
+      final biggest = idxs
+          .map((e) => e?.group(1))
+          .where((e) => e != null)
+          .reduce((a, b) => a!.length > b!.length ? a : b);
+      final biggestInt = int.tryParse(biggest ?? '0');
+      if (biggestInt != null && biggestInt > 0) {
+        return '${spi.name}(${biggestInt + 1})';
       }
       return spi.name;
     }();
+    final key = GlobalKey<SSHPageState>();
     _tabMap[name] = (
       page: SSHPage(
         // Keep it, or the Flutter will works unexpectedly
-        key: ValueKey(spi.id),
+        key: key,
         spi: spi,
         notFromTab: false,
         onSessionEnd: () {
           _tabMap.remove(name);
         },
       ),
+      key: key,
     );
     final idx = _tabMap.keys.toList().indexOf(name);
     _tabRN.build();
