@@ -141,11 +141,12 @@ class _SSHTabPageState extends State<SSHTabPage>
   void _onTapInitCard(ServerPrivateInfo spi) async {
     final name = () {
       final reg = RegExp(r'\((\d+)\)');
-      final idxs = _tabMap.keys.map((e) => reg.firstMatch(e)).toList();
-      final biggest = idxs
+      final idxs = _tabMap.keys
+          .map((e) => reg.firstMatch(e))
           .map((e) => e?.group(1))
-          .where((e) => e != null)
-          .reduce((a, b) => a!.length > b!.length ? a : b);
+          .where((e) => e != null);
+      if (idxs.isEmpty) return spi.name;
+      final biggest = idxs.reduce((a, b) => a!.length > b!.length ? a : b);
       final biggestInt = int.tryParse(biggest ?? '0');
       if (biggestInt != null && biggestInt > 0) {
         return '${spi.name}(${biggestInt + 1})';
@@ -203,11 +204,18 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
     return ListenBuilder(
       listenable: idxVN,
       builder: () {
-        return ListView.builder(
+        return ListView.separated(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
           itemCount: names.length,
           itemBuilder: (_, idx) => _buillItem(idx),
+          separatorBuilder: (_, __) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 17),
+            child: Container(
+              color: const Color.fromARGB(61, 158, 158, 158),
+              width: 3,
+            ),
+          ),
         );
       },
     );
@@ -215,32 +223,55 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
 
   Widget _buillItem(int idx) {
     final name = names[idx];
+    final selected = idxVN.value == idx;
+    final color =
+        selected ? const Color.fromARGB(240, 255, 255, 255) : Colors.grey;
+
+    final Widget child;
+    if (idx == 0) {
+      child = Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 13),
+        child: Icon(Icons.add, size: 17, color: color),
+      );
+    } else {
+      final text = Text(
+        name,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(color: color),
+        softWrap: false,
+        textAlign: TextAlign.center,
+        textWidthBasis: TextWidthBasis.parent,
+      );
+      child = AnimatedContainer(
+        width: selected ? 90 : 50,
+        duration: Durations.medium3,
+        curve: Curves.fastEaseInToSlowEaseOut,
+        child: switch (selected) {
+          true => Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                SizedBox(width: 55, child: text),
+                if (selected)
+                  FadeIn(
+                    child: IconBtn(
+                      icon: Icons.close,
+                      color: color,
+                      onTap: () => onClose(name),
+                    ),
+                  ),
+              ],
+            ),
+          false => Center(child: text),
+        },
+      ).paddingOnly(left: 3, right: 3);
+    }
+
     return InkWell(
       borderRadius: BorderRadius.circular(13),
       onTap: () => onTap(idx),
-      child: SizedBox(
-        width: idx == 0 ? 80 : 130,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            idx == 0
-                // Use [IconBtn] for same size
-                ? IconBtn(icon: Icons.add, onTap: () {})
-                : IconBtn(
-                    icon: Icons.close,
-                    onTap: () => onClose(name),
-                  ),
-            SizedBox(
-              width: idx == 0 ? 35 : 85,
-              child: Text(name),
-            ),
-            (idxVN.value == idx && idx != 0)
-                ? FadeIn(child: UIs.dot())
-                : const SizedBox(width: 7),
-          ],
-        ),
-      ).paddingOnly(left: 3, right: 17),
-    ).paddingSymmetric(horizontal: 3);
+      child: child,
+    ).paddingSymmetric(horizontal: 13);
   }
 }
