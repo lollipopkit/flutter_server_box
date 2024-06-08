@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/route.dart';
@@ -224,14 +225,13 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
   Widget _buillItem(int idx) {
     final name = names[idx];
     final selected = idxVN.value == idx;
-    final color =
-        selected ? const Color.fromARGB(240, 255, 255, 255) : Colors.grey;
+    final color = selected ? null : Colors.grey;
 
     final Widget child;
     if (idx == 0) {
       child = Padding(
         padding: const EdgeInsets.symmetric(horizontal: 13),
-        child: Icon(Icons.add, size: 17, color: color),
+        child: Icon(MingCute.add_circle_fill, size: 17, color: color),
       );
     } else {
       final text = Text(
@@ -256,7 +256,7 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
                 if (selected)
                   FadeIn(
                     child: IconBtn(
-                      icon: Icons.close,
+                      icon: MingCute.close_circle_fill,
                       color: color,
                       onTap: () => onClose(name),
                     ),

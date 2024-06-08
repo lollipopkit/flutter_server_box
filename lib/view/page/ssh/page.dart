@@ -41,6 +41,8 @@ class SSHPage extends StatefulWidget {
     this.terminalKey,
   });
 
+  static final focusNode = FocusNode();
+
   @override
   State<SSHPage> createState() => SSHPageState();
 }
@@ -159,6 +161,7 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
             CustomAppBar.barHeight ?? _media.padding.top,
           ),
           hideScrollBar: false,
+          focusNode: SSHPage.focusNode,
         ),
       ),
     );

@@ -17,6 +17,7 @@ import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/data/res/url.dart';
+import 'package:toolbox/view/page/ssh/page.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 part 'appbar.dart';
@@ -151,6 +152,7 @@ class _HomePageState extends State<HomePage>
         physics: const NeverScrollableScrollPhysics(),
         itemBuilder: (_, index) => AppTab.values[index].page,
         onPageChanged: (value) {
+          SSHPage.focusNode.unfocus();
           if (!_switchingPage) {
             _selectIndex.value = value;
           }
