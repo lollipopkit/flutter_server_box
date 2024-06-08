@@ -41,13 +41,15 @@ class SSHPage extends StatefulWidget {
     this.terminalKey,
   });
 
+  static final focusNode = FocusNode();
+
   @override
-  State<SSHPage> createState() => _SSHPageState();
+  State<SSHPage> createState() => SSHPageState();
 }
 
 const _horizonPadding = 7.0;
 
-class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
+class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
   final _keyboard = VirtKeyProvider();
   late final _terminal = Terminal(inputHandler: _keyboard);
   final TerminalController _terminalController = TerminalController();
@@ -159,6 +161,7 @@ class _SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
             CustomAppBar.barHeight ?? _media.padding.top,
           ),
           hideScrollBar: false,
+          focusNode: SSHPage.focusNode,
         ),
       ),
     );

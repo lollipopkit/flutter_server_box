@@ -9,7 +9,6 @@ import 'package:toolbox/core/channel/home_widget.dart';
 import 'package:toolbox/core/extension/build.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/route.dart';
-import 'package:toolbox/data/model/app/github_id.dart';
 import 'package:toolbox/data/model/app/tab.dart';
 import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/res/github_id.dart';
@@ -17,6 +16,7 @@ import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
 import 'package:toolbox/data/res/url.dart';
+import 'package:toolbox/view/page/ssh/page.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 part 'appbar.dart';
@@ -151,6 +151,7 @@ class _HomePageState extends State<HomePage>
         physics: const NeverScrollableScrollPhysics(),
         itemBuilder: (_, index) => AppTab.values[index].page,
         onPageChanged: (value) {
+          SSHPage.focusNode.unfocus();
           if (!_switchingPage) {
             _selectIndex.value = value;
           }

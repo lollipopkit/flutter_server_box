@@ -1,5 +1,3 @@
-import 'package:toolbox/data/model/app/github_id.dart';
-
 abstract final class GithubIds {
   // Thanks
   // If you want to change your Github ID, please open an issue.
@@ -74,4 +72,10 @@ abstract final class GithubIds {
     'ZRY233',
     'Jasonzhu1207',
   };
+}
+
+typedef GhId = String;
+
+extension GhIdX on GhId {
+  String get url => 'https://github.com/$this';
 }

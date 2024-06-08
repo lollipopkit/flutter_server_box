@@ -305,7 +305,7 @@ class _SettingPageState extends State<SettingPage> {
     _setting.primaryColor.put(color.value);
     context.pop();
     context.pop();
-    RebuildNodes.app.rebuild();
+    RNodes.app.build();
   }
 
   // Widget _buildLaunchPage() {
@@ -393,7 +393,7 @@ class _SettingPageState extends State<SettingPage> {
         );
         if (selected != null) {
           _setting.themeMode.put(selected);
-          RebuildNodes.app.rebuild();
+          RNodes.app.build();
         }
       },
       trailing: ValBuilder(
@@ -442,7 +442,7 @@ class _SettingPageState extends State<SettingPage> {
               onPressed: () {
                 _setting.fontPath.delete();
                 context.pop();
-                RebuildNodes.app.rebuild();
+                RNodes.app.build();
               },
               child: Text(l10n.clear),
             )
@@ -466,7 +466,7 @@ class _SettingPageState extends State<SettingPage> {
     }
 
     context.pop();
-    RebuildNodes.app.rebuild();
+    RNodes.app.build();
   }
 
   Widget _buildTermFontSize() {
@@ -536,7 +536,7 @@ class _SettingPageState extends State<SettingPage> {
         if (selected != null) {
           _setting.locale.put(selected.code);
           context.pop();
-          RebuildNodes.app.rebuild();
+          RNodes.app.build();
         }
       },
       trailing: ListenBuilder(
@@ -609,7 +609,7 @@ class _SettingPageState extends State<SettingPage> {
       subtitle: Text(l10n.fullScreenTip, style: UIs.textGrey),
       trailing: StoreSwitch(
         prop: _setting.fullScreen,
-        callback: (_) => RebuildNodes.app.rebuild(),
+        callback: (_) => RNodes.app.build(),
       ),
     );
   }
@@ -820,7 +820,7 @@ class _SettingPageState extends State<SettingPage> {
       return;
     }
     _setting.textFactor.put(val);
-    RebuildNodes.app.rebuild();
+    RNodes.app.build();
     context.pop();
   }
 
