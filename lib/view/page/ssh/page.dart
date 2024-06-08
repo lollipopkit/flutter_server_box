@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:after_layout/after_layout.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
@@ -49,7 +50,8 @@ class SSHPage extends StatefulWidget {
 
 const _horizonPadding = 7.0;
 
-class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
+class SSHPageState extends State<SSHPage>
+    with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
   final _keyboard = VirtKeyProvider();
   late final _terminal = Terminal(inputHandler: _keyboard);
   final TerminalController _terminalController = TerminalController();
@@ -73,13 +75,6 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     super.initState();
     _initStoredCfg();
     _initVirtKeys();
-
-    Future.delayed(const Duration(milliseconds: 77), () async {
-      _showHelp();
-      await _initTerminal();
-
-      if (Stores.setting.sshWakeLock.fetch()) WakelockPlus.enable();
-    });
   }
 
   @override
@@ -153,7 +148,7 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
           textStyle: _terminalStyle,
           theme: _terminalTheme,
           deleteDetection: isMobile,
-          autofocus: true,
+          autofocus: false,
           keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,
           showToolbar: isMobile,
           viewOffset: Offset(
@@ -432,6 +427,8 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
       }
     }
 
+    SSHPage.focusNode.requestFocus();
+
     await session.done;
     if (mounted && widget.notFromTab) {
       context.pop();
@@ -518,22 +515,30 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin {
     _terminalStyle = TerminalStyle.fromTextStyle(textStyle);
   }
 
-  void _showHelp() {
-    if (!Stores.setting.sshTermHelpShown.fetch()) {
-      context.showRoundDialog(
-        title: l10n.doc,
-        child: Text(l10n.sshTermHelp),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Stores.setting.sshTermHelpShown.put(true);
-              context.pop();
-            },
-            child: Text(l10n.noPromptAgain),
-          ),
-        ],
-      );
-    }
+  Future<void> _showHelp() async {
+    if (Stores.setting.sshTermHelpShown.fetch()) return;
+    
+    return await context.showRoundDialog(
+      title: l10n.doc,
+      child: Text(l10n.sshTermHelp),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Stores.setting.sshTermHelpShown.put(true);
+            context.pop();
+          },
+          child: Text(l10n.noPromptAgain),
+        ),
+      ],
+    );
+  }
+
+  @override
+  FutureOr<void> afterFirstLayout(BuildContext context) async {
+    await _showHelp();
+    await _initTerminal();
+
+    if (Stores.setting.sshWakeLock.fetch()) WakelockPlus.enable();
   }
 }
 

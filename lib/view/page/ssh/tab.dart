@@ -43,10 +43,10 @@ class _SSHTabPageState extends State<SSHTabPage>
         },
       ),
       body: _buildBody(),
-      floatingActionButton: ListenableBuilder(
+      floatingActionButton: ValBuilder(
         listenable: _fabVN,
-        builder: (_, __) {
-          if (_fabVN.value != 0) return const SizedBox();
+        builder: (idx) {
+          if (idx != 0) return const SizedBox();
           return FloatingActionButton(
             heroTag: 'sshAddServer',
             onPressed: () => AppRoutes.serverEdit().go(context),
@@ -60,11 +60,12 @@ class _SSHTabPageState extends State<SSHTabPage>
 
   void _onTapTab(int idx) async {
     await _toPage(idx);
-    _fabVN.value = idx;
-    FocusScope.of(context).unfocus();
+    SSHPage.focusNode.unfocus();
   }
 
   void _onTapClose(String name) async {
+    SSHPage.focusNode.unfocus();
+    
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -89,6 +90,8 @@ class _SSHTabPageState extends State<SSHTabPage>
 
     _tabMap.remove(name);
     _tabRN.build();
+    _pageCtrl.previousPage(
+        duration: Durations.medium1, curve: Curves.fastEaseInToSlowEaseOut);
   }
 
   Widget _buildAddPage() {
@@ -134,6 +137,7 @@ class _SSHTabPageState extends State<SSHTabPage>
             final name = _tabMap.keys.elementAt(idx);
             return _tabMap[name]?.page ?? UIs.placeholder;
           },
+          onPageChanged: (value) => _fabVN.value = value,
         );
       },
     );
@@ -141,12 +145,14 @@ class _SSHTabPageState extends State<SSHTabPage>
 
   void _onTapInitCard(ServerPrivateInfo spi) async {
     final name = () {
-      final reg = RegExp(r'\((\d+)\)');
+      final reg = RegExp('${spi.name}\\((\\d+)\\)');
       final idxs = _tabMap.keys
           .map((e) => reg.firstMatch(e))
           .map((e) => e?.group(1))
           .where((e) => e != null);
-      if (idxs.isEmpty) return spi.name;
+      if (idxs.isEmpty) {
+        return _tabMap.keys.contains(spi.name) ? '${spi.name}(1)' : spi.name;
+      }
       final biggest = idxs.reduce((a, b) => a!.length > b!.length ? a : b);
       final biggestInt = int.tryParse(biggest ?? '0');
       if (biggestInt != null && biggestInt > 0) {
@@ -172,7 +178,6 @@ class _SSHTabPageState extends State<SSHTabPage>
     await Future.delayed(Durations.short3);
     final idx = _tabMap.keys.toList().indexOf(name);
     await _toPage(idx);
-    _fabVN.value = idx;
   }
 
   Future<void> _toPage(int idx) => _pageCtrl.animateToPage(idx,
