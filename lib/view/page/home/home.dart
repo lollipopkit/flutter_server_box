@@ -9,7 +9,6 @@ import 'package:toolbox/core/channel/home_widget.dart';
 import 'package:toolbox/core/extension/build.dart';
 import 'package:toolbox/core/extension/context/locale.dart';
 import 'package:toolbox/core/route.dart';
-import 'package:toolbox/data/model/app/github_id.dart';
 import 'package:toolbox/data/model/app/tab.dart';
 import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/res/github_id.dart';
