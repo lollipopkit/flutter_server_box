@@ -143,7 +143,6 @@ final class DockerPs implements ContainerPs {
   @override
   bool get running {
     if (state?.contains('Exited') == true) return false;
-    if (state?.contains('Up') == true) return true;
     return true;
   }
 
@@ -162,9 +161,9 @@ final class DockerPs implements ContainerPs {
     final parts = raw.split(Miscs.multiBlankreg);
     return DockerPs(
       id: parts[0],
-      names: parts[1],
-      image: parts[2],
-      state: parts[3].trim(),
+      state: parts[1],
+      names: parts[2],
+      image: parts[3].trim(),
     );
   }
 }

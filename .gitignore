@@ -57,7 +57,7 @@ test.dart
 
 # Linux release
 linux.AppDir
-ServerBox-x86_64.AppImage
+**/*.AppImage
 
 untranlated.json
 
