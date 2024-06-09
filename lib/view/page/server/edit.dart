@@ -9,6 +9,8 @@ import 'package:toolbox/data/model/app/shell_func.dart';
 import 'package:toolbox/data/model/server/custom.dart';
 import 'package:toolbox/data/model/server/wol_cfg.dart';
 import 'package:toolbox/data/res/provider.dart';
+import 'package:toolbox/data/res/store.dart';
+import 'package:toolbox/data/res/url.dart';
 
 import '../../../core/route.dart';
 import '../../../data/model/server/server_private_info.dart';
@@ -646,6 +648,17 @@ class _ServerEditPageState extends State<ServerEditPage> {
       custom: custom,
       wolCfg: wol,
     );
+
+    final tipShown = Stores.history.writeScriptTipShown;
+    if (!tipShown.fetch()) {
+      final ok = await context.showRoundDialog(
+        title: l10n.attention,
+        child: SimpleMarkdown(data: l10n.beforeConnect(Urls.thisRepo)),
+        actions: Btns.oks(onTap: () => context.pop(true)),
+      );
+      if (ok != true) return;
+      tipShown.put(true);
+    }
 
     if (widget.spi == null) {
       Pros.server.addServer(spi);

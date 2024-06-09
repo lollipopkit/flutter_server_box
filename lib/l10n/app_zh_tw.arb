@@ -26,6 +26,7 @@
   "backupTip": "導出的數據僅進行了簡單加密，請妥善保管。",
   "backupVersionNotMatch": "備份版本不匹配，無法還原",
   "battery": "電池",
+  "beforeConnect": "ServerBox將在連接後，在`~/.config/server_box`寫入腳本並執行，更多的技術細節請訪問[Github]({url})。",
   "bgRun": "背景運行",
   "bgRunTip": "此開關只代表程式會嘗試在背景執行，具體能否背景運行取決於是否開啟了權限。 原生 Android 請關閉本 App 的“電池優化”，MIUI 請修改省電策略為“無限制”。",
   "bioAuth": "生物認證",

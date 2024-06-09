@@ -517,7 +517,7 @@ class SSHPageState extends State<SSHPage>
 
   Future<void> _showHelp() async {
     if (Stores.setting.sshTermHelpShown.fetch()) return;
-    
+
     return await context.showRoundDialog(
       title: l10n.doc,
       child: Text(l10n.sshTermHelp),

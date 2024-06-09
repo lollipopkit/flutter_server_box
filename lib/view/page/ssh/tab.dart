@@ -65,7 +65,7 @@ class _SSHTabPageState extends State<SSHTabPage>
 
   void _onTapClose(String name) async {
     SSHPage.focusNode.unfocus();
-    
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) {

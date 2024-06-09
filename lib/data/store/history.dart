@@ -54,4 +54,7 @@ class HistoryStore extends PersistentStore {
   late final sftpLastPath = _MapHistory(box: box, name: 'sftpLastPath');
 
   late final sshCmds = _ListHistory(box: box, name: 'sshCmds');
+
+  /// Notify users that this app will write script to server to works properly
+  late final writeScriptTipShown = property('writeScriptTipShown', false);
 }
