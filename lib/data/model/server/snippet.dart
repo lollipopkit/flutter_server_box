@@ -115,10 +115,10 @@ class Snippet implements TagPickable {
       final key = argsFmted.substring(start, end).toLowerCase();
 
       // Special funcs
-      final special = _find(specialCtrl, key);
+      final special = _find(SnippetFuncs.specialCtrl, key);
       if (special != null) {
         final raw = key.substring(special.key.length + 1, key.length - 1);
-        await special.value(raw);
+        await special.value((term: terminal, raw: raw));
       }
 
       // Term keys
@@ -152,15 +152,17 @@ class Snippet implements TagPickable {
 
     // `${ctrl+ad}` -> `ctrla + d`
     final chars = key.substring(termKey.key.length + 1, key.length - 1);
-    terminal.charInput(
+    if (chars.isEmpty) return;
+    final ok = terminal.charInput(
       chars.codeUnitAt(0),
       ctrl: ctrlAlt.ctrl,
       alt: ctrlAlt.alt,
     );
-    
-    for (final char in chars.codeUnits.skip(1)) {
-      terminal.charInput(char, ctrl: false, alt: false);
+    if (!ok) {
+      Loggers.app.warning('Failed to input: $key');
     }
+
+    terminal.textInput(chars.substring(1));
   }
 
   MapEntry<String, T>? _find<T>(Map<String, T> map, String key) {
@@ -180,12 +182,6 @@ class Snippet implements TagPickable {
   static final fmtTermKeys = {
     r'${ctrl': TerminalKey.control,
     r'${alt': TerminalKey.alt,
-    r'${enter': TerminalKey.enter,
-  };
-
-  static final specialCtrl = {
-    // `${sleep 3}` -> sleep 3 seconds
-    r'${sleep': SnippetFuncs.sleep,
   };
 }
 
@@ -201,11 +197,31 @@ class SnippetResult {
   });
 }
 
+typedef SnippetFuncCtx = ({Terminal term, String raw});
+
 abstract final class SnippetFuncs {
-  static FutureOr<void> sleep(String raw) async {
-    final seconds = int.tryParse(raw);
+  static final specialCtrl = {
+    // `${sleep 3}` -> sleep 3 seconds
+    r'${sleep': SnippetFuncs.sleep,
+    r'${enter': SnippetFuncs.enter,
+  };
+
+  static const help = {
+    'sleep': 'Sleep for a few seconds',
+    'enter': 'Enter a few times',
+  };
+
+  static FutureOr<void> sleep(SnippetFuncCtx ctx) async {
+    final seconds = int.tryParse(ctx.raw);
     if (seconds == null) return;
     final duration = Duration(seconds: seconds);
     await Future.delayed(duration);
+  }
+
+  static FutureOr<void> enter(SnippetFuncCtx ctx) async {
+    final times = int.tryParse(ctx.raw) ?? 1;
+    for (var i = 0; i < times; i++) {
+      ctx.term.keyInput(TerminalKey.enter);
+    }
   }
 }
