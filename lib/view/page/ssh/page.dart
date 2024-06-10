@@ -29,6 +29,7 @@ const _echoPWD = 'echo \$PWD';
 class SSHPage extends StatefulWidget {
   final ServerPrivateInfo spi;
   final String? initCmd;
+  final Snippet? initSnippet;
   final bool notFromTab;
   final Function()? onSessionEnd;
   final GlobalKey<TerminalViewState>? terminalKey;
@@ -37,6 +38,7 @@ class SSHPage extends StatefulWidget {
     super.key,
     required this.spi,
     this.initCmd,
+    this.initSnippet,
     this.notFromTab = true,
     this.onSessionEnd,
     this.terminalKey,
@@ -309,8 +311,7 @@ class SSHPageState extends State<SSHPage>
 
         final snippet = snippets.firstOrNull;
         if (snippet == null) return;
-        _terminal.textInput(snippet.script);
-        _terminal.keyInput(TerminalKey.enter);
+        snippet.runInTerm(_terminal, widget.spi);
         break;
       case VirtualKeyFunc.file:
         // get $PWD from SSH session
@@ -415,16 +416,19 @@ class SSHPageState extends State<SSHPage>
 
     _initService();
 
+    for (final snippet in Pros.snippet.snippets) {
+      if (snippet.autoRunOn?.contains(widget.spi.id) == true) {
+        snippet.runInTerm(_terminal, widget.spi);
+      }
+    }
+
     if (widget.initCmd != null) {
       _terminal.textInput(widget.initCmd!);
       _terminal.keyInput(TerminalKey.enter);
-    } else {
-      for (final snippet in Pros.snippet.snippets) {
-        if (snippet.autoRunOn?.contains(widget.spi.id) == true) {
-          _terminal.textInput(snippet.script);
-          _terminal.keyInput(TerminalKey.enter);
-        }
-      }
+    }
+
+    if (widget.initSnippet != null) {
+      widget.initSnippet!.runInTerm(_terminal, widget.spi);
     }
 
     SSHPage.focusNode.requestFocus();

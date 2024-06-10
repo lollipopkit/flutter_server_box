@@ -126,7 +126,7 @@ void _onTapMoreBtns(
       if (snippets == null || snippets.isEmpty) return;
       final snippet = snippets.firstOrNull;
       if (snippet == null) return;
-      final fmted = snippet.fmtWith(spi);
+      final fmted = snippet.fmtWithSpi(spi);
       final sure = await context.showRoundDialog<bool>(
         title: l10n.attention,
         child: SingleChildScrollView(
@@ -141,7 +141,7 @@ void _onTapMoreBtns(
         ],
       );
       if (sure != true) return;
-      AppRoutes.ssh(spi: spi, initCmd: fmted).checkGo(
+      AppRoutes.ssh(spi: spi, initSnippet: snippet).checkGo(
         context: context,
         check: () => _checkClient(context, spi.id),
       );

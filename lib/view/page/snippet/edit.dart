@@ -200,9 +200,13 @@ class _SnippetEditPageState extends State<SnippetEditPage>
         padding: const EdgeInsets.all(13),
         child: SimpleMarkdown(
           data: '''
-📌 ${l10n.supportFmtArgs}
+📌 ${l10n.supportFmtArgs}\n
+${Snippet.fmtArgs.keys.map((e) => '`$e`').join(', ')}\n
 
-${Snippet.fmtArgs.keys.map((e) => '`$e`').join(', ')}
+${Snippet.fmtTermKeys.keys.map((e) => '`$e+?}`').join(', ')}\n
+${l10n.forExample}: 
+- `\${ctrl+c}` (Control + C)
+- `\${ctrl+b}d` (Tmux Detach)
 ''',
           styleSheet: MarkdownStyleSheet(
             codeblockDecoration: const BoxDecoration(

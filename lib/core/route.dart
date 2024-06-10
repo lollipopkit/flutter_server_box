@@ -102,12 +102,14 @@ class AppRoutes {
     Key? key,
     required ServerPrivateInfo spi,
     String? initCmd,
+    Snippet? initSnippet,
   }) {
     return AppRoutes(
       SSHPage(
         key: key,
         spi: spi,
         initCmd: initCmd,
+        initSnippet: initSnippet,
       ),
       'ssh_term',
     );

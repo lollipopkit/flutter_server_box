@@ -562,7 +562,10 @@ class _ContainerPageState extends State<ContainerPage> {
       case ContainerMenu.terminal:
         AppRoutes.ssh(
           spi: widget.spi,
-          initCmd: 'docker exec -it ${dItem.id} sh',
+          initCmd: '${switch (_container.type) {
+            ContainerType.podman => 'podman',
+            ContainerType.docker => 'docker',
+          }} exec -it ${dItem.id} sh',
         ).go(context);
         break;
       // case DockerMenuType.stats:

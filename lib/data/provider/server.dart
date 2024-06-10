@@ -18,7 +18,6 @@ import '../../core/utils/server.dart';
 import '../model/server/server.dart';
 import '../model/server/server_private_info.dart';
 import '../model/server/server_status_update_req.dart';
-import '../model/server/snippet.dart';
 import '../model/server/try_limiter.dart';
 import '../res/status.dart';
 
@@ -460,20 +459,20 @@ class ServerProvider extends ChangeNotifier {
     TryLimiter.reset(sid);
   }
 
-  Future<SnippetResult?> runSnippet(String id, Snippet snippet) async {
-    final server = _servers[id];
-    if (server == null) return null;
-    final watch = Stopwatch()..start();
-    final result = await server.client?.run(snippet.fmtWith(server.spi)).string;
-    final time = watch.elapsed;
-    watch.stop();
-    if (result == null) return null;
-    return SnippetResult(
-      dest: _servers[id]?.spi.name,
-      result: result,
-      time: time,
-    );
-  }
+  // Future<SnippetResult?> runSnippet(String id, Snippet snippet) async {
+  //   final server = _servers[id];
+  //   if (server == null) return null;
+  //   final watch = Stopwatch()..start();
+  //   final result = await server.client?.run(snippet.fmtWithArgs(server.spi)).string;
+  //   final time = watch.elapsed;
+  //   watch.stop();
+  //   if (result == null) return null;
+  //   return SnippetResult(
+  //     dest: _servers[id]?.spi.name,
+  //     result: result,
+  //     time: time,
+  //   );
+  // }
 
   // Future<List<SnippetResult?>> runSnippetsMulti(
   //   List<String> ids,

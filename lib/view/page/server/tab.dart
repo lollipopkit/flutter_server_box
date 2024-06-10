@@ -98,7 +98,8 @@ class _ServerPageState extends State<ServerPage>
       ),
       floatingActionButton: AutoHide(
         key: _autoHideKey,
-        direction: AxisDirection.right,
+        direction: AxisDirection.down,
+        offset: 75,
         controller: _scrollController,
         child: FloatingActionButton(
           heroTag: 'addServer',

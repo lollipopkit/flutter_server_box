@@ -96,6 +96,7 @@ class _SSHTabPageState extends State<SSHTabPage>
 
   Widget _buildAddPage() {
     return Center(
+      key: const Key('sshTabAddServer'),
       child: Consumer<ServerProvider>(builder: (_, pro, __) {
         if (pro.serverOrder.isEmpty) {
           return Center(
@@ -105,21 +106,27 @@ class _SSHTabPageState extends State<SSHTabPage>
             ),
           );
         }
-        return ListView.builder(
+        return GridView.builder(
           padding: const EdgeInsets.all(7),
           itemBuilder: (_, idx) {
             final spi = Pros.server.pick(id: pro.serverOrder[idx])?.spi;
             if (spi == null) return UIs.placeholder;
             return CardX(
               child: ListTile(
+                contentPadding: const EdgeInsets.only(left: 17, right: 7),
                 title: Text(spi.name),
-                subtitle: Text(spi.id, style: UIs.textGrey),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => _onTapInitCard(spi),
-              ),
+              ).center(),
             );
           },
           itemCount: pro.servers.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 3,
+            crossAxisSpacing: 3,
+            mainAxisSpacing: 3,
+          ),
         );
       }),
     );
