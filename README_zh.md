@@ -19,7 +19,8 @@
 
 [iOS & macOS](https://apps.apple.com/app/id1586449703) / [Android & Linux & Windows](https://github.com/lollipopkit/flutter_server_box/releases)
 
-所有 `v930` 之前的版本可以在 [这里](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid) 找到。
+- 所有 `v930` 之前的版本可以在 [这里](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid) 找到。
+- 为了防止注入攻击等，请不要从不受信任的来源下载。例如：Gitee 的发行包与该项目无关。
 
 
 ## 🔖 特点

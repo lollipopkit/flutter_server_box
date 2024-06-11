@@ -13,12 +13,14 @@ A Flutter project which provide charts to display <a href="../../issues/43">Linu
 Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a> & <a href="https://github.com/TerminalStudio/xterm.dart">xterm.dart</a>.
 </p>
 
+
 ## ⬇️ Download
 🎉 **The `Android / Linux / Windows` version are now built via GitHub Actions**
 
 [iOS & macOS](https://apps.apple.com/app/id1586449703) / [Android & Linux & Windows](https://github.com/lollipopkit/flutter_server_box/releases)
 
-All deprecated versions before `v930` can be found in [here](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid).
+- All deprecated versions before `v930` can be found in [here](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid).
+- To prevent injection attacks and etc., please don't download from untrusted sources. eg: Gitee release is not related to this project.
 
 
 ## 🔖 Feature
