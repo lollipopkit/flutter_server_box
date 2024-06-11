@@ -375,9 +375,11 @@ packages:
   fl_build:
     dependency: "direct dev"
     description:
-      path: "../fl_build"
-      relative: true
-    source: path
+      path: "."
+      ref: "v1.0.15"
+      resolved-ref: "6a16e4ea3951ac14e1f84b69710ce3d366b021f7"
+      url: "https://github.com/lppcg/fl_build.git"
+    source: git
     version: "1.0.0"
   fl_chart:
     dependency: "direct main"
