@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/data/model/server/server_private_info.dart';
-import 'package:toolbox/data/res/provider.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/res/provider.dart';
 
 abstract final class KeybordInteractive {
   static FutureOr<List<String>?> defaultHandle(

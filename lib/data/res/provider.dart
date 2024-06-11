@@ -1,9 +1,9 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:toolbox/data/provider/app.dart';
-import 'package:toolbox/data/provider/private_key.dart';
-import 'package:toolbox/data/provider/server.dart';
-import 'package:toolbox/data/provider/sftp.dart';
-import 'package:toolbox/data/provider/snippet.dart';
+import 'package:server_box/data/provider/app.dart';
+import 'package:server_box/data/provider/private_key.dart';
+import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/provider/sftp.dart';
+import 'package:server_box/data/provider/snippet.dart';
 
 abstract final class Pros {
   static final app = AppProvider();

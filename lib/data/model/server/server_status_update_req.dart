@@ -1,9 +1,9 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:toolbox/data/model/server/battery.dart';
-import 'package:toolbox/data/model/server/nvdia.dart';
-import 'package:toolbox/data/model/server/sensors.dart';
-import 'package:toolbox/data/model/server/server.dart';
-import 'package:toolbox/data/model/server/system.dart';
+import 'package:server_box/data/model/server/battery.dart';
+import 'package:server_box/data/model/server/nvdia.dart';
+import 'package:server_box/data/model/server/sensors.dart';
+import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/system.dart';
 
 import '../app/shell_func.dart';
 import 'cpu.dart';

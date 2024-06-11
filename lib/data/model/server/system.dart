@@ -1,4 +1,4 @@
-import 'package:toolbox/data/model/app/shell_func.dart';
+import 'package:server_box/data/model/app/shell_func.dart';
 
 enum SystemType {
   linux._(linuxSign),

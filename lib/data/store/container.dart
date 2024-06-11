@@ -1,6 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:toolbox/data/model/container/type.dart';
-import 'package:toolbox/data/res/store.dart';
+import 'package:server_box/data/model/container/type.dart';
+import 'package:server_box/data/res/store.dart';
 
 const _keyConfig = 'providerConfig';
 

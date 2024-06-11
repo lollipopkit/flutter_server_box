@@ -4,13 +4,13 @@ import 'package:after_layout/after_layout.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/data/model/server/server.dart';
-import 'package:toolbox/data/provider/server.dart';
-import 'package:toolbox/data/res/build_data.dart';
-import 'package:toolbox/data/res/provider.dart';
-import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/data/res/url.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/res/build_data.dart';
+import 'package:server_box/data/res/provider.dart';
+import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/res/url.dart';
 
 final class WearHome extends StatefulWidget {
   const WearHome({super.key});

@@ -2,16 +2,16 @@ import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/extension/ssh_client.dart';
-import 'package:toolbox/data/model/app/menu/base.dart';
-import 'package:toolbox/data/model/app/menu/server_func.dart';
-import 'package:toolbox/data/model/app/shell_func.dart';
-import 'package:toolbox/data/model/pkg/manager.dart';
-import 'package:toolbox/data/model/server/dist.dart';
-import 'package:toolbox/data/model/server/snippet.dart';
-import 'package:toolbox/data/res/provider.dart';
-import 'package:toolbox/data/res/store.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/ssh_client.dart';
+import 'package:server_box/data/model/app/menu/base.dart';
+import 'package:server_box/data/model/app/menu/server_func.dart';
+import 'package:server_box/data/model/app/shell_func.dart';
+import 'package:server_box/data/model/pkg/manager.dart';
+import 'package:server_box/data/model/server/dist.dart';
+import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/data/res/provider.dart';
+import 'package:server_box/data/res/store.dart';
 
 import '../../core/route.dart';
 import '../../core/utils/server.dart';

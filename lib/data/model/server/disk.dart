@@ -1,5 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:toolbox/data/model/server/time_seq.dart';
+import 'package:server_box/data/model/server/time_seq.dart';
 
 import '../../res/misc.dart';
 

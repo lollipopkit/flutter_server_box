@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:toolbox/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:xterm/core.dart';
 
 part 'virtual_key.g.dart';

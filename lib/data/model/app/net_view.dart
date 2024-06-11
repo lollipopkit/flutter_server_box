@@ -1,7 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/data/model/server/server.dart';
-import 'package:toolbox/data/res/store.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/res/store.dart';
 
 part 'net_view.g.dart';
 

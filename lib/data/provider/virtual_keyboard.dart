@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:toolbox/data/res/store.dart';
+import 'package:server_box/data/res/store.dart';
 import 'package:xterm/core.dart';
 
 class VirtKeyProvider extends TerminalInputHandler with ChangeNotifier {

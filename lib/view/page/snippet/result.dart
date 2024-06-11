@@ -1,7 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/data/model/server/snippet.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/server/snippet.dart';
 
 class SnippetResultPage extends StatelessWidget {
   final List<SnippetResult?> results;

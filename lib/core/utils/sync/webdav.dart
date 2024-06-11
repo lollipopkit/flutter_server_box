@@ -3,10 +3,10 @@ import 'dart:io';
 import 'package:computer/computer.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:logging/logging.dart';
-import 'package:toolbox/data/model/app/backup.dart';
-import 'package:toolbox/data/model/app/error.dart';
-import 'package:toolbox/data/res/misc.dart';
-import 'package:toolbox/data/res/store.dart';
+import 'package:server_box/data/model/app/backup.dart';
+import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/res/misc.dart';
+import 'package:server_box/data/res/store.dart';
 import 'package:webdav_client/webdav_client.dart';
 
 abstract final class Webdav {

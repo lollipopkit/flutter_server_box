@@ -1,8 +1,8 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:toolbox/data/model/server/custom.dart';
-import 'package:toolbox/data/model/server/server.dart';
-import 'package:toolbox/data/model/server/wol_cfg.dart';
-import 'package:toolbox/data/res/provider.dart';
+import 'package:server_box/data/model/server/custom.dart';
+import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/wol_cfg.dart';
+import 'package:server_box/data/res/provider.dart';
 
 import '../app/error.dart';
 

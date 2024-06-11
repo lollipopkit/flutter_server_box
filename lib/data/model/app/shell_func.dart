@@ -1,4 +1,4 @@
-import 'package:toolbox/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 
 import '../../res/build_data.dart';
 import '../server/system.dart';

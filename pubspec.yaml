@@ -1,7 +1,7 @@
-name: toolbox
-description: A server toolbox app.
+name: server_box
+description: server status & toolbox app.
 publish_to: 'none'
-version: 1.0.0
+version: 1.0.959
 
 environment:
   sdk: ">=3.0.0"

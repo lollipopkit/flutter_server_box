@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:toolbox/data/model/server/pve.dart';
+import 'package:server_box/data/model/server/pve.dart';
 
 const _raw = '''
 {

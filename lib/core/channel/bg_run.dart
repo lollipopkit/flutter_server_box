@@ -1,5 +1,5 @@
 import 'package:flutter/services.dart';
-import 'package:toolbox/data/res/misc.dart';
+import 'package:server_box/data/res/misc.dart';
 
 abstract final class BgRunMC {
   static const _channel = MethodChannel('${Miscs.pkgName}/app_retain');

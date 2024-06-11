@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:toolbox/data/model/server/sensors.dart';
+import 'package:server_box/data/model/server/sensors.dart';
 
 const _sensorsRaw = '''
 coretemp-isa-0000

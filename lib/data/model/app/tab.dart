@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:toolbox/view/page/ping.dart';
-import 'package:toolbox/view/page/server/tab.dart';
-import 'package:toolbox/view/page/snippet/list.dart';
-import 'package:toolbox/view/page/ssh/tab.dart';
+import 'package:server_box/view/page/ping.dart';
+import 'package:server_box/view/page/server/tab.dart';
+import 'package:server_box/view/page/snippet/list.dart';
+import 'package:server_box/view/page/ssh/tab.dart';
 
 enum AppTab {
   server,

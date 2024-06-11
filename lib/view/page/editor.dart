@@ -8,9 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_highlight/themes/a11y-light.dart';
 import 'package:flutter_highlight/themes/monokai.dart';
-import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/data/res/highlight.dart';
-import 'package:toolbox/data/res/store.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/res/highlight.dart';
+import 'package:server_box/data/res/store.dart';
 
 import '../widget/two_line_text.dart';
 

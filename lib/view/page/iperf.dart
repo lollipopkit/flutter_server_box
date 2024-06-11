@@ -1,8 +1,8 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/route.dart';
-import 'package:toolbox/data/model/server/server_private_info.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/route.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 
 class IPerfPage extends StatefulWidget {
   final ServerPrivateInfo spi;

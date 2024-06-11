@@ -1,8 +1,8 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/data/model/app/menu/server_func.dart';
-import 'package:toolbox/data/res/store.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/menu/server_func.dart';
+import 'package:server_box/data/res/store.dart';
 
 class ServerFuncBtnsOrderPage extends StatefulWidget {
   const ServerFuncBtnsOrderPage({super.key});

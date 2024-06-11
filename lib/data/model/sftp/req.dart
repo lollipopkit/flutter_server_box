@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:toolbox/data/res/store.dart';
+import 'package:server_box/data/res/store.dart';
 
 import '../../../core/utils/server.dart';
 import '../server/server_private_info.dart';

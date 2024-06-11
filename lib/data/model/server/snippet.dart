@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:toolbox/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:xterm/core.dart';
 
 import '../app/tag_pickable.dart';

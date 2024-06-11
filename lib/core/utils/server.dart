@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/foundation.dart';
-import 'package:toolbox/data/model/app/error.dart';
-import 'package:toolbox/data/res/store.dart';
+import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/res/store.dart';
 
 import '../../data/model/server/server_private_info.dart';
 

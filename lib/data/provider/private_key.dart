@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:toolbox/data/model/server/private_key_info.dart';
-import 'package:toolbox/data/res/store.dart';
+import 'package:server_box/data/model/server/private_key_info.dart';
+import 'package:server_box/data/res/store.dart';
 
 class PrivateKeyProvider extends ChangeNotifier {
   List<PrivateKeyInfo> get pkis => _pkis;

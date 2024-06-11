@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:toolbox/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 
 part 'server_func.g.dart';
 

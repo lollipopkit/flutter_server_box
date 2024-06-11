@@ -1,10 +1,10 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:toolbox/data/store/container.dart';
-import 'package:toolbox/data/store/history.dart';
-import 'package:toolbox/data/store/private_key.dart';
-import 'package:toolbox/data/store/server.dart';
-import 'package:toolbox/data/store/setting.dart';
-import 'package:toolbox/data/store/snippet.dart';
+import 'package:server_box/data/store/container.dart';
+import 'package:server_box/data/store/history.dart';
+import 'package:server_box/data/store/private_key.dart';
+import 'package:server_box/data/store/server.dart';
+import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/data/store/snippet.dart';
 
 abstract final class Stores {
   static final setting = SettingStore();

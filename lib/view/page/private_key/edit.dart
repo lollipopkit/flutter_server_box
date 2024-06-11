@@ -4,9 +4,9 @@ import 'package:computer/computer.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/data/res/misc.dart';
-import 'package:toolbox/data/res/provider.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/res/misc.dart';
+import 'package:server_box/data/res/provider.dart';
 
 import '../../../core/utils/server.dart';
 import '../../../data/model/server/private_key_info.dart';

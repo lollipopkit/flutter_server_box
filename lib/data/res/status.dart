@@ -1,5 +1,5 @@
-import 'package:toolbox/data/model/server/server.dart';
-import 'package:toolbox/data/model/server/temp.dart';
+import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/temp.dart';
 
 import '../model/server/cpu.dart';
 import '../model/server/disk.dart';

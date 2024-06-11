@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:toolbox/data/model/server/snippet.dart';
-import 'package:toolbox/data/res/store.dart';
+import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/data/res/store.dart';
 
 class SnippetProvider extends ChangeNotifier {
   late List<Snippet> _snippets;

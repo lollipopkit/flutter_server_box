@@ -2,13 +2,13 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/data/model/server/pve.dart';
-import 'package:toolbox/data/model/server/server_private_info.dart';
-import 'package:toolbox/data/provider/pve.dart';
-import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/view/widget/percent_circle.dart';
-import 'package:toolbox/view/widget/two_line_text.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/server/pve.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/pve.dart';
+import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/widget/percent_circle.dart';
+import 'package:server_box/view/widget/two_line_text.dart';
 
 final class PvePage extends StatefulWidget {
   final ServerPrivateInfo spi;

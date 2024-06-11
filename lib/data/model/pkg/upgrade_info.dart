@@ -1,4 +1,4 @@
-import 'package:toolbox/data/model/pkg/manager.dart';
+import 'package:server_box/data/model/pkg/manager.dart';
 
 class UpgradePkgInfo {
   final PkgManager? _mgr;

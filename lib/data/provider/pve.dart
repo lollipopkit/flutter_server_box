@@ -6,10 +6,10 @@ import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/data/model/app/error.dart';
-import 'package:toolbox/data/model/server/pve.dart';
-import 'package:toolbox/data/model/server/server_private_info.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/server/pve.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:dartssh2/dartssh2.dart';
 
 typedef PveCtrlFunc = Future<bool> Function(String node, String id);

@@ -1,4 +1,4 @@
-import 'package:toolbox/data/model/server/dist.dart';
+import 'package:server_box/data/model/server/dist.dart';
 
 enum PkgManager {
   apt,

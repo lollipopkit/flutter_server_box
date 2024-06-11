@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:toolbox/data/model/server/proc.dart';
+import 'package:server_box/data/model/server/proc.dart';
 
 void main() {
   test('parse process', () {

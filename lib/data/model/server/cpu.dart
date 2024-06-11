@@ -1,8 +1,8 @@
 import 'dart:collection';
 
 import 'package:fl_chart/fl_chart.dart';
-import 'package:toolbox/data/model/server/time_seq.dart';
-import 'package:toolbox/data/res/status.dart';
+import 'package:server_box/data/model/server/time_seq.dart';
+import 'package:server_box/data/res/status.dart';
 
 const _kCap = 30;
 

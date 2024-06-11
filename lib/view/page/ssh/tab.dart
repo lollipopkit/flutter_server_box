@@ -2,12 +2,12 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:provider/provider.dart';
-import 'package:toolbox/core/extension/context/locale.dart';
-import 'package:toolbox/core/route.dart';
-import 'package:toolbox/data/model/server/server_private_info.dart';
-import 'package:toolbox/data/provider/server.dart';
-import 'package:toolbox/data/res/provider.dart';
-import 'package:toolbox/view/page/ssh/page.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/route.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/res/provider.dart';
+import 'package:server_box/view/page/ssh/page.dart';
 
 class SSHTabPage extends StatefulWidget {
   const SSHTabPage({super.key});
