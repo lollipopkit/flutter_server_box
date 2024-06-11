@@ -1,0 +1,6 @@
+A Flutter project which provide charts to display Linux server status and tools to manage server.
+Especially thanks to dartssh2 & xterm.dart.
+
+* Status chart (CPU, Sensors, GPU...), SSH Term, SFTP, Docker & Pkg & Process...
+* Platform specific: Bio auth、Msg push、Home widget、watchOS App...
+* English, 简体中文; Deutsch, 繁體中文, Indonesian, Français, Dutch; Español, Русский язык, Português, 日本語
