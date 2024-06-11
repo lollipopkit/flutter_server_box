@@ -26,7 +26,6 @@ import 'package:toolbox/data/res/build_data.dart';
 import 'package:toolbox/data/res/misc.dart';
 import 'package:toolbox/data/res/provider.dart';
 import 'package:toolbox/data/res/store.dart';
-import 'package:toolbox/data/res/url.dart';
 
 Future<void> main() async {
   _runInZone(() async {
@@ -56,7 +55,6 @@ void _runInZone(void Function() body) {
   runZonedGuarded(
     body,
     (obj, trace) {
-      Analysis.recordException(trace);
       Loggers.root.warning(obj, null, trace);
     },
     zoneSpecification: zoneSpec,
@@ -112,10 +110,6 @@ void _setupDebug() {
     if (record.error != null) print(record.error);
     if (record.stackTrace != null) print(record.stackTrace);
   });
-
-  if (Stores.setting.collectUsage.fetch()) {
-    Analysis.init(Urls.analysis, '0772e65c696709f879d87db77ae1a811259e3eb9');
-  }
 }
 
 void _doPlatformRelated() async {

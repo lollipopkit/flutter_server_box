@@ -4,7 +4,6 @@ English | [简体中文](README_zh.md)
 
 <p align="center">
   <img alt="lang" src="https://img.shields.io/badge/lang-dart-pink">
-  <img alt="countly" src="https://img.shields.io/badge/analysis-countly-pink">
   <img alt="license" src="https://img.shields.io/badge/license-GPLv3-pink">
 </p>
 

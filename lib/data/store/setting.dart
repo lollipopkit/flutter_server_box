@@ -265,8 +265,6 @@ class SettingStore extends PersistentStore {
 
   late final horizonVirtKey = property('horizonVirtKey', false);
 
-  late final collectUsage = property('collectUsage', true);
-
   /// general wake lock
   late final generalWakeLock = property('generalWakeLock', false);
 

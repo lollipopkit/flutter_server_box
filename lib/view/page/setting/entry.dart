@@ -1068,7 +1068,6 @@ class _SettingPageState extends State<SettingPage> {
       children: [
         _buildBeta(),
         _buildWakeLock(),
-        if (isAndroid || isIOS) _buildCollectUsage(),
         _buildCollapseUI(),
         _buildCupertinoRoute(),
         if (isDesktop) _buildHideTitleBar(),
@@ -1114,14 +1113,6 @@ class _SettingPageState extends State<SettingPage> {
       leading: const Icon(MingCute.align_center_line),
       title: Text(l10n.softWrap),
       trailing: StoreSwitch(prop: _setting.editorSoftWrap),
-    );
-  }
-
-  Widget _buildCollectUsage() {
-    return ListTile(
-      title: const Text('Countly'),
-      subtitle: Text(l10n.collectUsage, style: UIs.textGrey),
-      trailing: StoreSwitch(prop: _setting.collectUsage),
     );
   }
 

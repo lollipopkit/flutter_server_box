@@ -46,7 +46,6 @@
   "cnKeyboardCompTip": "If the terminal pops up a secure keyboard, you can enable it.",
   "collapseUI": "Collapse",
   "collapseUITip": "Whether to collapse long lists present in the UI by default",
-  "collectUsage": "Collect usage information (unrelated to privacy).",
   "conn": "Connection",
   "connected": "Connected",
   "container": "Container",

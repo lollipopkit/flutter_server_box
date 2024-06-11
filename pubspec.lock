@@ -206,7 +206,7 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: master
+      ref: "v1.0.88"
       resolved-ref: b0819c8a939e1fa6858f1a0e12ee8122db0df390
       url: "https://github.com/lollipopkit/dart_computer"
     source: git
@@ -219,14 +219,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.1"
-  countly_flutter:
-    dependency: transitive
-    description:
-      name: countly_flutter
-      sha256: "366f0c7769b998a06579235b0afd3797bc0bc7c8ce80bb673fca59c217f66012"
-      url: "https://pub.dev"
-    source: hosted
-    version: "24.4.1"
   cross_file:
     dependency: transitive
     description:
@@ -383,11 +375,9 @@ packages:
   fl_build:
     dependency: "direct dev"
     description:
-      path: "."
-      ref: "v1.0.13"
-      resolved-ref: baded8103bd046806929b8d6547d5bce38060b06
-      url: "https://github.com/lppcg/fl_build.git"
-    source: git
+      path: "../fl_build"
+      relative: true
+    source: path
     version: "1.0.0"
   fl_chart:
     dependency: "direct main"
@@ -401,8 +391,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v1.0.39"
-      resolved-ref: "49fc10b39e390f4ecc3ee4f16f0926460b77adac"
+      ref: "v1.0.40"
+      resolved-ref: "1f547b45bc9083558ee88eafa61df92eb0abf552"
       url: "https://github.com/lppcg/fl_lib"
     source: git
     version: "0.0.1"
@@ -914,14 +904,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.1"
-  pedantic:
-    dependency: transitive
-    description:
-      name: pedantic
-      sha256: "67fc27ed9639506c856c840ccce7594d0bdcd91bc8d53d6e52359449a1d50602"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.11.1"
   permission_handler:
     dependency: transitive
     description:
@@ -990,7 +972,7 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: master
+      ref: "v1.0.23"
       resolved-ref: "5f56dc56a6670e2533b0caa7d09d31d16e6c7663"
       url: "https://github.com/lollipopkit/plain_notification_token"
     source: git
@@ -1419,19 +1401,20 @@ packages:
   watch_connectivity:
     dependency: "direct main"
     description:
-      name: watch_connectivity
-      sha256: a4257a314601c8448662d1a91421321a2e8a3207937fec4792116f1270ea8766
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.0"
+      path: "."
+      ref: "v1.0.84"
+      resolved-ref: "50405d87bea86aece143c235b8b17263d37de3ef"
+      url: "https://github.com/lollipopkit/watch_connectivity"
+    source: git
+    version: "0.1.5"
   watch_connectivity_platform_interface:
     dependency: transitive
     description:
       name: watch_connectivity_platform_interface
-      sha256: "82e8f165eac779d71bff7f6269a8be530798311cf7f3c33f1594d93468747d11"
+      sha256: "9074115391bd764c08a17346fcbc4d5c0b555672defbe6928ac648503b54aa9c"
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.0"
+    version: "0.1.2"
   watcher:
     dependency: transitive
     description:
@@ -1540,4 +1523,4 @@ packages:
     version: "0.0.6"
 sdks:
   dart: ">=3.4.0 <4.0.0"
-  flutter: ">=3.19.0"
+  flutter: ">=3.22.0"
