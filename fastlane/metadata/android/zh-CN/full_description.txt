@@ -1,0 +1,7 @@
+使用 Flutter 开发的 Linux 服务器工具箱，提供服务器状态图表和管理工具。
+特别感谢 dartssh2 & xterm.dart。
+
+特点：
+* 状态图表（CPU、传感器、GPU 等）, SSH 终端, SFTP, Docker & 包 & 进程管理器...
+* 特殊支持：生物认证、推送、桌面小部件、watchOS App、跟随系统颜色...
+* 本地化 (English, 简体中文, Español, Русский язык, Português, 日本語, Deutsch, 繁體中文, Indonesian, Français, Dutch
