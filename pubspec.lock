@@ -989,10 +989,11 @@ packages:
   plain_notification_token:
     dependency: "direct main"
     description:
-      name: plain_notification_token
-      sha256: "32481c1c6ad76613ed38822ffe819ea5d5534f9e07e8ff1d44aafe069f45ea24"
-      url: "https://pub.dev"
-    source: hosted
+      path: "."
+      ref: master
+      resolved-ref: "5f56dc56a6670e2533b0caa7d09d31d16e6c7663"
+      url: "https://github.com/lollipopkit/plain_notification_token"
+    source: git
     version: "0.0.4"
   platform:
     dependency: transitive
