@@ -35,7 +35,6 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
         children: [
           _buildBgRun(),
           _buildAndroidWidgetSharedPreference(),
-          _buildWatch(),
           if (BioAuth.isPlatformSupported)
             PlatformPublicSettings.buildBioAuth(),
         ].map((e) => CardX(child: e)).toList(),
@@ -52,7 +51,6 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
   }
 
   void _saveWidgetSP(Map<String, String> map, Map<String, String> old) {
-    context.pop();
     try {
       final keysDel = old.keys.toSet().difference(map.keys.toSet());
       for (final key in keysDel) {
@@ -99,39 +97,40 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
     );
   }
 
-  Widget _buildWatch() {
-    return FutureWidget(
-      future: wc.isReachable,
-      error: (e, s) {
-        Loggers.app.warning('WatchOS error', e, s);
-        return ListTile(
-          title: const Text('Watch app'),
-          subtitle: Text(l10n.viewErr, style: UIs.textGrey),
-          trailing: const Icon(Icons.keyboard_arrow_right),
-          onTap: () {
-            context.showRoundDialog(
-              title: l10n.error,
-              child: SingleChildScrollView(
-                child: SimpleMarkdown(data: '${e.toString()}\n```$s```'),
-              ),
-            );
-          },
-        );
-      },
-      success: (val) {
-        if (val == null) {
-          return ListTile(
-            title: const Text('Watch app'),
-            subtitle: Text(l10n.watchNotPaired, style: UIs.textGrey),
-          );
-        }
-        return ListTile(
-          title: const Text('Watch app'),
-          subtitle: Text(l10n.sync, style: UIs.textGrey),
-          trailing: const Icon(Icons.keyboard_arrow_right),
-          onTap: () async {},
-        );
-      },
-    );
-  }
+  /// It's removed due to Issue #381
+  // Widget _buildWatch() {
+  //   return FutureWidget(
+  //     future: wc.isReachable,
+  //     error: (e, s) {
+  //       Loggers.app.warning('WatchOS error', e, s);
+  //       return ListTile(
+  //         title: const Text('Watch app'),
+  //         subtitle: Text(l10n.viewErr, style: UIs.textGrey),
+  //         trailing: const Icon(Icons.keyboard_arrow_right),
+  //         onTap: () {
+  //           context.showRoundDialog(
+  //             title: l10n.error,
+  //             child: SingleChildScrollView(
+  //               child: SimpleMarkdown(data: '${e.toString()}\n```$s```'),
+  //             ),
+  //           );
+  //         },
+  //       );
+  //     },
+  //     success: (val) {
+  //       if (val == null) {
+  //         return ListTile(
+  //           title: const Text('Watch app'),
+  //           subtitle: Text(l10n.watchNotPaired, style: UIs.textGrey),
+  //         );
+  //       }
+  //       return ListTile(
+  //         title: const Text('Watch app'),
+  //         subtitle: Text(l10n.sync, style: UIs.textGrey),
+  //         trailing: const Icon(Icons.keyboard_arrow_right),
+  //         onTap: () async {},
+  //       );
+  //     },
+  //   );
+  // }
 }
