@@ -376,8 +376,8 @@ packages:
     dependency: "direct dev"
     description:
       path: "."
-      ref: "v1.0.21"
-      resolved-ref: "99955c45e990e742f4f314fbd66e146fbcec95e5"
+      ref: "v1.0.22"
+      resolved-ref: "379df0e16b39da0612939f83f4e73190fb4665c9"
       url: "https://github.com/lppcg/fl_build.git"
     source: git
     version: "1.0.0"
@@ -1502,8 +1502,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: master
-      resolved-ref: "13a280e77dd077b439af24ad3d054d318ae5df4a"
+      ref: "v1.0.586"
+      resolved-ref: b8c73bec722055f24c5724cd2f2297859e95b6af
       url: "https://github.com/lollipopkit/xterm.dart"
     source: git
     version: "4.0.0"

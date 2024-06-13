@@ -1,7 +1,7 @@
 name: server_box
 description: server status & toolbox app.
 publish_to: 'none'
-version: 1.0.975+975
+version: 1.0.976+976
 
 environment:
   sdk: ">=3.0.0"
@@ -43,7 +43,7 @@ dependencies:
   xterm:
     git:
       url: https://github.com/lollipopkit/xterm.dart
-      ref: master
+      ref: v1.0.586
   computer:
     git:
       url: https://github.com/lollipopkit/dart_computer
@@ -80,7 +80,7 @@ dev_dependencies:
     # path: ../fl_build
     git:
       url: https://github.com/lppcg/fl_build.git
-      ref: v1.0.21
+      ref: v1.0.22
 
 flutter:
   generate: true
