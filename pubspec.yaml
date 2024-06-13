@@ -1,7 +1,7 @@
 name: server_box
 description: server status & toolbox app.
 publish_to: 'none'
-version: 1.0.973+973
+version: 1.0.974+974
 
 environment:
   sdk: ">=3.0.0"
@@ -80,7 +80,7 @@ dev_dependencies:
     # path: ../fl_build
     git:
       url: https://github.com/lppcg/fl_build.git
-      ref: v1.0.19
+      ref: v1.0.20
 
 flutter:
   generate: true
