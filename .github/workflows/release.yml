@@ -32,13 +32,18 @@ jobs:
           curl -u ${{ secrets.BASIC_AUTH }} -o android/key.properties ${{ secrets.URL_PREFIX }}key.properties
       - name: Build
         run: dart run fl_build -p android,linux
+      - name: Rename for fdroid
+        run: |
+          mv build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_arm64.apk build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_arm64.apk
+          mv build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_arm.apk build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_arm.apk
+          mv build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.apk build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_amd64.apk
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_arm64.apk
-            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_arm.apk
-            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.apk
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_arm64.apk
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_arm.apk
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_amd64.apk
             ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
