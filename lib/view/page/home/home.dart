@@ -224,17 +224,10 @@ class _HomePageState extends State<HomePage>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _buildIcon(),
-          TextButton(
-            onPressed: () => context.showRoundDialog(
-              title: BuildDataX.versionStr,
-              child: const Text(
-                  '${BuildData.buildAt}\nFlutter ${BuildData.engine}'),
-            ),
-            child: const Text(
-              '${BuildData.name}\n${BuildDataX.versionStr}',
-              textAlign: TextAlign.center,
-              style: UIs.text15,
-            ),
+          const Text(
+            '${BuildData.name}\n${BuildDataX.versionStr}',
+            textAlign: TextAlign.center,
+            style: UIs.text15,
           ),
           const SizedBox(height: 37),
           _buildTiles(),
