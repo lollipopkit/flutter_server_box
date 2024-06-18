@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:after_layout/after_layout.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';

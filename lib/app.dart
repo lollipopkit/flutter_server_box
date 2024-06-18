@@ -71,6 +71,7 @@ class MyApp extends StatelessWidget {
         ...AppLocalizations.localizationsDelegates,
       ],
       supportedLocales: AppLocalizations.supportedLocales,
+      localeListResolutionCallback: LocaleUtil.resolve,
       title: BuildData.name,
       themeMode: themeMode,
       theme: light,
