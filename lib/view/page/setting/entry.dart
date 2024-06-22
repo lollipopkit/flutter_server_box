@@ -7,7 +7,6 @@ import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/data/res/rebuild.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
@@ -737,47 +736,29 @@ class _SettingPageState extends State<SettingPage> {
       leading: const Icon(Icons.delete_forever),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () async {
-        context.showRoundDialog<List<String>>(
-          title: l10n.choose,
-          child: SingleChildScrollView(
-            child: StatefulBuilder(builder: (ctx, setState) {
-              final keys = Stores.server.box.keys.toList();
-              keys.removeWhere((element) => element == BoxX.lastModifiedKey);
-              final all = keys.map(
-                (e) {
-                  final name = Pros.server.pick(id: e)?.spi.name;
-                  return ListTile(
-                    title: Text(name ?? e),
-                    subtitle: name != null ? Text(e) : null,
-                    onTap: () => context.showRoundDialog(
-                      title: l10n.attention,
-                      child: Text(l10n.askContinue(
-                        '${l10n.delete} ${l10n.server}($e)',
-                      )),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            Pros.server.delServer(e);
-                            ctx.pop();
-                            setState(() {});
-                          },
-                          child: Text(l10n.ok),
-                        )
-                      ],
-                    ),
-                  );
-                },
-              );
-              return ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 377),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: all.toList(),
-                ),
-              );
-            }),
-          ),
+        final keys = Stores.server.box.keys.toList();
+        keys.removeWhere((element) => element == BoxX.lastModifiedKey);
+        final strKeys = List<String>.empty(growable: true);
+        for (final key in keys) {
+          if (key is String) strKeys.add(key);
+        }
+        final deleteKeys = await context.showPickDialog<String>(
+          clearable: true,
+          items: strKeys,
         );
+        if (deleteKeys == null) return;
+
+        final md = deleteKeys.map((e) => '- $e').join('\n');
+        final sure = await context.showRoundDialog(
+          title: l10n.attention,
+          child: SimpleMarkdown(data: md),
+        );
+
+        if (sure != true) return;
+        for (final key in deleteKeys) {
+          Stores.server.box.delete(key);
+        }
+        context.showSnackBar(l10n.success);
       },
     );
   }
