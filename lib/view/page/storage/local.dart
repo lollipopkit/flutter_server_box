@@ -314,7 +314,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
             leading: const Icon(Icons.open_in_new),
             title: Text(l10n.open),
             onTap: () {
-              Pfs.sharePath(file.absolute.path);
+              Pfs.share(path: file.absolute.path);
             },
           ),
         ],
