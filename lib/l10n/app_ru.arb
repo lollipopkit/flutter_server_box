@@ -231,6 +231,7 @@
   "rememberChoice": "Запомнить выбор",
   "rememberPwdInMem": "Запомнить пароль в памяти",
   "rememberPwdInMemTip": "Используется для контейнеров, приостановки и т. д.",
+  "rememberWindowSize": "Запомнить размер окна",
   "remotePath": "удаленный путь",
   "rename": "переименовать",
   "reportBugsOnGithubIssue": "Пожалуйста, сообщайте о проблемах на {url}",

@@ -231,6 +231,7 @@
   "rememberChoice": "Ingat pilihan",
   "rememberPwdInMem": "Ingat kata sandi di dalam memori",
   "rememberPwdInMemTip": "Digunakan untuk kontainer, menangguhkan, dll.",
+  "rememberWindowSize": "Ingat ukuran jendela",
   "remotePath": "Jalur jarak jauh",
   "rename": "Ganti nama",
   "reportBugsOnGithubIssue": "Harap laporkan bug di {url}",

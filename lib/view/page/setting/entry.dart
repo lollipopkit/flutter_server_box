@@ -11,6 +11,7 @@ import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/data/res/rebuild.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
+import 'package:server_box/view/page/setting/platform/platform_pub.dart';
 
 import '../../../core/route.dart';
 import '../../../data/model/app/net_view.dart';
@@ -1071,6 +1072,7 @@ class _SettingPageState extends State<SettingPage> {
         _buildCollapseUI(),
         _buildCupertinoRoute(),
         if (isDesktop) _buildHideTitleBar(),
+        if (isDesktop) PlatformPublicSettings.buildSaveWindowSize(),
       ],
     );
   }

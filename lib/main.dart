@@ -9,6 +9,7 @@ import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
+import 'package:server_box/core/utils/window_size_listener.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/core/utils/sync/icloud.dart';
@@ -68,7 +69,12 @@ Future<void> _initApp() async {
   await _initData();
   _setupDebug();
 
-  SystemUIs.initDesktopWindow(Stores.setting.hideTitleBar.fetch());
+  final windowSize = Stores.setting.windowSize.fetch().toSize();
+  SystemUIs.initDesktopWindow(
+    hideTitleBar: Stores.setting.hideTitleBar.fetch(),
+    size: windowSize,
+    listener: WindowSizeListener.instance,
+  );
   FontUtils.loadFrom(Stores.setting.fontPath.fetch());
 
   _doPlatformRelated();

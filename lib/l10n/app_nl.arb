@@ -230,6 +230,7 @@
   "rememberChoice": "Selectie onthouden",
   "rememberPwdInMem": "Wachtwoord onthouden in geheugen",
   "rememberPwdInMemTip": "Gebruikt voor containers, opschorting, enz.",
+  "rememberWindowSize": "Venstergrootte onthouden",
   "remotePath": "Extern pad",
   "rename": "Hernoemen",
   "reportBugsOnGithubIssue": "Meld alstublieft bugs op {url}",

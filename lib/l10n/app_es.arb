@@ -231,6 +231,7 @@
   "rememberChoice": "Recordar la selección",
   "rememberPwdInMem": "Recordar contraseña en la memoria",
   "rememberPwdInMemTip": "Utilizado para contenedores, suspensión, etc.",
+  "rememberWindowSize": "Recordar el tamaño de la ventana",
   "remotePath": "Ruta remota",
   "rename": "Renombrar",
   "reportBugsOnGithubIssue": "Por favor, informa los problemas en {url}",

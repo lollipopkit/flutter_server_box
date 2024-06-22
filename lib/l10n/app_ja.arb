@@ -231,6 +231,7 @@
   "rememberChoice": "選択を記憶する",
   "rememberPwdInMem": "メモリにパスワードを記憶する",
   "rememberPwdInMemTip": "コンテナ、一時停止などに使用されます。",
+  "rememberWindowSize": "ウィンドウサイズを記憶する",
   "remotePath": "リモートパス",
   "rename": "名前を変更",
   "reportBugsOnGithubIssue": "{url}で問題を報告してください",
