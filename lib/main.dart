@@ -71,7 +71,6 @@ Future<void> _initApp() async {
 
   final windowSize = Stores.setting.windowSize.fetch().toSize();
   final hideTitleBar = Stores.setting.hideTitleBar.fetch();
-  print('windowSize: $windowSize, hideTitleBar: $hideTitleBar');
   SystemUIs.initDesktopWindow(
     hideTitleBar: hideTitleBar,
     size: windowSize,
