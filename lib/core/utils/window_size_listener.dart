@@ -8,52 +8,40 @@ abstract final class WindowSizeListener {
 
 final class _WindowSizeListener implements WindowListener {
   @override
-  void onWindowBlur() {
-  }
+  void onWindowBlur() {}
 
   @override
-  void onWindowClose() {
-  }
+  void onWindowClose() {}
 
   @override
-  void onWindowDocked() {
-  }
+  void onWindowDocked() {}
 
   @override
-  void onWindowEnterFullScreen() {
-  }
+  void onWindowEnterFullScreen() {}
 
   @override
-  void onWindowEvent(String eventName) {
-  }
+  void onWindowEvent(String eventName) {}
 
   @override
-  void onWindowFocus() {
-  }
+  void onWindowFocus() {}
 
   @override
-  void onWindowLeaveFullScreen() {
-  }
+  void onWindowLeaveFullScreen() {}
 
   @override
-  void onWindowMaximize() {
-  }
+  void onWindowMaximize() {}
 
   @override
-  void onWindowMinimize() {
-  }
+  void onWindowMinimize() {}
 
   @override
-  void onWindowMove() {
-  }
+  void onWindowMove() {}
 
   @override
-  void onWindowMoved() {
-  }
+  void onWindowMoved() {}
 
   @override
   void onWindowResize() {
-    if (!isLinux) return;
     final current = Stores.setting.windowSize.fetch();
     if (current.isEmpty) return;
 
@@ -63,26 +51,14 @@ final class _WindowSizeListener implements WindowListener {
   }
 
   @override
-  void onWindowResized() {
-    if (!isMacOS || !isWindows) return;
-    final current = Stores.setting.windowSize.fetch();
-    if (current.isEmpty) return;
-
-    windowManager.getSize().then((size) {
-      Stores.setting.windowSize.put(size.toIntStr());
-    });
-  }
+  void onWindowResized() {}
 
   @override
-  void onWindowRestore() {
-  }
+  void onWindowRestore() {}
 
   @override
-  void onWindowUndocked() {
-  }
+  void onWindowUndocked() {}
 
   @override
-  void onWindowUnmaximize() {
-  }
-
+  void onWindowUnmaximize() {}
 }
