@@ -231,6 +231,7 @@
   "rememberChoice": "記住選擇",
   "rememberPwdInMem": "在記憶體中記住密碼",
   "rememberPwdInMemTip": "用於容器、暫停等",
+  "rememberWindowSize": "記住窗口大小",
   "remotePath": "遠端路徑",
   "rename": "重命名",
   "reportBugsOnGithubIssue": "請到 {url} 提交問題",

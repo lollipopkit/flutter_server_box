@@ -276,6 +276,10 @@ class SettingStore extends PersistentStore {
 
   late final betaTest = property('betaTest', false);
 
+  /// If it's empty, skip change window size.
+  /// Format: {width}x{height}
+  late final windowSize = property('windowSize', '');
+
   // Never show these settings for users
   //
   // ------BEGIN------

@@ -231,6 +231,7 @@
   "rememberChoice": "Auswahl merken",
   "rememberPwdInMem": "Passwort im Speicher behalten",
   "rememberPwdInMemTip": "Für Container, Aufhängen usw.",
+  "rememberWindowSize": "Fenstergröße merken",
   "remotePath": "Entfernte Pfade",
   "rename": "Umbenennen",
   "reportBugsOnGithubIssue": "Bitte Bugs auf {url} melden",
