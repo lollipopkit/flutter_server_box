@@ -82,9 +82,7 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
   Widget _buildWatchApp() {
     return FutureWidget(
       future: () async {
-        if (!await wc.isPaired) {
-          return null;
-        }
+        if (!await wc.isPaired) return null;
         return await wc.applicationContext;
       }(),
       loading: UIs.centerLoading,
@@ -114,16 +112,15 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
   void _onTapWatchApp(Map<String, dynamic> map) async {
     final urls = Map<String, String>.from(map['urls'] as Map? ?? {});
     final result = await AppRoutes.kvEditor(data: urls).go(context);
-    if (result == null || result! is Map<String, String>) return;
+    if (result == null || result is! Map<String, String>) return;
 
     try {
-      await wc.updateApplicationContext({'urls': result});
-    } catch (e, trace) {
-      context.showRoundDialog(
-        title: l10n.error,
-        child: Text('${l10n.save}:\n$e'),
-      );
-      Loggers.app.warning('Update watch config failed', e, trace);
+      await context.showLoadingDialog(fn: () async {
+        await wc.updateApplicationContext({'urls': result});
+      });
+    } catch (e, s) {
+      context.showErrDialog(e: e, s: s, operation: 'Watch Context');
+      Loggers.app.warning('Update watch config failed', e, s);
     }
   }
 }
