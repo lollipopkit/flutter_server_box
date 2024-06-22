@@ -1,6 +1,4 @@
 PODS:
-  - countly_flutter (24.4.1):
-    - Flutter
   - device_info_plus (0.0.1):
     - Flutter
   - file_picker (0.0.1):
@@ -36,7 +34,6 @@ PODS:
     - Flutter
 
 DEPENDENCIES:
-  - countly_flutter (from `.symlinks/plugins/countly_flutter/ios`)
   - device_info_plus (from `.symlinks/plugins/device_info_plus/ios`)
   - file_picker (from `.symlinks/plugins/file_picker/ios`)
   - Flutter (from `Flutter`)
@@ -55,8 +52,6 @@ DEPENDENCIES:
   - watch_connectivity (from `.symlinks/plugins/watch_connectivity/ios`)
 
 EXTERNAL SOURCES:
-  countly_flutter:
-    :path: ".symlinks/plugins/countly_flutter/ios"
   device_info_plus:
     :path: ".symlinks/plugins/device_info_plus/ios"
   file_picker:
@@ -91,7 +86,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/watch_connectivity/ios"
 
 SPEC CHECKSUMS:
-  countly_flutter: 56233d921c6b4e0a720774a39b8ee8110d6f8d91
   device_info_plus: 97af1d7e84681a90d0693e63169a5d50e0839a0d
   file_picker: c79185e70b9b45728cde2a8d8da454e0cb43f287
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7

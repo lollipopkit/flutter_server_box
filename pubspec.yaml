@@ -50,7 +50,7 @@ dependencies:
   watch_connectivity:
     git:
       url: https://github.com/lollipopkit/watch_connectivity
-      ref: v1.0.84
+      ref: v1.0.85
   plain_notification_token:
     git:
       url: https://github.com/lollipopkit/plain_notification_token
