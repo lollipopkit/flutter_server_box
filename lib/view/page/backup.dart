@@ -66,18 +66,7 @@ class BackupPage extends StatelessWidget {
             trailing: const Icon(Icons.save),
             onTap: () async {
               final path = await Backup.backup();
-              debugPrint("Backup path: $path");
-
-              /// Issue #188
-              switch (Pfs.type) {
-                case Pfs.windows:
-                  final backslashPath = path.replaceAll('/', '\\');
-                  await Process.run('explorer', ['/select,$backslashPath']);
-                case Pfs.linux:
-                  await Process.run('xdg-open', [path]);
-                default:
-                  await Pfs.sharePath(path);
-              }
+              await Pfs.share(path: path);
             },
           ),
           ListTile(

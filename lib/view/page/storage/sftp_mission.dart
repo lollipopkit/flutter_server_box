@@ -59,65 +59,84 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
         ),
       );
     }
-    switch (status.status) {
-      case SftpWorkerStatus.finished:
-        final time = status.spentTime.toString();
-        final str = '${l10n.finished} ${l10n.spentTime(
-          time == 'null' ? l10n.unknown : (time.substring(0, time.length - 7)),
-        )}';
-        return _wrapInCard(
-          status: status,
-          subtitle: str,
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                  onPressed: () {
-                    final idx = status.req.localPath.lastIndexOf('/');
-                    final dir = status.req.localPath.substring(0, idx);
-                    AppRoutes.localStorage(initDir: dir).go(context);
-                  },
-                  icon: const Icon(Icons.file_open)),
-              IconButton(
-                onPressed: () => Pfs.sharePath(status.req.localPath),
-                icon: const Icon(Icons.open_in_new),
-              )
-            ],
-          ),
-        );
-      case SftpWorkerStatus.loading:
-        final percentStr = (status.progress ?? 0.0).toStringAsFixed(2);
-        final size = (status.size ?? 0).bytes2Str;
-        return _wrapInCard(
-          status: status,
-          subtitle: l10n.percentOfSize(percentStr, size),
-          trailing: _buildDelete(status.fileName, status.id),
-        );
-      case SftpWorkerStatus.preparing:
-        return _wrapInCard(
-          status: status,
-          subtitle: l10n.sftpDlPrepare,
-          trailing: _buildDelete(status.fileName, status.id),
-        );
-      case SftpWorkerStatus.sshConnectted:
-        return _wrapInCard(
-          status: status,
-          subtitle: l10n.sftpSSHConnected,
-          trailing: _buildDelete(status.fileName, status.id),
-        );
-      default:
-        return _wrapInCard(
-          status: status,
-          subtitle: l10n.unknown,
-          trailing: IconButton(
-            onPressed: () => context.showRoundDialog(
-              title: l10n.error,
-              child: Text((status.error ?? l10n.unknown).toString()),
-            ),
-            icon: const Icon(Icons.error),
-          ),
-        );
-    }
+    return switch (status.status) {
+      const (SftpWorkerStatus.finished) => _buildFinished(status),
+      const (SftpWorkerStatus.loading) => _buildLoading(status),
+      const (SftpWorkerStatus.sshConnectted) => _buildConnected(status),
+      const (SftpWorkerStatus.preparing) => _buildPreparing(status),
+      _ => _buildDefault(status),
+    };
+  }
+
+  Widget _buildPreparing(SftpReqStatus status) {
+    return _wrapInCard(
+      status: status,
+      subtitle: l10n.sftpDlPrepare,
+      trailing: _buildDelete(status.fileName, status.id),
+    );
+  }
+
+  Widget _buildDefault(SftpReqStatus status) {
+    return _wrapInCard(
+      status: status,
+      subtitle: l10n.unknown,
+      trailing: IconButton(
+        onPressed: () => context.showRoundDialog(
+          title: l10n.error,
+          child: Text((status.error ?? l10n.unknown).toString()),
+        ),
+        icon: const Icon(Icons.error),
+      ),
+    );
+  }
+
+  Widget _buildConnected(SftpReqStatus status) {
+    return _wrapInCard(
+      status: status,
+      subtitle: l10n.sftpSSHConnected,
+      trailing: _buildDelete(status.fileName, status.id),
+    );
+  }
+
+  Widget _buildLoading(SftpReqStatus status) {
+    final percentStr = (status.progress ?? 0.0).toStringAsFixed(2);
+    final size = (status.size ?? 0).bytes2Str;
+    return _wrapInCard(
+      status: status,
+      subtitle: l10n.percentOfSize(percentStr, size),
+      trailing: _buildDelete(status.fileName, status.id),
+    );
+  }
+
+  Widget _buildFinished(SftpReqStatus status) {
+    final time = status.spentTime.toString();
+    final str = '${l10n.finished} ${l10n.spentTime(
+      time == 'null' ? l10n.unknown : (time.substring(0, time.length - 7)),
+    )}';
+
+    final btns = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          onPressed: () {
+            final idx = status.req.localPath.lastIndexOf('/');
+            final dir = status.req.localPath.substring(0, idx);
+            AppRoutes.localStorage(initDir: dir).go(context);
+          },
+          icon: const Icon(Icons.file_open),
+        ),
+        IconButton(
+          onPressed: () => Pfs.share(path: status.req.localPath),
+          icon: const Icon(Icons.open_in_new),
+        )
+      ],
+    );
+
+    return _wrapInCard(
+      status: status,
+      subtitle: str,
+      trailing: btns,
+    );
   }
 
   Widget _wrapInCard({
