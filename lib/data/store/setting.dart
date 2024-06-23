@@ -280,6 +280,8 @@ class SettingStore extends PersistentStore {
   /// Format: {width}x{height}
   late final windowSize = property('windowSize', '');
 
+  late final showIntro = property('showIntro', true);
+
   // Never show these settings for users
   //
   // ------BEGIN------

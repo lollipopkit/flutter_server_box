@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/channel/home_widget.dart';
 import 'package:server_box/core/extension/build.dart';
@@ -59,9 +58,6 @@ class _HomePageState extends State<HomePage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    context.setLibL10n();
-    final appL10n = AppLocalizations.of(context);
-    if (appL10n != null) l10n = appL10n;
     _isLandscape.value =
         MediaQuery.of(context).orientation == Orientation.landscape;
   }
