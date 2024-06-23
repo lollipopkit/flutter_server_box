@@ -178,6 +178,7 @@
   "newContainer": "Nieuwe container",
   "noClient": "Geen client",
   "noInterface": "Geen interface",
+  "noLineChart": "lijndiagrammen gebruiken",
   "noNotiPerm": "Geen meldingsmachtigingen, mogelijk geen voortgangsindicatie bij het downloaden van app-updates.",
   "noOptions": "Geen opties",
   "noPrivateKeyTip": "De privésleutel bestaat niet, deze is mogelijk verwijderd of er is een configuratiefout.",

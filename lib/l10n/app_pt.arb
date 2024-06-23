@@ -178,7 +178,7 @@
   "newContainer": "Novo contêiner",
   "noClient": "Sem conexão SSH",
   "noInterface": "Sem interface disponível",
-  "noLineChart": "Gebruik geen lijndiagrammen",
+  "noLineChart": "Não usar gráficos de linha",
   "noNotiPerm": "Sem permissão de notificação, possivelmente sem indicação de progresso ao baixar atualizações de aplicativos.",
   "noOptions": "Sem opções",
   "noPrivateKeyTip": "A chave privada não existe, pode ter sido deletada ou há um erro de configuração.",

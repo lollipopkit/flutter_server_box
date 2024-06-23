@@ -55,6 +55,7 @@ abstract final class PlatformPublicSettings {
 
     return ListTile(
       title: Text(l10n.rememberWindowSize),
+
       /// Copied from `fl_build/view/store_switch`
       trailing: ValBuilder(
         listenable: isBusy,
