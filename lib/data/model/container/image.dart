@@ -111,13 +111,13 @@ final class DockerImg implements ContainerImg {
       final Object? a => a.toString(),
     };
     return DockerImg(
-        containers: containers,
-        createdAt: json["CreatedAt"],
-        id: json["ID"] ?? json["Id"] ?? '',
-        repository: repo,
-        size: size,
-        tag: json["Tag"],
-      );
+      containers: containers,
+      createdAt: json["CreatedAt"],
+      id: json["ID"] ?? json["Id"] ?? '',
+      repository: repo,
+      size: size,
+      tag: json["Tag"],
+    );
   }
 
   Map<String, dynamic> toJson() => {

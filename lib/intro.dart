@@ -2,7 +2,7 @@ part of 'app.dart';
 
 final class _IntroPage extends StatelessWidget {
   const _IntroPage();
-  
+
   static final _setting = Stores.setting;
   static const _kIconSize = 23.0;
   static const _introListPad = EdgeInsets.symmetric(horizontal: 17);
