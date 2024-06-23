@@ -160,11 +160,18 @@ class ContainerProvider extends ChangeNotifier {
     }
 
     // Parse images
-    final imageRaw = ContainerCmdType.images.find(segments);
+    final imageRaw = ContainerCmdType.images.find(segments).trim();
+    final isEntireJson = imageRaw.startsWith('[') && imageRaw.endsWith(']');
     try {
-      final imgLines = imageRaw.split('\n');
-      imgLines.removeWhere((element) => element.isEmpty);
-      images = imgLines.map((e) => ContainerImg.fromRawJson(e, type)).toList();
+      if (isEntireJson) {
+        images = (json.decode(imageRaw) as List)
+            .map((e) => ContainerImg.fromRawJson(json.encode(e), type))
+            .toList();
+      } else {
+        final lines = imageRaw.split('\n');
+        lines.removeWhere((element) => element.isEmpty);
+        images = lines.map((e) => ContainerImg.fromRawJson(e, type)).toList();
+      }
     } catch (e, trace) {
       error = ContainerErr(
         type: ContainerErrType.parseImages,
@@ -298,6 +305,6 @@ enum ContainerCmdType {
   }) {
     return ContainerCmdType.values
         .map((e) => e.exec(type, sudo: sudo, includeStats: includeStats))
-        .join(' && echo ${ShellFunc.seperator} && ');
+        .join('\necho ${ShellFunc.seperator}\n');
   }
 }
