@@ -368,8 +368,8 @@ packages:
     dependency: "direct dev"
     description:
       path: "."
-      ref: "v1.0.27"
-      resolved-ref: e04757d6570f5cd4fd6b3b004dffd2eb6e75c94d
+      ref: "v1.0.29"
+      resolved-ref: "2b53f17befdf4fa2672cb3f3fbe218f8d078a171"
       url: "https://github.com/lppcg/fl_build.git"
     source: git
     version: "1.0.0"

@@ -18,7 +18,7 @@ final class _IntroPage extends StatelessWidget {
             _buildRecommended(context, padTop),
           ],
           onDone: (ctx) {
-            //Stores.setting.showIntro.put(false);
+            Stores.setting.showIntro.put(false);
             Navigator.of(ctx).pushReplacement(
               MaterialPageRoute(builder: (_) => const HomePage()),
             );
