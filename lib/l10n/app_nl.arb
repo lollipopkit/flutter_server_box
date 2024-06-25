@@ -101,7 +101,7 @@
   "export": "Exporteren",
   "extraArgs": "Extra argumenten",
   "failed": "Mislukt",
-  "fdroidReleaseTip": "Als u deze app van Fdroid heeft gedownload, wordt aanbevolen deze optie uit te schakelen.",
+  "fdroidReleaseTip": "Als u deze app van F-Droid heeft gedownload, wordt aanbevolen deze optie uit te schakelen.",
   "feedback": "Feedback",
   "feedbackOnGithub": "Als je vragen hebt, geef dan feedback op Github.",
   "fieldMustNotEmpty": "Deze velden mogen niet leeg zijn.",

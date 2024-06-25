@@ -101,7 +101,7 @@
   "export": "エクスポート",
   "extraArgs": "追加引数",
   "failed": "失敗しました",
-  "fdroidReleaseTip": "このアプリをFdroidからダウンロードした場合、このオプションをオフにすることをお勧めします。",
+  "fdroidReleaseTip": "このアプリをF-Droidからダウンロードした場合、このオプションをオフにすることをお勧めします。",
   "feedback": "フィードバック",
   "feedbackOnGithub": "問題がある場合は、GitHubでフィードバックしてください",
   "fieldMustNotEmpty": "これらの入力フィールドは空にできません。",

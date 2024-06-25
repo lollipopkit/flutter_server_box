@@ -101,7 +101,7 @@
   "export": "導出",
   "extraArgs": "額外參數",
   "failed": "失敗",
-  "fdroidReleaseTip": "如果你是從 Fdroid 下載的本應用，推薦關閉此選項",
+  "fdroidReleaseTip": "如果你是從 F-Droid 下載的本應用，推薦關閉此選項",
   "feedback": "反饋",
   "feedbackOnGithub": "如果你有任何問題，請在GitHub反饋",
   "fieldMustNotEmpty": "這些輸入框不能為空。",
