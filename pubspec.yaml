@@ -79,7 +79,7 @@ dev_dependencies:
     # path: ../fl_build
     git:
       url: https://github.com/lppcg/fl_build.git
-      ref: v1.0.29
+      ref: v1.0.30
 
 flutter:
   generate: true
