@@ -101,7 +101,7 @@
   "export": "Export",
   "extraArgs": "Extra args",
   "failed": "Failed",
-  "fdroidReleaseTip": "Wenn Sie diese App von Fdroid heruntergeladen haben, wird empfohlen, diese Option zu deaktivieren.",
+  "fdroidReleaseTip": "Wenn Sie diese App von F-Droid heruntergeladen haben, wird empfohlen, diese Option zu deaktivieren.",
   "feedback": "Feedback",
   "feedbackOnGithub": "Wenn du Fragen hast, stelle diese bitte auf Github.",
   "fieldMustNotEmpty": "Die Eingabefelder dürfen nicht leer sein.",

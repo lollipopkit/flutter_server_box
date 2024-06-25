@@ -101,7 +101,7 @@
   "export": "Export",
   "extraArgs": "Extra args",
   "failed": "Failed",
-  "fdroidReleaseTip": "If you downloaded this app from Fdroid, it is recommended to turn off this option.",
+  "fdroidReleaseTip": "If you downloaded this app from F-Droid, it is recommended to turn off this option.",
   "feedback": "Feedback",
   "feedbackOnGithub": "If you have any questions, please feedback on Github.",
   "fieldMustNotEmpty": "These fields must not be empty.",

@@ -101,7 +101,7 @@
   "export": "Exporter",
   "extraArgs": "Arguments supplémentaires",
   "failed": "Échoué",
-  "fdroidReleaseTip": "Si vous avez téléchargé cette application depuis Fdroid, il est recommandé de désactiver cette option.",
+  "fdroidReleaseTip": "Si vous avez téléchargé cette application depuis F-Droid, il est recommandé de désactiver cette option.",
   "feedback": "Retour",
   "feedbackOnGithub": "Si vous avez des questions, veuillez donner votre avis sur Github.",
   "fieldMustNotEmpty": "Ces champs ne doivent pas être vides.",

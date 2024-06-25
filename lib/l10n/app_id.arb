@@ -101,7 +101,7 @@
   "export": "Ekspor",
   "extraArgs": "Args ekstra",
   "failed": "Gagal",
-  "fdroidReleaseTip": "Jika Anda mengunduh aplikasi ini dari Fdroid, disarankan untuk mematikan opsi ini.",
+  "fdroidReleaseTip": "Jika Anda mengunduh aplikasi ini dari F-Droid, disarankan untuk mematikan opsi ini.",
   "feedback": "Masukan",
   "feedbackOnGithub": "Jika Anda memiliki pertanyaan, silakan umpan balik tentang GitHub.",
   "fieldMustNotEmpty": "Bidang -bidang ini tidak boleh kosong.",
