@@ -71,11 +71,7 @@ class MyApp extends StatelessWidget {
               brightness: Brightness.dark,
               colorSchemeSeed: UIs.colorSeed,
             ))
-<<<<<<< HEAD
-        .useSystemChineseFont(Brightness.light);
-=======
         .useSystemChineseFont(Brightness.dark);
->>>>>>> eec4323b (fix: chinese font display (lollipopkit/flutter_server_box#397))
 
     return MaterialApp(
       locale: locale,
