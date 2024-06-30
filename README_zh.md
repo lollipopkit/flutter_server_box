@@ -13,15 +13,31 @@
 特别感谢 <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a> & <a href="https://github.com/TerminalStudio/xterm.dart">xterm.dart</a>。
 </p>
 
+## 📥 安装
 
-## ⬇️ Download
+### 从 F-Droid 安装 (Android)
+
+<a href="https://f-droid.org/packages/tech.lolli.toolbox">
+    <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on-zh-cn.png"
+    alt="Get it on F-Droid"
+    height="80">
+</a>
+
+### 从 App Store 安装 (iOS / macOS)
+
+<a href="https://apps.apple.com/app/id1586449703">
+    <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
+    height="80">
+</a>
+
+### 手动安装 (Android / Linux / Windows)
+
 🎉 **现在 `Android / Linux / Windows` 版本使用 GitHub Actions 构建**。
 
-[iOS & macOS](https://apps.apple.com/app/id1586449703) / [Android & Linux & Windows](https://github.com/lollipopkit/flutter_server_box/releases)
+请从 [GitHub Releases](https://github.com/lollipopkit/flutter_server_box/releases) 下载。
 
 - 所有 `v930` 之前的版本可以在 [这里](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid) 找到。
 - 为了防止注入攻击等，请不要从不受信任的来源下载。例如：Gitee 的发行包与该项目无关。
-
 
 ## 🔖 特点
 - `状态图表`（CPU、传感器、GPU 等）, `SSH` 终端, `SFTP`, `Docker & 包 & 进程` 管理器...
