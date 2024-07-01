@@ -175,7 +175,7 @@
   "name": "Nama",
   "needHomeDir": "Jika Anda pengguna Synology, [lihat di sini](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Pengguna sistem lain perlu mencari cara membuat direktori home.",
   "needRestart": "Perlu memulai ulang aplikasi",
-  "net": "Net",
+  "net": "Jaringan",
   "netViewType": "Jenis tampilan bersih",
   "newContainer": "Wadah baru",
   "noClient": "Tidak ada klien",
