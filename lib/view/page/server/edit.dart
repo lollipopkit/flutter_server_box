@@ -423,7 +423,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
           type: TextInputType.url,
           icon: MingCute.web_line,
           node: node,
-          label: l10n.addr,
+          label: 'URL',
           hint: addr,
         ),
       ),
@@ -486,7 +486,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
       Input(
         controller: _wolMacCtrl,
         type: TextInputType.text,
-        label: 'Mac ${l10n.addr}',
+        label: 'MAC ${l10n.addr}',
         icon: Icons.computer,
         hint: '00:11:22:33:44:55',
       ),
