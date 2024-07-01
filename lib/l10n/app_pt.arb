@@ -181,6 +181,7 @@
   "noClient": "Sem conexão SSH",
   "noInterface": "Sem interface disponível",
   "noLineChart": "Não usar gráficos de linha",
+  "noLineChartForCpu": "Não utilizar gráficos de linhas para a CPU",
   "noNotiPerm": "Sem permissão de notificação, possivelmente sem indicação de progresso ao baixar atualizações de aplicativos.",
   "noOptions": "Sem opções",
   "noPrivateKeyTip": "A chave privada não existe, pode ter sido deletada ou há um erro de configuração.",

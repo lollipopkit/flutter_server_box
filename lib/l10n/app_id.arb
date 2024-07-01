@@ -181,6 +181,7 @@
   "noClient": "Tidak ada klien",
   "noInterface": "Tidak ada antarmuka",
   "noLineChart": "Jangan gunakan grafik garis",
+  "noLineChartForCpu": "Jangan gunakan diagram garis untuk CPU",
   "noNotiPerm": "Tidak ada izin notifikasi, mungkin tidak ada indikasi kemajuan saat mengunduh pembaruan aplikasi.",
   "noOptions": "Tidak ada opsi",
   "noPrivateKeyTip": "Kunci privat tidak ada, mungkin telah dihapus atau ada kesalahan konfigurasi.",
