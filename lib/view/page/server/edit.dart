@@ -423,7 +423,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
           type: TextInputType.url,
           icon: MingCute.web_line,
           node: node,
-          label: l10n.addr,
+          label: 'URL',
           hint: addr,
         ),
       ),
