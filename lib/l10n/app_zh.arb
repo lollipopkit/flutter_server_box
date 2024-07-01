@@ -181,6 +181,7 @@
   "noClient": "没有SSH连接",
   "noInterface": "没有可用的接口",
   "noLineChart": "不使用折线图",
+  "noLineChartForCpu": "CPU 不使用折线图",
   "noNotiPerm": "无通知权限，可能下载App更新时无进度提示。",
   "noOptions": "无可选项",
   "noPrivateKeyTip": "私钥不存在，可能已被删除/配置错误",

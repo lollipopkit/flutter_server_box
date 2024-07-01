@@ -181,6 +181,7 @@
   "noClient": "SSH接続がありません",
   "noInterface": "使用可能なインターフェースがありません",
   "noLineChart": "折れ線グラフを使用しない",
+  "noLineChartForCpu": "CPUに折れ線グラフを使わない",
   "noNotiPerm": "通知の権限がないため、アプリの更新のダウンロード中に進行状況が表示されない場合があります。",
   "noOptions": "選択肢がありません",
   "noPrivateKeyTip": "秘密鍵が存在しません。削除されたか、設定ミスがある可能性があります。",

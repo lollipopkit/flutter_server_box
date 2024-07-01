@@ -181,6 +181,7 @@
   "noClient": "Kein Client",
   "noInterface": "Kein Interface",
   "noLineChart": "Verwenden Sie keine Liniendiagramme",
+  "noLineChartForCpu": "Verwenden Sie keine Liniendiagramme für CPU",
   "noNotiPerm": "Keine Benachrichtigungsrechte, möglicherweise keine Fortschrittsanzeige beim Herunterladen von App-Updates.",
   "noOptions": "Keine Optionen verfügbar",
   "noPrivateKeyTip": "Der private Schlüssel existiert nicht, möglicherweise wurde er gelöscht oder es liegt ein Konfigurationsfehler vor.",

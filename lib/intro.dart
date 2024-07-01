@@ -49,7 +49,7 @@ final class _IntroPage extends StatelessWidget {
         ).cardx,
         ListTile(
           leading: const Icon(OctIcons.cpu),
-          title: Text('CPU ${l10n.noLineChart}'),
+          title: Text(l10n.noLineChartForCpu),
           subtitle: Text(l10n.cpuViewAsProgressTip, style: UIs.textGrey),
           trailing: StoreSwitch(prop: _setting.cpuViewAsProgress),
         ).cardx,

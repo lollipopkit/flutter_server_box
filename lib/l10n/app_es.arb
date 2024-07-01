@@ -181,6 +181,7 @@
   "noClient": "No hay conexión SSH",
   "noInterface": "No hay interfaz disponible",
   "noLineChart": "No utilice gráficos de líneas",
+  "noLineChartForCpu": "No utilice gráficos lineales para la CPU",
   "noNotiPerm": "Sin permisos de notificación, posiblemente sin indicación de progreso al descargar actualizaciones de la aplicación.",
   "noOptions": "Sin opciones disponibles",
   "noPrivateKeyTip": "La clave privada no existe, puede haber sido eliminada o hay un error de configuración.",

@@ -181,6 +181,7 @@
   "noClient": "No client",
   "noInterface": "No interface",
   "noLineChart": "Do not use line charts",
+  "noLineChartForCpu": "Do not use line charts for CPU",
   "noNotiPerm": "No notification permissions, possibly no progress indication when downloading app updates.",
   "noOptions": "No options",
   "noPrivateKeyTip": "The private key does not exist, it may have been deleted or there is a configuration error.",

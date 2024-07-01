@@ -181,6 +181,7 @@
   "noClient": "Pas de client",
   "noInterface": "Pas d'interface",
   "noLineChart": "Ne pas utiliser de graphiques linéaires",
+  "noLineChartForCpu": "Ne pas utiliser de graphiques linéaires pour l'unité centrale",
   "noNotiPerm": "Pas de permissions de notification, peut-être pas d'indication de progression lors de la mise à jour des applications.",
   "noOptions": "Pas d'options",
   "noPrivateKeyTip": "La clé privée n'existe pas, elle a peut-être été supprimée ou il y a une erreur de configuration.",
