@@ -175,7 +175,7 @@
   "name": "Name",
   "needHomeDir": "If you are a Synology user, [see here](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Users of other systems need to search for how to create a home directory.",
   "needRestart": "App needs to be restarted",
-  "net": "Net",
+  "net": "Network",
   "netViewType": "Network view type",
   "newContainer": "New container",
   "noClient": "No client",

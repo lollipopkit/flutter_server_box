@@ -175,7 +175,7 @@
   "name": "Name",
   "needHomeDir": "Wenn Sie ein Synology-Benutzer sind, [sehen Sie hier](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Benutzer anderer Systeme müssen suchen, wie man ein Home-Verzeichnis erstellt.",
   "needRestart": "App muss neugestartet werden",
-  "net": "Netz",
+  "net": "Netzwerk",
   "netViewType": "Netzwerkansicht Typ",
   "newContainer": "Neuer Container",
   "noClient": "Kein Client",
