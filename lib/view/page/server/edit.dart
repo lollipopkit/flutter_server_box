@@ -381,7 +381,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
           controller: _logoUrlCtrl,
           type: TextInputType.url,
           icon: Icons.image,
-          label: 'Url',
+          label: 'URL',
           hint: 'https://example.com/logo.png',
         ),
         UIs.height7,
