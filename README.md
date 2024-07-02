@@ -16,29 +16,14 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 
 ## 📥 Install
 
-### Install from F-Droid (Android)
+Platform | From
+--- | --- 
+iOS / macOS | [AppStore](https://apps.apple.com/app/id1586449703)
+Android | [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid)
+Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid)
 
-<a href="https://f-droid.org/packages/tech.lolli.toolbox">
-    <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
-    alt="Get it on F-Droid"
-    height="80">
-</a>
-
-### Install from App Store (iOS / macOS)
-
-<a href="https://apps.apple.com/app/id1586449703">
-    <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
-    height="80">
-</a>
-
-### Manual installation (Android / Linux / Windows)
-
-🎉 **The `Android / Linux / Windows` version are now built via GitHub Actions**
-
-Please download from [GitHub Releases](https://github.com/lollipopkit/flutter_server_box/releases).
-
-- All deprecated versions before `v930` can be found in [here](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid).
-- To prevent injection attacks and etc., please don't download / install from untrusted sources. eg: Gitee release is not related to this project.
+To prevent injection attacks and etc., please don't download / install from untrusted sources. eg: Gitee release is not related to this project.  
+`CDN` packages are built by myself, if you don't trust, please download from GitHub / build by yourself.
 
 ## 🔖 Feature
 - `Status chart` (CPU, Sensors, GPU...), `SSH` Term, `SFTP`, `Docker & Pkg & Process`...
@@ -48,16 +33,14 @@ Please download from [GitHub Releases](https://github.com/lollipopkit/flutter_se
 ## 🏙️ ScreenShots
 <table>
   <tr>
-    <td><img width="277px" src="imgs/server.png"></td>
-    <td><img width="277px" src="imgs/detail.png"></td>
-    <td><img width="277px" src="imgs/sftp.png"></td>
+    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/1.png"></td>
+    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/2.png"></td>
+    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/3.png"></td>
   </tr>
-</table>
-<table>
   <tr>
-    <td><img width="277px" src="imgs/editor.png"> </td>
-    <td><img width="277px" src="imgs/ssh.png"></td>
-    <td><img width="277px" src="imgs/docker.png"></td>
+    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/4.png"> </td>
+    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/5.png"></td>
+    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/6.png"></td>
   </tr>
 </table>
 

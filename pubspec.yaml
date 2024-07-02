@@ -58,7 +58,7 @@ dependencies:
   fl_lib:
     git:
       url: https://github.com/lppcg/fl_lib
-      ref: v1.0.50
+      ref: v1.0.56
 
 dependency_overrides:
 #   dartssh2:
@@ -79,7 +79,7 @@ dev_dependencies:
     # path: ../fl_build
     git:
       url: https://github.com/lppcg/fl_build.git
-      ref: v1.0.30
+      ref: v1.0.32
 
 flutter:
   generate: true
