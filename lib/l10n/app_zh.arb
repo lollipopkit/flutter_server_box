@@ -303,7 +303,7 @@
   "total": "总共",
   "traffic": "流量",
   "trySudo": "尝试使用sudo",
-  "ttl": "缓存时间",
+  "ttl": "TTL",
   "unknown": "未知",
   "unknownError": "未知错误",
   "unkownConvertMode": "未知转换模式",
