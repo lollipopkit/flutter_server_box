@@ -303,7 +303,7 @@
   "total": "Total",
   "traffic": "Tráfego",
   "trySudo": "Tentar usar sudo",
-  "ttl": "Tempo de vida do cache",
+  "ttl": "TTL",
   "unknown": "Desconhecido",
   "unknownError": "Erro desconhecido",
   "unkownConvertMode": "Modo de conversão desconhecido",

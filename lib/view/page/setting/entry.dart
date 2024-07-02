@@ -1135,13 +1135,13 @@ class _SettingPageState extends State<SettingPage> {
 
     return ListTile(
       leading: const Icon(Icons.image),
-      title: Text('Logo ${l10n.addr}'),
+      title: Text('Logo URL'),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () {
         final ctrl =
             TextEditingController(text: _setting.serverLogoUrl.fetch());
         context.showRoundDialog(
-          title: 'Logo ${l10n.addr}',
+          title: 'Logo URL',
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

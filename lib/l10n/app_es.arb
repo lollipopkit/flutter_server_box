@@ -303,7 +303,7 @@
   "total": "Total",
   "traffic": "Tráfico",
   "trySudo": "Intentar con sudo",
-  "ttl": "Tiempo de vida (TTL)",
+  "ttl": "TTL",
   "unknown": "Desconocido",
   "unknownError": "Error desconocido",
   "unkownConvertMode": "Modo de conversión desconocido",
