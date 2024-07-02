@@ -31,6 +31,7 @@ dependencies:
   flutter_adaptive_scaffold: ^0.1.10+2
   device_info_plus: ^10.1.0
   extended_image: ^8.2.1
+  chinese_font_library: ^1.2.0
   dartssh2:
     git:
       url: https://github.com/lollipopkit/dartssh2
