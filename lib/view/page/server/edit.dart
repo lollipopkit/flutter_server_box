@@ -248,7 +248,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         controller: _altUrlController,
         type: TextInputType.url,
         node: _alterUrlFocus,
-        label: l10n.alterUrl,
+        label: l10n.fallbackSshDest,
         icon: MingCute.link_line,
         hint: 'user@ip:port',
       ),
