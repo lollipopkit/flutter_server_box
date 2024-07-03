@@ -280,8 +280,6 @@ class SettingStore extends PersistentStore {
   /// Format: {width}x{height}
   late final windowSize = property('windowSize', '');
 
-  late final showIntro = property('showIntro', true);
-
   late final introVer = property('introVer', 0);
 
   late final letterCache = property('letterCache', false);

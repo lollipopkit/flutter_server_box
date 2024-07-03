@@ -85,7 +85,6 @@ class MyApp extends StatelessWidget {
           context.setLibL10n();
           final appL10n = AppLocalizations.of(context);
           if (appL10n != null) l10n = appL10n;
-          print(Stores.setting.introVer.fetch());
 
           final intros = _IntroPage.builders;
           if (intros.isNotEmpty) {
