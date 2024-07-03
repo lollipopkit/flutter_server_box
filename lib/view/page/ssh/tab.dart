@@ -108,27 +108,16 @@ class _SSHTabPageState extends State<SSHTabPage>
         }
         return GridView.builder(
           padding: const EdgeInsets.all(7),
-          itemBuilder: (context, idx) {
+          itemBuilder: (_, idx) {
             final spi = Pros.server.pick(id: pro.serverOrder[idx])?.spi;
             if (spi == null) return UIs.placeholder;
             return CardX(
-              child: InkWell(
+              child: ListTile(
+                contentPadding: const EdgeInsets.only(left: 17, right: 7),
+                title: Text(spi.name),
+                trailing: const Icon(Icons.chevron_right),
                 onTap: () => _onTapInitCard(spi),
-                child: Container(
-                  alignment: Alignment.centerLeft,
-                  padding: const EdgeInsets.only(left: 17, right: 7),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        spi.name,
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                      const Icon(Icons.chevron_right)
-                    ],
-                  ),
-                ),
-              ),
+              ).center(),
             );
           },
           itemCount: pro.servers.length,
