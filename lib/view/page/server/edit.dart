@@ -5,12 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/app/shell_func.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/res/provider.dart';
-import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/res/url.dart';
 
 import '../../../core/route.dart';
 import '../../../data/model/server/server_private_info.dart';
@@ -152,44 +149,17 @@ class _ServerEditPageState extends State<ServerEditPage> {
   Widget _buildDelBtn() {
     return IconButton(
       onPressed: () {
-        var delScripts = false;
         context.showRoundDialog(
           title: l10n.attention,
           child: StatefulBuilder(builder: (ctx, setState) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(l10n.askContinue(
-                  '${l10n.delete} ${l10n.server}(${widget.spi!.name})',
-                )),
-                UIs.height13,
-                if (widget.spi?.server?.canViewDetails ?? false)
-                  CheckboxListTile(
-                    value: delScripts,
-                    onChanged: (_) => setState(
-                      () => delScripts = !delScripts,
-                    ),
-                    controlAffinity: ListTileControlAffinity.leading,
-                    title: Text(l10n.deleteScripts),
-                    tileColor: Colors.transparent,
-                    contentPadding: EdgeInsets.zero,
-                  )
-              ],
-            );
+            return Text(l10n.askContinue(
+              '${l10n.delete} ${l10n.server}(${widget.spi!.name})',
+            ));
           }),
           actions: [
             TextButton(
               onPressed: () async {
                 context.pop();
-                if (delScripts) {
-                  await context.showLoadingDialog(
-                    fn: () async {
-                      const cmd = 'rm ${ShellFunc.srvBoxDir}/mobile_v*.sh';
-                      return widget.spi?.server?.client?.run(cmd);
-                    },
-                  );
-                }
                 Pros.server.delServer(widget.spi!.id);
                 context.pop(true);
               },
@@ -649,16 +619,16 @@ class _ServerEditPageState extends State<ServerEditPage> {
       wolCfg: wol,
     );
 
-    final tipShown = Stores.history.writeScriptTipShown;
-    if (!tipShown.fetch()) {
-      final ok = await context.showRoundDialog(
-        title: l10n.attention,
-        child: SimpleMarkdown(data: l10n.beforeConnect(Urls.thisRepo)),
-        actions: Btns.oks(onTap: () => context.pop(true)),
-      );
-      if (ok != true) return;
-      tipShown.put(true);
-    }
+    // final tipShown = Stores.history.writeScriptTipShown;
+    // if (!tipShown.fetch()) {
+    //   final ok = await context.showRoundDialog(
+    //     title: l10n.attention,
+    //     child: SimpleMarkdown(data: l10n.beforeConnect(Urls.thisRepo)),
+    //     actions: Btns.oks(onTap: () => context.pop(true)),
+    //   );
+    //   if (ok != true) return;
+    //   tipShown.put(true);
+    // }
 
     if (widget.spi == null) {
       Pros.server.addServer(spi);

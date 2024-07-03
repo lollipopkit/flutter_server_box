@@ -1135,7 +1135,7 @@ class _SettingPageState extends State<SettingPage> {
 
     return ListTile(
       leading: const Icon(Icons.image),
-      title: Text('Logo URL'),
+      title: const Text('Logo URL'),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () {
         final ctrl =

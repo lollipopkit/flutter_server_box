@@ -12,32 +12,17 @@ enum ShellFunc {
   suspend,
   ;
 
-  static const _homeVar = '\$HOME';
   static const seperator = 'SrvBoxSep';
 
   /// The suffix `\t` is for formatting
   static const cmdDivider = '\necho $seperator\n\t';
-  static const _srvBoxDir = '.config/server_box';
-  static const scriptFile = 'mobile_v${BuildData.script}.sh';
 
-  /// Issue #159
-  ///
-  /// Use script commit count as version of shell script.
-  ///
-  /// So different version of app can run at the same time.
-  ///
-  /// **Can't** use it in SFTP, because SFTP can't recognize `$HOME`
-  static String getShellPath(String home) => '$home/$_srvBoxDir/$scriptFile';
-
-  static const srvBoxDir = '$_homeVar/$_srvBoxDir';
-  static const _installShellPath = '$_homeVar/$_srvBoxDir/$scriptFile';
-
-  // Issue #299, chmod ~/.config to avoid permission issue
+  /// srvboxm -> ServerBox Mobile
+  static const scriptFile = 'srvboxm_v${BuildData.script}.sh';
+  static const scriptPath = '/dev/shm/$scriptFile';
   static const installShellCmd = """
-chmod +x ~/.config &> /dev/null
-mkdir -p $_homeVar/$_srvBoxDir
-cat > $_installShellPath
-chmod +x $_installShellPath
+cat > $scriptPath
+chmod +x $scriptPath
 """;
 
   String get flag {
@@ -57,7 +42,7 @@ chmod +x $_installShellPath
     }
   }
 
-  String get exec => 'sh $_installShellPath -$flag';
+  String get exec => 'sh $scriptPath -$flag';
 
   String get name {
     switch (this) {

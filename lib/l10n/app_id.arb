@@ -25,7 +25,6 @@
   "backupTip": "Data yang diekspor hanya dienkripsi.\nTolong jaga keamanannya.",
   "backupVersionNotMatch": "Versi cadangan tidak cocok.",
   "battery": "Baterai",
-  "beforeConnect": "ServerBox akan menulis dan menjalankan skrip di `~/.config/server_box` setelah koneksi. Untuk detail teknis lebih lanjut, silakan kunjungi [Github]({url}).",
   "bgRun": "Jalankan di Backgroud",
   "bgRunTip": "Sakelar ini hanya berarti aplikasi akan mencoba berjalan di latar belakang, apakah aplikasi dapat berjalan di latar belakang tergantung pada apakah izin diaktifkan atau tidak. Untuk Android asli, nonaktifkan \"Pengoptimalan Baterai\" di aplikasi ini, dan untuk miui, ubah kebijakan penghematan daya ke \"Tidak Terbatas\".",
   "bioAuth": "Biosertifikasi",

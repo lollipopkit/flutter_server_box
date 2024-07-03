@@ -25,7 +25,6 @@
   "backupTip": "Os dados exportados são criptografados de forma simples, por favor, guarde-os com segurança.",
   "backupVersionNotMatch": "Versão de backup não compatível, não é possível restaurar",
   "battery": "Bateria",
-  "beforeConnect": "O ServerBox escreverá e executará um script em `~/.config/server_box` após a conexão. Para mais detalhes técnicos, por favor visite [Github]({url}).",
   "bgRun": "Execução em segundo plano",
   "bgRunTip": "Este interruptor indica que o programa tentará rodar em segundo plano, mas a capacidade de fazer isso depende das permissões concedidas. No Android nativo, desative a 'Otimização de bateria' para este app, no MIUI, altere a estratégia de economia de energia para 'Sem restrições'.",
   "bioAuth": "Autenticação biométrica",
