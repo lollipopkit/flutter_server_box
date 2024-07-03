@@ -129,6 +129,7 @@ class SSHPageState extends State<SSHPage>
   }
 
   Widget _buildBody() {
+    final letterCache = Stores.setting.letterCache.fetch();
     return SizedBox(
       height: _media.size.height -
           _virtKeysHeight -
@@ -144,8 +145,10 @@ class SSHPageState extends State<SSHPage>
           _terminal,
           key: _termKey,
           controller: _terminalController,
-          keyboardType: TextInputType.text,
-          enableSuggestions: true,
+          keyboardType: letterCache
+              ? TextInputType.text
+              : TextInputType.visiblePassword,
+          enableSuggestions: !letterCache,
           textStyle: _terminalStyle,
           theme: _terminalTheme,
           deleteDetection: isMobile,

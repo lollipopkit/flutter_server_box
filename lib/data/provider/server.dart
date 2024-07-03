@@ -347,9 +347,13 @@ class ServerProvider extends ChangeNotifier {
           if (homePath == null || homePath.isEmpty) {
             throw Exception('Got empty home path');
           }
-          final remotePath = ShellFunc.getShellPath(homePath);
           final reqId = Pros.sftp.add(
-            SftpReq(spi, remotePath, localPath, SftpReqType.upload),
+            SftpReq(
+              spi,
+              ShellFunc.scriptPath,
+              localPath,
+              SftpReqType.upload,
+            ),
             completer: completer,
           );
           await completer.future;

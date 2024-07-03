@@ -156,6 +156,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildSSH() {
     return Column(
       children: [
+        _buildLetterCache(),
         _buildSSHWakeLock(),
         _buildTermTheme(),
         _buildFont(),
@@ -1135,13 +1136,13 @@ class _SettingPageState extends State<SettingPage> {
 
     return ListTile(
       leading: const Icon(Icons.image),
-      title: Text('Logo ${l10n.addr}'),
+      title: const Text('Logo URL'),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () {
         final ctrl =
             TextEditingController(text: _setting.serverLogoUrl.fetch());
         context.showRoundDialog(
-          title: 'Logo ${l10n.addr}',
+          title: 'Logo URL',
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1176,6 +1177,18 @@ class _SettingPageState extends State<SettingPage> {
       title: const Text('Beta Program'),
       subtitle: Text(l10n.acceptBeta, style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.betaTest),
+    );
+  }
+
+  Widget _buildLetterCache() {
+    return ListTile(
+      leading: const Icon(Bootstrap.input_cursor),
+      title: Text(l10n.letterCache),
+      subtitle: Text(
+        '${l10n.letterCacheTip}\n${l10n.needRestart}',
+        style: UIs.textGrey,
+      ),
+      trailing: StoreSwitch(prop: _setting.letterCache),
     );
   }
 }

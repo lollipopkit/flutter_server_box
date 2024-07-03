@@ -1,24 +1,26 @@
 part of 'app.dart';
 
 final class _IntroPage extends StatelessWidget {
-  const _IntroPage();
+  final List<IntroPageBuilder> pages;
 
-  static final _setting = Stores.setting;
-  static const _kIconSize = 23.0;
-  static const _introListPad = EdgeInsets.symmetric(horizontal: 17);
+  const _IntroPage(this.pages);
+
+  static const _builders = {
+    1: _buildAppSettings,
+    2: _buildRecommended,
+    1006: _buildTermLetterCache,
+  };
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, cons) {
-        final padTop = cons.maxHeight * .2;
+        final padTop = cons.maxHeight * .16;
+        final pages_ = pages.map((e) => e(context, padTop)).toList();
         return IntroPage(
-          pages: [
-            _buildAppSettings(context, padTop),
-            _buildRecommended(context, padTop),
-          ],
+          pages: pages_,
           onDone: (ctx) {
-            Stores.setting.showIntro.put(false);
+            Stores.setting.introVer.put(BuildData.build);
             Navigator.of(ctx).pushReplacement(
               MaterialPageRoute(builder: (_) => const HomePage()),
             );
@@ -28,12 +30,29 @@ final class _IntroPage extends StatelessWidget {
     );
   }
 
-  Widget _buildRecommended(BuildContext context, double padTop) {
+  static Widget _buildTermLetterCache(BuildContext context, double padTop) {
     return ListView(
       padding: _introListPad,
       children: [
         SizedBox(height: padTop),
-        const Icon(Bootstrap.stars, size: 35),
+        IntroPage.title(icon: BoxIcons.bxs_terminal, big: true),
+        SizedBox(height: padTop),
+        ListTile(
+          leading: const Icon(Bootstrap.input_cursor),
+          title: Text(l10n.letterCache),
+          subtitle: Text(l10n.letterCacheTip, style: UIs.textGrey),
+          trailing: StoreSwitch(prop: _setting.letterCache),
+        ).cardx,
+      ],
+    );
+  }
+
+  static Widget _buildRecommended(BuildContext context, double padTop) {
+    return ListView(
+      padding: _introListPad,
+      children: [
+        SizedBox(height: padTop),
+        IntroPage.title(icon: Bootstrap.stars, big: true),
         SizedBox(height: padTop),
         ListTile(
           leading: const Icon(MingCute.delete_2_fill),
@@ -49,7 +68,7 @@ final class _IntroPage extends StatelessWidget {
         ).cardx,
         ListTile(
           leading: const Icon(OctIcons.cpu),
-          title: Text('CPU ${l10n.noLineChart}'),
+          title: Text(l10n.noLineChartForCpu),
           subtitle: Text(l10n.cpuViewAsProgressTip, style: UIs.textGrey),
           trailing: StoreSwitch(prop: _setting.cpuViewAsProgress),
         ).cardx,
@@ -57,12 +76,12 @@ final class _IntroPage extends StatelessWidget {
     );
   }
 
-  Widget _buildAppSettings(BuildContext ctx, double padTop) {
+  static Widget _buildAppSettings(BuildContext ctx, double padTop) {
     return ListView(
       padding: _introListPad,
       children: [
         SizedBox(height: padTop),
-        _buildTitle(l10n.init, big: true),
+        IntroPage.title(text: l10n.init, big: true),
         SizedBox(height: padTop),
         ListTile(
           leading: const Icon(IonIcons.language),
@@ -94,14 +113,15 @@ final class _IntroPage extends StatelessWidget {
     );
   }
 
-  Widget _buildTitle(String text, {bool big = false}) {
-    return Center(
-      child: Text(
-        text,
-        style: big
-            ? const TextStyle(fontSize: 41, fontWeight: FontWeight.w500)
-            : UIs.textGrey,
-      ),
-    );
+  static List<IntroPageBuilder> get builders {
+    final storedVer = _setting.introVer.fetch();
+    return _builders.entries
+        .where((e) => e.key > storedVer)
+        .map((e) => e.value)
+        .toList();
   }
+
+  static final _setting = Stores.setting;
+  static const _kIconSize = 23.0;
+  static const _introListPad = EdgeInsets.symmetric(horizontal: 17);
 }

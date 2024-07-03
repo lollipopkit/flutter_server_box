@@ -13,15 +13,16 @@
 特别感谢 <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a> & <a href="https://github.com/TerminalStudio/xterm.dart">xterm.dart</a>。
 </p>
 
+## 📥 安装
 
-## ⬇️ Download
-🎉 **现在 `Android / Linux / Windows` 版本使用 GitHub Actions 构建**。
+平台 | 下载
+--- | --- 
+iOS / macOS | [AppStore](https://apps.apple.com/app/id1586449703)
+Android | [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid) / [国内小水管服务器](https://res.lolli.tech/serverbox/?sort=time&order=desc&layout=grid)
+Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid) / [国内小水管服务器](https://res.lolli.tech/serverbox/?sort=time&order=desc&layout=grid)
 
-[iOS & macOS](https://apps.apple.com/app/id1586449703) / [Android & Linux & Windows](https://github.com/lollipopkit/flutter_server_box/releases)
-
-- 所有 `v930` 之前的版本可以在 [这里](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid) 找到。
-- 为了防止注入攻击等，请不要从不受信任的来源下载。例如：Gitee 的发行包与该项目无关。
-
+为了防止注入攻击等，请不要从不受信任的来源下载。例如：Gitee 的发行包与该项目无关。  
+`CDN / 国内小水管` 的安装包于本人本机构建，如果不信任请 在 Github 下载 / 自行构建。
 
 ## 🔖 特点
 - `状态图表`（CPU、传感器、GPU 等）, `SSH` 终端, `SFTP`, `Docker & 包 & 进程` 管理器...
@@ -35,16 +36,14 @@
 ## 🏙️ 截屏
 <table>
   <tr>
-    <td><img width="277px" src="imgs/server.png"></td>
-    <td><img width="277px" src="imgs/detail.png"></td>
-    <td><img width="277px" src="imgs/sftp.png"></td>
+    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/1.png"></td>
+    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/2.png"></td>
+    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/3.png"></td>
   </tr>
-</table>
-<table>
   <tr>
-    <td><img width="277px" src="imgs/editor.png"> </td>
-    <td><img width="277px" src="imgs/ssh.png"></td>
-    <td><img width="277px" src="imgs/docker.png"></td>
+    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/4.png"> </td>
+    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/5.png"></td>
+    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/6.png"></td>
   </tr>
 </table>
 
