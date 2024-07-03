@@ -156,6 +156,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildSSH() {
     return Column(
       children: [
+        _buildLetterCache(),
         _buildSSHWakeLock(),
         _buildTermTheme(),
         _buildFont(),
@@ -1176,6 +1177,18 @@ class _SettingPageState extends State<SettingPage> {
       title: const Text('Beta Program'),
       subtitle: Text(l10n.acceptBeta, style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.betaTest),
+    );
+  }
+
+  Widget _buildLetterCache() {
+    return ListTile(
+      leading: const Icon(Bootstrap.input_cursor),
+      title: Text(l10n.letterCache),
+      subtitle: Text(
+        '${l10n.letterCacheTip}\n${l10n.needRestart}',
+        style: UIs.textGrey,
+      ),
+      trailing: StoreSwitch(prop: _setting.letterCache),
     );
   }
 }

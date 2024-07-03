@@ -80,36 +80,22 @@ class MyApp extends StatelessWidget {
       themeMode: themeMode,
       theme: light,
       darkTheme: tMode < 3 ? dark : dark.toAmoled,
-      home: _buildAppContent(ctx),
+      home: Builder(
+        builder: (context) {
+          context.setLibL10n();
+          final appL10n = AppLocalizations.of(context);
+          if (appL10n != null) l10n = appL10n;
+          print(Stores.setting.introVer.fetch());
+
+          final intros = _IntroPage.builders;
+          if (intros.isNotEmpty) {
+            return _IntroPage(intros);
+          }
+
+          return const HomePage();
+        },
+      ),
     );
-  }
-
-  Widget _buildAppContent(BuildContext ctx) {
-    //if (Pros.app.isWearOS) return const WearHome();
-    return const _AppContent(
-      intro: _IntroPage(),
-      child: HomePage(),
-    );
-  }
-}
-
-/// It's used for init settings related to [BuildContext]
-final class _AppContent extends StatelessWidget {
-  final Widget child;
-  final Widget intro;
-
-  const _AppContent({required this.child, required this.intro});
-
-  @override
-  Widget build(BuildContext context) {
-    context.setLibL10n();
-    final appL10n = AppLocalizations.of(context);
-    if (appL10n != null) l10n = appL10n;
-
-    final showIntro = Stores.setting.showIntro.fetch();
-    if (showIntro) return intro;
-
-    return child;
   }
 }
 

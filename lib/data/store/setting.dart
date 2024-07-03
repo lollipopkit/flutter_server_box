@@ -282,6 +282,10 @@ class SettingStore extends PersistentStore {
 
   late final showIntro = property('showIntro', true);
 
+  late final introVer = property('introVer', 0);
+
+  late final letterCache = property('letterCache', false);
+
   // Never show these settings for users
   //
   // ------BEGIN------
