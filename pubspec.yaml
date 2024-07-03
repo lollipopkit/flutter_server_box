@@ -58,7 +58,7 @@ dependencies:
   fl_lib:
     git:
       url: https://github.com/lppcg/fl_lib
-      ref: v1.0.59
+      ref: v1.0.60
 
 dependency_overrides:
 #   dartssh2:
