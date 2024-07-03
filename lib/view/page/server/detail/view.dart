@@ -82,6 +82,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       final s = widget.spi.server;
       if (s == null) {
         return Scaffold(
+          appBar: const CustomAppBar(),
           body: Center(
             child: Text(l10n.noClient),
           ),
