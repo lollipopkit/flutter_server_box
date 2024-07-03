@@ -172,6 +172,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
                 : Text(
                     subtitle,
                     maxLines: 1,
+                    style: UIs.textGrey,
                     overflow: TextOverflow.ellipsis,
                   ),
             onTap: () async {

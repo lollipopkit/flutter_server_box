@@ -25,7 +25,6 @@
   "backupTip": "De geëxporteerde gegevens zijn simpelweg versleuteld. \nBewaar deze aub veilig.",
   "backupVersionNotMatch": "Back-upversie komt niet overeen.",
   "battery": "Batterij",
-  "beforeConnect": "ServerBox zal na verbinding een script schrijven en uitvoeren in `~/.config/server_box`. Voor meer technische details, bezoek [Github]({url}).",
   "bgRun": "Uitvoeren op de achtergrond",
   "bgRunTip": "Deze schakelaar betekent alleen dat het programma zal proberen op de achtergrond uit te voeren, of het in de achtergrond kan worden uitgevoerd, hangt af van of de toestemming is ingeschakeld of niet. Voor native Android, schakel \"Batterijoptimalisatie\" uit in deze app, en voor miui, wijzig de energiebesparingsbeleid naar \"Onbeperkt\".",
   "bioAuth": "Biometrische authenticatie",
