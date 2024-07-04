@@ -1,3 +1,4 @@
+import 'package:chinese_font_library/chinese_font_library.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/l10n/gen_l10n/lib_l10n.dart';
@@ -58,15 +59,19 @@ class MyApp extends StatelessWidget {
     };
     final locale = Stores.setting.locale.fetch().toLocale;
 
-    light ??= ThemeData(
-      useMaterial3: true,
-      colorSchemeSeed: UIs.colorSeed,
-    );
-    dark ??= ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      colorSchemeSeed: UIs.colorSeed,
-    );
+    light = (light ??
+            ThemeData(
+              useMaterial3: true,
+              colorSchemeSeed: UIs.colorSeed,
+            ))
+        .useSystemChineseFont(Brightness.light);
+    dark = (dark ??
+            ThemeData(
+              useMaterial3: true,
+              brightness: Brightness.dark,
+              colorSchemeSeed: UIs.colorSeed,
+            ))
+        .useSystemChineseFont(Brightness.dark);
 
     return MaterialApp(
       locale: locale,
