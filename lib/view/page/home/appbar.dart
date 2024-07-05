@@ -14,6 +14,8 @@ final class _AppBar extends CustomAppBar {
 
   @override
   Widget build(BuildContext context) {
+    if (isDesktop) return super.build(context);
+
     final placeholder = SizedBox(
       height: CustomAppBar.barHeight ?? 0 + MediaQuery.of(context).padding.top,
     );
@@ -25,7 +27,7 @@ final class _AppBar extends CustomAppBar {
         return ValBuilder(
           listenable: selectIndex,
           builder: (idx) {
-            if (idx == AppTab.ssh.index && !isWindows && !isLinux) {
+            if (idx == AppTab.ssh.index) {
               return placeholder;
             }
             return super.build(context);
