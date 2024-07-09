@@ -18,11 +18,13 @@
 平台 | 下载
 --- | --- 
 iOS / macOS | [AppStore](https://apps.apple.com/app/id1586449703)
-Android | [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid) / [国内小水管服务器](https://res.lolli.tech/serverbox/?sort=time&order=desc&layout=grid)
-Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid) / [国内小水管服务器](https://res.lolli.tech/serverbox/?sort=time&order=desc&layout=grid)
+Android | [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid) / [OpenAPK](https://www.openapk.net/serverbox/tech.lolli.toolbox/)
+Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid)
 
-为了防止注入攻击等，请不要从不受信任的来源下载。例如：Gitee 的发行包与该项目无关。  
-`CDN / 国内小水管` 的安装包于本人本机构建，如果不信任请 在 Github 下载 / 自行构建。
+**请不要从不受信任的来源下载!**
+- `AppStore` & `CDN` 的包由我构建
+- Github 的包由 Github Actions 构建
+- 其他来源由其所有者构建
 
 ## 🔖 特点
 - `状态图表`（CPU、传感器、GPU 等）, `SSH` 终端, `SFTP`, `Docker & 包 & 进程` 管理器...

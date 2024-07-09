@@ -19,11 +19,13 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 Platform | From
 --- | --- 
 iOS / macOS | [AppStore](https://apps.apple.com/app/id1586449703)
-Android | [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid)
+Android | [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid) / [OpenAPK](https://www.openapk.net/serverbox/tech.lolli.toolbox/)
 Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid)
 
-To prevent injection attacks and etc., please don't download / install from untrusted sources. eg: Gitee release is not related to this project.  
-`CDN` packages are built by myself, if you don't trust, please download from GitHub / build by yourself.
+**Please only download pkgs from the source that you trust!**  
+- `AppStore` & `CDN` packages are built by myself
+- Github releases are built by Github Actions
+- Other sources are built by themselves
 
 ## 🔖 Feature
 - `Status chart` (CPU, Sensors, GPU...), `SSH` Term, `SFTP`, `Docker & Pkg & Process`...
