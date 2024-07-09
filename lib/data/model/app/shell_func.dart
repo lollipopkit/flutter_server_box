@@ -22,7 +22,7 @@ enum ShellFunc {
   static const scriptPath = '/dev/shm/$scriptFile';
   static const installShellCmd = """
 cat > $scriptPath
-chmod +x $scriptPath
+chmod 744 $scriptPath
 """;
 
   String get flag {

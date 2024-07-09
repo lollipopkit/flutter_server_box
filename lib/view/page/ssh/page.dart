@@ -145,9 +145,8 @@ class SSHPageState extends State<SSHPage>
           _terminal,
           key: _termKey,
           controller: _terminalController,
-          keyboardType: letterCache
-              ? TextInputType.text
-              : TextInputType.visiblePassword,
+          keyboardType:
+              letterCache ? TextInputType.text : TextInputType.visiblePassword,
           enableSuggestions: !letterCache,
           textStyle: _terminalStyle,
           theme: _terminalTheme,
