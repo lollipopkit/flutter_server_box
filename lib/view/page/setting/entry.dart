@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:provider/provider.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/rebuild.dart';
 import 'package:server_box/data/res/store.dart';
@@ -14,7 +13,6 @@ import 'package:server_box/view/page/setting/platform/platform_pub.dart';
 
 import '../../../core/route.dart';
 import '../../../data/model/app/net_view.dart';
-import '../../../data/provider/app.dart';
 import '../../../data/res/build_data.dart';
 
 const _kIconSize = 23.0;
@@ -184,12 +182,13 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       leading: const Icon(Icons.update),
       title: Text(l10n.autoCheckUpdate),
-      subtitle: Consumer<AppProvider>(
-        builder: (ctx, app, __) {
+      subtitle: ValBuilder(
+        listenable: AppUpdateIface.newestBuild,
+        builder: (val) {
           String display;
-          if (app.newestBuild != null) {
-            if (app.newestBuild! > BuildData.build) {
-              display = l10n.versionHaveUpdate(app.newestBuild!);
+          if (val != null) {
+            if (val > BuildData.build) {
+              display = l10n.versionHaveUpdate(val);
             } else {
               display = l10n.versionUpdated(BuildData.build);
             }

@@ -3,13 +3,6 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 
 class AppProvider extends ChangeNotifier {
-  int? _newestBuild;
-  int? get newestBuild => _newestBuild;
-  set newestBuild(int? build) {
-    _newestBuild = build;
-    notifyListeners();
-  }
-
   BuildContext? ctx;
 
   bool isWearOS = false;

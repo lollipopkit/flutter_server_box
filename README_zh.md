@@ -18,7 +18,7 @@
 平台 | 下载
 --- | --- 
 iOS / macOS | [AppStore](https://apps.apple.com/app/id1586449703)
-Android | [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid) / [OpenAPK](https://www.openapk.net/serverbox/tech.lolli.toolbox/)
+Android | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid) / [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [OpenAPK](https://www.openapk.net/serverbox/tech.lolli.toolbox/)
 Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid)
 
 **请不要从不受信任的来源下载!**

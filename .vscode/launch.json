@@ -8,6 +8,10 @@
             "name": "debug",
             "request": "launch",
             "type": "dart",
+            "env": {
+                // Comment this line to use the default display
+                "DISPLAY": ":1"
+            }
             // "args": [
             //     "-v"
             // ]
