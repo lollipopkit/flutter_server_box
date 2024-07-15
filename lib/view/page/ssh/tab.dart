@@ -1,4 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:provider/provider.dart';
@@ -89,7 +90,7 @@ class _SSHTabPageState extends State<SSHTabPage>
     if (confirm != true) return;
 
     _tabMap.remove(name);
-    _tabRN.build();
+    _tabRN.notify();
     _pageCtrl.previousPage(
         duration: Durations.medium1, curve: Curves.fastEaseInToSlowEaseOut);
   }
@@ -191,7 +192,7 @@ class _SSHTabPageState extends State<SSHTabPage>
       ),
       key: key,
     );
-    _tabRN.build();
+    _tabRN.notify();
     // Wait for the page to be built
     await Future.delayed(Durations.short3);
     final idx = _tabMap.keys.toList().indexOf(name);
@@ -213,7 +214,7 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
     required this.onClose,
   });
 
-  final ValueNotifier<int> idxVN;
+  final ValueListenable<int> idxVN;
   final _TabMap map;
   final void Function(int idx) onTap;
   final void Function(String name) onClose;

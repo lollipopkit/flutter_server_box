@@ -170,7 +170,7 @@ class Backup {
     }
 
     Pros.reload();
-    RNodes.app.build();
+    RNodes.app.notify();
 
     _logger.info('Restore success');
   }
