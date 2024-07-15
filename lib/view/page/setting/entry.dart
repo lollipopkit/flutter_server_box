@@ -305,7 +305,7 @@ class _SettingPageState extends State<SettingPage> {
     _setting.primaryColor.put(color.value);
     context.pop();
     context.pop();
-    RNodes.app.build();
+    RNodes.app.notify();
   }
 
   // Widget _buildLaunchPage() {
@@ -393,7 +393,7 @@ class _SettingPageState extends State<SettingPage> {
         );
         if (selected != null) {
           _setting.themeMode.put(selected);
-          RNodes.app.build();
+          RNodes.app.notify();
         }
       },
       trailing: ValBuilder(
@@ -442,7 +442,7 @@ class _SettingPageState extends State<SettingPage> {
               onPressed: () {
                 _setting.fontPath.delete();
                 context.pop();
-                RNodes.app.build();
+                RNodes.app.notify();
               },
               child: Text(l10n.clear),
             )
@@ -466,7 +466,7 @@ class _SettingPageState extends State<SettingPage> {
     }
 
     context.pop();
-    RNodes.app.build();
+    RNodes.app.notify();
   }
 
   Widget _buildTermFontSize() {
@@ -536,7 +536,7 @@ class _SettingPageState extends State<SettingPage> {
         if (selected != null) {
           _setting.locale.put(selected.code);
           context.pop();
-          RNodes.app.build();
+          RNodes.app.notify();
         }
       },
       trailing: ListenBuilder(
@@ -609,7 +609,7 @@ class _SettingPageState extends State<SettingPage> {
       subtitle: Text(l10n.fullScreenTip, style: UIs.textGrey),
       trailing: StoreSwitch(
         prop: _setting.fullScreen,
-        callback: (_) => RNodes.app.build(),
+        callback: (_) => RNodes.app.notify(),
       ),
     );
   }
@@ -802,7 +802,7 @@ class _SettingPageState extends State<SettingPage> {
       return;
     }
     _setting.textFactor.put(val);
-    RNodes.app.build();
+    RNodes.app.notify();
     context.pop();
   }
 
@@ -1049,7 +1049,7 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(l10n.more),
       children: [
         _buildBeta(),
-        _buildWakeLock(),
+        if (isMobile) _buildWakeLock(),
         _buildCollapseUI(),
         _buildCupertinoRoute(),
         if (isDesktop) _buildHideTitleBar(),

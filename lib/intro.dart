@@ -95,7 +95,7 @@ final class _IntroPage extends StatelessWidget {
             );
             if (selected != null) {
               _setting.locale.put(selected.code);
-              RNodes.app.build();
+              RNodes.app.notify();
             }
           },
           trailing: Text(

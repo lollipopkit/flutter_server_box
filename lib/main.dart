@@ -75,6 +75,7 @@ Future<void> _initApp() async {
     size: windowSize.fetch().toSize(),
     listener: WindowSizeListener(windowSize),
   );
+
   FontUtils.loadFrom(Stores.setting.fontPath.fetch());
 
   _doPlatformRelated();
