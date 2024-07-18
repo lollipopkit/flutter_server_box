@@ -5,18 +5,20 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/sftpfile.dart';
+import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/comparator.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/sftp/absolute_path.dart';
+import 'package:server_box/data/model/sftp/browser_status.dart';
+import 'package:server_box/data/model/sftp/req.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/widget/omit_start_text.dart';
 
-import '../../../core/route.dart';
-import '../../../data/model/server/server_private_info.dart';
-import '../../../data/model/sftp/absolute_path.dart';
-import '../../../data/model/sftp/browser_status.dart';
-import '../../../data/model/sftp/req.dart';
-import '../../widget/two_line_text.dart';
+import 'package:icons_plus/icons_plus.dart';
+import 'package:server_box/view/widget/two_line_text.dart';
+import 'package:server_box/view/widget/unix_perm.dart';
 
 class SftpPage extends StatefulWidget {
   final ServerPrivateInfo spi;
@@ -174,49 +176,50 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
   Widget _buildUploadBtn() {
     return IconButton(
-        onPressed: () async {
-          final idx = await context.showRoundDialog(
-              child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.open_in_new),
-                title: Text(l10n.system),
-                onTap: () => context.pop(1),
-              ),
-              ListTile(
-                leading: const Icon(Icons.folder),
-                title: Text(l10n.inner),
-                onTap: () => context.pop(0),
-              ),
-            ],
-          ));
-          final path = await () async {
-            switch (idx) {
-              case 0:
-                return await AppRoutes.localStorage(isPickFile: true)
-                    .go<String>(context);
-              case 1:
-                return await Pfs.pickFilePath();
-              default:
-                return null;
-            }
-          }();
-          if (path == null) {
-            return;
+      onPressed: () async {
+        final idx = await context.showRoundDialog(
+            child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.open_in_new),
+              title: Text(l10n.system),
+              onTap: () => context.pop(1),
+            ),
+            ListTile(
+              leading: const Icon(Icons.folder),
+              title: Text(l10n.inner),
+              onTap: () => context.pop(0),
+            ),
+          ],
+        ));
+        final path = await () async {
+          switch (idx) {
+            case 0:
+              return await AppRoutes.localStorage(isPickFile: true)
+                  .go<String>(context);
+            case 1:
+              return await Pfs.pickFilePath();
+            default:
+              return null;
           }
-          final remoteDir = _status.path?.path;
-          if (remoteDir == null) {
-            context.showSnackBar('remote path is null');
-            return;
-          }
-          final remotePath = '$remoteDir/${path.split('/').last}';
-          Loggers.app.info('SFTP upload local: $path, remote: $remotePath');
-          Pros.sftp.add(
-            SftpReq(widget.spi, remotePath, path, SftpReqType.upload),
-          );
-        },
-        icon: const Icon(Icons.upload_file));
+        }();
+        if (path == null) {
+          return;
+        }
+        final remoteDir = _status.path?.path;
+        if (remoteDir == null) {
+          context.showSnackBar('remote path is null');
+          return;
+        }
+        final remotePath = '$remoteDir/${path.split('/').last}';
+        Loggers.app.info('SFTP upload local: $path, remote: $remotePath');
+        Pros.sftp.add(
+          SftpReq(widget.spi, remotePath, path, SftpReqType.upload),
+        );
+      },
+      icon: const Icon(Icons.upload_file),
+    );
   }
 
   Widget _buildAddBtn() {
@@ -370,6 +373,43 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         leading: const Icon(Icons.abc),
         title: Text(l10n.rename),
         onTap: () => _rename(file),
+      ),
+      ListTile(
+        leading: const Icon(MingCute.copy_line),
+        title: Text(l10n.copyPath),
+        onTap: () {
+          Pfs.copy(_getRemotePath(file));
+          context.pop();
+          context.showSnackBar(l10n.success);
+        },
+      ),
+      ListTile(
+        leading: const Icon(Icons.security),
+        title: Text(l10n.permission),
+        onTap: () async {
+          context.pop();
+
+          final perm = file.attr.mode?.toUnixPerm() ?? UnixPerm.empty;
+          var newPerm = perm.copyWith();
+          final ok = await context.showRoundDialog(
+            child: UnixPermEditor(perm: perm, onChanged: (p) => newPerm = p),
+            actions: Btns.oks(onTap: () => context.pop(true)),
+          );
+
+          final permStr = newPerm.perm;
+          if (ok == true && permStr != perm.perm) {
+            print('${perm.perm} -> $permStr');
+            await context.showLoadingDialog(
+              fn: () async {
+                await _client!.run('chmod $permStr "${_getRemotePath(file)}"');
+                await _listDir();
+              },
+              onErr: (e, s) {
+                context.showErrDialog(e: e, s: s, operation: l10n.permission);
+              },
+            );
+          }
+        },
       ),
     ];
     if (notDir) {

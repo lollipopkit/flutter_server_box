@@ -209,6 +209,7 @@
   "paste": "粘贴",
   "path": "路径",
   "percentOfSize": "{size} 的 {percent}%",
+  "permission": "权限",
   "pickFile": "选择文件",
   "pingAvg": "平均:",
   "pingInputIP": "请输入目标IP或域名",

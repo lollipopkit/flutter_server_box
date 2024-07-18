@@ -209,6 +209,7 @@
   "paste": "Plakken",
   "path": "Pad",
   "percentOfSize": "{percent}% van {size}",
+  "permission": "Machtigingen",
   "pickFile": "Bestand kiezen",
   "pingAvg": "Gem:",
   "pingInputIP": "Voer een doel-IP / domein in.",

@@ -209,6 +209,7 @@
   "paste": "Colar",
   "path": "Caminho",
   "percentOfSize": "{percent}% de {size}",
+  "permission": "Permissões",
   "pickFile": "Escolher arquivo",
   "pingAvg": "Média:",
   "pingInputIP": "Por favor, insira o IP ou domínio alvo",
