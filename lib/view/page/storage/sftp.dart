@@ -398,7 +398,6 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
           final permStr = newPerm.perm;
           if (ok == true && permStr != perm.perm) {
-            print('${perm.perm} -> $permStr');
             await context.showLoadingDialog(
               fn: () async {
                 await _client!.run('chmod $permStr "${_getRemotePath(file)}"');
