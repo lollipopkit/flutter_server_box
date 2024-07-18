@@ -385,8 +385,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v1.0.67"
-      resolved-ref: e91886e49ccede77ba7fed14325963ac260f999e
+      ref: "v1.0.71"
+      resolved-ref: "0289f2050150fc78f2862edc4727c344aedf9ce4"
       url: "https://github.com/lppcg/fl_lib"
     source: git
     version: "0.0.1"
@@ -1434,14 +1434,14 @@ packages:
     source: hosted
     version: "3.0.0"
   webdav_client:
-    dependency: transitive
+    dependency: "direct main"
     description:
       path: "."
-      ref: main
-      resolved-ref: "88de97ad783c624d81b0dbcc09927b10aabd5580"
+      ref: "v1.0.66"
+      resolved-ref: "1908cd0f4909730d9ae4d4fc4c05fb2576b3f674"
       url: "https://github.com/lollipopkit/webdav_client"
     source: git
-    version: "1.2.1"
+    version: "1.2.2"
   win32:
     dependency: transitive
     description:
