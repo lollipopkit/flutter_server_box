@@ -209,6 +209,7 @@
   "paste": "貼り付け",
   "path": "パス",
   "percentOfSize": "{size} の {percent}%",
+  "permission": "権限",
   "pickFile": "ファイルを選択",
   "pingAvg": "平均:",
   "pingInputIP": "対象のIPまたはドメインを入力してください",

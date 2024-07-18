@@ -209,6 +209,7 @@
   "paste": "Coller",
   "path": "Chemin",
   "percentOfSize": "{percent}% de {size}",
+  "permission": "Permissions",
   "pickFile": "Choisir un fichier",
   "pingAvg": "Moy.:",
   "pingInputIP": "Veuillez saisir une adresse IP / un domaine cible.",

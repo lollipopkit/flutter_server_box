@@ -209,6 +209,7 @@
   "paste": "Tempel",
   "path": "Jalur",
   "percentOfSize": "{percent}% dari {size}",
+  "permission": "Izin",
   "pickFile": "Pilih file",
   "pingAvg": "Rata -rata:",
   "pingInputIP": "Harap masukkan IP / domain target.",

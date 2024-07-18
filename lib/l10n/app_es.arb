@@ -209,6 +209,7 @@
   "paste": "Pegar",
   "path": "Ruta",
   "percentOfSize": "El {percent}% de {size}",
+  "permission": "Permisos",
   "pickFile": "Seleccionar archivo",
   "pingAvg": "Promedio:",
   "pingInputIP": "Por favor, introduce la IP de destino o el dominio",

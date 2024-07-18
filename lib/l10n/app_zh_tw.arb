@@ -209,6 +209,7 @@
   "paste": "貼上",
   "path": "路徑",
   "percentOfSize": "{size} 的 {percent}%",
+  "permission": "權限",
   "pickFile": "選擇檔案",
   "pingAvg": "平均:",
   "pingInputIP": "請輸入目標 IP 或域名",

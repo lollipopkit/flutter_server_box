@@ -209,6 +209,7 @@
   "paste": "вставить",
   "path": "путь",
   "percentOfSize": "{percent}% от {size}",
+  "permission": "Разрешения",
   "pickFile": "выбрать файл",
   "pingAvg": "Среднее:",
   "pingInputIP": "Пожалуйста, введите целевой IP или доменное имя",

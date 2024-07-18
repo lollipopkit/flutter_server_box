@@ -18,6 +18,7 @@ import 'package:server_box/view/widget/omit_start_text.dart';
 
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/view/widget/two_line_text.dart';
+import 'package:server_box/view/widget/unix_perm.dart';
 
 class SftpPage extends StatefulWidget {
   final ServerPrivateInfo spi;
@@ -380,6 +381,34 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           Pfs.copy(_getRemotePath(file));
           context.pop();
           context.showSnackBar(l10n.success);
+        },
+      ),
+      ListTile(
+        leading: const Icon(Icons.security),
+        title: Text(l10n.permission),
+        onTap: () async {
+          context.pop();
+
+          final perm = file.attr.mode?.toUnixPerm() ?? UnixPerm.empty;
+          var newPerm = perm.copyWith();
+          final ok = await context.showRoundDialog(
+            child: UnixPermEditor(perm: perm, onChanged: (p) => newPerm = p),
+            actions: Btns.oks(onTap: () => context.pop(true)),
+          );
+
+          final permStr = newPerm.perm;
+          if (ok == true && permStr != perm.perm) {
+            print('${perm.perm} -> $permStr');
+            await context.showLoadingDialog(
+              fn: () async {
+                await _client!.run('chmod $permStr "${_getRemotePath(file)}"');
+                await _listDir();
+              },
+              onErr: (e, s) {
+                context.showErrDialog(e: e, s: s, operation: l10n.permission);
+              },
+            );
+          }
         },
       ),
     ];

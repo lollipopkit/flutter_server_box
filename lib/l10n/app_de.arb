@@ -209,6 +209,7 @@
   "paste": "Einfügen",
   "path": "Pfad",
   "percentOfSize": "{percent}% von {size}",
+  "permission": "Berechtigungen",
   "pickFile": "Datei wählen",
   "pingAvg": "Avg:",
   "pingInputIP": "Bitte gib eine Ziel-IP/Domain ein.",
