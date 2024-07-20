@@ -30,6 +30,7 @@ enum ShellFunc {
   static String setScriptPath(String id, String path) {
     return _scriptPathMap[id] = path;
   }
+
   static String installShellCmd(String id) {
     final path = getScriptPath(id);
     return """
