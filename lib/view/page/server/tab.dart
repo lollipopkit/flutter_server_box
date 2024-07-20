@@ -356,7 +356,7 @@ class _ServerPageState extends State<ServerPage>
                   Stores.setting.showSuspendTip.put(false);
                 }
                 srv.client?.execWithPwd(
-                  ShellFunc.suspend.exec,
+                  ShellFunc.suspend.exec(srv.id),
                   context: context,
                   id: srv.id,
                 );
@@ -370,7 +370,7 @@ class _ServerPageState extends State<ServerPage>
           IconTextBtn(
             onPressed: () => _askFor(
               func: () => srv.client?.execWithPwd(
-                ShellFunc.shutdown.exec,
+                ShellFunc.shutdown.exec(srv.id),
                 context: context,
                 id: srv.id,
               ),
@@ -383,7 +383,7 @@ class _ServerPageState extends State<ServerPage>
           IconTextBtn(
             onPressed: () => _askFor(
               func: () => srv.client?.execWithPwd(
-                ShellFunc.reboot.exec,
+                ShellFunc.reboot.exec(srv.id),
                 context: context,
                 id: srv.id,
               ),
