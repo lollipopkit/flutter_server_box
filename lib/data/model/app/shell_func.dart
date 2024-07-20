@@ -19,11 +19,24 @@ enum ShellFunc {
 
   /// srvboxm -> ServerBox Mobile
   static const scriptFile = 'srvboxm_v${BuildData.script}.sh';
-  static const scriptPath = '/dev/shm/$scriptFile';
-  static const installShellCmd = """
-cat > $scriptPath
-chmod 744 $scriptPath
+  static const scriptPathShm = '/dev/shm/$scriptFile';
+  static const scriptPathHome = '~/.config/server_box/$scriptFile';
+
+  static final _scriptPathMap = <String, String>{};
+  static String getScriptPath(String id) {
+    return _scriptPathMap.putIfAbsent(id, () => scriptPathShm);
+  }
+
+  static String setScriptPath(String id, String path) {
+    return _scriptPathMap[id] = path;
+  }
+  static String installShellCmd(String id) {
+    final path = getScriptPath(id);
+    return """
+cat > $path
+chmod 744 $path
 """;
+  }
 
   String get flag {
     switch (this) {
@@ -42,7 +55,7 @@ chmod 744 $scriptPath
     }
   }
 
-  String get exec => 'sh $scriptPath -$flag';
+  String exec(String id) => 'sh ${getScriptPath(id)} -$flag';
 
   String get name {
     switch (this) {

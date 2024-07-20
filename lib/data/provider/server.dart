@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io';
+// import 'dart:io';
 
 import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
@@ -10,8 +10,8 @@ import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
 import 'package:server_box/data/model/server/system.dart';
-import 'package:server_box/data/model/sftp/req.dart';
-import 'package:server_box/data/res/provider.dart';
+// import 'package:server_box/data/model/sftp/req.dart';
+// import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/data/res/store.dart';
 
 import '../../core/utils/server.dart';
@@ -313,17 +313,25 @@ class ServerProvider extends ChangeNotifier {
 
       _setServerState(s, ServerConn.connected);
 
-      // Write script to server
-      // by ssh
       final scriptRaw = ShellFunc.allScript(spi.custom?.cmds).uint8List;
-      try {
+
+      Future<void> fn(String scriptPath) async {
         await s.client?.runForOutput(
-          ShellFunc.installShellCmd,
+          scriptPath,
           action: (session) async {
             session.stdin.add(scriptRaw);
             session.stdin.close();
           },
         );
+        ShellFunc.setScriptPath(spi.id, scriptPath);
+      }
+
+      try {
+        try {
+          await fn(ShellFunc.scriptPathShm);
+        } catch (_) {
+          await fn(ShellFunc.scriptPathHome);
+        }
       } on SSHAuthAbortError catch (e) {
         TryLimiter.inc(sid);
         s.status.err = SSHErr(type: SSHErrType.auth, message: e.toString());
@@ -335,44 +343,10 @@ class ServerProvider extends ChangeNotifier {
         _setServerState(s, ServerConn.failed);
         return;
       } catch (e) {
+        TryLimiter.inc(sid);
+        s.status.err = SSHErr(type: SSHErrType.auth, message: e.toString());
+        _setServerState(s, ServerConn.failed);
         Loggers.app.warning('Write script to ${spi.name} by shell', e);
-
-        /// by sftp
-        final localPath = Paths.doc.joinPath('install.sh');
-        final file = File(localPath);
-        try {
-          file.writeAsBytes(scriptRaw);
-          final completer = Completer();
-          final homePath = (await s.client?.run('echo \$HOME').string)?.trim();
-          if (homePath == null || homePath.isEmpty) {
-            throw Exception('Got empty home path');
-          }
-          final reqId = Pros.sftp.add(
-            SftpReq(
-              spi,
-              ShellFunc.scriptPath,
-              localPath,
-              SftpReqType.upload,
-            ),
-            completer: completer,
-          );
-          await completer.future;
-          final err = Pros.sftp.get(reqId)?.error;
-          if (err != null) {
-            throw err;
-          }
-        } catch (ee) {
-          TryLimiter.inc(sid);
-          s.status.err = SSHErr(
-            type: SSHErrType.writeScript,
-            message: '$e\n\n$ee',
-          );
-          _setServerState(s, ServerConn.failed);
-          Loggers.app.warning('Write script to ${spi.name} by sftp', ee);
-          return;
-        } finally {
-          if (await file.exists()) await file.delete();
-        }
       }
     }
 
@@ -389,7 +363,7 @@ class ServerProvider extends ChangeNotifier {
     String? raw;
 
     try {
-      raw = await s.client?.run(ShellFunc.status.exec).string;
+      raw = await s.client?.run(ShellFunc.status.exec(spi.id)).string;
       segments = raw?.split(ShellFunc.seperator).map((e) => e.trim()).toList();
       if (raw == null || raw.isEmpty || segments == null || segments.isEmpty) {
         if (Stores.setting.keepStatusWhenErr.fetch()) {
@@ -462,26 +436,4 @@ class ServerProvider extends ChangeNotifier {
     // reset try times only after prepared successfully
     TryLimiter.reset(sid);
   }
-
-  // Future<SnippetResult?> runSnippet(String id, Snippet snippet) async {
-  //   final server = _servers[id];
-  //   if (server == null) return null;
-  //   final watch = Stopwatch()..start();
-  //   final result = await server.client?.run(snippet.fmtWithArgs(server.spi)).string;
-  //   final time = watch.elapsed;
-  //   watch.stop();
-  //   if (result == null) return null;
-  //   return SnippetResult(
-  //     dest: _servers[id]?.spi.name,
-  //     result: result,
-  //     time: time,
-  //   );
-  // }
-
-  // Future<List<SnippetResult?>> runSnippetsMulti(
-  //   List<String> ids,
-  //   Snippet snippet,
-  // ) async {
-  //   return await Future.wait(ids.map((id) async => runSnippet(id, snippet)));
-  // }
 }

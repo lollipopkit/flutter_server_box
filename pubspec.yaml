@@ -61,13 +61,13 @@ dependencies:
   fl_lib:
     git:
       url: https://github.com/lppcg/fl_lib
-      ref: v1.0.73
+      ref: v1.0.74
 
 dependency_overrides:
 #   dartssh2:
 #     path: ../dartssh2
-  fl_lib:
-    path: ../fl_lib
+  # fl_lib:
+  #   path: ../fl_lib
   # xterm:
   #   path: ../xterm.dart
 
