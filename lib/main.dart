@@ -95,6 +95,12 @@ Future<void> _initData() async {
   Hive.registerAdapter(ServerCustomAdapter()); // 7
   Hive.registerAdapter(WakeOnLanCfgAdapter()); // 8
 
+  try {
+    /// Apps' data on other platforms are stored in a container that prevents 
+    /// access by other apps. Therefore, there is no need to encrypt the data.
+    if (isLinux || isWindows) await SecureStore.init();
+  } catch (_) {}
+
   await Stores.setting.init();
   await Stores.server.init();
   await Stores.key.init();
