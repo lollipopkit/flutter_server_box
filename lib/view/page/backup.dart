@@ -305,6 +305,8 @@ class BackupPage extends StatelessWidget {
     final url = TextEditingController(text: Stores.setting.webdavUrl.fetch());
     final user = TextEditingController(text: Stores.setting.webdavUser.fetch());
     final pwd = TextEditingController(text: Stores.setting.webdavPwd.fetch());
+    final nodeUser = FocusNode();
+    final nodePwd = FocusNode();
     final result = await context.showRoundDialog<bool>(
       title: 'WebDAV',
       child: Column(
@@ -314,14 +316,19 @@ class BackupPage extends StatelessWidget {
             label: 'URL',
             hint: 'https://example.com/webdav/',
             controller: url,
+            onSubmitted: (p0) => FocusScope.of(context).requestFocus(nodeUser),
           ),
           Input(
             label: l10n.user,
             controller: user,
+            node: nodeUser,
+            onSubmitted: (p0) => FocusScope.of(context).requestFocus(nodePwd),
           ),
           Input(
             label: l10n.pwd,
             controller: pwd,
+            node: nodePwd,
+            onSubmitted: (_) => context.pop(true),
           ),
         ],
       ),

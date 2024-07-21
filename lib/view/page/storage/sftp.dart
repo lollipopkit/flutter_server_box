@@ -581,6 +581,35 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   void _mkdir() {
     context.pop();
     final textController = TextEditingController();
+
+    void onSubmitted() async {
+      if (textController.text.isEmpty) {
+        context.showRoundDialog(
+          child: Text(l10n.fieldMustNotEmpty),
+          actions: [
+            TextButton(
+              onPressed: () => context.pop(),
+              child: Text(l10n.ok),
+            ),
+          ],
+        );
+        return;
+      }
+      context.pop();
+      try {
+        await context.showLoadingDialog(
+          fn: () async {
+            final dir = '${_status.path!.path}/${textController.text}';
+            await _status.client!.mkdir(dir);
+          },
+          onErr: (e, s) {},
+        );
+        _listDir();
+      } catch (e, s) {
+        context.showErrDialog(e: e, s: s, operation: l10n.createFolder);
+      }
+    }
+
     context.showRoundDialog(
       title: l10n.createFolder,
       child: Input(
@@ -588,6 +617,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         icon: Icons.folder,
         controller: textController,
         label: l10n.name,
+        onSubmitted: (_) => onSubmitted(),
       ),
       actions: [
         TextButton(
@@ -595,33 +625,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           child: Text(l10n.cancel),
         ),
         TextButton(
-          onPressed: () async {
-            if (textController.text.isEmpty) {
-              context.showRoundDialog(
-                child: Text(l10n.fieldMustNotEmpty),
-                actions: [
-                  TextButton(
-                    onPressed: () => context.pop(),
-                    child: Text(l10n.ok),
-                  ),
-                ],
-              );
-              return;
-            }
-            context.pop();
-            try {
-              await context.showLoadingDialog(
-                fn: () async {
-                  final dir = '${_status.path!.path}/${textController.text}';
-                  await _status.client!.mkdir(dir);
-                },
-                onErr: (e, s) {},
-              );
-              _listDir();
-            } catch (e, s) {
-              context.showErrDialog(e: e, s: s, operation: l10n.createFolder);
-            }
-          },
+          onPressed: onSubmitted,
           child: Text(l10n.ok, style: UIs.textRed),
         ),
       ],
@@ -631,6 +635,36 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   void _newFile() {
     context.pop();
     final textController = TextEditingController();
+
+    void onSubmitted() async {
+      if (textController.text.isEmpty) {
+        context.showRoundDialog(
+          title: l10n.attention,
+          child: Text(l10n.fieldMustNotEmpty),
+          actions: [
+            TextButton(
+              onPressed: () => context.pop(),
+              child: Text(l10n.ok),
+            ),
+          ],
+        );
+        return;
+      }
+      context.pop();
+      try {
+        await context.showLoadingDialog(
+          fn: () async {
+            final path = '${_status.path!.path}/${textController.text}';
+            await _client!.run('touch "$path"');
+          },
+          onErr: (e, s) {},
+        );
+        _listDir();
+      } catch (e, s) {
+        context.showErrDialog(e: e, s: s, operation: l10n.createFile);
+      }
+    }
+
     context.showRoundDialog(
       title: l10n.createFile,
       child: Input(
@@ -638,37 +672,11 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         icon: Icons.insert_drive_file,
         controller: textController,
         label: l10n.name,
+        onSubmitted: (_) => onSubmitted(),
       ),
       actions: [
         TextButton(
-          onPressed: () async {
-            if (textController.text.isEmpty) {
-              context.showRoundDialog(
-                title: l10n.attention,
-                child: Text(l10n.fieldMustNotEmpty),
-                actions: [
-                  TextButton(
-                    onPressed: () => context.pop(),
-                    child: Text(l10n.ok),
-                  ),
-                ],
-              );
-              return;
-            }
-            context.pop();
-            try {
-              await context.showLoadingDialog(
-                fn: () async {
-                  final path = '${_status.path!.path}/${textController.text}';
-                  await _client!.run('touch "$path"');
-                },
-                onErr: (e, s) {},
-              );
-              _listDir();
-            } catch (e, s) {
-              context.showErrDialog(e: e, s: s, operation: l10n.createFile);
-            }
-          },
+          onPressed: onSubmitted,
           child: Text(l10n.ok, style: UIs.textRed),
         ),
       ],
@@ -678,6 +686,36 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   void _rename(SftpName file) {
     context.pop();
     final textController = TextEditingController(text: file.filename);
+
+    void onSubmitted() async {
+      if (textController.text.isEmpty) {
+        context.showRoundDialog(
+          title: l10n.attention,
+          child: Text(l10n.fieldMustNotEmpty),
+          actions: [
+            TextButton(
+              onPressed: () => context.pop(),
+              child: Text(l10n.ok),
+            ),
+          ],
+        );
+        return;
+      }
+      context.pop();
+      try {
+        await context.showLoadingDialog(
+          fn: () async {
+            final newName = textController.text;
+            await _status.client?.rename(file.filename, newName);
+          },
+          onErr: (e, s) {},
+        );
+        _listDir();
+      } catch (e, s) {
+        context.showErrDialog(e: e, s: s, operation: l10n.rename);
+      }
+    }
+
     context.showRoundDialog(
       title: l10n.rename,
       child: Input(
@@ -685,38 +723,12 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         icon: Icons.abc,
         controller: textController,
         label: l10n.name,
+        onSubmitted: (_) => onSubmitted(),
       ),
       actions: [
         TextButton(onPressed: () => context.pop(), child: Text(l10n.cancel)),
         TextButton(
-          onPressed: () async {
-            if (textController.text.isEmpty) {
-              context.showRoundDialog(
-                title: l10n.attention,
-                child: Text(l10n.fieldMustNotEmpty),
-                actions: [
-                  TextButton(
-                    onPressed: () => context.pop(),
-                    child: Text(l10n.ok),
-                  ),
-                ],
-              );
-              return;
-            }
-            context.pop();
-            try {
-              await context.showLoadingDialog(
-                fn: () async {
-                  final newName = textController.text;
-                  await _status.client?.rename(file.filename, newName);
-                },
-                onErr: (e, s) {},
-              );
-              _listDir();
-            } catch (e, s) {
-              context.showErrDialog(e: e, s: s, operation: l10n.rename);
-            }
-          },
+          onPressed: onSubmitted,
           child: Text(l10n.rename, style: UIs.textRed),
         ),
       ],

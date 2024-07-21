@@ -340,5 +340,6 @@
   "willTakEeffectImmediately": "As alterações serão aplicadas imediatamente",
   "wolTip": "Após configurar o WOL (Wake-on-LAN), um pedido de WOL é enviado cada vez que o servidor é conectado.",
   "write": "Escrita",
-  "writeScriptFailTip": "Falha ao escrever no script, possivelmente devido à falta de permissões ou o diretório não existe."
+  "writeScriptFailTip": "Falha ao escrever no script, possivelmente devido à falta de permissões ou o diretório não existe.",
+  "writeScriptTip": "Após conectar ao servidor, um script será escrito em ~/.config/server_box para monitorar o status do sistema. Você pode revisar o conteúdo do script."
 }

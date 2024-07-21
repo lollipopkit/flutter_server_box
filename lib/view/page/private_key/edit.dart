@@ -118,32 +118,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
   Widget _buildFAB() {
     return FloatingActionButton(
       tooltip: l10n.save,
-      onPressed: () async {
-        final name = _nameController.text;
-        final key = _standardizeLineSeparators(_keyController.text.trim());
-        final pwd = _pwdController.text;
-        if (name.isEmpty || key.isEmpty) {
-          context.showSnackBar(l10n.fieldMustNotEmpty);
-          return;
-        }
-        FocusScope.of(context).unfocus();
-        _loading.value = UIs.centerSizedLoading;
-        try {
-          final decrypted = await Computer.shared.start(decyptPem, [key, pwd]);
-          final pki = PrivateKeyInfo(id: name, key: decrypted);
-          if (widget.pki != null) {
-            Pros.key.update(widget.pki!, pki);
-          } else {
-            Pros.key.add(pki);
-          }
-        } catch (e) {
-          context.showSnackBar(e.toString());
-          rethrow;
-        } finally {
-          _loading.value = null;
-        }
-        context.pop();
-      },
+      onPressed: _onTapSave,
       child: const Icon(Icons.save),
     );
   }
@@ -206,6 +181,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
           obscureText: true,
           label: l10n.pwd,
           icon: Icons.password,
+          onSubmitted: (_) => _onTapSave(),
         ),
         SizedBox(height: MediaQuery.of(context).size.height * 0.1),
         ValBuilder(
@@ -214,5 +190,32 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
         ),
       ],
     );
+  }
+
+  void _onTapSave() async {
+    final name = _nameController.text;
+    final key = _standardizeLineSeparators(_keyController.text.trim());
+    final pwd = _pwdController.text;
+    if (name.isEmpty || key.isEmpty) {
+      context.showSnackBar(l10n.fieldMustNotEmpty);
+      return;
+    }
+    FocusScope.of(context).unfocus();
+    _loading.value = UIs.centerSizedLoading;
+    try {
+      final decrypted = await Computer.shared.start(decyptPem, [key, pwd]);
+      final pki = PrivateKeyInfo(id: name, key: decrypted);
+      if (widget.pki != null) {
+        Pros.key.update(widget.pki!, pki);
+      } else {
+        Pros.key.add(pki);
+      }
+    } catch (e) {
+      context.showSnackBar(e.toString());
+      rethrow;
+    } finally {
+      _loading.value = null;
+    }
+    context.pop();
   }
 }
