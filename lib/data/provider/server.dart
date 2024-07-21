@@ -315,23 +315,14 @@ class ServerProvider extends ChangeNotifier {
 
       final scriptRaw = ShellFunc.allScript(spi.custom?.cmds).uint8List;
 
-      Future<void> fn(String scriptPath) async {
+      try {
         await s.client?.runForOutput(
-          scriptPath,
+          ShellFunc.installShellCmd,
           action: (session) async {
             session.stdin.add(scriptRaw);
             session.stdin.close();
           },
         );
-        ShellFunc.setScriptPath(spi.id, scriptPath);
-      }
-
-      try {
-        try {
-          await fn(ShellFunc.scriptPathShm);
-        } catch (_) {
-          await fn(ShellFunc.scriptPathHome);
-        }
       } on SSHAuthAbortError catch (e) {
         TryLimiter.inc(sid);
         s.status.err = SSHErr(type: SSHErrType.auth, message: e.toString());
@@ -343,10 +334,11 @@ class ServerProvider extends ChangeNotifier {
         _setServerState(s, ServerConn.failed);
         return;
       } catch (e) {
+        final err = e.toString();
         TryLimiter.inc(sid);
-        s.status.err = SSHErr(type: SSHErrType.auth, message: e.toString());
+        s.status.err = SSHErr(type: SSHErrType.writeScript, message: err);
         _setServerState(s, ServerConn.failed);
-        Loggers.app.warning('Write script to ${spi.name} by shell', e);
+        Loggers.app.warning('Write script to ${spi.name} by shell', err);
       }
     }
 
@@ -363,7 +355,7 @@ class ServerProvider extends ChangeNotifier {
     String? raw;
 
     try {
-      raw = await s.client?.run(ShellFunc.status.exec(spi.id)).string;
+      raw = await s.client?.run(ShellFunc.status.exec).string;
       segments = raw?.split(ShellFunc.seperator).map((e) => e.trim()).toList();
       if (raw == null || raw.isEmpty || segments == null || segments.isEmpty) {
         if (Stores.setting.keepStatusWhenErr.fetch()) {

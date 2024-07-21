@@ -174,6 +174,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
 
   Widget _buildForm() {
     final children = [
+      _buildWriteScriptTip(),
       Input(
         autoFocus: true,
         controller: _nameController,
@@ -637,5 +638,20 @@ class _ServerEditPageState extends State<ServerEditPage> {
     }
 
     context.pop();
+  }
+
+  Widget _buildWriteScriptTip() {
+    return ListTile(
+      leading: const Icon(Icons.tips_and_updates).paddingOnly(left: 13),
+      title: Text(l10n.attention),
+      onTap: () {
+          context.showRoundDialog(
+            title: l10n.attention,
+            child: SimpleMarkdown(data: l10n.writeScriptTip),
+            actions: Btns.oks(onTap: () => context.pop(true)),
+          );
+        },
+      trailing: const Icon(Icons.keyboard_arrow_right),
+    ).cardx;
   }
 }

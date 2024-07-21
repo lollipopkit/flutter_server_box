@@ -9,7 +9,6 @@ import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/core/utils/sync/icloud.dart';
 import 'package:server_box/core/utils/sync/webdav.dart';
@@ -95,11 +94,7 @@ Future<void> _initData() async {
   Hive.registerAdapter(ServerCustomAdapter()); // 7
   Hive.registerAdapter(WakeOnLanCfgAdapter()); // 8
 
-  try {
-    /// Apps' data on other platforms are stored in a container that prevents
-    /// access by other apps. Therefore, there is no need to encrypt the data.
-    if (isLinux || isWindows) await SecureStore.init();
-  } catch (_) {}
+  await SharedPref.init(); // Call this before accessing any store
 
   await Stores.setting.init();
   await Stores.server.init();
@@ -127,8 +122,6 @@ void _setupDebug() {
 
 void _doPlatformRelated() async {
   if (isAndroid) {
-    // SharedPreferences is only used on Android for saving home widgets settings.
-    SharedPreferences.setPrefix('');
     // try switch to highest refresh rate
     FlutterDisplayMode.setHighRefreshRate();
   }

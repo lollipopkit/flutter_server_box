@@ -19,44 +19,24 @@ enum ShellFunc {
 
   /// srvboxm -> ServerBox Mobile
   static const scriptFile = 'srvboxm_v${BuildData.script}.sh';
-  static const scriptPathShm = '/dev/shm/$scriptFile';
-  static const scriptPathHome = '~/.config/server_box/$scriptFile';
+  static const scriptDir = '~/.config/server_box';
+  static const scriptPath = '$scriptDir/$scriptFile';
 
-  static final _scriptPathMap = <String, String>{};
-  static String getScriptPath(String id) {
-    return _scriptPathMap.putIfAbsent(id, () => scriptPathShm);
-  }
-
-  static String setScriptPath(String id, String path) {
-    return _scriptPathMap[id] = path;
-  }
-
-  static String installShellCmd(String id) {
-    final path = getScriptPath(id);
-    return """
-cat > $path
-chmod 744 $path
+  static const String installShellCmd = """
+cat > $scriptPath
+chmod 744 $scriptPath
 """;
-  }
 
-  String get flag {
-    switch (this) {
-      case ShellFunc.status:
-        return 's';
-      // case ShellFunc.docker:
-      //   return 'd';
-      case ShellFunc.process:
-        return 'p';
-      case ShellFunc.shutdown:
-        return 'sd';
-      case ShellFunc.reboot:
-        return 'r';
-      case ShellFunc.suspend:
-        return 'sp';
-    }
-  }
+  String get flag => switch (this) {
+        ShellFunc.process => 'p',
+        ShellFunc.shutdown => 'sd',
+        ShellFunc.reboot => 'r',
+        ShellFunc.suspend => 'sp',
+        ShellFunc.status => 's',
+        // ShellFunc.docker=> 'd',
+      };
 
-  String exec(String id) => 'sh ${getScriptPath(id)} -$flag';
+  String get exec => 'sh $scriptPath -$flag';
 
   String get name {
     switch (this) {
