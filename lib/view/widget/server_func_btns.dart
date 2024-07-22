@@ -245,7 +245,7 @@ Future<void> _onPkg(BuildContext context, ServerPrivateInfo spi) async {
   }
 
   // Update pkg list
-  await context.showLoadingDialog(
+  final suc = await context.showLoadingDialog(
     fn: () async {
       final updateCmd = pkg.update;
       if (updateCmd != null) {
@@ -258,6 +258,7 @@ Future<void> _onPkg(BuildContext context, ServerPrivateInfo spi) async {
     },
     barrierDismiss: true,
   );
+  if (suc != true) return;
 
   final listCmd = pkg.listUpdate;
   if (listCmd == null) {
@@ -266,9 +267,14 @@ Future<void> _onPkg(BuildContext context, ServerPrivateInfo spi) async {
   }
 
   // Get upgrade list
-  final result = await context.showLoadingDialog(fn: () async {
-    return await client.run(listCmd).string;
-  });
+  final result = await context.showLoadingDialog(
+    fn: () => client.run(listCmd).string,
+  );
+  if (result == null || result.isEmpty) {
+    context.showSnackBar(l10n.noResult);
+    return;
+  }
+
   final list = pkg.updateListRemoveUnused(result.split('\n'));
   final upgradeable = list.map((e) => UpgradePkgInfo(e, pkg)).toList();
   if (upgradeable.isEmpty) {

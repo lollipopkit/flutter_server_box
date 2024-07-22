@@ -114,13 +114,8 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
     final result = await AppRoutes.kvEditor(data: urls).go(context);
     if (result == null || result is! Map<String, String>) return;
 
-    try {
-      await context.showLoadingDialog(fn: () async {
-        await wc.updateApplicationContext({'urls': result});
-      });
-    } catch (e, s) {
-      context.showErrDialog(e: e, s: s, operation: 'Watch Context');
-      Loggers.app.warning('Update watch config failed', e, s);
-    }
+    await context.showLoadingDialog(fn: () async {
+      await wc.updateApplicationContext({'urls': result});
+    });
   }
 }

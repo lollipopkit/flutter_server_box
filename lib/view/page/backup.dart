@@ -225,6 +225,7 @@ class BackupPage extends StatelessWidget {
       final backup = await context.showLoadingDialog(
         fn: () => Computer.shared.start(Backup.fromJsonString, text.trim()),
       );
+      if (backup == null) return;
       if (backupFormatVersion != backup.version) {
         context.showSnackBar(l10n.backupVersionNotMatch);
         return;
@@ -367,6 +368,7 @@ class BackupPage extends StatelessWidget {
         fn: () => Computer.shared.start(Backup.fromJsonString, text.trim()),
       );
 
+      if (backup == null) return;
       if (backupFormatVersion != backup.version) {
         context.showSnackBar(l10n.backupVersionNotMatch);
         return;
@@ -408,6 +410,7 @@ class BackupPage extends StatelessWidget {
           return list.map((e) => ServerPrivateInfo.fromJson(e)).toList();
         }, text.trim()),
       );
+      if (spis == null) return;
       final sure = await context.showRoundDialog<bool>(
         title: l10n.import,
         child: Text(l10n.askContinue('${spis.length} ${l10n.server}')),
@@ -419,13 +422,15 @@ class BackupPage extends StatelessWidget {
         ],
       );
       if (sure == true) {
-        await context.showLoadingDialog(
+        final suc = await context.showLoadingDialog(
           fn: () async {
             for (var spi in spis) {
               Stores.server.put(spi);
             }
+            return true;
           },
         );
+        if (suc != true) return;
         context.showSnackBar(l10n.success);
       }
     } catch (e, s) {

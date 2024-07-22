@@ -279,7 +279,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         }
 
         _status.path?.update(p);
-        final suc = await _listDir();
+        final suc = await _listDir() ?? false;
         if (suc && Stores.setting.recordHistory.fetch()) {
           Stores.history.sftpGoPath.add(p);
         }
@@ -406,6 +406,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
               },
               onErr: (e, s) {
                 context.showErrDialog(e: e, s: s, operation: l10n.permission);
+                return false;
               },
             );
           }
@@ -463,7 +464,8 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       SftpReqType.download,
     );
     Pros.sftp.add(req, completer: completer);
-    await context.showLoadingDialog(fn: () => completer.future);
+    final suc = await context.showLoadingDialog(fn: () => completer.future);
+    if (suc == null) return;
 
     final result = await AppRoutes.editor(path: localPath).go<bool>(context);
     if (result != null && result) {
@@ -554,24 +556,23 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         TextButton(
           onPressed: () async {
             context.pop();
-            try {
-              await context.showLoadingDialog(
-                fn: () async {
-                  final remotePath = _getRemotePath(file);
-                  if (useRmr) {
-                    await _client!.run('rm -r "$remotePath"');
-                  } else if (file.attr.isDirectory) {
-                    await _status.client!.rmdir(remotePath);
-                  } else {
-                    await _status.client!.remove(remotePath);
-                  }
-                },
-                onErr: (e, s) {},
-              );
-              _listDir();
-            } catch (e, s) {
-              context.showErrDialog(e: e, s: s, operation: l10n.delete);
-            }
+
+            final suc = await context.showLoadingDialog(
+              fn: () async {
+                final remotePath = _getRemotePath(file);
+                if (useRmr) {
+                  await _client!.run('rm -r "$remotePath"');
+                } else if (file.attr.isDirectory) {
+                  await _status.client!.rmdir(remotePath);
+                } else {
+                  await _status.client!.remove(remotePath);
+                }
+                return true;
+              },
+            );
+            if (suc == null) return;
+
+            _listDir();
           },
           child: Text(l10n.delete, style: UIs.textRed),
         ),
@@ -597,18 +598,17 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         return;
       }
       context.pop();
-      try {
-        await context.showLoadingDialog(
-          fn: () async {
-            final dir = '${_status.path!.path}/${textController.text}';
-            await _status.client!.mkdir(dir);
-          },
-          onErr: (e, s) {},
-        );
-        _listDir();
-      } catch (e, s) {
-        context.showErrDialog(e: e, s: s, operation: l10n.createFolder);
-      }
+
+      final suc = await context.showLoadingDialog(
+        fn: () async {
+          final dir = '${_status.path!.path}/${textController.text}';
+          await _status.client!.mkdir(dir);
+          return true;
+        },
+      );
+      if (suc == null) return;
+
+      _listDir();
     }
 
     context.showRoundDialog(
@@ -653,18 +653,17 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         return;
       }
       context.pop();
-      try {
-        await context.showLoadingDialog(
-          fn: () async {
-            final path = '${_status.path!.path}/${textController.text}';
-            await _client!.run('touch "$path"');
-          },
-          onErr: (e, s) {},
-        );
-        _listDir();
-      } catch (e, s) {
-        context.showErrDialog(e: e, s: s, operation: l10n.createFile);
-      }
+
+      final suc = await context.showLoadingDialog(
+        fn: () async {
+          final path = '${_status.path!.path}/${textController.text}';
+          await _client!.run('touch "$path"');
+          return true;
+        },
+      );
+      if (suc == null) return;
+
+      _listDir();
     }
 
     context.showRoundDialog(
@@ -705,18 +704,17 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         return;
       }
       context.pop();
-      try {
-        await context.showLoadingDialog(
-          fn: () async {
-            final newName = textController.text;
-            await _status.client?.rename(file.filename, newName);
-          },
-          onErr: (e, s) {},
-        );
-        _listDir();
-      } catch (e, s) {
-        context.showErrDialog(e: e, s: s, operation: l10n.rename);
-      }
+
+      final suc = await context.showLoadingDialog(
+        fn: () async {
+          final newName = textController.text;
+          await _status.client?.rename(file.filename, newName);
+          return true;
+        },
+      );
+      if (suc == null) return;
+
+      _listDir();
     }
 
     context.showRoundDialog(
@@ -756,7 +754,10 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       );
       return;
     }
-    await context.showLoadingDialog(fn: () async => _client?.run(cmd));
+    final suc = await context.showLoadingDialog(
+      fn: () => _client?.run(cmd) ?? Future.value(false),
+    );
+    if (suc == null) return;
     _listDir();
   }
 
@@ -771,7 +772,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   }
 
   /// Only return true if the path is changed
-  Future<bool> _listDir() async {
+  Future<bool?> _listDir() async {
     return context.showLoadingDialog(
       fn: () async {
         _status.client ??= await _client?.sftp();
