@@ -329,6 +329,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
       child: Input(
         autoFocus: true,
         controller: TextEditingController(text: fileName),
+        suggestion: true,
         onSubmitted: (p0) {
           context.pop();
           final newPath = '${file.parent.path}/$p0';

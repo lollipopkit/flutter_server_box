@@ -270,6 +270,7 @@ class _SettingPageState extends State<SettingPage> {
                   controller: ctrl,
                   hint: '#8b2252',
                   icon: Icons.colorize,
+                  suggestion: false,
                 ),
                 ColorPicker(
                   color: Color(_setting.primaryColor.fetch()),
@@ -784,6 +785,7 @@ class _SettingPageState extends State<SettingPage> {
           icon: Icons.format_size,
           controller: ctrl,
           onSubmitted: _onSaveTextScaler,
+          suggestion: false,
         ),
         actions: [
           TextButton(
@@ -888,6 +890,7 @@ class _SettingPageState extends State<SettingPage> {
         autoFocus: true,
         type: TextInputType.number,
         icon: Icons.font_download,
+        suggestion: false,
         onSubmitted: (_) => onSave(),
       ),
       actions: [
@@ -1151,6 +1154,7 @@ class _SettingPageState extends State<SettingPage> {
                 hint: 'https://example.com/logo.png',
                 icon: Icons.link,
                 maxLines: 2,
+                suggestion: false,
                 onSubmitted: onSave,
               ),
               ListTile(

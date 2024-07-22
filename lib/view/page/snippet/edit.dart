@@ -114,6 +114,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           onSubmitted: (_) => FocusScope.of(context).requestFocus(_scriptNode),
           label: l10n.name,
           icon: Icons.info,
+          suggestion: true,
         ),
         Input(
           controller: _noteController,
@@ -122,6 +123,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           type: TextInputType.multiline,
           label: l10n.note,
           icon: Icons.note,
+          suggestion: true,
         ),
         ValBuilder(
           listenable: _tags,
@@ -146,6 +148,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           type: TextInputType.multiline,
           label: l10n.snippet,
           icon: Icons.code,
+          suggestion: false,
         ),
         _buildAutoRunOn(),
         _buildTip(),

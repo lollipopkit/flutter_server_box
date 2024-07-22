@@ -267,6 +267,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
                 label: l10n.path,
                 node: node,
                 controller: controller,
+                suggestion: true,
                 onSubmitted: (value) => context.pop(value),
               );
             },
@@ -617,6 +618,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         icon: Icons.folder,
         controller: textController,
         label: l10n.name,
+        suggestion: true,
         onSubmitted: (_) => onSubmitted(),
       ),
       actions: [
@@ -672,6 +674,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         icon: Icons.insert_drive_file,
         controller: textController,
         label: l10n.name,
+        suggestion: true,
         onSubmitted: (_) => onSubmitted(),
       ),
       actions: [
@@ -723,6 +726,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         icon: Icons.abc,
         controller: textController,
         label: l10n.name,
+        suggestion: true,
         onSubmitted: (_) => onSubmitted(),
       ),
       actions: [

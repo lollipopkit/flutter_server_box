@@ -135,6 +135,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
           onSubmitted: (_) => _focusScope.requestFocus(_keyNode),
           label: l10n.name,
           icon: Icons.info,
+          suggestion: true,
         ),
         Input(
           controller: _keyController,
@@ -145,6 +146,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
           onSubmitted: (_) => _focusScope.requestFocus(_pwdNode),
           label: l10n.privateKey,
           icon: Icons.vpn_key,
+          suggestion: false,
         ),
         TextButton(
           onPressed: () async {
@@ -181,6 +183,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
           obscureText: true,
           label: l10n.pwd,
           icon: Icons.password,
+          suggestion: false,
           onSubmitted: (_) => _onTapSave(),
         ),
         SizedBox(height: MediaQuery.of(context).size.height * 0.1),

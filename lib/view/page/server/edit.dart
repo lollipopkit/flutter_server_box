@@ -196,6 +196,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         label: l10n.host,
         icon: BoxIcons.bx_server,
         hint: 'example.com',
+        suggestion: false,
       ),
       Input(
         controller: _portController,
@@ -205,6 +206,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         label: l10n.port,
         icon: Bootstrap.number_123,
         hint: '22',
+        suggestion: false,
       ),
       Input(
         controller: _usernameController,
@@ -214,6 +216,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         label: l10n.user,
         icon: Icons.account_box,
         hint: 'root',
+        suggestion: false,
       ),
       Input(
         controller: _altUrlController,
@@ -222,6 +225,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         label: l10n.fallbackSshDest,
         icon: MingCute.link_line,
         hint: 'user@ip:port',
+        suggestion: false,
       ),
       TagEditor(
         tags: _tags,
@@ -288,6 +292,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
             label: l10n.pwd,
             icon: Icons.password,
             hint: l10n.pwd,
+            suggestion: false,
             onSubmitted: (_) => _onSave(),
           ));
         }
@@ -354,6 +359,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
           icon: Icons.image,
           label: 'URL',
           hint: 'https://example.com/logo.png',
+          suggestion: false,
         ),
         UIs.height7,
         ..._buildPVEs(),
@@ -368,6 +374,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
           label: l10n.deviceName,
           icon: MingCute.low_temperature_line,
           hint: 'nvme-pci-0400',
+          suggestion: false,
         ),
         UIs.height7,
         ..._buildWOLs(),
@@ -396,6 +403,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
           node: node,
           label: 'URL',
           hint: addr,
+          suggestion: false,
         ),
       ),
       ListTile(
@@ -429,6 +437,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         label: 'JSON',
         icon: Icons.code,
         hint: '{${l10n.customCmdHint}}',
+        suggestion: false,
       ),
       ListTile(
         leading: const Padding(
@@ -460,6 +469,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         label: 'MAC ${l10n.addr}',
         icon: Icons.computer,
         hint: '00:11:22:33:44:55',
+        suggestion: false,
       ),
       Input(
         controller: _wolIpCtrl,
@@ -467,6 +477,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         label: 'IP ${l10n.addr}',
         icon: Icons.network_cell,
         hint: '192.168.1.x',
+        suggestion: false,
       ),
       Input(
         controller: _wolPwdCtrl,
@@ -475,6 +486,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         label: l10n.pwd,
         icon: Icons.password,
         hint: l10n.pwd,
+        suggestion: false,
       ),
     ];
   }
@@ -620,17 +632,6 @@ class _ServerEditPageState extends State<ServerEditPage> {
       wolCfg: wol,
     );
 
-    // final tipShown = Stores.history.writeScriptTipShown;
-    // if (!tipShown.fetch()) {
-    //   final ok = await context.showRoundDialog(
-    //     title: l10n.attention,
-    //     child: SimpleMarkdown(data: l10n.beforeConnect(Urls.thisRepo)),
-    //     actions: Btns.oks(onTap: () => context.pop(true)),
-    //   );
-    //   if (ok != true) return;
-    //   tipShown.put(true);
-    // }
-
     if (widget.spi == null) {
       Pros.server.addServer(spi);
     } else {
@@ -645,12 +646,12 @@ class _ServerEditPageState extends State<ServerEditPage> {
       leading: const Icon(Icons.tips_and_updates).paddingOnly(left: 13),
       title: Text(l10n.attention),
       onTap: () {
-          context.showRoundDialog(
-            title: l10n.attention,
-            child: SimpleMarkdown(data: l10n.writeScriptTip),
-            actions: Btns.oks(onTap: () => context.pop(true)),
-          );
-        },
+        context.showRoundDialog(
+          title: l10n.attention,
+          child: SimpleMarkdown(data: l10n.writeScriptTip),
+          actions: Btns.oks(onTap: () => context.pop(true)),
+        );
+      },
       trailing: const Icon(Icons.keyboard_arrow_right),
     ).cardx;
   }

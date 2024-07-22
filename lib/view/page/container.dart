@@ -338,18 +338,21 @@ class _ContainerPageState extends State<ContainerPage> {
             label: l10n.image,
             hint: 'xxx:1.1',
             controller: imageCtrl,
+            suggestion: false,
           ),
           Input(
             type: TextInputType.text,
             controller: nameCtrl,
             label: l10n.containerName,
             hint: 'xxx',
+            suggestion: false,
           ),
           Input(
             type: TextInputType.text,
             controller: argsCtrl,
             label: l10n.extraArgs,
             hint: '-p 2222:22 -v ~/.xxx/:/xxx',
+            suggestion: false,
           ),
         ],
       ),
@@ -425,6 +428,7 @@ class _ContainerPageState extends State<ContainerPage> {
         controller: ctrl,
         onSubmitted: _onSaveDockerHost,
         hint: 'unix:///run/user/1000/docker.sock',
+        suggestion: false,
       ),
       actions: [
         TextButton(

@@ -23,7 +23,18 @@ class MyApp extends StatelessWidget {
       builder: (context, _) {
         if (!Stores.setting.useSystemPrimaryColor.fetch()) {
           UIs.colorSeed = Color(Stores.setting.primaryColor.fetch());
-          return _buildApp(context);
+          return _buildApp(
+            context,
+            light: ThemeData(
+              useMaterial3: true,
+              colorSchemeSeed: UIs.colorSeed,
+            ),
+            dark: ThemeData(
+              useMaterial3: true,
+              brightness: Brightness.dark,
+              colorSchemeSeed: UIs.colorSeed,
+            ),
+          );
         }
         return DynamicColorBuilder(
           builder: (light, dark) {
@@ -36,10 +47,10 @@ class MyApp extends StatelessWidget {
               brightness: Brightness.dark,
               colorScheme: dark,
             );
-            if (context.isDark && light != null) {
-              UIs.primaryColor = light.primary;
-            } else if (!context.isDark && dark != null) {
+            if (context.isDark && dark != null) {
               UIs.primaryColor = dark.primary;
+            } else if (!context.isDark && light != null) {
+              UIs.primaryColor = light.primary;
             }
             return _buildApp(context, light: lightTheme, dark: darkTheme);
           },
@@ -48,7 +59,8 @@ class MyApp extends StatelessWidget {
     );
   }
 
-  Widget _buildApp(BuildContext ctx, {ThemeData? light, ThemeData? dark}) {
+  Widget _buildApp(BuildContext ctx,
+      {required ThemeData light, required ThemeData dark}) {
     final tMode = Stores.setting.themeMode.fetch();
     // Issue #57
     final themeMode = switch (tMode) {
@@ -57,16 +69,6 @@ class MyApp extends StatelessWidget {
       _ => ThemeMode.system,
     };
     final locale = Stores.setting.locale.fetch().toLocale;
-
-    light ??= ThemeData(
-      useMaterial3: true,
-      colorSchemeSeed: UIs.colorSeed,
-    );
-    dark ??= ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      colorSchemeSeed: UIs.colorSeed,
-    );
 
     return MaterialApp(
       locale: locale,
@@ -78,8 +80,8 @@ class MyApp extends StatelessWidget {
       localeListResolutionCallback: LocaleUtil.resolve,
       title: BuildData.name,
       themeMode: themeMode,
-      theme: light,
-      darkTheme: tMode < 3 ? dark : dark.toAmoled,
+      theme: light.fixWindowsFont,
+      darkTheme: (tMode < 3 ? dark : dark.toAmoled).fixWindowsFont,
       home: Builder(
         builder: (context) {
           context.setLibL10n();

@@ -52,12 +52,14 @@ class _IPerfPageState extends State<IPerfPage> {
           controller: _hostCtrl,
           label: l10n.host,
           icon: Icons.computer,
+          suggestion: false,
         ),
         Input(
           controller: _portCtrl,
           label: l10n.port,
           type: TextInputType.number,
           icon: Icons.numbers,
+          suggestion: false,
         ),
       ],
     );

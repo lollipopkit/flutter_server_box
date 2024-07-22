@@ -59,6 +59,7 @@ class _PingPageState extends State<PingPage>
             controller: _textEditingController,
             hint: l10n.inputDomainHere,
             maxLines: 1,
+            suggestion: false,
             onSubmitted: (_) => _doPing(),
           ),
           actions: [

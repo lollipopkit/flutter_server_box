@@ -53,9 +53,7 @@ void _runInZone(void Function() body) {
 
   runZonedGuarded(
     body,
-    (obj, trace) {
-      Loggers.root.warning(obj, null, trace);
-    },
+    (e, s) => print('[ZONE] $e\n$s'),
     zoneSpecification: zoneSpec,
   );
 }
@@ -82,7 +80,6 @@ Future<void> _initApp() async {
 }
 
 Future<void> _initData() async {
-  // await SecureStore.init();
   await Hive.initFlutter();
   // Ordered by typeId
   Hive.registerAdapter(PrivateKeyInfoAdapter()); // 1
@@ -94,7 +91,7 @@ Future<void> _initData() async {
   Hive.registerAdapter(ServerCustomAdapter()); // 7
   Hive.registerAdapter(WakeOnLanCfgAdapter()); // 8
 
-  await SharedPref.init(); // Call this before accessing any store
+  await PrefStore.init(); // Call this before accessing any store
 
   await Stores.setting.init();
   await Stores.server.init();

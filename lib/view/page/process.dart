@@ -51,8 +51,7 @@ class _ProcessPageState extends State<ProcessPage> {
 
   Future<void> _refresh() async {
     if (mounted) {
-      final result =
-          await _client?.run(ShellFunc.process.exec).string;
+      final result = await _client?.run(ShellFunc.process.exec).string;
       if (result == null || result.isEmpty) {
         context.showSnackBar(l10n.noResult);
         return;
