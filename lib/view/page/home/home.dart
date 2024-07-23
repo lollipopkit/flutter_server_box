@@ -78,11 +78,7 @@ class _HomePageState extends State<HomePage>
 
     switch (state) {
       case AppLifecycleState.resumed:
-        if (_shouldAuth) {
-          if (Stores.setting.useBioAuth.fetch()) {
-            BioAuth.go().then((_) => _shouldAuth = false);
-          }
-        }
+        if (_shouldAuth) _goAuth();
         if (!Pros.server.isAutoRefreshOn) {
           Pros.server.startAutoRefresh();
         }
@@ -323,7 +319,7 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
     // Auth required for first launch
-    if (Stores.setting.useBioAuth.fetch()) BioAuth.go();
+    _goAuth();
 
     //_reqNotiPerm();
 
@@ -360,6 +356,15 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
   //     );
   //   }
   // }
+
+  void _goAuth() {
+    if (Stores.setting.useBioAuth.fetch()) {
+      if (BioAuthPage.route.isAlreadyIn) return;
+      BioAuthPage.route.go(context, args: BioAuthPageArgs(
+        onAuthSuccess: () => _shouldAuth = false,
+      ));
+    }
+  }
 
   Future<void> _onLongPressSetting() async {
     final map = Stores.setting.box.toJson(includeInternal: false);
