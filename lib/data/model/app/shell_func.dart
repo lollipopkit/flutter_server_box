@@ -192,6 +192,7 @@ enum StatusCmdType {
       'for f in /sys/class/power_supply/*/uevent; do cat "\$f"; echo; done'),
   nvidia._('nvidia-smi -q -x'),
   sensors._('sensors'),
+  cpuBrand._('cat /proc/cpuinfo | grep "model name"'),
   ;
 
   final String cmd;
@@ -210,6 +211,7 @@ enum BSDStatusCmdType {
   mem._('top -l 1 | grep PhysMem'),
   //temp,
   host._('hostname'),
+  cpuBrand._('sysctl -n machdep.cpu.brand_string'),
   ;
 
   final String cmd;

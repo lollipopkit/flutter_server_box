@@ -4,10 +4,13 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:server_box/data/model/server/time_seq.dart';
 import 'package:server_box/data/res/status.dart';
 
+/// Capacity of the FIFO queue
 const _kCap = 30;
 
 class Cpus extends TimeSeq<List<SingleCpuCore>> {
   Cpus(super.init1, super.init2);
+
+  final Map<String, int> brand = {};
 
   @override
   void onUpdate() {
@@ -172,6 +175,22 @@ class SingleCpuCore extends TimeSeqIface<SingleCpuCore> {
       );
     }
     return cpus;
+  }
+}
+
+final class CpuBrand {
+  static Map<String, int> parse(String raw) {
+    final lines = raw.split('\n');
+    // {brand: count}
+    final brands = <String, int>{};
+    for (var line in lines) {
+      if (line.contains('model name')) {
+        final model = line.split(':').last.trim();
+        final count = brands[model] ?? 0;
+        brands[model] = count + 1;
+      }
+    }
+    return brands;
   }
 }
 
