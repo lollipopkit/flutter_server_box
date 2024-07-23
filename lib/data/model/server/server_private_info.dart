@@ -42,6 +42,10 @@ class ServerPrivateInfo {
   @HiveField(11)
   final WakeOnLanCfg? wolCfg;
 
+  /// It only applies to SSH terminal.
+  @HiveField(12)
+  final Map<String, String>? envs;
+
   final String id;
 
   const ServerPrivateInfo({
@@ -57,6 +61,7 @@ class ServerPrivateInfo {
     this.jumpId,
     this.custom,
     this.wolCfg,
+    this.envs,
   }) : id = '$user@$ip:$port';
 
   static ServerPrivateInfo fromJson(Map<String, dynamic> json) {
@@ -76,6 +81,15 @@ class ServerPrivateInfo {
     final wolCfg = json["wolCfg"] == null
         ? null
         : WakeOnLanCfg.fromJson(json["wolCfg"].cast<String, dynamic>());
+    final envs_ = json["envs"] as Map<String, dynamic>?;
+    final envs = <String, String>{};
+    if (envs_ != null) {
+      envs_.forEach((key, value) {
+        if (value is String) {
+          envs[key] = value;
+        }
+      });
+    }
 
     return ServerPrivateInfo(
       name: name,
@@ -90,6 +104,7 @@ class ServerPrivateInfo {
       jumpId: jumpId,
       custom: custom,
       wolCfg: wolCfg,
+      envs: envs.isEmpty ? null : envs,
     );
   }
 
@@ -122,6 +137,9 @@ class ServerPrivateInfo {
     }
     if (wolCfg != null) {
       data["wolCfg"] = wolCfg?.toJson();
+    }
+    if (envs != null) {
+      data["envs"] = envs;
     }
     return data;
   }

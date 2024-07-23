@@ -92,6 +92,7 @@
   "editor": "Editor",
   "editorHighlightTip": "De huidige codehighlighting-prestaties zijn slechter en kunnen optioneel worden uitgeschakeld om te verbeteren.",
   "encode": "Coderen",
+  "envVars": "Omgevingsvariabele",
   "error": "Fout",
   "exampleName": "Voorbeeldnaam",
   "experimentalFeature": "Experimentele functie",

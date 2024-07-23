@@ -92,6 +92,7 @@
   "editor": "Editor",
   "editorHighlightTip": "El rendimiento del resaltado de código es bastante pobre actualmente, puedes elegir desactivarlo para mejorar.",
   "encode": "Codificar",
+  "envVars": "Variable de entorno",
   "error": "Error",
   "exampleName": "Ejemplo de nombre",
   "experimentalFeature": "Función experimental",

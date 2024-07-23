@@ -92,6 +92,7 @@
   "editor": "編輯器",
   "editorHighlightTip": "目前的代碼高亮性能較為糟糕，可以選擇關閉以改善。",
   "encode": "編碼",
+  "envVars": "環境變量",
   "error": "錯誤",
   "exampleName": "名稱範例",
   "experimentalFeature": "實驗性功能",

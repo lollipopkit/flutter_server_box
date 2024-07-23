@@ -92,6 +92,7 @@
   "editor": "Editor",
   "editorHighlightTip": "The current code highlighting performance is not ideal and can be optionally turned off to improve.",
   "encode": "Encode",
+  "envVars": "Environment variable",
   "error": "Error",
   "exampleName": "Example name",
   "experimentalFeature": "Experimental feature",
