@@ -198,6 +198,29 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       ]);
     }
 
+    final List<Widget> children = Stores.setting.cpuViewAsProgress.fetch()
+        ? _buildCPUProgress(ss.cpu)
+        : [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 13),
+              child: SizedBox(
+                height: 137,
+                width: _media.size.width - 26 - 34,
+                child: _buildLineChart(
+                  ss.cpu.spots,
+                  //ss.cpu.rangeX,
+                  tooltipPrefix: 'CPU',
+                ),
+              ),
+            ),
+          ];
+
+    if (ss.cpu.brand.isNotEmpty) {
+      children.add(Column(
+        children: ss.cpu.brand.entries.map(_buildCpuModelItem).toList(),
+      ).paddingOnly(top: 13));
+    }
+
     return CardX(
       child: ExpandTile(
         title: Align(
@@ -214,25 +237,19 @@ class _ServerDetailPageState extends State<ServerDetailPage>
           mainAxisSize: MainAxisSize.min,
           children: details,
         ),
-        children: Stores.setting.cpuViewAsProgress.fetch()
-            ? _buildCPUProgress(ss.cpu)
-            : [
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 17, vertical: 13),
-                  child: SizedBox(
-                    height: 137,
-                    width: _media.size.width - 26 - 34,
-                    child: _buildLineChart(
-                      ss.cpu.spots,
-                      //ss.cpu.rangeX,
-                      tooltipPrefix: 'CPU',
-                    ),
-                  ),
-                ),
-              ],
+        children: children,
       ),
     );
+  }
+
+  Widget _buildCpuModelItem(MapEntry<String, int> e) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(e.key, style: UIs.text13),
+        Text('x ${e.value}', style: UIs.text13Grey),
+      ],
+    ).paddingSymmetric(horizontal: 17);
   }
 
   Widget _buildDetailPercent(double percent, String timeType) {
