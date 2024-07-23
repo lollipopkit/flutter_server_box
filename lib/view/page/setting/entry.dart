@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:locale_names/locale_names.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/rebuild.dart';
 import 'package:server_box/data/res/store.dart';
@@ -473,8 +474,12 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildTermFontSize() {
     return ListTile(
       leading: const Icon(MingCute.font_size_line),
-      title: Text(l10n.fontSize),
-      subtitle: Text(l10n.termFontSizeTip, style: UIs.textGrey),
+      // title: Text(l10n.fontSize),
+      // subtitle: Text(l10n.termFontSizeTip, style: UIs.textGrey),
+      title: TipText(
+        tip: l10n.termFontSizeTip,
+        text: l10n.fontSize,
+      ),
       trailing: ValBuilder(
         listenable: _setting.termFontSize.listenable(),
         builder: (val) => Text(
@@ -531,7 +536,7 @@ class _SettingPageState extends State<SettingPage> {
         final selected = await context.showPickSingleDialog(
           title: l10n.language,
           items: AppLocalizations.supportedLocales,
-          name: (p0) => p0.code,
+          name: (p0) => '${p0.nativeDisplayLanguage} (${p0.code})',
           initial: _setting.locale.fetch().toLocale,
         );
         if (selected != null) {
@@ -606,8 +611,12 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildFullScreenSwitch() {
     return ListTile(
       leading: const Icon(Bootstrap.phone_landscape_fill),
-      title: Text(l10n.fullScreen),
-      subtitle: Text(l10n.fullScreenTip, style: UIs.textGrey),
+      // title: Text(l10n.fullScreen),
+      // subtitle: Text(l10n.fullScreenTip, style: UIs.textGrey),
+      title: TipText(
+        tip: l10n.fullScreenTip,
+        text: l10n.fullScreen,
+      ),
       trailing: StoreSwitch(
         prop: _setting.fullScreen,
         callback: (_) => RNodes.app.notify(),
@@ -692,8 +701,12 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildSftpOpenLastPath() {
     return ListTile(
       leading: const Icon(MingCute.history_line),
-      title: Text(l10n.openLastPath),
-      subtitle: Text(l10n.openLastPathTip, style: UIs.textGrey),
+      // title: Text(l10n.openLastPath),
+      // subtitle: Text(l10n.openLastPathTip, style: UIs.textGrey),
+      title: TipText(
+        tip: l10n.openLastPathTip,
+        text: l10n.openLastPath,
+      ),
       trailing: StoreSwitch(prop: _setting.sftpOpenLastPath),
     );
   }
@@ -767,8 +780,12 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildTextScaler() {
     final ctrl = TextEditingController(text: _setting.textFactor.toString());
     return ListTile(
-      title: Text(l10n.textScaler),
-      subtitle: Text(l10n.textScalerTip, style: UIs.textGrey),
+      // title: Text(l10n.textScaler),
+      // subtitle: Text(l10n.textScalerTip, style: UIs.textGrey),
+      title: TipText(
+        tip: l10n.textScalerTip,
+        text: l10n.textScaler,
+      ),
       trailing: ValBuilder(
         listenable: _setting.textFactor.listenable(),
         builder: (val) => Text(
@@ -821,8 +838,12 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildServerFuncBtnsSwitch() {
     return ListTile(
-      title: Text(l10n.location),
-      subtitle: Text(l10n.moveOutServerFuncBtnsHelp, style: UIs.text13Grey),
+      // title: Text(l10n.location),
+      // subtitle: Text(l10n.moveOutServerFuncBtnsHelp, style: UIs.text13Grey),
+      title: TipText(
+        tip: l10n.moveOutServerFuncBtnsHelp,
+        text: l10n.location,
+      ),
       trailing: StoreSwitch(prop: _setting.moveOutServerTabFuncBtns),
     );
   }
@@ -913,8 +934,12 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildDoubleColumnServersPage() {
     return ListTile(
-      title: Text(l10n.doubleColumnMode),
-      subtitle: Text(l10n.doubleColumnTip, style: UIs.textGrey),
+      // title: Text(l10n.doubleColumnMode),
+      // subtitle: Text(l10n.doubleColumnTip, style: UIs.textGrey),
+      title: TipText(
+        tip: l10n.doubleColumnTip,
+        text: l10n.doubleColumnMode,
+      ),
       trailing: StoreSwitch(prop: _setting.doubleColumnServersPage),
     );
   }
@@ -937,8 +962,12 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildEditorHighlight() {
     return ListTile(
       leading: const Icon(MingCute.code_line, size: _kIconSize),
-      title: Text(l10n.highlight),
-      subtitle: Text(l10n.editorHighlightTip, style: UIs.textGrey),
+      // title: Text(l10n.highlight),
+      // subtitle: Text(l10n.editorHighlightTip, style: UIs.textGrey),
+      title: TipText(
+        tip: l10n.editorHighlightTip,
+        text: l10n.highlight,
+      ),
       trailing: StoreSwitch(prop: _setting.editorHighlight),
     );
   }
@@ -961,9 +990,11 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildContainerTrySudo() {
     return ListTile(
-      leading: const Icon(Clarity.administrator_solid),
-      title: Text(l10n.trySudo),
-      subtitle: Text(l10n.containerTrySudoTip, style: UIs.textGrey),
+      leading: const Icon(EvaIcons.person_done),
+      title: TipText(
+        tip: l10n.containerTrySudoTip,
+        text: l10n.trySudo,
+      ),
       trailing: StoreSwitch(prop: _setting.containerTrySudo),
     );
   }
@@ -978,9 +1009,13 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildContainerParseStat() {
     return ListTile(
-      leading: const Icon(IonIcons.stats_chart, size: _kIconSize),
-      title: Text(l10n.parseContainerStats),
-      subtitle: Text(l10n.parseContainerStatsTip, style: UIs.textGrey),
+      leading: const Icon(MingCute.chart_line_line, size: _kIconSize),
+      // title: Text(l10n.parseContainerStats),
+      // subtitle: Text(l10n.parseContainerStatsTip, style: UIs.textGrey),
+      title: TipText(
+        tip: l10n.parseContainerStatsTip,
+        text: l10n.stat,
+      ),
       trailing: StoreSwitch(prop: _setting.containerParseStat),
     );
   }
@@ -1002,8 +1037,12 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildRememberPwdInMem() {
     return ListTile(
-      title: Text(l10n.rememberPwdInMem),
-      subtitle: Text(l10n.rememberPwdInMemTip, style: UIs.textGrey),
+      // title: Text(l10n.rememberPwdInMem),
+      // subtitle: Text(l10n.rememberPwdInMemTip, style: UIs.textGrey),
+      title: TipText(
+        tip: l10n.rememberPwdInMemTip,
+        text: l10n.rememberPwdInMem,
+      ),
       trailing: StoreSwitch(prop: _setting.rememberPwdInMem),
     );
   }
@@ -1185,11 +1224,15 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildLetterCache() {
     return ListTile(
-      leading: const Icon(Bootstrap.input_cursor),
-      title: Text(l10n.letterCache),
-      subtitle: Text(
-        '${l10n.letterCacheTip}\n${l10n.needRestart}',
-        style: UIs.textGrey,
+      leading: const Icon(Bootstrap.alphabet),
+      // title: Text(l10n.letterCache),
+      // subtitle: Text(
+      //   '${l10n.letterCacheTip}\n${l10n.needRestart}',
+      //   style: UIs.textGrey,
+      // ),
+      title: TipText(
+        tip: '${l10n.letterCacheTip}\n${l10n.needRestart}',
+        text: l10n.letterCache,
       ),
       trailing: StoreSwitch(prop: _setting.letterCache),
     );

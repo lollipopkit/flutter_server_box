@@ -30,6 +30,7 @@ dependencies:
   flutter_adaptive_scaffold: ^0.1.10+2
   device_info_plus: ^10.1.0
   extended_image: ^8.2.1
+  locale_names: ^1.1.1
   dartssh2:
     git:
       url: https://github.com/lollipopkit/dartssh2
@@ -61,7 +62,7 @@ dependencies:
   fl_lib:
     git:
       url: https://github.com/lppcg/fl_lib
-      ref: v1.0.84
+      ref: v1.0.87
 
 dependency_overrides:
   # dartssh2:

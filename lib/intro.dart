@@ -18,13 +18,15 @@ final class _IntroPage extends StatelessWidget {
         final padTop = cons.maxHeight * .16;
         final pages_ = pages.map((e) => e(context, padTop)).toList();
         return IntroPage(
-          pages: pages_,
-          onDone: (ctx) {
-            Stores.setting.introVer.put(BuildData.build);
-            Navigator.of(ctx).pushReplacement(
-              MaterialPageRoute(builder: (_) => const HomePage()),
-            );
-          },
+          args: IntroPageArgs(
+            pages: pages_,
+            onDone: (ctx) {
+              Stores.setting.introVer.put(BuildData.build);
+              Navigator.of(ctx).pushReplacement(
+                MaterialPageRoute(builder: (_) => const HomePage()),
+              );
+            },
+          ),
         );
       },
     );
@@ -38,7 +40,7 @@ final class _IntroPage extends StatelessWidget {
         IntroPage.title(icon: BoxIcons.bxs_terminal, big: true),
         SizedBox(height: padTop),
         ListTile(
-          leading: const Icon(Bootstrap.input_cursor),
+          leading: const Icon(Bootstrap.alphabet),
           title: Text(l10n.letterCache),
           subtitle: Text(l10n.letterCacheTip, style: UIs.textGrey),
           trailing: StoreSwitch(prop: _setting.letterCache),
@@ -61,8 +63,8 @@ final class _IntroPage extends StatelessWidget {
           trailing: StoreSwitch(prop: _setting.sftpRmrDir),
         ).cardx,
         ListTile(
-          leading: const Icon(IonIcons.stats_chart, size: _kIconSize),
-          title: Text(l10n.parseContainerStats),
+          leading: const Icon(MingCute.chart_line_line, size: _kIconSize),
+          title: Text(l10n.stat),
           subtitle: Text(l10n.parseContainerStatsTip, style: UIs.textGrey),
           trailing: StoreSwitch(prop: _setting.containerParseStat),
         ).cardx,
@@ -90,7 +92,7 @@ final class _IntroPage extends StatelessWidget {
             final selected = await ctx.showPickSingleDialog(
               title: l10n.language,
               items: AppLocalizations.supportedLocales,
-              name: (p0) => p0.code,
+              name: (p0) => '${p0.nativeDisplayLanguage} (${p0.code})',
               initial: _setting.locale.fetch().toLocale,
             );
             if (selected != null) {
