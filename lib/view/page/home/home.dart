@@ -360,9 +360,10 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
   void _goAuth() {
     if (Stores.setting.useBioAuth.fetch()) {
       if (BioAuthPage.route.isAlreadyIn) return;
-      BioAuthPage.route.go(context, args: BioAuthPageArgs(
-        onAuthSuccess: () => _shouldAuth = false,
-      ));
+      BioAuthPage.route.go(
+        context,
+        args: BioAuthPageArgs(onAuthSuccess: () => _shouldAuth = false),
+      );
     }
   }
 

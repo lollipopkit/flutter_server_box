@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
@@ -212,7 +213,8 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           context.showSnackBar('remote path is null');
           return;
         }
-        final remotePath = '$remoteDir/${path.split('/').last}';
+        final fileName = path.split(Platform.pathSeparator).lastOrNull;
+        final remotePath = '$remoteDir/$fileName';
         Loggers.app.info('SFTP upload local: $path, remote: $remotePath');
         Pros.sftp.add(
           SftpReq(widget.spi, remotePath, path, SftpReqType.upload),
