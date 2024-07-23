@@ -154,7 +154,7 @@
   "lastTry": "最後嘗試",
   "launchPage": "啓動頁",
   "letterCache": "输入法字符緩存",
-  "letterCacheTip": "推薦開啟，但是開啟後無法輸入CJK（中文、日文、韓文）等文字",
+  "letterCacheTip": "建議關閉，但關閉後將無法輸入 CJK 等文字。",
   "license": "開源許可證",
   "light": "亮",
   "loadingFiles": "正在加載目錄...",

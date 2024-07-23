@@ -154,7 +154,7 @@
   "lastTry": "Laatste poging",
   "launchPage": "Startpagina",
   "letterCache": "Lettercaching",
-  "letterCacheTip": "Aanbevolen om in te schakelen, maar bij inschakeling wordt de invoer van CJK (Chinees, Japans, Koreaans) tekens voorkomen",
+  "letterCacheTip": "Aanbevolen om uit te schakelen, maar na het uitschakelen is het niet mogelijk om CJK-tekens in te voeren.",
   "license": "Licentie",
   "light": "Licht",
   "loadingFiles": "Bestanden laden...",

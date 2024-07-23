@@ -154,7 +154,7 @@
   "lastTry": "Dernière tentative",
   "launchPage": "Page de lancement",
   "letterCache": "Mise en cache des lettres",
-  "letterCacheTip": "Recommandé à activer, mais son activation empêche la saisie de caractères CJK (chinois, japonais, coréen)",
+  "letterCacheTip": "Recommandé de désactiver, mais après désactivation, il sera impossible de saisir des caractères CJK.",
   "license": "Licence",
   "light": "Clair",
   "loadingFiles": "Chargement des fichiers...",

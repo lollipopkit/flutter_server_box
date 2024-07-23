@@ -154,7 +154,7 @@
   "lastTry": "Letzter Versuch",
   "launchPage": "Startseite",
   "letterCache": "Buchstaben-Caching",
-  "letterCacheTip": "Empfohlen zu aktivieren, aber die Aktivierung verhindert die Eingabe von CJK (Chinesisch, Japanisch, Koreanisch) Zeichen",
+  "letterCacheTip": "Empfohlen, zu deaktivieren, aber nach dem Deaktivieren können keine CJK-Zeichen eingegeben werden.",
   "license": "Lizenzen",
   "light": "Hell",
   "loadingFiles": "Lädt Dateien...",

@@ -154,7 +154,7 @@
   "lastTry": "Percobaan terakhir",
   "launchPage": "Halaman peluncuran",
   "letterCache": "Caching huruf",
-  "letterCacheTip": "Disarankan untuk diaktifkan, tetapi mengaktifkannya mencegah input karakter CJK (Cina, Jepang, Korea)",
+  "letterCacheTip": "Direkomendasikan untuk menonaktifkan, tetapi setelah dinonaktifkan, tidak mungkin untuk memasukkan karakter CJK.",
   "license": "Lisensi",
   "light": "Terang",
   "loadingFiles": "Memuat file ...",

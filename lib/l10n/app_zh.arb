@@ -154,7 +154,7 @@
   "lastTry": "最后尝试",
   "launchPage": "启动页",
   "letterCache": "输入法字符缓存",
-  "letterCacheTip": "推荐开启，但是开启后无法输入 CJK 等文字",
+  "letterCacheTip": "推荐关闭，但是关闭后无法输入 CJK 等文字",
   "license": "开源许可证",
   "light": "亮",
   "loadingFiles": "正在加载目录。。。",

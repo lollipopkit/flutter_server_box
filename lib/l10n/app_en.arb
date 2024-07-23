@@ -154,7 +154,7 @@
   "lastTry": "Last try",
   "launchPage": "Launch page",
   "letterCache": "Letter caching",
-  "letterCacheTip": "Recommended to enable, but enabling it prevents the input of CJK (Chinese, Japanese, Korean) characters",
+  "letterCacheTip": "Recommended to disable, but after disabling, it will be impossible to input CJK characters.",
   "license": "License",
   "light": "Light",
   "loadingFiles": "Loading files...",

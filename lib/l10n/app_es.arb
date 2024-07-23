@@ -154,7 +154,7 @@
   "lastTry": "Último intento",
   "launchPage": "Página de lanzamiento",
   "letterCache": "Caché de letras",
-  "letterCacheTip": "Se recomienda activar, pero al activarlo se impide la introducción de caracteres CJK (chino, japonés, coreano)",
+  "letterCacheTip": "Recomendado desactivar, pero después de desactivarlo, no se podrán ingresar caracteres CJK.",
   "license": "Licencia de código abierto",
   "light": "Claro",
   "loadingFiles": "Cargando directorio...",

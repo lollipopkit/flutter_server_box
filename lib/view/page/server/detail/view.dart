@@ -243,13 +243,22 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildCpuModelItem(MapEntry<String, int> e) {
-    return Row(
+    final child = Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(e.key, style: UIs.text13),
+        SizedBox(
+          width: _media.size.width * .7,
+          child: Text(
+            e.key,
+            style: UIs.text13,
+            overflow: TextOverflow.fade,
+            maxLines: 1,
+          ),
+        ),
         Text('x ${e.value}', style: UIs.text13Grey),
       ],
-    ).paddingSymmetric(horizontal: 17);
+    );
+    return child.paddingSymmetric(horizontal: 17);
   }
 
   Widget _buildDetailPercent(double percent, String timeType) {
