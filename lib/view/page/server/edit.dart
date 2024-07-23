@@ -203,7 +203,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       _buildMore(),
     ];
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(17, 17, 17, 47),
+      padding: const EdgeInsets.fromLTRB(17, 7, 17, 47),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -303,9 +303,8 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
 
   Widget _buildEnvs() {
     return _env.listenVal((val) {
-      final subtitle = val.isEmpty
-          ? null
-          : Text(val.keys.join(','), style: UIs.textGrey);
+      final subtitle =
+          val.isEmpty ? null : Text(val.keys.join(','), style: UIs.textGrey);
       return ListTile(
         leading: const Padding(
           padding: EdgeInsets.only(left: 10),
@@ -622,18 +621,26 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   }
 
   Widget _buildWriteScriptTip() {
-    return ListTile(
-      leading: const Icon(Icons.tips_and_updates).paddingOnly(left: 13),
-      title: Text(l10n.attention),
-      onTap: () {
-        context.showRoundDialog(
-          title: l10n.attention,
-          child: SimpleMarkdown(data: l10n.writeScriptTip),
-          actions: Btns.oks(onTap: () => context.pop(true)),
-        );
-      },
-      trailing: const Icon(Icons.keyboard_arrow_right),
-    ).cardx;
+    return Center(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: () {
+          context.showRoundDialog(
+            title: l10n.attention,
+            child: SimpleMarkdown(data: l10n.writeScriptTip),
+            actions: Btns.oks(onTap: () => context.pop(true)),
+          );
+        },
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.tips_and_updates, size: 15, color: Colors.grey),
+            UIs.width13,
+            Text(l10n.attention, style: UIs.textGrey)
+          ],
+        ).paddingSymmetric(horizontal: 13, vertical: 3),
+      ),
+    ).paddingOnly(bottom: 13);
   }
 
   @override

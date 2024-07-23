@@ -385,8 +385,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v1.0.84"
-      resolved-ref: "4069be5204fb1866ca72b702df47fa334b189d1a"
+      ref: "v1.0.87"
+      resolved-ref: a5cfc603d2f5ea9bb2caa91ab1ab9dadded46622
       url: "https://github.com/lppcg/fl_lib"
     source: git
     version: "0.0.1"
@@ -754,6 +754,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.10"
+  locale_names:
+    dependency: "direct main"
+    description:
+      name: locale_names
+      sha256: "7a89ca54072f4f13d0f5df5a9ba69337554bf2fd057d1dd2a238898f3f159374"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.1"
   logging:
     dependency: transitive
     description:

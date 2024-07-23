@@ -289,7 +289,8 @@ class _ServerPageState extends State<ServerPage>
           }
         },
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 7),
+          padding:
+              const EdgeInsets.only(left: 13, right: 3, top: 13, bottom: 13),
           child: _buildRealServerCard(srv),
         ),
       ),
@@ -458,13 +459,9 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildTopRightWidget(Server s) {
-    return switch (s.conn) {
-      ServerConn.connecting ||
-      ServerConn.loading ||
-      ServerConn.connected =>
-        Padding(
-          padding: const EdgeInsets.only(left: 11, right: 3),
-          child: SizedBox(
+    final (child, onTap) = switch (s.conn) {
+      ServerConn.connecting || ServerConn.loading || ServerConn.connected => (
+          SizedBox(
             width: 19,
             height: 19,
             child: CircularProgressIndicator(
@@ -472,46 +469,52 @@ class _ServerPageState extends State<ServerPage>
               valueColor: AlwaysStoppedAnimation(UIs.primaryColor),
             ),
           ),
+          null,
         ),
-      ServerConn.failed => InkWell(
-          onTap: () {
+      ServerConn.failed => (
+          const Icon(
+            Icons.refresh,
+            size: 21,
+            color: Colors.grey,
+          ),
+          () {
             TryLimiter.reset(s.spi.id);
             Pros.server.refresh(spi: s.spi);
           },
-          child: const Padding(
-            padding: EdgeInsets.only(left: 11, right: 3),
-            child: Icon(
-              Icons.refresh,
-              size: 21,
-              color: Colors.grey,
-            ),
-          ),
         ),
-      ServerConn.disconnected => InkWell(
-          onTap: () => Pros.server.refresh(spi: s.spi),
-          child: const Padding(
-            padding: EdgeInsets.only(left: 11, right: 3),
-            child: Icon(
-              BoxIcons.bx_link,
-              size: 21,
-              color: Colors.grey,
-            ),
+      ServerConn.disconnected => (
+          const Icon(
+            BoxIcons.bx_link,
+            size: 21,
+            color: Colors.grey,
           ),
+          () => Pros.server.refresh(spi: s.spi)
         ),
-      ServerConn.finished => InkWell(
-          onTap: () => Pros.server.closeServer(id: s.spi.id),
-          child: const Padding(
-            padding: EdgeInsets.only(left: 11, right: 3),
-            child: Icon(
-              BoxIcons.bx_unlink,
-              size: 17,
-              color: Colors.grey,
-            ),
+      ServerConn.finished => (
+          const Icon(
+            BoxIcons.bx_unlink,
+            size: 17,
+            color: Colors.grey,
           ),
+          () => Pros.server.closeServer(id: s.spi.id),
         ),
-      _ when Stores.setting.serverTabUseOldUI.fetch() =>
-        ServerFuncBtnsTopRight(spi: s.spi),
+      _ when Stores.setting.serverTabUseOldUI.fetch() => (
+          ServerFuncBtnsTopRight(spi: s.spi),
+          null,
+        ),
     };
+
+    final wrapped = SizedBox(
+      height: _kCardHeightMin,
+      width: 27,
+      child: child,
+    );
+    if (onTap == null) return wrapped;
+    return InkWell(
+      borderRadius: BorderRadius.circular(7),
+      onTap: onTap,
+      child: wrapped,
+    ).paddingOnly(left: 10);
   }
 
   Widget _buildTopRightText(Server s) {
@@ -646,20 +649,25 @@ ${ss.err?.message ?? l10n.unknownError}
           _tag == null || (pro.pick(id: e)?.spi.tags?.contains(_tag) ?? false))
       .toList();
 
+  static const _kCardHeightMin = 23.0;
+  static const _kCardHeightFlip = 97.0;
+  static const _kCardHeightNormal = 106.0;
+  static const _kCardHeightMoveOutFuncs = 132.0;
+
   double? _calcCardHeight(ServerConn cs, bool flip) {
     if (_textFactorDouble != 1.0) return null;
     if (cs != ServerConn.finished) {
-      return 23.0;
+      return _kCardHeightMin;
     }
     if (flip) {
-      return 97.0;
+      return _kCardHeightFlip;
     }
     if (Stores.setting.moveOutServerTabFuncBtns.fetch() &&
         // Discussion #146
         !Stores.setting.serverTabUseOldUI.fetch()) {
-      return 132;
+      return _kCardHeightMoveOutFuncs;
     }
-    return 106;
+    return _kCardHeightNormal;
   }
 
   void _askFor({
