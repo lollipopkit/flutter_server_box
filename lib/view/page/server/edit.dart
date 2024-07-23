@@ -22,7 +22,7 @@ class ServerEditPage extends StatefulWidget {
   State<ServerEditPage> createState() => _ServerEditPageState();
 }
 
-class _ServerEditPageState extends State<ServerEditPage> {
+class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   final _nameController = TextEditingController();
   final _ipController = TextEditingController();
   final _altUrlController = TextEditingController();
@@ -49,57 +49,9 @@ class _ServerEditPageState extends State<ServerEditPage> {
   final _autoConnect = ValueNotifier(true);
   final _jumpServer = ValueNotifier<String?>(null);
   final _pveIgnoreCert = ValueNotifier(false);
+  final _env = <String, String>{}.vn;
 
   var _tags = <String>[];
-
-  @override
-  void initState() {
-    super.initState();
-
-    final spi = widget.spi;
-    if (spi != null) {
-      _nameController.text = spi.name;
-      _ipController.text = spi.ip;
-      _portController.text = spi.port.toString();
-      _usernameController.text = spi.user;
-      if (spi.keyId == null) {
-        _passwordController.text = spi.pwd ?? '';
-      } else {
-        _keyIdx.value = Pros.key.pkis.indexWhere(
-          (e) => e.id == widget.spi!.keyId,
-        );
-      }
-
-      /// List in dart is passed by pointer, so you need to copy it here
-      _tags.addAll(spi.tags ?? []);
-
-      _altUrlController.text = spi.alterUrl ?? '';
-      _autoConnect.value = spi.autoConnect ?? true;
-      _jumpServer.value = spi.jumpId;
-
-      final custom = spi.custom;
-      if (custom != null) {
-        _pveAddrCtrl.text = custom.pveAddr ?? '';
-        _pveIgnoreCert.value = custom.pveIgnoreCert;
-        try {
-          // Add a null check here to prevent setting `null` to the controller
-          final encoded = json.encode(custom.cmds!);
-          if (encoded.isNotEmpty) {
-            _customCmdCtrl.text = encoded;
-          }
-        } catch (_) {}
-        _preferTempDevCtrl.text = custom.preferTempDev ?? '';
-        _logoUrlCtrl.text = custom.logoUrl ?? '';
-      }
-
-      final wol = spi.wolCfg;
-      if (wol != null) {
-        _wolMacCtrl.text = wol.mac;
-        _wolIpCtrl.text = wol.ip;
-        _wolPwdCtrl.text = wol.pwd ?? '';
-      }
-    }
-  }
 
   @override
   void dispose() {
@@ -246,6 +198,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         ),
       ),
       _buildAuth(),
+      _buildEnvs(),
       _buildJumpServer(),
       _buildMore(),
     ];
@@ -302,12 +255,13 @@ class _ServerEditPageState extends State<ServerEditPage> {
   }
 
   Widget _buildKeyAuth() {
+    const padding = EdgeInsets.only(left: 23, right: 13);
     return Consumer<PrivateKeyProvider>(
       builder: (_, key, __) {
         final tiles = List<Widget>.generate(key.pkis.length, (index) {
           final e = key.pkis[index];
           return ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 17),
+            contentPadding: padding,
             leading: Text(
               '#${index + 1}',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
@@ -329,7 +283,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
         tiles.add(
           ListTile(
             title: Text(l10n.addPrivateKey),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 17),
+            contentPadding: padding,
             trailing: const Padding(
               padding: EdgeInsets.only(right: 13),
               child: Icon(Icons.add),
@@ -345,6 +299,31 @@ class _ServerEditPageState extends State<ServerEditPage> {
         );
       },
     );
+  }
+
+  Widget _buildEnvs() {
+    return _env.listenVal((val) {
+      final subtitle = val.isEmpty
+          ? null
+          : Text(val.keys.join(','), style: UIs.textGrey);
+      return ListTile(
+        leading: const Padding(
+          padding: EdgeInsets.only(left: 10),
+          child: Icon(HeroIcons.variable),
+        ),
+        subtitle: subtitle,
+        title: Text(l10n.envVars),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: () async {
+          final res = await KvEditor.route.go(
+            context,
+            args: KvEditorArgs(data: widget.spi?.envs ?? {}),
+          );
+          if (res == null) return;
+          _env.value = res;
+        },
+      ).cardx;
+    });
   }
 
   Widget _buildMore() {
@@ -630,6 +609,7 @@ class _ServerEditPageState extends State<ServerEditPage> {
       jumpId: _jumpServer.value,
       custom: custom,
       wolCfg: wol,
+      envs: _env.value.isEmpty ? null : _env.value,
     );
 
     if (widget.spi == null) {
@@ -654,5 +634,54 @@ class _ServerEditPageState extends State<ServerEditPage> {
       },
       trailing: const Icon(Icons.keyboard_arrow_right),
     ).cardx;
+  }
+
+  @override
+  void afterFirstLayout(BuildContext context) {
+    final spi = widget.spi;
+    if (spi != null) {
+      _nameController.text = spi.name;
+      _ipController.text = spi.ip;
+      _portController.text = spi.port.toString();
+      _usernameController.text = spi.user;
+      if (spi.keyId == null) {
+        _passwordController.text = spi.pwd ?? '';
+      } else {
+        _keyIdx.value = Pros.key.pkis.indexWhere(
+          (e) => e.id == widget.spi!.keyId,
+        );
+      }
+
+      /// List in dart is passed by pointer, so you need to copy it here
+      _tags.addAll(spi.tags ?? []);
+
+      _altUrlController.text = spi.alterUrl ?? '';
+      _autoConnect.value = spi.autoConnect ?? true;
+      _jumpServer.value = spi.jumpId;
+
+      final custom = spi.custom;
+      if (custom != null) {
+        _pveAddrCtrl.text = custom.pveAddr ?? '';
+        _pveIgnoreCert.value = custom.pveIgnoreCert;
+        try {
+          // Add a null check here to prevent setting `null` to the controller
+          final encoded = json.encode(custom.cmds!);
+          if (encoded.isNotEmpty) {
+            _customCmdCtrl.text = encoded;
+          }
+        } catch (_) {}
+        _preferTempDevCtrl.text = custom.preferTempDev ?? '';
+        _logoUrlCtrl.text = custom.logoUrl ?? '';
+      }
+
+      final wol = spi.wolCfg;
+      if (wol != null) {
+        _wolMacCtrl.text = wol.mac;
+        _wolIpCtrl.text = wol.ip;
+        _wolPwdCtrl.text = wol.pwd ?? '';
+      }
+
+      _env.value = spi.envs ?? {};
+    }
   }
 }

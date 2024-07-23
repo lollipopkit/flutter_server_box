@@ -393,12 +393,13 @@ class SSHPageState extends State<SSHPage>
         width: _terminal.viewWidth,
         height: _terminal.viewHeight,
       ),
+      environment: widget.spi.envs,
     );
 
     //_setupDiscontinuityTimer();
 
     if (session == null) {
-      _writeLn('Null session');
+      _writeLn('Null session, please back and retry\r\n');
       return;
     }
 

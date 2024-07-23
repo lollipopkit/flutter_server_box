@@ -92,6 +92,7 @@
   "editor": "エディター",
   "editorHighlightTip": "現在のコードハイライトのパフォーマンスはかなり悪いため、改善するために無効にすることを選択できます。",
   "encode": "エンコード",
+  "envVars": "環境変数",
   "error": "エラー",
   "exampleName": "名前例",
   "experimentalFeature": "実験的な機能",

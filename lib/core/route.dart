@@ -250,6 +250,9 @@ class AppRoutes {
   }
 
   static AppRoutes kvEditor({Key? key, required Map<String, String> data}) {
-    return AppRoutes(KvEditor(key: key, data: data), 'kv_editor');
+    return AppRoutes(
+      KvEditor(key: key, args: KvEditorArgs(data: data)),
+      'kv_editor',
+    );
   }
 }

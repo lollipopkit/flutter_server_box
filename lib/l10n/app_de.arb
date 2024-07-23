@@ -92,6 +92,7 @@
   "editor": "Editor",
   "editorHighlightTip": "Die Leistung der aktuellen Codehervorhebung ist schlechter und kann zur Verbesserung optional ausgeschaltet werden.",
   "encode": "Encode",
+  "envVars": "Umgebungsvariable",
   "error": "Fehler",
   "exampleName": "Servername",
   "experimentalFeature": "Experimentelles Feature",

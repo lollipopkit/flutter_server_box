@@ -92,6 +92,7 @@
   "editor": "Editor",
   "editorHighlightTip": "Performa penyorotan kode saat ini lebih buruk, dan dapat dimatikan secara opsional untuk perbaikan.",
   "encode": "Menyandi",
+  "envVars": "Variabel lingkungan",
   "error": "Kesalahan",
   "exampleName": "Nama contoh",
   "experimentalFeature": "Fitur eksperimental",

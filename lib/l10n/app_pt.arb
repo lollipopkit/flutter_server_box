@@ -92,6 +92,7 @@
   "editor": "Editor",
   "editorHighlightTip": "O desempenho do destaque de código atualmente é ruim, pode optar por desativá-lo para melhorar.",
   "encode": "Codificar",
+  "envVars": "Variável de ambiente",
   "error": "Erro",
   "exampleName": "Exemplo de nome",
   "experimentalFeature": "Recurso experimental",

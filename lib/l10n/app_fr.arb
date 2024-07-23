@@ -92,6 +92,7 @@
   "editor": "Éditeur",
   "editorHighlightTip": "La performance actuelle de mise en surbrillance du code est pire et peut être désactivée en option pour s'améliorer.",
   "encode": "Encoder",
+  "envVars": "Variable d’environnement",
   "error": "Erreur",
   "exampleName": "Nom de l'exemple",
   "experimentalFeature": "Fonctionnalité expérimentale",

@@ -29,13 +29,14 @@ class ServerPrivateInfoAdapter extends TypeAdapter<ServerPrivateInfo> {
       jumpId: fields[9] as String?,
       custom: fields[10] as ServerCustom?,
       wolCfg: fields[11] as WakeOnLanCfg?,
+      envs: (fields[12] as Map?)?.cast<String, String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, ServerPrivateInfo obj) {
     writer
-      ..writeByte(12)
+      ..writeByte(13)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -59,7 +60,9 @@ class ServerPrivateInfoAdapter extends TypeAdapter<ServerPrivateInfo> {
       ..writeByte(10)
       ..write(obj.custom)
       ..writeByte(11)
-      ..write(obj.wolCfg);
+      ..write(obj.wolCfg)
+      ..writeByte(12)
+      ..write(obj.envs);
   }
 
   @override
