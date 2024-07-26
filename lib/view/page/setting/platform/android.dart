@@ -44,8 +44,9 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
 
   Widget _buildBgRun() {
     return ListTile(
-      title: Text(l10n.bgRun),
-      subtitle: Text(l10n.bgRunTip, style: UIs.textGrey),
+      // title: Text(l10n.bgRun),
+      // subtitle: Text(l10n.bgRunTip, style: UIs.textGrey),
+      title: TipText(text: l10n.bgRun, tip: l10n.bgRunTip),
       trailing: StoreSwitch(prop: Stores.setting.bgRun),
     );
   }

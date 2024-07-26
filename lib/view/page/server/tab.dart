@@ -504,12 +504,15 @@ class _ServerPageState extends State<ServerPage>
         ),
     };
 
-    final wrapped = SizedBox(
-      height: _kCardHeightMin,
-      width: 27,
-      child: child,
-    );
-    if (onTap == null) return wrapped;
+    // Or the loading icon will be rescaled.
+    final wrapped = child is SizedBox
+        ? child
+        : SizedBox(
+            height: _kCardHeightMin,
+            width: 27,
+            child: child,
+          );
+    if (onTap == null) return wrapped.paddingOnly(left: 10);
     return InkWell(
       borderRadius: BorderRadius.circular(7),
       onTap: onTap,
@@ -650,9 +653,9 @@ ${ss.err?.message ?? l10n.unknownError}
       .toList();
 
   static const _kCardHeightMin = 23.0;
-  static const _kCardHeightFlip = 97.0;
-  static const _kCardHeightNormal = 106.0;
-  static const _kCardHeightMoveOutFuncs = 132.0;
+  static const _kCardHeightFlip = 99.0;
+  static const _kCardHeightNormal = 108.0;
+  static const _kCardHeightMoveOutFuncs = 135.0;
 
   double? _calcCardHeight(ServerConn cs, bool flip) {
     if (_textFactorDouble != 1.0) return null;

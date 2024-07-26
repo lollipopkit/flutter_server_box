@@ -85,6 +85,15 @@ abstract final class GithubIds {
     'Mooling0602',
     'IllTamer',
     'marlkiller',
+    'hlarc',
+    'itsandrewpao',
+    'StudyingLover',
+    'QJAG1024',
+    'Wuming-HUST',
+    'WolfCanglong',
+    'liwenjie119',
+    'logce',
+    'h-lyf',
   };
 }
 

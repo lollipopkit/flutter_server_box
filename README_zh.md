@@ -26,6 +26,7 @@ Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/rel
 - Github 的包由 Github Actions 构建
 - 其他来源由其所有者构建
 
+
 ## 🔖 特点
 - `状态图表`（CPU、传感器、GPU 等）, `SSH` 终端, `SFTP`, `Docker & 包 & 进程` 管理器...
 - 特殊支持：`生物认证`、`推送`、`桌面小部件`、`watchOS App`、`跟随系统颜色`...
@@ -65,9 +66,15 @@ Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/rel
 
 
 ## 🧱 贡献
-- 任何正面的贡献都欢迎。
-- [本地化翻译指南](https://blog.lolli.tech/faq/) 可在我的博客中找到。
+任何正面的贡献都欢迎。
 
+### 开发
+1. 安装 [Flutter](https://flutter.dev/docs/get-started/install)
+2. 克隆这个仓库, 运行 `flutter run` 启动应用
+3. 运行 `dart run fl_build -p PLATFORM` 构建应用
+
+### 翻译
+[指南](https://blog.lolli.tech/faq/) 可在我的博客中找到。
 
 ## 💡 我的其它 Apps
 - [GPT Box](https://github.com/lollipopkit/flutter_gpt_box) - 支持 OpenAI API 的 第三方全平台客户端。

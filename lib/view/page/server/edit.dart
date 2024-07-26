@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
@@ -30,7 +28,6 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _pveAddrCtrl = TextEditingController();
-  final _customCmdCtrl = TextEditingController();
   final _preferTempDevCtrl = TextEditingController();
   final _logoUrlCtrl = TextEditingController();
   final _wolMacCtrl = TextEditingController();
@@ -50,6 +47,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   final _jumpServer = ValueNotifier<String?>(null);
   final _pveIgnoreCert = ValueNotifier(false);
   final _env = <String, String>{}.vn;
+  final _customCmds = <String, String>{}.vn;
 
   var _tags = <String>[];
 
@@ -68,7 +66,6 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     _portFocus.dispose();
     _usernameFocus.dispose();
     _pveAddrCtrl.dispose();
-    _customCmdCtrl.dispose();
     _preferTempDevCtrl.dispose();
     _logoUrlCtrl.dispose();
     _wolMacCtrl.dispose();
@@ -84,10 +81,13 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _buildAppBar(),
-      body: _buildForm(),
-      floatingActionButton: _buildFAB(),
+    return GestureDetector(
+      onTap: () => _focusScope.unfocus(),
+      child: Scaffold(
+        appBar: _buildAppBar(),
+        body: _buildForm(),
+        floatingActionButton: _buildFAB(),
+      ),
     );
   }
 
@@ -198,7 +198,6 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         ),
       ),
       _buildAuth(),
-      _buildEnvs(),
       _buildJumpServer(),
       _buildMore(),
     ];
@@ -340,6 +339,10 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
           suggestion: false,
         ),
         UIs.height7,
+        Text(l10n.envVars, style: UIs.text13Grey),
+        UIs.height7,
+        _buildEnvs(),
+        UIs.height7,
         ..._buildPVEs(),
         UIs.height7,
         ..._buildCustomCmds(),
@@ -408,15 +411,26 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     return [
       Text(l10n.customCmd, style: UIs.text13Grey),
       UIs.height7,
-      Input(
-        controller: _customCmdCtrl,
-        type: TextInputType.text,
-        maxLines: 3,
-        label: 'JSON',
-        icon: Icons.code,
-        hint: '{${l10n.customCmdHint}}',
-        suggestion: false,
-      ),
+      _customCmds.listenVal(
+        (vals) {
+          return ListTile(
+            leading: const Icon(BoxIcons.bxs_file_json).paddingOnly(left: 10),
+            title: const Text('JSON'),
+            subtitle: vals.isEmpty
+                ? null
+                : Text(vals.keys.join(','), style: UIs.textGrey),
+            trailing: const Icon(Icons.keyboard_arrow_right),
+            onTap: () async {
+              final res = await KvEditor.route.go(
+                context,
+                args: KvEditorArgs(data: _customCmds.value),
+              );
+              if (res == null) return;
+              _customCmds.value = res;
+            },
+          );
+        },
+      ).cardx,
       ListTile(
         leading: const Padding(
           padding: EdgeInsets.only(left: 10),
@@ -556,19 +570,11 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     if (_portController.text.isEmpty) {
       _portController.text = '22';
     }
-    final customCmds = () {
-      if (_customCmdCtrl.text.isEmpty) return null;
-      try {
-        return json.decode(_customCmdCtrl.text).cast<String, String>();
-      } catch (e) {
-        context.showSnackBar(l10n.invalidJson);
-        return null;
-      }
-    }();
+    final customCmds = _customCmds.value;
     final custom = ServerCustom(
       pveAddr: _pveAddrCtrl.text.selfIfNotNullEmpty,
       pveIgnoreCert: _pveIgnoreCert.value,
-      cmds: customCmds,
+      cmds: customCmds.isEmpty ? null : customCmds,
       preferTempDev: _preferTempDevCtrl.text.selfIfNotNullEmpty,
       logoUrl: _logoUrlCtrl.text.selfIfNotNullEmpty,
     );
@@ -670,13 +676,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       if (custom != null) {
         _pveAddrCtrl.text = custom.pveAddr ?? '';
         _pveIgnoreCert.value = custom.pveIgnoreCert;
-        try {
-          // Add a null check here to prevent setting `null` to the controller
-          final encoded = json.encode(custom.cmds!);
-          if (encoded.isNotEmpty) {
-            _customCmdCtrl.text = encoded;
-          }
-        } catch (_) {}
+        _customCmds.value = custom.cmds ?? {};
         _preferTempDevCtrl.text = custom.preferTempDev ?? '';
         _logoUrlCtrl.text = custom.logoUrl ?? '';
       }
