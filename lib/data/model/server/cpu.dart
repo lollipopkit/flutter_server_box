@@ -1,6 +1,5 @@
-import 'dart:collection';
-
 import 'package:fl_chart/fl_chart.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/time_seq.dart';
 import 'package:server_box/data/res/status.dart';
 
@@ -26,10 +25,16 @@ class Cpus extends TimeSeq<List<SingleCpuCore>> {
 
   double usedPercent({int coreIdx = 0}) {
     if (now.length != pre.length) return 0;
-    final idleDelta = now[coreIdx].idle - pre[coreIdx].idle;
-    final totalDelta = now[coreIdx].total - pre[coreIdx].total;
-    final used = idleDelta / totalDelta;
-    return used.isNaN ? 0 : 100 - used * 100;
+    if (now.isEmpty) return 0;
+    try {
+      final idleDelta = now[coreIdx].idle - pre[coreIdx].idle;
+      final totalDelta = now[coreIdx].total - pre[coreIdx].total;
+      final used = idleDelta / totalDelta;
+      return used.isNaN ? 0 : 100 - used * 100;
+    } catch (e, s) {
+      Loggers.app.warning('Cpus.usedPercent()', e, s);
+      return 0;
+    }
   }
 
   int _coresCount = 0;

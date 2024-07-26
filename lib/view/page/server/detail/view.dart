@@ -900,6 +900,6 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   bool _getInitExpand(int len, [int? max]) {
     if (!_collapse) return true;
-    return len <= (max ?? 3);
+    return len > 0 && len <= (max ?? 3);
   }
 }

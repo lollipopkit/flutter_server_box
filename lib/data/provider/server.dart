@@ -316,7 +316,7 @@ class ServerProvider extends ChangeNotifier {
       final scriptRaw = ShellFunc.allScript(spi.custom?.cmds).uint8List;
 
       try {
-        await s.client?.runForOutput(
+        await s.client!.runForOutput(
           ShellFunc.installShellCmd,
           action: (session) async {
             session.stdin.add(scriptRaw);
