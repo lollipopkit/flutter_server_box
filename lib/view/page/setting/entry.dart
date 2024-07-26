@@ -691,6 +691,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildSFTP() {
     return Column(
       children: [
+        _buildSftpEditor(),
         _buildSftpRmrDir(),
         _buildSftpOpenLastPath(),
         _buildSftpShowFoldersFirst(),
@@ -1235,6 +1236,42 @@ class _SettingPageState extends State<SettingPage> {
         text: l10n.letterCache,
       ),
       trailing: StoreSwitch(prop: _setting.letterCache),
+    );
+  }
+
+  Widget _buildSftpEditor() {
+    return _setting.sftpEditor.listenable().listenVal(
+      (val) {
+        return ListTile(
+          leading: const Icon(MingCute.edit_fill),
+          title: TipText(text: l10n.editor, tip: l10n.sftpEditorTip),
+          trailing: Text(
+            val.isEmpty ? l10n.inner : val,
+            style: UIs.text15,
+          ),
+          onTap: () async {
+            final ctrl = TextEditingController(text: val);
+            void onSave(String s) {
+              _setting.sftpEditor.put(s);
+              context.pop();
+            }
+
+            await context.showRoundDialog<bool>(
+              title: l10n.choose,
+              child: Input(
+                controller: ctrl,
+                autoFocus: true,
+                label: l10n.editor,
+                hint: '\$EDITOR / vim / nano ...',
+                icon: Icons.edit,
+                suggestion: false,
+                onSubmitted: onSave,
+              ),
+              actions: Btns.oks(onTap: () => onSave(ctrl.text)),
+            );
+          },
+        );
+      },
     );
   }
 }

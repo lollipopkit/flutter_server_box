@@ -264,6 +264,7 @@
   "serverTabUnkown": "Negara yang tidak diketahui",
   "setting": "Pengaturan",
   "sftpDlPrepare": "Bersiap untuk terhubung ...",
+  "sftpEditorTip": "Jika kosong, gunakan editor file bawaan aplikasi. Jika ada nilai, gunakan editor server jarak jauh, misalnya `vim` (disarankan untuk mendeteksi secara otomatis sesuai `EDITOR`).",
   "sftpRmrDirSummary": "Gunakan `rm -r` untuk menghapus dir di SFTP",
   "sftpSSHConnected": "Sftp terhubung",
   "sftpShowFoldersFirst": "Folder ditampilkan lebih dulu",

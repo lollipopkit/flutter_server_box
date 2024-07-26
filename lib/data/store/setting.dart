@@ -284,6 +284,10 @@ class SettingStore extends PersistentStore {
 
   late final letterCache = property('letterCache', false);
 
+  /// Set it to `$EDITOR`, `vim` and etc. to use remote system editor in SSH terminal.
+  /// Set it empty to use local editor GUI.
+  late final sftpEditor = property('sftpEditor', '');
+
   // Never show these settings for users
   //
   // ------BEGIN------

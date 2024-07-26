@@ -445,6 +445,18 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   }
 
   Future<void> _edit(SftpName name) async {
+    context.pop();
+
+    // #489
+    final editor = Stores.setting.sftpEditor.fetch();
+    if (editor.isNotEmpty) {
+      // Use single quote to avoid escape
+      final cmd = "$editor '${_getRemotePath(name)}'";
+      await AppRoutes.ssh(spi: widget.spi, initCmd: cmd).go(context);
+      await _listDir();
+      return;
+    }
+
     final size = name.attr.size;
     if (size == null || size > Miscs.editorMaxSize) {
       context.showSnackBar(l10n.fileTooLarge(
@@ -454,7 +466,6 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       ));
       return;
     }
-    context.pop();
 
     final remotePath = _getRemotePath(name);
     final localPath = await _getLocalPath(remotePath);

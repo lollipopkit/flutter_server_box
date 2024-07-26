@@ -264,6 +264,7 @@
   "serverTabUnkown": "Unbekannter Status",
   "setting": "Einstellungen",
   "sftpDlPrepare": "Verbindung vorbereiten...",
+  "sftpEditorTip": "Wenn leer, verwenden Sie den im App integrierten Dateieditor. Wenn ein Wert vorhanden ist, wird der Editor des Remote-Servers verwendet, z.B. `vim` (es wird empfohlen, automatisch gemäß `EDITOR` zu ermitteln).",
   "sftpRmrDirSummary": "Verwenden Sie \"rm -r\", um das Verzeichnis in SFTP zu löschen.",
   "sftpSSHConnected": "SFTP Verbunden",
   "sftpShowFoldersFirst": "Ordner zuerst anzeigen",
