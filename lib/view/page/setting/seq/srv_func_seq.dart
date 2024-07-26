@@ -45,7 +45,7 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
                   text: TextSpan(
                     children: [
                       WidgetSpan(child: Icon(funcBtn.icon)),
-                      const WidgetSpan(child: UIs.width7),
+                      const WidgetSpan(child: UIs.width13),
                       TextSpan(text: funcBtn.toStr, style: UIs.textGrey),
                     ],
                   ),

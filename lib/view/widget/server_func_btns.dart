@@ -3,19 +3,14 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/data/model/app/menu/base.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
-import 'package:server_box/data/model/app/shell_func.dart';
-import 'package:server_box/data/model/pkg/manager.dart';
-import 'package:server_box/data/model/server/dist.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/data/res/store.dart';
 
 import '../../core/route.dart';
 import '../../core/utils/server.dart';
-import '../../data/model/pkg/upgrade_info.dart';
 import '../../data/model/server/server_private_info.dart';
 
 class ServerFuncBtnsTopRight extends StatelessWidget {
@@ -98,9 +93,9 @@ void _onTapMoreBtns(
   BuildContext context,
 ) async {
   switch (value) {
-    case ServerFuncBtn.pkg:
-      _onPkg(context, spi);
-      break;
+    // case ServerFuncBtn.pkg:
+    //   _onPkg(context, spi);
+    //   break;
     case ServerFuncBtn.sftp:
       AppRoutes.sftp(spi: spi).checkGo(
         context: context,
@@ -225,86 +220,86 @@ bool _checkClient(BuildContext context, String id) {
   return true;
 }
 
-Future<void> _onPkg(BuildContext context, ServerPrivateInfo spi) async {
-  final server = spi.server;
-  final client = server?.client;
-  if (server == null || client == null) {
-    context.showSnackBar(l10n.noClient);
-    return;
-  }
-  final sys = server.status.more[StatusCmdType.sys];
-  if (sys == null) {
-    context.showSnackBar(l10n.noResult);
-    return;
-  }
+// Future<void> _onPkg(BuildContext context, ServerPrivateInfo spi) async {
+//   final server = spi.server;
+//   final client = server?.client;
+//   if (server == null || client == null) {
+//     context.showSnackBar(l10n.noClient);
+//     return;
+//   }
+//   final sys = server.status.more[StatusCmdType.sys];
+//   if (sys == null) {
+//     context.showSnackBar(l10n.noResult);
+//     return;
+//   }
 
-  final pkg = PkgManager.fromDist(sys.dist);
-  if (pkg == null) {
-    context.showSnackBar('Unsupported dist: $sys');
-    return;
-  }
+//   final pkg = PkgManager.fromDist(sys.dist);
+//   if (pkg == null) {
+//     context.showSnackBar('Unsupported dist: $sys');
+//     return;
+//   }
 
-  // Update pkg list
-  final suc = await context.showLoadingDialog(
-    fn: () async {
-      final updateCmd = pkg.update;
-      if (updateCmd != null) {
-        await client.execWithPwd(
-          updateCmd,
-          context: context,
-          id: spi.id,
-        );
-      }
-    },
-    barrierDismiss: true,
-  );
-  if (suc != true) return;
+//   // Update pkg list
+//   final suc = await context.showLoadingDialog(
+//     fn: () async {
+//       final updateCmd = pkg.update;
+//       if (updateCmd != null) {
+//         await client.execWithPwd(
+//           updateCmd,
+//           context: context,
+//           id: spi.id,
+//         );
+//       }
+//     },
+//     barrierDismiss: true,
+//   );
+//   if (suc != true) return;
 
-  final listCmd = pkg.listUpdate;
-  if (listCmd == null) {
-    context.showSnackBar('Unsupported dist: $sys');
-    return;
-  }
+//   final listCmd = pkg.listUpdate;
+//   if (listCmd == null) {
+//     context.showSnackBar('Unsupported dist: $sys');
+//     return;
+//   }
 
-  // Get upgrade list
-  final result = await context.showLoadingDialog(
-    fn: () => client.run(listCmd).string,
-  );
-  if (result == null || result.isEmpty) {
-    context.showSnackBar(l10n.noResult);
-    return;
-  }
+//   // Get upgrade list
+//   final result = await context.showLoadingDialog(
+//     fn: () => client.run(listCmd).string,
+//   );
+//   if (result == null || result.isEmpty) {
+//     context.showSnackBar(l10n.noResult);
+//     return;
+//   }
 
-  final list = pkg.updateListRemoveUnused(result.split('\n'));
-  final upgradeable = list.map((e) => UpgradePkgInfo(e, pkg)).toList();
-  if (upgradeable.isEmpty) {
-    context.showSnackBar(l10n.noUpdateAvailable);
-    return;
-  }
-  final args = upgradeable.map((e) => e.package).join(' ');
-  final isSU = server.spi.user == 'root';
-  final upgradeCmd = isSU ? pkg.upgrade(args) : 'sudo ${pkg.upgrade(args)}';
+//   final list = pkg.updateListRemoveUnused(result.split('\n'));
+//   final upgradeable = list.map((e) => UpgradePkgInfo(e, pkg)).toList();
+//   if (upgradeable.isEmpty) {
+//     context.showSnackBar(l10n.noUpdateAvailable);
+//     return;
+//   }
+//   final args = upgradeable.map((e) => e.package).join(' ');
+//   final isSU = server.spi.user == 'root';
+//   final upgradeCmd = isSU ? pkg.upgrade(args) : 'sudo ${pkg.upgrade(args)}';
 
-  // Confirm upgrade
-  final gotoUpgrade = await context.showRoundDialog<bool>(
-    title: l10n.attention,
-    child: SingleChildScrollView(
-      child: Text(
-          '${l10n.pkgUpgradeTip}\n${l10n.foundNUpdate(upgradeable.length)}\n\n$upgradeCmd'),
-    ),
-    actions: [
-      CountDownBtn(
-        onTap: () => context.pop(true),
-        text: l10n.update,
-        afterColor: Colors.red,
-      ),
-    ],
-  );
+//   // Confirm upgrade
+//   final gotoUpgrade = await context.showRoundDialog<bool>(
+//     title: l10n.attention,
+//     child: SingleChildScrollView(
+//       child: Text(
+//           '${l10n.pkgUpgradeTip}\n${l10n.foundNUpdate(upgradeable.length)}\n\n$upgradeCmd'),
+//     ),
+//     actions: [
+//       CountDownBtn(
+//         onTap: () => context.pop(true),
+//         text: l10n.update,
+//         afterColor: Colors.red,
+//       ),
+//     ],
+//   );
 
-  if (gotoUpgrade != true) return;
+//   if (gotoUpgrade != true) return;
 
-  AppRoutes.ssh(spi: spi, initCmd: upgradeCmd).checkGo(
-    context: context,
-    check: () => _checkClient(context, spi.id),
-  );
-}
+//   AppRoutes.ssh(spi: spi, initCmd: upgradeCmd).checkGo(
+//     context: context,
+//     check: () => _checkClient(context, spi.id),
+//   );
+// }

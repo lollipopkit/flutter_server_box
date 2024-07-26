@@ -170,15 +170,6 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         hint: 'root',
         suggestion: false,
       ),
-      Input(
-        controller: _altUrlController,
-        type: TextInputType.url,
-        node: _alterUrlFocus,
-        label: l10n.fallbackSshDest,
-        icon: MingCute.link_line,
-        hint: 'user@ip:port',
-        suggestion: false,
-      ),
       TagEditor(
         tags: _tags,
         onChanged: (p0) => _tags = p0,
@@ -328,19 +319,16 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     return ExpandTile(
       title: Text(l10n.more),
       children: [
-        const Text('Logo', style: UIs.text13Grey),
         UIs.height7,
         Input(
           controller: _logoUrlCtrl,
           type: TextInputType.url,
           icon: Icons.image,
-          label: 'URL',
+          label: 'Logo URL',
           hint: 'https://example.com/logo.png',
           suggestion: false,
         ),
-        UIs.height7,
-        Text(l10n.envVars, style: UIs.text13Grey),
-        UIs.height7,
+        _buildAltUrl(),
         _buildEnvs(),
         UIs.height7,
         ..._buildPVEs(),
@@ -360,6 +348,18 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         UIs.height7,
         ..._buildWOLs(),
       ],
+    );
+  }
+
+  Widget _buildAltUrl() {
+    return Input(
+      controller: _altUrlController,
+      type: TextInputType.url,
+      node: _alterUrlFocus,
+      label: l10n.fallbackSshDest,
+      icon: MingCute.link_line,
+      hint: 'user@ip:port',
+      suggestion: false,
     );
   }
 

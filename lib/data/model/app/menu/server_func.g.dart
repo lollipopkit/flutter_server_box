@@ -21,8 +21,6 @@ class ServerFuncBtnAdapter extends TypeAdapter<ServerFuncBtn> {
         return ServerFuncBtn.container;
       case 3:
         return ServerFuncBtn.process;
-      case 4:
-        return ServerFuncBtn.pkg;
       case 5:
         return ServerFuncBtn.snippet;
       case 6:
@@ -46,9 +44,6 @@ class ServerFuncBtnAdapter extends TypeAdapter<ServerFuncBtn> {
         break;
       case ServerFuncBtn.process:
         writer.writeByte(3);
-        break;
-      case ServerFuncBtn.pkg:
-        writer.writeByte(4);
         break;
       case ServerFuncBtn.snippet:
         writer.writeByte(5);

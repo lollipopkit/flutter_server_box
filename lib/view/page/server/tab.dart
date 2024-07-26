@@ -27,6 +27,9 @@ class ServerPage extends StatefulWidget {
   State<ServerPage> createState() => _ServerPageState();
 }
 
+const _cardPad = 74.0;
+const _cardPadSingle = 13.0;
+
 class _ServerPageState extends State<ServerPage>
     with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
   late MediaQueryData _media;
@@ -97,7 +100,7 @@ class _ServerPageState extends State<ServerPage>
       ),
       floatingActionButton: AutoHide(
         key: _autoHideKey,
-        direction: AxisDirection.down,
+        direction: AxisDirection.right,
         offset: 75,
         controller: _scrollController,
         child: FloatingActionButton(
@@ -289,8 +292,12 @@ class _ServerPageState extends State<ServerPage>
           }
         },
         child: Padding(
-          padding:
-              const EdgeInsets.only(left: 13, right: 3, top: 13, bottom: 13),
+          padding: const EdgeInsets.only(
+            left: _cardPadSingle,
+            right: 3,
+            top: _cardPadSingle,
+            bottom: _cardPadSingle,
+          ),
           child: _buildRealServerCard(srv),
         ),
       ),
@@ -300,7 +307,7 @@ class _ServerPageState extends State<ServerPage>
   /// The child's width mat not equal to 1/4 of the screen width,
   /// so we need to wrap it with a SizedBox.
   Widget _wrapWithSizedbox(Widget child, [bool circle = false]) {
-    var width = (_media.size.width - 74) / (circle ? 4 : 4.3);
+    var width = (_media.size.width - _cardPad) / (circle ? 4 : 4.3);
     if (_useDoubleColumn) width /= 2;
     return SizedBox(
       width: width,
@@ -341,66 +348,72 @@ class _ServerPageState extends State<ServerPage>
   }
 
   List<Widget> _buildFlippedCard(Server srv) {
+    final children = [
+      IconTextBtn(
+        onPressed: () => _askFor(
+          func: () async {
+            if (Stores.setting.showSuspendTip.fetch()) {
+              await context.showRoundDialog(
+                title: l10n.attention,
+                child: Text(l10n.suspendTip),
+              );
+              Stores.setting.showSuspendTip.put(false);
+            }
+            srv.client?.execWithPwd(
+              ShellFunc.suspend.exec,
+              context: context,
+              id: srv.id,
+            );
+          },
+          typ: l10n.suspend,
+          name: srv.spi.name,
+        ),
+        icon: Icons.stop,
+        text: l10n.suspend,
+      ),
+      IconTextBtn(
+        onPressed: () => _askFor(
+          func: () => srv.client?.execWithPwd(
+            ShellFunc.shutdown.exec,
+            context: context,
+            id: srv.id,
+          ),
+          typ: l10n.shutdown,
+          name: srv.spi.name,
+        ),
+        icon: Icons.power_off,
+        text: l10n.shutdown,
+      ),
+      IconTextBtn(
+        onPressed: () => _askFor(
+          func: () => srv.client?.execWithPwd(
+            ShellFunc.reboot.exec,
+            context: context,
+            id: srv.id,
+          ),
+          typ: l10n.reboot,
+          name: srv.spi.name,
+        ),
+        icon: Icons.restart_alt,
+        text: l10n.reboot,
+      ),
+      IconTextBtn(
+        onPressed: () => AppRoutes.serverEdit(spi: srv.spi).go(context),
+        icon: Icons.edit,
+        text: l10n.edit,
+      )
+    ];
+
+    final width = (_media.size.width - _cardPad) / children.length;
     return [
       UIs.height13,
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          IconTextBtn(
-            onPressed: () => _askFor(
-              func: () async {
-                if (Stores.setting.showSuspendTip.fetch()) {
-                  await context.showRoundDialog(
-                    title: l10n.attention,
-                    child: Text(l10n.suspendTip),
-                  );
-                  Stores.setting.showSuspendTip.put(false);
-                }
-                srv.client?.execWithPwd(
-                  ShellFunc.suspend.exec,
-                  context: context,
-                  id: srv.id,
-                );
-              },
-              typ: l10n.suspend,
-              name: srv.spi.name,
-            ),
-            icon: Icons.stop,
-            text: l10n.suspend,
-          ),
-          IconTextBtn(
-            onPressed: () => _askFor(
-              func: () => srv.client?.execWithPwd(
-                ShellFunc.shutdown.exec,
-                context: context,
-                id: srv.id,
-              ),
-              typ: l10n.shutdown,
-              name: srv.spi.name,
-            ),
-            icon: Icons.power_off,
-            text: l10n.shutdown,
-          ),
-          IconTextBtn(
-            onPressed: () => _askFor(
-              func: () => srv.client?.execWithPwd(
-                ShellFunc.reboot.exec,
-                context: context,
-                id: srv.id,
-              ),
-              typ: l10n.reboot,
-              name: srv.spi.name,
-            ),
-            icon: Icons.restart_alt,
-            text: l10n.reboot,
-          ),
-          IconTextBtn(
-            onPressed: () => AppRoutes.serverEdit(spi: srv.spi).go(context),
-            icon: Icons.edit,
-            text: l10n.edit,
-          )
-        ],
-      )
+        children: children.map((e) {
+          if (width == 0) return e;
+          return SizedBox(width: width, child: e);
+        }).toList(),
+      ),
     ];
   }
 
