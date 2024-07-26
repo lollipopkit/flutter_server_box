@@ -264,6 +264,7 @@
   "serverTabUnkown": "Unknown state",
   "setting": "Settings",
   "sftpDlPrepare": "Preparing to connect...",
+  "sftpEditorTip": "If empty, use the built-in file editor of the app. If a value is present, use the remote server’s editor, e.g., `vim` (recommended to automatically detect according to `EDITOR`).",
   "sftpRmrDirSummary": "Use `rm -r` to delete a folder in SFTP.",
   "sftpSSHConnected": "SFTP Connected",
   "sftpShowFoldersFirst": "Display folders first",

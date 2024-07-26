@@ -264,6 +264,7 @@
   "serverTabUnkown": "État inconnu",
   "setting": "Paramètres",
   "sftpDlPrepare": "Préparation de la connexion...",
+  "sftpEditorTip": "Si vide, utilisez l’éditeur de fichiers intégré de l’application. Si une valeur est présente, utilisez l’éditeur du serveur distant, par exemple `vim` (il est recommandé de détecter automatiquement selon `EDITOR`).",
   "sftpRmrDirSummary": "Utilisez `rm -r` pour supprimer un dossier en SFTP.",
   "sftpSSHConnected": "SFTP Connecté",
   "sftpShowFoldersFirst": "Afficher d'abord les dossiers",

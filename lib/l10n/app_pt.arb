@@ -264,6 +264,7 @@
   "serverTabUnkown": "Estado desconhecido",
   "setting": "Configurações",
   "sftpDlPrepare": "Preparando para conectar ao servidor...",
+  "sftpEditorTip": "Se vazio, use o editor de arquivos integrado do aplicativo. Se houver um valor, use o editor do servidor remoto, por exemplo, `vim` (recomendado detectar automaticamente de acordo com `EDITOR`).",
   "sftpRmrDirSummary": "Usar `rm -r` em SFTP para excluir pastas",
   "sftpSSHConnected": "SFTP conectado...",
   "sftpShowFoldersFirst": "Mostrar pastas primeiro",

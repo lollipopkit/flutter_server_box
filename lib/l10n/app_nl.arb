@@ -264,6 +264,7 @@
   "serverTabUnkown": "Onbekende status",
   "setting": "Instellingen",
   "sftpDlPrepare": "Voorbereiden om verbinding te maken...",
+  "sftpEditorTip": "Indien leeg, gebruik de ingebouwde bestandseditor van de app. Indien een waarde aanwezig is, gebruik de editor van de externe server, bijvoorbeeld `vim` (aanbevolen om automatisch te detecteren volgens `EDITOR`).",
   "sftpRmrDirSummary": "Gebruik `rm -r` om een map te verwijderen in SFTP.",
   "sftpSSHConnected": "SFTP Verbonden",
   "sftpShowFoldersFirst": "Mappen eerst weergeven",

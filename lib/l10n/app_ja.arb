@@ -264,6 +264,7 @@
   "serverTabUnkown": "不明な状態",
   "setting": "設定",
   "sftpDlPrepare": "サーバーへの接続を準備中...",
+  "sftpEditorTip": "空の場合は、アプリ内蔵のファイルエディタを使用します。値がある場合は、リモートサーバーのエディタ（例：`vim`）を使用します（`EDITOR` に従って自動検出することをお勧めします）。",
   "sftpRmrDirSummary": "SFTPで`rm -r`を使用してフォルダーを削除",
   "sftpSSHConnected": "SFTPに接続されました...",
   "sftpShowFoldersFirst": "フォルダーを先に表示",
