@@ -90,83 +90,109 @@ class Backup {
     }
 
     // Snippets
-    final nowSnippets = Stores.snippet.box.keys.toSet();
-    final bakSnippets = snippets.map((e) => e.name).toSet();
-    final newSnippets = bakSnippets.difference(nowSnippets);
-    final delSnippets = nowSnippets.difference(bakSnippets);
-    final updateSnippets = nowSnippets.intersection(bakSnippets);
-    for (final s in newSnippets) {
-      Stores.snippet.box.put(s, snippets.firstWhere((e) => e.name == s));
-    }
-    for (final s in delSnippets) {
-      Stores.snippet.box.delete(s);
-    }
-    for (final s in updateSnippets) {
-      Stores.snippet.box.put(s, snippets.firstWhere((e) => e.name == s));
+    if (force) {
+      for (final s in snippets) {
+        Stores.snippet.box.put(s.name, s);
+      }
+    } else {
+      final nowSnippets = Stores.snippet.box.keys.toSet();
+      final bakSnippets = snippets.map((e) => e.name).toSet();
+      final newSnippets = bakSnippets.difference(nowSnippets);
+      final delSnippets = nowSnippets.difference(bakSnippets);
+      final updateSnippets = nowSnippets.intersection(bakSnippets);
+      for (final s in newSnippets) {
+        Stores.snippet.box.put(s, snippets.firstWhere((e) => e.name == s));
+      }
+      for (final s in delSnippets) {
+        Stores.snippet.box.delete(s);
+      }
+      for (final s in updateSnippets) {
+        Stores.snippet.box.put(s, snippets.firstWhere((e) => e.name == s));
+      }
     }
 
     // ServerPrivateInfo
-    final nowSpis = Stores.server.box.keys.toSet();
-    final bakSpis = spis.map((e) => e.id).toSet();
-    final newSpis = bakSpis.difference(nowSpis);
-    final delSpis = nowSpis.difference(bakSpis);
-    final updateSpis = nowSpis.intersection(bakSpis);
-    for (final s in newSpis) {
-      Stores.server.box.put(s, spis.firstWhere((e) => e.id == s));
-    }
-    for (final s in delSpis) {
-      Stores.server.box.delete(s);
-    }
-    for (final s in updateSpis) {
-      Stores.server.box.put(s, spis.firstWhere((e) => e.id == s));
+    if (force) {
+      for (final s in spis) {
+        Stores.server.box.put(s.id, s);
+      }
+    } else {
+      final nowSpis = Stores.server.box.keys.toSet();
+      final bakSpis = spis.map((e) => e.id).toSet();
+      final newSpis = bakSpis.difference(nowSpis);
+      final delSpis = nowSpis.difference(bakSpis);
+      final updateSpis = nowSpis.intersection(bakSpis);
+      for (final s in newSpis) {
+        Stores.server.box.put(s, spis.firstWhere((e) => e.id == s));
+      }
+      for (final s in delSpis) {
+        Stores.server.box.delete(s);
+      }
+      for (final s in updateSpis) {
+        Stores.server.box.put(s, spis.firstWhere((e) => e.id == s));
+      }
     }
 
     // PrivateKeyInfo
-    final nowKeys = Stores.key.box.keys.toSet();
-    final bakKeys = keys.map((e) => e.id).toSet();
-    final newKeys = bakKeys.difference(nowKeys);
-    final delKeys = nowKeys.difference(bakKeys);
-    final updateKeys = nowKeys.intersection(bakKeys);
-    for (final s in newKeys) {
-      Stores.key.box.put(s, keys.firstWhere((e) => e.id == s));
-    }
-    for (final s in delKeys) {
-      Stores.key.box.delete(s);
-    }
-    for (final s in updateKeys) {
-      Stores.key.box.put(s, keys.firstWhere((e) => e.id == s));
+    if (force) {
+      for (final s in keys) {
+        Stores.key.box.put(s.id, s);
+      }
+    } else {
+      final nowKeys = Stores.key.box.keys.toSet();
+      final bakKeys = keys.map((e) => e.id).toSet();
+      final newKeys = bakKeys.difference(nowKeys);
+      final delKeys = nowKeys.difference(bakKeys);
+      final updateKeys = nowKeys.intersection(bakKeys);
+      for (final s in newKeys) {
+        Stores.key.box.put(s, keys.firstWhere((e) => e.id == s));
+      }
+      for (final s in delKeys) {
+        Stores.key.box.delete(s);
+      }
+      for (final s in updateKeys) {
+        Stores.key.box.put(s, keys.firstWhere((e) => e.id == s));
+      }
     }
 
     // History
-    final nowHistory = Stores.history.box.keys.toSet();
-    final bakHistory = history.keys.toSet();
-    final newHistory = bakHistory.difference(nowHistory);
-    final delHistory = nowHistory.difference(bakHistory);
-    final updateHistory = nowHistory.intersection(bakHistory);
-    for (final s in newHistory) {
-      Stores.history.box.put(s, history[s]);
-    }
-    for (final s in delHistory) {
-      Stores.history.box.delete(s);
-    }
-    for (final s in updateHistory) {
-      Stores.history.box.put(s, history[s]);
+    if (force) {
+      Stores.history.box.putAll(history);
+    } else {
+      final nowHistory = Stores.history.box.keys.toSet();
+      final bakHistory = history.keys.toSet();
+      final newHistory = bakHistory.difference(nowHistory);
+      final delHistory = nowHistory.difference(bakHistory);
+      final updateHistory = nowHistory.intersection(bakHistory);
+      for (final s in newHistory) {
+        Stores.history.box.put(s, history[s]);
+      }
+      for (final s in delHistory) {
+        Stores.history.box.delete(s);
+      }
+      for (final s in updateHistory) {
+        Stores.history.box.put(s, history[s]);
+      }
     }
 
     // Container
-    final nowContainer = Stores.container.box.keys.toSet();
-    final bakContainer = container.keys.toSet();
-    final newContainer = bakContainer.difference(nowContainer);
-    final delContainer = nowContainer.difference(bakContainer);
-    final updateContainer = nowContainer.intersection(bakContainer);
-    for (final s in newContainer) {
-      Stores.container.box.put(s, container[s]);
-    }
-    for (final s in delContainer) {
-      Stores.container.box.delete(s);
-    }
-    for (final s in updateContainer) {
-      Stores.container.box.put(s, container[s]);
+    if (force) {
+      Stores.container.box.putAll(container);
+    } else {
+      final nowContainer = Stores.container.box.keys.toSet();
+      final bakContainer = container.keys.toSet();
+      final newContainer = bakContainer.difference(nowContainer);
+      final delContainer = nowContainer.difference(bakContainer);
+      final updateContainer = nowContainer.intersection(bakContainer);
+      for (final s in newContainer) {
+        Stores.container.box.put(s, container[s]);
+      }
+      for (final s in delContainer) {
+        Stores.container.box.delete(s);
+      }
+      for (final s in updateContainer) {
+        Stores.container.box.put(s, container[s]);
+      }
     }
 
     Pros.reload();
