@@ -396,7 +396,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           var newPerm = perm.copyWith();
           final ok = await context.showRoundDialog(
             child: UnixPermEditor(perm: perm, onChanged: (p) => newPerm = p),
-            actions: Btns.oks(onTap: () => context.pop(true)),
+            actions: [Btn.ok(onTap: (context) => context.pop(true))],
           );
 
           final permStr = newPerm.perm;
@@ -752,7 +752,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       context.showRoundDialog(
         title: l10n.error,
         child: Text('Unsupport file: ${name.filename}'),
-        actions: Btns.oks(onTap: () => context.pop()),
+        actions: [Btn.ok()],
       );
       return;
     }
@@ -760,11 +760,10 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     final confirm = await context.showRoundDialog(
       title: l10n.attention,
       child: SimpleMarkdown(data: '```sh\n$cmd\n```'),
-      actions: Btns.okCancels(
-        onTapOk: () => context.pop(true),
-        onTapCancel: () => context.pop(false),
-        red: true,
-      ),
+      actions: [
+        Btn.cancel(onTap: (c) => c.pop(false)),
+        Btn.ok(onTap: (c) => c.pop(true), red: true),
+      ],
     );
     if (confirm != true) return;
 

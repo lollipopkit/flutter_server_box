@@ -2,9 +2,8 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/res/provider.dart';
-
-import '../../../data/model/server/snippet.dart';
 
 class SnippetEditPage extends StatefulWidget {
   const SnippetEditPage({super.key, this.snippet});
@@ -22,7 +21,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
   final _noteController = TextEditingController();
   final _scriptNode = FocusNode();
   final _autoRunOn = ValueNotifier(<String>[]);
-  final _tags = ValueNotifier(<String>[]);
+  final _tags = <String>{}.vn;
 
   @override
   void dispose() {
@@ -36,7 +35,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(l10n.edit, style: UIs.text18),
+        title: Text(l10n.edit),
         actions: _buildAppBarActions(),
       ),
       body: _buildBody(),
@@ -45,9 +44,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
   }
 
   List<Widget>? _buildAppBarActions() {
-    if (widget.snippet == null) {
-      return null;
-    }
+    if (widget.snippet == null) return null;
     return [
       IconButton(
         onPressed: () {
@@ -89,7 +86,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
         final snippet = Snippet(
           name: name,
           script: script,
-          tags: _tags.value.isEmpty ? null : _tags.value,
+          tags: _tags.value.isEmpty ? null : _tags.value.toList(),
           note: note.isEmpty ? null : note,
           autoRunOn: _autoRunOn.value.isEmpty ? null : _autoRunOn.value,
         );
@@ -125,21 +122,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           icon: Icons.note,
           suggestion: true,
         ),
-        ValBuilder(
-          listenable: _tags,
-          builder: (vals) {
-            return TagEditor(
-              tags: _tags.value,
-              onChanged: (p0) => setState(() {
-                _tags.value = p0;
-              }),
-              allTags: [...Pros.snippet.tags.value],
-              onRenameTag: (old, n) => setState(() {
-                Pros.snippet.renameTag(old, n);
-              }),
-            );
-          },
-        ),
+        TagTile(tags: _tags, allTags: Pros.snippet.tags.value).cardx,
         Input(
           controller: _scriptController,
           node: _scriptNode,
@@ -167,7 +150,10 @@ class _SnippetEditPageState extends State<SnippetEditPage>
                   .map((e) => Pros.server.pick(id: e)?.spi.name ?? e)
                   .join(', ');
           return ListTile(
-            leading: const Icon(Icons.settings_remote, size: 19),
+            leading: const Padding(
+              padding: EdgeInsets.only(left: 5),
+              child: Icon(Icons.settings_remote, size: 19),
+            ),
             title: Text(l10n.autoRun),
             trailing: const Icon(Icons.keyboard_arrow_right),
             subtitle: subtitle == null
@@ -232,7 +218,7 @@ ${l10n.forExample}:
       }
 
       if (snippet.tags != null) {
-        _tags.value = snippet.tags!;
+        _tags.value = snippet.tags!.toSet();
       }
 
       if (snippet.autoRunOn != null) {

@@ -26,8 +26,8 @@ class ServerProvider extends ChangeNotifier {
   Iterable<Server> get servers => _servers.values;
   final List<String> _serverOrder = [];
   List<String> get serverOrder => _serverOrder;
-  final _tags = ValueNotifier(<String>[]);
-  ValueNotifier<List<String>> get tags => _tags;
+  final _tags = ValueNotifier(<String>{});
+  ValueNotifier<Set<String>> get tags => _tags;
 
   Timer? _timer;
 
@@ -85,7 +85,6 @@ class ServerProvider extends ChangeNotifier {
   }
 
   void _updateTags() {
-    _tags.value.clear();
     for (final s in _servers.values) {
       if (s.spi.tags == null) continue;
       for (final t in s.spi.tags!) {
@@ -94,21 +93,7 @@ class ServerProvider extends ChangeNotifier {
         }
       }
     }
-    _tags.value.sort();
-    _tags.notifyListeners();
-  }
-
-  void renameTag(String old, String new_) {
-    for (final s in _servers.values) {
-      if (s.spi.tags == null) continue;
-      for (var i = 0; i < s.spi.tags!.length; i++) {
-        if (s.spi.tags![i] == old) {
-          s.spi.tags![i] = new_;
-        }
-      }
-      Stores.server.update(s.spi, s.spi);
-    }
-    _updateTags();
+    _tags.value = (_tags.value.toList()..sort()).toSet();
   }
 
   Server genServer(ServerPrivateInfo spi) {

@@ -1251,7 +1251,8 @@ class _SettingPageState extends State<SettingPage> {
           ),
           onTap: () async {
             final ctrl = TextEditingController(text: val);
-            void onSave(String s) {
+            void onSave() {
+              final s = ctrl.text.trim();
               _setting.sftpEditor.put(s);
               context.pop();
             }
@@ -1265,9 +1266,9 @@ class _SettingPageState extends State<SettingPage> {
                 hint: '\$EDITOR / vim / nano ...',
                 icon: Icons.edit,
                 suggestion: false,
-                onSubmitted: onSave,
+                onSubmitted: (_) => onSave(),
               ),
-              actions: Btns.oks(onTap: () => onSave(ctrl.text)),
+              actions: [Btn.ok(onTap: (_) => onSave())],
             );
           },
         );

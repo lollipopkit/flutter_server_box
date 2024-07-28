@@ -9,8 +9,7 @@ class SnippetProvider extends ChangeNotifier {
   late List<Snippet> _snippets;
   List<Snippet> get snippets => _snippets;
 
-  final _tags = ValueNotifier(<String>[]);
-  ValueNotifier<List<String>> get tags => _tags;
+  final tags = ValueNotifier(<String>{});
 
   void load() {
     _snippets = Stores.snippet.fetch();
@@ -29,16 +28,14 @@ class SnippetProvider extends ChangeNotifier {
   }
 
   void _updateTags() {
-    _tags.value.clear();
-    final tags = <String>{};
+    final tags_ = <String>{};
     for (final s in _snippets) {
-      if (s.tags?.isEmpty ?? true) {
-        continue;
+      final t = s.tags;
+      if (t != null) {
+        tags_.addAll(t);
       }
-      tags.addAll(s.tags!);
     }
-    _tags.value.addAll(tags);
-    _tags.notifyListeners();
+    tags.value = tags_;
   }
 
   void add(Snippet snippet) {

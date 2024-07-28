@@ -48,8 +48,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   final _pveIgnoreCert = ValueNotifier(false);
   final _env = <String, String>{}.vn;
   final _customCmds = <String, String>{}.vn;
-
-  var _tags = <String>[];
+  final _tags = <String>{}.vn;
 
   @override
   void dispose() {
@@ -170,12 +169,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         hint: 'root',
         suggestion: false,
       ),
-      TagEditor(
-        tags: _tags,
-        onChanged: (p0) => _tags = p0,
-        allTags: [...Pros.server.tags.value],
-        onRenameTag: Pros.server.renameTag,
-      ),
+      TagTile(tags: _tags, allTags: Pros.server.tags.value).cardx,
       ListTile(
         title: Text(l10n.autoConnect),
         trailing: ListenableBuilder(
@@ -436,7 +430,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
 
   List<Widget> _buildWOLs() {
     return [
-      const Text('Wake On LAN', style: UIs.text13Grey),
+      const Text('Wake On LAN (beta)', style: UIs.text13Grey),
       UIs.height7,
       ListTile(
         leading: const Icon(BoxIcons.bxs_help_circle),
@@ -455,7 +449,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         controller: _wolIpCtrl,
         type: TextInputType.text,
         label: 'IP ${l10n.addr}',
-        icon: Icons.network_cell,
+        icon: ZondIcons.network,
         hint: '192.168.1.x',
         suggestion: false,
       ),
@@ -590,7 +584,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       keyId: _keyIdx.value != null
           ? Pros.key.pkis.elementAt(_keyIdx.value!).id
           : null,
-      tags: _tags,
+      tags: _tags.value.isEmpty ? null : _tags.value.toList(),
       alterUrl: _altUrlController.text.selfIfNotNullEmpty,
       autoConnect: _autoConnect.value,
       jumpId: _jumpServer.value,
@@ -616,7 +610,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
           context.showRoundDialog(
             title: l10n.attention,
             child: SimpleMarkdown(data: l10n.writeScriptTip),
-            actions: Btns.oks(onTap: () => context.pop(true)),
+            actions: [Btn.ok()],
           );
         },
         child: Row(
@@ -648,7 +642,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       }
 
       /// List in dart is passed by pointer, so you need to copy it here
-      _tags.addAll(spi.tags ?? []);
+      _tags.value = spi.tags?.toSet() ?? {};
 
       _altUrlController.text = spi.alterUrl ?? '';
       _autoConnect.value = spi.autoConnect ?? true;

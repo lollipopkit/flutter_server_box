@@ -100,16 +100,8 @@ class _SnippetListPageState extends State<SnippetListPage> {
           maxLines: 3,
           style: UIs.textGrey,
         ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              onPressed: () =>
-                  AppRoutes.snippetEdit(snippet: snippet).go(context),
-              icon: const Icon(Icons.edit),
-            ),
-          ],
-        ),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: () => AppRoutes.snippetEdit(snippet: snippet).go(context),
       ),
     );
   }
