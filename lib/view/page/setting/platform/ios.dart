@@ -114,8 +114,12 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
     final result = await AppRoutes.kvEditor(data: urls).go(context);
     if (result == null || result is! Map<String, String>) return;
 
-    await context.showLoadingDialog(fn: () async {
+    final suc = await context.showLoadingDialog(fn: () async {
       await wc.updateApplicationContext({'urls': result});
+      return true;
     });
+    if (suc == true) {
+      context.showSnackBar(l10n.success);
+    }
   }
 }

@@ -5,9 +5,12 @@ import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:easy_isolate/easy_isolate.dart';
+import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/res/store.dart';
 
-import '../../../core/utils/server.dart';
-import 'req.dart';
+part 'req.dart';
 
 class SftpWorker {
   final Function(Object event) onNotify;
@@ -20,14 +23,7 @@ class SftpWorker {
     required this.req,
   });
 
-  /// Use [@Deprecated] to prevent calling [SftpWorker.dispose] directly
-  ///
-  /// Don't delete this method
-  @Deprecated(
-    "Use [SftpWorkerStatus.dispose] to dispose the worker, "
-    "instead of [SftpWorker.dispose]",
-  )
-  void dispose() {
+  void _dispose() {
     worker.dispose();
   }
 
