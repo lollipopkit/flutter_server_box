@@ -59,9 +59,9 @@ final class _PvePageState extends State<PvePage> {
             listenable: _pve.err,
             builder: (val) => val == null
                 ? UIs.placeholder
-                : IconBtn(
-                    icon: Icons.refresh,
-                    onTap: () {
+                : Btn.icon(
+                    icon: const Icon(Icons.refresh),
+                    onTap: (_) {
                       _pve.err.value = null;
                       _pve.list();
                       _initRefreshTimer();
@@ -393,27 +393,26 @@ final class _PvePageState extends State<PvePage> {
   }
 
   Widget _buildCtrlBtns(PveCtrlIface item) {
+    const pad = EdgeInsets.symmetric(horizontal: 7, vertical: 5);
     if (!item.available) {
-      return IconBtn(
-          icon: Icons.play_arrow,
-          color: Colors.grey,
-          onTap: () => _onCtrl(_pve.start, l10n.start, item));
+      return Btn.icon(
+          icon: const Icon(Icons.play_arrow, color: Colors.grey),
+          onTap: (_) => _onCtrl(_pve.start, l10n.start, item));
     }
     return Row(
       children: [
-        IconBtn(
-            icon: Icons.stop,
-            color: Colors.grey,
-            onTap: () => _onCtrl(_pve.stop, l10n.stop, item)),
-        IconBtn(
-            icon: Icons.refresh,
-            color: Colors.grey,
-            onTap: () => _onCtrl(_pve.reboot, l10n.reboot, item)),
-        IconBtn(
-          icon: Icons.power_off,
-          color: Colors.grey,
-          onTap: () => _onCtrl(_pve.shutdown, l10n.shutdown, item),
-        ),
+        Btn.icon(
+            icon: const Icon(Icons.stop, color: Colors.grey, size: 20),
+            padding: pad,
+            onTap: (_) => _onCtrl(_pve.stop, l10n.stop, item)),
+        Btn.icon(
+            icon: const Icon(Icons.refresh, color: Colors.grey, size: 20),
+            padding: pad,
+            onTap: (_) => _onCtrl(_pve.reboot, l10n.reboot, item)),
+        Btn.icon(
+            icon: const Icon(Icons.power_off, color: Colors.grey, size: 20),
+            padding: pad,
+            onTap: (_) => _onCtrl(_pve.shutdown, l10n.shutdown, item)),
       ],
     );
   }

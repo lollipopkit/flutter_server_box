@@ -349,8 +349,8 @@ class _ServerPageState extends State<ServerPage>
 
   List<Widget> _buildFlippedCard(Server srv) {
     final children = [
-      IconTextBtn(
-        onPressed: () => _askFor(
+      Btn.column(
+        onTap: (_) => _askFor(
           func: () async {
             if (Stores.setting.showSuspendTip.fetch()) {
               await context.showRoundDialog(
@@ -368,11 +368,11 @@ class _ServerPageState extends State<ServerPage>
           typ: l10n.suspend,
           name: srv.spi.name,
         ),
-        icon: Icons.stop,
+        icon: const Icon(Icons.stop),
         text: l10n.suspend,
       ),
-      IconTextBtn(
-        onPressed: () => _askFor(
+      Btn.column(
+        onTap: (_) => _askFor(
           func: () => srv.client?.execWithPwd(
             ShellFunc.shutdown.exec,
             context: context,
@@ -381,11 +381,11 @@ class _ServerPageState extends State<ServerPage>
           typ: l10n.shutdown,
           name: srv.spi.name,
         ),
-        icon: Icons.power_off,
+        icon: const Icon(Icons.power_off),
         text: l10n.shutdown,
       ),
-      IconTextBtn(
-        onPressed: () => _askFor(
+      Btn.column(
+        onTap: (_) => _askFor(
           func: () => srv.client?.execWithPwd(
             ShellFunc.reboot.exec,
             context: context,
@@ -394,12 +394,12 @@ class _ServerPageState extends State<ServerPage>
           typ: l10n.reboot,
           name: srv.spi.name,
         ),
-        icon: Icons.restart_alt,
+        icon: const Icon(Icons.restart_alt),
         text: l10n.reboot,
       ),
-      IconTextBtn(
-        onPressed: () => AppRoutes.serverEdit(spi: srv.spi).go(context),
-        icon: Icons.edit,
+      Btn.column(
+        onTap: (_) => AppRoutes.serverEdit(spi: srv.spi).go(context),
+        icon: const Icon(Icons.edit),
         text: l10n.edit,
       )
     ];

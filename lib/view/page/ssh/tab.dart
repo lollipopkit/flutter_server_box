@@ -231,7 +231,7 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
       builder: () {
         return ListView.separated(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
           itemCount: names.length,
           itemBuilder: (_, idx) => _buillItem(idx),
           separatorBuilder: (_, __) => Padding(
@@ -270,32 +270,38 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
       child = AnimatedContainer(
         width: selected ? 90 : 50,
         duration: Durations.medium3,
+        padding: selected ? const EdgeInsets.symmetric(horizontal: 7) : null,
         curve: Curves.fastEaseInToSlowEaseOut,
         child: switch (selected) {
           true => Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                SizedBox(width: 55, child: text),
                 if (selected)
                   FadeIn(
-                    child: IconBtn(
-                      icon: MingCute.close_circle_fill,
-                      color: color,
-                      onTap: () => onClose(name),
+                    child: Btn.icon(
+                      icon: Icon(
+                        MingCute.close_circle_fill,
+                        color: color,
+                        size: 17,
+                      ),
+                      onTap: (_) => onClose(name),
                     ),
                   ),
+                const Spacer(),
+                SizedBox(width: 50, child: text),
               ],
             ),
-          false => Center(child: text),
+          false => Align(
+              alignment: Alignment.centerRight,
+              child: text,
+            ),
         },
-      ).paddingOnly(left: 3, right: 3);
+      );
     }
 
     return InkWell(
       borderRadius: BorderRadius.circular(13),
       onTap: () => onTap(idx),
       child: child,
-    ).paddingSymmetric(horizontal: 13);
+    ).paddingSymmetric(horizontal: 7);
   }
 }
