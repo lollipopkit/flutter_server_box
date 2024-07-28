@@ -110,7 +110,7 @@ Future<void> _initData() async {
 void _setupDebug() {
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
-    Pros.debug.addLog(record);
+    DebugProvider.addLog(record);
     print(record);
     if (record.error != null) print(record.error);
     if (record.stackTrace != null) print(record.stackTrace);

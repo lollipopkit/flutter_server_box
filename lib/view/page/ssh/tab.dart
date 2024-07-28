@@ -268,7 +268,7 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
         textWidthBasis: TextWidthBasis.parent,
       );
       child = AnimatedContainer(
-        width: selected ? 90 : 50,
+        width: selected ? 90 : 57,
         duration: Durations.medium3,
         padding: selected ? const EdgeInsets.symmetric(horizontal: 7) : null,
         curve: Curves.fastEaseInToSlowEaseOut,
@@ -290,10 +290,7 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
                 SizedBox(width: 50, child: text),
               ],
             ),
-          false => Align(
-              alignment: Alignment.centerRight,
-              child: text,
-            ),
+          false => Center(child: text),
         },
       );
     }

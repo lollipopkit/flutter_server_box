@@ -243,15 +243,19 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildCpuModelItem(MapEntry<String, int> e) {
+    final name = e.key
+        .replaceFirst('Intel(R)', '')
+        .replaceFirst('AMD', '')
+        .replaceFirst('with Radeon Graphics', '');
     final child = Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         SizedBox(
           width: _media.size.width * .7,
           child: Text(
-            e.key,
+            name,
             style: UIs.text13,
-            overflow: TextOverflow.fade,
+            overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
         ),

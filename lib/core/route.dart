@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/build_data.dart';
-import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/backup.dart';
 import 'package:server_box/view/page/container.dart';
@@ -157,11 +156,7 @@ class AppRoutes {
     return AppRoutes(
       DebugPage(
         key: key,
-        args: DebugPageArgs(
-          notifier: Pros.debug.widgets,
-          onClear: Pros.debug.clear,
-          title: 'Logs(${BuildData.build})',
-        ),
+        args: const DebugPageArgs(title: 'Logs(${BuildData.build})'),
       ),
       'debug',
     );
