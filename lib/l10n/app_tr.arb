@@ -75,7 +75,7 @@
   "disk": "Disk",
   "diskIgnorePath": "Disk için göz ardı edilen yol",
   "displayCpuIndex": "CPU dizinini görüntüle",
-  "displayName": "Görünen ad",
+  "displayName": "Görünen ad", 
   "dl2Local": "{fileName} dosyasını yerel olarak indirmek istiyor musunuz?",
   "doc": "Dokümantasyon",
   "dockerEditHost": "DOCKER_HOST'u düzenle",
@@ -117,7 +117,7 @@
   "fullScreen": "Tam ekran modu",
   "fullScreenJitter": "Tam ekran titremesi",
   "fullScreenJitterHelp": "Ekran yanıklarını önlemek için",
-  "fullScreenTip": "Cihaz yatay moda döndürüldüğünde tam ekran modu etkinleştirilsin mi? Bu seçenek yalnızca sunucu sekmesi için geçerlidir."
+  "fullScreenTip": "Cihaz yatay moda döndürüldüğünde tam ekran modu etkinleştirilsin mi? Bu seçenek yalnızca sunucu sekmesi için geçerlidir.",
   "getPushTokenFailed": "Push token alınamıyor",
   "gettingToken": "Token alınıyor...",
   "goBackQ": "Geri dön?",
@@ -225,7 +225,7 @@
   "primaryColorSeed": "Birincil renk tohumu",
   "privateKey": "Özel Anahtar",
   "process": "Süreç",
-  "pushToken": "Push token"
+  "pushToken": "Push token",
   "pveIgnoreCertTip": "Etkinleştirilmesi önerilmez, güvenlik risklerine dikkat edin! PVE'nin varsayılan sertifikasını kullanıyorsanız, bu seçeneği etkinleştirmeniz gerekir.",
   "pveLoginFailed": "Giriş başarısız. Linux PAM girişi için sunucu yapılandırmasındaki kullanıcı adı/şifre ile kimlik doğrulaması yapılamadı.",
   "pveVersionLow": "Bu özellik şu anda test aşamasında ve sadece PVE 8+ üzerinde test edilmiştir. Lütfen dikkatli kullanın.",

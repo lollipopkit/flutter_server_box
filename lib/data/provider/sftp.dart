@@ -1,8 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-
-import '../model/sftp/req.dart';
+import 'package:server_box/data/model/sftp/worker.dart';
 
 class SftpProvider extends ChangeNotifier {
   final List<SftpReqStatus> _status = [];

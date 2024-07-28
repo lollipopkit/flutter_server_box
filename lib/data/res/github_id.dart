@@ -15,6 +15,7 @@ abstract final class GithubIds {
     'FrancXPT',
     'Liloupar',
     'dccif',
+    'mikropsoft',
   };
 
   static const participants = <GhId>{
@@ -95,6 +96,7 @@ abstract final class GithubIds {
     'logce',
     'h-lyf',
     '88484396',
+    'honggeigei',
   };
 }
 

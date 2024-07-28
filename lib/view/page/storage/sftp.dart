@@ -11,15 +11,15 @@ import 'package:server_box/core/utils/comparator.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/sftp/absolute_path.dart';
 import 'package:server_box/data/model/sftp/browser_status.dart';
-import 'package:server_box/data/model/sftp/req.dart';
+import 'package:server_box/data/model/sftp/worker.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/widget/omit_start_text.dart';
-
-import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/view/widget/two_line_text.dart';
 import 'package:server_box/view/widget/unix_perm.dart';
+
+import 'package:icons_plus/icons_plus.dart';
 
 class SftpPage extends StatefulWidget {
   final ServerPrivateInfo spi;
@@ -401,16 +401,10 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
           final permStr = newPerm.perm;
           if (ok == true && permStr != perm.perm) {
-            await context.showLoadingDialog(
-              fn: () async {
-                await _client!.run('chmod $permStr "${_getRemotePath(file)}"');
-                await _listDir();
-              },
-              onErr: (e, s) {
-                context.showErrDialog(e: e, s: s, operation: l10n.permission);
-                return false;
-              },
-            );
+            await context.showLoadingDialog(fn: () async {
+              await _client!.run('chmod $permStr "${_getRemotePath(file)}"');
+              await _listDir();
+            });
           }
         },
       ),
@@ -758,15 +752,22 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       context.showRoundDialog(
         title: l10n.error,
         child: Text('Unsupport file: ${name.filename}'),
-        actions: [
-          TextButton(
-            onPressed: () => context.pop(),
-            child: Text(l10n.ok),
-          ),
-        ],
+        actions: Btns.oks(onTap: () => context.pop()),
       );
       return;
     }
+
+    final confirm = await context.showRoundDialog(
+      title: l10n.attention,
+      child: SimpleMarkdown(data: '```sh\n$cmd\n```'),
+      actions: Btns.okCancels(
+        onTapOk: () => context.pop(true),
+        onTapCancel: () => context.pop(false),
+        red: true,
+      ),
+    );
+    if (confirm != true) return;
+
     final suc = await context.showLoadingDialog(
       fn: () => _client?.run(cmd) ?? Future.value(false),
     );

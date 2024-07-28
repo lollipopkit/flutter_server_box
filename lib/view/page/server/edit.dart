@@ -296,10 +296,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       final subtitle =
           val.isEmpty ? null : Text(val.keys.join(','), style: UIs.textGrey);
       return ListTile(
-        leading: const Padding(
-          padding: EdgeInsets.only(left: 10),
-          child: Icon(HeroIcons.variable),
-        ),
+        leading: const Icon(HeroIcons.variable),
         subtitle: subtitle,
         title: Text(l10n.envVars),
         trailing: const Icon(Icons.keyboard_arrow_right),
@@ -388,10 +385,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         ),
       ),
       ListTile(
-        leading: const Padding(
-          padding: EdgeInsets.only(left: 10),
-          child: Icon(MingCute.certificate_line),
-        ),
+        leading: const Icon(MingCute.certificate_line),
         title: Text('PVE ${l10n.ignoreCert}'),
         subtitle: Text(l10n.pveIgnoreCertTip, style: UIs.text12Grey),
         trailing: ListenableBuilder(
@@ -414,7 +408,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       _customCmds.listenVal(
         (vals) {
           return ListTile(
-            leading: const Icon(BoxIcons.bxs_file_json).paddingOnly(left: 10),
+            leading: const Icon(BoxIcons.bxs_file_json),
             title: const Text('JSON'),
             subtitle: vals.isEmpty
                 ? null
@@ -432,10 +426,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         },
       ).cardx,
       ListTile(
-        leading: const Padding(
-          padding: EdgeInsets.only(left: 10),
-          child: Icon(MingCute.doc_line),
-        ),
+        leading: const Icon(MingCute.doc_line),
         title: Text(l10n.doc),
         trailing: const Icon(Icons.open_in_new, size: 17),
         onTap: () => l10n.customCmdDocUrl.launch(),
@@ -448,10 +439,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       const Text('Wake On LAN', style: UIs.text13Grey),
       UIs.height7,
       ListTile(
-        leading: const Padding(
-          padding: EdgeInsets.only(left: 10),
-          child: Icon(BoxIcons.bxs_help_circle),
-        ),
+        leading: const Icon(BoxIcons.bxs_help_circle),
         title: Text(l10n.about),
         subtitle: Text(l10n.wolTip, style: UIs.text12Grey),
       ).cardx,
@@ -513,19 +501,13 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             .toList();
         children.add(ListTile(
           title: Text(l10n.clear),
-          trailing: const Padding(
-            padding: EdgeInsets.only(right: 13),
-            child: Icon(Icons.clear),
-          ),
+          trailing: const Icon(Icons.clear),
           onTap: () => _jumpServer.value = null,
           contentPadding: const EdgeInsets.symmetric(horizontal: 17),
         ));
         return CardX(
           child: ExpandTile(
-            leading: const Padding(
-              padding: EdgeInsets.only(left: 10),
-              child: Icon(Icons.map),
-            ),
+            leading: const Icon(Icons.map),
             initiallyExpanded: _jumpServer.value != null,
             title: Text(l10n.jumpServer),
             children: children,
