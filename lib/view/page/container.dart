@@ -391,11 +391,15 @@ class _ContainerPageState extends State<ContainerPage> {
           onPressed: () async {
             context.pop();
 
-            final result = await context.showLoadingDialog(
+            final (result, err) = await context.showLoadingDialog(
               fn: () => _container.run(cmd),
             );
-            if (result != null) {
-              context.showSnackBar(result.message ?? l10n.unknownError);
+            if (err != null || result != null) {
+              final e = result?.message ?? err?.toString();
+              context.showRoundDialog(
+                title: l10n.error,
+                child: Text(e ?? l10n.unknownError),
+              );
             }
           },
           child: Text(l10n.run),
@@ -506,13 +510,14 @@ class _ContainerPageState extends State<ContainerPage> {
               onPressed: () async {
                 context.pop();
 
-                final result = await context.showLoadingDialog(
+                final (result, err) = await context.showLoadingDialog(
                   fn: () => _container.delete(id, force),
                 );
-                if (result != null) {
+                if (err != null || result != null) {
+                  final e = result?.message ?? err?.toString();
                   context.showRoundDialog(
                     title: l10n.error,
-                    child: Text(result.message ?? l10n.unknownError),
+                    child: Text(e ?? l10n.unknownError),
                   );
                 }
               },
@@ -522,35 +527,38 @@ class _ContainerPageState extends State<ContainerPage> {
         );
         break;
       case ContainerMenu.start:
-        final result = await context.showLoadingDialog(
+        final (result, err) = await context.showLoadingDialog(
           fn: () => _container.start(id),
         );
-        if (result != null) {
+        if (err != null || result != null) {
+          final e = result?.message ?? err?.toString();
           context.showRoundDialog(
             title: l10n.error,
-            child: Text(result.message ?? l10n.unknownError),
+            child: Text(e ?? l10n.unknownError),
           );
         }
         break;
       case ContainerMenu.stop:
-        final result = await context.showLoadingDialog(
+        final (result, err) = await context.showLoadingDialog(
           fn: () => _container.stop(id),
         );
-        if (result != null) {
+        if (err != null || result != null) {
+          final e = result?.message ?? err?.toString();
           context.showRoundDialog(
             title: l10n.error,
-            child: Text(result.message ?? l10n.unknownError),
+            child: Text(e ?? l10n.unknownError),
           );
         }
         break;
       case ContainerMenu.restart:
-        final result = await context.showLoadingDialog(
+        final (result, err) = await context.showLoadingDialog(
           fn: () => _container.restart(id),
         );
-        if (result != null) {
+        if (err != null || result != null) {
+          final e = result?.message ?? err?.toString();
           context.showRoundDialog(
             title: l10n.error,
-            child: Text(result.message ?? l10n.unknownError),
+            child: Text(e ?? l10n.unknownError),
           );
         }
         break;

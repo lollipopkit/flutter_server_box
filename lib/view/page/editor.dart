@@ -145,10 +145,13 @@ class _EditorPageState extends State<EditorPage> {
             // If path is not null, then it's a file editor
             // save the text and return true to pop the page
             if (widget.path != null) {
-              final res = await context.showLoadingDialog(
+              final (res, _) = await context.showLoadingDialog(
                 fn: () => File(widget.path!).writeAsString(_controller.text),
               );
-              if (res == null) return;
+              if (res == null) {
+                context.showSnackBar(l10n.failed);
+                return;
+              }
               context.pop(true);
               return;
             }

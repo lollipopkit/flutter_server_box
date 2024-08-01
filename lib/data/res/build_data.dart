@@ -2,6 +2,6 @@
 
 class BuildData {
   static const String name = "ServerBox";
-  static const int build = 1038;
+  static const int build = 1041;
   static const int script = 55;
 }

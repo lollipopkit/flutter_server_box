@@ -222,10 +222,10 @@ class BackupPage extends StatelessWidget {
     if (text == null) return;
 
     try {
-      final backup = await context.showLoadingDialog(
+      final (backup, err) = await context.showLoadingDialog(
         fn: () => Computer.shared.start(Backup.fromJsonString, text.trim()),
       );
-      if (backup == null) return;
+      if (err != null || backup == null) return;
       if (backupFormatVersion != backup.version) {
         context.showSnackBar(l10n.backupVersionNotMatch);
         return;
@@ -364,11 +364,11 @@ class BackupPage extends StatelessWidget {
     }
 
     try {
-      final backup = await context.showLoadingDialog(
+      final (backup, err) = await context.showLoadingDialog(
         fn: () => Computer.shared.start(Backup.fromJsonString, text.trim()),
       );
+      if (err != null || backup == null) return;
 
-      if (backup == null) return;
       if (backupFormatVersion != backup.version) {
         context.showSnackBar(l10n.backupVersionNotMatch);
         return;
@@ -404,13 +404,13 @@ class BackupPage extends StatelessWidget {
     if (text == null) return;
 
     try {
-      final spis = await context.showLoadingDialog(
+      final (spis, err) = await context.showLoadingDialog(
         fn: () => Computer.shared.start((val) {
           final list = json.decode(val) as List;
           return list.map((e) => ServerPrivateInfo.fromJson(e)).toList();
         }, text.trim()),
       );
-      if (spis == null) return;
+      if (err != null || spis == null) return;
       final sure = await context.showRoundDialog<bool>(
         title: l10n.import,
         child: Text(l10n.askContinue('${spis.length} ${l10n.server}')),
@@ -422,7 +422,7 @@ class BackupPage extends StatelessWidget {
         ],
       );
       if (sure == true) {
-        final suc = await context.showLoadingDialog(
+        final (suc, err) = await context.showLoadingDialog(
           fn: () async {
             for (var spi in spis) {
               Stores.server.put(spi);
@@ -430,7 +430,7 @@ class BackupPage extends StatelessWidget {
             return true;
           },
         );
-        if (suc != true) return;
+        if (err != null || suc != true) return;
         context.showSnackBar(l10n.success);
       }
     } catch (e, s) {

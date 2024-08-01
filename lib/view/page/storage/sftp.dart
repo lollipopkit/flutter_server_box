@@ -471,8 +471,10 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       SftpReqType.download,
     );
     Pros.sftp.add(req, completer: completer);
-    final suc = await context.showLoadingDialog(fn: () => completer.future);
-    if (suc == null) return;
+    final (suc, err) = await context.showLoadingDialog(
+      fn: () => completer.future,
+    );
+    if (suc == null || err != null) return;
 
     final result = await AppRoutes.editor(path: localPath).go<bool>(context);
     if (result != null && result) {
@@ -564,7 +566,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           onPressed: () async {
             context.pop();
 
-            final suc = await context.showLoadingDialog(
+            final (suc, err) = await context.showLoadingDialog(
               fn: () async {
                 final remotePath = _getRemotePath(file);
                 if (useRmr) {
@@ -577,7 +579,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
                 return true;
               },
             );
-            if (suc == null) return;
+            if (suc == null || err != null) return;
 
             _listDir();
           },
@@ -606,14 +608,14 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       }
       context.pop();
 
-      final suc = await context.showLoadingDialog(
+      final (suc, err) = await context.showLoadingDialog(
         fn: () async {
           final dir = '${_status.path!.path}/${textController.text}';
           await _status.client!.mkdir(dir);
           return true;
         },
       );
-      if (suc == null) return;
+      if (suc == null || err != null) return;
 
       _listDir();
     }
@@ -661,14 +663,14 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       }
       context.pop();
 
-      final suc = await context.showLoadingDialog(
+      final (suc, err) = await context.showLoadingDialog(
         fn: () async {
           final path = '${_status.path!.path}/${textController.text}';
           await _client!.run('touch "$path"');
           return true;
         },
       );
-      if (suc == null) return;
+      if (suc == null || err != null) return;
 
       _listDir();
     }
@@ -712,14 +714,14 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       }
       context.pop();
 
-      final suc = await context.showLoadingDialog(
+      final (suc, err) = await context.showLoadingDialog(
         fn: () async {
           final newName = textController.text;
           await _status.client?.rename(file.filename, newName);
           return true;
         },
       );
-      if (suc == null) return;
+      if (suc == null || err != null) return;
 
       _listDir();
     }
@@ -767,10 +769,10 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     );
     if (confirm != true) return;
 
-    final suc = await context.showLoadingDialog(
+    final (suc, err) = await context.showLoadingDialog(
       fn: () => _client?.run(cmd) ?? Future.value(false),
     );
-    if (suc == null) return;
+    if (suc == null || err != null) return;
     _listDir();
   }
 
@@ -786,65 +788,47 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
   /// Only return true if the path is changed
   Future<bool?> _listDir() async {
-    return context.showLoadingDialog(
+    final (ret, err) = await context.showLoadingDialog(
       fn: () async {
         _status.client ??= await _client?.sftp();
-        try {
-          final listPath = _status.path?.path ?? '/';
-          final fs = await _status.client?.listdir(listPath);
-          if (fs == null) {
-            return false;
-          }
-          fs.sort((a, b) => a.filename.compareTo(b.filename));
-
-          /// Issue #97
-          /// In order to compatible with the Synology NAS
-          /// which not has '.' and '..' in listdir
-          if (fs.isNotEmpty && fs.firstOrNull?.filename == '.') {
-            fs.removeAt(0);
-          }
-
-          /// Issue #96
-          /// Due to [WillPopScope] added in this page
-          /// There is no need to keep '..' folder in listdir
-          /// So remove it
-          if (fs.isNotEmpty && fs.firstOrNull?.filename == '..') {
-            fs.removeAt(0);
-          }
-          if (mounted) {
-            setState(() {
-              _status.files = fs;
-            });
-
-            // Only update history when success
-            if (Stores.setting.sftpOpenLastPath.fetch()) {
-              Stores.history.sftpLastPath.put(widget.spi.id, listPath);
-            }
-
-            return true;
-          }
-          return false;
-        } catch (e, trace) {
-          Loggers.app.warning('List dir failed', e, trace);
-          await _backward();
-          Future.delayed(
-            const Duration(milliseconds: 177),
-            () => context.showRoundDialog(
-              title: l10n.error,
-              child: Text(e.toString()),
-              actions: [
-                TextButton(
-                  onPressed: () => context.pop(),
-                  child: Text(l10n.ok),
-                )
-              ],
-            ),
-          );
+        final listPath = _status.path?.path ?? '/';
+        final fs = await _status.client?.listdir(listPath);
+        if (fs == null) {
           return false;
         }
+        fs.sort((a, b) => a.filename.compareTo(b.filename));
+
+        /// Issue #97
+        /// In order to compatible with the Synology NAS
+        /// which not has '.' and '..' in listdir
+        if (fs.isNotEmpty && fs.firstOrNull?.filename == '.') {
+          fs.removeAt(0);
+        }
+
+        /// Issue #96
+        /// Due to [WillPopScope] added in this page
+        /// There is no need to keep '..' folder in listdir
+        /// So remove it
+        if (fs.isNotEmpty && fs.firstOrNull?.filename == '..') {
+          fs.removeAt(0);
+        }
+        if (mounted) {
+          setState(() {
+            _status.files = fs;
+          });
+
+          // Only update history when success
+          if (Stores.setting.sftpOpenLastPath.fetch()) {
+            Stores.history.sftpLastPath.put(widget.spi.id, listPath);
+          }
+
+          return true;
+        }
+        return false;
       },
       barrierDismiss: true,
     );
+    return ret ?? err == null;
   }
 
   Future<void> _backward() async {

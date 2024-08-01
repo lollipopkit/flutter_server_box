@@ -430,12 +430,13 @@ final class _PvePageState extends State<PvePage> {
     );
     if (sure != true) return;
 
-    final suc =
-        await context.showLoadingDialog(fn: () => func(item.node, item.id));
+    final (suc, err) = await context.showLoadingDialog(
+      fn: () => func(item.node, item.id),
+    );
     if (suc == true) {
       context.showSnackBar(l10n.success);
     } else {
-      context.showSnackBar(l10n.failed);
+      context.showSnackBar(err?.toString() ?? l10n.failed);
     }
   }
 
