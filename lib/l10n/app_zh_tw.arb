@@ -30,7 +30,6 @@
   "bioAuth": "生物認證",
   "browser": "瀏覽器",
   "bulkImportServers": "批量導入伺服器",
-  "bulkImportServersTip": "您可以在此處找到[格式]({url})",
   "canPullRefresh": "可以下拉更新",
   "cancel": "取消",
   "choose": "選擇",

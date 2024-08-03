@@ -30,7 +30,6 @@
   "bioAuth": "生体認証",
   "browser": "ブラウザ",
   "bulkImportServers": "サーバーを一括インポートする",
-  "bulkImportServersTip": "[こちら]({url})でフォーマットを見つけることができます",
   "canPullRefresh": "引っ張って更新できます",
   "cancel": "キャンセル",
   "choose": "選択",

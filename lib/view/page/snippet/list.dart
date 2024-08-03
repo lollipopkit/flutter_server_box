@@ -52,7 +52,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
             .toList();
 
         return ReorderableListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 13),
+          padding: const EdgeInsets.symmetric(horizontal: 11),
           itemCount: filtered.length,
           onReorder: (oldIdx, newIdx) => setState(() {
             provider.snippets.moveByItem(

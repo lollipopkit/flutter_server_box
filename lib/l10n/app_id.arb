@@ -30,7 +30,6 @@
   "bioAuth": "Biosertifikasi",
   "browser": "Peramban",
   "bulkImportServers": "Impor server secara massal",
-  "bulkImportServersTip": "Anda dapat menemukan [format]({url}) di sini.",
   "canPullRefresh": "Anda dapat menarik untuk menyegarkan.",
   "cancel": "Membatalkan",
   "choose": "Memilih",

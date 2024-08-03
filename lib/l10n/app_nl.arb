@@ -30,7 +30,6 @@
   "bioAuth": "Biometrische authenticatie",
   "browser": "Browser",
   "bulkImportServers": "Servers batchgewijs importeren",
-  "bulkImportServersTip": "U kunt het [formaat]({url}) hier vinden.",
   "canPullRefresh": "Je kunt verversen door te slepen.",
   "cancel": "Annuleren",
   "choose": "Kiezen",

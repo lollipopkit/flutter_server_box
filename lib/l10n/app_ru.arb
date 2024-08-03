@@ -30,7 +30,6 @@
   "bioAuth": "биометрическая аутентификация",
   "browser": "Браузер",
   "bulkImportServers": "Пакетный импорт серверов",
-  "bulkImportServersTip": "[Формат]({url}) можно найти здесь.",
   "canPullRefresh": "можно обновить, потянув вниз",
   "cancel": "отмена",
   "choose": "выбрать",

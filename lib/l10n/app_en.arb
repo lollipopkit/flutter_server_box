@@ -30,7 +30,6 @@
   "bioAuth": "Biometric auth",
   "browser": "Browser",
   "bulkImportServers": "Batch import servers",
-  "bulkImportServersTip": "You can find the [format]({url}) here.",
   "canPullRefresh": "You can pull to refresh.",
   "cancel": "Cancel",
   "choose": "Choose",

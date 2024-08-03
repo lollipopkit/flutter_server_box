@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:computer/computer.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/sync/icloud.dart';
 import 'package:server_box/core/utils/sync/webdav.dart';
@@ -12,7 +11,6 @@ import 'package:server_box/data/model/app/backup.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/res/url.dart';
 
 class BackupPage extends StatelessWidget {
   BackupPage({super.key});
@@ -204,12 +202,6 @@ class BackupPage extends StatelessWidget {
     return CardX(
       child: ListTile(
         title: Text(l10n.bulkImportServers),
-        subtitle: SimpleMarkdown(
-          data: l10n.bulkImportServersTip(Urls.appWiki),
-          styleSheet: MarkdownStyleSheet(
-            p: UIs.textGrey,
-          ),
-        ),
         leading: const Icon(Icons.import_export),
         onTap: () => _onBulkImportServers(context),
         trailing: const Icon(Icons.keyboard_arrow_right),
@@ -400,8 +392,12 @@ class BackupPage extends StatelessWidget {
   }
 
   void _onBulkImportServers(BuildContext context) async {
-    final text = await Pfs.pickFileString();
-    if (text == null) return;
+    final data = await context.showImportDialog(
+      title: l10n.server,
+      modelDef: ServerPrivateInfo.example.toJson(),
+    );
+    if (data == null) return;
+    final text = String.fromCharCodes(data);
 
     try {
       final (spis, err) = await context.showLoadingDialog(

@@ -30,7 +30,6 @@
   "bioAuth": "Biyometrik kimlik doğrulama",
   "browser": "Tarayıcı",
   "bulkImportServers": "Toplu sunucu içe aktarma",
-  "bulkImportServersTip": "[Formatı]({url}) burada bulabilirsiniz.",
   "canPullRefresh": "Yenilemek için aşağı çekebilirsiniz.",
   "cancel": "İptal",
   "choose": "Seç",
@@ -75,7 +74,7 @@
   "disk": "Disk",
   "diskIgnorePath": "Disk için göz ardı edilen yol",
   "displayCpuIndex": "CPU dizinini görüntüle",
-  "displayName": "Görünen ad", 
+  "displayName": "Görünen ad",
   "dl2Local": "{fileName} dosyasını yerel olarak indirmek istiyor musunuz?",
   "doc": "Dokümantasyon",
   "dockerEditHost": "DOCKER_HOST'u düzenle",
@@ -345,5 +344,3 @@
   "writeScriptFailTip": "Komut dosyasına yazma başarısız oldu, muhtemelen izin eksikliğinden veya dizin mevcut olmadığından kaynaklanıyor olabilir.",
   "writeScriptTip": "Sunucuya bağlandıktan sonra, sistem durumunu izlemek için ~/.config/server_box'a bir komut dosyası yazılacaktır. Komut dosyası içeriğini inceleyebilirsiniz."
 }
-
-

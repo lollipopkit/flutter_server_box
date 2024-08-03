@@ -180,6 +180,28 @@ class ServerPrivateInfo {
   String toString() {
     return id;
   }
+
+  static const example = ServerPrivateInfo(
+    name: 'name',
+    ip: 'ip',
+    port: 22,
+    user: 'root',
+    pwd: 'pwd',
+    keyId: 'private_key_id',
+    tags: ['tag1', 'tag2'],
+    alterUrl: 'user@ip:port',
+    autoConnect: true,
+    jumpId: 'jump_server_id',
+    custom: ServerCustom(
+      pveAddr: 'http://localhost:8006',
+      pveIgnoreCert: false,
+      cmds: {
+        'echo': 'echo hello',
+      },
+      preferTempDev: 'nvme-pci-0400',
+      logoUrl: 'https://example.com/logo.png',
+    ),
+  );
 }
 
 class _IpPort {
