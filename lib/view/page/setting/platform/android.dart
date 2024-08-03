@@ -1,11 +1,8 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/route.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/setting/platform/platform_pub.dart';
-import 'package:watch_connectivity/watch_connectivity.dart';
 
 class AndroidSettingsPage extends StatefulWidget {
   const AndroidSettingsPage({super.key});
@@ -15,15 +12,6 @@ class AndroidSettingsPage extends StatefulWidget {
 }
 
 class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
-  late SharedPreferences _sp;
-  final wc = WatchConnectivity();
-
-  @override
-  void initState() {
-    super.initState();
-    SharedPreferences.getInstance().then((value) => _sp = value);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,10 +43,10 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
     try {
       final keysDel = old.keys.toSet().difference(map.keys.toSet());
       for (final key in keysDel) {
-        _sp.remove(key);
+        PrefStore.remove(key);
       }
       map.forEach((key, value) {
-        _sp.setString(key, value);
+        PrefStore.set(key, value);
       });
       context.showSnackBar(l10n.success);
     } catch (e) {
@@ -72,27 +60,18 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () async {
         final data = <String, String>{};
-        _sp.getKeys().forEach((key) {
-          final val = _sp.getString(key);
+        for (final key in PrefStore.keys()) {
+          final val = PrefStore.get<String>(key);
           if (val != null) {
             data[key] = val;
           }
-        });
-        final result = await AppRoutes.kvEditor(data: data).go(context);
+        }
+        final result = await KvEditor.route.go(
+          context,
+          args: KvEditorArgs(data: data, prefix: 'widget_'),
+        );
         if (result != null) {
-          if (result is Map<String, String>) {
-            _saveWidgetSP(result, data);
-          } else {
-            final err = 'Save Android widget SharedPreference failed: '
-                'unexpected type: ${result.runtimeType}';
-            Loggers.app.warning(err);
-            context.showRoundDialog(
-              title: l10n.error,
-              child: SingleChildScrollView(
-                child: SimpleMarkdown(data: '$err\n\n```$result```'),
-              ),
-            );
-          }
+          _saveWidgetSP(result, data);
         }
       },
     );
