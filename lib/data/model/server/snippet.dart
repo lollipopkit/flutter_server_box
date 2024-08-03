@@ -183,6 +183,14 @@ class Snippet implements TagPickable {
     r'${ctrl': TerminalKey.control,
     r'${alt': TerminalKey.alt,
   };
+
+  static const example = Snippet(
+    name: 'example',
+    script: 'echo hello',
+    tags: ['tag'],
+    note: 'note',
+    autoRunOn: ['server_id'],
+  );
 }
 
 class SnippetResult {

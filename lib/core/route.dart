@@ -243,11 +243,4 @@ class AppRoutes {
   static AppRoutes pve({Key? key, required ServerPrivateInfo spi}) {
     return AppRoutes(PvePage(key: key, spi: spi), 'pve');
   }
-
-  static AppRoutes kvEditor({Key? key, required Map<String, String> data}) {
-    return AppRoutes(
-      KvEditor(key: key, args: KvEditorArgs(data: data)),
-      'kv_editor',
-    );
-  }
 }

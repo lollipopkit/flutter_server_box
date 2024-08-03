@@ -1,9 +1,12 @@
+import 'dart:convert';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/res/provider.dart';
+import 'package:icons_plus/icons_plus.dart';
 
 class SnippetEditPage extends StatefulWidget {
   const SnippetEditPage({super.key, this.snippet});
@@ -102,8 +105,9 @@ class _SnippetEditPageState extends State<SnippetEditPage>
 
   Widget _buildBody() {
     return ListView(
-      padding: const EdgeInsets.all(13),
+      padding: const EdgeInsets.symmetric(horizontal:13),
       children: [
+        _buildImport(),
         Input(
           autoFocus: true,
           controller: _nameController,
@@ -180,6 +184,61 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           );
         },
       ),
+    );
+  }
+
+  Widget _buildImport() {
+    return Btn.tile(
+      text: l10n.import,
+      icon: const Icon(BoxIcons.bx_import),
+      onTap: (c) async {
+        final data = await c.showImportDialog(
+          title: l10n.snippet,
+          modelDef: Snippet.example.toJson(),
+        );
+        if (data == null) return;
+        final str = String.fromCharCodes(data);
+        final list = json.decode(str) as List;
+        if (list.isEmpty) return;
+        final snippets = <Snippet>[];
+        final errs = <String>[];
+        for (final item in list) {
+          try {
+            final snippet = Snippet.fromJson(item);
+            snippets.add(snippet);
+          } catch (e) {
+            errs.add(e.toString());
+          }
+        }
+        if (snippets.isEmpty) {
+          c.showSnackBar(libL10n.empty);
+          return;
+        }
+        if (errs.isNotEmpty) {
+          c.showRoundDialog(
+            title: l10n.error,
+            child: SingleChildScrollView(child: Text(errs.join('\n'))),
+          );
+          return;
+        }
+        final snippetNames = snippets.map((e) => e.name).join(', ');
+        c.showRoundDialog(
+          title: l10n.attention,
+          child: SingleChildScrollView(
+            child: Text(l10n.askContinue('${l10n.import} [$snippetNames]')),
+          ),
+          actions: Btn.ok(
+            onTap: (c) {
+              for (final snippet in snippets) {
+                Pros.snippet.add(snippet);
+              }
+              c.pop();
+              context.pop();
+            },
+          ).toList,
+        );
+      },
+      mainAxisAlignment: MainAxisAlignment.center,
     );
   }
 

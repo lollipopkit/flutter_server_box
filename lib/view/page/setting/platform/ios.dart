@@ -1,7 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/setting/platform/platform_pub.dart';
@@ -111,8 +110,11 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
 
   void _onTapWatchApp(Map<String, dynamic> map) async {
     final urls = Map<String, String>.from(map['urls'] as Map? ?? {});
-    final result = await AppRoutes.kvEditor(data: urls).go(context);
-    if (result == null || result is! Map<String, String>) return;
+    final result = await KvEditor.route.go(
+      context,
+      args: KvEditorArgs(data: urls),
+    );
+    if (result == null) return;
 
     final (suc, err) = await context.showLoadingDialog(fn: () async {
       await wc.updateApplicationContext({'urls': result});
