@@ -27,8 +27,8 @@ class HomeWidget : AppWidgetProvider() {
     private fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
         val views = RemoteViews(context.packageName, R.layout.home_widget)
         val sp = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-        var url = sp.getString("$appWidgetId", null)
-        val gUrl = sp.getString("*", null)
+        var url = sp.getString("widget_$appWidgetId", null)
+        val gUrl = sp.getString("widget_*", null)
         if (url.isNullOrEmpty()) {
             url = gUrl
         }
