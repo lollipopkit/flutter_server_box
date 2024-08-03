@@ -55,7 +55,8 @@ class SettingStore extends PersistentStore {
     1.0,
   );
 
-  late final primaryColor = property(
+  /// The seed of color scheme
+  late final colorSeed = property(
     'primaryColor',
     4287106639,
   );

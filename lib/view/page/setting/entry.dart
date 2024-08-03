@@ -38,9 +38,10 @@ class _SettingPageState extends State<SettingPage> {
             onPressed: () => context.showRoundDialog(
               title: libL10n.attention,
               child: SimpleMarkdown(
-                  data: libL10n.askContinue(
-                '${libL10n.delete} **${libL10n.all}** ${l10n.setting}',
-              )),
+                data: libL10n.askContinue(
+                  '${libL10n.delete} **${libL10n.all}** ${l10n.setting}',
+                ),
+              ),
               actions: Btn.ok(
                 onTap: (c) {
                   context.pop();
@@ -223,8 +224,11 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       leading: const Icon(Icons.colorize),
       title: Text(l10n.primaryColorSeed),
-      trailing: ClipOval(
-        child: Container(color: UIs.primaryColor, height: 27, width: 27),
+      trailing: _setting.colorSeed.listenable().listenVal(
+        (val) {
+          final c = Color(val);
+          return ClipOval(child: Container(color: c, height: 27, width: 27));
+        },
       ),
       onTap: () async {
         final ctrl = TextEditingController(text: UIs.primaryColor.toHex);
@@ -252,7 +256,7 @@ class _SettingPageState extends State<SettingPage> {
                   suggestion: false,
                 ),
                 ColorPicker(
-                  color: Color(_setting.primaryColor.fetch()),
+                  color: Color(_setting.colorSeed.fetch()),
                   onColorChanged: (c) => ctrl.text = c.toHex,
                 )
               ]);
@@ -274,13 +278,10 @@ class _SettingPageState extends State<SettingPage> {
       context.showSnackBar(libL10n.fail);
       return;
     }
-    // Change [primaryColor] first, then change [_selectedColorValue],
-    // So the [ValueBuilder] will be triggered with the new value
     UIs.colorSeed = color;
-    _setting.primaryColor.put(color.value);
+    _setting.colorSeed.put(color.value);
     context.pop();
-    context.pop();
-    RNodes.app.notify();
+    Future.delayed(Durations.medium1, RNodes.app.notify);
   }
 
   // Widget _buildLaunchPage() {

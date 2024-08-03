@@ -34,6 +34,7 @@ class BackupPage extends StatelessWidget {
       padding: const EdgeInsets.all(13),
       children: [
         _buildTip(),
+        CenterGreyTitle(libL10n.sync),
         if (isMacOS || isIOS) _buildIcloud(context),
         _buildWebdav(context),
         _buildFile(context),

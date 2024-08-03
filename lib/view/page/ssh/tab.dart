@@ -73,15 +73,10 @@ class _SSHTabPageState extends State<SSHTabPage>
         return AlertDialog(
           title: Text(libL10n.attention),
           content: Text('${libL10n.close} SSH ${l10n.conn}($name) ?'),
-          actions: [
-            Btn.ok(
-              onTap: (c) => context.pop(true),
-              red: true,
-            ),
-            Btn.cancel(
-              onTap: (c) => context.pop(false),
-            ),
-          ],
+          actions: Btn.ok(
+            onTap: (c) => context.pop(true),
+            red: true,
+          ).toList,
         );
       },
     );
