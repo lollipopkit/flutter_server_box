@@ -80,33 +80,28 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
   CustomAppBar _buildAppBar() {
     final actions = [
       IconButton(
-        tooltip: l10n.delete,
+        tooltip: libL10n.delete,
         onPressed: () {
           context.showRoundDialog(
-            title: l10n.attention,
-            child: Text(l10n.askContinue(
-              '${l10n.delete} ${l10n.privateKey}(${widget.pki!.id})',
+            title: libL10n.attention,
+            child: Text(libL10n.askContinue(
+              '${libL10n.delete} ${l10n.privateKey}(${widget.pki!.id})',
             )),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Pros.key.delete(widget.pki!);
-                  context.pop();
-                  context.pop();
-                },
-                child: Text(
-                  l10n.ok,
-                  style: UIs.textRed,
-                ),
-              ),
-            ],
+            actions: Btn.ok(
+              onTap: (c) {
+                Pros.key.delete(widget.pki!);
+                context.pop();
+                context.pop();
+              },
+              red: true,
+            ).toList,
           );
         },
         icon: const Icon(Icons.delete),
       )
     ];
     return CustomAppBar(
-      title: Text(l10n.edit, style: UIs.text18),
+      title: Text(libL10n.edit),
       actions: widget.pki == null ? null : actions,
     );
   }
@@ -133,7 +128,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
           type: TextInputType.text,
           node: _nameNode,
           onSubmitted: (_) => _focusScope.requestFocus(_keyNode),
-          label: l10n.name,
+          label: libL10n.name,
           icon: Icons.info,
           suggestion: true,
         ),
@@ -155,7 +150,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
 
             final file = File(path);
             if (!file.existsSync()) {
-              context.showSnackBar(l10n.fileNotExist(path));
+              context.showSnackBar(libL10n.notExistFmt(path));
               return;
             }
             final size = (await file.stat()).size;
@@ -174,7 +169,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
             // dartssh2 accepts only LF (but not CRLF or CR)
             _keyController.text = _standardizeLineSeparators(content.trim());
           },
-          child: Text(l10n.pickFile),
+          child: Text(libL10n.file),
         ),
         Input(
           controller: _pwdController,
@@ -200,7 +195,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
     final key = _standardizeLineSeparators(_keyController.text.trim());
     final pwd = _pwdController.text;
     if (name.isEmpty || key.isEmpty) {
-      context.showSnackBar(l10n.fieldMustNotEmpty);
+      context.showSnackBar(libL10n.empty);
       return;
     }
     FocusScope.of(context).unfocus();

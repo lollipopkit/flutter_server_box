@@ -92,7 +92,7 @@ final class _IntroPage extends StatelessWidget {
             final selected = await ctx.showPickSingleDialog(
               title: l10n.language,
               items: AppLocalizations.supportedLocales,
-              name: (p0) => '${p0.nativeDisplayLanguage} (${p0.code})',
+              name: (p0) => p0.nativeName,
               initial: _setting.locale.fetch().toLocale,
             );
             if (selected != null) {
@@ -101,7 +101,7 @@ final class _IntroPage extends StatelessWidget {
             }
           },
           trailing: Text(
-            l10n.languageName,
+            ctx.localeNativeName,
             style: const TextStyle(fontSize: 15, color: Colors.grey),
           ),
         ).cardx,

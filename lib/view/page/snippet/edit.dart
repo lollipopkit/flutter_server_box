@@ -1,13 +1,9 @@
-import 'dart:convert';
-
-import 'package:computer/computer.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/res/provider.dart';
-import 'package:icons_plus/icons_plus.dart';
 
 class SnippetEditPage extends StatefulWidget {
   const SnippetEditPage({super.key, this.snippet});
@@ -39,7 +35,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(l10n.edit),
+        title: Text(libL10n.edit),
         actions: _buildAppBarActions(),
       ),
       body: _buildBody(),
@@ -53,23 +49,21 @@ class _SnippetEditPageState extends State<SnippetEditPage>
       IconButton(
         onPressed: () {
           context.showRoundDialog(
-            title: l10n.attention,
-            child: Text(l10n.askContinue(
-              '${l10n.delete} ${l10n.snippet}(${widget.snippet!.name})',
+            title: libL10n.attention,
+            child: Text(libL10n.askContinue(
+              '${libL10n.delete} ${l10n.snippet}(${widget.snippet!.name})',
             )),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Pros.snippet.del(widget.snippet!);
-                  context.pop();
-                  context.pop();
-                },
-                child: Text(l10n.ok, style: UIs.textRed),
-              ),
-            ],
+            actions: Btn.ok(
+              onTap: (c) {
+                Pros.snippet.del(widget.snippet!);
+                context.pop();
+                context.pop();
+              },
+              red: true,
+            ).toList,
           );
         },
-        tooltip: l10n.delete,
+        tooltip: libL10n.delete,
         icon: const Icon(Icons.delete),
       )
     ];
@@ -83,7 +77,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
         final name = _nameController.text;
         final script = _scriptController.text;
         if (name.isEmpty || script.isEmpty) {
-          context.showSnackBar(l10n.fieldMustNotEmpty);
+          context.showSnackBar(libL10n.empty);
           return;
         }
         final note = _noteController.text;
@@ -108,13 +102,12 @@ class _SnippetEditPageState extends State<SnippetEditPage>
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 13),
       children: [
-        _buildImport(),
         Input(
           autoFocus: true,
           controller: _nameController,
           type: TextInputType.text,
           onSubmitted: (_) => FocusScope.of(context).requestFocus(_scriptNode),
-          label: l10n.name,
+          label: libL10n.name,
           icon: Icons.info,
           suggestion: true,
         ),
@@ -188,65 +181,6 @@ class _SnippetEditPageState extends State<SnippetEditPage>
     );
   }
 
-  Widget _buildImport() {
-    return Btn.tile(
-      text: l10n.import,
-      icon: const Icon(BoxIcons.bx_import),
-      onTap: (c) async {
-        final data = await c.showImportDialog(
-          title: l10n.snippet,
-          modelDef: Snippet.example.toJson(),
-        );
-        if (data == null) return;
-        final str = String.fromCharCodes(data);
-        final (list, _) = await context.showLoadingDialog(
-          fn: () => Computer.shared.start((s) {
-            return json.decode(s) as List;
-          }, str),
-        );
-        if (list == null || list.isEmpty) return;
-        final snippets = <Snippet>[];
-        final errs = <String>[];
-        for (final item in list) {
-          try {
-            final snippet = Snippet.fromJson(item);
-            snippets.add(snippet);
-          } catch (e) {
-            errs.add(e.toString());
-          }
-        }
-        if (snippets.isEmpty) {
-          c.showSnackBar(libL10n.empty);
-          return;
-        }
-        if (errs.isNotEmpty) {
-          c.showRoundDialog(
-            title: l10n.error,
-            child: SingleChildScrollView(child: Text(errs.join('\n'))),
-          );
-          return;
-        }
-        final snippetNames = snippets.map((e) => e.name).join(', ');
-        c.showRoundDialog(
-          title: l10n.attention,
-          child: SingleChildScrollView(
-            child: Text(l10n.askContinue('${l10n.import} [$snippetNames]')),
-          ),
-          actions: Btn.ok(
-            onTap: (c) {
-              for (final snippet in snippets) {
-                Pros.snippet.add(snippet);
-              }
-              c.pop();
-              context.pop();
-            },
-          ).toList,
-        );
-      },
-      mainAxisAlignment: MainAxisAlignment.center,
-    );
-  }
-
   Widget _buildTip() {
     return CardX(
       child: Padding(
@@ -257,7 +191,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
 ${Snippet.fmtArgs.keys.map((e) => '`$e`').join(', ')}\n
 
 ${Snippet.fmtTermKeys.keys.map((e) => '`$e+?}`').join(', ')}\n
-${l10n.forExample}: 
+${libL10n.example}: 
 - `\${ctrl+c}` (Control + C)
 - `\${ctrl+b}d` (Tmux Detach)
 ''',

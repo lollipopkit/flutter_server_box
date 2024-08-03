@@ -33,7 +33,7 @@ class _IPerfPageState extends State<IPerfPage> {
       child: const Icon(Icons.send),
       onPressed: () {
         if (_hostCtrl.text.isEmpty || _portCtrl.text.isEmpty) {
-          context.showSnackBar(l10n.fieldMustNotEmpty);
+          context.showSnackBar(libL10n.empty);
           return;
         }
         AppRoutes.ssh(

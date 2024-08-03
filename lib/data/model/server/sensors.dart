@@ -1,5 +1,4 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 
 final class SensorAdaptor {
   final String raw;
@@ -37,7 +36,7 @@ final class SensorItem {
 
   String get toMarkdown {
     final sb = StringBuffer();
-    sb.writeln('| ${l10n.name} | ${l10n.content} |');
+    sb.writeln('| ${libL10n.name} | ${libL10n.content} |');
     sb.writeln('| --- | --- |');
     for (final entry in details.entries) {
       sb.writeln('| ${entry.key} | ${entry.value} |');
@@ -80,9 +79,7 @@ final class SensorItem {
       for (var idx = 2; idx < len; idx++) {
         final part = sensorLines[idx];
         final detailParts = part.split(':');
-        if (detailParts.length < 2) {
-          continue;
-        }
+        if (detailParts.length < 2) continue;
         final key = detailParts[0].trim();
         final value = detailParts[1].trim();
         details[key] = value;

@@ -128,7 +128,7 @@ class _HomePageState extends State<HomePage>
         ),
         IconButton(
           icon: const Icon(Icons.developer_mode, size: 21),
-          tooltip: l10n.debug,
+          tooltip: 'Debug',
           onPressed: () => AppRoutes.debug().go(context),
         ),
       ],
@@ -245,17 +245,17 @@ class _HomePageState extends State<HomePage>
           ),
           ListTile(
             leading: const Icon(BoxIcons.bxs_file_blank),
-            title: Text(l10n.files),
+            title: Text(libL10n.file),
             onTap: () => AppRoutes.localStorage().go(context),
           ),
           ListTile(
             leading: const Icon(MingCute.file_import_fill),
-            title: Text(l10n.backup),
+            title: Text(libL10n.backup),
             onTap: () => AppRoutes.backup().go(context),
           ),
           ListTile(
             leading: const Icon(OctIcons.feed_discussion),
-            title: Text('${l10n.about} & ${l10n.feedback}'),
+            title: Text('${l10n.about} & ${libL10n.feedback}'),
             onTap: _showAboutDialog,
           )
         ].map((e) => CardX(child: e)).toList(),
@@ -274,7 +274,7 @@ class _HomePageState extends State<HomePage>
         ),
         TextButton(
           onPressed: () => Urls.appHelp.launch(),
-          child: Text(l10n.feedback),
+          child: Text(libL10n.feedback),
         ),
         TextButton(
           onPressed: () => showLicensePage(context: context),
@@ -391,7 +391,7 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
       }
     } catch (e, trace) {
       context.showRoundDialog(
-        title: l10n.error,
+        title: libL10n.error,
         child: Text('${l10n.save}:\n$e'),
       );
       Loggers.app.warning('Update json settings failed', e, trace);

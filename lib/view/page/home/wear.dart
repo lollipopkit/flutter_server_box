@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/res/build_data.dart';
@@ -53,7 +52,7 @@ final class _WearHomeState extends State<WearHome> with AfterLayoutMixin {
         children: [
           IconButton(onPressed: () {}, icon: const Icon(Icons.add)),
           UIs.height7,
-          Text(l10n.restore)
+          Text(libL10n.restore)
         ],
       ),
     );

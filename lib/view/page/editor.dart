@@ -149,7 +149,7 @@ class _EditorPageState extends State<EditorPage> {
                 fn: () => File(widget.path!).writeAsString(_controller.text),
               );
               if (res == null) {
-                context.showSnackBar(l10n.failed);
+                context.showSnackBar(libL10n.fail);
                 return;
               }
               context.pop(true);

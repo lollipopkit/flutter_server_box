@@ -378,7 +378,7 @@ final class _PvePageState extends State<PvePage> {
             ],
           ),
           UIs.height7,
-          KvRow(k: l10n.content, v: item.content),
+          KvRow(k: libL10n.content, v: item.content),
           KvRow(k: l10n.plugInType, v: item.plugintype),
         ],
       ),
@@ -419,14 +419,12 @@ final class _PvePageState extends State<PvePage> {
 
   void _onCtrl(PveCtrlFunc func, String action, PveCtrlIface item) async {
     final sure = await context.showRoundDialog<bool>(
-      title: l10n.attention,
-      child: Text(l10n.askContinue('$action ${item.id}')),
-      actions: [
-        TextButton(
-          onPressed: () => context.pop(true),
-          child: Text(l10n.ok, style: UIs.textRed),
-        ),
-      ],
+      title: libL10n.attention,
+      child: Text(libL10n.askContinue('$action ${item.id}')),
+      actions: Btn.ok(
+        onTap: (c) => context.pop(true),
+        red: true,
+      ).toList,
     );
     if (sure != true) return;
 
@@ -436,7 +434,7 @@ final class _PvePageState extends State<PvePage> {
     if (suc == true) {
       context.showSnackBar(l10n.success);
     } else {
-      context.showSnackBar(err?.toString() ?? l10n.failed);
+      context.showSnackBar(err?.toString() ?? libL10n.fail);
     }
   }
 

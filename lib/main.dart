@@ -81,6 +81,7 @@ Future<void> _initApp() async {
 
 Future<void> _initData() async {
   await Hive.initFlutter();
+
   // Ordered by typeId
   Hive.registerAdapter(PrivateKeyInfoAdapter()); // 1
   Hive.registerAdapter(SnippetAdapter()); // 2

@@ -57,7 +57,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
             context.pop();
           },
         ),
-        title: Text(l10n.files),
+        title: Text(libL10n.file),
         actions: [
           IconButton(
             icon: const Icon(Icons.downloading),
@@ -72,7 +72,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
                   return [
                     PopupMenuItem(
                       value: _SortType.name,
-                      child: Text(l10n.name),
+                      child: Text(libL10n.name),
                     ),
                     PopupMenuItem(
                       value: _SortType.size,
@@ -111,7 +111,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          OmitStartText(_path?.path ?? l10n.loadingFiles),
+          OmitStartText(_path?.path ?? '...'),
           _buildBtns(),
         ],
       ),
@@ -203,7 +203,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
               context.pop();
               _showRenameDialog(file);
             },
-            title: Text(l10n.rename),
+            title: Text(libL10n.rename),
             leading: const Icon(Icons.abc),
           ),
           ListTile(
@@ -211,7 +211,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
               context.pop();
               _showDeleteDialog(file);
             },
-            title: Text(l10n.delete),
+            title: Text(libL10n.delete),
             leading: const Icon(Icons.delete),
           ),
         ],
@@ -223,17 +223,15 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
     final fileName = file.path.split('/').last;
     if (widget.isPickFile) {
       await context.showRoundDialog(
-          title: l10n.pickFile,
-          child: Text(fileName),
-          actions: [
-            TextButton(
-              onPressed: () {
-                context.pop();
-                context.pop(file.path);
-              },
-              child: Text(l10n.ok),
-            ),
-          ]);
+        title: libL10n.file,
+        child: Text(fileName),
+        actions: [
+          Btn.ok(onTap: (c) {
+            context.pop();
+            context.pop(file.path);
+          }),
+        ],
+      );
       return;
     }
     context.showRoundDialog(
@@ -242,13 +240,13 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
         children: [
           ListTile(
             leading: const Icon(Icons.edit),
-            title: Text(l10n.edit),
+            title: Text(libL10n.edit),
             onTap: () async {
               context.pop();
               final stat = await file.stat();
               if (stat.size > Miscs.editorMaxSize) {
                 context.showRoundDialog(
-                  title: l10n.attention,
+                  title: libL10n.attention,
                   child: Text(l10n.fileTooLarge(fileName, stat.size, '1m')),
                 );
                 return;
@@ -264,7 +262,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
           ),
           ListTile(
             leading: const Icon(Icons.abc),
-            title: Text(l10n.rename),
+            title: Text(libL10n.rename),
             onTap: () {
               context.pop();
               _showRenameDialog(file);
@@ -272,7 +270,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
           ),
           ListTile(
             leading: const Icon(Icons.delete),
-            title: Text(l10n.delete),
+            title: Text(libL10n.delete),
             onTap: () {
               context.pop();
               _showDeleteDialog(file);
@@ -285,7 +283,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
               context.pop();
 
               final spi = await context.showPickSingleDialog<ServerPrivateInfo>(
-                title: l10n.choose,
+                title: libL10n.select,
                 items: Pros.server.serverOrder
                     .map((e) => Pros.server.pick(id: e)?.spi)
                     .toList(),
@@ -325,7 +323,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
   void _showRenameDialog(FileSystemEntity file) {
     final fileName = file.path.split('/').last;
     context.showRoundDialog(
-      title: l10n.rename,
+      title: libL10n.rename,
       child: Input(
         autoFocus: true,
         controller: TextEditingController(text: fileName),
@@ -336,7 +334,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
           try {
             file.renameSync(newPath);
           } catch (e) {
-            context.showSnackBar('${l10n.failed}:\n$e');
+            context.showSnackBar('${libL10n.fail}:\n$e');
             return;
           }
 
@@ -349,27 +347,20 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
   void _showDeleteDialog(FileSystemEntity file) {
     final fileName = file.path.split('/').last;
     context.showRoundDialog(
-      title: l10n.delete,
-      child: Text(l10n.askContinue('${l10n.delete} $fileName')),
-      actions: [
-        TextButton(
-          onPressed: () => context.pop(),
-          child: Text(l10n.cancel),
-        ),
-        TextButton(
-          onPressed: () {
-            context.pop();
-            try {
-              file.deleteSync(recursive: true);
-            } catch (e) {
-              context.showSnackBar('${l10n.failed}:\n$e');
-              return;
-            }
-            setState(() {});
-          },
-          child: Text(l10n.ok),
-        ),
-      ],
+      title: libL10n.delete,
+      child: Text(libL10n.askContinue('${libL10n.delete} $fileName')),
+      actions: Btn.ok(
+        onTap: (c) {
+          context.pop();
+          try {
+            file.deleteSync(recursive: true);
+          } catch (e) {
+            context.showSnackBar('${libL10n.fail}:\n$e');
+            return;
+          }
+          setState(() {});
+        },
+      ).toList,
     );
   }
 }

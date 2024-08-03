@@ -19,14 +19,40 @@ enum ShellFunc {
 
   /// srvboxm -> ServerBox Mobile
   static const scriptFile = 'srvboxm_v${BuildData.script}.sh';
-  static const scriptDir = '~/.config/server_box';
-  static const scriptPath = '$scriptDir/$scriptFile';
+  static const scriptDirHome = '~/.config/server_box';
+  static const scriptDirTmp = '/tmp/server_box';
 
-  static const String installShellCmd = """
+  static final _scriptDirMap = <String, String>{};
+
+  /// Get the script directory for the given [id].
+  ///
+  /// Default is [scriptDirTmp]/[scriptFile], if this path is not accessible,
+  /// it will be changed to [scriptDirHome]/[scriptFile].
+  static String getScriptDir(String id) {
+    return _scriptDirMap.putIfAbsent(id, () {
+      return scriptDirTmp;
+    });
+  }
+
+  static void switchScriptDir(String id) => switch (_scriptDirMap[id]) {
+        scriptDirTmp => _scriptDirMap[id] = scriptDirHome,
+        scriptDirHome => _scriptDirMap[id] = scriptDirTmp,
+        _ => _scriptDirMap[id] = scriptDirHome,
+      };
+
+  static String getScriptPath(String id) {
+    return '${getScriptDir(id)}/$scriptFile';
+  }
+
+  static String getInstallShellCmd(String id) {
+    final scriptDir = getScriptDir(id);
+    final scriptPath = '$scriptDir/$scriptFile';
+    return """
 mkdir -p $scriptDir
 cat > $scriptPath
 chmod 744 $scriptPath
 """;
+  }
 
   String get flag => switch (this) {
         ShellFunc.process => 'p',
@@ -37,7 +63,7 @@ chmod 744 $scriptPath
         // ShellFunc.docker=> 'd',
       };
 
-  String get exec => 'sh $scriptPath -$flag';
+  String exec(String id) => 'sh ${getScriptPath(id)} -$flag';
 
   String get name {
     switch (this) {

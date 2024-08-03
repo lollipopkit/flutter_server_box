@@ -106,7 +106,7 @@ class _ServerPageState extends State<ServerPage>
         child: FloatingActionButton(
           heroTag: 'addServer',
           onPressed: () => AppRoutes.serverEdit().go(context),
-          tooltip: l10n.addAServer,
+          tooltip: libL10n.add,
           child: const Icon(Icons.add),
         ),
       ),
@@ -141,10 +141,7 @@ class _ServerPageState extends State<ServerPage>
     return Consumer<ServerProvider>(builder: (_, pro, __) {
       if (pro.serverOrder.isEmpty) {
         return Center(
-          child: Text(
-            l10n.serverTabEmpty,
-            textAlign: TextAlign.center,
-          ),
+          child: Text(libL10n.empty, textAlign: TextAlign.center),
         );
       }
 
@@ -190,10 +187,7 @@ class _ServerPageState extends State<ServerPage>
         }
         if (pro.serverOrder.isEmpty) {
           return Center(
-            child: Text(
-              l10n.serverTabEmpty,
-              textAlign: TextAlign.center,
-            ),
+            child: Text(libL10n.empty, textAlign: TextAlign.center),
           );
         }
 
@@ -348,19 +342,20 @@ class _ServerPageState extends State<ServerPage>
   }
 
   List<Widget> _buildFlippedCard(Server srv) {
+    const textStyle = TextStyle(color: Colors.grey);
     final children = [
       Btn.column(
         onTap: (_) => _askFor(
           func: () async {
             if (Stores.setting.showSuspendTip.fetch()) {
               await context.showRoundDialog(
-                title: l10n.attention,
+                title: libL10n.attention,
                 child: Text(l10n.suspendTip),
               );
               Stores.setting.showSuspendTip.put(false);
             }
             srv.client?.execWithPwd(
-              ShellFunc.suspend.exec,
+              ShellFunc.suspend.exec(srv.spi.id),
               context: context,
               id: srv.id,
             );
@@ -368,39 +363,43 @@ class _ServerPageState extends State<ServerPage>
           typ: l10n.suspend,
           name: srv.spi.name,
         ),
-        icon: const Icon(Icons.stop),
+        icon: const Icon(Icons.stop, color: Colors.grey),
         text: l10n.suspend,
+        textStyle: textStyle,
       ),
       Btn.column(
         onTap: (_) => _askFor(
           func: () => srv.client?.execWithPwd(
-            ShellFunc.shutdown.exec,
+            ShellFunc.shutdown.exec(srv.spi.id),
             context: context,
             id: srv.id,
           ),
           typ: l10n.shutdown,
           name: srv.spi.name,
         ),
-        icon: const Icon(Icons.power_off),
+        icon: const Icon(Icons.power_off, color: Colors.grey),
         text: l10n.shutdown,
+        textStyle: textStyle,
       ),
       Btn.column(
         onTap: (_) => _askFor(
           func: () => srv.client?.execWithPwd(
-            ShellFunc.reboot.exec,
+            ShellFunc.reboot.exec(srv.spi.id),
             context: context,
             id: srv.id,
           ),
           typ: l10n.reboot,
           name: srv.spi.name,
         ),
-        icon: const Icon(Icons.restart_alt),
+        icon: const Icon(Icons.restart_alt, color: Colors.grey),
         text: l10n.reboot,
+        textStyle: textStyle,
       ),
       Btn.column(
         onTap: (_) => AppRoutes.serverEdit(spi: srv.spi).go(context),
-        icon: const Icon(Icons.edit),
-        text: l10n.edit,
+        icon: const Icon(Icons.edit, color: Colors.grey),
+        text: libL10n.edit,
+        textStyle: textStyle,
       )
     ];
 
@@ -445,7 +444,7 @@ class _ServerPageState extends State<ServerPage>
 
   Widget _buildServerCardTitle(Server s) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 7),
+      padding: const EdgeInsets.only(left: 7, right: 13),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -497,15 +496,15 @@ class _ServerPageState extends State<ServerPage>
         ),
       ServerConn.disconnected => (
           const Icon(
-            BoxIcons.bx_link,
-            size: 21,
+            MingCute.link_3_line,
+            size: 19,
             color: Colors.grey,
           ),
           () => Pros.server.refresh(spi: s.spi)
         ),
       ServerConn.finished => (
           const Icon(
-            BoxIcons.bx_unlink,
+            MingCute.unlink_2_line,
             size: 17,
             color: Colors.grey,
           ),
@@ -535,15 +534,14 @@ class _ServerPageState extends State<ServerPage>
 
   Widget _buildTopRightText(Server s) {
     final hasErr = s.conn == ServerConn.failed && s.status.err != null;
+    final str = s.getTopRightStr(s.spi);
+    if (str == null) return UIs.placeholder;
     return GestureDetector(
       onTap: () {
         if (!hasErr) return;
         _showFailReason(s.status);
       },
-      child: Text(
-        s.getTopRightStr(s.spi),
-        style: UIs.text13Grey,
-      ),
+      child: Text(str, style: UIs.text13Grey),
     );
   }
 
@@ -552,15 +550,15 @@ class _ServerPageState extends State<ServerPage>
 ${ss.err?.solution ?? l10n.unknown}
 
 ```sh
-${ss.err?.message ?? l10n.unknownError}
+${ss.err?.message ?? 'null'}
 ''';
     context.showRoundDialog(
-      title: l10n.error,
+      title: libL10n.error,
       child: SingleChildScrollView(child: SimpleMarkdown(data: md)),
       actions: [
         TextButton(
           onPressed: () => Pfs.copy(md),
-          child: Text(l10n.copy),
+          child: Text(libL10n.copy),
         )
       ],
     );
@@ -692,17 +690,14 @@ ${ss.err?.message ?? l10n.unknownError}
     required String name,
   }) {
     context.showRoundDialog(
-      title: l10n.attention,
-      child: Text(l10n.askContinue('$typ ${l10n.server}($name)')),
-      actions: [
-        TextButton(
-          onPressed: () {
-            context.pop();
-            func();
-          },
-          child: Text(l10n.ok),
-        ),
-      ],
+      title: libL10n.attention,
+      child: Text(libL10n.askContinue('$typ ${l10n.server}($name)')),
+      actions: Btn.ok(
+        onTap: (c) {
+          context.pop();
+          func();
+        },
+      ).toList,
     );
   }
 
@@ -748,5 +743,62 @@ class _CardStatus {
       diskIO: diskIO ?? this.diskIO,
       net: net ?? this.net,
     );
+  }
+}
+
+extension _ServerX on Server {
+  String? getTopRightStr(ServerPrivateInfo spi) {
+    switch (conn) {
+      case ServerConn.disconnected:
+        return null;
+      case ServerConn.finished:
+        // Highest priority of temperature display
+        final cmdTemp = () {
+          final val = status.customCmds['server_card_top_right'];
+          if (val == null) return null;
+          // This returned value is used on server card top right, so it should
+          // be a single line string.
+          return val.split('\n').lastOrNull;
+        }();
+        final temperatureVal = () {
+          // Second priority
+          final preferTempDev = spi.custom?.preferTempDev;
+          if (preferTempDev != null) {
+            final preferTemp = status.sensors
+                .firstWhereOrNull((e) => e.device == preferTempDev)
+                ?.summary
+                ?.split(' ')
+                .firstOrNull;
+            if (preferTemp != null) {
+              return double.tryParse(preferTemp.replaceFirst('°C', ''));
+            }
+          }
+          // Last priority
+          final temp = status.temps.first;
+          if (temp != null) {
+            return temp;
+          }
+          return null;
+        }();
+        final upTime = status.more[StatusCmdType.uptime];
+        final items = [
+          cmdTemp ??
+              (temperatureVal != null
+                  ? '${temperatureVal.toStringAsFixed(1)}°C'
+                  : null),
+          upTime
+        ];
+        final str = items.where((e) => e != null && e.isNotEmpty).join(' | ');
+        if (str.isEmpty) return libL10n.empty;
+        return str;
+      case ServerConn.loading:
+        return null;
+      case ServerConn.connected:
+        return null;
+      case ServerConn.connecting:
+        return null;
+      case ServerConn.failed:
+        return status.err != null ? l10n.viewErr : libL10n.fail;
+    }
   }
 }

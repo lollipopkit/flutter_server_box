@@ -1,8 +1,7 @@
 import 'package:dartssh2/dartssh2.dart';
-import 'package:fl_lib/fl_lib.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
+import 'package:server_box/data/model/app/tag_pickable.dart';
 import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/conn.dart';
 import 'package:server_box/data/model/server/cpu.dart';
@@ -14,10 +13,6 @@ import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/temp.dart';
-
-import '../app/tag_pickable.dart';
-
-part 'server.ext.dart';
 
 class Server implements TagPickable {
   ServerPrivateInfo spi;

@@ -9,16 +9,16 @@ abstract final class PlatformPublicSettings {
     return FutureWidget<bool>(
       future: BioAuth.isAvail,
       loading: ListTile(
-        title: Text(l10n.bioAuth),
-        subtitle: Text(l10n.serverTabLoading, style: UIs.textGrey),
+        title: Text(libL10n.bioAuth),
+        subtitle: const Text('...', style: UIs.textGrey),
       ),
       error: (e, __) => ListTile(
-        title: Text(l10n.bioAuth),
-        subtitle: Text('${l10n.failed}: $e', style: UIs.textGrey),
+        title: Text(libL10n.bioAuth),
+        subtitle: Text('${libL10n.fail}: $e', style: UIs.textGrey),
       ),
       success: (can) {
         return ListTile(
-          title: Text(l10n.bioAuth),
+          title: Text(libL10n.bioAuth),
           subtitle: can == true
               ? null
               : const Text(

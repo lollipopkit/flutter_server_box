@@ -104,7 +104,7 @@ void _onTapMoreBtns(
       break;
     case ServerFuncBtn.snippet:
       if (Pros.snippet.snippets.isEmpty) {
-        context.showSnackBar(l10n.noSavedSnippet);
+        context.showSnackBar(libL10n.empty);
         return;
       }
       final snippets = await context.showPickWithTagDialog<Snippet>(
@@ -123,7 +123,7 @@ void _onTapMoreBtns(
       if (snippet == null) return;
       final fmted = snippet.fmtWithSpi(spi);
       final sure = await context.showRoundDialog<bool>(
-        title: l10n.attention,
+        title: libL10n.attention,
         child: SingleChildScrollView(
           child: SimpleMarkdown(data: '```shell\n$fmted\n```'),
         ),
@@ -219,87 +219,3 @@ bool _checkClient(BuildContext context, String id) {
   }
   return true;
 }
-
-// Future<void> _onPkg(BuildContext context, ServerPrivateInfo spi) async {
-//   final server = spi.server;
-//   final client = server?.client;
-//   if (server == null || client == null) {
-//     context.showSnackBar(l10n.noClient);
-//     return;
-//   }
-//   final sys = server.status.more[StatusCmdType.sys];
-//   if (sys == null) {
-//     context.showSnackBar(l10n.noResult);
-//     return;
-//   }
-
-//   final pkg = PkgManager.fromDist(sys.dist);
-//   if (pkg == null) {
-//     context.showSnackBar('Unsupported dist: $sys');
-//     return;
-//   }
-
-//   // Update pkg list
-//   final suc = await context.showLoadingDialog(
-//     fn: () async {
-//       final updateCmd = pkg.update;
-//       if (updateCmd != null) {
-//         await client.execWithPwd(
-//           updateCmd,
-//           context: context,
-//           id: spi.id,
-//         );
-//       }
-//     },
-//     barrierDismiss: true,
-//   );
-//   if (suc != true) return;
-
-//   final listCmd = pkg.listUpdate;
-//   if (listCmd == null) {
-//     context.showSnackBar('Unsupported dist: $sys');
-//     return;
-//   }
-
-//   // Get upgrade list
-//   final result = await context.showLoadingDialog(
-//     fn: () => client.run(listCmd).string,
-//   );
-//   if (result == null || result.isEmpty) {
-//     context.showSnackBar(l10n.noResult);
-//     return;
-//   }
-
-//   final list = pkg.updateListRemoveUnused(result.split('\n'));
-//   final upgradeable = list.map((e) => UpgradePkgInfo(e, pkg)).toList();
-//   if (upgradeable.isEmpty) {
-//     context.showSnackBar(l10n.noUpdateAvailable);
-//     return;
-//   }
-//   final args = upgradeable.map((e) => e.package).join(' ');
-//   final isSU = server.spi.user == 'root';
-//   final upgradeCmd = isSU ? pkg.upgrade(args) : 'sudo ${pkg.upgrade(args)}';
-
-//   // Confirm upgrade
-//   final gotoUpgrade = await context.showRoundDialog<bool>(
-//     title: l10n.attention,
-//     child: SingleChildScrollView(
-//       child: Text(
-//           '${l10n.pkgUpgradeTip}\n${l10n.foundNUpdate(upgradeable.length)}\n\n$upgradeCmd'),
-//     ),
-//     actions: [
-//       CountDownBtn(
-//         onTap: () => context.pop(true),
-//         text: l10n.update,
-//         afterColor: Colors.red,
-//       ),
-//     ],
-//   );
-
-//   if (gotoUpgrade != true) return;
-
-//   AppRoutes.ssh(spi: spi, initCmd: upgradeCmd).checkGo(
-//     context: context,
-//     check: () => _checkClient(context, spi.id),
-//   );
-// }
