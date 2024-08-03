@@ -529,7 +529,7 @@ class _ServerPageState extends State<ServerPage>
       borderRadius: BorderRadius.circular(7),
       onTap: onTap,
       child: wrapped,
-    ).paddingOnly(left: 10);
+    ).paddingOnly(left: 5);
   }
 
   Widget _buildTopRightText(Server s) {

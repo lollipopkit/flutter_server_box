@@ -350,10 +350,10 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
       title: libL10n.delete,
       child: Text(libL10n.askContinue('${libL10n.delete} $fileName')),
       actions: Btn.ok(
-        onTap: (c) {
+        onTap: (c) async {
           context.pop();
           try {
-            file.deleteSync(recursive: true);
+            await file.delete(recursive: true);
           } catch (e) {
             context.showSnackBar('${libL10n.fail}:\n$e');
             return;

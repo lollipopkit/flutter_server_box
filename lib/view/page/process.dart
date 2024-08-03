@@ -159,9 +159,11 @@ class _ProcessPageState extends State<ProcessPage> {
               '${l10n.stop} ${l10n.process}(${proc.pid})',
             )),
             actions: Btn.ok(onTap: (c) async {
-              await _client?.run('kill ${proc.pid}');
-              await _refresh();
               context.pop();
+              await context.showLoadingDialog(fn: () async {
+                await _client?.run('kill ${proc.pid}');
+                await _refresh();
+              });
             }).toList,
           );
         },

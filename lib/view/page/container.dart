@@ -413,7 +413,7 @@ class _ContainerPageState extends State<ContainerPage> {
     final host = Stores.container.fetch(id);
     final ctrl = TextEditingController(text: host);
     await context.showRoundDialog(
-      title: 'DOCKER_HOST',
+      title: libL10n.edit,
       child: Input(
         maxLines: 2,
         controller: ctrl,
