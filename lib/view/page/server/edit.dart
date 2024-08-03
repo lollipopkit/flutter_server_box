@@ -92,7 +92,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
 
   PreferredSizeWidget _buildAppBar() {
     return CustomAppBar(
-      title: Text(l10n.edit, style: UIs.text18),
+      title: Text(libL10n.edit),
       actions: widget.spi != null ? [_buildDelBtn()] : null,
     );
   }
@@ -101,22 +101,20 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     return IconButton(
       onPressed: () {
         context.showRoundDialog(
-          title: l10n.attention,
+          title: libL10n.attention,
           child: StatefulBuilder(builder: (ctx, setState) {
-            return Text(l10n.askContinue(
-              '${l10n.delete} ${l10n.server}(${widget.spi!.name})',
+            return Text(libL10n.askContinue(
+              '${libL10n.delete} ${l10n.server}(${widget.spi!.name})',
             ));
           }),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                context.pop();
-                Pros.server.delServer(widget.spi!.id);
-                context.pop(true);
-              },
-              child: Text(l10n.ok, style: UIs.textRed),
-            ),
-          ],
+          actions: Btn.ok(
+            onTap: (c) async {
+              context.pop();
+              Pros.server.delServer(widget.spi!.id);
+              context.pop(true);
+            },
+            red: true,
+          ).toList,
         );
       },
       icon: const Icon(Icons.delete),
@@ -132,8 +130,8 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         type: TextInputType.text,
         node: _nameFocus,
         onSubmitted: (_) => _focusScope.requestFocus(_ipFocus),
-        hint: l10n.exampleName,
-        label: l10n.name,
+        hint: libL10n.example,
+        label: libL10n.name,
         icon: BoxIcons.bx_rename,
         obscureText: false,
         autoCorrect: true,
@@ -164,7 +162,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         type: TextInputType.text,
         node: _usernameFocus,
         onSubmitted: (_) => _focusScope.requestFocus(_alterUrlFocus),
-        label: l10n.user,
+        label: libL10n.user,
         icon: Icons.account_box,
         hint: 'root',
         suggestion: false,
@@ -266,7 +264,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         });
         tiles.add(
           ListTile(
-            title: Text(l10n.addPrivateKey),
+            title: Text(libL10n.add),
             contentPadding: padding,
             trailing: const Padding(
               padding: EdgeInsets.only(right: 13),
@@ -331,7 +329,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         Input(
           controller: _preferTempDevCtrl,
           type: TextInputType.text,
-          label: l10n.deviceName,
+          label: libL10n.device,
           icon: MingCute.low_temperature_line,
           hint: 'nvme-pci-0400',
           suggestion: false,
@@ -421,7 +419,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       ).cardx,
       ListTile(
         leading: const Icon(MingCute.doc_line),
-        title: Text(l10n.doc),
+        title: Text(libL10n.doc),
         trailing: const Icon(Icons.open_in_new, size: 17),
         onTap: () => l10n.customCmdDocUrl.launch(),
       ).cardx,
@@ -494,7 +492,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             )
             .toList();
         children.add(ListTile(
-          title: Text(l10n.clear),
+          title: Text(libL10n.clear),
           trailing: const Icon(Icons.clear),
           onTap: () => _jumpServer.value = null,
           contentPadding: const EdgeInsets.symmetric(horizontal: 17),
@@ -513,31 +511,31 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
 
   void _onSave() async {
     if (_ipController.text.isEmpty) {
-      context.showSnackBar(l10n.plzEnterHost);
+      context.showSnackBar('${libL10n.empty} ${l10n.host}');
       return;
     }
+
     if (_keyIdx.value == null && _passwordController.text.isEmpty) {
       final cancel = await context.showRoundDialog<bool>(
-        title: l10n.attention,
-        child: Text(l10n.askContinue(l10n.useNoPwd)),
+        title: libL10n.attention,
+        child: Text(libL10n.askContinue(l10n.useNoPwd)),
         actions: [
           TextButton(
             onPressed: () => context.pop(false),
-            child: Text(l10n.ok),
+            child: Text(libL10n.ok),
           ),
           TextButton(
             onPressed: () => context.pop(true),
-            child: Text(l10n.cancel),
+            child: Text(libL10n.cancel),
           )
         ],
       );
-      if (cancel != false) {
-        return;
-      }
+      if (cancel != false) return;
     }
+
     // If [_pubKeyIndex] is -1, it means that the user has not selected
     if (_keyIdx.value == -1) {
-      context.showSnackBar(l10n.plzSelectKey);
+      context.showSnackBar(libL10n.empty);
       return;
     }
     if (_usernameController.text.isEmpty) {
@@ -568,7 +566,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     if (wol != null) {
       final wolValidation = wol.validate();
       if (!wolValidation.$2) {
-        context.showSnackBar('${l10n.failed}: ${wolValidation.$1}');
+        context.showSnackBar('${libL10n.fail}: ${wolValidation.$1}');
         return;
       }
     }
@@ -608,7 +606,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         borderRadius: BorderRadius.circular(10),
         onTap: () {
           context.showRoundDialog(
-            title: l10n.attention,
+            title: libL10n.attention,
             child: SimpleMarkdown(data: l10n.writeScriptTip),
             actions: [Btn.ok()],
           );
@@ -618,7 +616,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
           children: [
             const Icon(Icons.tips_and_updates, size: 15, color: Colors.grey),
             UIs.width13,
-            Text(l10n.attention, style: UIs.textGrey)
+            Text(libL10n.attention, style: UIs.textGrey)
           ],
         ).paddingSymmetric(horizontal: 13, vertical: 3),
       ),

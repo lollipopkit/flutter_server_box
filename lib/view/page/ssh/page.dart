@@ -325,7 +325,7 @@ class SSHPageState extends State<SSHPage>
         final initPath = cmds[idx + 1].toString();
         if (initPath.isEmpty || !initPath.startsWith('/')) {
           context.showRoundDialog(
-            title: l10n.error,
+            title: libL10n.error,
             child: const Text('Failed to get current path'),
           );
           return;
@@ -524,7 +524,7 @@ class SSHPageState extends State<SSHPage>
     if (Stores.setting.sshTermHelpShown.fetch()) return;
 
     return await context.showRoundDialog(
-      title: l10n.doc,
+      title: libL10n.doc,
       child: Text(l10n.sshTermHelp),
       actions: [
         TextButton(

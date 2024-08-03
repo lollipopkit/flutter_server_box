@@ -69,7 +69,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
                 itemBuilder: (context) {
                   final currentSelectedOption = _sortOption.value;
                   final options = [
-                    (_SortType.name, l10n.name),
+                    (_SortType.name, libL10n.name),
                     (_SortType.size, l10n.size),
                     (_SortType.time, l10n.time),
                   ];
@@ -142,7 +142,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            OmitStartText(_status.path?.path ?? l10n.loadingFiles),
+            OmitStartText(_status.path?.path ?? '...'),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: children,
@@ -232,12 +232,12 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           children: [
             ListTile(
               leading: const Icon(Icons.folder),
-              title: Text(l10n.createFolder),
+              title: Text(libL10n.folder),
               onTap: _mkdir,
             ),
             ListTile(
               leading: const Icon(Icons.insert_drive_file),
-              title: Text(l10n.createFile),
+              title: Text(libL10n.file),
               onTap: _newFile,
             ),
           ],
@@ -369,12 +369,12 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     final children = [
       ListTile(
         leading: const Icon(Icons.delete),
-        title: Text(l10n.delete),
+        title: Text(libL10n.delete),
         onTap: () => _delete(file),
       ),
       ListTile(
         leading: const Icon(Icons.abc),
-        title: Text(l10n.rename),
+        title: Text(libL10n.rename),
         onTap: () => _rename(file),
       ),
       ListTile(
@@ -413,12 +413,12 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       children.addAll([
         ListTile(
           leading: const Icon(Icons.edit),
-          title: Text(l10n.edit),
+          title: Text(libL10n.edit),
           onTap: () => _edit(file),
         ),
         ListTile(
           leading: const Icon(Icons.download),
-          title: Text(l10n.download),
+          title: Text(libL10n.download),
           onTap: () => _download(file),
         ),
         // Only show decompress option when the file is a compressed file
@@ -490,12 +490,12 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
   void _download(SftpName name) {
     context.showRoundDialog(
-      title: l10n.attention,
+      title: libL10n.attention,
       child: Text('${l10n.dl2Local(name.filename)}\n${l10n.keepForeground}'),
       actions: [
         TextButton(
           onPressed: () => context.pop(),
-          child: Text(l10n.cancel),
+          child: Text(libL10n.cancel),
         ),
         TextButton(
           onPressed: () async {
@@ -513,7 +513,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
             context.pop();
           },
-          child: Text(l10n.download),
+          child: Text(libL10n.download),
         )
       ],
     );
@@ -525,15 +525,15 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     var useRmr = Stores.setting.sftpRmrDir.fetch();
     final text = () {
       if (isDir && !useRmr) {
-        return l10n.askContinue('${l10n.delete} ${file.filename}');
+        return libL10n.askContinue('${libL10n.delete} ${file.filename}');
       }
-      return l10n.askContinue('${l10n.delete} ${file.filename}');
+      return libL10n.askContinue('${libL10n.delete} ${file.filename}');
     }();
 
     // Most users don't know that SFTP can't delete a directory which is not
     // empty, so we provide a checkbox to let user choose to use `rm -r` or not
     context.showRoundDialog(
-      title: l10n.attention,
+      title: libL10n.attention,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -560,7 +560,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       actions: [
         TextButton(
           onPressed: () => context.pop(),
-          child: Text(l10n.cancel),
+          child: Text(libL10n.cancel),
         ),
         TextButton(
           onPressed: () async {
@@ -583,7 +583,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
             _listDir();
           },
-          child: Text(l10n.delete, style: UIs.textRed),
+          child: Text(libL10n.delete, style: UIs.textRed),
         ),
       ],
     );
@@ -596,13 +596,8 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     void onSubmitted() async {
       if (textController.text.isEmpty) {
         context.showRoundDialog(
-          child: Text(l10n.fieldMustNotEmpty),
-          actions: [
-            TextButton(
-              onPressed: () => context.pop(),
-              child: Text(l10n.ok),
-            ),
-          ],
+          child: Text(libL10n.empty),
+          actions: Btnx.oks,
         );
         return;
       }
@@ -621,25 +616,19 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     }
 
     context.showRoundDialog(
-      title: l10n.createFolder,
+      title: libL10n.folder,
       child: Input(
         autoFocus: true,
         icon: Icons.folder,
         controller: textController,
-        label: l10n.name,
+        label: libL10n.name,
         suggestion: true,
         onSubmitted: (_) => onSubmitted(),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => context.pop(),
-          child: Text(l10n.cancel),
-        ),
-        TextButton(
-          onPressed: onSubmitted,
-          child: Text(l10n.ok, style: UIs.textRed),
-        ),
-      ],
+      actions: Btn.ok(
+        onTap: (c) => onSubmitted(),
+        red: true,
+      ).toList,
     );
   }
 
@@ -650,14 +639,11 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     void onSubmitted() async {
       if (textController.text.isEmpty) {
         context.showRoundDialog(
-          title: l10n.attention,
-          child: Text(l10n.fieldMustNotEmpty),
-          actions: [
-            TextButton(
-              onPressed: () => context.pop(),
-              child: Text(l10n.ok),
-            ),
-          ],
+          title: libL10n.attention,
+          child: Text(libL10n.empty),
+          actions: Btn.ok(
+            onTap: (c) => context.pop(),
+          ).toList,
         );
         return;
       }
@@ -676,21 +662,19 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     }
 
     context.showRoundDialog(
-      title: l10n.createFile,
+      title: libL10n.file,
       child: Input(
         autoFocus: true,
         icon: Icons.insert_drive_file,
         controller: textController,
-        label: l10n.name,
+        label: libL10n.name,
         suggestion: true,
         onSubmitted: (_) => onSubmitted(),
       ),
-      actions: [
-        TextButton(
-          onPressed: onSubmitted,
-          child: Text(l10n.ok, style: UIs.textRed),
-        ),
-      ],
+      actions: Btn.ok(
+        onTap: (c) => onSubmitted(),
+        red: true,
+      ).toList,
     );
   }
 
@@ -701,14 +685,11 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     void onSubmitted() async {
       if (textController.text.isEmpty) {
         context.showRoundDialog(
-          title: l10n.attention,
-          child: Text(l10n.fieldMustNotEmpty),
-          actions: [
-            TextButton(
-              onPressed: () => context.pop(),
-              child: Text(l10n.ok),
-            ),
-          ],
+          title: libL10n.attention,
+          child: Text(libL10n.empty),
+          actions: Btn.ok(
+            onTap: (c) => context.pop(),
+          ).toList,
         );
         return;
       }
@@ -727,20 +708,20 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     }
 
     context.showRoundDialog(
-      title: l10n.rename,
+      title: libL10n.rename,
       child: Input(
         autoFocus: true,
         icon: Icons.abc,
         controller: textController,
-        label: l10n.name,
+        label: libL10n.name,
         suggestion: true,
         onSubmitted: (_) => onSubmitted(),
       ),
       actions: [
-        TextButton(onPressed: () => context.pop(), child: Text(l10n.cancel)),
+        TextButton(onPressed: () => context.pop(), child: Text(libL10n.cancel)),
         TextButton(
           onPressed: onSubmitted,
-          child: Text(l10n.rename, style: UIs.textRed),
+          child: Text(libL10n.rename, style: UIs.textRed),
         ),
       ],
     );
@@ -752,7 +733,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     final cmd = _getDecompressCmd(absPath);
     if (cmd == null) {
       context.showRoundDialog(
-        title: l10n.error,
+        title: libL10n.error,
         child: Text('Unsupport file: ${name.filename}'),
         actions: [Btn.ok()],
       );
@@ -760,7 +741,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     }
 
     final confirm = await context.showRoundDialog(
-      title: l10n.attention,
+      title: libL10n.attention,
       child: SimpleMarkdown(data: '```sh\n$cmd\n```'),
       actions: [
         Btn.cancel(onTap: (c) => c.pop(false)),

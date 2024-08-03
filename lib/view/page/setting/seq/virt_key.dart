@@ -17,9 +17,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-        title: Text(l10n.editVirtKeys),
-      ),
+      appBar: CustomAppBar(title: Text(l10n.editVirtKeys)),
       body: Column(
         children: [
           Padding(
@@ -67,7 +65,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
           itemCount: allKeys.length,
           onReorder: (o, n) {
             if (o >= keys.length || n >= keys.length) {
-              context.showSnackBar(l10n.disabled);
+              context.showSnackBar(libL10n.disabled);
               return;
             }
             keys.moveByItem(o, n, property: prop);

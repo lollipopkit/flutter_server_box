@@ -301,29 +301,37 @@ class ServerProvider extends ChangeNotifier {
       final scriptRaw = ShellFunc.allScript(spi.custom?.cmds).uint8List;
 
       try {
-        await s.client!.runForOutput(
-          ShellFunc.installShellCmd,
+        final writeScriptResult = await s.client!.runForOutput(
+          ShellFunc.getInstallShellCmd(spi.id),
           action: (session) async {
             session.stdin.add(scriptRaw);
             session.stdin.close();
           },
         );
+        if (writeScriptResult.isNotEmpty) {
+          ShellFunc.switchScriptDir(spi.id);
+          throw String.fromCharCodes(writeScriptResult);
+        }
       } on SSHAuthAbortError catch (e) {
         TryLimiter.inc(sid);
-        s.status.err = SSHErr(type: SSHErrType.auth, message: e.toString());
+        final err = SSHErr(type: SSHErrType.auth, message: e.toString());
+        s.status.err = err;
+        Loggers.app.warning(err);
         _setServerState(s, ServerConn.failed);
         return;
       } on SSHAuthFailError catch (e) {
         TryLimiter.inc(sid);
-        s.status.err = SSHErr(type: SSHErrType.auth, message: e.toString());
+        final err = SSHErr(type: SSHErrType.auth, message: e.toString());
+        s.status.err = err;
+        Loggers.app.warning(err);
         _setServerState(s, ServerConn.failed);
         return;
       } catch (e) {
-        final err = e.toString();
         TryLimiter.inc(sid);
-        s.status.err = SSHErr(type: SSHErrType.writeScript, message: err);
+        final err = SSHErr(type: SSHErrType.writeScript, message: e.toString());
+        s.status.err = err;
+        Loggers.app.warning(err);
         _setServerState(s, ServerConn.failed);
-        Loggers.app.warning('Write script to ${spi.name} by shell', err);
       }
     }
 
@@ -340,7 +348,7 @@ class ServerProvider extends ChangeNotifier {
     String? raw;
 
     try {
-      raw = await s.client?.run(ShellFunc.status.exec).string;
+      raw = await s.client?.run(ShellFunc.status.exec(spi.id)).string;
       segments = raw?.split(ShellFunc.seperator).map((e) => e.trim()).toList();
       if (raw == null || raw.isEmpty || segments == null || segments.isEmpty) {
         if (Stores.setting.keepStatusWhenErr.fetch()) {

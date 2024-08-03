@@ -83,9 +83,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       if (s == null) {
         return Scaffold(
           appBar: const CustomAppBar(),
-          body: Center(
-            child: Text(l10n.noClient),
-          ),
+          body: Center(child: Text(libL10n.empty)),
         );
       }
       return _buildMainPage(s);
@@ -123,7 +121,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   CustomAppBar _buildAppBar(Server si) {
     return CustomAppBar(
-      title: Text(si.spi.name, style: UIs.text18),
+      title: Text(si.spi.name),
       actions: [
         IconButton(
           icon: const Icon(Icons.edit),
@@ -484,7 +482,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                 actions: [
                   TextButton(
                     onPressed: () => context.pop(),
-                    child: Text(l10n.close),
+                    child: Text(libL10n.close),
                   )
                 ],
               );
@@ -528,7 +526,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             actions: [
               TextButton(
                 onPressed: () => context.pop(),
-                child: Text(l10n.close),
+                child: Text(libL10n.close),
               )
             ],
           );
@@ -605,18 +603,10 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   Widget _buildNetView(ServerStatus ss) {
     final ns = ss.netSpeed;
     final children = <Widget>[];
-    if (ns.devices.isEmpty) {
-      children.add(Center(
-        child: Text(
-          l10n.noInterface,
-          style: UIs.text13Grey,
-        ),
-      ));
-    } else {
-      final devices = ns.devices;
-      devices.sort(_netSortType.value.getSortFunc(ns));
-      children.addAll(devices.map((e) => _buildNetSpeedItem(ns, e)));
-    }
+    final devices = ns.devices;
+    devices.sort(_netSortType.value.getSortFunc(ns));
+    children.addAll(devices.map((e) => _buildNetSpeedItem(ns, e)));
+
     return CardX(
       child: ExpandTile(
         leading: Icon(ServerDetailCards.net.icon, size: 17),
@@ -870,7 +860,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                 actions: [
                   TextButton(
                     onPressed: () => context.pop(),
-                    child: Text(l10n.close),
+                    child: Text(libL10n.close),
                   ),
                 ],
               );

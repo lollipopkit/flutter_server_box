@@ -24,7 +24,7 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(l10n.privateKey, style: UIs.text18),
+        title: Text(l10n.privateKey),
       ),
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
@@ -38,9 +38,7 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
     return Consumer<PrivateKeyProvider>(
       builder: (_, key, __) {
         if (key.pkis.isEmpty) {
-          return Center(
-            child: Text(l10n.noSavedPrivateKey),
-          );
+          return Center(child: Text(libL10n.empty));
         }
         return ListView.builder(
           padding: const EdgeInsets.all(13),
@@ -80,21 +78,12 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
         key: idRsaFile.readAsStringSync(),
       );
       context.showRoundDialog(
-        title: l10n.attention,
+        title: libL10n.attention,
         child: Text(l10n.addSystemPrivateKeyTip),
-        actions: [
-          TextButton(
-            onPressed: () {
-              context.pop();
-              AppRoutes.keyEdit(pki: sysPk).go(context);
-            },
-            child: Text(l10n.ok),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(l10n.cancel),
-          ),
-        ],
+        actions: Btn.ok(onTap: (c) {
+          context.pop();
+          AppRoutes.keyEdit(pki: sysPk).go(context);
+        }).toList,
       );
     }
   }

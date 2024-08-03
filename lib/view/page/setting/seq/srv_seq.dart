@@ -16,9 +16,7 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-        title: Text(l10n.serverOrder),
-      ),
+      appBar: CustomAppBar(title: Text(l10n.serverOrder)),
       body: _buildBody(),
     );
   }
@@ -48,7 +46,7 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
 
   Widget _buildBody() {
     if (Pros.server.serverOrder.isEmpty) {
-      return Center(child: Text(l10n.noServerAvailable));
+      return Center(child: Text(libL10n.empty));
     }
     return ReorderableListView.builder(
       footer: const SizedBox(height: 77),

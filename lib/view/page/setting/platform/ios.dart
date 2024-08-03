@@ -21,9 +21,7 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(
-        title: Text('iOS'),
-      ),
+      appBar: const CustomAppBar(title: Text('iOS')),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 17),
         children: [
@@ -45,22 +43,23 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
         alignment: Alignment.centerRight,
         padding: EdgeInsets.zero,
         onPressed: () {
-          if (_pushToken.value != null) {
-            Pfs.copy(_pushToken.value!);
+          final val = _pushToken.value;
+          if (val != null) {
+            Pfs.copy(val);
             context.showSnackBar(l10n.success);
           } else {
-            context.showSnackBar(l10n.getPushTokenFailed);
+            context.showSnackBar(libL10n.fail);
           }
         },
       ),
       subtitle: FutureWidget<String?>(
         future: getToken(),
-        loading: Text(l10n.gettingToken),
-        error: (error, trace) => Text('${l10n.error}: $error'),
+        loading: const Text('...'),
+        error: (error, trace) => Text('${libL10n.error}: $error'),
         success: (text) {
           _pushToken.value = text;
           return Text(
-            text ?? l10n.nullToken,
+            text ?? 'null',
             style: UIs.textGrey,
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
@@ -89,7 +88,7 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
         Loggers.app.warning('WatchOS error', e, trace);
         return ListTile(
           title: const Text('Watch app'),
-          subtitle: Text('${l10n.error}: $e', style: UIs.textGrey),
+          subtitle: Text('${libL10n.error}: $e', style: UIs.textGrey),
         );
       },
       success: (ctx) {

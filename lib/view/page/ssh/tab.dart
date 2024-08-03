@@ -22,7 +22,7 @@ typedef _TabMap = Map<String, ({Widget page, GlobalKey<SSHPageState>? key})>;
 class _SSHTabPageState extends State<SSHTabPage>
     with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   late final _TabMap _tabMap = {
-    l10n.add: (page: _buildAddPage(), key: null),
+    libL10n.add: (page: _buildAddPage(), key: null),
   };
   final _pageCtrl = PageController();
   final _fabVN = 0.vn;
@@ -51,7 +51,7 @@ class _SSHTabPageState extends State<SSHTabPage>
           return FloatingActionButton(
             heroTag: 'sshAddServer',
             onPressed: () => AppRoutes.serverEdit().go(context),
-            tooltip: l10n.addAServer,
+            tooltip: libL10n.add,
             child: const Icon(Icons.add),
           );
         },
@@ -71,16 +71,15 @@ class _SSHTabPageState extends State<SSHTabPage>
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(l10n.attention),
-          content: Text('${l10n.close} SSH ${l10n.conn}($name) ?'),
+          title: Text(libL10n.attention),
+          content: Text('${libL10n.close} SSH ${l10n.conn}($name) ?'),
           actions: [
-            TextButton(
-              onPressed: () => context.pop(true),
-              child: Text(l10n.ok, style: UIs.textRed),
+            Btn.ok(
+              onTap: (c) => context.pop(true),
+              red: true,
             ),
-            TextButton(
-              onPressed: () => context.pop(false),
-              child: Text(l10n.cancel),
+            Btn.cancel(
+              onTap: (c) => context.pop(false),
             ),
           ],
         );
@@ -101,10 +100,7 @@ class _SSHTabPageState extends State<SSHTabPage>
       child: Consumer<ServerProvider>(builder: (_, pro, __) {
         if (pro.serverOrder.isEmpty) {
           return Center(
-            child: Text(
-              l10n.serverTabEmpty,
-              textAlign: TextAlign.center,
-            ),
+            child: Text(libL10n.empty, textAlign: TextAlign.center),
           );
         }
         return GridView.builder(

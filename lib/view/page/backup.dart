@@ -9,8 +9,11 @@ import 'package:server_box/core/utils/sync/icloud.dart';
 import 'package:server_box/core/utils/sync/webdav.dart';
 import 'package:server_box/data/model/app/backup.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/res/misc.dart';
+import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:icons_plus/icons_plus.dart';
 
 class BackupPage extends StatelessWidget {
   BackupPage({super.key});
@@ -21,23 +24,23 @@ class BackupPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-        title: Text(l10n.backup, style: UIs.text18),
-      ),
+      appBar: CustomAppBar(title: Text(libL10n.backup)),
       body: _buildBody(context),
     );
   }
 
   Widget _buildBody(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(17),
+      padding: const EdgeInsets.all(13),
       children: [
         _buildTip(),
         if (isMacOS || isIOS) _buildIcloud(context),
         _buildWebdav(context),
         _buildFile(context),
         _buildClipboard(context),
+        CenterGreyTitle(libL10n.import),
         _buildBulkImportServers(context),
+        _buildImportSnippet(context),
       ],
     );
   }
@@ -46,7 +49,7 @@ class BackupPage extends StatelessWidget {
     return CardX(
       child: ListTile(
         leading: const Icon(Icons.warning),
-        title: Text(l10n.attention),
+        title: Text(libL10n.attention),
         subtitle: Text(l10n.backupTip, style: UIs.textGrey),
       ),
     );
@@ -56,11 +59,11 @@ class BackupPage extends StatelessWidget {
     return CardX(
       child: ExpandTile(
         leading: const Icon(Icons.file_open),
-        title: Text(l10n.files),
+        title: Text(libL10n.file),
         initiallyExpanded: true,
         children: [
           ListTile(
-            title: Text(l10n.backup),
+            title: Text(libL10n.backup),
             trailing: const Icon(Icons.save),
             onTap: () async {
               final path = await Backup.backup();
@@ -69,7 +72,7 @@ class BackupPage extends StatelessWidget {
           ),
           ListTile(
             trailing: const Icon(Icons.restore),
-            title: Text(l10n.restore),
+            title: Text(libL10n.restore),
             onTap: () async => _onTapFileRestore(context),
           ),
         ],
@@ -156,12 +159,12 @@ class BackupPage extends StatelessWidget {
                   children: [
                     TextButton(
                       onPressed: () async => _onTapWebdavDl(context),
-                      child: Text(l10n.restore),
+                      child: Text(libL10n.restore),
                     ),
                     UIs.width7,
                     TextButton(
                       onPressed: () async => _onTapWebdavUp(context),
-                      child: Text(l10n.backup),
+                      child: Text(libL10n.backup),
                     ),
                   ],
                 );
@@ -177,10 +180,10 @@ class BackupPage extends StatelessWidget {
     return CardX(
       child: ExpandTile(
         leading: const Icon(Icons.content_paste),
-        title: Text(l10n.clipboard),
+        title: Text(libL10n.clipboard),
         children: [
           ListTile(
-            title: Text(l10n.backup),
+            title: Text(libL10n.backup),
             trailing: const Icon(Icons.save),
             onTap: () async {
               final path = await Backup.backup();
@@ -190,7 +193,7 @@ class BackupPage extends StatelessWidget {
           ),
           ListTile(
             trailing: const Icon(Icons.restore),
-            title: Text(l10n.restore),
+            title: Text(libL10n.restore),
             onTap: () async => _onTapClipboardRestore(context),
           ),
         ],
@@ -201,12 +204,73 @@ class BackupPage extends StatelessWidget {
   Widget _buildBulkImportServers(BuildContext context) {
     return CardX(
       child: ListTile(
-        title: Text(l10n.bulkImportServers),
-        leading: const Icon(Icons.import_export),
+        title: Text(l10n.server),
+        leading: const Icon(BoxIcons.bx_server),
         onTap: () => _onBulkImportServers(context),
         trailing: const Icon(Icons.keyboard_arrow_right),
       ),
     );
+  }
+
+  Widget _buildImportSnippet(BuildContext context) {
+    return ListTile(
+      title: Text(l10n.snippet),
+      leading: const Icon(MingCute.code_line),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: () async {
+        final data = await context.showImportDialog(
+          title: l10n.snippet,
+          modelDef: Snippet.example.toJson(),
+        );
+        if (data == null) return;
+        final str = String.fromCharCodes(data);
+        final (list, _) = await context.showLoadingDialog(
+          fn: () => Computer.shared.start((s) {
+            return json.decode(s) as List;
+          }, str),
+        );
+        if (list == null || list.isEmpty) return;
+        final snippets = <Snippet>[];
+        final errs = <String>[];
+        for (final item in list) {
+          try {
+            final snippet = Snippet.fromJson(item);
+            snippets.add(snippet);
+          } catch (e) {
+            errs.add(e.toString());
+          }
+        }
+        if (snippets.isEmpty) {
+          context.showSnackBar(libL10n.empty);
+          return;
+        }
+        if (errs.isNotEmpty) {
+          context.showRoundDialog(
+            title: libL10n.error,
+            child: SingleChildScrollView(child: Text(errs.join('\n'))),
+          );
+          return;
+        }
+        final snippetNames = snippets.map((e) => e.name).join(', ');
+        context.showRoundDialog(
+          title: libL10n.attention,
+          child: SingleChildScrollView(
+            child: Text(
+              libL10n.askContinue('${libL10n.import} [$snippetNames]'),
+            ),
+          ),
+          actions: Btn.ok(
+            onTap: (c) {
+              for (final snippet in snippets) {
+                Pros.snippet.add(snippet);
+              }
+              c.pop();
+              context.pop();
+            },
+          ).toList,
+        );
+      },
+    ).cardx;
   }
 
   Future<void> _onTapFileRestore(BuildContext context) async {
@@ -224,27 +288,20 @@ class BackupPage extends StatelessWidget {
       }
 
       await context.showRoundDialog(
-        title: l10n.restore,
-        child: Text(l10n.askContinue(
-          '${l10n.restore} ${l10n.backup}(${backup.date})',
+        title: libL10n.restore,
+        child: Text(libL10n.askContinue(
+          '${libL10n.restore} ${libL10n.backup}(${backup.date})',
         )),
-        actions: [
-          TextButton(
-            onPressed: () => context.pop(),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () async {
-              await backup.restore(force: true);
-              context.pop();
-            },
-            child: Text(l10n.ok),
-          ),
-        ],
+        actions: Btn.ok(
+          onTap: (c) async {
+            await backup.restore(force: true);
+            context.pop();
+          },
+        ).toList,
       );
     } catch (e, s) {
       Loggers.app.warning('Import backup failed', e, s);
-      context.showErrDialog(e: e, s: s, operation: l10n.restore);
+      context.showErrDialog(e: e, s: s, operation: libL10n.restore);
     }
   }
 
@@ -255,7 +312,7 @@ class BackupPage extends StatelessWidget {
       if (files.isEmpty) return context.showSnackBar(l10n.dirEmpty);
 
       final fileName = await context.showPickSingleDialog(
-        title: l10n.restore,
+        title: libL10n.restore,
         items: files,
       );
       if (fileName == null) return;
@@ -268,7 +325,7 @@ class BackupPage extends StatelessWidget {
       final dlBak = await Computer.shared.start(Backup.fromJsonString, dlFile);
       await dlBak.restore(force: true);
     } catch (e, s) {
-      context.showErrDialog(e: e, s: s, operation: l10n.restore);
+      context.showErrDialog(e: e, s: s, operation: libL10n.restore);
       Loggers.app.warning('Download webdav backup failed', e, s);
     } finally {
       webdavLoading.value = false;
@@ -313,7 +370,7 @@ class BackupPage extends StatelessWidget {
             onSubmitted: (p0) => FocusScope.of(context).requestFocus(nodeUser),
           ),
           Input(
-            label: l10n.user,
+            label: libL10n.user,
             controller: user,
             node: nodeUser,
             suggestion: false,
@@ -328,14 +385,7 @@ class BackupPage extends StatelessWidget {
           ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            context.pop(true);
-          },
-          child: Text(l10n.ok),
-        ),
-      ],
+      actions: Btn.ok(onTap: (c) => context.pop(true)).toList,
     );
     if (result == true) {
       final result = await Webdav.test(url.text, user.text, pwd.text);
@@ -351,7 +401,7 @@ class BackupPage extends StatelessWidget {
   void _onTapClipboardRestore(BuildContext context) async {
     final text = await Pfs.paste();
     if (text == null || text.isEmpty) {
-      context.showSnackBar(l10n.fieldMustNotEmpty);
+      context.showSnackBar(libL10n.empty);
       return;
     }
 
@@ -367,27 +417,20 @@ class BackupPage extends StatelessWidget {
       }
 
       await context.showRoundDialog(
-        title: l10n.restore,
-        child: Text(l10n.askContinue(
-          '${l10n.restore} ${l10n.backup}(${backup.date})',
+        title: libL10n.restore,
+        child: Text(libL10n.askContinue(
+          '${libL10n.restore} ${libL10n.backup}(${backup.date})',
         )),
-        actions: [
-          TextButton(
-            onPressed: () => context.pop(),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () async {
-              await backup.restore(force: true);
-              context.pop();
-            },
-            child: Text(l10n.ok),
-          ),
-        ],
+        actions: Btn.ok(
+          onTap: (c) async {
+            await backup.restore(force: true);
+            context.pop();
+          },
+        ).toList,
       );
     } catch (e, s) {
       Loggers.app.warning('Import backup failed', e, s);
-      context.showErrDialog(e: e, s: s, operation: l10n.restore);
+      context.showErrDialog(e: e, s: s, operation: libL10n.restore);
     }
   }
 
@@ -408,14 +451,9 @@ class BackupPage extends StatelessWidget {
       );
       if (err != null || spis == null) return;
       final sure = await context.showRoundDialog<bool>(
-        title: l10n.import,
-        child: Text(l10n.askContinue('${spis.length} ${l10n.server}')),
-        actions: [
-          TextButton(
-            onPressed: () => context.pop(true),
-            child: Text(l10n.ok),
-          ),
-        ],
+        title: libL10n.import,
+        child: Text(libL10n.askContinue('${spis.length} ${l10n.server}')),
+        actions: Btn.ok(onTap: (c) => context.pop(true)).toList,
       );
       if (sure == true) {
         final (suc, err) = await context.showLoadingDialog(
@@ -430,7 +468,7 @@ class BackupPage extends StatelessWidget {
         context.showSnackBar(l10n.success);
       }
     } catch (e, s) {
-      context.showErrDialog(e: e, s: s, operation: l10n.import);
+      context.showErrDialog(e: e, s: s, operation: libL10n.import);
       Loggers.app.warning('Import servers failed', e, s);
     }
   }

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:locale_names/locale_names.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/rebuild.dart';
 import 'package:server_box/data/res/store.dart';
@@ -37,24 +36,19 @@ class _SettingPageState extends State<SettingPage> {
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: () => context.showRoundDialog(
-              title: l10n.attention,
+              title: libL10n.attention,
               child: SimpleMarkdown(
-                  data: l10n.askContinue(
-                '${l10n.delete} **${l10n.all}** ${l10n.setting}',
+                  data: libL10n.askContinue(
+                '${libL10n.delete} **${libL10n.all}** ${l10n.setting}',
               )),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    context.pop();
-                    _setting.box.deleteAll(_setting.box.keys);
-                    context.showSnackBar(l10n.success);
-                  },
-                  child: Text(
-                    l10n.ok,
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                ),
-              ],
+              actions: Btn.ok(
+                onTap: (c) {
+                  context.pop();
+                  _setting.box.deleteAll(_setting.box.keys);
+                  context.showSnackBar(l10n.success);
+                },
+                red: true,
+              ).toList,
             ),
           ),
         ],
@@ -62,37 +56,25 @@ class _SettingPageState extends State<SettingPage> {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 17),
         children: [
-          _buildTitle('App'),
+          const CenterGreyTitle('App'),
           _buildApp(),
-          _buildTitle(l10n.server),
+          CenterGreyTitle(l10n.server),
           _buildServer(),
-          _buildTitle(l10n.container),
+          CenterGreyTitle(l10n.container),
           _buildContainer(),
-          _buildTitle('SSH'),
+          const CenterGreyTitle('SSH'),
           _buildSSH(),
-          _buildTitle('SFTP'),
+          const CenterGreyTitle('SFTP'),
           _buildSFTP(),
-          _buildTitle(l10n.editor),
+          CenterGreyTitle(l10n.editor),
           _buildEditor(),
 
           /// Fullscreen Mode is designed for old mobile phone which can be
           /// used as a status screen.
-          if (isMobile) _buildTitle(l10n.fullScreen),
+          if (isMobile) CenterGreyTitle(l10n.fullScreen),
           if (isMobile) _buildFullScreen(),
           const SizedBox(height: 37),
         ],
-      ),
-    );
-  }
-
-  Widget _buildTitle(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 23, bottom: 17),
-      child: Center(
-        child: Text(
-          text,
-          style: UIs.textGrey,
-        ),
       ),
     );
   }
@@ -216,10 +198,6 @@ class _SettingPageState extends State<SettingPage> {
       title: Text(
         l10n.updateServerStatusInterval,
       ),
-      subtitle: Text(
-        l10n.willTakEeffectImmediately,
-        style: UIs.textGrey,
-      ),
       onTap: () async {
         final val = await context.showPickSingleDialog(
           title: l10n.setting,
@@ -284,12 +262,7 @@ class _SettingPageState extends State<SettingPage> {
               children: children,
             );
           }),
-          actions: [
-            TextButton(
-              onPressed: () => _onSaveColor(ctrl.text),
-              child: Text(l10n.ok),
-            ),
-          ],
+          actions: Btn.ok(onTap: (c) => _onSaveColor(ctrl.text)).toList,
         );
       },
     );
@@ -298,7 +271,7 @@ class _SettingPageState extends State<SettingPage> {
   void _onSaveColor(String s) {
     final color = s.hexToColor;
     if (color == null) {
-      context.showSnackBar(l10n.failed);
+      context.showSnackBar(libL10n.fail);
       return;
     }
     // Change [primaryColor] first, then change [_selectedColorValue],
@@ -354,13 +327,7 @@ class _SettingPageState extends State<SettingPage> {
     return ValBuilder(
       listenable: _setting.maxRetryCount.listenable(),
       builder: (val) => ListTile(
-        title: Text(
-          l10n.maxRetryCount,
-          textAlign: TextAlign.start,
-        ),
-        subtitle: Text(
-            val == 0 ? l10n.maxRetryCountEqual0 : l10n.canPullRefresh,
-            style: UIs.textGrey),
+        title: Text(l10n.maxRetryCount),
         onTap: () async {
           final selected = await context.showPickSingleDialog(
             title: l10n.maxRetryCount,
@@ -411,9 +378,9 @@ class _SettingPageState extends State<SettingPage> {
   String _buildThemeModeStr(int n) {
     switch (n) {
       case 1:
-        return l10n.light;
+        return libL10n.bright;
       case 2:
-        return l10n.dark;
+        return libL10n.dark;
       case 3:
         return 'AMOLED';
       case 4:
@@ -429,7 +396,7 @@ class _SettingPageState extends State<SettingPage> {
       leading: const Icon(MingCute.font_fill),
       title: Text(l10n.font),
       trailing: Text(
-        fontName ?? l10n.notSelected,
+        fontName ?? libL10n.empty,
         style: UIs.text15,
       ),
       onTap: () {
@@ -438,7 +405,7 @@ class _SettingPageState extends State<SettingPage> {
           actions: [
             TextButton(
               onPressed: () async => await _pickFontFile(),
-              child: Text(l10n.pickFile),
+              child: Text(libL10n.file),
             ),
             TextButton(
               onPressed: () {
@@ -446,7 +413,7 @@ class _SettingPageState extends State<SettingPage> {
                 context.pop();
                 RNodes.app.notify();
               },
-              child: Text(l10n.clear),
+              child: Text(libL10n.clear),
             )
           ],
         );
@@ -536,7 +503,7 @@ class _SettingPageState extends State<SettingPage> {
         final selected = await context.showPickSingleDialog(
           title: l10n.language,
           items: AppLocalizations.supportedLocales,
-          name: (p0) => '${p0.nativeDisplayLanguage} (${p0.code})',
+          name: (p0) => p0.nativeName,
           initial: _setting.locale.fetch().toLocale,
         );
         if (selected != null) {
@@ -548,7 +515,7 @@ class _SettingPageState extends State<SettingPage> {
       trailing: ListenBuilder(
         listenable: _setting.locale.listenable(),
         builder: () => Text(
-          l10n.languageName,
+          context.localeNativeName,
           style: UIs.text15,
         ),
       ),
@@ -567,7 +534,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildEditorTheme() {
     return ListTile(
       leading: const Icon(MingCute.sun_fill),
-      title: Text('${l10n.light} ${l10n.theme.toLowerCase()}'),
+      title: Text('${libL10n.bright} ${l10n.theme.toLowerCase()}'),
       trailing: ValBuilder(
         listenable: _setting.editorTheme.listenable(),
         builder: (val) => Text(val, style: UIs.text15),
@@ -589,7 +556,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildEditorDarkTheme() {
     return ListTile(
       leading: const Icon(MingCute.moon_stars_fill),
-      title: Text('${l10n.dark} ${l10n.theme.toLowerCase()}'),
+      title: Text('${libL10n.dark} ${l10n.theme.toLowerCase()}'),
       trailing: ValBuilder(
         listenable: _setting.editorDarkTheme.listenable(),
         builder: (val) => Text(val, style: UIs.text15),
@@ -668,14 +635,6 @@ class _SettingPageState extends State<SettingPage> {
   //         ),
   //       ),
   //     ),
-  //   );
-  // }
-
-  // Widget _buildCNKeyboardComp() {
-  //   return ListTile(
-  //     title: Text(l10n.cnKeyboardComp),
-  //     subtitle: Text(l10n.cnKeyboardCompTip, style: UIs.textGrey),
-  //     trailing: StoreSwitch(prop: _setting.cnKeyboardComp),
   //   );
   // }
 
@@ -765,7 +724,7 @@ class _SettingPageState extends State<SettingPage> {
 
         final md = deleteKeys.map((e) => '- $e').join('\n');
         final sure = await context.showRoundDialog(
-          title: l10n.attention,
+          title: libL10n.attention,
           child: SimpleMarkdown(data: md),
         );
 
@@ -805,12 +764,7 @@ class _SettingPageState extends State<SettingPage> {
           onSubmitted: _onSaveTextScaler,
           suggestion: false,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => _onSaveTextScaler(ctrl.text),
-            child: Text(l10n.ok),
-          ),
-        ],
+        actions: Btn.ok(onTap: (c) => _onSaveTextScaler(ctrl.text)).toList,
       ),
     );
   }
@@ -818,7 +772,7 @@ class _SettingPageState extends State<SettingPage> {
   void _onSaveTextScaler(String s) {
     final val = double.tryParse(s);
     if (val == null) {
-      context.showSnackBar(l10n.failed);
+      context.showSnackBar(libL10n.fail);
       return;
     }
     _setting.textFactor.put(val);
@@ -897,7 +851,7 @@ class _SettingPageState extends State<SettingPage> {
       final fontSize = double.tryParse(ctrller.text);
       if (fontSize == null) {
         context.showRoundDialog(
-          title: l10n.failed,
+          title: libL10n.fail,
           child: Text('Parsed failed: ${ctrller.text}'),
         );
         return;
@@ -915,20 +869,14 @@ class _SettingPageState extends State<SettingPage> {
         suggestion: false,
         onSubmitted: (_) => onSave(),
       ),
-      actions: [
-        TextButton(
-          onPressed: onSave,
-          child: Text(l10n.ok),
-        ),
-      ],
+      actions: Btn.ok(onTap: (c) => onSave()).toList,
     );
   }
 
   Widget _buildSftpRmrDir() {
     return ListTile(
       leading: const Icon(MingCute.delete_2_fill),
-      title: const Text('rm -r'),
-      subtitle: Text(l10n.sftpRmrDirSummary, style: UIs.textGrey),
+      title: TipText(text: 'rm -r', tip: l10n.sftpRmrDirSummary),
       trailing: StoreSwitch(prop: _setting.sftpRmrDir),
     );
   }
@@ -975,8 +923,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildCollapseUI() {
     return ListTile(
-      title: Text(l10n.collapseUI),
-      subtitle: Text(l10n.collapseUITip, style: UIs.textGrey),
+      title: TipText(text: 'UI ${libL10n.fold}', tip: l10n.collapseUITip),
       trailing: StoreSwitch(prop: _setting.collapseUIDefault),
     );
   }
@@ -1054,11 +1001,11 @@ class _SettingPageState extends State<SettingPage> {
         case 0:
           return l10n.system;
         case 1:
-          return l10n.light;
+          return libL10n.bright;
         case 2:
-          return l10n.dark;
+          return libL10n.dark;
         default:
-          return l10n.error;
+          return libL10n.error;
       }
     }
 
@@ -1161,14 +1108,9 @@ class _SettingPageState extends State<SettingPage> {
     void onSave(String url) {
       if (url.isEmpty || !url.startsWith('http')) {
         context.showRoundDialog(
-          title: l10n.failed,
+          title: libL10n.fail,
           child: Text('${l10n.invalid} URL'),
-          actions: [
-            TextButton(
-              onPressed: () => context.pop(),
-              child: Text(l10n.ok),
-            ),
-          ],
+          actions: Btn.ok(onTap: (c) => context.pop()).toList,
         );
         return;
       }
@@ -1198,18 +1140,13 @@ class _SettingPageState extends State<SettingPage> {
                 onSubmitted: onSave,
               ),
               ListTile(
-                title: Text(l10n.doc),
+                title: Text(libL10n.doc),
                 trailing: const Icon(Icons.open_in_new),
                 onTap: () => Urls.appWiki.launch(),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => onSave(ctrl.text),
-              child: Text(l10n.ok),
-            ),
-          ],
+          actions: Btn.ok(onTap: (c) => onSave(ctrl.text)).toList,
         );
       },
     );
@@ -1217,8 +1154,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildBeta() {
     return ListTile(
-      title: const Text('Beta Program'),
-      subtitle: Text(l10n.acceptBeta, style: UIs.textGrey),
+      title: TipText(text: 'Beta Program', tip: l10n.acceptBeta),
       trailing: StoreSwitch(prop: _setting.betaTest),
     );
   }
@@ -1258,7 +1194,7 @@ class _SettingPageState extends State<SettingPage> {
             }
 
             await context.showRoundDialog<bool>(
-              title: l10n.choose,
+              title: libL10n.select,
               child: Input(
                 controller: ctrl,
                 autoFocus: true,

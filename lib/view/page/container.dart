@@ -98,7 +98,7 @@ class _ContainerPageState extends State<ContainerPage> {
             UIs.height13,
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 23),
-              child: Text(_container.error?.toString() ?? l10n.unknownError),
+              child: Text(_container.error.toString()),
             ),
             const Spacer(),
             _buildEditHost(),
@@ -285,16 +285,13 @@ class _ContainerPageState extends State<ContainerPage> {
     if (emptyPs && emptyImgs) {
       children.add(Padding(
         padding: const EdgeInsets.fromLTRB(17, 17, 17, 0),
-        child: Text(
-          l10n.dockerEmptyRunningItems,
-          textAlign: TextAlign.center,
-        ),
+        child: SimpleMarkdown(data: l10n.dockerEmptyRunningItems),
       ));
     }
     children.add(
       TextButton(
         onPressed: _showEditHostDialog,
-        child: Text(l10n.dockerEditHost),
+        child: Text('${libL10n.edit} DOCKER_HOST'),
       ),
     );
     return CardX(
@@ -328,54 +325,44 @@ class _ContainerPageState extends State<ContainerPage> {
     final nameCtrl = TextEditingController();
     final argsCtrl = TextEditingController();
     await context.showRoundDialog(
-      title: l10n.newContainer,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Input(
-            autoFocus: true,
-            type: TextInputType.text,
-            label: l10n.image,
-            hint: 'xxx:1.1',
-            controller: imageCtrl,
-            suggestion: false,
-          ),
-          Input(
-            type: TextInputType.text,
-            controller: nameCtrl,
-            label: l10n.containerName,
-            hint: 'xxx',
-            suggestion: false,
-          ),
-          Input(
-            type: TextInputType.text,
-            controller: argsCtrl,
-            label: l10n.extraArgs,
-            hint: '-p 2222:22 -v ~/.xxx/:/xxx',
-            suggestion: false,
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => context.pop(),
-          child: Text(l10n.cancel),
+        title: l10n.newContainer,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Input(
+              autoFocus: true,
+              type: TextInputType.text,
+              label: l10n.image,
+              hint: 'xxx:1.1',
+              controller: imageCtrl,
+              suggestion: false,
+            ),
+            Input(
+              type: TextInputType.text,
+              controller: nameCtrl,
+              label: libL10n.name,
+              hint: 'xxx',
+              suggestion: false,
+            ),
+            Input(
+              type: TextInputType.text,
+              controller: argsCtrl,
+              label: l10n.extraArgs,
+              hint: '-p 2222:22 -v ~/.xxx/:/xxx',
+              suggestion: false,
+            ),
+          ],
         ),
-        TextButton(
-          onPressed: () async {
-            context.pop();
-            await _showAddCmdPreview(
-              _buildAddCmd(
-                imageCtrl.text.trim(),
-                nameCtrl.text.trim(),
-                argsCtrl.text.trim(),
-              ),
-            );
-          },
-          child: Text(l10n.ok),
-        )
-      ],
-    );
+        actions: Btn.ok(onTap: (c) async {
+          context.pop();
+          await _showAddCmdPreview(
+            _buildAddCmd(
+              imageCtrl.text.trim(),
+              nameCtrl.text.trim(),
+              argsCtrl.text.trim(),
+            ),
+          );
+        }).toList);
   }
 
   Future<void> _showAddCmdPreview(String cmd) async {
@@ -385,7 +372,7 @@ class _ContainerPageState extends State<ContainerPage> {
       actions: [
         TextButton(
           onPressed: () => context.pop(),
-          child: Text(l10n.cancel),
+          child: Text(libL10n.cancel),
         ),
         TextButton(
           onPressed: () async {
@@ -397,8 +384,8 @@ class _ContainerPageState extends State<ContainerPage> {
             if (err != null || result != null) {
               final e = result?.message ?? err?.toString();
               context.showRoundDialog(
-                title: l10n.error,
-                child: Text(e ?? l10n.unknownError),
+                title: libL10n.error,
+                child: Text(e.toString()),
               );
             }
           },
@@ -426,7 +413,7 @@ class _ContainerPageState extends State<ContainerPage> {
     final host = Stores.container.fetch(id);
     final ctrl = TextEditingController(text: host);
     await context.showRoundDialog(
-      title: l10n.dockerEditHost,
+      title: 'DOCKER_HOST',
       child: Input(
         maxLines: 2,
         controller: ctrl,
@@ -434,12 +421,7 @@ class _ContainerPageState extends State<ContainerPage> {
         hint: 'unix:///run/user/1000/docker.sock',
         suggestion: false,
       ),
-      actions: [
-        TextButton(
-          onPressed: () => _onSaveDockerHost(ctrl.text),
-          child: Text(l10n.ok),
-        ),
-      ],
+      actions: Btn.ok(onTap: (c) => _onSaveDockerHost(ctrl.text)).toList,
     );
   }
 
@@ -451,24 +433,20 @@ class _ContainerPageState extends State<ContainerPage> {
 
   void _showImageRmDialog(ContainerImg e) {
     context.showRoundDialog(
-      title: l10n.attention,
-      child: Text(l10n.askContinue('${l10n.delete} Image(${e.repository})')),
-      actions: [
-        TextButton(
-          onPressed: () => context.pop(),
-          child: Text(l10n.cancel),
-        ),
-        TextButton(
-          onPressed: () async {
-            context.pop();
-            final result = await _container.run('rmi ${e.id} -f');
-            if (result != null) {
-              context.showSnackBar(result.message ?? l10n.unknownError);
-            }
-          },
-          child: Text(l10n.ok, style: UIs.textRed),
-        ),
-      ],
+      title: libL10n.attention,
+      child: Text(
+        libL10n.askContinue('${libL10n.delete} Image(${e.repository})'),
+      ),
+      actions: Btn.ok(
+        onTap: (c) async {
+          context.pop();
+          final result = await _container.run('rmi ${e.id} -f');
+          if (result != null) {
+            context.showSnackBar(result.message ?? 'null');
+          }
+        },
+        red: true,
+      ).toList,
     );
   }
 
@@ -482,12 +460,12 @@ class _ContainerPageState extends State<ContainerPage> {
       case ContainerMenu.rm:
         var force = false;
         context.showRoundDialog(
-          title: l10n.attention,
+          title: libL10n.attention,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(l10n.askContinue(
-                '${l10n.delete} Container(${dItem.name})',
+              Text(libL10n.askContinue(
+                '${libL10n.delete} Container(${dItem.name})',
               )),
               UIs.height13,
               Row(
@@ -505,25 +483,20 @@ class _ContainerPageState extends State<ContainerPage> {
               )
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                context.pop();
+          actions: Btn.ok(onTap: (c) async {
+            context.pop();
 
-                final (result, err) = await context.showLoadingDialog(
-                  fn: () => _container.delete(id, force),
-                );
-                if (err != null || result != null) {
-                  final e = result?.message ?? err?.toString();
-                  context.showRoundDialog(
-                    title: l10n.error,
-                    child: Text(e ?? l10n.unknownError),
-                  );
-                }
-              },
-              child: Text(l10n.ok),
-            )
-          ],
+            final (result, err) = await context.showLoadingDialog(
+              fn: () => _container.delete(id, force),
+            );
+            if (err != null || result != null) {
+              final e = result?.message ?? err?.toString();
+              context.showRoundDialog(
+                title: libL10n.error,
+                child: Text(e ?? 'null'),
+              );
+            }
+          }).toList,
         );
         break;
       case ContainerMenu.start:
@@ -533,8 +506,8 @@ class _ContainerPageState extends State<ContainerPage> {
         if (err != null || result != null) {
           final e = result?.message ?? err?.toString();
           context.showRoundDialog(
-            title: l10n.error,
-            child: Text(e ?? l10n.unknownError),
+            title: libL10n.error,
+            child: Text(e ?? 'null'),
           );
         }
         break;
@@ -545,8 +518,8 @@ class _ContainerPageState extends State<ContainerPage> {
         if (err != null || result != null) {
           final e = result?.message ?? err?.toString();
           context.showRoundDialog(
-            title: l10n.error,
-            child: Text(e ?? l10n.unknownError),
+            title: libL10n.error,
+            child: Text(e ?? 'null'),
           );
         }
         break;
@@ -557,8 +530,8 @@ class _ContainerPageState extends State<ContainerPage> {
         if (err != null || result != null) {
           final e = result?.message ?? err?.toString();
           context.showRoundDialog(
-            title: l10n.error,
-            child: Text(e ?? l10n.unknownError),
+            title: libL10n.error,
+            child: Text(e ?? 'null'),
           );
         }
         break;

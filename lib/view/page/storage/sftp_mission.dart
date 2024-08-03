@@ -28,9 +28,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
   Widget _buildBody() {
     return Consumer<SftpProvider>(builder: (__, pro, _) {
       if (pro.status.isEmpty) {
-        return Center(
-          child: Text(l10n.noTask),
-        );
+        return Center(child: Text(libL10n.empty));
       }
       return ListView.builder(
         padding: const EdgeInsets.all(11),
@@ -48,10 +46,10 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
     if (err != null) {
       return _wrapInCard(
         status: status,
-        subtitle: l10n.error,
+        subtitle: libL10n.error,
         trailing: IconButton(
           onPressed: () => context.showRoundDialog(
-            title: l10n.error,
+            title: libL10n.error,
             child: Text(err.toString()),
           ),
           icon: const Icon(Icons.error),
@@ -81,7 +79,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
       subtitle: l10n.unknown,
       trailing: IconButton(
         onPressed: () => context.showRoundDialog(
-          title: l10n.error,
+          title: libL10n.error,
           child: Text((status.error ?? l10n.unknown).toString()),
         ),
         icon: const Icon(Icons.error),
@@ -109,9 +107,9 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
 
   Widget _buildFinished(SftpReqStatus status) {
     final time = status.spentTime.toString();
-    final str = '${l10n.finished} ${l10n.spentTime(
+    final str = l10n.spentTime(
       time == 'null' ? l10n.unknown : (time.substring(0, time.length - 7)),
-    )}';
+    );
 
     final btns = Row(
       mainAxisSize: MainAxisSize.min,
@@ -161,19 +159,17 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
   Widget _buildDelete(String name, int id) {
     return IconButton(
       onPressed: () => context.showRoundDialog(
-          title: l10n.attention,
-          child: Text(l10n.askContinue(
-            '${l10n.delete} ${l10n.mission}($name)',
-          )),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Pros.sftp.cancel(id);
-                context.pop();
-              },
-              child: Text(l10n.ok),
-            ),
-          ]),
+        title: libL10n.attention,
+        child: Text(libL10n.askContinue(
+          '${libL10n.delete} ${l10n.mission}($name)',
+        )),
+        actions: Btn.ok(
+          onTap: (c) {
+            Pros.sftp.cancel(id);
+            context.pop();
+          },
+        ).toList,
+      ),
       icon: const Icon(Icons.delete),
     );
   }

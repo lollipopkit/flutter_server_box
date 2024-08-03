@@ -51,9 +51,10 @@ class _ProcessPageState extends State<ProcessPage> {
 
   Future<void> _refresh() async {
     if (mounted) {
-      final result = await _client?.run(ShellFunc.process.exec).string;
+      final result =
+          await _client?.run(ShellFunc.process.exec(widget.spi.id)).string;
       if (result == null || result.isEmpty) {
-        context.showSnackBar(l10n.noResult);
+        context.showSnackBar(libL10n.empty);
         return;
       }
       _result = PsResult.parse(result, sort: _procSortMode);
@@ -100,12 +101,12 @@ class _ProcessPageState extends State<ProcessPage> {
       actions.add(IconButton(
         icon: const Icon(Icons.error),
         onPressed: () => context.showRoundDialog(
-          title: l10n.error,
+          title: libL10n.error,
           child: SingleChildScrollView(child: Text(_result.error!)),
           actions: [
             TextButton(
               onPressed: () => Pfs.copy(_result.error!),
-              child: Text(l10n.copy),
+              child: Text(libL10n.copy),
             ),
           ],
         ),
@@ -153,20 +154,15 @@ class _ProcessPageState extends State<ProcessPage> {
         onTap: () => _lastFocusId = proc.pid,
         onLongPress: () {
           context.showRoundDialog(
-            title: l10n.attention,
-            child: Text(l10n.askContinue(
+            title: libL10n.attention,
+            child: Text(libL10n.askContinue(
               '${l10n.stop} ${l10n.process}(${proc.pid})',
             )),
-            actions: [
-              TextButton(
-                onPressed: () async {
-                  await _client?.run('kill ${proc.pid}');
-                  await _refresh();
-                  context.pop();
-                },
-                child: Text(l10n.ok),
-              ),
-            ],
+            actions: Btn.ok(onTap: (c) async {
+              await _client?.run('kill ${proc.pid}');
+              await _refresh();
+              context.pop();
+            }).toList,
           );
         },
         selected: _lastFocusId == proc.pid,

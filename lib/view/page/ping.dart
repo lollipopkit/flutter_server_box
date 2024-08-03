@@ -53,18 +53,16 @@ class _PingPageState extends State<PingPage>
       heroTag: 'ping',
       onPressed: () {
         context.showRoundDialog(
-          title: l10n.choose,
+          title: libL10n.select,
           child: Input(
             autoFocus: true,
             controller: _textEditingController,
-            hint: l10n.inputDomainHere,
-            maxLines: 1,
-            suggestion: false,
+            hint: 'example.com',
+            maxLines: 2,
+            minLines: 1,
             onSubmitted: (_) => _doPing(),
           ),
-          actions: [
-            TextButton(onPressed: _doPing, child: Text(l10n.ok)),
-          ],
+          actions: Btn.ok(onTap: (c) => _doPing()).toList,
         );
       },
       child: const Icon(Icons.search),
@@ -77,12 +75,12 @@ class _PingPageState extends State<PingPage>
       await doPing();
     } catch (e) {
       context.showRoundDialog(
-        title: l10n.error,
+        title: libL10n.error,
         child: Text(e.toString()),
         actions: [
           TextButton(
             onPressed: () => Pfs.copy(e.toString()),
-            child: Text(l10n.copy),
+            child: Text(libL10n.copy),
           ),
         ],
       );
@@ -92,12 +90,7 @@ class _PingPageState extends State<PingPage>
 
   Widget _buildBody() {
     if (isInit) {
-      return Center(
-        child: Text(
-          l10n.noResult,
-          style: const TextStyle(fontSize: 15),
-        ),
-      );
+      return Center(child: Text(libL10n.empty));
     }
     return ListView.builder(
       padding: const EdgeInsets.all(11),
@@ -139,7 +132,7 @@ class _PingPageState extends State<PingPage>
   String _buildPingSummary(PingResult result, String unknown, String ms) {
     final ip = result.ip ?? unknown;
     if (result.results == null || result.results!.isEmpty) {
-      return '$ip - ${l10n.noResult}';
+      return '$ip - ${libL10n.empty}';
     }
     final ttl = result.results?.firstOrNull?.ttl ?? unknown;
     final loss = result.statistic?.loss ?? unknown;

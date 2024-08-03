@@ -1,7 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/store.dart';
 
 import '../../../data/model/server/snippet.dart';
@@ -42,9 +41,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
     return Consumer<SnippetProvider>(
       builder: (_, provider, __) {
         if (provider.snippets.isEmpty) {
-          return Center(
-            child: Text(l10n.noSavedSnippet),
-          );
+          return Center(child: Text(libL10n.empty));
         }
 
         final filtered = provider.snippets
