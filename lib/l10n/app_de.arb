@@ -30,7 +30,6 @@
   "bioAuth": "Biozertifizierung",
   "browser": "Browser",
   "bulkImportServers": "Server im Batch importieren",
-  "bulkImportServersTip": "Sie können das [Format]({url}) hier finden.",
   "canPullRefresh": "Danach: herunterziehen zum Aktualisieren",
   "cancel": "Abbrechen",
   "choose": "Auswählen",

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:computer/computer.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -105,7 +106,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
 
   Widget _buildBody() {
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal:13),
+      padding: const EdgeInsets.symmetric(horizontal: 13),
       children: [
         _buildImport(),
         Input(
@@ -198,8 +199,12 @@ class _SnippetEditPageState extends State<SnippetEditPage>
         );
         if (data == null) return;
         final str = String.fromCharCodes(data);
-        final list = json.decode(str) as List;
-        if (list.isEmpty) return;
+        final (list, _) = await context.showLoadingDialog(
+          fn: () => Computer.shared.start((s) {
+            return json.decode(s) as List;
+          }, str),
+        );
+        if (list == null || list.isEmpty) return;
         final snippets = <Snippet>[];
         final errs = <String>[];
         for (final item in list) {

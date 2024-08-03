@@ -30,7 +30,6 @@
   "bioAuth": "Autenticación biométrica",
   "browser": "Navegador",
   "bulkImportServers": "Importar servidores en masa",
-  "bulkImportServersTip": "Puede encontrar el [formato]]({url}) aquí.",
   "canPullRefresh": "Se puede deslizar hacia abajo para refrescar",
   "cancel": "Cancelar",
   "choose": "Elegir",
