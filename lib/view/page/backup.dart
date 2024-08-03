@@ -15,11 +15,11 @@ import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:icons_plus/icons_plus.dart';
 
-class BackupPage extends StatelessWidget {
-  BackupPage({super.key});
+final icloudLoading = false.vn;
+final webdavLoading = false.vn;
 
-  final icloudLoading = ValueNotifier(false);
-  final webdavLoading = ValueNotifier(false);
+class BackupPage extends StatelessWidget {
+  const BackupPage({super.key});
 
   @override
   Widget build(BuildContext context) {
