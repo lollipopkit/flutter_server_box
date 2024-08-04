@@ -59,34 +59,30 @@ final class _IntroPage extends StatelessWidget {
         ).cardx,
         ListTile(
           leading: const Icon(Icons.update),
-          title: Text(l10n.autoCheckUpdate),
-          subtitle: Text(l10n.fdroidReleaseTip, style: UIs.textGrey),
+          title: TipText(l10n.autoCheckUpdate, l10n.fdroidReleaseTip),
           trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),
         ).cardx,
         ListTile(
           leading: const Icon(MingCute.delete_2_fill),
-          title: const Text('rm -r'),
-          subtitle: Text(l10n.sftpRmrDirSummary, style: UIs.textGrey),
+          title: TipText('rm -r', l10n.sftpRmrDirSummary),
           trailing: StoreSwitch(prop: _setting.sftpRmrDir),
         ).cardx,
         ListTile(
           leading: const Icon(MingCute.chart_line_line, size: _kIconSize),
-          title: Text(l10n.stat),
-          subtitle: Text(l10n.parseContainerStatsTip, style: UIs.textGrey),
+          title: TipText(l10n.stat, l10n.parseContainerStatsTip),
           trailing: StoreSwitch(prop: _setting.containerParseStat),
         ).cardx,
         ListTile(
           leading: const Icon(OctIcons.cpu),
-          title: Text(l10n.noLineChartForCpu),
-          subtitle: Text(l10n.cpuViewAsProgressTip, style: UIs.textGrey),
+          title: TipText(l10n.noLineChartForCpu, l10n.cpuViewAsProgressTip),
           trailing: StoreSwitch(prop: _setting.cpuViewAsProgress),
         ).cardx,
         ListTile(
           leading: const Icon(Bootstrap.alphabet),
-          title: Text(l10n.letterCache),
-          subtitle: Text(l10n.letterCacheTip, style: UIs.textGrey),
+          title: TipText(l10n.letterCache, l10n.letterCacheTip),
           trailing: StoreSwitch(prop: _setting.letterCache),
         ).cardx,
+        UIs.height77,
       ],
     );
   }

@@ -444,10 +444,7 @@ class _SettingPageState extends State<SettingPage> {
       leading: const Icon(MingCute.font_size_line),
       // title: Text(l10n.fontSize),
       // subtitle: Text(l10n.termFontSizeTip, style: UIs.textGrey),
-      title: TipText(
-        tip: l10n.termFontSizeTip,
-        text: l10n.fontSize,
-      ),
+      title: TipText(l10n.fontSize, l10n.termFontSizeTip),
       trailing: ValBuilder(
         listenable: _setting.termFontSize.listenable(),
         builder: (val) => Text(
@@ -581,10 +578,7 @@ class _SettingPageState extends State<SettingPage> {
       leading: const Icon(Bootstrap.phone_landscape_fill),
       // title: Text(l10n.fullScreen),
       // subtitle: Text(l10n.fullScreenTip, style: UIs.textGrey),
-      title: TipText(
-        tip: l10n.fullScreenTip,
-        text: l10n.fullScreen,
-      ),
+      title: TipText(l10n.fullScreen, l10n.fullScreenTip),
       trailing: StoreSwitch(
         prop: _setting.fullScreen,
         callback: (_) => RNodes.app.notify(),
@@ -665,8 +659,8 @@ class _SettingPageState extends State<SettingPage> {
       // title: Text(l10n.openLastPath),
       // subtitle: Text(l10n.openLastPathTip, style: UIs.textGrey),
       title: TipText(
-        tip: l10n.openLastPathTip,
-        text: l10n.openLastPath,
+        l10n.openLastPath,
+        l10n.openLastPathTip
       ),
       trailing: StoreSwitch(prop: _setting.sftpOpenLastPath),
     );
@@ -744,8 +738,8 @@ class _SettingPageState extends State<SettingPage> {
       // title: Text(l10n.textScaler),
       // subtitle: Text(l10n.textScalerTip, style: UIs.textGrey),
       title: TipText(
-        tip: l10n.textScalerTip,
-        text: l10n.textScaler,
+        l10n.textScaler,
+        l10n.textScalerTip
       ),
       trailing: ValBuilder(
         listenable: _setting.textFactor.listenable(),
@@ -797,8 +791,8 @@ class _SettingPageState extends State<SettingPage> {
       // title: Text(l10n.location),
       // subtitle: Text(l10n.moveOutServerFuncBtnsHelp, style: UIs.text13Grey),
       title: TipText(
-        tip: l10n.moveOutServerFuncBtnsHelp,
-        text: l10n.location,
+        l10n.location,
+        l10n.moveOutServerFuncBtnsHelp
       ),
       trailing: StoreSwitch(prop: _setting.moveOutServerTabFuncBtns),
     );
@@ -877,7 +871,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildSftpRmrDir() {
     return ListTile(
       leading: const Icon(MingCute.delete_2_fill),
-      title: TipText(text: 'rm -r', tip: l10n.sftpRmrDirSummary),
+      title: TipText('rm -r', l10n.sftpRmrDirSummary),
       trailing: StoreSwitch(prop: _setting.sftpRmrDir),
     );
   }
@@ -887,8 +881,8 @@ class _SettingPageState extends State<SettingPage> {
       // title: Text(l10n.doubleColumnMode),
       // subtitle: Text(l10n.doubleColumnTip, style: UIs.textGrey),
       title: TipText(
-        tip: l10n.doubleColumnTip,
-        text: l10n.doubleColumnMode,
+        l10n.doubleColumnMode,
+        l10n.doubleColumnTip
       ),
       trailing: StoreSwitch(prop: _setting.doubleColumnServersPage),
     );
@@ -915,8 +909,8 @@ class _SettingPageState extends State<SettingPage> {
       // title: Text(l10n.highlight),
       // subtitle: Text(l10n.editorHighlightTip, style: UIs.textGrey),
       title: TipText(
-        tip: l10n.editorHighlightTip,
-        text: l10n.highlight,
+        l10n.highlight,
+        l10n.editorHighlightTip
       ),
       trailing: StoreSwitch(prop: _setting.editorHighlight),
     );
@@ -924,7 +918,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildCollapseUI() {
     return ListTile(
-      title: TipText(text: 'UI ${libL10n.fold}', tip: l10n.collapseUITip),
+      title: TipText('UI ${libL10n.fold}', l10n.collapseUITip),
       trailing: StoreSwitch(prop: _setting.collapseUIDefault),
     );
   }
@@ -941,8 +935,8 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       leading: const Icon(EvaIcons.person_done),
       title: TipText(
-        tip: l10n.containerTrySudoTip,
-        text: l10n.trySudo,
+        l10n.trySudo,
+        l10n.containerTrySudoTip
       ),
       trailing: StoreSwitch(prop: _setting.containerTrySudo),
     );
@@ -962,8 +956,8 @@ class _SettingPageState extends State<SettingPage> {
       // title: Text(l10n.parseContainerStats),
       // subtitle: Text(l10n.parseContainerStatsTip, style: UIs.textGrey),
       title: TipText(
-        tip: l10n.parseContainerStatsTip,
-        text: l10n.stat,
+        l10n.stat,
+        l10n.parseContainerStatsTip
       ),
       trailing: StoreSwitch(prop: _setting.containerParseStat),
     );
@@ -989,8 +983,8 @@ class _SettingPageState extends State<SettingPage> {
       // title: Text(l10n.rememberPwdInMem),
       // subtitle: Text(l10n.rememberPwdInMemTip, style: UIs.textGrey),
       title: TipText(
-        tip: l10n.rememberPwdInMemTip,
-        text: l10n.rememberPwdInMem,
+        l10n.rememberPwdInMem,
+        l10n.rememberPwdInMemTip
       ),
       trailing: StoreSwitch(prop: _setting.rememberPwdInMem),
     );
@@ -1155,7 +1149,7 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildBeta() {
     return ListTile(
-      title: TipText(text: 'Beta Program', tip: l10n.acceptBeta),
+      title: TipText('Beta Program', l10n.acceptBeta),
       trailing: StoreSwitch(prop: _setting.betaTest),
     );
   }
@@ -1169,8 +1163,8 @@ class _SettingPageState extends State<SettingPage> {
       //   style: UIs.textGrey,
       // ),
       title: TipText(
-        tip: '${l10n.letterCacheTip}\n${l10n.needRestart}',
-        text: l10n.letterCache,
+        l10n.letterCache,
+        '${l10n.letterCacheTip}\n${l10n.needRestart}'
       ),
       trailing: StoreSwitch(prop: _setting.letterCache),
     );
@@ -1181,7 +1175,7 @@ class _SettingPageState extends State<SettingPage> {
       (val) {
         return ListTile(
           leading: const Icon(MingCute.edit_fill),
-          title: TipText(text: l10n.editor, tip: l10n.sftpEditorTip),
+          title: TipText(l10n.editor, l10n.sftpEditorTip),
           trailing: Text(
             val.isEmpty ? l10n.inner : val,
             style: UIs.text15,
