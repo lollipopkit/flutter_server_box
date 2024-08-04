@@ -429,7 +429,7 @@ final class _PvePageState extends State<PvePage> {
       fn: () => func(item.node, item.id),
     );
     if (suc == true) {
-      context.showSnackBar(l10n.success);
+      context.showSnackBar(libL10n.success);
     } else {
       context.showSnackBar(err?.toString() ?? libL10n.fail);
     }

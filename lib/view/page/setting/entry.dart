@@ -31,7 +31,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(l10n.setting),
+        title: Text(libL10n.setting),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete),
@@ -39,14 +39,14 @@ class _SettingPageState extends State<SettingPage> {
               title: libL10n.attention,
               child: SimpleMarkdown(
                 data: libL10n.askContinue(
-                  '${libL10n.delete} **${libL10n.all}** ${l10n.setting}',
+                  '${libL10n.delete} **${libL10n.all}** ${libL10n.setting}',
                 ),
               ),
               actions: Btn.ok(
                 onTap: () {
                   context.pop();
                   _setting.box.deleteAll(_setting.box.keys);
-                  context.showSnackBar(l10n.success);
+                  context.showSnackBar(libL10n.success);
                 },
                 red: true,
               ).toList,
@@ -172,12 +172,12 @@ class _SettingPageState extends State<SettingPage> {
           String display;
           if (val != null) {
             if (val > BuildData.build) {
-              display = l10n.versionHaveUpdate(val);
+              display = libL10n.versionHasUpdate(val);
             } else {
-              display = l10n.versionUpdated(BuildData.build);
+              display = libL10n.versionUpdated(BuildData.build);
             }
           } else {
-            display = l10n.versionUnknownUpdate(BuildData.build);
+            display = libL10n.versionUnknownUpdate(BuildData.build);
           }
           return Text(display, style: UIs.textGrey);
         },
@@ -196,12 +196,10 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _buildUpdateInterval() {
     return ListTile(
-      title: Text(
-        l10n.updateServerStatusInterval,
-      ),
+      title: Text(l10n.updateServerStatusInterval),
       onTap: () async {
         final val = await context.showPickSingleDialog(
-          title: l10n.setting,
+          title: libL10n.setting,
           items: List.generate(10, (idx) => idx == 1 ? null : idx),
           initial: _setting.serverStatusUpdateInterval.fetch(),
           name: (p0) => p0 == 0 ? l10n.manual : '$p0 ${l10n.second}',
@@ -223,7 +221,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildAppColor() {
     return ListTile(
       leading: const Icon(Icons.colorize),
-      title: Text(l10n.primaryColorSeed),
+      title: Text(libL10n.primaryColorSeed),
       trailing: _setting.colorSeed.listenable().listenVal(
         (val) {
           final c = Color(val);
@@ -233,7 +231,7 @@ class _SettingPageState extends State<SettingPage> {
       onTap: () async {
         final ctrl = TextEditingController(text: UIs.primaryColor.toHex);
         await context.showRoundDialog(
-          title: l10n.primaryColorSeed,
+          title: libL10n.primaryColorSeed,
           child: StatefulBuilder(builder: (context, setState) {
             final children = <Widget>[
               /// Plugin [dynamic_color] is not supported on iOS
@@ -353,10 +351,10 @@ class _SettingPageState extends State<SettingPage> {
     final len = ThemeMode.values.length;
     return ListTile(
       leading: const Icon(MingCute.moon_stars_fill),
-      title: Text(l10n.themeMode),
+      title: Text(libL10n.themeMode),
       onTap: () async {
         final selected = await context.showPickSingleDialog(
-          title: l10n.themeMode,
+          title: libL10n.themeMode,
           items: List.generate(len + 2, (index) => index),
           name: (p0) => _buildThemeModeStr(p0),
           initial: _setting.themeMode.fetch(),
@@ -392,13 +390,17 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   Widget _buildFont() {
-    final fontName = _setting.fontPath.fetch().getFileName();
     return ListTile(
       leading: const Icon(MingCute.font_fill),
       title: Text(l10n.font),
-      trailing: Text(
-        fontName ?? libL10n.empty,
-        style: UIs.text15,
+      trailing: _setting.fontPath.listenable().listenVal(
+        (val) {
+          final fontName = val.getFileName();
+          return Text(
+            fontName ?? libL10n.empty,
+            style: UIs.text15,
+          );
+        },
       ),
       onTap: () {
         context.showRoundDialog(
@@ -496,10 +498,10 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildLocale() {
     return ListTile(
       leading: const Icon(IonIcons.language),
-      title: Text(l10n.language),
+      title: Text(libL10n.language),
       onTap: () async {
         final selected = await context.showPickSingleDialog(
-          title: l10n.language,
+          title: libL10n.language,
           items: AppLocalizations.supportedLocales,
           name: (p0) => p0.nativeName,
           initial: _setting.locale.fetch().toLocale,
@@ -658,10 +660,7 @@ class _SettingPageState extends State<SettingPage> {
       leading: const Icon(MingCute.history_line),
       // title: Text(l10n.openLastPath),
       // subtitle: Text(l10n.openLastPathTip, style: UIs.textGrey),
-      title: TipText(
-        l10n.openLastPath,
-        l10n.openLastPathTip
-      ),
+      title: TipText(l10n.openLastPath, l10n.openLastPathTip),
       trailing: StoreSwitch(prop: _setting.sftpOpenLastPath),
     );
   }
@@ -727,7 +726,7 @@ class _SettingPageState extends State<SettingPage> {
         for (final key in deleteKeys) {
           Stores.server.box.delete(key);
         }
-        context.showSnackBar(l10n.success);
+        context.showSnackBar(libL10n.success);
       },
     );
   }
@@ -737,10 +736,7 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       // title: Text(l10n.textScaler),
       // subtitle: Text(l10n.textScalerTip, style: UIs.textGrey),
-      title: TipText(
-        l10n.textScaler,
-        l10n.textScalerTip
-      ),
+      title: TipText(l10n.textScaler, l10n.textScalerTip),
       trailing: ValBuilder(
         listenable: _setting.textFactor.listenable(),
         builder: (val) => Text(
@@ -790,11 +786,8 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       // title: Text(l10n.location),
       // subtitle: Text(l10n.moveOutServerFuncBtnsHelp, style: UIs.text13Grey),
-      title: TipText(
-        l10n.location,
-        l10n.moveOutServerFuncBtnsHelp
-      ),
-      trailing: StoreSwitch(prop: _setting.moveOutServerTabFuncBtns),
+      title: TipText(l10n.location, l10n.moveOutServerFuncBtnsHelp),
+      trailing: StoreSwitch(prop: _setting.moveServerFuncs),
     );
   }
 
@@ -880,10 +873,7 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       // title: Text(l10n.doubleColumnMode),
       // subtitle: Text(l10n.doubleColumnTip, style: UIs.textGrey),
-      title: TipText(
-        l10n.doubleColumnMode,
-        l10n.doubleColumnTip
-      ),
+      title: TipText(l10n.doubleColumnMode, l10n.doubleColumnTip),
       trailing: StoreSwitch(prop: _setting.doubleColumnServersPage),
     );
   }
@@ -897,7 +887,7 @@ class _SettingPageState extends State<SettingPage> {
     if (func == null) return null;
     return ListTile(
       leading: const Icon(Icons.phone_android),
-      title: Text('${Pfs.type} ${l10n.setting}'),
+      title: Text('${Pfs.type} ${libL10n.setting}'),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () => func(context),
     );
@@ -908,10 +898,7 @@ class _SettingPageState extends State<SettingPage> {
       leading: const Icon(MingCute.code_line, size: _kIconSize),
       // title: Text(l10n.highlight),
       // subtitle: Text(l10n.editorHighlightTip, style: UIs.textGrey),
-      title: TipText(
-        l10n.highlight,
-        l10n.editorHighlightTip
-      ),
+      title: TipText(l10n.highlight, l10n.editorHighlightTip),
       trailing: StoreSwitch(prop: _setting.editorHighlight),
     );
   }
@@ -934,10 +921,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildContainerTrySudo() {
     return ListTile(
       leading: const Icon(EvaIcons.person_done),
-      title: TipText(
-        l10n.trySudo,
-        l10n.containerTrySudoTip
-      ),
+      title: TipText(l10n.trySudo, l10n.containerTrySudoTip),
       trailing: StoreSwitch(prop: _setting.containerTrySudo),
     );
   }
@@ -955,10 +939,7 @@ class _SettingPageState extends State<SettingPage> {
       leading: const Icon(MingCute.chart_line_line, size: _kIconSize),
       // title: Text(l10n.parseContainerStats),
       // subtitle: Text(l10n.parseContainerStatsTip, style: UIs.textGrey),
-      title: TipText(
-        l10n.stat,
-        l10n.parseContainerStatsTip
-      ),
+      title: TipText(l10n.stat, l10n.parseContainerStatsTip),
       trailing: StoreSwitch(prop: _setting.containerParseStat),
     );
   }
@@ -982,10 +963,7 @@ class _SettingPageState extends State<SettingPage> {
     return ListTile(
       // title: Text(l10n.rememberPwdInMem),
       // subtitle: Text(l10n.rememberPwdInMemTip, style: UIs.textGrey),
-      title: TipText(
-        l10n.rememberPwdInMem,
-        l10n.rememberPwdInMemTip
-      ),
+      title: TipText(l10n.rememberPwdInMem, l10n.rememberPwdInMemTip),
       trailing: StoreSwitch(prop: _setting.rememberPwdInMem),
     );
   }
@@ -1163,9 +1141,7 @@ class _SettingPageState extends State<SettingPage> {
       //   style: UIs.textGrey,
       // ),
       title: TipText(
-        l10n.letterCache,
-        '${l10n.letterCacheTip}\n${l10n.needRestart}'
-      ),
+          l10n.letterCache, '${l10n.letterCacheTip}\n${l10n.needRestart}'),
       trailing: StoreSwitch(prop: _setting.letterCache),
     );
   }

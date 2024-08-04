@@ -44,7 +44,7 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
       map.forEach((key, value) {
         PrefStore.set(key, value);
       });
-      context.showSnackBar(l10n.success);
+      context.showSnackBar(libL10n.success);
     } catch (e) {
       context.showSnackBar(e.toString());
     }

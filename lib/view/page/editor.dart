@@ -123,7 +123,7 @@ class _EditorPageState extends State<EditorPage> {
       actions: [
         PopupMenuButton<String>(
           icon: const Icon(Icons.language),
-          tooltip: l10n.language,
+          tooltip: libL10n.language,
           onSelected: (value) {
             _controller.language = Highlights.all[value];
             _langCode = value;

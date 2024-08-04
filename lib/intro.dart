@@ -39,10 +39,10 @@ final class _IntroPage extends StatelessWidget {
         SizedBox(height: padTop),
         ListTile(
           leading: const Icon(IonIcons.language),
-          title: Text(l10n.language),
+          title: Text(libL10n.language),
           onTap: () async {
             final selected = await ctx.showPickSingleDialog(
-              title: l10n.language,
+              title: libL10n.language,
               items: AppLocalizations.supportedLocales,
               name: (p0) => p0.nativeName,
               initial: _setting.locale.fetch().toLocale,
@@ -59,7 +59,8 @@ final class _IntroPage extends StatelessWidget {
         ).cardx,
         ListTile(
           leading: const Icon(Icons.update),
-          title: TipText(l10n.autoCheckUpdate, l10n.fdroidReleaseTip),
+          title: Text(l10n.autoCheckUpdate),
+          subtitle: Text(l10n.fdroidReleaseTip, style: UIs.textGrey),
           trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),
         ).cardx,
         ListTile(

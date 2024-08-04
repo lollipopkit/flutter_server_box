@@ -44,7 +44,6 @@ class _HomePageState extends State<HomePage>
     super.initState();
     SystemUIs.switchStatusBar(hide: false);
     WidgetsBinding.instance.addObserver(this);
-    _selectIndex.value = Stores.setting.launchPage.fetch();
     // avoid index out of range
     if (_selectIndex.value >= AppTab.values.length || _selectIndex.value < 0) {
       _selectIndex.value = 0;
@@ -234,7 +233,7 @@ class _HomePageState extends State<HomePage>
         children: [
           ListTile(
             leading: const Icon(Icons.settings),
-            title: Text(l10n.setting),
+            title: Text(libL10n.setting),
             onTap: () => AppRoutes.settings().go(context),
             onLongPress: _onLongPressSetting,
           ),
@@ -255,7 +254,7 @@ class _HomePageState extends State<HomePage>
           ),
           ListTile(
             leading: const Icon(OctIcons.feed_discussion),
-            title: Text('${l10n.about} & ${libL10n.feedback}'),
+            title: Text('${libL10n.about} & ${libL10n.feedback}'),
             onTap: _showAboutDialog,
           )
         ].map((e) => CardX(child: e)).toList(),
@@ -265,7 +264,7 @@ class _HomePageState extends State<HomePage>
 
   void _showAboutDialog() {
     context.showRoundDialog(
-      title: l10n.about,
+      title: libL10n.about,
       child: _buildAboutContent(),
       actions: [
         TextButton(
@@ -376,7 +375,7 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
     final result = await AppRoutes.editor(
       text: text,
       langCode: 'json',
-      title: l10n.setting,
+      title: libL10n.setting,
     ).go<String>(context);
     if (result == null) {
       return;

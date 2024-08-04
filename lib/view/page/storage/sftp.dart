@@ -266,7 +266,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
               return Input(
                 autoFocus: true,
                 icon: Icons.abc,
-                label: l10n.path,
+                label: libL10n.path,
                 node: node,
                 controller: controller,
                 suggestion: true,
@@ -381,9 +381,9 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         leading: const Icon(MingCute.copy_line),
         title: Text(l10n.copyPath),
         onTap: () {
-          Pfs.copy(_getRemotePath(file));
           context.pop();
-          context.showSnackBar(l10n.success);
+          Pfs.copy(_getRemotePath(file));
+          context.showSnackBar(libL10n.success);
         },
       ),
       ListTile(

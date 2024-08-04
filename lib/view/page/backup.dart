@@ -115,7 +115,7 @@ class BackupPage extends StatelessWidget {
         initiallyExpanded: false,
         children: [
           ListTile(
-            title: Text(l10n.setting),
+            title: Text(libL10n.setting),
             trailing: const Icon(Icons.settings),
             onTap: () async => _onTapWebdavSetting(context),
           ),
@@ -189,7 +189,7 @@ class BackupPage extends StatelessWidget {
             onTap: () async {
               final path = await Backup.backup();
               Pfs.copy(await File(path).readAsString());
-              context.showSnackBar(l10n.success);
+              context.showSnackBar(libL10n.success);
             },
           ),
           ListTile(
@@ -394,7 +394,7 @@ class BackupPage extends StatelessWidget {
         context.showSnackBar(result);
         return;
       }
-      context.showSnackBar(l10n.success);
+      context.showSnackBar(libL10n.success);
       Webdav.changeClient(url.text, user.text, pwd.text);
     }
   }
@@ -466,7 +466,7 @@ class BackupPage extends StatelessWidget {
           },
         );
         if (err != null || suc != true) return;
-        context.showSnackBar(l10n.success);
+        context.showSnackBar(libL10n.success);
       }
     } catch (e, s) {
       context.showErrDialog(e: e, s: s, operation: libL10n.import);

@@ -116,7 +116,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           minLines: 3,
           maxLines: 3,
           type: TextInputType.multiline,
-          label: l10n.note,
+          label: libL10n.note,
           icon: Icons.note,
           suggestion: true,
         ),

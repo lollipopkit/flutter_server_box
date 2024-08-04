@@ -432,7 +432,7 @@ class _ServerPageState extends State<ServerPage>
         ],
       ),
       UIs.height13,
-      if (Stores.setting.moveOutServerTabFuncBtns.fetch() &&
+      if (Stores.setting.moveServerFuncs.fetch() &&
           // Discussion #146
           !Stores.setting.serverTabUseOldUI.fetch())
         SizedBox(
@@ -676,7 +676,7 @@ ${ss.err?.message ?? 'null'}
     if (flip) {
       return _kCardHeightFlip;
     }
-    if (Stores.setting.moveOutServerTabFuncBtns.fetch() &&
+    if (Stores.setting.moveServerFuncs.fetch() &&
         // Discussion #146
         !Stores.setting.serverTabUseOldUI.fetch()) {
       return _kCardHeightMoveOutFuncs;

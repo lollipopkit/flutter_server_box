@@ -60,7 +60,7 @@ class ServerFuncBtns extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: btns
           .map(
-            (e) => Stores.setting.moveOutServerTabFuncBtns.fetch()
+            (e) => Stores.setting.moveServerFuncs.fetch()
                 ? IconButton(
                     onPressed: () => _onTapMoreBtns(e, spi, context),
                     padding: EdgeInsets.zero,

@@ -31,7 +31,7 @@ enum ServerDetailCards {
   static final names = values.map((e) => e.name).toList();
 
   String get toStr => switch (this) {
-        about => l10n.about,
+        about => libL10n.about,
         cpu => 'CPU',
         mem => 'RAM',
         swap => 'Swap',

@@ -46,7 +46,7 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
           final val = _pushToken.value;
           if (val != null) {
             Pfs.copy(val);
-            context.showSnackBar(l10n.success);
+            context.showSnackBar(libL10n.success);
           } else {
             context.showSnackBar(libL10n.fail);
           }
@@ -115,12 +115,11 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
     );
     if (result == null) return;
 
-    final (suc, err) = await context.showLoadingDialog(fn: () async {
+    final (_, err) = await context.showLoadingDialog(fn: () async {
       await wc.updateApplicationContext({'urls': result});
-      return true;
     });
-    if (suc == true) {
-      context.showSnackBar(err?.toString() ?? l10n.success);
+    if (err == null) {
+      context.showSnackBar(libL10n.success);
     }
   }
 }

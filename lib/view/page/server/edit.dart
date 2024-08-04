@@ -432,7 +432,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       UIs.height7,
       ListTile(
         leading: const Icon(BoxIcons.bxs_help_circle),
-        title: Text(l10n.about),
+        title: Text(libL10n.about),
         subtitle: Text(l10n.wolTip, style: UIs.text12Grey),
       ).cardx,
       Input(

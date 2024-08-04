@@ -16,28 +16,16 @@ class SettingStore extends PersistentStore {
   // item in the drawer of the home page)
 
   /// Discussion #146
-  late final serverTabUseOldUI = property(
-    'serverTabUseOldUI',
-    false,
-  );
+  late final serverTabUseOldUI = property('serverTabUseOldUI', false);
 
   /// Time out for server connect and more...
-  late final timeout = property(
-    'timeOut',
-    5,
-  );
+  late final timeout = property('timeOut', 5);
 
   /// Record history of SFTP path and etc.
-  late final recordHistory = property(
-    'recordHistory',
-    true,
-  );
+  late final recordHistory = property('recordHistory', true);
 
   /// Lanch page idx
-  late final launchPage = property(
-    'launchPage',
-    Defaults.launchPageIdx,
-  );
+  // late final launchPage = property('launchPage', Defaults.launchPageIdx);
 
   /// Disk view: amount / IO
   late final serverTabPreferDiskAmount = property(
@@ -50,16 +38,10 @@ class SettingStore extends PersistentStore {
   /// Bigger for bigger font size
   /// 1.0 means 100%
   /// Warning: This may cause some UI issues
-  late final textFactor = property(
-    'textFactor',
-    1.0,
-  );
+  late final textFactor = property('textFactor', 1.0);
 
   /// The seed of color scheme
-  late final colorSeed = property(
-    'primaryColor',
-    4287106639,
-  );
+  late final colorSeed = property('primaryColor', 4287106639);
 
   late final serverStatusUpdateInterval = property(
     'serverStatusUpdateInterval',
@@ -101,25 +83,14 @@ class SettingStore extends PersistentStore {
   late final editorFontSize = property('editorFontSize', 12.5);
 
   // Editor theme
-  late final editorTheme = property(
-    'editorTheme',
-    Defaults.editorTheme,
-  );
+  late final editorTheme = property('editorTheme', Defaults.editorTheme);
 
-  late final editorDarkTheme = property(
-    'editorDarkTheme',
-    Defaults.editorDarkTheme,
-  );
+  late final editorDarkTheme =
+      property('editorDarkTheme', Defaults.editorDarkTheme);
 
-  late final fullScreen = property(
-    'fullScreen',
-    false,
-  );
+  late final fullScreen = property('fullScreen', false);
 
-  late final fullScreenJitter = property(
-    'fullScreenJitter',
-    true,
-  );
+  late final fullScreenJitter = property('fullScreenJitter', true);
 
   // late final fullScreenRotateQuarter = property(
   //   'fullScreenRotateQuarter',
@@ -136,53 +107,29 @@ class SettingStore extends PersistentStore {
     VirtKey.defaultOrder.map((e) => e.index).toList(),
   );
 
-  late final netViewType = property(
-    'netViewType',
-    NetViewType.speed,
-  );
+  late final netViewType = property('netViewType', NetViewType.speed);
 
   // Only valid on iOS
-  late final autoUpdateHomeWidget = property(
-    'autoUpdateHomeWidget',
-    isIOS,
-  );
+  late final autoUpdateHomeWidget = property('autoUpdateHomeWidget', isIOS);
 
-  late final autoCheckAppUpdate = property(
-    'autoCheckAppUpdate',
-    true,
-  );
+  late final autoCheckAppUpdate = property('autoCheckAppUpdate', true);
 
   /// Display server tab function buttons on the bottom of each server card if [true]
   ///
   /// Otherwise, display them on the top of server detail page
-  late final moveOutServerTabFuncBtns = property(
-    'moveOutServerTabFuncBtns',
-    true,
-  );
+  late final moveServerFuncs = property('moveOutServerTabFuncBtns', false);
 
   /// Whether use `rm -r` to delete directory on SFTP
-  late final sftpRmrDir = property(
-    'sftpRmrDir',
-    false,
-  );
+  late final sftpRmrDir = property('sftpRmrDir', false);
 
   /// Whether use system's primary color as the app's primary color
-  late final useSystemPrimaryColor = property(
-    'useSystemPrimaryColor',
-    false,
-  );
+  late final useSystemPrimaryColor = property('useSystemPrimaryColor', false);
 
   /// Only valid on iOS and macOS
-  late final icloudSync = property(
-    'icloudSync',
-    false,
-  );
+  late final icloudSync = property('icloudSync', false);
 
   /// Only valid on iOS / Android / Windows
-  late final useBioAuth = property(
-    'useBioAuth',
-    false,
-  );
+  late final useBioAuth = property('useBioAuth', false);
 
   /// The performance of highlight is bad
   late final editorHighlight = property('editorHighlight', true);

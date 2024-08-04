@@ -310,7 +310,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
           ),
           ListTile(
             leading: const Icon(Icons.open_in_new),
-            title: Text(l10n.open),
+            title: Text(libL10n.open),
             onTap: () {
               Pfs.share(path: file.absolute.path);
             },

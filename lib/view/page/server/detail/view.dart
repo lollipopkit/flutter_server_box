@@ -91,7 +91,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildMainPage(Server si) {
-    final buildFuncs = !Stores.setting.moveOutServerTabFuncBtns.fetch();
+    final buildFuncs = !Stores.setting.moveServerFuncs.fetch();
     final logoUrl = si.spi.custom?.logoUrl ??
         Stores.setting.serverLogoUrl.fetch().selfIfNotNullEmpty;
     final buildLogo = logoUrl != null;
@@ -157,7 +157,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       child: ExpandTile(
         leading: const Icon(MingCute.information_fill, size: 20),
         initiallyExpanded: _getInitExpand(ss.more.entries.length),
-        title: Text(l10n.about),
+        title: Text(libL10n.about),
         childrenPadding: const EdgeInsets.symmetric(
           horizontal: 17,
           vertical: 11,
