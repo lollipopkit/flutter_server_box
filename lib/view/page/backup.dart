@@ -386,7 +386,7 @@ class BackupPage extends StatelessWidget {
           ),
         ],
       ),
-      actions: Btn.ok(onTap: () => context.pop(true)).toList,
+      actions: Btnx.oks,
     );
     if (result == true) {
       final result = await Webdav.test(url.text, user.text, pwd.text);
