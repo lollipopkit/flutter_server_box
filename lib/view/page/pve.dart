@@ -61,7 +61,7 @@ final class _PvePageState extends State<PvePage> {
                 ? UIs.placeholder
                 : Btn.icon(
                     icon: const Icon(Icons.refresh),
-                    onTap: (_) {
+                    onTap: () {
                       _pve.err.value = null;
                       _pve.list();
                       _initRefreshTimer();
@@ -397,22 +397,22 @@ final class _PvePageState extends State<PvePage> {
     if (!item.available) {
       return Btn.icon(
           icon: const Icon(Icons.play_arrow, color: Colors.grey),
-          onTap: (_) => _onCtrl(_pve.start, l10n.start, item));
+          onTap: () => _onCtrl(_pve.start, l10n.start, item));
     }
     return Row(
       children: [
         Btn.icon(
             icon: const Icon(Icons.stop, color: Colors.grey, size: 20),
             padding: pad,
-            onTap: (_) => _onCtrl(_pve.stop, l10n.stop, item)),
+            onTap: () => _onCtrl(_pve.stop, l10n.stop, item)),
         Btn.icon(
             icon: const Icon(Icons.refresh, color: Colors.grey, size: 20),
             padding: pad,
-            onTap: (_) => _onCtrl(_pve.reboot, l10n.reboot, item)),
+            onTap: () => _onCtrl(_pve.reboot, l10n.reboot, item)),
         Btn.icon(
             icon: const Icon(Icons.power_off, color: Colors.grey, size: 20),
             padding: pad,
-            onTap: (_) => _onCtrl(_pve.shutdown, l10n.shutdown, item)),
+            onTap: () => _onCtrl(_pve.shutdown, l10n.shutdown, item)),
       ],
     );
   }
@@ -421,10 +421,7 @@ final class _PvePageState extends State<PvePage> {
     final sure = await context.showRoundDialog<bool>(
       title: libL10n.attention,
       child: Text(libL10n.askContinue('$action ${item.id}')),
-      actions: Btn.ok(
-        onTap: (c) => context.pop(true),
-        red: true,
-      ).toList,
+      actions: Btnx.okReds,
     );
     if (sure != true) return;
 

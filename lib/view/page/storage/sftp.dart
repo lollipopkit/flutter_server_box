@@ -396,7 +396,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           var newPerm = perm.copyWith();
           final ok = await context.showRoundDialog(
             child: UnixPermEditor(perm: perm, onChanged: (p) => newPerm = p),
-            actions: [Btn.ok(onTap: (context) => context.pop(true))],
+            actions: Btnx.okReds,
           );
 
           final permStr = newPerm.perm;
@@ -594,7 +594,8 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     final textController = TextEditingController();
 
     void onSubmitted() async {
-      if (textController.text.isEmpty) {
+      final text = textController.text.trim();
+      if (text.isEmpty) {
         context.showRoundDialog(
           child: Text(libL10n.empty),
           actions: Btnx.oks,
@@ -605,7 +606,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
       final (suc, err) = await context.showLoadingDialog(
         fn: () async {
-          final dir = '${_status.path!.path}/${textController.text}';
+          final dir = '${_status.path!.path}/$text';
           await _status.client!.mkdir(dir);
           return true;
         },
@@ -626,7 +627,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         onSubmitted: (_) => onSubmitted(),
       ),
       actions: Btn.ok(
-        onTap: (c) => onSubmitted(),
+        onTap: onSubmitted,
         red: true,
       ).toList,
     );
@@ -637,13 +638,12 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     final textController = TextEditingController();
 
     void onSubmitted() async {
-      if (textController.text.isEmpty) {
+      final text = textController.text.trim();
+      if (text.isEmpty) {
         context.showRoundDialog(
           title: libL10n.attention,
           child: Text(libL10n.empty),
-          actions: Btn.ok(
-            onTap: (c) => context.pop(),
-          ).toList,
+          actions: Btnx.oks,
         );
         return;
       }
@@ -651,7 +651,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
       final (suc, err) = await context.showLoadingDialog(
         fn: () async {
-          final path = '${_status.path!.path}/${textController.text}';
+          final path = '${_status.path!.path}/$text';
           await _client!.run('touch "$path"');
           return true;
         },
@@ -671,10 +671,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         suggestion: true,
         onSubmitted: (_) => onSubmitted(),
       ),
-      actions: Btn.ok(
-        onTap: (c) => onSubmitted(),
-        red: true,
-      ).toList,
+      actions: Btn.ok(onTap: onSubmitted, red: true).toList,
     );
   }
 
@@ -683,13 +680,12 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     final textController = TextEditingController(text: file.filename);
 
     void onSubmitted() async {
-      if (textController.text.isEmpty) {
+      final text = textController.text.trim();
+      if (text.isEmpty) {
         context.showRoundDialog(
           title: libL10n.attention,
           child: Text(libL10n.empty),
-          actions: Btn.ok(
-            onTap: (c) => context.pop(),
-          ).toList,
+          actions: Btnx.oks,
         );
         return;
       }
@@ -743,17 +739,11 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     final confirm = await context.showRoundDialog(
       title: libL10n.attention,
       child: SimpleMarkdown(data: '```sh\n$cmd\n```'),
-      actions: [
-        Btn.cancel(onTap: (c) => c.pop(false)),
-        Btn.ok(onTap: (c) => c.pop(true), red: true),
-      ],
+      actions: Btnx.cancelRedOk,
     );
     if (confirm != true) return;
 
-    final (suc, err) = await context.showLoadingDialog(
-      fn: () => _client?.run(cmd) ?? Future.value(false),
-    );
-    if (suc == null || err != null) return;
+    await AppRoutes.ssh(spi: widget.spi, initCmd: cmd).go(context);
     _listDir();
   }
 

@@ -353,7 +353,7 @@ class _ContainerPageState extends State<ContainerPage> {
             ),
           ],
         ),
-        actions: Btn.ok(onTap: (c) async {
+        actions: Btn.ok(onTap: () async {
           context.pop();
           await _showAddCmdPreview(
             _buildAddCmd(
@@ -421,7 +421,7 @@ class _ContainerPageState extends State<ContainerPage> {
         hint: 'unix:///run/user/1000/docker.sock',
         suggestion: false,
       ),
-      actions: Btn.ok(onTap: (c) => _onSaveDockerHost(ctrl.text)).toList,
+      actions: Btn.ok(onTap: () => _onSaveDockerHost(ctrl.text)).toList,
     );
   }
 
@@ -438,7 +438,7 @@ class _ContainerPageState extends State<ContainerPage> {
         libL10n.askContinue('${libL10n.delete} Image(${e.repository})'),
       ),
       actions: Btn.ok(
-        onTap: (c) async {
+        onTap: () async {
           context.pop();
           final result = await _container.run('rmi ${e.id} -f');
           if (result != null) {
@@ -483,7 +483,7 @@ class _ContainerPageState extends State<ContainerPage> {
               )
             ],
           ),
-          actions: Btn.ok(onTap: (c) async {
+          actions: Btn.ok(onTap: () async {
             context.pop();
 
             final (result, err) = await context.showLoadingDialog(

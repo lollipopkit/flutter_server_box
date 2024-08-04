@@ -164,7 +164,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
           '${libL10n.delete} ${l10n.mission}($name)',
         )),
         actions: Btn.ok(
-          onTap: (c) {
+          onTap: () {
             Pros.sftp.cancel(id);
             context.pop();
           },

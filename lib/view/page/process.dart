@@ -158,7 +158,7 @@ class _ProcessPageState extends State<ProcessPage> {
             child: Text(libL10n.askContinue(
               '${l10n.stop} ${l10n.process}(${proc.pid})',
             )),
-            actions: Btn.ok(onTap: (c) async {
+            actions: Btn.ok(onTap: () async {
               context.pop();
               await context.showLoadingDialog(fn: () async {
                 await _client?.run('kill ${proc.pid}');

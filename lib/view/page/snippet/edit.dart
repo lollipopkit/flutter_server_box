@@ -54,7 +54,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
               '${libL10n.delete} ${l10n.snippet}(${widget.snippet!.name})',
             )),
             actions: Btn.ok(
-              onTap: (c) {
+              onTap: () {
                 Pros.snippet.del(widget.snippet!);
                 context.pop();
                 context.pop();

@@ -62,7 +62,7 @@ class _PingPageState extends State<PingPage>
             minLines: 1,
             onSubmitted: (_) => _doPing(),
           ),
-          actions: Btn.ok(onTap: (c) => _doPing()).toList,
+          actions: Btn.ok(onTap: _doPing).toList,
         );
       },
       child: const Icon(Icons.search),

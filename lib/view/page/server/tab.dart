@@ -345,7 +345,7 @@ class _ServerPageState extends State<ServerPage>
     const textStyle = TextStyle(color: Colors.grey);
     final children = [
       Btn.column(
-        onTap: (_) => _askFor(
+        onTap: () => _askFor(
           func: () async {
             if (Stores.setting.showSuspendTip.fetch()) {
               await context.showRoundDialog(
@@ -368,7 +368,7 @@ class _ServerPageState extends State<ServerPage>
         textStyle: textStyle,
       ),
       Btn.column(
-        onTap: (_) => _askFor(
+        onTap: () => _askFor(
           func: () => srv.client?.execWithPwd(
             ShellFunc.shutdown.exec(srv.spi.id),
             context: context,
@@ -382,7 +382,7 @@ class _ServerPageState extends State<ServerPage>
         textStyle: textStyle,
       ),
       Btn.column(
-        onTap: (_) => _askFor(
+        onTap: () => _askFor(
           func: () => srv.client?.execWithPwd(
             ShellFunc.reboot.exec(srv.spi.id),
             context: context,
@@ -396,7 +396,7 @@ class _ServerPageState extends State<ServerPage>
         textStyle: textStyle,
       ),
       Btn.column(
-        onTap: (_) => AppRoutes.serverEdit(spi: srv.spi).go(context),
+        onTap: () => AppRoutes.serverEdit(spi: srv.spi).go(context),
         icon: const Icon(Icons.edit, color: Colors.grey),
         text: libL10n.edit,
         textStyle: textStyle,
@@ -693,7 +693,7 @@ ${ss.err?.message ?? 'null'}
       title: libL10n.attention,
       child: Text(libL10n.askContinue('$typ ${l10n.server}($name)')),
       actions: Btn.ok(
-        onTap: (c) {
+        onTap: () {
           context.pop();
           func();
         },

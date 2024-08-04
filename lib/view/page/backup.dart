@@ -61,7 +61,7 @@ class BackupPage extends StatelessWidget {
       child: ExpandTile(
         leading: const Icon(Icons.file_open),
         title: Text(libL10n.file),
-        initiallyExpanded: true,
+        initiallyExpanded: false,
         children: [
           ListTile(
             title: Text(libL10n.backup),
@@ -112,7 +112,7 @@ class BackupPage extends StatelessWidget {
       child: ExpandTile(
         leading: const Icon(Icons.storage),
         title: const Text('WebDAV'),
-        initiallyExpanded: true,
+        initiallyExpanded: false,
         children: [
           ListTile(
             title: Text(l10n.setting),
@@ -261,11 +261,11 @@ class BackupPage extends StatelessWidget {
             ),
           ),
           actions: Btn.ok(
-            onTap: (c) {
+            onTap: () {
               for (final snippet in snippets) {
                 Pros.snippet.add(snippet);
               }
-              c.pop();
+              context.pop();
               context.pop();
             },
           ).toList,
@@ -294,7 +294,7 @@ class BackupPage extends StatelessWidget {
           '${libL10n.restore} ${libL10n.backup}(${backup.date})',
         )),
         actions: Btn.ok(
-          onTap: (c) async {
+          onTap: () async {
             await backup.restore(force: true);
             context.pop();
           },
@@ -386,7 +386,7 @@ class BackupPage extends StatelessWidget {
           ),
         ],
       ),
-      actions: Btn.ok(onTap: (c) => context.pop(true)).toList,
+      actions: Btn.ok(onTap: () => context.pop(true)).toList,
     );
     if (result == true) {
       final result = await Webdav.test(url.text, user.text, pwd.text);
@@ -423,7 +423,7 @@ class BackupPage extends StatelessWidget {
           '${libL10n.restore} ${libL10n.backup}(${backup.date})',
         )),
         actions: Btn.ok(
-          onTap: (c) async {
+          onTap: () async {
             await backup.restore(force: true);
             context.pop();
           },
@@ -454,7 +454,7 @@ class BackupPage extends StatelessWidget {
       final sure = await context.showRoundDialog<bool>(
         title: libL10n.import,
         child: Text(libL10n.askContinue('${spis.length} ${l10n.server}')),
-        actions: Btn.ok(onTap: (c) => context.pop(true)).toList,
+        actions: Btnx.oks,
       );
       if (sure == true) {
         final (suc, err) = await context.showLoadingDialog(

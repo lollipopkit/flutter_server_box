@@ -7,8 +7,6 @@ final class _IntroPage extends StatelessWidget {
 
   static const _builders = {
     1: _buildAppSettings,
-    2: _buildRecommended,
-    1006: _buildTermLetterCache,
   };
 
   @override
@@ -29,52 +27,6 @@ final class _IntroPage extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-
-  static Widget _buildTermLetterCache(BuildContext context, double padTop) {
-    return ListView(
-      padding: _introListPad,
-      children: [
-        SizedBox(height: padTop),
-        IntroPage.title(icon: BoxIcons.bxs_terminal, big: true),
-        SizedBox(height: padTop),
-        ListTile(
-          leading: const Icon(Bootstrap.alphabet),
-          title: Text(l10n.letterCache),
-          subtitle: Text(l10n.letterCacheTip, style: UIs.textGrey),
-          trailing: StoreSwitch(prop: _setting.letterCache),
-        ).cardx,
-      ],
-    );
-  }
-
-  static Widget _buildRecommended(BuildContext context, double padTop) {
-    return ListView(
-      padding: _introListPad,
-      children: [
-        SizedBox(height: padTop),
-        IntroPage.title(icon: Bootstrap.stars, big: true),
-        SizedBox(height: padTop),
-        ListTile(
-          leading: const Icon(MingCute.delete_2_fill),
-          title: const Text('rm -r'),
-          subtitle: Text(l10n.sftpRmrDirSummary, style: UIs.textGrey),
-          trailing: StoreSwitch(prop: _setting.sftpRmrDir),
-        ).cardx,
-        ListTile(
-          leading: const Icon(MingCute.chart_line_line, size: _kIconSize),
-          title: Text(l10n.stat),
-          subtitle: Text(l10n.parseContainerStatsTip, style: UIs.textGrey),
-          trailing: StoreSwitch(prop: _setting.containerParseStat),
-        ).cardx,
-        ListTile(
-          leading: const Icon(OctIcons.cpu),
-          title: Text(l10n.noLineChartForCpu),
-          subtitle: Text(l10n.cpuViewAsProgressTip, style: UIs.textGrey),
-          trailing: StoreSwitch(prop: _setting.cpuViewAsProgress),
-        ).cardx,
-      ],
     );
   }
 
@@ -110,6 +62,30 @@ final class _IntroPage extends StatelessWidget {
           title: Text(l10n.autoCheckUpdate),
           subtitle: Text(l10n.fdroidReleaseTip, style: UIs.textGrey),
           trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),
+        ).cardx,
+        ListTile(
+          leading: const Icon(MingCute.delete_2_fill),
+          title: const Text('rm -r'),
+          subtitle: Text(l10n.sftpRmrDirSummary, style: UIs.textGrey),
+          trailing: StoreSwitch(prop: _setting.sftpRmrDir),
+        ).cardx,
+        ListTile(
+          leading: const Icon(MingCute.chart_line_line, size: _kIconSize),
+          title: Text(l10n.stat),
+          subtitle: Text(l10n.parseContainerStatsTip, style: UIs.textGrey),
+          trailing: StoreSwitch(prop: _setting.containerParseStat),
+        ).cardx,
+        ListTile(
+          leading: const Icon(OctIcons.cpu),
+          title: Text(l10n.noLineChartForCpu),
+          subtitle: Text(l10n.cpuViewAsProgressTip, style: UIs.textGrey),
+          trailing: StoreSwitch(prop: _setting.cpuViewAsProgress),
+        ).cardx,
+        ListTile(
+          leading: const Icon(Bootstrap.alphabet),
+          title: Text(l10n.letterCache),
+          subtitle: Text(l10n.letterCacheTip, style: UIs.textGrey),
+          trailing: StoreSwitch(prop: _setting.letterCache),
         ).cardx,
       ],
     );
