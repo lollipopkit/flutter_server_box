@@ -165,7 +165,7 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildCheckUpdate() {
     return ListTile(
       leading: const Icon(Icons.update),
-      title: Text(l10n.autoCheckUpdate),
+      title: Text(libL10n.autoCheckUpdate),
       subtitle: ValBuilder(
         listenable: AppUpdateIface.newestBuild,
         builder: (val) {
@@ -383,9 +383,9 @@ class _SettingPageState extends State<SettingPage> {
       case 3:
         return 'AMOLED';
       case 4:
-        return '${l10n.auto} AMOLED';
+        return '${libL10n.auto} AMOLED';
       default:
-        return l10n.auto;
+        return libL10n.auto;
     }
   }
 

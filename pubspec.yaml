@@ -1,7 +1,7 @@
 name: server_box
 description: server status & toolbox app.
 publish_to: 'none'
-version: 1.0.1049+1049
+version: 1.0.1051+1051
 
 environment:
   sdk: ">=3.0.0"
@@ -61,7 +61,7 @@ dependencies:
   fl_lib:
     git:
       url: https://github.com/lppcg/fl_lib
-      ref: v1.0.116
+      ref: v1.0.118
 
 dependency_overrides:
   # dartssh2:
@@ -83,7 +83,7 @@ dev_dependencies:
   fl_build:
     git:
       url: https://github.com/lppcg/fl_build.git
-      ref: v1.0.35
+      ref: v1.0.40
 
 flutter:
   generate: true

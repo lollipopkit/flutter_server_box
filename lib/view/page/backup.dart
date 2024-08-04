@@ -120,7 +120,7 @@ class BackupPage extends StatelessWidget {
             onTap: () async => _onTapWebdavSetting(context),
           ),
           ListTile(
-            title: Text(l10n.auto),
+            title: Text(libL10n.auto),
             trailing: StoreSwitch(
               prop: Stores.setting.webdavSync,
               validator: (p0) {
