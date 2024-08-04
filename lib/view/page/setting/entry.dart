@@ -43,7 +43,7 @@ class _SettingPageState extends State<SettingPage> {
                 ),
               ),
               actions: Btn.ok(
-                onTap: (c) {
+                onTap: () {
                   context.pop();
                   _setting.box.deleteAll(_setting.box.keys);
                   context.showSnackBar(l10n.success);
@@ -266,7 +266,7 @@ class _SettingPageState extends State<SettingPage> {
               children: children,
             );
           }),
-          actions: Btn.ok(onTap: (c) => _onSaveColor(ctrl.text)).toList,
+          actions: Btn.ok(onTap: () => _onSaveColor(ctrl.text)).toList,
         );
       },
     );
@@ -765,7 +765,7 @@ class _SettingPageState extends State<SettingPage> {
           onSubmitted: _onSaveTextScaler,
           suggestion: false,
         ),
-        actions: Btn.ok(onTap: (c) => _onSaveTextScaler(ctrl.text)).toList,
+        actions: Btn.ok(onTap: () => _onSaveTextScaler(ctrl.text)).toList,
       ),
     );
   }
@@ -870,7 +870,7 @@ class _SettingPageState extends State<SettingPage> {
         suggestion: false,
         onSubmitted: (_) => onSave(),
       ),
-      actions: Btn.ok(onTap: (c) => onSave()).toList,
+      actions: Btn.ok(onTap: onSave).toList,
     );
   }
 
@@ -1111,7 +1111,7 @@ class _SettingPageState extends State<SettingPage> {
         context.showRoundDialog(
           title: libL10n.fail,
           child: Text('${l10n.invalid} URL'),
-          actions: Btn.ok(onTap: (c) => context.pop()).toList,
+          actions: Btnx.oks,
         );
         return;
       }
@@ -1147,7 +1147,7 @@ class _SettingPageState extends State<SettingPage> {
               ),
             ],
           ),
-          actions: Btn.ok(onTap: (c) => onSave(ctrl.text)).toList,
+          actions: Btn.ok(onTap: () => onSave(ctrl.text)).toList,
         );
       },
     );
@@ -1205,7 +1205,7 @@ class _SettingPageState extends State<SettingPage> {
                 suggestion: false,
                 onSubmitted: (_) => onSave(),
               ),
-              actions: [Btn.ok(onTap: (_) => onSave())],
+              actions: Btn.ok(onTap: onSave).toList,
             );
           },
         );

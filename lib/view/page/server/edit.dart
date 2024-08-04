@@ -108,7 +108,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             ));
           }),
           actions: Btn.ok(
-            onTap: (c) async {
+            onTap: () async {
               context.pop();
               Pros.server.delServer(widget.spi!.id);
               context.pop(true);

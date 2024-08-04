@@ -73,10 +73,7 @@ class _SSHTabPageState extends State<SSHTabPage>
         return AlertDialog(
           title: Text(libL10n.attention),
           content: Text('${libL10n.close} SSH ${l10n.conn}($name) ?'),
-          actions: Btn.ok(
-            onTap: (c) => context.pop(true),
-            red: true,
-          ).toList,
+          actions: Btnx.okReds,
         );
       },
     );
@@ -274,7 +271,7 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
                         color: color,
                         size: 17,
                       ),
-                      onTap: (_) => onClose(name),
+                      onTap: () => onClose(name),
                     ),
                   ),
                 const Spacer(),

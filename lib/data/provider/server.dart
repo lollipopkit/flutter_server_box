@@ -327,7 +327,8 @@ class ServerProvider extends ChangeNotifier {
         _setServerState(s, ServerConn.failed);
         return;
       } catch (e) {
-        TryLimiter.inc(sid);
+        // If max try times < 2 and can't write script, this will stop the status getting and etc.
+        // TryLimiter.inc(sid);
         final err = SSHErr(type: SSHErrType.writeScript, message: e.toString());
         s.status.err = err;
         Loggers.app.warning(err);

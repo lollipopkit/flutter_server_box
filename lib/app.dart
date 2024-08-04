@@ -22,7 +22,10 @@ class MyApp extends StatelessWidget {
       listenable: RNodes.app,
       builder: (context, _) {
         if (!Stores.setting.useSystemPrimaryColor.fetch()) {
-          UIs.colorSeed = Color(Stores.setting.colorSeed.fetch());
+          final colorSeed = Color(Stores.setting.colorSeed.fetch());
+          UIs.colorSeed = colorSeed;
+          // Past code uses [UIs.primaryColor] as the primary color
+          UIs.primaryColor = colorSeed;
           return _buildApp(
             context,
             light: ThemeData(
@@ -88,7 +91,6 @@ class MyApp extends StatelessWidget {
           context.setLibL10n();
           final appL10n = AppLocalizations.of(context);
           if (appL10n != null) l10n = appL10n;
-          UIs.primaryColor = Theme.of(context).colorScheme.primary;
 
           final intros = _IntroPage.builders;
           if (intros.isNotEmpty) {

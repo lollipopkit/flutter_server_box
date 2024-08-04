@@ -88,7 +88,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
               '${libL10n.delete} ${l10n.privateKey}(${widget.pki!.id})',
             )),
             actions: Btn.ok(
-              onTap: (c) {
+              onTap: () {
                 Pros.key.delete(widget.pki!);
                 context.pop();
                 context.pop();

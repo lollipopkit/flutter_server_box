@@ -226,7 +226,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
         title: libL10n.file,
         child: Text(fileName),
         actions: [
-          Btn.ok(onTap: (c) {
+          Btn.ok(onTap: () {
             context.pop();
             context.pop(file.path);
           }),
@@ -350,7 +350,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
       title: libL10n.delete,
       child: Text(libL10n.askContinue('${libL10n.delete} $fileName')),
       actions: Btn.ok(
-        onTap: (c) async {
+        onTap: () async {
           context.pop();
           try {
             await file.delete(recursive: true);

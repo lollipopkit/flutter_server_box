@@ -80,7 +80,7 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
       context.showRoundDialog(
         title: libL10n.attention,
         child: Text(l10n.addSystemPrivateKeyTip),
-        actions: Btn.ok(onTap: (c) {
+        actions: Btn.ok(onTap: () {
           context.pop();
           AppRoutes.keyEdit(pki: sysPk).go(context);
         }).toList,
