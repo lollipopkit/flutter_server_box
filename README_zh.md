@@ -3,8 +3,9 @@
 <h2 align="center">Flutter Server Box</h2>
 
 <p align="center">
-  <img alt="lang" src="https://img.shields.io/badge/lang-dart-pink">
-  <img alt="license" src="https://img.shields.io/badge/license-GPLv3-pink">
+  <a href="https://cdn.lpkt.cn/donate"><img alt="donate" src="https://img.shields.io/badge/捐赠-我-pink"></a>
+  <img alt="语言" src="https://img.shields.io/badge/语言-dart-cyan">
+  <img alt="license" src="https://img.shields.io/badge/证书-GPLv3-yellow">
 </p>
 
 <p align="center">
@@ -53,16 +54,16 @@ Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/rel
 
 ## 🆘 帮助
 
-- 吹水、参与开发、了解如何使用，QQ群 **762870488**
-- 为了可以在不使用 ServerBox app 时获取服务器状态（例如：桌面小部件、推送服务），你需要在你的服务器上安装 [ServerBoxMonitor](https://github.com/lollipopkit/server_box_monitor)，并且正确配置，详情可见 [wiki](https://github.com/lollipopkit/server_box_monitor/wiki/%E4%B8%BB%E9%A1%B5)。
-- **常见问题**可以在 [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki/主页) 查看。
+Telegram [群](https://t.me/lpktg) / [频道](https://t.me/lpktc)  
+
+为了可以在不使用 ServerBox app 时获取服务器状态（例如：桌面小部件、推送服务），你需要在你的服务器上安装 [ServerBoxMonitor](https://github.com/lollipopkit/server_box_monitor)，详情见 [wiki](https://github.com/lollipopkit/server_box_monitor/wiki/%E4%B8%BB%E9%A1%B5)。  
+
+**常见问题** 可以在 [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki/主页) 查看。
 
 反馈前须知：
 1. 反馈问题请附带 log（点击首页右上角），并以 bug 模版提交。
 2. 反馈问题前请检查是否是 serverbox 的问题。
 3. 欢迎所有有效、正面的反馈，主观（比如你觉得其他UI更好看）的反馈不一定会接受
-
-确认了解上述内容后，请在 [问题](https://github.com/lollipopkit/flutter_server_box/issues/new) 中反馈。
 
 
 ## 🧱 贡献

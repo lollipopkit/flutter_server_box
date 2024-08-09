@@ -3,8 +3,9 @@ English | [简体中文](README_zh.md)
 <h2 align="center">Flutter Server Box</h2>
 
 <p align="center">
-  <img alt="lang" src="https://img.shields.io/badge/lang-dart-pink">
-  <img alt="license" src="https://img.shields.io/badge/license-GPLv3-pink">
+  <a href="https://cdn.lpkt.cn/donate"><img alt="donate" src="https://img.shields.io/badge/donate-me-pink"></a>
+  <img alt="lang" src="https://img.shields.io/badge/lang-dart-cyan">
+  <img alt="license" src="https://img.shields.io/badge/license-GPLv3-yellow">
 </p>
 
 <p align="center">
