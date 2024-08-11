@@ -2,11 +2,15 @@ English | [简体中文](README_zh.md)
 
 <h2 align="center">Flutter Server Box</h2>
 
-<p align="center">
+<div align="center">
   <a href="https://cdn.lpkt.cn/donate"><img alt="donate" src="https://img.shields.io/badge/donate-me-pink"></a>
   <img alt="lang" src="https://img.shields.io/badge/lang-dart-cyan">
   <img alt="license" src="https://img.shields.io/badge/license-GPLv3-yellow">
-</p>
+</div>
+<div align="center">
+  <a href="https://t.me/lpktg"><img alt="donate" src="https://img.shields.io/badge/Telegram-lpktg-green"></a>
+  <a href="https://discord.gg/SsVNbRhK7w"><img alt="discord" src="https://img.shields.io/badge/Discord-lpkt-purple"></a>
+</div>
 
 <p align="center">
 A Flutter project which provide charts to display <a href="../../issues/43">Linux</a> server status and tools to manage server.
@@ -24,9 +28,6 @@ Android | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) /
 Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid)
 
 **Please only download pkgs from the source that you trust!**  
-- `AppStore` & `CDN` packages are built by myself
-- Github releases are built by Github Actions
-- Other sources are built by themselves
 
 
 ## 🔖 Feature
@@ -38,14 +39,14 @@ Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/rel
 ## 🏙️ ScreenShots
 <table>
   <tr>
-    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/1.png"></td>
-    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/2.png"></td>
-    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/3.png"></td>
+    <td><img width="277px" src="https://cdn.lpkt.cn/serverbox/screenshot/1.png"></td>
+    <td><img width="277px" src="https://cdn.lpkt.cn/serverbox/screenshot/2.png"></td>
+    <td><img width="277px" src="https://cdn.lpkt.cn/serverbox/screenshot/3.png"></td>
   </tr>
   <tr>
-    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/4.png"> </td>
-    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/5.png"></td>
-    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/6.png"></td>
+    <td><img width="277px" src="https://cdn.lpkt.cn/serverbox/screenshot/4.png"> </td>
+    <td><img width="277px" src="https://cdn.lpkt.cn/serverbox/screenshot/5.png"></td>
+    <td><img width="277px" src="https://cdn.lpkt.cn/serverbox/screenshot/6.png"></td>
   </tr>
 </table>
 

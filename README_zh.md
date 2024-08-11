@@ -2,11 +2,15 @@
 
 <h2 align="center">Flutter Server Box</h2>
 
-<p align="center">
+<div align="center">
   <a href="https://cdn.lpkt.cn/donate"><img alt="donate" src="https://img.shields.io/badge/捐赠-我-pink"></a>
   <img alt="语言" src="https://img.shields.io/badge/语言-dart-cyan">
   <img alt="license" src="https://img.shields.io/badge/证书-GPLv3-yellow">
-</p>
+</div>
+<div align="center">
+  <a href="https://t.me/lpktg"><img alt="donate" src="https://img.shields.io/badge/Telegram-lpktg-green"></a>
+  <a href="https://discord.gg/SsVNbRhK7w"><img alt="discord" src="https://img.shields.io/badge/Discord-lpkt-purple"></a>
+</div>
 
 <p align="center">
 使用 Flutter 开发的 <a href="../../issues/43">Linux</a> 服务器工具箱，提供服务器状态图表和管理工具。
@@ -23,9 +27,6 @@ Android | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) /
 Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid)
 
 **请不要从不受信任的来源下载!**
-- `AppStore` & `CDN` 的包由我构建
-- Github 的包由 Github Actions 构建
-- 其他来源由其所有者构建
 
 
 ## 🔖 特点
@@ -40,25 +41,21 @@ Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/rel
 ## 🏙️ 截屏
 <table>
   <tr>
-    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/1.png"></td>
-    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/2.png"></td>
-    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/3.png"></td>
+    <td><img width="277px" src="https://cdn.lpkt.cn/serverbox/screenshot/1.png"></td>
+    <td><img width="277px" src="https://cdn.lpkt.cn/serverbox/screenshot/2.png"></td>
+    <td><img width="277px" src="https://cdn.lpkt.cn/serverbox/screenshot/3.png"></td>
   </tr>
   <tr>
-    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/4.png"> </td>
-    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/5.png"></td>
-    <td><img width="277px" src="https://cdn.lolli.tech/serverbox/screenshot/6.png"></td>
+    <td><img width="277px" src="https://cdn.lpkt.cn/serverbox/screenshot/4.png"> </td>
+    <td><img width="277px" src="https://cdn.lpkt.cn/serverbox/screenshot/5.png"></td>
+    <td><img width="277px" src="https://cdn.lpkt.cn/serverbox/screenshot/6.png"></td>
   </tr>
 </table>
 
 
 ## 🆘 帮助
-
-Telegram [群](https://t.me/lpktg) / [频道](https://t.me/lpktc)  
-
-为了可以在不使用 ServerBox app 时获取服务器状态（例如：桌面小部件、推送服务），你需要在你的服务器上安装 [ServerBoxMonitor](https://github.com/lollipopkit/server_box_monitor)，详情见 [wiki](https://github.com/lollipopkit/server_box_monitor/wiki/%E4%B8%BB%E9%A1%B5)。  
-
-**常见问题** 可以在 [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki/主页) 查看。
+- 为了可以在不使用 ServerBox app 时获取服务器状态（例如：桌面小部件、推送服务），你需要在你的服务器上安装 [ServerBoxMonitor](https://github.com/lollipopkit/server_box_monitor)，详情见 [wiki](https://github.com/lollipopkit/server_box_monitor/wiki/%E4%B8%BB%E9%A1%B5)。  
+- **常见问题** 可以在 [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki/主页) 查看。
 
 反馈前须知：
 1. 反馈问题请附带 log（点击首页右上角），并以 bug 模版提交。

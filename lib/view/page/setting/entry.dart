@@ -9,7 +9,6 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/rebuild.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
-import 'package:server_box/view/page/setting/platform/platform_pub.dart';
 
 import '../../../core/route.dart';
 import '../../../data/model/app/net_view.dart';
@@ -54,27 +53,28 @@ class _SettingPageState extends State<SettingPage> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 17),
+      body: MultiList(
+        widthDivider: 2.3,
+        thumbVisibility: true,
         children: [
-          const CenterGreyTitle('App'),
-          _buildApp(),
-          CenterGreyTitle(l10n.server),
-          _buildServer(),
-          CenterGreyTitle(l10n.container),
-          _buildContainer(),
-          const CenterGreyTitle('SSH'),
-          _buildSSH(),
-          const CenterGreyTitle('SFTP'),
-          _buildSFTP(),
-          CenterGreyTitle(l10n.editor),
-          _buildEditor(),
+          [const CenterGreyTitle('App'), _buildApp()],
+          [CenterGreyTitle(l10n.server), _buildServer()],
+          [
+            const CenterGreyTitle('SSH'),
+            _buildSSH(),
+            const CenterGreyTitle('SFTP'),
+            _buildSFTP()
+          ],
+          [
+            CenterGreyTitle(l10n.container),
+            _buildContainer(),
+            CenterGreyTitle(l10n.editor),
+            _buildEditor(),
+          ],
 
           /// Fullscreen Mode is designed for old mobile phone which can be
           /// used as a status screen.
-          if (isMobile) CenterGreyTitle(l10n.fullScreen),
-          if (isMobile) _buildFullScreen(),
-          const SizedBox(height: 37),
+          if (isMobile) [CenterGreyTitle(l10n.fullScreen), _buildFullScreen()],
         ],
       ),
     );
@@ -948,6 +948,7 @@ class _SettingPageState extends State<SettingPage> {
     return ExpandTile(
       leading: const Icon(MingCute.more_3_fill),
       title: Text(l10n.more),
+      initiallyExpanded: isDesktop,
       children: [
         _buildRememberPwdInMem(),
         _buildTextScaler(),
@@ -1010,13 +1011,13 @@ class _SettingPageState extends State<SettingPage> {
     return ExpandTile(
       leading: const Icon(MingCute.more_3_fill),
       title: Text(l10n.more),
+      initiallyExpanded: isDesktop,
       children: [
         _buildBeta(),
         if (isMobile) _buildWakeLock(),
         _buildCollapseUI(),
         _buildCupertinoRoute(),
         if (isDesktop) _buildHideTitleBar(),
-        if (isDesktop) PlatformPublicSettings.buildSaveWindowSize(),
       ],
     );
   }

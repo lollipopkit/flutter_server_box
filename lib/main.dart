@@ -93,13 +93,7 @@ Future<void> _initData() async {
   Hive.registerAdapter(WakeOnLanCfgAdapter()); // 8
 
   await PrefStore.init(); // Call this before accessing any store
-
-  await Stores.setting.init();
-  await Stores.server.init();
-  await Stores.key.init();
-  await Stores.snippet.init();
-  await Stores.container.init();
-  await Stores.history.init();
+  await Stores.init();
 
   Pros.snippet.load();
   Pros.key.load();

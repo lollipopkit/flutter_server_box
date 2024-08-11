@@ -33,7 +33,7 @@ dependencies:
   dartssh2:
     git:
       url: https://github.com/lollipopkit/dartssh2
-      ref: dev
+      ref: no-etm
   circle_chart:
     git:
       url: https://github.com/lollipopkit/circle_chart
@@ -61,7 +61,7 @@ dependencies:
   fl_lib:
     git:
       url: https://github.com/lppcg/fl_lib
-      ref: v1.0.118
+      ref: v1.0.129
 
 dependency_overrides:
   # dartssh2:
@@ -83,7 +83,7 @@ dev_dependencies:
   fl_build:
     git:
       url: https://github.com/lppcg/fl_build.git
-      ref: v1.0.40
+      ref: v1.0.41
 
 flutter:
   generate: true

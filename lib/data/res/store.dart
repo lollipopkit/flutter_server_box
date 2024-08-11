@@ -23,6 +23,10 @@ abstract final class Stores {
     snippet,
   ];
 
+  static Future<void> init() async {
+    await Future.wait(all.map((store) => store.init()));
+  }
+
   static int? get lastModTime {
     int? lastModTime = 0;
     for (final store in all) {

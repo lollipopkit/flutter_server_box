@@ -1,8 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:window_manager/window_manager.dart';
 
 abstract final class PlatformPublicSettings {
   static Widget buildBioAuth() {
@@ -44,51 +42,6 @@ abstract final class PlatformPublicSettings {
               : null,
         );
       },
-    );
-  }
-
-  static Widget buildSaveWindowSize() {
-    final isBusy = false.vn;
-    // Only show [FadeIn] when previous state is busy.
-    var lastIsBusy = false;
-    final prop = Stores.setting.windowSize;
-
-    return ListTile(
-      title: Text(l10n.rememberWindowSize),
-
-      /// Copied from `fl_build/view/store_switch`
-      trailing: ValBuilder(
-        listenable: isBusy,
-        builder: (busy) {
-          return ValBuilder(
-            listenable: prop.listenable(),
-            builder: (value) {
-              if (busy) {
-                lastIsBusy = true;
-                return UIs.centerSizedLoadingSmall.paddingOnly(right: 17);
-              }
-
-              final switcher = Switch(
-                value: value.isNotEmpty,
-                onChanged: (value) async {
-                  isBusy.value = true;
-                  final size = await windowManager.getSize();
-                  isBusy.value = false;
-                  prop.put(size.toIntStr());
-                },
-              );
-
-              if (lastIsBusy) {
-                final ret = FadeIn(child: switcher);
-                lastIsBusy = false;
-                return ret;
-              }
-
-              return switcher;
-            },
-          );
-        },
-      ),
     );
   }
 }

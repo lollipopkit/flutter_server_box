@@ -221,7 +221,7 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
           itemCount: names.length,
-          itemBuilder: (_, idx) => _buillItem(idx),
+          itemBuilder: (_, idx) => _buildItem(idx),
           separatorBuilder: (_, __) => Padding(
             padding: const EdgeInsets.symmetric(vertical: 17),
             child: Container(
@@ -234,7 +234,10 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  Widget _buillItem(int idx) {
+  static const kWideWidth = 90.0;
+  static const kNarrowWidth = 60.0;
+
+  Widget _buildItem(int idx) {
     final name = names[idx];
     final selected = idxVN.value == idx;
     final color = selected ? null : Colors.grey;
@@ -255,31 +258,28 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
         textAlign: TextAlign.center,
         textWidthBasis: TextWidthBasis.parent,
       );
+      final Widget btn;
+      if (selected) {
+        btn = Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Btn.icon(
+              icon: Icon(MingCute.close_circle_fill, color: color, size: 17),
+              onTap: () => onClose(name),
+              padding: null,
+            ),
+            SizedBox(width: kNarrowWidth - 10, child: text),
+          ],
+        );
+      } else {
+        btn = Center(child: text);
+      }
       child = AnimatedContainer(
-        width: selected ? 90 : 57,
+        width: selected ? kWideWidth : kNarrowWidth,
         duration: Durations.medium3,
         padding: selected ? const EdgeInsets.symmetric(horizontal: 7) : null,
         curve: Curves.fastEaseInToSlowEaseOut,
-        child: switch (selected) {
-          true => Row(
-              children: [
-                if (selected)
-                  FadeIn(
-                    child: Btn.icon(
-                      icon: Icon(
-                        MingCute.close_circle_fill,
-                        color: color,
-                        size: 17,
-                      ),
-                      onTap: () => onClose(name),
-                    ),
-                  ),
-                const Spacer(),
-                SizedBox(width: 50, child: text),
-              ],
-            ),
-          false => Center(child: text),
-        },
+        child: btn,
       );
     }
 
