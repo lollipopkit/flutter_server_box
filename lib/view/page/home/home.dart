@@ -14,7 +14,6 @@ import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
-import 'package:server_box/view/page/ssh/page.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 part 'appbar.dart';
@@ -128,7 +127,10 @@ class _HomePageState extends State<HomePage>
         IconButton(
           icon: const Icon(Icons.developer_mode, size: 21),
           tooltip: 'Debug',
-          onPressed: () => AppRoutes.debug().go(context),
+          onPressed: () => DebugPage.route.go(
+            context,
+            args: const DebugPageArgs(title: 'Debug(${BuildData.build})'),
+          ),
         ),
       ],
     );
@@ -141,7 +143,7 @@ class _HomePageState extends State<HomePage>
         physics: const NeverScrollableScrollPhysics(),
         itemBuilder: (_, index) => AppTab.values[index].page,
         onPageChanged: (value) {
-          SSHPage.focusNode.unfocus();
+          FocusScope.of(context).unfocus();
           if (!_switchingPage) {
             _selectIndex.value = value;
           }

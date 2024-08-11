@@ -32,6 +32,7 @@ class SSHPage extends StatefulWidget {
   final bool notFromTab;
   final Function()? onSessionEnd;
   final GlobalKey<TerminalViewState>? terminalKey;
+  final FocusNode? focusNode;
 
   const SSHPage({
     super.key,
@@ -41,9 +42,8 @@ class SSHPage extends StatefulWidget {
     this.notFromTab = true,
     this.onSessionEnd,
     this.terminalKey,
+    this.focusNode,
   });
-
-  static final focusNode = FocusNode();
 
   @override
   State<SSHPage> createState() => SSHPageState();
@@ -158,7 +158,7 @@ class SSHPageState extends State<SSHPage>
             CustomAppBar.barHeight ?? _media.padding.top,
           ),
           hideScrollBar: false,
-          focusNode: SSHPage.focusNode,
+          focusNode: widget.focusNode,
         ),
       ),
     );
@@ -432,7 +432,7 @@ class SSHPageState extends State<SSHPage>
       widget.initSnippet!.runInTerm(_terminal, widget.spi);
     }
 
-    SSHPage.focusNode.requestFocus();
+    widget.focusNode?.requestFocus();
 
     await session.done;
     if (mounted && widget.notFromTab) {
