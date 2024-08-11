@@ -1,9 +1,7 @@
-import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/backup.dart';
 import 'package:server_box/view/page/container.dart';
@@ -150,16 +148,6 @@ class AppRoutes {
 
   static AppRoutes backup({Key? key}) {
     return AppRoutes(BackupPage(key: key), 'backup');
-  }
-
-  static AppRoutes debug({Key? key}) {
-    return AppRoutes(
-      DebugPage(
-        key: key,
-        args: const DebugPageArgs(title: 'Logs(${BuildData.build})'),
-      ),
-      'debug',
-    );
   }
 
   static AppRoutes docker({Key? key, required ServerPrivateInfo spi}) {

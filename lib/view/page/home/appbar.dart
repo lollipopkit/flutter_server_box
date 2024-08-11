@@ -14,22 +14,22 @@ final class _AppBar extends CustomAppBar {
 
   @override
   Widget build(BuildContext context) {
-    if (isDesktop) return super.build(context);
-
     final placeholder = SizedBox(
       height: CustomAppBar.barHeight ?? 0 + MediaQuery.of(context).padding.top,
     );
-    return ValBuilder(
-      listenable: landscape,
-      builder: (ls) {
-        if (ls) return placeholder;
+    return selectIndex.listenVal(
+      (idx) {
+        if (idx == AppTab.ssh.index) {
+          return placeholder;
+        }
+
+        if (isDesktop) return super.build(context);
 
         return ValBuilder(
-          listenable: selectIndex,
-          builder: (idx) {
-            if (idx == AppTab.ssh.index) {
-              return placeholder;
-            }
+          listenable: landscape,
+          builder: (ls) {
+            if (ls) return placeholder;
+
             return super.build(context);
           },
         );

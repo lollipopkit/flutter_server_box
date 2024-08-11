@@ -17,12 +17,12 @@ class SSHTabPage extends StatefulWidget {
   State<SSHTabPage> createState() => _SSHTabPageState();
 }
 
-typedef _TabMap = Map<String, ({Widget page, GlobalKey<SSHPageState>? key})>;
+typedef _TabMap = Map<String, ({Widget page, FocusNode? focus})>;
 
 class _SSHTabPageState extends State<SSHTabPage>
     with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   late final _TabMap _tabMap = {
-    libL10n.add: (page: _buildAddPage(), key: null),
+    libL10n.add: (page: _buildAddPage(), focus: null),
   };
   final _pageCtrl = PageController();
   final _fabVN = 0.vn;
@@ -61,12 +61,9 @@ class _SSHTabPageState extends State<SSHTabPage>
 
   void _onTapTab(int idx) async {
     await _toPage(idx);
-    SSHPage.focusNode.unfocus();
   }
 
   void _onTapClose(String name) async {
-    SSHPage.focusNode.unfocus();
-
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -95,8 +92,11 @@ class _SSHTabPageState extends State<SSHTabPage>
             child: Text(libL10n.empty, textAlign: TextAlign.center),
           );
         }
+
+        final ratio = context.media.size.aspectRatio;
         return GridView.builder(
           padding: const EdgeInsets.all(7),
+          cacheExtent: 50,
           itemBuilder: (context, idx) {
             final spi = Pros.server.pick(id: pro.serverOrder[idx])?.spi;
             if (spi == null) return UIs.placeholder;
@@ -109,10 +109,7 @@ class _SSHTabPageState extends State<SSHTabPage>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        spi.name,
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
+                      Text(spi.name, style: UIs.text18),
                       const Icon(Icons.chevron_right)
                     ],
                   ),
@@ -121,9 +118,9 @@ class _SSHTabPageState extends State<SSHTabPage>
             );
           },
           itemCount: pro.servers.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            childAspectRatio: 3,
+            childAspectRatio: 3 * (ratio / (9 / 16)),
             crossAxisSpacing: 3,
             mainAxisSpacing: 3,
           ),
@@ -178,7 +175,7 @@ class _SSHTabPageState extends State<SSHTabPage>
           _tabMap.remove(name);
         },
       ),
-      key: key,
+      focus: FocusNode(),
     );
     _tabRN.notify();
     // Wait for the page to be built
@@ -187,8 +184,14 @@ class _SSHTabPageState extends State<SSHTabPage>
     await _toPage(idx);
   }
 
-  Future<void> _toPage(int idx) => _pageCtrl.animateToPage(idx,
-      duration: Durations.short3, curve: Curves.fastEaseInToSlowEaseOut);
+  Future<void> _toPage(int idx) async {
+    await _pageCtrl.animateToPage(idx,
+        duration: Durations.short3, curve: Curves.fastEaseInToSlowEaseOut);
+    final focus = _tabMap.values.elementAt(idx).focus;
+    if (focus != null) {
+      FocusScope.of(context).requestFocus(focus);
+    }
+  }
 
   @override
   bool get wantKeepAlive => true;
