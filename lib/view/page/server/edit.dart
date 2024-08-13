@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
@@ -80,50 +82,29 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
 
   @override
   Widget build(BuildContext context) {
+    final actions = <Widget>[];
+    if (widget.spi != null) actions.add(_buildDelBtn());
+
     return GestureDetector(
       onTap: () => _focusScope.unfocus(),
       child: Scaffold(
-        appBar: _buildAppBar(),
+        appBar: CustomAppBar(title: Text(libL10n.edit), actions: actions),
         body: _buildForm(),
         floatingActionButton: _buildFAB(),
       ),
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
-    return CustomAppBar(
-      title: Text(libL10n.edit),
-      actions: widget.spi != null ? [_buildDelBtn()] : null,
-    );
-  }
-
-  Widget _buildDelBtn() {
-    return IconButton(
-      onPressed: () {
-        context.showRoundDialog(
-          title: libL10n.attention,
-          child: StatefulBuilder(builder: (ctx, setState) {
-            return Text(libL10n.askContinue(
-              '${libL10n.delete} ${l10n.server}(${widget.spi!.name})',
-            ));
-          }),
-          actions: Btn.ok(
-            onTap: () async {
-              context.pop();
-              Pros.server.delServer(widget.spi!.id);
-              context.pop(true);
-            },
-            red: true,
-          ).toList,
-        );
-      },
-      icon: const Icon(Icons.delete),
-    );
-  }
-
   Widget _buildForm() {
-    final children = [
+    final topItems = [
       _buildWriteScriptTip(),
+      if (isMobile) _buildQrScan(),
+    ];
+    final children = [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: topItems.joinWith(UIs.width13).toList(),
+      ),
       Input(
         autoFocus: true,
         controller: _nameController,
@@ -600,69 +581,113 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     context.pop();
   }
 
-  Widget _buildWriteScriptTip() {
-    return Center(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        onTap: () {
-          context.showRoundDialog(
-            title: libL10n.attention,
-            child: SimpleMarkdown(data: l10n.writeScriptTip),
-            actions: [Btn.ok()],
-          );
-        },
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.tips_and_updates, size: 15, color: Colors.grey),
-            UIs.width13,
-            Text(libL10n.attention, style: UIs.textGrey)
-          ],
-        ).paddingSymmetric(horizontal: 13, vertical: 3),
-      ),
-    ).paddingOnly(bottom: 13);
-  }
-
   @override
   void afterFirstLayout(BuildContext context) {
     final spi = widget.spi;
     if (spi != null) {
-      _nameController.text = spi.name;
-      _ipController.text = spi.ip;
-      _portController.text = spi.port.toString();
-      _usernameController.text = spi.user;
-      if (spi.keyId == null) {
-        _passwordController.text = spi.pwd ?? '';
-      } else {
-        _keyIdx.value = Pros.key.pkis.indexWhere(
-          (e) => e.id == widget.spi!.keyId,
-        );
-      }
-
-      /// List in dart is passed by pointer, so you need to copy it here
-      _tags.value = spi.tags?.toSet() ?? {};
-
-      _altUrlController.text = spi.alterUrl ?? '';
-      _autoConnect.value = spi.autoConnect ?? true;
-      _jumpServer.value = spi.jumpId;
-
-      final custom = spi.custom;
-      if (custom != null) {
-        _pveAddrCtrl.text = custom.pveAddr ?? '';
-        _pveIgnoreCert.value = custom.pveIgnoreCert;
-        _customCmds.value = custom.cmds ?? {};
-        _preferTempDevCtrl.text = custom.preferTempDev ?? '';
-        _logoUrlCtrl.text = custom.logoUrl ?? '';
-      }
-
-      final wol = spi.wolCfg;
-      if (wol != null) {
-        _wolMacCtrl.text = wol.mac;
-        _wolIpCtrl.text = wol.ip;
-        _wolPwdCtrl.text = wol.pwd ?? '';
-      }
-
-      _env.value = spi.envs ?? {};
+      _initWithSpi(spi);
     }
+  }
+
+  void _initWithSpi(ServerPrivateInfo spi) {
+    _nameController.text = spi.name;
+    _ipController.text = spi.ip;
+    _portController.text = spi.port.toString();
+    _usernameController.text = spi.user;
+    if (spi.keyId == null) {
+      _passwordController.text = spi.pwd ?? '';
+    } else {
+      _keyIdx.value = Pros.key.pkis.indexWhere(
+        (e) => e.id == widget.spi!.keyId,
+      );
+    }
+
+    /// List in dart is passed by pointer, so you need to copy it here
+    _tags.value = spi.tags?.toSet() ?? {};
+
+    _altUrlController.text = spi.alterUrl ?? '';
+    _autoConnect.value = spi.autoConnect ?? true;
+    _jumpServer.value = spi.jumpId;
+
+    final custom = spi.custom;
+    if (custom != null) {
+      _pveAddrCtrl.text = custom.pveAddr ?? '';
+      _pveIgnoreCert.value = custom.pveIgnoreCert;
+      _customCmds.value = custom.cmds ?? {};
+      _preferTempDevCtrl.text = custom.preferTempDev ?? '';
+      _logoUrlCtrl.text = custom.logoUrl ?? '';
+    }
+
+    final wol = spi.wolCfg;
+    if (wol != null) {
+      _wolMacCtrl.text = wol.mac;
+      _wolIpCtrl.text = wol.ip;
+      _wolPwdCtrl.text = wol.pwd ?? '';
+    }
+
+    _env.value = spi.envs ?? {};
+  }
+
+  Widget _buildWriteScriptTip() {
+    return Btn.tile(
+      text: libL10n.attention,
+      icon: const Icon(Icons.tips_and_updates, color: Colors.grey),
+      onTap: () {
+        context.showRoundDialog(
+          title: libL10n.attention,
+          child: SimpleMarkdown(data: l10n.writeScriptTip),
+          actions: Btnx.oks,
+        );
+      },
+      textStyle: UIs.textGrey,
+      mainAxisSize: MainAxisSize.min,
+    );
+  }
+
+  Widget _buildQrScan() {
+    return Btn.tile(
+      text: libL10n.import,
+      icon: const Icon(Icons.qr_code, color: Colors.grey),
+      onTap: () async {
+        final codes = await BarcodeScannerPage.route.go(
+          context,
+          args: const BarcodeScannerPageArgs(),
+        );
+        final code = codes?.firstOrNull?.rawValue;
+        if (code == null) return;
+        try {
+          final spi = ServerPrivateInfo.fromJson(json.decode(code));
+          _initWithSpi(spi);
+        } catch (e, s) {
+          context.showErrDialog(e, s);
+        }
+      },
+      textStyle: UIs.textGrey,
+      mainAxisSize: MainAxisSize.min,
+    );
+  }
+
+  Widget _buildDelBtn() {
+    return IconButton(
+      onPressed: () {
+        context.showRoundDialog(
+          title: libL10n.attention,
+          child: StatefulBuilder(builder: (ctx, setState) {
+            return Text(libL10n.askContinue(
+              '${libL10n.delete} ${l10n.server}(${widget.spi!.name})',
+            ));
+          }),
+          actions: Btn.ok(
+            onTap: () async {
+              context.pop();
+              Pros.server.delServer(widget.spi!.id);
+              context.pop(true);
+            },
+            red: true,
+          ).toList,
+        );
+      },
+      icon: const Icon(Icons.delete),
+    );
   }
 }
