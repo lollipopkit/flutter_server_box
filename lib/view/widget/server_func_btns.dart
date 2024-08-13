@@ -8,6 +8,7 @@ import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/systemd.dart';
 
 import '../../core/route.dart';
 import '../../core/utils/server.dart';
@@ -160,6 +161,12 @@ void _onTapMoreBtns(
       AppRoutes.iperf(spi: spi).checkGo(
         context: context,
         check: () => _checkClient(context, spi.id),
+      );
+      break;
+    case ServerFuncBtn.systemd:
+      SystemdPage.route.go(
+        context,
+        args: SystemdPageArgs(spi: spi),
       );
       break;
   }

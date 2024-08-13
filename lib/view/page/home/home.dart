@@ -8,6 +8,7 @@ import 'package:server_box/core/extension/build.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/provider/app.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/github_id.dart';
 import 'package:server_box/data/res/misc.dart';
@@ -103,7 +104,7 @@ class _HomePageState extends State<HomePage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    Pros.app.ctx = context;
+    AppProvider.ctx = context;
 
     final appBar = _AppBar(
       selectIndex: _selectIndex,

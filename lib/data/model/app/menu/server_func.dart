@@ -23,6 +23,8 @@ enum ServerFuncBtn {
   iperf,
   // @HiveField(7)
   // pve,
+  @HiveField(8)
+  systemd,
   ;
 
   static final defaultIdxs = [
@@ -42,6 +44,7 @@ enum ServerFuncBtn {
         process => Icons.list_alt_outlined,
         terminal => Icons.terminal,
         iperf => Icons.speed,
+        systemd => MingCute.plugin_2_fill,
       };
 
   String get toStr => switch (this) {
@@ -52,5 +55,6 @@ enum ServerFuncBtn {
         process => l10n.process,
         terminal => l10n.terminal,
         iperf => 'iperf',
+        systemd => 'Systemd',
       };
 }

@@ -25,6 +25,8 @@ class ServerFuncBtnAdapter extends TypeAdapter<ServerFuncBtn> {
         return ServerFuncBtn.snippet;
       case 6:
         return ServerFuncBtn.iperf;
+      case 8:
+        return ServerFuncBtn.systemd;
       default:
         return ServerFuncBtn.terminal;
     }
@@ -50,6 +52,9 @@ class ServerFuncBtnAdapter extends TypeAdapter<ServerFuncBtn> {
         break;
       case ServerFuncBtn.iperf:
         writer.writeByte(6);
+        break;
+      case ServerFuncBtn.systemd:
+        writer.writeByte(8);
         break;
     }
   }

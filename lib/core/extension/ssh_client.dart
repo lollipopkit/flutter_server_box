@@ -13,6 +13,7 @@ typedef _OnStdin = void Function(SSHSession session);
 typedef PwdRequestFunc = Future<String?> Function(String? user);
 
 extension SSHClientX on SSHClient {
+  /// TODO: delete [exec]
   Future<SSHSession> exec(
     String cmd, {
     _OnStdout? onStderr,
@@ -134,5 +135,37 @@ extension SSHClientX on SSHClient {
     await stderrDone.future;
 
     return result.takeBytes();
+  }
+
+  Future<String> runScriptIn(
+    String cmd, {
+    String shell = '/bin/sh',
+    bool stdout = true,
+    bool stderr = true,
+  }) async {
+    final session = await execute('cat | $shell');
+
+    final result = BytesBuilder(copy: false);
+    final stdoutDone = Completer<void>();
+    final stderrDone = Completer<void>();
+
+    session.stdout.listen(
+      stdout ? result.add : (_) {},
+      onDone: stdoutDone.complete,
+      onError: stderrDone.completeError,
+    );
+    session.stderr.listen(
+      stderr ? result.add : (_) {},
+      onDone: stderrDone.complete,
+      onError: stderrDone.completeError,
+    );
+
+    session.stdin.add('$cmd\n'.uint8List);
+    session.stdin.close();
+
+    await stdoutDone.future;
+    await stderrDone.future;
+
+    return result.takeBytes().string;
   }
 }
