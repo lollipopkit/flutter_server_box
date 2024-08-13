@@ -406,8 +406,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v1.0.129"
-      resolved-ref: e971000e0cffa49637564e35f477ed782ca3dd10
+      ref: "v1.0.132"
+      resolved-ref: f68453c64cfa3b363bcd6b5e7d76cad7fa7724c6
       url: "https://github.com/lppcg/fl_lib"
     source: git
     version: "0.0.1"
@@ -839,6 +839,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.5"
+  mobile_scanner:
+    dependency: transitive
+    description:
+      name: mobile_scanner
+      sha256: b8c0e9afcfd52534f85ec666f3d52156f560b5e6c25b1e3d4fe2087763607926
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.1.1"
   nested:
     dependency: transitive
     description:
@@ -1040,6 +1048,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.5.1"
+  pretty_qr_code:
+    dependency: transitive
+    description:
+      name: pretty_qr_code
+      sha256: cbdb4af29da1c1fa21dd76f809646c591320ab9e435d3b0eab867492d43607d5
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.3.0"
   provider:
     dependency: "direct main"
     description:
@@ -1064,6 +1080,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.3.0"
+  qr:
+    dependency: transitive
+    description:
+      name: qr
+      sha256: "5a1d2586170e172b8a8c8470bbbffd5eb0cd38a66c0d77155ea138d3af3a4445"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.2"
   quiver:
     dependency: transitive
     description:
@@ -1080,6 +1104,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.1.9"
+  screenshot:
+    dependency: transitive
+    description:
+      name: screenshot
+      sha256: "63817697a7835e6ce82add4228e15d233b74d42975c143ad8cfe07009fab866b"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.0"
   share_plus:
     dependency: transitive
     description:

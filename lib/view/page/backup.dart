@@ -306,7 +306,7 @@ class BackupPage extends StatelessWidget {
       );
     } catch (e, s) {
       Loggers.app.warning('Import backup failed', e, s);
-      context.showErrDialog(e: e, s: s, operation: libL10n.restore);
+      context.showErrDialog(e, s, libL10n.restore);
     }
   }
 
@@ -330,7 +330,7 @@ class BackupPage extends StatelessWidget {
       final dlBak = await Computer.shared.start(Backup.fromJsonString, dlFile);
       await dlBak.restore(force: true);
     } catch (e, s) {
-      context.showErrDialog(e: e, s: s, operation: libL10n.restore);
+      context.showErrDialog(e, s, libL10n.restore);
       Loggers.app.warning('Download webdav backup failed', e, s);
     } finally {
       webdavLoading.value = false;
@@ -349,7 +349,7 @@ class BackupPage extends StatelessWidget {
       }
       Loggers.app.info('Upload webdav backup success');
     } catch (e, s) {
-      context.showErrDialog(e: e, s: s, operation: l10n.upload);
+      context.showErrDialog(e, s, l10n.upload);
       Loggers.app.warning('Upload webdav backup failed', e, s);
     } finally {
       webdavLoading.value = false;
@@ -435,7 +435,7 @@ class BackupPage extends StatelessWidget {
       );
     } catch (e, s) {
       Loggers.app.warning('Import backup failed', e, s);
-      context.showErrDialog(e: e, s: s, operation: libL10n.restore);
+      context.showErrDialog(e, s, libL10n.restore);
     }
   }
 
@@ -473,7 +473,7 @@ class BackupPage extends StatelessWidget {
         context.showSnackBar(libL10n.success);
       }
     } catch (e, s) {
-      context.showErrDialog(e: e, s: s, operation: libL10n.import);
+      context.showErrDialog(e, s, libL10n.import);
       Loggers.app.warning('Import servers failed', e, s);
     }
   }

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/server.dart';
@@ -143,6 +145,8 @@ class ServerPrivateInfo {
     }
     return data;
   }
+
+  String toJsonString() => json.encode(toJson());
 
   Server? get server => Pros.server.pick(spi: this);
   Server? get jumpServer => Pros.server.pick(id: jumpId);

@@ -123,6 +123,11 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     return CustomAppBar(
       title: Text(si.spi.name),
       actions: [
+        ShareBtn(
+          data: widget.spi.toJsonString(),
+          tip: widget.spi.name,
+          tip2: '${libL10n.share} ${l10n.server} ~ ServerBox',
+        ),
         IconButton(
           icon: const Icon(Icons.edit),
           onPressed: () async {
