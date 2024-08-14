@@ -32,7 +32,6 @@ Future<void> main() async {
     runApp(
       MultiProvider(
         providers: [
-          ChangeNotifierProvider(create: (_) => Pros.app),
           ChangeNotifierProvider(create: (_) => Pros.server),
           ChangeNotifierProvider(create: (_) => Pros.snippet),
           ChangeNotifierProvider(create: (_) => Pros.key),
@@ -97,7 +96,6 @@ Future<void> _initData() async {
 
   Pros.snippet.load();
   Pros.key.load();
-  await Pros.app.init();
 
   if (Stores.setting.betaTest.fetch()) AppUpdate.chan = AppUpdateChan.beta;
 }
@@ -136,6 +134,7 @@ Future<void> _doVersionRelated() async {
   // How to upgrade the data is inside each own func.
   if (curVer < newVer) {
     ServerDetailCards.autoAddNewCards(newVer);
+    ServerFuncBtn.autoAddNewFuncs(newVer);
     Stores.setting.lastVer.put(newVer);
   }
 }
