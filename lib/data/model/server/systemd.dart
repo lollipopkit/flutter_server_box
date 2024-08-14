@@ -32,13 +32,6 @@ enum SystemdUnitType {
   static SystemdUnitType? fromString(String? value) {
     return values.firstWhereOrNull((e) => e.name == value?.toLowerCase());
   }
-
-  Color get color => switch (this) {
-        service => Colors.blue,
-        socket => Colors.orange,
-        mount => Colors.purple,
-        timer => Colors.pink,
-      };
 }
 
 enum SystemdUnitScope {
@@ -46,9 +39,9 @@ enum SystemdUnitScope {
   user,
   ;
 
-  Color get color => switch (this) {
+  Color? get color => switch (this) {
         system => Colors.red,
-        user => Colors.green,
+        _ => null,
       };
 
   String getCmdPrefix(bool isRoot) {
@@ -71,12 +64,9 @@ enum SystemdUnitState {
     return values.firstWhereOrNull((e) => e.name == value?.toLowerCase());
   }
 
-  Color get color => switch (this) {
-        active => Colors.green,
-        inactive => const Color.fromARGB(255, 84, 64, 64),
+  Color? get color => switch (this) {
         failed => Colors.red,
-        activating => Colors.cyan,
-        deactivating => Colors.orange,
+        _ => null,
       };
 }
 

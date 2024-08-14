@@ -81,14 +81,14 @@ final class _SystemdPageState extends State<SystemdPage> {
             (context, index) {
               final unit = units[index];
               return ListTile(
+                leading: _buildScopeTag(unit.scope),
                 title: unit.description != null
                     ? TipText(unit.name, unit.description!)
                     : Text(unit.name),
                 subtitle: Wrap(children: [
-                  _buildScopeTag(unit.scope),
                   _buildStateTag(unit.state),
                   _buildTypeTag(unit.type),
-                ]),
+                ]).paddingOnly(top: 7),
                 trailing: _buildUnitFuncs(unit),
               ).cardx.paddingSymmetric(horizontal: 13);
             },
@@ -139,7 +139,7 @@ final class _SystemdPageState extends State<SystemdPage> {
   }
 
   Widget _buildScopeTag(SystemdUnitScope scope) {
-    return _buildTag(scope.name.upperFirst, scope.color);
+    return _buildTag(scope.name.upperFirst, scope.color, true);
   }
 
   Widget _buildStateTag(SystemdUnitState state) {
@@ -147,19 +147,19 @@ final class _SystemdPageState extends State<SystemdPage> {
   }
 
   Widget _buildTypeTag(SystemdUnitType type) {
-    return _buildTag(type.name.upperFirst, type.color);
+    return _buildTag(type.name.upperFirst);
   }
 
-  Widget _buildTag(String tag, Color color) {
+  Widget _buildTag(String tag, [Color? color, bool noPad = false]) {
     return Container(
       decoration: BoxDecoration(
-        color: color.withOpacity(0.7),
+        color: color?.withOpacity(0.7) ?? UIs.halfAlpha,
         borderRadius: BorderRadius.circular(5),
       ),
       child: Text(
         tag,
         style: UIs.text11Grey,
       ).paddingSymmetric(horizontal: 5, vertical: 1),
-    ).paddingOnly(right: 5);
+    ).paddingOnly(right: noPad ? 0 : 5);
   }
 }
