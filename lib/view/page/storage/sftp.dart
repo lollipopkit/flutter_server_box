@@ -611,11 +611,9 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           fs.removeAt(0);
         }
 
-        /// Issue #96
-        /// Due to [WillPopScope] added in this page
-        /// There is no need to keep '..' folder in listdir
-        /// So remove it
-        if (fs.isNotEmpty && fs.firstOrNull?.filename == '..') {
+        if (fs.isNotEmpty &&
+            fs.firstOrNull?.filename == '..' &&
+            _status.path.path == '/') {
           fs.removeAt(0);
         }
         if (mounted) {
