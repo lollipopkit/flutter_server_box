@@ -2,30 +2,46 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/res/store.dart';
 
 part 'server_func.g.dart';
 
 @HiveType(typeId: 6)
 enum ServerFuncBtn {
   @HiveField(0)
-  terminal,
+  terminal._(),
   @HiveField(1)
-  sftp,
+  sftp._(),
   @HiveField(2)
-  container,
+  container._(),
   @HiveField(3)
-  process,
+  process._(),
   //@HiveField(4)
   //pkg,
   @HiveField(5)
-  snippet,
+  snippet._(),
   @HiveField(6)
-  iperf,
+  iperf._(),
   // @HiveField(7)
   // pve,
   @HiveField(8)
-  systemd,
+  systemd._(1058),
   ;
+
+  final int? addedVersion;
+
+  const ServerFuncBtn._([this.addedVersion]);
+
+  static void autoAddNewFuncs(int cur) {
+    if (cur >= systemd.addedVersion!) {
+      final prop = Stores.setting.serverFuncBtns;
+      final list = prop.fetch();
+      if (!list.contains(systemd.index)) {
+        list.add(systemd.index);
+        prop.put(list);
+      }
+    }
+  }
 
   static final defaultIdxs = [
     terminal,
@@ -34,6 +50,7 @@ enum ServerFuncBtn {
     process,
     //pkg,
     snippet,
+    systemd,
   ].map((e) => e.index).toList();
 
   IconData get icon => switch (this) {

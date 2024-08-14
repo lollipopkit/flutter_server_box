@@ -134,6 +134,7 @@ Future<void> _doVersionRelated() async {
   // How to upgrade the data is inside each own func.
   if (curVer < newVer) {
     ServerDetailCards.autoAddNewCards(newVer);
+    ServerFuncBtn.autoAddNewFuncs(newVer);
     Stores.setting.lastVer.put(newVer);
   }
 }
