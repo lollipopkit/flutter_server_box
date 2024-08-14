@@ -9,8 +9,6 @@ enum SystemdUnitFunc {
   enable,
   disable,
   status,
-  logs,
-  edit,
   ;
 
   IconData get icon => switch (this) {
@@ -21,8 +19,6 @@ enum SystemdUnitFunc {
         enable => Icons.check,
         disable => Icons.close,
         status => Icons.info,
-        logs => Icons.list,
-        edit => Icons.edit,
       };
 }
 
@@ -86,12 +82,14 @@ enum SystemdUnitState {
 
 final class SystemdUnit {
   final String name;
+  final String? description;
   final SystemdUnitType type;
   final SystemdUnitScope scope;
   final SystemdUnitState state;
 
   SystemdUnit({
     required this.name,
+    this.description,
     required this.type,
     required this.scope,
     required this.state,
@@ -124,7 +122,7 @@ final class SystemdUnit {
         funcs.addAll([SystemdUnitFunc.start]);
         break;
     }
-    funcs.addAll([SystemdUnitFunc.status, SystemdUnitFunc.logs]);
+    funcs.addAll([SystemdUnitFunc.status]);
     return funcs.toList();
   }
 }

@@ -55,7 +55,9 @@ final class _SystemdPageState extends State<SystemdPage> {
               duration: Durations.medium1,
               curve: Curves.fastEaseInToSlowEaseOut,
               height: isBusy ? 50 : 0,
-              child: isBusy ? UIs.centerSizedLoading : const SizedBox.shrink(),
+              child: isBusy
+                  ? UIs.centerSizedLoadingSmall.paddingOnly(bottom: 7)
+                  : const SizedBox.shrink(),
             ),
           ),
         ),
@@ -79,14 +81,14 @@ final class _SystemdPageState extends State<SystemdPage> {
             (context, index) {
               final unit = units[index];
               return ListTile(
-                title: Text(unit.name),
-                subtitle: Wrap(
-                  children: [
-                    _buildScopeTag(unit.scope),
-                    _buildStateTag(unit.state),
-                    _buildTypeTag(unit.type),
-                  ],
-                ),
+                title: unit.description != null
+                    ? TipText(unit.name, unit.description!)
+                    : Text(unit.name),
+                subtitle: Wrap(children: [
+                  _buildScopeTag(unit.scope),
+                  _buildStateTag(unit.state),
+                  _buildTypeTag(unit.type),
+                ]),
                 trailing: _buildUnitFuncs(unit),
               ).cardx.paddingSymmetric(horizontal: 13);
             },
@@ -158,6 +160,6 @@ final class _SystemdPageState extends State<SystemdPage> {
         tag,
         style: UIs.text11Grey,
       ).paddingSymmetric(horizontal: 5, vertical: 1),
-    ).paddingOnly(right: 3);
+    ).paddingOnly(right: 5);
   }
 }
