@@ -10,9 +10,9 @@ import 'package:server_box/data/res/rebuild.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 
-import '../../../core/route.dart';
-import '../../../data/model/app/net_view.dart';
-import '../../../data/res/build_data.dart';
+import 'package:server_box/core/route.dart';
+import 'package:server_box/data/model/app/net_view.dart';
+import 'package:server_box/data/res/build_data.dart';
 
 const _kIconSize = 23.0;
 
@@ -1032,7 +1032,6 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildHideTitleBar() {
     return ListTile(
       title: Text(l10n.hideTitleBar),
-      subtitle: Text(l10n.hideTitleBarTip, style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.hideTitleBar),
     );
   }

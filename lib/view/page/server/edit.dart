@@ -9,9 +9,9 @@ import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/res/provider.dart';
 
-import '../../../core/route.dart';
-import '../../../data/model/server/server_private_info.dart';
-import '../../../data/provider/private_key.dart';
+import 'package:server_box/core/route.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/private_key.dart';
 
 class ServerEditPage extends StatefulWidget {
   const ServerEditPage({super.key, this.spi});

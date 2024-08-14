@@ -70,7 +70,7 @@ class ContainerProvider extends ChangeNotifier {
     }
 
     final res = await client?.run(_wrap(ContainerCmdType.images.exec(type)));
-    if (res?.string.toLowerCase().contains("permission denied") ?? false) {
+    if (res?.string.toLowerCase().contains('permission denied') ?? false) {
       return sudoCompleter.complete(true);
     }
     return sudoCompleter.complete(false);

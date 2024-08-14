@@ -8,8 +8,8 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/provider.dart';
 
-import '../../../core/utils/server.dart';
-import '../../../data/model/server/private_key_info.dart';
+import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/data/model/server/private_key_info.dart';
 
 const _format = 'text/plain';
 
@@ -107,7 +107,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
   }
 
   String _standardizeLineSeparators(String value) {
-    return value.replaceAll("\r\n", "\n").replaceAll("\r", "\n");
+    return value.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
   }
 
   Widget _buildFAB() {

@@ -9,8 +9,8 @@ import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/view/widget/omit_start_text.dart';
 
-import '../../../core/route.dart';
-import '../../../data/model/app/path_with_prefix.dart';
+import 'package:server_box/core/route.dart';
+import 'package:server_box/data/model/app/path_with_prefix.dart';
 
 class LocalStoragePage extends StatefulWidget {
   final bool isPickFile;

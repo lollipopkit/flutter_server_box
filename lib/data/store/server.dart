@@ -1,6 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 
-import '../model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 
 class ServerStore extends PersistentStore {
   ServerStore() : super('server');

@@ -7,9 +7,9 @@ import 'package:provider/provider.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/store.dart';
 
-import '../../../core/route.dart';
-import '../../../data/model/server/private_key_info.dart';
-import '../../../data/provider/private_key.dart';
+import 'package:server_box/core/route.dart';
+import 'package:server_box/data/model/server/private_key_info.dart';
+import 'package:server_box/data/provider/private_key.dart';
 
 class PrivateKeysListPage extends StatefulWidget {
   const PrivateKeysListPage({super.key});

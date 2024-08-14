@@ -90,5 +90,5 @@ enum ServerConn {
   /// Status parsing finished
   finished;
 
-  operator <(ServerConn other) => index < other.index;
+  bool operator <(ServerConn other) => index < other.index;
 }

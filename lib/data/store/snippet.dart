@@ -1,6 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 
-import '../model/server/snippet.dart';
+import 'package:server_box/data/model/server/snippet.dart';
 
 class SnippetStore extends PersistentStore {
   SnippetStore() : super('snippet');

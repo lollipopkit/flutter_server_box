@@ -1,4 +1,4 @@
-import '../../res/misc.dart';
+import 'package:server_box/data/res/misc.dart';
 
 class Conn {
   final int maxConn;

@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:server_box/data/res/store.dart';
 
-import '../../../data/model/server/snippet.dart';
-import '/core/route.dart';
-import '/data/provider/snippet.dart';
+import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/core/route.dart';
+import 'package:server_box/data/provider/snippet.dart';
 
 class SnippetListPage extends StatefulWidget {
   const SnippetListPage({super.key});

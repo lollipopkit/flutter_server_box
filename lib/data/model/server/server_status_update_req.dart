@@ -5,12 +5,12 @@ import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/system.dart';
 
-import '../app/shell_func.dart';
-import 'cpu.dart';
-import 'disk.dart';
-import 'memory.dart';
-import 'net_speed.dart';
-import 'conn.dart';
+import 'package:server_box/data/model/app/shell_func.dart';
+import 'package:server_box/data/model/server/cpu.dart';
+import 'package:server_box/data/model/server/disk.dart';
+import 'package:server_box/data/model/server/memory.dart';
+import 'package:server_box/data/model/server/net_speed.dart';
+import 'package:server_box/data/model/server/conn.dart';
 
 class ServerStatusUpdateReq {
   final ServerStatus ss;
