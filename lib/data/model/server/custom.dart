@@ -30,11 +30,11 @@ final class ServerCustom {
 
   static ServerCustom fromJson(Map<String, dynamic> json) {
     //final temperature = json["temperature"] as String?;
-    final pveAddr = json["pveAddr"] as String?;
-    final pveIgnoreCert = json["pveIgnoreCert"] as bool;
-    final cmds = json["cmds"] as Map<String, dynamic>?;
-    final preferTempDev = json["preferTempDev"] as String?;
-    final logoUrl = json["logoUrl"] as String?;
+    final pveAddr = json['pveAddr'] as String?;
+    final pveIgnoreCert = json['pveIgnoreCert'] as bool;
+    final cmds = json['cmds'] as Map<String, dynamic>?;
+    final preferTempDev = json['preferTempDev'] as String?;
+    final logoUrl = json['logoUrl'] as String?;
     return ServerCustom(
       //temperature: temperature,
       pveAddr: pveAddr,
@@ -51,18 +51,18 @@ final class ServerCustom {
     //   json["temperature"] = temperature;
     // }
     if (pveAddr != null) {
-      json["pveAddr"] = pveAddr;
+      json['pveAddr'] = pveAddr;
     }
-    json["pveIgnoreCert"] = pveIgnoreCert;
+    json['pveIgnoreCert'] = pveIgnoreCert;
 
     if (cmds != null) {
-      json["cmds"] = cmds;
+      json['cmds'] = cmds;
     }
     if (preferTempDev != null) {
-      json["preferTempDev"] = preferTempDev;
+      json['preferTempDev'] = preferTempDev;
     }
     if (logoUrl != null) {
-      json["logoUrl"] = logoUrl;
+      json['logoUrl'] = logoUrl;
     }
     return json;
   }

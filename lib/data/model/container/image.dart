@@ -45,21 +45,21 @@ final class PodmanImg implements ContainerImg {
   String toRawJson() => json.encode(toJson());
 
   factory PodmanImg.fromJson(Map<String, dynamic> json) => PodmanImg(
-        repository: json["repository"],
-        tag: json["tag"],
-        id: json["Id"],
-        created: json["Created"],
-        size: json["Size"],
-        containers: json["Containers"],
+        repository: json['repository'],
+        tag: json['tag'],
+        id: json['Id'],
+        created: json['Created'],
+        size: json['Size'],
+        containers: json['Containers'],
       );
 
   Map<String, dynamic> toJson() => {
-        "repository": repository,
-        "tag": tag,
-        "Id": id,
-        "Created": created,
-        "Size": size,
-        "Containers": containers,
+        'repository': repository,
+        'tag': tag,
+        'Id': id,
+        'Created': created,
+        'Size': size,
+        'Containers': containers,
       };
 }
 
@@ -96,36 +96,36 @@ final class DockerImg implements ContainerImg {
   String toRawJson() => json.encode(toJson());
 
   factory DockerImg.fromJson(Map<String, dynamic> json) {
-    final containers = switch (json["Containers"]) {
+    final containers = switch (json['Containers']) {
       final String a => a,
       final Object? a => a.toString(),
     };
-    final repo = switch (json["Repository"] ?? json["Names"]) {
+    final repo = switch (json['Repository'] ?? json['Names']) {
       final String a => a,
       final List a => a.firstOrNull.toString(),
       final Object? a => a.toString(),
     };
-    final size = switch (json["Size"]) {
+    final size = switch (json['Size']) {
       final String a => a,
       final int a => a.bytes2Str,
       final Object? a => a.toString(),
     };
     return DockerImg(
       containers: containers,
-      createdAt: json["CreatedAt"],
-      id: json["ID"] ?? json["Id"] ?? '',
+      createdAt: json['CreatedAt'],
+      id: json['ID'] ?? json['Id'] ?? '',
       repository: repo,
       size: size,
-      tag: json["Tag"],
+      tag: json['Tag'],
     );
   }
 
   Map<String, dynamic> toJson() => {
-        "Containers": containers,
-        "CreatedAt": createdAt,
-        "ID": id,
-        "Repository": repository,
-        "Size": size,
-        "Tag": tag,
+        'Containers': containers,
+        'CreatedAt': createdAt,
+        'ID': id,
+        'Repository': repository,
+        'Size': size,
+        'Tag': tag,
       };
 }

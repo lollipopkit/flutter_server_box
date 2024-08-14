@@ -84,29 +84,29 @@ final class PodmanPs implements ContainerPs {
   String toRawJson() => json.encode(toJson());
 
   factory PodmanPs.fromJson(Map<String, dynamic> json) => PodmanPs(
-        command: json["Command"] == null
+        command: json['Command'] == null
             ? []
-            : List<String>.from(json["Command"]!.map((x) => x)),
+            : List<String>.from(json['Command']!.map((x) => x)),
         created:
-            json["Created"] == null ? null : DateTime.parse(json["Created"]),
-        exited: json["Exited"],
-        id: json["Id"],
-        image: json["Image"],
-        names: json["Names"] == null
+            json['Created'] == null ? null : DateTime.parse(json['Created']),
+        exited: json['Exited'],
+        id: json['Id'],
+        image: json['Image'],
+        names: json['Names'] == null
             ? []
-            : List<String>.from(json["Names"]!.map((x) => x)),
-        startedAt: json["StartedAt"],
+            : List<String>.from(json['Names']!.map((x) => x)),
+        startedAt: json['StartedAt'],
       );
 
   Map<String, dynamic> toJson() => {
-        "Command":
+        'Command':
             command == null ? [] : List<dynamic>.from(command!.map((x) => x)),
-        "Created": created?.toIso8601String(),
-        "Exited": exited,
-        "Id": id,
-        "Image": image,
-        "Names": names == null ? [] : List<dynamic>.from(names!.map((x) => x)),
-        "StartedAt": startedAt,
+        'Created': created?.toIso8601String(),
+        'Exited': exited,
+        'Id': id,
+        'Image': image,
+        'Names': names == null ? [] : List<dynamic>.from(names!.map((x) => x)),
+        'StartedAt': startedAt,
       };
 }
 

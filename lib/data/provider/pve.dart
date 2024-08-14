@@ -104,7 +104,7 @@ final class PveProvider extends ChangeNotifier {
       socket.cast<List<int>>().pipe(forward.sink);
     });*/
 
-    if (url.isScheme("https")) {
+    if (url.isScheme('https')) {
       return SecureSocket.startConnect('localhost', _localPort,
           onBadCertificate: (_) => true);
     } else {

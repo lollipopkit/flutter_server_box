@@ -30,14 +30,19 @@ linter:
   # `// ignore_for_file: name_of_lint` syntax on the line or in the file
   # producing the lint.
   rules:
-    library_private_types_in_public_api: false
+    library_private_types_in_public_api: true
     use_build_context_synchronously: false
     depend_on_referenced_packages: false
     prefer_final_locals: true
     unnecessary_parenthesis: true
     implicit_call_tearoffs: true
+    always_declare_return_types: true
+    always_use_package_imports: true
+    annotate_overrides: true
+    avoid_empty_else: true
     # avoid_print: false  # Uncomment to disable the `avoid_print` rule
-    # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+    prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+    avoid_return_types_on_setters: true
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

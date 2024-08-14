@@ -2,22 +2,20 @@ import 'package:fl_lib/fl_lib.dart';
 
 class AbsolutePath {
   String _path;
+  final _prePath = <String>[];
+
+  AbsolutePath(this._path);
+
   String get path => _path;
-  final List<String> _prePath;
 
-  AbsolutePath(this._path) : _prePath = ['/'];
-
-  void update(String newPath) {
+  /// Update path, not set path
+  set path(String newPath) {
     _prePath.add(_path);
     if (newPath == '..') {
       _path = _path.substring(0, _path.lastIndexOf('/'));
       if (_path == '') {
         _path = '/';
       }
-      return;
-    }
-    if (newPath == '/') {
-      _path = '/';
       return;
     }
     if (newPath.startsWith('/')) {

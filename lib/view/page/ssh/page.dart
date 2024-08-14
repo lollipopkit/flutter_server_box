@@ -18,10 +18,10 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
 
-import '../../../core/route.dart';
-import '../../../data/model/server/server_private_info.dart';
-import '../../../data/model/ssh/virtual_key.dart';
-import '../../../data/res/terminal.dart';
+import 'package:server_box/core/route.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/ssh/virtual_key.dart';
+import 'package:server_box/data/res/terminal.dart';
 
 const _echoPWD = 'echo \$PWD';
 

@@ -5,7 +5,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:xterm/core.dart';
 
-import '../app/tag_pickable.dart';
+import 'package:server_box/data/model/app/tag_pickable.dart';
 
 part 'snippet.g.dart';
 

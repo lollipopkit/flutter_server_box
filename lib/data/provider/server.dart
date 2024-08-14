@@ -14,12 +14,12 @@ import 'package:server_box/data/model/server/system.dart';
 // import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/data/res/store.dart';
 
-import '../../core/utils/server.dart';
-import '../model/server/server.dart';
-import '../model/server/server_private_info.dart';
-import '../model/server/server_status_update_req.dart';
-import '../model/server/try_limiter.dart';
-import '../res/status.dart';
+import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/server_status_update_req.dart';
+import 'package:server_box/data/model/server/try_limiter.dart';
+import 'package:server_box/data/res/status.dart';
 
 class ServerProvider extends ChangeNotifier {
   final Map<String, Server> _servers = {};

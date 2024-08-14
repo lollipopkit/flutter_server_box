@@ -12,7 +12,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/highlight.dart';
 import 'package:server_box/data/res/store.dart';
 
-import '../widget/two_line_text.dart';
+import 'package:server_box/view/widget/two_line_text.dart';
 
 class EditorPage extends StatefulWidget {
   /// If path is not null, then it's a file editor

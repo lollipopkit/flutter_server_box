@@ -20,9 +20,9 @@ import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
 
-import '../../../../core/route.dart';
-import '../../../../data/model/server/server.dart';
-import '../../../../data/provider/server.dart';
+import 'package:server_box/core/route.dart';
+import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/provider/server.dart';
 
 part 'misc.dart';
 

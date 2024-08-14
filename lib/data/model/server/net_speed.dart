@@ -1,6 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 
-import 'time_seq.dart';
+import 'package:server_box/data/model/server/time_seq.dart';
 
 class NetSpeedPart extends TimeSeqIface<NetSpeedPart> {
   final String device;

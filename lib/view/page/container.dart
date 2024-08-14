@@ -11,10 +11,10 @@ import 'package:server_box/data/model/container/image.dart';
 import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/res/store.dart';
 
-import '../../data/model/container/ps.dart';
-import '../../data/model/server/server_private_info.dart';
-import '../../data/provider/container.dart';
-import '../widget/two_line_text.dart';
+import 'package:server_box/data/model/container/ps.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/container.dart';
+import 'package:server_box/view/widget/two_line_text.dart';
 
 class ContainerPage extends StatefulWidget {
   final ServerPrivateInfo spi;

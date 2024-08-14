@@ -6,10 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/store.dart';
 
-import '../../data/model/app/shell_func.dart';
-import '../../data/model/server/proc.dart';
-import '../../data/model/server/server_private_info.dart';
-import '../widget/two_line_text.dart';
+import 'package:server_box/data/model/app/shell_func.dart';
+import 'package:server_box/data/model/server/proc.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/view/widget/two_line_text.dart';
 
 class ProcessPage extends StatefulWidget {
   final ServerPrivateInfo spi;

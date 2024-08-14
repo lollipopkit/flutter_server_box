@@ -339,7 +339,7 @@ class BackupPage extends StatelessWidget {
 
   Future<void> _onTapWebdavUp(BuildContext context) async {
     webdavLoading.value = true;
-    final date = DateTime.now().ymdhms(ymdSep: "-", hmsSep: "-", sep: "-");
+    final date = DateTime.now().ymdhms(ymdSep: '-', hmsSep: '-', sep: '-');
     final bakName = '$date-${Miscs.bakFileName}';
     try {
       await Backup.backup(bakName);

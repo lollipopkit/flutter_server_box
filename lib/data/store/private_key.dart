@@ -1,6 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 
-import '../model/server/private_key_info.dart';
+import 'package:server_box/data/model/server/private_key_info.dart';
 
 class PrivateKeyStore extends PersistentStore {
   PrivateKeyStore() : super('key');

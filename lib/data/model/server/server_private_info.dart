@@ -6,7 +6,7 @@ import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/res/provider.dart';
 
-import '../app/error.dart';
+import 'package:server_box/data/model/app/error.dart';
 
 part 'server_private_info.g.dart';
 
@@ -67,23 +67,23 @@ class ServerPrivateInfo {
   }) : id = '$user@$ip:$port';
 
   static ServerPrivateInfo fromJson(Map<String, dynamic> json) {
-    final ip = json["ip"] as String? ?? '';
-    final port = json["port"] as int? ?? 22;
-    final user = json["user"] as String? ?? 'root';
-    final name = json["name"] as String? ?? '';
-    final pwd = json["pwd"] as String? ?? json["authorization"] as String?;
-    final keyId = json["pubKeyId"] as String?;
-    final tags = (json["tags"] as List?)?.cast<String>();
-    final alterUrl = json["alterUrl"] as String?;
-    final autoConnect = json["autoConnect"] as bool?;
-    final jumpId = json["jumpId"] as String?;
-    final custom = json["customCmd"] == null
+    final ip = json['ip'] as String? ?? '';
+    final port = json['port'] as int? ?? 22;
+    final user = json['user'] as String? ?? 'root';
+    final name = json['name'] as String? ?? '';
+    final pwd = json['pwd'] as String? ?? json['authorization'] as String?;
+    final keyId = json['pubKeyId'] as String?;
+    final tags = (json['tags'] as List?)?.cast<String>();
+    final alterUrl = json['alterUrl'] as String?;
+    final autoConnect = json['autoConnect'] as bool?;
+    final jumpId = json['jumpId'] as String?;
+    final custom = json['customCmd'] == null
         ? null
-        : ServerCustom.fromJson(json["custom"].cast<String, dynamic>());
-    final wolCfg = json["wolCfg"] == null
+        : ServerCustom.fromJson(json['custom'].cast<String, dynamic>());
+    final wolCfg = json['wolCfg'] == null
         ? null
-        : WakeOnLanCfg.fromJson(json["wolCfg"].cast<String, dynamic>());
-    final envs_ = json["envs"] as Map<String, dynamic>?;
+        : WakeOnLanCfg.fromJson(json['wolCfg'].cast<String, dynamic>());
+    final envs_ = json['envs'] as Map<String, dynamic>?;
     final envs = <String, String>{};
     if (envs_ != null) {
       envs_.forEach((key, value) {
@@ -112,36 +112,36 @@ class ServerPrivateInfo {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
-    data["name"] = name;
-    data["ip"] = ip;
-    data["port"] = port;
-    data["user"] = user;
+    data['name'] = name;
+    data['ip'] = ip;
+    data['port'] = port;
+    data['user'] = user;
     if (pwd != null) {
-      data["pwd"] = pwd;
+      data['pwd'] = pwd;
     }
     if (keyId != null) {
-      data["pubKeyId"] = keyId;
+      data['pubKeyId'] = keyId;
     }
     if (tags != null) {
-      data["tags"] = tags;
+      data['tags'] = tags;
     }
     if (alterUrl != null) {
-      data["alterUrl"] = alterUrl;
+      data['alterUrl'] = alterUrl;
     }
     if (autoConnect != null) {
-      data["autoConnect"] = autoConnect;
+      data['autoConnect'] = autoConnect;
     }
     if (jumpId != null) {
-      data["jumpId"] = jumpId;
+      data['jumpId'] = jumpId;
     }
     if (custom != null) {
-      data["custom"] = custom?.toJson();
+      data['custom'] = custom?.toJson();
     }
     if (wolCfg != null) {
-      data["wolCfg"] = wolCfg?.toJson();
+      data['wolCfg'] = wolCfg?.toJson();
     }
     if (envs != null) {
-      data["envs"] = envs;
+      data['envs'] = envs;
     }
     return data;
   }
@@ -160,7 +160,7 @@ class ServerPrivateInfo {
         custom?.cmds != old.custom?.cmds;
   }
 
-  _IpPort fromStringUrl() {
+  IpPort fromStringUrl() {
     if (alterUrl == null) {
       throw SSHErr(type: SSHErrType.connect, message: 'alterUrl is null');
     }
@@ -177,7 +177,7 @@ class ServerPrivateInfo {
     if (port <= 0 || port > 65535) {
       throw SSHErr(type: SSHErrType.connect, message: 'alterUrl port error');
     }
-    return _IpPort(ip_, port_);
+    return IpPort(ip_, port_);
   }
 
   @override
@@ -208,9 +208,9 @@ class ServerPrivateInfo {
   );
 }
 
-class _IpPort {
+class IpPort {
   final String ip;
   final int port;
 
-  _IpPort(this.ip, this.port);
+  IpPort(this.ip, this.port);
 }

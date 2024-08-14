@@ -28,13 +28,13 @@ class PrivateKeyInfo {
   }
 
   PrivateKeyInfo.fromJson(Map<String, dynamic> json)
-      : id = json["id"].toString(),
-        key = json["private_key"].toString();
+      : id = json['id'].toString(),
+        key = json['private_key'].toString();
 
   Map<String, dynamic> toJson() {
     final data = <String, String>{};
-    data["id"] = id;
-    data["private_key"] = key;
+    data['id'] = id;
+    data['private_key'] = key;
     return data;
   }
 }

@@ -5,10 +5,10 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/widgets.dart';
 
-import '../../data/res/misc.dart';
+import 'package:server_box/data/res/misc.dart';
 
-typedef _OnStdout = void Function(String data, SSHSession session);
-typedef _OnStdin = void Function(SSHSession session);
+typedef OnStdout = void Function(String data, SSHSession session);
+typedef OnStdin = void Function(SSHSession session);
 
 typedef PwdRequestFunc = Future<String?> Function(String? user);
 
@@ -16,15 +16,15 @@ extension SSHClientX on SSHClient {
   /// TODO: delete [exec]
   Future<SSHSession> exec(
     String cmd, {
-    _OnStdout? onStderr,
-    _OnStdout? onStdout,
-    _OnStdin? stdin,
+    OnStdout? onStderr,
+    OnStdout? onStdout,
+    OnStdin? stdin,
     bool redirectToBash = false, // not working yet. do not use
   }) async {
-    final session = await execute(redirectToBash ? "head -1 | bash" : cmd);
+    final session = await execute(redirectToBash ? 'head -1 | bash' : cmd);
 
     if (redirectToBash) {
-      session.stdin.add("$cmd\n".uint8List);
+      session.stdin.add('$cmd\n'.uint8List);
     }
 
     final stdoutDone = Completer<void>();
@@ -62,9 +62,9 @@ extension SSHClientX on SSHClient {
   Future<int?> execWithPwd(
     String cmd, {
     BuildContext? context,
-    _OnStdout? onStdout,
-    _OnStdout? onStderr,
-    _OnStdin? stdin,
+    OnStdout? onStdout,
+    OnStdout? onStderr,
+    OnStdin? stdin,
     bool redirectToBash = false, // not working yet. do not use
     required String id,
   }) async {

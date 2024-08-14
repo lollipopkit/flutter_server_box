@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/provider.dart';
 
-import '../../data/model/server/ping_result.dart';
+import 'package:server_box/data/model/server/ping_result.dart';
 
 /// Only permit ipv4 / ipv6 / domain chars
 final targetReg = RegExp(r'[a-zA-Z0-9\.-_:]+');

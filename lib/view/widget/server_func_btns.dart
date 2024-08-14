@@ -10,9 +10,9 @@ import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/systemd.dart';
 
-import '../../core/route.dart';
-import '../../core/utils/server.dart';
-import '../../data/model/server/server_private_info.dart';
+import 'package:server_box/core/route.dart';
+import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 
 class ServerFuncBtnsTopRight extends StatelessWidget {
   final ServerPrivateInfo spi;
@@ -196,17 +196,17 @@ void _gotoSSH(ServerPrivateInfo spi, BuildContext context) async {
       await file.delete();
     }
     await file.writeAsString(getPrivateKey(spi.keyId!));
-    extraArgs.addAll(["-i", path]);
+    extraArgs.addAll(['-i', path]);
   }
 
-  final sshCommand = ["ssh", "${spi.user}@${spi.ip}"] + extraArgs;
+  final sshCommand = ['ssh', '${spi.user}@${spi.ip}'] + extraArgs;
   final system = Pfs.type;
   switch (system) {
     case Pfs.windows:
-      await Process.start("cmd", ["/c", "start"] + sshCommand);
+      await Process.start('cmd', ['/c', 'start'] + sshCommand);
       break;
     case Pfs.linux:
-      await Process.start("x-terminal-emulator", ["-e"] + sshCommand);
+      await Process.start('x-terminal-emulator', ['-e'] + sshCommand);
       break;
     default:
       context.showSnackBar('Mismatch system: $system');

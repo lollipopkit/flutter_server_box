@@ -34,9 +34,9 @@ class UpgradePkgInfo {
   }
 
   void _parseApt(String raw) {
-    final split1 = raw.split("/");
+    final split1 = raw.split('/');
     package = split1[0];
-    final split2 = split1[1].split(" ");
+    final split2 = split1[1].split(' ');
     newVersion = split2[1];
     arch = split2[2];
     nowVersion = split2[5].replaceFirst(']', '');
@@ -53,7 +53,7 @@ class UpgradePkgInfo {
   }
 
   void _parseZypper(String raw) {
-    final cols = raw.split("|");
+    final cols = raw.split('|');
     package = cols[2].trim();
     nowVersion = cols[3].trim();
     newVersion = cols[4].trim();

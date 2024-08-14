@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/res/store.dart';
 
-import '../../data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 
 /// Must put this func out of any Class.
 ///

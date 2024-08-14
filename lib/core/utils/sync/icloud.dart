@@ -9,7 +9,7 @@ import 'package:server_box/data/model/app/backup.dart';
 import 'package:server_box/data/model/app/sync.dart';
 import 'package:server_box/data/res/misc.dart';
 
-import '../../../data/model/app/error.dart';
+import 'package:server_box/data/model/app/error.dart';
 
 abstract final class ICloud {
   static const _containerId = 'iCloud.tech.lolli.serverbox';

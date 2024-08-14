@@ -20,18 +20,18 @@ import 'package:server_box/view/page/ssh/page.dart';
 import 'package:server_box/view/page/setting/seq/virt_key.dart';
 import 'package:server_box/view/page/storage/local.dart';
 
-import '../data/model/server/snippet.dart';
-import '../view/page/editor.dart';
-import '../view/page/process.dart';
-import '../view/page/server/edit.dart';
-import '../view/page/server/tab.dart';
-import '../view/page/setting/entry.dart';
-import '../view/page/setting/seq/srv_detail_seq.dart';
-import '../view/page/setting/seq/srv_seq.dart';
-import '../view/page/snippet/edit.dart';
-import '../view/page/snippet/list.dart';
-import '../view/page/storage/sftp.dart';
-import '../view/page/storage/sftp_mission.dart';
+import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/view/page/editor.dart';
+import 'package:server_box/view/page/process.dart';
+import 'package:server_box/view/page/server/edit.dart';
+import 'package:server_box/view/page/server/tab.dart';
+import 'package:server_box/view/page/setting/entry.dart';
+import 'package:server_box/view/page/setting/seq/srv_detail_seq.dart';
+import 'package:server_box/view/page/setting/seq/srv_seq.dart';
+import 'package:server_box/view/page/snippet/edit.dart';
+import 'package:server_box/view/page/snippet/list.dart';
+import 'package:server_box/view/page/storage/sftp.dart';
+import 'package:server_box/view/page/storage/sftp_mission.dart';
 
 class AppRoutes {
   final Widget page;

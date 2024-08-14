@@ -1,7 +1,7 @@
 import 'package:server_box/core/extension/context/locale.dart';
 
-import '../../res/build_data.dart';
-import '../server/system.dart';
+import 'package:server_box/data/res/build_data.dart';
+import 'package:server_box/data/model/server/system.dart';
 
 enum ShellFunc {
   status,
@@ -47,11 +47,11 @@ enum ShellFunc {
   static String getInstallShellCmd(String id) {
     final scriptDir = getScriptDir(id);
     final scriptPath = '$scriptDir/$scriptFile';
-    return """
+    return '''
 mkdir -p $scriptDir
 cat > $scriptPath
 chmod 744 $scriptPath
-""";
+''';
   }
 
   String get flag => switch (this) {

@@ -59,7 +59,7 @@ final class UnixPermEditor extends StatefulWidget {
       {super.key, required this.perm, required this.onChanged});
 
   @override
-  _UnixPermEditorState createState() => _UnixPermEditorState();
+  State<UnixPermEditor> createState() => _UnixPermEditorState();
 }
 
 final class _UnixPermEditorState extends State<UnixPermEditor> {
