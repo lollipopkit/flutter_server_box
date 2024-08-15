@@ -4,7 +4,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/server.dart';
-import 'package:server_box/data/res/provider.dart';
+import 'package:server_box/data/provider/snippet.dart';
 
 class SnippetEditPage extends StatefulWidget {
   const SnippetEditPage({super.key, this.snippet});
@@ -56,7 +56,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
             )),
             actions: Btn.ok(
               onTap: () {
-                Pros.snippet.del(widget.snippet!);
+                SnippetProvider.del(widget.snippet!);
                 context.pop();
                 context.pop();
               },
@@ -90,9 +90,9 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           autoRunOn: _autoRunOn.value.isEmpty ? null : _autoRunOn.value,
         );
         if (widget.snippet != null) {
-          Pros.snippet.update(widget.snippet!, snippet);
+          SnippetProvider.update(widget.snippet!, snippet);
         } else {
-          Pros.snippet.add(snippet);
+          SnippetProvider.add(snippet);
         }
         context.pop();
       },
@@ -121,7 +121,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           icon: Icons.note,
           suggestion: true,
         ),
-        TagTile(tags: _tags, allTags: Pros.snippet.tags.value).cardx,
+        TagTile(tags: _tags, allTags: SnippetProvider.tags.value).cardx,
         Input(
           controller: _scriptController,
           node: _scriptNode,

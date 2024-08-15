@@ -5,7 +5,6 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/sftp/worker.dart';
 import 'package:server_box/data/provider/sftp.dart';
-import 'package:server_box/data/res/provider.dart';
 
 class SftpMissionPage extends StatefulWidget {
   const SftpMissionPage({super.key});

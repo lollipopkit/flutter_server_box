@@ -1,6 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:server_box/data/res/store.dart';
 
 import 'package:server_box/data/model/server/snippet.dart';
@@ -38,13 +37,13 @@ class _SnippetListPageState extends State<SnippetListPage> {
   }
 
   Widget _buildBody() {
-    return Consumer<SnippetProvider>(
-      builder: (_, provider, __) {
-        if (provider.snippets.isEmpty) {
+    return SnippetProvider.snippets.listenVal(
+      (snippets) {
+        if (snippets.isEmpty) {
           return Center(child: Text(libL10n.empty));
         }
 
-        final filtered = provider.snippets
+        final filtered = snippets
             .where((e) => _tag == null || (e.tags?.contains(_tag) ?? false))
             .toList();
 
@@ -52,7 +51,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
           padding: const EdgeInsets.symmetric(horizontal: 11),
           itemCount: filtered.length,
           onReorder: (oldIdx, newIdx) => setState(() {
-            provider.snippets.moveByItem(
+            snippets.moveByItem(
               oldIdx,
               newIdx,
               filtered: filtered,
@@ -62,7 +61,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
             );
           }),
           header: TagSwitcher(
-            tags: provider.tags,
+            tags: SnippetProvider.tags,
             onTagChanged: (tag) => setState(() => _tag = tag),
             initTag: _tag,
             width: _media.size.width,

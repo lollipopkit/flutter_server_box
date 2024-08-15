@@ -5,8 +5,8 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/res/provider.dart';
 
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
@@ -89,7 +89,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
             )),
             actions: Btn.ok(
               onTap: () {
-                Pros.key.delete(widget.pki!);
+                PrivateKeyProvider.delete(widget.pki!);
                 context.pop();
                 context.pop();
               },
@@ -204,9 +204,9 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
       final decrypted = await Computer.shared.start(decyptPem, [key, pwd]);
       final pki = PrivateKeyInfo(id: name, key: decrypted);
       if (widget.pki != null) {
-        Pros.key.update(widget.pki!, pki);
+        PrivateKeyProvider.update(widget.pki!, pki);
       } else {
-        Pros.key.add(pki);
+        PrivateKeyProvider.add(pki);
       }
     } catch (e) {
       context.showSnackBar(e.toString());

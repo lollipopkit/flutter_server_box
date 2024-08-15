@@ -3,12 +3,10 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:provider/provider.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/provider/server.dart';
-import 'package:server_box/data/res/provider.dart';
 
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -220,10 +218,10 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
 
   Widget _buildKeyAuth() {
     const padding = EdgeInsets.only(left: 23, right: 13);
-    return Consumer<PrivateKeyProvider>(
-      builder: (_, key, __) {
-        final tiles = List<Widget>.generate(key.pkis.length, (index) {
-          final e = key.pkis[index];
+    return PrivateKeyProvider.pkis.listenVal(
+      (pkis) {
+        final tiles = List<Widget>.generate(pkis.length, (index) {
+          final e = pkis[index];
           return ListTile(
             contentPadding: padding,
             leading: Text(
@@ -545,7 +543,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       user: _usernameController.text,
       pwd: _passwordController.text.selfIfNotNullEmpty,
       keyId: _keyIdx.value != null
-          ? Pros.key.pkis.elementAt(_keyIdx.value!).id
+          ? PrivateKeyProvider.pkis.value.elementAt(_keyIdx.value!).id
           : null,
       tags: _tags.value.isEmpty ? null : _tags.value.toList(),
       alterUrl: _altUrlController.text.selfIfNotNullEmpty,
@@ -581,7 +579,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     if (spi.keyId == null) {
       _passwordController.text = spi.pwd ?? '';
     } else {
-      _keyIdx.value = Pros.key.pkis.indexWhere(
+      _keyIdx.value = PrivateKeyProvider.pkis.value.indexWhere(
         (e) => e.id == widget.spi!.keyId,
       );
     }

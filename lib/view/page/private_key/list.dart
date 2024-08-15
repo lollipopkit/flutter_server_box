@@ -3,7 +3,6 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -35,16 +34,16 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
   }
 
   Widget _buildBody() {
-    return PrivateKeyProvider.pkis.(
+    return PrivateKeyProvider.pkis.listenVal(
       (pkis) {
-        if (key.pkis.isEmpty) {
+        if (pkis.isEmpty) {
           return Center(child: Text(libL10n.empty));
         }
         return ListView.builder(
           padding: const EdgeInsets.all(13),
-          itemCount: key.pkis.length,
+          itemCount: pkis.length,
           itemBuilder: (context, idx) {
-            final item = key.pkis[idx];
+            final item = pkis[idx];
             return CardX(
               child: ListTile(
                 leading: Text(

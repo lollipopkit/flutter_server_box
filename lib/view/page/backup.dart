@@ -10,8 +10,8 @@ import 'package:server_box/core/utils/sync/webdav.dart';
 import 'package:server_box/data/model/app/backup.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:icons_plus/icons_plus.dart';
 
@@ -266,7 +266,7 @@ class BackupPage extends StatelessWidget {
           actions: Btn.ok(
             onTap: () {
               for (final snippet in snippets) {
-                Pros.snippet.add(snippet);
+                SnippetProvider.add(snippet);
               }
               context.pop();
               context.pop();

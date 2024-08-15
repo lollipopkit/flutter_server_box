@@ -333,7 +333,6 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
       );
     }
     HomeWidgetMC.update();
-    await ServerProvider.load();
     await ServerProvider.refresh();
   }
 

@@ -7,7 +7,7 @@ import 'package:server_box/data/model/app/menu/base.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/server.dart';
-import 'package:server_box/data/res/provider.dart';
+import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/systemd.dart';
 
@@ -105,16 +105,16 @@ void _onTapMoreBtns(
       );
       break;
     case ServerFuncBtn.snippet:
-      if (Pros.snippet.snippets.isEmpty) {
+      if (SnippetProvider.snippets.value.isEmpty) {
         context.showSnackBar(libL10n.empty);
         return;
       }
       final snippets = await context.showPickWithTagDialog<Snippet>(
         title: l10n.snippet,
-        tags: Pros.snippet.tags,
+        tags: SnippetProvider.tags,
         itemsBuilder: (e) {
-          if (e == null) return Pros.snippet.snippets;
-          return Pros.snippet.snippets
+          if (e == null) return SnippetProvider.snippets.value;
+          return SnippetProvider.snippets.value
               .where((element) => element.tags?.contains(e) ?? false)
               .toList();
         },
