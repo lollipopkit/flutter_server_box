@@ -54,9 +54,9 @@ final class _SystemdPageState extends State<SystemdPage> {
             (isBusy) => AnimatedContainer(
               duration: Durations.medium1,
               curve: Curves.fastEaseInToSlowEaseOut,
-              height: isBusy ? 50 : 0,
+              height: isBusy ? 30 : 0,
               child: isBusy
-                  ? UIs.centerSizedLoadingSmall.paddingOnly(bottom: 7)
+                  ? SizedLoading.centerSmall.paddingOnly(bottom: 7)
                   : const SizedBox.shrink(),
             ),
           ),
@@ -71,8 +71,7 @@ final class _SystemdPageState extends State<SystemdPage> {
       (units) {
         if (units.isEmpty) {
           return SliverToBoxAdapter(
-            child: ListTile(title: Text(libL10n.empty))
-                .cardx
+            child: CenterGreyTitle(libL10n.empty)
                 .paddingSymmetric(horizontal: 13),
           );
         }
@@ -103,7 +102,7 @@ final class _SystemdPageState extends State<SystemdPage> {
     return PopupMenu(
       items: unit.availableFuncs.map(_buildUnitFuncBtn).toList(),
       onSelected: (val) async {
-        final cmd = unit.getCmd(func: val, isRoot: _pro.isRoot.value);
+        final cmd = unit.getCmd(func: val, isRoot: _pro.isRoot);
         final sure = await context.showRoundDialog(
           title: libL10n.attention,
           child: SimpleMarkdown(data: '```shell\n$cmd\n```'),

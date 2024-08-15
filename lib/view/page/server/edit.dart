@@ -606,7 +606,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     _tags.value = spi.tags?.toSet() ?? {};
 
     _altUrlController.text = spi.alterUrl ?? '';
-    _autoConnect.value = spi.autoConnect ?? true;
+    _autoConnect.value = spi.autoConnect;
     _jumpServer.value = spi.jumpId;
 
     final custom = spi.custom;

@@ -8,28 +8,27 @@ import 'package:server_box/data/res/provider.dart';
 
 final class SystemdProvider {
   late final SSHClient _client;
+  late final bool isRoot;
 
   SystemdProvider.init(ServerPrivateInfo spi) {
+    isRoot = spi.isRoot;
     _client = Pros.server.pick(spi: spi)!.client!;
     getUnits();
   }
 
   final isBusy = false.vn;
-  final isRoot = false.vn;
   final units = <SystemdUnit>[].vn;
 
   Future<void> getUnits() async {
     isBusy.value = true;
 
     try {
-      final result = await _client.runScriptIn(_getUnitsCmd);
+      final result = await _client.execForOutput(_getUnitsCmd);
       final units = result.split('\n');
-      final isRootRaw = units.firstOrNull;
-      isRoot.value = isRootRaw == '0';
 
       final userUnits = <String>[];
       final systemUnits = <String>[];
-      for (final unit in units.skip(1)) {
+      for (final unit in units) {
         if (unit.startsWith('/etc/systemd/system')) {
           systemUnits.add(unit);
         } else if (unit.startsWith('~/.config/systemd/user')) {
@@ -64,7 +63,7 @@ for unit in ${unitNames_.join(' ')}; do
   echo -n "${ShellFunc.seperator}\n\$state"
 done
 ''';
-    final result = await _client.runScriptIn(script);
+    final result = await _client.execForOutput(script);
     final units = result.split(ShellFunc.seperator);
 
     final parsedUnits = <SystemdUnit>[];
@@ -124,17 +123,8 @@ done
     });
     return parsedUnits;
   }
-}
 
-String _getIniVal(String line) {
-  return line.split('=').last;
-}
-
-const _getUnitsCmd = '''
-# If root, get system & user units, otherwise get user units
-uid=\$(id -u)
-echo \$uid
-
+  late final _getUnitsCmd = '''
 get_files() {
   unit_type=\$1
   base_dir=\$2
@@ -149,14 +139,12 @@ get_files() {
 
 get_type_files() {
     unit_type=\$1
-
     base_dir=""
-    if [ "\$uid" -eq 0 ]; then
-        get_files \$unit_type /etc/systemd/system
-        get_files \$unit_type ~/.config/systemd/user
-    else
-        get_files \$unit_type ~/.config/systemd/user
-    fi
+
+${isRoot ? """
+get_files \$unit_type /etc/systemd/system
+get_files \$unit_type ~/.config/systemd/user""" : """
+get_files \$unit_type ~/.config/systemd/user"""}
 }
 
 types="service socket mount timer"
@@ -165,3 +153,8 @@ for type in \$types; do
     get_type_files \$type
 done
 ''';
+}
+
+String _getIniVal(String line) {
+  return line.split('=').last;
+}

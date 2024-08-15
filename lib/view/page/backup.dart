@@ -156,9 +156,8 @@ class BackupPage extends StatelessWidget {
             trailing: ListenableBuilder(
               listenable: webdavLoading,
               builder: (_, __) {
-                if (webdavLoading.value) {
-                  return UIs.centerSizedLoadingSmall;
-                }
+                if (webdavLoading.value) return SizedLoading.centerSmall;
+
                 return Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

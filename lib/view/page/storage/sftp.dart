@@ -64,24 +64,22 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   }
 
   Widget _buildSortMenu() {
+    final options = [
+      (_SortType.name, libL10n.name),
+      (_SortType.size, l10n.size),
+      (_SortType.time, l10n.time),
+    ];
     return ValBuilder(
       listenable: _sortOption,
       builder: (value) {
         return PopupMenuButton<_SortType>(
           icon: const Icon(Icons.sort),
           itemBuilder: (context) {
-            final currentSelectedOption = _sortOption.value;
-            final options = [
-              (_SortType.name, libL10n.name),
-              (_SortType.size, l10n.size),
-              (_SortType.time, l10n.time),
-            ];
             return options.map((r) {
               final (type, name) = r;
-              final selected = type == currentSelectedOption.sortBy;
-              final title = selected
-                  ? "$name (${currentSelectedOption.reversed ? '-' : '+'})"
-                  : name;
+              final selected = type == value.sortBy;
+              final title =
+                  selected ? "$name (${value.reversed ? '-' : '+'})" : name;
               return PopupMenuItem(
                 value: type,
                 child: Text(
@@ -607,7 +605,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         /// Issue #97
         /// In order to compatible with the Synology NAS
         /// which not has '.' and '..' in listdir
-        if (fs.isNotEmpty && fs.firstOrNull?.filename == '.') {
+        if (fs.firstOrNull?.filename == '.') {
           fs.removeAt(0);
         }
 

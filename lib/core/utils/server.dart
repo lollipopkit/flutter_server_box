@@ -95,8 +95,8 @@ Future<SSHClient> genClient(
       try {
         final ipPort = spi.fromStringUrl();
         return await SSHSocket.connect(
-          ipPort.ip,
-          ipPort.port,
+          ipPort.$1,
+          ipPort.$2,
           timeout: timeout,
         );
       } catch (e) {

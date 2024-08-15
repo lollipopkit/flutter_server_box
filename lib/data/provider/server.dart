@@ -34,7 +34,7 @@ class ServerProvider extends ChangeNotifier {
   final _manualDisconnectedIds = <String>{};
 
   Future<void> load() async {
-    // Issue #147
+    // #147
     // Clear all servers because of restarting app will cause duplicate servers
     final oldServers = Map<String, Server>.from(_servers);
     _servers.clear();
@@ -46,7 +46,7 @@ class ServerProvider extends ChangeNotifier {
       final originServer = oldServers[spi.id];
       final newServer = genServer(spi);
 
-      /// Issues #258
+      /// #258
       /// If not [shouldReconnect], then keep the old state.
       if (originServer != null && !originServer.spi.shouldReconnect(spi)) {
         newServer.conn = originServer.conn;
@@ -112,20 +112,20 @@ class ServerProvider extends ChangeNotifier {
       return;
     }
 
-    await Future.wait(_servers.values.map((s) => _connectFn(s, onlyFailed)));
-  }
+    await Future.wait(_servers.values.map((s) async {
+      if (onlyFailed) {
+        if (s.conn != ServerConn.failed) return;
+        TryLimiter.reset(s.spi.id);
+      }
 
-  Future<void> _connectFn(Server s, bool onlyFailed) async {
-    if (onlyFailed) {
-      if (s.conn != ServerConn.failed) return;
-      TryLimiter.reset(s.spi.id);
-    }
+      if (_manualDisconnectedIds.contains(s.spi.id)) return;
 
-    if (!(s.spi.autoConnect ?? true) && s.conn == ServerConn.disconnected ||
-        _manualDisconnectedIds.contains(s.spi.id)) {
-      return;
-    }
-    return await _getData(s.spi);
+      if (s.conn == ServerConn.disconnected && !s.spi.autoConnect) {
+        return;
+      }
+
+      return await _getData(s.spi);
+    }));
   }
 
   Future<void> startAutoRefresh() async {
@@ -301,16 +301,16 @@ class ServerProvider extends ChangeNotifier {
       final scriptRaw = ShellFunc.allScript(spi.custom?.cmds).uint8List;
 
       try {
-        final writeScriptResult = await s.client!.runForOutput(
-          ShellFunc.getInstallShellCmd(spi.id),
-          action: (session) async {
+        final (_, writeScriptResult) = await s.client!.exec(
+          (session) async {
             session.stdin.add(scriptRaw);
             session.stdin.close();
           },
+          entry: ShellFunc.getInstallShellCmd(spi.id),
         );
         if (writeScriptResult.isNotEmpty) {
           ShellFunc.switchScriptDir(spi.id);
-          throw String.fromCharCodes(writeScriptResult);
+          throw writeScriptResult;
         }
       } on SSHAuthAbortError catch (e) {
         TryLimiter.inc(sid);

@@ -25,7 +25,7 @@ class ServerPrivateInfoAdapter extends TypeAdapter<ServerPrivateInfo> {
       keyId: fields[5] as String?,
       tags: (fields[6] as List?)?.cast<String>(),
       alterUrl: fields[7] as String?,
-      autoConnect: fields[8] as bool?,
+      autoConnect: fields[8] == null ? true : fields[8] as bool,
       jumpId: fields[9] as String?,
       custom: fields[10] as ServerCustom?,
       wolCfg: fields[11] as WakeOnLanCfg?,

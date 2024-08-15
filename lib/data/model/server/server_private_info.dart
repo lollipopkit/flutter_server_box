@@ -31,8 +31,8 @@ class ServerPrivateInfo {
   final List<String>? tags;
   @HiveField(7)
   final String? alterUrl;
-  @HiveField(8)
-  final bool? autoConnect;
+  @HiveField(8, defaultValue: true)
+  final bool autoConnect;
 
   /// [id] of the jump server
   @HiveField(9)
@@ -59,7 +59,7 @@ class ServerPrivateInfo {
     this.keyId,
     this.tags,
     this.alterUrl,
-    this.autoConnect,
+    this.autoConnect = true,
     this.jumpId,
     this.custom,
     this.wolCfg,
@@ -75,7 +75,7 @@ class ServerPrivateInfo {
     final keyId = json['pubKeyId'] as String?;
     final tags = (json['tags'] as List?)?.cast<String>();
     final alterUrl = json['alterUrl'] as String?;
-    final autoConnect = json['autoConnect'] as bool?;
+    final autoConnect = json['autoConnect'] as bool? ?? true;
     final jumpId = json['jumpId'] as String?;
     final custom = json['customCmd'] == null
         ? null
@@ -128,9 +128,7 @@ class ServerPrivateInfo {
     if (alterUrl != null) {
       data['alterUrl'] = alterUrl;
     }
-    if (autoConnect != null) {
-      data['autoConnect'] = autoConnect;
-    }
+    data['autoConnect'] = autoConnect;
     if (jumpId != null) {
       data['jumpId'] = jumpId;
     }
@@ -160,7 +158,7 @@ class ServerPrivateInfo {
         custom?.cmds != old.custom?.cmds;
   }
 
-  IpPort fromStringUrl() {
+  (String, int) fromStringUrl() {
     if (alterUrl == null) {
       throw SSHErr(type: SSHErrType.connect, message: 'alterUrl is null');
     }
@@ -177,7 +175,7 @@ class ServerPrivateInfo {
     if (port <= 0 || port > 65535) {
       throw SSHErr(type: SSHErrType.connect, message: 'alterUrl port error');
     }
-    return IpPort(ip_, port_);
+    return (ip_, port_);
   }
 
   @override
@@ -206,11 +204,6 @@ class ServerPrivateInfo {
       logoUrl: 'https://example.com/logo.png',
     ),
   );
-}
 
-class IpPort {
-  final String ip;
-  final int port;
-
-  IpPort(this.ip, this.port);
+  bool get isRoot => user == 'root';
 }
