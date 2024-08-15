@@ -8,7 +8,7 @@ import 'package:server_box/data/provider/app.dart';
 
 abstract final class KeybordInteractive {
   static FutureOr<List<String>?> defaultHandle(
-    ServerPrivateInfo spi, {
+    Spi spi, {
     BuildContext? ctx,
   }) async {
     try {

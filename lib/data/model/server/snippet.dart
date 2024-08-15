@@ -48,7 +48,7 @@ class Snippet implements TagPickable {
 
   static final fmtFinder = RegExp(r'\$\{[^{}]+\}');
 
-  String fmtWithSpi(ServerPrivateInfo spi) {
+  String fmtWithSpi(Spi spi) {
     return script.replaceAllMapped(
       fmtFinder,
       (match) {
@@ -63,7 +63,7 @@ class Snippet implements TagPickable {
 
   Future<void> runInTerm(
     Terminal terminal,
-    ServerPrivateInfo spi, {
+    Spi spi, {
     bool autoEnter = false,
   }) async {
     final argsFmted = fmtWithSpi(spi);
@@ -159,12 +159,12 @@ class Snippet implements TagPickable {
   }
 
   static final fmtArgs = {
-    r'${host}': (ServerPrivateInfo spi) => spi.ip,
-    r'${port}': (ServerPrivateInfo spi) => spi.port.toString(),
-    r'${user}': (ServerPrivateInfo spi) => spi.user,
-    r'${pwd}': (ServerPrivateInfo spi) => spi.pwd ?? '',
-    r'${id}': (ServerPrivateInfo spi) => spi.id,
-    r'${name}': (ServerPrivateInfo spi) => spi.name,
+    r'${host}': (Spi spi) => spi.ip,
+    r'${port}': (Spi spi) => spi.port.toString(),
+    r'${user}': (Spi spi) => spi.user,
+    r'${pwd}': (Spi spi) => spi.pwd ?? '',
+    r'${id}': (Spi spi) => spi.id,
+    r'${name}': (Spi spi) => spi.name,
   };
 
   /// r'${ctrl+ad}' -> TerminalKey.control, a, d

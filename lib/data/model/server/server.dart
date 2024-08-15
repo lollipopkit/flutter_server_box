@@ -15,7 +15,7 @@ import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/temp.dart';
 
 class Server implements TagPickable {
-  ServerPrivateInfo spi;
+  Spi spi;
   ServerStatus status;
   SSHClient? client;
   ServerConn conn;

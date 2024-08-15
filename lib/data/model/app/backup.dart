@@ -7,8 +7,8 @@ import 'package:logging/logging.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/data/provider/base.dart';
 import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/data/res/rebuild.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -23,7 +23,7 @@ class Backup {
   // backup format version
   final int version;
   final String date;
-  final List<ServerPrivateInfo> spis;
+  final List<Spi> spis;
   final List<Snippet> snippets;
   final List<PrivateKeyInfo> keys;
   final Map<String, dynamic> container;
@@ -177,7 +177,7 @@ class Backup {
       }
     }
 
-    Pros.reload();
+    Provider.reload();
     RNodes.app.notify();
 
     _logger.info('Restore success');

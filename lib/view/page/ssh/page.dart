@@ -11,8 +11,8 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/provider/virtual_keyboard.dart';
-import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:xterm/core.dart';
@@ -26,7 +26,7 @@ import 'package:server_box/data/res/terminal.dart';
 const _echoPWD = 'echo \$PWD';
 
 class SSHPage extends StatefulWidget {
-  final ServerPrivateInfo spi;
+  final Spi spi;
   final String? initCmd;
   final Snippet? initSnippet;
   final bool notFromTab;
@@ -68,7 +68,7 @@ class SSHPageState extends State<SSHPage>
 
   bool _isDark = false;
   Timer? _virtKeyLongPressTimer;
-  late SSHClient? _client = widget.spi.server?.client;
+  late SSHClient? _client = widget.spi.server?.value.client;
   Timer? _discontinuityTimer;
 
   @override
@@ -298,10 +298,10 @@ class SSHPageState extends State<SSHPage>
       case VirtualKeyFunc.snippet:
         final snippets = await context.showPickWithTagDialog<Snippet>(
           title: l10n.snippet,
-          tags: Pros.snippet.tags,
+          tags: SnippetProvider.tags,
           itemsBuilder: (e) {
-            if (e == null) return Pros.snippet.snippets;
-            return Pros.snippet.snippets
+            if (e == null) return SnippetProvider.snippets.value;
+            return SnippetProvider.snippets.value
                 .where((element) => element.tags?.contains(e) ?? false)
                 .toList();
           },
@@ -417,7 +417,7 @@ class SSHPageState extends State<SSHPage>
 
     _initService();
 
-    for (final snippet in Pros.snippet.snippets) {
+    for (final snippet in SnippetProvider.snippets.value) {
       if (snippet.autoRunOn?.contains(widget.spi.id) == true) {
         snippet.runInTerm(_terminal, widget.spi);
       }

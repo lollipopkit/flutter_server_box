@@ -6,7 +6,8 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/menu/base.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/server/snippet.dart';
-import 'package:server_box/data/res/provider.dart';
+import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/systemd.dart';
 
@@ -15,7 +16,7 @@ import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
 class ServerFuncBtnsTopRight extends StatelessWidget {
-  final ServerPrivateInfo spi;
+  final Spi spi;
 
   const ServerFuncBtnsTopRight({
     super.key,
@@ -40,7 +41,7 @@ class ServerFuncBtns extends StatelessWidget {
     required this.spi,
   });
 
-  final ServerPrivateInfo spi;
+  final Spi spi;
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +91,7 @@ class ServerFuncBtns extends StatelessWidget {
 
 void _onTapMoreBtns(
   ServerFuncBtn value,
-  ServerPrivateInfo spi,
+  Spi spi,
   BuildContext context,
 ) async {
   switch (value) {
@@ -104,16 +105,16 @@ void _onTapMoreBtns(
       );
       break;
     case ServerFuncBtn.snippet:
-      if (Pros.snippet.snippets.isEmpty) {
+      if (SnippetProvider.snippets.value.isEmpty) {
         context.showSnackBar(libL10n.empty);
         return;
       }
       final snippets = await context.showPickWithTagDialog<Snippet>(
         title: l10n.snippet,
-        tags: Pros.snippet.tags,
+        tags: SnippetProvider.tags,
         itemsBuilder: (e) {
-          if (e == null) return Pros.snippet.snippets;
-          return Pros.snippet.snippets
+          if (e == null) return SnippetProvider.snippets.value;
+          return SnippetProvider.snippets.value
               .where((element) => element.tags?.contains(e) ?? false)
               .toList();
         },
@@ -172,7 +173,7 @@ void _onTapMoreBtns(
   }
 }
 
-void _gotoSSH(ServerPrivateInfo spi, BuildContext context) async {
+void _gotoSSH(Spi spi, BuildContext context) async {
   // run built-in ssh on macOS due to incompatibility
   if (isMobile || isMacOS) {
     AppRoutes.ssh(spi: spi).go(context);
@@ -219,7 +220,7 @@ void _gotoSSH(ServerPrivateInfo spi, BuildContext context) async {
 }
 
 bool _checkClient(BuildContext context, String id) {
-  final server = Pros.server.pick(id: id);
+  final server = ServerProvider.pick(id: id)?.value;
   if (server == null || server.client == null) {
     context.showSnackBar(l10n.waitConnection);
     return false;

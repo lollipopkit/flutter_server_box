@@ -1,38 +1,42 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/sftp/worker.dart';
+import 'package:server_box/data/provider/base.dart';
 
-class SftpProvider extends ChangeNotifier {
-  final List<SftpReqStatus> _status = [];
-  List<SftpReqStatus> get status => _status;
+class SftpProvider extends Provider {
+  const SftpProvider._();
+  static const instance = SftpProvider._();
 
-  SftpReqStatus? get(int id) {
-    return _status.singleWhere((element) => element.id == id);
+  static final status = <SftpReqStatus>[].vn;
+
+  static SftpReqStatus? get(int id) {
+    return status.value.singleWhere((element) => element.id == id);
   }
 
-  int add(SftpReq req, {Completer? completer}) {
-    final status = SftpReqStatus(
-      notifyListeners: notifyListeners,
+  static int add(SftpReq req, {Completer? completer}) {
+    final reqStat = SftpReqStatus(
+      notifyListeners: status.notify,
       completer: completer,
       req: req,
     );
-    _status.add(status);
-    return status.id;
+    status.value.add(reqStat);
+    status.notify();
+    return reqStat.id;
   }
 
-  @override
-  void dispose() {
-    for (final item in _status) {
+  static void dispose() {
+    for (final item in status.value) {
       item.dispose();
     }
-    super.dispose();
+    status.value.clear();
+    status.notify();
   }
 
-  void cancel(int id) {
-    final idx = _status.indexWhere((element) => element.id == id);
-    _status[idx].dispose();
-    _status.removeAt(idx);
-    notifyListeners();
+  static void cancel(int id) {
+    final idx = status.value.indexWhere((e) => e.id == id);
+    status.value[idx].dispose();
+    status.value.removeAt(idx);
+    status.notify();
   }
 }

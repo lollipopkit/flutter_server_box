@@ -11,7 +11,7 @@ import 'package:server_box/view/widget/percent_circle.dart';
 import 'package:server_box/view/widget/two_line_text.dart';
 
 final class PvePage extends StatefulWidget {
-  final ServerPrivateInfo spi;
+  final Spi spi;
 
   const PvePage({
     super.key,

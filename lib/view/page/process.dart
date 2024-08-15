@@ -12,7 +12,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/view/widget/two_line_text.dart';
 
 class ProcessPage extends StatefulWidget {
-  final ServerPrivateInfo spi;
+  final Spi spi;
   const ProcessPage({super.key, required this.spi});
 
   @override
@@ -37,7 +37,7 @@ class _ProcessPageState extends State<ProcessPage> {
   @override
   void initState() {
     super.initState();
-    _client = widget.spi.server?.client;
+    _client = widget.spi.server?.value.client;
     final duration =
         Duration(seconds: Stores.setting.serverStatusUpdateInterval.fetch());
     _timer = Timer.periodic(duration, (_) => _refresh());

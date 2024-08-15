@@ -1,35 +1,40 @@
-import 'package:flutter/material.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
+import 'package:server_box/data/provider/base.dart';
 import 'package:server_box/data/res/store.dart';
 
-class PrivateKeyProvider extends ChangeNotifier {
-  List<PrivateKeyInfo> get pkis => _pkis;
-  late List<PrivateKeyInfo> _pkis;
+class PrivateKeyProvider extends Provider {
+  const PrivateKeyProvider._();
+  static const instance = PrivateKeyProvider._();
 
+  static final pkis = <PrivateKeyInfo>[].vn;
+
+  @override
   void load() {
-    _pkis = Stores.key.fetch();
+    super.load();
+    pkis.value = Stores.key.fetch();
   }
 
-  void add(PrivateKeyInfo info) {
-    _pkis.add(info);
+  static void add(PrivateKeyInfo info) {
+    pkis.value.add(info);
+    pkis.notify();
     Stores.key.put(info);
-    notifyListeners();
   }
 
-  void delete(PrivateKeyInfo info) {
-    _pkis.removeWhere((e) => e.id == info.id);
+  static void delete(PrivateKeyInfo info) {
+    pkis.value.removeWhere((e) => e.id == info.id);
+    pkis.notify();
     Stores.key.delete(info);
-    notifyListeners();
   }
 
-  void update(PrivateKeyInfo old, PrivateKeyInfo newInfo) {
-    final idx = _pkis.indexWhere((e) => e.id == old.id);
+  static void update(PrivateKeyInfo old, PrivateKeyInfo newInfo) {
+    final idx = pkis.value.indexWhere((e) => e.id == old.id);
     if (idx == -1) {
-      _pkis.add(newInfo);
+      pkis.value.add(newInfo);
     } else {
-      _pkis[idx] = newInfo;
+      pkis.value[idx] = newInfo;
     }
+    pkis.notify();
     Stores.key.put(newInfo);
-    notifyListeners();
   }
 }

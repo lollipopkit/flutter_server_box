@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/res/provider.dart';
+import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/res/store.dart';
 
 class ServerOrderPage extends StatefulWidget {
@@ -45,24 +45,28 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
   }
 
   Widget _buildBody() {
-    if (Pros.server.serverOrder.isEmpty) {
-      return Center(child: Text(libL10n.empty));
-    }
-    return ReorderableListView.builder(
-      footer: const SizedBox(height: 77),
-      onReorder: (oldIndex, newIndex) => setState(() {
-        Pros.server.serverOrder.move(
-          oldIndex,
-          newIndex,
-          property: Stores.setting.serverOrder,
-        );
-      }),
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-      buildDefaultDragHandles: false,
-      itemBuilder: (_, idx) => _buildItem(idx),
-      itemCount: Pros.server.serverOrder.length,
-      proxyDecorator: _proxyDecorator,
-    );
+    final orderNode = ServerProvider.serverOrder;
+    return orderNode.listenVal((order) {
+      if (order.isEmpty) {
+        return Center(child: Text(libL10n.empty));
+      }
+      return ReorderableListView.builder(
+        footer: const SizedBox(height: 77),
+        onReorder: (oldIndex, newIndex) => setState(() {
+          orderNode.value.move(
+            oldIndex,
+            newIndex,
+            property: Stores.setting.serverOrder,
+          );
+          orderNode.notify();
+        }),
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        buildDefaultDragHandles: false,
+        itemBuilder: (_, idx) => _buildItem(idx),
+        itemCount: order.length,
+        proxyDecorator: _proxyDecorator,
+      );
+    });
   }
 
   Widget _buildItem(int index) {
@@ -74,8 +78,8 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
   }
 
   Widget _buildCardTile(int index) {
-    final id = Pros.server.serverOrder[index];
-    final spi = Pros.server.pick(id: id)?.spi;
+    final id = ServerProvider.serverOrder.value[index];
+    final spi = ServerProvider.pick(id: id)?.value.spi;
     if (spi == null) {
       return const SizedBox();
     }

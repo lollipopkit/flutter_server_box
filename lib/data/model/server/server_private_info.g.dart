@@ -6,17 +6,17 @@ part of 'server_private_info.dart';
 // TypeAdapterGenerator
 // **************************************************************************
 
-class ServerPrivateInfoAdapter extends TypeAdapter<ServerPrivateInfo> {
+class SpiAdapter extends TypeAdapter<Spi> {
   @override
   final int typeId = 3;
 
   @override
-  ServerPrivateInfo read(BinaryReader reader) {
+  Spi read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return ServerPrivateInfo(
+    return Spi(
       name: fields[0] as String,
       ip: fields[1] as String,
       port: fields[2] as int,
@@ -34,7 +34,7 @@ class ServerPrivateInfoAdapter extends TypeAdapter<ServerPrivateInfo> {
   }
 
   @override
-  void write(BinaryWriter writer, ServerPrivateInfo obj) {
+  void write(BinaryWriter writer, Spi obj) {
     writer
       ..writeByte(13)
       ..writeByte(0)
@@ -71,7 +71,7 @@ class ServerPrivateInfoAdapter extends TypeAdapter<ServerPrivateInfo> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is ServerPrivateInfoAdapter &&
+      other is SpiAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
@@ -80,8 +80,7 @@ class ServerPrivateInfoAdapter extends TypeAdapter<ServerPrivateInfo> {
 // JsonSerializableGenerator
 // **************************************************************************
 
-ServerPrivateInfo _$ServerPrivateInfoFromJson(Map<String, dynamic> json) =>
-    ServerPrivateInfo(
+Spi _$SpiFromJson(Map<String, dynamic> json) => Spi(
       name: json['name'] as String,
       ip: json['ip'] as String,
       port: (json['port'] as num).toInt(),
@@ -103,8 +102,7 @@ ServerPrivateInfo _$ServerPrivateInfoFromJson(Map<String, dynamic> json) =>
       ),
     );
 
-Map<String, dynamic> _$ServerPrivateInfoToJson(ServerPrivateInfo instance) =>
-    <String, dynamic>{
+Map<String, dynamic> _$SpiToJson(Spi instance) => <String, dynamic>{
       'name': instance.name,
       'ip': instance.ip,
       'port': instance.port,

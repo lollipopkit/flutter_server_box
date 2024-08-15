@@ -42,7 +42,7 @@ String getPrivateKey(String id) {
 }
 
 Future<SSHClient> genClient(
-  ServerPrivateInfo spi, {
+  Spi spi, {
   void Function(GenSSHClientStatus)? onStatus,
 
   /// Only pass this param if using multi-threading and key login
@@ -52,10 +52,10 @@ Future<SSHClient> genClient(
   String? jumpPrivateKey,
   Duration timeout = const Duration(seconds: 5),
 
-  /// [ServerPrivateInfo] of the jump server
+  /// [Spi] of the jump server
   ///
   /// Must pass this param if using multi-threading and key login
-  ServerPrivateInfo? jumpSpi,
+  Spi? jumpSpi,
 
   /// Handle keyboard-interactive authentication
   FutureOr<List<String>?> Function(SSHUserInfoRequest)? onKeyboardInteractive,

@@ -1,12 +1,12 @@
 part of 'worker.dart';
 
 class SftpReq {
-  final ServerPrivateInfo spi;
+  final Spi spi;
   final String remotePath;
   final String localPath;
   final SftpReqType type;
   String? privateKey;
-  ServerPrivateInfo? jumpSpi;
+  Spi? jumpSpi;
   String? jumpPrivateKey;
 
   SftpReq(

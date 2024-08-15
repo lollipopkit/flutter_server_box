@@ -400,14 +400,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_adaptive_scaffold:
-    dependency: "direct main"
-    description:
-      name: flutter_adaptive_scaffold
-      sha256: a464b74540401cade07af0ae84d19f210534cac67651a150fb413507040b74f6
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.12"
   flutter_background_service:
     dependency: "direct main"
     description:
@@ -1049,7 +1041,7 @@ packages:
     source: hosted
     version: "3.3.0"
   provider:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: provider
       sha256: c8a055ee5ce3fd98d6fc872478b03823ffdb448699c6ebdbbc71d59b596fd48c

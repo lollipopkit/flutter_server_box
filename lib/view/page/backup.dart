@@ -10,8 +10,8 @@ import 'package:server_box/core/utils/sync/webdav.dart';
 import 'package:server_box/data/model/app/backup.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:icons_plus/icons_plus.dart';
 
@@ -266,7 +266,7 @@ class BackupPage extends StatelessWidget {
           actions: Btn.ok(
             onTap: () {
               for (final snippet in snippets) {
-                Pros.snippet.add(snippet);
+                SnippetProvider.add(snippet);
               }
               context.pop();
               context.pop();
@@ -441,7 +441,7 @@ class BackupPage extends StatelessWidget {
   void _onBulkImportServers(BuildContext context) async {
     final data = await context.showImportDialog(
       title: l10n.server,
-      modelDef: ServerPrivateInfo.example.toJson(),
+      modelDef: Spix.example.toJson(),
     );
     if (data == null) return;
     final text = String.fromCharCodes(data);
@@ -450,7 +450,7 @@ class BackupPage extends StatelessWidget {
       final (spis, err) = await context.showLoadingDialog(
         fn: () => Computer.shared.start((val) {
           final list = json.decode(val) as List;
-          return list.map((e) => ServerPrivateInfo.fromJson(e)).toList();
+          return list.map((e) => Spi.fromJson(e)).toList();
         }, text.trim()),
       );
       if (err != null || spis == null) return;

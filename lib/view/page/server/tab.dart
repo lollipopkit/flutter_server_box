@@ -4,12 +4,10 @@ import 'dart:math' as math;
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:provider/provider.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
-import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/widget/percent_circle.dart';
 
@@ -86,7 +84,7 @@ class _ServerPageState extends State<ServerPage>
 
   Widget _buildPortrait() {
     return Scaffold(
-      appBar: _buildTagsSwitcher(Pros.server),
+      appBar: _buildTagsSwitcher(),
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => _autoHideKey.currentState?.show(),
@@ -138,74 +136,74 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildLandscapeBody() {
-    return Consumer<ServerProvider>(builder: (_, pro, __) {
-      if (pro.serverOrder.isEmpty) {
+    return ServerProvider.serverOrder.listenVal((order) {
+      if (order.isEmpty) {
         return Center(
           child: Text(libL10n.empty, textAlign: TextAlign.center),
         );
       }
 
       return PageView.builder(
-        itemCount: pro.serverOrder.length,
+        itemCount: order.length,
         itemBuilder: (_, idx) {
-          final id = pro.serverOrder[idx];
-          final srv = pro.pick(id: id);
+          final id = order[idx];
+          final srv = ServerProvider.pick(id: id);
           if (srv == null) return UIs.placeholder;
 
-          final title = _buildServerCardTitle(srv);
-          final List<Widget> children = [
-            title,
-            ..._buildNormalCard(srv.status, srv.spi).joinWith(SizedBox(
-              height: _media.size.height / 10,
-            ))
-          ];
+          return srv.listenVal((srv) {
+            final title = _buildServerCardTitle(srv);
+            final List<Widget> children = [
+              title,
+              ..._buildNormalCard(srv.status, srv.spi).joinWith(SizedBox(
+                height: _media.size.height / 10,
+              ))
+            ];
 
-          return Padding(
-            padding: _media.padding,
-            child: ListenableBuilder(
-              listenable: _getCardNoti(id),
-              builder: (_, __) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: children,
-                );
-              },
-            ),
-          );
+            return Padding(
+              padding: _media.padding,
+              child: ListenableBuilder(
+                listenable: _getCardNoti(id),
+                builder: (_, __) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: children,
+                  );
+                },
+              ),
+            );
+          });
         },
       );
     });
   }
 
   Widget _buildBody() {
-    final child = Consumer<ServerProvider>(
-      builder: (_, pro, __) {
-        if (!pro.tags.value.contains(_tag)) {
+    return ServerProvider.serverOrder.listenVal(
+      (order) {
+        if (!ServerProvider.tags.value.contains(_tag)) {
           _tag = null;
         }
-        if (pro.serverOrder.isEmpty) {
+        if (order.isEmpty) {
           return Center(
             child: Text(libL10n.empty, textAlign: TextAlign.center),
           );
         }
 
-        final filtered = _filterServers(pro);
+        final filtered = _filterServers(order);
         if (_useDoubleColumn &&
             Stores.setting.doubleColumnServersPage.fetch()) {
-          return _buildBodyMedium(pro: pro, filtered: filtered);
+          return _buildBodyMedium(filtered);
         }
-        return _buildBodySmall(pro: pro, filtered: filtered);
+        return _buildBodySmall(filtered: filtered);
       },
     );
-
-    return child;
   }
 
-  TagSwitcher _buildTagsSwitcher(ServerProvider provider) {
+  TagSwitcher _buildTagsSwitcher() {
     return TagSwitcher(
-      tags: provider.tags,
+      tags: ServerProvider.tags,
       width: _media.size.width,
       onTagChanged: (p0) => setState(() {
         _tag = p0;
@@ -215,7 +213,6 @@ class _ServerPageState extends State<ServerPage>
   }
 
   Widget _buildBodySmall({
-    required ServerProvider pro,
     required List<String> filtered,
     EdgeInsets? padding = const EdgeInsets.fromLTRB(7, 0, 7, 7),
   }) {
@@ -227,15 +224,14 @@ class _ServerPageState extends State<ServerPage>
       itemBuilder: (_, index) {
         // Issue #130
         if (index == count - 1) return UIs.height77;
-        return _buildEachServerCard(pro.pick(id: filtered[index]));
+        final vnode = ServerProvider.pick(id: filtered[index]);
+        if (vnode == null) return UIs.placeholder;
+        return vnode.listenVal(_buildEachServerCard);
       },
     );
   }
 
-  Widget _buildBodyMedium({
-    required ServerProvider pro,
-    required List<String> filtered,
-  }) {
+  Widget _buildBodyMedium(List<String> filtered) {
     final mid = (filtered.length / 2).ceil();
     final filteredLeft = filtered.sublist(0, mid);
     final filteredRight = filtered.sublist(mid);
@@ -243,14 +239,12 @@ class _ServerPageState extends State<ServerPage>
       children: [
         Expanded(
           child: _buildBodySmall(
-            pro: pro,
             filtered: filteredLeft,
             padding: const EdgeInsets.only(left: 7),
           ),
         ),
         Expanded(
           child: _buildBodySmall(
-            pro: pro,
             filtered: filteredRight,
             padding: const EdgeInsets.only(right: 7),
           ),
@@ -416,7 +410,7 @@ class _ServerPageState extends State<ServerPage>
     ];
   }
 
-  List<Widget> _buildNormalCard(ServerStatus ss, ServerPrivateInfo spi) {
+  List<Widget> _buildNormalCard(ServerStatus ss, Spi spi) {
     return [
       UIs.height13,
       Row(
@@ -491,7 +485,7 @@ class _ServerPageState extends State<ServerPage>
           ),
           () {
             TryLimiter.reset(s.spi.id);
-            Pros.server.refresh(spi: s.spi);
+            ServerProvider.refresh(spi: s.spi);
           },
         ),
       ServerConn.disconnected => (
@@ -500,7 +494,7 @@ class _ServerPageState extends State<ServerPage>
             size: 19,
             color: Colors.grey,
           ),
-          () => Pros.server.refresh(spi: s.spi)
+          () => ServerProvider.refresh(spi: s.spi)
         ),
       ServerConn.finished => (
           const Icon(
@@ -508,7 +502,7 @@ class _ServerPageState extends State<ServerPage>
             size: 17,
             color: Colors.grey,
           ),
-          () => Pros.server.closeServer(id: s.spi.id),
+          () => ServerProvider.closeServer(id: s.spi.id),
         ),
       _ when Stores.setting.serverTabUseOldUI.fetch() => (
           ServerFuncBtnsTopRight(spi: s.spi),
@@ -653,14 +647,14 @@ ${ss.err?.message ?? 'null'}
 
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
-    await Pros.server.load();
-    Pros.server.startAutoRefresh();
+    ServerProvider.refresh();
+    ServerProvider.startAutoRefresh();
   }
 
-  List<String> _filterServers(ServerProvider pro) => pro.serverOrder
-      .where((e) => pro.serverOrder.contains(e))
+  List<String> _filterServers(List<String> order) => order
       .where((e) =>
-          _tag == null || (pro.pick(id: e)?.spi.tags?.contains(_tag) ?? false))
+          _tag == null ||
+          (ServerProvider.pick(id: e)?.value.spi.tags?.contains(_tag) ?? false))
       .toList();
 
   static const _kCardHeightMin = 23.0;
@@ -747,7 +741,7 @@ class _CardStatus {
 }
 
 extension _ServerX on Server {
-  String? getTopRightStr(ServerPrivateInfo spi) {
+  String? getTopRightStr(Spi spi) {
     switch (conn) {
       case ServerConn.disconnected:
         return null;

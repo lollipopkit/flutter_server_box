@@ -3,11 +3,10 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:provider/provider.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
-import 'package:server_box/data/res/provider.dart';
+import 'package:server_box/data/provider/server.dart';
 
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -16,7 +15,7 @@ import 'package:server_box/data/provider/private_key.dart';
 class ServerEditPage extends StatefulWidget {
   const ServerEditPage({super.key, this.spi});
 
-  final ServerPrivateInfo? spi;
+  final Spi? spi;
 
   @override
   State<ServerEditPage> createState() => _ServerEditPageState();
@@ -148,7 +147,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         hint: 'root',
         suggestion: false,
       ),
-      TagTile(tags: _tags, allTags: Pros.server.tags.value).cardx,
+      TagTile(tags: _tags, allTags: ServerProvider.tags.value).cardx,
       ListTile(
         title: Text(l10n.autoConnect),
         trailing: ListenableBuilder(
@@ -219,10 +218,10 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
 
   Widget _buildKeyAuth() {
     const padding = EdgeInsets.only(left: 23, right: 13);
-    return Consumer<PrivateKeyProvider>(
-      builder: (_, key, __) {
-        final tiles = List<Widget>.generate(key.pkis.length, (index) {
-          final e = key.pkis[index];
+    return PrivateKeyProvider.pkis.listenVal(
+      (pkis) {
+        final tiles = List<Widget>.generate(pkis.length, (index) {
+          final e = pkis[index];
           return ListTile(
             contentPadding: padding,
             leading: Text(
@@ -289,7 +288,6 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     return ExpandTile(
       title: Text(l10n.more),
       children: [
-        UIs.height7,
         Input(
           controller: _logoUrlCtrl,
           type: TextInputType.url,
@@ -300,13 +298,9 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         ),
         _buildAltUrl(),
         _buildEnvs(),
-        UIs.height7,
         ..._buildPVEs(),
-        UIs.height7,
         ..._buildCustomCmds(),
-        UIs.height7,
-        Text(l10n.temperature, style: UIs.text13Grey),
-        UIs.height7,
+        CenterGreyTitle(l10n.temperature),
         Input(
           controller: _preferTempDevCtrl,
           type: TextInputType.text,
@@ -336,26 +330,14 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   List<Widget> _buildPVEs() {
     const addr = 'https://127.0.0.1:8006';
     return [
-      const Text('PVE', style: UIs.text13Grey),
-      UIs.height7,
-      Autocomplete<String>(
-        optionsBuilder: (val) {
-          final v = val.text;
-          if (v.startsWith(addr.substring(0, v.length))) {
-            return [addr];
-          }
-          return [];
-        },
-        onSelected: (val) => _pveAddrCtrl.text = val,
-        fieldViewBuilder: (_, ctrl, node, __) => Input(
-          controller: ctrl,
-          type: TextInputType.url,
-          icon: MingCute.web_line,
-          node: node,
-          label: 'URL',
-          hint: addr,
-          suggestion: false,
-        ),
+      const CenterGreyTitle('PVE'),
+      Input(
+        controller: _pveAddrCtrl,
+        type: TextInputType.url,
+        icon: MingCute.web_line,
+        label: 'URL',
+        hint: addr,
+        suggestion: false,
       ),
       ListTile(
         leading: const Icon(MingCute.certificate_line),
@@ -376,8 +358,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
 
   List<Widget> _buildCustomCmds() {
     return [
-      Text(l10n.customCmd, style: UIs.text13Grey),
-      UIs.height7,
+      CenterGreyTitle(l10n.customCmd),
       _customCmds.listenVal(
         (vals) {
           return ListTile(
@@ -455,9 +436,10 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     return ListenableBuilder(
       listenable: _jumpServer,
       builder: (_, __) {
-        final children = Pros.server.servers
-            .where((element) => element.spi.jumpId == null)
-            .where((element) => element.spi.id != widget.spi?.id)
+        final children = ServerProvider.servers.values
+            .map((e) => e.value)
+            .where((e) => e.spi.jumpId == null)
+            .where((e) => e.spi.id != widget.spi?.id)
             .map(
               (e) => ListTile(
                 title: Text(e.spi.name),
@@ -552,7 +534,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       }
     }
 
-    final spi = ServerPrivateInfo(
+    final spi = Spi(
       name: _nameController.text.isEmpty
           ? _ipController.text
           : _nameController.text,
@@ -561,7 +543,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       user: _usernameController.text,
       pwd: _passwordController.text.selfIfNotNullEmpty,
       keyId: _keyIdx.value != null
-          ? Pros.key.pkis.elementAt(_keyIdx.value!).id
+          ? PrivateKeyProvider.pkis.value.elementAt(_keyIdx.value!).id
           : null,
       tags: _tags.value.isEmpty ? null : _tags.value.toList(),
       alterUrl: _altUrlController.text.selfIfNotNullEmpty,
@@ -573,9 +555,9 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     );
 
     if (widget.spi == null) {
-      Pros.server.addServer(spi);
+      ServerProvider.addServer(spi);
     } else {
-      Pros.server.updateServer(widget.spi!, spi);
+      ServerProvider.updateServer(widget.spi!, spi);
     }
 
     context.pop();
@@ -589,7 +571,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     }
   }
 
-  void _initWithSpi(ServerPrivateInfo spi) {
+  void _initWithSpi(Spi spi) {
     _nameController.text = spi.name;
     _ipController.text = spi.ip;
     _portController.text = spi.port.toString();
@@ -597,7 +579,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     if (spi.keyId == null) {
       _passwordController.text = spi.pwd ?? '';
     } else {
-      _keyIdx.value = Pros.key.pkis.indexWhere(
+      _keyIdx.value = PrivateKeyProvider.pkis.value.indexWhere(
         (e) => e.id == widget.spi!.keyId,
       );
     }
@@ -656,7 +638,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         final code = codes?.firstOrNull?.rawValue;
         if (code == null) return;
         try {
-          final spi = ServerPrivateInfo.fromJson(json.decode(code));
+          final spi = Spi.fromJson(json.decode(code));
           _initWithSpi(spi);
         } catch (e, s) {
           context.showErrDialog(e, s);
@@ -680,7 +662,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
           actions: Btn.ok(
             onTap: () async {
               context.pop();
-              Pros.server.delServer(widget.spi!.id);
+              ServerProvider.delServer(widget.spi!.id);
               context.pop(true);
             },
             red: true,

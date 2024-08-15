@@ -5,7 +5,7 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
 class IPerfPage extends StatefulWidget {
-  final ServerPrivateInfo spi;
+  final Spi spi;
   const IPerfPage({super.key, required this.spi});
 
   @override
