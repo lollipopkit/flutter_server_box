@@ -5,12 +5,14 @@ import 'package:server_box/data/res/store.dart';
 
 class SnippetProvider extends Provider {
   const SnippetProvider._();
+  static const instance = SnippetProvider._();
 
   static final snippets = <Snippet>[].vn;
   static final tags = <String>{}.vn;
 
   @override
   void load() {
+    super.load();
     final snippets_ = Stores.snippet.fetch();
     final order = Stores.setting.snippetOrder.fetch();
     if (order.isNotEmpty) {

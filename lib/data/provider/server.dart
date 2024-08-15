@@ -22,7 +22,8 @@ import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/res/status.dart';
 
 class ServerProvider extends Provider {
-  const ServerProvider._() : super();
+  const ServerProvider._();
+  static const instance = ServerProvider._();
 
   static final Map<String, VNode<Server>> servers = {};
   static final serverOrder = <String>[].vn;
@@ -35,6 +36,7 @@ class ServerProvider extends Provider {
 
   @override
   Future<void> load() async {
+    super.load();
     // #147
     // Clear all servers because of restarting app will cause duplicate servers
     final oldServers = Map<String, VNode<Server>>.from(servers);

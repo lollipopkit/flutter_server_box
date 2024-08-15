@@ -663,7 +663,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           delegate: SearchPage(
             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
             future: (q) => find(q).toList(),
-            builder: (ctx, e) => _buildItem(e, beforeTap: () => ctx.pop()),
+            builder: (ctx, e) => _buildItem(e, beforeTap: ctx.pop),
           ),
         );
       },

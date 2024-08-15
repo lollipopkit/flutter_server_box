@@ -647,6 +647,7 @@ ${ss.err?.message ?? 'null'}
 
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
+    ServerProvider.refresh();
     ServerProvider.startAutoRefresh();
   }
 

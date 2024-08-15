@@ -6,6 +6,7 @@ import 'package:server_box/data/provider/base.dart';
 
 class SftpProvider extends Provider {
   const SftpProvider._();
+  static const instance = SftpProvider._();
 
   static final status = <SftpReqStatus>[].vn;
 
@@ -38,7 +39,4 @@ class SftpProvider extends Provider {
     status.value.removeAt(idx);
     status.notify();
   }
-
-  @override
-  FutureOr<void> load() {}
 }

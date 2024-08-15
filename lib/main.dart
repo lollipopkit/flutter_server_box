@@ -20,7 +20,10 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
-import 'package:server_box/data/provider/base.dart';
+import 'package:server_box/data/provider/private_key.dart';
+import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/provider/sftp.dart';
+import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
@@ -83,7 +86,11 @@ Future<void> _initData() async {
   await PrefStore.init(); // Call this before accessing any store
   await Stores.init();
 
-  Provider.init();
+  // DO NOT change the order of these providers.
+  PrivateKeyProvider.instance.load();
+  SnippetProvider.instance.load();
+  ServerProvider.instance.load();
+  SftpProvider.instance.load();
 
   if (Stores.setting.betaTest.fetch()) AppUpdate.chan = AppUpdateChan.beta;
 }

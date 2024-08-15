@@ -5,11 +5,13 @@ import 'package:server_box/data/res/store.dart';
 
 class PrivateKeyProvider extends Provider {
   const PrivateKeyProvider._();
+  static const instance = PrivateKeyProvider._();
 
   static final pkis = <PrivateKeyInfo>[].vn;
 
   @override
   void load() {
+    super.load();
     pkis.value = Stores.key.fetch();
   }
 
