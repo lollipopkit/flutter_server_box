@@ -142,11 +142,11 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildLogo(String logoUrl, Dist? dist) {
-    if (dist != null) {
-      logoUrl = logoUrl
-          .replaceFirst('{DIST}', dist.name)
-          .replaceFirst('{BRIGHT}', context.isDark ? 'dark' : 'light');
-    }
+    if (dist == null) return UIs.placeholder;
+
+    logoUrl = logoUrl
+        .replaceFirst('{DIST}', dist.name)
+        .replaceFirst('{BRIGHT}', context.isDark ? 'dark' : 'light');
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 13),
       child: ExtendedImage.network(

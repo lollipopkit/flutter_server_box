@@ -11,7 +11,12 @@ import 'package:server_box/data/model/app/error.dart';
 
 part 'server_private_info.g.dart';
 
-/// In former version, it's called `ServerPrivateInfo`.
+/// In the first version, it's called `ServerPrivateInfo` which was designed to
+/// store the private information of a server.
+/// 
+/// Some params named as `spi` in the codebase which is the abbreviation of `ServerPrivateInfo`.
+///
+/// Nowaday, more fields are added to this class, but the name is still the same.
 @JsonSerializable()
 @HiveType(typeId: 3)
 class ServerPrivateInfo {
@@ -71,7 +76,7 @@ class ServerPrivateInfo {
 
   factory ServerPrivateInfo.fromJson(Map<String, dynamic> json) =>
       _$ServerPrivateInfoFromJson(json);
-  
+
   Map<String, dynamic> toJson() => _$ServerPrivateInfoToJson(this);
 
   String toJsonString() => json.encode(toJson());
