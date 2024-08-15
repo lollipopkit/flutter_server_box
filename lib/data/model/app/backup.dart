@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:json_annotation/json_annotation.dart';
 import 'package:logging/logging.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -11,10 +12,13 @@ import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/data/res/rebuild.dart';
 import 'package:server_box/data/res/store.dart';
 
+part 'backup.g.dart';
+
 const backupFormatVersion = 1;
 
 final _logger = Logger('Backup');
 
+@JsonSerializable()
 class Backup {
   // backup format version
   final int version;
@@ -37,31 +41,9 @@ class Backup {
     this.lastModTime,
   });
 
-  Backup.fromJson(Map<String, dynamic> json)
-      : version = json['version'] as int,
-        date = json['date'],
-        spis = (json['spis'] as List)
-            .map((e) => ServerPrivateInfo.fromJson(e))
-            .toList(),
-        snippets =
-            (json['snippets'] as List).map((e) => Snippet.fromJson(e)).toList(),
-        keys = (json['keys'] as List)
-            .map((e) => PrivateKeyInfo.fromJson(e))
-            .toList(),
-        container = json['container'] ?? {},
-        lastModTime = json['lastModTime'],
-        history = json['history'] ?? {};
+  factory Backup.fromJson(Map<String, dynamic> json) => _$BackupFromJson(json);
 
-  Map<String, dynamic> toJson() => {
-        'version': version,
-        'date': date,
-        'spis': spis,
-        'snippets': snippets,
-        'keys': keys,
-        'container': container,
-        'lastModTime': lastModTime,
-        'history': history,
-      };
+  Map<String, dynamic> toJson() => _$BackupToJson(this);
 
   Backup.loadFromStore()
       : version = backupFormatVersion,
@@ -201,8 +183,8 @@ class Backup {
     _logger.info('Restore success');
   }
 
-  Backup.fromJsonString(String raw)
-      : this.fromJson(json.decode(_diyDecrypt(raw)));
+  factory Backup.fromJsonString(String raw) =>
+      Backup.fromJson(json.decode(_diyDecrypt(raw)));
 }
 
 String _diyEncrypt(String raw) => json.encode(

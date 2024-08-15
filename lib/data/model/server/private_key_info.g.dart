@@ -42,3 +42,19 @@ class PrivateKeyInfoAdapter extends TypeAdapter<PrivateKeyInfo> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+PrivateKeyInfo _$PrivateKeyInfoFromJson(Map<String, dynamic> json) =>
+    PrivateKeyInfo(
+      id: json['id'] as String,
+      key: json['private_key'] as String,
+    );
+
+Map<String, dynamic> _$PrivateKeyInfoToJson(PrivateKeyInfo instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'private_key': instance.key,
+    };

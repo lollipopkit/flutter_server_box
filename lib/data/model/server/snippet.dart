@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:json_annotation/json_annotation.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:xterm/core.dart';
 
@@ -9,6 +10,7 @@ import 'package:server_box/data/model/app/tag_pickable.dart';
 
 part 'snippet.g.dart';
 
+@JsonSerializable()
 @HiveType(typeId: 2)
 class Snippet implements TagPickable {
   @HiveField(0)
@@ -32,22 +34,9 @@ class Snippet implements TagPickable {
     this.autoRunOn,
   });
 
-  Snippet.fromJson(Map<String, dynamic> json)
-      : name = json['name'].toString(),
-        script = json['script'].toString(),
-        tags = json['tags']?.cast<String>(),
-        note = json['note']?.toString(),
-        autoRunOn = json['autoRunOn']?.cast<String>();
+  factory Snippet.fromJson(Map<String, dynamic> json) => _$SnippetFromJson(json);
 
-  Map<String, dynamic> toJson() {
-    final data = <String, dynamic>{};
-    data['name'] = name;
-    data['script'] = script;
-    data['tags'] = tags;
-    data['note'] = note;
-    data['autoRunOn'] = autoRunOn;
-    return data;
-  }
+  Map<String, dynamic> toJson() => _$SnippetToJson(this);
 
   @override
   bool containsTag(String tag) {

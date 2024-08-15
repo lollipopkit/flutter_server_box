@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:json_annotation/json_annotation.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
@@ -11,6 +12,7 @@ import 'package:server_box/data/model/app/error.dart';
 part 'server_private_info.g.dart';
 
 /// In former version, it's called `ServerPrivateInfo`.
+@JsonSerializable()
 @HiveType(typeId: 3)
 class ServerPrivateInfo {
   @HiveField(0)
@@ -25,6 +27,7 @@ class ServerPrivateInfo {
   final String? pwd;
 
   /// [id] of private key
+  @JsonKey(name: 'pubKeyId')
   @HiveField(5)
   final String? keyId;
   @HiveField(6)
@@ -66,83 +69,10 @@ class ServerPrivateInfo {
     this.envs,
   }) : id = '$user@$ip:$port';
 
-  static ServerPrivateInfo fromJson(Map<String, dynamic> json) {
-    final ip = json['ip'] as String? ?? '';
-    final port = json['port'] as int? ?? 22;
-    final user = json['user'] as String? ?? 'root';
-    final name = json['name'] as String? ?? '';
-    final pwd = json['pwd'] as String? ?? json['authorization'] as String?;
-    final keyId = json['pubKeyId'] as String?;
-    final tags = (json['tags'] as List?)?.cast<String>();
-    final alterUrl = json['alterUrl'] as String?;
-    final autoConnect = json['autoConnect'] as bool? ?? true;
-    final jumpId = json['jumpId'] as String?;
-    final custom = json['customCmd'] == null
-        ? null
-        : ServerCustom.fromJson(json['custom'].cast<String, dynamic>());
-    final wolCfg = json['wolCfg'] == null
-        ? null
-        : WakeOnLanCfg.fromJson(json['wolCfg'].cast<String, dynamic>());
-    final envs_ = json['envs'] as Map<String, dynamic>?;
-    final envs = <String, String>{};
-    if (envs_ != null) {
-      envs_.forEach((key, value) {
-        if (value is String) {
-          envs[key] = value;
-        }
-      });
-    }
-
-    return ServerPrivateInfo(
-      name: name,
-      ip: ip,
-      port: port,
-      user: user,
-      pwd: pwd,
-      keyId: keyId,
-      tags: tags,
-      alterUrl: alterUrl,
-      autoConnect: autoConnect,
-      jumpId: jumpId,
-      custom: custom,
-      wolCfg: wolCfg,
-      envs: envs.isEmpty ? null : envs,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['name'] = name;
-    data['ip'] = ip;
-    data['port'] = port;
-    data['user'] = user;
-    if (pwd != null) {
-      data['pwd'] = pwd;
-    }
-    if (keyId != null) {
-      data['pubKeyId'] = keyId;
-    }
-    if (tags != null) {
-      data['tags'] = tags;
-    }
-    if (alterUrl != null) {
-      data['alterUrl'] = alterUrl;
-    }
-    data['autoConnect'] = autoConnect;
-    if (jumpId != null) {
-      data['jumpId'] = jumpId;
-    }
-    if (custom != null) {
-      data['custom'] = custom?.toJson();
-    }
-    if (wolCfg != null) {
-      data['wolCfg'] = wolCfg?.toJson();
-    }
-    if (envs != null) {
-      data['envs'] = envs;
-    }
-    return data;
-  }
+  factory ServerPrivateInfo.fromJson(Map<String, dynamic> json) =>
+      _$ServerPrivateInfoFromJson(json);
+  
+  Map<String, dynamic> toJson() => _$ServerPrivateInfoToJson(this);
 
   String toJsonString() => json.encode(toJson());
 

@@ -1,10 +1,12 @@
 import 'dart:io';
 
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:json_annotation/json_annotation.dart';
 import 'package:wake_on_lan/wake_on_lan.dart';
 
 part 'wol_cfg.g.dart';
 
+@JsonSerializable()
 @HiveType(typeId: 8)
 final class WakeOnLanCfg {
   @HiveField(0)
@@ -54,22 +56,8 @@ final class WakeOnLanCfg {
     );
   }
 
-  static WakeOnLanCfg fromJson(Map<String, dynamic> json) {
-    return WakeOnLanCfg(
-      mac: json['mac'] as String,
-      ip: json['ip'] as String,
-      pwd: json['pwd'] as String?,
-    );
-  }
+  factory WakeOnLanCfg.fromJson(Map<String, dynamic> json) =>
+      _$WakeOnLanCfgFromJson(json);
 
-  Map<String, dynamic> toJson() {
-    final map = <String, dynamic>{
-      'mac': mac,
-      'ip': ip,
-    };
-    if (pwd != null) {
-      map['pwd'] = pwd;
-    }
-    return map;
-  }
+  Map<String, dynamic> toJson() => _$WakeOnLanCfgToJson(this);
 }

@@ -1,7 +1,9 @@
 import 'package:hive_flutter/adapters.dart';
+import 'package:json_annotation/json_annotation.dart';
 
 part 'custom.g.dart';
 
+@JsonSerializable()
 @HiveType(typeId: 7)
 final class ServerCustom {
   // @HiveField(0)
@@ -28,44 +30,11 @@ final class ServerCustom {
     this.logoUrl,
   });
 
-  static ServerCustom fromJson(Map<String, dynamic> json) {
-    //final temperature = json["temperature"] as String?;
-    final pveAddr = json['pveAddr'] as String?;
-    final pveIgnoreCert = json['pveIgnoreCert'] as bool;
-    final cmds = json['cmds'] as Map<String, dynamic>?;
-    final preferTempDev = json['preferTempDev'] as String?;
-    final logoUrl = json['logoUrl'] as String?;
-    return ServerCustom(
-      //temperature: temperature,
-      pveAddr: pveAddr,
-      pveIgnoreCert: pveIgnoreCert,
-      cmds: cmds?.cast<String, String>(),
-      preferTempDev: preferTempDev,
-      logoUrl: logoUrl,
-    );
-  }
+  factory ServerCustom.fromJson(Map<String, dynamic> json) =>
+      _$ServerCustomFromJson(json);
 
-  Map<String, dynamic> toJson() {
-    final json = <String, dynamic>{};
-    // if (temperature != null) {
-    //   json["temperature"] = temperature;
-    // }
-    if (pveAddr != null) {
-      json['pveAddr'] = pveAddr;
-    }
-    json['pveIgnoreCert'] = pveIgnoreCert;
+  Map<String, dynamic> toJson() => _$ServerCustomToJson(this);
 
-    if (cmds != null) {
-      json['cmds'] = cmds;
-    }
-    if (preferTempDev != null) {
-      json['preferTempDev'] = preferTempDev;
-    }
-    if (logoUrl != null) {
-      json['logoUrl'] = logoUrl;
-    }
-    return json;
-  }
 
   @override
   String toString() {

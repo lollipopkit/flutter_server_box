@@ -711,7 +711,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(key, style: UIs.text15),
+          Text(key, style: UIs.text15).paddingSymmetric(horizontal: 5).tap(
+            onTap: () {
+              Pfs.copy(key);
+              context.showSnackBar('${libL10n.copy} ${libL10n.success}');
+            },
+          ),
           Text('${val?.toStringAsFixed(1)}°C', style: UIs.text13Grey),
         ],
       ),

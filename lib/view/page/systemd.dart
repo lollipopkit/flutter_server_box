@@ -38,11 +38,11 @@ final class _SystemdPageState extends State<SystemdPage> {
     return Scaffold(
       appBar: CustomAppBar(
         title: const Text('Systemd'),
-        actions: [
-          Btn.icon(icon: const Icon(Icons.refresh), onTap: _pro.getUnits),
-        ],
+        actions: isDesktop
+            ? [Btn.icon(icon: const Icon(Icons.refresh), onTap: _pro.getUnits)]
+            : null,
       ),
-      body: _buildBody(),
+      body: RefreshIndicator(onRefresh: _pro.getUnits, child: _buildBody()),
     );
   }
 
@@ -71,8 +71,8 @@ final class _SystemdPageState extends State<SystemdPage> {
       (units) {
         if (units.isEmpty) {
           return SliverToBoxAdapter(
-            child: CenterGreyTitle(libL10n.empty)
-                .paddingSymmetric(horizontal: 13),
+            child:
+                CenterGreyTitle(libL10n.empty).paddingSymmetric(horizontal: 13),
           );
         }
         return SliverList(
@@ -155,10 +155,8 @@ final class _SystemdPageState extends State<SystemdPage> {
         color: color?.withOpacity(0.7) ?? UIs.halfAlpha,
         borderRadius: BorderRadius.circular(5),
       ),
-      child: Text(
-        tag,
-        style: UIs.text11Grey,
-      ).paddingSymmetric(horizontal: 5, vertical: 1),
+      child: Text(tag, style: UIs.text11)
+          .paddingSymmetric(horizontal: 5, vertical: 1),
     ).paddingOnly(right: noPad ? 0 : 5);
   }
 }
