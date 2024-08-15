@@ -9,6 +9,7 @@ import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
 import 'package:server_box/data/model/server/system.dart';
+import 'package:server_box/data/provider/base.dart';
 // import 'package:server_box/data/model/sftp/req.dart';
 // import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/data/res/store.dart';
@@ -20,8 +21,8 @@ import 'package:server_box/data/model/server/server_status_update_req.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/res/status.dart';
 
-class ServerProvider {
-  const ServerProvider._();
+class ServerProvider extends Provider {
+  const ServerProvider._() : super();
 
   static final Map<String, VNode<Server>> servers = {};
   static final serverOrder = <String>[].vn;
@@ -32,7 +33,8 @@ class ServerProvider {
 
   static final _manualDisconnectedIds = <String>{};
 
-  static Future<void> load() async {
+  @override
+  Future<void> load() async {
     // #147
     // Clear all servers because of restarting app will cause duplicate servers
     final oldServers = Map<String, VNode<Server>>.from(servers);

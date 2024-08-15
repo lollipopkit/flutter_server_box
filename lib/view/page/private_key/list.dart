@@ -35,8 +35,8 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
   }
 
   Widget _buildBody() {
-    return Consumer<PrivateKeyProvider>(
-      builder: (_, key, __) {
+    return PrivateKeyProvider.pkis.(
+      (pkis) {
         if (key.pkis.isEmpty) {
           return Center(child: Text(libL10n.empty));
         }
