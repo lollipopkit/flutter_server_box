@@ -11,6 +11,7 @@ import 'package:server_box/core/utils/comparator.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/sftp/browser_status.dart';
 import 'package:server_box/data/model/sftp/worker.dart';
+import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/widget/omit_start_text.dart';
@@ -302,7 +303,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       localPath,
       SftpReqType.download,
     );
-    Pros.sftp.add(req, completer: completer);
+    SftpProvider.add(req, completer: completer);
     final (suc, err) = await context.showLoadingDialog(
       fn: () => completer.future,
     );
@@ -310,7 +311,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
     final result = await AppRoutes.editor(path: localPath).go<bool>(context);
     if (result != null && result) {
-      Pros.sftp.add(SftpReq(
+      SftpProvider.add(SftpReq(
         req.spi,
         remotePath,
         localPath,
@@ -334,7 +335,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
             context.pop();
             final remotePath = _getRemotePath(name);
 
-            Pros.sftp.add(
+            SftpProvider.add(
               SftpReq(
                 widget.spi,
                 remotePath,
@@ -658,12 +659,13 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         }
 
         showSearch(
-            context: context,
-            delegate: SearchPage(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-              future: (q) => find(q).toList(),
-              builder: (ctx, e) => _buildItem(e, beforeTap: () => ctx.pop()),
-            ));
+          context: context,
+          delegate: SearchPage(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+            future: (q) => find(q).toList(),
+            builder: (ctx, e) => _buildItem(e, beforeTap: () => ctx.pop()),
+          ),
+        );
       },
       icon: const Icon(Icons.search),
     );
@@ -700,7 +702,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         final fileName = path.split(Platform.pathSeparator).lastOrNull;
         final remotePath = '$remoteDir/$fileName';
         Loggers.app.info('SFTP upload local: $path, remote: $remotePath');
-        Pros.sftp.add(
+        SftpProvider.add(
           SftpReq(widget.spi, remotePath, path, SftpReqType.upload),
         );
       },

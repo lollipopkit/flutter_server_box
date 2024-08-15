@@ -6,6 +6,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/sftp/worker.dart';
 import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/view/widget/omit_start_text.dart';
 
@@ -299,7 +300,7 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
                 return;
               }
 
-              Pros.sftp.add(SftpReq(
+              SftpProvider.add(SftpReq(
                 spi,
                 '$remotePath/$fileName',
                 file.absolute.path,

@@ -1,13 +1,15 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
+import 'package:server_box/data/provider/base.dart';
 import 'package:server_box/data/res/store.dart';
 
-class PrivateKeyProvider {
+class PrivateKeyProvider extends Provider {
   const PrivateKeyProvider._();
 
   static final pkis = <PrivateKeyInfo>[].vn;
 
-  static void load() {
+  @override
+  void load() {
     pkis.value = Stores.key.fetch();
   }
 

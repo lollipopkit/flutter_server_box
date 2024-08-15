@@ -1,6 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/sftp/worker.dart';
@@ -25,16 +24,15 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
   }
 
   Widget _buildBody() {
-    return Consumer<SftpProvider>(builder: (__, pro, _) {
-      if (pro.status.isEmpty) {
+    return SftpProvider.status.listenVal((status) {
+      if (status.isEmpty) {
         return Center(child: Text(libL10n.empty));
       }
       return ListView.builder(
         padding: const EdgeInsets.all(11),
-        itemCount: pro.status.length,
+        itemCount: status.length,
         itemBuilder: (context, index) {
-          final status = pro.status[index];
-          return _buildItem(status);
+          return _buildItem(status[index]);
         },
       );
     });
@@ -164,7 +162,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
         )),
         actions: Btn.ok(
           onTap: () {
-            Pros.sftp.cancel(id);
+            SftpProvider.cancel(id);
             context.pop();
           },
         ).toList,
