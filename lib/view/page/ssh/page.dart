@@ -26,7 +26,7 @@ import 'package:server_box/data/res/terminal.dart';
 const _echoPWD = 'echo \$PWD';
 
 class SSHPage extends StatefulWidget {
-  final ServerPrivateInfo spi;
+  final Spi spi;
   final String? initCmd;
   final Snippet? initSnippet;
   final bool notFromTab;
@@ -68,7 +68,7 @@ class SSHPageState extends State<SSHPage>
 
   bool _isDark = false;
   Timer? _virtKeyLongPressTimer;
-  late SSHClient? _client = widget.spi.server?.client;
+  late SSHClient? _client = widget.spi.server?.value.client;
   Timer? _discontinuityTimer;
 
   @override

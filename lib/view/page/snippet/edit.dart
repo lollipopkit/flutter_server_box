@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/res/provider.dart';
 
 class SnippetEditPage extends StatefulWidget {
@@ -145,7 +146,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           final subtitle = vals.isEmpty
               ? null
               : vals
-                  .map((e) => Pros.server.pick(id: e)?.spi.name ?? e)
+                  .map((e) => ServerProvider.pick(id: e)?.value.spi.name ?? e)
                   .join(', ');
           return ListTile(
             leading: const Padding(
@@ -163,11 +164,12 @@ class _SnippetEditPageState extends State<SnippetEditPage>
                     overflow: TextOverflow.ellipsis,
                   ),
             onTap: () async {
-              vals.removeWhere((e) => !Pros.server.serverOrder.contains(e));
+              vals.removeWhere(
+                  (e) => !ServerProvider.serverOrder.value.contains(e));
               final serverIds = await context.showPickDialog(
                 title: l10n.autoRun,
-                items: Pros.server.serverOrder,
-                name: (e) => Pros.server.pick(id: e)?.spi.name ?? e,
+                items: ServerProvider.serverOrder.value,
+                name: (e) => ServerProvider.pick(id: e)?.value.spi.name ?? e,
                 initial: vals,
                 clearable: true,
               );

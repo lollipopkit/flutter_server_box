@@ -5,13 +5,12 @@ import 'package:server_box/data/provider/snippet.dart';
 
 abstract final class Pros {
   static final key = PrivateKeyProvider();
-  static final server = ServerProvider();
   static final sftp = SftpProvider();
   static final snippet = SnippetProvider();
 
   static void reload() {
     key.load();
-    server.load();
+    ServerProvider.load();
     snippet.load();
   }
 }

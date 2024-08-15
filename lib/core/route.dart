@@ -58,7 +58,7 @@ class AppRoutes {
     return Future.value(null);
   }
 
-  static AppRoutes serverDetail({Key? key, required ServerPrivateInfo spi}) {
+  static AppRoutes serverDetail({Key? key, required Spi spi}) {
     return AppRoutes(ServerDetailPage(key: key, spi: spi), 'server_detail');
   }
 
@@ -66,7 +66,7 @@ class AppRoutes {
     return AppRoutes(ServerPage(key: key), 'server_tab');
   }
 
-  static AppRoutes serverEdit({Key? key, ServerPrivateInfo? spi}) {
+  static AppRoutes serverEdit({Key? key, Spi? spi}) {
     return AppRoutes(
       ServerEditPage(spi: spi),
       'server_${spi == null ? 'add' : 'edit'}',
@@ -97,7 +97,7 @@ class AppRoutes {
 
   static AppRoutes ssh({
     Key? key,
-    required ServerPrivateInfo spi,
+    required Spi spi,
     String? initCmd,
     Snippet? initSnippet,
   }) {
@@ -133,7 +133,7 @@ class AppRoutes {
 
   static AppRoutes sftp(
       {Key? key,
-      required ServerPrivateInfo spi,
+      required Spi spi,
       String? initPath,
       bool isSelect = false}) {
     return AppRoutes(
@@ -150,7 +150,7 @@ class AppRoutes {
     return AppRoutes(BackupPage(key: key), 'backup');
   }
 
-  static AppRoutes docker({Key? key, required ServerPrivateInfo spi}) {
+  static AppRoutes docker({Key? key, required Spi spi}) {
     return AppRoutes(ContainerPage(key: key, spi: spi), 'docker');
   }
 
@@ -186,7 +186,7 @@ class AppRoutes {
     return AppRoutes(PingPage(key: key), 'ping');
   }
 
-  static AppRoutes process({Key? key, required ServerPrivateInfo spi}) {
+  static AppRoutes process({Key? key, required Spi spi}) {
     return AppRoutes(ProcessPage(key: key, spi: spi), 'process');
   }
 
@@ -220,7 +220,7 @@ class AppRoutes {
         'snippet_result');
   }
 
-  static AppRoutes iperf({Key? key, required ServerPrivateInfo spi}) {
+  static AppRoutes iperf({Key? key, required Spi spi}) {
     return AppRoutes(IPerfPage(key: key, spi: spi), 'iperf');
   }
 
@@ -228,7 +228,7 @@ class AppRoutes {
     return AppRoutes(ServerFuncBtnsOrderPage(key: key), 'server_func_btns_seq');
   }
 
-  static AppRoutes pve({Key? key, required ServerPrivateInfo spi}) {
+  static AppRoutes pve({Key? key, required Spi spi}) {
     return AppRoutes(PvePage(key: key, spi: spi), 'pve');
   }
 }

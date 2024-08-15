@@ -441,7 +441,7 @@ class BackupPage extends StatelessWidget {
   void _onBulkImportServers(BuildContext context) async {
     final data = await context.showImportDialog(
       title: l10n.server,
-      modelDef: ServerPrivateInfo.example.toJson(),
+      modelDef: Spix.example.toJson(),
     );
     if (data == null) return;
     final text = String.fromCharCodes(data);
@@ -450,7 +450,7 @@ class BackupPage extends StatelessWidget {
       final (spis, err) = await context.showLoadingDialog(
         fn: () => Computer.shared.start((val) {
           final list = json.decode(val) as List;
-          return list.map((e) => ServerPrivateInfo.fromJson(e)).toList();
+          return list.map((e) => Spi.fromJson(e)).toList();
         }, text.trim()),
       );
       if (err != null || spis == null) return;

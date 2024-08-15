@@ -21,7 +21,7 @@ import 'package:server_box/view/widget/unix_perm.dart';
 import 'package:icons_plus/icons_plus.dart';
 
 class SftpPage extends StatefulWidget {
-  final ServerPrivateInfo spi;
+  final Spi spi;
   final String? initPath;
   final bool isSelect;
 
@@ -38,7 +38,7 @@ class SftpPage extends StatefulWidget {
 
 class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   late final _status = SftpBrowserStatus(_client);
-  late final _client = widget.spi.server!.client!;
+  late final _client = widget.spi.server!.value.client!;
   final _sortOption = _SortOption().vn;
 
   @override

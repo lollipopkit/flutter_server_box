@@ -6,7 +6,7 @@ import 'package:server_box/data/model/server/systemd.dart';
 import 'package:server_box/data/provider/systemd.dart';
 
 final class SystemdPageArgs {
-  final ServerPrivateInfo spi;
+  final Spi spi;
 
   const SystemdPageArgs({
     required this.spi,
@@ -102,7 +102,7 @@ final class _SystemdPageState extends State<SystemdPage> {
     return PopupMenu(
       items: unit.availableFuncs.map(_buildUnitFuncBtn).toList(),
       onSelected: (val) async {
-        final cmd = unit.getCmd(func: val, isRoot: _pro.isRoot);
+        final cmd = unit.getCmd(func: val, isRoot: widget.args.spi.isRoot);
         final sure = await context.showRoundDialog(
           title: libL10n.attention,
           child: SimpleMarkdown(data: '```shell\n$cmd\n```'),

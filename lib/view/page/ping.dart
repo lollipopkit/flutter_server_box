@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/res/provider.dart';
+import 'package:server_box/data/provider/server.dart';
 
 import 'package:server_box/data/model/server/ping_result.dart';
 
@@ -150,7 +150,7 @@ class _PingPageState extends State<PingPage>
       return;
     }
 
-    if (Pros.server.serverOrder.isEmpty) {
+    if (ServerProvider.serverOrder.value.isEmpty) {
       context.showSnackBar(l10n.pingNoServer);
       return;
     }
@@ -161,7 +161,8 @@ class _PingPageState extends State<PingPage>
       return;
     }
 
-    await Future.wait(Pros.server.servers.map((e) async {
+    await Future.wait(ServerProvider.servers.values.map((v) async {
+      final e = v.value;
       if (e.client == null) {
         return;
       }

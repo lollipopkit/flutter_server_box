@@ -32,7 +32,6 @@ Future<void> main() async {
     runApp(
       MultiProvider(
         providers: [
-          ChangeNotifierProvider(create: (_) => Pros.server),
           ChangeNotifierProvider(create: (_) => Pros.snippet),
           ChangeNotifierProvider(create: (_) => Pros.key),
           ChangeNotifierProvider(create: (_) => Pros.sftp),
@@ -84,7 +83,7 @@ Future<void> _initData() async {
   // Ordered by typeId
   Hive.registerAdapter(PrivateKeyInfoAdapter()); // 1
   Hive.registerAdapter(SnippetAdapter()); // 2
-  Hive.registerAdapter(ServerPrivateInfoAdapter()); // 3
+  Hive.registerAdapter(SpiAdapter()); // 3
   Hive.registerAdapter(VirtKeyAdapter()); // 4
   Hive.registerAdapter(NetViewTypeAdapter()); // 5
   Hive.registerAdapter(ServerFuncBtnAdapter()); // 6

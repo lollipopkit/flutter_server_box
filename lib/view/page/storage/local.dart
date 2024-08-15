@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/sftp/worker.dart';
+import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/view/widget/omit_start_text.dart';
@@ -282,10 +283,10 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
             onTap: () async {
               context.pop();
 
-              final spi = await context.showPickSingleDialog<ServerPrivateInfo>(
+              final spi = await context.showPickSingleDialog<Spi>(
                 title: libL10n.select,
-                items: Pros.server.serverOrder
-                    .map((e) => Pros.server.pick(id: e)?.spi)
+                items: ServerProvider.serverOrder.value
+                    .map((e) => ServerProvider.pick(id: e)?.value.spi)
                     .toList(),
                 name: (e) => e.name,
               );

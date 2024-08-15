@@ -10,7 +10,7 @@ Backup _$BackupFromJson(Map<String, dynamic> json) => Backup(
       version: (json['version'] as num).toInt(),
       date: json['date'] as String,
       spis: (json['spis'] as List<dynamic>)
-          .map((e) => ServerPrivateInfo.fromJson(e as Map<String, dynamic>))
+          .map((e) => Spi.fromJson(e as Map<String, dynamic>))
           .toList(),
       snippets: (json['snippets'] as List<dynamic>)
           .map((e) => Snippet.fromJson(e as Map<String, dynamic>))

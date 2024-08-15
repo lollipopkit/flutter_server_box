@@ -23,7 +23,7 @@ class Backup {
   // backup format version
   final int version;
   final String date;
-  final List<ServerPrivateInfo> spis;
+  final List<Spi> spis;
   final List<Snippet> snippets;
   final List<PrivateKeyInfo> keys;
   final Map<String, dynamic> container;

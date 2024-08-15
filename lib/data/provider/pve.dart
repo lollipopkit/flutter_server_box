@@ -15,7 +15,7 @@ import 'package:dartssh2/dartssh2.dart';
 typedef PveCtrlFunc = Future<bool> Function(String node, String id);
 
 final class PveProvider extends ChangeNotifier {
-  final ServerPrivateInfo spi;
+  final Spi spi;
   late String addr;
   late final SSHClient _client;
   late final ServerSocket _serverSocket;
@@ -23,7 +23,7 @@ final class PveProvider extends ChangeNotifier {
   int _localPort = 0;
 
   PveProvider({required this.spi}) {
-    final client = spi.server?.client;
+    final client = spi.server?.value.client;
     if (client == null) {
       throw Exception('Server client is null');
     }

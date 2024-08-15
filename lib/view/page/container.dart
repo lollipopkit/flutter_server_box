@@ -17,7 +17,7 @@ import 'package:server_box/data/provider/container.dart';
 import 'package:server_box/view/widget/two_line_text.dart';
 
 class ContainerPage extends StatefulWidget {
-  final ServerPrivateInfo spi;
+  final Spi spi;
   const ContainerPage({required this.spi, super.key});
 
   @override
@@ -27,7 +27,7 @@ class ContainerPage extends StatefulWidget {
 class _ContainerPageState extends State<ContainerPage> {
   final _textController = TextEditingController();
   late final _container = ContainerProvider(
-    client: widget.spi.server?.client,
+    client: widget.spi.server?.value.client,
     userName: widget.spi.user,
     hostId: widget.spi.id,
     context: context,

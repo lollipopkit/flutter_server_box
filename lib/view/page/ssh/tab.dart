@@ -2,12 +2,10 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:provider/provider.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server.dart';
-import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/view/page/ssh/page.dart';
 
 class SSHTabPage extends StatefulWidget {
@@ -86,8 +84,8 @@ class _SSHTabPageState extends State<SSHTabPage>
   Widget _buildAddPage() {
     return Center(
       key: const Key('sshTabAddServer'),
-      child: Consumer<ServerProvider>(builder: (_, pro, __) {
-        if (pro.serverOrder.isEmpty) {
+      child: ServerProvider.serverOrder.listenVal((order) {
+        if (order.isEmpty) {
           return Center(
             child: Text(libL10n.empty, textAlign: TextAlign.center),
           );
@@ -98,7 +96,7 @@ class _SSHTabPageState extends State<SSHTabPage>
           padding: const EdgeInsets.all(7),
           cacheExtent: 50,
           itemBuilder: (context, idx) {
-            final spi = Pros.server.pick(id: pro.serverOrder[idx])?.spi;
+            final spi = ServerProvider.pick(id: order[idx])?.value.spi;
             if (spi == null) return UIs.placeholder;
             return CardX(
               child: InkWell(
@@ -117,7 +115,7 @@ class _SSHTabPageState extends State<SSHTabPage>
               ),
             );
           },
-          itemCount: pro.servers.length,
+          itemCount: ServerProvider.servers.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
             childAspectRatio: 3 * (ratio / (9 / 16)),
@@ -147,7 +145,7 @@ class _SSHTabPageState extends State<SSHTabPage>
     );
   }
 
-  void _onTapInitCard(ServerPrivateInfo spi) async {
+  void _onTapInitCard(Spi spi) async {
     final name = () {
       final reg = RegExp('${spi.name}\\((\\d+)\\)');
       final idxs = _tabMap.keys

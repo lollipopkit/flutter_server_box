@@ -1,11 +1,12 @@
 import 'dart:convert';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
-import 'package:server_box/data/res/provider.dart';
+import 'package:server_box/data/provider/server.dart';
 
 import 'package:server_box/data/model/app/error.dart';
 
@@ -13,13 +14,13 @@ part 'server_private_info.g.dart';
 
 /// In the first version, it's called `ServerPrivateInfo` which was designed to
 /// store the private information of a server.
-/// 
+///
 /// Some params named as `spi` in the codebase which is the abbreviation of `ServerPrivateInfo`.
 ///
-/// Nowaday, more fields are added to this class, but the name is still the same.
+/// Nowaday, more fields are added to this class, and it's renamed to `Spi`.
 @JsonSerializable()
 @HiveType(typeId: 3)
-class ServerPrivateInfo {
+class Spi {
   @HiveField(0)
   final String name;
   @HiveField(1)
@@ -58,7 +59,7 @@ class ServerPrivateInfo {
 
   final String id;
 
-  const ServerPrivateInfo({
+  const Spi({
     required this.name,
     required this.ip,
     required this.port,
@@ -74,17 +75,22 @@ class ServerPrivateInfo {
     this.envs,
   }) : id = '$user@$ip:$port';
 
-  factory ServerPrivateInfo.fromJson(Map<String, dynamic> json) =>
-      _$ServerPrivateInfoFromJson(json);
+  factory Spi.fromJson(Map<String, dynamic> json) =>
+      _$SpiFromJson(json);
 
-  Map<String, dynamic> toJson() => _$ServerPrivateInfoToJson(this);
+  Map<String, dynamic> toJson() => _$SpiToJson(this);
 
+  @override
+  String toString() => id;
+}
+
+extension Spix on Spi {
   String toJsonString() => json.encode(toJson());
 
-  Server? get server => Pros.server.pick(spi: this);
-  Server? get jumpServer => Pros.server.pick(id: jumpId);
+  VNode<Server>? get server => ServerProvider.pick(spi: this);
+  VNode<Server>? get jumpServer => ServerProvider.pick(id: jumpId);
 
-  bool shouldReconnect(ServerPrivateInfo old) {
+  bool shouldReconnect(Spi old) {
     return id != old.id ||
         pwd != old.pwd ||
         keyId != old.keyId ||
@@ -113,12 +119,7 @@ class ServerPrivateInfo {
     return (ip_, port_);
   }
 
-  @override
-  String toString() {
-    return id;
-  }
-
-  static const example = ServerPrivateInfo(
+  static const example = Spi(
     name: 'name',
     ip: 'ip',
     port: 22,

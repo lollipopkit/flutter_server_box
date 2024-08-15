@@ -9,10 +9,10 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/provider/app.dart';
+import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/github_id.dart';
 import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -65,7 +65,7 @@ class _HomePageState extends State<HomePage>
   void dispose() {
     super.dispose();
     WidgetsBinding.instance.removeObserver(this);
-    Pros.server.closeServer();
+    ServerProvider.closeServer();
     _pageController.dispose();
     WakelockPlus.disable();
   }
@@ -78,8 +78,8 @@ class _HomePageState extends State<HomePage>
     switch (state) {
       case AppLifecycleState.resumed:
         if (_shouldAuth) _goAuth();
-        if (!Pros.server.isAutoRefreshOn) {
-          Pros.server.startAutoRefresh();
+        if (!ServerProvider.isAutoRefreshOn) {
+          ServerProvider.startAutoRefresh();
         }
         HomeWidgetMC.update();
         break;
@@ -93,7 +93,7 @@ class _HomePageState extends State<HomePage>
           // }
         } else {
           //Pros.server.setDisconnected();
-          Pros.server.stopAutoRefresh();
+          ServerProvider.stopAutoRefresh();
         }
         break;
       default:
@@ -120,7 +120,7 @@ class _HomePageState extends State<HomePage>
               icon: const Icon(Icons.refresh),
               tooltip: 'Refresh',
               onPressed: () async {
-                await Pros.server.refresh();
+                await ServerProvider.refresh();
               },
             );
           },
@@ -333,8 +333,8 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
       );
     }
     HomeWidgetMC.update();
-    await Pros.server.load();
-    await Pros.server.refresh();
+    await ServerProvider.load();
+    await ServerProvider.refresh();
   }
 
   // Future<void> _reqNotiPerm() async {

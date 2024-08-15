@@ -4,7 +4,6 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:provider/provider.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
@@ -22,14 +21,13 @@ import 'package:server_box/view/widget/server_func_btns.dart';
 
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server.dart';
-import 'package:server_box/data/provider/server.dart';
 
 part 'misc.dart';
 
 class ServerDetailPage extends StatefulWidget {
   const ServerDetailPage({super.key, required this.spi});
 
-  final ServerPrivateInfo spi;
+  final Spi spi;
 
   @override
   State<ServerDetailPage> createState() => _ServerDetailPageState();
@@ -79,16 +77,14 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ServerProvider>(builder: (_, provider, __) {
-      final s = widget.spi.server;
-      if (s == null) {
-        return Scaffold(
-          appBar: const CustomAppBar(),
-          body: Center(child: Text(libL10n.empty)),
-        );
-      }
-      return _buildMainPage(s);
-    });
+    final s = widget.spi.server;
+    if (s == null) {
+      return Scaffold(
+        appBar: const CustomAppBar(),
+        body: Center(child: Text(libL10n.empty)),
+      );
+    }
+    return s.listenVal(_buildMainPage);
   }
 
   Widget _buildMainPage(Server si) {
@@ -96,12 +92,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     final logo = _buildLogo(si);
     final children = [
       logo,
-      if (buildFuncs) ServerFuncBtns(spi: widget.spi),
+      if (buildFuncs) ServerFuncBtns(spi: si.spi),
     ];
     for (final card in _cardsOrder) {
       final buildFunc = _cardBuildMap[card];
       if (buildFunc != null) {
-        children.add(buildFunc(si.status));
+        children.add(buildFunc(si));
       }
     }
     return Scaffold(
@@ -122,8 +118,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       title: Text(si.spi.name),
       actions: [
         ShareBtn(
-          data: widget.spi.toJsonString(),
-          tip: widget.spi.name,
+          data: si.spi.toJsonString(),
+          tip: si.spi.name,
           tip2: '${libL10n.share} ${l10n.server} ~ ServerBox',
         ),
         IconButton(
@@ -160,7 +156,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildAbout(ServerStatus ss) {
+  Widget _buildAbout(Server si) {
+    final ss = si.status;
     return CardX(
       child: ExpandTile(
         leading: const Icon(MingCute.information_fill, size: 20),
@@ -188,7 +185,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildCPUView(ServerStatus ss) {
+  Widget _buildCPUView(Server si) {
+    final ss = si.status;
     final percent = ss.cpu.usedPercent(coreIdx: 0).toInt();
     final details = [
       _buildDetailPercent(ss.cpu.user, 'user'),
@@ -352,7 +350,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildMemView(ServerStatus ss) {
+  Widget _buildMemView(Server si) {
+    final ss = si.status;
     final free = ss.mem.free / ss.mem.total * 100;
     final avail = ss.mem.availPercent * 100;
     final used = ss.mem.usedPercent * 100;
@@ -399,7 +398,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildSwapView(ServerStatus ss) {
+  Widget _buildSwapView(Server si) {
+    final ss = si.status;
     if (ss.swap.total == 0) return UIs.placeholder;
     final used = ss.swap.usedPercent * 100;
     final cached = ss.swap.cached / ss.swap.total * 100;
@@ -434,7 +434,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildGpuView(ServerStatus ss) {
+  Widget _buildGpuView(Server si) {
+    final ss = si.status;
     if (ss.nvidia == null || ss.nvidia?.isEmpty == true) return UIs.placeholder;
     final children = ss.nvidia?.map((e) => _buildGpuItem(e)).toList() ?? [];
     return CardX(
@@ -544,7 +545,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildDiskView(ServerStatus ss) {
+  Widget _buildDiskView(Server si) {
+    final ss = si.status;
     final children = List.generate(
         ss.disk.length, (idx) => _buildDiskItem(ss.disk[idx], ss));
     return CardX(
@@ -608,7 +610,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildNetView(ServerStatus ss) {
+  Widget _buildNetView(Server si) {
+    final ss = si.status;
     final ns = ss.netSpeed;
     final children = <Widget>[];
     final devices = ns.devices;
@@ -691,14 +694,15 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildTemperature(ServerStatus ss) {
+  Widget _buildTemperature(Server si) {
+    final ss = si.status;
     if (ss.temps.isEmpty) {
       return UIs.placeholder;
     }
     return CardX(
       child: ExpandTile(
         title: Text(l10n.temperature),
-        leading: const Icon(Icons.ac_unit, size: 17),
+        leading: const Icon(Icons.ac_unit, size: 20),
         initiallyExpanded: _getInitExpand(ss.temps.devices.length),
         childrenPadding: const EdgeInsets.only(bottom: 7),
         children: ss.temps.devices
@@ -726,7 +730,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildBatteries(ServerStatus ss) {
+  Widget _buildBatteries(Server si) {
+    final ss = si.status;
     if (ss.batteries.isEmpty) {
       return UIs.placeholder;
     }
@@ -767,7 +772,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildSensors(ServerStatus ss) {
+  Widget _buildSensors(Server si) {
+    final ss = si.status;
     if (ss.sensors.isEmpty) return UIs.placeholder;
     return CardX(
       child: ExpandTile(
@@ -830,20 +836,21 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildPve(_) {
-    final addr = widget.spi.custom?.pveAddr;
-    if (addr == null) return UIs.placeholder;
+  Widget _buildPve(Server si) {
+    final addr = si.spi.custom?.pveAddr;
+    if (addr == null || addr.isEmpty) return UIs.placeholder;
     return CardX(
       child: ListTile(
         title: const Text('PVE'),
         leading: const Icon(FontAwesome.server_solid, size: 17),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () => AppRoutes.pve(spi: widget.spi).go(context),
+        onTap: () => AppRoutes.pve(spi: si.spi).go(context),
       ),
     );
   }
 
-  Widget _buildCustom(ServerStatus ss) {
+  Widget _buildCustom(Server si) {
+    final ss = si.status;
     if (ss.customCmds.isEmpty) return UIs.placeholder;
     return CardX(
       child: ExpandTile(

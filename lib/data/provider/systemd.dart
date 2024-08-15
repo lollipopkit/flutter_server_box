@@ -1,18 +1,18 @@
-import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
+import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/systemd.dart';
-import 'package:server_box/data/res/provider.dart';
+import 'package:server_box/data/provider/server.dart';
 
 final class SystemdProvider {
-  late final SSHClient _client;
-  late final bool isRoot;
+  late final VNode<Server> _si;
+  late final bool _isRoot;
 
-  SystemdProvider.init(ServerPrivateInfo spi) {
-    isRoot = spi.isRoot;
-    _client = Pros.server.pick(spi: spi)!.client!;
+  SystemdProvider.init(Spi spi) {
+    _isRoot = spi.isRoot;
+    _si = ServerProvider.pick(spi: spi)!;
     getUnits();
   }
 
@@ -23,7 +23,8 @@ final class SystemdProvider {
     isBusy.value = true;
 
     try {
-      final result = await _client.execForOutput(_getUnitsCmd);
+      final client = _si.value.client;
+      final result = await client!.execForOutput(_getUnitsCmd);
       final units = result.split('\n');
 
       final userUnits = <String>[];
@@ -63,7 +64,8 @@ for unit in ${unitNames_.join(' ')}; do
   echo -n "${ShellFunc.seperator}\n\$state"
 done
 ''';
-    final result = await _client.execForOutput(script);
+    final client = _si.value.client!;
+    final result = await client.execForOutput(script);
     final units = result.split(ShellFunc.seperator);
 
     final parsedUnits = <SystemdUnit>[];
@@ -141,7 +143,7 @@ get_type_files() {
     unit_type=\$1
     base_dir=""
 
-${isRoot ? """
+${_isRoot ? """
 get_files \$unit_type /etc/systemd/system
 get_files \$unit_type ~/.config/systemd/user""" : """
 get_files \$unit_type ~/.config/systemd/user"""}
