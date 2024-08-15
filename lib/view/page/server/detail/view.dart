@@ -58,9 +58,10 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   late MediaQueryData _media;
   final List<String> _cardsOrder = [];
 
+  final _settings = Stores.setting;
   final _netSortType = ValueNotifier(_NetSortType.device);
-  late final _collapse = Stores.setting.collapseUIDefault.fetch();
-  late final _textFactor = TextScaler.linear(Stores.setting.textFactor.fetch());
+  late final _collapse = _settings.collapseUIDefault.fetch();
+  late final _textFactor = TextScaler.linear(_settings.textFactor.fetch());
 
   @override
   void didChangeDependencies() {
@@ -71,7 +72,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   @override
   void initState() {
     super.initState();
-    final order = Stores.setting.detailCardOrder.fetch();
+    final order = _settings.detailCardOrder.fetch();
     order.removeWhere((e) => !ServerDetailCards.names.contains(e));
     _cardsOrder.addAll(order);
   }
@@ -92,12 +93,9 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildMainPage(Server si) {
     final buildFuncs = !Stores.setting.moveServerFuncs.fetch();
-    final logoUrl = si.spi.custom?.logoUrl ??
-        Stores.setting.serverLogoUrl.fetch().selfIfNotNullEmpty;
-    final buildLogo = logoUrl != null;
+    final logo = _buildLogo(si);
     final children = [
-      if (buildLogo)
-        _buildLogo(logoUrl, si.status.more[StatusCmdType.sys]?.dist),
+      logo,
       if (buildFuncs) ServerFuncBtns(spi: widget.spi),
     ];
     for (final card in _cardsOrder) {
@@ -141,7 +139,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildLogo(String logoUrl, Dist? dist) {
+  Widget _buildLogo(Server si) {
+    var logoUrl = si.spi.custom?.logoUrl ??
+        _settings.serverLogoUrl.fetch().selfIfNotNullEmpty;
+    if (logoUrl == null) return UIs.placeholder;
+
+    final dist = si.status.more[StatusCmdType.sys]?.dist;
     if (dist == null) return UIs.placeholder;
 
     logoUrl = logoUrl
