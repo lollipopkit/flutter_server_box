@@ -22,7 +22,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
       appBar: TagSwitcher(
         tags: SnippetProvider.tags,
         onTagChanged: (tag) => _tag.value = tag,
-        tag: _tag,
+        initTag: _tag.value,
       ),
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
@@ -36,24 +36,21 @@ class _SnippetListPageState extends State<SnippetListPage> {
   Widget _buildBody() {
     return SnippetProvider.snippets.listenVal(
       (snippets) {
-        if (snippets.isEmpty) {
-          return Center(child: Text(libL10n.empty));
-        }
-
+        if (snippets.isEmpty) return Center(child: Text(libL10n.empty));
         return _tag.listenVal((tag) => _buildSnippetList(snippets, tag));
       },
     );
   }
 
   Widget _buildSnippetList(List<Snippet> snippets, String tag) {
-    final filtered = tag.isEmpty
+    final filtered = tag == kDefaultTag
         ? snippets
         : snippets.where((e) => e.tags?.contains(tag) ?? false).toList();
 
     return ReorderableListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 11),
+      padding: const EdgeInsets.symmetric(horizontal: 9),
       itemCount: filtered.length,
-      onReorder: (oldIdx, newIdx) => setState(() {
+      onReorder: (oldIdx, newIdx) {
         snippets.moveByItem(
           oldIdx,
           newIdx,
@@ -62,7 +59,8 @@ class _SnippetListPageState extends State<SnippetListPage> {
             Stores.setting.snippetOrder.put(p0.map((e) => e.name).toList());
           },
         );
-      }),
+        SnippetProvider.snippets.notify();
+      },
       footer: UIs.height77,
       buildDefaultDragHandles: false,
       itemBuilder: (context, idx) {

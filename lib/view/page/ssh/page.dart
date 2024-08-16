@@ -300,7 +300,7 @@ class SSHPageState extends State<SSHPage>
           title: l10n.snippet,
           tags: SnippetProvider.tags,
           itemsBuilder: (e) {
-            if (e == null) return SnippetProvider.snippets.value;
+            if (e == kDefaultTag) return SnippetProvider.snippets.value;
             return SnippetProvider.snippets.value
                 .where((element) => element.tags?.contains(e) ?? false)
                 .toList();

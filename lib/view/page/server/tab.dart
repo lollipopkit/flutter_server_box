@@ -87,7 +87,7 @@ class _ServerPageState extends State<ServerPage>
       appBar: TagSwitcher(
         tags: ServerProvider.tags,
         onTagChanged: (p0) => _tag.value = p0,
-        tag: _tag,
+        initTag: _tag.value,
       ),
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -647,7 +647,7 @@ ${ss.err?.message ?? 'null'}
 
   List<String> _filterServers(List<String> order) {
     final tag = _tag.value;
-    if (tag.isEmpty) return order;
+    if (tag == kDefaultTag) return order;
     return order.where((e) {
       final tags = ServerProvider.pick(id: e)?.value.spi.tags;
       if (tags == null) return false;
