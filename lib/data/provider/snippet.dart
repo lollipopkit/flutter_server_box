@@ -1,6 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/snippet.dart';
-import 'package:server_box/data/provider/base.dart';
 import 'package:server_box/data/res/store.dart';
 
 class SnippetProvider extends Provider {

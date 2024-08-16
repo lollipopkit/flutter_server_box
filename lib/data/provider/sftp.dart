@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/sftp/worker.dart';
-import 'package:server_box/data/provider/base.dart';
 
 class SftpProvider extends Provider {
   const SftpProvider._();
