@@ -9,9 +9,6 @@ import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
 import 'package:server_box/data/model/server/system.dart';
-import 'package:server_box/data/provider/base.dart';
-// import 'package:server_box/data/model/sftp/req.dart';
-// import 'package:server_box/data/res/provider.dart';
 import 'package:server_box/data/res/store.dart';
 
 import 'package:server_box/core/utils/server.dart';

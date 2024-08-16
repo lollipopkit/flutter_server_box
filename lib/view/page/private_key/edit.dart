@@ -203,8 +203,9 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
     try {
       final decrypted = await Computer.shared.start(decyptPem, [key, pwd]);
       final pki = PrivateKeyInfo(id: name, key: decrypted);
-      if (widget.pki != null) {
-        PrivateKeyProvider.update(widget.pki!, pki);
+      final originPki = widget.pki;
+      if (originPki != null) {
+        PrivateKeyProvider.update(originPki, pki);
       } else {
         PrivateKeyProvider.add(pki);
       }

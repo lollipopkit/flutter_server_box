@@ -1,6 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
-import 'package:server_box/data/provider/base.dart';
 import 'package:server_box/data/res/store.dart';
 
 class PrivateKeyProvider extends Provider {
@@ -31,10 +30,12 @@ class PrivateKeyProvider extends Provider {
     final idx = pkis.value.indexWhere((e) => e.id == old.id);
     if (idx == -1) {
       pkis.value.add(newInfo);
+      Stores.key.put(newInfo);
+      Stores.key.delete(old);
     } else {
       pkis.value[idx] = newInfo;
+      Stores.key.put(newInfo);
     }
     pkis.notify();
-    Stores.key.put(newInfo);
   }
 }
