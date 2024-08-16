@@ -14,19 +14,16 @@ class SnippetListPage extends StatefulWidget {
 }
 
 class _SnippetListPageState extends State<SnippetListPage> {
-  late MediaQueryData _media;
-
-  String? _tag;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _media = MediaQuery.of(context);
-  }
+  final _tag = ''.vn;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: TagSwitcher(
+        tags: SnippetProvider.tags,
+        onTagChanged: (tag) => _tag.value = tag,
+        tag: _tag,
+      ),
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
         heroTag: 'snippetAdd',
@@ -43,39 +40,37 @@ class _SnippetListPageState extends State<SnippetListPage> {
           return Center(child: Text(libL10n.empty));
         }
 
-        final filtered = snippets
-            .where((e) => _tag == null || (e.tags?.contains(_tag) ?? false))
-            .toList();
+        return _tag.listenVal((tag) => _buildSnippetList(snippets, tag));
+      },
+    );
+  }
 
-        return ReorderableListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 11),
-          itemCount: filtered.length,
-          onReorder: (oldIdx, newIdx) => setState(() {
-            snippets.moveByItem(
-              oldIdx,
-              newIdx,
-              filtered: filtered,
-              onMove: (p0) {
-                Stores.setting.snippetOrder.put(p0.map((e) => e.name).toList());
-              },
-            );
-          }),
-          header: TagSwitcher(
-            tags: SnippetProvider.tags,
-            onTagChanged: (tag) => setState(() => _tag = tag),
-            initTag: _tag,
-            width: _media.size.width,
-          ),
-          footer: UIs.height77,
-          buildDefaultDragHandles: false,
-          itemBuilder: (context, idx) {
-            final snippet = filtered.elementAt(idx);
-            return ReorderableDelayedDragStartListener(
-              key: ValueKey(idx),
-              index: idx,
-              child: _buildSnippetItem(snippet),
-            );
+  Widget _buildSnippetList(List<Snippet> snippets, String tag) {
+    final filtered = tag.isEmpty
+        ? snippets
+        : snippets.where((e) => e.tags?.contains(tag) ?? false).toList();
+
+    return ReorderableListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 11),
+      itemCount: filtered.length,
+      onReorder: (oldIdx, newIdx) => setState(() {
+        snippets.moveByItem(
+          oldIdx,
+          newIdx,
+          filtered: filtered,
+          onMove: (p0) {
+            Stores.setting.snippetOrder.put(p0.map((e) => e.name).toList());
           },
+        );
+      }),
+      footer: UIs.height77,
+      buildDefaultDragHandles: false,
+      itemBuilder: (context, idx) {
+        final snippet = filtered.elementAt(idx);
+        return ReorderableDelayedDragStartListener(
+          key: ValueKey(idx),
+          index: idx,
+          child: _buildSnippetItem(snippet),
         );
       },
     );

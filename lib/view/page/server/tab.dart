@@ -40,7 +40,7 @@ class _ServerPageState extends State<ServerPage>
 
   Timer? _timer;
 
-  String? _tag;
+  final _tag = ''.vn;
   bool _useDoubleColumn = false;
 
   final _scrollController = ScrollController();
@@ -84,7 +84,11 @@ class _ServerPageState extends State<ServerPage>
 
   Widget _buildPortrait() {
     return Scaffold(
-      appBar: _buildTagsSwitcher(),
+      appBar: TagSwitcher(
+        tags: ServerProvider.tags,
+        onTagChanged: (p0) => _tag.value = p0,
+        tag: _tag,
+      ),
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => _autoHideKey.currentState?.show(),
@@ -182,33 +186,23 @@ class _ServerPageState extends State<ServerPage>
   Widget _buildBody() {
     return ServerProvider.serverOrder.listenVal(
       (order) {
-        if (!ServerProvider.tags.value.contains(_tag)) {
-          _tag = null;
-        }
         if (order.isEmpty) {
           return Center(
             child: Text(libL10n.empty, textAlign: TextAlign.center),
           );
         }
 
-        final filtered = _filterServers(order);
-        if (_useDoubleColumn &&
-            Stores.setting.doubleColumnServersPage.fetch()) {
-          return _buildBodyMedium(filtered);
-        }
-        return _buildBodySmall(filtered: filtered);
+        return _tag.listenVal(
+          (val) {
+            final filtered = _filterServers(order);
+            if (_useDoubleColumn &&
+                Stores.setting.doubleColumnServersPage.fetch()) {
+              return _buildBodyMedium(filtered);
+            }
+            return _buildBodySmall(filtered: filtered);
+          },
+        );
       },
-    );
-  }
-
-  TagSwitcher _buildTagsSwitcher() {
-    return TagSwitcher(
-      tags: ServerProvider.tags,
-      width: _media.size.width,
-      onTagChanged: (p0) => setState(() {
-        _tag = p0;
-      }),
-      initTag: _tag,
     );
   }
 
@@ -259,7 +253,7 @@ class _ServerPageState extends State<ServerPage>
     }
 
     return CardX(
-      key: Key(srv.spi.id + (_tag ?? '')),
+      key: Key(srv.spi.id + _tag.value),
       child: InkWell(
         onTap: () {
           if (srv.canViewDetails) {
@@ -651,11 +645,15 @@ ${ss.err?.message ?? 'null'}
     ServerProvider.startAutoRefresh();
   }
 
-  List<String> _filterServers(List<String> order) => order
-      .where((e) =>
-          _tag == null ||
-          (ServerProvider.pick(id: e)?.value.spi.tags?.contains(_tag) ?? false))
-      .toList();
+  List<String> _filterServers(List<String> order) {
+    final tag = _tag.value;
+    if (tag.isEmpty) return order;
+    return order.where((e) {
+      final tags = ServerProvider.pick(id: e)?.value.spi.tags;
+      if (tags == null) return false;
+      return tags.contains(tag);
+    }).toList();
+  }
 
   static const _kCardHeightMin = 23.0;
   static const _kCardHeightFlip = 99.0;

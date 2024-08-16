@@ -202,7 +202,7 @@ class _SettingPageState extends State<SettingPage> {
           title: libL10n.setting,
           items: List.generate(10, (idx) => idx == 1 ? null : idx),
           initial: _setting.serverStatusUpdateInterval.fetch(),
-          name: (p0) => p0 == 0 ? l10n.manual : '$p0 ${l10n.second}',
+          display: (p0) => p0 == 0 ? l10n.manual : '$p0 ${l10n.second}',
         );
         if (val != null) {
           _setting.serverStatusUpdateInterval.put(val);
@@ -331,7 +331,7 @@ class _SettingPageState extends State<SettingPage> {
           final selected = await context.showPickSingleDialog(
             title: l10n.maxRetryCount,
             items: List.generate(10, (index) => index),
-            name: (p0) => '$p0 ${l10n.times}',
+            display: (p0) => '$p0 ${l10n.times}',
             initial: val,
           );
           if (selected != null) {
@@ -356,7 +356,7 @@ class _SettingPageState extends State<SettingPage> {
         final selected = await context.showPickSingleDialog(
           title: libL10n.themeMode,
           items: List.generate(len + 2, (index) => index),
-          name: (p0) => _buildThemeModeStr(p0),
+          display: (p0) => _buildThemeModeStr(p0),
           initial: _setting.themeMode.fetch(),
         );
         if (selected != null) {
@@ -503,7 +503,7 @@ class _SettingPageState extends State<SettingPage> {
         final selected = await context.showPickSingleDialog(
           title: libL10n.language,
           items: AppLocalizations.supportedLocales,
-          name: (p0) => p0.nativeName,
+          display: (p0) => p0.nativeName,
           initial: _setting.locale.fetch().toLocale,
         );
         if (selected != null) {
@@ -543,7 +543,7 @@ class _SettingPageState extends State<SettingPage> {
         final selected = await context.showPickSingleDialog(
           title: l10n.theme,
           items: themeMap.keys.toList(),
-          name: (p0) => p0,
+          display: (p0) => p0,
           initial: _setting.editorTheme.fetch(),
         );
         if (selected != null) {
@@ -565,7 +565,7 @@ class _SettingPageState extends State<SettingPage> {
         final selected = await context.showPickSingleDialog(
           title: l10n.theme,
           items: themeMap.keys.toList(),
-          name: (p0) => p0,
+          display: (p0) => p0,
           initial: _setting.editorDarkTheme.fetch(),
         );
         if (selected != null) {
@@ -688,7 +688,7 @@ class _SettingPageState extends State<SettingPage> {
         final selected = await context.showPickSingleDialog(
           title: l10n.netViewType,
           items: NetViewType.values,
-          name: (p0) => p0.toStr,
+          display: (p0) => p0.toStr,
           initial: _setting.netViewType.fetch(),
         );
         if (selected != null) {
@@ -997,7 +997,7 @@ class _SettingPageState extends State<SettingPage> {
         final selected = await context.showPickSingleDialog(
           title: l10n.theme,
           items: List.generate(3, (index) => index),
-          name: (p0) => index2Str(p0),
+          display: (p0) => index2Str(p0),
           initial: _setting.termTheme.fetch(),
         );
         if (selected != null) {

@@ -118,7 +118,7 @@ void _onTapMoreBtns(
               .where((element) => element.tags?.contains(e) ?? false)
               .toList();
         },
-        name: (e) => e.name,
+        display: (e) => e.name,
       );
       if (snippets == null || snippets.isEmpty) return;
       final snippet = snippets.firstOrNull;

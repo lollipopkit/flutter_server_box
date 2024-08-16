@@ -44,7 +44,7 @@ final class _IntroPage extends StatelessWidget {
             final selected = await ctx.showPickSingleDialog(
               title: libL10n.language,
               items: AppLocalizations.supportedLocales,
-              name: (p0) => p0.nativeName,
+              display: (p0) => p0.nativeName,
               initial: _setting.locale.fetch().toLocale,
             );
             if (selected != null) {

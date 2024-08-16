@@ -287,8 +287,9 @@ class _LocalStoragePageState extends State<LocalStoragePage> {
                 title: libL10n.select,
                 items: ServerProvider.serverOrder.value
                     .map((e) => ServerProvider.pick(id: e)?.value.spi)
+                    .whereType<Spi>()
                     .toList(),
-                name: (e) => e.name,
+                display: (e) => e.name,
               );
               if (spi == null) return;
 

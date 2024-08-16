@@ -169,7 +169,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
               final serverIds = await context.showPickDialog(
                 title: l10n.autoRun,
                 items: ServerProvider.serverOrder.value,
-                name: (e) => ServerProvider.pick(id: e)?.value.spi.name ?? e,
+                display: (e) => ServerProvider.pick(id: e)?.value.spi.name ?? e,
                 initial: vals,
                 clearable: true,
               );

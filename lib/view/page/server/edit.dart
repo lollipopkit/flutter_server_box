@@ -1,10 +1,12 @@
 import 'dart:convert';
 
+import 'package:choice/choice.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/custom.dart';
+import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/provider/server.dart';
 
@@ -45,7 +47,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
 
   final _keyIdx = ValueNotifier<int?>(null);
   final _autoConnect = ValueNotifier(true);
-  final _jumpServer = ValueNotifier<String?>(null);
+  final _jumpServer = nvn<String?>();
   final _pveIgnoreCert = ValueNotifier(false);
   final _env = <String, String>{}.vn;
   final _customCmds = <String, String>{}.vn;
@@ -217,16 +219,16 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   }
 
   Widget _buildKeyAuth() {
-    const padding = EdgeInsets.only(left: 23, right: 13);
     return PrivateKeyProvider.pkis.listenVal(
       (pkis) {
         final tiles = List<Widget>.generate(pkis.length, (index) {
           final e = pkis[index];
           return ListTile(
-            contentPadding: padding,
-            leading: Text(
-              '#${index + 1}',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            contentPadding: const EdgeInsets.only(left: 10, right: 15),
+            leading: Radio<int>(
+              value: index,
+              groupValue: _keyIdx.value,
+              onChanged: (value) => _keyIdx.value = value,
             ),
             title: Text(e.id, textAlign: TextAlign.start),
             subtitle: Text(
@@ -234,10 +236,9 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
               textAlign: TextAlign.start,
               style: UIs.textGrey,
             ),
-            trailing: Radio<int>(
-              value: index,
-              groupValue: _keyIdx.value,
-              onChanged: (value) => _keyIdx.value = value,
+            trailing: Btn.icon(
+              icon: const Icon(Icons.edit),
+              onTap: () => AppRoutes.keyEdit(pki: e).go(context),
             ),
             onTap: () => _keyIdx.value = index,
           );
@@ -245,11 +246,8 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         tiles.add(
           ListTile(
             title: Text(libL10n.add),
-            contentPadding: padding,
-            trailing: const Padding(
-              padding: EdgeInsets.only(right: 13),
-              child: Icon(Icons.add),
-            ),
+            contentPadding: const EdgeInsets.only(left: 23, right: 23),
+            trailing: const Icon(Icons.add),
             onTap: () => AppRoutes.keyEdit().go(context),
           ),
         );
@@ -433,43 +431,49 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   }
 
   Widget _buildJumpServer() {
-    return ListenableBuilder(
-      listenable: _jumpServer,
-      builder: (_, __) {
-        final children = ServerProvider.servers.values
-            .map((e) => e.value)
-            .where((e) => e.spi.jumpId == null)
-            .where((e) => e.spi.id != widget.spi?.id)
-            .map(
-              (e) => ListTile(
-                title: Text(e.spi.name),
-                subtitle: Text(e.spi.id, style: UIs.textGrey),
-                trailing: Radio<String>(
-                  groupValue: _jumpServer.value,
-                  value: e.spi.id,
-                  onChanged: (val) => _jumpServer.value = val,
-                ),
-                onTap: () => _jumpServer.value = e.spi.id,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 17),
-              ),
-            )
-            .toList();
-        children.add(ListTile(
-          title: Text(libL10n.clear),
-          trailing: const Icon(Icons.clear),
-          onTap: () => _jumpServer.value = null,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 17),
-        ));
-        return CardX(
-          child: ExpandTile(
-            leading: const Icon(Icons.map),
-            initiallyExpanded: _jumpServer.value != null,
-            title: Text(l10n.jumpServer),
-            children: children,
+    const padding = EdgeInsets.only(left: 13, right: 13, bottom: 7);
+    final srvs = ServerProvider.servers.values
+        .map((e) => e.value)
+        .where((e) => e.spi.jumpId == null)
+        .where((e) => e.spi.id != widget.spi?.id)
+        .toList();
+    final choice = _jumpServer.listenVal(
+      (val) {
+        final srv = srvs.firstWhereOrNull((e) => e.id == _jumpServer.value);
+        return Choice<Server>(
+          multiple: false,
+          clearable: true,
+          value: srv != null ? [srv] : [],
+          builder: (state, _) => Wrap(
+            children: List<Widget>.generate(
+              srvs.length,
+              (index) {
+                final item = srvs[index];
+                return ChoiceChipX<Server>(
+                  label: item.spi.name,
+                  state: state,
+                  value: item,
+                  onSelected: (srv, on) {
+                    if (on) {
+                      _jumpServer.value = srv.spi.id;
+                    } else {
+                      _jumpServer.value = null;
+                    }
+                  },
+                );
+              },
+            ),
           ),
         );
       },
     );
+    return ExpandTile(
+      leading: const Icon(Icons.map),
+      initiallyExpanded: _jumpServer.value != null,
+      childrenPadding: padding,
+      title: Text(l10n.jumpServer),
+      children: [choice],
+    ).cardx;
   }
 
   void _onSave() async {
