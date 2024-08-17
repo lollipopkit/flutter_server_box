@@ -75,8 +75,7 @@ class Spi {
     this.envs,
   }) : id = '$user@$ip:$port';
 
-  factory Spi.fromJson(Map<String, dynamic> json) =>
-      _$SpiFromJson(json);
+  factory Spi.fromJson(Map<String, dynamic> json) => _$SpiFromJson(json);
 
   Map<String, dynamic> toJson() => _$SpiToJson(this);
 

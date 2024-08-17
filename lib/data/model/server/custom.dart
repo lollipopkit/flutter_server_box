@@ -21,6 +21,14 @@ final class ServerCustom {
   @HiveField(5)
   final String? logoUrl;
 
+  /// The device name of the network interface displayed in the home server card.
+  @HiveField(6)
+  final String? netDev;
+
+  /// The directory where the script is stored.
+  @HiveField(7)
+  final String? scriptDir;
+
   const ServerCustom({
     //this.temperature,
     this.pveAddr,
@@ -28,18 +36,14 @@ final class ServerCustom {
     this.cmds,
     this.preferTempDev,
     this.logoUrl,
+    this.netDev,
+    this.scriptDir,
   });
 
   factory ServerCustom.fromJson(Map<String, dynamic> json) =>
       _$ServerCustomFromJson(json);
 
   Map<String, dynamic> toJson() => _$ServerCustomToJson(this);
-
-
-  @override
-  String toString() {
-    return toJson().toString();
-  }
 
   @override
   bool operator ==(Object other) {
@@ -49,7 +53,9 @@ final class ServerCustom {
         other.pveIgnoreCert == pveIgnoreCert &&
         other.cmds == cmds &&
         other.preferTempDev == preferTempDev &&
-        other.logoUrl == logoUrl;
+        other.logoUrl == logoUrl &&
+        other.netDev == netDev &&
+        other.scriptDir == scriptDir;
   }
 
   @override
@@ -59,5 +65,7 @@ final class ServerCustom {
       pveIgnoreCert.hashCode ^
       cmds.hashCode ^
       preferTempDev.hashCode ^
-      logoUrl.hashCode;
+      logoUrl.hashCode ^
+      netDev.hashCode ^
+      scriptDir.hashCode;
 }

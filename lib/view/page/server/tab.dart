@@ -587,18 +587,15 @@ ${ss.err?.message ?? 'null'}
   Widget _buildNet(ServerStatus ss, String id) {
     final cardNoti = _getCardNoti(id);
     final type = cardNoti.value.net ?? Stores.setting.netViewType.fetch();
-    final (a, b) = type.build(ss);
+    final device = ServerProvider.pick(id: id)?.value.spi.custom?.netDev ?? 'tailscale0';
+    final (a, b) = type.build(ss, dev: device);
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 377),
-      transitionBuilder: (Widget child, Animation<double> animation) {
-        return FadeTransition(opacity: animation, child: child);
-      },
+      transitionBuilder: (c, anim) => FadeTransition(opacity: anim, child: c),
       child: _buildIOData(
         a,
         b,
-        onTap: () {
-          cardNoti.value = cardNoti.value.copyWith(net: type.next);
-        },
+        onTap: () => cardNoti.value = cardNoti.value.copyWith(net: type.next),
         key: ValueKey(type),
       ),
     );
