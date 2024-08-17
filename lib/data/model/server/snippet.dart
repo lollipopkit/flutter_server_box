@@ -34,7 +34,8 @@ class Snippet implements TagPickable {
     this.autoRunOn,
   });
 
-  factory Snippet.fromJson(Map<String, dynamic> json) => _$SnippetFromJson(json);
+  factory Snippet.fromJson(Map<String, dynamic> json) =>
+      _$SnippetFromJson(json);
 
   Map<String, dynamic> toJson() => _$SnippetToJson(this);
 

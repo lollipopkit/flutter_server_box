@@ -132,10 +132,7 @@ class AppRoutes {
   }
 
   static AppRoutes sftp(
-      {Key? key,
-      required Spi spi,
-      String? initPath,
-      bool isSelect = false}) {
+      {Key? key, required Spi spi, String? initPath, bool isSelect = false}) {
     return AppRoutes(
         SftpPage(
           key: key,

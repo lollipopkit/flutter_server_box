@@ -2,7 +2,6 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server.dart';
-import 'package:server_box/data/res/store.dart';
 
 part 'net_view.g.dart';
 
@@ -27,36 +26,43 @@ enum NetViewType {
         NetViewType.speed => l10n.speed,
       };
 
-  (String, String) build(ServerStatus ss) {
-    final ignoreLocal = Stores.setting.ignoreLocalNet.fetch();
-    switch (this) {
-      case NetViewType.conn:
-        return (
-          '${l10n.conn}:\n${ss.tcp.maxConn}',
-          '${libL10n.fail}:\n${ss.tcp.fail}',
-        );
-      case NetViewType.speed:
-        if (ignoreLocal) {
+  /// If no device is specified, return the cached value (only real devices, 
+  /// such as ethX, wlanX...).
+  (String, String) build(ServerStatus ss, {String? dev}) {
+    final notSepcifyDev = dev == null || dev.isEmpty;
+    try {
+      switch (this) {
+        case NetViewType.conn:
           return (
-            '↓:\n${ss.netSpeed.cachedRealVals.speedIn}',
-            '↑:\n${ss.netSpeed.cachedRealVals.speedOut}',
+            '${l10n.conn}:\n${ss.tcp.maxConn}',
+            '${libL10n.fail}:\n${ss.tcp.fail}',
           );
-        }
-        return (
-          '↓:\n${ss.netSpeed.speedIn()}',
-          '↑:\n${ss.netSpeed.speedOut()}',
-        );
-      case NetViewType.traffic:
-        if (ignoreLocal) {
+        case NetViewType.speed:
+          if (notSepcifyDev) {
+            return (
+              '↓:\n${ss.netSpeed.cachedVals.speedIn}',
+              '↑:\n${ss.netSpeed.cachedVals.speedOut}',
+            );
+          }
           return (
-            '↓:\n${ss.netSpeed.cachedRealVals.sizeIn}',
-            '↑:\n${ss.netSpeed.cachedRealVals.sizeOut}',
+            '↓:\n${ss.netSpeed.speedIn(device: dev)}',
+            '↑:\n${ss.netSpeed.speedOut(device: dev)}',
           );
-        }
-        return (
-          '↓:\n${ss.netSpeed.sizeIn()}',
-          '↑:\n${ss.netSpeed.sizeOut()}',
-        );
+        case NetViewType.traffic:
+          if (notSepcifyDev) {
+            return (
+              '↓:\n${ss.netSpeed.cachedVals.sizeIn}',
+              '↑:\n${ss.netSpeed.cachedVals.sizeOut}',
+            );
+          }
+          return (
+            '↓:\n${ss.netSpeed.sizeIn(device: dev)}',
+            '↑:\n${ss.netSpeed.sizeOut(device: dev)}',
+          );
+      }
+    } catch (e, s) {
+      Loggers.app.warning('NetViewType.build', e, s);
+      return ('N/A', 'N/A');
     }
   }
 

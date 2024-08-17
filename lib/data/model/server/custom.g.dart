@@ -22,13 +22,15 @@ class ServerCustomAdapter extends TypeAdapter<ServerCustom> {
       cmds: (fields[3] as Map?)?.cast<String, String>(),
       preferTempDev: fields[4] as String?,
       logoUrl: fields[5] as String?,
+      netDev: fields[6] as String?,
+      scriptDir: fields[7] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ServerCustom obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(7)
       ..writeByte(1)
       ..write(obj.pveAddr)
       ..writeByte(2)
@@ -38,7 +40,11 @@ class ServerCustomAdapter extends TypeAdapter<ServerCustom> {
       ..writeByte(4)
       ..write(obj.preferTempDev)
       ..writeByte(5)
-      ..write(obj.logoUrl);
+      ..write(obj.logoUrl)
+      ..writeByte(6)
+      ..write(obj.netDev)
+      ..writeByte(7)
+      ..write(obj.scriptDir);
   }
 
   @override
@@ -64,6 +70,8 @@ ServerCustom _$ServerCustomFromJson(Map<String, dynamic> json) => ServerCustom(
       ),
       preferTempDev: json['preferTempDev'] as String?,
       logoUrl: json['logoUrl'] as String?,
+      netDev: json['netDev'] as String?,
+      scriptDir: json['scriptDir'] as String?,
     );
 
 Map<String, dynamic> _$ServerCustomToJson(ServerCustom instance) =>
@@ -73,4 +81,6 @@ Map<String, dynamic> _$ServerCustomToJson(ServerCustom instance) =>
       'cmds': instance.cmds,
       'preferTempDev': instance.preferTempDev,
       'logoUrl': instance.logoUrl,
+      'netDev': instance.netDev,
+      'scriptDir': instance.scriptDir,
     };

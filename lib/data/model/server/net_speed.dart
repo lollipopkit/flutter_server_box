@@ -14,6 +14,13 @@ class NetSpeedPart extends TimeSeqIface<NetSpeedPart> {
   bool same(NetSpeedPart other) => device == other.device;
 }
 
+typedef CachedNetVals = ({
+  String sizeIn,
+  String sizeOut,
+  String speedIn,
+  String speedOut,
+});
+
 class NetSpeed extends TimeSeq<List<NetSpeedPart>> {
   NetSpeed(super.init1, super.init2);
 
@@ -24,14 +31,14 @@ class NetSpeed extends TimeSeq<List<NetSpeedPart>> {
 
     realIfaces.clear();
     realIfaces.addAll(devices
-        .where((e) => realIfacePrefixs.any((prefix) => e.startsWith(prefix)))
-        .toList());
+        .where((e) => realIfacePrefixs.any((prefix) => e.startsWith(prefix))));
 
     final sizeIn = this.sizeIn();
     final sizeOut = this.sizeOut();
     final speedIn = this.speedIn();
     final speedOut = this.speedOut();
-    cachedRealVals = (
+
+    cachedVals = (
       sizeIn: sizeIn,
       sizeOut: sizeOut,
       speedIn: speedIn,
@@ -49,12 +56,7 @@ class NetSpeed extends TimeSeq<List<NetSpeedPart>> {
   /// Cached non-virtual network device prefix
   final realIfaces = <String>[];
 
-  ({
-    String sizeIn,
-    String sizeOut,
-    String speedIn,
-    String speedOut,
-  }) cachedRealVals =
+  CachedNetVals cachedVals =
       (sizeIn: '0kb', sizeOut: '0kb', speedIn: '0kb/s', speedOut: '0kb/s');
 
   /// Time diff between [pre] and [now]
@@ -67,7 +69,8 @@ class NetSpeed extends TimeSeq<List<NetSpeedPart>> {
   BigInt sizeOutBytes(int i) => now[i].bytesOut;
 
   String speedIn({String? device}) {
-    if (pre[0].device == '' || now[0].device == '') return '0kb/s';
+    if (pre.isEmpty || now.isEmpty) return 'N/A';
+    if (pre.length != now.length) return 'N/A';
     if (device == null) {
       var speed = 0.0;
       for (final device in devices) {
@@ -84,7 +87,8 @@ class NetSpeed extends TimeSeq<List<NetSpeedPart>> {
   }
 
   String sizeIn({String? device}) {
-    if (pre[0].device == '' || now[0].device == '') return '0kb';
+    if (pre.isEmpty || now.isEmpty) return 'N/A';
+    if (pre.length != now.length) return 'N/A';
     if (device == null) {
       var size = BigInt.from(0);
       for (final device in devices) {
@@ -101,7 +105,8 @@ class NetSpeed extends TimeSeq<List<NetSpeedPart>> {
   }
 
   String speedOut({String? device}) {
-    if (pre[0].device == '' || now[0].device == '') return '0kb/s';
+    if (pre.isEmpty || now.isEmpty) return 'N/A';
+    if (pre.length != now.length) return 'N/A';
     if (device == null) {
       var speed = 0.0;
       for (final device in devices) {
@@ -118,7 +123,8 @@ class NetSpeed extends TimeSeq<List<NetSpeedPart>> {
   }
 
   String sizeOut({String? device}) {
-    if (pre[0].device == '' || now[0].device == '') return '0kb';
+    if (pre.isEmpty || now.isEmpty) return 'N/A';
+    if (pre.length != now.length) return 'N/A';
     if (device == null) {
       var size = BigInt.from(0);
       for (final device in devices) {
