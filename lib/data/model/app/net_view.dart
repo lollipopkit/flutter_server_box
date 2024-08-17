@@ -26,7 +26,7 @@ enum NetViewType {
         NetViewType.speed => l10n.speed,
       };
 
-  /// If no device is specified, return the cached value (only real devices, 
+  /// If no device is specified, return the cached value (only real devices,
   /// such as ethX, wlanX...).
   (String, String) build(ServerStatus ss, {String? dev}) {
     final notSepcifyDev = dev == null || dev.isEmpty;

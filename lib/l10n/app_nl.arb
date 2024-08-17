@@ -161,6 +161,8 @@
   "size": "Grootte",
   "snippet": "Fragment",
   "softWrap": "Zachte wrap",
+  "specifyDev": "Apparaat specificeren",
+  "specifyDevTip": "Bijvoorbeeld, netwerkverkeersstatistieken zijn standaard voor alle apparaten. Hier kunt u een specifiek apparaat opgeven.",
   "speed": "Snelheid",
   "spentTime": "Gebruikte tijd: {time}",
   "sshTermHelp": "Wanneer het terminal scrollbaar is, kan horizontaal slepen tekst selecteren. Klikken op de toetsenbordknop schakelt het toetsenbord aan/uit. Het bestandsicoon opent de huidige pad SFTP. De klembordknop kopieert de inhoud wanneer tekst is geselecteerd en plakt inhoud van het klembord in de terminal wanneer geen tekst is geselecteerd en er inhoud op het klembord staat. Het code-icoon plakt codefragmenten in de terminal en voert ze uit.",

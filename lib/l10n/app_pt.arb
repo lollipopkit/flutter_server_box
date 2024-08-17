@@ -161,6 +161,8 @@
   "size": "Tamanho",
   "snippet": "Snippet",
   "softWrap": "Quebra de linha suave",
+  "specifyDev": "Especificar dispositivo",
+  "specifyDevTip": "Por exemplo, as estatísticas de tráfego de rede são por padrão para todos os dispositivos. Você pode especificar um dispositivo específico aqui.",
   "speed": "Velocidade",
   "spentTime": "Tempo gasto: {time}",
   "sshTermHelp": "Quando o terminal é rolável, arrastar horizontalmente pode selecionar texto. Clicar no botão do teclado ativa/desativa o teclado. O ícone de arquivo abre o SFTP do caminho atual. O botão da área de transferência copia o conteúdo quando o texto é selecionado e cola o conteúdo da área de transferência no terminal quando nenhum texto é selecionado e há conteúdo na área de transferência. O ícone de código cola trechos de código no terminal e os executa.",
