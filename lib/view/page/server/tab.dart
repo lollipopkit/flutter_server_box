@@ -587,7 +587,7 @@ ${ss.err?.message ?? 'null'}
   Widget _buildNet(ServerStatus ss, String id) {
     final cardNoti = _getCardNoti(id);
     final type = cardNoti.value.net ?? Stores.setting.netViewType.fetch();
-    final device = ServerProvider.pick(id: id)?.value.spi.custom?.netDev ?? 'tailscale0';
+    final device = ServerProvider.pick(id: id)?.value.spi.custom?.netDev;
     final (a, b) = type.build(ss, dev: device);
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 377),

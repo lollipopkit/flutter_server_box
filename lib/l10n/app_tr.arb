@@ -161,6 +161,8 @@
   "size": "Boyut",
   "snippet": "Parça",
   "softWrap": "Yumuşak kaydırma",
+  "specifyDev": "Cihazı belirle",
+  "specifyDevTip": "Örneğin, ağ trafiği istatistikleri varsayılan olarak tüm cihazlar içindir. Burada belirli bir cihazı belirtebilirsiniz.",
   "speed": "Hız",
   "spentTime": "Harcanan zaman: {time}",
   "sshTermHelp": "Terminal kaydırılabilir olduğunda, yatay sürükleme metni seçebilir. Klavye düğmesine tıklamak klavyeyi açar/kapatır. Dosya simgesi mevcut yolu SFTP'de açar. Pano düğmesi metin seçildiğinde içeriği kopyalar ve metin seçilmediğinde ve panoda içerik olduğunda panodaki içeriği terminale yapıştırır. Kod simgesi kod parçacıklarını terminale yapıştırır ve çalıştırır.",

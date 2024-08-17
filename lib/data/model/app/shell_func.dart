@@ -1,4 +1,5 @@
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/provider/server.dart';
 
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/model/server/system.dart';
@@ -29,6 +30,9 @@ enum ShellFunc {
   /// Default is [scriptDirTmp]/[scriptFile], if this path is not accessible,
   /// it will be changed to [scriptDirHome]/[scriptFile].
   static String getScriptDir(String id) {
+    final customScriptDir =
+        ServerProvider.pick(id: id)?.value.spi.custom?.scriptDir;
+    if (customScriptDir != null) return customScriptDir;
     return _scriptDirMap.putIfAbsent(id, () {
       return scriptDirTmp;
     });

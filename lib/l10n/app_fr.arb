@@ -161,6 +161,8 @@
   "size": "Taille",
   "snippet": "Extrait",
   "softWrap": "Retour à la ligne souple",
+  "specifyDev": "Spécifier l'appareil",
+  "specifyDevTip": "Par exemple, les statistiques de trafic réseau concernent par défaut tous les appareils. Vous pouvez spécifier ici un appareil particulier.",
   "speed": "Vitesse",
   "spentTime": "Temps écoulé : {time}",
   "sshTermHelp": "Lorsque le terminal est défilable, faire glisser horizontalement permet de sélectionner du texte. En cliquant sur le bouton du clavier, vous activez/désactivez le clavier. L'icône de fichier ouvre le chemin actuel SFTP. Le bouton du presse-papiers copie le contenu lorsque du texte est sélectionné, et colle le contenu du presse-papiers dans le terminal lorsqu'aucun texte n'est sélectionné et qu'il y a du contenu dans le presse-papiers. L'icône de code colle des extraits de code dans le terminal et les exécute.",

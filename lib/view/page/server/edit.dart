@@ -36,6 +36,8 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   final _wolMacCtrl = TextEditingController();
   final _wolIpCtrl = TextEditingController();
   final _wolPwdCtrl = TextEditingController();
+  final _netDevCtrl = TextEditingController();
+  final _scriptDirCtrl = TextEditingController();
 
   final _nameFocus = FocusNode();
   final _ipFocus = FocusNode();
@@ -73,6 +75,8 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     _wolMacCtrl.dispose();
     _wolIpCtrl.dispose();
     _wolPwdCtrl.dispose();
+    _netDevCtrl.dispose();
+    _scriptDirCtrl.dispose();
   }
 
   @override
@@ -295,20 +299,52 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
           suggestion: false,
         ),
         _buildAltUrl(),
+        _buildScriptDir(),
         _buildEnvs(),
-        ..._buildPVEs(),
-        ..._buildCustomCmds(),
-        CenterGreyTitle(l10n.temperature),
+        _buildPVEs(),
+        _buildCustomCmds(),
+        _buildCustomDev(),
+        _buildWOLs(),
+      ],
+    );
+  }
+
+  Widget _buildScriptDir() {
+    return Input(
+      controller: _scriptDirCtrl,
+      type: TextInputType.text,
+      label: '${l10n.remotePath} (Shell ${l10n.install})',
+      icon: Icons.folder,
+      hint: '~/.config/server_box',
+      suggestion: false,
+    );
+  }
+
+  Widget _buildCustomDev() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CenterGreyTitle(l10n.specifyDev),
+        ListTile(
+          leading: const Icon(MingCute.question_line),
+          title: TipText(libL10n.note, l10n.specifyDevTip),
+        ).cardx,
         Input(
           controller: _preferTempDevCtrl,
           type: TextInputType.text,
-          label: libL10n.device,
+          label: l10n.temperature,
           icon: MingCute.low_temperature_line,
           hint: 'nvme-pci-0400',
           suggestion: false,
         ),
-        UIs.height7,
-        ..._buildWOLs(),
+        Input(
+          controller: _netDevCtrl,
+          type: TextInputType.text,
+          label: l10n.net,
+          icon: ZondIcons.network,
+          hint: 'eth0',
+          suggestion: false,
+        ),
       ],
     );
   }
@@ -325,102 +361,108 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     );
   }
 
-  List<Widget> _buildPVEs() {
+  Widget _buildPVEs() {
     const addr = 'https://127.0.0.1:8006';
-    return [
-      const CenterGreyTitle('PVE'),
-      Input(
-        controller: _pveAddrCtrl,
-        type: TextInputType.url,
-        icon: MingCute.web_line,
-        label: 'URL',
-        hint: addr,
-        suggestion: false,
-      ),
-      ListTile(
-        leading: const Icon(MingCute.certificate_line),
-        title: Text('PVE ${l10n.ignoreCert}'),
-        subtitle: Text(l10n.pveIgnoreCertTip, style: UIs.text12Grey),
-        trailing: ListenableBuilder(
-          listenable: _pveIgnoreCert,
-          builder: (_, __) => Switch(
-            value: _pveIgnoreCert.value,
-            onChanged: (val) {
-              _pveIgnoreCert.value = val;
-            },
-          ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const CenterGreyTitle('PVE'),
+        Input(
+          controller: _pveAddrCtrl,
+          type: TextInputType.url,
+          icon: MingCute.web_line,
+          label: 'URL',
+          hint: addr,
+          suggestion: false,
         ),
-      ).cardx,
-    ];
+        ListTile(
+          leading: const Icon(MingCute.certificate_line),
+          title: TipText('PVE ${l10n.ignoreCert}', l10n.pveIgnoreCertTip),
+          trailing: ListenableBuilder(
+            listenable: _pveIgnoreCert,
+            builder: (_, __) => Switch(
+              value: _pveIgnoreCert.value,
+              onChanged: (val) {
+                _pveIgnoreCert.value = val;
+              },
+            ),
+          ),
+        ).cardx,
+      ],
+    );
   }
 
-  List<Widget> _buildCustomCmds() {
-    return [
-      CenterGreyTitle(l10n.customCmd),
-      _customCmds.listenVal(
-        (vals) {
-          return ListTile(
-            leading: const Icon(BoxIcons.bxs_file_json),
-            title: const Text('JSON'),
-            subtitle: vals.isEmpty
-                ? null
-                : Text(vals.keys.join(','), style: UIs.textGrey),
-            trailing: const Icon(Icons.keyboard_arrow_right),
-            onTap: () async {
-              final res = await KvEditor.route.go(
-                context,
-                args: KvEditorArgs(data: _customCmds.value),
-              );
-              if (res == null) return;
-              _customCmds.value = res;
-            },
-          );
-        },
-      ).cardx,
-      ListTile(
-        leading: const Icon(MingCute.doc_line),
-        title: Text(libL10n.doc),
-        trailing: const Icon(Icons.open_in_new, size: 17),
-        onTap: () => l10n.customCmdDocUrl.launch(),
-      ).cardx,
-    ];
+  Widget _buildCustomCmds() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CenterGreyTitle(l10n.customCmd),
+        _customCmds.listenVal(
+          (vals) {
+            return ListTile(
+              leading: const Icon(BoxIcons.bxs_file_json),
+              title: const Text('JSON'),
+              subtitle: vals.isEmpty
+                  ? null
+                  : Text(vals.keys.join(','), style: UIs.textGrey),
+              trailing: const Icon(Icons.keyboard_arrow_right),
+              onTap: () async {
+                final res = await KvEditor.route.go(
+                  context,
+                  args: KvEditorArgs(data: _customCmds.value),
+                );
+                if (res == null) return;
+                _customCmds.value = res;
+              },
+            );
+          },
+        ).cardx,
+        ListTile(
+          leading: const Icon(MingCute.doc_line),
+          title: Text(libL10n.doc),
+          trailing: const Icon(Icons.open_in_new, size: 17),
+          onTap: () => l10n.customCmdDocUrl.launch(),
+        ).cardx,
+      ],
+    );
   }
 
-  List<Widget> _buildWOLs() {
-    return [
-      const Text('Wake On LAN (beta)', style: UIs.text13Grey),
-      UIs.height7,
-      ListTile(
-        leading: const Icon(BoxIcons.bxs_help_circle),
-        title: Text(libL10n.about),
-        subtitle: Text(l10n.wolTip, style: UIs.text12Grey),
-      ).cardx,
-      Input(
-        controller: _wolMacCtrl,
-        type: TextInputType.text,
-        label: 'MAC ${l10n.addr}',
-        icon: Icons.computer,
-        hint: '00:11:22:33:44:55',
-        suggestion: false,
-      ),
-      Input(
-        controller: _wolIpCtrl,
-        type: TextInputType.text,
-        label: 'IP ${l10n.addr}',
-        icon: ZondIcons.network,
-        hint: '192.168.1.x',
-        suggestion: false,
-      ),
-      Input(
-        controller: _wolPwdCtrl,
-        type: TextInputType.text,
-        obscureText: true,
-        label: l10n.pwd,
-        icon: Icons.password,
-        hint: l10n.pwd,
-        suggestion: false,
-      ),
-    ];
+  Widget _buildWOLs() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const CenterGreyTitle('Wake On LAN (beta)'),
+        ListTile(
+          leading: const Icon(BoxIcons.bxs_help_circle),
+          title: TipText(libL10n.about, l10n.wolTip),
+        ).cardx,
+        Input(
+          controller: _wolMacCtrl,
+          type: TextInputType.text,
+          label: 'MAC ${l10n.addr}',
+          icon: Icons.computer,
+          hint: '00:11:22:33:44:55',
+          suggestion: false,
+        ),
+        Input(
+          controller: _wolIpCtrl,
+          type: TextInputType.text,
+          label: 'IP ${l10n.addr}',
+          icon: ZondIcons.network,
+          hint: '192.168.1.x',
+          suggestion: false,
+        ),
+        Input(
+          controller: _wolPwdCtrl,
+          type: TextInputType.text,
+          obscureText: true,
+          label: l10n.pwd,
+          icon: Icons.password,
+          hint: l10n.pwd,
+          suggestion: false,
+        ),
+      ],
+    );
   }
 
   Widget _buildFAB() {
@@ -518,6 +560,8 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       cmds: customCmds.isEmpty ? null : customCmds,
       preferTempDev: _preferTempDevCtrl.text.selfIfNotNullEmpty,
       logoUrl: _logoUrlCtrl.text.selfIfNotNullEmpty,
+      netDev: _netDevCtrl.text.selfIfNotNullEmpty,
+      scriptDir: _scriptDirCtrl.text.selfIfNotNullEmpty,
     );
 
     final wolEmpty = _wolMacCtrl.text.isEmpty &&
@@ -612,6 +656,9 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     }
 
     _env.value = spi.envs ?? {};
+
+    _netDevCtrl.text = spi.custom?.netDev ?? '';
+    _scriptDirCtrl.text = spi.custom?.scriptDir ?? '';
   }
 
   Widget _buildWriteScriptTip() {

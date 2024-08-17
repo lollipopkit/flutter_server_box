@@ -161,6 +161,8 @@
   "size": "Größe",
   "snippet": "Snippet",
   "softWrap": "Weicher Umbruch",
+  "specifyDev": "Gerät angeben",
+  "specifyDevTip": "Zum Beispiel bezieht sich die Standard-Netzwerkverkehrsstatistik auf alle Geräte. Hier können Sie ein bestimmtes Gerät angeben.",
   "speed": "Tempo",
   "spentTime": "Benötigte Zeit: {time}",
   "sshTermHelp": "Wenn das Terminal scrollbar ist, kann durch horizontales Ziehen Text ausgewählt werden. Durch Klicken auf die Tastentaste wird die Tastatur ein- oder ausgeschaltet. Das Dateisymbol öffnet den aktuellen Pfad SFTP. Die Zwischenablage-Schaltfläche kopiert den Inhalt, wenn Text ausgewählt ist, und fügt Inhalte aus der Zwischenablage in das Terminal ein, wenn kein Text ausgewählt ist und Inhalte in der Zwischenablage vorhanden sind. Das Codesymbol fügt Code-Schnipsel ins Terminal ein und führt sie aus.",

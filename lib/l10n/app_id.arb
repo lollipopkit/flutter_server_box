@@ -161,6 +161,8 @@
   "size": "Ukuran",
   "snippet": "Snippet",
   "softWrap": "Pembungkus lembut",
+  "specifyDev": "Tentukan perangkat",
+  "specifyDevTip": "Misalnya, statistik lalu lintas jaringan secara default adalah untuk semua perangkat. Anda dapat menentukan perangkat tertentu di sini.",
   "speed": "Kecepatan",
   "spentTime": "Menghabiskan waktu: {time}",
   "sshTermHelp": "Ketika terminal dapat digulirkan, menggeser secara horizontal dapat memilih teks. Mengklik tombol keyboard mengaktifkan/menonaktifkan keyboard. Ikon file membuka SFTP jalur saat ini. Tombol papan klip menyalin konten saat teks dipilih, dan menempelkan konten dari papan klip ke terminal saat tidak ada teks yang dipilih dan ada konten di papan klip. Ikon kode menempelkan potongan kode ke terminal dan mengeksekusinya.",

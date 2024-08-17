@@ -161,6 +161,8 @@
   "size": "Tamaño",
   "snippet": "Fragmento de código",
   "softWrap": "Salto de línea suave",
+  "specifyDev": "Especificar dispositivo",
+  "specifyDevTip": "Por ejemplo, las estadísticas de tráfico de red son por defecto para todos los dispositivos. Aquí puede especificar un dispositivo en particular.",
   "speed": "Velocidad",
   "spentTime": "Tiempo gastado: {time}",
   "sshTermHelp": "Cuando el terminal es desplazable, arrastrar horizontalmente puede seleccionar texto. Hacer clic en el botón del teclado enciende/apaga el teclado. El icono de archivo abre el SFTP de la ruta actual. El botón del portapapeles copia el contenido cuando se selecciona texto y pega el contenido del portapapeles en el terminal cuando no se selecciona texto y hay contenido en el portapapeles. El icono de código pega fragmentos de código en el terminal y los ejecuta.",
