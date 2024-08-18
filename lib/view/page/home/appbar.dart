@@ -19,11 +19,11 @@ final class _AppBar extends CustomAppBar {
     );
     return selectIndex.listenVal(
       (idx) {
+        if (isDesktop) return super.build(context);
+
         if (idx == AppTab.ssh.index) {
           return placeholder;
         }
-
-        if (isDesktop) return super.build(context);
 
         return ValBuilder(
           listenable: landscape,
