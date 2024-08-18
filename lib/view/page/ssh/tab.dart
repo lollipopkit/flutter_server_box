@@ -105,9 +105,15 @@ class _SSHTabPageState extends State<SSHTabPage>
                   alignment: Alignment.centerLeft,
                   padding: const EdgeInsets.only(left: 17, right: 7),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(spi.name, style: UIs.text18),
+                      Expanded(
+                        child: Text(
+                          spi.name,
+                          style: UIs.text18,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                       const Icon(Icons.chevron_right)
                     ],
                   ),
