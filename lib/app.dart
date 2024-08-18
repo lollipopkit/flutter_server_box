@@ -86,19 +86,21 @@ class MyApp extends StatelessWidget {
       themeMode: themeMode,
       theme: light.fixWindowsFont,
       darkTheme: (tMode < 3 ? dark : dark.toAmoled).fixWindowsFont,
-      home: Builder(
-        builder: (context) {
-          context.setLibL10n();
-          final appL10n = AppLocalizations.of(context);
-          if (appL10n != null) l10n = appL10n;
+      home: VirtualWindowFrame(
+        child: Builder(
+          builder: (context) {
+            context.setLibL10n();
+            final appL10n = AppLocalizations.of(context);
+            if (appL10n != null) l10n = appL10n;
 
-          final intros = _IntroPage.builders;
-          if (intros.isNotEmpty) {
-            return _IntroPage(intros);
-          }
+            final intros = _IntroPage.builders;
+            if (intros.isNotEmpty) {
+              return _IntroPage(intros);
+            }
 
-          return const HomePage();
-        },
+            return const HomePage();
+          },
+        ),
       ),
     );
   }
