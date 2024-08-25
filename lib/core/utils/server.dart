@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dartssh2/dartssh2.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/res/store.dart';
@@ -62,6 +63,8 @@ Future<SSHClient> genClient(
 }) async {
   onStatus?.call(GenSSHClientStatus.socket);
 
+  String? alterUser;
+
   final socket = await () async {
     // Proxy
     final jumpSpi_ = () {
@@ -90,16 +93,19 @@ Future<SSHClient> genClient(
         spi.port,
         timeout: timeout,
       );
-    } catch (e) {
+    } catch (e, s) {
+      Loggers.app.warning('genClient', e, s);
       if (spi.alterUrl == null) rethrow;
       try {
-        final ipPort = spi.fromStringUrl();
+        final res = spi.fromStringUrl();
+        alterUser = res.$2;
         return await SSHSocket.connect(
-          ipPort.$1,
-          ipPort.$2,
+          res.$1,
+          res.$3,
           timeout: timeout,
         );
-      } catch (e) {
+      } catch (e, s) {
+        Loggers.app.warning('genClient alterUrl', e, s);
         rethrow;
       }
     }
@@ -110,7 +116,7 @@ Future<SSHClient> genClient(
     onStatus?.call(GenSSHClientStatus.pwd);
     return SSHClient(
       socket,
-      username: spi.user,
+      username: alterUser ?? spi.user,
       onPasswordRequest: () => spi.pwd,
       onUserInfoRequest: onKeyboardInteractive,
       // printDebug: debugPrint,

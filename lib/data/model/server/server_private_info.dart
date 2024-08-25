@@ -98,7 +98,7 @@ extension Spix on Spi {
         custom?.cmds != old.custom?.cmds;
   }
 
-  (String, int) fromStringUrl() {
+  (String ip, String usr, int port) fromStringUrl() {
     if (alterUrl == null) {
       throw SSHErr(type: SSHErrType.connect, message: 'alterUrl is null');
     }
@@ -106,6 +106,7 @@ extension Spix on Spi {
     if (splited.length != 2) {
       throw SSHErr(type: SSHErrType.connect, message: 'alterUrl no @');
     }
+    final usr = splited[0];
     final splited2 = splited[1].split(':');
     if (splited2.length != 2) {
       throw SSHErr(type: SSHErrType.connect, message: 'alterUrl no :');
@@ -115,7 +116,7 @@ extension Spix on Spi {
     if (port <= 0 || port > 65535) {
       throw SSHErr(type: SSHErrType.connect, message: 'alterUrl port error');
     }
-    return (ip_, port_);
+    return (ip_, usr, port_);
   }
 
   static const example = Spi(
