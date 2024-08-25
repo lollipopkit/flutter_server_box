@@ -682,11 +682,11 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       text: libL10n.import,
       icon: const Icon(Icons.qr_code, color: Colors.grey),
       onTap: () async {
-        final codes = await BarcodeScannerPage.route.go(
+        final ret = await BarcodeScannerPage.route.go(
           context,
           args: const BarcodeScannerPageArgs(),
         );
-        final code = codes?.firstOrNull?.rawValue;
+        final code = ret?.text;
         if (code == null) return;
         try {
           final spi = Spi.fromJson(json.decode(code));
