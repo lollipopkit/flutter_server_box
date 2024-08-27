@@ -106,7 +106,7 @@ class _SSHTabPageState extends State<SSHTabPage>
               ),
             );
           }).toList(),
-        );
+        ).paddingSymmetric(horizontal: 13);
       }),
     );
   }
