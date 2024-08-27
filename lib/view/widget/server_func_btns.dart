@@ -165,10 +165,7 @@ void _onTapMoreBtns(
       );
       break;
     case ServerFuncBtn.systemd:
-      SystemdPage.route.go(
-        context,
-        args: SystemdPageArgs(spi: spi),
-      );
+      SystemdPage.route.go(context, SystemdPageArgs(spi: spi));
       break;
   }
 }

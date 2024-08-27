@@ -9,6 +9,7 @@ import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/server/edit.dart';
 import 'package:server_box/view/widget/percent_circle.dart';
 
 import 'package:server_box/core/route.dart';
@@ -107,7 +108,7 @@ class _ServerPageState extends State<ServerPage>
         controller: _scrollController,
         child: FloatingActionButton(
           heroTag: 'addServer',
-          onPressed: () => AppRoutes.serverEdit().go(context),
+          onPressed: () => ServerEditPage.route.go(context),
           tooltip: libL10n.add,
           child: const Icon(Icons.add),
         ),
@@ -259,7 +260,7 @@ class _ServerPageState extends State<ServerPage>
           if (srv.canViewDetails) {
             AppRoutes.serverDetail(spi: srv.spi).go(context);
           } else {
-            AppRoutes.serverEdit(spi: srv.spi).go(context);
+            ServerEditPage.route.go(context, args: srv.spi);
           }
         },
         onLongPress: () {
@@ -270,7 +271,7 @@ class _ServerPageState extends State<ServerPage>
               flip: !cardStatus.value.flip,
             );
           } else {
-            AppRoutes.serverEdit(spi: srv.spi).go(context);
+            ServerEditPage.route.go(context, args: srv.spi);
           }
         },
         child: Padding(
@@ -384,7 +385,7 @@ class _ServerPageState extends State<ServerPage>
         textStyle: textStyle,
       ),
       Btn.column(
-        onTap: () => AppRoutes.serverEdit(spi: srv.spi).go(context),
+        onTap: () => ServerEditPage.route.go(context, args: srv.spi),
         icon: const Icon(Icons.edit, color: Colors.grey),
         text: libL10n.edit,
         textStyle: textStyle,

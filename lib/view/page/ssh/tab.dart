@@ -3,9 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/view/page/server/edit.dart';
 import 'package:server_box/view/page/ssh/page.dart';
 
 class SSHTabPage extends StatefulWidget {
@@ -48,7 +48,7 @@ class _SSHTabPageState extends State<SSHTabPage>
           if (idx != 0) return const SizedBox();
           return FloatingActionButton(
             heroTag: 'sshAddServer',
-            onPressed: () => AppRoutes.serverEdit().go(context),
+            onPressed: () => ServerEditPage.route.go(context),
             tooltip: libL10n.add,
             child: const Icon(Icons.add),
           );

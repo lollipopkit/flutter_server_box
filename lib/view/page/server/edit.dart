@@ -15,15 +15,21 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/private_key.dart';
 
 class ServerEditPage extends StatefulWidget {
-  const ServerEditPage({super.key, this.spi});
+  final Spi? args;
 
-  final Spi? spi;
+  const ServerEditPage({super.key, this.args});
+
+  static const route = AppRoute<bool, Spi>(
+    page: ServerEditPage.new,
+    path: '/server_edit',
+  );
 
   @override
   State<ServerEditPage> createState() => _ServerEditPageState();
 }
 
 class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
+  late final spi = widget.args;
   final _nameController = TextEditingController();
   final _ipController = TextEditingController();
   final _altUrlController = TextEditingController();
@@ -47,6 +53,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
 
   late FocusScopeNode _focusScope;
 
+  /// -1: non selected, null: password, others: index of private key
   final _keyIdx = ValueNotifier<int?>(null);
   final _autoConnect = ValueNotifier(true);
   final _jumpServer = nvn<String?>();
@@ -88,7 +95,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   @override
   Widget build(BuildContext context) {
     final actions = <Widget>[];
-    if (widget.spi != null) actions.add(_buildDelBtn());
+    if (spi != null) actions.add(_buildDelBtn());
 
     return GestureDetector(
       onTap: () => _focusScope.unfocus(),
@@ -277,7 +284,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         onTap: () async {
           final res = await KvEditor.route.go(
             context,
-            args: KvEditorArgs(data: widget.spi?.envs ?? {}),
+            KvEditorArgs(data: spi?.envs ?? {}),
           );
           if (res == null) return;
           _env.value = res;
@@ -409,7 +416,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
               onTap: () async {
                 final res = await KvEditor.route.go(
                   context,
-                  args: KvEditorArgs(data: _customCmds.value),
+                  KvEditorArgs(data: _customCmds.value),
                 );
                 if (res == null) return;
                 _customCmds.value = res;
@@ -477,7 +484,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     final srvs = ServerProvider.servers.values
         .map((e) => e.value)
         .where((e) => e.spi.jumpId == null)
-        .where((e) => e.spi.id != widget.spi?.id)
+        .where((e) => e.spi.id != spi?.id)
         .toList();
     final choice = _jumpServer.listenVal(
       (val) {
@@ -602,10 +609,10 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       envs: _env.value.isEmpty ? null : _env.value,
     );
 
-    if (widget.spi == null) {
+    if (this.spi == null) {
       ServerProvider.addServer(spi);
     } else {
-      ServerProvider.updateServer(widget.spi!, spi);
+      ServerProvider.updateServer(this.spi!, spi);
     }
 
     context.pop();
@@ -613,9 +620,8 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
 
   @override
   void afterFirstLayout(BuildContext context) {
-    final spi = widget.spi;
     if (spi != null) {
-      _initWithSpi(spi);
+      _initWithSpi(spi!);
     }
   }
 
@@ -628,7 +634,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       _passwordController.text = spi.pwd ?? '';
     } else {
       _keyIdx.value = PrivateKeyProvider.pkis.value.indexWhere(
-        (e) => e.id == widget.spi!.keyId,
+        (e) => e.id == spi.keyId,
       );
     }
 
@@ -705,15 +711,13 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       onPressed: () {
         context.showRoundDialog(
           title: libL10n.attention,
-          child: StatefulBuilder(builder: (ctx, setState) {
-            return Text(libL10n.askContinue(
-              '${libL10n.delete} ${l10n.server}(${widget.spi!.name})',
-            ));
-          }),
+          child: Text(libL10n.askContinue(
+            '${libL10n.delete} ${l10n.server}(${spi!.name})',
+          )),
           actions: Btn.ok(
             onTap: () async {
               context.pop();
-              ServerProvider.delServer(widget.spi!.id);
+              ServerProvider.delServer(spi!.id);
               context.pop(true);
             },
             red: true,

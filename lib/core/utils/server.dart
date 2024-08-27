@@ -93,8 +93,8 @@ Future<SSHClient> genClient(
         spi.port,
         timeout: timeout,
       );
-    } catch (e, s) {
-      Loggers.app.warning('genClient', e, s);
+    } catch (e) {
+      Loggers.app.warning('genClient', e);
       if (spi.alterUrl == null) rethrow;
       try {
         final res = spi.fromStringUrl();
@@ -104,8 +104,8 @@ Future<SSHClient> genClient(
           res.$3,
           timeout: timeout,
         );
-      } catch (e, s) {
-        Loggers.app.warning('genClient alterUrl', e, s);
+      } catch (e) {
+        Loggers.app.warning('genClient alterUrl', e);
         rethrow;
       }
     }
