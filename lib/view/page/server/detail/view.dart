@@ -17,6 +17,7 @@ import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/server/edit.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
 
 import 'package:server_box/core/route.dart';
@@ -125,7 +126,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         IconButton(
           icon: const Icon(Icons.edit),
           onPressed: () async {
-            final delete = await AppRoutes.serverEdit(spi: si.spi).go(context);
+            final delete = await ServerEditPage.route.go(context, args: si.spi);
             if (delete == true) {
               context.pop();
             }

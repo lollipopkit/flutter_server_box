@@ -21,7 +21,7 @@ final class SystemdPage extends StatefulWidget {
     required this.args,
   });
 
-  static const route = AppRoute<void, SystemdPageArgs>(
+  static const route = AppRouteArg<void, SystemdPageArgs>(
     page: SystemdPage.new,
     path: '/systemd',
   );

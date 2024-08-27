@@ -421,8 +421,8 @@ packages:
     dependency: "direct dev"
     description:
       path: "."
-      ref: "v1.0.42"
-      resolved-ref: "2cae3388a66581169638c3b3f5fc73dd7b5b4bfd"
+      ref: "v1.0.43"
+      resolved-ref: df503ed1598f4fc6a3d3904491d54a1738d4be98
       url: "https://github.com/lppcg/fl_build.git"
     source: git
     version: "1.0.0"
@@ -438,8 +438,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v1.0.143"
-      resolved-ref: "241ab972985a97abcba032cba96229bdff61a759"
+      ref: "v1.0.145"
+      resolved-ref: "9f37be2b15c9d87887d704599f8fcc17263b8335"
       url: "https://github.com/lppcg/fl_lib"
     source: git
     version: "0.0.1"
@@ -1425,10 +1425,10 @@ packages:
     dependency: transitive
     description:
       name: vm_service
-      sha256: f652077d0bdf60abe4c1f6377448e8655008eef28f128bc023f7b5e8dfeb48fc
+      sha256: "5c5f338a667b4c644744b661f309fb8080bb94b18a7e91ef1dbd343bed00ed6d"
       url: "https://pub.dev"
     source: hosted
-    version: "14.2.4"
+    version: "14.2.5"
   wake_on_lan:
     dependency: "direct main"
     description:

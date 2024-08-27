@@ -23,7 +23,6 @@ import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/view/page/editor.dart';
 import 'package:server_box/view/page/process.dart';
-import 'package:server_box/view/page/server/edit.dart';
 import 'package:server_box/view/page/server/tab.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/page/setting/seq/srv_detail_seq.dart';
@@ -64,13 +63,6 @@ class AppRoutes {
 
   static AppRoutes serverTab({Key? key}) {
     return AppRoutes(ServerPage(key: key), 'server_tab');
-  }
-
-  static AppRoutes serverEdit({Key? key, Spi? spi}) {
-    return AppRoutes(
-      ServerEditPage(spi: spi),
-      'server_${spi == null ? 'add' : 'edit'}',
-    );
   }
 
   static AppRoutes keyEdit({Key? key, PrivateKeyInfo? pki}) {

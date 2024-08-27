@@ -64,7 +64,7 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
         }
         final result = await KvEditor.route.go(
           context,
-          args: KvEditorArgs(data: data, prefix: 'widget_'),
+          KvEditorArgs(data: data, prefix: 'widget_'),
         );
         if (result != null) {
           _saveWidgetSP(result, data);

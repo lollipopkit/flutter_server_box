@@ -111,7 +111,7 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
     final urls = Map<String, String>.from(map['urls'] as Map? ?? {});
     final result = await KvEditor.route.go(
       context,
-      args: KvEditorArgs(data: urls),
+      KvEditorArgs(data: urls),
     );
     if (result == null) return;
 

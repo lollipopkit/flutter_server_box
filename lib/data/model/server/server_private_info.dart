@@ -107,13 +107,13 @@ extension Spix on Spi {
       throw SSHErr(type: SSHErrType.connect, message: 'alterUrl no @');
     }
     final usr = splited[0];
-    final splited2 = splited[1].split(':');
-    if (splited2.length != 2) {
+    final idx = splited[1].lastIndexOf(':');
+    if (idx == -1) {
       throw SSHErr(type: SSHErrType.connect, message: 'alterUrl no :');
     }
-    final ip_ = splited2[0];
-    final port_ = int.tryParse(splited2[1]) ?? 22;
-    if (port <= 0 || port > 65535) {
+    final ip_ = splited[1].substring(0, idx);
+    final port_ = int.tryParse(splited[1].substring(idx + 1));
+    if (port_ == null || port_ <= 0 || port_ > 65535) {
       throw SSHErr(type: SSHErrType.connect, message: 'alterUrl port error');
     }
     return (ip_, usr, port_);
