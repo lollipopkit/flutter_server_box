@@ -70,13 +70,8 @@ final class _IntroPage extends StatelessWidget {
         ).cardx,
         ListTile(
           leading: const Icon(MingCute.chart_line_line, size: _kIconSize),
-          title: TipText(l10n.stat, l10n.parseContainerStatsTip),
+          title: TipText('Docker ${l10n.stat}', l10n.parseContainerStatsTip),
           trailing: StoreSwitch(prop: _setting.containerParseStat),
-        ).cardx,
-        ListTile(
-          leading: const Icon(OctIcons.cpu),
-          title: TipText(l10n.noLineChartForCpu, l10n.cpuViewAsProgressTip),
-          trailing: StoreSwitch(prop: _setting.cpuViewAsProgress),
         ).cardx,
         ListTile(
           leading: const Icon(Bootstrap.alphabet),
