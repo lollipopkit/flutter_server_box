@@ -90,44 +90,22 @@ class _SSHTabPageState extends State<SSHTabPage>
             child: Text(libL10n.empty, textAlign: TextAlign.center),
           );
         }
-
-        final ratio = context.media.size.aspectRatio;
-        return GridView.builder(
-          padding: const EdgeInsets.all(7),
-          cacheExtent: 50,
-          itemBuilder: (context, idx) {
-            final spi = ServerProvider.pick(id: order[idx])?.value.spi;
+        return Wrap(
+          children: order.map((id) {
+            final spi = ServerProvider.pick(id: id)?.value.spi;
             if (spi == null) return UIs.placeholder;
             return CardX(
               child: InkWell(
                 onTap: () => _onTapInitCard(spi),
-                child: Container(
-                  alignment: Alignment.centerLeft,
-                  padding: const EdgeInsets.only(left: 17, right: 7),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          spi.name,
-                          style: UIs.text18,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const Icon(Icons.chevron_right)
-                    ],
-                  ),
-                ),
+                child: Text(
+                  spi.name,
+                  style: UIs.text18,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ).paddingSymmetric(horizontal: 13, vertical: 7),
               ),
             );
-          },
-          itemCount: ServerProvider.servers.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 3 * (ratio / (9 / 16)),
-            crossAxisSpacing: 3,
-            mainAxisSpacing: 3,
-          ),
+          }).toList(),
         );
       }),
     );
@@ -262,20 +240,20 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
         overflow: TextOverflow.ellipsis,
         style: TextStyle(color: color),
         softWrap: false,
-        textAlign: TextAlign.center,
+        textAlign: TextAlign.right,
         textWidthBasis: TextWidthBasis.parent,
       );
       final Widget btn;
       if (selected) {
         btn = Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             Btn.icon(
               icon: Icon(MingCute.close_circle_fill, color: color, size: 17),
               onTap: () => onClose(name),
               padding: null,
             ),
-            SizedBox(width: kNarrowWidth - 10, child: text),
+            SizedBox(width: kNarrowWidth - 15, child: text),
           ],
         );
       } else {
@@ -284,9 +262,11 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
       child = AnimatedContainer(
         width: selected ? kWideWidth : kNarrowWidth,
         duration: Durations.medium3,
-        padding: selected ? const EdgeInsets.symmetric(horizontal: 7) : null,
         curve: Curves.fastEaseInToSlowEaseOut,
-        child: btn,
+        child: OverflowBox(
+          maxWidth: selected ? kWideWidth : null,
+          child: btn,
+        ),
       );
     }
 
