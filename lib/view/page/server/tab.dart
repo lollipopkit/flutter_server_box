@@ -315,15 +315,24 @@ class _ServerPageState extends State<ServerPage>
           }
         }
 
+        final height = _calcCardHeight(srv.conn, cardStatus.value.flip);
         return AnimatedContainer(
           duration: const Duration(milliseconds: 377),
           curve: Curves.fastEaseInToSlowEaseOut,
-          height: _calcCardHeight(srv.conn, cardStatus.value.flip),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: children,
+          height: height,
+          // Use [OverflowBox] to dismiss the warning of [Column] overflow.
+          child: OverflowBox(
+            // If `height == _kCardHeightMin`, the `maxHeight` will be ignored.
+            //
+            // You can comment the `maxHeight` then connect&disconnect the server
+            // to see the difference.
+            maxHeight: height != _kCardHeightMin ? height : null,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: children,
+            ),
           ),
         );
       },
