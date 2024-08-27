@@ -74,6 +74,7 @@ class MyApp extends StatelessWidget {
     final locale = Stores.setting.locale.fetch().toLocale;
 
     return MaterialApp(
+      key: ValueKey(locale),
       locale: locale,
       localizationsDelegates: const [
         LibLocalizations.delegate,
