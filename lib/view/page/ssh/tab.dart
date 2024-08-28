@@ -259,11 +259,11 @@ class _AddPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const viewPadding = 3.0;
+    const viewPadding = 7.0;
     final viewWidth = context.media.size.width - 2 * viewPadding;
 
     final itemCount = ServerProvider.servers.length;
-    const itemPadding = 3.0;
+    const itemPadding = 1.0;
     const itemWidth = 150.0;
     const itemHeight = 50.0;
 
@@ -272,62 +272,55 @@ class _AddPage extends StatelessWidget {
         max(viewWidth ~/ (visualCrossCount * itemPadding + itemWidth), 1);
     final mainCount = itemCount ~/ crossCount + 1;
 
-    return Center(
-      key: const Key('sshTabAddServer'),
-      child: ServerProvider.serverOrder.listenVal((order) {
-        if (order.isEmpty) {
-          return Center(
-            child: Text(libL10n.empty, textAlign: TextAlign.center),
-          );
-        }
+    return ServerProvider.serverOrder.listenVal((order) {
+      if (order.isEmpty) {
+        return Center(
+          child: Text(libL10n.empty, textAlign: TextAlign.center),
+        );
+      }
 
-        // Custom grid
-        return ListView(
-          padding: const EdgeInsets.all(viewPadding),
-          children: List.generate(
-            mainCount,
-            (rowIndex) => Row(
-              children: List.generate(crossCount, (columnIndex) {
-                final idx = rowIndex * crossCount + columnIndex;
-                final id = order.elementAtOrNull(idx);
-                if (id == null) return _placeholder;
+      // Custom grid
+      return ListView(
+        padding: const EdgeInsets.all(viewPadding),
+        children: List.generate(
+          mainCount,
+          (rowIndex) => Row(
+            children: List.generate(crossCount, (columnIndex) {
+              final idx = rowIndex * crossCount + columnIndex;
+              final id = order.elementAtOrNull(idx);
+              final spi = ServerProvider.pick(id: id)?.value.spi;
+              if (spi == null) return _placeholder;
 
-                final spi = ServerProvider.pick(id: order[idx])?.value.spi;
-                if (spi == null) return _placeholder;
-
-                return Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(itemPadding),
-                    child: CardX(
-                      child: InkWell(
-                        onTap: () => onTapInitCard(spi),
-                        child: Container(
-                          height: itemHeight,
-                          alignment: Alignment.centerLeft,
-                          padding: const EdgeInsets.only(left: 17, right: 7),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  spi.name,
-                                  style: UIs.text18,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const Icon(Icons.chevron_right)
-                            ],
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(itemPadding),
+                  child: InkWell(
+                    onTap: () => onTapInitCard(spi),
+                    child: Container(
+                      height: itemHeight,
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.only(left: 17, right: 7),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              spi.name,
+                              style: UIs.text18,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
+                          const Icon(Icons.chevron_right)
+                        ],
                       ),
                     ),
-                  ),
-                );
-              }),
-            ),
+                  ).cardx,
+                ),
+              );
+            }),
           ),
-        );
-      }),
-    );
+        ),
+      );
+    });
   }
 }
