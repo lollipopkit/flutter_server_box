@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +22,7 @@ typedef _TabMap = Map<String, ({Widget page, FocusNode? focus})>;
 class _SSHTabPageState extends State<SSHTabPage>
     with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   late final _TabMap _tabMap = {
-    libL10n.add: (page: _buildAddPage(), focus: null),
+    libL10n.add: (page: _AddPage(onTapInitCard: _onTapInitCard), focus: null),
   };
   final _pageCtrl = PageController();
   final _fabVN = 0.vn;
@@ -79,36 +81,6 @@ class _SSHTabPageState extends State<SSHTabPage>
     _tabRN.notify();
     _pageCtrl.previousPage(
         duration: Durations.medium1, curve: Curves.fastEaseInToSlowEaseOut);
-  }
-
-  Widget _buildAddPage() {
-    return Center(
-      key: const Key('sshTabAddServer'),
-      child: ServerProvider.serverOrder.listenVal((order) {
-        if (order.isEmpty) {
-          return Center(
-            child: Text(libL10n.empty, textAlign: TextAlign.center),
-          );
-        }
-        return Wrap(
-          children: order.map((id) {
-            final spi = ServerProvider.pick(id: id)?.value.spi;
-            if (spi == null) return UIs.placeholder;
-            return CardX(
-              child: InkWell(
-                onTap: () => _onTapInitCard(spi),
-                child: Text(
-                  spi.name,
-                  style: UIs.text18,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ).paddingSymmetric(horizontal: 13, vertical: 7),
-              ),
-            );
-          }).toList(),
-        ).paddingSymmetric(horizontal: 13);
-      }),
-    );
   }
 
   Widget _buildBody() {
@@ -275,5 +247,87 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
       onTap: () => onTap(idx),
       child: child,
     ).paddingSymmetric(horizontal: 7);
+  }
+}
+
+class _AddPage extends StatelessWidget {
+  const _AddPage({required this.onTapInitCard});
+
+  final void Function(Spi spi) onTapInitCard;
+
+  Widget get _placeholder => const Expanded(child: UIs.placeholder);
+
+  @override
+  Widget build(BuildContext context) {
+    const viewPadding = 3.0;
+    final viewWidth = context.media.size.width - 2 * viewPadding;
+
+    final itemCount = ServerProvider.servers.length;
+    const itemPadding = 3.0;
+    const itemWidth = 150.0;
+    const itemHeight = 50.0;
+
+    final visualCrossCount = viewWidth / itemWidth;
+    final crossCount =
+        max(viewWidth ~/ (visualCrossCount * itemPadding + itemWidth), 1);
+    final mainCount = itemCount ~/ crossCount + 1;
+
+    return Center(
+      key: const Key('sshTabAddServer'),
+      child: ServerProvider.serverOrder.listenVal((order) {
+        if (order.isEmpty) {
+          return Center(
+            child: Text(libL10n.empty, textAlign: TextAlign.center),
+          );
+        }
+
+        // Custom grid
+        return ListView(
+          padding: const EdgeInsets.all(viewPadding),
+          children: List.generate(
+            mainCount,
+            (rowIndex) => Row(
+              children: List.generate(crossCount, (columnIndex) {
+                final idx = rowIndex * crossCount + columnIndex;
+                final id = order.elementAtOrNull(idx);
+                if (id == null) return _placeholder;
+
+                final spi = ServerProvider.pick(id: order[idx])?.value.spi;
+                if (spi == null) return _placeholder;
+
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(itemPadding),
+                    child: CardX(
+                      child: InkWell(
+                        onTap: () => onTapInitCard(spi),
+                        child: Container(
+                          height: itemHeight,
+                          alignment: Alignment.centerLeft,
+                          padding: const EdgeInsets.only(left: 17, right: 7),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  spi.name,
+                                  style: UIs.text18,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const Icon(Icons.chevron_right)
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+        );
+      }),
+    );
   }
 }
