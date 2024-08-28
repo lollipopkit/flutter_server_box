@@ -107,18 +107,18 @@ class _SSHTabPageState extends State<SSHTabPage>
       final idxs = _tabMap.keys
           .map((e) => reg.firstMatch(e))
           .map((e) => e?.group(1))
-          .where((e) => e != null);
+          .whereType<String>();
       if (idxs.isEmpty) {
         return _tabMap.keys.contains(spi.name) ? '${spi.name}(1)' : spi.name;
       }
-      final biggest = idxs.reduce((a, b) => a!.length > b!.length ? a : b);
-      final biggestInt = int.tryParse(biggest ?? '0');
+      final biggest = idxs.reduce((a, b) => a.length > b.length ? a : b);
+      final biggestInt = int.tryParse(biggest);
       if (biggestInt != null && biggestInt > 0) {
         return '${spi.name}(${biggestInt + 1})';
       }
       return spi.name;
     }();
-    final key = GlobalKey<SSHPageState>();
+    final key = Key(name);
     _tabMap[name] = (
       page: SSHPage(
         // Keep it, or the Flutter will works unexpectedly

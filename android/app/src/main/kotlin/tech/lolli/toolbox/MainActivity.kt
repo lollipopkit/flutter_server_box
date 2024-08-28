@@ -18,8 +18,12 @@ class MainActivity: FlutterFragmentActivity() {
                         result.success(null)
                     }
                     "startService" -> {
-                        val intent = Intent(this@MainActivity, KeepAliveService::class.java)
-                        startService(intent)
+                        val serviceIntent = Intent(this, ForegroundService::class.java)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            startForegroundService(serviceIntent)
+                        } else {
+                            startService(serviceIntent)
+                        }
                     }
                     else -> {
                         result.notImplemented()
