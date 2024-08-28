@@ -4,11 +4,9 @@ import android.app.*
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
-import androidx.core.app.NotificationCompat
 
-class MyForegroundService : Service() {
-
-    private val CHANNEL_ID = "ForegroundServiceChannel"
+class ForegroundService : Service() {
+    private val chanId = "ForegroundServiceChannel"
 
     override fun onCreate() {
         super.onCreate()
@@ -31,8 +29,8 @@ class MyForegroundService : Service() {
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val serviceChannel = NotificationChannel(
-                CHANNEL_ID,
-                CHANNEL_ID,
+                chanId,
+                chanId,
                 NotificationManager.IMPORTANCE_DEFAULT
             )
             val manager = getSystemService(NotificationManager::class.java)
@@ -49,11 +47,20 @@ class MyForegroundService : Service() {
             PendingIntent.FLAG_IMMUTABLE
         )
 
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("App is running")
-            .setContentText("Click to open the app")
-            .setSmallIcon(R.drawable.ic_notification)
-            .setContentIntent(pendingIntent)
-            .build()
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Notification.Builder(this, chanId)
+                .setContentTitle("App is running")
+                .setContentText("Click to open the app")
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentIntent(pendingIntent)
+                .build()
+        } else {
+            Notification.Builder(this)
+                .setContentTitle("App is running")
+                .setContentText("Click to open the app")
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentIntent(pendingIntent)
+                .build()
+        }
     }
 }
