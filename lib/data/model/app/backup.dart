@@ -56,7 +56,7 @@ class Backup {
 
   static Future<String> backup([String? name]) async {
     final result = _diyEncrypt(json.encode(Backup.loadFromStore().toJson()));
-    final path = '${Paths.doc}/${name ?? Miscs.bakFileName}';
+    final path = Paths.doc.joinPath(name ?? Miscs.bakFileName);
     await File(path).writeAsString(result);
     return path;
   }
