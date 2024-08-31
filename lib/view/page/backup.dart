@@ -5,8 +5,7 @@ import 'package:computer/computer.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/utils/sync/icloud.dart';
-import 'package:server_box/core/utils/sync/webdav.dart';
+import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/app/backup.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -14,9 +13,12 @@ import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:server_box/data/store/no_backup.dart';
 
 final icloudLoading = false.vn;
 final webdavLoading = false.vn;
+
+final _noBak = NoBackupStore.instance;
 
 class BackupPage extends StatelessWidget {
   const BackupPage({super.key});
@@ -91,9 +93,9 @@ class BackupPage extends StatelessWidget {
         leading: const Icon(Icons.cloud),
         title: const Text('iCloud'),
         trailing: StoreSwitch(
-          prop: Stores.setting.icloudSync,
+          prop: _noBak.icloudSync,
           validator: (p0) {
-            if (p0 && Stores.setting.webdavSync.fetch()) {
+            if (p0 && _noBak.webdavSync.fetch()) {
               context.showSnackBar(l10n.autoBackupConflict);
               return false;
             }
@@ -102,7 +104,7 @@ class BackupPage extends StatelessWidget {
           callback: (val) async {
             if (val) {
               icloudLoading.value = true;
-              await ICloud.sync();
+              await sync.sync(rs: icloud);
               icloudLoading.value = false;
             }
           },
@@ -126,17 +128,17 @@ class BackupPage extends StatelessWidget {
           ListTile(
             title: Text(libL10n.auto),
             trailing: StoreSwitch(
-              prop: Stores.setting.webdavSync,
+              prop: _noBak.webdavSync,
               validator: (p0) {
                 if (p0) {
-                  if (Stores.setting.webdavUrl.fetch().isEmpty ||
-                      Stores.setting.webdavUser.fetch().isEmpty ||
-                      Stores.setting.webdavPwd.fetch().isEmpty) {
+                  if (_noBak.webdavUrl.fetch().isEmpty ||
+                      _noBak.webdavUser.fetch().isEmpty ||
+                      _noBak.webdavPwd.fetch().isEmpty) {
                     context.showSnackBar(l10n.webdavSettingEmpty);
                     return false;
                   }
                 }
-                if (Stores.setting.icloudSync.fetch()) {
+                if (_noBak.icloudSync.fetch()) {
                   context.showSnackBar(l10n.autoBackupConflict);
                   return false;
                 }
@@ -145,7 +147,7 @@ class BackupPage extends StatelessWidget {
               callback: (val) async {
                 if (val) {
                   webdavLoading.value = true;
-                  await Webdav.sync();
+                  await sync.sync(rs: webdav);
                   webdavLoading.value = false;
                 }
               },
@@ -298,7 +300,7 @@ class BackupPage extends StatelessWidget {
         )),
         actions: Btn.ok(
           onTap: () async {
-            await backup.restore(force: true);
+            await backup.merge(force: true);
             context.pop();
           },
         ).toList,
@@ -312,7 +314,7 @@ class BackupPage extends StatelessWidget {
   Future<void> _onTapWebdavDl(BuildContext context) async {
     webdavLoading.value = true;
     try {
-      final files = await Webdav.list();
+      final files = await webdav.list();
       if (files.isEmpty) return context.showSnackBar(l10n.dirEmpty);
 
       final fileName = await context.showPickSingleDialog(
@@ -321,13 +323,10 @@ class BackupPage extends StatelessWidget {
       );
       if (fileName == null) return;
 
-      final result = await Webdav.download(relativePath: fileName);
-      if (result != null) {
-        throw result;
-      }
+      await webdav.download(relativePath: fileName);
       final dlFile = await File('${Paths.doc}/$fileName').readAsString();
       final dlBak = await Computer.shared.start(Backup.fromJsonString, dlFile);
-      await dlBak.restore(force: true);
+      await dlBak.merge(force: true);
     } catch (e, s) {
       context.showErrDialog(e, s, libL10n.restore);
       Loggers.app.warning('Download webdav backup failed', e, s);
@@ -342,10 +341,7 @@ class BackupPage extends StatelessWidget {
     final bakName = '$date-${Miscs.bakFileName}';
     try {
       await Backup.backup(bakName);
-      final uploadResult = await Webdav.upload(relativePath: bakName);
-      if (uploadResult != null) {
-        throw uploadResult;
-      }
+      await webdav.upload(relativePath: bakName);
       Loggers.app.info('Upload webdav backup success');
     } catch (e, s) {
       context.showErrDialog(e, s, l10n.upload);
@@ -356,9 +352,9 @@ class BackupPage extends StatelessWidget {
   }
 
   Future<void> _onTapWebdavSetting(BuildContext context) async {
-    final url = TextEditingController(text: Stores.setting.webdavUrl.fetch());
-    final user = TextEditingController(text: Stores.setting.webdavUser.fetch());
-    final pwd = TextEditingController(text: Stores.setting.webdavPwd.fetch());
+    final url = TextEditingController(text: _noBak.webdavUrl.fetch());
+    final user = TextEditingController(text: _noBak.webdavUser.fetch());
+    final pwd = TextEditingController(text: _noBak.webdavPwd.fetch());
     final nodeUser = FocusNode();
     final nodePwd = FocusNode();
     final result = await context.showRoundDialog<bool>(
@@ -392,13 +388,18 @@ class BackupPage extends StatelessWidget {
       actions: Btnx.oks,
     );
     if (result == true) {
-      final result = await Webdav.test(url.text, user.text, pwd.text);
-      if (result != null) {
-        context.showSnackBar(result);
-        return;
+      try {
+        await Webdav.test(url.text, user.text, pwd.text);
+        context.showSnackBar(libL10n.success);
+        webdav.init(WebdavInitArgs(
+          url: url.text,
+          user: user.text,
+          pwd: pwd.text,
+          prefix: 'serverbox/',
+        ));
+      } catch (e, s) {
+        context.showErrDialog(e, s, 'Webdav');
       }
-      context.showSnackBar(libL10n.success);
-      Webdav.changeClient(url.text, user.text, pwd.text);
     }
   }
 
@@ -427,7 +428,7 @@ class BackupPage extends StatelessWidget {
         )),
         actions: Btn.ok(
           onTap: () async {
-            await backup.restore(force: true);
+            await backup.merge(force: true);
             context.pop();
           },
         ).toList,
