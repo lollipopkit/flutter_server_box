@@ -199,7 +199,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
       return;
     }
     FocusScope.of(context).unfocus();
-    _loading.value = SizedLoading.centerMedium;
+    _loading.value = SizedLoading.medium;
     try {
       final decrypted = await Computer.shared.start(decyptPem, [key, pwd]);
       final pki = PrivateKeyInfo(id: name, key: decrypted);
