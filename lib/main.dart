@@ -9,6 +9,7 @@ import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:server_box/app.dart';
+import 'package:server_box/core/channel/bg_run.dart';
 import 'package:server_box/core/utils/sync/icloud.dart';
 import 'package:server_box/core/utils/sync/webdav.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
@@ -109,6 +110,10 @@ void _doPlatformRelated() async {
   if (isAndroid) {
     // try switch to highest refresh rate
     FlutterDisplayMode.setHighRefreshRate();
+    if (Stores.setting.bgRun.fetch()) {
+      Loggers.app.info('Start foreground service');
+      BgRunMC.startService();
+    }
   }
 
   final serversCount = Stores.server.box.keys.length;

@@ -5,7 +5,6 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:provider/provider.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
@@ -85,6 +84,7 @@ class SSHPageState extends State<SSHPage>
     _terminalController.dispose();
     _discontinuityTimer?.cancel();
     if (!Stores.setting.generalWakeLock.fetch()) WakelockPlus.disable();
+    _setupDiscontinuityTimer();
   }
 
   @override
@@ -95,7 +95,7 @@ class SSHPageState extends State<SSHPage>
       2 => true,
       _ => context.isDark,
     };
-    _media = MediaQuery.of(context);
+    _media = context.media;
 
     _terminalTheme = _isDark ? TerminalThemes.dark : TerminalThemes.light;
     _terminalTheme = _terminalTheme.copyWith(selectionCursor: UIs.primaryColor);
@@ -415,8 +415,6 @@ class SSHPageState extends State<SSHPage>
     _listen(session.stdout);
     _listen(session.stderr);
 
-    _initService();
-
     for (final snippet in SnippetProvider.snippets.value) {
       if (snippet.autoRunOn?.contains(widget.spi.id) == true) {
         snippet.runInTerm(_terminal, widget.spi);
@@ -451,63 +449,42 @@ class SSHPageState extends State<SSHPage>
         .listen(_terminal.write);
   }
 
-  // void _setupDiscontinuityTimer() {
-  //   _discontinuityTimer = Timer.periodic(
-  //     const Duration(seconds: 5),
-  //     (_) async {
-  //       var throwTimeout = true;
-  //       Future.delayed(const Duration(seconds: 3), () {
-  //         if (throwTimeout) {
-  //           _catchTimeout();
-  //         }
-  //       });
-  //       await _client?.ping();
-  //       throwTimeout = false;
-  //     },
-  //   );
-  // }
+  void _setupDiscontinuityTimer() {
+    _discontinuityTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) async {
+        var throwTimeout = true;
+        Future.delayed(const Duration(seconds: 3), () {
+          if (throwTimeout) {
+            _catchTimeout();
+          }
+        });
+        await _client?.ping();
+        throwTimeout = false;
+      },
+    );
+  }
 
-  // void _catchTimeout() {
-  //   _discontinuityTimer?.cancel();
-  //   if (!mounted) return;
-  //   _writeLn('\n\nConnection lost\r\n');
-  //   context.showRoundDialog(
-  //     title: Text(l10n.attention),
-  //     child: Text('${l10n.disconnected}\n${l10n.goBackQ}'),
-  //     barrierDismiss: false,
-  //     actions: [
-  //       TextButton(
-  //         onPressed: () {
-  //           if (mounted) {
-  //             context.pop();
-  //             if (widget.pop) {
-  //               context.pop();
-  //             }
-  //           }
-  //         },
-  //         child: Text(l10n.ok),
-  //       ),
-  //     ],
-  //   );
-  // }
+  void _catchTimeout() {
+    _discontinuityTimer?.cancel();
+    if (!mounted) return;
+    _writeLn('\n\nConnection lost\r\n');
+    context.showRoundDialog(
+      title: libL10n.attention,
+      child: Text('${l10n.disconnected}\n${l10n.goBackQ}'),
+      barrierDismiss: false,
+      actions: Btn.ok(
+        onTap: () {
+          if (mounted) {
+            context.pop();
+          }
+        },
+      ).toList,
+    );
+  }
 
   @override
   bool get wantKeepAlive => true;
-
-  Future<void> _initService() async {
-    if (!isAndroid) return;
-
-    await FlutterBackgroundService().configure(
-      androidConfiguration: AndroidConfiguration(
-        onStart: _onStart,
-        autoStart: true,
-        isForegroundMode: true,
-        initialNotificationTitle: 'SSH',
-        initialNotificationContent: l10n.bgRun,
-      ),
-      iosConfiguration: IosConfiguration(),
-    );
-  }
 
   void _initStoredCfg() {
     final fontFamilly = Stores.setting.fontPath.fetch().getFileName();
@@ -546,5 +523,3 @@ class SSHPageState extends State<SSHPage>
     if (Stores.setting.sshWakeLock.fetch()) WakelockPlus.enable();
   }
 }
-
-Future<void> _onStart(ServiceInstance service) async {}
