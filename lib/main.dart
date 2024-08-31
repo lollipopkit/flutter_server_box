@@ -10,8 +10,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/core/channel/bg_run.dart';
-import 'package:server_box/core/utils/sync/icloud.dart';
-import 'package:server_box/core/utils/sync/webdav.dart';
+import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
@@ -28,7 +27,6 @@ import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
-
 Future<void> main() async {
   _runInZone(() async {
     await _initApp();
@@ -120,10 +118,7 @@ void _doPlatformRelated() async {
   // Plus 1 to avoid 0.
   Computer.shared.turnOn(workersCount: (serversCount / 3).round() + 1);
 
-  if (isIOS || isMacOS) {
-    if (Stores.setting.icloudSync.fetch()) ICloud.sync();
-  }
-  if (Stores.setting.webdavSync.fetch()) Webdav.sync();
+  sync.sync();
 }
 
 // It may contains some async heavy funcs.

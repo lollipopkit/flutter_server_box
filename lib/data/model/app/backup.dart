@@ -18,7 +18,7 @@ const backupFormatVersion = 1;
 final _logger = Logger('Backup');
 
 @JsonSerializable()
-class Backup {
+class Backup extends Mergeable {
   // backup format version
   final int version;
   final String date;
@@ -28,8 +28,9 @@ class Backup {
   final Map<String, dynamic> container;
   final Map<String, dynamic> history;
   final int? lastModTime;
+  final Map<String, dynamic> settings;
 
-  const Backup({
+  Backup({
     required this.version,
     required this.date,
     required this.spis,
@@ -37,6 +38,7 @@ class Backup {
     required this.keys,
     required this.container,
     required this.history,
+    required this.settings,
     this.lastModTime,
   });
 
@@ -52,7 +54,8 @@ class Backup {
         keys = Stores.key.fetch(),
         container = Stores.container.box.toJson(),
         lastModTime = Stores.lastModTime,
-        history = Stores.history.box.toJson();
+        history = Stores.history.box.toJson(),
+        settings = Stores.setting.box.toJson();
 
   static Future<String> backup([String? name]) async {
     final result = _diyEncrypt(json.encode(Backup.loadFromStore().toJson()));
@@ -61,7 +64,8 @@ class Backup {
     return path;
   }
 
-  Future<void> restore({bool force = false}) async {
+  @override
+  Future<void> merge({bool force = false}) async {
     final curTime = Stores.lastModTime ?? 0;
     final bakTime = lastModTime ?? 0;
     final shouldRestore = force || curTime < bakTime;
@@ -173,6 +177,26 @@ class Backup {
       }
       for (final s in updateContainer) {
         Stores.container.box.put(s, container[s]);
+      }
+    }
+
+    // Settings
+    if (force) {
+      Stores.setting.box.putAll(settings);
+    } else {
+      final nowSettings = Stores.setting.box.keys.toSet();
+      final bakSettings = settings.keys.toSet();
+      final newSettings = bakSettings.difference(nowSettings);
+      final delSettings = nowSettings.difference(bakSettings);
+      final updateSettings = nowSettings.intersection(bakSettings);
+      for (final s in newSettings) {
+        Stores.setting.box.put(s, settings[s]);
+      }
+      for (final s in delSettings) {
+        Stores.setting.box.delete(s);
+      }
+      for (final s in updateSettings) {
+        Stores.setting.box.put(s, settings[s]);
       }
     }
 

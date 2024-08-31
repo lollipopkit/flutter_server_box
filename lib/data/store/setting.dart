@@ -125,8 +125,6 @@ class SettingStore extends PersistentStore {
   /// Whether use system's primary color as the app's primary color
   late final useSystemPrimaryColor = property('useSystemPrimaryColor', false);
 
-  /// Only valid on iOS and macOS
-  late final icloudSync = property('icloudSync', false);
 
   /// Only valid on iOS / Android / Windows
   late final useBioAuth = property('useBioAuth', false);
@@ -142,12 +140,6 @@ class SettingStore extends PersistentStore {
 
   /// Show tip of suspend
   late final showSuspendTip = property('showSuspendTip', true);
-
-  /// Webdav sync
-  late final webdavSync = property('webdavSync', false);
-  late final webdavUrl = property('webdavUrl', '', updateLastModified: false);
-  late final webdavUser = property('webdavUser', '', updateLastModified: false);
-  late final webdavPwd = property('webdavPwd', '', updateLastModified: false);
 
   /// Whether collapse UI items by default
   late final collapseUIDefault = property('collapseUIDefault', true);
