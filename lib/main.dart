@@ -27,6 +27,8 @@ import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/no_backup.dart';
+
 Future<void> main() async {
   _runInZone(() async {
     await _initApp();
@@ -66,7 +68,6 @@ Future<void> _initApp() async {
   FontUtils.loadFrom(Stores.setting.fontPath.fetch());
 
   _doPlatformRelated();
-  _doVersionRelated();
 }
 
 Future<void> _initData() async {
@@ -92,6 +93,9 @@ Future<void> _initData() async {
   SftpProvider.instance.load();
 
   if (Stores.setting.betaTest.fetch()) AppUpdate.chan = AppUpdateChan.beta;
+
+  // It may effect the following logic, so await it.
+  await _doVersionRelated();
 }
 
 void _setupDebug() {
@@ -130,6 +134,7 @@ Future<void> _doVersionRelated() async {
   if (curVer < newVer) {
     ServerDetailCards.autoAddNewCards(newVer);
     ServerFuncBtn.autoAddNewFuncs(newVer);
+    NoBackupStore.instance.migrate();
     Stores.setting.lastVer.put(newVer);
   }
 }
