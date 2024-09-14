@@ -5,6 +5,7 @@ import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
+import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
@@ -190,6 +191,7 @@ class ServerProvider extends Provider {
     Stores.setting.serverOrder.put(serverOrder.value);
     _updateTags();
     refresh(spi: spi);
+    syncer.sync();
   }
 
   static void delServer(String id) {
@@ -199,6 +201,7 @@ class ServerProvider extends Provider {
     Stores.setting.serverOrder.put(serverOrder.value);
     Stores.server.delete(id);
     _updateTags();
+    syncer.sync();
   }
 
   static void deleteAll() {
@@ -234,6 +237,7 @@ class ServerProvider extends Provider {
       }
     }
     _updateTags();
+    syncer.sync();
   }
 
   static void _setServerState(VNode<Server> s, ServerConn ss) {

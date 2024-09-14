@@ -137,7 +137,7 @@ class SSHPageState extends State<SSHPage>
           _media.padding.top,
       child: Padding(
         padding: EdgeInsets.only(
-          top: widget.notFromTab ? CustomAppBar.barHeight ?? 0 : 0,
+          top: widget.notFromTab ? CustomAppBar.sysStatusBarHeight ?? 0 : 0,
           left: _horizonPadding,
           right: _horizonPadding,
         ),
@@ -155,7 +155,7 @@ class SSHPageState extends State<SSHPage>
           showToolbar: isMobile,
           viewOffset: Offset(
             2 * _horizonPadding,
-            CustomAppBar.barHeight ?? _media.padding.top,
+            CustomAppBar.sysStatusBarHeight ?? _media.padding.top,
           ),
           hideScrollBar: false,
           focusNode: widget.focusNode,

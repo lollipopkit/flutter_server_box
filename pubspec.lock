@@ -470,8 +470,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v1.0.150"
-      resolved-ref: "53c92f43fff4cf643fc03e186a22268b64085e86"
+      ref: "v1.0.166"
+      resolved-ref: "59c2e4f353df53d782ba440ac581e29c0f149ae8"
       url: "https://github.com/lppcg/fl_lib"
     source: git
     version: "0.0.1"
@@ -575,14 +575,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.0"
-  functions_client:
-    dependency: transitive
-    description:
-      name: functions_client
-      sha256: e63f49cd3b41727f47b3bde284a11a4ac62839e0604f64077d4257487510e484
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.3.2"
   glob:
     dependency: transitive
     description:
@@ -591,14 +583,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.2"
-  gotrue:
-    dependency: transitive
-    description:
-      name: gotrue
-      sha256: "8703db795511f69194fe77125a0c838bbb6befc2f95717b6e40331784a8bdecb"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.8.4"
   graphs:
     dependency: transitive
     description:
@@ -751,14 +735,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.8.0"
-  jwt_decode:
-    dependency: transitive
-    description:
-      name: jwt_decode
-      sha256: d2e9f68c052b2225130977429d30f187aa1981d789c76ad104a32243cfdebfbb
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.3.1"
   leak_tracker:
     dependency: transitive
     description:
@@ -899,10 +875,10 @@ packages:
     dependency: transitive
     description:
       name: mime
-      sha256: "2e123074287cc9fd6c09de8336dae606d1ddb88d9ac47358826db698c176a1f2"
+      sha256: "801fd0b26f14a4a58ccb09d5892c3fbdeff209594300a542492cf13fba9d247a"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.5"
+    version: "1.0.6"
   nested:
     dependency: transitive
     description:
@@ -1056,14 +1032,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.5.1"
-  postgrest:
-    dependency: transitive
-    description:
-      name: postgrest
-      sha256: c4197238601c7c3103b03a4bb77f2050b17d0064bf8b968309421abdebbb7f0e
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.1.4"
   pretty_qr_code:
     dependency: transitive
     description:
@@ -1120,30 +1088,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.2.1"
-  realtime_client:
-    dependency: transitive
-    description:
-      name: realtime_client
-      sha256: d897a65ee3b1b5ddc1cf606f0b83792262d38fd5679c2df7e38da29c977513da
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.2.1"
-  retry:
-    dependency: transitive
-    description:
-      name: retry
-      sha256: "822e118d5b3aafed083109c72d5f484c6dc66707885e07c0fbcb8b986bba7efc"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.1.2"
-  rxdart:
-    dependency: transitive
-    description:
-      name: rxdart
-      sha256: "5c3004a4a8dbb94bd4bf5412a4def4acdaa12e12f269737a5751369e12d1a962"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.28.0"
   screen_retriever:
     dependency: transitive
     description:
@@ -1293,14 +1237,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.11.1"
-  storage_client:
-    dependency: transitive
-    description:
-      name: storage_client
-      sha256: "28c147c805304dbc2b762becd1fc26ee0cb621ace3732b9ae61ef979aab8b367"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.3"
   stream_channel:
     dependency: transitive
     description:
@@ -1325,22 +1261,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.0"
-  supabase:
-    dependency: transitive
-    description:
-      name: supabase
-      sha256: "4ed1cf3298f39865c05b2d8557f92eb131a9b9af70e32e218672a0afce01a6bc"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.3.0"
-  supabase_flutter:
-    dependency: transitive
-    description:
-      name: supabase_flutter
-      sha256: ff6ba3048fd47d831fdc0027d3efb99346d99b95becfcb406562454bd9b229c5
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.6.0"
   term_glyph:
     dependency: transitive
     description:
@@ -1664,14 +1584,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.2"
-  yet_another_json_isolate:
-    dependency: transitive
-    description:
-      name: yet_another_json_isolate
-      sha256: "47ed3900e6b0e4dfe378811a4402e85b7fc126a7daa94f840fef65ea9c8e46f4"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.2"
   zmodem:
     dependency: transitive
     description:

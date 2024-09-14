@@ -15,7 +15,7 @@ final class _AppBar extends CustomAppBar {
   @override
   Widget build(BuildContext context) {
     final placeholder = SizedBox(
-      height: CustomAppBar.barHeight ?? 0 + MediaQuery.of(context).padding.top,
+      height: CustomAppBar.sysStatusBarHeight ?? 0 + MediaQuery.of(context).padding.top,
     );
     return selectIndex.listenVal(
       (idx) {

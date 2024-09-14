@@ -3,7 +3,9 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
 class ServerStore extends PersistentStore {
-  ServerStore() : super('server');
+  ServerStore._() : super('server');
+
+  static final instance = ServerStore._();
 
   void put(Spi info) {
     box.put(info.id, info);

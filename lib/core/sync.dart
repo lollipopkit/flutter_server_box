@@ -4,10 +4,10 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/backup.dart';
 import 'package:server_box/data/store/no_backup.dart';
 
-const sync = Sync._();
+const syncer = Syncer._();
 
-final class Sync extends SyncCfg {
-  const Sync._() : super();
+final class Syncer extends SyncCfg {
+  const Syncer._() : super();
 
   @override
   Future<void> saveToFile() => Backup.backup();
