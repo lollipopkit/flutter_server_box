@@ -7,7 +7,9 @@ import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/res/default.dart';
 
 class SettingStore extends PersistentStore {
-  SettingStore() : super('setting');
+  SettingStore._() : super('setting');
+
+  static final instance = SettingStore._();
 
   // ------BEGIN------
   //

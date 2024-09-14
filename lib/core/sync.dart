@@ -4,16 +4,16 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/backup.dart';
 import 'package:server_box/data/store/no_backup.dart';
 
-const sync = Sync._();
+const bakSync = BakSyncer._();
 
-final class Sync extends SyncCfg {
-  const Sync._() : super();
+final class BakSyncer extends SyncIface<Backup> {
+  const BakSyncer._() : super();
 
   @override
   Future<void> saveToFile() => Backup.backup();
 
   @override
-  Future<Mergeable> fromFile(String path) async {
+  Future<Backup> fromFile(String path) async {
     final content = await File(path).readAsString();
     return Backup.fromJsonString(content);
   }
