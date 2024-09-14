@@ -191,7 +191,7 @@ class ServerProvider extends Provider {
     Stores.setting.serverOrder.put(serverOrder.value);
     _updateTags();
     refresh(spi: spi);
-    syncer.sync();
+    bakSync.sync(milliDelay: 1000);
   }
 
   static void delServer(String id) {
@@ -201,7 +201,7 @@ class ServerProvider extends Provider {
     Stores.setting.serverOrder.put(serverOrder.value);
     Stores.server.delete(id);
     _updateTags();
-    syncer.sync();
+    bakSync.sync(milliDelay: 1000);
   }
 
   static void deleteAll() {
@@ -237,7 +237,7 @@ class ServerProvider extends Provider {
       }
     }
     _updateTags();
-    syncer.sync();
+    bakSync.sync();
   }
 
   static void _setServerState(VNode<Server> s, ServerConn ss) {

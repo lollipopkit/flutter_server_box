@@ -122,7 +122,7 @@ void _doPlatformRelated() async {
   // Plus 1 to avoid 0.
   Computer.shared.turnOn(workersCount: (serversCount / 3).round() + 1);
 
-  syncer.sync();
+  bakSync.sync();
 }
 
 // It may contains some async heavy funcs.

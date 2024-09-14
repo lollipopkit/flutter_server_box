@@ -104,7 +104,7 @@ class BackupPage extends StatelessWidget {
           callback: (val) async {
             if (val) {
               icloudLoading.value = true;
-              await syncer.sync(rs: icloud);
+              await bakSync.sync(rs: icloud);
               icloudLoading.value = false;
             }
           },
@@ -147,7 +147,7 @@ class BackupPage extends StatelessWidget {
               callback: (val) async {
                 if (val) {
                   webdavLoading.value = true;
-                  await syncer.sync(rs: webdav);
+                  await bakSync.sync(rs: webdav);
                   webdavLoading.value = false;
                 }
               },
