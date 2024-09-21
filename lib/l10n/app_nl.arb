@@ -142,6 +142,7 @@
   "route": "Route",
   "run": "Uitvoeren",
   "running": "Uitgevoerd",
+  "sameIdServerExist": "Er bestaat al een server met dezelfde ID",
   "save": "Opslaan",
   "saved": "Opgeslagen",
   "second": "s",

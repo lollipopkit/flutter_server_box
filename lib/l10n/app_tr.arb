@@ -142,6 +142,7 @@
   "route": "Yönlendirme",
   "run": "Çalıştır",
   "running": "Çalışıyor",
+  "sameIdServerExist": "Aynı kimliğe sahip bir sunucu zaten var",
   "save": "Kaydet",
   "saved": "Kaydedildi",
   "second": "s",

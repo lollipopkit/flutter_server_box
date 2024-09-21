@@ -142,6 +142,7 @@
   "route": "ルーティング",
   "run": "実行",
   "running": "実行中",
+  "sameIdServerExist": "同じIDのサーバーが既に存在します",
   "save": "保存",
   "saved": "保存されました",
   "second": "秒",

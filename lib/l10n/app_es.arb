@@ -142,6 +142,7 @@
   "route": "Enrutamiento",
   "run": "Ejecutar",
   "running": "En ejecución",
+  "sameIdServerExist": "Ya existe un servidor con el mismo ID",
   "save": "Guardar",
   "saved": "Guardado",
   "second": "Segundo",

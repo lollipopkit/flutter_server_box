@@ -142,6 +142,7 @@
   "route": "路由",
   "run": "運行",
   "running": "運作中",
+  "sameIdServerExist": "已存在相同 ID 的伺服器",
   "save": "保存",
   "saved": "已保存",
   "second": "秒",

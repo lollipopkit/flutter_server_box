@@ -13,6 +13,7 @@ import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/private_key.dart';
+import 'package:server_box/data/store/server.dart';
 
 class ServerEditPage extends StatefulWidget {
   final Spi? args;
@@ -608,6 +609,12 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       wolCfg: wol,
       envs: _env.value.isEmpty ? null : _env.value,
     );
+
+    final existsIds = ServerStore.instance.box.keys;
+    if (existsIds.contains(spi.id)) {
+      context.showSnackBar('${l10n.sameIdServerExist}: ${spi.id}');
+      return;
+    }
 
     if (this.spi == null) {
       ServerProvider.addServer(spi);
