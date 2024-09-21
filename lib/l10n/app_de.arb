@@ -142,6 +142,7 @@
   "route": "Routen",
   "run": "Ausführen",
   "running": "läuft",
+  "sameIdServerExist": "Ein Server mit derselben ID existiert bereits",
   "save": "Speichern",
   "saved": "Gerettet",
   "second": "s",

@@ -142,6 +142,7 @@
   "route": "Routing",
   "run": "Berlari",
   "running": "berlari",
+  "sameIdServerExist": "Server dengan ID yang sama sudah ada",
   "save": "Menyimpan",
   "saved": "Diselamatkan",
   "second": "S",

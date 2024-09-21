@@ -142,6 +142,7 @@
   "route": "Routing",
   "run": "Run",
   "running": "Running",
+  "sameIdServerExist": "A server with the same ID already exists",
   "save": "Save",
   "saved": "Saved",
   "second": "s",

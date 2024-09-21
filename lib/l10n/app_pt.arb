@@ -142,6 +142,7 @@
   "route": "Roteamento",
   "run": "Executar",
   "running": "Executando",
+  "sameIdServerExist": "Já existe um servidor com o mesmo ID",
   "save": "Salvar",
   "saved": "Salvo",
   "second": "Segundo",
