@@ -13,11 +13,13 @@ class SnippetListPage extends StatefulWidget {
   State<SnippetListPage> createState() => _SnippetListPageState();
 }
 
-class _SnippetListPageState extends State<SnippetListPage> {
+class _SnippetListPageState extends State<SnippetListPage>
+    with AutomaticKeepAliveClientMixin {
   final _tag = ''.vn;
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       appBar: TagSwitcher(
         tags: SnippetProvider.tags,
@@ -43,7 +45,7 @@ class _SnippetListPageState extends State<SnippetListPage> {
   }
 
   Widget _buildSnippetList(List<Snippet> snippets, String tag) {
-    final filtered = tag == kDefaultTag
+    final filtered = tag == TagSwitcher.kDefaultTag
         ? snippets
         : snippets.where((e) => e.tags?.contains(tag) ?? false).toList();
 
@@ -94,6 +96,9 @@ class _SnippetListPageState extends State<SnippetListPage> {
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 
   // Future<void> _runSnippet(Snippet snippet) async {
   //   final servers = await context.showPickDialog<Server>(

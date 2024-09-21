@@ -88,16 +88,15 @@ class ServerProvider extends Provider {
   }
 
   static void _updateTags() {
+    final tags = <String>{};
     for (final s in servers.values) {
-      final tags = s.value.spi.tags;
-      if (tags == null) continue;
-      for (final t in tags) {
-        if (!_tags.value.contains(t)) {
-          _tags.value.add(t);
-        }
+      final spiTags = s.value.spi.tags;
+      if (spiTags == null) continue;
+      for (final t in spiTags) {
+        tags.add(t);
       }
     }
-    _tags.value = (_tags.value.toList()..sort()).toSet();
+    _tags.value = tags;
   }
 
   static Server genServer(Spi spi) {
