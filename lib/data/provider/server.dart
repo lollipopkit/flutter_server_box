@@ -306,11 +306,10 @@ class ServerProvider extends Provider {
 
       _setServerState(s, ServerConn.connected);
 
-      final scriptRaw = ShellFunc.allScript(spi.custom?.cmds).uint8List;
-
       try {
         final (_, writeScriptResult) = await sv.client!.exec(
           (session) async {
+            final scriptRaw = ShellFunc.allScript(spi.custom?.cmds).uint8List;
             session.stdin.add(scriptRaw);
             session.stdin.close();
           },

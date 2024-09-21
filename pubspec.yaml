@@ -1,7 +1,7 @@
 name: server_box
 description: server status & toolbox app.
 publish_to: 'none'
-version: 1.0.1076+1076
+version: 1.0.1091+1091
 
 environment:
   sdk: ">=3.0.0"
@@ -28,6 +28,7 @@ dependencies:
   extended_image: ^8.2.1
   json_annotation: ^4.9.0
   choice: ^2.3.2
+  flutter_reorderable_grid_view: ^5.1.0
   dartssh2:
     git:
       url: https://github.com/lollipopkit/dartssh2
@@ -59,7 +60,7 @@ dependencies:
   fl_lib:
     git:
       url: https://github.com/lppcg/fl_lib
-      ref: v1.0.167
+      ref: v1.0.183
 
 dependency_overrides:
   # dartssh2:
@@ -82,7 +83,7 @@ dev_dependencies:
   fl_build:
     git:
       url: https://github.com/lppcg/fl_build.git
-      ref: v1.0.43
+      ref: v1.0.44
 
 flutter:
   generate: true

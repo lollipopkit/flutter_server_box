@@ -25,7 +25,6 @@ import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/build_data.dart';
-import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/no_backup.dart';
 
@@ -53,7 +52,7 @@ void _runInZone(void Function() body) {
 Future<void> _initApp() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Paths.init(BuildData.name, bakName: Miscs.bakFileName);
+  await Paths.init(BuildData.name, bakName: 'srvbox_bak.json');
   await _initData();
   _setupDebug();
 

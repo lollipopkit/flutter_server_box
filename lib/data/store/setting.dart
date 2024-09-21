@@ -127,7 +127,6 @@ class SettingStore extends PersistentStore {
   /// Whether use system's primary color as the app's primary color
   late final useSystemPrimaryColor = property('useSystemPrimaryColor', false);
 
-
   /// Only valid on iOS / Android / Windows
   late final useBioAuth = property('useBioAuth', false);
 

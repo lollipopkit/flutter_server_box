@@ -4,7 +4,6 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/channel/home_widget.dart';
-import 'package:server_box/core/extension/build.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/tab.dart';
@@ -218,7 +217,7 @@ class _HomePageState extends State<HomePage>
         children: [
           _buildIcon(),
           const Text(
-            '${BuildData.name}\n${BuildDataX.versionStr}',
+            '${BuildData.name}\nv${BuildData.build}',
             textAlign: TextAlign.center,
             style: UIs.text15,
           ),
