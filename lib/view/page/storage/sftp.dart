@@ -14,6 +14,7 @@ import 'package:server_box/data/model/sftp/worker.dart';
 import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/widget/omit_start_text.dart';
 import 'package:server_box/view/widget/two_line_text.dart';
 import 'package:server_box/view/widget/unix_perm.dart';
@@ -691,8 +692,10 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           ],
         ));
         final path = switch (idx) {
-          0 =>
-            await AppRoutes.localStorage(isPickFile: true).go<String>(context),
+          0 => await LocalFilePage.route.go(
+              context,
+              args: const LocalFilePageArgs(isPickFile: true),
+            ),
           1 => await Pfs.pickFilePath(),
           _ => null,
         };

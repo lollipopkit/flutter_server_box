@@ -22,9 +22,6 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-        title: Text(l10n.privateKey),
-      ),
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),

@@ -119,6 +119,9 @@ extension Spix on Spi {
     return (ip_, usr, port_);
   }
 
+  /// Just for showing the struct of the class.
+  ///
+  /// **NOT** the default value.
   static const example = Spi(
     name: 'name',
     ip: 'ip',

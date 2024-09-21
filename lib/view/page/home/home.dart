@@ -1,17 +1,10 @@
-import 'dart:convert';
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/channel/home_widget.dart';
-import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/provider/app.dart';
 import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/res/build_data.dart';
-import 'package:server_box/data/res/github_id.dart';
-import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -104,39 +97,10 @@ class _HomePageState extends State<HomePage>
   Widget build(BuildContext context) {
     super.build(context);
     AppProvider.ctx = context;
+    final sysPadding = MediaQuery.of(context).padding;
 
-    final appBar = _AppBar(
-      selectIndex: _selectIndex,
-      landscape: _isLandscape,
-      centerTitle: false,
-      title: const Text(BuildData.name),
-      actions: <Widget>[
-        ValBuilder(
-          listenable: Stores.setting.serverStatusUpdateInterval.listenable(),
-          builder: (interval) {
-            if (interval != 0) return UIs.placeholder;
-            return IconButton(
-              icon: const Icon(Icons.refresh),
-              tooltip: 'Refresh',
-              onPressed: () async {
-                await ServerProvider.refresh();
-              },
-            );
-          },
-        ),
-        IconButton(
-          icon: const Icon(Icons.developer_mode, size: 21),
-          tooltip: 'Debug',
-          onPressed: () => DebugPage.route.go(
-            context,
-            args: const DebugPageArgs(title: 'Debug(${BuildData.build})'),
-          ),
-        ),
-      ],
-    );
     return Scaffold(
-      drawer: _buildDrawer(),
-      appBar: appBar,
+      appBar: _AppBar(sysPadding.top),
       body: PageView.builder(
         controller: _pageController,
         itemCount: AppTab.values.length,
@@ -184,133 +148,7 @@ class _HomePageState extends State<HomePage>
       labelBehavior: ls
           ? NavigationDestinationLabelBehavior.alwaysHide
           : NavigationDestinationLabelBehavior.onlyShowSelected,
-      destinations: [
-        NavigationDestination(
-          icon: const Icon(BoxIcons.bx_server),
-          label: l10n.server,
-          selectedIcon: const Icon(BoxIcons.bxs_server),
-        ),
-        const NavigationDestination(
-          icon: Icon(Icons.terminal_outlined),
-          label: 'SSH',
-          selectedIcon: Icon(Icons.terminal),
-        ),
-        NavigationDestination(
-          icon: const Icon(MingCute.file_code_line),
-          label: l10n.snippet,
-          selectedIcon: const Icon(MingCute.file_code_fill),
-        ),
-        const NavigationDestination(
-          icon: Icon(MingCute.planet_line),
-          label: 'Ping',
-          selectedIcon: Icon(MingCute.planet_fill),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDrawer() {
-    return Drawer(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _buildIcon(),
-          const Text(
-            '${BuildData.name}\nv${BuildData.build}',
-            textAlign: TextAlign.center,
-            style: UIs.text15,
-          ),
-          const SizedBox(height: 37),
-          _buildTiles(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTiles() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 17),
-      child: Column(
-        children: [
-          ListTile(
-            leading: const Icon(Icons.settings),
-            title: Text(libL10n.setting),
-            onTap: () => AppRoutes.settings().go(context),
-            onLongPress: _onLongPressSetting,
-          ),
-          ListTile(
-            leading: const Icon(Icons.vpn_key),
-            title: Text(l10n.privateKey),
-            onTap: () => AppRoutes.keyList().go(context),
-          ),
-          ListTile(
-            leading: const Icon(BoxIcons.bxs_file_blank),
-            title: Text(libL10n.file),
-            onTap: () => AppRoutes.localStorage().go(context),
-          ),
-          ListTile(
-            leading: const Icon(MingCute.file_import_fill),
-            title: Text(libL10n.backup),
-            onTap: () => AppRoutes.backup().go(context),
-          ),
-          ListTile(
-            leading: const Icon(OctIcons.feed_discussion),
-            title: Text('${libL10n.about} & ${libL10n.feedback}'),
-            onTap: _showAboutDialog,
-          )
-        ].map((e) => CardX(child: e)).toList(),
-      ),
-    );
-  }
-
-  void _showAboutDialog() {
-    context.showRoundDialog(
-      title: libL10n.about,
-      child: _buildAboutContent(),
-      actions: [
-        TextButton(
-          onPressed: () => Urls.appWiki.launch(),
-          child: const Text('Wiki'),
-        ),
-        TextButton(
-          onPressed: () => Urls.appHelp.launch(),
-          child: Text(libL10n.feedback),
-        ),
-        TextButton(
-          onPressed: () => showLicensePage(context: context),
-          child: Text(l10n.license),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAboutContent() {
-    return SingleChildScrollView(
-      child: SizedBox(
-        width: MediaQuery.of(context).size.width * 0.8,
-        child: SimpleMarkdown(
-          data: '''
-${l10n.madeWithLove('[lollipopkit](${Urls.myGithub})')}
-
-#### Contributors
-${GithubIds.contributors.map((e) => '[$e](${e.url})').join(' ')}
-
-#### Participants
-${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
-
-#### My other apps
-- [GPT Box](https://github.com/lollipopkit/flutter_gpt_box)
-''',
-        ),
-      ),
-    );
-  }
-
-  Widget _buildIcon() {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxHeight: 57, maxWidth: 57),
-      child: UIs.appIcon,
+      destinations: AppTab.navDestinations,
     );
   }
 
@@ -364,37 +202,6 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
         context,
         args: BioAuthPageArgs(onAuthSuccess: () => _shouldAuth = false),
       );
-    }
-  }
-
-  Future<void> _onLongPressSetting() async {
-    final map = Stores.setting.box.toJson(includeInternal: false);
-    final keys = map.keys;
-
-    /// Encode [map] to String with indent `\t`
-    final text = Miscs.jsonEncoder.convert(map);
-    final result = await AppRoutes.editor(
-      text: text,
-      langCode: 'json',
-      title: libL10n.setting,
-    ).go<String>(context);
-    if (result == null) {
-      return;
-    }
-    try {
-      final newSettings = json.decode(result) as Map<String, dynamic>;
-      Stores.setting.box.putAll(newSettings);
-      final newKeys = newSettings.keys;
-      final removedKeys = keys.where((e) => !newKeys.contains(e));
-      for (final key in removedKeys) {
-        Stores.setting.box.delete(key);
-      }
-    } catch (e, trace) {
-      context.showRoundDialog(
-        title: libL10n.error,
-        child: Text('${l10n.save}:\n$e'),
-      );
-      Loggers.app.warning('Update json settings failed', e, trace);
     }
   }
 }

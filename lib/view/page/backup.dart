@@ -15,18 +15,23 @@ import 'package:server_box/data/res/store.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/data/store/no_backup.dart';
 
-final icloudLoading = false.vn;
-final webdavLoading = false.vn;
-
-final _noBak = NoBackupStore.instance;
-
-class BackupPage extends StatelessWidget {
+class BackupPage extends StatefulWidget {
   const BackupPage({super.key});
 
   @override
+  State<BackupPage> createState() => _BackupPageState();
+}
+
+final class _BackupPageState extends State<BackupPage>
+    with AutomaticKeepAliveClientMixin {
+  final _noBak = NoBackupStore.instance;
+  final icloudLoading = false.vn;
+  final webdavLoading = false.vn;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
-      appBar: CustomAppBar(title: Text(libL10n.backup)),
       body: _buildBody(context),
     );
   }
@@ -477,4 +482,7 @@ class BackupPage extends StatelessWidget {
       Loggers.app.warning('Import servers failed', e, s);
     }
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

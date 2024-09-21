@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
@@ -6,6 +7,7 @@ import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/res/github_id.dart';
 import 'package:server_box/data/res/rebuild.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
@@ -13,70 +15,196 @@ import 'package:server_box/data/res/url.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/res/build_data.dart';
+import 'package:server_box/view/page/backup.dart';
+import 'package:server_box/view/page/private_key/list.dart';
 
 const _kIconSize = 23.0;
 
-class SettingPage extends StatefulWidget {
-  const SettingPage({super.key});
+enum SettingsTabs {
+  app,
+  privateKey,
+  backup,
+  about,
+  ;
 
-  @override
-  State<SettingPage> createState() => _SettingPageState();
+  String get i18n => switch (this) {
+        SettingsTabs.app => libL10n.app,
+        SettingsTabs.privateKey => l10n.privateKey,
+        SettingsTabs.backup => libL10n.backup,
+        SettingsTabs.about => libL10n.about,
+      };
+
+  Widget get page => switch (this) {
+        SettingsTabs.app => const AppSettingsPage(),
+        SettingsTabs.privateKey => const PrivateKeysListPage(),
+        SettingsTabs.backup => const BackupPage(),
+        SettingsTabs.about => const AppAboutPage(),
+      };
+
+  static final List<Widget> pages =
+      SettingsTabs.values.map((e) => e.page).toList();
 }
 
-class _SettingPageState extends State<SettingPage> {
-  final _setting = Stores.setting;
+class SettingsPage extends StatefulWidget {
+  const SettingsPage({super.key});
+
+  static const route = AppRouteNoArg(page: SettingsPage.new, path: '/settings');
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage>
+    with SingleTickerProviderStateMixin {
+  late final _tabCtrl =
+      TabController(length: SettingsTabs.values.length, vsync: this);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-        title: Text(libL10n.setting),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: () => context.showRoundDialog(
-              title: libL10n.attention,
-              child: SimpleMarkdown(
-                data: libL10n.askContinue(
-                  '${libL10n.delete} **${libL10n.all}** ${libL10n.setting}',
-                ),
-              ),
-              actions: Btn.ok(
-                onTap: () {
-                  context.pop();
-                  _setting.box.deleteAll(_setting.box.keys);
-                  context.showSnackBar(libL10n.success);
-                },
-                red: true,
-              ).toList,
-            ),
-          ),
-        ],
+      appBar: TabBar(
+        controller: _tabCtrl,
+        dividerHeight: 0,
+        tabAlignment: TabAlignment.center,
+        isScrollable: true,
+        tabs: SettingsTabs.values
+            .map((e) => Tab(text: e.i18n))
+            .toList(growable: false),
       ),
-      body: MultiList(
-        widthDivider: 2.3,
-        thumbVisibility: true,
-        children: [
-          [const CenterGreyTitle('App'), _buildApp()],
-          [CenterGreyTitle(l10n.server), _buildServer()],
-          [
-            const CenterGreyTitle('SSH'),
-            _buildSSH(),
-            const CenterGreyTitle('SFTP'),
-            _buildSFTP()
-          ],
-          [
-            CenterGreyTitle(l10n.container),
-            _buildContainer(),
-            CenterGreyTitle(l10n.editor),
-            _buildEditor(),
-          ],
+      // actions: [
+      //   IconButton(
+      //     icon: const Icon(Icons.delete),
+      //     onPressed: () => context.showRoundDialog(
+      //       title: libL10n.attention,
+      //       child: SimpleMarkdown(
+      //         data: libL10n.askContinue(
+      //           '${libL10n.delete} **${libL10n.all}** ${libL10n.setting}',
+      //         ),
+      //       ),
+      //       actions: [
+      //         CountDownBtn(
+      //           onTap: () {
+      //             context.pop();
+      //             _setting.box.deleteAll(_setting.box.keys);
+      //             context.showSnackBar(libL10n.success);
+      //           },
+      //           afterColor: Colors.red,
+      //         )
+      //       ],
+      //     ),
+      //   ),
+      // ],
+      body: TabBarView(controller: _tabCtrl, children: SettingsTabs.pages),
+    );
+  }
+}
 
-          /// Fullscreen Mode is designed for old mobile phone which can be
-          /// used as a status screen.
-          if (isMobile) [CenterGreyTitle(l10n.fullScreen), _buildFullScreen()],
+final class AppAboutPage extends StatefulWidget {
+  const AppAboutPage({super.key});
+
+  @override
+  State<AppAboutPage> createState() => _AppAboutPageState();
+}
+
+final class _AppAboutPageState extends State<AppAboutPage>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return ListView(
+      padding: const EdgeInsets.all(13),
+      children: [
+        UIs.height13,
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 47, maxWidth: 47),
+          child: UIs.appIcon,
+        ),
+        const Text(
+          '${BuildData.name}\nv${BuildData.build}',
+          textAlign: TextAlign.center,
+          style: UIs.text15,
+        ),
+        UIs.height13,
+        SizedBox(
+          height: 47,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: <Widget>[
+              Btn.elevated(
+                icon: const Icon(Icons.edit_document),
+                text: 'Wiki',
+                onTap: Urls.appWiki.launch,
+              ),
+              Btn.elevated(
+                icon: const Icon(Icons.feedback),
+                text: libL10n.feedback,
+                onTap: Urls.appHelp.launch,
+              ),
+              Btn.elevated(
+                icon: const Icon(MingCute.question_fill),
+                text: l10n.license,
+                onTap: () => showLicensePage(context: context),
+              ),
+            ].joinWith(UIs.width13),
+          ),
+        ),
+        UIs.height13,
+        SimpleMarkdown(
+          data: '''
+#### Contributors
+${GithubIds.contributors.map((e) => '[$e](${e.url})').join(' ')}
+
+#### Participants
+${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
+
+#### My other apps
+[GPT Box](https://github.com/lollipopkit/flutter_gpt_box)
+
+${l10n.madeWithLove('[lollipopkit](${Urls.myGithub})')}
+''',
+        ).paddingAll(13).cardx,
+      ],
+    );
+  }
+
+  @override
+  bool get wantKeepAlive => true;
+}
+
+final class AppSettingsPage extends StatefulWidget {
+  const AppSettingsPage({super.key});
+
+  @override
+  State<AppSettingsPage> createState() => _AppSettingsPageState();
+}
+
+final class _AppSettingsPageState extends State<AppSettingsPage> {
+  final _setting = Stores.setting;
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiList(
+      thumbVisibility: true,
+      children: [
+        [const CenterGreyTitle('App'), _buildApp()],
+        [CenterGreyTitle(l10n.server), _buildServer()],
+        [
+          const CenterGreyTitle('SSH'),
+          _buildSSH(),
+          const CenterGreyTitle('SFTP'),
+          _buildSFTP()
         ],
-      ),
+        [
+          CenterGreyTitle(l10n.container),
+          _buildContainer(),
+          CenterGreyTitle(l10n.editor),
+          _buildEditor(),
+        ],
+
+        /// Fullscreen Mode is designed for old mobile phone which can be
+        /// used as a status screen.
+        if (isMobile) [CenterGreyTitle(l10n.fullScreen), _buildFullScreen()],
+      ],
     );
   }
 
@@ -94,9 +222,7 @@ class _SettingPageState extends State<SettingPage> {
       _buildAppMore(),
     ];
 
-    return Column(
-      children: children.map((e) => CardX(child: e)).toList(),
-    );
+    return Column(children: children.map((e) => e.cardx).toList());
   }
 
   Widget _buildFullScreen() {
@@ -1181,5 +1307,36 @@ class _SettingPageState extends State<SettingPage> {
         );
       },
     );
+  }
+
+  Future<void> _onLongPressSetting() async {
+    final map = Stores.setting.box.toJson(includeInternal: false);
+    final keys = map.keys;
+
+    /// Encode [map] to String with indent `\t`
+    final text = jsonIndentEncoder.convert(map);
+    final result = await AppRoutes.editor(
+      text: text,
+      langCode: 'json',
+      title: libL10n.setting,
+    ).go<String>(context);
+    if (result == null) {
+      return;
+    }
+    try {
+      final newSettings = json.decode(result) as Map<String, dynamic>;
+      Stores.setting.box.putAll(newSettings);
+      final newKeys = newSettings.keys;
+      final removedKeys = keys.where((e) => !newKeys.contains(e));
+      for (final key in removedKeys) {
+        Stores.setting.box.delete(key);
+      }
+    } catch (e, trace) {
+      context.showRoundDialog(
+        title: libL10n.error,
+        child: Text('${l10n.save}:\n$e'),
+      );
+      Loggers.app.warning('Update json settings failed', e, trace);
+    }
   }
 }

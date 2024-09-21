@@ -118,10 +118,10 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     return CustomAppBar(
       title: Text(si.spi.name),
       actions: [
-        ShareBtn(
+        QrShareBtn(
           data: si.spi.toJsonString(),
           tip: si.spi.name,
-          tip2: '${libL10n.share} ${l10n.server} ~ ServerBox',
+          tip2: '${l10n.server} ~ ServerBox',
         ),
         IconButton(
           icon: const Icon(Icons.edit),

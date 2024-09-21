@@ -1,9 +1,9 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/sftp/worker.dart';
 import 'package:server_box/data/provider/sftp.dart';
+import 'package:server_box/view/page/storage/local.dart';
 
 class SftpMissionPage extends StatefulWidget {
   const SftpMissionPage({super.key});
@@ -115,7 +115,10 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
           onPressed: () {
             final idx = status.req.localPath.lastIndexOf('/');
             final dir = status.req.localPath.substring(0, idx);
-            AppRoutes.localStorage(initDir: dir).go(context);
+            LocalFilePage.route.go(
+              context,
+              args: LocalFilePageArgs(initDir: dir),
+            );
           },
           icon: const Icon(Icons.file_open),
         ),

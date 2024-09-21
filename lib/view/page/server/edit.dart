@@ -610,13 +610,12 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       envs: _env.value.isEmpty ? null : _env.value,
     );
 
-    final existsIds = ServerStore.instance.box.keys;
-    if (existsIds.contains(spi.id)) {
-      context.showSnackBar('${l10n.sameIdServerExist}: ${spi.id}');
-      return;
-    }
-
     if (this.spi == null) {
+      final existsIds = ServerStore.instance.box.keys;
+      if (existsIds.contains(spi.id)) {
+        context.showSnackBar('${l10n.sameIdServerExist}: ${spi.id}');
+        return;
+      }
       ServerProvider.addServer(spi);
     } else {
       ServerProvider.updateServer(this.spi!, spi);
