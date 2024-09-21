@@ -63,6 +63,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   late final _textFactor = TextScaler.linear(_settings.textFactor.fetch());
 
   @override
+  void dispose() {
+    super.dispose();
+    _netSortType.dispose();
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);

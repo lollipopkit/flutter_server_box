@@ -60,6 +60,12 @@ class _SettingsPageState extends State<SettingsPage>
       TabController(length: SettingsTabs.values.length, vsync: this);
 
   @override
+  void dispose() {
+    super.dispose();
+    _tabCtrl.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: TabBar(

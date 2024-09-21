@@ -72,12 +72,6 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     _portController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
-    _nameFocus.dispose();
-    _ipFocus.dispose();
-    _alterUrlFocus.dispose();
-    _portFocus.dispose();
-    _usernameFocus.dispose();
-    _pveAddrCtrl.dispose();
     _preferTempDevCtrl.dispose();
     _logoUrlCtrl.dispose();
     _wolMacCtrl.dispose();
@@ -85,6 +79,21 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     _wolPwdCtrl.dispose();
     _netDevCtrl.dispose();
     _scriptDirCtrl.dispose();
+
+    _nameFocus.dispose();
+    _ipFocus.dispose();
+    _alterUrlFocus.dispose();
+    _portFocus.dispose();
+    _usernameFocus.dispose();
+    _pveAddrCtrl.dispose();
+
+    _keyIdx.dispose();
+    _autoConnect.dispose();
+    _jumpServer.dispose();
+    _pveIgnoreCert.dispose();
+    _env.dispose();
+    _customCmds.dispose();
+    _tags.dispose();
   }
 
   @override

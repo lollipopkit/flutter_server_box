@@ -18,6 +18,12 @@ class _SnippetListPageState extends State<SnippetListPage>
   final _tag = ''.vn;
 
   @override
+  void dispose() {
+    super.dispose();
+    _tag.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(

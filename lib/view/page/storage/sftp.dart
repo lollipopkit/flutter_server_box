@@ -43,6 +43,12 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   final _sortOption = _SortOption().vn;
 
   @override
+  void dispose() {
+    super.dispose();
+    _sortOption.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final children = [
       Btn.icon(

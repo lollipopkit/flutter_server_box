@@ -71,19 +71,19 @@ class SSHPageState extends State<SSHPage>
   Timer? _discontinuityTimer;
 
   @override
-  void initState() {
-    super.initState();
-    _initStoredCfg();
-    _initVirtKeys();
-  }
-
-  @override
   void dispose() {
     super.dispose();
     _virtKeyLongPressTimer?.cancel();
     _terminalController.dispose();
     _discontinuityTimer?.cancel();
-    if (!Stores.setting.generalWakeLock.fetch()) WakelockPlus.disable();
+    WakelockPlus.disable();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _initStoredCfg();
+    _initVirtKeys();
     _setupDiscontinuityTimer();
   }
 

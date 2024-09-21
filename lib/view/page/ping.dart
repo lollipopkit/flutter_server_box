@@ -24,16 +24,16 @@ class _PingPageState extends State<PingPage>
   bool get isInit => _results.value.isEmpty;
 
   @override
-  void initState() {
-    super.initState();
-    _textEditingController = TextEditingController(text: '');
-  }
-
-  @override
   void dispose() {
     super.dispose();
     _textEditingController.dispose();
     _results.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _textEditingController = TextEditingController(text: '');
   }
 
   @override

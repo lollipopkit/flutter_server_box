@@ -35,6 +35,18 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
   final _loading = ValueNotifier<Widget?>(null);
 
   @override
+  void dispose() {
+    super.dispose();
+    _nameController.dispose();
+    _keyController.dispose();
+    _pwdController.dispose();
+    _nameNode.dispose();
+    _keyNode.dispose();
+    _pwdNode.dispose();
+    _loading.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
     if (widget.pki != null) {
@@ -49,17 +61,6 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
         }
       });
     }
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _nameController.dispose();
-    _keyController.dispose();
-    _pwdController.dispose();
-    _nameNode.dispose();
-    _keyNode.dispose();
-    _pwdNode.dispose();
   }
 
   @override

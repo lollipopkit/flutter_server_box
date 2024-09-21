@@ -35,6 +35,12 @@ class _ProcessPageState extends State<ProcessPage> {
   List<ProcSortMode> _sortModes = List.from(ProcSortMode.values);
 
   @override
+  void dispose() {
+    super.dispose();
+    _timer.cancel();
+  }
+
+  @override
   void initState() {
     super.initState();
     _client = widget.spi.server?.value.client;
@@ -73,12 +79,6 @@ class _ProcessPageState extends State<ProcessPage> {
     } else {
       _timer.cancel();
     }
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _timer.cancel();
   }
 
   @override

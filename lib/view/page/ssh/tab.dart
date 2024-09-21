@@ -29,6 +29,14 @@ class _SSHTabPageState extends State<SSHTabPage>
   final _tabRN = RNode();
 
   @override
+  void dispose() {
+    super.dispose();
+    _pageCtrl.dispose();
+    _tabRN.dispose();
+    _fabVN.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(

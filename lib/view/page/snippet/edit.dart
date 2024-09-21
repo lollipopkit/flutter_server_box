@@ -29,7 +29,10 @@ class _SnippetEditPageState extends State<SnippetEditPage>
     super.dispose();
     _nameController.dispose();
     _scriptController.dispose();
+    _noteController.dispose();
     _scriptNode.dispose();
+    _autoRunOn.dispose();
+    _tags.dispose();
   }
 
   @override

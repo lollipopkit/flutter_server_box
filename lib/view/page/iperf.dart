@@ -17,6 +17,13 @@ class _IPerfPageState extends State<IPerfPage> {
   final _portCtrl = TextEditingController();
 
   @override
+  void dispose() {
+    super.dispose();
+    _hostCtrl.dispose();
+    _portCtrl.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(

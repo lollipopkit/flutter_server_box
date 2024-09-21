@@ -32,6 +32,18 @@ class _HomePageState extends State<HomePage>
   bool _shouldAuth = false;
 
   @override
+  void dispose() {
+    super.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    ServerProvider.closeServer();
+    _pageController.dispose();
+    WakelockPlus.disable();
+
+    _selectIndex.dispose();
+    _isLandscape.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
     SystemUIs.switchStatusBar(hide: false);
@@ -51,15 +63,6 @@ class _HomePageState extends State<HomePage>
     super.didChangeDependencies();
     _isLandscape.value =
         MediaQuery.of(context).orientation == Orientation.landscape;
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    WidgetsBinding.instance.removeObserver(this);
-    ServerProvider.closeServer();
-    _pageController.dispose();
-    WakelockPlus.disable();
   }
 
   @override

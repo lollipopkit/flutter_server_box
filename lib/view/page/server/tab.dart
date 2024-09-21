@@ -52,6 +52,15 @@ class _ServerPageState extends State<ServerPage>
   final _autoHideKey = GlobalKey<AutoHideState>();
 
   @override
+  void dispose() {
+    super.dispose();
+    _timer?.cancel();
+    _scrollController.dispose();
+    _autoHideKey.currentState?.dispose();
+    _tag.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
     if (!Stores.setting.fullScreenJitter.fetch()) return;

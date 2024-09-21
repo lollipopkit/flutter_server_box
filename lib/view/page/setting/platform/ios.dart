@@ -19,6 +19,12 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
   final wc = WatchConnectivity();
 
   @override
+  void dispose() {
+    super.dispose();
+    _pushToken.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(title: Text('iOS')),

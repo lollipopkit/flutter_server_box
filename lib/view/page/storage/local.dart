@@ -42,6 +42,12 @@ class _LocalFilePageState extends State<LocalFilePage>
   bool get isPickFile => widget.args?.isPickFile ?? false;
 
   @override
+  void dispose() {
+    super.dispose();
+    _sortType.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     super.build(context);
     final title = _path.path.fileName ?? libL10n.file;

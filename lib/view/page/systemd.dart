@@ -34,6 +34,12 @@ final class _SystemdPageState extends State<SystemdPage> {
   late final _pro = SystemdProvider.init(widget.args.spi);
 
   @override
+  void dispose() {
+    super.dispose();
+    _pro.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(

@@ -51,6 +51,13 @@ class _EditorPageState extends State<EditorPage> {
   String? _langCode;
 
   @override
+  void dispose() {
+    super.dispose();
+    _controller.dispose();
+    _focusNode.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
 
@@ -95,13 +102,6 @@ class _EditorPageState extends State<EditorPage> {
           themeMap[Stores.setting.editorTheme.fetch()] ?? a11yLightTheme;
     }
     _focusNode.requestFocus();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    _focusNode.dispose();
-    super.dispose();
   }
 
   @override

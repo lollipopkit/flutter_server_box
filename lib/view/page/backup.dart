@@ -29,6 +29,13 @@ final class _BackupPageState extends State<BackupPage>
   final webdavLoading = false.vn;
 
   @override
+  void dispose() {
+    icloudLoading.dispose();
+    webdavLoading.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(

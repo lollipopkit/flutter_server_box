@@ -38,6 +38,7 @@ class _ContainerPageState extends State<ContainerPage> {
   void dispose() {
     super.dispose();
     _textController.dispose();
+    _container.dispose();
   }
 
   @override
