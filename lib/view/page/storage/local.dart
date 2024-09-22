@@ -11,6 +11,7 @@ import 'package:server_box/data/res/misc.dart';
 
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/path_with_prefix.dart';
+import 'package:server_box/view/page/editor.dart';
 
 final class LocalFilePageArgs {
   final bool? isPickFile;
@@ -183,7 +184,7 @@ class _LocalFilePageState extends State<LocalFilePage>
   Future<void> _showFileActionDialog(FileSystemEntity file) async {
     final fileName = file.path.split('/').last;
     if (isPickFile) {
-      await context.showRoundDialog(
+      context.showRoundDialog(
         title: libL10n.file,
         child: Text(fileName),
         actions: [
@@ -199,9 +200,9 @@ class _LocalFilePageState extends State<LocalFilePage>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          ListTile(
-            leading: const Icon(Icons.edit),
-            title: Text(libL10n.edit),
+          Btn.tile(
+            icon: const Icon(Icons.edit),
+            text: libL10n.edit,
             onTap: () async {
               context.pop();
               final stat = await file.stat();
@@ -212,34 +213,35 @@ class _LocalFilePageState extends State<LocalFilePage>
                 );
                 return;
               }
-              final result = await AppRoutes.editor(
-                path: file.absolute.path,
-              ).go<bool>(context);
-              if (result == true) {
+              final ret = await EditorPage.route.go(
+                context,
+                args: EditorPageArgs(path: file.absolute.path),
+              );
+              if (ret?.editExistedOk == true) {
                 context.showSnackBar(l10n.saved);
                 setState(() {});
               }
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.abc),
-            title: Text(libL10n.rename),
+          Btn.tile(
+            icon: const Icon(Icons.abc),
+            text: libL10n.rename,
             onTap: () {
               context.pop();
               _showRenameDialog(file);
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.delete),
-            title: Text(libL10n.delete),
+          Btn.tile(
+            icon: const Icon(Icons.delete),
+            text: libL10n.delete,
             onTap: () {
               context.pop();
               _showDeleteDialog(file);
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.upload),
-            title: Text(l10n.upload),
+          Btn.tile(
+            icon: const Icon(Icons.upload),
+            text: l10n.upload,
             onTap: () async {
               context.pop();
 
@@ -270,9 +272,9 @@ class _LocalFilePageState extends State<LocalFilePage>
               context.showSnackBar(l10n.added2List);
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.open_in_new),
-            title: Text(libL10n.open),
+          Btn.tile(
+            icon: const Icon(Icons.open_in_new),
+            text: libL10n.open,
             onTap: () {
               Pfs.share(path: file.absolute.path);
             },
@@ -283,7 +285,7 @@ class _LocalFilePageState extends State<LocalFilePage>
   }
 
   void _showRenameDialog(FileSystemEntity file) {
-    final fileName = file.path.split('/').last;
+    final fileName = file.path.split(Pfs.seperator).last;
     final ctrl = TextEditingController(text: fileName);
     void onSubmit() async {
       final newName = ctrl.text;
@@ -293,7 +295,7 @@ class _LocalFilePageState extends State<LocalFilePage>
       }
 
       context.pop();
-      final newPath = '${file.parent.path}/$newName';
+      final newPath = '${file.parent.path}${Pfs.seperator}$newName';
       await context.showLoadingDialog(fn: () => file.rename(newPath));
 
       setState(() {});
@@ -305,7 +307,7 @@ class _LocalFilePageState extends State<LocalFilePage>
         autoFocus: true,
         icon: Icons.abc,
         label: libL10n.name,
-        controller: TextEditingController(text: fileName),
+        controller: ctrl,
         suggestion: true,
         maxLines: 3,
         onSubmitted: (p0) => onSubmit(),

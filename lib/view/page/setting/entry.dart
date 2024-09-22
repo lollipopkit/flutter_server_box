@@ -16,6 +16,7 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/view/page/backup.dart';
+import 'package:server_box/view/page/editor.dart';
 import 'package:server_box/view/page/private_key/list.dart';
 
 const _kIconSize = 23.0;
@@ -1150,6 +1151,7 @@ final class _AppSettingsPageState extends State<AppSettingsPage> {
         _buildCollapseUI(),
         _buildCupertinoRoute(),
         if (isDesktop) _buildHideTitleBar(),
+        _buildEditRawSettings(),
       ],
     );
   }
@@ -1315,20 +1317,30 @@ final class _AppSettingsPageState extends State<AppSettingsPage> {
     );
   }
 
-  Future<void> _onLongPressSetting() async {
+  Widget _buildEditRawSettings() {
+    return ListTile(
+      title: const Text('(Dev) Edit raw json'),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: _editRawSettings,
+    );
+  }
+
+  Future<void> _editRawSettings() async {
     final map = Stores.setting.box.toJson(includeInternal: false);
     final keys = map.keys;
 
     /// Encode [map] to String with indent `\t`
     final text = jsonIndentEncoder.convert(map);
-    final result = await AppRoutes.editor(
-      text: text,
-      langCode: 'json',
-      title: libL10n.setting,
-    ).go<String>(context);
-    if (result == null) {
-      return;
-    }
+    final ret = await EditorPage.route.go(
+      context,
+      args: EditorPageArgs(
+        text: text,
+        langCode: 'json',
+        title: libL10n.setting,
+      ),
+    );
+    final result = ret?.result;
+    if (result == null) return;
     try {
       final newSettings = json.decode(result) as Map<String, dynamic>;
       Stores.setting.box.putAll(newSettings);

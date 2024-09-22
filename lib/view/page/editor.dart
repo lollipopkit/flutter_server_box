@@ -14,7 +14,17 @@ import 'package:server_box/data/res/store.dart';
 
 import 'package:server_box/view/widget/two_line_text.dart';
 
-class EditorPage extends StatefulWidget {
+final class EditorPageRet {
+  /// If edit text, this includes the edited result
+  final String? result;
+
+  /// Indicates whether it's ok to edit existing file
+  final bool? editExistedOk;
+
+  const EditorPageRet({this.result, this.editExistedOk});
+}
+
+final class EditorPageArgs {
   /// If path is not null, then it's a file editor
   /// If path is null, then it's a text editor
   final String? path;
@@ -28,13 +38,23 @@ class EditorPage extends StatefulWidget {
 
   final String? title;
 
-  const EditorPage({
-    super.key,
+  const EditorPageArgs({
     this.path,
     this.text,
     this.langCode,
     this.title,
   });
+}
+
+class EditorPage extends StatefulWidget {
+  final EditorPageArgs? args;
+
+  const EditorPage({super.key, this.args});
+
+  static const route = AppRoute<EditorPageRet, EditorPageArgs>(
+    page: EditorPage.new,
+    path: '/editor',
+  );
 
   @override
   State<EditorPage> createState() => _EditorPageState();
@@ -63,7 +83,8 @@ class _EditorPageState extends State<EditorPage> {
 
     /// Higher priority than [path]
     if (Stores.setting.editorHighlight.fetch()) {
-      _langCode = widget.langCode ?? Highlights.getCode(widget.path);
+      _langCode =
+          widget.args?.langCode ?? Highlights.getCode(widget.args?.path);
     }
     _controller = CodeController(
       language: Highlights.all[_langCode],
@@ -79,14 +100,15 @@ class _EditorPageState extends State<EditorPage> {
   }
 
   Future<void> _setupCtrl() async {
-    if (widget.path != null) {
-      final code = await Computer.shared.start(
-        (path) async => await File(path).readAsString(),
-        widget.path!,
+    final path = widget.args?.path;
+    final text = widget.args?.text;
+    if (path != null) {
+      final code = await Computer.shared.startNoParam(
+        () => File(path).readAsString(),
       );
       _controller.text = code;
-    } else if (widget.text != null) {
-      _controller.text = widget.text!;
+    } else if (text != null) {
+      _controller.text = text;
     }
   }
 
@@ -117,7 +139,9 @@ class _EditorPageState extends State<EditorPage> {
     return CustomAppBar(
       centerTitle: true,
       title: TwoLineText(
-        up: widget.title ?? widget.path?.getFileName() ?? l10n.unknown,
+        up: widget.args?.title ??
+            widget.args?.path?.getFileName() ??
+            l10n.unknown,
         down: l10n.editor,
       ),
       actions: [
@@ -144,20 +168,21 @@ class _EditorPageState extends State<EditorPage> {
           onPressed: () async {
             // If path is not null, then it's a file editor
             // save the text and return true to pop the page
-            if (widget.path != null) {
+            final path = widget.args?.path;
+            if (path != null) {
               final (res, _) = await context.showLoadingDialog(
-                fn: () => File(widget.path!).writeAsString(_controller.text),
+                fn: () => File(path).writeAsString(_controller.text),
               );
               if (res == null) {
                 context.showSnackBar(libL10n.fail);
                 return;
               }
-              context.pop(true);
+              context.pop(const EditorPageRet(editExistedOk: true));
               return;
             }
             // else it's a text editor
             // return the text to the previous page
-            context.pop(_controller.text);
+            context.pop(EditorPageRet(result: _controller.text));
           },
         )
       ],

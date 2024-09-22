@@ -17,7 +17,6 @@ import 'package:server_box/view/page/snippet/result.dart';
 import 'package:server_box/view/page/ssh/page.dart';
 import 'package:server_box/view/page/setting/seq/virt_key.dart';
 import 'package:server_box/data/model/server/snippet.dart';
-import 'package:server_box/view/page/editor.dart';
 import 'package:server_box/view/page/process.dart';
 import 'package:server_box/view/page/server/tab.dart';
 import 'package:server_box/view/page/setting/seq/srv_detail_seq.dart';
@@ -112,26 +111,6 @@ class AppRoutes {
 
   static AppRoutes docker({Key? key, required Spi spi}) {
     return AppRoutes(ContainerPage(key: key, spi: spi), 'docker');
-  }
-
-  /// - Pop true if the text is changed & [path] is not null
-  /// - Pop text if [path] is null
-  static AppRoutes editor({
-    Key? key,
-    String? path,
-    String? text,
-    String? langCode,
-    String? title,
-  }) {
-    return AppRoutes(
-        EditorPage(
-          key: key,
-          path: path,
-          text: text,
-          langCode: langCode,
-          title: title,
-        ),
-        'editor');
   }
 
   // static AppRoutes fullscreen({Key? key}) {

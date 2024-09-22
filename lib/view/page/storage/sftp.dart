@@ -14,6 +14,7 @@ import 'package:server_box/data/model/sftp/worker.dart';
 import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/editor.dart';
 import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/widget/omit_start_text.dart';
 import 'package:server_box/view/widget/two_line_text.dart';
@@ -302,7 +303,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     }
 
     final remotePath = _getRemotePath(name);
-    final localPath = await _getLocalPath(remotePath);
+    final localPath = _getLocalPath(remotePath);
     final completer = Completer();
     final req = SftpReq(
       widget.spi,
@@ -316,8 +317,11 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     );
     if (suc == null || err != null) return;
 
-    final result = await AppRoutes.editor(path: localPath).go<bool>(context);
-    if (result != null && result) {
+    final ret = await EditorPage.route.go(
+      context,
+      args: EditorPageArgs(path: localPath),
+    );
+    if (ret?.editExistedOk == true) {
       SftpProvider.add(SftpReq(
         req.spi,
         remotePath,
@@ -346,7 +350,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
               SftpReq(
                 widget.spi,
                 remotePath,
-                await _getLocalPath(remotePath),
+                _getLocalPath(remotePath),
                 SftpReqType.download,
               ),
             );
@@ -554,11 +558,8 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
         onSubmitted: (_) => onSubmitted(),
       ),
       actions: [
-        TextButton(onPressed: () => context.pop(), child: Text(libL10n.cancel)),
-        TextButton(
-          onPressed: onSubmitted,
-          child: Text(libL10n.rename, style: UIs.textRed),
-        ),
+        Btn.cancel(),
+        Btn.ok(onTap: onSubmitted, red: true),
       ],
     );
   }
@@ -593,8 +594,9 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     return prePath.joinPath(name.filename, seperator: '/');
   }
 
-  Future<String> _getLocalPath(String remotePath) async {
-    return Paths.file.joinPath(remotePath);
+  /// Local file dir + server id + remote path
+  String _getLocalPath(String remotePath) {
+    return Paths.file.joinPath(widget.spi.id).joinPath(remotePath);
   }
 
   /// Only return true if the path is changed
