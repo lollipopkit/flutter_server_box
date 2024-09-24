@@ -6,6 +6,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:server_box/core/channel/bg_run.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/server.dart';
@@ -70,13 +71,22 @@ class SSHPageState extends State<SSHPage>
   late SSHClient? _client = widget.spi.server?.value.client;
   Timer? _discontinuityTimer;
 
+  /// Used for (de)activate the wake lock and forground service
+  static var _sshConnCount = 0;
+
   @override
   void dispose() {
     super.dispose();
     _virtKeyLongPressTimer?.cancel();
     _terminalController.dispose();
     _discontinuityTimer?.cancel();
-    WakelockPlus.disable();
+
+    if (--_sshConnCount <= 0) {
+      WakelockPlus.disable();
+      if (isAndroid) {
+        BgRunMC.stopService();
+      }
+    }
   }
 
   @override
@@ -85,6 +95,13 @@ class SSHPageState extends State<SSHPage>
     _initStoredCfg();
     _initVirtKeys();
     _setupDiscontinuityTimer();
+
+    if (++_sshConnCount == 1) {
+      WakelockPlus.enable();
+      if (isAndroid) {
+        BgRunMC.startService();
+      }
+    }
   }
 
   @override

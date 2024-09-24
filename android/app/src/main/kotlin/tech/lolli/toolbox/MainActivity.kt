@@ -31,6 +31,11 @@ class MainActivity: FlutterFragmentActivity() {
                             startService(serviceIntent)
                         }
                     }
+                    "stopService" -> {
+                        val serviceIntent = Intent(this@MainActivity, ForegroundService::class.java)
+                        stopService(serviceIntent)
+                        result.success(null)
+                    }
                     else -> {
                         result.notImplemented()
                     }
