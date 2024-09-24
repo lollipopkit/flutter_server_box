@@ -14,12 +14,17 @@ class ForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val notification = createNotification()
-        startForeground(1, notification)
-
-        // Exec your code here
-
-        return START_STICKY
+        when (intent?.action) {
+            "ACTION_STOP_FOREGROUND" -> {
+                stopForegroundService()
+                return START_NOT_STICKY
+            }
+            else -> {
+                val notification = createNotification()
+                startForeground(1, notification)
+                return START_STICKY
+            }
+        }
     }
 
     override fun onBind(intent: Intent): IBinder? {
@@ -47,20 +52,37 @@ class ForegroundService : Service() {
             PendingIntent.FLAG_IMMUTABLE
         )
 
+        val deleteIntent = Intent(this, ForegroundService::class.java).apply {
+            action = "ACTION_STOP_FOREGROUND"
+        }
+        val deletePendingIntent = PendingIntent.getService(
+            this,
+            0,
+            deleteIntent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
+
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(this, chanId)
-                .setContentTitle("App is running")
-                .setContentText("Click to open the app")
+                .setContentTitle("Server Box")
+                .setContentText("Open the app")
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentIntent(pendingIntent)
+                .addAction(android.R.drawable.ic_delete, "Stop", deletePendingIntent)
                 .build()
         } else {
             Notification.Builder(this)
-                .setContentTitle("App is running")
-                .setContentText("Click to open the app")
+                .setContentTitle("Server Box")
+                .setContentText("Open the app")
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentIntent(pendingIntent)
+                .addAction(android.R.drawable.ic_delete, "Stop", deletePendingIntent)
                 .build()
         }
+    }
+
+    fun stopForegroundService() {
+        stopForeground(true)
+        stopSelf()
     }
 }

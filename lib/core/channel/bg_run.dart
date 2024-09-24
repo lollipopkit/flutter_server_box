@@ -11,4 +11,8 @@ abstract final class BgRunMC {
   static void startService() {
     _channel.invokeMethod('startService');
   }
+
+  static void stopService() {
+    _channel.invokeMethod('stopService');
+  }
 }
