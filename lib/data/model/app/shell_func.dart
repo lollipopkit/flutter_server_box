@@ -54,7 +54,7 @@ enum ShellFunc {
     return '''
 mkdir -p $scriptDir
 cat > $scriptPath
-chmod 744 $scriptPath
+chmod 755 $scriptPath
 ''';
   }
 

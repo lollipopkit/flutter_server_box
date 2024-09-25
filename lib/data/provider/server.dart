@@ -5,6 +5,7 @@ import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
+import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
@@ -87,16 +88,15 @@ class ServerProvider extends Provider {
   }
 
   static void _updateTags() {
+    final tags = <String>{};
     for (final s in servers.values) {
-      final tags = s.value.spi.tags;
-      if (tags == null) continue;
-      for (final t in tags) {
-        if (!_tags.value.contains(t)) {
-          _tags.value.add(t);
-        }
+      final spiTags = s.value.spi.tags;
+      if (spiTags == null) continue;
+      for (final t in spiTags) {
+        tags.add(t);
       }
     }
-    _tags.value = (_tags.value.toList()..sort()).toSet();
+    _tags.value = tags;
   }
 
   static Server genServer(Spi spi) {
@@ -190,6 +190,7 @@ class ServerProvider extends Provider {
     Stores.setting.serverOrder.put(serverOrder.value);
     _updateTags();
     refresh(spi: spi);
+    bakSync.sync(milliDelay: 1000);
   }
 
   static void delServer(String id) {
@@ -199,6 +200,7 @@ class ServerProvider extends Provider {
     Stores.setting.serverOrder.put(serverOrder.value);
     Stores.server.delete(id);
     _updateTags();
+    bakSync.sync(milliDelay: 1000);
   }
 
   static void deleteAll() {
@@ -234,6 +236,7 @@ class ServerProvider extends Provider {
       }
     }
     _updateTags();
+    bakSync.sync();
   }
 
   static void _setServerState(VNode<Server> s, ServerConn ss) {
@@ -302,11 +305,10 @@ class ServerProvider extends Provider {
 
       _setServerState(s, ServerConn.connected);
 
-      final scriptRaw = ShellFunc.allScript(spi.custom?.cmds).uint8List;
-
       try {
         final (_, writeScriptResult) = await sv.client!.exec(
           (session) async {
+            final scriptRaw = ShellFunc.allScript(spi.custom?.cmds).uint8List;
             session.stdin.add(scriptRaw);
             session.stdin.close();
           },

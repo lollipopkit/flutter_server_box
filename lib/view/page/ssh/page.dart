@@ -5,8 +5,8 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:provider/provider.dart';
+import 'package:server_box/core/channel/bg_run.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/server.dart';
@@ -71,12 +71,8 @@ class SSHPageState extends State<SSHPage>
   late SSHClient? _client = widget.spi.server?.value.client;
   Timer? _discontinuityTimer;
 
-  @override
-  void initState() {
-    super.initState();
-    _initStoredCfg();
-    _initVirtKeys();
-  }
+  /// Used for (de)activate the wake lock and forground service
+  static var _sshConnCount = 0;
 
   @override
   void dispose() {
@@ -84,7 +80,28 @@ class SSHPageState extends State<SSHPage>
     _virtKeyLongPressTimer?.cancel();
     _terminalController.dispose();
     _discontinuityTimer?.cancel();
-    if (!Stores.setting.generalWakeLock.fetch()) WakelockPlus.disable();
+
+    if (--_sshConnCount <= 0) {
+      WakelockPlus.disable();
+      if (isAndroid) {
+        BgRunMC.stopService();
+      }
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _initStoredCfg();
+    _initVirtKeys();
+    _setupDiscontinuityTimer();
+
+    if (++_sshConnCount == 1) {
+      WakelockPlus.enable();
+      if (isAndroid) {
+        BgRunMC.startService();
+      }
+    }
   }
 
   @override
@@ -95,7 +112,7 @@ class SSHPageState extends State<SSHPage>
       2 => true,
       _ => context.isDark,
     };
-    _media = MediaQuery.of(context);
+    _media = context.media;
 
     _terminalTheme = _isDark ? TerminalThemes.dark : TerminalThemes.light;
     _terminalTheme = _terminalTheme.copyWith(selectionCursor: UIs.primaryColor);
@@ -137,7 +154,7 @@ class SSHPageState extends State<SSHPage>
           _media.padding.top,
       child: Padding(
         padding: EdgeInsets.only(
-          top: widget.notFromTab ? CustomAppBar.barHeight ?? 0 : 0,
+          top: widget.notFromTab ? CustomAppBar.sysStatusBarHeight ?? 0 : 0,
           left: _horizonPadding,
           right: _horizonPadding,
         ),
@@ -155,7 +172,7 @@ class SSHPageState extends State<SSHPage>
           showToolbar: isMobile,
           viewOffset: Offset(
             2 * _horizonPadding,
-            CustomAppBar.barHeight ?? _media.padding.top,
+            CustomAppBar.sysStatusBarHeight ?? _media.padding.top,
           ),
           hideScrollBar: false,
           focusNode: widget.focusNode,
@@ -300,7 +317,9 @@ class SSHPageState extends State<SSHPage>
           title: l10n.snippet,
           tags: SnippetProvider.tags,
           itemsBuilder: (e) {
-            if (e == kDefaultTag) return SnippetProvider.snippets.value;
+            if (e == TagSwitcher.kDefaultTag) {
+              return SnippetProvider.snippets.value;
+            }
             return SnippetProvider.snippets.value
                 .where((element) => element.tags?.contains(e) ?? false)
                 .toList();
@@ -415,8 +434,6 @@ class SSHPageState extends State<SSHPage>
     _listen(session.stdout);
     _listen(session.stderr);
 
-    _initService();
-
     for (final snippet in SnippetProvider.snippets.value) {
       if (snippet.autoRunOn?.contains(widget.spi.id) == true) {
         snippet.runInTerm(_terminal, widget.spi);
@@ -451,63 +468,42 @@ class SSHPageState extends State<SSHPage>
         .listen(_terminal.write);
   }
 
-  // void _setupDiscontinuityTimer() {
-  //   _discontinuityTimer = Timer.periodic(
-  //     const Duration(seconds: 5),
-  //     (_) async {
-  //       var throwTimeout = true;
-  //       Future.delayed(const Duration(seconds: 3), () {
-  //         if (throwTimeout) {
-  //           _catchTimeout();
-  //         }
-  //       });
-  //       await _client?.ping();
-  //       throwTimeout = false;
-  //     },
-  //   );
-  // }
+  void _setupDiscontinuityTimer() {
+    _discontinuityTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) async {
+        var throwTimeout = true;
+        Future.delayed(const Duration(seconds: 3), () {
+          if (throwTimeout) {
+            _catchTimeout();
+          }
+        });
+        await _client?.ping();
+        throwTimeout = false;
+      },
+    );
+  }
 
-  // void _catchTimeout() {
-  //   _discontinuityTimer?.cancel();
-  //   if (!mounted) return;
-  //   _writeLn('\n\nConnection lost\r\n');
-  //   context.showRoundDialog(
-  //     title: Text(l10n.attention),
-  //     child: Text('${l10n.disconnected}\n${l10n.goBackQ}'),
-  //     barrierDismiss: false,
-  //     actions: [
-  //       TextButton(
-  //         onPressed: () {
-  //           if (mounted) {
-  //             context.pop();
-  //             if (widget.pop) {
-  //               context.pop();
-  //             }
-  //           }
-  //         },
-  //         child: Text(l10n.ok),
-  //       ),
-  //     ],
-  //   );
-  // }
+  void _catchTimeout() {
+    _discontinuityTimer?.cancel();
+    if (!mounted) return;
+    _writeLn('\n\nConnection lost\r\n');
+    context.showRoundDialog(
+      title: libL10n.attention,
+      child: Text('${l10n.disconnected}\n${l10n.goBackQ}'),
+      barrierDismiss: false,
+      actions: Btn.ok(
+        onTap: () {
+          if (mounted) {
+            context.pop();
+          }
+        },
+      ).toList,
+    );
+  }
 
   @override
   bool get wantKeepAlive => true;
-
-  Future<void> _initService() async {
-    if (!isAndroid) return;
-
-    await FlutterBackgroundService().configure(
-      androidConfiguration: AndroidConfiguration(
-        onStart: _onStart,
-        autoStart: true,
-        isForegroundMode: true,
-        initialNotificationTitle: 'SSH',
-        initialNotificationContent: l10n.bgRun,
-      ),
-      iosConfiguration: IosConfiguration(),
-    );
-  }
 
   void _initStoredCfg() {
     final fontFamilly = Stores.setting.fontPath.fetch().getFileName();
@@ -546,5 +542,3 @@ class SSHPageState extends State<SSHPage>
     if (Stores.setting.sshWakeLock.fetch()) WakelockPlus.enable();
   }
 }
-
-Future<void> _onStart(ServiceInstance service) async {}

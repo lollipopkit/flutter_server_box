@@ -19,6 +19,11 @@ final class SystemdProvider {
   final isBusy = false.vn;
   final units = <SystemdUnit>[].vn;
 
+  void dispose() {
+    isBusy.dispose();
+    units.dispose();
+  }
+
   Future<void> getUnits() async {
     isBusy.value = true;
 

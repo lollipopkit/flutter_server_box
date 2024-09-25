@@ -1,4 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -44,6 +45,7 @@ class SnippetProvider extends Provider {
     snippets.notify();
     Stores.snippet.put(snippet);
     _updateTags();
+    bakSync.sync(milliDelay: 1000);
   }
 
   static void del(Snippet snippet) {
@@ -51,6 +53,7 @@ class SnippetProvider extends Provider {
     snippets.notify();
     Stores.snippet.delete(snippet);
     _updateTags();
+    bakSync.sync(milliDelay: 1000);
   }
 
   static void update(Snippet old, Snippet newOne) {
@@ -60,6 +63,7 @@ class SnippetProvider extends Provider {
     Stores.snippet.delete(old);
     Stores.snippet.put(newOne);
     _updateTags();
+    bakSync.sync(milliDelay: 1000);
   }
 
   static void renameTag(String old, String newOne) {
@@ -71,5 +75,6 @@ class SnippetProvider extends Provider {
       }
     }
     _updateTags();
+    bakSync.sync(milliDelay: 1000);
   }
 }

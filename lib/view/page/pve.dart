@@ -30,6 +30,13 @@ final class _PvePageState extends State<PvePage> {
   Timer? _timer;
 
   @override
+  void dispose() {
+    super.dispose();
+    _timer?.cancel();
+    _pve.dispose();
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _media = MediaQuery.of(context);
@@ -40,13 +47,6 @@ final class _PvePageState extends State<PvePage> {
     super.initState();
     _initRefreshTimer();
     _afterInit();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _timer?.cancel();
-    _pve.dispose();
   }
 
   @override

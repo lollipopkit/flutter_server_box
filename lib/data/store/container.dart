@@ -5,7 +5,9 @@ import 'package:server_box/data/res/store.dart';
 const _keyConfig = 'providerConfig';
 
 class ContainerStore extends PersistentStore {
-  ContainerStore() : super('docker');
+  ContainerStore._() : super('docker');
+
+  static final instance = ContainerStore._();
 
   String? fetch(String? id) {
     return box.get(id);

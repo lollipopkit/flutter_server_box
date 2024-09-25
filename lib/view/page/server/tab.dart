@@ -8,8 +8,10 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
+import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/edit.dart';
+import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/widget/percent_circle.dart';
 
 import 'package:server_box/core/route.dart';
@@ -18,6 +20,8 @@ import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
+
+part 'top_bar.dart';
 
 class ServerPage extends StatefulWidget {
   const ServerPage({super.key});
@@ -46,6 +50,15 @@ class _ServerPageState extends State<ServerPage>
 
   final _scrollController = ScrollController();
   final _autoHideKey = GlobalKey<AutoHideState>();
+
+  @override
+  void dispose() {
+    super.dispose();
+    _timer?.cancel();
+    _scrollController.dispose();
+    _autoHideKey.currentState?.dispose();
+    _tag.dispose();
+  }
 
   @override
   void initState() {
@@ -85,7 +98,7 @@ class _ServerPageState extends State<ServerPage>
 
   Widget _buildPortrait() {
     return Scaffold(
-      appBar: TagSwitcher(
+      appBar: _TopBar(
         tags: ServerProvider.tags,
         onTagChanged: (p0) => _tag.value = p0,
         initTag: _tag.value,
@@ -130,7 +143,7 @@ class _ServerPageState extends State<ServerPage>
               top: 0,
               left: 0,
               child: IconButton(
-                onPressed: () => AppRoutes.settings().go(context),
+                onPressed: () => SettingsPage.route.go(context),
                 icon: const Icon(Icons.settings, color: Colors.grey),
               ),
             ),
@@ -482,30 +495,18 @@ class _ServerPageState extends State<ServerPage>
           null,
         ),
       ServerConn.failed => (
-          const Icon(
-            Icons.refresh,
-            size: 21,
-            color: Colors.grey,
-          ),
+          const Icon(Icons.refresh, size: 21, color: Colors.grey),
           () {
             TryLimiter.reset(s.spi.id);
             ServerProvider.refresh(spi: s.spi);
           },
         ),
       ServerConn.disconnected => (
-          const Icon(
-            MingCute.link_3_line,
-            size: 19,
-            color: Colors.grey,
-          ),
+          const Icon(MingCute.link_3_line, size: 19, color: Colors.grey),
           () => ServerProvider.refresh(spi: s.spi)
         ),
       ServerConn.finished => (
-          const Icon(
-            MingCute.unlink_2_line,
-            size: 17,
-            color: Colors.grey,
-          ),
+          const Icon(MingCute.unlink_2_line, size: 17, color: Colors.grey),
           () => ServerProvider.closeServer(id: s.spi.id),
         ),
       _ when Stores.setting.serverTabUseOldUI.fetch() => (
@@ -517,11 +518,7 @@ class _ServerPageState extends State<ServerPage>
     // Or the loading icon will be rescaled.
     final wrapped = child is SizedBox
         ? child
-        : SizedBox(
-            height: _kCardHeightMin,
-            width: 27,
-            child: child,
-          );
+        : SizedBox(height: _kCardHeightMin, width: 27, child: child);
     if (onTap == null) return wrapped.paddingOnly(left: 10);
     return InkWell(
       borderRadius: BorderRadius.circular(7),
@@ -654,7 +651,7 @@ ${ss.err?.message ?? 'null'}
 
   List<String> _filterServers(List<String> order) {
     final tag = _tag.value;
-    if (tag == kDefaultTag) return order;
+    if (tag == TagSwitcher.kDefaultTag) return order;
     return order.where((e) {
       final tags = ServerProvider.pick(id: e)?.value.spi.tags;
       if (tags == null) return false;

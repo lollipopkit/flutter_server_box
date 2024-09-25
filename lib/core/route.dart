@@ -3,13 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:server_box/view/page/backup.dart';
 import 'package:server_box/view/page/container.dart';
 import 'package:server_box/view/page/home/home.dart';
 import 'package:server_box/view/page/iperf.dart';
 import 'package:server_box/view/page/ping.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
-import 'package:server_box/view/page/private_key/list.dart';
 import 'package:server_box/view/page/pve.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/setting/platform/android.dart';
@@ -18,17 +16,12 @@ import 'package:server_box/view/page/setting/seq/srv_func_seq.dart';
 import 'package:server_box/view/page/snippet/result.dart';
 import 'package:server_box/view/page/ssh/page.dart';
 import 'package:server_box/view/page/setting/seq/virt_key.dart';
-import 'package:server_box/view/page/storage/local.dart';
-
 import 'package:server_box/data/model/server/snippet.dart';
-import 'package:server_box/view/page/editor.dart';
 import 'package:server_box/view/page/process.dart';
 import 'package:server_box/view/page/server/tab.dart';
-import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/page/setting/seq/srv_detail_seq.dart';
 import 'package:server_box/view/page/setting/seq/srv_seq.dart';
 import 'package:server_box/view/page/snippet/edit.dart';
-import 'package:server_box/view/page/snippet/list.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/page/storage/sftp_mission.dart';
 
@@ -72,19 +65,11 @@ class AppRoutes {
     );
   }
 
-  static AppRoutes keyList({Key? key}) {
-    return AppRoutes(PrivateKeysListPage(key: key), 'key_detail');
-  }
-
   static AppRoutes snippetEdit({Key? key, Snippet? snippet}) {
     return AppRoutes(
       SnippetEditPage(snippet: snippet),
       'snippet_${snippet == null ? 'add' : 'edit'}',
     );
-  }
-
-  static AppRoutes snippetList({Key? key}) {
-    return AppRoutes(SnippetListPage(key: key), 'snippet_detail');
   }
 
   static AppRoutes ssh({
@@ -108,17 +93,6 @@ class AppRoutes {
     return AppRoutes(SSHVirtKeySettingPage(key: key), 'ssh_virt_key_setting');
   }
 
-  static AppRoutes localStorage(
-      {Key? key, bool isPickFile = false, String? initDir}) {
-    return AppRoutes(
-        LocalStoragePage(
-          key: key,
-          isPickFile: isPickFile,
-          initDir: initDir,
-        ),
-        'local_storage');
-  }
-
   static AppRoutes sftpMission({Key? key}) {
     return AppRoutes(SftpMissionPage(key: key), 'sftp_mission');
   }
@@ -135,32 +109,8 @@ class AppRoutes {
         'sftp');
   }
 
-  static AppRoutes backup({Key? key}) {
-    return AppRoutes(BackupPage(key: key), 'backup');
-  }
-
   static AppRoutes docker({Key? key, required Spi spi}) {
     return AppRoutes(ContainerPage(key: key, spi: spi), 'docker');
-  }
-
-  /// - Pop true if the text is changed & [path] is not null
-  /// - Pop text if [path] is null
-  static AppRoutes editor({
-    Key? key,
-    String? path,
-    String? text,
-    String? langCode,
-    String? title,
-  }) {
-    return AppRoutes(
-        EditorPage(
-          key: key,
-          path: path,
-          text: text,
-          langCode: langCode,
-          title: title,
-        ),
-        'editor');
   }
 
   // static AppRoutes fullscreen({Key? key}) {
@@ -177,10 +127,6 @@ class AppRoutes {
 
   static AppRoutes process({Key? key, required Spi spi}) {
     return AppRoutes(ProcessPage(key: key, spi: spi), 'process');
-  }
-
-  static AppRoutes settings({Key? key}) {
-    return AppRoutes(SettingPage(key: key), 'setting');
   }
 
   static AppRoutes serverOrder({Key? key}) {

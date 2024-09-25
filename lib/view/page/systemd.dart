@@ -34,6 +34,12 @@ final class _SystemdPageState extends State<SystemdPage> {
   late final _pro = SystemdProvider.init(widget.args.spi);
 
   @override
+  void dispose() {
+    super.dispose();
+    _pro.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
@@ -56,7 +62,7 @@ final class _SystemdPageState extends State<SystemdPage> {
               curve: Curves.fastEaseInToSlowEaseOut,
               height: isBusy ? 30 : 0,
               child: isBusy
-                  ? SizedLoading.centerSmall.paddingOnly(bottom: 7)
+                  ? SizedLoading.small.paddingOnly(bottom: 7)
                   : const SizedBox.shrink(),
             ),
           ),

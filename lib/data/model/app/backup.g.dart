@@ -20,6 +20,7 @@ Backup _$BackupFromJson(Map<String, dynamic> json) => Backup(
           .toList(),
       container: json['container'] as Map<String, dynamic>,
       history: json['history'] as Map<String, dynamic>,
+      settings: json['settings'] as Map<String, dynamic>?,
       lastModTime: (json['lastModTime'] as num?)?.toInt(),
     );
 
@@ -32,4 +33,5 @@ Map<String, dynamic> _$BackupToJson(Backup instance) => <String, dynamic>{
       'container': instance.container,
       'history': instance.history,
       'lastModTime': instance.lastModTime,
+      'settings': instance.settings,
     };

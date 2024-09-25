@@ -9,8 +9,7 @@ import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:server_box/app.dart';
-import 'package:server_box/core/utils/sync/icloud.dart';
-import 'package:server_box/core/utils/sync/webdav.dart';
+import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
@@ -25,8 +24,8 @@ import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/build_data.dart';
-import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/no_backup.dart';
 
 Future<void> main() async {
   _runInZone(() async {
@@ -52,7 +51,7 @@ void _runInZone(void Function() body) {
 Future<void> _initApp() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Paths.init(BuildData.name, bakName: Miscs.bakFileName);
+  await Paths.init(BuildData.name, bakName: 'srvbox_bak.json');
   await _initData();
   _setupDebug();
 
@@ -67,7 +66,6 @@ Future<void> _initApp() async {
   FontUtils.loadFrom(Stores.setting.fontPath.fetch());
 
   _doPlatformRelated();
-  _doVersionRelated();
 }
 
 Future<void> _initData() async {
@@ -93,6 +91,9 @@ Future<void> _initData() async {
   SftpProvider.instance.load();
 
   if (Stores.setting.betaTest.fetch()) AppUpdate.chan = AppUpdateChan.beta;
+
+  // It may effect the following logic, so await it.
+  await _doVersionRelated();
 }
 
 void _setupDebug() {
@@ -115,10 +116,7 @@ void _doPlatformRelated() async {
   // Plus 1 to avoid 0.
   Computer.shared.turnOn(workersCount: (serversCount / 3).round() + 1);
 
-  if (isIOS || isMacOS) {
-    if (Stores.setting.icloudSync.fetch()) ICloud.sync();
-  }
-  if (Stores.setting.webdavSync.fetch()) Webdav.sync();
+  bakSync.sync();
 }
 
 // It may contains some async heavy funcs.
@@ -130,6 +128,7 @@ Future<void> _doVersionRelated() async {
   if (curVer < newVer) {
     ServerDetailCards.autoAddNewCards(newVer);
     ServerFuncBtn.autoAddNewFuncs(newVer);
+    NoBackupStore.instance.migrate();
     Stores.setting.lastVer.put(newVer);
   }
 }

@@ -6,13 +6,11 @@ import 'package:json_annotation/json_annotation.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:xterm/core.dart';
 
-import 'package:server_box/data/model/app/tag_pickable.dart';
-
 part 'snippet.g.dart';
 
 @JsonSerializable()
 @HiveType(typeId: 2)
-class Snippet implements TagPickable {
+class Snippet {
   @HiveField(0)
   final String name;
   @HiveField(1)
@@ -38,14 +36,6 @@ class Snippet implements TagPickable {
       _$SnippetFromJson(json);
 
   Map<String, dynamic> toJson() => _$SnippetToJson(this);
-
-  @override
-  bool containsTag(String tag) {
-    return tags?.contains(tag) ?? false;
-  }
-
-  @override
-  String get tagName => name;
 
   static final fmtFinder = RegExp(r'\$\{[^{}]+\}');
 
@@ -109,11 +99,21 @@ class Snippet implements TagPickable {
       if (special != null) {
         final raw = key.substring(special.key.length + 1, key.length - 1);
         await special.value((term: terminal, raw: raw));
+      } else {
+        // Term keys
+        final termKey = _find(fmtTermKeys, key);
+        if (termKey != null) {
+          await _doTermKeys(terminal, termKey, key);
+        } else {
+          // Normal input
+          terminal.textInput(key);
+        }
       }
 
-      // Term keys
-      final termKey = _find(fmtTermKeys, key);
-      if (termKey != null) await _doTermKeys(terminal, termKey, key);
+      // Text between this and next match
+      if (idx < starts.length - 1) {
+        terminal.textInput(argsFmted.substring(end, starts[idx + 1]));
+      }
     }
 
     // End term input
@@ -129,16 +129,18 @@ class Snippet implements TagPickable {
     MapEntry<String, TerminalKey> termKey,
     String key,
   ) async {
-    if (termKey.value == TerminalKey.enter) {
-      terminal.keyInput(TerminalKey.enter);
-      return;
-    }
+    // if (termKey.value == TerminalKey.enter) {
+    //   terminal.keyInput(TerminalKey.enter);
+    //   return;
+    // }
 
     final ctrlAlt = switch (termKey.value) {
       TerminalKey.control => (ctrl: true, alt: false),
       TerminalKey.alt => (ctrl: false, alt: true),
       _ => (ctrl: false, alt: false),
     };
+
+    if (!key.contains('+')) return;
 
     // `${ctrl+ad}` -> `ctrla + d`
     final chars = key.substring(termKey.key.length + 1, key.length - 1);

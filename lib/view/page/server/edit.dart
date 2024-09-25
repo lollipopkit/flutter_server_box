@@ -13,6 +13,7 @@ import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/private_key.dart';
+import 'package:server_box/data/store/server.dart';
 
 class ServerEditPage extends StatefulWidget {
   final Spi? args;
@@ -71,12 +72,6 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     _portController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
-    _nameFocus.dispose();
-    _ipFocus.dispose();
-    _alterUrlFocus.dispose();
-    _portFocus.dispose();
-    _usernameFocus.dispose();
-    _pveAddrCtrl.dispose();
     _preferTempDevCtrl.dispose();
     _logoUrlCtrl.dispose();
     _wolMacCtrl.dispose();
@@ -84,6 +79,21 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     _wolPwdCtrl.dispose();
     _netDevCtrl.dispose();
     _scriptDirCtrl.dispose();
+
+    _nameFocus.dispose();
+    _ipFocus.dispose();
+    _alterUrlFocus.dispose();
+    _portFocus.dispose();
+    _usernameFocus.dispose();
+    _pveAddrCtrl.dispose();
+
+    _keyIdx.dispose();
+    _autoConnect.dispose();
+    _jumpServer.dispose();
+    _pveIgnoreCert.dispose();
+    _env.dispose();
+    _customCmds.dispose();
+    _tags.dispose();
   }
 
   @override
@@ -610,6 +620,11 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     );
 
     if (this.spi == null) {
+      final existsIds = ServerStore.instance.box.keys;
+      if (existsIds.contains(spi.id)) {
+        context.showSnackBar('${l10n.sameIdServerExist}: ${spi.id}');
+        return;
+      }
       ServerProvider.addServer(spi);
     } else {
       ServerProvider.updateServer(this.spi!, spi);
