@@ -1,1 +1,37 @@
-{"images":[{"scale":"3x","idiom":"universal","filename":"AppIcon-29.0x29.0@3x.png","size":"29x29","platform":"ios"},{"scale":"2x","idiom":"universal","filename":"AppIcon-29.0x29.0@2x.png","size":"29x29","platform":"ios"},{"scale":"3x","idiom":"universal","filename":"AppIcon-64.0x64.0@3x.png","size":"64x64","platform":"ios"},{"scale":"2x","idiom":"universal","filename":"AppIcon-20.0x20.0@2x.png","size":"20x20","platform":"ios"},{"scale":"2x","idiom":"universal","filename":"AppIcon-60.0x60.0@2x.png","size":"60x60","platform":"ios"},{"scale":"3x","idiom":"universal","filename":"AppIcon-40.0x40.0@3x.png","size":"40x40","platform":"ios"},{"scale":"2x","idiom":"universal","filename":"AppIcon-76.0x76.0@2x.png","size":"76x76","platform":"ios"},{"scale":"3x","idiom":"universal","filename":"AppIcon-38.0x38.0@3x.png","size":"38x38","platform":"ios"},{"scale":"2x","idiom":"universal","filename":"AppIcon-68.0x68.0@2x.png","size":"68x68","platform":"ios"},{"scale":"1x","idiom":"universal","filename":"AppIcon-1024.0x1024.0@1x.png","size":"1024x1024","platform":"ios"},{"scale":"2x","idiom":"universal","filename":"AppIcon-64.0x64.0@2x.png","size":"64x64","platform":"ios"},{"scale":"2x","idiom":"universal","filename":"AppIcon-40.0x40.0@2x.png","size":"40x40","platform":"ios"},{"scale":"2x","idiom":"universal","filename":"AppIcon-83.5x83.5@2x.png","size":"83.5x83.5","platform":"ios"},{"scale":"3x","idiom":"universal","filename":"AppIcon-20.0x20.0@3x.png","size":"20x20","platform":"ios"},{"scale":"2x","idiom":"universal","filename":"AppIcon-38.0x38.0@2x.png","size":"38x38","platform":"ios"},{"scale":"3x","idiom":"universal","filename":"AppIcon-60.0x60.0@3x.png","size":"60x60","platform":"ios"}],"info":{"version":1,"author":"appicon"}}
+{
+  "images" : [
+    {
+      "filename" : "Icon-1024.png",
+      "idiom" : "universal",
+      "platform" : "ios",
+      "size" : "1024x1024"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "icon-1024 1.png",
+      "idiom" : "universal",
+      "platform" : "ios",
+      "size" : "1024x1024"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "tinted"
+        }
+      ],
+      "idiom" : "universal",
+      "platform" : "ios",
+      "size" : "1024x1024"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
