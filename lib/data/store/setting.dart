@@ -106,7 +106,7 @@ class SettingStore extends PersistentStore {
 
   late final sshVirtKeys = listProperty(
     'sshVirtKeys',
-    VirtKey.defaultOrder.map((e) => e.index).toList(),
+    VirtKeyX.defaultOrder.map((e) => e.index).toList(),
   );
 
   late final netViewType = property('netViewType', NetViewType.speed);
