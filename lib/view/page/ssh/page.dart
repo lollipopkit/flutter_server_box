@@ -213,7 +213,7 @@ class SSHPageState extends State<SSHPage>
       );
     }
     final rows = _virtKeysList
-        .map((e) => Row(children: e.map((f) => _buildVirtKeyItem(f)).toList()))
+        .map((e) => Row(children: e.map(_buildVirtKeyItem).toList()))
         .toList();
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -279,6 +279,11 @@ class SSHPageState extends State<SSHPage>
     if (item.key != null) {
       HapticFeedback.mediumImpact();
       _doVirtualKeyInput(item.key!);
+    }
+    final inputRaw = item.inputRaw;
+    if (inputRaw != null) {
+      HapticFeedback.mediumImpact();
+      _terminal.textInput(inputRaw);
     }
   }
 

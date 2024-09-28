@@ -45,6 +45,38 @@ class VirtKeyAdapter extends TypeAdapter<VirtKey> {
         return VirtKey.pgup;
       case 15:
         return VirtKey.pgdn;
+      case 16:
+        return VirtKey.slash;
+      case 17:
+        return VirtKey.backSlash;
+      case 18:
+        return VirtKey.underscore;
+      case 19:
+        return VirtKey.plus;
+      case 20:
+        return VirtKey.equal;
+      case 21:
+        return VirtKey.minus;
+      case 22:
+        return VirtKey.parenLeft;
+      case 23:
+        return VirtKey.parenRight;
+      case 24:
+        return VirtKey.bracketLeft;
+      case 25:
+        return VirtKey.bracketRight;
+      case 26:
+        return VirtKey.braceLeft;
+      case 27:
+        return VirtKey.braceRight;
+      case 28:
+        return VirtKey.chevronLeft;
+      case 29:
+        return VirtKey.chevronRight;
+      case 30:
+        return VirtKey.colon;
+      case 31:
+        return VirtKey.semicolon;
       default:
         return VirtKey.esc;
     }
@@ -100,6 +132,54 @@ class VirtKeyAdapter extends TypeAdapter<VirtKey> {
         break;
       case VirtKey.pgdn:
         writer.writeByte(15);
+        break;
+      case VirtKey.slash:
+        writer.writeByte(16);
+        break;
+      case VirtKey.backSlash:
+        writer.writeByte(17);
+        break;
+      case VirtKey.underscore:
+        writer.writeByte(18);
+        break;
+      case VirtKey.plus:
+        writer.writeByte(19);
+        break;
+      case VirtKey.equal:
+        writer.writeByte(20);
+        break;
+      case VirtKey.minus:
+        writer.writeByte(21);
+        break;
+      case VirtKey.parenLeft:
+        writer.writeByte(22);
+        break;
+      case VirtKey.parenRight:
+        writer.writeByte(23);
+        break;
+      case VirtKey.bracketLeft:
+        writer.writeByte(24);
+        break;
+      case VirtKey.bracketRight:
+        writer.writeByte(25);
+        break;
+      case VirtKey.braceLeft:
+        writer.writeByte(26);
+        break;
+      case VirtKey.braceRight:
+        writer.writeByte(27);
+        break;
+      case VirtKey.chevronLeft:
+        writer.writeByte(28);
+        break;
+      case VirtKey.chevronRight:
+        writer.writeByte(29);
+        break;
+      case VirtKey.colon:
+        writer.writeByte(30);
+        break;
+      case VirtKey.semicolon:
+        writer.writeByte(31);
         break;
     }
   }
