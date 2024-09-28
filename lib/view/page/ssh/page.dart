@@ -346,11 +346,11 @@ class SSHPageState extends State<SSHPage>
         await Future.delayed(const Duration(milliseconds: 777));
         // the line below `echo $PWD` is the current path
         final idx = cmds.lastIndexWhere((e) => e.toString().contains(_echoPWD));
-        final initPath = cmds[idx + 1].toString();
-        if (initPath.isEmpty || !initPath.startsWith('/')) {
+        final initPath = cmds.elementAtOrNull(idx + 1)?.toString();
+        if (initPath == null || !initPath.startsWith('/')) {
           context.showRoundDialog(
             title: libL10n.error,
-            child: const Text('Failed to get current path'),
+            child: Text('${l10n.remotePath}: $initPath'),
           );
           return;
         }
@@ -360,8 +360,14 @@ class SSHPageState extends State<SSHPage>
 
   void _paste() {
     Clipboard.getData(Clipboard.kTextPlain).then((value) {
-      if (value != null) {
-        _terminal.textInput(value.text!);
+      final text = value?.text;
+      if (text != null) {
+        _terminal.textInput(text);
+      } else {
+        context.showRoundDialog(
+          title: libL10n.error,
+          child: Text(libL10n.empty),
+        );
       }
     });
   }
@@ -400,7 +406,7 @@ class SSHPageState extends State<SSHPage>
   }
 
   Future<void> _initTerminal() async {
-    _writeLn('Connecting...\r\n');
+    _writeLn(libL10n.content);
     _client ??= await genClient(
       widget.spi,
       onStatus: (p0) {
@@ -410,7 +416,7 @@ class SSHPageState extends State<SSHPage>
           KeybordInteractive.defaultHandle(widget.spi),
     );
 
-    _writeLn('Starting shell...\r\n');
+    _writeLn('${libL10n.execute}: Shell');
     final session = await _client?.shell(
       pty: SSHPtyConfig(
         width: _terminal.viewWidth,
@@ -422,7 +428,7 @@ class SSHPageState extends State<SSHPage>
     //_setupDiscontinuityTimer();
 
     if (session == null) {
-      _writeLn('Null session, please back and retry\r\n');
+      _writeLn(libL10n.fail);
       return;
     }
 
