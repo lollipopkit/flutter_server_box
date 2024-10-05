@@ -385,17 +385,7 @@ class SSHPageState extends State<SSHPage>
   }
 
   void _initVirtKeys() {
-    final virtKeys = () {
-      try {
-        return Stores.setting.sshVirtKeys
-            .fetch()
-            .map((e) => VirtKey.values[e])
-            .toList();
-      } catch (_) {
-        return VirtKey.values;
-      }
-    }();
-
+    final virtKeys = VirtKeyX.loadFromStore();
     for (int len = 0; len < virtKeys.length; len += 7) {
       if (len + 7 > virtKeys.length) {
         _virtKeysList.add(virtKeys.sublist(len));
@@ -405,15 +395,18 @@ class SSHPageState extends State<SSHPage>
     }
   }
 
+  FutureOr<List<String>?> _onKeyboardInteractive(SSHUserInfoRequest req) {
+    return KeybordInteractive.defaultHandle(widget.spi, ctx: context);
+  }
+
   Future<void> _initTerminal() async {
-    _writeLn(libL10n.content);
+    _writeLn(l10n.waitConnection);
     _client ??= await genClient(
       widget.spi,
       onStatus: (p0) {
         _writeLn(p0.toString());
       },
-      onKeyboardInteractive: (_) =>
-          KeybordInteractive.defaultHandle(widget.spi),
+      onKeyboardInteractive: _onKeyboardInteractive,
     );
 
     _writeLn('${libL10n.execute}: Shell');

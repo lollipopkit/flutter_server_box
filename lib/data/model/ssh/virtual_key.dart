@@ -1,6 +1,8 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/res/store.dart';
 import 'package:xterm/core.dart';
 
 part 'virtual_key.g.dart';
@@ -187,4 +189,18 @@ extension VirtKeyX on VirtKey {
         VirtKey.ime => l10n.virtKeyHelpIME,
         _ => null,
       };
+
+  /// - [saveDefaultIfErr] if the stored raw values is invalid, save default order to store
+  static List<VirtKey> loadFromStore({bool saveDefaultIfErr = true}) {
+    try {
+      final ints = Stores.setting.sshVirtKeys.fetch();
+      return ints.map((e) => VirtKey.values[e]).toList();
+    } on RangeError {
+      final ints = defaultOrder.map((e) => e.index).toList();
+      Stores.setting.sshVirtKeys.put(ints);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to load sshVirtKeys', e, s);
+    }
+    return defaultOrder;
+  }
 }
