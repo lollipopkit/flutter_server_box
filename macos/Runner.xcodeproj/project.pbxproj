@@ -471,7 +471,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1095;
+				CURRENT_PROJECT_VERSION = 1104;
 				DEVELOPMENT_TEAM = BA88US33G6;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Server Box";
@@ -481,7 +481,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MARKETING_VERSION = 1.0.1095;
+				MARKETING_VERSION = 1.0.1104;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox;
 				PRODUCT_NAME = "Server Box";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -608,7 +608,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1095;
+				CURRENT_PROJECT_VERSION = 1104;
 				DEVELOPMENT_TEAM = BA88US33G6;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Server Box";
@@ -618,7 +618,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MARKETING_VERSION = 1.0.1095;
+				MARKETING_VERSION = 1.0.1104;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox;
 				PRODUCT_NAME = "Server Box";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -638,7 +638,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "3rd Party Mac Developer Application";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1095;
+				CURRENT_PROJECT_VERSION = 1104;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=macosx*]" = BA88US33G6;
 				INFOPLIST_FILE = Runner/Info.plist;
@@ -649,7 +649,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MARKETING_VERSION = 1.0.1095;
+				MARKETING_VERSION = 1.0.1104;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox;
 				PRODUCT_NAME = "Server Box";
 				PROVISIONING_PROFILE_SPECIFIER = "";
