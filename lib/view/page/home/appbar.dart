@@ -8,7 +8,7 @@ final class _AppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: paddingTop,
+      height: preferredSize.height,
       child: isIOS
           ? const Center(child: Text(BuildData.name, style: UIs.text15Bold))
           : null,
@@ -16,5 +16,11 @@ final class _AppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => Size.fromHeight(paddingTop);
+  Size get preferredSize {
+    final height = switch (Pfs.type) {
+      Pfs.macos => paddingTop + (CustomAppBar.sysStatusBarHeight ?? 0),
+      _ => paddingTop,
+    };
+    return Size.fromHeight(height);
+  }
 }
