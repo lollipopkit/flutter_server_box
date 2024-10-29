@@ -11,6 +11,8 @@ class AndroidSettingsPage extends StatefulWidget {
   State<AndroidSettingsPage> createState() => _AndroidSettingsPageState();
 }
 
+const _homeWidgetPrefPrefix = 'widget_';
+
 class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
   @override
   Widget build(BuildContext context) {
@@ -39,11 +41,13 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
     try {
       final keysDel = old.keys.toSet().difference(map.keys.toSet());
       for (final key in keysDel) {
+        if (!key.startsWith(_homeWidgetPrefPrefix)) continue;
         PrefStore.remove(key);
       }
-      map.forEach((key, value) {
-        PrefStore.set(key, value);
-      });
+      for (final entry in map.entries) {
+        if (!entry.key.startsWith(_homeWidgetPrefPrefix)) continue;
+        PrefStore.set(entry.key, entry.value);
+      }
       context.showSnackBar(libL10n.success);
     } catch (e) {
       context.showSnackBar(e.toString());
@@ -64,7 +68,7 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
         }
         final result = await KvEditor.route.go(
           context,
-          KvEditorArgs(data: data, prefix: 'widget_'),
+          KvEditorArgs(data: data, prefix: _homeWidgetPrefPrefix),
         );
         if (result != null) {
           _saveWidgetSP(result, data);
