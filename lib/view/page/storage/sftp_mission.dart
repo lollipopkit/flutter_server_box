@@ -113,7 +113,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
       children: [
         IconButton(
           onPressed: () {
-            final idx = status.req.localPath.lastIndexOf('/');
+            final idx = status.req.localPath.lastIndexOf(Pfs.seperator);
             final dir = status.req.localPath.substring(0, idx);
             LocalFilePage.route.go(
               context,
