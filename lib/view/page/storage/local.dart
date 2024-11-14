@@ -12,8 +12,6 @@ import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/path_with_prefix.dart';
 import 'package:server_box/view/page/editor.dart';
-import 'package:path/path.dart' as pathLib;
-
 
 final class LocalFilePageArgs {
   final bool? isPickFile;
@@ -71,12 +69,7 @@ class _LocalFilePageState extends State<LocalFilePage>
                 if (!await destinationDir.exists()) {
                   await destinationDir.create(recursive: true);
                 }
-
-                final destinationPath = pathLib.join(_path.path, name);
-                await File(path).copy(destinationPath);
-
-
-
+                await File(path).copy(_path.path.joinPath(name));
                 setState(() {});
               },
               icon: const Icon(Icons.add),
