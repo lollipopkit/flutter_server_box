@@ -461,11 +461,14 @@ class _ServerPageState extends State<ServerPage>
         children: [
           ConstrainedBox(
             constraints: BoxConstraints(maxWidth: _media.size.width / 2.3),
-            child: Text(
-              s.spi.name,
-              style: UIs.text13Bold,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            child: Hero(
+              tag: 'home_card_title_${s.spi.id}',
+              child: Text(
+                s.spi.name,
+                style: UIs.text13Bold,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ),
           const Icon(

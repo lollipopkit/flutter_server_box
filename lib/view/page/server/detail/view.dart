@@ -122,7 +122,10 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   CustomAppBar _buildAppBar(Server si) {
     return CustomAppBar(
-      title: Text(si.spi.name),
+      title: Hero(
+        tag: 'home_card_title_${si.spi.id}',
+        child: Text(si.spi.name),
+      ),
       actions: [
         QrShareBtn(
           data: si.spi.toJsonString(),
