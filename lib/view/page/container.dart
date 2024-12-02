@@ -175,7 +175,7 @@ class _ContainerPageState extends State<ContainerPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(_container.type.name.upperFirst),
+          Text(_container.type.name.capitalize),
           Text(_container.version ?? l10n.unknown),
         ],
       ),

@@ -591,7 +591,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
   String _getRemotePath(SftpName name) {
     final prePath = _status.path.path;
     // Only support Linux as remote now, so the seperator is '/'
-    return prePath.joinPath(name.filename, seperator: '/');
+    return prePath.joinPath(name.filename, separator: '/');
   }
 
   /// Local file dir + server id + remote path

@@ -21,7 +21,7 @@ class SftpReq {
     }
     if (spi.jumpId != null) {
       jumpSpi = Stores.server.box.get(spi.jumpId);
-      jumpPrivateKey = Stores.key.get(jumpSpi?.keyId)?.key;
+      jumpPrivateKey = Stores.key.fetchOne(jumpSpi?.keyId)?.key;
     }
   }
 }

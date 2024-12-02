@@ -481,7 +481,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MARKETING_VERSION = 1.0.1104;
+				MARKETING_VERSION = 1.0.1110;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox;
 				PRODUCT_NAME = "Server Box";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -618,7 +618,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MARKETING_VERSION = 1.0.1104;
+				MARKETING_VERSION = 1.0.1110;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox;
 				PRODUCT_NAME = "Server Box";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -649,7 +649,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
-				MARKETING_VERSION = 1.0.1104;
+				MARKETING_VERSION = 1.0.1110;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox;
 				PRODUCT_NAME = "Server Box";
 				PROVISIONING_PROFILE_SPECIFIER = "";

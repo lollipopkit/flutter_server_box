@@ -4,7 +4,8 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_highlight/theme_map.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
+
+import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/github_id.dart';
@@ -140,12 +141,12 @@ final class _AppAboutPageState extends State<AppAboutPage>
               Btn.elevated(
                 icon: const Icon(Icons.edit_document),
                 text: 'Wiki',
-                onTap: Urls.appWiki.launch,
+                onTap: Urls.appWiki.launchUrl,
               ),
               Btn.elevated(
                 icon: const Icon(Icons.feedback),
                 text: libL10n.feedback,
-                onTap: Urls.appHelp.launch,
+                onTap: Urls.appHelp.launchUrl,
               ),
               Btn.elevated(
                 icon: const Icon(MingCute.question_fill),
@@ -298,7 +299,7 @@ final class _AppSettingsPageState extends State<AppSettingsPage> {
   Widget _buildCheckUpdate() {
     return ListTile(
       leading: const Icon(Icons.update),
-      title: Text(libL10n.autoCheckUpdate),
+      title: Text(libL10n.checkUpdate),
       subtitle: ValBuilder(
         listenable: AppUpdateIface.newestBuild,
         builder: (val) {
@@ -404,7 +405,7 @@ final class _AppSettingsPageState extends State<AppSettingsPage> {
   }
 
   void _onSaveColor(String s) {
-    final color = s.hexToColor;
+    final color = s.fromColorHex;
     if (color == null) {
       context.showSnackBar(libL10n.fail);
       return;
@@ -837,15 +838,10 @@ final class _AppSettingsPageState extends State<AppSettingsPage> {
       leading: const Icon(Icons.delete_forever),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () async {
-        final keys = Stores.server.box.keys.toList();
-        keys.removeWhere((element) => element == BoxX.lastModifiedKey);
-        final strKeys = List<String>.empty(growable: true);
-        for (final key in keys) {
-          if (key is String) strKeys.add(key);
-        }
+        final keys = Stores.server.keys();
         final deleteKeys = await context.showPickDialog<String>(
           clearable: true,
-          items: strKeys,
+          items: keys.toList(),
         );
         if (deleteKeys == null) return;
 
@@ -965,8 +961,8 @@ final class _AppSettingsPageState extends State<AppSettingsPage> {
     );
   }
 
-  void _showFontSizeDialog(StorePropertyBase<double> property) {
-    final ctrller = TextEditingController(text: property.fetch().toString());
+  void _showFontSizeDialog(HiveProp<double> property) {
+    final ctrller = TextEditingController(text: property.get().toString());
     void onSave() {
       context.pop();
       final fontSize = double.tryParse(ctrller.text);
@@ -977,7 +973,7 @@ final class _AppSettingsPageState extends State<AppSettingsPage> {
         );
         return;
       }
-      property.put(fontSize);
+      property.set(fontSize);
     }
 
     context.showRoundDialog(
@@ -1081,7 +1077,7 @@ final class _AppSettingsPageState extends State<AppSettingsPage> {
     return ExpandTile(
       leading: const Icon(MingCute.more_3_fill),
       title: Text(l10n.more),
-      initiallyExpanded: isDesktop,
+      initiallyExpanded: false,
       children: [
         _buildRememberPwdInMem(),
         _buildTextScaler(),
@@ -1144,7 +1140,7 @@ final class _AppSettingsPageState extends State<AppSettingsPage> {
     return ExpandTile(
       leading: const Icon(MingCute.more_3_fill),
       title: Text(l10n.more),
-      initiallyExpanded: isDesktop,
+      initiallyExpanded: false,
       children: [
         _buildBeta(),
         if (isMobile) _buildWakeLock(),
@@ -1249,7 +1245,7 @@ final class _AppSettingsPageState extends State<AppSettingsPage> {
               ListTile(
                 title: Text(libL10n.doc),
                 trailing: const Icon(Icons.open_in_new),
-                onTap: () => Urls.appWiki.launch(),
+                onTap: Urls.appWiki.launchUrl,
               ),
             ],
           ),
@@ -1326,7 +1322,7 @@ final class _AppSettingsPageState extends State<AppSettingsPage> {
   }
 
   Future<void> _editRawSettings() async {
-    final map = Stores.setting.box.toJson(includeInternal: false);
+    final map = await Stores.setting.getAllMap(includeInternalKeys: true);
     final keys = map.keys;
 
     /// Encode [map] to String with indent `\t`

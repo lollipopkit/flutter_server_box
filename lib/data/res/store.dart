@@ -16,7 +16,7 @@ abstract final class Stores {
   static final history = HistoryStore.instance;
 
   /// All stores that need backup
-  static final List<PersistentStore> _allBackup = [
+  static final List<HiveStore> _allBackup = [
     SettingStore.instance,
     ServerStore.instance,
     ContainerStore.instance,
@@ -30,11 +30,16 @@ abstract final class Stores {
     await NoBackupStore.instance.init();
   }
 
-  static int? get lastModTime {
-    int? lastModTime = 0;
+  static DateTime? get lastModTime {
+    DateTime? lastModTime;
     for (final store in _allBackup) {
-      final last = store.box.lastModified ?? 0;
-      if (last > (lastModTime ?? 0)) {
+      final last = store.lastUpdateTs;
+      if (last == null) {
+        continue;
+      }
+      if (lastModTime == null) {
+        lastModTime = last;
+      } else if (last.isAfter(lastModTime)) {
         lastModTime = last;
       }
     }

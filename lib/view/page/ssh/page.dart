@@ -112,7 +112,7 @@ class SSHPageState extends State<SSHPage>
       2 => true,
       _ => context.isDark,
     };
-    _media = context.media;
+    _media = context.mediaQuery;
 
     _terminalTheme = _isDark ? TerminalThemes.dark : TerminalThemes.light;
     _terminalTheme = _terminalTheme.copyWith(selectionCursor: UIs.primaryColor);

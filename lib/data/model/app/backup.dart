@@ -46,19 +46,24 @@ class Backup implements Mergeable {
 
   Map<String, dynamic> toJson() => _$BackupToJson(this);
 
-  Backup.loadFromStore()
-      : version = backupFormatVersion,
-        date = DateTime.now().toString().split('.').firstOrNull ?? '',
-        spis = Stores.server.fetch(),
-        snippets = Stores.snippet.fetch(),
-        keys = Stores.key.fetch(),
-        container = Stores.container.box.toJson(),
-        lastModTime = Stores.lastModTime,
-        history = Stores.history.box.toJson(),
-        settings = Stores.setting.box.toJson();
+  static Future<Backup> loadFromStore() async {
+    final lastModTime = Stores.lastModTime?.millisecondsSinceEpoch;
+    return Backup(
+      version: backupFormatVersion,
+      date: DateTime.now().toString().split('.').firstOrNull ?? '',
+      spis: Stores.server.fetch(),
+      snippets: Stores.snippet.fetch(),
+      keys: Stores.key.fetch(),
+      container: await Stores.container.getAllMap(),
+      lastModTime: lastModTime,
+      history: await Stores.history.getAllMap(),
+      settings: await Stores.setting.getAllMap(),
+    );
+  }
 
   static Future<String> backup([String? name]) async {
-    final result = _diyEncrypt(json.encode(Backup.loadFromStore().toJson()));
+    final bak = await Backup.loadFromStore();
+    final result = _diyEncrypt(json.encode(bak.toJson()));
     final path = Paths.doc.joinPath(name ?? Miscs.bakFileName);
     await File(path).writeAsString(result);
     return path;
@@ -66,7 +71,7 @@ class Backup implements Mergeable {
 
   @override
   Future<void> merge({bool force = false}) async {
-    final curTime = Stores.lastModTime ?? 0;
+    final curTime = Stores.lastModTime?.millisecondsSinceEpoch ?? 0;
     final bakTime = lastModTime ?? 0;
     final shouldRestore = force || curTime < bakTime;
     if (!shouldRestore) {

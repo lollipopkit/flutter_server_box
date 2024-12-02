@@ -268,7 +268,7 @@ class _AddPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const viewPadding = 7.0;
-    final viewWidth = context.media.size.width - 2 * viewPadding;
+    final viewWidth = context.mediaQuery.size.width - 2 * viewPadding;
 
     final itemCount = ServerProvider.servers.length;
     const itemPadding = 1.0;

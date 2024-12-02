@@ -18,7 +18,6 @@ class _ListHistory {
     _history.remove(path);
     _history.insert(0, path);
     _box.put(_name, _history);
-    _box.updateLastModified();
   }
 
   List get all => _history;
@@ -39,13 +38,12 @@ class _MapHistory {
   void put(String id, String val) {
     _history[id] = val;
     _box.put(_name, _history);
-    _box.updateLastModified();
   }
 
   String? fetch(String id) => _history[id];
 }
 
-class HistoryStore extends PersistentStore {
+class HistoryStore extends HiveStore {
   HistoryStore._() : super('history');
 
   static final instance = HistoryStore._();
@@ -58,5 +56,6 @@ class HistoryStore extends PersistentStore {
   late final sshCmds = _ListHistory(box: box, name: 'sshCmds');
 
   /// Notify users that this app will write script to server to works properly
-  late final writeScriptTipShown = property('writeScriptTipShown', false);
+  late final writeScriptTipShown =
+      propertyDefault('writeScriptTipShown', false);
 }

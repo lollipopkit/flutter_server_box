@@ -59,8 +59,10 @@ final class _IntroPage extends StatelessWidget {
         ).cardx,
         ListTile(
           leading: const Icon(Icons.update),
-          title: Text(libL10n.autoCheckUpdate),
-          subtitle: Text(l10n.fdroidReleaseTip, style: UIs.textGrey),
+          title: Text(libL10n.checkUpdate),
+          subtitle: isAndroid
+              ? Text(l10n.fdroidReleaseTip, style: UIs.textGrey)
+              : null,
           trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),
         ).cardx,
         ListTile(
