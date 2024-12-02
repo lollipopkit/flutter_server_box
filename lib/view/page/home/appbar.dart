@@ -9,9 +9,26 @@ final class _AppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: preferredSize.height,
-      child: isIOS
-          ? const Center(child: Text(BuildData.name, style: UIs.text15Bold))
-          : null,
+      child: isIOS ? Center(child: _buildLogo()) : null,
+    );
+  }
+
+  Widget _buildLogo() {
+    final text = Text(
+      BuildData.name,
+      style: TextStyle(
+        fontSize: 10,
+        fontWeight: FontWeight.bold,
+        color: UIs.primaryColor.isBrightColor ? Colors.black : Colors.white,
+      ),
+    );
+    return Container(
+      decoration: BoxDecoration(
+        color: UIs.primaryColor,
+        borderRadius: BorderRadius.circular(11),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+      child: text,
     );
   }
 

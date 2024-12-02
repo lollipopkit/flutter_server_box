@@ -25,16 +25,17 @@ final class _TopBar extends StatelessWidget implements PreferredSizeWidget {
                 context,
                 args: const DebugPageArgs(title: 'Logs(${BuildData.build})'),
               ),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 7),
+              child:  Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 7),
                 child: Row(
                   children: [
-                    Text(
-                      BuildData.name,
-                      style: TextStyle(fontSize: 20),
-                      textAlign: TextAlign.center,
+                    Btn.icon(
+                      icon: const Icon(Icons.settings),
+                      onTap: () {
+                        SettingsPage.route.go(context);
+                      },
                     ),
-                    Icon(
+                    const Icon(
                       Icons.keyboard_arrow_right,
                       color: Colors.grey,
                       size: 17,

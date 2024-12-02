@@ -2,7 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/view/page/server/tab.dart';
-import 'package:server_box/view/page/setting/entry.dart';
+// import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/page/snippet/list.dart';
 import 'package:server_box/view/page/ssh/tab.dart';
 import 'package:icons_plus/icons_plus.dart';
@@ -13,13 +13,13 @@ enum AppTab {
   ssh,
   file,
   snippet,
-  settings,
+  //settings,
   ;
 
   Widget get page {
     return switch (this) {
       server => const ServerPage(),
-      settings => const SettingsPage(),
+      //settings => const SettingsPage(),
       ssh => const SSHTabPage(),
       file => const LocalFilePage(),
       snippet => const SnippetListPage(),
@@ -33,11 +33,11 @@ enum AppTab {
           label: l10n.server,
           selectedIcon: const Icon(BoxIcons.bxs_server),
         ),
-      settings => NavigationDestination(
-          icon: const Icon(Icons.settings),
-          label: libL10n.setting,
-          selectedIcon: const Icon(Icons.settings),
-        ),
+      // settings => NavigationDestination(
+      //     icon: const Icon(Icons.settings),
+      //     label: libL10n.setting,
+      //     selectedIcon: const Icon(Icons.settings),
+      //   ),
       ssh => const NavigationDestination(
           icon: Icon(Icons.terminal_outlined),
           label: 'SSH',

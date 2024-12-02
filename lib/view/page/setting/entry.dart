@@ -70,14 +70,17 @@ class _SettingsPageState extends State<SettingsPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: TabBar(
-        controller: _tabCtrl,
-        dividerHeight: 0,
-        tabAlignment: TabAlignment.center,
-        isScrollable: true,
-        tabs: SettingsTabs.values
-            .map((e) => Tab(text: e.i18n))
-            .toList(growable: false),
+      appBar: AppBar(
+        title: Text(libL10n.setting, style: const TextStyle(fontSize: 20)),
+        bottom: TabBar(
+          controller: _tabCtrl,
+          dividerHeight: 0,
+          tabAlignment: TabAlignment.center,
+          isScrollable: true,
+          tabs: SettingsTabs.values
+              .map((e) => Tab(text: e.i18n))
+              .toList(growable: false),
+        ),
       ),
       // actions: [
       //   IconButton(
@@ -134,8 +137,9 @@ final class _AppAboutPageState extends State<AppAboutPage>
         ),
         UIs.height13,
         SizedBox(
-          height: 47,
+          height: 77,
           child: ListView(
+            padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 7),
             scrollDirection: Axis.horizontal,
             children: <Widget>[
               Btn.elevated(
