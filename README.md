@@ -9,7 +9,7 @@ English | [简体中文](README_zh.md)
 </div>
 
 <p align="center">
-A Flutter project which provide charts to display <a href="../../issues/43">Linux</a> server status and tools to manage server.
+A Flutter project which provide charts to display <a href="https://github.com/lollipopkit/flutter_server_box/issues/43">Linux</a> server status and tools to manage server.
 <br>
 Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a> & <a href="https://github.com/TerminalStudio/xterm.dart">xterm.dart</a>.
 </p>
@@ -28,11 +28,11 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 
 ## 📥 Install
 
-Platform | From
---- | --- 
-iOS / macOS | [AppStore](https://apps.apple.com/app/id1586449703)
-Android | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid) / [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [OpenAPK](https://www.openapk.net/serverbox/tech.lolli.toolbox/)
-Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid)
+Platform        | From
+----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+iOS / macOS     | [AppStore](https://apps.apple.com/app/id1586449703)
+Android         | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid) / [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [OpenAPK](https://www.openapk.net/serverbox/tech.lolli.toolbox/)
+Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid)
 
 Please only download pkgs from the source that **you trust**!  
 

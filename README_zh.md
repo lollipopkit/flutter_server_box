@@ -9,7 +9,7 @@
 </div>
 
 <p align="center">
-使用 Flutter 开发的 <a href="../../issues/43">Linux</a> 服务器工具箱，提供服务器状态图表和管理工具。
+使用 Flutter 开发的 <a href="https://github.com/lollipopkit/flutter_server_box/issues/43">Linux</a> 服务器工具箱，提供服务器状态图表和管理工具。
 <br>
 特别感谢 <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a> & <a href="https://github.com/TerminalStudio/xterm.dart">xterm.dart</a>。
 </p>
@@ -28,11 +28,11 @@
 
 ## 📥 安装
 
-平台 | 下载
---- | --- 
-iOS / macOS | [AppStore](https://apps.apple.com/app/id1586449703)
-Android | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid) / [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [OpenAPK](https://www.openapk.net/serverbox/tech.lolli.toolbox/)
-Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lolli.tech/serverbox/?sort=time&order=desc&layout=grid)
+平台            | 下载
+----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+iOS / macOS     | [AppStore](https://apps.apple.com/app/id1586449703)
+Android         | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid) / [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [OpenAPK](https://www.openapk.net/serverbox/tech.lolli.toolbox/)
+Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid)
 
 请从 **信任** 的来源下载!
 
@@ -72,7 +72,7 @@ Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/rel
 3. 运行 `dart run fl_build -p PLATFORM` 构建应用
 
 ### 翻译
-[指南](https://blog.lolli.tech/faq/) 可在我的博客中找到。
+[指南](https://blog.lpkt.cn/faq/) 可在我的博客中找到。
 
 ## 💡 我的其它 Apps
 - [GPT Box](https://github.com/lollipopkit/flutter_gpt_box) - 支持 OpenAI API 的 第三方全平台客户端。

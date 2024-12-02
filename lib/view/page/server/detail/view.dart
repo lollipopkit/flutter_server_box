@@ -124,7 +124,17 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     return CustomAppBar(
       title: Hero(
         tag: 'home_card_title_${si.spi.id}',
-        child: Text(si.spi.name),
+        transitionOnUserGestures: true,
+        child: Material(
+          color: Colors.transparent,
+          child: Text(
+            si.spi.name,
+            style: TextStyle(
+              fontSize: 20,
+              color: context.isDark ? Colors.white : Colors.black,
+            ),
+          ),
+        ),
       ),
       actions: [
         QrShareBtn(

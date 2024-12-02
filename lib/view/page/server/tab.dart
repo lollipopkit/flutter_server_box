@@ -316,44 +316,41 @@ class _ServerPageState extends State<ServerPage>
     final cardStatus = _getCardNoti(id);
     final title = _buildServerCardTitle(srv);
 
-    return ListenableBuilder(
-      listenable: cardStatus,
-      builder: (_, __) {
-        final List<Widget> children = [title];
-        if (srv.conn == ServerConn.finished) {
-          if (cardStatus.value.flip) {
-            children.addAll(_buildFlippedCard(srv));
-          } else {
-            children.addAll(_buildNormalCard(srv.status, srv.spi));
-          }
+    return cardStatus.listenVal((_) {
+      final List<Widget> children = [title];
+      if (srv.conn == ServerConn.finished) {
+        if (cardStatus.value.flip) {
+          children.add(_buildFlippedCard(srv));
+        } else {
+          children.addAll(_buildNormalCard(srv.status, srv.spi));
         }
+      }
 
-        final height = _calcCardHeight(srv.conn, cardStatus.value.flip);
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 377),
-          curve: Curves.fastEaseInToSlowEaseOut,
-          height: height,
-          // Use [OverflowBox] to dismiss the warning of [Column] overflow.
-          child: OverflowBox(
-            // If `height == _kCardHeightMin`, the `maxHeight` will be ignored.
-            //
-            // You can comment the `maxHeight` then connect&disconnect the server
-            // to see the difference.
-            maxHeight: height != _kCardHeightMin ? height : null,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: children,
-            ),
+      final height = _calcCardHeight(srv.conn, cardStatus.value.flip);
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 377),
+        curve: Curves.fastEaseInToSlowEaseOut,
+        height: height,
+        // Use [OverflowBox] to dismiss the warning of [Column] overflow.
+        child: OverflowBox(
+          // If `height == _kCardHeightMin`, the `maxHeight` will be ignored.
+          //
+          // You can comment the `maxHeight` then connect&disconnect the server
+          // to see the difference.
+          maxHeight: height != _kCardHeightMin ? height : null,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: children,
           ),
-        );
-      },
-    );
+        ),
+      );
+    });
   }
 
-  List<Widget> _buildFlippedCard(Server srv) {
-    const textStyle = TextStyle(color: Colors.grey);
+  Widget _buildFlippedCard(Server srv) {
+    const color = Colors.grey;
+    const textStyle = TextStyle(fontSize: 13, color: color);
     final children = [
       Btn.column(
         onTap: () => _askFor(
@@ -374,7 +371,7 @@ class _ServerPageState extends State<ServerPage>
           typ: l10n.suspend,
           name: srv.spi.name,
         ),
-        icon: const Icon(Icons.stop, color: Colors.grey),
+        icon: const Icon(Icons.stop, color: color),
         text: l10n.suspend,
         textStyle: textStyle,
       ),
@@ -388,7 +385,7 @@ class _ServerPageState extends State<ServerPage>
           typ: l10n.shutdown,
           name: srv.spi.name,
         ),
-        icon: const Icon(Icons.power_off, color: Colors.grey),
+        icon: const Icon(Icons.power_off, color: color),
         text: l10n.shutdown,
         textStyle: textStyle,
       ),
@@ -402,29 +399,29 @@ class _ServerPageState extends State<ServerPage>
           typ: l10n.reboot,
           name: srv.spi.name,
         ),
-        icon: const Icon(Icons.restart_alt, color: Colors.grey),
+        icon: const Icon(Icons.restart_alt, color: color),
         text: l10n.reboot,
         textStyle: textStyle,
       ),
       Btn.column(
         onTap: () => ServerEditPage.route.go(context, args: srv.spi),
-        icon: const Icon(Icons.edit, color: Colors.grey),
+        icon: const Icon(Icons.edit, color: color),
         text: libL10n.edit,
         textStyle: textStyle,
       )
     ];
 
     final width = (_media.size.width - _cardPad) / children.length;
-    return [
-      UIs.height13,
-      Row(
+    return Padding(
+      padding: const EdgeInsets.only(top: 9),
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: children.map((e) {
           if (width == 0) return e;
           return SizedBox(width: width, child: e);
         }).toList(),
       ),
-    ];
+    );
   }
 
   List<Widget> _buildNormalCard(ServerStatus ss, Spi spi) {
@@ -463,11 +460,17 @@ class _ServerPageState extends State<ServerPage>
             constraints: BoxConstraints(maxWidth: _media.size.width / 2.3),
             child: Hero(
               tag: 'home_card_title_${s.spi.id}',
-              child: Text(
-                s.spi.name,
-                style: UIs.text13Bold,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              transitionOnUserGestures: true,
+              child: Material(
+                color: Colors.transparent,
+                child: Text(
+                  s.spi.name,
+                  style: UIs.text13Bold.copyWith(
+                    color: context.isDark ? Colors.white : Colors.black,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
           ),
