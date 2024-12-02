@@ -144,7 +144,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildLogo(Server si) {
     var logoUrl = si.spi.custom?.logoUrl ??
-        _settings.serverLogoUrl.fetch().selfIfNotNullEmpty;
+        _settings.serverLogoUrl.fetch().selfNotEmptyOrNull;
     if (logoUrl == null) return UIs.placeholder;
 
     final dist = si.status.more[StatusCmdType.sys]?.dist;

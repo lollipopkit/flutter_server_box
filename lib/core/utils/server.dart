@@ -32,7 +32,7 @@ enum GenSSHClientStatus {
 }
 
 String getPrivateKey(String id) {
-  final pki = Stores.key.get(id);
+  final pki = Stores.key.fetchOne(id);
   if (pki == null) {
     throw SSHErr(
       type: SSHErrType.noPrivateKey,

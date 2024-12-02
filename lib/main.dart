@@ -81,7 +81,7 @@ Future<void> _initData() async {
   Hive.registerAdapter(ServerCustomAdapter()); // 7
   Hive.registerAdapter(WakeOnLanCfgAdapter()); // 8
 
-  await PrefStore.init(); // Call this before accessing any store
+  await PrefStore.shared.init(); // Call this before accessing any store
   await Stores.init();
 
   // DO NOT change the order of these providers.
@@ -112,7 +112,7 @@ void _doPlatformRelated() async {
     FlutterDisplayMode.setHighRefreshRate();
   }
 
-  final serversCount = Stores.server.box.keys.length;
+  final serversCount = Stores.server.keys().length;
   // Plus 1 to avoid 0.
   Computer.shared.turnOn(workersCount: (serversCount / 3).round() + 1);
 
@@ -121,14 +121,14 @@ void _doPlatformRelated() async {
 
 // It may contains some async heavy funcs.
 Future<void> _doVersionRelated() async {
-  final curVer = Stores.setting.lastVer.fetch();
+  final lastVer = Stores.setting.lastVer.fetch();
   const newVer = BuildData.build;
   // It's only the version upgrade trigger logic.
   // How to upgrade the data is inside each own func.
-  if (curVer < newVer) {
+  if (lastVer < newVer) {
     ServerDetailCards.autoAddNewCards(newVer);
     ServerFuncBtn.autoAddNewFuncs(newVer);
-    NoBackupStore.instance.migrate();
+    NoBackupStore.instance.migrate(lastVer);
     Stores.setting.lastVer.put(newVer);
   }
 }

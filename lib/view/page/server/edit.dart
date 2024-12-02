@@ -438,7 +438,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
           leading: const Icon(MingCute.doc_line),
           title: Text(libL10n.doc),
           trailing: const Icon(Icons.open_in_new, size: 17),
-          onTap: () => l10n.customCmdDocUrl.launch(),
+          onTap: l10n.customCmdDocUrl.launchUrl,
         ).cardx,
       ],
     );
@@ -572,13 +572,13 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     }
     final customCmds = _customCmds.value;
     final custom = ServerCustom(
-      pveAddr: _pveAddrCtrl.text.selfIfNotNullEmpty,
+      pveAddr: _pveAddrCtrl.text.selfNotEmptyOrNull,
       pveIgnoreCert: _pveIgnoreCert.value,
       cmds: customCmds.isEmpty ? null : customCmds,
-      preferTempDev: _preferTempDevCtrl.text.selfIfNotNullEmpty,
-      logoUrl: _logoUrlCtrl.text.selfIfNotNullEmpty,
-      netDev: _netDevCtrl.text.selfIfNotNullEmpty,
-      scriptDir: _scriptDirCtrl.text.selfIfNotNullEmpty,
+      preferTempDev: _preferTempDevCtrl.text.selfNotEmptyOrNull,
+      logoUrl: _logoUrlCtrl.text.selfNotEmptyOrNull,
+      netDev: _netDevCtrl.text.selfNotEmptyOrNull,
+      scriptDir: _scriptDirCtrl.text.selfNotEmptyOrNull,
     );
 
     final wolEmpty = _wolMacCtrl.text.isEmpty &&
@@ -589,7 +589,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         : WakeOnLanCfg(
             mac: _wolMacCtrl.text,
             ip: _wolIpCtrl.text,
-            pwd: _wolPwdCtrl.text.selfIfNotNullEmpty,
+            pwd: _wolPwdCtrl.text.selfNotEmptyOrNull,
           );
     if (wol != null) {
       final wolValidation = wol.validate();
@@ -606,12 +606,12 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       ip: _ipController.text,
       port: int.parse(_portController.text),
       user: _usernameController.text,
-      pwd: _passwordController.text.selfIfNotNullEmpty,
+      pwd: _passwordController.text.selfNotEmptyOrNull,
       keyId: _keyIdx.value != null
           ? PrivateKeyProvider.pkis.value.elementAt(_keyIdx.value!).id
           : null,
       tags: _tags.value.isEmpty ? null : _tags.value.toList(),
-      alterUrl: _altUrlController.text.selfIfNotNullEmpty,
+      alterUrl: _altUrlController.text.selfNotEmptyOrNull,
       autoConnect: _autoConnect.value,
       jumpId: _jumpServer.value,
       custom: custom,

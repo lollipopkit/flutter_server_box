@@ -4,7 +4,7 @@ import 'package:server_box/data/res/store.dart';
 
 const _keyConfig = 'providerConfig';
 
-class ContainerStore extends PersistentStore {
+class ContainerStore extends HiveStore {
   ContainerStore._() : super('docker');
 
   static final instance = ContainerStore._();
@@ -15,7 +15,7 @@ class ContainerStore extends PersistentStore {
 
   void put(String id, String host) {
     box.put(id, host);
-    box.updateLastModified();
+    updateLastUpdateTs();
   }
 
   ContainerType getType([String id = '']) {
@@ -30,7 +30,7 @@ class ContainerStore extends PersistentStore {
   }
 
   ContainerType get defaultType {
-    if (Stores.setting.usePodman.fetch()) return ContainerType.podman;
+    if (Stores.setting.usePodman.get()) return ContainerType.podman;
     return ContainerType.docker;
   }
 
@@ -40,6 +40,6 @@ class ContainerStore extends PersistentStore {
     } else {
       box.put(_keyConfig + id, type.toString());
     }
-    box.updateLastModified();
+    updateLastUpdateTs();
   }
 }

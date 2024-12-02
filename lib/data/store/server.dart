@@ -2,14 +2,15 @@ import 'package:fl_lib/fl_lib.dart';
 
 import 'package:server_box/data/model/server/server_private_info.dart';
 
-class ServerStore extends PersistentStore {
+class ServerStore extends HiveStore {
   ServerStore._() : super('server');
 
   static final instance = ServerStore._();
 
   void put(Spi info) {
-    box.put(info.id, info);
-    box.updateLastModified();
+    // box.put(info.id, info);
+    // box.updateLastModified();
+    set(info.id, info);
   }
 
   List<Spi> fetch() {
@@ -25,13 +26,11 @@ class ServerStore extends PersistentStore {
   }
 
   void delete(String id) {
-    box.delete(id);
-    box.updateLastModified();
+    remove(id);
   }
 
   void deleteAll() {
-    box.clear();
-    box.updateLastModified();
+    clear();
   }
 
   void update(Spi old, Spi newInfo) {

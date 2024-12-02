@@ -1,12 +1,13 @@
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:fl_lib/l10n/gen_l10n/lib_l10n.dart';
+import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/l10n.dart';
+
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/rebuild.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/home/home.dart';
 import 'package:icons_plus/icons_plus.dart';
 

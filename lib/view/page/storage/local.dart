@@ -51,7 +51,7 @@ class _LocalFilePageState extends State<LocalFilePage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final title = _path.path.fileName ?? libL10n.file;
+    final title = _path.path.fileNameGetter ?? libL10n.file;
     return Scaffold(
       appBar: CustomAppBar(
         title: AnimatedSwitcher(

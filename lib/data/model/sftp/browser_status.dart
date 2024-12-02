@@ -36,7 +36,7 @@ class _AbsolutePath {
       _path = newPath;
       return;
     }
-    _path = _path.joinPath(newPath, seperator: _sep);
+    _path = _path.joinPath(newPath, separator: _sep);
   }
 
   bool undo() {

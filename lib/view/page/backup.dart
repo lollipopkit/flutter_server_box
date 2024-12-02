@@ -14,6 +14,7 @@ import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/data/store/no_backup.dart';
+import 'package:webdav_client/webdav_client.dart';
 
 class BackupPage extends StatefulWidget {
   const BackupPage({super.key});
@@ -105,7 +106,7 @@ final class _BackupPageState extends State<BackupPage>
         leading: const Icon(Icons.cloud),
         title: const Text('iCloud'),
         trailing: StoreSwitch(
-          prop: _noBak.icloudSync,
+          prop: PrefProps.icloudSync,
           validator: (p0) {
             if (p0 && _noBak.webdavSync.fetch()) {
               context.showSnackBar(l10n.autoBackupConflict);
@@ -150,7 +151,7 @@ final class _BackupPageState extends State<BackupPage>
                     return false;
                   }
                 }
-                if (_noBak.icloudSync.fetch()) {
+                if (PrefProps.icloudSync.get()) {
                   context.showSnackBar(l10n.autoBackupConflict);
                   return false;
                 }
@@ -159,7 +160,7 @@ final class _BackupPageState extends State<BackupPage>
               callback: (val) async {
                 if (val) {
                   webdavLoading.value = true;
-                  await bakSync.sync(rs: webdav);
+                  await bakSync.sync(rs: Webdav.shared);
                   webdavLoading.value = false;
                 }
               },
@@ -326,7 +327,7 @@ final class _BackupPageState extends State<BackupPage>
   Future<void> _onTapWebdavDl(BuildContext context) async {
     webdavLoading.value = true;
     try {
-      final files = await webdav.list();
+      final files = await Webdav.shared.list();
       if (files.isEmpty) return context.showSnackBar(l10n.dirEmpty);
 
       final fileName = await context.showPickSingleDialog(
@@ -335,7 +336,7 @@ final class _BackupPageState extends State<BackupPage>
       );
       if (fileName == null) return;
 
-      await webdav.download(relativePath: fileName);
+      await Webdav.shared.download(relativePath: fileName);
       final dlFile = await File('${Paths.doc}/$fileName').readAsString();
       final dlBak = await Computer.shared.start(Backup.fromJsonString, dlFile);
       await dlBak.merge(force: true);
@@ -353,7 +354,7 @@ final class _BackupPageState extends State<BackupPage>
     final bakName = '$date-${Miscs.bakFileName}';
     try {
       await Backup.backup(bakName);
-      await webdav.upload(relativePath: bakName);
+      await Webdav.shared.upload(relativePath: bakName);
       Loggers.app.info('Upload webdav backup success');
     } catch (e, s) {
       context.showErrDialog(e, s, l10n.upload);
@@ -403,12 +404,8 @@ final class _BackupPageState extends State<BackupPage>
       try {
         await Webdav.test(url.text, user.text, pwd.text);
         context.showSnackBar(libL10n.success);
-        webdav.init(WebdavInitArgs(
-          url: url.text,
-          user: user.text,
-          pwd: pwd.text,
-          prefix: 'serverbox/',
-        ));
+        Webdav.shared.client =
+            WebdavClient(url: url.text, user: user.text, pwd: pwd.text);
       } catch (e, s) {
         context.showErrDialog(e, s, 'Webdav');
       }
