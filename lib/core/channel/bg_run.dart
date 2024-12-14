@@ -8,11 +8,12 @@ abstract final class BgRunMC {
     _channel.invokeMethod('sendToBackground');
   }
 
+  /// TODO: try fix the fn, then uncomment it and [stopService]
   static void startService() {
-    _channel.invokeMethod('startService');
+    // _channel.invokeMethod('startService');
   }
 
   static void stopService() {
-    _channel.invokeMethod('stopService');
+    // _channel.invokeMethod('stopService');
   }
 }
