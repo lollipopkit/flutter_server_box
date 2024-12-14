@@ -21,21 +21,19 @@ final class _TopBar extends StatelessWidget implements PreferredSizeWidget {
           Center(
             child: InkWell(
               borderRadius: BorderRadius.circular(13),
-              onTap: () => DebugPage.route.go(
-                context,
-                args: const DebugPageArgs(title: 'Logs(${BuildData.build})'),
-              ),
-              child:  Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 7),
+              onTap: () {
+                SettingsPage.route.go(context);
+              },
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 child: Row(
                   children: [
-                    Btn.icon(
-                      icon: const Icon(Icons.settings),
-                      onTap: () {
-                        SettingsPage.route.go(context);
-                      },
+                    Text(
+                      BuildData.name,
+                      style: TextStyle(fontSize: 19),
                     ),
-                    const Icon(
+                    SizedBox(width: 3),
+                    Icon(
                       Icons.keyboard_arrow_right,
                       color: Colors.grey,
                       size: 17,

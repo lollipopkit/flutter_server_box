@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_highlight/theme_map.dart';
+import 'package:server_box/data/store/setting.dart';
 
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:icons_plus/icons_plus.dart';
@@ -81,30 +82,38 @@ class _SettingsPageState extends State<SettingsPage>
               .map((e) => Tab(text: e.i18n))
               .toList(growable: false),
         ),
+        actions: [
+          Btn.icon(
+            icon: const Icon(Icons.developer_board),
+            onTap: () => DebugPage.route.go(
+              context,
+              args: const DebugPageArgs(title: 'Logs(${BuildData.build})'),
+            ),
+          ),
+          Btn.icon(
+            icon: const Icon(Icons.delete),
+            onTap: () => context.showRoundDialog(
+              title: libL10n.attention,
+              child: SimpleMarkdown(
+                data: libL10n.askContinue(
+                  '${libL10n.delete} **${libL10n.all}** ${libL10n.setting}',
+                ),
+              ),
+              actions: [
+                CountDownBtn(
+                  onTap: () {
+                    context.pop();
+                    final keys = SettingStore.instance.box.keys;
+                    SettingStore.instance.box.deleteAll(keys);
+                    context.showSnackBar(libL10n.success);
+                  },
+                  afterColor: Colors.red,
+                )
+              ],
+            ),
+          ),
+        ],
       ),
-      // actions: [
-      //   IconButton(
-      //     icon: const Icon(Icons.delete),
-      //     onPressed: () => context.showRoundDialog(
-      //       title: libL10n.attention,
-      //       child: SimpleMarkdown(
-      //         data: libL10n.askContinue(
-      //           '${libL10n.delete} **${libL10n.all}** ${libL10n.setting}',
-      //         ),
-      //       ),
-      //       actions: [
-      //         CountDownBtn(
-      //           onTap: () {
-      //             context.pop();
-      //             _setting.box.deleteAll(_setting.box.keys);
-      //             context.showSnackBar(libL10n.success);
-      //           },
-      //           afterColor: Colors.red,
-      //         )
-      //       ],
-      //     ),
-      //   ),
-      // ],
       body: TabBarView(controller: _tabCtrl, children: SettingsTabs.pages),
     );
   }
