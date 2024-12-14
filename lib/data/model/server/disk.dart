@@ -104,7 +104,9 @@ class DiskIO extends TimeSeq<List<DiskIOPiece>> {
           !item.dev.startsWith('vd') &&
           !item.dev.startsWith('hd') &&
           !item.dev.startsWith('mmcblk') &&
-          !item.dev.startsWith('sr')) continue;
+          !item.dev.startsWith('sr')) {
+        continue;
+      }
       final (read_, write_) = _getSpeed(item.dev);
       read += read_ ?? 0;
       write += write_ ?? 0;

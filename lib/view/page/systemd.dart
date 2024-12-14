@@ -158,7 +158,7 @@ final class _SystemdPageState extends State<SystemdPage> {
   Widget _buildTag(String tag, [Color? color, bool noPad = false]) {
     return Container(
       decoration: BoxDecoration(
-        color: color?.withOpacity(0.7) ?? UIs.halfAlpha,
+        color: color?.withValues(alpha: 0.7) ?? UIs.halfAlpha,
         borderRadius: BorderRadius.circular(5),
       ),
       child: Text(tag, style: UIs.text11)

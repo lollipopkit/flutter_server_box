@@ -22,8 +22,6 @@ enum PkgManager {
         return 'opkg list-upgradable';
       case PkgManager.apk:
         return 'apk list --upgradable';
-      default:
-        return null;
     }
   }
 
@@ -56,8 +54,6 @@ enum PkgManager {
         return 'opkg upgrade $args';
       case PkgManager.apk:
         return 'apk upgrade';
-      default:
-        return null;
     }
   }
 

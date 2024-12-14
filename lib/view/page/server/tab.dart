@@ -515,10 +515,6 @@ class _ServerPageState extends State<ServerPage>
           const Icon(MingCute.unlink_2_line, size: 17, color: Colors.grey),
           () => ServerProvider.closeServer(id: s.spi.id),
         ),
-      _ when Stores.setting.serverTabUseOldUI.fetch() => (
-          ServerFuncBtnsTopRight(spi: s.spi),
-          null,
-        ),
     };
 
     // Or the loading icon will be rescaled.

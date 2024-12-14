@@ -424,7 +424,7 @@ final class _AppSettingsPageState extends State<AppSettingsPage> {
       return;
     }
     UIs.colorSeed = color;
-    _setting.colorSeed.put(color.value);
+    _setting.colorSeed.put(color.value255);
     context.pop();
     Future.delayed(Durations.medium1, RNodes.app.notify);
   }

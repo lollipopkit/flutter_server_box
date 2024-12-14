@@ -60,8 +60,6 @@ Future<void> isolateMessageHandler(
         case SftpReqType.upload:
           await _upload(data, mainSendPort, sendError);
           break;
-        default:
-          sendError(Exception('unknown type'));
       }
       break;
     default:
