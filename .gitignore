@@ -46,6 +46,7 @@ app.*.map.json
 /android/app/release
 
 /android/app/fjy.androidstudio.key
+/android/app/app.key
 /release
 test.dart
 

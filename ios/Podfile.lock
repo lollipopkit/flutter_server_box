@@ -6,7 +6,7 @@ PODS:
   - file_picker (0.0.1):
     - Flutter
   - Flutter (1.0.0)
-  - flutter_native_splash (0.0.1):
+  - flutter_native_splash (2.4.3):
     - Flutter
   - icloud_storage (0.0.1):
     - Flutter
@@ -33,6 +33,7 @@ PODS:
     - Flutter
   - webview_flutter_wkwebview (0.0.1):
     - Flutter
+    - FlutterMacOS
 
 DEPENDENCIES:
   - app_links (from `.symlinks/plugins/app_links/ios`)
@@ -50,7 +51,7 @@ DEPENDENCIES:
   - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
   - wakelock_plus (from `.symlinks/plugins/wakelock_plus/ios`)
   - watch_connectivity (from `.symlinks/plugins/watch_connectivity/ios`)
-  - webview_flutter_wkwebview (from `.symlinks/plugins/webview_flutter_wkwebview/ios`)
+  - webview_flutter_wkwebview (from `.symlinks/plugins/webview_flutter_wkwebview/darwin`)
 
 EXTERNAL SOURCES:
   app_links:
@@ -84,25 +85,25 @@ EXTERNAL SOURCES:
   watch_connectivity:
     :path: ".symlinks/plugins/watch_connectivity/ios"
   webview_flutter_wkwebview:
-    :path: ".symlinks/plugins/webview_flutter_wkwebview/ios"
+    :path: ".symlinks/plugins/webview_flutter_wkwebview/darwin"
 
 SPEC CHECKSUMS:
   app_links: e7a6750a915a9e161c58d91bc610e8cd1d4d0ad0
   camera_avfoundation: dd002b0330f4981e1bbcb46ae9b62829237459a4
   file_picker: c79185e70b9b45728cde2a8d8da454e0cb43f287
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
-  flutter_native_splash: edf599c81f74d093a4daf8e17bd7a018854bc778
+  flutter_native_splash: e8a1e01082d97a8099d973f919f57904c925008a
   icloud_storage: d9ac7a33ced81df08ba7ea1bf3099cc0ee58f60a
   local_auth_darwin: 66e40372f1c29f383a314c738c7446e2f7fdadc3
-  package_info_plus: 58f0028419748fad15bf008b270aaa8e54380b1c
+  package_info_plus: c0502532a26c7662a62a356cebe2692ec5fe4ec4
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
   plain_notification_token: b36467dc91939a7b6754267c701bbaca14996ee1
-  share_plus: 8875f4f2500512ea181eef553c3e27dba5135aad
+  share_plus: 8b6f8b3447e494cca5317c8c3073de39b3600d1f
   shared_preferences_foundation: fcdcbc04712aee1108ac7fda236f363274528f78
   url_launcher_ios: 5334b05cef931de560670eeae103fd3e431ac3fe
   wakelock_plus: 78ec7c5b202cab7761af8e2b2b3d0671be6c4ae1
   watch_connectivity: 715eb484685e05846eab74795348a44bb2809b82
-  webview_flutter_wkwebview: 2a23822e9039b7b1bc52e5add778e5d89ad488d1
+  webview_flutter_wkwebview: 0982481e3d9c78fd5c6f62a002fcd24fc791f1e4
 
 PODFILE CHECKSUM: ec6ef69056f066e8b21a3391082f23b5ad2d37f8
 

@@ -25,7 +25,10 @@ dependencies:
   fl_chart: ^0.67.0
   wakelock_plus: ^1.2.4
   wake_on_lan: ^4.1.1+3
-  extended_image: ^8.2.1
+  extended_image: ^9.0.7
+  # TODO: remove this dependency
+  # https://github.com/miguelpruivo/flutter_file_picker/issues/1645
+  file_picker: 8.1.2
   json_annotation: ^4.9.0
   choice: ^2.3.2
   flutter_reorderable_grid_view: ^5.1.0
@@ -60,7 +63,7 @@ dependencies:
   fl_lib:
     git:
       url: https://github.com/lppcg/fl_lib
-      ref: v1.0.222
+      ref: v1.0.223
 
 dependency_overrides:
   # dartssh2:
