@@ -3,18 +3,22 @@ PODS:
     - FlutterMacOS
   - dynamic_color (0.0.2):
     - FlutterMacOS
+  - flutter_inappwebview_macos (0.0.1):
+    - FlutterMacOS
+    - OrderedSet (~> 6.0.3)
   - FlutterMacOS (1.0.0)
   - icloud_storage (0.0.1):
     - FlutterMacOS
   - local_auth_darwin (0.0.1):
     - Flutter
     - FlutterMacOS
+  - OrderedSet (6.0.3)
   - package_info_plus (0.0.1):
     - FlutterMacOS
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - screen_retriever (0.0.1):
+  - screen_retriever_macos (0.0.1):
     - FlutterMacOS
   - share_plus (0.0.1):
     - FlutterMacOS
@@ -31,23 +35,30 @@ PODS:
 DEPENDENCIES:
   - app_links (from `Flutter/ephemeral/.symlinks/plugins/app_links/macos`)
   - dynamic_color (from `Flutter/ephemeral/.symlinks/plugins/dynamic_color/macos`)
+  - flutter_inappwebview_macos (from `Flutter/ephemeral/.symlinks/plugins/flutter_inappwebview_macos/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
   - icloud_storage (from `Flutter/ephemeral/.symlinks/plugins/icloud_storage/macos`)
   - local_auth_darwin (from `Flutter/ephemeral/.symlinks/plugins/local_auth_darwin/darwin`)
   - package_info_plus (from `Flutter/ephemeral/.symlinks/plugins/package_info_plus/macos`)
   - path_provider_foundation (from `Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin`)
-  - screen_retriever (from `Flutter/ephemeral/.symlinks/plugins/screen_retriever/macos`)
+  - screen_retriever_macos (from `Flutter/ephemeral/.symlinks/plugins/screen_retriever_macos/macos`)
   - share_plus (from `Flutter/ephemeral/.symlinks/plugins/share_plus/macos`)
   - shared_preferences_foundation (from `Flutter/ephemeral/.symlinks/plugins/shared_preferences_foundation/darwin`)
   - url_launcher_macos (from `Flutter/ephemeral/.symlinks/plugins/url_launcher_macos/macos`)
   - wakelock_plus (from `Flutter/ephemeral/.symlinks/plugins/wakelock_plus/macos`)
   - window_manager (from `Flutter/ephemeral/.symlinks/plugins/window_manager/macos`)
 
+SPEC REPOS:
+  trunk:
+    - OrderedSet
+
 EXTERNAL SOURCES:
   app_links:
     :path: Flutter/ephemeral/.symlinks/plugins/app_links/macos
   dynamic_color:
     :path: Flutter/ephemeral/.symlinks/plugins/dynamic_color/macos
+  flutter_inappwebview_macos:
+    :path: Flutter/ephemeral/.symlinks/plugins/flutter_inappwebview_macos/macos
   FlutterMacOS:
     :path: Flutter/ephemeral
   icloud_storage:
@@ -58,8 +69,8 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/package_info_plus/macos
   path_provider_foundation:
     :path: Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin
-  screen_retriever:
-    :path: Flutter/ephemeral/.symlinks/plugins/screen_retriever/macos
+  screen_retriever_macos:
+    :path: Flutter/ephemeral/.symlinks/plugins/screen_retriever_macos/macos
   share_plus:
     :path: Flutter/ephemeral/.symlinks/plugins/share_plus/macos
   shared_preferences_foundation:
@@ -74,15 +85,17 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   app_links: 10e0a0ab602ffaf34d142cd4862f29d34b303b2a
   dynamic_color: 2eaa27267de1ca20d879fbd6e01259773fb1670f
+  flutter_inappwebview_macos: bdf207b8f4ebd58e86ae06cd96b147de99a67c9b
   FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
   icloud_storage: 33b05299e26d1391d724da8d62860e702380a1cd
   local_auth_darwin: 66e40372f1c29f383a314c738c7446e2f7fdadc3
-  package_info_plus: fa739dd842b393193c5ca93c26798dff6e3d0e0c
+  OrderedSet: e539b66b644ff081c73a262d24ad552a69be3a94
+  package_info_plus: 12f1c5c2cfe8727ca46cbd0b26677728972d9a5b
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
-  screen_retriever: 59634572a57080243dd1bf715e55b6c54f241a38
-  share_plus: 36537c04ce0c3e3f5bd297ce4318b6d5ee5fd6cf
+  screen_retriever_macos: 776e0fa5d42c6163d2bf772d22478df4b302b161
+  share_plus: 1fa619de8392a4398bfaf176d441853922614e89
   shared_preferences_foundation: fcdcbc04712aee1108ac7fda236f363274528f78
-  url_launcher_macos: 5f437abeda8c85500ceb03f5c1938a8c5a705399
+  url_launcher_macos: c82c93949963e55b228a30115bd219499a6fe404
   wakelock_plus: 4783562c9a43d209c458cb9b30692134af456269
   window_manager: 3a1844359a6295ab1e47659b1a777e36773cd6e8
 

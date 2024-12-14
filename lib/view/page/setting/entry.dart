@@ -83,8 +83,8 @@ class _SettingsPageState extends State<SettingsPage>
               .toList(growable: false),
         ),
         actions: [
-          Btn.icon(
-            icon: const Icon(Icons.developer_board),
+          Btn.text(
+            text: 'Logs',
             onTap: () => DebugPage.route.go(
               context,
               args: const DebugPageArgs(title: 'Logs(${BuildData.build})'),
