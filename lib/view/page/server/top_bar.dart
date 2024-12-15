@@ -18,6 +18,7 @@ final class _TopBar extends StatelessWidget implements PreferredSizeWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          // Keep this btn. For issue #657.
           InkWell(
             borderRadius: BorderRadius.circular(13),
             onTap: () {
