@@ -86,10 +86,12 @@ android {
 
         debug {
             applicationIdSuffix '.debug'
+            resValue "string", "app_name", "SrvBxD"
         }
 
         profile {
             applicationIdSuffix '.debug'
+            resValue "string", "app_name", "SrvBxP"
         }
     }
 }
