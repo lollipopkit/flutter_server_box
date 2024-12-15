@@ -6,7 +6,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:server_box/core/channel/bg_run.dart';
+import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/server.dart';
@@ -84,7 +84,7 @@ class SSHPageState extends State<SSHPage>
     if (--_sshConnCount <= 0) {
       WakelockPlus.disable();
       if (isAndroid) {
-        BgRunMC.stopService();
+        MethodChans.stopService();
       }
     }
   }
@@ -99,7 +99,7 @@ class SSHPageState extends State<SSHPage>
     if (++_sshConnCount == 1) {
       WakelockPlus.enable();
       if (isAndroid) {
-        BgRunMC.startService();
+        MethodChans.startService();
       }
     }
   }

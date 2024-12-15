@@ -1,6 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:server_box/core/channel/home_widget.dart';
+import 'package:server_box/core/chan.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/provider/app.dart';
 import 'package:server_box/data/provider/server.dart';
@@ -76,7 +76,7 @@ class _HomePageState extends State<HomePage>
         if (!ServerProvider.isAutoRefreshOn) {
           ServerProvider.startAutoRefresh();
         }
-        HomeWidgetMC.update();
+        MethodChans.updateHomeWidget();
         break;
       case AppLifecycleState.paused:
         _shouldAuth = true;
@@ -172,7 +172,7 @@ class _HomePageState extends State<HomePage>
         context: context,
       );
     }
-    HomeWidgetMC.update();
+    MethodChans.updateHomeWidget();
     await ServerProvider.refresh();
   }
 

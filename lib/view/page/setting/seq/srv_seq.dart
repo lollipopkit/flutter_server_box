@@ -45,20 +45,20 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
   }
 
   Widget _buildBody() {
-    final orderNode = ServerProvider.serverOrder;
-    return orderNode.listenVal((order) {
+    final orders = ServerProvider.serverOrder;
+    return orders.listenVal((order) {
       if (order.isEmpty) {
         return Center(child: Text(libL10n.empty));
       }
       return ReorderableListView.builder(
         footer: const SizedBox(height: 77),
         onReorder: (oldIndex, newIndex) => setState(() {
-          orderNode.value.move(
+          orders.value.move(
             oldIndex,
             newIndex,
             property: Stores.setting.serverOrder,
           );
-          orderNode.notify();
+          orders.notify();
         }),
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
         buildDefaultDragHandles: false,

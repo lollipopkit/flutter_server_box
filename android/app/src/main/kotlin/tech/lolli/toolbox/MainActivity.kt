@@ -9,13 +9,15 @@ import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import android.appwidget.AppWidgetManager
+import tech.lolli.toolbox.widget.HomeWidget
 
 class MainActivity: FlutterFragmentActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         val binaryMessenger = flutterEngine.dartExecutor.binaryMessenger
 
-        MethodChannel(binaryMessenger, "tech.lolli.toolbox/app_retain").apply {
+        MethodChannel(binaryMessenger, "tech.lolli.toolbox/main_chan").apply {
             setMethodCallHandler { method, result ->
                 when (method.method) {
                     "sendToBackground" -> {
@@ -34,6 +36,12 @@ class MainActivity: FlutterFragmentActivity() {
                     "stopService" -> {
                         val serviceIntent = Intent(this@MainActivity, ForegroundService::class.java)
                         stopService(serviceIntent)
+                        result.success(null)
+                    }
+                    "updateHomeWidget" -> {
+                        val intent = Intent(this@MainActivity, HomeWidget::class.java)
+                        intent.action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                        sendBroadcast(intent)
                         result.success(null)
                     }
                     else -> {

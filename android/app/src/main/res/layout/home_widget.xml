@@ -18,122 +18,144 @@
         android:maxLines="1"
         tools:text="Server Name" />
 
-    <RelativeLayout
-        android:id="@+id/widget_container_inner"
+    <!-- Wrap the content in a LinearLayout for easy visibility management -->
+    <LinearLayout
+        android:id="@+id/widget_content"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center_vertical"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_below="@id/widget_name"
         android:paddingTop="13dp">
 
-        <LinearLayout
-            android:id="@+id/widget_cpu_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingBottom="2.7dp"
+        <RelativeLayout
+            android:id="@+id/widget_container_inner"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:paddingTop="13dp">
 
-            <ImageView
-                android:layout_width="17dp"
-                android:layout_height="17dp"
-                android:src="@drawable/speed_24">
-            </ImageView>
-
-            <TextView
-                android:id="@+id/widget_cpu"
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:id="@+id/widget_cpu_label"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="11dp"
-                android:singleLine="true"
-                android:ellipsize = "marquee"
-                android:textColor="@color/widgetSummaryText"
-                android:textSize="12.7sp"
-                tools:text="CPU" />
+                android:paddingBottom="2.7dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="17dp"
+                    android:layout_height="17dp"
+                    android:src="@drawable/speed_24">
+                </ImageView>
+
+                <TextView
+                    android:id="@+id/widget_cpu"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="11dp"
+                    android:singleLine="true"
+                    android:ellipsize = "marquee"
+                    android:textColor="@color/widgetSummaryText"
+                    android:textSize="12.7sp"
+                    tools:text="CPU" />
 
 
-        </LinearLayout>
+            </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/widget_mem_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingBottom="2.7dp"
-            android:layout_below="@id/widget_cpu_label"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <ImageView
-                android:layout_width="17dp"
-                android:layout_height="17dp"
-                android:src="@drawable/memory_24">
-            </ImageView>
-
-            <TextView
-                android:id="@+id/widget_mem"
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:id="@+id/widget_mem_label"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="11dp"
-                android:maxLines="1"
-                android:textColor="@color/widgetSummaryText"
-                android:textSize="12.7sp"
-                tools:text="Mem" />
+                android:paddingBottom="2.7dp"
+                android:layout_below="@id/widget_cpu_label"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-        </LinearLayout>
+                <ImageView
+                    android:layout_width="17dp"
+                    android:layout_height="17dp"
+                    android:src="@drawable/memory_24">
+                </ImageView>
 
-        <LinearLayout
-            android:id="@+id/widget_disk_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingBottom="2.7dp"
-            android:layout_below="@id/widget_mem_label"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/widget_mem"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="11dp"
+                    android:maxLines="1"
+                    android:textColor="@color/widgetSummaryText"
+                    android:textSize="12.7sp"
+                    tools:text="Mem" />
 
-            <ImageView
-                android:layout_width="17dp"
-                android:layout_height="17dp"
-                android:src="@drawable/storage_24">
-            </ImageView>
+            </LinearLayout>
 
-            <TextView
-                android:id="@+id/widget_disk"
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:id="@+id/widget_disk_label"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="11dp"
-                android:maxLines="1"
-                android:textColor="@color/widgetSummaryText"
-                android:textSize="12.7sp"
-                tools:text="Disk" />
+                android:paddingBottom="2.7dp"
+                android:layout_below="@id/widget_mem_label"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-        </LinearLayout>
+                <ImageView
+                    android:layout_width="17dp"
+                    android:layout_height="17dp"
+                    android:src="@drawable/storage_24">
+                </ImageView>
 
-        <LinearLayout
-            android:id="@+id/widget_net_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/widget_disk_label"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/widget_disk"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="11dp"
+                    android:maxLines="1"
+                    android:textColor="@color/widgetSummaryText"
+                    android:textSize="12.7sp"
+                    tools:text="Disk" />
 
-            <ImageView
-                android:layout_width="17dp"
-                android:layout_height="17dp"
-                android:src="@drawable/net_24">
-            </ImageView>
+            </LinearLayout>
 
-            <TextView
-                android:id="@+id/widget_net"
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:id="@+id/widget_net_label"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="11dp"
-                android:maxLines="1"
-                android:textColor="@color/widgetSummaryText"
-                android:textSize="12.7sp"
-                tools:text="Net" />
+                android:layout_below="@id/widget_disk_label"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-        </LinearLayout>
+                <ImageView
+                    android:layout_width="17dp"
+                    android:layout_height="17dp"
+                    android:src="@drawable/net_24">
+                </ImageView>
 
-    </RelativeLayout>
+                <TextView
+                    android:id="@+id/widget_net"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="11dp"
+                    android:maxLines="1"
+                    android:textColor="@color/widgetSummaryText"
+                    android:textSize="12.7sp"
+                    tools:text="Net" />
+
+            </LinearLayout>
+
+        </RelativeLayout>
+
+    </LinearLayout>
+
+    <!-- Add a TextView for error messages -->
+    <TextView
+        android:id="@+id/error_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/widget_name"
+        android:textColor="@color/widgetSummaryText"
+        android:textSize="12sp"
+        android:visibility="gone"
+        tools:text="Error message" />
 
     <TextView
         android:id="@+id/widget_time"
