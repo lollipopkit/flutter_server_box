@@ -39,7 +39,7 @@ class HomeWidget : AppWidgetProvider() {
         }
 
         if (url.isNullOrEmpty()) {
-            Log.e("HomeWidget", "未找到 URL")
+            Log.e("HomeWidget", "URL not found")
         }
 
         val intentUpdate = Intent(context, HomeWidget::class.java)
@@ -90,7 +90,7 @@ class HomeWidget : AppWidgetProvider() {
                     val net = data.getString("net")
                     withContext(Dispatchers.Main) {
                         if (mem.isEmpty() || disk.isEmpty()) {
-                            Log.e("HomeWidget", "获取状态失败：内存或磁盘信息为空")
+                            Log.e("HomeWidget", "Failed to retrieve status: Memory or disk information is empty")
                             return@withContext
                         }
                         views.setTextViewText(R.id.widget_name, server)
@@ -106,7 +106,7 @@ class HomeWidget : AppWidgetProvider() {
                     throw FileNotFoundException("HTTP response code: $responseCode")
                 }
             } catch (e: Exception) {
-                Log.e("HomeWidget", "更新小部件时出错：${e.localizedMessage}", e)
+                Log.e("HomeWidget", "Error updating widget: ${e.localizedMessage}", e)
                 withContext(Dispatchers.Main) {
                     views.setTextViewText(R.id.widget_name, "Error")
                     // Update the widget to display a message for data retrieval failure
