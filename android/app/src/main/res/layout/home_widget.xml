@@ -16,6 +16,8 @@
         android:textSize="23sp"
         android:textStyle="bold"
         android:maxLines="1"
+        android:alpha="0"
+        android:animateLayoutChanges="true"
         tools:text="Server Name" />
 
     <!-- Wrap the content in a LinearLayout for easy visibility management -->
@@ -32,7 +34,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center_vertical"
-            android:paddingTop="13dp">
+            android:paddingTop="13dp"
+            android:animateLayoutChanges="true">
 
             <LinearLayout
                 android:id="@+id/widget_cpu_label"
@@ -155,6 +158,8 @@
         android:textColor="@color/widgetSummaryText"
         android:textSize="12sp"
         android:visibility="gone"
+        android:alpha="0"
+        android:animateLayoutChanges="true"
         tools:text="Error message" />
 
     <TextView
@@ -165,6 +170,8 @@
         android:maxLines="2"
         android:textColor="@color/widgetSummaryText"
         android:textSize="11sp"
+        android:alpha="0"
+        android:animateLayoutChanges="true"
         tools:text="UpdateTime" />
 
 </RelativeLayout>

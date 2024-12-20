@@ -65,6 +65,8 @@ class HomeWidget : AppWidgetProvider() {
             views.setViewVisibility(R.id.error_message, View.VISIBLE)
             views.setTextViewText(R.id.error_message, "Please configure the widget URL.")
             views.setViewVisibility(R.id.widget_content, View.GONE)
+            views.setFloat(R.id.widget_name, "setAlpha", 1f)
+            views.setFloat(R.id.error_message, "setAlpha", 1f)
             appWidgetManager.updateAppWidget(appWidgetId, views)
             return
         } else {
@@ -100,6 +102,12 @@ class HomeWidget : AppWidgetProvider() {
                         views.setTextViewText(R.id.widget_net, net)
                         val timeStr = android.text.format.DateFormat.format("HH:mm", java.util.Date()).toString()
                         views.setTextViewText(R.id.widget_time, timeStr)
+                        views.setFloat(R.id.widget_name, "setAlpha", 1f)
+                        views.setFloat(R.id.widget_cpu_label, "setAlpha", 1f)
+                        views.setFloat(R.id.widget_mem_label, "setAlpha", 1f)
+                        views.setFloat(R.id.widget_disk_label, "setAlpha", 1f)
+                        views.setFloat(R.id.widget_net_label, "setAlpha", 1f)
+                        views.setFloat(R.id.widget_time, "setAlpha", 1f)
                         appWidgetManager.updateAppWidget(appWidgetId, views)
                     }
                 } else {
@@ -113,6 +121,8 @@ class HomeWidget : AppWidgetProvider() {
                     views.setViewVisibility(R.id.error_message, View.VISIBLE)
                     views.setTextViewText(R.id.error_message, "Failed to retrieve data.")
                     views.setViewVisibility(R.id.widget_content, View.GONE)
+                    views.setFloat(R.id.widget_name, "setAlpha", 1f)
+                    views.setFloat(R.id.error_message, "setAlpha", 1f)
                     appWidgetManager.updateAppWidget(appWidgetId, views)
                 }
             }
