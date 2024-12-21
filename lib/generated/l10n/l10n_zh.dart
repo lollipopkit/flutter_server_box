@@ -52,7 +52,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bgRun => '后台运行';
 
   @override
-  String get bgRunTip => '此开关只代表程序会尝试在后台运行，具体能否后台运行取决于是否开启了权限。原生 Android 请关闭本 App 的“电池优化”，MIUI / HyperOS 请修改省电策略为“无限制”。';
+  String get bgRunTip =>
+      '此开关只代表程序会尝试在后台运行，具体能否后台运行取决于是否开启了权限。原生 Android 请关闭本 App 的“电池优化”，MIUI / HyperOS 请修改省电策略为“无限制”。';
 
   @override
   String get cmd => '命令';
@@ -67,7 +68,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get container => '容器';
 
   @override
-  String get containerTrySudoTip => '例如：在应用内将用户设置为 aaa，但是 Docker 安装在root用户下，这时就需要启用此选项';
+  String get containerTrySudoTip =>
+      '例如：在应用内将用户设置为 aaa，但是 Docker 安装在root用户下，这时就需要启用此选项';
 
   @override
   String get convert => '转换';
@@ -85,7 +87,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get customCmd => '自定义命令';
 
   @override
-  String get customCmdDocUrl => 'https://github.com/lollipopkit/flutter_server_box/wiki/主页#自定义命令';
+  String get customCmdDocUrl =>
+      'https://github.com/lollipopkit/flutter_server_box/wiki/主页#自定义命令';
 
   @override
   String get customCmdHint => '\"命令名称\": \"命令\"';
@@ -120,7 +123,8 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get dockerEmptyRunningItems => '没有正在运行的容器。\n这可能是因为：\n- Docker 安装用户与 App 内配置的用户名不同\n- 环境变量 DOCKER_HOST 没有被正确读取。可以通过在终端内运行 `echo \$DOCKER_HOST` 来获取。';
+  String get dockerEmptyRunningItems =>
+      '没有正在运行的容器。\n这可能是因为：\n- Docker 安装用户与 App 内配置的用户名不同\n- 环境变量 DOCKER_HOST 没有被正确读取。可以通过在终端内运行 `echo \$DOCKER_HOST` 来获取。';
 
   @override
   String dockerImagesFmt(Object count) {
@@ -131,7 +135,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dockerNotInstalled => 'Docker 未安装';
 
   @override
-  String dockerStatusRunningAndStoppedFmt(Object runningCount, Object stoppedCount) {
+  String dockerStatusRunningAndStoppedFmt(
+      Object runningCount, Object stoppedCount) {
     return '$runningCount 个正在运行, $stoppedCount 个已停止';
   }
 
@@ -244,7 +249,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get install => '安装';
 
   @override
-  String get installDockerWithUrl => '请先 https://docs.docker.com/engine/install docker';
+  String get installDockerWithUrl =>
+      '请先 https://docs.docker.com/engine/install docker';
 
   @override
   String get invalid => '无效';
@@ -306,13 +312,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get more => '更多';
 
   @override
-  String get moveOutServerFuncBtnsHelp => '开启：可以在服务器 Tab 页的每个卡片下方显示。关闭：在服务器详情页顶部显示。';
+  String get moveOutServerFuncBtnsHelp =>
+      '开启：可以在服务器 Tab 页的每个卡片下方显示。关闭：在服务器详情页顶部显示。';
 
   @override
   String get ms => '毫秒';
 
   @override
-  String get needHomeDir => '如果你是群晖用户，[看这里](https://kb.synology.cn/zh-cn/DSM/tutorial/ssh_could_not_chdir_to_home_directory)。其他系统用户，需搜索如何创建家目录（home directory）.';
+  String get needHomeDir =>
+      '如果你是群晖用户，[看这里](https://kb.synology.cn/zh-cn/DSM/tutorial/ssh_could_not_chdir_to_home_directory)。其他系统用户，需搜索如何创建家目录（home directory）.';
 
   @override
   String get needRestart => '需要重启 App';
@@ -482,7 +490,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sftpDlPrepare => '准备连接至服务器...';
 
   @override
-  String get sftpEditorTip => '如果为空, 使用App内置的文件编辑器. 如果有值, 这是用远程服务器的编辑器, 例如 `vim` (建议根据 `EDITOR` 自动获取).';
+  String get sftpEditorTip =>
+      '如果为空, 使用App内置的文件编辑器. 如果有值, 这是用远程服务器的编辑器, 例如 `vim` (建议根据 `EDITOR` 自动获取).';
 
   @override
   String get sftpRmrDirSummary => '在 SFTP 中使用 `rm -r` 来删除文件夹';
@@ -523,7 +532,8 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get sshTermHelp => '在终端可滚动时，横向拖动可以选中文字。点击键盘按钮可以开启/关闭键盘。文件图标会打开当前路径 SFTP。剪切板按钮会在有选中文字时复制内容，在未选中并且剪切板有内容时粘贴内容到终端。代码图标会粘贴代码片段到终端并执行。';
+  String get sshTermHelp =>
+      '在终端可滚动时，横向拖动可以选中文字。点击键盘按钮可以开启/关闭键盘。文件图标会打开当前路径 SFTP。剪切板按钮会在有选中文字时复制内容，在未选中并且剪切板有内容时粘贴内容到终端。代码图标会粘贴代码片段到终端并执行。';
 
   @override
   String sshTip(Object url) {
@@ -695,12 +705,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get writeScriptFailTip => '写入脚本失败，可能是没有权限/目录不存在等';
 
   @override
-  String get writeScriptTip => '在连接服务器后，会向 ~/.config/server_box 写入脚本来监测系统状态，你可以审查脚本内容。';
+  String get writeScriptTip =>
+      '在连接服务器后，会向 ~/.config/server_box 写入脚本来监测系统状态，你可以审查脚本内容。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
 class AppLocalizationsZhTw extends AppLocalizationsZh {
-  AppLocalizationsZhTw(): super('zh_TW');
+  AppLocalizationsZhTw() : super('zh_TW');
 
   @override
   String get aboutThanks => '感謝以下參與的各位。';
@@ -748,7 +759,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get bgRun => '後台運行';
 
   @override
-  String get bgRunTip => '此開關只代表程式會嘗試在後台運行，具體能否在後臺運行取決於是否開啟了權限。 原生 Android 請關閉本 App 的“電池優化”，MIUI / HyperOS 請修改省電策略為“無限制”。';
+  String get bgRunTip =>
+      '此開關只代表程式會嘗試在後台運行，具體能否在後臺運行取決於是否開啟了權限。 原生 Android 請關閉本 App 的“電池優化”，MIUI / HyperOS 請修改省電策略為“無限制”。';
 
   @override
   String get cmd => '命令';
@@ -763,7 +775,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get container => '容器';
 
   @override
-  String get containerTrySudoTip => '例如：App 內設置使用者為 aaa，但是 Docker 安裝在 root 使用者，這時就需要開啟此選項';
+  String get containerTrySudoTip =>
+      '例如：App 內設置使用者為 aaa，但是 Docker 安裝在 root 使用者，這時就需要開啟此選項';
 
   @override
   String get convert => '轉換';
@@ -781,7 +794,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get customCmd => '自訂命令';
 
   @override
-  String get customCmdDocUrl => 'https://github.com/lollipopkit/flutter_server_box/wiki/主页#自定义命令';
+  String get customCmdDocUrl =>
+      'https://github.com/lollipopkit/flutter_server_box/wiki/主页#自定义命令';
 
   @override
   String get customCmdHint => '\"命令名稱\": \"命令\"';
@@ -816,7 +830,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get dockerEmptyRunningItems => '沒有正在運行的容器。\n這可能是因為：\n- Docker 安裝使用者與 App 內配置的使用者名稱不同\n- 環境變量 DOCKER_HOST 沒有被正確讀取。你可以通過在終端內運行 `echo \$DOCKER_HOST` 來獲取。';
+  String get dockerEmptyRunningItems =>
+      '沒有正在運行的容器。\n這可能是因為：\n- Docker 安裝使用者與 App 內配置的使用者名稱不同\n- 環境變量 DOCKER_HOST 沒有被正確讀取。你可以通過在終端內運行 `echo \$DOCKER_HOST` 來獲取。';
 
   @override
   String dockerImagesFmt(Object count) {
@@ -827,7 +842,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get dockerNotInstalled => 'Docker 未安裝';
 
   @override
-  String dockerStatusRunningAndStoppedFmt(Object runningCount, Object stoppedCount) {
+  String dockerStatusRunningAndStoppedFmt(
+      Object runningCount, Object stoppedCount) {
     return '$runningCount 個正在運行, $stoppedCount 個已停止';
   }
 
@@ -940,7 +956,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get install => '安裝';
 
   @override
-  String get installDockerWithUrl => '請先 https://docs.docker.com/engine/install docker';
+  String get installDockerWithUrl =>
+      '請先 https://docs.docker.com/engine/install docker';
 
   @override
   String get invalid => '無效';
@@ -1002,13 +1019,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get more => '更多';
 
   @override
-  String get moveOutServerFuncBtnsHelp => '開啟：可以在伺服器 Tab 頁的每個卡片下方顯示。關閉：在伺服器詳情頁頂部顯示。';
+  String get moveOutServerFuncBtnsHelp =>
+      '開啟：可以在伺服器 Tab 頁的每個卡片下方顯示。關閉：在伺服器詳情頁頂部顯示。';
 
   @override
   String get ms => '毫秒';
 
   @override
-  String get needHomeDir => '如果你是群暉用戶，[看這裡](https://kb.synology.com/DSM/tutorial/user_enable_home_service)。其他系統用戶，需搜索如何創建家目錄（home directory）。';
+  String get needHomeDir =>
+      '如果你是群暉用戶，[看這裡](https://kb.synology.com/DSM/tutorial/user_enable_home_service)。其他系統用戶，需搜索如何創建家目錄（home directory）。';
 
   @override
   String get needRestart => '需要重啓 App';
@@ -1178,7 +1197,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sftpDlPrepare => '準備連接至伺服器...';
 
   @override
-  String get sftpEditorTip => '如果為空, 使用App內置的文件編輯器。如果有值, 則使用遠程伺服器的編輯器, 例如 `vim`（建議根據 `EDITOR` 自動獲取）。';
+  String get sftpEditorTip =>
+      '如果為空, 使用App內置的文件編輯器。如果有值, 則使用遠程伺服器的編輯器, 例如 `vim`（建議根據 `EDITOR` 自動獲取）。';
 
   @override
   String get sftpRmrDirSummary => '在 SFTP 中使用 `rm -r` 來刪除文件夾';
@@ -1219,7 +1239,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get sshTermHelp => '在終端可滾動時，橫向拖動可以選中文字。點擊鍵盤按鈕可以開啟/關閉鍵盤。文件圖標會打開當前路徑 SFTP。剪貼簿按鈕會在有選中文字時複製內容，在未選中並且剪貼簿有內容時貼上內容到終端。代碼圖標會貼上代碼片段到終端並執行。';
+  String get sshTermHelp =>
+      '在終端可滾動時，橫向拖動可以選中文字。點擊鍵盤按鈕可以開啟/關閉鍵盤。文件圖標會打開當前路徑 SFTP。剪貼簿按鈕會在有選中文字時複製內容，在未選中並且剪貼簿有內容時貼上內容到終端。代碼圖標會貼上代碼片段到終端並執行。';
 
   @override
   String sshTip(Object url) {
@@ -1391,5 +1412,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get writeScriptFailTip => '寫入腳本失敗，可能是沒有權限/目錄不存在等。';
 
   @override
-  String get writeScriptTip => '連接到伺服器後，將會在 ~/.config/server_box 中寫入一個腳本來監測系統狀態。你可以審查腳本內容。';
+  String get writeScriptTip =>
+      '連接到伺服器後，將會在 ~/.config/server_box 中寫入一個腳本來監測系統狀態。你可以審查腳本內容。';
 }

@@ -26,11 +26,18 @@ class MainActivity: FlutterFragmentActivity() {
                     }
                     "startService" -> {
                         reqPerm()
-                        val serviceIntent = Intent(this@MainActivity, ForegroundService::class.java)
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            startForegroundService(serviceIntent)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                            ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.POST_NOTIFICATIONS)
+                            != PackageManager.PERMISSION_GRANTED
+                        ) {
+                            result.error("PERMISSION_DENIED", "Notification permission is denied.", null)
                         } else {
-                            startService(serviceIntent)
+                            val serviceIntent = Intent(this@MainActivity, ForegroundService::class.java)
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                startForegroundService(serviceIntent)
+                            } else {
+                                startService(serviceIntent)
+                            }
                         }
                     }
                     "stopService" -> {

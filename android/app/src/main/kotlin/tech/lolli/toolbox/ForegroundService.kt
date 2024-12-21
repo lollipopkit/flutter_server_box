@@ -16,6 +16,16 @@ class ForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            androidx.core.content.ContextCompat.checkSelfPermission(
+                this, android.Manifest.permission.POST_NOTIFICATIONS
+            ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            Log.w("ForegroundService", "Notification permission denied. Stopping service.")
+            stopForegroundService()
+            return START_NOT_STICKY
+        }
+
         if (intent == null) {
             Log.w("ForegroundService", "onStartCommand called with null intent")
             stopForegroundService()
