@@ -25,19 +25,19 @@ class MainActivity: FlutterFragmentActivity() {
                         result.success(null)
                     }
                     "startService" -> {
-                        reqPerm()
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                            ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.POST_NOTIFICATIONS)
-                            != PackageManager.PERMISSION_GRANTED
-                        ) {
-                            result.error("PERMISSION_DENIED", "Notification permission is denied.", null)
-                        } else {
+                        try {
+                            reqPerm()
                             val serviceIntent = Intent(this@MainActivity, ForegroundService::class.java)
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                                 startForegroundService(serviceIntent)
                             } else {
                                 startService(serviceIntent)
                             }
+                            result.success(null)
+                        } catch (e: Exception) {
+                            // Log error but don't crash
+                            android.util.Log.e("MainActivity", "Failed to start service: ${e.message}")
+                            result.error("SERVICE_ERROR", e.message, null)
                         }
                     }
                     "stopService" -> {
@@ -61,13 +61,20 @@ class MainActivity: FlutterFragmentActivity() {
 
     private fun reqPerm() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        
+        // Check if we already have the permission to avoid unnecessary prompts
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
             != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                123,
-            )
+            try {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    123,
+                )
+            } catch (e: Exception) {
+                // Log error but don't crash
+                android.util.Log.e("MainActivity", "Failed to request permissions: ${e.message}")
+            }
         }
     }
 }
