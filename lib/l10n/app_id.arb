@@ -53,6 +53,8 @@
   "extraArgs": "Args ekstra",
   "fallbackSshDest": "Tujuan SSH mundur",
   "fdroidReleaseTip": "Jika Anda mengunduh aplikasi ini dari F-Droid, disarankan untuk mematikan opsi ini.",
+  "fgService": "Layanan Latar Depan",
+  "fgServiceTip": "Setelah diaktifkan, beberapa model perangkat mungkin crash. Menonaktifkannya dapat menyebabkan beberapa model tidak dapat mempertahankan koneksi SSH di latar belakang. Harap izinkan perizinan notifikasi ServerBox, menjalankan di latar belakang, dan bangun mandiri di pengaturan sistem.",
   "fileTooLarge": "File '{file}' terlalu besar {size}, max {sizeMax}",
   "followSystem": "Ikuti sistem",
   "font": "Font",

@@ -13,8 +13,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get acceptBeta => 'テストバージョンの更新を受け入れる';
 
   @override
-  String get addSystemPrivateKeyTip =>
-      '現在秘密鍵がありません。システムのデフォルト(~/.ssh/id_rsa)を追加しますか？';
+  String get addSystemPrivateKeyTip => '現在秘密鍵がありません。システムのデフォルト(~/.ssh/id_rsa)を追加しますか？';
 
   @override
   String get added2List => 'タスクリストに追加されました';
@@ -53,8 +52,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get bgRun => 'バックグラウンド実行';
 
   @override
-  String get bgRunTip =>
-      'このスイッチはプログラムがバックグラウンドで実行を試みることを意味しますが、実際にバックグラウンドで実行できるかどうかは、権限が有効になっているかに依存します。AOSPベースのAndroid ROMでは、このアプリの「バッテリー最適化」をオフにしてください。MIUIでは、省エネモードを「無制限」に変更してください。';
+  String get bgRunTip => 'このスイッチはプログラムがバックグラウンドで実行を試みることを意味しますが、実際にバックグラウンドで実行できるかどうかは、権限が有効になっているかに依存します。AOSPベースのAndroid ROMでは、このアプリの「バッテリー最適化」をオフにしてください。MIUIでは、省エネモードを「無制限」に変更してください。';
 
   @override
   String get cmd => 'コマンド';
@@ -69,8 +67,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get container => 'コンテナ';
 
   @override
-  String get containerTrySudoTip =>
-      '例：アプリ内でユーザーをaaaに設定しているが、Dockerがrootユーザーでインストールされている場合、このオプションを有効にする必要があります';
+  String get containerTrySudoTip => '例：アプリ内でユーザーをaaaに設定しているが、Dockerがrootユーザーでインストールされている場合、このオプションを有効にする必要があります';
 
   @override
   String get convert => '変換';
@@ -88,8 +85,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get customCmd => 'カスタムコマンド';
 
   @override
-  String get customCmdDocUrl =>
-      'https://github.com/lollipopkit/flutter_server_box/wiki#custom-commands';
+  String get customCmdDocUrl => 'https://github.com/lollipopkit/flutter_server_box/wiki#custom-commands';
 
   @override
   String get customCmdHint => '\"コマンド名\": \"コマンド\"';
@@ -124,8 +120,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get dockerEmptyRunningItems =>
-      '実行中のコンテナがありません。\nこれは次の理由による可能性があります：\n- Dockerのインストールユーザーとアプリ内の設定されたユーザー名が異なる\n- 環境変数DOCKER_HOSTが正しく読み込まれていない。ターミナルで`echo \$DOCKER_HOST`を実行して取得できます。';
+  String get dockerEmptyRunningItems => '実行中のコンテナがありません。\nこれは次の理由による可能性があります：\n- Dockerのインストールユーザーとアプリ内の設定されたユーザー名が異なる\n- 環境変数DOCKER_HOSTが正しく読み込まれていない。ターミナルで`echo \$DOCKER_HOST`を実行して取得できます。';
 
   @override
   String dockerImagesFmt(Object count) {
@@ -136,8 +131,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get dockerNotInstalled => 'Dockerがインストールされていません';
 
   @override
-  String dockerStatusRunningAndStoppedFmt(
-      Object runningCount, Object stoppedCount) {
+  String dockerStatusRunningAndStoppedFmt(Object runningCount, Object stoppedCount) {
     return '$runningCount個が実行中、$stoppedCount個が停止中';
   }
 
@@ -150,8 +144,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get doubleColumnMode => 'ダブルカラムモード';
 
   @override
-  String get doubleColumnTip =>
-      'このオプションは機能を有効にするだけで、実際に有効にできるかどうかはデバイスの幅に依存します';
+  String get doubleColumnTip => 'このオプションは機能を有効にするだけで、実際に有効にできるかどうかはデバイスの幅に依存します';
 
   @override
   String get editVirtKeys => '仮想キーを編集';
@@ -160,8 +153,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get editor => 'エディター';
 
   @override
-  String get editorHighlightTip =>
-      '現在のコードハイライトのパフォーマンスはかなり悪いため、改善するために無効にすることを選択できます。';
+  String get editorHighlightTip => '現在のコードハイライトのパフォーマンスはかなり悪いため、改善するために無効にすることを選択できます。';
 
   @override
   String get encode => 'エンコード';
@@ -179,8 +171,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get fallbackSshDest => 'フォールバックSSH宛先';
 
   @override
-  String get fdroidReleaseTip =>
-      'このアプリをF-Droidからダウンロードした場合、このオプションをオフにすることをお勧めします。';
+  String get fdroidReleaseTip => 'このアプリをF-Droidからダウンロードした場合、このオプションをオフにすることをお勧めします。';
+
+  @override
+  String get fgService => 'フォアグラウンドサービス';
+
+  @override
+  String get fgServiceTip => '有効にすると、一部の機種でクラッシュする可能性があります。無効にすると、一部の機種でバックグラウンドでのSSH接続を維持できなくなる可能性があります。システム設定でServerBoxの通知権限、バックグラウンド実行、自己起動を許可してください。';
 
   @override
   String fileTooLarge(Object file, Object size, Object sizeMax) {
@@ -209,8 +206,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get fullScreenJitterHelp => '焼き付き防止';
 
   @override
-  String get fullScreenTip =>
-      'デバイスが横向きに回転したときにフルスクリーンモードを有効にしますか？このオプションはサーバータブにのみ適用されます。';
+  String get fullScreenTip => 'デバイスが横向きに回転したときにフルスクリーンモードを有効にしますか？このオプションはサーバータブにのみ適用されます。';
 
   @override
   String get goBackQ => '戻りますか？';
@@ -254,8 +250,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get install => 'インストール';
 
   @override
-  String get installDockerWithUrl =>
-      '最初に https://docs.docker.com/engine/install dockerをインストールしてください';
+  String get installDockerWithUrl => '最初に https://docs.docker.com/engine/install dockerをインストールしてください';
 
   @override
   String get invalid => '無効';
@@ -317,15 +312,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get more => 'もっと';
 
   @override
-  String get moveOutServerFuncBtnsHelp =>
-      '有効にする：サーバータブの各カードの下に表示されます。無効にする：サーバーの詳細ページの上部に表示されます。';
+  String get moveOutServerFuncBtnsHelp => '有効にする：サーバータブの各カードの下に表示されます。無効にする：サーバーの詳細ページの上部に表示されます。';
 
   @override
   String get ms => 'ミリ秒';
 
   @override
-  String get needHomeDir =>
-      'Synologyユーザーの場合は、[こちらをご覧ください](https://kb.synology.com/DSM/tutorial/user_enable_home_service)。他のシステムのユーザーは、ホームディレクトリの作成方法を検索する必要があります。';
+  String get needHomeDir => 'Synologyユーザーの場合は、[こちらをご覧ください](https://kb.synology.com/DSM/tutorial/user_enable_home_service)。他のシステムのユーザーは、ホームディレクトリの作成方法を検索する必要があります。';
 
   @override
   String get needRestart => 'アプリを再起動する必要があります';
@@ -414,12 +407,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get pushToken => 'プッシュトークン';
 
   @override
-  String get pveIgnoreCertTip =>
-      'オプションを有効にすることは推奨されません、セキュリティリスクに注意してください！PVEのデフォルト証明書を使用している場合は、このオプションを有効にする必要があります。';
+  String get pveIgnoreCertTip => 'オプションを有効にすることは推奨されません、セキュリティリスクに注意してください！PVEのデフォルト証明書を使用している場合は、このオプションを有効にする必要があります。';
 
   @override
-  String get pveLoginFailed =>
-      'ログインに失敗しました。Linux PAMログインのためにサーバー構成からのユーザー名/パスワードで認証できません。';
+  String get pveLoginFailed => 'ログインに失敗しました。Linux PAMログインのためにサーバー構成からのユーザー名/パスワードで認証できません。';
 
   @override
   String get pveVersionLow => 'この機能は現在テスト段階にあり、PVE 8+でのみテストされています。ご利用の際は慎重に。';
@@ -497,8 +488,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sftpDlPrepare => 'サーバーへの接続を準備中...';
 
   @override
-  String get sftpEditorTip =>
-      '空の場合は、アプリ内蔵のファイルエディタを使用します。値がある場合は、リモートサーバーのエディタ（例：`vim`）を使用します（`EDITOR` に従って自動検出することをお勧めします）。';
+  String get sftpEditorTip => '空の場合は、アプリ内蔵のファイルエディタを使用します。値がある場合は、リモートサーバーのエディタ（例：`vim`）を使用します（`EDITOR` に従って自動検出することをお勧めします）。';
 
   @override
   String get sftpRmrDirSummary => 'SFTPで`rm -r`を使用してフォルダーを削除';
@@ -528,8 +518,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get specifyDev => 'デバイスを指定';
 
   @override
-  String get specifyDevTip =>
-      '例えば、ネットワークトラフィック統計はデフォルトですべてのデバイスに対するものです。ここで特定のデバイスを指定できます。';
+  String get specifyDevTip => '例えば、ネットワークトラフィック統計はデフォルトですべてのデバイスに対するものです。ここで特定のデバイスを指定できます。';
 
   @override
   String get speed => '速度';
@@ -540,8 +529,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get sshTermHelp =>
-      'ターミナルがスクロール可能な場合、横にドラッグするとテキストを選択できます。キーボードボタンをクリックするとキーボードのオン/オフが切り替わります。ファイルアイコンは現在のパスSFTPを開きます。クリップボードボタンは、テキストが選択されているときに内容をコピーし、テキストが選択されておらずクリップボードに内容がある場合には、その内容をターミナルに貼り付けます。コードアイコンは、コードスニペットをターミナルに貼り付けて実行します。';
+  String get sshTermHelp => 'ターミナルがスクロール可能な場合、横にドラッグするとテキストを選択できます。キーボードボタンをクリックするとキーボードのオン/オフが切り替わります。ファイルアイコンは現在のパスSFTPを開きます。クリップボードボタンは、テキストが選択されているときに内容をコピーし、テキストが選択されておらずクリップボードに内容がある場合には、その内容をターミナルに貼り付けます。コードアイコンは、コードスニペットをターミナルに貼り付けて実行します。';
 
   @override
   String sshTip(Object url) {
@@ -599,8 +587,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get temperature => '温度';
 
   @override
-  String get termFontSizeTip =>
-      'この設定は端末のサイズ（幅と高さ）に影響します。現在のセッションのフォントサイズを調整するために、端末ページを拡大縮小できます。';
+  String get termFontSizeTip => 'この設定は端末のサイズ（幅と高さ）に影響します。現在のセッションのフォントサイズを調整するために、端末ページを拡大縮小できます。';
 
   @override
   String get terminal => 'ターミナル';
@@ -612,8 +599,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get textScaler => 'テキストスケーラー';
 
   @override
-  String get textScalerTip =>
-      '1.0 => 100%（デフォルトサイズ）。サーバーページの一部のテキストにのみ適用されます。変更をお勧めしません。';
+  String get textScalerTip => '1.0 => 100%（デフォルトサイズ）。サーバーページの一部のテキストにのみ適用されます。変更をお勧めしません。';
 
   @override
   String get theme => 'テーマ';
@@ -646,8 +632,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get update => '更新';
 
   @override
-  String get updateIntervalEqual0 =>
-      '0に設定すると、サーバーの状態は自動的に更新されず、CPU使用率も計算できません。';
+  String get updateIntervalEqual0 => '0に設定すると、サーバーの状態は自動的に更新されず、CPU使用率も計算できません。';
 
   @override
   String get updateServerStatusInterval => 'サーバー状態の更新間隔';
@@ -683,8 +668,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get viewErr => 'エラーを表示';
 
   @override
-  String get virtKeyHelpClipboard =>
-      '端末に選択された文字がある場合は、選択された文字をクリップボードにコピーします。そうでない場合は、クリップボードの内容を端末に貼り付けます。';
+  String get virtKeyHelpClipboard => '端末に選択された文字がある場合は、選択された文字をクリップボードにコピーします。そうでない場合は、クリップボードの内容を端末に貼り付けます。';
 
   @override
   String get virtKeyHelpIME => 'キーボードのオン/オフ';
@@ -714,10 +698,8 @@ class AppLocalizationsJa extends AppLocalizations {
   String get write => '書き込み';
 
   @override
-  String get writeScriptFailTip =>
-      'スクリプトの書き込みに失敗しました。権限がないかディレクトリが存在しない可能性があります。';
+  String get writeScriptFailTip => 'スクリプトの書き込みに失敗しました。権限がないかディレクトリが存在しない可能性があります。';
 
   @override
-  String get writeScriptTip =>
-      'サーバーに接続すると、システムの状態を監視するためのスクリプトが ~/.config/server_box に書き込まれます。スクリプトの内容を確認できます。';
+  String get writeScriptTip => 'サーバーに接続すると、システムの状態を監視するためのスクリプトが ~/.config/server_box に書き込まれます。スクリプトの内容を確認できます。';
 }

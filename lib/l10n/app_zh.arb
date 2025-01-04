@@ -53,6 +53,8 @@
   "extraArgs": "额外参数",
   "fallbackSshDest": "备选 SSH 目标",
   "fdroidReleaseTip": "如果你是从 F-Droid 下载的本应用，推荐关闭此选项",
+  "fgService": "前台服务",
+  "fgServiceTip": "开启后，可能会导致部分机型闪退。关闭可能导致部分机型无法后台保持 SSH 连接。请在系统设置内允许 ServerBox 通知权限、后台运行、自我唤醒。",
   "fileTooLarge": "文件 '{file}' 过大 '{size}'，超过了 {sizeMax}",
   "followSystem": "跟随系统",
   "font": "字体",

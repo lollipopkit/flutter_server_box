@@ -13,8 +13,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get acceptBeta => 'Aceitar atualizações da versão de teste';
 
   @override
-  String get addSystemPrivateKeyTip =>
-      'Atualmente, não há nenhuma chave privada. Gostaria de adicionar a chave do sistema (~/.ssh/id_rsa)?';
+  String get addSystemPrivateKeyTip => 'Atualmente, não há nenhuma chave privada. Gostaria de adicionar a chave do sistema (~/.ssh/id_rsa)?';
 
   @override
   String get added2List => 'Adicionado à lista de tarefas';
@@ -26,12 +25,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get alreadyLastDir => 'Já é o diretório mais alto';
 
   @override
-  String get authFailTip =>
-      'Autenticação falhou, por favor verifique se a senha/chave/host/usuário, etc., estão incorretos.';
+  String get authFailTip => 'Autenticação falhou, por favor verifique se a senha/chave/host/usuário, etc., estão incorretos.';
 
   @override
-  String get autoBackupConflict =>
-      'Apenas um backup automático pode ser ativado por vez';
+  String get autoBackupConflict => 'Apenas um backup automático pode ser ativado por vez';
 
   @override
   String get autoConnect => 'Conexão automática';
@@ -40,16 +37,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get autoRun => 'Execução automática';
 
   @override
-  String get autoUpdateHomeWidget =>
-      'Atualização automática do widget da tela inicial';
+  String get autoUpdateHomeWidget => 'Atualização automática do widget da tela inicial';
 
   @override
-  String get backupTip =>
-      'Os dados exportados são criptografados de forma simples, por favor, guarde-os com segurança.';
+  String get backupTip => 'Os dados exportados são criptografados de forma simples, por favor, guarde-os com segurança.';
 
   @override
-  String get backupVersionNotMatch =>
-      'Versão de backup não compatível, não é possível restaurar';
+  String get backupVersionNotMatch => 'Versão de backup não compatível, não é possível restaurar';
 
   @override
   String get battery => 'Bateria';
@@ -58,8 +52,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get bgRun => 'Execução em segundo plano';
 
   @override
-  String get bgRunTip =>
-      'Este interruptor indica que o programa tentará rodar em segundo plano, mas a capacidade de fazer isso depende das permissões concedidas. No Android nativo, desative a \'Otimização de bateria\' para este app, no MIUI, altere a estratégia de economia de energia para \'Sem restrições\'.';
+  String get bgRunTip => 'Este interruptor indica que o programa tentará rodar em segundo plano, mas a capacidade de fazer isso depende das permissões concedidas. No Android nativo, desative a \'Otimização de bateria\' para este app, no MIUI, altere a estratégia de economia de energia para \'Sem restrições\'.';
 
   @override
   String get cmd => 'Comando';
@@ -74,8 +67,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get container => 'Contêiner';
 
   @override
-  String get containerTrySudoTip =>
-      'Por exemplo: se o usuário for definido como aaa dentro do app, mas o Docker estiver instalado sob o usuário root, esta opção precisará ser ativada';
+  String get containerTrySudoTip => 'Por exemplo: se o usuário for definido como aaa dentro do app, mas o Docker estiver instalado sob o usuário root, esta opção precisará ser ativada';
 
   @override
   String get convert => 'Converter';
@@ -84,8 +76,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get copyPath => 'Copiar caminho';
 
   @override
-  String get cpuViewAsProgressTip =>
-      'Exiba a taxa de uso de cada CPU em estilo de barra de progresso (estilo antigo)';
+  String get cpuViewAsProgressTip => 'Exiba a taxa de uso de cada CPU em estilo de barra de progresso (estilo antigo)';
 
   @override
   String get cursorType => 'Tipo de cursor';
@@ -94,8 +85,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get customCmd => 'Comandos personalizados';
 
   @override
-  String get customCmdDocUrl =>
-      'https://github.com/lollipopkit/flutter_server_box/wiki#custom-commands';
+  String get customCmdDocUrl => 'https://github.com/lollipopkit/flutter_server_box/wiki#custom-commands';
 
   @override
   String get customCmdHint => '\"Nome do comando\": \"Comando\"';
@@ -130,8 +120,7 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get dockerEmptyRunningItems =>
-      'Não há contêineres em execução.\nIsso pode ser porque:\n- O usuário que instalou o Docker difere do usuário configurado no app\n- A variável de ambiente DOCKER_HOST não foi lida corretamente. Você pode verificar isso executando `echo \$DOCKER_HOST` no terminal.';
+  String get dockerEmptyRunningItems => 'Não há contêineres em execução.\nIsso pode ser porque:\n- O usuário que instalou o Docker difere do usuário configurado no app\n- A variável de ambiente DOCKER_HOST não foi lida corretamente. Você pode verificar isso executando `echo \$DOCKER_HOST` no terminal.';
 
   @override
   String dockerImagesFmt(Object count) {
@@ -142,8 +131,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get dockerNotInstalled => 'Docker não instalado';
 
   @override
-  String dockerStatusRunningAndStoppedFmt(
-      Object runningCount, Object stoppedCount) {
+  String dockerStatusRunningAndStoppedFmt(Object runningCount, Object stoppedCount) {
     return '$runningCount em execução, $stoppedCount parados';
   }
 
@@ -156,8 +144,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get doubleColumnMode => 'Modo de coluna dupla';
 
   @override
-  String get doubleColumnTip =>
-      'Esta opção apenas ativa a funcionalidade, se ela será ativada depende também da largura do dispositivo';
+  String get doubleColumnTip => 'Esta opção apenas ativa a funcionalidade, se ela será ativada depende também da largura do dispositivo';
 
   @override
   String get editVirtKeys => 'Editar teclas virtuais';
@@ -166,8 +153,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get editor => 'Editor';
 
   @override
-  String get editorHighlightTip =>
-      'O desempenho do destaque de código atualmente é ruim, pode optar por desativá-lo para melhorar.';
+  String get editorHighlightTip => 'O desempenho do destaque de código atualmente é ruim, pode optar por desativá-lo para melhorar.';
 
   @override
   String get encode => 'Codificar';
@@ -185,8 +171,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get fallbackSshDest => 'Destino SSH de fallback';
 
   @override
-  String get fdroidReleaseTip =>
-      'Se você baixou este aplicativo do F-Droid, é recomendado desativar esta opção.';
+  String get fdroidReleaseTip => 'Se você baixou este aplicativo do F-Droid, é recomendado desativar esta opção.';
+
+  @override
+  String get fgService => 'Serviço em primeiro plano';
+
+  @override
+  String get fgServiceTip => 'Após ativar, alguns modelos de dispositivos podem travar. Desativar pode fazer com que alguns modelos não consigam manter conexões SSH em segundo plano. Por favor, permita as permissões de notificação do ServerBox, execução em segundo plano e auto-despertar nas configurações do sistema.';
 
   @override
   String fileTooLarge(Object file, Object size, Object sizeMax) {
@@ -215,8 +206,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get fullScreenJitterHelp => 'Prevenir burn-in de tela';
 
   @override
-  String get fullScreenTip =>
-      'Deve ser ativado o modo de tela cheia quando o dispositivo é girado para o modo paisagem? Esta opção aplica-se apenas à aba do servidor.';
+  String get fullScreenTip => 'Deve ser ativado o modo de tela cheia quando o dispositivo é girado para o modo paisagem? Esta opção aplica-se apenas à aba do servidor.';
 
   @override
   String get goBackQ => 'Voltar?';
@@ -231,8 +221,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get highlight => 'Destaque de código';
 
   @override
-  String get homeWidgetUrlConfig =>
-      'Configuração de URL do widget da tela inicial';
+  String get homeWidgetUrlConfig => 'Configuração de URL do widget da tela inicial';
 
   @override
   String get host => 'Host';
@@ -261,8 +250,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get install => 'Instalar';
 
   @override
-  String get installDockerWithUrl =>
-      'Por favor, instale o Docker primeiro em https://docs.docker.com/engine/install';
+  String get installDockerWithUrl => 'Por favor, instale o Docker primeiro em https://docs.docker.com/engine/install';
 
   @override
   String get invalid => 'Inválido';
@@ -286,8 +274,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get letterCache => 'Cache de letras';
 
   @override
-  String get letterCacheTip =>
-      'Recomendado desativar, mas após desativar, será impossível inserir caracteres CJK.';
+  String get letterCacheTip => 'Recomendado desativar, mas após desativar, será impossível inserir caracteres CJK.';
 
   @override
   String get license => 'Licença de código aberto';
@@ -310,8 +297,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get max => 'Máximo';
 
   @override
-  String get maxRetryCount =>
-      'Número de tentativas de reconexão com o servidor';
+  String get maxRetryCount => 'Número de tentativas de reconexão com o servidor';
 
   @override
   String get maxRetryCountEqual0 => 'Irá tentar indefinidamente';
@@ -326,15 +312,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get more => 'Mais';
 
   @override
-  String get moveOutServerFuncBtnsHelp =>
-      'Ativado: Mostra abaixo de cada cartão na aba do servidor. Desativado: Mostra no topo da página de detalhes do servidor.';
+  String get moveOutServerFuncBtnsHelp => 'Ativado: Mostra abaixo de cada cartão na aba do servidor. Desativado: Mostra no topo da página de detalhes do servidor.';
 
   @override
   String get ms => 'ms';
 
   @override
-  String get needHomeDir =>
-      'Se você é usuário de Synology, [veja aqui](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Usuários de outros sistemas precisam pesquisar como criar um diretório home.';
+  String get needHomeDir => 'Se você é usuário de Synology, [veja aqui](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Usuários de outros sistemas precisam pesquisar como criar um diretório home.';
 
   @override
   String get needRestart => 'Necessita reiniciar o app';
@@ -355,8 +339,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get noLineChartForCpu => 'Não utilizar gráficos de linhas para a CPU';
 
   @override
-  String get noPrivateKeyTip =>
-      'A chave privada não existe, pode ter sido deletada ou há um erro de configuração.';
+  String get noPrivateKeyTip => 'A chave privada não existe, pode ter sido deletada ou há um erro de configuração.';
 
   @override
   String get noPromptAgain => 'Não perguntar novamente';
@@ -374,19 +357,16 @@ class AppLocalizationsPt extends AppLocalizations {
   String get onlyOneLine => 'Exibir apenas como uma linha (rolável)';
 
   @override
-  String get onlyWhenCoreBiggerThan8 =>
-      'Efetivo apenas quando o número de núcleos > 8';
+  String get onlyWhenCoreBiggerThan8 => 'Efetivo apenas quando o número de núcleos > 8';
 
   @override
   String get openLastPath => 'Abrir o último caminho';
 
   @override
-  String get openLastPathTip =>
-      'Registros diferentes para servidores diferentes, e registra o caminho ao sair';
+  String get openLastPathTip => 'Registros diferentes para servidores diferentes, e registra o caminho ao sair';
 
   @override
-  String get parseContainerStatsTip =>
-      'Análise de status do Docker pode ser lenta';
+  String get parseContainerStatsTip => 'Análise de status do Docker pode ser lenta';
 
   @override
   String percentOfSize(Object percent, Object size) {
@@ -403,8 +383,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get pingInputIP => 'Por favor, insira o IP ou domínio alvo';
 
   @override
-  String get pingNoServer =>
-      'Nenhum servidor disponível para Ping\nPor favor, adicione um servidor na aba de servidores e tente novamente';
+  String get pingNoServer => 'Nenhum servidor disponível para Ping\nPor favor, adicione um servidor na aba de servidores e tente novamente';
 
   @override
   String get pkg => 'Gerenciamento de pacotes';
@@ -428,16 +407,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get pushToken => 'Token de notificação push';
 
   @override
-  String get pveIgnoreCertTip =>
-      'Não recomendado para ativar, cuidado com os riscos de segurança! Se estiver usando o certificado padrão do PVE, você precisa habilitar esta opção.';
+  String get pveIgnoreCertTip => 'Não recomendado para ativar, cuidado com os riscos de segurança! Se estiver usando o certificado padrão do PVE, você precisa habilitar esta opção.';
 
   @override
-  String get pveLoginFailed =>
-      'Falha no login. Não é possível autenticar com o nome de usuário/senha da configuração do servidor para login no Linux PAM.';
+  String get pveLoginFailed => 'Falha no login. Não é possível autenticar com o nome de usuário/senha da configuração do servidor para login no Linux PAM.';
 
   @override
-  String get pveVersionLow =>
-      'Esta funcionalidade está atualmente em fase de teste e foi testada apenas no PVE 8+. Por favor, use com cautela.';
+  String get pveVersionLow => 'Esta funcionalidade está atualmente em fase de teste e foi testada apenas no PVE 8+. Por favor, use com cautela.';
 
   @override
   String get pwd => 'Senha';
@@ -500,8 +476,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get server => 'Servidor';
 
   @override
-  String get serverDetailOrder =>
-      'Ordem dos componentes na página de detalhes do servidor';
+  String get serverDetailOrder => 'Ordem dos componentes na página de detalhes do servidor';
 
   @override
   String get serverFuncBtns => 'Botões de função do servidor';
@@ -513,8 +488,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sftpDlPrepare => 'Preparando para conectar ao servidor...';
 
   @override
-  String get sftpEditorTip =>
-      'Se vazio, use o editor de arquivos integrado do aplicativo. Se houver um valor, use o editor do servidor remoto, por exemplo, `vim` (recomendado detectar automaticamente de acordo com `EDITOR`).';
+  String get sftpEditorTip => 'Se vazio, use o editor de arquivos integrado do aplicativo. Se houver um valor, use o editor do servidor remoto, por exemplo, `vim` (recomendado detectar automaticamente de acordo com `EDITOR`).';
 
   @override
   String get sftpRmrDirSummary => 'Usar `rm -r` em SFTP para excluir pastas';
@@ -544,8 +518,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get specifyDev => 'Especificar dispositivo';
 
   @override
-  String get specifyDevTip =>
-      'Por exemplo, as estatísticas de tráfego de rede são por padrão para todos os dispositivos. Você pode especificar um dispositivo específico aqui.';
+  String get specifyDevTip => 'Por exemplo, as estatísticas de tráfego de rede são por padrão para todos os dispositivos. Você pode especificar um dispositivo específico aqui.';
 
   @override
   String get speed => 'Velocidade';
@@ -556,8 +529,7 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get sshTermHelp =>
-      'Quando o terminal é rolável, arrastar horizontalmente pode selecionar texto. Clicar no botão do teclado ativa/desativa o teclado. O ícone de arquivo abre o SFTP do caminho atual. O botão da área de transferência copia o conteúdo quando o texto é selecionado e cola o conteúdo da área de transferência no terminal quando nenhum texto é selecionado e há conteúdo na área de transferência. O ícone de código cola trechos de código no terminal e os executa.';
+  String get sshTermHelp => 'Quando o terminal é rolável, arrastar horizontalmente pode selecionar texto. Clicar no botão do teclado ativa/desativa o teclado. O ícone de arquivo abre o SFTP do caminho atual. O botão da área de transferência copia o conteúdo quando o texto é selecionado e cola o conteúdo da área de transferência no terminal quando nenhum texto é selecionado e há conteúdo na área de transferência. O ícone de código cola trechos de código no terminal e os executa.';
 
   @override
   String sshTip(Object url) {
@@ -565,8 +537,7 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get sshVirtualKeyAutoOff =>
-      'Desativação automática das teclas virtuais';
+  String get sshVirtualKeyAutoOff => 'Desativação automática das teclas virtuais';
 
   @override
   String get start => 'Iniciar';
@@ -593,8 +564,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get suspend => 'Suspender';
 
   @override
-  String get suspendTip =>
-      'A função de suspensão requer permissões de root e suporte do systemd.';
+  String get suspendTip => 'A função de suspensão requer permissões de root e suporte do systemd.';
 
   @override
   String switchTo(Object val) {
@@ -605,8 +575,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sync => 'Sincronizar';
 
   @override
-  String get syncTip =>
-      'Pode ser necessário reiniciar para algumas mudanças surtirem efeito.';
+  String get syncTip => 'Pode ser necessário reiniciar para algumas mudanças surtirem efeito.';
 
   @override
   String get system => 'Sistema';
@@ -618,8 +587,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get temperature => 'Temperatura';
 
   @override
-  String get termFontSizeTip =>
-      'Esta configuração afetará o tamanho do terminal (largura e altura). Você pode dar zoom na página do terminal para ajustar o tamanho da fonte da sessão atual.';
+  String get termFontSizeTip => 'Esta configuração afetará o tamanho do terminal (largura e altura). Você pode dar zoom na página do terminal para ajustar o tamanho da fonte da sessão atual.';
 
   @override
   String get terminal => 'Terminal';
@@ -631,8 +599,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get textScaler => 'Escala de texto';
 
   @override
-  String get textScalerTip =>
-      '1.0 => 100% (tamanho original), afeta apenas algumas fontes na página do servidor, não é recomendado alterar.';
+  String get textScalerTip => '1.0 => 100% (tamanho original), afeta apenas algumas fontes na página do servidor, não é recomendado alterar.';
 
   @override
   String get theme => 'Tema';
@@ -665,12 +632,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get update => 'Atualizar';
 
   @override
-  String get updateIntervalEqual0 =>
-      'Se definido como 0, o estado do servidor não será atualizado automaticamente.\nE o uso da CPU não poderá ser calculado.';
+  String get updateIntervalEqual0 => 'Se definido como 0, o estado do servidor não será atualizado automaticamente.\nE o uso da CPU não poderá ser calculado.';
 
   @override
-  String get updateServerStatusInterval =>
-      'Intervalo de atualização do estado do servidor';
+  String get updateServerStatusInterval => 'Intervalo de atualização do estado do servidor';
 
   @override
   String get upload => 'Upload';
@@ -685,8 +650,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get useCdn => 'Utilizando CDN';
 
   @override
-  String get useCdnTip =>
-      'Recomenda-se que usuários não chineses usem CDN. Gostaria de usá-lo?';
+  String get useCdnTip => 'Recomenda-se que usuários não chineses usem CDN. Gostaria de usá-lo?';
 
   @override
   String get useNoPwd => 'Será usado sem senha';
@@ -704,8 +668,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get viewErr => 'Ver erro';
 
   @override
-  String get virtKeyHelpClipboard =>
-      'Se houver texto selecionado no terminal, copia para a área de transferência, caso contrário, cola o conteúdo da área de transferência no terminal.';
+  String get virtKeyHelpClipboard => 'Se houver texto selecionado no terminal, copia para a área de transferência, caso contrário, cola o conteúdo da área de transferência no terminal.';
 
   @override
   String get virtKeyHelpIME => 'Ligar/desligar o teclado';
@@ -729,17 +692,14 @@ class AppLocalizationsPt extends AppLocalizations {
   String get whenOpenApp => 'Ao abrir o app';
 
   @override
-  String get wolTip =>
-      'Após configurar o WOL (Wake-on-LAN), um pedido de WOL é enviado cada vez que o servidor é conectado.';
+  String get wolTip => 'Após configurar o WOL (Wake-on-LAN), um pedido de WOL é enviado cada vez que o servidor é conectado.';
 
   @override
   String get write => 'Escrita';
 
   @override
-  String get writeScriptFailTip =>
-      'Falha ao escrever no script, possivelmente devido à falta de permissões ou o diretório não existe.';
+  String get writeScriptFailTip => 'Falha ao escrever no script, possivelmente devido à falta de permissões ou o diretório não existe.';
 
   @override
-  String get writeScriptTip =>
-      'Após conectar ao servidor, um script será escrito em ~/.config/server_box para monitorar o status do sistema. Você pode revisar o conteúdo do script.';
+  String get writeScriptTip => 'Após conectar ao servidor, um script será escrito em ~/.config/server_box para monitorar o status do sistema. Você pode revisar o conteúdo do script.';
 }

@@ -53,6 +53,8 @@
   "extraArgs": "Arguments supplémentaires",
   "fallbackSshDest": "Destino SSH alternativo",
   "fdroidReleaseTip": "Si vous avez téléchargé cette application depuis F-Droid, il est recommandé de désactiver cette option.",
+  "fgService": "Service de premier plan",
+  "fgServiceTip": "Après l'activation, certains modèles d'appareils peuvent planter. La désactivation peut empêcher certains modèles de maintenir les connexions SSH en arrière-plan. Veuillez autoriser les permissions de notification ServerBox, l'exécution en arrière-plan et l'auto-réveil dans les paramètres système.",
   "fileTooLarge": "Fichier '{file}' trop volumineux {size}, max {sizeMax}",
   "followSystem": "Suivre le système",
   "font": "Police",
