@@ -67,30 +67,6 @@ class _SSHTabPageState extends State<SSHTabPage>
     );
   }
 
-  void _onTapTab(int idx) async {
-    await _toPage(idx);
-  }
-
-  void _onTapClose(String name) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(libL10n.attention),
-          content: Text('${libL10n.close} SSH ${l10n.conn}($name) ?'),
-          actions: Btnx.okReds,
-        );
-      },
-    );
-    Future.delayed(Durations.short1, FocusScope.of(context).unfocus);
-    if (confirm != true) return;
-
-    _tabMap.remove(name);
-    _tabRN.notify();
-    _pageCtrl.previousPage(
-        duration: Durations.medium1, curve: Curves.fastEaseInToSlowEaseOut);
-  }
-
   Widget _buildBody() {
     return ListenBuilder(
       listenable: _tabRN,
@@ -109,6 +85,11 @@ class _SSHTabPageState extends State<SSHTabPage>
     );
   }
 
+  @override
+  bool get wantKeepAlive => true;
+}
+
+extension on _SSHTabPageState {
   void _onTapInitCard(Spi spi) async {
     final name = () {
       final reg = RegExp('${spi.name}\\((\\d+)\\)');
@@ -155,8 +136,29 @@ class _SSHTabPageState extends State<SSHTabPage>
     }
   }
 
-  @override
-  bool get wantKeepAlive => true;
+  void _onTapTab(int idx) async {
+    await _toPage(idx);
+  }
+
+  void _onTapClose(String name) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(libL10n.attention),
+          content: Text('${libL10n.close} SSH ${l10n.conn}($name) ?'),
+          actions: Btnx.okReds,
+        );
+      },
+    );
+    Future.delayed(Durations.short1, FocusScope.of(context).unfocus);
+    if (confirm != true) return;
+
+    _tabMap.remove(name);
+    _tabRN.notify();
+    _pageCtrl.previousPage(
+        duration: Durations.medium1, curve: Curves.fastEaseInToSlowEaseOut);
+  }
 }
 
 final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
