@@ -174,6 +174,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fdroidReleaseTip => 'If you downloaded this app from F-Droid, it is recommended to turn off this option.';
 
   @override
+  String get fgService => 'Foreground Service';
+
+  @override
+  String get fgServiceTip => 'After enabling, some device models may crash. Disabling it may cause some models to be unable to maintain SSH connections in the background. Please allow ServerBox notification permissions, background running, and self-wake-up in system settings.';
+
+  @override
   String fileTooLarge(Object file, Object size, Object sizeMax) {
     return 'File \'$file\' too large $size, max $sizeMax';
   }

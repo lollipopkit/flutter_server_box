@@ -174,6 +174,12 @@ class AppLocalizationsNl extends AppLocalizations {
   String get fdroidReleaseTip => 'Als u deze app van F-Droid heeft gedownload, wordt aanbevolen deze optie uit te schakelen.';
 
   @override
+  String get fgService => 'Voorgrondservice';
+
+  @override
+  String get fgServiceTip => 'Na het inschakelen kunnen sommige apparaatmodellen crashen. Uitschakelen kan ertoe leiden dat sommige modellen SSH-verbindingen niet op de achtergrond kunnen behouden. Sta ServerBox notificatierechten, achtergronduitvoering en zelf-ontwaken toe in systeeminstellingen.';
+
+  @override
   String fileTooLarge(Object file, Object size, Object sizeMax) {
     return 'Bestand \'$file\' te groot $size, max $sizeMax';
   }

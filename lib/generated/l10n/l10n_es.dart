@@ -174,6 +174,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get fdroidReleaseTip => 'Si descargaste esta aplicación desde F-Droid, se recomienda desactivar esta opción.';
 
   @override
+  String get fgService => 'Servicio en primer plano';
+
+  @override
+  String get fgServiceTip => 'Después de activarlo, algunos modelos de dispositivos pueden bloquearse. Desactivarlo puede hacer que algunos modelos no puedan mantener las conexiones SSH en segundo plano. Por favor, permita los permisos de notificación de ServerBox, la ejecución en segundo plano y el auto-despertar en la configuración del sistema.';
+
+  @override
   String fileTooLarge(Object file, Object size, Object sizeMax) {
     return 'El archivo \'$file\' es demasiado grande \'$size\', supera el $sizeMax';
   }

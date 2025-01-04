@@ -174,6 +174,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get fdroidReleaseTip => 'Если вы скачали это приложение с F-Droid, рекомендуется отключить эту опцию.';
 
   @override
+  String get fgService => 'Сервис переднего плана';
+
+  @override
+  String get fgServiceTip => 'После включения некоторые модели устройств могут вылетать. Отключение может привести к тому, что некоторые модели не смогут поддерживать SSH-соединения в фоновом режиме. Пожалуйста, разрешите ServerBox права на уведомления, фоновую работу и самопробуждение в системных настройках.';
+
+  @override
   String fileTooLarge(Object file, Object size, Object sizeMax) {
     return 'Файл \'$file\' слишком большой \'$size\', превышает $sizeMax';
   }

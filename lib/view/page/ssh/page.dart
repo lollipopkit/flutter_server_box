@@ -76,7 +76,6 @@ class SSHPageState extends State<SSHPage>
 
   @override
   void dispose() {
-    super.dispose();
     _virtKeyLongPressTimer?.cancel();
     _terminalController.dispose();
     _discontinuityTimer?.cancel();
@@ -87,6 +86,7 @@ class SSHPageState extends State<SSHPage>
         MethodChans.stopService();
       }
     }
+    super.dispose();
   }
 
   @override
@@ -270,6 +270,161 @@ class SSHPageState extends State<SSHPage>
     );
   }
 
+  @override
+  bool get wantKeepAlive => true;
+
+  void _initStoredCfg() {
+    final fontFamilly = Stores.setting.fontPath.fetch().getFileName();
+    final textSize = Stores.setting.termFontSize.fetch();
+    final textStyle = TextStyle(
+      fontFamily: fontFamilly,
+      fontSize: textSize,
+    );
+
+    _terminalStyle = TerminalStyle.fromTextStyle(textStyle);
+  }
+
+  Future<void> _showHelp() async {
+    if (Stores.setting.sshTermHelpShown.fetch()) return;
+
+    return await context.showRoundDialog(
+      title: libL10n.doc,
+      child: Text(l10n.sshTermHelp),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Stores.setting.sshTermHelpShown.put(true);
+            context.pop();
+          },
+          child: Text(l10n.noPromptAgain),
+        ),
+      ],
+    );
+  }
+
+  @override
+  FutureOr<void> afterFirstLayout(BuildContext context) async {
+    await _showHelp();
+    await _initTerminal();
+
+    if (Stores.setting.sshWakeLock.fetch()) WakelockPlus.enable();
+  }
+}
+
+extension _Init on SSHPageState {
+  Future<void> _initTerminal() async {
+    _writeLn(l10n.waitConnection);
+    _client ??= await genClient(
+      widget.spi,
+      onStatus: (p0) {
+        _writeLn(p0.toString());
+      },
+      onKeyboardInteractive: _onKeyboardInteractive,
+    );
+
+    _writeLn('${libL10n.execute}: Shell');
+    final session = await _client?.shell(
+      pty: SSHPtyConfig(
+        width: _terminal.viewWidth,
+        height: _terminal.viewHeight,
+      ),
+      environment: widget.spi.envs,
+    );
+
+    //_setupDiscontinuityTimer();
+
+    if (session == null) {
+      _writeLn(libL10n.fail);
+      return;
+    }
+
+    _terminal.buffer.clear();
+    _terminal.buffer.setCursor(0, 0);
+
+    _terminal.onOutput = (data) {
+      session.write(utf8.encode(data));
+    };
+    _terminal.onResize = (width, height, pixelWidth, pixelHeight) {
+      session.resizeTerminal(width, height);
+    };
+
+    _listen(session.stdout);
+    _listen(session.stderr);
+
+    for (final snippet in SnippetProvider.snippets.value) {
+      if (snippet.autoRunOn?.contains(widget.spi.id) == true) {
+        snippet.runInTerm(_terminal, widget.spi);
+      }
+    }
+
+    if (widget.initCmd != null) {
+      _terminal.textInput(widget.initCmd!);
+      _terminal.keyInput(TerminalKey.enter);
+    }
+
+    if (widget.initSnippet != null) {
+      widget.initSnippet!.runInTerm(_terminal, widget.spi);
+    }
+
+    widget.focusNode?.requestFocus();
+
+    await session.done;
+    if (mounted && widget.notFromTab) {
+      context.pop();
+    }
+    widget.onSessionEnd?.call();
+  }
+
+  void _listen(Stream<Uint8List>? stream) {
+    if (stream == null) {
+      return;
+    }
+    stream
+        .cast<List<int>>()
+        .transform(const Utf8Decoder())
+        .listen(_terminal.write);
+  }
+
+  void _setupDiscontinuityTimer() {
+    _discontinuityTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) async {
+        var throwTimeout = true;
+        Future.delayed(const Duration(seconds: 3), () {
+          if (throwTimeout) {
+            _catchTimeout();
+          }
+        });
+        await _client?.ping();
+        throwTimeout = false;
+      },
+    );
+  }
+
+  void _catchTimeout() {
+    _discontinuityTimer?.cancel();
+    if (!mounted) return;
+    _writeLn('\n\nConnection lost\r\n');
+    context.showRoundDialog(
+      title: libL10n.attention,
+      child: Text('${l10n.disconnected}\n${l10n.goBackQ}'),
+      barrierDismiss: false,
+      actions: Btn.ok(
+        onTap: () {
+          if (mounted) {
+            context.pop();
+          }
+        },
+      ).toList,
+    );
+  }
+
+  void _writeLn(String p0) {
+    _terminal.write('$p0\r\n');
+  }
+}
+
+extension _VirtKey on SSHPageState {
   void _doVirtualKey(VirtKey item) {
     if (item.func != null) {
       HapticFeedback.mediumImpact();
@@ -380,10 +535,6 @@ class SSHPageState extends State<SSHPage>
     return _terminal.buffer.getText(range);
   }
 
-  void _writeLn(String p0) {
-    _terminal.write('$p0\r\n');
-  }
-
   void _initVirtKeys() {
     final virtKeys = VirtKeyX.loadFromStore();
     for (int len = 0; len < virtKeys.length; len += 7) {
@@ -397,152 +548,5 @@ class SSHPageState extends State<SSHPage>
 
   FutureOr<List<String>?> _onKeyboardInteractive(SSHUserInfoRequest req) {
     return KeybordInteractive.defaultHandle(widget.spi, ctx: context);
-  }
-
-  Future<void> _initTerminal() async {
-    _writeLn(l10n.waitConnection);
-    _client ??= await genClient(
-      widget.spi,
-      onStatus: (p0) {
-        _writeLn(p0.toString());
-      },
-      onKeyboardInteractive: _onKeyboardInteractive,
-    );
-
-    _writeLn('${libL10n.execute}: Shell');
-    final session = await _client?.shell(
-      pty: SSHPtyConfig(
-        width: _terminal.viewWidth,
-        height: _terminal.viewHeight,
-      ),
-      environment: widget.spi.envs,
-    );
-
-    //_setupDiscontinuityTimer();
-
-    if (session == null) {
-      _writeLn(libL10n.fail);
-      return;
-    }
-
-    _terminal.buffer.clear();
-    _terminal.buffer.setCursor(0, 0);
-
-    _terminal.onOutput = (data) {
-      session.write(utf8.encode(data));
-    };
-    _terminal.onResize = (width, height, pixelWidth, pixelHeight) {
-      session.resizeTerminal(width, height);
-    };
-
-    _listen(session.stdout);
-    _listen(session.stderr);
-
-    for (final snippet in SnippetProvider.snippets.value) {
-      if (snippet.autoRunOn?.contains(widget.spi.id) == true) {
-        snippet.runInTerm(_terminal, widget.spi);
-      }
-    }
-
-    if (widget.initCmd != null) {
-      _terminal.textInput(widget.initCmd!);
-      _terminal.keyInput(TerminalKey.enter);
-    }
-
-    if (widget.initSnippet != null) {
-      widget.initSnippet!.runInTerm(_terminal, widget.spi);
-    }
-
-    widget.focusNode?.requestFocus();
-
-    await session.done;
-    if (mounted && widget.notFromTab) {
-      context.pop();
-    }
-    widget.onSessionEnd?.call();
-  }
-
-  void _listen(Stream<Uint8List>? stream) {
-    if (stream == null) {
-      return;
-    }
-    stream
-        .cast<List<int>>()
-        .transform(const Utf8Decoder())
-        .listen(_terminal.write);
-  }
-
-  void _setupDiscontinuityTimer() {
-    _discontinuityTimer = Timer.periodic(
-      const Duration(seconds: 5),
-      (_) async {
-        var throwTimeout = true;
-        Future.delayed(const Duration(seconds: 3), () {
-          if (throwTimeout) {
-            _catchTimeout();
-          }
-        });
-        await _client?.ping();
-        throwTimeout = false;
-      },
-    );
-  }
-
-  void _catchTimeout() {
-    _discontinuityTimer?.cancel();
-    if (!mounted) return;
-    _writeLn('\n\nConnection lost\r\n');
-    context.showRoundDialog(
-      title: libL10n.attention,
-      child: Text('${l10n.disconnected}\n${l10n.goBackQ}'),
-      barrierDismiss: false,
-      actions: Btn.ok(
-        onTap: () {
-          if (mounted) {
-            context.pop();
-          }
-        },
-      ).toList,
-    );
-  }
-
-  @override
-  bool get wantKeepAlive => true;
-
-  void _initStoredCfg() {
-    final fontFamilly = Stores.setting.fontPath.fetch().getFileName();
-    final textSize = Stores.setting.termFontSize.fetch();
-    final textStyle = TextStyle(
-      fontFamily: fontFamilly,
-      fontSize: textSize,
-    );
-
-    _terminalStyle = TerminalStyle.fromTextStyle(textStyle);
-  }
-
-  Future<void> _showHelp() async {
-    if (Stores.setting.sshTermHelpShown.fetch()) return;
-
-    return await context.showRoundDialog(
-      title: libL10n.doc,
-      child: Text(l10n.sshTermHelp),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Stores.setting.sshTermHelpShown.put(true);
-            context.pop();
-          },
-          child: Text(l10n.noPromptAgain),
-        ),
-      ],
-    );
-  }
-
-  @override
-  FutureOr<void> afterFirstLayout(BuildContext context) async {
-    await _showHelp();
-    await _initTerminal();
-
-    if (Stores.setting.sshWakeLock.fetch()) WakelockPlus.enable();
   }
 }

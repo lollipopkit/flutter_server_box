@@ -21,6 +21,7 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 17),
         children: [
+          _buildFgService(),
           _buildBgRun(),
           _buildAndroidWidgetSharedPreference(),
           if (BioAuth.isPlatformSupported)
@@ -115,4 +116,11 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
   //     },
   //   );
   // }
+
+  Widget _buildFgService() {
+    return ListTile(
+      title: TipText(l10n.fgService, l10n.fgServiceTip),
+      trailing: StoreSwitch(prop: Stores.setting.fgService),
+    );
+  }
 }

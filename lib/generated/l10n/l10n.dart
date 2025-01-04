@@ -434,6 +434,18 @@ abstract class AppLocalizations {
   /// **'If you downloaded this app from F-Droid, it is recommended to turn off this option.'**
   String get fdroidReleaseTip;
 
+  /// No description provided for @fgService.
+  ///
+  /// In en, this message translates to:
+  /// **'Foreground Service'**
+  String get fgService;
+
+  /// No description provided for @fgServiceTip.
+  ///
+  /// In en, this message translates to:
+  /// **'After enabling, some device models may crash. Disabling it may cause some models to be unable to maintain SSH connections in the background. Please allow ServerBox notification permissions, background running, and self-wake-up in system settings.'**
+  String get fgServiceTip;
+
   /// No description provided for @fileTooLarge.
   ///
   /// In en, this message translates to:

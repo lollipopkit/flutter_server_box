@@ -174,6 +174,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fdroidReleaseTip => '如果你是从 F-Droid 下载的本应用，推荐关闭此选项';
 
   @override
+  String get fgService => '前台服务';
+
+  @override
+  String get fgServiceTip => '开启后，可能会导致部分机型闪退。关闭可能导致部分机型无法后台保持 SSH 连接。请在系统设置内允许 ServerBox 通知权限、后台运行、自我唤醒。';
+
+  @override
   String fileTooLarge(Object file, Object size, Object sizeMax) {
     return '文件 \'$file\' 过大 \'$size\'，超过了 $sizeMax';
   }
@@ -868,6 +874,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get fdroidReleaseTip => '如果你是從 F-Droid 下載的本應用，推薦關閉此選項';
+
+  @override
+  String get fgService => '前台服務';
+
+  @override
+  String get fgServiceTip => '開啟後，可能會導致部分機型閃退。關閉可能導致部分機型無法後台保持 SSH 連接。請在系統設置內允許 ServerBox 通知權限、後台運行、自我喚醒。';
 
   @override
   String fileTooLarge(Object file, Object size, Object sizeMax) {

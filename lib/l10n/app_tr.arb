@@ -53,6 +53,8 @@
   "extraArgs": "Ek argümanlar",
   "fallbackSshDest": "Yedek SSH hedefi",
   "fdroidReleaseTip": "Bu uygulamayı F-Droid'den indirdiyseniz, bu seçeneği kapatmanız önerilir.",
+  "fgService": "Ön plan hizmeti",
+  "fgServiceTip": "Etkinleştirdikten sonra, bazı cihaz modellerinde çökme olabilir. Devre dışı bırakmak, bazı modellerin SSH bağlantılarını arka planda sürdürememesine neden olabilir. Lütfen sistem ayarlarında ServerBox bildirim izinlerine, arka planda çalışmaya ve kendiliğinden uyanmaya izin verin.",
   "fileTooLarge": "'{file}' dosyası çok büyük {size}, maksimum {sizeMax}",
   "followSystem": "Sistemi takip et",
   "font": "Yazı tipi",

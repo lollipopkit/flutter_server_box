@@ -235,6 +235,9 @@ class SettingStore extends HiveStore {
   /// Set it empty to use local editor GUI.
   late final sftpEditor = propertyDefault('sftpEditor', '');
 
+  /// Run foreground service on Android, if the SSH terminal is running
+  late final fgService = propertyDefault('fgService', false);
+
   // Never show these settings for users
   //
   // ------BEGIN------

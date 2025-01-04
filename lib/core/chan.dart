@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:server_box/data/res/misc.dart';
+import 'package:server_box/data/res/store.dart';
 
 abstract final class MethodChans {
   static const _channel = MethodChannel('${Miscs.pkgName}/main_chan');
@@ -8,14 +9,14 @@ abstract final class MethodChans {
     _channel.invokeMethod('sendToBackground');
   }
 
-  /// TODO: try fix the fn, then uncomment it and [stopService]
-  /// Issues #639
   static void startService() {
-    // _channel.invokeMethod('startService');
+    if (Stores.setting.fgService.fetch() != true) return;
+    _channel.invokeMethod('startService');
   }
 
   static void stopService() {
-    // _channel.invokeMethod('stopService');
+    if (Stores.setting.fgService.fetch() != true) return;
+    _channel.invokeMethod('stopService');
   }
 
   static void updateHomeWidget() async {

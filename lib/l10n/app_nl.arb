@@ -53,6 +53,8 @@
   "extraArgs": "Extra argumenten",
   "fallbackSshDest": "Fallback SSH-bestemming",
   "fdroidReleaseTip": "Als u deze app van F-Droid heeft gedownload, wordt aanbevolen deze optie uit te schakelen.",
+  "fgService": "Voorgrondservice",
+  "fgServiceTip": "Na het inschakelen kunnen sommige apparaatmodellen crashen. Uitschakelen kan ertoe leiden dat sommige modellen SSH-verbindingen niet op de achtergrond kunnen behouden. Sta ServerBox notificatierechten, achtergronduitvoering en zelf-ontwaken toe in systeeminstellingen.",
   "fileTooLarge": "Bestand '{file}' te groot {size}, max {sizeMax}",
   "followSystem": "Volg systeem",
   "font": "Lettertype",

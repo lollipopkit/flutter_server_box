@@ -53,6 +53,8 @@
   "extraArgs": "Argumentos extras",
   "fallbackSshDest": "Destino SSH de fallback",
   "fdroidReleaseTip": "Se você baixou este aplicativo do F-Droid, é recomendado desativar esta opção.",
+  "fgService": "Serviço em primeiro plano",
+  "fgServiceTip": "Após ativar, alguns modelos de dispositivos podem travar. Desativar pode fazer com que alguns modelos não consigam manter conexões SSH em segundo plano. Por favor, permita as permissões de notificação do ServerBox, execução em segundo plano e auto-despertar nas configurações do sistema.",
   "fileTooLarge": "Arquivo '{file}' muito grande '{size}', excedendo {sizeMax}",
   "followSystem": "Seguir sistema",
   "font": "Fonte",

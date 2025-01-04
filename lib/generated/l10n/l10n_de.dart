@@ -174,6 +174,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get fdroidReleaseTip => 'Wenn Sie diese App von F-Droid heruntergeladen haben, wird empfohlen, diese Option zu deaktivieren.';
 
   @override
+  String get fgService => 'Vordergrund-Dienst';
+
+  @override
+  String get fgServiceTip => 'Nach dem Einschalten kann es bei einigen Gerätemodellen zu Abstürzen kommen. Das Ausschalten kann bei einigen Modellen dazu führen, dass SSH-Verbindungen im Hintergrund nicht aufrechterhalten werden können. Bitte erlauben Sie ServerBox in den Systemeinstellungen Benachrichtigungsrechte, Hintergrundausführung und Selbstaktivierung.';
+
+  @override
   String fileTooLarge(Object file, Object size, Object sizeMax) {
     return 'Datei \'$file\' ist zu groß $size, max $sizeMax';
   }

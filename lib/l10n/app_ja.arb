@@ -53,6 +53,8 @@
   "extraArgs": "追加引数",
   "fallbackSshDest": "フォールバックSSH宛先",
   "fdroidReleaseTip": "このアプリをF-Droidからダウンロードした場合、このオプションをオフにすることをお勧めします。",
+  "fgService": "フォアグラウンドサービス",
+  "fgServiceTip": "有効にすると、一部の機種でクラッシュする可能性があります。無効にすると、一部の機種でバックグラウンドでのSSH接続を維持できなくなる可能性があります。システム設定でServerBoxの通知権限、バックグラウンド実行、自己起動を許可してください。",
   "fileTooLarge": "ファイル '{file}' は大きすぎます '{size}'、{sizeMax} を超えています",
   "followSystem": "システムに従う",
   "font": "フォント",

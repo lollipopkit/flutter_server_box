@@ -53,6 +53,8 @@
   "extraArgs": "Extra args",
   "fallbackSshDest": "SSH-Fallback-Ziel",
   "fdroidReleaseTip": "Wenn Sie diese App von F-Droid heruntergeladen haben, wird empfohlen, diese Option zu deaktivieren.",
+  "fgService": "Vordergrund-Dienst",
+  "fgServiceTip": "Nach dem Einschalten kann es bei einigen Gerätemodellen zu Abstürzen kommen. Das Ausschalten kann bei einigen Modellen dazu führen, dass SSH-Verbindungen im Hintergrund nicht aufrechterhalten werden können. Bitte erlauben Sie ServerBox in den Systemeinstellungen Benachrichtigungsrechte, Hintergrundausführung und Selbstaktivierung.",
   "fileTooLarge": "Datei '{file}' ist zu groß {size}, max {sizeMax}",
   "followSystem": "System verfolgen",
   "font": "Schriftarten",
