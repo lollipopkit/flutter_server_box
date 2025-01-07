@@ -80,36 +80,7 @@ class _EditorPageState extends State<EditorPage> {
   @override
   void initState() {
     super.initState();
-
-    /// Higher priority than [path]
-    if (Stores.setting.editorHighlight.fetch()) {
-      _langCode =
-          widget.args?.langCode ?? Highlights.getCode(widget.args?.path);
-    }
-    _controller = CodeController(
-      language: Highlights.all[_langCode],
-    );
-
-    if (_langCode == null) {
-      _setupCtrl();
-    } else {
-      Future.delayed(const Duration(milliseconds: 377)).then(
-        (value) async => await _setupCtrl(),
-      );
-    }
-  }
-
-  Future<void> _setupCtrl() async {
-    final path = widget.args?.path;
-    final text = widget.args?.text;
-    if (path != null) {
-      final code = await Computer.shared.startNoParam(
-        () => File(path).readAsString(),
-      );
-      _controller.text = code;
-    } else if (text != null) {
-      _controller.text = text;
-    }
+    _init();
   }
 
   @override
@@ -204,5 +175,39 @@ class _EditorPageState extends State<EditorPage> {
         ),
       ),
     ));
+  }
+}
+
+extension on _EditorPageState {
+  Future<void> _init() async {
+    /// Higher priority than [path]
+    if (Stores.setting.editorHighlight.fetch()) {
+      _langCode =
+          widget.args?.langCode ?? Highlights.getCode(widget.args?.path);
+    }
+    _controller = CodeController(
+      language: Highlights.all[_langCode],
+    );
+
+    if (_langCode == null) {
+      _setupCtrl();
+    } else {
+      Future.delayed(const Duration(milliseconds: 377)).then(
+        (value) async => await _setupCtrl(),
+      );
+    }
+  }
+
+  Future<void> _setupCtrl() async {
+    final path = widget.args?.path;
+    final text = widget.args?.text;
+    if (path != null) {
+      final code = await Computer.shared.startNoParam(
+        () => File(path).readAsString(),
+      );
+      _controller.text = code;
+    } else if (text != null) {
+      _controller.text = text;
+    }
   }
 }
