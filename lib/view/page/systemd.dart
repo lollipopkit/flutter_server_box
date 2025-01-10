@@ -42,7 +42,7 @@ final class _SystemdPageState extends State<SystemdPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
+      appBar: AppBar(
         title: const Text('Systemd'),
         actions: isDesktop
             ? [Btn.icon(icon: const Icon(Icons.refresh), onTap: _pro.getUnits)]

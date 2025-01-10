@@ -107,7 +107,7 @@ class _EditorPageState extends State<EditorPage> {
   }
 
   PreferredSizeWidget _buildAppBar() {
-    return CustomAppBar(
+    return AppBar(
       centerTitle: true,
       title: TwoLineText(
         up: widget.args?.title ??

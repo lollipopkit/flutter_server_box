@@ -52,7 +52,7 @@ final class _PvePageState extends State<PvePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
+      appBar: AppBar(
         title: TwoLineText(up: 'PVE', down: widget.spi.name),
         actions: [
           ValBuilder(

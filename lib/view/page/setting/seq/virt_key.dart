@@ -17,7 +17,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: Text(l10n.editVirtKeys)),
+      appBar: AppBar(title: Text(l10n.editVirtKeys)),
       body: Column(
         children: [
           Padding(

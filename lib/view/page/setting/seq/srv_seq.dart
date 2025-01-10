@@ -16,7 +16,7 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: Text(l10n.serverOrder)),
+      appBar: AppBar(title: Text(l10n.serverOrder)),
       body: _buildBody(),
     );
   }

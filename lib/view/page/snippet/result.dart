@@ -11,7 +11,7 @@ class SnippetResultPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: Text(l10n.result)),
+      appBar: AppBar(title: Text(l10n.result)),
       body: _buildBody(),
     );
   }
