@@ -70,53 +70,51 @@ class _SettingsPageState extends State<SettingsPage>
 
   @override
   Widget build(BuildContext context) {
-    return VirtualWindowFrame(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(libL10n.setting, style: const TextStyle(fontSize: 20)),
-          bottom: TabBar(
-            controller: _tabCtrl,
-            dividerHeight: 0,
-            tabAlignment: TabAlignment.center,
-            isScrollable: true,
-            tabs: SettingsTabs.values
-                .map((e) => Tab(text: e.i18n))
-                .toList(growable: false),
-          ),
-          actions: [
-            Btn.text(
-              text: 'Logs',
-              onTap: () => DebugPage.route.go(
-                context,
-                args: const DebugPageArgs(title: 'Logs(${BuildData.build})'),
-              ),
-            ),
-            Btn.icon(
-              icon: const Icon(Icons.delete),
-              onTap: () => context.showRoundDialog(
-                title: libL10n.attention,
-                child: SimpleMarkdown(
-                  data: libL10n.askContinue(
-                    '${libL10n.delete} **${libL10n.all}** ${libL10n.setting}',
-                  ),
-                ),
-                actions: [
-                  CountDownBtn(
-                    onTap: () {
-                      context.pop();
-                      final keys = SettingStore.instance.box.keys;
-                      SettingStore.instance.box.deleteAll(keys);
-                      context.showSnackBar(libL10n.success);
-                    },
-                    afterColor: Colors.red,
-                  )
-                ],
-              ),
-            ),
-          ],
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(libL10n.setting, style: const TextStyle(fontSize: 20)),
+        bottom: TabBar(
+          controller: _tabCtrl,
+          dividerHeight: 0,
+          tabAlignment: TabAlignment.center,
+          isScrollable: true,
+          tabs: SettingsTabs.values
+              .map((e) => Tab(text: e.i18n))
+              .toList(growable: false),
         ),
-        body: TabBarView(controller: _tabCtrl, children: SettingsTabs.pages),
+        actions: [
+          Btn.text(
+            text: 'Logs',
+            onTap: () => DebugPage.route.go(
+              context,
+              args: const DebugPageArgs(title: 'Logs(${BuildData.build})'),
+            ),
+          ),
+          Btn.icon(
+            icon: const Icon(Icons.delete),
+            onTap: () => context.showRoundDialog(
+              title: libL10n.attention,
+              child: SimpleMarkdown(
+                data: libL10n.askContinue(
+                  '${libL10n.delete} **${libL10n.all}** ${libL10n.setting}',
+                ),
+              ),
+              actions: [
+                CountDownBtn(
+                  onTap: () {
+                    context.pop();
+                    final keys = SettingStore.instance.box.keys;
+                    SettingStore.instance.box.deleteAll(keys);
+                    context.showSnackBar(libL10n.success);
+                  },
+                  afterColor: Colors.red,
+                )
+              ],
+            ),
+          ),
+        ],
       ),
+      body: TabBarView(controller: _tabCtrl, children: SettingsTabs.pages),
     );
   }
 }
