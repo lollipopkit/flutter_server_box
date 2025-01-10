@@ -16,7 +16,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
+      appBar: AppBar(
         title: Text(l10n.mission, style: UIs.text18),
       ),
       body: _buildBody(),

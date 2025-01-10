@@ -38,7 +38,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
+      appBar: AppBar(
         title: Text(libL10n.edit),
         actions: _buildAppBarActions(),
       ),

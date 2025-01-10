@@ -110,7 +110,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     return GestureDetector(
       onTap: () => _focusScope.unfocus(),
       child: Scaffold(
-        appBar: CustomAppBar(title: Text(libL10n.edit), actions: actions),
+        appBar: AppBar(title: Text(libL10n.edit), actions: actions),
         body: _buildForm(),
         floatingActionButton: _buildFAB(),
       ),

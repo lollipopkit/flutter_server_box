@@ -53,7 +53,7 @@ class _LocalFilePageState extends State<LocalFilePage>
     super.build(context);
     final title = _path.path.fileNameGetter ?? libL10n.file;
     return Scaffold(
-      appBar: CustomAppBar(
+      appBar: AppBar(
         title: AnimatedSwitcher(
           duration: Durations.short3,
           child: Text(title, key: ValueKey(title)),

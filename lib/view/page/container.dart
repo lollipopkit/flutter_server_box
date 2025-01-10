@@ -60,7 +60,7 @@ class _ContainerPageState extends State<ContainerPage> {
       builder: (_, __) => Consumer<ContainerProvider>(
         builder: (_, ___, __) {
           return Scaffold(
-            appBar: CustomAppBar(
+            appBar: AppBar(
               centerTitle: true,
               title: TwoLineText(up: l10n.container, down: widget.spi.name),
               actions: [
