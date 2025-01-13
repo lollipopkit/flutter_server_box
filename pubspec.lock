@@ -138,18 +138,18 @@ packages:
     dependency: "direct dev"
     description:
       name: build_runner
-      sha256: "028819cfb90051c6b5440c7e574d1896f8037e3c96cf17aaeb054c9311cfbf4d"
+      sha256: "74691599a5bc750dc96a6b4bfd48f7d9d66453eab04c7f4063134800d6a5c573"
       url: "https://pub.dev"
     source: hosted
-    version: "2.4.13"
+    version: "2.4.14"
   build_runner_core:
     dependency: transitive
     description:
       name: build_runner_core
-      sha256: f8126682b87a7282a339b871298cc12009cb67109cfa1614d6436fb0289193e0
+      sha256: "22e3aa1c80e0ada3722fe5b63fd43d9c8990759d0a2cf489c8c5d7b2bdebc021"
       url: "https://pub.dev"
     source: hosted
-    version: "7.3.2"
+    version: "8.0.0"
   built_collection:
     dependency: transitive
     description:
@@ -461,8 +461,8 @@ packages:
     dependency: "direct dev"
     description:
       path: "."
-      ref: "v1.0.44"
-      resolved-ref: cc77a409966fcf104933aa63be05938e029cf4b3
+      ref: "v1.0.48"
+      resolved-ref: "9a589bb5b8d8376e32fb73793e8cf7c4ec4894a5"
       url: "https://github.com/lppcg/fl_build.git"
     source: git
     version: "1.0.0"
@@ -478,8 +478,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v1.0.225"
-      resolved-ref: "9ca92213fea15b8c245ed2cc2958e14baea5cdbe"
+      ref: "v1.0.235"
+      resolved-ref: b6b2fda4d91554c8c9b93bf360c672ec75fde74e
       url: "https://github.com/lppcg/fl_lib"
     source: git
     version: "0.0.1"
@@ -647,6 +647,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  freezed_annotation:
+    dependency: transitive
+    description:
+      name: freezed_annotation
+      sha256: c2e2d632dd9b8a2b7751117abcfc2b4888ecfe181bd9fca7170d9ef02e595fe2
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.4"
   frontend_server_client:
     dependency: transitive
     description:
@@ -1689,5 +1697,5 @@ packages:
     source: hosted
     version: "1.1.2"
 sdks:
-  dart: ">=3.5.0 <4.0.0"
+  dart: ">=3.6.0 <4.0.0"
   flutter: ">=3.24.0"

@@ -392,19 +392,10 @@ final class _AppSettingsPageState extends State<AppSettingsPage> {
                 )
             ];
             if (!_setting.useSystemPrimaryColor.fetch()) {
-              children.addAll([
-                Input(
-                  onSubmitted: _onSaveColor,
-                  controller: ctrl,
-                  hint: '#8b2252',
-                  icon: Icons.colorize,
-                  suggestion: false,
-                ),
-                ColorPicker(
-                  color: Color(_setting.colorSeed.fetch()),
-                  onColorChanged: (c) => ctrl.text = c.toHex,
-                )
-              ]);
+              children.add(ColorPicker(
+                color: Color(_setting.colorSeed.fetch()),
+                onColorChanged: (c) => ctrl.text = c.toHex,
+              ));
             }
             return Column(
               mainAxisSize: MainAxisSize.min,

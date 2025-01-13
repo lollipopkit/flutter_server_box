@@ -49,14 +49,14 @@ class _ServerPageState extends State<ServerPage>
   bool _useDoubleColumn = false;
 
   final _scrollController = ScrollController();
-  final _autoHideKey = GlobalKey<AutoHideState>();
+  final _autoHideCtrl = AutoHideController();
 
   @override
   void dispose() {
     super.dispose();
     _timer?.cancel();
     _scrollController.dispose();
-    _autoHideKey.currentState?.dispose();
+    _autoHideCtrl.dispose();
     _tag.dispose();
   }
 
@@ -105,7 +105,7 @@ class _ServerPageState extends State<ServerPage>
       ),
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () => _autoHideKey.currentState?.show(),
+        onTap: () => _autoHideCtrl.show(),
         child: ListenableBuilder(
           listenable: Stores.setting.textFactor.listenable(),
           builder: (_, __) {
@@ -115,10 +115,10 @@ class _ServerPageState extends State<ServerPage>
         ),
       ),
       floatingActionButton: AutoHide(
-        key: _autoHideKey,
         direction: AxisDirection.right,
         offset: 75,
-        controller: _scrollController,
+        scrollController: _scrollController,
+        hideController: _autoHideCtrl,
         child: FloatingActionButton(
           heroTag: 'addServer',
           onPressed: () => ServerEditPage.route.go(context),
