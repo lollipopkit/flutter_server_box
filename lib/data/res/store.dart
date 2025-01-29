@@ -1,7 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/store/container.dart';
 import 'package:server_box/data/store/history.dart';
-import 'package:server_box/data/store/no_backup.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -27,7 +26,6 @@ abstract final class Stores {
 
   static Future<void> init() async {
     await Future.wait(_allBackup.map((store) => store.init()));
-    await NoBackupStore.instance.init();
   }
 
   static DateTime? get lastModTime {

@@ -25,7 +25,6 @@ import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/store/no_backup.dart';
 
 Future<void> main() async {
   _runInZone(() async {
@@ -128,7 +127,6 @@ Future<void> _doVersionRelated() async {
   if (lastVer < newVer) {
     ServerDetailCards.autoAddNewCards(newVer);
     ServerFuncBtn.autoAddNewFuncs(newVer);
-    NoBackupStore.instance.migrate(lastVer);
     Stores.setting.lastVer.put(newVer);
   }
 }
