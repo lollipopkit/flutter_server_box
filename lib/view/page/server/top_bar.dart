@@ -35,7 +35,6 @@ final class _TopBar extends StatelessWidget implements PreferredSizeWidget {
                   SizedBox(width: 5),
                   Icon(
                     Icons.settings,
-                    color: Colors.grey,
                     size: 17,
                   ),
                 ],
