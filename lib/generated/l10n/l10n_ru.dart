@@ -55,6 +55,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get bgRunTip => 'Этот переключатель означает, что программа будет пытаться работать в фоновом режиме, но фактическое выполнение зависит от того, включено ли разрешение. Для нативного Android отключите «Оптимизацию батареи» для этого приложения, для MIUI измените контроль активности на «Нет ограничений».';
 
   @override
+  String get closeAfterSave => 'Сохранить и закрыть';
+
+  @override
   String get cmd => 'Команда';
 
   @override

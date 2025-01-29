@@ -11,17 +11,17 @@ import 'package:flutter_highlight/themes/monokai.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/highlight.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/setting.dart';
 
 import 'package:server_box/view/widget/two_line_text.dart';
 
+enum EditorPageRetType { path, text }
+
 final class EditorPageRet {
-  /// If edit text, this includes the edited result
-  final String? result;
+  final EditorPageRetType typ;
+  final String val;
 
-  /// Indicates whether it's ok to edit existing file
-  final bool? editExistedOk;
-
-  const EditorPageRet({this.result, this.editExistedOk});
+  const EditorPageRet(this.typ, this.val);
 }
 
 final class EditorPageArgs {
@@ -38,11 +38,14 @@ final class EditorPageArgs {
 
   final String? title;
 
+  final void Function(BuildContext, EditorPageRet) onSave;
+
   const EditorPageArgs({
     this.path,
     this.text,
     this.langCode,
     this.title,
+    required this.onSave,
   });
 }
 
@@ -51,7 +54,7 @@ class EditorPage extends StatefulWidget {
 
   const EditorPage({super.key, this.args});
 
-  static const route = AppRoute<EditorPageRet, EditorPageArgs>(
+  static const route = AppRoute<void, EditorPageArgs>(
     page: EditorPage.new,
     path: '/editor',
   );
@@ -69,6 +72,7 @@ class _EditorPageState extends State<EditorPage> {
       TextStyle(fontSize: Stores.setting.editorFontSize.fetch());
 
   String? _langCode;
+  var _saved = false;
 
   @override
   void dispose() {
@@ -99,10 +103,16 @@ class _EditorPageState extends State<EditorPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _codeTheme['root']?.backgroundColor,
-      appBar: _buildAppBar(),
-      body: _buildBody(),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        _pop();
+      },
+      child: Scaffold(
+        backgroundColor: _codeTheme['root']?.backgroundColor,
+        appBar: _buildAppBar(),
+        body: _buildBody(),
+      ),
     );
   }
 
@@ -136,25 +146,7 @@ class _EditorPageState extends State<EditorPage> {
         IconButton(
           icon: const Icon(Icons.save),
           tooltip: l10n.save,
-          onPressed: () async {
-            // If path is not null, then it's a file editor
-            // save the text and return true to pop the page
-            final path = widget.args?.path;
-            if (path != null) {
-              final (res, _) = await context.showLoadingDialog(
-                fn: () => File(path).writeAsString(_controller.text),
-              );
-              if (res == null) {
-                context.showSnackBar(libL10n.fail);
-                return;
-              }
-              context.pop(const EditorPageRet(editExistedOk: true));
-              return;
-            }
-            // else it's a text editor
-            // return the text to the previous page
-            context.pop(EditorPageRet(result: _controller.text));
-          },
+          onPressed: _onSave,
         )
       ],
     );
@@ -209,5 +201,45 @@ extension on _EditorPageState {
     } else if (text != null) {
       _controller.text = text;
     }
+  }
+
+  void _onSave() async {
+    // If path is not null, then it's a file editor
+    final path = widget.args?.path;
+    if (path != null) {
+      final (res, _) = await context.showLoadingDialog(
+        fn: () => File(path).writeAsString(_controller.text),
+      );
+      if (res == null) {
+        context.showSnackBar(libL10n.fail);
+        return;
+      }
+      final ret = EditorPageRet(EditorPageRetType.path, path);
+      widget.args?.onSave(context, ret);
+      _saved = true;
+
+      final pop_ = SettingStore.instance.closeAfterSave.fetch();
+      if (pop_) _pop();
+      return;
+    }
+    // it's a text editor
+    final ret = EditorPageRet(EditorPageRetType.text, _controller.text);
+    widget.args?.onSave(context, ret);
+    _saved = true;
+
+    final pop_ = SettingStore.instance.closeAfterSave.fetch();
+    if (pop_) _pop();
+  }
+
+  void _pop() async {
+    if (!_saved) {
+      final ret = await context.showRoundDialog(
+        title: libL10n.attention,
+        child: Text(libL10n.askContinue(libL10n.exit)),
+        actions: Btnx.cancelOk,
+      );
+      if (ret != true) return;
+    }
+    context.pop();
   }
 }

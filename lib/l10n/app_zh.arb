@@ -16,6 +16,7 @@
   "battery": "电池",
   "bgRun": "后台运行",
   "bgRunTip": "此开关只代表程序会尝试在后台运行，具体能否后台运行取决于是否开启了权限。原生 Android 请关闭本 App 的“电池优化”，MIUI / HyperOS 请修改省电策略为“无限制”。",
+  "closeAfterSave": "保存后关闭",
   "cmd": "命令",
   "collapseUITip": "是否默认折叠 UI 中的长列表",
   "conn": "连接",

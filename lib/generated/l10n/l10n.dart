@@ -212,6 +212,12 @@ abstract class AppLocalizations {
   /// **'This switch only means the program will try to run in the background. Whether it can run in the background depends on whether the permission is enabled or not. For AOSP-based Android ROMs, please disable \"Battery Optimization\" in this app. For MIUI / HyperOS, please change the power saving policy to \"Unlimited\".'**
   String get bgRunTip;
 
+  /// No description provided for @closeAfterSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save and close'**
+  String get closeAfterSave;
+
   /// No description provided for @cmd.
   ///
   /// In en, this message translates to:

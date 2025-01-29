@@ -55,6 +55,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get bgRunTip => 'Цей перемикач лише вказує на те, що програма намагатиметься працювати у фоновому режимі. Чи може вона працювати у фоновому режимі, залежить від прав доступу. Для AOSP-орієнтованих Android ROM, будь ласка, вимкніть \"Оптимізацію акумулятора\" в цьому додатку. Для MIUI / HyperOS, будь ласка, змініть політику економії енергії на \"Нескінченна\".';
 
   @override
+  String get closeAfterSave => 'Зберегти та закрити';
+
+  @override
   String get cmd => 'Команда';
 
   @override

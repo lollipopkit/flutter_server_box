@@ -55,6 +55,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get bgRunTip => 'Deze schakelaar betekent alleen dat het programma zal proberen op de achtergrond uit te voeren, of het in de achtergrond kan worden uitgevoerd, hangt af van of de toestemming is ingeschakeld of niet. Voor native Android, schakel \"Batterijoptimalisatie\" uit in deze app, en voor miui, wijzig de energiebesparingsbeleid naar \"Onbeperkt\".';
 
   @override
+  String get closeAfterSave => 'Opslaan en sluiten';
+
+  @override
   String get cmd => 'Opdracht';
 
   @override

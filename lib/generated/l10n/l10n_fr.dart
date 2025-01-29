@@ -55,6 +55,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get bgRunTip => 'Cette option signifie seulement que le programme essaiera de s\'exécuter en arrière-plan, que cela soit possible dépend de l\'autorisation activée ou non. Pour Android natif, veuillez désactiver l\'« Optimisation de la batterie » dans cette application, et pour MIUI, veuillez changer la politique d\'économie d\'énergie en « Illimité ».';
 
   @override
+  String get closeAfterSave => 'Enregistrer et fermer';
+
+  @override
   String get cmd => 'Commande';
 
   @override

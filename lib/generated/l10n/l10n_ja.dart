@@ -55,6 +55,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get bgRunTip => 'このスイッチはプログラムがバックグラウンドで実行を試みることを意味しますが、実際にバックグラウンドで実行できるかどうかは、権限が有効になっているかに依存します。AOSPベースのAndroid ROMでは、このアプリの「バッテリー最適化」をオフにしてください。MIUIでは、省エネモードを「無制限」に変更してください。';
 
   @override
+  String get closeAfterSave => '保存して閉じる';
+
+  @override
   String get cmd => 'コマンド';
 
   @override

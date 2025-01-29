@@ -55,6 +55,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get bgRunTip => 'Sakelar ini hanya berarti aplikasi akan mencoba berjalan di latar belakang, apakah aplikasi dapat berjalan di latar belakang tergantung pada apakah izin diaktifkan atau tidak. Untuk Android asli, nonaktifkan \"Pengoptimalan Baterai\" di aplikasi ini, dan untuk miui, ubah kebijakan penghematan daya ke \"Tidak Terbatas\".';
 
   @override
+  String get closeAfterSave => 'Simpan dan tutup';
+
+  @override
   String get cmd => 'Memerintah';
 
   @override

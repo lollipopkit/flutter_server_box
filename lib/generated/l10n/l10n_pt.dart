@@ -55,6 +55,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get bgRunTip => 'Este interruptor indica que o programa tentará rodar em segundo plano, mas a capacidade de fazer isso depende das permissões concedidas. No Android nativo, desative a \'Otimização de bateria\' para este app, no MIUI, altere a estratégia de economia de energia para \'Sem restrições\'.';
 
   @override
+  String get closeAfterSave => 'Salvar e fechar';
+
+  @override
   String get cmd => 'Comando';
 
   @override

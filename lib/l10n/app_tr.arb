@@ -16,6 +16,7 @@
   "battery": "Pil",
   "bgRun": "Arka planda çalıştır",
   "bgRunTip": "Bu anahtar yalnızca programın arka planda çalışmayı deneyeceğini ifade eder. Arka planda çalışıp çalışamayacağı, iznin etkinleştirilip etkinleştirilmediğine bağlıdır. AOSP tabanlı Android ROM'larda, bu uygulamada \"Pil Optimizasyonunu\" devre dışı bırakın. MIUI / HyperOS için, güç tasarrufu politikasını \"Sınırsız\" olarak değiştirin.",
+  "closeAfterSave": "Kaydet ve kapat",
   "cmd": "Komut",
   "collapseUITip": "UI'daki uzun listeleri varsayılan olarak gizleyip gizlememeyi belirler",
   "conn": "Bağlantı",

@@ -55,6 +55,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get bgRunTip => 'Bu anahtar yalnızca programın arka planda çalışmayı deneyeceğini ifade eder. Arka planda çalışıp çalışamayacağı, iznin etkinleştirilip etkinleştirilmediğine bağlıdır. AOSP tabanlı Android ROM\'larda, bu uygulamada \"Pil Optimizasyonunu\" devre dışı bırakın. MIUI / HyperOS için, güç tasarrufu politikasını \"Sınırsız\" olarak değiştirin.';
 
   @override
+  String get closeAfterSave => 'Kaydet ve kapat';
+
+  @override
   String get cmd => 'Komut';
 
   @override
