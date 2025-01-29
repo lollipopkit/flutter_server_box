@@ -13,7 +13,6 @@ import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:server_box/data/store/no_backup.dart';
 import 'package:webdav_client/webdav_client.dart';
 
 class BackupPage extends StatefulWidget {
@@ -25,7 +24,6 @@ class BackupPage extends StatefulWidget {
 
 final class _BackupPageState extends State<BackupPage>
     with AutomaticKeepAliveClientMixin {
-  final _noBak = NoBackupStore.instance;
   final icloudLoading = false.vn;
   final webdavLoading = false.vn;
 
@@ -108,7 +106,7 @@ final class _BackupPageState extends State<BackupPage>
         trailing: StoreSwitch(
           prop: PrefProps.icloudSync,
           validator: (p0) {
-            if (p0 && _noBak.webdavSync.fetch()) {
+            if (p0 && PrefProps.webdavSync.get()) {
               context.showSnackBar(l10n.autoBackupConflict);
               return false;
             }
@@ -141,12 +139,21 @@ final class _BackupPageState extends State<BackupPage>
           ListTile(
             title: Text(libL10n.auto),
             trailing: StoreSwitch(
-              prop: _noBak.webdavSync,
+              prop: PrefProps.webdavSync,
               validator: (p0) {
                 if (p0) {
-                  if (_noBak.webdavUrl.fetch().isEmpty ||
-                      _noBak.webdavUser.fetch().isEmpty ||
-                      _noBak.webdavPwd.fetch().isEmpty) {
+                  final url = PrefProps.webdavUrl.get();
+                  final user = PrefProps.webdavUser.get();
+                  final pwd = PrefProps.webdavPwd.get();
+
+                  final anyNull = url == null || user == null || pwd == null;
+                  if (anyNull) {
+                    context.showSnackBar(l10n.webdavSettingEmpty);
+                    return false;
+                  }
+
+                  final anyEmpty = url.isEmpty || user.isEmpty || pwd.isEmpty;
+                  if (anyEmpty) {
                     context.showSnackBar(l10n.webdavSettingEmpty);
                     return false;
                   }
@@ -365,9 +372,9 @@ final class _BackupPageState extends State<BackupPage>
   }
 
   Future<void> _onTapWebdavSetting(BuildContext context) async {
-    final url = TextEditingController(text: _noBak.webdavUrl.fetch());
-    final user = TextEditingController(text: _noBak.webdavUser.fetch());
-    final pwd = TextEditingController(text: _noBak.webdavPwd.fetch());
+    final url = TextEditingController(text: PrefProps.webdavUrl.get());
+    final user = TextEditingController(text: PrefProps.webdavUser.get());
+    final pwd = TextEditingController(text: PrefProps.webdavPwd.get());
     final nodeUser = FocusNode();
     final nodePwd = FocusNode();
     final result = await context.showRoundDialog<bool>(
@@ -377,7 +384,7 @@ final class _BackupPageState extends State<BackupPage>
         children: [
           Input(
             label: 'URL',
-            hint: 'https://example.com/webdav/',
+            hint: 'https://example.com/sub/',
             controller: url,
             suggestion: false,
             onSubmitted: (p0) => FocusScope.of(context).requestFocus(nodeUser),
@@ -402,10 +409,17 @@ final class _BackupPageState extends State<BackupPage>
     );
     if (result == true) {
       try {
-        await Webdav.test(url.text, user.text, pwd.text);
+        final url_ = url.text;
+        final user_ = user.text;
+        final pwd_ = pwd.text;
+
+        await Webdav.test(url_, user_, pwd_);
         context.showSnackBar(libL10n.success);
-        Webdav.shared.client =
-            WebdavClient(url: url.text, user: user.text, pwd: pwd.text);
+
+        Webdav.shared.client = WebdavClient(url: url_, user: user_, pwd: pwd_);
+        PrefProps.webdavUrl.set(url_);
+        PrefProps.webdavUser.set(user_);
+        PrefProps.webdavPwd.set(pwd_);
       } catch (e, s) {
         context.showErrDialog(e, s, 'Webdav');
       }
