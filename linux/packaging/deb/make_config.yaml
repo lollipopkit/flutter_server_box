@@ -1,0 +1,31 @@
+display_name: ServerBox
+package_name: cn.lpkt.serverbox
+maintainer:
+  name: lollipopkit
+  email: 10864310+lollipopkit@users.noreply.github.com
+# co_authors:
+#   - name: 
+#     email: 
+priority: optional
+section: x11
+installed_size: 6604
+essential: false
+icon: assets/app_icon.png
+
+# postinstall_scripts:
+#   - echo "Installed my awesome app"
+# postuninstall_scripts:
+#   - echo "Surprised Pickachu face"
+
+keywords:
+  - server
+  - ssh
+  - sftp
+  - system
+
+generic_name: ServerBox
+
+categories:
+  - Utility
+
+startup_notify: true

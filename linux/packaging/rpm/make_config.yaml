@@ -1,0 +1,23 @@
+icon: assets/app_icon.png
+summary: Server status and tools to manage server.
+group: Application/Utility
+vendor: lollipopkit
+packager: lollipopkit
+packagerEmail: 10864310+lollipopkit@users.noreply.github.com
+license: GPLv3
+url: https://github.com/lollipopkit/flutter_server_box
+
+display_name: ServerBox
+
+keywords:
+  - server
+  - ssh
+  - sftp
+  - system
+
+generic_name: ServerBox
+
+categories:
+  - Utility
+
+startup_notify: true

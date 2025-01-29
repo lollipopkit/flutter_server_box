@@ -210,12 +210,10 @@ class ServerProvider extends Provider {
     Stores.setting.serverOrder.put(serverOrder.value);
     Stores.server.deleteAll();
     _updateTags();
+    bakSync.sync(milliDelay: 1000);
   }
 
-  static Future<void> updateServer(
-    Spi old,
-    Spi newSpi,
-  ) async {
+  static Future<void> updateServer(Spi old, Spi newSpi) async {
     if (old != newSpi) {
       Stores.server.update(old, newSpi);
       servers[old.id]?.value.spi = newSpi;
@@ -236,7 +234,7 @@ class ServerProvider extends Provider {
       }
     }
     _updateTags();
-    bakSync.sync();
+    bakSync.sync(milliDelay: 1000);
   }
 
   static void _setServerState(VNode<Server> s, ServerConn ss) {

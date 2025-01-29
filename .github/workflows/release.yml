@@ -53,14 +53,31 @@ jobs:
         uses: actions/checkout@v4
       - name: Install Flutter
         uses: subosito/flutter-action@v2
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          # Basic
+          sudo apt install -y clang cmake ninja-build pkg-config libgtk-3-dev libvulkan-dev desktop-file-utils
+          # App Specific
+          sudo apt install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libunwind-dev
+          # Packaging
+          sudo apt install -y rpm patchelf
       - name: Build
         run: |
-          dart run fl_build -p linux
+          dart run fl_build
+          dart run flutter_distributor:main release --name linux --skip-clean
+      - name: Rename artifacts
+        run: |
+          deb_name=$(ls dist/*/*.deb)
+          mv $deb_name ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.deb
+          rpm_name=$(ls dist/*/*.rpm)
+          mv $rpm_name ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.rpm
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.AppImage
+            ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.deb
+            ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.rpm
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

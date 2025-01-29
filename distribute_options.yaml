@@ -1,0 +1,13 @@
+variables:
+output: dist/
+releases:
+  - name: linux
+    jobs:
+      - name: release-linux-deb
+        package:
+          platform: linux
+          target: deb
+      - name: release-linux-rpm
+        package:
+          platform: linux
+          target: rpm
