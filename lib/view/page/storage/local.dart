@@ -217,14 +217,17 @@ class _LocalFilePageState extends State<LocalFilePage>
                 );
                 return;
               }
-              final ret = await EditorPage.route.go(
+
+              await EditorPage.route.go(
                 context,
-                args: EditorPageArgs(path: file.absolute.path),
+                args: EditorPageArgs(
+                  path: file.absolute.path,
+                  onSave: (context, _) {
+                    context.showSnackBar(l10n.saved);
+                    setState(() {});
+                  },
+                ),
               );
-              if (ret?.editExistedOk == true) {
-                context.showSnackBar(l10n.saved);
-                setState(() {});
-              }
             },
           ),
           Btn.tile(

@@ -238,6 +238,9 @@ class SettingStore extends HiveStore {
   /// Run foreground service on Android, if the SSH terminal is running
   late final fgService = propertyDefault('fgService', false);
 
+  /// Close the editor after saving
+  late final closeAfterSave = propertyDefault('closeAfterSave', false);
+
   // Never show these settings for users
   //
   // ------BEGIN------

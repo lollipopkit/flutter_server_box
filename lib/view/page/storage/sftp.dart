@@ -317,19 +317,21 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     );
     if (suc == null || err != null) return;
 
-    final ret = await EditorPage.route.go(
+    await EditorPage.route.go(
       context,
-      args: EditorPageArgs(path: localPath),
+      args: EditorPageArgs(
+        path: localPath,
+        onSave: (context, _) {
+          SftpProvider.add(SftpReq(
+            req.spi,
+            remotePath,
+            localPath,
+            SftpReqType.upload,
+          ));
+          context.showSnackBar(l10n.added2List);
+        },
+      ),
     );
-    if (ret?.editExistedOk == true) {
-      SftpProvider.add(SftpReq(
-        req.spi,
-        remotePath,
-        localPath,
-        SftpReqType.upload,
-      ));
-      context.showSnackBar(l10n.added2List);
-    }
   }
 
   void _download(SftpName name) {

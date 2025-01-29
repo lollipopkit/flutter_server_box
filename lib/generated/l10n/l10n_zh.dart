@@ -55,6 +55,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bgRunTip => '此开关只代表程序会尝试在后台运行，具体能否后台运行取决于是否开启了权限。原生 Android 请关闭本 App 的“电池优化”，MIUI / HyperOS 请修改省电策略为“无限制”。';
 
   @override
+  String get closeAfterSave => '保存后关闭';
+
+  @override
   String get cmd => '命令';
 
   @override
@@ -755,6 +758,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get bgRunTip => '此開關只代表程式會嘗試在後台運行，具體能否在後臺運行取決於是否開啟了權限。 原生 Android 請關閉本 App 的“電池優化”，MIUI / HyperOS 請修改省電策略為“無限制”。';
+
+  @override
+  String get closeAfterSave => '儲存後關閉';
 
   @override
   String get cmd => '命令';

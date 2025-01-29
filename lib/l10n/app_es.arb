@@ -16,6 +16,7 @@
   "battery": "Batería",
   "bgRun": "Ejecución en segundo plano",
   "bgRunTip": "Este interruptor solo indica que la aplicación intentará correr en segundo plano, si puede hacerlo o no depende de si tiene el permiso correspondiente. En Android puro, por favor desactiva la “optimización de batería” para esta app, en MIUI por favor cambia la estrategia de ahorro de energía a “Sin restricciones”.",
+  "closeAfterSave": "Guardar y cerrar",
   "cmd": "Comando",
   "collapseUITip": "¿Colapsar por defecto las listas largas en la UI?",
   "conn": "Conectar",
