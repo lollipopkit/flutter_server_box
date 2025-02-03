@@ -63,6 +63,7 @@ jobs:
           sudo apt install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libunwind-dev
           # Packaging
           sudo wget https://github.com/AppImage/appimagetool/releases/download/1.9.0/appimagetool-x86_64.AppImage -o /bin/appimagetool
+          sudo chmod +x /bin/appimagetool
       - name: Build
         run: |
           dart run fl_build
