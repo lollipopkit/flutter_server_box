@@ -70,7 +70,7 @@ jobs:
           dart run flutter_distributor:main package --platform=linux --target=appimage
       - name: Rename artifacts
         run: |
-          appimage_name=$(ls dist/*/*.deb)
+          appimage_name=$(ls dist/*/*.AppImage)
           mv $appimage_name ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.appimage
       - name: Create Release
         uses: softprops/action-gh-release@v2
