@@ -18,12 +18,12 @@ jobs:
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
-          flutter-version: '3.27.3'
+          channel: "stable"
+          flutter-version: "3.27.3"
       - uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
-          java-version: '17'
+          distribution: "zulu"
+          java-version: "17"
       - name: Fetch secrets
         run: |
           curl -u ${{ secrets.BASIC_AUTH }} -o android/app/app.key ${{ secrets.URL_PREFIX }}app.key
@@ -57,27 +57,24 @@ jobs:
         run: |
           sudo apt update
           # Basic
-          sudo apt install -y clang cmake ninja-build pkg-config libgtk-3-dev libvulkan-dev desktop-file-utils
+          sudo apt install -y clang cmake ninja-build pkg-config libgtk-3-dev libvulkan-dev desktop-file-utils wget
           # App Specific
           sudo apt install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libunwind-dev
           # Packaging
-          sudo apt install -y rpm patchelf
+          sudo wget https://github.com/AppImage/appimagetool/releases/download/1.9.0/appimagetool-x86_64.AppImage -o /bin/appimagetool
       - name: Build
         run: |
           dart run fl_build
-          dart run flutter_distributor:main release --name linux --skip-clean
+          dart run flutter_distributor:main package --platform=linux --target=appimage
       - name: Rename artifacts
         run: |
-          deb_name=$(ls dist/*/*.deb)
-          mv $deb_name ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.deb
-          rpm_name=$(ls dist/*/*.rpm)
-          mv $rpm_name ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.rpm
+          appimage_name=$(ls dist/*/*.deb)
+          mv $appimage_name ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.appimage
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.deb
-            ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.rpm
+            ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.appimage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -107,9 +104,9 @@ jobs:
   #       uses: actions/checkout@v4
   #     - name: Install Flutter
   #       uses: subosito/flutter-action@v2
-        # with:
-        #   channel: 'stable'
-        #   flutter-version: '3.22.2'
+  # with:
+  #   channel: 'stable'
+  #   flutter-version: '3.22.2'
   #     - name: Build
   #       run: dart run fl_build -p ios,mac
   #     - name: Create Release
