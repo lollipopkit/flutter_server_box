@@ -330,7 +330,7 @@ final class _AppSettingsPageState extends State<AppSettingsPage> {
           return Text(display, style: UIs.textGrey);
         },
       ),
-      onTap: () => Funcs.throttle(
+      onTap: () => Fns.throttle(
         () => AppUpdateIface.doUpdate(
           context: context,
           build: BuildData.build,
