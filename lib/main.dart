@@ -53,15 +53,7 @@ Future<void> _initApp() async {
   await Paths.init(BuildData.name, bakName: 'srvbox_bak.json');
   await _initData();
   _setupDebug();
-
-  final windowSize = Stores.setting.windowSize;
-  final hideTitleBar = Stores.setting.hideTitleBar.fetch();
-  await SystemUIs.initDesktopWindow(
-    hideTitleBar: hideTitleBar,
-    size: windowSize.fetch().toSize(),
-    listener: WindowSizeListener(windowSize),
-  );
-
+  _initWindow();
   FontUtils.loadFrom(Stores.setting.fontPath.fetch());
 
   _doPlatformRelated();
@@ -129,4 +121,17 @@ Future<void> _doVersionRelated() async {
     ServerFuncBtn.autoAddNewFuncs(newVer);
     Stores.setting.lastVer.put(newVer);
   }
+}
+
+Future<void> _initWindow() async {
+  if (!isDesktop) return;
+  final windowStateProp = Stores.setting.windowState;
+  final windowState = windowStateProp.fetch();
+  final hideTitleBar = Stores.setting.hideTitleBar.fetch();
+  await SystemUIs.initDesktopWindow(
+    hideTitleBar: hideTitleBar,
+    size: windowState?.size,
+    position: windowState?.position,
+    listener: WindowStateListener(windowStateProp),
+  );
 }

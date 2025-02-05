@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
@@ -223,9 +225,14 @@ class SettingStore extends HiveStore {
 
   late final betaTest = propertyDefault('betaTest', false);
 
-  /// If it's empty, skip change window size.
-  /// Format: {width}x{height}
-  late final windowSize = propertyDefault('windowSize', '');
+  /// For desktop only.
+  /// Record the position and size of the window.
+  late final windowState = property<WindowState>(
+    'windowState',
+    fromStr: (jsonStr) =>
+        WindowState.fromJson(jsonDecode(jsonStr) as Map<String, dynamic>),
+    toStr: (state) => state == null ? null : jsonEncode(state.toJson()),
+  );
 
   late final introVer = propertyDefault('introVer', 0);
 

@@ -63,7 +63,7 @@ dependencies:
   fl_lib:
     git:
       url: https://github.com/lppcg/fl_lib
-      ref: v1.0.236
+      ref: v1.0.243
   flutter_distributor: ^0.4.5
 
 dependency_overrides:
