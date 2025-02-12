@@ -53,7 +53,7 @@ Future<void> _initApp() async {
   await Paths.init(BuildData.name, bakName: 'srvbox_bak.json');
   await _initData();
   _setupDebug();
-  _initWindow();
+  await _initWindow();
   FontUtils.loadFrom(Stores.setting.fontPath.fetch());
 
   _doPlatformRelated();
