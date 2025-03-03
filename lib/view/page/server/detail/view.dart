@@ -161,7 +161,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     if (logoUrl == null) return UIs.placeholder;
 
     final dist = si.status.more[StatusCmdType.sys]?.dist;
-    if (dist == null) return UIs.placeholder;
+    if (dist == null && (logoUrl.contains('{DIST}') || logoUrl.contains('{BRIGHT}')) ) return UIs.placeholder;
 
     logoUrl = logoUrl
         .replaceFirst('{DIST}', dist.name)

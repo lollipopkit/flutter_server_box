@@ -105,6 +105,7 @@ enum PkgManager {
         return PkgManager.apt;
       case Dist.opensuse:
         return PkgManager.zypper;
+      case Dist.coreelec:
       case Dist.wrt:
         return PkgManager.opkg;
       case Dist.arch:
