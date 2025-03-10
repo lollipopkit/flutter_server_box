@@ -209,7 +209,7 @@ enum StatusCmdType {
   echo._('echo ${SystemType.linuxSign}'),
   time._('date +%s'),
   net._('cat /proc/net/dev'),
-  sys._('cat /etc/*-release | grep PRETTY_NAME'),
+  sys._('cat /etc/*-release | grep ^PRETTY_NAME'),
   cpu._('cat /proc/stat | grep cpu'),
   uptime._('uptime'),
   conn._('cat /proc/net/snmp'),

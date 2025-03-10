@@ -11,6 +11,7 @@ enum Dist {
   alpine,
   rocky,
   deepin,
+  coreelec,
   ;
 }
 
