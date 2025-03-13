@@ -1,5 +1,7 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/services.dart';
 import 'package:server_box/data/res/misc.dart';
+import 'package:server_box/data/res/store.dart';
 
 abstract final class MethodChans {
   static const _channel = MethodChannel('${Miscs.pkgName}/main_chan');
@@ -21,7 +23,8 @@ abstract final class MethodChans {
   }
 
   static void updateHomeWidget() async {
-    //if (!Stores.setting.autoUpdateHomeWidget.fetch()) return;
+    if (!isIOS || !isAndroid) return;
+    if (!Stores.setting.autoUpdateHomeWidget.fetch()) return;
     await _channel.invokeMethod('updateHomeWidget');
   }
 }

@@ -1,3 +1,5 @@
+// ignore_for_file: unintended_html_in_doc_comment
+
 import 'package:fl_lib/fl_lib.dart';
 
 import 'package:server_box/data/model/server/time_seq.dart';

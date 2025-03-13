@@ -22,13 +22,11 @@ dependencies:
   dynamic_color: ^1.6.6
   xml: ^6.4.2 # for parsing nvidia-smi
   flutter_displaymode: ^0.6.0
-  fl_chart: ^0.67.0
+  fl_chart: ^0.70.2
   wakelock_plus: ^1.2.4
   wake_on_lan: ^4.1.1+3
   extended_image: ^9.0.7
-  # TODO: remove this dependency
-  # https://github.com/miguelpruivo/flutter_file_picker/issues/1645
-  file_picker: 8.1.2
+  file_picker: ^8.3.7
   json_annotation: ^4.9.0
   choice: ^2.3.2
   flutter_reorderable_grid_view: ^5.1.0
@@ -63,10 +61,9 @@ dependencies:
   fl_lib:
     git:
       url: https://github.com/lppcg/fl_lib
-      ref: v1.0.243
-  flutter_distributor: ^0.4.5
+      ref: v1.0.251
 
-dependency_overrides:
+# dependency_overrides:
   # dartssh2:
   #   path: ../dartssh2
   # xterm:
@@ -80,7 +77,7 @@ dev_dependencies:
   flutter_native_splash: ^2.1.6
   hive_generator: ^2.0.0
   build_runner: ^2.3.2
-  flutter_lints: ^3.0.0
+  flutter_lints: ^5.0.0
   json_serializable: ^6.8.0
   flutter_test:
     sdk: flutter
