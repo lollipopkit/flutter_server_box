@@ -26,7 +26,7 @@ class _IPerfPageState extends State<IPerfPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: CustomAppBar(
         title: const Text('iperf'),
       ),
       body: _buildBody(),

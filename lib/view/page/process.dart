@@ -123,7 +123,7 @@ class _ProcessPageState extends State<ProcessPage> {
       );
     }
     return Scaffold(
-      appBar: AppBar(
+      appBar: CustomAppBar(
         centerTitle: true,
         title: TwoLineText(up: widget.spi.name, down: l10n.process),
         actions: actions,

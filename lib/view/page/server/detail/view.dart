@@ -87,7 +87,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     final s = widget.spi.server;
     if (s == null) {
       return Scaffold(
-        appBar: AppBar(),
+        appBar: CustomAppBar(),
         body: Center(child: Text(libL10n.empty)),
       );
     }
@@ -120,8 +120,8 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  AppBar _buildAppBar(Server si) {
-    return AppBar(
+  CustomAppBar _buildAppBar(Server si) {
+    return CustomAppBar(
       title: Hero(
         tag: 'home_card_title_${si.spi.id}',
         transitionOnUserGestures: true,

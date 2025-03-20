@@ -78,7 +78,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
     );
   }
 
-  AppBar _buildAppBar() {
+  CustomAppBar _buildAppBar() {
     final actions = [
       IconButton(
         tooltip: libL10n.delete,
@@ -101,7 +101,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
         icon: const Icon(Icons.delete),
       )
     ];
-    return AppBar(
+    return CustomAppBar(
       title: Text(libL10n.edit),
       actions: widget.pki == null ? null : actions,
     );
