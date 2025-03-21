@@ -405,18 +405,18 @@ packages:
     dependency: "direct main"
     description:
       name: extended_image
-      sha256: "85199f9233e03abc2ce2e68cbb2991648666af4a527ae4e6250935be8edfddae"
+      sha256: fcefcf3cba32696c639e9e305a790039709d05a7139320b91bb9d300993452e2
       url: "https://pub.dev"
     source: hosted
-    version: "9.1.0"
+    version: "10.0.0"
   extended_image_library:
     dependency: transitive
     description:
       name: extended_image_library
-      sha256: e61dafd94400fff6ef7ed1523d445ff3af137f198f3228e4a3107bc5b4bec5d1
+      sha256: ae468c31c375064964de11cbb31310a58c4462df6e3bae1a0bc0066f586795d5
       url: "https://pub.dev"
     source: hosted
-    version: "4.0.6"
+    version: "5.0.0"
   fake_async:
     dependency: transitive
     description:
@@ -445,10 +445,10 @@ packages:
     dependency: "direct main"
     description:
       name: file_picker
-      sha256: ab13ae8ef5580a411c458d6207b6774a6c237d77ac37011b13994879f68a8810
+      sha256: "8d938fd5c11dc81bf1acd4f7f0486c683fe9e79a0b13419e27730f9ce4d8a25b"
       url: "https://pub.dev"
     source: hosted
-    version: "8.3.7"
+    version: "9.2.1"
   fixnum:
     dependency: transitive
     description:
@@ -478,8 +478,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v1.0.251"
-      resolved-ref: "5774f9e56e6255293a40dc750692dc600056a288"
+      ref: "v1.0.257"
+      resolved-ref: af64c32469b797d98fa539f04592b06bdb977d1a
       url: "https://github.com/lppcg/fl_lib"
     source: git
     version: "0.0.1"
@@ -1654,12 +1654,12 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.2"
-  webdav_client:
+  webdav_client_plus:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v1.0.66"
-      resolved-ref: "1908cd0f4909730d9ae4d4fc4c05fb2576b3f674"
+      ref: "v1.0.86"
+      resolved-ref: "7e08000e20c001b15a747c9564adfbfd45c7cadc"
       url: "https://github.com/lollipopkit/webdav_client"
     source: git
     version: "1.2.2"
@@ -1730,4 +1730,4 @@ packages:
     version: "1.1.2"
 sdks:
   dart: ">=3.7.0 <4.0.0"
-  flutter: ">=3.27.0"
+  flutter: ">=3.29.0"

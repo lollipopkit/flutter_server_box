@@ -11,11 +11,6 @@ final class BakSyncer extends SyncIface<Backup> {
   const BakSyncer._() : super();
 
   @override
-  void init() {
-    Webdav.shared.prefix = 'serverbox/';
-  }
-
-  @override
   Future<void> saveToFile() => Backup.backup();
 
   @override
