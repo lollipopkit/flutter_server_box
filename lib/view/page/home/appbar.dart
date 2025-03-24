@@ -15,7 +15,7 @@ final class _AppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize {
     final height = switch (Pfs.type) {
-      Pfs.macos => paddingTop + (CustomAppBar.sysStatusBarHeight ?? 0),
+      Pfs.macos => paddingTop + CustomAppBar.sysStatusBarHeight,
       _ => paddingTop,
     };
     return Size.fromHeight(height);
