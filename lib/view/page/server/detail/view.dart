@@ -161,11 +161,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     if (logoUrl == null) return UIs.placeholder;
 
     final dist = si.status.more[StatusCmdType.sys]?.dist;
-    if (dist == null && (logoUrl.contains('{DIST}') || logoUrl.contains('{BRIGHT}')) ) return UIs.placeholder;
+    if (dist != null) {
+      logoUrl = logoUrl.replaceFirst('{DIST}', dist.name);
+    }
+    logoUrl =
+        logoUrl.replaceFirst('{BRIGHT}', context.isDark ? 'dark' : 'light');
 
-    logoUrl = logoUrl
-        .replaceFirst('{DIST}', dist.name)
-        .replaceFirst('{BRIGHT}', context.isDark ? 'dark' : 'light');
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 13),
       child: ExtendedImage.network(
