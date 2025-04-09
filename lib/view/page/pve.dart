@@ -416,7 +416,9 @@ final class _PvePageState extends State<PvePage> {
       ],
     );
   }
+}
 
+extension on _PvePageState {
   void _onCtrl(PveCtrlFunc func, String action, PveCtrlIface item) async {
     final sure = await context.showRoundDialog<bool>(
       title: libL10n.attention,

@@ -71,6 +71,22 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     );
   }
 
+  @override
+  FutureOr<void> afterFirstLayout(BuildContext context) {
+    var initPath = '/';
+    if (Stores.setting.sftpOpenLastPath.fetch()) {
+      final history = Stores.history.sftpLastPath.fetch(widget.spi.id);
+      if (history != null) {
+        initPath = history;
+      }
+    }
+
+    _status.path.path = widget.initPath ?? initPath;
+    _listDir();
+  }
+}
+
+extension _UI on _SftpPageState {
   Widget _buildSortMenu() {
     final options = [
       (_SortType.name, libL10n.name),
@@ -205,7 +221,9 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       ),
     );
   }
+}
 
+extension _Actions on _SftpPageState {
   void _onItemPress(SftpName file, bool notDir) {
     final children = [
       ListTile(
@@ -626,6 +644,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
           fs.removeAt(0);
         }
         if (mounted) {
+          // ignore: invalid_use_of_protected_member
           setState(() {
             _status.files
               ..clear()
@@ -804,20 +823,6 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
       },
       icon: const Icon(Icons.home),
     );
-  }
-
-  @override
-  FutureOr<void> afterFirstLayout(BuildContext context) {
-    var initPath = '/';
-    if (Stores.setting.sftpOpenLastPath.fetch()) {
-      final history = Stores.history.sftpLastPath.fetch(widget.spi.id);
-      if (history != null) {
-        initPath = history;
-      }
-    }
-
-    _status.path.path = widget.initPath ?? initPath;
-    _listDir();
   }
 }
 
