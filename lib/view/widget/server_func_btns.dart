@@ -9,6 +9,7 @@ import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/iperf.dart';
 import 'package:server_box/view/page/systemd.dart';
 
 import 'package:server_box/core/route.dart';
@@ -161,10 +162,8 @@ void _onTapMoreBtns(
       _gotoSSH(spi, context);
       break;
     case ServerFuncBtn.iperf:
-      AppRoutes.iperf(spi: spi).checkGo(
-        context: context,
-        check: () => _checkClient(context, spi.id),
-      );
+      if (!_checkClient(context, spi.id)) return;
+      IPerfPage.route.go(context, IPerfPageArgs(spi: spi));
       break;
     case ServerFuncBtn.systemd:
       SystemdPage.route.go(context, SystemdPageArgs(spi: spi));

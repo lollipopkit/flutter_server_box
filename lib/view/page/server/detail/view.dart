@@ -17,10 +17,9 @@ import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/pve.dart';
 import 'package:server_box/view/page/server/edit.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
-
-import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server.dart';
 
 part 'misc.dart';
@@ -865,7 +864,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         title: const Text('PVE'),
         leading: const Icon(FontAwesome.server_solid, size: 17),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () => AppRoutes.pve(spi: si.spi).go(context),
+        onTap: () => PvePage.route.go(context, PvePageArgs(spi: si.spi)),
       ),
     );
   }

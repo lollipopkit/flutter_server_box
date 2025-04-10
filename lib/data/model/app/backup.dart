@@ -8,7 +8,6 @@ import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/res/rebuild.dart';
 import 'package:server_box/data/res/store.dart';
 
 part 'backup.g.dart';

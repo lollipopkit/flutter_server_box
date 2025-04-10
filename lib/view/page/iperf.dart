@@ -4,12 +4,24 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
-class IPerfPage extends StatefulWidget {
+final class IPerfPageArgs {
   final Spi spi;
-  const IPerfPage({super.key, required this.spi});
+
+  const IPerfPageArgs({required this.spi});
+}
+
+class IPerfPage extends StatefulWidget {
+  final IPerfPageArgs args;
+
+  const IPerfPage({super.key, required this.args});
 
   @override
   State<IPerfPage> createState() => _IPerfPageState();
+
+  static const route = AppRouteArg<void, IPerfPageArgs>(
+    page: IPerfPage.new,
+    path: '/iperf',
+  );
 }
 
 class _IPerfPageState extends State<IPerfPage> {
@@ -44,7 +56,7 @@ class _IPerfPageState extends State<IPerfPage> {
           return;
         }
         AppRoutes.ssh(
-          spi: widget.spi,
+          spi: widget.args.spi,
           initCmd: 'iperf -c ${_hostCtrl.text} -p ${_portCtrl.text}',
         ).go(context);
       },

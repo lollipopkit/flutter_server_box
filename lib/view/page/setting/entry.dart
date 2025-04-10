@@ -10,7 +10,6 @@ import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/github_id.dart';
-import 'package:server_box/data/res/rebuild.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 
@@ -20,6 +19,7 @@ import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/view/page/backup.dart';
 import 'package:server_box/view/page/editor.dart';
 import 'package:server_box/view/page/private_key/list.dart';
+import 'package:server_box/view/page/setting/seq/srv_func_seq.dart';
 
 part 'about.dart';
 part 'entries/app.dart';

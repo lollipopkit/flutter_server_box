@@ -133,7 +133,7 @@ extension _Server on _AppSettingsPageState {
     return ListTile(
       title: Text(l10n.sequence),
       trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => AppRoutes.serverFuncBtnsOrder().go(context),
+      onTap: () => ServerFuncBtnsOrderPage.route.go(context),
     );
   }
 

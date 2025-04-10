@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/build_data.dart';
-import 'package:server_box/data/res/rebuild.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/home/home.dart';
@@ -25,7 +24,6 @@ class MyApp extends StatelessWidget {
         if (!Stores.setting.useSystemPrimaryColor.fetch()) {
           final colorSeed = Color(Stores.setting.colorSeed.fetch());
           UIs.colorSeed = colorSeed;
-          // Past code uses [UIs.primaryColor] as the primary color
           UIs.primaryColor = colorSeed;
           return _buildApp(
             context,

@@ -5,14 +5,11 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/container.dart';
 import 'package:server_box/view/page/home/home.dart';
-import 'package:server_box/view/page/iperf.dart';
 import 'package:server_box/view/page/ping.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
-import 'package:server_box/view/page/pve.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/setting/platform/android.dart';
 import 'package:server_box/view/page/setting/platform/ios.dart';
-import 'package:server_box/view/page/setting/seq/srv_func_seq.dart';
 import 'package:server_box/view/page/snippet/result.dart';
 import 'package:server_box/view/page/ssh/page.dart';
 import 'package:server_box/view/page/setting/seq/virt_key.dart';
@@ -153,17 +150,5 @@ class AppRoutes {
           results: results,
         ),
         'snippet_result');
-  }
-
-  static AppRoutes iperf({Key? key, required Spi spi}) {
-    return AppRoutes(IPerfPage(key: key, spi: spi), 'iperf');
-  }
-
-  static AppRoutes serverFuncBtnsOrder({Key? key}) {
-    return AppRoutes(ServerFuncBtnsOrderPage(key: key), 'server_func_btns_seq');
-  }
-
-  static AppRoutes pve({Key? key, required Spi spi}) {
-    return AppRoutes(PvePage(key: key, spi: spi), 'pve');
   }
 }

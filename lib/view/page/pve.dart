@@ -10,13 +10,21 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/widget/percent_circle.dart';
 import 'package:server_box/view/widget/two_line_text.dart';
 
-final class PvePage extends StatefulWidget {
+final class PvePageArgs {
   final Spi spi;
+
+  const PvePageArgs({required this.spi});
+}
+
+final class PvePage extends StatefulWidget {
+  final PvePageArgs args;
 
   const PvePage({
     super.key,
-    required this.spi,
+    required this.args,
   });
+
+  static const route = AppRouteArg<void, PvePageArgs>(page: PvePage.new, path: '/pve');
 
   @override
   State<PvePage> createState() => _PvePageState();
@@ -25,7 +33,7 @@ final class PvePage extends StatefulWidget {
 const _kHorziPadding = 11.0;
 
 final class _PvePageState extends State<PvePage> {
-  late final _pve = PveProvider(spi: widget.spi);
+  late final _pve = PveProvider(spi: widget.args.spi);
   late MediaQueryData _media;
   Timer? _timer;
 
@@ -53,7 +61,7 @@ final class _PvePageState extends State<PvePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: TwoLineText(up: 'PVE', down: widget.spi.name),
+        title: TwoLineText(up: 'PVE', down: widget.args.spi.name),
         actions: [
           ValBuilder(
             listenable: _pve.err,
