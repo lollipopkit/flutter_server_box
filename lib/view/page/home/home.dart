@@ -144,10 +144,7 @@ class _HomePageState extends State<HomePage>
           config: {
             Breakpoints.small: SlotLayout.from(
               key: const Key('bottomNavigation'),
-              builder: (context) => ListenableBuilder(
-                listenable: _selectIndex,
-                builder: (context, child) => _buildBottomBar(),
-              ),
+              builder: (context) => _buildBottomBar(),
             ),
           },
         ),
@@ -156,31 +153,37 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildBottomBar() {
-    return ListenableBuilder(
-      listenable: _selectIndex,
-      builder: (context, child) => NavigationBar(
-        selectedIndex: _selectIndex.value,
-        height: kBottomNavigationBarHeight * 1.1,
-        animationDuration: const Duration(milliseconds: 250),
-        onDestinationSelected: _onDestinationSelected,
-        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-        destinations: AppTab.navDestinations,
-      ),
-    );
+    return Stores.setting.fullScreen.fetch()
+        ? UIs.placeholder
+        : ListenableBuilder(
+            listenable: _selectIndex,
+            builder: (context, child) => NavigationBar(
+              selectedIndex: _selectIndex.value,
+              height: kBottomNavigationBarHeight * 1.1,
+              animationDuration: const Duration(milliseconds: 250),
+              onDestinationSelected: _onDestinationSelected,
+              labelBehavior:
+                  NavigationDestinationLabelBehavior.onlyShowSelected,
+              destinations: AppTab.navDestinations,
+            ),
+          );
   }
 
   Widget _buildRailBar({bool extended = false}) {
-    return ListenableBuilder(
-      listenable: _selectIndex,
-      builder: (context, child) => AdaptiveScaffold.standardNavigationRail(
-        extended: extended,
-        padding: EdgeInsets.zero,
-        selectedIndex: _selectIndex.value,
-        destinations: AppTab.navRailDestinations,
-        onDestinationSelected: _onDestinationSelected,
-        labelType: extended ? null : NavigationRailLabelType.selected,
-      ),
-    );
+    return Stores.setting.fullScreen.fetch()
+        ? UIs.placeholder
+        : ListenableBuilder(
+            listenable: _selectIndex,
+            builder: (context, child) =>
+                AdaptiveScaffold.standardNavigationRail(
+              extended: extended,
+              padding: EdgeInsets.zero,
+              selectedIndex: _selectIndex.value,
+              destinations: AppTab.navRailDestinations,
+              onDestinationSelected: _onDestinationSelected,
+              labelType: extended ? null : NavigationRailLabelType.selected,
+            ),
+          );
   }
 
   @override
