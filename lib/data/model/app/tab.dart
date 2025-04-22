@@ -56,7 +56,41 @@ enum AppTab {
     };
   }
 
+  NavigationRailDestination get navRailDestination {
+    return switch (this) {
+      server => NavigationRailDestination(
+          icon: const Icon(BoxIcons.bx_server),
+          label: Text(l10n.server),
+          selectedIcon: const Icon(BoxIcons.bxs_server),
+        ),
+      // settings => NavigationRailDestination(
+      //     icon: const Icon(Icons.settings),
+      //     label: libL10n.setting,
+      //     selectedIcon: const Icon(Icons.settings),
+      //   ),
+      ssh => const NavigationRailDestination(
+          icon: Icon(Icons.terminal_outlined),
+          label: Text('SSH'),
+          selectedIcon: Icon(Icons.terminal),
+        ),
+      snippet => NavigationRailDestination(
+          icon: const Icon(Icons.code),
+          label: Text(l10n.snippet),
+          selectedIcon: const Icon(Icons.code),
+        ),
+      file => NavigationRailDestination(
+          icon: const Icon(Icons.folder_open),
+          label: Text(libL10n.file),
+          selectedIcon: const Icon(Icons.folder),
+        ),
+    };
+  }
+
   static List<NavigationDestination> get navDestinations {
     return AppTab.values.map((e) => e.navDestination).toList();
+  }
+
+  static List<NavigationRailDestination> get navRailDestinations {
+    return AppTab.values.map((e) => e.navRailDestination).toList();
   }
 }

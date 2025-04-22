@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_adaptive_scaffold/flutter_adaptive_scaffold.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/provider/app.dart';
@@ -26,7 +27,6 @@ class _HomePageState extends State<HomePage>
   late final PageController _pageController;
 
   final _selectIndex = ValueNotifier(0);
-  final _isLandscape = ValueNotifier(false);
 
   bool _switchingPage = false;
   bool _shouldAuth = false;
@@ -40,7 +40,6 @@ class _HomePageState extends State<HomePage>
     WakelockPlus.disable();
 
     _selectIndex.dispose();
-    _isLandscape.dispose();
   }
 
   @override
@@ -56,13 +55,6 @@ class _HomePageState extends State<HomePage>
     if (Stores.setting.generalWakeLock.fetch()) {
       WakelockPlus.enable();
     }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _isLandscape.value =
-        MediaQuery.of(context).orientation == Orientation.landscape;
   }
 
   @override
@@ -102,56 +94,92 @@ class _HomePageState extends State<HomePage>
     AppProvider.ctx = context;
     final sysPadding = MediaQuery.of(context).padding;
 
-    return Scaffold(
-      appBar: _AppBar(sysPadding.top),
-      body: PageView.builder(
-        controller: _pageController,
-        itemCount: AppTab.values.length,
-        physics: const NeverScrollableScrollPhysics(),
-        itemBuilder: (_, index) => AppTab.values[index].page,
-        onPageChanged: (value) {
-          FocusScope.of(context).unfocus();
-          if (!_switchingPage) {
-            _selectIndex.value = value;
-          }
-        },
-      ),
-      bottomNavigationBar: ValBuilder(
-        listenable: _isLandscape,
-        builder: (ls) {
-          return Stores.setting.fullScreen.fetch()
-              ? UIs.placeholder
-              : ListenableBuilder(
-                  listenable: _selectIndex,
-                  builder: (_, __) => _buildBottomBar(ls),
-                );
-        },
+    return ColoredBox(
+      color: context.theme.colorScheme.surface,
+      child: AdaptiveLayout(
+        transitionDuration: const Duration(milliseconds: 250),
+        primaryNavigation: SlotLayout(
+          config: {
+            Breakpoints.medium: SlotLayout.from(
+              key: const Key('primaryNavigation'),
+              builder: (context) => _buildRailBar(),
+            ),
+            Breakpoints.mediumLarge: SlotLayout.from(
+              key: const Key('MediumLarge primaryNavigation'),
+              builder: (context) => _buildRailBar(extended: true),
+            ),
+            Breakpoints.large: SlotLayout.from(
+              key: const Key('Large primaryNavigation'),
+              builder: (context) => _buildRailBar(extended: true),
+            ),
+            Breakpoints.extraLarge: SlotLayout.from(
+              key: const Key('ExtraLarge primaryNavigation'),
+              builder: (context) => _buildRailBar(extended: true),
+            ),
+          },
+        ),
+        body: SlotLayout(
+          config: {
+            Breakpoint.standard(): SlotLayout.from(
+              key: const Key('body'),
+              builder: (context) => Scaffold(
+                appBar: _AppBar(sysPadding.top),
+                body: PageView.builder(
+                  controller: _pageController,
+                  itemCount: AppTab.values.length,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemBuilder: (_, index) => AppTab.values[index].page,
+                  onPageChanged: (value) {
+                    FocusScope.of(context).unfocus();
+                    if (!_switchingPage) {
+                      _selectIndex.value = value;
+                    }
+                  },
+                ),
+              ),
+            ),
+          },
+        ),
+        bottomNavigation: SlotLayout(
+          config: {
+            Breakpoints.small: SlotLayout.from(
+              key: const Key('bottomNavigation'),
+              builder: (context) => ListenableBuilder(
+                listenable: _selectIndex,
+                builder: (context, child) => _buildBottomBar(),
+              ),
+            ),
+          },
+        ),
       ),
     );
   }
 
-  Widget _buildBottomBar(bool ls) {
-    return NavigationBar(
-      selectedIndex: _selectIndex.value,
-      height: kBottomNavigationBarHeight * (ls ? 0.75 : 1.1),
-      animationDuration: const Duration(milliseconds: 250),
-      onDestinationSelected: (int index) {
-        if (_selectIndex.value == index) return;
-        _selectIndex.value = index;
-        _switchingPage = true;
-        _pageController.animateToPage(
-          index,
-          duration: const Duration(milliseconds: 677),
-          curve: Curves.fastLinearToSlowEaseIn,
-        );
-        Future.delayed(const Duration(milliseconds: 677), () {
-          _switchingPage = false;
-        });
-      },
-      labelBehavior: ls
-          ? NavigationDestinationLabelBehavior.alwaysHide
-          : NavigationDestinationLabelBehavior.onlyShowSelected,
-      destinations: AppTab.navDestinations,
+  Widget _buildBottomBar() {
+    return ListenableBuilder(
+      listenable: _selectIndex,
+      builder: (context, child) => NavigationBar(
+        selectedIndex: _selectIndex.value,
+        height: kBottomNavigationBarHeight * 1.1,
+        animationDuration: const Duration(milliseconds: 250),
+        onDestinationSelected: _onDestinationSelected,
+        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+        destinations: AppTab.navDestinations,
+      ),
+    );
+  }
+
+  Widget _buildRailBar({bool extended = false}) {
+    return ListenableBuilder(
+      listenable: _selectIndex,
+      builder: (context, child) => AdaptiveScaffold.standardNavigationRail(
+        extended: extended,
+        padding: EdgeInsets.zero,
+        selectedIndex: _selectIndex.value,
+        destinations: AppTab.navRailDestinations,
+        onDestinationSelected: _onDestinationSelected,
+        labelType: extended ? null : NavigationRailLabelType.selected,
+      ),
     );
   }
 
@@ -206,5 +234,19 @@ class _HomePageState extends State<HomePage>
         args: BioAuthPageArgs(onAuthSuccess: () => _shouldAuth = false),
       );
     }
+  }
+
+  void _onDestinationSelected(int index) {
+    if (_selectIndex.value == index) return;
+    _selectIndex.value = index;
+    _switchingPage = true;
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 677),
+      curve: Curves.fastLinearToSlowEaseIn,
+    );
+    Future.delayed(const Duration(milliseconds: 677), () {
+      _switchingPage = false;
+    });
   }
 }
