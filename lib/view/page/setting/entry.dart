@@ -55,7 +55,7 @@ class _SettingsPageState extends State<SettingsPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: CustomAppBar(
         title: Text(libL10n.setting, style: const TextStyle(fontSize: 20)),
         bottom: TabBar(
           controller: _tabCtrl,

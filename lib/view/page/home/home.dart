@@ -177,7 +177,7 @@ class _HomePageState extends State<HomePage>
             builder: (context, child) =>
                 AdaptiveScaffold.standardNavigationRail(
               extended: extended,
-              padding: EdgeInsets.zero,
+              padding: EdgeInsets.only(top: CustomAppBar.sysStatusBarHeight),
               selectedIndex: _selectIndex.value,
               destinations: AppTab.navRailDestinations,
               onDestinationSelected: _onDestinationSelected,
