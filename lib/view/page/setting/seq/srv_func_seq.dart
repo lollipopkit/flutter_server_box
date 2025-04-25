@@ -19,7 +19,7 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.sequence)),
+      appBar: CustomAppBar(title: Text(l10n.sequence)),
       body: _buildBody(),
     );
   }

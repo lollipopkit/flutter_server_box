@@ -34,7 +34,7 @@ dependencies:
   dartssh2:
     git:
       url: https://github.com/lollipopkit/dartssh2
-      ref: no-etm
+      ref: master
   circle_chart:
     git:
       url: https://github.com/lollipopkit/circle_chart

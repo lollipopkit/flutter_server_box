@@ -27,7 +27,7 @@ class _IOSSettingsPageState extends State<IOSSettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('iOS')),
+      appBar: CustomAppBar(title: const Text('iOS')),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 17),
         children: [

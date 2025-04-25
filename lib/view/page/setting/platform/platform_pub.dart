@@ -19,8 +19,8 @@ abstract final class PlatformPublicSettings {
           title: Text(libL10n.bioAuth),
           subtitle: can == true
               ? null
-              : const Text(
-                  'Not available',
+              : Text(
+                  libL10n.notExistFmt(libL10n.bioAuth),
                   style: UIs.textGrey,
                 ),
           trailing: can == true

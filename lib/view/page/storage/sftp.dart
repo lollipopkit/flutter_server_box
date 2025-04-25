@@ -62,7 +62,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
     if (isDesktop) children.add(_buildRefreshBtn());
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: CustomAppBar(
         title: TwoLineText(up: 'SFTP', down: widget.spi.name),
         actions: children,
       ),

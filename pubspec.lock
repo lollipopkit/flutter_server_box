@@ -66,10 +66,10 @@ packages:
     dependency: transitive
     description:
       name: archive
-      sha256: "0c64e928dcbefddecd234205422bcfc2b5e6d31be0b86fef0d0dd48d7b4c9742"
+      sha256: "7dcbd0f87fe5f61cb28da39a1a8b70dbc106e2fe0516f7836eb7bb2948481a12"
       url: "https://pub.dev"
     source: hosted
-    version: "4.0.4"
+    version: "4.0.5"
   args:
     dependency: transitive
     description:
@@ -82,10 +82,10 @@ packages:
     dependency: transitive
     description:
       name: asn1lib
-      sha256: "068190d6c99c436287936ba5855af2e1fa78d8083ae65b4db6a281780da727ae"
+      sha256: e02d018628c870ef2d7f03e33f9ad179d89ff6ec52ca6c56bcb80bcef979867f
       url: "https://pub.dev"
     source: hosted
-    version: "1.6.0"
+    version: "1.6.2"
   async:
     dependency: transitive
     description:
@@ -186,10 +186,10 @@ packages:
     dependency: transitive
     description:
       name: camera_avfoundation
-      sha256: "3057ada0b30402e3a9b6dffec365c9736a36edbf04abaecc67c4309eadc86b49"
+      sha256: ba48b65a3a97004276ede882e6b838d9667642ff462c95a8bb57ca8a82b6bd25
       url: "https://pub.dev"
     source: hosted
-    version: "0.9.18+9"
+    version: "0.9.18+11"
   camera_platform_interface:
     dependency: transitive
     description:
@@ -340,11 +340,11 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: no-etm
-      resolved-ref: "88852f3a6304c8f6876b17aaed757111bf8128ae"
+      ref: master
+      resolved-ref: "262f41491ec6e558f4799935924b3c222869e698"
       url: "https://github.com/lollipopkit/dartssh2"
     source: git
-    version: "2.9.1-pre"
+    version: "2.12.0"
   dbus:
     dependency: transitive
     description:
@@ -406,16 +406,20 @@ packages:
     description:
       name: extended_image
       sha256: fcefcf3cba32696c639e9e305a790039709d05a7139320b91bb9d300993452e2
+      sha256: fcefcf3cba32696c639e9e305a790039709d05a7139320b91bb9d300993452e2
       url: "https://pub.dev"
     source: hosted
+    version: "10.0.0"
     version: "10.0.0"
   extended_image_library:
     dependency: transitive
     description:
       name: extended_image_library
       sha256: ae468c31c375064964de11cbb31310a58c4462df6e3bae1a0bc0066f586795d5
+      sha256: ae468c31c375064964de11cbb31310a58c4462df6e3bae1a0bc0066f586795d5
       url: "https://pub.dev"
     source: hosted
+    version: "5.0.0"
     version: "5.0.0"
   fake_async:
     dependency: transitive
@@ -446,8 +450,10 @@ packages:
     description:
       name: file_picker
       sha256: "8d938fd5c11dc81bf1acd4f7f0486c683fe9e79a0b13419e27730f9ce4d8a25b"
+      sha256: "8d938fd5c11dc81bf1acd4f7f0486c683fe9e79a0b13419e27730f9ce4d8a25b"
       url: "https://pub.dev"
     source: hosted
+    version: "9.2.1"
     version: "9.2.1"
   fixnum:
     dependency: transitive
@@ -633,10 +639,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_reorderable_grid_view
-      sha256: a7e0f9d5ba12fd232eb07fbb7f570ae35491045a6bba1858f6eb50c675526dfe
+      sha256: f5db90ae62f8307daef9a884e09ed2d883838592e92185017a4431fe8e78899e
       url: "https://pub.dev"
     source: hosted
-    version: "5.4.1"
+    version: "5.5.0"
   flutter_riverpod:
     dependency: transitive
     description:
@@ -795,10 +801,10 @@ packages:
     dependency: transitive
     description:
       name: image
-      sha256: "13d3349ace88f12f4a0d175eb5c12dcdd39d35c4c109a8a13dfeb6d0bd9e31c3"
+      sha256: "4e973fcf4caae1a4be2fa0a13157aa38a8f9cb049db6529aa00b4d71abc4d928"
       url: "https://pub.dev"
     source: hosted
-    version: "4.5.3"
+    version: "4.5.4"
   intl:
     dependency: "direct main"
     description:
@@ -1477,14 +1483,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.2"
-  unorm_dart:
-    dependency: transitive
-    description:
-      name: unorm_dart
-      sha256: "23d8bf65605401a6a32cff99435fed66ef3dab3ddcad3454059165df46496a3b"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.3.0"
   url_launcher:
     dependency: transitive
     description:
@@ -1737,4 +1735,5 @@ packages:
     version: "1.1.2"
 sdks:
   dart: ">=3.7.0 <4.0.0"
+  flutter: ">=3.29.0"
   flutter: ">=3.29.0"
