@@ -206,7 +206,7 @@ extension _Server on _AppSettingsPageState {
   }
 
   Future<void> _editRawSettings() async {
-    final map = await Stores.setting.getAllMap(includeInternalKeys: true);
+    final map = Stores.setting.getAllMap(includeInternalKeys: true);
     final keys = map.keys;
 
     void onSave(BuildContext context, EditorPageRet ret) {

@@ -68,7 +68,7 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () async {
         final data = <String, String>{};
-        final keys = await PrefStore.shared.keys();
+        final keys = PrefStore.shared.keys();
 
         for (final key in keys) {
           final val = PrefStore.shared.get<String>(key);

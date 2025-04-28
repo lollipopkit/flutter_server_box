@@ -53,10 +53,10 @@ class Backup implements Mergeable {
       spis: Stores.server.fetch(),
       snippets: Stores.snippet.fetch(),
       keys: Stores.key.fetch(),
-      container: await Stores.container.getAllMap(),
+      container: Stores.container.getAllMap(),
       lastModTime: lastModTime,
-      history: await Stores.history.getAllMap(),
-      settings: await Stores.setting.getAllMap(),
+      history: Stores.history.getAllMap(),
+      settings: Stores.setting.getAllMap(),
     );
   }
 

@@ -7,7 +7,7 @@ const bakSync = BakSyncer._();
 
 final icloud = ICloud(containerId: 'iCloud.tech.lolli.serverbox');
 
-final class BakSyncer extends SyncIface<Backup> {
+final class BakSyncer extends SyncIface {
   const BakSyncer._() : super();
 
   @override
