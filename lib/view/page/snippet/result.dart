@@ -10,7 +10,7 @@ class SnippetResultPage extends StatelessWidget {
 
   static const route = AppRouteArg(
     page: SnippetResultPage.new,
-    path: '/snippet/result',
+    path: '/snippets/result',
   );
 
   @override

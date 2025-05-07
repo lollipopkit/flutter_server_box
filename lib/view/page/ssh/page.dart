@@ -58,7 +58,7 @@ class SSHPage extends StatefulWidget {
 
   static const route = AppRouteArg<void, SshPageArgs>(
     page: SSHPage.new,
-    path: '/ssh',
+    path: '/ssh/page',
   );
 }
 

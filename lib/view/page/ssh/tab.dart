@@ -15,6 +15,11 @@ class SSHTabPage extends StatefulWidget {
 
   @override
   State<SSHTabPage> createState() => _SSHTabPageState();
+
+  static const route = AppRouteNoArg(
+    page: SSHTabPage.new,
+    path: '/ssh',
+  );
 }
 
 typedef _TabMap = Map<String, ({Widget page, FocusNode? focus})>;

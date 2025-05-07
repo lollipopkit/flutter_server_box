@@ -12,6 +12,11 @@ class SnippetListPage extends StatefulWidget {
 
   @override
   State<SnippetListPage> createState() => _SnippetListPageState();
+
+  static const route = AppRouteNoArg(
+    page: SnippetListPage.new,
+    path: '/snippets',
+  );
 }
 
 class _SnippetListPageState extends State<SnippetListPage> with AutomaticKeepAliveClientMixin {

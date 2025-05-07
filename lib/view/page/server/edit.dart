@@ -23,7 +23,7 @@ class ServerEditPage extends StatefulWidget {
 
   static const route = AppRoute<bool, SpiRequiredArgs>(
     page: ServerEditPage.new,
-    path: '/server/edit',
+    path: '/servers/edit',
   );
 
   @override

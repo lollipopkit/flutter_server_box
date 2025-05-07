@@ -39,7 +39,7 @@ class ServerPage extends StatefulWidget {
 
   static const route = AppRouteNoArg(
     page: ServerPage.new,
-    path: '/server',
+    path: '/servers',
   );
 }
 

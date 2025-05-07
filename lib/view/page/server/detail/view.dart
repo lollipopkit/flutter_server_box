@@ -34,7 +34,7 @@ class ServerDetailPage extends StatefulWidget {
 
   static const route = AppRouteArg(
     page: ServerDetailPage.new,
-    path: '/server/detail',
+    path: '/servers/detail',
   );
 }
 

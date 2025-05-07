@@ -21,7 +21,7 @@ class SnippetEditPage extends StatefulWidget {
 
   static const route = AppRoute(
     page: SnippetEditPage.new,
-    path: '/snippet/edit',
+    path: '/snippets/edit',
   );
 }
 

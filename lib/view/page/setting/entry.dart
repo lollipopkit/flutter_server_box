@@ -39,16 +39,17 @@ const _kIconSize = 23.0;
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
-  static const route = AppRouteNoArg(page: SettingsPage.new, path: '/settings');
+  static const route = AppRouteNoArg(
+    page: SettingsPage.new,
+    path: '/settings',
+  );
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage>
-    with SingleTickerProviderStateMixin {
-  late final _tabCtrl =
-      TabController(length: SettingsTabs.values.length, vsync: this);
+class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderStateMixin {
+  late final _tabCtrl = TabController(length: SettingsTabs.values.length, vsync: this);
 
   @override
   void dispose() {
@@ -66,9 +67,7 @@ class _SettingsPageState extends State<SettingsPage>
           dividerHeight: 0,
           tabAlignment: TabAlignment.center,
           isScrollable: true,
-          tabs: SettingsTabs.values
-              .map((e) => Tab(text: e.i18n))
-              .toList(growable: false),
+          tabs: SettingsTabs.values.map((e) => Tab(text: e.i18n)).toList(growable: false),
         ),
         actions: [
           Btn.text(
@@ -124,12 +123,7 @@ final class _AppSettingsPageState extends State<AppSettingsPage> {
       children: [
         [const CenterGreyTitle('App'), _buildApp()],
         [CenterGreyTitle(l10n.server), _buildServer()],
-        [
-          const CenterGreyTitle('SSH'),
-          _buildSSH(),
-          const CenterGreyTitle('SFTP'),
-          _buildSFTP()
-        ],
+        [const CenterGreyTitle('SSH'), _buildSSH(), const CenterGreyTitle('SFTP'), _buildSFTP()],
         [
           CenterGreyTitle(l10n.container),
           _buildContainer(),
@@ -166,6 +160,5 @@ enum SettingsTabs {
         SettingsTabs.about => const _AppAboutPage(),
       };
 
-  static final List<Widget> pages =
-      SettingsTabs.values.map((e) => e.page).toList();
+  static final List<Widget> pages = SettingsTabs.values.map((e) => e.page).toList();
 }

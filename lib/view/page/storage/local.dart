@@ -30,7 +30,7 @@ class LocalFilePage extends StatefulWidget {
 
   static const route = AppRoute<String, LocalFilePageArgs>(
     page: LocalFilePage.new,
-    path: '/local_file',
+    path: '/files/local',
   );
 
   @override
