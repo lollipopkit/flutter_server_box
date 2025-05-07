@@ -17,8 +17,8 @@ extension _App on _AppSettingsPageState {
 
   Widget? _buildPlatformSetting() {
     final func = switch (Pfs.type) {
-      Pfs.android => AppRoutes.androidSettings().go,
-      Pfs.ios => AppRoutes.iosSettings().go,
+      Pfs.android => AndroidSettingsPage.route.go,
+      Pfs.ios => IosSettingsPage.route.go,
       _ => null,
     };
     if (func == null) return null;

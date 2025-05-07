@@ -15,6 +15,11 @@ class SSHTabPage extends StatefulWidget {
 
   @override
   State<SSHTabPage> createState() => _SSHTabPageState();
+
+  static const route = AppRouteNoArg(
+    page: SSHTabPage.new,
+    path: '/ssh',
+  );
 }
 
 typedef _TabMap = Map<String, ({Widget page, FocusNode? focus})>;
@@ -93,10 +98,7 @@ extension on _SSHTabPageState {
   void _onTapInitCard(Spi spi) async {
     final name = () {
       final reg = RegExp('${spi.name}\\((\\d+)\\)');
-      final idxs = _tabMap.keys
-          .map((e) => reg.firstMatch(e))
-          .map((e) => e?.group(1))
-          .whereType<String>();
+      final idxs = _tabMap.keys.map((e) => reg.firstMatch(e)).map((e) => e?.group(1)).whereType<String>();
       if (idxs.isEmpty) {
         return _tabMap.keys.contains(spi.name) ? '${spi.name}(1)' : spi.name;
       }
@@ -108,15 +110,17 @@ extension on _SSHTabPageState {
       return spi.name;
     }();
     final key = Key(name);
+    final args = SshPageArgs(
+      spi: spi,
+      notFromTab: false,
+      onSessionEnd: () {
+        _tabMap.remove(name);
+      },
+    );
     _tabMap[name] = (
       page: SSHPage(
-        // Keep it, or the Flutter will works unexpectedly
-        key: key,
-        spi: spi,
-        notFromTab: false,
-        onSessionEnd: () {
-          _tabMap.remove(name);
-        },
+        key: key, // Keep it, or the Flutter will works unexpectedly
+        args: args,
       ),
       focus: FocusNode(),
     );
@@ -128,8 +132,7 @@ extension on _SSHTabPageState {
   }
 
   Future<void> _toPage(int idx) async {
-    await _pageCtrl.animateToPage(idx,
-        duration: Durations.short3, curve: Curves.fastEaseInToSlowEaseOut);
+    await _pageCtrl.animateToPage(idx, duration: Durations.short3, curve: Curves.fastEaseInToSlowEaseOut);
     final focus = _tabMap.values.elementAt(idx).focus;
     if (focus != null) {
       FocusScope.of(context).requestFocus(focus);
@@ -156,8 +159,7 @@ extension on _SSHTabPageState {
 
     _tabMap.remove(name);
     _tabRN.notify();
-    _pageCtrl.previousPage(
-        duration: Durations.medium1, curve: Curves.fastEaseInToSlowEaseOut);
+    _pageCtrl.previousPage(duration: Durations.medium1, curve: Curves.fastEaseInToSlowEaseOut);
   }
 }
 
@@ -278,8 +280,7 @@ class _AddPage extends StatelessWidget {
     const itemHeight = 50.0;
 
     final visualCrossCount = viewWidth / itemWidth;
-    final crossCount =
-        max(viewWidth ~/ (visualCrossCount * itemPadding + itemWidth), 1);
+    final crossCount = max(viewWidth ~/ (visualCrossCount * itemPadding + itemWidth), 1);
     final mainCount = itemCount ~/ crossCount + 1;
 
     return ServerProvider.serverOrder.listenVal((order) {

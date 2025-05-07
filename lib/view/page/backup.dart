@@ -20,6 +20,11 @@ class BackupPage extends StatefulWidget {
 
   @override
   State<BackupPage> createState() => _BackupPageState();
+
+  static const route = AppRouteNoArg(
+    page: BackupPage.new,
+    path: '/backup',
+  );
 }
 
 final class _BackupPageState extends State<BackupPage>

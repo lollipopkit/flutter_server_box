@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:equatable/equatable.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:json_annotation/json_annotation.dart';
@@ -20,7 +21,7 @@ part 'server_private_info.g.dart';
 /// Nowaday, more fields are added to this class, and it's renamed to `Spi`.
 @JsonSerializable()
 @HiveType(typeId: 3)
-class Spi {
+class Spi with EquatableMixin {
   @HiveField(0)
   final String name;
   @HiveField(1)
@@ -81,6 +82,10 @@ class Spi {
 
   @override
   String toString() => id;
+
+  @override
+  List<Object?> get props =>
+      [name, ip, port, user, pwd, keyId, tags, alterUrl, autoConnect, jumpId, custom, wolCfg, envs];
 }
 
 extension Spix on Spi {

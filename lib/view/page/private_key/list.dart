@@ -6,26 +6,30 @@ import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/store.dart';
 
-import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/provider/private_key.dart';
+import 'package:server_box/view/page/private_key/edit.dart';
 
 class PrivateKeysListPage extends StatefulWidget {
   const PrivateKeysListPage({super.key});
 
   @override
   State<PrivateKeysListPage> createState() => _PrivateKeyListState();
+
+  static const route = AppRouteNoArg(
+    page: PrivateKeysListPage.new,
+    path: '/private_key',
+  );
 }
 
-class _PrivateKeyListState extends State<PrivateKeysListPage>
-    with AfterLayoutMixin {
+class _PrivateKeyListState extends State<PrivateKeysListPage> with AfterLayoutMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
-        onPressed: () => AppRoutes.keyEdit().go(context),
+        onPressed: () => PrivateKeyEditPage.route.go(context),
       ),
     );
   }
@@ -52,7 +56,10 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
                 ),
                 title: Text(item.id),
                 subtitle: Text(item.type ?? l10n.unknown, style: UIs.textGrey),
-                onTap: () => AppRoutes.keyEdit(pki: item).go(context),
+                onTap: () => PrivateKeyEditPage.route.go(
+                  context,
+                  args: PrivateKeyEditPageArgs(pki: item),
+                ),
                 trailing: const Icon(Icons.edit),
               ),
             );
@@ -78,7 +85,10 @@ class _PrivateKeyListState extends State<PrivateKeysListPage>
         child: Text(l10n.addSystemPrivateKeyTip),
         actions: Btn.ok(onTap: () {
           context.pop();
-          AppRoutes.keyEdit(pki: sysPk).go(context);
+          PrivateKeyEditPage.route.go(
+            context,
+            args: PrivateKeyEditPageArgs(pki: sysPk),
+          );
         }).toList,
       );
     }

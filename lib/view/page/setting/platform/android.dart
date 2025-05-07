@@ -9,6 +9,11 @@ class AndroidSettingsPage extends StatefulWidget {
 
   @override
   State<AndroidSettingsPage> createState() => _AndroidSettingsPageState();
+
+  static const route = AppRouteNoArg(
+    page: AndroidSettingsPage.new,
+    path: '/settings/android',
+  );
 }
 
 const _homeWidgetPrefPrefix = 'widget_';
@@ -24,8 +29,7 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
           // _buildFgService(),
           _buildBgRun(),
           _buildAndroidWidgetSharedPreference(),
-          if (BioAuth.isPlatformSupported)
-            PlatformPublicSettings.buildBioAuth(),
+          if (BioAuth.isPlatformSupported) PlatformPublicSettings.buildBioAuth(),
         ].map((e) => CardX(child: e)).toList(),
       ),
     );

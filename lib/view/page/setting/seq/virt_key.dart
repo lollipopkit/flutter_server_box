@@ -9,6 +9,11 @@ class SSHVirtKeySettingPage extends StatefulWidget {
 
   @override
   State<SSHVirtKeySettingPage> createState() => _SSHVirtKeySettingPageState();
+
+  static const route = AppRouteNoArg(
+    page: SSHVirtKeySettingPage.new,
+    path: '/settings/ssh_virt_key',
+  );
 }
 
 class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {

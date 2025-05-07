@@ -15,6 +15,11 @@ class PingPage extends StatefulWidget {
 
   @override
   State<PingPage> createState() => _PingPageState();
+
+  static const route = AppRouteNoArg(
+    page: PingPage.new,
+    path: '/ping',
+  );
 }
 
 class _PingPageState extends State<PingPage>
