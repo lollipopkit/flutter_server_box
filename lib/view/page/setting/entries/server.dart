@@ -142,7 +142,7 @@ extension _Server on _AppSettingsPageState {
       leading: const Icon(OctIcons.sort_desc, size: _kIconSize),
       title: Text(l10n.serverOrder),
       trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => AppRoutes.serverOrder().go(context),
+      onTap: () => ServerOrderPage.route.go(context),
     );
   }
 
@@ -151,7 +151,7 @@ extension _Server on _AppSettingsPageState {
       leading: const Icon(OctIcons.sort_desc, size: _kIconSize),
       title: Text(l10n.serverDetailOrder),
       trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => AppRoutes.serverDetailOrder().go(context),
+      onTap: () => ServerDetailOrderPage.route.go(context),
     );
   }
 

@@ -9,9 +9,10 @@ import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/res/misc.dart';
 
-import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/path_with_prefix.dart';
 import 'package:server_box/view/page/editor.dart';
+import 'package:server_box/view/page/storage/sftp.dart';
+import 'package:server_box/view/page/storage/sftp_mission.dart';
 
 final class LocalFilePageArgs {
   final bool? isPickFile;
@@ -36,8 +37,7 @@ class LocalFilePage extends StatefulWidget {
   State<LocalFilePage> createState() => _LocalFilePageState();
 }
 
-class _LocalFilePageState extends State<LocalFilePage>
-    with AutomaticKeepAliveClientMixin {
+class _LocalFilePageState extends State<LocalFilePage> with AutomaticKeepAliveClientMixin {
   late final _path = LocalPath(widget.args?.initDir ?? Paths.file);
   final _sortType = _SortType.name.vn;
   bool get isPickFile => widget.args?.isPickFile ?? false;
@@ -125,13 +125,9 @@ class _LocalFilePageState extends State<LocalFilePage>
 
             return CardX(
               child: ListTile(
-                leading: isDir
-                    ? const Icon(Icons.folder_open)
-                    : const Icon(Icons.insert_drive_file),
+                leading: isDir ? const Icon(Icons.folder_open) : const Icon(Icons.insert_drive_file),
                 title: Text(fileName),
-                subtitle: isDir
-                    ? null
-                    : Text(stat.size.bytes2Str, style: UIs.textGrey),
+                subtitle: isDir ? null : Text(stat.size.bytes2Str, style: UIs.textGrey),
                 trailing: Text(
                   stat.modified.ymdhms(),
                   style: UIs.textGrey,
@@ -262,10 +258,11 @@ class _LocalFilePageState extends State<LocalFilePage>
               );
               if (spi == null) return;
 
-              final remotePath = await AppRoutes.sftp(
+              final args = SftpPageArgs(
                 spi: spi,
                 isSelect: true,
-              ).go<String>(context);
+              );
+              final remotePath = await SftpPage.route.go(context, args);
               if (remotePath == null) {
                 return;
               }
@@ -346,7 +343,7 @@ class _LocalFilePageState extends State<LocalFilePage>
   Widget _buildMissionBtn() {
     return IconButton(
       icon: const Icon(Icons.downloading),
-      onPressed: () => AppRoutes.sftpMission().go(context),
+      onPressed: () => SftpMissionPage.route.go(context),
     );
   }
 
@@ -383,8 +380,7 @@ enum _SortType {
         files.sort((a, b) => a.statSync().size.compareTo(b.statSync().size));
         break;
       case _SortType.time:
-        files.sort(
-            (a, b) => a.statSync().modified.compareTo(b.statSync().modified));
+        files.sort((a, b) => a.statSync().modified.compareTo(b.statSync().modified));
         break;
     }
     return files;

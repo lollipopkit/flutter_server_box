@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:server_box/data/res/store.dart';
 
 import 'package:server_box/data/model/server/snippet.dart';
-import 'package:server_box/core/route.dart';
 import 'package:server_box/data/provider/snippet.dart';
+import 'package:server_box/view/page/snippet/edit.dart';
+import 'package:responsive_framework/responsive_framework.dart';
 
 class SnippetListPage extends StatefulWidget {
   const SnippetListPage({super.key});
@@ -13,44 +14,70 @@ class SnippetListPage extends StatefulWidget {
   State<SnippetListPage> createState() => _SnippetListPageState();
 }
 
-class _SnippetListPageState extends State<SnippetListPage>
-    with AutomaticKeepAliveClientMixin {
+class _SnippetListPageState extends State<SnippetListPage> with AutomaticKeepAliveClientMixin {
   final _tag = ''.vn;
+  final _splitViewCtrl = SplitViewController();
 
   @override
   void dispose() {
     super.dispose();
     _tag.dispose();
+    _splitViewCtrl.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    return _buildBody();
+  }
+
+  Widget _buildBody() {
+    final isMobile = ResponsiveBreakpoints.of(context).isMobile;
+    return SnippetProvider.snippets.listenVal(
+      (snippets) {
+        return _tag.listenVal((tag) {
+          final child = _buildScaffold(_buildSnippetList(snippets, tag));
+          if (isMobile) {
+            return child;
+          }
+
+          return SplitView(
+            controller: _splitViewCtrl,
+            leftWeight: 1,
+            rightWeight: 1.3,
+            initialRight: Center(child: Text(libL10n.empty)),
+            leftBuilder: (_, __) => child,
+          );
+        });
+      },
+    );
+  }
+
+  Widget _buildScaffold(Widget child) {
     return Scaffold(
       appBar: TagSwitcher(
         tags: SnippetProvider.tags,
         onTagChanged: (tag) => _tag.value = tag,
         initTag: _tag.value,
       ),
-      body: _buildBody(),
+      body: child,
       floatingActionButton: FloatingActionButton(
         heroTag: 'snippetAdd',
         child: const Icon(Icons.add),
-        onPressed: () => AppRoutes.snippetEdit().go(context),
+        onPressed: () {
+          if (ResponsiveBreakpoints.of(context).isMobile) {
+            SnippetEditPage.route.go(context);
+          } else {
+            _splitViewCtrl.replace(const SnippetEditPage());
+          }
+        },
       ),
     );
   }
 
-  Widget _buildBody() {
-    return SnippetProvider.snippets.listenVal(
-      (snippets) {
-        if (snippets.isEmpty) return Center(child: Text(libL10n.empty));
-        return _tag.listenVal((tag) => _buildSnippetList(snippets, tag));
-      },
-    );
-  }
-
   Widget _buildSnippetList(List<Snippet> snippets, String tag) {
+    if (snippets.isEmpty) return Center(child: Text(libL10n.empty));
+
     final filtered = tag == TagSwitcher.kDefaultTag
         ? snippets
         : snippets.where((e) => e.tags?.contains(tag) ?? false).toList();
@@ -76,13 +103,13 @@ class _SnippetListPageState extends State<SnippetListPage>
         return ReorderableDelayedDragStartListener(
           key: ValueKey(idx),
           index: idx,
-          child: _buildSnippetItem(snippet),
+          child: _buildSnippetItem(snippet, ResponsiveBreakpoints.of(context).isMobile),
         );
       },
     );
   }
 
-  Widget _buildSnippetItem(Snippet snippet) {
+  Widget _buildSnippetItem(Snippet snippet, bool isMobile) {
     return CardX(
       child: ListTile(
         contentPadding: const EdgeInsets.only(left: 23, right: 17),
@@ -98,26 +125,22 @@ class _SnippetListPageState extends State<SnippetListPage>
           style: UIs.textGrey,
         ),
         trailing: const Icon(Icons.keyboard_arrow_right),
-        onTap: () => AppRoutes.snippetEdit(snippet: snippet).go(context),
+        onTap: () {
+          if (isMobile) {
+            SnippetEditPage.route.go(
+              context,
+              args: SnippetEditPageArgs(snippet: snippet),
+            );
+          } else {
+            _splitViewCtrl.replace(SnippetEditPage(
+              args: SnippetEditPageArgs(snippet: snippet),
+            ));
+          }
+        },
       ),
     );
   }
 
   @override
   bool get wantKeepAlive => true;
-
-  // Future<void> _runSnippet(Snippet snippet) async {
-  //   final servers = await context.showPickDialog<Server>(
-  //     items: Pros.server.servers.toList(),
-  //     name: (e) => e.spi.name,
-  //   );
-  //   if (servers == null) {
-  //     return;
-  //   }
-  //   final ids = servers.map((e) => e.spi.id).toList();
-  //   final results = await Pros.server.runSnippetsMulti(ids, snippet);
-  //   if (results.isNotEmpty) {
-  //     AppRoutes.snippetResult(results: results).go(context);
-  //   }
-  // }
 }

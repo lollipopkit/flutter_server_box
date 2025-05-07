@@ -5,24 +5,25 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/provider/server.dart';
 
-import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/store/server.dart';
+import 'package:server_box/view/page/private_key/edit.dart';
 
 class ServerEditPage extends StatefulWidget {
-  final Spi? args;
+  final SpiRequiredArgs? args;
 
   const ServerEditPage({super.key, this.args});
 
-  static const route = AppRoute<bool, Spi>(
+  static const route = AppRoute<bool, SpiRequiredArgs>(
     page: ServerEditPage.new,
-    path: '/server_edit',
+    path: '/server/edit',
   );
 
   @override
@@ -30,7 +31,7 @@ class ServerEditPage extends StatefulWidget {
 }
 
 class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
-  late final spi = widget.args;
+  late final spi = widget.args?.spi;
   final _nameController = TextEditingController();
   final _ipController = TextEditingController();
   final _altUrlController = TextEditingController();
@@ -259,7 +260,10 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             ),
             trailing: Btn.icon(
               icon: const Icon(Icons.edit),
-              onTap: () => AppRoutes.keyEdit(pki: e).go(context),
+              onTap: () => PrivateKeyEditPage.route.go(
+                context,
+                args: PrivateKeyEditPageArgs(pki: e),
+              ),
             ),
             onTap: () => _keyIdx.value = index,
           );
@@ -269,7 +273,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             title: Text(libL10n.add),
             contentPadding: const EdgeInsets.only(left: 23, right: 23),
             trailing: const Icon(Icons.add),
-            onTap: () => AppRoutes.keyEdit().go(context),
+            onTap: () => PrivateKeyEditPage.route.go(context),
           ),
         );
         return CardX(
@@ -284,8 +288,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
 
   Widget _buildEnvs() {
     return _env.listenVal((val) {
-      final subtitle =
-          val.isEmpty ? null : Text(val.keys.join(','), style: UIs.textGrey);
+      final subtitle = val.isEmpty ? null : Text(val.keys.join(','), style: UIs.textGrey);
       return ListTile(
         leading: const Icon(HeroIcons.variable),
         subtitle: subtitle,
@@ -419,9 +422,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             return ListTile(
               leading: const Icon(BoxIcons.bxs_file_json),
               title: const Text('JSON'),
-              subtitle: vals.isEmpty
-                  ? null
-                  : Text(vals.keys.join(','), style: UIs.textGrey),
+              subtitle: vals.isEmpty ? null : Text(vals.keys.join(','), style: UIs.textGrey),
               trailing: const Icon(Icons.keyboard_arrow_right),
               onTap: () async {
                 final res = await KvEditor.route.go(
@@ -581,9 +582,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       scriptDir: _scriptDirCtrl.text.selfNotEmptyOrNull,
     );
 
-    final wolEmpty = _wolMacCtrl.text.isEmpty &&
-        _wolIpCtrl.text.isEmpty &&
-        _wolPwdCtrl.text.isEmpty;
+    final wolEmpty = _wolMacCtrl.text.isEmpty && _wolIpCtrl.text.isEmpty && _wolPwdCtrl.text.isEmpty;
     final wol = wolEmpty
         ? null
         : WakeOnLanCfg(
@@ -600,16 +599,12 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     }
 
     final spi = Spi(
-      name: _nameController.text.isEmpty
-          ? _ipController.text
-          : _nameController.text,
+      name: _nameController.text.isEmpty ? _ipController.text : _nameController.text,
       ip: _ipController.text,
       port: int.parse(_portController.text),
       user: _usernameController.text,
       pwd: _passwordController.text.selfNotEmptyOrNull,
-      keyId: _keyIdx.value != null
-          ? PrivateKeyProvider.pkis.value.elementAt(_keyIdx.value!).id
-          : null,
+      keyId: _keyIdx.value != null ? PrivateKeyProvider.pkis.value.elementAt(_keyIdx.value!).id : null,
       tags: _tags.value.isEmpty ? null : _tags.value.toList(),
       alterUrl: _altUrlController.text.selfNotEmptyOrNull,
       autoConnect: _autoConnect.value,

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
 import 'package:server_box/data/model/server/battery.dart';
@@ -25,16 +26,19 @@ import 'package:server_box/data/model/server/server.dart';
 part 'misc.dart';
 
 class ServerDetailPage extends StatefulWidget {
-  const ServerDetailPage({super.key, required this.spi});
-
-  final Spi spi;
+  final SpiRequiredArgs args;
+  const ServerDetailPage({super.key, required this.args});
 
   @override
   State<ServerDetailPage> createState() => _ServerDetailPageState();
+
+  static const route = AppRouteArg(
+    page: ServerDetailPage.new,
+    path: '/server/detail',
+  );
 }
 
-class _ServerDetailPageState extends State<ServerDetailPage>
-    with SingleTickerProviderStateMixin {
+class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerProviderStateMixin {
   late final _cardBuildMap = Map.fromIterables(
     ServerDetailCards.names,
     [
@@ -83,7 +87,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   @override
   Widget build(BuildContext context) {
-    final s = widget.spi.server;
+    final s = widget.args.spi.server;
     if (s == null) {
       return Scaffold(
         appBar: CustomAppBar(),
@@ -121,18 +125,11 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   CustomAppBar _buildAppBar(Server si) {
     return CustomAppBar(
-      title: Hero(
-        tag: 'home_card_title_${si.spi.id}',
-        transitionOnUserGestures: true,
-        child: Material(
-          color: Colors.transparent,
-          child: Text(
-            si.spi.name,
-            style: TextStyle(
-              fontSize: 20,
-              color: context.isDark ? Colors.white : Colors.black,
-            ),
-          ),
+      title: Text(
+        si.spi.name,
+        style: TextStyle(
+          fontSize: 20,
+          color: context.isDark ? Colors.white : Colors.black,
         ),
       ),
       actions: [
@@ -144,7 +141,10 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         IconButton(
           icon: const Icon(Icons.edit),
           onPressed: () async {
-            final delete = await ServerEditPage.route.go(context, args: si.spi);
+            final delete = await ServerEditPage.route.go(
+              context,
+              args: SpiRequiredArgs(si.spi),
+            );
             if (delete == true) {
               context.pop();
             }
@@ -155,16 +155,14 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildLogo(Server si) {
-    var logoUrl = si.spi.custom?.logoUrl ??
-        _settings.serverLogoUrl.fetch().selfNotEmptyOrNull;
+    var logoUrl = si.spi.custom?.logoUrl ?? _settings.serverLogoUrl.fetch().selfNotEmptyOrNull;
     if (logoUrl == null) return UIs.placeholder;
 
     final dist = si.status.more[StatusCmdType.sys]?.dist;
     if (dist != null) {
       logoUrl = logoUrl.replaceFirst('{DIST}', dist.name);
     }
-    logoUrl =
-        logoUrl.replaceFirst('{BRIGHT}', context.isDark ? 'dark' : 'light');
+    logoUrl = logoUrl.replaceFirst('{BRIGHT}', context.isDark ? 'dark' : 'light');
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 13),
@@ -194,8 +192,16 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(e.key.i18n, style: UIs.text13),
-                    Text(e.value, style: UIs.text13Grey)
+                    Text(
+                      e.key.i18n,
+                      style: UIs.text13,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      e.value,
+                      style: UIs.text13Grey,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
                 ),
               ),
@@ -267,15 +273,15 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildCpuModelItem(MapEntry<String, int> e) {
-    final name = e.key
-        .replaceFirst('Intel(R)', '')
-        .replaceFirst('AMD', '')
-        .replaceFirst('with Radeon Graphics', '');
+    final name =
+        e.key.replaceFirst('Intel(R)', '').replaceFirst('AMD', '').replaceFirst('with Radeon Graphics', '');
     final child = Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        SizedBox(
-          width: _media.size.width * .7,
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: _media.size.width * .7,
+          ),
           child: Text(
             name,
             style: UIs.text13,
@@ -283,7 +289,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             maxLines: 1,
           ),
         ),
-        Text('x ${e.value}', style: UIs.text13Grey),
+        Text('x ${e.value}', style: UIs.text13Grey, overflow: TextOverflow.clip),
       ],
     );
     return child.paddingSymmetric(horizontal: 17);
@@ -504,8 +510,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                   height: height,
                   child: ListView.builder(
                     itemCount: processes.length,
-                    itemBuilder: (_, idx) =>
-                        _buildGpuProcessItem(processes[idx]),
+                    itemBuilder: (_, idx) => _buildGpuProcessItem(processes[idx]),
                   ),
                 ),
                 actions: [
@@ -567,8 +572,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildDiskView(Server si) {
     final ss = si.status;
-    final children = List.generate(
-        ss.disk.length, (idx) => _buildDiskItem(ss.disk[idx], ss));
+    final children = List.generate(ss.disk.length, (idx) => _buildDiskItem(ss.disk[idx], ss));
     return CardX(
       child: ExpandTile(
         title: Text(l10n.disk),
@@ -725,9 +729,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         leading: const Icon(Icons.ac_unit, size: 20),
         initiallyExpanded: _getInitExpand(ss.temps.devices.length),
         childrenPadding: const EdgeInsets.only(bottom: 7),
-        children: ss.temps.devices
-            .map((key) => _buildTemperatureItem(key, ss.temps.get(key)))
-            .toList(),
+        children: ss.temps.devices.map((key) => _buildTemperatureItem(key, ss.temps.get(key))).toList(),
       ),
     );
   }

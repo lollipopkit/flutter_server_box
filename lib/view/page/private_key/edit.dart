@@ -13,13 +13,22 @@ import 'package:server_box/data/model/server/private_key_info.dart';
 
 const _format = 'text/plain';
 
-class PrivateKeyEditPage extends StatefulWidget {
-  const PrivateKeyEditPage({super.key, this.pki});
-
+final class PrivateKeyEditPageArgs {
   final PrivateKeyInfo? pki;
+  const PrivateKeyEditPageArgs({this.pki});
+}
+
+class PrivateKeyEditPage extends StatefulWidget {
+  final PrivateKeyEditPageArgs? args;
+  const PrivateKeyEditPage({super.key, this.args});
 
   @override
   State<PrivateKeyEditPage> createState() => _PrivateKeyEditPageState();
+
+  static const route = AppRoute(
+    page: PrivateKeyEditPage.new,
+    path: '/private_key/edit',
+  );
 }
 
 class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
@@ -33,6 +42,8 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
   late FocusScopeNode _focusScope;
 
   final _loading = ValueNotifier<Widget?>(null);
+
+  PrivateKeyInfo? get pki => widget.args?.pki;
 
   @override
   void dispose() {
@@ -49,9 +60,10 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
   @override
   void initState() {
     super.initState();
-    if (widget.pki != null) {
-      _nameController.text = widget.pki!.id;
-      _keyController.text = widget.pki!.key;
+    final pki = this.pki;
+    if (pki != null) {
+      _nameController.text = pki.id;
+      _keyController.text = pki.key;
     } else {
       Clipboard.getData(_format).then((value) {
         if (value == null) return;
@@ -79,31 +91,34 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
   }
 
   CustomAppBar _buildAppBar() {
-    final actions = [
-      IconButton(
-        tooltip: libL10n.delete,
-        onPressed: () {
-          context.showRoundDialog(
-            title: libL10n.attention,
-            child: Text(libL10n.askContinue(
-              '${libL10n.delete} ${l10n.privateKey}(${widget.pki!.id})',
-            )),
-            actions: Btn.ok(
-              onTap: () {
-                PrivateKeyProvider.delete(widget.pki!);
-                context.pop();
-                context.pop();
+    final pki = this.pki;
+    final actions = pki != null
+        ? [
+            IconButton(
+              tooltip: libL10n.delete,
+              onPressed: () {
+                context.showRoundDialog(
+                  title: libL10n.attention,
+                  child: Text(libL10n.askContinue(
+                    '${libL10n.delete} ${l10n.privateKey}(${pki.id})',
+                  )),
+                  actions: Btn.ok(
+                    onTap: () {
+                      PrivateKeyProvider.delete(pki);
+                      context.pop();
+                      context.pop();
+                    },
+                    red: true,
+                  ).toList,
+                );
               },
-              red: true,
-            ).toList,
-          );
-        },
-        icon: const Icon(Icons.delete),
-      )
-    ];
+              icon: const Icon(Icons.delete),
+            )
+          ]
+        : null;
     return CustomAppBar(
       title: Text(libL10n.edit),
-      actions: widget.pki == null ? null : actions,
+      actions: actions,
     );
   }
 
@@ -204,7 +219,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
     try {
       final decrypted = await Computer.shared.start(decyptPem, [key, pwd]);
       final pki = PrivateKeyInfo(id: name, key: decrypted);
-      final originPki = widget.pki;
+      final originPki = this.pki;
       if (originPki != null) {
         PrivateKeyProvider.update(originPki, pki);
       } else {

@@ -4,24 +4,17 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/systemd.dart';
 import 'package:server_box/data/provider/systemd.dart';
-
-final class SystemdPageArgs {
-  final Spi spi;
-
-  const SystemdPageArgs({
-    required this.spi,
-  });
-}
+import 'package:server_box/view/page/ssh/page.dart';
 
 final class SystemdPage extends StatefulWidget {
-  final SystemdPageArgs args;
+  final SpiRequiredArgs args;
 
   const SystemdPage({
     super.key,
     required this.args,
   });
 
-  static const route = AppRouteArg<void, SystemdPageArgs>(
+  static const route = AppRouteArg<void, SpiRequiredArgs>(
     page: SystemdPage.new,
     path: '/systemd',
   );
@@ -123,7 +116,8 @@ final class _SystemdPageState extends State<SystemdPage> {
         );
         if (sure != true) return;
 
-        AppRoutes.ssh(spi: widget.args.spi, initCmd: cmd).go(context);
+        final args = SshPageArgs(spi: widget.args.spi, initCmd: cmd);
+        SSHPage.route.go(context, args);
       },
     );
   }

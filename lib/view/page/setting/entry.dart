@@ -13,13 +13,17 @@ import 'package:server_box/data/res/github_id.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 
-import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/view/page/backup.dart';
 import 'package:server_box/view/page/editor.dart';
 import 'package:server_box/view/page/private_key/list.dart';
+import 'package:server_box/view/page/setting/platform/android.dart';
+import 'package:server_box/view/page/setting/platform/ios.dart';
+import 'package:server_box/view/page/setting/seq/srv_detail_seq.dart';
 import 'package:server_box/view/page/setting/seq/srv_func_seq.dart';
+import 'package:server_box/view/page/setting/seq/srv_seq.dart';
+import 'package:server_box/view/page/setting/seq/virt_key.dart';
 
 part 'about.dart';
 part 'entries/app.dart';

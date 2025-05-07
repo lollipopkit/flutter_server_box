@@ -13,6 +13,9 @@ final class _TopBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = ResponsiveBreakpoints.of(context).isMobile;
+    if (!isMobile) return UIs.placeholder;
+
     return Padding(
       padding: const EdgeInsets.only(left: 10),
       child: Row(

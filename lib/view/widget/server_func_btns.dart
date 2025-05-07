@@ -9,7 +9,11 @@ import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/container.dart';
 import 'package:server_box/view/page/iperf.dart';
+import 'package:server_box/view/page/process.dart';
+import 'package:server_box/view/page/ssh/page.dart';
+import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/page/systemd.dart';
 
 import 'package:server_box/core/route.dart';
@@ -27,9 +31,7 @@ class ServerFuncBtnsTopRight extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PopupMenu<ServerFuncBtn>(
-      items: ServerFuncBtn.values
-          .map((e) => PopMenu.build(e, e.icon, e.toStr))
-          .toList(),
+      items: ServerFuncBtn.values.map((e) => PopMenu.build(e, e.icon, e.toStr)).toList(),
       padding: const EdgeInsets.symmetric(horizontal: 10),
       onSelected: (val) => _onTapMoreBtns(val, spi, context),
     );
@@ -46,47 +48,63 @@ class ServerFuncBtns extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final btns = () {
-      try {
-        final vals = <ServerFuncBtn>[];
-        final list = Stores.setting.serverFuncBtns.fetch();
-        for (final idx in list) {
-          if (idx < 0 || idx >= ServerFuncBtn.values.length) continue;
-          vals.add(ServerFuncBtn.values[idx]);
-        }
-        return vals;
-      } catch (e) {
-        return ServerFuncBtn.values;
-      }
-    }();
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: btns
-          .map(
-            (e) => Stores.setting.moveServerFuncs.fetch()
-                ? IconButton(
-                    onPressed: () => _onTapMoreBtns(e, spi, context),
-                    padding: EdgeInsets.zero,
-                    tooltip: e.toStr,
-                    icon: Icon(e.icon, size: 15),
-                  )
-                : Padding(
-                    padding: const EdgeInsets.only(bottom: 13),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          onPressed: () => _onTapMoreBtns(e, spi, context),
-                          padding: EdgeInsets.zero,
-                          icon: Icon(e.icon, size: 17),
-                        ),
-                        Text(e.toStr, style: UIs.text11Grey)
-                      ],
-                    ),
-                  ),
-          )
-          .toList(),
+    final btns = this.btns;
+    if (btns.isEmpty) return UIs.placeholder;
+
+    return SizedBox(
+      height: 70,
+      child: ListView.builder(
+        itemCount: btns.length,
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: 13),
+        itemBuilder: (context, index) {
+          final value = btns[index];
+          final item = _buildItem(context, value);
+          return item.paddingSymmetric(horizontal: 7);
+        },
+      ),
     );
+  }
+
+  Widget _buildItem(BuildContext context, ServerFuncBtn e) {
+    final move = Stores.setting.moveServerFuncs.fetch();
+    if (move) {
+      return IconButton(
+        onPressed: () => _onTapMoreBtns(e, spi, context),
+        padding: EdgeInsets.zero,
+        tooltip: e.toStr,
+        icon: Icon(e.icon, size: 15),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 13),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            onPressed: () => _onTapMoreBtns(e, spi, context),
+            padding: EdgeInsets.zero,
+            icon: Icon(e.icon, size: 17),
+          ),
+          Text(e.toStr, style: UIs.text11Grey)
+        ],
+      ),
+    );
+  }
+
+  List<ServerFuncBtn> get btns {
+    try {
+      final vals = <ServerFuncBtn>[];
+      final list = Stores.setting.serverFuncBtns.fetch();
+      for (final idx in list) {
+        if (idx < 0 || idx >= ServerFuncBtn.values.length) continue;
+        vals.add(ServerFuncBtn.values[idx]);
+      }
+      return vals;
+    } catch (e) {
+      return ServerFuncBtn.values;
+    }
   }
 }
 
@@ -100,10 +118,8 @@ void _onTapMoreBtns(
     //   _onPkg(context, spi);
     //   break;
     case ServerFuncBtn.sftp:
-      AppRoutes.sftp(spi: spi).checkGo(
-        context: context,
-        check: () => _checkClient(context, spi.id),
-      );
+      if (!_checkClient(context, spi.id)) return;
+      SftpPage.route.go(context, SftpPageArgs(spi: spi));
       break;
     case ServerFuncBtn.snippet:
       if (SnippetProvider.snippets.value.isEmpty) {
@@ -141,32 +157,27 @@ void _onTapMoreBtns(
         ],
       );
       if (sure != true) return;
-      AppRoutes.ssh(spi: spi, initSnippet: snippet).checkGo(
-        context: context,
-        check: () => _checkClient(context, spi.id),
-      );
+      if (!_checkClient(context, spi.id)) return;
+      final args = SshPageArgs(spi: spi, initSnippet: snippet);
+      SSHPage.route.go(context, args);
       break;
     case ServerFuncBtn.container:
-      AppRoutes.docker(spi: spi).checkGo(
-        context: context,
-        check: () => _checkClient(context, spi.id),
-      );
+      if (!_checkClient(context, spi.id)) return;
+      ContainerPage.route.go(context, SpiRequiredArgs(spi));
       break;
     case ServerFuncBtn.process:
-      AppRoutes.process(spi: spi).checkGo(
-        context: context,
-        check: () => _checkClient(context, spi.id),
-      );
+      if (!_checkClient(context, spi.id)) return;
+      ProcessPage.route.go(context, SpiRequiredArgs(spi));
       break;
     case ServerFuncBtn.terminal:
       _gotoSSH(spi, context);
       break;
     case ServerFuncBtn.iperf:
       if (!_checkClient(context, spi.id)) return;
-      IPerfPage.route.go(context, IPerfPageArgs(spi: spi));
+      IPerfPage.route.go(context, SpiRequiredArgs(spi));
       break;
     case ServerFuncBtn.systemd:
-      SystemdPage.route.go(context, SystemdPageArgs(spi: spi));
+      SystemdPage.route.go(context, SpiRequiredArgs(spi));
       break;
   }
 }
@@ -174,7 +185,8 @@ void _onTapMoreBtns(
 void _gotoSSH(Spi spi, BuildContext context) async {
   // run built-in ssh on macOS due to incompatibility
   if (isMobile || isMacOS) {
-    AppRoutes.ssh(spi: spi).go(context);
+    final args = SshPageArgs(spi: spi);
+    SSHPage.route.go(context, args);
     return;
   }
   final extraArgs = <String>[];
