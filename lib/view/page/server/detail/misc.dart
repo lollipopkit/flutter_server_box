@@ -1,5 +1,83 @@
 part of 'view.dart';
 
+extension on _ServerDetailPageState {
+  void _onTapGpuItem(NvidiaSmiItem item) {
+    final processes = item.memory.processes;
+    final displayCount = processes.length > 5 ? 5 : processes.length;
+    final height = displayCount * 47.0;
+    context.showRoundDialog(
+      title: item.name,
+      child: SizedBox(
+        width: double.maxFinite,
+        height: height,
+        child: ListView.builder(
+          itemCount: processes.length,
+          itemBuilder: (_, idx) => _buildGpuProcessItem(processes[idx]),
+        ),
+      ),
+      actions: Btnx.oks,
+    );
+  }
+
+  void _nTapGpuProcessItem(NvidiaSmiMemProcess process) {
+    context.showRoundDialog(
+      title: '${process.pid}',
+      titleMaxLines: 1,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          UIs.height13,
+          Text('Memory: ${process.memory} MiB'),
+          UIs.height13,
+          Text('Process: ${process.name}')
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => context.pop(),
+          child: Text(libL10n.close),
+        )
+      ],
+    );
+  }
+
+  void _onTapCustomItem(MapEntry<String, String> cmd) {
+    context.showRoundDialog(
+      title: cmd.key,
+      child: SingleChildScrollView(
+        child: Text(cmd.value, style: UIs.text13Grey),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => context.pop(),
+          child: Text(libL10n.close),
+        ),
+      ],
+    );
+  }
+
+  void _onTapSensorItem(SensorItem si) {
+    context.showRoundDialog(
+      title: si.device,
+      child: SingleChildScrollView(
+        child: SimpleMarkdown(
+          data: si.toMarkdown,
+          styleSheet: MarkdownStyleSheet(
+            tableBorder: TableBorder.all(color: Colors.grey),
+            tableHead: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _onTapTemperatureItem(String key) {
+    Pfs.copy(key);
+    context.showSnackBar('${libL10n.copy} ${libL10n.success}');
+  }
+}
+
 enum _NetSortType {
   device,
   trans,
@@ -26,13 +104,9 @@ enum _NetSortType {
       case _NetSortType.device:
         return (b, a) => a.compareTo(b);
       case _NetSortType.recv:
-        return (b, a) => ns
-            .speedInBytes(ns.deviceIdx(a))
-            .compareTo(ns.speedInBytes(ns.deviceIdx(b)));
+        return (b, a) => ns.speedInBytes(ns.deviceIdx(a)).compareTo(ns.speedInBytes(ns.deviceIdx(b)));
       case _NetSortType.trans:
-        return (b, a) => ns
-            .speedOutBytes(ns.deviceIdx(a))
-            .compareTo(ns.speedOutBytes(ns.deviceIdx(b)));
+        return (b, a) => ns.speedOutBytes(ns.deviceIdx(a)).compareTo(ns.speedOutBytes(ns.deviceIdx(b)));
     }
   }
 }

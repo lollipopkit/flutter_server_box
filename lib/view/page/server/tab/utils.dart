@@ -5,15 +5,23 @@ part of 'tab.dart';
 extension _Actions on _ServerPageState {
   void _onTapCard(Server srv) {
     if (srv.canViewDetails) {
-      _splitViewCtrl.replace(ServerDetailPage(
-        key: ValueKey(srv.spi.id),
-        args: SpiRequiredArgs(srv.spi),
-      ));
+      // _splitViewCtrl.replace(ServerDetailPage(
+      //   key: ValueKey(srv.spi.id),
+      //   args: SpiRequiredArgs(srv.spi),
+      // ));
+      ServerDetailPage.route.go(
+        context,
+        SpiRequiredArgs(srv.spi),
+      );
     } else {
-      _splitViewCtrl.replace(ServerEditPage(
-        key: ValueKey(srv.spi.id),
+      // _splitViewCtrl.replace(ServerEditPage(
+      //   key: ValueKey(srv.spi.id),
+      //   args: SpiRequiredArgs(srv.spi),
+      // ));
+      ServerEditPage.route.go(
+        context,
         args: SpiRequiredArgs(srv.spi),
-      ));
+      );
     }
   }
 
@@ -33,14 +41,14 @@ extension _Actions on _ServerPageState {
   }
 
   void _onTapAddServer() {
-    final isMobile = ResponsiveBreakpoints.of(context).isMobile;
-    if (isMobile) {
-      ServerEditPage.route.go(context);
-    } else {
-      _splitViewCtrl.replace(const ServerEditPage(
-        key: ValueKey('addServer'),
-      ));
-    }
+    //   final isMobile = ResponsiveBreakpoints.of(context).isMobile;
+    //   if (isMobile) {
+    ServerEditPage.route.go(context);
+    //   } else {
+    //     _splitViewCtrl.replace(const ServerEditPage(
+    //       key: ValueKey('addServer'),
+    //     ));
+    //   }
   }
 }
 

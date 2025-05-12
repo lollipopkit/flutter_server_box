@@ -108,9 +108,7 @@ extension _UI on _SftpPageState {
       (_SortType.size, l10n.size),
       (_SortType.time, l10n.time),
     ];
-    return ValBuilder(
-      listenable: _sortOption,
-      builder: (value) {
+    return _sortOption.listenVal((value) {
         return PopupMenuButton<_SortType>(
           icon: const Icon(Icons.sort),
           itemBuilder: (context) {

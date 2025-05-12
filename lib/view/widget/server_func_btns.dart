@@ -113,13 +113,22 @@ void _onTapMoreBtns(
   Spi spi,
   BuildContext context,
 ) async {
+  // final isMobile = ResponsiveBreakpoints.of(context).isMobile;
   switch (value) {
     // case ServerFuncBtn.pkg:
     //   _onPkg(context, spi);
     //   break;
     case ServerFuncBtn.sftp:
       if (!_checkClient(context, spi.id)) return;
-      SftpPage.route.go(context, SftpPageArgs(spi: spi));
+      final args = SftpPageArgs(spi: spi);
+      // if (isMobile) {
+      SftpPage.route.go(context, args);
+      // } else {
+      //   SplitViewNavigator.of(context)?.replace(
+      //     SftpPage.route.toWidget(args: args),
+      //   );
+      // }
+
       break;
     case ServerFuncBtn.snippet:
       if (SnippetProvider.snippets.value.isEmpty) {
@@ -159,25 +168,60 @@ void _onTapMoreBtns(
       if (sure != true) return;
       if (!_checkClient(context, spi.id)) return;
       final args = SshPageArgs(spi: spi, initSnippet: snippet);
+      // if (isMobile) {
       SSHPage.route.go(context, args);
+      // } else {
+      //   SplitViewNavigator.of(context)?.replace(
+      //     SSHPage.route.toWidget(args: args),
+      //   );
+      // }
       break;
     case ServerFuncBtn.container:
       if (!_checkClient(context, spi.id)) return;
-      ContainerPage.route.go(context, SpiRequiredArgs(spi));
+      final args = SpiRequiredArgs(spi);
+      if (isMobile) {
+        ContainerPage.route.go(context, args);
+      } else {
+        SplitViewNavigator.of(context)?.replace(
+          ContainerPage.route.toWidget(args: args),
+        );
+      }
       break;
     case ServerFuncBtn.process:
       if (!_checkClient(context, spi.id)) return;
-      ProcessPage.route.go(context, SpiRequiredArgs(spi));
+      final args = SpiRequiredArgs(spi);
+      // if (isMobile) {
+      ProcessPage.route.go(context, args);
+      // } else {
+      //   SplitViewNavigator.of(context)?.replace(
+      //     ProcessPage.route.toWidget(args: args),
+      //   );
+      // }
       break;
     case ServerFuncBtn.terminal:
       _gotoSSH(spi, context);
       break;
     case ServerFuncBtn.iperf:
       if (!_checkClient(context, spi.id)) return;
-      IPerfPage.route.go(context, SpiRequiredArgs(spi));
+      final args = SpiRequiredArgs(spi);
+      // if (isMobile) {
+      IPerfPage.route.go(context, args);
+      // } else {
+      //   SplitViewNavigator.of(context)?.replace(
+      //     IPerfPage.route.toWidget(args: args),
+      //   );
+      // }
       break;
     case ServerFuncBtn.systemd:
-      SystemdPage.route.go(context, SpiRequiredArgs(spi));
+      if (!_checkClient(context, spi.id)) return;
+      final args = SpiRequiredArgs(spi);
+      // if (isMobile) {
+      SystemdPage.route.go(context, args);
+      // } else {
+      //   SplitViewNavigator.of(context)?.replace(
+      //     SystemdPage.route.toWidget(args: args),
+      //   );
+      // }
       break;
   }
 }

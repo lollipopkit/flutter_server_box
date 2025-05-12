@@ -135,8 +135,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
   }
 
   Widget _buildBody() {
-    return ListView(
-      padding: const EdgeInsets.all(13),
+    return AutoMultiList(
       children: [
         Input(
           autoFocus: true,

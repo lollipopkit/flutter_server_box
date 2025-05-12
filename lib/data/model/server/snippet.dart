@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:equatable/equatable.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:json_annotation/json_annotation.dart';
@@ -10,7 +11,7 @@ part 'snippet.g.dart';
 
 @JsonSerializable()
 @HiveType(typeId: 2)
-class Snippet {
+class Snippet with EquatableMixin {
   @HiveField(0)
   final String name;
   @HiveField(1)
@@ -32,11 +33,21 @@ class Snippet {
     this.autoRunOn,
   });
 
-  factory Snippet.fromJson(Map<String, dynamic> json) =>
-      _$SnippetFromJson(json);
+  factory Snippet.fromJson(Map<String, dynamic> json) => _$SnippetFromJson(json);
 
   Map<String, dynamic> toJson() => _$SnippetToJson(this);
 
+  @override
+  List<Object?> get props => [
+        name,
+        script,
+        tags,
+        note,
+        autoRunOn,
+      ];
+}
+
+extension SnippetX on Snippet {
   static final fmtFinder = RegExp(r'\$\{[^{}]+\}');
 
   String fmtWithSpi(Spi spi) {

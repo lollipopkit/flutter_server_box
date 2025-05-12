@@ -114,8 +114,7 @@ class _SnippetEditPageState extends State<SnippetEditPage> with AfterLayoutMixin
   }
 
   Widget _buildBody() {
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 13),
+    return AutoMultiList(
       children: [
         Input(
           autoFocus: true,
@@ -201,9 +200,9 @@ class _SnippetEditPageState extends State<SnippetEditPage> with AfterLayoutMixin
         child: SimpleMarkdown(
           data: '''
 📌 ${l10n.supportFmtArgs}\n
-${Snippet.fmtArgs.keys.map((e) => '`$e`').join(', ')}\n
+${SnippetX.fmtArgs.keys.map((e) => '`$e`').join(', ')}\n
 
-${Snippet.fmtTermKeys.keys.map((e) => '`$e+?}`').join(', ')}\n
+${SnippetX.fmtTermKeys.keys.map((e) => '`$e+?}`').join(', ')}\n
 ${libL10n.example}: 
 - `\${ctrl+c}` (Control + C)
 - `\${ctrl+b}d` (Tmux Detach)

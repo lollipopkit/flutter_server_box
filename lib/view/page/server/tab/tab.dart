@@ -134,24 +134,24 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
   }
 
   Widget _buildPortrait() {
-    final isMobile = ResponsiveBreakpoints.of(context).isMobile;
+    // final isMobile = ResponsiveBreakpoints.of(context).isMobile;
     return ServerProvider.serverOrder.listenVal(
       (order) {
         return _tag.listenVal(
           (val) {
             final filtered = _filterServers(order);
             final child = _buildScaffold(_buildBodySmall(filtered: filtered));
-            if (isMobile) {
-              return child;
-            }
+            // if (isMobile) {
+            return child;
+            // }
 
-            return SplitView(
-              controller: _splitViewCtrl,
-              leftWeight: 1,
-              rightWeight: 1.3,
-              initialRight: Center(child: CircularProgressIndicator()),
-              leftBuilder: (_, __) => child,
-            );
+            // return SplitView(
+            //   controller: _splitViewCtrl,
+            //   leftWeight: 1,
+            //   rightWeight: 1.3,
+            //   initialRight: Center(child: CircularProgressIndicator()),
+            //   leftBuilder: (_, __) => child,
+            // );
           },
         );
       },
@@ -166,17 +166,41 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
       return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
     }
 
-    final count = filtered.length + 1;
+    // Calculate number of columns based on available width
+    final columnsCount = math.max(1, (_media.size.width / UIs.columnWidth).floor());
+    
+    // Calculate number of rows needed
+    final rowCount = (filtered.length + columnsCount - 1) ~/ columnsCount;
+    
     return ListView.builder(
       controller: _scrollController,
       padding: padding,
-      itemCount: count,
-      itemBuilder: (_, index) {
-        // Issue #130
-        if (index == count - 1) return UIs.height77;
-        final vnode = ServerProvider.pick(id: filtered[index]);
-        if (vnode == null) return UIs.placeholder;
-        return vnode.listenVal(_buildEachServerCard);
+      itemCount: rowCount + 1, // +1 for the bottom space
+      itemBuilder: (_, rowIndex) {
+        // Bottom space
+        if (rowIndex == rowCount) return UIs.height77;
+        
+        // Create a row of server cards
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: List.generate(columnsCount, (colIndex) {
+              final index = rowIndex * columnsCount + colIndex;
+              if (index >= filtered.length) return Expanded(child: Container());
+              
+              final vnode = ServerProvider.pick(id: filtered[index]);
+              if (vnode == null) return Expanded(child: UIs.placeholder);
+              
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  child: vnode.listenVal(_buildEachServerCard),
+                ),
+              );
+            }),
+          ),
+        );
       },
     );
   }

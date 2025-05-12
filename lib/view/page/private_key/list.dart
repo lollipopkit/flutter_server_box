@@ -40,36 +40,33 @@ class _PrivateKeyListState extends State<PrivateKeysListPage> with AfterLayoutMi
         if (pkis.isEmpty) {
           return Center(child: Text(libL10n.empty));
         }
-        return ListView.builder(
-          padding: const EdgeInsets.all(13),
-          itemCount: pkis.length,
-          itemBuilder: (context, idx) {
-            final item = pkis[idx];
-            return CardX(
-              child: ListTile(
-                leading: Text(
-                  '#$idx',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                title: Text(item.id),
-                subtitle: Text(item.type ?? l10n.unknown, style: UIs.textGrey),
-                onTap: () => PrivateKeyEditPage.route.go(
-                  context,
-                  args: PrivateKeyEditPageArgs(pki: item),
-                ),
-                trailing: const Icon(Icons.edit),
-              ),
-            );
-          },
-        );
+
+        final children = pkis.map(_buildKeyItem).toList();
+        return AutoMultiList(children: children);
       },
     );
   }
 
-  void autoAddSystemPriavteKey() {
+  Widget _buildKeyItem(PrivateKeyInfo item) {
+    return ListTile(
+      title: Text(item.id),
+      subtitle: Text(item.type ?? l10n.unknown, style: UIs.textGrey),
+      onTap: () => PrivateKeyEditPage.route.go(
+        context,
+        args: PrivateKeyEditPageArgs(pki: item),
+      ),
+      trailing: const Icon(Icons.edit),
+    ).cardx;
+  }
+
+  @override
+  FutureOr<void> afterFirstLayout(BuildContext context) {
+    _autoAddSystemPriavteKey();
+  }
+}
+
+extension on _PrivateKeyListState {
+  void _autoAddSystemPriavteKey() async {
     // Only trigger on desktop platform and no private key saved
     if (isDesktop && Stores.snippet.box.keys.isEmpty) {
       final home = Pfs.homeDir;
@@ -78,7 +75,7 @@ class _PrivateKeyListState extends State<PrivateKeysListPage> with AfterLayoutMi
       if (!idRsaFile.existsSync()) return;
       final sysPk = PrivateKeyInfo(
         id: 'system',
-        key: idRsaFile.readAsStringSync(),
+        key: await idRsaFile.readAsString(),
       );
       context.showRoundDialog(
         title: libL10n.attention,
@@ -92,10 +89,5 @@ class _PrivateKeyListState extends State<PrivateKeysListPage> with AfterLayoutMi
         }).toList,
       );
     }
-  }
-
-  @override
-  FutureOr<void> afterFirstLayout(BuildContext context) {
-    autoAddSystemPriavteKey();
   }
 }

@@ -188,14 +188,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       _buildJumpServer(),
       _buildMore(),
     ];
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(17, 7, 17, 47),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: children,
-      ),
-    );
+    return AutoMultiList(children: children);
   }
 
   Widget _buildAuth() {
@@ -276,12 +269,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             onTap: () => PrivateKeyEditPage.route.go(context),
           ),
         );
-        return CardX(
-          child: ListenableBuilder(
-            listenable: _keyIdx,
-            builder: (_, __) => Column(children: tiles),
-          ),
-        );
+        return _keyIdx.listenVal((_) => Column(children: tiles)).cardx;
       },
     );
   }
@@ -424,14 +412,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
               title: const Text('JSON'),
               subtitle: vals.isEmpty ? null : Text(vals.keys.join(','), style: UIs.textGrey),
               trailing: const Icon(Icons.keyboard_arrow_right),
-              onTap: () async {
-                final res = await KvEditor.route.go(
-                  context,
-                  KvEditorArgs(data: _customCmds.value),
-                );
-                if (res == null) return;
-                _customCmds.value = res;
-              },
+              onTap: _onTapCustomItem,
             );
           },
         ).cardx,
@@ -536,6 +517,85 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     ).cardx;
   }
 
+  Widget _buildWriteScriptTip() {
+    return Btn.tile(
+      text: libL10n.attention,
+      icon: const Icon(Icons.tips_and_updates, color: Colors.grey),
+      onTap: () {
+        context.showRoundDialog(
+          title: libL10n.attention,
+          child: SimpleMarkdown(data: l10n.writeScriptTip),
+          actions: Btnx.oks,
+        );
+      },
+      textStyle: UIs.textGrey,
+      mainAxisSize: MainAxisSize.min,
+    );
+  }
+
+  Widget _buildQrScan() {
+    return Btn.tile(
+      text: libL10n.import,
+      icon: const Icon(Icons.qr_code, color: Colors.grey),
+      onTap: () async {
+        final ret = await BarcodeScannerPage.route.go(
+          context,
+          args: const BarcodeScannerPageArgs(),
+        );
+        final code = ret?.text;
+        if (code == null) return;
+        try {
+          final spi = Spi.fromJson(json.decode(code));
+          _initWithSpi(spi);
+        } catch (e, s) {
+          context.showErrDialog(e, s);
+        }
+      },
+      textStyle: UIs.textGrey,
+      mainAxisSize: MainAxisSize.min,
+    );
+  }
+
+  Widget _buildDelBtn() {
+    return IconButton(
+      onPressed: () {
+        context.showRoundDialog(
+          title: libL10n.attention,
+          child: Text(libL10n.askContinue(
+            '${libL10n.delete} ${l10n.server}(${spi!.name})',
+          )),
+          actions: Btn.ok(
+            onTap: () async {
+              context.pop();
+              ServerProvider.delServer(spi!.id);
+              context.pop(true);
+            },
+            red: true,
+          ).toList,
+        );
+      },
+      icon: const Icon(Icons.delete),
+    );
+  }
+
+  @override
+  void afterFirstLayout(BuildContext context) {
+    if (spi != null) {
+      _initWithSpi(spi!);
+    }
+  }
+}
+
+extension on _ServerEditPageState {
+  void _onTapCustomItem() async {
+    final res = await KvEditor.route.go(
+      context,
+      KvEditorArgs(data: _customCmds.value),
+    );
+    if (res == null) return;
+    _customCmds.value = res;
+  }
+
   void _onSave() async {
     if (_ipController.text.isEmpty) {
       context.showSnackBar('${libL10n.empty} ${l10n.host}');
@@ -628,13 +688,6 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     context.pop();
   }
 
-  @override
-  void afterFirstLayout(BuildContext context) {
-    if (spi != null) {
-      _initWithSpi(spi!);
-    }
-  }
-
   void _initWithSpi(Spi spi) {
     _nameController.text = spi.name;
     _ipController.text = spi.ip;
@@ -675,66 +728,5 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
 
     _netDevCtrl.text = spi.custom?.netDev ?? '';
     _scriptDirCtrl.text = spi.custom?.scriptDir ?? '';
-  }
-
-  Widget _buildWriteScriptTip() {
-    return Btn.tile(
-      text: libL10n.attention,
-      icon: const Icon(Icons.tips_and_updates, color: Colors.grey),
-      onTap: () {
-        context.showRoundDialog(
-          title: libL10n.attention,
-          child: SimpleMarkdown(data: l10n.writeScriptTip),
-          actions: Btnx.oks,
-        );
-      },
-      textStyle: UIs.textGrey,
-      mainAxisSize: MainAxisSize.min,
-    );
-  }
-
-  Widget _buildQrScan() {
-    return Btn.tile(
-      text: libL10n.import,
-      icon: const Icon(Icons.qr_code, color: Colors.grey),
-      onTap: () async {
-        final ret = await BarcodeScannerPage.route.go(
-          context,
-          args: const BarcodeScannerPageArgs(),
-        );
-        final code = ret?.text;
-        if (code == null) return;
-        try {
-          final spi = Spi.fromJson(json.decode(code));
-          _initWithSpi(spi);
-        } catch (e, s) {
-          context.showErrDialog(e, s);
-        }
-      },
-      textStyle: UIs.textGrey,
-      mainAxisSize: MainAxisSize.min,
-    );
-  }
-
-  Widget _buildDelBtn() {
-    return IconButton(
-      onPressed: () {
-        context.showRoundDialog(
-          title: libL10n.attention,
-          child: Text(libL10n.askContinue(
-            '${libL10n.delete} ${l10n.server}(${spi!.name})',
-          )),
-          actions: Btn.ok(
-            onTap: () async {
-              context.pop();
-              ServerProvider.delServer(spi!.id);
-              context.pop(true);
-            },
-            red: true,
-          ).toList,
-        );
-      },
-      icon: const Icon(Icons.delete),
-    );
   }
 }
