@@ -6,17 +6,26 @@ import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/provider/snippet.dart';
 
-class SnippetEditPage extends StatefulWidget {
-  const SnippetEditPage({super.key, this.snippet});
-
+final class SnippetEditPageArgs {
   final Snippet? snippet;
+  const SnippetEditPageArgs({this.snippet});
+}
+
+class SnippetEditPage extends StatefulWidget {
+  final SnippetEditPageArgs? args;
+
+  const SnippetEditPage({super.key, this.args});
 
   @override
   State<SnippetEditPage> createState() => _SnippetEditPageState();
+
+  static const route = AppRoute(
+    page: SnippetEditPage.new,
+    path: '/snippets/edit',
+  );
 }
 
-class _SnippetEditPageState extends State<SnippetEditPage>
-    with AfterLayoutMixin {
+class _SnippetEditPageState extends State<SnippetEditPage> with AfterLayoutMixin {
   final _nameController = TextEditingController();
   final _scriptController = TextEditingController();
   final _noteController = TextEditingController();
@@ -48,18 +57,19 @@ class _SnippetEditPageState extends State<SnippetEditPage>
   }
 
   List<Widget>? _buildAppBarActions() {
-    if (widget.snippet == null) return null;
+    final snippet = widget.args?.snippet;
+    if (snippet == null) return null;
     return [
       IconButton(
         onPressed: () {
           context.showRoundDialog(
             title: libL10n.attention,
             child: Text(libL10n.askContinue(
-              '${libL10n.delete} ${l10n.snippet}(${widget.snippet!.name})',
+              '${libL10n.delete} ${l10n.snippet}(${snippet.name})',
             )),
             actions: Btn.ok(
               onTap: () {
-                SnippetProvider.del(widget.snippet!);
+                SnippetProvider.del(snippet);
                 context.pop();
                 context.pop();
               },
@@ -92,8 +102,9 @@ class _SnippetEditPageState extends State<SnippetEditPage>
           note: note.isEmpty ? null : note,
           autoRunOn: _autoRunOn.value.isEmpty ? null : _autoRunOn.value,
         );
-        if (widget.snippet != null) {
-          SnippetProvider.update(widget.snippet!, snippet);
+        final oldSnippet = widget.args?.snippet;
+        if (oldSnippet != null) {
+          SnippetProvider.update(oldSnippet, snippet);
         } else {
           SnippetProvider.add(snippet);
         }
@@ -103,8 +114,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
   }
 
   Widget _buildBody() {
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 13),
+    return AutoMultiList(
       children: [
         Input(
           autoFocus: true,
@@ -148,9 +158,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
         builder: (vals) {
           final subtitle = vals.isEmpty
               ? null
-              : vals
-                  .map((e) => ServerProvider.pick(id: e)?.value.spi.name ?? e)
-                  .join(', ');
+              : vals.map((e) => ServerProvider.pick(id: e)?.value.spi.name ?? e).join(', ');
           return ListTile(
             leading: const Padding(
               padding: EdgeInsets.only(left: 5),
@@ -167,8 +175,7 @@ class _SnippetEditPageState extends State<SnippetEditPage>
                     overflow: TextOverflow.ellipsis,
                   ),
             onTap: () async {
-              vals.removeWhere(
-                  (e) => !ServerProvider.serverOrder.value.contains(e));
+              vals.removeWhere((e) => !ServerProvider.serverOrder.value.contains(e));
               final serverIds = await context.showPickDialog(
                 title: l10n.autoRun,
                 items: ServerProvider.serverOrder.value,
@@ -193,9 +200,9 @@ class _SnippetEditPageState extends State<SnippetEditPage>
         child: SimpleMarkdown(
           data: '''
 📌 ${l10n.supportFmtArgs}\n
-${Snippet.fmtArgs.keys.map((e) => '`$e`').join(', ')}\n
+${SnippetX.fmtArgs.keys.map((e) => '`$e`').join(', ')}\n
 
-${Snippet.fmtTermKeys.keys.map((e) => '`$e+?}`').join(', ')}\n
+${SnippetX.fmtTermKeys.keys.map((e) => '`$e+?}`').join(', ')}\n
 ${libL10n.example}: 
 - `\${ctrl+c}` (Control + C)
 - `\${ctrl+b}d` (Tmux Detach)
@@ -212,7 +219,7 @@ ${libL10n.example}:
 
   @override
   void afterFirstLayout(BuildContext context) {
-    final snippet = widget.snippet;
+    final snippet = widget.args?.snippet;
     if (snippet != null) {
       _nameController.text = snippet.name;
       _scriptController.text = snippet.script;

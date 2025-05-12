@@ -9,6 +9,11 @@ class ServerDetailOrderPage extends StatefulWidget {
 
   @override
   State<ServerDetailOrderPage> createState() => _ServerDetailOrderPageState();
+
+  static const route = AppRouteNoArg(
+    page: ServerDetailOrderPage.new,
+    path: '/settings/order/server_detail',
+  );
 }
 
 class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {

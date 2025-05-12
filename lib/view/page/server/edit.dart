@@ -5,24 +5,25 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/provider/server.dart';
 
-import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/store/server.dart';
+import 'package:server_box/view/page/private_key/edit.dart';
 
 class ServerEditPage extends StatefulWidget {
-  final Spi? args;
+  final SpiRequiredArgs? args;
 
   const ServerEditPage({super.key, this.args});
 
-  static const route = AppRoute<bool, Spi>(
+  static const route = AppRoute<bool, SpiRequiredArgs>(
     page: ServerEditPage.new,
-    path: '/server_edit',
+    path: '/servers/edit',
   );
 
   @override
@@ -30,7 +31,7 @@ class ServerEditPage extends StatefulWidget {
 }
 
 class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
-  late final spi = widget.args;
+  late final spi = widget.args?.spi;
   final _nameController = TextEditingController();
   final _ipController = TextEditingController();
   final _altUrlController = TextEditingController();
@@ -187,14 +188,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       _buildJumpServer(),
       _buildMore(),
     ];
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(17, 7, 17, 47),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: children,
-      ),
-    );
+    return AutoMultiList(children: children);
   }
 
   Widget _buildAuth() {
@@ -259,7 +253,10 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             ),
             trailing: Btn.icon(
               icon: const Icon(Icons.edit),
-              onTap: () => AppRoutes.keyEdit(pki: e).go(context),
+              onTap: () => PrivateKeyEditPage.route.go(
+                context,
+                args: PrivateKeyEditPageArgs(pki: e),
+              ),
             ),
             onTap: () => _keyIdx.value = index,
           );
@@ -269,23 +266,17 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             title: Text(libL10n.add),
             contentPadding: const EdgeInsets.only(left: 23, right: 23),
             trailing: const Icon(Icons.add),
-            onTap: () => AppRoutes.keyEdit().go(context),
+            onTap: () => PrivateKeyEditPage.route.go(context),
           ),
         );
-        return CardX(
-          child: ListenableBuilder(
-            listenable: _keyIdx,
-            builder: (_, __) => Column(children: tiles),
-          ),
-        );
+        return _keyIdx.listenVal((_) => Column(children: tiles)).cardx;
       },
     );
   }
 
   Widget _buildEnvs() {
     return _env.listenVal((val) {
-      final subtitle =
-          val.isEmpty ? null : Text(val.keys.join(','), style: UIs.textGrey);
+      final subtitle = val.isEmpty ? null : Text(val.keys.join(','), style: UIs.textGrey);
       return ListTile(
         leading: const Icon(HeroIcons.variable),
         subtitle: subtitle,
@@ -419,18 +410,9 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             return ListTile(
               leading: const Icon(BoxIcons.bxs_file_json),
               title: const Text('JSON'),
-              subtitle: vals.isEmpty
-                  ? null
-                  : Text(vals.keys.join(','), style: UIs.textGrey),
+              subtitle: vals.isEmpty ? null : Text(vals.keys.join(','), style: UIs.textGrey),
               trailing: const Icon(Icons.keyboard_arrow_right),
-              onTap: () async {
-                final res = await KvEditor.route.go(
-                  context,
-                  KvEditorArgs(data: _customCmds.value),
-                );
-                if (res == null) return;
-                _customCmds.value = res;
-              },
+              onTap: _onTapCustomItem,
             );
           },
         ).cardx,
@@ -535,153 +517,6 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     ).cardx;
   }
 
-  void _onSave() async {
-    if (_ipController.text.isEmpty) {
-      context.showSnackBar('${libL10n.empty} ${l10n.host}');
-      return;
-    }
-
-    if (_keyIdx.value == null && _passwordController.text.isEmpty) {
-      final cancel = await context.showRoundDialog<bool>(
-        title: libL10n.attention,
-        child: Text(libL10n.askContinue(l10n.useNoPwd)),
-        actions: [
-          TextButton(
-            onPressed: () => context.pop(false),
-            child: Text(libL10n.ok),
-          ),
-          TextButton(
-            onPressed: () => context.pop(true),
-            child: Text(libL10n.cancel),
-          )
-        ],
-      );
-      if (cancel != false) return;
-    }
-
-    // If [_pubKeyIndex] is -1, it means that the user has not selected
-    if (_keyIdx.value == -1) {
-      context.showSnackBar(libL10n.empty);
-      return;
-    }
-    if (_usernameController.text.isEmpty) {
-      _usernameController.text = 'root';
-    }
-    if (_portController.text.isEmpty) {
-      _portController.text = '22';
-    }
-    final customCmds = _customCmds.value;
-    final custom = ServerCustom(
-      pveAddr: _pveAddrCtrl.text.selfNotEmptyOrNull,
-      pveIgnoreCert: _pveIgnoreCert.value,
-      cmds: customCmds.isEmpty ? null : customCmds,
-      preferTempDev: _preferTempDevCtrl.text.selfNotEmptyOrNull,
-      logoUrl: _logoUrlCtrl.text.selfNotEmptyOrNull,
-      netDev: _netDevCtrl.text.selfNotEmptyOrNull,
-      scriptDir: _scriptDirCtrl.text.selfNotEmptyOrNull,
-    );
-
-    final wolEmpty = _wolMacCtrl.text.isEmpty &&
-        _wolIpCtrl.text.isEmpty &&
-        _wolPwdCtrl.text.isEmpty;
-    final wol = wolEmpty
-        ? null
-        : WakeOnLanCfg(
-            mac: _wolMacCtrl.text,
-            ip: _wolIpCtrl.text,
-            pwd: _wolPwdCtrl.text.selfNotEmptyOrNull,
-          );
-    if (wol != null) {
-      final wolValidation = wol.validate();
-      if (!wolValidation.$2) {
-        context.showSnackBar('${libL10n.fail}: ${wolValidation.$1}');
-        return;
-      }
-    }
-
-    final spi = Spi(
-      name: _nameController.text.isEmpty
-          ? _ipController.text
-          : _nameController.text,
-      ip: _ipController.text,
-      port: int.parse(_portController.text),
-      user: _usernameController.text,
-      pwd: _passwordController.text.selfNotEmptyOrNull,
-      keyId: _keyIdx.value != null
-          ? PrivateKeyProvider.pkis.value.elementAt(_keyIdx.value!).id
-          : null,
-      tags: _tags.value.isEmpty ? null : _tags.value.toList(),
-      alterUrl: _altUrlController.text.selfNotEmptyOrNull,
-      autoConnect: _autoConnect.value,
-      jumpId: _jumpServer.value,
-      custom: custom,
-      wolCfg: wol,
-      envs: _env.value.isEmpty ? null : _env.value,
-    );
-
-    if (this.spi == null) {
-      final existsIds = ServerStore.instance.box.keys;
-      if (existsIds.contains(spi.id)) {
-        context.showSnackBar('${l10n.sameIdServerExist}: ${spi.id}');
-        return;
-      }
-      ServerProvider.addServer(spi);
-    } else {
-      ServerProvider.updateServer(this.spi!, spi);
-    }
-
-    context.pop();
-  }
-
-  @override
-  void afterFirstLayout(BuildContext context) {
-    if (spi != null) {
-      _initWithSpi(spi!);
-    }
-  }
-
-  void _initWithSpi(Spi spi) {
-    _nameController.text = spi.name;
-    _ipController.text = spi.ip;
-    _portController.text = spi.port.toString();
-    _usernameController.text = spi.user;
-    if (spi.keyId == null) {
-      _passwordController.text = spi.pwd ?? '';
-    } else {
-      _keyIdx.value = PrivateKeyProvider.pkis.value.indexWhere(
-        (e) => e.id == spi.keyId,
-      );
-    }
-
-    /// List in dart is passed by pointer, so you need to copy it here
-    _tags.value = spi.tags?.toSet() ?? {};
-
-    _altUrlController.text = spi.alterUrl ?? '';
-    _autoConnect.value = spi.autoConnect;
-    _jumpServer.value = spi.jumpId;
-
-    final custom = spi.custom;
-    if (custom != null) {
-      _pveAddrCtrl.text = custom.pveAddr ?? '';
-      _pveIgnoreCert.value = custom.pveIgnoreCert;
-      _customCmds.value = custom.cmds ?? {};
-      _preferTempDevCtrl.text = custom.preferTempDev ?? '';
-      _logoUrlCtrl.text = custom.logoUrl ?? '';
-    }
-
-    final wol = spi.wolCfg;
-    if (wol != null) {
-      _wolMacCtrl.text = wol.mac;
-      _wolIpCtrl.text = wol.ip;
-      _wolPwdCtrl.text = wol.pwd ?? '';
-    }
-
-    _env.value = spi.envs ?? {};
-
-    _netDevCtrl.text = spi.custom?.netDev ?? '';
-    _scriptDirCtrl.text = spi.custom?.scriptDir ?? '';
-  }
-
   Widget _buildWriteScriptTip() {
     return Btn.tile(
       text: libL10n.attention,
@@ -741,5 +576,157 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       },
       icon: const Icon(Icons.delete),
     );
+  }
+
+  @override
+  void afterFirstLayout(BuildContext context) {
+    if (spi != null) {
+      _initWithSpi(spi!);
+    }
+  }
+}
+
+extension on _ServerEditPageState {
+  void _onTapCustomItem() async {
+    final res = await KvEditor.route.go(
+      context,
+      KvEditorArgs(data: _customCmds.value),
+    );
+    if (res == null) return;
+    _customCmds.value = res;
+  }
+
+  void _onSave() async {
+    if (_ipController.text.isEmpty) {
+      context.showSnackBar('${libL10n.empty} ${l10n.host}');
+      return;
+    }
+
+    if (_keyIdx.value == null && _passwordController.text.isEmpty) {
+      final cancel = await context.showRoundDialog<bool>(
+        title: libL10n.attention,
+        child: Text(libL10n.askContinue(l10n.useNoPwd)),
+        actions: [
+          TextButton(
+            onPressed: () => context.pop(false),
+            child: Text(libL10n.ok),
+          ),
+          TextButton(
+            onPressed: () => context.pop(true),
+            child: Text(libL10n.cancel),
+          )
+        ],
+      );
+      if (cancel != false) return;
+    }
+
+    // If [_pubKeyIndex] is -1, it means that the user has not selected
+    if (_keyIdx.value == -1) {
+      context.showSnackBar(libL10n.empty);
+      return;
+    }
+    if (_usernameController.text.isEmpty) {
+      _usernameController.text = 'root';
+    }
+    if (_portController.text.isEmpty) {
+      _portController.text = '22';
+    }
+    final customCmds = _customCmds.value;
+    final custom = ServerCustom(
+      pveAddr: _pveAddrCtrl.text.selfNotEmptyOrNull,
+      pveIgnoreCert: _pveIgnoreCert.value,
+      cmds: customCmds.isEmpty ? null : customCmds,
+      preferTempDev: _preferTempDevCtrl.text.selfNotEmptyOrNull,
+      logoUrl: _logoUrlCtrl.text.selfNotEmptyOrNull,
+      netDev: _netDevCtrl.text.selfNotEmptyOrNull,
+      scriptDir: _scriptDirCtrl.text.selfNotEmptyOrNull,
+    );
+
+    final wolEmpty = _wolMacCtrl.text.isEmpty && _wolIpCtrl.text.isEmpty && _wolPwdCtrl.text.isEmpty;
+    final wol = wolEmpty
+        ? null
+        : WakeOnLanCfg(
+            mac: _wolMacCtrl.text,
+            ip: _wolIpCtrl.text,
+            pwd: _wolPwdCtrl.text.selfNotEmptyOrNull,
+          );
+    if (wol != null) {
+      final wolValidation = wol.validate();
+      if (!wolValidation.$2) {
+        context.showSnackBar('${libL10n.fail}: ${wolValidation.$1}');
+        return;
+      }
+    }
+
+    final spi = Spi(
+      name: _nameController.text.isEmpty ? _ipController.text : _nameController.text,
+      ip: _ipController.text,
+      port: int.parse(_portController.text),
+      user: _usernameController.text,
+      pwd: _passwordController.text.selfNotEmptyOrNull,
+      keyId: _keyIdx.value != null ? PrivateKeyProvider.pkis.value.elementAt(_keyIdx.value!).id : null,
+      tags: _tags.value.isEmpty ? null : _tags.value.toList(),
+      alterUrl: _altUrlController.text.selfNotEmptyOrNull,
+      autoConnect: _autoConnect.value,
+      jumpId: _jumpServer.value,
+      custom: custom,
+      wolCfg: wol,
+      envs: _env.value.isEmpty ? null : _env.value,
+    );
+
+    if (this.spi == null) {
+      final existsIds = ServerStore.instance.box.keys;
+      if (existsIds.contains(spi.id)) {
+        context.showSnackBar('${l10n.sameIdServerExist}: ${spi.id}');
+        return;
+      }
+      ServerProvider.addServer(spi);
+    } else {
+      ServerProvider.updateServer(this.spi!, spi);
+    }
+
+    context.pop();
+  }
+
+  void _initWithSpi(Spi spi) {
+    _nameController.text = spi.name;
+    _ipController.text = spi.ip;
+    _portController.text = spi.port.toString();
+    _usernameController.text = spi.user;
+    if (spi.keyId == null) {
+      _passwordController.text = spi.pwd ?? '';
+    } else {
+      _keyIdx.value = PrivateKeyProvider.pkis.value.indexWhere(
+        (e) => e.id == spi.keyId,
+      );
+    }
+
+    /// List in dart is passed by pointer, so you need to copy it here
+    _tags.value = spi.tags?.toSet() ?? {};
+
+    _altUrlController.text = spi.alterUrl ?? '';
+    _autoConnect.value = spi.autoConnect;
+    _jumpServer.value = spi.jumpId;
+
+    final custom = spi.custom;
+    if (custom != null) {
+      _pveAddrCtrl.text = custom.pveAddr ?? '';
+      _pveIgnoreCert.value = custom.pveIgnoreCert;
+      _customCmds.value = custom.cmds ?? {};
+      _preferTempDevCtrl.text = custom.preferTempDev ?? '';
+      _logoUrlCtrl.text = custom.logoUrl ?? '';
+    }
+
+    final wol = spi.wolCfg;
+    if (wol != null) {
+      _wolMacCtrl.text = wol.mac;
+      _wolIpCtrl.text = wol.ip;
+      _wolPwdCtrl.text = wol.pwd ?? '';
+    }
+
+    _env.value = spi.envs ?? {};
+
+    _netDevCtrl.text = spi.custom?.netDev ?? '';
+    _scriptDirCtrl.text = spi.custom?.scriptDir ?? '';
   }
 }

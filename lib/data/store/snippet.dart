@@ -14,15 +14,14 @@ class SnippetStore extends HiveStore {
   }
 
   List<Snippet> fetch() {
-    final keys = box.keys;
-    final ss = <Snippet>[];
-    for (final key in keys) {
+    final ss = <Snippet>{};
+    for (final key in keys()) {
       final s = box.get(key);
       if (s != null && s is Snippet) {
         ss.add(s);
       }
     }
-    return ss;
+    return ss.toList();
   }
 
   void delete(Snippet s) {

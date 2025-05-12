@@ -14,22 +14,28 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/container.dart';
+import 'package:server_box/view/page/ssh/page.dart';
 import 'package:server_box/view/widget/two_line_text.dart';
 
 class ContainerPage extends StatefulWidget {
-  final Spi spi;
-  const ContainerPage({required this.spi, super.key});
+  final SpiRequiredArgs args;
+  const ContainerPage({required this.args, super.key});
 
   @override
   State<ContainerPage> createState() => _ContainerPageState();
+
+  static const route = AppRouteArg(
+    page: ContainerPage.new,
+    path: '/container',
+  );
 }
 
 class _ContainerPageState extends State<ContainerPage> {
   final _textController = TextEditingController();
   late final _container = ContainerProvider(
-    client: widget.spi.server?.value.client,
-    userName: widget.spi.user,
-    hostId: widget.spi.id,
+    client: widget.args.spi.server?.value.client,
+    userName: widget.args.spi.user,
+    hostId: widget.args.spi.id,
     context: context,
   );
   late Size _size;
@@ -55,27 +61,23 @@ class _ContainerPageState extends State<ContainerPage> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => _container,
-      builder: (_, __) => Consumer<ContainerProvider>(
-        builder: (_, ___, __) {
-          return Scaffold(
-            appBar: CustomAppBar(
-              centerTitle: true,
-              title: TwoLineText(up: l10n.container, down: widget.spi.name),
-              actions: [
-                IconButton(
-                  onPressed: () =>
-                      context.showLoadingDialog(fn: () => _container.refresh()),
-                  icon: const Icon(Icons.refresh),
-                )
-              ],
-            ),
-            body: _buildMain(),
-            floatingActionButton: _container.error == null ? _buildFAB() : null,
-          );
-        },
-      ),
+    return Consumer<ContainerProvider>(
+      builder: (_, ___, __) {
+        return Scaffold(
+          appBar: CustomAppBar(
+            centerTitle: true,
+            title: TwoLineText(up: l10n.container, down: widget.args.spi.name),
+            actions: [
+              IconButton(
+                onPressed: () => context.showLoadingDialog(fn: () => _container.refresh()),
+                icon: const Icon(Icons.refresh),
+              )
+            ],
+          ),
+          body: _buildMain(),
+          floatingActionButton: _container.error == null ? _buildFAB() : null,
+        );
+      },
     );
   }
 
@@ -234,8 +236,7 @@ class _ContainerPageState extends State<ContainerPage> {
         ),
         Row(
           children: [
-            _buildPsItemStatsItem(
-                'Mem', item.mem, Icons.settings_input_component),
+            _buildPsItemStatsItem('Mem', item.mem, Icons.settings_input_component),
             UIs.width13,
             _buildPsItemStatsItem('Disk', item.disk, Icons.storage),
           ],
@@ -263,9 +264,7 @@ class _ContainerPageState extends State<ContainerPage> {
 
   Widget _buildMoreBtn(ContainerPs dItem) {
     return PopupMenu(
-      items: ContainerMenu.items(dItem.running)
-          .map((e) => PopMenu.build(e, e.icon, e.toStr))
-          .toList(),
+      items: ContainerMenu.items(dItem.running).map((e) => PopMenu.build(e, e.icon, e.toStr)).toList(),
       onSelected: (item) => _onTapMoreBtn(item, dItem),
     );
   }
@@ -410,7 +409,7 @@ class _ContainerPageState extends State<ContainerPage> {
   }
 
   Future<void> _showEditHostDialog() async {
-    final id = widget.spi.id;
+    final id = widget.args.spi.id;
     final host = Stores.container.fetch(id);
     final ctrl = TextEditingController(text: host);
     await context.showRoundDialog(
@@ -428,7 +427,7 @@ class _ContainerPageState extends State<ContainerPage> {
 
   void _onSaveDockerHost(String val) {
     context.pop();
-    Stores.container.put(widget.spi.id, val.trim());
+    Stores.container.put(widget.args.spi.id, val.trim());
     _container.refresh();
   }
 
@@ -537,22 +536,24 @@ class _ContainerPageState extends State<ContainerPage> {
         }
         break;
       case ContainerMenu.logs:
-        AppRoutes.ssh(
-          spi: widget.spi,
+        final args = SshPageArgs(
+          spi: widget.args.spi,
           initCmd: '${switch (_container.type) {
             ContainerType.podman => 'podman',
             ContainerType.docker => 'docker',
           }} logs -f --tail 100 ${dItem.id}',
-        ).go(context);
+        );
+        SSHPage.route.go(context, args);
         break;
       case ContainerMenu.terminal:
-        AppRoutes.ssh(
-          spi: widget.spi,
+        final args = SshPageArgs(
+          spi: widget.args.spi,
           initCmd: '${switch (_container.type) {
             ContainerType.podman => 'podman',
             ContainerType.docker => 'docker',
           }} exec -it ${dItem.id} sh',
-        ).go(context);
+        );
+        SSHPage.route.go(context, args);
         break;
       // case DockerMenuType.stats:
       //   showRoundDialog(

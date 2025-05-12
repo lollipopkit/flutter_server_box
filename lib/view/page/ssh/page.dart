@@ -14,18 +14,18 @@ import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/provider/virtual_keyboard.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
 
-import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/res/terminal.dart';
 
 const _echoPWD = 'echo \$PWD';
 
-class SSHPage extends StatefulWidget {
+final class SshPageArgs {
   final Spi spi;
   final String? initCmd;
   final Snippet? initSnippet;
@@ -34,8 +34,7 @@ class SSHPage extends StatefulWidget {
   final GlobalKey<TerminalViewState>? terminalKey;
   final FocusNode? focusNode;
 
-  const SSHPage({
-    super.key,
+  const SshPageArgs({
     required this.spi,
     this.initCmd,
     this.initSnippet,
@@ -44,20 +43,33 @@ class SSHPage extends StatefulWidget {
     this.terminalKey,
     this.focusNode,
   });
+}
+
+class SSHPage extends StatefulWidget {
+  final SshPageArgs args;
+
+  const SSHPage({
+    super.key,
+    required this.args,
+  });
 
   @override
   State<SSHPage> createState() => SSHPageState();
+
+  static const route = AppRouteArg<void, SshPageArgs>(
+    page: SSHPage.new,
+    path: '/ssh/page',
+  );
 }
 
 const _horizonPadding = 7.0;
 
-class SSHPageState extends State<SSHPage>
-    with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
+class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
   final _keyboard = VirtKeyProvider();
   late final _terminal = Terminal(inputHandler: _keyboard);
   final TerminalController _terminalController = TerminalController();
   final List<List<VirtKey>> _virtKeysList = [];
-  late final _termKey = widget.terminalKey ?? GlobalKey<TerminalViewState>();
+  late final _termKey = widget.args.terminalKey ?? GlobalKey<TerminalViewState>();
 
   late MediaQueryData _media;
   late TerminalStyle _terminalStyle;
@@ -68,7 +80,7 @@ class SSHPageState extends State<SSHPage>
 
   bool _isDark = false;
   Timer? _virtKeyLongPressTimer;
-  late SSHClient? _client = widget.spi.server?.value.client;
+  late SSHClient? _client = widget.args.spi.server?.value.client;
   Timer? _discontinuityTimer;
 
   /// Used for (de)activate the wake lock and forground service
@@ -148,13 +160,10 @@ class SSHPageState extends State<SSHPage>
   Widget _buildBody() {
     final letterCache = Stores.setting.letterCache.fetch();
     return SizedBox(
-      height: _media.size.height -
-          _virtKeysHeight -
-          _media.padding.bottom -
-          _media.padding.top,
+      height: _media.size.height - _virtKeysHeight - _media.padding.bottom - _media.padding.top,
       child: Padding(
         padding: EdgeInsets.only(
-          top: widget.notFromTab ? CustomAppBar.sysStatusBarHeight : 0,
+          top: widget.args.notFromTab ? CustomAppBar.sysStatusBarHeight : 0,
           left: _horizonPadding,
           right: _horizonPadding,
         ),
@@ -175,7 +184,7 @@ class SSHPageState extends State<SSHPage>
             CustomAppBar.sysStatusBarHeight,
           ),
           hideScrollBar: false,
-          focusNode: widget.focusNode,
+          focusNode: widget.args.focusNode,
         ),
       ),
     );
@@ -192,8 +201,7 @@ class SSHPageState extends State<SSHPage>
           height: _virtKeysHeight,
           child: ChangeNotifierProvider(
             create: (_) => _keyboard,
-            builder: (_, __) =>
-                Consumer<VirtKeyProvider>(builder: (_, __, ___) {
+            builder: (_, __) => Consumer<VirtKeyProvider>(builder: (_, __, ___) {
               return _buildVirtualKey();
             }),
           ),
@@ -207,14 +215,11 @@ class SSHPageState extends State<SSHPage>
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
-          children:
-              _virtKeysList.expand((e) => e).map(_buildVirtKeyItem).toList(),
+          children: _virtKeysList.expand((e) => e).map(_buildVirtKeyItem).toList(),
         ),
       );
     }
-    final rows = _virtKeysList
-        .map((e) => Row(children: e.map(_buildVirtKeyItem).toList()))
-        .toList();
+    final rows = _virtKeysList.map((e) => Row(children: e.map(_buildVirtKeyItem).toList())).toList();
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: rows,
@@ -243,9 +248,7 @@ class SSHPageState extends State<SSHPage>
         : Text(
             item.text,
             style: TextStyle(
-              color: selected
-                  ? UIs.primaryColor
-                  : (_isDark ? Colors.white : Colors.black),
+              color: selected ? UIs.primaryColor : (_isDark ? Colors.white : Colors.black),
               fontSize: 15,
             ),
           );
@@ -315,7 +318,7 @@ extension _Init on SSHPageState {
   Future<void> _initTerminal() async {
     _writeLn(l10n.waitConnection);
     _client ??= await genClient(
-      widget.spi,
+      widget.args.spi,
       onStatus: (p0) {
         _writeLn(p0.toString());
       },
@@ -328,7 +331,7 @@ extension _Init on SSHPageState {
         width: _terminal.viewWidth,
         height: _terminal.viewHeight,
       ),
-      environment: widget.spi.envs,
+      environment: widget.args.spi.envs,
     );
 
     //_setupDiscontinuityTimer();
@@ -352,37 +355,34 @@ extension _Init on SSHPageState {
     _listen(session.stderr);
 
     for (final snippet in SnippetProvider.snippets.value) {
-      if (snippet.autoRunOn?.contains(widget.spi.id) == true) {
-        snippet.runInTerm(_terminal, widget.spi);
+      if (snippet.autoRunOn?.contains(widget.args.spi.id) == true) {
+        snippet.runInTerm(_terminal, widget.args.spi);
       }
     }
 
-    if (widget.initCmd != null) {
-      _terminal.textInput(widget.initCmd!);
+    if (widget.args.initCmd != null) {
+      _terminal.textInput(widget.args.initCmd!);
       _terminal.keyInput(TerminalKey.enter);
     }
 
-    if (widget.initSnippet != null) {
-      widget.initSnippet!.runInTerm(_terminal, widget.spi);
+    if (widget.args.initSnippet != null) {
+      widget.args.initSnippet!.runInTerm(_terminal, widget.args.spi);
     }
 
-    widget.focusNode?.requestFocus();
+    widget.args.focusNode?.requestFocus();
 
     await session.done;
-    if (mounted && widget.notFromTab) {
+    if (mounted && widget.args.notFromTab) {
       context.pop();
     }
-    widget.onSessionEnd?.call();
+    widget.args.onSessionEnd?.call();
   }
 
   void _listen(Stream<Uint8List>? stream) {
     if (stream == null) {
       return;
     }
-    stream
-        .cast<List<int>>()
-        .transform(const Utf8Decoder())
-        .listen(_terminal.write);
+    stream.cast<List<int>>().transform(const Utf8Decoder()).listen(_terminal.write);
   }
 
   void _setupDiscontinuityTimer() {
@@ -490,7 +490,7 @@ extension _VirtKey on SSHPageState {
 
         final snippet = snippets.firstOrNull;
         if (snippet == null) return;
-        snippet.runInTerm(_terminal, widget.spi);
+        snippet.runInTerm(_terminal, widget.args.spi);
         break;
       case VirtualKeyFunc.file:
         // get $PWD from SSH session
@@ -509,7 +509,8 @@ extension _VirtKey on SSHPageState {
           );
           return;
         }
-        AppRoutes.sftp(spi: widget.spi, initPath: initPath).go(context);
+        final args = SftpPageArgs(spi: widget.args.spi, initPath: initPath);
+        SftpPage.route.go(context, args);
     }
   }
 
@@ -547,6 +548,6 @@ extension _VirtKey on SSHPageState {
   }
 
   FutureOr<List<String>?> _onKeyboardInteractive(SSHUserInfoRequest req) {
-    return KeybordInteractive.defaultHandle(widget.spi, ctx: context);
+    return KeybordInteractive.defaultHandle(widget.args.spi, ctx: context);
   }
 }

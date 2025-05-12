@@ -20,7 +20,7 @@ extension _SSH on _AppSettingsPageState {
       leading: const Icon(BoxIcons.bxs_keyboard),
       title: Text(l10n.editVirtKeys),
       trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => AppRoutes.sshVirtKeySetting().go(context),
+      onTap: () => SSHVirtKeySettingPage.route.go(context),
     );
   }
 

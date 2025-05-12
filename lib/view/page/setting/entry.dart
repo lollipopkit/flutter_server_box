@@ -13,13 +13,17 @@ import 'package:server_box/data/res/github_id.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 
-import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/view/page/backup.dart';
 import 'package:server_box/view/page/editor.dart';
 import 'package:server_box/view/page/private_key/list.dart';
+import 'package:server_box/view/page/setting/platform/android.dart';
+import 'package:server_box/view/page/setting/platform/ios.dart';
+import 'package:server_box/view/page/setting/seq/srv_detail_seq.dart';
 import 'package:server_box/view/page/setting/seq/srv_func_seq.dart';
+import 'package:server_box/view/page/setting/seq/srv_seq.dart';
+import 'package:server_box/view/page/setting/seq/virt_key.dart';
 
 part 'about.dart';
 part 'entries/app.dart';
@@ -35,16 +39,17 @@ const _kIconSize = 23.0;
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
-  static const route = AppRouteNoArg(page: SettingsPage.new, path: '/settings');
+  static const route = AppRouteNoArg(
+    page: SettingsPage.new,
+    path: '/settings',
+  );
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage>
-    with SingleTickerProviderStateMixin {
-  late final _tabCtrl =
-      TabController(length: SettingsTabs.values.length, vsync: this);
+class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderStateMixin {
+  late final _tabCtrl = TabController(length: SettingsTabs.values.length, vsync: this);
 
   @override
   void dispose() {
@@ -62,9 +67,7 @@ class _SettingsPageState extends State<SettingsPage>
           dividerHeight: 0,
           tabAlignment: TabAlignment.center,
           isScrollable: true,
-          tabs: SettingsTabs.values
-              .map((e) => Tab(text: e.i18n))
-              .toList(growable: false),
+          tabs: SettingsTabs.values.map((e) => Tab(text: e.i18n)).toList(growable: false),
         ),
         actions: [
           Btn.text(
@@ -120,12 +123,7 @@ final class _AppSettingsPageState extends State<AppSettingsPage> {
       children: [
         [const CenterGreyTitle('App'), _buildApp()],
         [CenterGreyTitle(l10n.server), _buildServer()],
-        [
-          const CenterGreyTitle('SSH'),
-          _buildSSH(),
-          const CenterGreyTitle('SFTP'),
-          _buildSFTP()
-        ],
+        [const CenterGreyTitle('SSH'), _buildSSH(), const CenterGreyTitle('SFTP'), _buildSFTP()],
         [
           CenterGreyTitle(l10n.container),
           _buildContainer(),
@@ -162,6 +160,5 @@ enum SettingsTabs {
         SettingsTabs.about => const _AppAboutPage(),
       };
 
-  static final List<Widget> pages =
-      SettingsTabs.values.map((e) => e.page).toList();
+  static final List<Widget> pages = SettingsTabs.values.map((e) => e.page).toList();
 }

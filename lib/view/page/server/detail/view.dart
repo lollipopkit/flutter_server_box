@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
 import 'package:server_box/data/model/server/battery.dart';
@@ -25,16 +26,19 @@ import 'package:server_box/data/model/server/server.dart';
 part 'misc.dart';
 
 class ServerDetailPage extends StatefulWidget {
-  const ServerDetailPage({super.key, required this.spi});
-
-  final Spi spi;
+  final SpiRequiredArgs args;
+  const ServerDetailPage({super.key, required this.args});
 
   @override
   State<ServerDetailPage> createState() => _ServerDetailPageState();
+
+  static const route = AppRouteArg(
+    page: ServerDetailPage.new,
+    path: '/servers/detail',
+  );
 }
 
-class _ServerDetailPageState extends State<ServerDetailPage>
-    with SingleTickerProviderStateMixin {
+class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerProviderStateMixin {
   late final _cardBuildMap = Map.fromIterables(
     ServerDetailCards.names,
     [
@@ -49,7 +53,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       _buildTemperature,
       _buildBatteries,
       _buildPve,
-      _buildCustom,
+      _buildCustomCmd,
     ],
   );
 
@@ -83,7 +87,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   @override
   Widget build(BuildContext context) {
-    final s = widget.spi.server;
+    final s = widget.args.spi.server;
     if (s == null) {
       return Scaffold(
         appBar: CustomAppBar(),
@@ -106,14 +110,10 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         children.add(buildFunc(si));
       }
     }
+
     return Scaffold(
       appBar: _buildAppBar(si),
-      body: ListView(
-        padding: EdgeInsets.only(
-          left: 13,
-          right: 13,
-          bottom: _media.padding.bottom + 77,
-        ),
+      body: AutoMultiList(
         children: children,
       ),
     );
@@ -121,18 +121,11 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   CustomAppBar _buildAppBar(Server si) {
     return CustomAppBar(
-      title: Hero(
-        tag: 'home_card_title_${si.spi.id}',
-        transitionOnUserGestures: true,
-        child: Material(
-          color: Colors.transparent,
-          child: Text(
-            si.spi.name,
-            style: TextStyle(
-              fontSize: 20,
-              color: context.isDark ? Colors.white : Colors.black,
-            ),
-          ),
+      title: Text(
+        si.spi.name,
+        style: TextStyle(
+          fontSize: 20,
+          color: context.isDark ? Colors.white : Colors.black,
         ),
       ),
       actions: [
@@ -144,7 +137,10 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         IconButton(
           icon: const Icon(Icons.edit),
           onPressed: () async {
-            final delete = await ServerEditPage.route.go(context, args: si.spi);
+            final delete = await ServerEditPage.route.go(
+              context,
+              args: SpiRequiredArgs(si.spi),
+            );
             if (delete == true) {
               context.pop();
             }
@@ -155,16 +151,14 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildLogo(Server si) {
-    var logoUrl = si.spi.custom?.logoUrl ??
-        _settings.serverLogoUrl.fetch().selfNotEmptyOrNull;
+    var logoUrl = si.spi.custom?.logoUrl ?? _settings.serverLogoUrl.fetch().selfNotEmptyOrNull;
     if (logoUrl == null) return UIs.placeholder;
 
     final dist = si.status.more[StatusCmdType.sys]?.dist;
     if (dist != null) {
       logoUrl = logoUrl.replaceFirst('{DIST}', dist.name);
     }
-    logoUrl =
-        logoUrl.replaceFirst('{BRIGHT}', context.isDark ? 'dark' : 'light');
+    logoUrl = logoUrl.replaceFirst('{BRIGHT}', context.isDark ? 'dark' : 'light');
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 13),
@@ -194,8 +188,16 @@ class _ServerDetailPageState extends State<ServerDetailPage>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(e.key.i18n, style: UIs.text13),
-                    Text(e.value, style: UIs.text13Grey)
+                    Text(
+                      e.key.i18n,
+                      style: UIs.text13,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      e.value,
+                      style: UIs.text13Grey,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
                 ),
               ),
@@ -267,15 +269,15 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   }
 
   Widget _buildCpuModelItem(MapEntry<String, int> e) {
-    final name = e.key
-        .replaceFirst('Intel(R)', '')
-        .replaceFirst('AMD', '')
-        .replaceFirst('with Radeon Graphics', '');
+    final name =
+        e.key.replaceFirst('Intel(R)', '').replaceFirst('AMD', '').replaceFirst('with Radeon Graphics', '');
     final child = Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        SizedBox(
-          width: _media.size.width * .7,
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: _media.size.width * .7,
+          ),
           child: Text(
             name,
             style: UIs.text13,
@@ -283,7 +285,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             maxLines: 1,
           ),
         ),
-        Text('x ${e.value}', style: UIs.text13Grey),
+        Text('x ${e.value}', style: UIs.text13Grey, overflow: TextOverflow.clip),
       ],
     );
     return child.paddingSymmetric(horizontal: 17);
@@ -312,41 +314,47 @@ class _ServerDetailPageState extends State<ServerDetailPage>
   List<Widget> _buildCPUProgress(Cpus cs) {
     const kMaxColumn = 2;
     const kRowThreshold = 4;
-    const kCoresCount = kMaxColumn * kRowThreshold;
+    const kCoresCountThreshold = kMaxColumn * kRowThreshold;
     final children = <Widget>[];
+    final displayCpuIndexSetting = Stores.setting.displayCpuIndex.fetch();
 
-    if (cs.coresCount > kCoresCount) {
-      final rows = cs.coresCount ~/ kMaxColumn;
-      for (var i = 0; i < rows; i++) {
+    if (cs.coresCount > kCoresCountThreshold) {
+      final numCoresToDisplay = cs.coresCount - 1;
+      final numRows = (numCoresToDisplay + kMaxColumn - 1) ~/ kMaxColumn;
+
+      for (var i = 0; i < numRows; i++) {
         final rowChildren = <Widget>[];
         for (var j = 0; j < kMaxColumn; j++) {
-          final idx = i * kMaxColumn + j + 1;
-          if (idx >= cs.coresCount) break;
-          if (Stores.setting.displayCpuIndex.fetch()) {
-            rowChildren.add(Text('$idx', style: UIs.text13Grey));
+          final coreListIndex = i * kMaxColumn + j;
+          if (coreListIndex >= numCoresToDisplay) break;
+
+          final coreNumberOneBased = coreListIndex + 1;
+
+          if (displayCpuIndexSetting) {
+            rowChildren.add(Text('$coreNumberOneBased', style: UIs.text13Grey));
           }
           rowChildren.add(
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 3),
-                child: _buildProgress(cs.usedPercent(coreIdx: idx)),
+                child: _buildProgress(cs.usedPercent(coreIdx: coreNumberOneBased)),
               ),
             ),
           );
         }
-        rowChildren.joinWith(UIs.width7);
-        children.add(
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 17),
-            child: Row(
-              children: rowChildren,
+        if (rowChildren.isNotEmpty) {
+          children.add(
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 17),
+              child: Row(
+                children: rowChildren.joinWith(UIs.width7).toList(),
+              ),
             ),
-          ),
-        );
+          );
+        }
       }
     } else {
-      for (var i = 0; i < cs.coresCount; i++) {
-        if (i == 0) continue;
+      for (var i = 1; i < cs.coresCount; i++) {
         children.add(
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 17),
@@ -377,6 +385,17 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     final used = ss.mem.usedPercent * 100;
     final usedStr = used.toStringAsFixed(0);
 
+    final percentW = Row(
+      children: [
+        _buildAnimatedText(ValueKey(usedStr), '$usedStr%', UIs.text27),
+        UIs.width7,
+        Text(
+          'of ${(ss.mem.total * 1024).bytes2Str}',
+          style: UIs.text13Grey,
+        )
+      ],
+    );
+
     return CardX(
       child: Padding(
         padding: UIs.roundRectCardPadding,
@@ -387,20 +406,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    _buildAnimatedText(
-                      ValueKey(usedStr),
-                      '$usedStr%',
-                      UIs.text27,
-                    ),
-                    UIs.width7,
-                    Text(
-                      'of ${(ss.mem.total * 1024).bytes2Str}',
-                      style: UIs.text13Grey,
-                    )
-                  ],
-                ),
+                percentW,
                 Row(
                   children: [
                     _buildDetailPercent(free, 'free'),
@@ -423,6 +429,18 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     if (ss.swap.total == 0) return UIs.placeholder;
     final used = ss.swap.usedPercent * 100;
     final cached = ss.swap.cached / ss.swap.total * 100;
+
+    final percentW = Row(
+      children: [
+        Text('${used.toStringAsFixed(0)}%', style: UIs.text27),
+        UIs.width7,
+        Text(
+          'of ${(ss.swap.total * 1024).bytes2Str} ',
+          style: UIs.text13Grey,
+        )
+      ],
+    );
+
     return CardX(
       child: Padding(
         padding: UIs.roundRectCardPadding,
@@ -433,16 +451,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Text('${used.toStringAsFixed(0)}%', style: UIs.text27),
-                    UIs.width7,
-                    Text(
-                      'of ${(ss.swap.total * 1024).bytes2Str} ',
-                      style: UIs.text13Grey,
-                    )
-                  ],
-                ),
+                percentW,
                 _buildDetailPercent(cached, 'cached'),
               ],
             ),
@@ -470,7 +479,6 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildGpuItem(NvidiaSmiItem item) {
     final mem = item.memory;
-    final processes = mem.processes;
     return ListTile(
       title: Text(item.name, style: UIs.text13),
       leading: Text(
@@ -490,32 +498,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            onPressed: () {
-              final height = () {
-                if (processes.length > 5) {
-                  return 5 * 47.0;
-                }
-                return processes.length * 47.0;
-              }();
-              context.showRoundDialog(
-                title: item.name,
-                child: SizedBox(
-                  width: double.maxFinite,
-                  height: height,
-                  child: ListView.builder(
-                    itemCount: processes.length,
-                    itemBuilder: (_, idx) =>
-                        _buildGpuProcessItem(processes[idx]),
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => context.pop(),
-                    child: Text(libL10n.close),
-                  )
-                ],
-              );
-            },
+            onPressed: () => _onTapGpuItem(item),
             icon: const Icon(Icons.info_outline, size: 17),
           ),
         ],
@@ -538,28 +521,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         textScaler: _textFactor,
       ),
       trailing: InkWell(
-        onTap: () {
-          context.showRoundDialog(
-            title: '${process.pid}',
-            titleMaxLines: 1,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                UIs.height13,
-                Text('Memory: ${process.memory} MiB'),
-                UIs.height13,
-                Text('Process: ${process.name}')
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => context.pop(),
-                child: Text(libL10n.close),
-              )
-            ],
-          );
-        },
+        onTap: () => _nTapGpuProcessItem(process),
         child: const Icon(Icons.info_outline, size: 17),
       ),
     );
@@ -567,8 +529,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
 
   Widget _buildDiskView(Server si) {
     final ss = si.status;
-    final children = List.generate(
-        ss.disk.length, (idx) => _buildDiskItem(ss.disk[idx], ss));
+    final children = List.generate(ss.disk.length, (idx) => _buildDiskItem(ss.disk[idx], ss));
     return CardX(
       child: ExpandTile(
         title: Text(l10n.disk),
@@ -587,6 +548,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       if (read == null || write == null) return use;
       return '$use\n${l10n.read} $read | ${l10n.write} $write';
     }();
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 5),
       child: Row(
@@ -638,43 +600,40 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     devices.sort(_netSortType.value.getSortFunc(ns));
     children.addAll(devices.map((e) => _buildNetSpeedItem(ns, e)));
 
-    return CardX(
-      child: ExpandTile(
-        leading: Icon(ServerDetailCards.net.icon, size: 17),
-        title: Row(
-          children: [
-            Text(l10n.net),
-            UIs.width13,
-            ValBuilder(
-              listenable: _netSortType,
-              builder: (val) => InkWell(
-                onTap: () => _netSortType.value = val.next,
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 377),
-                  transitionBuilder: (child, animation) => FadeTransition(
-                    opacity: animation,
-                    child: child,
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.sort, size: 17),
-                      UIs.width7,
-                      Text(
-                        val.name,
-                        style: UIs.text13Grey,
-                      ),
-                    ],
-                  ),
+    return ExpandTile(
+      leading: Icon(ServerDetailCards.net.icon, size: 17),
+      title: Row(
+        children: [
+          Text(l10n.net),
+          UIs.width13,
+          _netSortType.listenVal(
+            (val) => InkWell(
+              onTap: () => _netSortType.value = val.next,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 377),
+                transitionBuilder: (child, animation) => FadeTransition(
+                  opacity: animation,
+                  child: child,
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.sort, size: 17),
+                    UIs.width7,
+                    Text(
+                      val.name,
+                      style: UIs.text13Grey,
+                    ),
+                  ],
                 ),
               ),
             ),
-          ],
-        ),
-        childrenPadding: const EdgeInsets.only(bottom: 11),
-        initiallyExpanded: _getInitExpand(children.length),
-        children: children,
+          ),
+        ],
       ),
-    );
+      childrenPadding: const EdgeInsets.only(bottom: 11),
+      initiallyExpanded: _getInitExpand(children.length),
+      children: children,
+    ).cardx;
   }
 
   Widget _buildNetSpeedItem(NetSpeed ns, String device) {
@@ -725,9 +684,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         leading: const Icon(Icons.ac_unit, size: 20),
         initiallyExpanded: _getInitExpand(ss.temps.devices.length),
         childrenPadding: const EdgeInsets.only(bottom: 7),
-        children: ss.temps.devices
-            .map((key) => _buildTemperatureItem(key, ss.temps.get(key)))
-            .toList(),
+        children: ss.temps.devices.map((key) => _buildTemperatureItem(key, ss.temps.get(key))).toList(),
       ),
     );
   }
@@ -738,12 +695,11 @@ class _ServerDetailPageState extends State<ServerDetailPage>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(key, style: UIs.text15).paddingSymmetric(horizontal: 5).tap(
-            onTap: () {
-              Pfs.copy(key);
-              context.showSnackBar('${libL10n.copy} ${libL10n.success}');
-            },
-          ),
+          Btn.text(
+            text: key,
+            textStyle: UIs.text15,
+            onTap: () => _onTapTemperatureItem(key),
+          ).paddingSymmetric(horizontal: 5),
           Text('${val?.toStringAsFixed(1)}°C', style: UIs.text13Grey),
         ],
       ),
@@ -813,41 +769,31 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         child: Text(si.device),
       );
     }
+
+    final itemW = Expanded(
+        child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            Text(si.device, style: UIs.text15Bold),
+            UIs.width7,
+            Text('(${si.adapter.raw})', style: UIs.text13Grey),
+          ],
+        ),
+        Text(si.summary ?? '', style: UIs.text13Grey),
+      ],
+    ));
+
     return InkWell(
-      onTap: () {
-        context.showRoundDialog(
-          title: si.device,
-          child: SingleChildScrollView(
-            child: SimpleMarkdown(
-              data: si.toMarkdown,
-              styleSheet: MarkdownStyleSheet(
-                tableBorder: TableBorder.all(color: Colors.grey),
-                tableHead: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-        );
-      },
+      onTap: () => _onTapSensorItem(si),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Expanded(
-                child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Text(si.device, style: UIs.text15Bold),
-                    UIs.width7,
-                    Text('(${si.adapter.raw})', style: UIs.text13Grey),
-                  ],
-                ),
-                Text(si.summary ?? '', style: UIs.text13Grey),
-              ],
-            )),
+            itemW,
             UIs.width7,
             const Icon(Icons.keyboard_arrow_right, color: Colors.grey),
           ],
@@ -869,7 +815,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
     );
   }
 
-  Widget _buildCustom(Server si) {
+  Widget _buildCustomCmd(Server si) {
     final ss = si.status;
     if (ss.customCmds.isEmpty) return UIs.placeholder;
     return CardX(
@@ -877,12 +823,12 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         leading: const Icon(MingCute.command_line, size: 17),
         title: Text(l10n.customCmd),
         initiallyExpanded: _getInitExpand(ss.customCmds.length),
-        children: ss.customCmds.entries.map(_buildCustomItem).toList(),
+        children: ss.customCmds.entries.map(_buildCustomCmdItem).toList(),
       ),
     );
   }
 
-  Widget _buildCustomItem(MapEntry<String, String> cmd) {
+  Widget _buildCustomCmdItem(MapEntry<String, String> cmd) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
       child: KvRow(
@@ -891,20 +837,7 @@ class _ServerDetailPageState extends State<ServerDetailPage>
         vBuilder: () {
           if (!cmd.value.contains('\n')) return null;
           return GestureDetector(
-            onTap: () {
-              context.showRoundDialog(
-                title: cmd.key,
-                child: SingleChildScrollView(
-                  child: Text(cmd.value, style: UIs.text13Grey),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => context.pop(),
-                    child: Text(libL10n.close),
-                  ),
-                ],
-              );
-            },
+            onTap: () => _onTapCustomItem(cmd),
             child: const Icon(
               Icons.info_outline,
               size: 17,

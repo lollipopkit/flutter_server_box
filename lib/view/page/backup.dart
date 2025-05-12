@@ -20,6 +20,11 @@ class BackupPage extends StatefulWidget {
 
   @override
   State<BackupPage> createState() => _BackupPageState();
+
+  static const route = AppRouteNoArg(
+    page: BackupPage.new,
+    path: '/backup',
+  );
 }
 
 final class _BackupPageState extends State<BackupPage>
@@ -246,7 +251,7 @@ final class _BackupPageState extends State<BackupPage>
       onTap: () async {
         final data = await context.showImportDialog(
           title: l10n.snippet,
-          modelDef: Snippet.example.toJson(),
+          modelDef: SnippetX.example.toJson(),
         );
         if (data == null) return;
         final str = String.fromCharCodes(data);

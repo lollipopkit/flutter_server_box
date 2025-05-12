@@ -24,10 +24,13 @@ final class PvePage extends StatefulWidget {
     required this.args,
   });
 
-  static const route = AppRouteArg<void, PvePageArgs>(page: PvePage.new, path: '/pve');
-
   @override
   State<PvePage> createState() => _PvePageState();
+
+  static const route = AppRouteArg<void, PvePageArgs>(
+    page: PvePage.new,
+    path: '/pve',
+  );
 }
 
 const _kHorziPadding = 11.0;
@@ -454,9 +457,7 @@ extension on _PvePageState {
   }
 
   void _initRefreshTimer() {
-    _timer = Timer.periodic(
-        Duration(seconds: Stores.setting.serverStatusUpdateInterval.fetch()),
-        (_) {
+    _timer = Timer.periodic(Duration(seconds: Stores.setting.serverStatusUpdateInterval.fetch()), (_) {
       if (mounted) {
         _pve.list();
       }
