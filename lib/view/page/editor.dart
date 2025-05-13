@@ -14,6 +14,7 @@ import 'package:server_box/data/store/setting.dart';
 
 import 'package:server_box/view/widget/two_line_text.dart';
 import 'package:re_editor/re_editor.dart';
+import 'package:server_box/view/widget/code_find_panel_view.dart';
 
 enum EditorPageRetType { path, text }
 
@@ -67,6 +68,7 @@ class _EditorPageState extends State<EditorPage> {
   final _focusNode = FocusNode();
 
   late CodeLineEditingController _controller;
+  late CodeFindController _findController;
   late Map<String, TextStyle> _codeTheme;
 
   String? _langCode;
@@ -82,6 +84,8 @@ class _EditorPageState extends State<EditorPage> {
   @override
   void initState() {
     super.initState();
+    _controller = CodeLineEditingController();
+    _findController = CodeFindController(_controller);
     _init();
   }
 
@@ -120,6 +124,11 @@ class _EditorPageState extends State<EditorPage> {
         down: l10n.editor,
       ),
       actions: [
+        IconButton(
+          icon: const Icon(Icons.search),
+          tooltip: libL10n.search,
+          onPressed: () => _findController.findMode(),
+        ),
         PopupMenuButton<String>(
           icon: const Icon(Icons.language),
           tooltip: libL10n.language,
@@ -150,6 +159,7 @@ class _EditorPageState extends State<EditorPage> {
       color: _EditorReTheme.getBackground(_codeTheme),
       child: CodeEditor(
         controller: _controller,
+        findController: _findController,
         wordWrap: Stores.setting.editorSoftWrap.fetch(),
         focusNode: _focusNode,
         indicatorBuilder: (context, editingController, chunkController, notifier) {
@@ -162,7 +172,8 @@ class _EditorPageState extends State<EditorPage> {
             ],
           );
         },
-        // findBuilder: (context, controller, readOnly) => CodeFindPanelView(controller: controller, readOnly: readOnly),
+        findBuilder: (context, controller, readOnly) =>
+            CodeFindPanelView(controller: controller, readOnly: readOnly),
         // toolbarController: const ContextMenuControllerImpl(),
       ),
     );
@@ -175,7 +186,6 @@ extension on _EditorPageState {
     if (Stores.setting.editorHighlight.fetch()) {
       _langCode = widget.args?.langCode ?? Highlights.getCode(widget.args?.path);
     }
-    _controller = CodeLineEditingController();
     if (_langCode == null) {
       _setupCtrl();
     } else {

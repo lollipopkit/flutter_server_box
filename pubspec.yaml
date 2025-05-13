@@ -72,8 +72,8 @@ dependency_overrides:
   #   path: ../dartssh2
   # xterm:
   #   path: ../xterm.dart
-  # fl_lib:
-  #   path: ../fl_lib
+  fl_lib:
+    path: ../fl_lib
   # fl_build:
   #   path: ../fl_build
 
