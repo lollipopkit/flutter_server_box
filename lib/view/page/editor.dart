@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:code_text_field/code_text_field.dart';
 import 'package:computer/computer.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +13,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
 
 import 'package:server_box/view/widget/two_line_text.dart';
+import 'package:re_editor/re_editor.dart';
 
 enum EditorPageRetType { path, text }
 
@@ -66,10 +66,8 @@ class EditorPage extends StatefulWidget {
 class _EditorPageState extends State<EditorPage> {
   final _focusNode = FocusNode();
 
-  late CodeController _controller;
+  late CodeLineEditingController _controller;
   late Map<String, TextStyle> _codeTheme;
-  late final _textStyle =
-      TextStyle(fontSize: Stores.setting.editorFontSize.fetch());
 
   String? _langCode;
   var _saved = false;
@@ -92,11 +90,9 @@ class _EditorPageState extends State<EditorPage> {
     super.didChangeDependencies();
 
     if (context.isDark) {
-      _codeTheme =
-          themeMap[Stores.setting.editorDarkTheme.fetch()] ?? monokaiTheme;
+      _codeTheme = themeMap[Stores.setting.editorDarkTheme.fetch()] ?? monokaiTheme;
     } else {
-      _codeTheme =
-          themeMap[Stores.setting.editorTheme.fetch()] ?? a11yLightTheme;
+      _codeTheme = themeMap[Stores.setting.editorTheme.fetch()] ?? a11yLightTheme;
     }
     _focusNode.requestFocus();
   }
@@ -120,9 +116,7 @@ class _EditorPageState extends State<EditorPage> {
     return CustomAppBar(
       centerTitle: true,
       title: TwoLineText(
-        up: widget.args?.title ??
-            widget.args?.path?.getFileName() ??
-            l10n.unknown,
+        up: widget.args?.title ?? widget.args?.path?.getFileName() ?? l10n.unknown,
         down: l10n.editor,
       ),
       actions: [
@@ -130,7 +124,6 @@ class _EditorPageState extends State<EditorPage> {
           icon: const Icon(Icons.language),
           tooltip: libL10n.language,
           onSelected: (value) {
-            _controller.language = Highlights.all[value];
             _langCode = value;
           },
           initialValue: _langCode,
@@ -153,20 +146,26 @@ class _EditorPageState extends State<EditorPage> {
   }
 
   Widget _buildBody() {
-    return SingleChildScrollView(
-        child: CodeTheme(
-      data: CodeThemeData(styles: _codeTheme),
-      child: CodeField(
-        wrap: Stores.setting.editorSoftWrap.fetch(),
-        focusNode: _focusNode,
+    return Container(
+      color: _EditorReTheme.getBackground(_codeTheme),
+      child: CodeEditor(
         controller: _controller,
-        textStyle: _textStyle,
-        lineNumberStyle: const LineNumberStyle(
-          width: 47,
-          margin: 7,
-        ),
+        wordWrap: Stores.setting.editorSoftWrap.fetch(),
+        focusNode: _focusNode,
+        indicatorBuilder: (context, editingController, chunkController, notifier) {
+          return Row(
+            children: [
+              DefaultCodeLineNumber(
+                controller: editingController,
+                notifier: notifier,
+              ),
+            ],
+          );
+        },
+        // findBuilder: (context, controller, readOnly) => CodeFindPanelView(controller: controller, readOnly: readOnly),
+        // toolbarController: const ContextMenuControllerImpl(),
       ),
-    ));
+    );
   }
 }
 
@@ -174,13 +173,9 @@ extension on _EditorPageState {
   Future<void> _init() async {
     /// Higher priority than [path]
     if (Stores.setting.editorHighlight.fetch()) {
-      _langCode =
-          widget.args?.langCode ?? Highlights.getCode(widget.args?.path);
+      _langCode = widget.args?.langCode ?? Highlights.getCode(widget.args?.path);
     }
-    _controller = CodeController(
-      language: Highlights.all[_langCode],
-    );
-
+    _controller = CodeLineEditingController();
     if (_langCode == null) {
       _setupCtrl();
     } else {
@@ -242,4 +237,14 @@ extension on _EditorPageState {
     }
     context.pop();
   }
+}
+
+class _EditorReTheme {
+  static Color? getBackground(Map<String, TextStyle> codeTheme) {
+    return codeTheme['root']?.backgroundColor;
+  }
+
+  // static TextStyle? getTextStyle(Map<String, TextStyle> codeTheme) {
+  //   return codeTheme['root'];
+  // }
 }
