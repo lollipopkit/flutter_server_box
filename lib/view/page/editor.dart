@@ -76,9 +76,10 @@ class _EditorPageState extends State<EditorPage> {
 
   @override
   void dispose() {
-    super.dispose();
     _controller.dispose();
+    _findController.dispose();
     _focusNode.dispose();
+    super.dispose();
   }
 
   @override

@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:re_editor/re_editor.dart';
 
@@ -45,25 +46,23 @@ class CodeFindPanelView extends StatelessWidget implements PreferredSizeWidget {
     this.decoration = const InputDecoration(
       filled: true,
       contentPadding: _kDefaultFindInputContentPadding,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.all(Radius.circular(0)),
-        gapPadding: 0
-      ),
-    )
+      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(0)), gapPadding: 0),
+    ),
   });
 
   @override
-  Size get preferredSize => Size(
-    double.infinity,
-    controller.value == null ? 0 :
-      ((controller.value!.replaceMode ? _kDefaultReplacePanelHeight : _kDefaultFindPanelHeight) + margin.vertical)
-  );
+  Size get preferredSize {
+    final value = controller.value;
+    final height = value == null
+        ? 0.0
+        : (value.replaceMode ? _kDefaultReplacePanelHeight : _kDefaultFindPanelHeight) + margin.vertical;
+    return Size(double.infinity, height);
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (controller.value == null) {
-      return const SizedBox(width: 0, height: 0);
-    }
+    if (controller.value == null) return UIs.placeholder;
+
     return Container(
       margin: margin,
       alignment: Alignment.topRight,
@@ -75,12 +74,11 @@ class CodeFindPanelView extends StatelessWidget implements PreferredSizeWidget {
           child: Column(
             children: [
               _buildFindInputView(context),
-              if (controller.value!.replaceMode)
-                _buildReplaceInputView(context),
+              if (controller.value!.replaceMode) _buildReplaceInputView(context),
             ],
           ),
         ),
-      )
+      ),
     );
   }
 
@@ -88,78 +86,64 @@ class CodeFindPanelView extends StatelessWidget implements PreferredSizeWidget {
     final CodeFindValue value = controller.value!;
     final String result;
     if (value.result == null) {
-      result = 'none';
+      result = libL10n.empty;
     } else {
-      result = '${value.result!.index + 1}/${value.result!.matches.length}';
+      final index = value.result?.index;
+      final count = value.result?.matches.length;
+      result = '$index/$count';
     }
     return Row(
       children: [
         SizedBox(
-          width: _kDefaultFindPanelWidth / 1.75,
-          height: _kDefaultFindPanelHeight,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              _buildTextField(
-                context: context,
-                controller: controller.findInputController,
-                focusNode: controller.findInputFocusNode,
-                iconsWidth: _kDefaultFindIconWidth * 1.5
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  _buildCheckText(
-                    context: context,
-                    text: 'Aa',
-                    checked: value.option.caseSensitive,
-                    onPressed: () {
-                      controller.toggleCaseSensitive();
-                    }
-                  ),
-                  _buildCheckText(
-                    context: context,
-                    text: '.*',
-                    checked: value.option.regex,
-                    onPressed: () {
-                      controller.toggleRegex();
-                    }
-                  )
-                ],
-              )
-            ],
-          )
-        ),
-        Text(result,
-          style: TextStyle(
-            color: resultFontColor,
-            fontSize: resultFontSize
-          )
-        ),
+            width: _kDefaultFindPanelWidth / 1.75,
+            height: _kDefaultFindPanelHeight,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                _buildTextField(
+                  context: context,
+                  controller: controller.findInputController,
+                  focusNode: controller.findInputFocusNode,
+                  iconsWidth: _kDefaultFindIconWidth * 1.5,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    _buildCheckText(
+                      context: context,
+                      text: 'Aa',
+                      checked: value.option.caseSensitive,
+                      onPressed: controller.toggleCaseSensitive,
+                    ),
+                    _buildCheckText(
+                      context: context,
+                      text: '.*',
+                      checked: value.option.regex,
+                      onPressed: controller.toggleRegex,
+                    )
+                  ],
+                )
+              ],
+            )),
+        Text(result, style: TextStyle(color: resultFontColor, fontSize: resultFontSize)),
         Expanded(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               _buildIconButton(
-                onPressed: value.result == null ? null : () {
-                  controller.previousMatch();
-                },
+                onPressed: value.result == null ? null : controller.previousMatch,
                 icon: Icons.arrow_upward,
-                tooltip: 'Previous'
+                tooltip: libL10n.previous,
               ),
               _buildIconButton(
-                onPressed: value.result == null ? null : () {
-                  controller.nextMatch();
-                },
+                onPressed: value.result == null ? null : controller.nextMatch,
                 icon: Icons.arrow_downward,
-                tooltip: 'Next'
+                tooltip: libL10n.next,
               ),
               _buildIconButton(
-                onPressed: () {
-                  controller.close();
-                },
+                onPressed: controller.close,
                 icon: Icons.close,
-                tooltip: 'Close'
+                tooltip: libL10n.close,
               )
             ],
           ),
@@ -182,18 +166,14 @@ class CodeFindPanelView extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
         _buildIconButton(
-          onPressed: value.result == null ? null : () {
-            controller.replaceMatch();
-          },
+          onPressed: value.result == null ? null : controller.replaceMatch,
           icon: Icons.done,
-          tooltip: 'Replace'
+          tooltip: libL10n.replace,
         ),
         _buildIconButton(
-          onPressed: value.result == null ? null : () {
-            controller.replaceAllMatches();
-          },
+          onPressed: value.result == null ? null : controller.replaceAllMatches,
           icon: Icons.done_all,
-          tooltip: 'Replace All'
+          tooltip: libL10n.replaceAll,
         )
       ],
     );
@@ -210,15 +190,10 @@ class CodeFindPanelView extends StatelessWidget implements PreferredSizeWidget {
       child: TextField(
         maxLines: 1,
         focusNode: focusNode,
-        style: TextStyle(
-          color: inputTextColor,
-          fontSize: inputFontSize
-        ),
+        style: TextStyle(color: inputTextColor, fontSize: inputFontSize),
         decoration: decoration.copyWith(
-          contentPadding: (decoration.contentPadding ?? EdgeInsets.zero).add(EdgeInsets.only(
-            right: iconsWidth
-          )
-        )),
+            contentPadding:
+                (decoration.contentPadding ?? EdgeInsets.zero).add(EdgeInsets.only(right: iconsWidth))),
         controller: controller,
       ),
     );
@@ -242,28 +217,21 @@ class CodeFindPanelView extends StatelessWidget implements PreferredSizeWidget {
             style: TextStyle(
               color: checked ? selectedColor : iconColor,
               fontSize: inputFontSize,
-            )
+            ),
           ),
         ),
-      )
+      ),
     );
   }
 
-  Widget _buildIconButton({
-    required IconData icon,
-    VoidCallback? onPressed,
-    String? tooltip
-  }) {
+  Widget _buildIconButton({required IconData icon, VoidCallback? onPressed, String? tooltip}) {
     return IconButton(
       onPressed: onPressed,
       icon: Icon(
         icon,
         size: iconSize,
       ),
-      constraints: const BoxConstraints(
-        maxWidth: _kDefaultFindIconWidth,
-        maxHeight: _kDefaultFindIconHeight
-      ),
+      constraints: const BoxConstraints(maxWidth: _kDefaultFindIconWidth, maxHeight: _kDefaultFindIconHeight),
       tooltip: tooltip,
       splashRadius: max(_kDefaultFindIconWidth, _kDefaultFindIconHeight) / 2,
     );
