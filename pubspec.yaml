@@ -18,7 +18,7 @@ dependencies:
   highlight: ^0.7.0
   equatable: ^2.0.7
   flutter_highlight: ^0.7.0
-  code_text_field: ^1.1.0
+  re_editor: ^0.7.0
   shared_preferences: ^2.1.1
   dynamic_color: ^1.6.6
   xml: ^6.4.2 # for parsing nvidia-smi
@@ -63,7 +63,7 @@ dependencies:
   fl_lib:
     git:
       url: https://github.com/lppcg/fl_lib
-      ref: v1.0.281
+      ref: v1.0.283
 
 dependency_overrides:
   # webdav_client_plus:

@@ -303,14 +303,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.10.1"
-  code_text_field:
-    dependency: "direct main"
-    description:
-      name: code_text_field
-      sha256: "0cbffbb2932cf82e1d022996388041de3493a476acad3fbb13e5917cac0fc5f2"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.1.0"
   collection:
     dependency: transitive
     description:
@@ -542,8 +534,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v1.0.281"
-      resolved-ref: cff32a02af3622926d10c209fe07abe64408675c
+      ref: "v1.0.283"
+      resolved-ref: "6e25f9f00bbf5c2e2900009f9f2e28454050c4ec"
       url: "https://github.com/lppcg/fl_lib"
     source: git
     version: "0.0.1"
@@ -887,6 +879,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.5"
+  isolate_contactor:
+    dependency: transitive
+    description:
+      name: isolate_contactor
+      sha256: "6ba8434ceb58238a1389d6365111a3efe7baa1c68a66f4db6d63d351cf6c3a0f"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.1.0"
+  isolate_manager:
+    dependency: transitive
+    description:
+      name: isolate_manager
+      sha256: "22ed0c25f80ec3b5f21e3a55d060f4650afff33f27c2dff34c0f9409d5759ae5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.1.5+1"
   js:
     dependency: transitive
     description:
@@ -935,14 +943,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.1"
-  linked_scroll_controller:
-    dependency: transitive
-    description:
-      name: linked_scroll_controller
-      sha256: e6020062bcf4ffc907ee7fd090fa971e65d8dfaac3c62baf601a3ced0b37986a
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.0"
   lints:
     dependency: transitive
     description:
@@ -1280,6 +1280,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.2.2"
+  re_editor:
+    dependency: "direct main"
+    description:
+      name: re_editor
+      sha256: "17e430f0591dd361992ec2dd6f69191c1853fa46e05432e095310a8f82ee820e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.7.0"
+  re_highlight:
+    dependency: transitive
+    description:
+      name: re_highlight
+      sha256: "6c4ac3f76f939fb7ca9df013df98526634e17d8f7460e028bd23a035870024f2"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.3"
   responsive_framework:
     dependency: "direct main"
     description:
