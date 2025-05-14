@@ -209,7 +209,7 @@ extension _Server on _AppSettingsPageState {
     final map = Stores.setting.getAllMap(includeInternalKeys: true);
     final keys = map.keys;
 
-    void onSave(BuildContext context, EditorPageRet ret) {
+    void onSave(EditorPageRet ret) {
       if (ret.typ != EditorPageRetType.text) {
         context.showRoundDialog(
           title: libL10n.fail,
@@ -240,9 +240,12 @@ extension _Server on _AppSettingsPageState {
       context,
       args: EditorPageArgs(
         text: text,
-        langCode: 'json',
+        lang: ProgLang.json,
         title: libL10n.setting,
         onSave: onSave,
+        closeAfterSave: SettingStore.instance.closeAfterSave.fetch(),
+        softWrap: SettingStore.instance.editorSoftWrap.fetch(),
+        enableHighlight: SettingStore.instance.editorHighlight.fetch(),
       ),
     );
   }

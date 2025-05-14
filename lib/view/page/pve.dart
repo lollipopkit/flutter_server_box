@@ -8,7 +8,6 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/pve.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/widget/percent_circle.dart';
-import 'package:server_box/view/widget/two_line_text.dart';
 
 final class PvePageArgs {
   final Spi spi;

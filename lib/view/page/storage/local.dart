@@ -10,7 +10,7 @@ import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/res/misc.dart';
 
 import 'package:server_box/data/model/app/path_with_prefix.dart';
-import 'package:server_box/view/page/editor.dart';
+import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/page/storage/sftp_mission.dart';
 
@@ -103,16 +103,14 @@ class _LocalFilePageState extends State<LocalFilePage> with AutomaticKeepAliveCl
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 13),
           itemBuilder: (context, index) {
             if (index == 0 && _path.canBack) {
-              return CardX(
-                child: ListTile(
-                  leading: const Icon(Icons.arrow_back),
-                  title: const Text('..'),
-                  onTap: () {
-                    _path.update('..');
-                    setState(() {});
-                  },
-                ),
-              );
+              return ListTile(
+                leading: const Icon(Icons.arrow_back),
+                title: const Text('..'),
+                onTap: () {
+                  _path.update('..');
+                  setState(() {});
+                },
+              ).cardx;
             }
 
             if (_path.canBack) index--;
@@ -218,10 +216,13 @@ class _LocalFilePageState extends State<LocalFilePage> with AutomaticKeepAliveCl
                 context,
                 args: EditorPageArgs(
                   path: file.absolute.path,
-                  onSave: (context, _) {
+                  onSave: (_) {
                     context.showSnackBar(l10n.saved);
                     setState(() {});
                   },
+                  closeAfterSave: SettingStore.instance.closeAfterSave.fetch(),
+                  softWrap: SettingStore.instance.editorSoftWrap.fetch(),
+                  enableHighlight: SettingStore.instance.editorHighlight.fetch(),
                 ),
               );
             },

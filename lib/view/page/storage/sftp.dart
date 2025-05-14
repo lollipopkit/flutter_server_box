@@ -13,16 +13,14 @@ import 'package:server_box/data/model/sftp/worker.dart';
 import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:server_box/view/page/editor.dart';
+import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/view/page/ssh/page.dart';
 import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/sftp_mission.dart';
 import 'package:server_box/view/widget/omit_start_text.dart';
-import 'package:server_box/view/widget/two_line_text.dart';
 import 'package:server_box/view/widget/unix_perm.dart';
 
 import 'package:icons_plus/icons_plus.dart';
-
 
 final class SftpPageArgs {
   final Spi spi;
@@ -108,15 +106,15 @@ extension _UI on _SftpPageState {
       (_SortType.size, l10n.size),
       (_SortType.time, l10n.time),
     ];
-    return _sortOption.listenVal((value) {
+    return _sortOption.listenVal(
+      (value) {
         return PopupMenuButton<_SortType>(
           icon: const Icon(Icons.sort),
           itemBuilder: (context) {
             return options.map((r) {
               final (type, name) = r;
               final selected = type == value.sortBy;
-              final title =
-                  selected ? "$name (${value.reversed ? '-' : '+'})" : name;
+              final title = selected ? "$name (${value.reversed ? '-' : '+'})" : name;
               return PopupMenuItem(
                 value: type,
                 child: Text(
@@ -353,7 +351,7 @@ extension _Actions on _SftpPageState {
       context,
       args: EditorPageArgs(
         path: localPath,
-        onSave: (context, _) {
+        onSave: (_) {
           SftpProvider.add(SftpReq(
             req.spi,
             remotePath,
@@ -362,6 +360,9 @@ extension _Actions on _SftpPageState {
           ));
           context.showSnackBar(l10n.added2List);
         },
+        closeAfterSave: SettingStore.instance.closeAfterSave.fetch(),
+        softWrap: SettingStore.instance.editorSoftWrap.fetch(),
+        enableHighlight: SettingStore.instance.editorHighlight.fetch(),
       ),
     );
   }
@@ -653,9 +654,7 @@ extension _Actions on _SftpPageState {
           fs.removeAt(0);
         }
 
-        if (fs.isNotEmpty &&
-            fs.firstOrNull?.filename == '..' &&
-            _status.path.path == '/') {
+        if (fs.isNotEmpty && fs.firstOrNull?.filename == '..' && _status.path.path == '/') {
           fs.removeAt(0);
         }
         if (mounted) {
@@ -909,9 +908,7 @@ const _extCmdMap = {
 
 /// Return fmt: 2021-01-01 00:00:00
 String _getTime(int? unixMill) {
-  return DateTime.fromMillisecondsSinceEpoch((unixMill ?? 0) * 1000)
-      .toString()
-      .replaceFirst('.000', '');
+  return DateTime.fromMillisecondsSinceEpoch((unixMill ?? 0) * 1000).toString().replaceFirst('.000', '');
 }
 
 enum _SortType {
@@ -930,8 +927,7 @@ enum _SortType {
         files.sort(
           comparator
               .thenWithComparator(
-                (a, b) => Comparators.compareStringCaseInsensitive()(
-                    a.filename, b.filename),
+                (a, b) => Comparators.compareStringCaseInsensitive()(a.filename, b.filename),
                 reversed: reversed,
               )
               .compare,

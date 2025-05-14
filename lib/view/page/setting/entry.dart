@@ -16,7 +16,6 @@ import 'package:server_box/data/res/url.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/view/page/backup.dart';
-import 'package:server_box/view/page/editor.dart';
 import 'package:server_box/view/page/private_key/list.dart';
 import 'package:server_box/view/page/setting/platform/android.dart';
 import 'package:server_box/view/page/setting/platform/ios.dart';
