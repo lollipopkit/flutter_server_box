@@ -133,9 +133,9 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin, Af
     if (isMobile) {
       _virtKeyWidth = _media.size.width / 7;
       if (_horizonVirtKeys) {
-        _virtKeysHeight = _media.size.height * 0.043;
+        _virtKeysHeight = 37;
       } else {
-        _virtKeysHeight = _media.size.height * 0.043 * _virtKeysList.length;
+        _virtKeysHeight = 37.0 * _virtKeysList.length;
       }
     }
   }
