@@ -2,7 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
-import 'package:server_box/view/page/ssh/page.dart';
+import 'package:server_box/view/page/ssh/page/page.dart';
 
 
 class IPerfPage extends StatefulWidget {

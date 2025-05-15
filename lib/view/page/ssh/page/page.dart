@@ -23,6 +23,10 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/res/terminal.dart';
 
+part 'init.dart';
+part 'keyboard.dart';
+part 'virt_key.dart';
+
 const _echoPWD = 'echo \$PWD';
 
 final class SshPageArgs {
@@ -92,12 +96,15 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin, Af
     _terminalController.dispose();
     _discontinuityTimer?.cancel();
 
+    HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
+
     if (--_sshConnCount <= 0) {
       WakelockPlus.disable();
       if (isAndroid) {
         MethodChans.stopService();
       }
     }
+
     super.dispose();
   }
 
@@ -143,11 +150,19 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin, Af
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    Widget child = Scaffold(
-      backgroundColor: _terminalTheme.background,
-      body: _buildBody(),
-      bottomNavigationBar: isDesktop ? null : _buildBottom(),
+    Widget child = PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        _handleEscKeyOrBackButton();
+      },
+      child: Scaffold(
+        backgroundColor: _terminalTheme.background,
+        body: _buildBody(),
+        bottomNavigationBar: isDesktop ? null : _buildBottom(),
+      ),
     );
+
     if (isIOS) {
       child = AnnotatedRegion(
         value: _isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
@@ -276,278 +291,13 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin, Af
   @override
   bool get wantKeepAlive => true;
 
-  void _initStoredCfg() {
-    final fontFamilly = Stores.setting.fontPath.fetch().getFileName();
-    final textSize = Stores.setting.termFontSize.fetch();
-    final textStyle = TextStyle(
-      fontFamily: fontFamilly,
-      fontSize: textSize,
-    );
-
-    _terminalStyle = TerminalStyle.fromTextStyle(textStyle);
-  }
-
-  Future<void> _showHelp() async {
-    if (Stores.setting.sshTermHelpShown.fetch()) return;
-
-    return await context.showRoundDialog(
-      title: libL10n.doc,
-      child: Text(l10n.sshTermHelp),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Stores.setting.sshTermHelpShown.put(true);
-            context.pop();
-          },
-          child: Text(l10n.noPromptAgain),
-        ),
-      ],
-    );
-  }
-
   @override
   FutureOr<void> afterFirstLayout(BuildContext context) async {
     await _showHelp();
     await _initTerminal();
 
     if (Stores.setting.sshWakeLock.fetch()) WakelockPlus.enable();
-  }
-}
 
-extension _Init on SSHPageState {
-  Future<void> _initTerminal() async {
-    _writeLn(l10n.waitConnection);
-    _client ??= await genClient(
-      widget.args.spi,
-      onStatus: (p0) {
-        _writeLn(p0.toString());
-      },
-      onKeyboardInteractive: _onKeyboardInteractive,
-    );
-
-    _writeLn('${libL10n.execute}: Shell');
-    final session = await _client?.shell(
-      pty: SSHPtyConfig(
-        width: _terminal.viewWidth,
-        height: _terminal.viewHeight,
-      ),
-      environment: widget.args.spi.envs,
-    );
-
-    //_setupDiscontinuityTimer();
-
-    if (session == null) {
-      _writeLn(libL10n.fail);
-      return;
-    }
-
-    _terminal.buffer.clear();
-    _terminal.buffer.setCursor(0, 0);
-
-    _terminal.onOutput = (data) {
-      session.write(utf8.encode(data));
-    };
-    _terminal.onResize = (width, height, pixelWidth, pixelHeight) {
-      session.resizeTerminal(width, height);
-    };
-
-    _listen(session.stdout);
-    _listen(session.stderr);
-
-    for (final snippet in SnippetProvider.snippets.value) {
-      if (snippet.autoRunOn?.contains(widget.args.spi.id) == true) {
-        snippet.runInTerm(_terminal, widget.args.spi);
-      }
-    }
-
-    if (widget.args.initCmd != null) {
-      _terminal.textInput(widget.args.initCmd!);
-      _terminal.keyInput(TerminalKey.enter);
-    }
-
-    if (widget.args.initSnippet != null) {
-      widget.args.initSnippet!.runInTerm(_terminal, widget.args.spi);
-    }
-
-    widget.args.focusNode?.requestFocus();
-
-    await session.done;
-    if (mounted && widget.args.notFromTab) {
-      context.pop();
-    }
-    widget.args.onSessionEnd?.call();
-  }
-
-  void _listen(Stream<Uint8List>? stream) {
-    if (stream == null) {
-      return;
-    }
-    stream.cast<List<int>>().transform(const Utf8Decoder()).listen(_terminal.write);
-  }
-
-  void _setupDiscontinuityTimer() {
-    _discontinuityTimer = Timer.periodic(
-      const Duration(seconds: 5),
-      (_) async {
-        var throwTimeout = true;
-        Future.delayed(const Duration(seconds: 3), () {
-          if (throwTimeout) {
-            _catchTimeout();
-          }
-        });
-        await _client?.ping();
-        throwTimeout = false;
-      },
-    );
-  }
-
-  void _catchTimeout() {
-    _discontinuityTimer?.cancel();
-    if (!mounted) return;
-    _writeLn('\n\nConnection lost\r\n');
-    context.showRoundDialog(
-      title: libL10n.attention,
-      child: Text('${l10n.disconnected}\n${l10n.goBackQ}'),
-      barrierDismiss: false,
-      actions: Btn.ok(
-        onTap: () {
-          if (mounted) {
-            context.pop();
-          }
-        },
-      ).toList,
-    );
-  }
-
-  void _writeLn(String p0) {
-    _terminal.write('$p0\r\n');
-  }
-}
-
-extension _VirtKey on SSHPageState {
-  void _doVirtualKey(VirtKey item) {
-    if (item.func != null) {
-      HapticFeedback.mediumImpact();
-      _doVirtualKeyFunc(item.func!);
-      return;
-    }
-    if (item.key != null) {
-      HapticFeedback.mediumImpact();
-      _doVirtualKeyInput(item.key!);
-    }
-    final inputRaw = item.inputRaw;
-    if (inputRaw != null) {
-      HapticFeedback.mediumImpact();
-      _terminal.textInput(inputRaw);
-    }
-  }
-
-  void _doVirtualKeyInput(TerminalKey key) {
-    switch (key) {
-      case TerminalKey.control:
-        _keyboard.ctrl = !_keyboard.ctrl;
-        break;
-      case TerminalKey.alt:
-        _keyboard.alt = !_keyboard.alt;
-        break;
-      default:
-        _terminal.keyInput(key);
-        break;
-    }
-  }
-
-  Future<void> _doVirtualKeyFunc(VirtualKeyFunc type) async {
-    switch (type) {
-      case VirtualKeyFunc.toggleIME:
-        _termKey.currentState?.toggleFocus();
-        break;
-      case VirtualKeyFunc.backspace:
-        _terminal.keyInput(TerminalKey.backspace);
-        break;
-      case VirtualKeyFunc.clipboard:
-        final selected = terminalSelected;
-        if (selected != null) {
-          Pfs.copy(selected);
-        } else {
-          _paste();
-        }
-        break;
-      case VirtualKeyFunc.snippet:
-        final snippets = await context.showPickWithTagDialog<Snippet>(
-          title: l10n.snippet,
-          tags: SnippetProvider.tags,
-          itemsBuilder: (e) {
-            if (e == TagSwitcher.kDefaultTag) {
-              return SnippetProvider.snippets.value;
-            }
-            return SnippetProvider.snippets.value
-                .where((element) => element.tags?.contains(e) ?? false)
-                .toList();
-          },
-          display: (e) => e.name,
-        );
-        if (snippets == null || snippets.isEmpty) return;
-
-        final snippet = snippets.firstOrNull;
-        if (snippet == null) return;
-        snippet.runInTerm(_terminal, widget.args.spi);
-        break;
-      case VirtualKeyFunc.file:
-        // get $PWD from SSH session
-        _terminal.textInput(_echoPWD);
-        _terminal.keyInput(TerminalKey.enter);
-        final cmds = _terminal.buffer.lines.toList();
-        // wait for the command to finish
-        await Future.delayed(const Duration(milliseconds: 777));
-        // the line below `echo $PWD` is the current path
-        final idx = cmds.lastIndexWhere((e) => e.toString().contains(_echoPWD));
-        final initPath = cmds.elementAtOrNull(idx + 1)?.toString();
-        if (initPath == null || !initPath.startsWith('/')) {
-          context.showRoundDialog(
-            title: libL10n.error,
-            child: Text('${l10n.remotePath}: $initPath'),
-          );
-          return;
-        }
-        final args = SftpPageArgs(spi: widget.args.spi, initPath: initPath);
-        SftpPage.route.go(context, args);
-    }
-  }
-
-  void _paste() {
-    Clipboard.getData(Clipboard.kTextPlain).then((value) {
-      final text = value?.text;
-      if (text != null) {
-        _terminal.textInput(text);
-      } else {
-        context.showRoundDialog(
-          title: libL10n.error,
-          child: Text(libL10n.empty),
-        );
-      }
-    });
-  }
-
-  String? get terminalSelected {
-    final range = _terminalController.selection;
-    if (range == null) {
-      return null;
-    }
-    return _terminal.buffer.getText(range);
-  }
-
-  void _initVirtKeys() {
-    final virtKeys = VirtKeyX.loadFromStore();
-    for (int len = 0; len < virtKeys.length; len += 7) {
-      if (len + 7 > virtKeys.length) {
-        _virtKeysList.add(virtKeys.sublist(len));
-      } else {
-        _virtKeysList.add(virtKeys.sublist(len, len + 7));
-      }
-    }
-  }
-
-  FutureOr<List<String>?> _onKeyboardInteractive(SSHUserInfoRequest req) {
-    return KeybordInteractive.defaultHandle(widget.args.spi, ctx: context);
+    HardwareKeyboard.instance.addHandler(_handleKeyEvent);
   }
 }
