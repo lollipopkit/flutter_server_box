@@ -49,8 +49,6 @@ extension _Init on SSHPageState {
       environment: widget.args.spi.envs,
     );
 
-    //_setupDiscontinuityTimer();
-
     if (session == null) {
       _writeLn(libL10n.fail);
       return;
@@ -99,7 +97,15 @@ extension _Init on SSHPageState {
     if (stream == null) {
       return;
     }
-    stream.cast<List<int>>().transform(const Utf8Decoder()).listen(_terminal.write);
+
+    stream.cast<List<int>>().transform(const Utf8Decoder()).listen(
+      _terminal.write,
+      onError: (Object error, StackTrace stack) {
+        // _terminal.write('Stream error: $error\n');
+        Loggers.root.warning('Error in SSH stream', error, stack);
+      },
+      cancelOnError: false,
+    );
   }
 
   void _setupDiscontinuityTimer() {
