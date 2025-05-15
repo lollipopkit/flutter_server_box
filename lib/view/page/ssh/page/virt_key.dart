@@ -85,7 +85,7 @@ extension _VirtKey on SSHPageState {
         while (initPath == null) {
           // Check if we've exceeded timeout
           if (DateTime.now().difference(startTime) > timeout) {
-            context.showRoundDialog(
+            contextSafe?.showRoundDialog(
               title: libL10n.error,
               child: Text(libL10n.empty),
             );
@@ -102,7 +102,11 @@ extension _VirtKey on SSHPageState {
               final end = lineStr.indexOf(markerEnd) - 1; // -1 for ':'
               if (start < end) {
                 initPath = lineStr.substring(start, end);
-                break;
+                if (initPath.isEmpty || initPath == '\$PWD') {
+                  initPath = null;
+                } else {
+                  break;
+                }
               }
             }
           }
