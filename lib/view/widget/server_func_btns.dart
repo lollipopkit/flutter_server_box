@@ -12,7 +12,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/container.dart';
 import 'package:server_box/view/page/iperf.dart';
 import 'package:server_box/view/page/process.dart';
-import 'package:server_box/view/page/ssh/page.dart';
+import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/page/systemd.dart';
 

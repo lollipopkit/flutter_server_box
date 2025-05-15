@@ -14,7 +14,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/container.dart';
-import 'package:server_box/view/page/ssh/page.dart';
+import 'package:server_box/view/page/ssh/page/page.dart';
 
 class ContainerPage extends StatefulWidget {
   final SpiRequiredArgs args;

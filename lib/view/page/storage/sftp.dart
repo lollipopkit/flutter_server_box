@@ -14,7 +14,7 @@ import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
-import 'package:server_box/view/page/ssh/page.dart';
+import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/sftp_mission.dart';
 import 'package:server_box/view/widget/omit_start_text.dart';
