@@ -27,8 +27,6 @@ part 'init.dart';
 part 'keyboard.dart';
 part 'virt_key.dart';
 
-const _echoPWD = 'echo \$PWD';
-
 final class SshPageArgs {
   final Spi spi;
   final String? initCmd;

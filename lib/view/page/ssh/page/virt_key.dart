@@ -69,22 +69,60 @@ extension _VirtKey on SSHPageState {
         snippet.runInTerm(_terminal, widget.args.spi);
         break;
       case VirtualKeyFunc.file:
-        // get $PWD from SSH session
-        _terminal.textInput(_echoPWD);
+        // get $PWD from SSH session with unique markers
+        const marker = 'ServerBoxOutput';
+        const markerEnd = 'ServerBoxEnd';
+        const pwdCommand = 'echo "$marker:\$PWD:$markerEnd"';
+        _terminal.textInput(pwdCommand);
         _terminal.keyInput(TerminalKey.enter);
-        final cmds = _terminal.buffer.lines.toList();
-        // wait for the command to finish
-        await Future.delayed(const Duration(milliseconds: 777));
-        // the line below `echo $PWD` is the current path
-        final idx = cmds.lastIndexWhere((e) => e.toString().contains(_echoPWD));
-        final initPath = cmds.elementAtOrNull(idx + 1)?.toString();
-        if (initPath == null || !initPath.startsWith('/')) {
+
+        // Wait for output with timeout
+        String? initPath;
+        await Future.delayed(const Duration(milliseconds: 700));
+        final startTime = DateTime.now();
+        final timeout = const Duration(seconds: 3);
+
+        while (initPath == null) {
+          // Check if we've exceeded timeout
+          if (DateTime.now().difference(startTime) > timeout) {
+            contextSafe?.showRoundDialog(
+              title: libL10n.error,
+              child: Text(libL10n.empty),
+            );
+            return;
+          }
+
+          // Search for marked output in terminal buffer
+          final cmds = _terminal.buffer.lines.toList();
+          for (final line in cmds.reversed) {
+            final lineStr = line.toString();
+            if (lineStr.contains(marker) && lineStr.contains(markerEnd)) {
+              // Extract path between markers
+              final start = lineStr.indexOf(marker) + marker.length + 1; // +1 for ':'
+              final end = lineStr.indexOf(markerEnd) - 1; // -1 for ':'
+              if (start < end) {
+                initPath = lineStr.substring(start, end);
+                if (initPath.isEmpty || initPath == '\$PWD') {
+                  initPath = null;
+                } else {
+                  break;
+                }
+              }
+            }
+          }
+
+          // Short wait before checking again
+          await Future.delayed(const Duration(milliseconds: 100));
+        }
+
+        if (!initPath.startsWith('/')) {
           context.showRoundDialog(
             title: libL10n.error,
             child: Text('${l10n.remotePath}: $initPath'),
           );
           return;
         }
+
         final args = SftpPageArgs(spi: widget.args.spi, initPath: initPath);
         SftpPage.route.go(context, args);
         break;
