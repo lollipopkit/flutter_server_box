@@ -6,7 +6,6 @@ extension _Keyboard on SSHPageState {
     HapticFeedback.lightImpact();
   }
 
-  // Handle hardware keyboard events, particularly ESC key
   bool _handleKeyEvent(KeyEvent event) {
     if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.escape) {
