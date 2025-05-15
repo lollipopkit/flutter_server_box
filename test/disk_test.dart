@@ -20,15 +20,15 @@ void main() {
       // Verify root filesystem
       final rootFs = disks.firstWhere((disk) => disk.mount == '/');
       expect(rootFs.fsTyp, 'ext4');
-      expect(rootFs.size, BigInt.parse('982141468672'));
-      expect(rootFs.used, BigInt.parse('552718364672'));
-      expect(rootFs.avail, BigInt.parse('379457622016'));
+      expect(rootFs.size, BigInt.parse('982141468672') ~/ BigInt.from(1024));
+      expect(rootFs.used, BigInt.parse('552718364672') ~/ BigInt.from(1024));
+      expect(rootFs.avail, BigInt.parse('379457622016') ~/ BigInt.from(1024));
       expect(rootFs.usedPercent, 56);
       
       // Verify boot/efi filesystem
       final efiFs = disks.firstWhere((disk) => disk.mount == '/boot/efi');
       expect(efiFs.fsTyp, 'vfat');
-      expect(efiFs.size, BigInt.parse('535805952'));
+      expect(efiFs.size, BigInt.parse('535805952') ~/ BigInt.from(1024));
       expect(efiFs.usedPercent, 1);
       
       // Verify boot filesystem

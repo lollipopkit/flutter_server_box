@@ -795,21 +795,20 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
       );
     }
 
-    final itemW = Expanded(
-        child: Column(
+    final itemW = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           children: [
-            Text(si.device, style: UIs.text15Bold),
+            Text(si.device, style: UIs.text15),
             UIs.width7,
             Text('(${si.adapter.raw})', style: UIs.text13Grey),
           ],
         ),
         Text(si.summary ?? '', style: UIs.text13Grey),
       ],
-    ));
+    ).expanded();
 
     return InkWell(
       onTap: () => _onTapSensorItem(si),

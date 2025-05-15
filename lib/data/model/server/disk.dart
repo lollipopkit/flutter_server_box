@@ -51,10 +51,8 @@ class Disk with EquatableMixin {
         final List<dynamic> blockdevices = jsonData['blockdevices'] ?? [];
 
         for (final device in blockdevices) {
-          final disk = _processDiskDevice(device);
-          if (disk != null) {
-            list.add(disk);
-          }
+          // Process each device
+          _processTopLevelDevice(device, list);
         }
       } else {
         // Fallback to the old parsing method in case of non-JSON output
@@ -64,6 +62,77 @@ class Disk with EquatableMixin {
       Loggers.app.warning('Failed to parse disk info: $e', e);
     }
     return list;
+  }
+
+  /// Process a top-level device and add all valid disks to the list
+  static void _processTopLevelDevice(Map<String, dynamic> device, List<Disk> list) {
+    final disk = _processDiskDevice(device);
+    if (disk != null) {
+      list.add(disk);
+    }
+    
+    // For devices with children (like physical disks with partitions),
+    // also process each child individually to ensure BTRFS RAID disks are properly handled
+    final List<dynamic> childDevices = device['children'] ?? [];
+    for (final childDevice in childDevices) {
+      final String childPath = childDevice['path']?.toString() ?? '';
+      final String childFsType = childDevice['fstype']?.toString() ?? '';
+      
+      // If this is a BTRFS partition, add it directly to ensure it's properly represented
+      if (childFsType == 'btrfs' && childPath.isNotEmpty) {
+        final childDisk = _processSingleDevice(childDevice);
+        if (childDisk != null) {
+          list.add(childDisk);
+        }
+      }
+    }
+  }
+
+  /// Process a single device without recursively processing its children
+  static Disk? _processSingleDevice(Map<String, dynamic> device) {
+    final fstype = device['fstype']?.toString();
+    final String mountpoint = device['mountpoint']?.toString() ?? '';
+    final String path = device['path']?.toString() ?? '';
+    
+    if (path.isEmpty || (fstype == null && mountpoint.isEmpty)) {
+      return null;
+    }
+    
+    if (!_shouldCalc(fstype ?? '', mountpoint)) {
+      return null;
+    }
+
+    final sizeStr = device['fssize']?.toString() ?? '0';
+    final size = (BigInt.tryParse(sizeStr) ?? BigInt.zero) ~/ BigInt.from(1024);
+
+    final usedStr = device['fsused']?.toString() ?? '0';
+    final used = (BigInt.tryParse(usedStr) ?? BigInt.zero) ~/ BigInt.from(1024);
+
+    final availStr = device['fsavail']?.toString() ?? '0';
+    final avail = (BigInt.tryParse(availStr) ?? BigInt.zero) ~/ BigInt.from(1024);
+
+    // Parse fsuse% which is usually in the format "45%"
+    String usePercentStr = device['fsuse%']?.toString() ?? '0';
+    usePercentStr = usePercentStr.replaceAll('%', '');
+    final usedPercent = int.tryParse(usePercentStr) ?? 0;
+
+    final name = device['name']?.toString();
+    final kname = device['kname']?.toString();
+    final uuid = device['uuid']?.toString();
+
+    return Disk(
+      path: path,
+      fsTyp: fstype,
+      mount: mountpoint,
+      usedPercent: usedPercent,
+      used: used,
+      size: size,
+      avail: avail,
+      name: name,
+      kname: kname,
+      uuid: uuid,
+      children: const [], // No children for direct device
+    );
   }
 
   static Disk? _processDiskDevice(Map<String, dynamic> device) {
@@ -120,7 +189,7 @@ class Disk with EquatableMixin {
       );
     } else if (childDisks.isNotEmpty) {
       // If this is a parent device with no filesystem but has children,
-      // return the first valid child instead and append other children to it
+      // return the first valid child instead
       if (childDisks.isNotEmpty) {
         return childDisks.first;
       }
