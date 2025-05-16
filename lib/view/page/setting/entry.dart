@@ -118,7 +118,6 @@ final class _AppSettingsPageState extends State<AppSettingsPage> {
   @override
   Widget build(BuildContext context) {
     return MultiList(
-      thumbVisibility: true,
       children: [
         [const CenterGreyTitle('App'), _buildApp()],
         [CenterGreyTitle(l10n.server), _buildServer()],

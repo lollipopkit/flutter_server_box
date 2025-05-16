@@ -56,7 +56,8 @@ class SnippetAdapter extends TypeAdapter<Snippet> {
 // JsonSerializableGenerator
 // **************************************************************************
 
-Snippet _$SnippetFromJson(Map<String, dynamic> json) => Snippet(
+_$SnippetImpl _$$SnippetImplFromJson(Map<String, dynamic> json) =>
+    _$SnippetImpl(
       name: json['name'] as String,
       script: json['script'] as String,
       tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList(),
@@ -66,7 +67,8 @@ Snippet _$SnippetFromJson(Map<String, dynamic> json) => Snippet(
           .toList(),
     );
 
-Map<String, dynamic> _$SnippetToJson(Snippet instance) => <String, dynamic>{
+Map<String, dynamic> _$$SnippetImplToJson(_$SnippetImpl instance) =>
+    <String, dynamic>{
       'name': instance.name,
       'script': instance.script,
       'tags': instance.tags,

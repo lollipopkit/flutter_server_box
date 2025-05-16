@@ -1,50 +1,36 @@
 import 'dart:async';
 
-import 'package:equatable/equatable.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:json_annotation/json_annotation.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:xterm/core.dart';
 
 part 'snippet.g.dart';
+part 'snippet.freezed.dart';
 
-@JsonSerializable()
+@freezed
 @HiveType(typeId: 2)
-class Snippet with EquatableMixin {
-  @HiveField(0)
-  final String name;
-  @HiveField(1)
-  final String script;
-  @HiveField(2)
-  final List<String>? tags;
-  @HiveField(3)
-  final String? note;
-
-  /// List of server id that this snippet should be auto run on
-  @HiveField(4)
-  final List<String>? autoRunOn;
-
-  const Snippet({
-    required this.name,
-    required this.script,
-    this.tags,
-    this.note,
-    this.autoRunOn,
-  });
+class Snippet with _$Snippet {
+  const factory Snippet({
+    @HiveField(0) required String name,
+    @HiveField(1) required String script,
+    @HiveField(2) List<String>? tags,
+    @HiveField(3) String? note,
+    
+    /// List of server id that this snippet should be auto run on
+    @HiveField(4) List<String>? autoRunOn,
+  }) = _Snippet;
 
   factory Snippet.fromJson(Map<String, dynamic> json) => _$SnippetFromJson(json);
-
-  Map<String, dynamic> toJson() => _$SnippetToJson(this);
-
-  @override
-  List<Object?> get props => [
-        name,
-        script,
-        tags,
-        note,
-        autoRunOn,
-      ];
+  
+  static const example = Snippet(
+    name: 'example',
+    script: 'echo hello',
+    tags: ['tag'],
+    note: 'note',
+    autoRunOn: ['server_id'],
+  );
 }
 
 extension SnippetX on Snippet {
@@ -73,7 +59,7 @@ extension SnippetX on Snippet {
 
     /// There is no [TerminalKey] in the script
     if (matches.isEmpty) {
-      terminal.textInput(argsFmted);
+      terminal.textInput(argsFmted);  
       if (autoEnter) terminal.keyInput(TerminalKey.enter);
       return;
     }
@@ -186,14 +172,6 @@ extension SnippetX on Snippet {
     r'${ctrl': TerminalKey.control,
     r'${alt': TerminalKey.alt,
   };
-
-  static const example = Snippet(
-    name: 'example',
-    script: 'echo hello',
-    tags: ['tag'],
-    note: 'note',
-    autoRunOn: ['server_id'],
-  );
 }
 
 class SnippetResult {

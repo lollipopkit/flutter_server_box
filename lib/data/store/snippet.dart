@@ -8,8 +8,6 @@ class SnippetStore extends HiveStore {
   static final instance = SnippetStore._();
 
   void put(Snippet snippet) {
-    // box.put(snippet.name, snippet);
-    // box.updateLastModified();
     set(snippet.name, snippet);
   }
 
@@ -25,8 +23,16 @@ class SnippetStore extends HiveStore {
   }
 
   void delete(Snippet s) {
-    // box.delete(s.name);
-    // box.updateLastModified();
     remove(s.name);
   }
+
+  void update(Snippet old, Snippet newInfo) {
+    if (!have(old)) {
+      throw Exception('Old snippet: $old not found');
+    }
+    delete(old);
+    put(newInfo);
+  }
+
+  bool have(Snippet s) => get(s.name) != null;
 }
