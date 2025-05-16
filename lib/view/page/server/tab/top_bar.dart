@@ -28,7 +28,7 @@ final class _TopBar extends StatelessWidget implements PreferredSizeWidget {
               SettingsPage.route.go(context);
             },
             child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 7.0, vertical: 3.0),
+              padding: EdgeInsets.symmetric(horizontal: 7, vertical: 3),
               child: Row(
                 children: [
                   Text(

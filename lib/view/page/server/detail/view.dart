@@ -173,7 +173,7 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
   Widget _buildAbout(Server si) {
     final ss = si.status;
     return ExpandTile(
-      key: ValueKey(ss.more),
+      key: ValueKey(ss.more.hashCode), // Use hashCode to avoid perf issue
       leading: const Icon(MingCute.information_fill, size: 20),
       initiallyExpanded: _getInitExpand(ss.more.entries.length),
       title: Text(libL10n.about),

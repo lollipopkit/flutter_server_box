@@ -31,7 +31,6 @@ class ServerFuncBtnsTopRight extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PopupMenu<ServerFuncBtn>(
-      key: ValueKey('server_func_menu_${spi.id}'),
       items: ServerFuncBtn.values.map((e) => PopMenu.build(e, e.icon, e.toStr)).toList(),
       padding: const EdgeInsets.symmetric(horizontal: 10),
       onSelected: (val) => _onTapMoreBtns(val, spi, context),
@@ -53,21 +52,15 @@ class ServerFuncBtns extends StatelessWidget {
     if (btns.isEmpty) return UIs.placeholder;
 
     return SizedBox(
-      height: 70.0,
-      key: ValueKey('server_func_btns_${spi.id}_${btns.hashCode}'),
+      height: 70,
       child: ListView.builder(
-        key: ValueKey('server_func_list_${btns.hashCode}'),
         itemCount: btns.length,
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 13.0),
+        padding: EdgeInsets.symmetric(horizontal: 13),
         itemBuilder: (context, index) {
           final value = btns[index];
           final item = _buildItem(context, value);
-          return Padding(
-            key: ValueKey('server_func_item_${value.hashCode}_$index'),
-            padding: const EdgeInsets.symmetric(horizontal: 7.0),
-            child: item,
-          );
+          return item.paddingSymmetric(horizontal: 7);
         },
       ),
     );
@@ -77,7 +70,6 @@ class ServerFuncBtns extends StatelessWidget {
     final move = Stores.setting.moveServerFuncs.fetch();
     if (move) {
       return IconButton(
-        key: ValueKey('server_func_icon_${e.hashCode}'),
         onPressed: () => _onTapMoreBtns(e, spi, context),
         padding: EdgeInsets.zero,
         tooltip: e.toStr,
@@ -88,16 +80,14 @@ class ServerFuncBtns extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 13),
       child: Column(
-        key: ValueKey('server_func_col_${e.hashCode}'),
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            key: ValueKey('server_func_btn_${e.hashCode}'),
             onPressed: () => _onTapMoreBtns(e, spi, context),
             padding: EdgeInsets.zero,
             icon: Icon(e.icon, size: 17),
           ),
-          Text(e.toStr, key: ValueKey('server_func_text_${e.hashCode}'), style: UIs.text11Grey)
+          Text(e.toStr, style: UIs.text11Grey)
         ],
       ),
     );
