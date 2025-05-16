@@ -53,6 +53,7 @@ mixin _$Spi {
   /// It only applies to SSH terminal.
   @HiveField(12)
   Map<String, String>? get envs => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: Spi.parseId)
   @HiveField(13, defaultValue: '')
   String get id => throw _privateConstructorUsedError;
 
@@ -84,7 +85,9 @@ abstract class $SpiCopyWith<$Res> {
       @HiveField(10) ServerCustom? custom,
       @HiveField(11) WakeOnLanCfg? wolCfg,
       @HiveField(12) Map<String, String>? envs,
-      @HiveField(13, defaultValue: '') String id});
+      @JsonKey(fromJson: Spi.parseId)
+      @HiveField(13, defaultValue: '')
+      String id});
 }
 
 /// @nodoc
@@ -197,7 +200,9 @@ abstract class _$$SpiImplCopyWith<$Res> implements $SpiCopyWith<$Res> {
       @HiveField(10) ServerCustom? custom,
       @HiveField(11) WakeOnLanCfg? wolCfg,
       @HiveField(12) Map<String, String>? envs,
-      @HiveField(13, defaultValue: '') String id});
+      @JsonKey(fromJson: Spi.parseId)
+      @HiveField(13, defaultValue: '')
+      String id});
 }
 
 /// @nodoc
@@ -304,7 +309,9 @@ class _$SpiImpl extends _Spi {
       @HiveField(10) this.custom,
       @HiveField(11) this.wolCfg,
       @HiveField(12) final Map<String, String>? envs,
-      @HiveField(13, defaultValue: '') required this.id})
+      @JsonKey(fromJson: Spi.parseId)
+      @HiveField(13, defaultValue: '')
+      required this.id})
       : _tags = tags,
         _envs = envs,
         super._();
@@ -378,6 +385,7 @@ class _$SpiImpl extends _Spi {
   }
 
   @override
+  @JsonKey(fromJson: Spi.parseId)
   @HiveField(13, defaultValue: '')
   final String id;
 
@@ -454,7 +462,9 @@ abstract class _Spi extends Spi {
       @HiveField(10) final ServerCustom? custom,
       @HiveField(11) final WakeOnLanCfg? wolCfg,
       @HiveField(12) final Map<String, String>? envs,
-      @HiveField(13, defaultValue: '') required final String id}) = _$SpiImpl;
+      @JsonKey(fromJson: Spi.parseId)
+      @HiveField(13, defaultValue: '')
+      required final String id}) = _$SpiImpl;
   const _Spi._() : super._();
 
   factory _Spi.fromJson(Map<String, dynamic> json) = _$SpiImpl.fromJson;
@@ -506,6 +516,7 @@ abstract class _Spi extends Spi {
   @HiveField(12)
   Map<String, String>? get envs;
   @override
+  @JsonKey(fromJson: Spi.parseId)
   @HiveField(13, defaultValue: '')
   String get id;
 

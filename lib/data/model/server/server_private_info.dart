@@ -45,23 +45,30 @@ class Spi with _$Spi {
 
     /// It only applies to SSH terminal.
     @HiveField(12) Map<String, String>? envs,
-    @HiveField(13, defaultValue: '') required String id,
+    @JsonKey(fromJson: Spi.parseId) @HiveField(13, defaultValue: '') required String id,
   }) = _Spi;
 
   factory Spi.fromJson(Map<String, dynamic> json) => _$SpiFromJson(json);
 
   @override
   String toString() => 'Spi<$oldId>';
+
+  static String parseId(Object? id) {
+    if (id == null || id is! String || id.isEmpty) return ShortId.generate();
+    return id;
+  }
 }
 
 extension Spix on Spi {
+  /// After upgrading to >= 1155, this field is only recommended to be used
+  /// for displaying the server name.
   String get oldId => '$user@$ip:$port';
 
   /// Save the [Spi] to the local storage.
   void save() => ServerStore.instance.put(this);
 
   /// Migrate the [oldId] to the new generated [id] by [ShortId.generate].
-  /// 
+  ///
   /// Returns:
   /// - `null` if the [id] is not empty.
   /// - The new [id] if the [id] is empty.

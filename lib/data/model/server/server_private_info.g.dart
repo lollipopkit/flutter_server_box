@@ -103,7 +103,7 @@ _$SpiImpl _$$SpiImplFromJson(Map<String, dynamic> json) => _$SpiImpl(
       envs: (json['envs'] as Map<String, dynamic>?)?.map(
         (k, e) => MapEntry(k, e as String),
       ),
-      id: json['id'] as String,
+      id: Spi.parseId(json['id']),
     );
 
 Map<String, dynamic> _$$SpiImplToJson(_$SpiImpl instance) => <String, dynamic>{
