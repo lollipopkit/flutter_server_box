@@ -25,6 +25,7 @@ import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/server.dart';
 
 Future<void> main() async {
   _runInZone(() async {
@@ -75,6 +76,10 @@ Future<void> _initData() async {
   await PrefStore.shared.init(); // Call this before accessing any store
   await Stores.init();
 
+  // It may effect the following logic, so await it.
+  // DO DB migration before load any provider.
+  await _doDbMigrate();
+
   // DO NOT change the order of these providers.
   PrivateKeyProvider.instance.load();
   SnippetProvider.instance.load();
@@ -82,9 +87,6 @@ Future<void> _initData() async {
   SftpProvider.instance.load();
 
   if (Stores.setting.betaTest.fetch()) AppUpdate.chan = AppUpdateChan.beta;
-
-  // It may effect the following logic, so await it.
-  await _doVersionRelated();
 }
 
 void _setupDebug() {
@@ -111,7 +113,7 @@ void _doPlatformRelated() async {
 }
 
 // It may contains some async heavy funcs.
-Future<void> _doVersionRelated() async {
+Future<void> _doDbMigrate() async {
   final lastVer = Stores.setting.lastVer.fetch();
   const newVer = BuildData.build;
   // It's only the version upgrade trigger logic.
@@ -121,6 +123,9 @@ Future<void> _doVersionRelated() async {
     ServerFuncBtn.autoAddNewFuncs(newVer);
     Stores.setting.lastVer.put(newVer);
   }
+
+  // Migrate the old id to new id.
+  ServerStore.instance.migrateIds();
 }
 
 Future<void> _initWindow() async {

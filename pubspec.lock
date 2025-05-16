@@ -442,7 +442,7 @@ packages:
     source: hosted
     version: "5.0.3"
   equatable:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: equatable
       sha256: "567c64b3cb4cf82397aac55f4f0cbd3ca20d77c6c03bedbc4ceaddc08904aef7"
@@ -525,9 +525,11 @@ packages:
   fl_lib:
     dependency: "direct main"
     description:
-      path: "../fl_lib"
-      relative: true
-    source: path
+      path: "."
+      ref: "v1.0.294"
+      resolved-ref: aac04d5e6c649f59cae33d492d14bb59dacded9c
+      url: "https://github.com/lppcg/fl_lib"
+    source: git
     version: "0.0.1"
   flutter:
     dependency: "direct main"

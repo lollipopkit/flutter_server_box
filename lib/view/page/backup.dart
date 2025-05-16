@@ -251,7 +251,7 @@ final class _BackupPageState extends State<BackupPage>
       onTap: () async {
         final data = await context.showImportDialog(
           title: l10n.snippet,
-          modelDef: SnippetX.example.toJson(),
+          modelDef: Snippet.example.toJson(),
         );
         if (data == null) return;
         final str = String.fromCharCodes(data);

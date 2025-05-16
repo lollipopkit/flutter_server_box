@@ -30,13 +30,14 @@ class SpiAdapter extends TypeAdapter<Spi> {
       custom: fields[10] as ServerCustom?,
       wolCfg: fields[11] as WakeOnLanCfg?,
       envs: (fields[12] as Map?)?.cast<String, String>(),
+      id: fields[13] == null ? '' : fields[13] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, Spi obj) {
     writer
-      ..writeByte(13)
+      ..writeByte(14)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -62,7 +63,9 @@ class SpiAdapter extends TypeAdapter<Spi> {
       ..writeByte(11)
       ..write(obj.wolCfg)
       ..writeByte(12)
-      ..write(obj.envs);
+      ..write(obj.envs)
+      ..writeByte(13)
+      ..write(obj.id);
   }
 
   @override
@@ -80,7 +83,7 @@ class SpiAdapter extends TypeAdapter<Spi> {
 // JsonSerializableGenerator
 // **************************************************************************
 
-Spi _$SpiFromJson(Map<String, dynamic> json) => Spi(
+_$SpiImpl _$$SpiImplFromJson(Map<String, dynamic> json) => _$SpiImpl(
       name: json['name'] as String,
       ip: json['ip'] as String,
       port: (json['port'] as num).toInt(),
@@ -100,9 +103,10 @@ Spi _$SpiFromJson(Map<String, dynamic> json) => Spi(
       envs: (json['envs'] as Map<String, dynamic>?)?.map(
         (k, e) => MapEntry(k, e as String),
       ),
+      id: Spi.parseId(json['id']),
     );
 
-Map<String, dynamic> _$SpiToJson(Spi instance) => <String, dynamic>{
+Map<String, dynamic> _$$SpiImplToJson(_$SpiImpl instance) => <String, dynamic>{
       'name': instance.name,
       'ip': instance.ip,
       'port': instance.port,
@@ -116,4 +120,5 @@ Map<String, dynamic> _$SpiToJson(Spi instance) => <String, dynamic>{
       'custom': instance.custom,
       'wolCfg': instance.wolCfg,
       'envs': instance.envs,
+      'id': instance.id,
     };

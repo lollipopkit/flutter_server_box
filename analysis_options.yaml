@@ -16,6 +16,8 @@ analyzer:
     # strict-casts: true
     # strict-inference: true
     # strict-raw-types: true
+  errors:
+    invalid_annotation_target: ignore
 
 linter:
   # The lint rules applied to this project can be customized in the

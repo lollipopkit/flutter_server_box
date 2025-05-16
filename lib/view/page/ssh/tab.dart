@@ -8,7 +8,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/view/page/server/edit.dart';
-import 'package:server_box/view/page/ssh/page.dart';
+import 'package:server_box/view/page/ssh/page/page.dart';
 
 class SSHTabPage extends StatefulWidget {
   const SSHTabPage({super.key});
@@ -144,15 +144,10 @@ extension on _SSHTabPageState {
   }
 
   void _onTapClose(String name) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(libL10n.attention),
-          content: Text('${libL10n.close} SSH ${l10n.conn}($name) ?'),
-          actions: Btnx.okReds,
-        );
-      },
+    final confirm = await contextSafe?.showRoundDialog(
+      title: libL10n.attention,
+      child: Text('${libL10n.close} SSH ${l10n.conn}($name) ?'),
+      actions: Btnx.okReds,
     );
     Future.delayed(Durations.short1, FocusScope.of(context).unfocus);
     if (confirm != true) return;
