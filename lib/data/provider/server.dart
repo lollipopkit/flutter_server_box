@@ -208,7 +208,7 @@ class ServerProvider extends Provider {
     serverOrder.value.clear();
     serverOrder.notify();
     Stores.setting.serverOrder.put(serverOrder.value);
-    Stores.server.deleteAll();
+    Stores.server.clear();
     _updateTags();
     bakSync.sync(milliDelay: 1000);
   }

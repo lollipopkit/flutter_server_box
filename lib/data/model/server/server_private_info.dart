@@ -2,16 +2,18 @@ import 'dart:convert';
 
 import 'package:equatable/equatable.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:json_annotation/json_annotation.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/provider/server.dart';
 
 import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/store/server.dart';
 
 part 'server_private_info.g.dart';
+part 'server_private_info.freezed.dart';
 
 /// In the first version, it's called `ServerPrivateInfo` which was designed to
 /// store the private information of a server.
@@ -19,76 +21,55 @@ part 'server_private_info.g.dart';
 /// Some params named as `spi` in the codebase which is the abbreviation of `ServerPrivateInfo`.
 ///
 /// Nowaday, more fields are added to this class, and it's renamed to `Spi`.
-@JsonSerializable()
+@freezed
 @HiveType(typeId: 3)
-class Spi with EquatableMixin {
-  @HiveField(0)
-  final String name;
-  @HiveField(1)
-  final String ip;
-  @HiveField(2)
-  final int port;
-  @HiveField(3)
-  final String user;
-  @HiveField(4)
-  final String? pwd;
+class Spi with _$Spi, EquatableMixin {
+  const Spi._();
 
-  /// [id] of private key
-  @JsonKey(name: 'pubKeyId')
-  @HiveField(5)
-  final String? keyId;
-  @HiveField(6)
-  final List<String>? tags;
-  @HiveField(7)
-  final String? alterUrl;
-  @HiveField(8, defaultValue: true)
-  final bool autoConnect;
+  const factory Spi({
+    @HiveField(0) required String name,
+    @HiveField(1) required String ip,
+    @HiveField(2) required int port,
+    @HiveField(3) required String user,
+    @HiveField(4) String? pwd,
 
-  /// [id] of the jump server
-  @HiveField(9)
-  final String? jumpId;
+    /// [id] of private key
+    @JsonKey(name: 'pubKeyId') @HiveField(5) String? keyId,
+    @HiveField(6) List<String>? tags,
+    @HiveField(7) String? alterUrl,
+    @HiveField(8, defaultValue: true) @Default(true) bool autoConnect,
 
-  @HiveField(10)
-  final ServerCustom? custom;
+    /// [id] of the jump server
+    @HiveField(9) String? jumpId,
+    @HiveField(10) ServerCustom? custom,
+    @HiveField(11) WakeOnLanCfg? wolCfg,
 
-  @HiveField(11)
-  final WakeOnLanCfg? wolCfg;
-
-  /// It only applies to SSH terminal.
-  @HiveField(12)
-  final Map<String, String>? envs;
-
-  final String id;
-
-  const Spi({
-    required this.name,
-    required this.ip,
-    required this.port,
-    required this.user,
-    required this.pwd,
-    this.keyId,
-    this.tags,
-    this.alterUrl,
-    this.autoConnect = true,
-    this.jumpId,
-    this.custom,
-    this.wolCfg,
-    this.envs,
-  }) : id = '$user@$ip:$port';
+    /// It only applies to SSH terminal.
+    @HiveField(12) Map<String, String>? envs,
+    @HiveField(13, defaultValue: '') required String id,
+  }) = _Spi;
 
   factory Spi.fromJson(Map<String, dynamic> json) => _$SpiFromJson(json);
 
-  Map<String, dynamic> toJson() => _$SpiToJson(this);
+  @override
+  String toString() => 'Spi<$id>';
 
   @override
-  String toString() => id;
-
-  @override
-  List<Object?> get props =>
-      [name, ip, port, user, pwd, keyId, tags, alterUrl, autoConnect, jumpId, custom, wolCfg, envs];
+  List<Object?> get props => [id];
 }
 
 extension Spix on Spi {
+  String get oldId => '$user@$ip:$port';
+
+  void save() => ServerStore.instance.put(this);
+
+  void migrateId() {
+    if (id.isNotEmpty) return;
+    ServerStore.instance.delete(oldId);
+    final newSpi = copyWith(id: ShortId.generate());
+    newSpi.save();
+  }
+
   String toJsonString() => json.encode(toJson());
 
   VNode<Server>? get server => ServerProvider.pick(spi: this);
@@ -127,27 +108,27 @@ extension Spix on Spi {
   /// Just for showing the struct of the class.
   ///
   /// **NOT** the default value.
-  static const example = Spi(
-    name: 'name',
-    ip: 'ip',
-    port: 22,
-    user: 'root',
-    pwd: 'pwd',
-    keyId: 'private_key_id',
-    tags: ['tag1', 'tag2'],
-    alterUrl: 'user@ip:port',
-    autoConnect: true,
-    jumpId: 'jump_server_id',
-    custom: ServerCustom(
-      pveAddr: 'http://localhost:8006',
-      pveIgnoreCert: false,
-      cmds: {
-        'echo': 'echo hello',
-      },
-      preferTempDev: 'nvme-pci-0400',
-      logoUrl: 'https://example.com/logo.png',
-    ),
-  );
+  static final example = Spi(
+      name: 'name',
+      ip: 'ip',
+      port: 22,
+      user: 'root',
+      pwd: 'pwd',
+      keyId: 'private_key_id',
+      tags: ['tag1', 'tag2'],
+      alterUrl: 'user@ip:port',
+      autoConnect: true,
+      jumpId: 'jump_server_id',
+      custom: ServerCustom(
+        pveAddr: 'http://localhost:8006',
+        pveIgnoreCert: false,
+        cmds: {
+          'echo': 'echo hello',
+        },
+        preferTempDev: 'nvme-pci-0400',
+        logoUrl: 'https://example.com/logo.png',
+      ),
+      id: 'id');
 
   bool get isRoot => user == 'root';
 }

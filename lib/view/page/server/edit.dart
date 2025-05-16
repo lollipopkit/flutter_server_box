@@ -672,6 +672,7 @@ extension on _ServerEditPageState {
       custom: custom,
       wolCfg: wol,
       envs: _env.value.isEmpty ? null : _env.value,
+      id: widget.args?.spi.id ?? ShortId.generate(),
     );
 
     if (this.spi == null) {

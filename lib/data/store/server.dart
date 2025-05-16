@@ -8,15 +8,12 @@ class ServerStore extends HiveStore {
   static final instance = ServerStore._();
 
   void put(Spi info) {
-    // box.put(info.id, info);
-    // box.updateLastModified();
     set(info.id, info);
   }
 
   List<Spi> fetch() {
-    final ids = box.keys;
     final List<Spi> ss = [];
-    for (final id in ids) {
+    for (final id in keys()) {
       final s = box.get(id);
       if (s != null && s is Spi) {
         ss.add(s);
@@ -29,10 +26,6 @@ class ServerStore extends HiveStore {
     remove(id);
   }
 
-  void deleteAll() {
-    clear();
-  }
-
   void update(Spi old, Spi newInfo) {
     if (!have(old)) {
       throw Exception('Old spi: $old not found');
@@ -41,5 +34,5 @@ class ServerStore extends HiveStore {
     put(newInfo);
   }
 
-  bool have(Spi s) => box.get(s.id) != null;
+  bool have(Spi s) => get(s.id) != null;
 }

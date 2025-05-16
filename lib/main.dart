@@ -25,6 +25,7 @@ import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/server.dart';
 
 Future<void> main() async {
   _runInZone(() async {
@@ -121,6 +122,9 @@ Future<void> _doVersionRelated() async {
     ServerFuncBtn.autoAddNewFuncs(newVer);
     Stores.setting.lastVer.put(newVer);
   }
+
+  // Migrate the old id to new id.
+  ServerStore.instance.fetch().forEach((e) => e.migrateId());
 }
 
 Future<void> _initWindow() async {
