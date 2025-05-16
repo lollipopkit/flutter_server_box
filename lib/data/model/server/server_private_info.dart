@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:equatable/equatable.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -23,7 +22,7 @@ part 'server_private_info.freezed.dart';
 /// Nowaday, more fields are added to this class, and it's renamed to `Spi`.
 @freezed
 @HiveType(typeId: 3)
-class Spi with _$Spi, EquatableMixin {
+class Spi with _$Spi {
   const Spi._();
 
   const factory Spi({
@@ -52,22 +51,26 @@ class Spi with _$Spi, EquatableMixin {
   factory Spi.fromJson(Map<String, dynamic> json) => _$SpiFromJson(json);
 
   @override
-  String toString() => 'Spi<$id>';
-
-  @override
-  List<Object?> get props => [id];
+  String toString() => 'Spi<$oldId>';
 }
 
 extension Spix on Spi {
   String get oldId => '$user@$ip:$port';
 
+  /// Save the [Spi] to the local storage.
   void save() => ServerStore.instance.put(this);
 
-  void migrateId() {
-    if (id.isNotEmpty) return;
+  /// Migrate the [oldId] to the new generated [id] by [ShortId.generate].
+  /// 
+  /// Returns:
+  /// - `null` if the [id] is not empty.
+  /// - The new [id] if the [id] is empty.
+  String? migrateId() {
+    if (id.isNotEmpty) return null;
     ServerStore.instance.delete(oldId);
     final newSpi = copyWith(id: ShortId.generate());
     newSpi.save();
+    return newSpi.id;
   }
 
   String toJsonString() => json.encode(toJson());
