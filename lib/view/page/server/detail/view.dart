@@ -172,39 +172,38 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
 
   Widget _buildAbout(Server si) {
     final ss = si.status;
-    return CardX(
-      child: ExpandTile(
-        leading: const Icon(MingCute.information_fill, size: 20),
-        initiallyExpanded: _getInitExpand(ss.more.entries.length),
-        title: Text(libL10n.about),
-        childrenPadding: const EdgeInsets.symmetric(
-          horizontal: 17,
-          vertical: 11,
-        ),
-        children: ss.more.entries
-            .map(
-              (e) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      e.key.i18n,
-                      style: UIs.text13,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      e.value,
-                      style: UIs.text13Grey,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-            )
-            .toList(),
+    return ExpandTile(
+      key: ValueKey(ss.more.hashCode), // Use hashCode to avoid perf issue
+      leading: const Icon(MingCute.information_fill, size: 20),
+      initiallyExpanded: _getInitExpand(ss.more.entries.length),
+      title: Text(libL10n.about),
+      childrenPadding: const EdgeInsets.symmetric(
+        horizontal: 17,
+        vertical: 11,
       ),
-    );
+      children: ss.more.entries
+          .map(
+            (e) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    e.key.i18n,
+                    style: UIs.text13,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    e.value,
+                    style: UIs.text13Grey,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          )
+          .toList(),
+    ).cardx;
   }
 
   Widget _buildCPUView(Server si) {
@@ -247,25 +246,23 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
       ).paddingOnly(top: 13));
     }
 
-    return CardX(
-      child: ExpandTile(
-        title: Align(
-          alignment: Alignment.centerLeft,
-          child: _buildAnimatedText(
-            ValueKey(percent),
-            '$percent%',
-            UIs.text27,
-          ),
+    return ExpandTile(
+      title: Align(
+        alignment: Alignment.centerLeft,
+        child: _buildAnimatedText(
+          ValueKey(percent),
+          '$percent%',
+          UIs.text27,
         ),
-        childrenPadding: const EdgeInsets.symmetric(vertical: 13),
-        initiallyExpanded: _getInitExpand(1),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: details,
-        ),
-        children: children,
       ),
-    );
+      childrenPadding: const EdgeInsets.symmetric(vertical: 13),
+      initiallyExpanded: _getInitExpand(1),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: details,
+      ),
+      children: children,
+    ).cardx;
   }
 
   Widget _buildCpuModelItem(MapEntry<String, int> e) {
@@ -396,32 +393,30 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
       ],
     );
 
-    return CardX(
-      child: Padding(
-        padding: UIs.roundRectCardPadding,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                percentW,
-                Row(
-                  children: [
-                    _buildDetailPercent(free, 'free'),
-                    UIs.width13,
-                    _buildDetailPercent(avail, 'avail'),
-                  ],
-                ),
-              ],
-            ),
-            UIs.height13,
-            _buildProgress(used)
-          ],
-        ),
+    return Padding(
+      padding: UIs.roundRectCardPadding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              percentW,
+              Row(
+                children: [
+                  _buildDetailPercent(free, 'free'),
+                  UIs.width13,
+                  _buildDetailPercent(avail, 'avail'),
+                ],
+              ),
+            ],
+          ),
+          UIs.height13,
+          _buildProgress(used)
+        ],
       ),
-    );
+    ).cardx;
   }
 
   Widget _buildSwapView(Server si) {
@@ -441,40 +436,36 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
       ],
     );
 
-    return CardX(
-      child: Padding(
-        padding: UIs.roundRectCardPadding,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                percentW,
-                _buildDetailPercent(cached, 'cached'),
-              ],
-            ),
-            UIs.height13,
-            _buildProgress(used)
-          ],
-        ),
+    return Padding(
+      padding: UIs.roundRectCardPadding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              percentW,
+              _buildDetailPercent(cached, 'cached'),
+            ],
+          ),
+          UIs.height13,
+          _buildProgress(used)
+        ],
       ),
-    );
+    ).cardx;
   }
 
   Widget _buildGpuView(Server si) {
     final ss = si.status;
     if (ss.nvidia == null || ss.nvidia?.isEmpty == true) return UIs.placeholder;
     final children = ss.nvidia?.map((e) => _buildGpuItem(e)).toList() ?? [];
-    return CardX(
-      child: ExpandTile(
-        title: const Text('GPU'),
-        leading: const Icon(Icons.memory, size: 17),
-        initiallyExpanded: _getInitExpand(children.length, 3),
-        children: children,
-      ),
-    );
+    return ExpandTile(
+      title: const Text('GPU'),
+      leading: const Icon(Icons.memory, size: 17),
+      initiallyExpanded: _getInitExpand(children.length, 3),
+      children: children,
+    ).cardx;
   }
 
   Widget _buildGpuItem(NvidiaSmiItem item) {
@@ -529,20 +520,44 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
 
   Widget _buildDiskView(Server si) {
     final ss = si.status;
-    final children = List.generate(ss.disk.length, (idx) => _buildDiskItem(ss.disk[idx], ss));
-    return CardX(
-      child: ExpandTile(
-        title: Text(l10n.disk),
-        childrenPadding: const EdgeInsets.only(bottom: 7),
-        leading: Icon(ServerDetailCards.disk.icon, size: 17),
-        initiallyExpanded: _getInitExpand(children.length),
-        children: children,
-      ),
-    );
+    final children = <Widget>[];
+
+    // Create widgets for each top-level disk
+    for (int idx = 0; idx < ss.disk.length; idx++) {
+      final disk = ss.disk[idx];
+      children.add(_buildDiskItemWithHierarchy(disk, ss, 0));
+    }
+
+    if (children.isEmpty) return UIs.placeholder;
+
+    return ExpandTile(
+      title: Text(l10n.disk),
+      childrenPadding: const EdgeInsets.only(bottom: 7),
+      leading: Icon(ServerDetailCards.disk.icon, size: 17),
+      initiallyExpanded: _getInitExpand(children.length),
+      children: children,
+    ).cardx;
   }
 
-  Widget _buildDiskItem(Disk disk, ServerStatus ss) {
-    final (read, write) = ss.diskIO.getSpeed(disk.fs);
+  Widget _buildDiskItemWithHierarchy(Disk disk, ServerStatus ss, int depth) {
+    // Create a list to hold this disk and its children
+    final items = <Widget>[];
+
+    // Add the current disk
+    items.add(_buildDiskItem(disk, ss, depth));
+
+    // Recursively add child disks with increased indentation
+    if (disk.children.isNotEmpty) {
+      for (final childDisk in disk.children) {
+        items.add(_buildDiskItemWithHierarchy(childDisk, ss, depth + 1));
+      }
+    }
+
+    return Column(children: items);
+  }
+
+  Widget _buildDiskItem(Disk disk, ServerStatus ss, int depth) {
+    final (read, write) = ss.diskIO.getSpeed(disk.path);
     final text = () {
       final use = '${l10n.used} ${disk.used.kb2Str} / ${disk.size.kb2Str}';
       if (read == null || write == null) return use;
@@ -550,43 +565,51 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
     }();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 5),
+      padding: EdgeInsets.only(
+        left: 17.0 + (depth * 15.0), // Indent based on depth
+        right: 17.0,
+        top: 5.0,
+        bottom: 5.0,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                disk.fs,
-                style: UIs.text12,
-                textScaler: _textFactor,
-              ),
-              Text(
-                text,
-                style: UIs.text12Grey,
-                textScaler: _textFactor,
-              )
-            ],
-          ),
-          SizedBox(
-            height: 41,
-            width: 41,
-            child: Stack(
-              alignment: Alignment.center,
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircularProgressIndicator(
-                  value: disk.usedPercent / 100,
-                  strokeWidth: 5,
-                  backgroundColor: UIs.halfAlpha,
-                  color: UIs.primaryColor,
+                Text(
+                  disk.mount.isEmpty ? disk.path : '${disk.path} (${disk.mount})',
+                  style: UIs.text12,
+                  textScaler: _textFactor,
                 ),
-                Text('${disk.usedPercent}%', style: UIs.text12Grey)
+                Text(
+                  text,
+                  style: UIs.text12Grey,
+                  textScaler: _textFactor,
+                )
               ],
             ),
-          )
+          ),
+          if (disk.size > BigInt.zero)
+            SizedBox(
+              height: 41,
+              width: 41,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    value: disk.usedPercent / 100,
+                    strokeWidth: 5,
+                    backgroundColor: UIs.halfAlpha,
+                    color: UIs.primaryColor,
+                  ),
+                  Text('${disk.usedPercent}%', style: UIs.text12Grey)
+                ],
+              ),
+            )
         ],
       ),
     );
@@ -597,6 +620,8 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
     final ns = ss.netSpeed;
     final children = <Widget>[];
     final devices = ns.devices;
+    if (devices.isEmpty) return UIs.placeholder;
+
     devices.sort(_netSortType.value.getSortFunc(ns));
     children.addAll(devices.map((e) => _buildNetSpeedItem(ns, e)));
 
@@ -770,21 +795,20 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
       );
     }
 
-    final itemW = Expanded(
-        child: Column(
+    final itemW = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           children: [
-            Text(si.device, style: UIs.text15Bold),
+            Text(si.device, style: UIs.text15),
             UIs.width7,
             Text('(${si.adapter.raw})', style: UIs.text13Grey),
           ],
         ),
         Text(si.summary ?? '', style: UIs.text13Grey),
       ],
-    ));
+    ).expanded();
 
     return InkWell(
       onTap: () => _onTapSensorItem(si),

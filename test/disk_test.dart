@@ -4,15 +4,198 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/disk.dart';
 
 void main() {
-  test('parse disk', () {
-    for (final raw in _raws) {
-      print('---' * 10);
-      final disks = Disk.parse(raw);
-      print(disks.join('\n'));
-      print('\n');
-    }
+  group('Disk parsing', () {
+    test('parse traditional df output', () {
+      for (final raw in _raws) {
+        final disks = Disk.parse(raw);
+        expect(disks, isNotEmpty);
+      }
+    });
+    
+    test('parse lsblk JSON output', () {
+      final disks = Disk.parse(_jsonLsblkOutput);
+      expect(disks, isNotEmpty);
+      expect(disks.length, 6);  // Should find ext4 root, vfat efi, and ext2 boot
+      
+      // Verify root filesystem
+      final rootFs = disks.firstWhere((disk) => disk.mount == '/');
+      expect(rootFs.fsTyp, 'ext4');
+      expect(rootFs.size, BigInt.parse('982141468672') ~/ BigInt.from(1024));
+      expect(rootFs.used, BigInt.parse('552718364672') ~/ BigInt.from(1024));
+      expect(rootFs.avail, BigInt.parse('379457622016') ~/ BigInt.from(1024));
+      expect(rootFs.usedPercent, 56);
+      
+      // Verify boot/efi filesystem
+      final efiFs = disks.firstWhere((disk) => disk.mount == '/boot/efi');
+      expect(efiFs.fsTyp, 'vfat');
+      expect(efiFs.size, BigInt.parse('535805952') ~/ BigInt.from(1024));
+      expect(efiFs.usedPercent, 1);
+      
+      // Verify boot filesystem
+      final bootFs = disks.firstWhere((disk) => disk.mount == '/boot');
+      expect(bootFs.fsTyp, 'ext2');
+      expect(bootFs.usedPercent, 34);
+    });
+    
+    test('parse nested lsblk JSON output with parent/child relationships', () {
+      final disks = Disk.parse(_nestedJsonLsblkOutput);
+      expect(disks, isNotEmpty);
+      
+      // Check parent device with children
+      final parentDisk = disks.firstWhere((disk) => disk.path == '/dev/nvme0n1');
+      expect(parentDisk.children, isNotEmpty);
+      expect(parentDisk.children.length, 3);
+      
+      // Check one of the children
+      final rootPartition = parentDisk.children.firstWhere((disk) => disk.mount == '/');
+      expect(rootPartition.fsTyp, 'ext4');
+      expect(rootPartition.path, '/dev/nvme0n1p2');
+      expect(rootPartition.usedPercent, 45);
+      
+      // Verify we have a child partition with UUID
+      final bootPartition = parentDisk.children.firstWhere((disk) => disk.mount == '/boot');
+      expect(bootPartition.uuid, '12345678-abcd-1234-abcd-1234567890ab');
+    });
+    
+    test('DiskUsage handles zero size correctly', () {
+      final usage = DiskUsage(used: BigInt.from(1000), size: BigInt.zero);
+      expect(usage.usedPercent, 0); // Should return 0 instead of throwing
+    });
+    
+    test('DiskUsage handles null kname', () {
+      final disks = [
+        Disk(
+          path: '/dev/sda1',
+          mount: '/mnt',
+          usedPercent: 50,
+          used: BigInt.from(5000),
+          size: BigInt.from(10000),
+          avail: BigInt.from(5000),
+          kname: null, // Explicitly null kname
+        ),
+      ];
+      
+      final usage = DiskUsage.parse(disks);
+      expect(usage.used, BigInt.from(5000));
+      expect(usage.size, BigInt.from(10000));
+      expect(usage.usedPercent, 50);
+      // This would use the "unknown" fallback for kname
+    });
   });
 }
+
+const _jsonLsblkOutput = '''
+{
+   "blockdevices": [
+      {
+         "fstype": "LVM2_member",
+         "mountpoint": null,
+         "fssize": null,
+         "fsused": null,
+         "fsavail": null,
+         "fsuse%": null
+      },{
+         "fstype": "ext4",
+         "mountpoint": "/",
+         "fssize": 982141468672,
+         "fsused": 552718364672,
+         "fsavail": 379457622016,
+         "fsuse%": "56%"
+      },{
+         "fstype": "swap",
+         "mountpoint": "[SWAP]",
+         "fssize": null,
+         "fsused": null,
+         "fsavail": null,
+         "fsuse%": null
+      },{
+         "fstype": null,
+         "mountpoint": null,
+         "fssize": null,
+         "fsused": null,
+         "fsavail": null,
+         "fsuse%": null
+      },{
+         "fstype": "vfat",
+         "mountpoint": "/boot/efi",
+         "fssize": 535805952,
+         "fsused": 6127616,
+         "fsavail": 529678336,
+         "fsuse%": "1%"
+      },{
+         "fstype": "ext2",
+         "mountpoint": "/boot",
+         "fssize": 477210624,
+         "fsused": 161541120,
+         "fsavail": 290084864,
+         "fsuse%": "34%"
+      },{
+         "fstype": "crypto_LUKS",
+         "mountpoint": null,
+         "fssize": null,
+         "fsused": null,
+         "fsavail": null,
+         "fsuse%": null
+      }
+   ]
+}
+''';
+
+const _nestedJsonLsblkOutput = '''
+{
+  "blockdevices": [
+    {
+      "name": "nvme0n1",
+      "kname": "nvme0n1",
+      "path": "/dev/nvme0n1",
+      "fstype": null,
+      "mountpoint": null,
+      "fssize": null,
+      "fsused": null,
+      "fsavail": null,
+      "fsuse%": null,
+      "children": [
+        {
+          "name": "nvme0n1p1",
+          "kname": "nvme0n1p1",
+          "path": "/dev/nvme0n1p1",
+          "fstype": "vfat",
+          "mountpoint": "/boot/efi",
+          "fssize": "512000000",
+          "fsused": "25600000",
+          "fsavail": "486400000",
+          "fsuse%": "5%",
+          "uuid": "98765432-dcba-4321-dcba-0987654321fe"
+        },
+        {
+          "name": "nvme0n1p2",
+          "kname": "nvme0n1p2",
+          "path": "/dev/nvme0n1p2",
+          "fstype": "ext4",
+          "mountpoint": "/",
+          "fssize": "500000000000",
+          "fsused": "225000000000",
+          "fsavail": "275000000000",
+          "fsuse%": "45%",
+          "uuid": "abcdef12-3456-7890-abcd-ef1234567890"
+        },
+        {
+          "name": "nvme0n1p3",
+          "kname": "nvme0n1p3",
+          "path": "/dev/nvme0n1p3",
+          "fstype": "ext4",
+          "mountpoint": "/boot",
+          "fssize": "1000000000",
+          "fsused": "500000000",
+          "fsavail": "500000000",
+          "fsuse%": "50%",
+          "uuid": "12345678-abcd-1234-abcd-1234567890ab"
+        }
+      ]
+    }
+  ]
+}
+''';
 
 const _raws = [
 //   '''

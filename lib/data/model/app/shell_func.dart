@@ -30,8 +30,7 @@ enum ShellFunc {
   /// Default is [scriptDirTmp]/[scriptFile], if this path is not accessible,
   /// it will be changed to [scriptDirHome]/[scriptFile].
   static String getScriptDir(String id) {
-    final customScriptDir =
-        ServerProvider.pick(id: id)?.value.spi.custom?.scriptDir;
+    final customScriptDir = ServerProvider.pick(id: id)?.value.spi.custom?.scriptDir;
     if (customScriptDir != null) return customScriptDir;
     return _scriptDirMap.putIfAbsent(id, () {
       return scriptDirTmp;
@@ -164,9 +163,7 @@ exec 2>/dev/null
     // Write each func
     for (final func in values) {
       final customCmdsStr = () {
-        if (func == ShellFunc.status &&
-            customCmds != null &&
-            customCmds.isNotEmpty) {
+        if (func == ShellFunc.status && customCmds != null && customCmds.isNotEmpty) {
           return '$cmdDivider\n\t${customCmds.values.join(cmdDivider)}';
         }
         return '';
@@ -213,14 +210,13 @@ enum StatusCmdType {
   cpu._('cat /proc/stat | grep cpu'),
   uptime._('uptime'),
   conn._('cat /proc/net/snmp'),
-  disk._('df'),
+  disk._('lsblk --bytes --json --output FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID'),
   mem._("cat /proc/meminfo | grep -E 'Mem|Swap'"),
   tempType._('cat /sys/class/thermal/thermal_zone*/type'),
   tempVal._('cat /sys/class/thermal/thermal_zone*/temp'),
   host._('cat /etc/hostname'),
   diskio._('cat /proc/diskstats'),
-  battery._(
-      'for f in /sys/class/power_supply/*/uevent; do cat "\$f"; echo; done'),
+  battery._('for f in /sys/class/power_supply/*/uevent; do cat "\$f"; echo; done'),
   nvidia._('nvidia-smi -q -x'),
   sensors._('sensors'),
   cpuBrand._('cat /proc/cpuinfo | grep "model name"'),
@@ -238,6 +234,7 @@ enum BSDStatusCmdType {
   sys._('uname -or'),
   cpu._('top -l 1 | grep "CPU usage"'),
   uptime._('uptime'),
+  // Keep df -k for BSD systems as lsblk is not available on macOS/BSD
   disk._('df -k'),
   mem._('top -l 1 | grep PhysMem'),
   //temp,

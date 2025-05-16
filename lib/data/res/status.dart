@@ -42,7 +42,7 @@ abstract final class InitStatus {
         ),
         disk: [
           Disk(
-            fs: '/',
+            path: '/',
             mount: '/',
             usedPercent: 0,
             used: BigInt.zero,
