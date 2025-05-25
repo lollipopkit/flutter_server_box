@@ -9,13 +9,15 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get aboutThanks => 'Thanks to the following people who participated in.';
+  String get aboutThanks =>
+      'Thanks to the following people who participated in.';
 
   @override
   String get acceptBeta => 'Accept beta version updates';
 
   @override
-  String get addSystemPrivateKeyTip => 'Currently private keys don\'t exist, do you want to add the one that comes with the system (~/.ssh/id_rsa)?';
+  String get addSystemPrivateKeyTip =>
+      'Currently private keys don\'t exist, do you want to add the one that comes with the system (~/.ssh/id_rsa)?';
 
   @override
   String get added2List => 'Added to task list';
@@ -27,10 +29,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get alreadyLastDir => 'Already in last directory.';
 
   @override
-  String get authFailTip => 'Authentication failed, please check whether credentials are correct';
+  String get authFailTip =>
+      'Authentication failed, please check whether credentials are correct';
 
   @override
-  String get autoBackupConflict => 'Only one automatic backup can be turned on at the same time.';
+  String get autoBackupConflict =>
+      'Only one automatic backup can be turned on at the same time.';
 
   @override
   String get autoConnect => 'Auto connect';
@@ -42,7 +46,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get autoUpdateHomeWidget => 'Automatic home widget update';
 
   @override
-  String get backupTip => 'The exported data is weakly encrypted. \nPlease keep it safe.';
+  String get backupTip =>
+      'The exported data is weakly encrypted. \nPlease keep it safe.';
 
   @override
   String get backupVersionNotMatch => 'Backup version is not match.';
@@ -54,7 +59,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bgRun => 'Run in background';
 
   @override
-  String get bgRunTip => 'This switch only means the program will try to run in the background. Whether it can run in the background depends on whether the permission is enabled or not. For AOSP-based Android ROMs, please disable \"Battery Optimization\" in this app. For MIUI / HyperOS, please change the power saving policy to \"Unlimited\".';
+  String get bgRunTip =>
+      'This switch only means the program will try to run in the background. Whether it can run in the background depends on whether the permission is enabled or not. For AOSP-based Android ROMs, please disable \"Battery Optimization\" in this app. For MIUI / HyperOS, please change the power saving policy to \"Unlimited\".';
 
   @override
   String get closeAfterSave => 'Save and close';
@@ -63,7 +69,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cmd => 'Command';
 
   @override
-  String get collapseUITip => 'Whether to collapse long lists present in the UI by default';
+  String get collapseUITip =>
+      'Whether to collapse long lists present in the UI by default';
 
   @override
   String get conn => 'Connection';
@@ -72,7 +79,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get container => 'Container';
 
   @override
-  String get containerTrySudoTip => 'For example: In the app, the user is set to aaa, but Docker is installed under the root user. In this case, you need to enable this option.';
+  String get containerTrySudoTip =>
+      'For example: In the app, the user is set to aaa, but Docker is installed under the root user. In this case, you need to enable this option.';
 
   @override
   String get convert => 'Convert';
@@ -81,7 +89,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get copyPath => 'Copy path';
 
   @override
-  String get cpuViewAsProgressTip => 'Display the usage of each CPU in a progress bar style (old style)';
+  String get cpuViewAsProgressTip =>
+      'Display the usage of each CPU in a progress bar style (old style)';
 
   @override
   String get cursorType => 'Cursor type';
@@ -90,7 +99,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get customCmd => 'Custom commands';
 
   @override
-  String get customCmdDocUrl => 'https://github.com/lollipopkit/flutter_server_box/wiki#custom-commands';
+  String get customCmdDocUrl =>
+      'https://github.com/lollipopkit/flutter_server_box/wiki#custom-commands';
 
   @override
   String get customCmdHint => '\"Command Name\": \"Command\"';
@@ -125,7 +135,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get dockerEmptyRunningItems => 'There are no running containers.\nThis could be because:\n- The Docker installation user is not the same as the username configured within the App.\n- The environment variable DOCKER_HOST was not read correctly. You can get it by running `echo \$DOCKER_HOST` in the terminal.';
+  String get dockerEmptyRunningItems =>
+      'There are no running containers.\nThis could be because:\n- The Docker installation user is not the same as the username configured within the App.\n- The environment variable DOCKER_HOST was not read correctly. You can get it by running `echo \$DOCKER_HOST` in the terminal.';
 
   @override
   String dockerImagesFmt(Object count) {
@@ -136,7 +147,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dockerNotInstalled => 'Docker not installed';
 
   @override
-  String dockerStatusRunningAndStoppedFmt(Object runningCount, Object stoppedCount) {
+  String dockerStatusRunningAndStoppedFmt(
+      Object runningCount, Object stoppedCount) {
     return '$runningCount running, $stoppedCount container stopped.';
   }
 
@@ -149,7 +161,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get doubleColumnMode => 'Double column mode';
 
   @override
-  String get doubleColumnTip => 'This option only enables the feature, whether it can actually be enabled depends on the width of the device';
+  String get doubleColumnTip =>
+      'This option only enables the feature, whether it can actually be enabled depends on the width of the device';
 
   @override
   String get editVirtKeys => 'Edit virtual keys';
@@ -158,7 +171,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editor => 'Editor';
 
   @override
-  String get editorHighlightTip => 'The current code highlighting performance is not ideal and can be optionally turned off to improve.';
+  String get editorHighlightTip =>
+      'The current code highlighting performance is not ideal and can be optionally turned off to improve.';
 
   @override
   String get encode => 'Encode';
@@ -176,13 +190,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fallbackSshDest => 'Fallback SSH destination';
 
   @override
-  String get fdroidReleaseTip => 'If you downloaded this app from F-Droid, it is recommended to turn off this option.';
+  String get fdroidReleaseTip =>
+      'If you downloaded this app from F-Droid, it is recommended to turn off this option.';
 
   @override
   String get fgService => 'Foreground Service';
 
   @override
-  String get fgServiceTip => 'After enabling, some device models may crash. Disabling it may cause some models to be unable to maintain SSH connections in the background. Please allow ServerBox notification permissions, background running, and self-wake-up in system settings.';
+  String get fgServiceTip =>
+      'After enabling, some device models may crash. Disabling it may cause some models to be unable to maintain SSH connections in the background. Please allow ServerBox notification permissions, background running, and self-wake-up in system settings.';
 
   @override
   String fileTooLarge(Object file, Object size, Object sizeMax) {
@@ -211,7 +227,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fullScreenJitterHelp => 'To avoid screen burn-in';
 
   @override
-  String get fullScreenTip => 'Should full-screen mode be enabled when the device is rotated to landscape mode? This option only applies to the server tab.';
+  String get fullScreenTip =>
+      'Should full-screen mode be enabled when the device is rotated to landscape mode? This option only applies to the server tab.';
 
   @override
   String get goBackQ => 'Go back?';
@@ -255,7 +272,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get install => 'install';
 
   @override
-  String get installDockerWithUrl => 'Please https://docs.docker.com/engine/install docker first.';
+  String get installDockerWithUrl =>
+      'Please https://docs.docker.com/engine/install docker first.';
 
   @override
   String get invalid => 'Invalid';
@@ -270,7 +288,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get keepStatusWhenErr => 'Preserve the last server state';
 
   @override
-  String get keepStatusWhenErrTip => 'Only in the event of an error during script execution';
+  String get keepStatusWhenErrTip =>
+      'Only in the event of an error during script execution';
 
   @override
   String get keyAuth => 'Key Auth';
@@ -279,7 +298,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get letterCache => 'Letter caching';
 
   @override
-  String get letterCacheTip => 'Recommended to disable, but after disabling, it will be impossible to input CJK characters.';
+  String get letterCacheTip =>
+      'Recommended to disable, but after disabling, it will be impossible to input CJK characters.';
 
   @override
   String get license => 'License';
@@ -317,13 +337,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get more => 'More';
 
   @override
-  String get moveOutServerFuncBtnsHelp => 'On: can be displayed below each card on the Server Tab page. Off: can be displayed at the top of the Server Details page.';
+  String get moveOutServerFuncBtnsHelp =>
+      'On: can be displayed below each card on the Server Tab page. Off: can be displayed at the top of the Server Details page.';
 
   @override
   String get ms => 'ms';
 
   @override
-  String get needHomeDir => 'If you are a Synology user, [see here](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Users of other systems need to search for how to create a home directory.';
+  String get needHomeDir =>
+      'If you are a Synology user, [see here](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Users of other systems need to search for how to create a home directory.';
 
   @override
   String get needRestart => 'App needs to be restarted';
@@ -344,7 +366,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noLineChartForCpu => 'Do not use line charts for CPU';
 
   @override
-  String get noPrivateKeyTip => 'The private key does not exist, it may have been deleted or there is a configuration error.';
+  String get noPrivateKeyTip =>
+      'The private key does not exist, it may have been deleted or there is a configuration error.';
 
   @override
   String get noPromptAgain => 'Do not prompt again';
@@ -362,16 +385,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onlyOneLine => 'Only display as one line (scrollable)';
 
   @override
-  String get onlyWhenCoreBiggerThan8 => 'Works only when the number of cores is greater than 8';
+  String get onlyWhenCoreBiggerThan8 =>
+      'Works only when the number of cores is greater than 8';
 
   @override
   String get openLastPath => 'Open the last path';
 
   @override
-  String get openLastPathTip => 'Different servers will have different logs, and the log is the path to the exit';
+  String get openLastPathTip =>
+      'Different servers will have different logs, and the log is the path to the exit';
 
   @override
-  String get parseContainerStatsTip => 'Parsing the occupancy status of Docker is relatively slow.';
+  String get parseContainerStatsTip =>
+      'Parsing the occupancy status of Docker is relatively slow.';
 
   @override
   String percentOfSize(Object percent, Object size) {
@@ -388,7 +414,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pingInputIP => 'Please input a target IP / domain.';
 
   @override
-  String get pingNoServer => 'No server to ping.\nPlease add a server in server tab.';
+  String get pingNoServer =>
+      'No server to ping.\nPlease add a server in server tab.';
 
   @override
   String get pkg => 'Pkg';
@@ -412,13 +439,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pushToken => 'Push token';
 
   @override
-  String get pveIgnoreCertTip => 'Not recommended to enable, beware of security risks! If you are using the default certificate from PVE, you need to enable this option.';
+  String get pveIgnoreCertTip =>
+      'Not recommended to enable, beware of security risks! If you are using the default certificate from PVE, you need to enable this option.';
 
   @override
-  String get pveLoginFailed => 'Login failed. Unable to authenticate with username/password from server configuration for Linux PAM login.';
+  String get pveLoginFailed =>
+      'Login failed. Unable to authenticate with username/password from server configuration for Linux PAM login.';
 
   @override
-  String get pveVersionLow => 'This feature is currently in the testing phase and has only been tested on PVE 8+. Please use it with caution.';
+  String get pveVersionLow =>
+      'This feature is currently in the testing phase and has only been tested on PVE 8+. Please use it with caution.';
 
   @override
   String get pwd => 'Password';
@@ -493,7 +523,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sftpDlPrepare => 'Preparing to connect...';
 
   @override
-  String get sftpEditorTip => 'If empty, use the built-in file editor of the app. If a value is present, use the remote server’s editor, e.g., `vim` (recommended to automatically detect according to `EDITOR`).';
+  String get sftpEditorTip =>
+      'If empty, use the built-in file editor of the app. If a value is present, use the remote server’s editor, e.g., `vim` (recommended to automatically detect according to `EDITOR`).';
 
   @override
   String get sftpRmrDirSummary => 'Use `rm -r` to delete a folder in SFTP.';
@@ -523,7 +554,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get specifyDev => 'Specify device';
 
   @override
-  String get specifyDevTip => 'For example, network traffic statistics are by default for all devices. You can specify a particular device here.';
+  String get specifyDevTip =>
+      'For example, network traffic statistics are by default for all devices. You can specify a particular device here.';
 
   @override
   String get speed => 'Speed';
@@ -534,7 +566,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get sshTermHelp => 'When the terminal is scrollable, dragging horizontally can select text. Clicking the keyboard button turns the keyboard on/off. The file icon opens the current path SFTP. The clipboard button copies the content when text is selected, and pastes content from the clipboard into the terminal when no text is selected and there is content on the clipboard. The code icon pastes code snippets into the terminal and executes them.';
+  String get sshTermHelp =>
+      'When the terminal is scrollable, dragging horizontally can select text. Clicking the keyboard button turns the keyboard on/off. The file icon opens the current path SFTP. The clipboard button copies the content when text is selected, and pastes content from the clipboard into the terminal when no text is selected and there is content on the clipboard. The code icon pastes code snippets into the terminal and executes them.';
 
   @override
   String sshTip(Object url) {
@@ -563,13 +596,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get storage => 'Storage';
 
   @override
-  String get supportFmtArgs => 'The following formatting parameters are supported:';
+  String get supportFmtArgs =>
+      'The following formatting parameters are supported:';
 
   @override
   String get suspend => 'Suspend';
 
   @override
-  String get suspendTip => 'The suspend function requires root permission and systemd support.';
+  String get suspendTip =>
+      'The suspend function requires root permission and systemd support.';
 
   @override
   String switchTo(Object val) {
@@ -580,7 +615,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sync => 'Sync';
 
   @override
-  String get syncTip => 'A restart may be required for some changes to take effect.';
+  String get syncTip =>
+      'A restart may be required for some changes to take effect.';
 
   @override
   String get system => 'System';
@@ -592,7 +628,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get temperature => 'Temperature';
 
   @override
-  String get termFontSizeTip => 'This setting will affect the terminal size (width and height). You can zoom in on the terminal page to adjust the font size of the current session.';
+  String get termFontSizeTip =>
+      'This setting will affect the terminal size (width and height). You can zoom in on the terminal page to adjust the font size of the current session.';
 
   @override
   String get terminal => 'Terminal';
@@ -604,7 +641,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get textScaler => 'Text scaler';
 
   @override
-  String get textScalerTip => '1.0 => 100% (original size), only works on server page part of the font, not recommended to change.';
+  String get textScalerTip =>
+      '1.0 => 100% (original size), only works on server page part of the font, not recommended to change.';
 
   @override
   String get theme => 'Theme';
@@ -637,7 +675,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get update => 'Update';
 
   @override
-  String get updateIntervalEqual0 => 'You set to 0, will not update automatically.\nCan\'t calculate CPU status.';
+  String get updateIntervalEqual0 =>
+      'You set to 0, will not update automatically.\nCan\'t calculate CPU status.';
 
   @override
   String get updateServerStatusInterval => 'Server status update interval';
@@ -655,7 +694,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get useCdn => 'Using CDN';
 
   @override
-  String get useCdnTip => 'Non-Chinese users are recommended to use CDN. Would you like to use it?';
+  String get useCdnTip =>
+      'Non-Chinese users are recommended to use CDN. Would you like to use it?';
 
   @override
   String get useNoPwd => 'No password will be used';
@@ -673,7 +713,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewErr => 'See error';
 
   @override
-  String get virtKeyHelpClipboard => 'Copy to the clipboard if the selected terminal is not empty, otherwise paste the content of the clipboard to the terminal.';
+  String get virtKeyHelpClipboard =>
+      'Copy to the clipboard if the selected terminal is not empty, otherwise paste the content of the clipboard to the terminal.';
 
   @override
   String get virtKeyHelpIME => 'Turn on/off the keyboard';
@@ -682,7 +723,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get virtKeyHelpSFTP => 'Open current directory in SFTP.';
 
   @override
-  String get waitConnection => 'Please wait for the connection to be established.';
+  String get waitConnection =>
+      'Please wait for the connection to be established.';
 
   @override
   String get wakeLock => 'Keep awake';
@@ -697,14 +739,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get whenOpenApp => 'When opening the app';
 
   @override
-  String get wolTip => 'After configuring WOL (Wake-on-LAN), a WOL request is sent each time the server is connected.';
+  String get wolTip =>
+      'After configuring WOL (Wake-on-LAN), a WOL request is sent each time the server is connected.';
 
   @override
   String get write => 'Write';
 
   @override
-  String get writeScriptFailTip => 'Writing to the script failed, possibly due to lack of permissions or the directory does not exist.';
+  String get writeScriptFailTip =>
+      'Writing to the script failed, possibly due to lack of permissions or the directory does not exist.';
 
   @override
-  String get writeScriptTip => 'After connecting to the server, a script will be written to ~/.config/server_box to monitor the system status. You can review the script content.';
+  String get writeScriptTip =>
+      'After connecting to the server, a script will be written to ~/.config/server_box to monitor the system status. You can review the script content.';
 }

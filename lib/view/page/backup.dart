@@ -90,7 +90,7 @@ final class _BackupPageState extends State<BackupPage>
             trailing: const Icon(Icons.save),
             onTap: () async {
               final path = await Backup.backup();
-              await Pfs.share(path: path);
+              await Pfs.sharePaths(paths: [path]);
             },
           ),
           ListTile(

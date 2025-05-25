@@ -113,9 +113,7 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
 
     return Scaffold(
       appBar: _buildAppBar(si),
-      body: AutoMultiList(
-        children: children,
-      ),
+      body: SafeArea(child: AutoMultiList(children: children)),
     );
   }
 
@@ -716,7 +714,7 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
 
   Widget _buildTemperatureItem(String key, double? val) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 5),
+      padding: const EdgeInsets.only(left: 3, right: 17, top: 5, bottom: 5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

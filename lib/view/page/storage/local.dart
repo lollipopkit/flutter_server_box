@@ -95,8 +95,8 @@ class _LocalFilePageState extends State<LocalFilePage> with AutomaticKeepAliveCl
     return FutureWidget(
       future: getEntities(),
       loading: UIs.placeholder,
-      success: (items_) {
-        final items = items_ ?? [];
+      success: (items) {
+        items ??= [];
         final len = _path.canBack ? items.length + 1 : items.length;
         return ListView.builder(
           itemCount: len,
@@ -115,37 +115,17 @@ class _LocalFilePageState extends State<LocalFilePage> with AutomaticKeepAliveCl
 
             if (_path.canBack) index--;
 
-            final item = items[index];
+            final item = items![index];
             final file = item.$1;
             final fileName = file.path.split('/').last;
             final stat = item.$2;
             final isDir = stat.type == FileSystemEntityType.directory;
 
-            return CardX(
-              child: ListTile(
-                leading: isDir ? const Icon(Icons.folder_open) : const Icon(Icons.insert_drive_file),
-                title: Text(fileName),
-                subtitle: isDir ? null : Text(stat.size.bytes2Str, style: UIs.textGrey),
-                trailing: Text(
-                  stat.modified.ymdhms(),
-                  style: UIs.textGrey,
-                ),
-                onLongPress: () {
-                  if (isDir) {
-                    _showDirActionDialog(file);
-                    return;
-                  }
-                  _showFileActionDialog(file);
-                },
-                onTap: () {
-                  if (!isDir) {
-                    _showFileActionDialog(file);
-                    return;
-                  }
-                  _path.update(fileName);
-                  setState(() {});
-                },
-              ),
+            return _buildItem(
+              file: file,
+              fileName: fileName,
+              stat: stat,
+              isDir: isDir,
             );
           },
         );
@@ -153,6 +133,66 @@ class _LocalFilePageState extends State<LocalFilePage> with AutomaticKeepAliveCl
     );
   }
 
+  Widget _buildItem({
+    required FileSystemEntity file,
+    required String fileName,
+    required FileStat stat,
+    required bool isDir,
+  }) {
+    return CardX(
+      child: ListTile(
+        leading: isDir ? const Icon(Icons.folder_open) : const Icon(Icons.insert_drive_file),
+        title: Text(fileName),
+        subtitle: isDir ? null : Text(stat.size.bytes2Str, style: UIs.textGrey),
+        trailing: Text(
+          stat.modified.ymdhms(),
+          style: UIs.textGrey,
+        ),
+        onLongPress: () {
+          if (isDir) {
+            _showDirActionDialog(file);
+            return;
+          }
+          _showFileActionDialog(file);
+        },
+        onTap: () {
+          if (!isDir) {
+            _showFileActionDialog(file);
+            return;
+          }
+          _path.update(fileName);
+          setState(() {});
+        },
+      ),
+    );
+  }
+
+  Widget _buildMissionBtn() {
+    return IconButton(
+      icon: const Icon(Icons.downloading),
+      onPressed: () => SftpMissionPage.route.go(context),
+    );
+  }
+
+  Widget _buildSortBtn() {
+    return _sortType.listenVal(
+      (value) {
+        return PopupMenuButton<_SortType>(
+          icon: const Icon(Icons.sort),
+          itemBuilder: (_) => _SortType.values.map((e) => e.menuItem).toList(),
+          onSelected: (value) {
+            _sortType.value = value;
+          },
+        );
+      },
+    );
+  }
+
+  @override
+  bool get wantKeepAlive => true;
+}
+
+extension _Actions on _LocalFilePageState {
   Future<void> _showDirActionDialog(FileSystemEntity file) async {
     context.showRoundDialog(
       child: Column(
@@ -180,7 +220,7 @@ class _LocalFilePageState extends State<LocalFilePage> with AutomaticKeepAliveCl
   }
 
   Future<void> _showFileActionDialog(FileSystemEntity file) async {
-    final fileName = file.path.split('/').last;
+    final fileName = file.path.split('/').lastOrNull ?? '';
     if (isPickFile) {
       context.showRoundDialog(
         title: libL10n.file,
@@ -198,35 +238,12 @@ class _LocalFilePageState extends State<LocalFilePage> with AutomaticKeepAliveCl
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Btn.tile(
-            icon: const Icon(Icons.edit),
-            text: libL10n.edit,
-            onTap: () async {
-              context.pop();
-              final stat = await file.stat();
-              if (stat.size > Miscs.editorMaxSize) {
-                context.showRoundDialog(
-                  title: libL10n.attention,
-                  child: Text(l10n.fileTooLarge(fileName, stat.size, '1m')),
-                );
-                return;
-              }
-
-              await EditorPage.route.go(
-                context,
-                args: EditorPageArgs(
-                  path: file.absolute.path,
-                  onSave: (_) {
-                    context.showSnackBar(l10n.saved);
-                    setState(() {});
-                  },
-                  closeAfterSave: SettingStore.instance.closeAfterSave.fetch(),
-                  softWrap: SettingStore.instance.editorSoftWrap.fetch(),
-                  enableHighlight: SettingStore.instance.editorHighlight.fetch(),
-                ),
-              );
-            },
-          ),
+          if (isMobile)
+            Btn.tile(
+              icon: const Icon(Icons.edit),
+              text: libL10n.edit,
+              onTap: () => _onTapEdit(file, fileName),
+            ),
           Btn.tile(
             icon: const Icon(Icons.abc),
             text: libL10n.rename,
@@ -246,42 +263,13 @@ class _LocalFilePageState extends State<LocalFilePage> with AutomaticKeepAliveCl
           Btn.tile(
             icon: const Icon(Icons.upload),
             text: l10n.upload,
-            onTap: () async {
-              context.pop();
-
-              final spi = await context.showPickSingleDialog<Spi>(
-                title: libL10n.select,
-                items: ServerProvider.serverOrder.value
-                    .map((e) => ServerProvider.pick(id: e)?.value.spi)
-                    .whereType<Spi>()
-                    .toList(),
-                display: (e) => e.name,
-              );
-              if (spi == null) return;
-
-              final args = SftpPageArgs(
-                spi: spi,
-                isSelect: true,
-              );
-              final remotePath = await SftpPage.route.go(context, args);
-              if (remotePath == null) {
-                return;
-              }
-
-              SftpProvider.add(SftpReq(
-                spi,
-                '$remotePath/$fileName',
-                file.absolute.path,
-                SftpReqType.upload,
-              ));
-              context.showSnackBar(l10n.added2List);
-            },
+            onTap: () => _onTapUpload(file, fileName),
           ),
           Btn.tile(
             icon: const Icon(Icons.open_in_new),
             text: libL10n.open,
             onTap: () {
-              Pfs.share(path: file.absolute.path);
+              Pfs.sharePaths(paths: [file.absolute.path]);
             },
           ),
         ],
@@ -303,7 +291,7 @@ class _LocalFilePageState extends State<LocalFilePage> with AutomaticKeepAliveCl
       final newPath = '${file.parent.path}${Pfs.seperator}$newName';
       await context.showLoadingDialog(fn: () => file.rename(newPath));
 
-      setState(() {});
+      setStateSafe(() {});
     }
 
     context.showRoundDialog(
@@ -335,35 +323,70 @@ class _LocalFilePageState extends State<LocalFilePage> with AutomaticKeepAliveCl
             context.showSnackBar('${libL10n.fail}:\n$e');
             return;
           }
-          setState(() {});
+          setStateSafe(() {});
         },
       ).toList,
     );
   }
+}
 
-  Widget _buildMissionBtn() {
-    return IconButton(
-      icon: const Icon(Icons.downloading),
-      onPressed: () => SftpMissionPage.route.go(context),
+extension _OnTapFile on _LocalFilePageState {
+  void _onTapEdit(FileSystemEntity file, String fileName) async {
+    context.pop();
+    final stat = await file.stat();
+    if (stat.size > Miscs.editorMaxSize) {
+      context.showRoundDialog(
+        title: libL10n.attention,
+        child: Text(l10n.fileTooLarge(fileName, stat.size, '1m')),
+      );
+      return;
+    }
+
+    await EditorPage.route.go(
+      context,
+      args: EditorPageArgs(
+        path: file.absolute.path,
+        onSave: (_) {
+          context.showSnackBar(l10n.saved);
+          setStateSafe(() {});
+        },
+        closeAfterSave: SettingStore.instance.closeAfterSave.fetch(),
+        softWrap: SettingStore.instance.editorSoftWrap.fetch(),
+        enableHighlight: SettingStore.instance.editorHighlight.fetch(),
+      ),
     );
   }
 
-  Widget _buildSortBtn() {
-    return _sortType.listenVal(
-      (value) {
-        return PopupMenuButton<_SortType>(
-          icon: const Icon(Icons.sort),
-          itemBuilder: (_) => _SortType.values.map((e) => e.menuItem).toList(),
-          onSelected: (value) {
-            _sortType.value = value;
-          },
-        );
-      },
-    );
-  }
+  void _onTapUpload(FileSystemEntity file, String fileName) async {
+    context.pop();
 
-  @override
-  bool get wantKeepAlive => true;
+    final spi = await context.showPickSingleDialog<Spi>(
+      title: libL10n.select,
+      items: ServerProvider.serverOrder.value
+          .map((e) => ServerProvider.pick(id: e)?.value.spi)
+          .whereType<Spi>()
+          .toList(),
+      display: (e) => e.name,
+    );
+    if (spi == null) return;
+
+    final args = SftpPageArgs(
+      spi: spi,
+      isSelect: true,
+    );
+    final remotePath = await SftpPage.route.go(context, args);
+    if (remotePath == null) {
+      return;
+    }
+
+    SftpProvider.add(SftpReq(
+      spi,
+      '$remotePath/$fileName',
+      file.absolute.path,
+      SftpReqType.upload,
+    ));
+    context.showSnackBar(l10n.added2List);
+  }
 }
 
 enum _SortType {

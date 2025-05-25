@@ -33,10 +33,10 @@ extension _Actions on _ServerPageState {
         flip: !cardStatus.value.flip,
       );
     } else {
-      _splitViewCtrl.replace(ServerEditPage(
-        key: ValueKey(srv.spi.id),
+      ServerEditPage.route.go(
+        context,
         args: SpiRequiredArgs(srv.spi),
-      ));
+      );
     }
   }
 
@@ -100,15 +100,15 @@ extension _Operation on _ServerPageState {
 
   void _onTapEdit(Server srv) {
     if (srv.canViewDetails) {
-      _splitViewCtrl.replace(ServerDetailPage(
-        key: ValueKey(srv.spi.id),
-        args: SpiRequiredArgs(srv.spi),
-      ));
+      ServerDetailPage.route.go(
+        context,
+        SpiRequiredArgs(srv.spi),
+      );
     } else {
-      _splitViewCtrl.replace(ServerEditPage(
-        key: ValueKey(srv.spi.id),
+      ServerEditPage.route.go(
+        context,
         args: SpiRequiredArgs(srv.spi),
-      ));
+      );
     }
   }
 }

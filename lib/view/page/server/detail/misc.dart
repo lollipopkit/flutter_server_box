@@ -121,7 +121,7 @@ Widget _buildLineChart(
     lineTouchData: LineTouchData(
       touchTooltipData: LineTouchTooltipData(
         tooltipPadding: const EdgeInsets.all(5),
-        tooltipRoundedRadius: 8,
+        tooltipBorderRadius: BorderRadius.circular(8),
         getTooltipItems: (List<LineBarSpot> touchedSpots) {
           return touchedSpots.map((e) {
             return LineTooltipItem(

@@ -1,7 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:server_box/data/res/store.dart';
-import 'package:flutter_reorderable_grid_view/widgets/widgets.dart';
 
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/snippet.dart';
@@ -22,6 +20,9 @@ class SnippetListPage extends StatefulWidget {
 class _SnippetListPageState extends State<SnippetListPage> with AutomaticKeepAliveClientMixin {
   final _tag = ''.vn;
   final _splitViewCtrl = SplitViewController();
+
+  static final _desiredItemHeight = isDesktop ? 113 : 97;
+  static final _childAspectRatio = UIs.columnWidth / _desiredItemHeight;
 
   @override
   void dispose() {
@@ -87,43 +88,16 @@ class _SnippetListPageState extends State<SnippetListPage> with AutomaticKeepAli
         ? snippets
         : snippets.where((e) => e.tags?.contains(tag) ?? false).toList();
 
-    final generatedChildren = List.generate(
-      filtered.length,
-      (idx) {
-        final snippet = filtered.elementAtOrNull(idx);
-        if (snippet == null) return UIs.placeholder;
-        return Container(
-          key: ValueKey(snippet.name),
-          child: _buildSnippetItem(snippet),
-        );
-      },
-    );
-
-    return ReorderableBuilder(
-      children: generatedChildren,
-      onReorder: (ReorderedListFunction reorderedListFunction) {
-        setState(() {
-          final newFiltered = reorderedListFunction(filtered) as List<Snippet>;
-          snippets.moveByItem(
-            0,
-            0,
-            filtered: filtered,
-            onMove: (p0) {
-              Stores.setting.snippetOrder.put(newFiltered.map((e) => e.name).toList());
-            },
-          );
-          SnippetProvider.snippets.notify();
-        });
-      },
-      builder: (children) {
-        return GridView(
-          padding: const EdgeInsets.symmetric(horizontal: 9),
-          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 330,
-            childAspectRatio: 3.4,
-          ),
-          children: children,
-        );
+    return GridView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 9),
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: UIs.columnWidth,
+        childAspectRatio: _childAspectRatio,
+      ),
+      itemCount: filtered.length,
+      itemBuilder: (context, index) {
+        final snippet = filtered[index];
+        return _buildSnippetItem(snippet);
       },
     );
   }

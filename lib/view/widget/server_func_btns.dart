@@ -52,7 +52,7 @@ class ServerFuncBtns extends StatelessWidget {
     if (btns.isEmpty) return UIs.placeholder;
 
     return SizedBox(
-      height: 70,
+      height: 74,
       child: ListView.builder(
         itemCount: btns.length,
         scrollDirection: Axis.horizontal,

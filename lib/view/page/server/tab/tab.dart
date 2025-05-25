@@ -61,7 +61,6 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
 
   final _scrollController = ScrollController();
   final _autoHideCtrl = AutoHideController();
-  final _splitViewCtrl = SplitViewController();
 
   @override
   void dispose() {
@@ -168,10 +167,10 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
 
     // Calculate number of columns based on available width
     final columnsCount = math.max(1, (_media.size.width / UIs.columnWidth).floor());
-    
+
     // Calculate number of rows needed
     final rowCount = (filtered.length + columnsCount - 1) ~/ columnsCount;
-    
+
     return ListView.builder(
       controller: _scrollController,
       padding: padding,
@@ -179,27 +178,24 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
       itemBuilder: (_, rowIndex) {
         // Bottom space
         if (rowIndex == rowCount) return UIs.height77;
-        
+
         // Create a row of server cards
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: List.generate(columnsCount, (colIndex) {
-              final index = rowIndex * columnsCount + colIndex;
-              if (index >= filtered.length) return Expanded(child: Container());
-              
-              final vnode = ServerProvider.pick(id: filtered[index]);
-              if (vnode == null) return Expanded(child: UIs.placeholder);
-              
-              return Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                  child: vnode.listenVal(_buildEachServerCard),
-                ),
-              );
-            }),
-          ),
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: List.generate(columnsCount, (colIndex) {
+            final index = rowIndex * columnsCount + colIndex;
+            if (index >= filtered.length) return Expanded(child: Container());
+
+            final vnode = ServerProvider.pick(id: filtered[index]);
+            if (vnode == null) return Expanded(child: UIs.placeholder);
+
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                child: vnode.listenVal(_buildEachServerCard),
+              ),
+            );
+          }),
         );
       },
     );
@@ -307,16 +303,18 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
       )
     ];
 
-    final width = (_media.size.width - _cardPad) / children.length;
     return Padding(
       padding: const EdgeInsets.only(top: 9),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: children.map((e) {
-          if (width == 0) return e;
-          return SizedBox(width: width, child: e);
-        }).toList(),
-      ),
+      child: LayoutBuilder(builder: (_, cons) {
+        final width = (cons.maxWidth - _cardPad) / children.length;
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: children.map((e) {
+            if (width == 0) return e;
+            return SizedBox(width: width, child: e);
+          }).toList(),
+        );
+      }),
     );
   }
 
