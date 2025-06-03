@@ -4,14 +4,15 @@ publish_to: "none"
 version: 1.0.1128+1128
 
 environment:
-  sdk: ">=3.0.0"
+  sdk: ">=3.8.0"
+  flutter: ">=3.32.1"
 
 dependencies:
   flutter:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  hive_flutter: ^1.1.0
+  hive_ce_flutter: ^2.3.1
   dio: ^5.2.1
   easy_isolate: ^1.3.0
   intl: ^0.20.2
@@ -61,7 +62,7 @@ dependencies:
   fl_lib:
     git:
       url: https://github.com/lppcg/fl_lib
-      ref: v1.0.300
+      ref: v1.0.310
 
 dependency_overrides:
   # webdav_client_plus:
@@ -70,24 +71,23 @@ dependency_overrides:
   #   path: ../dartssh2
   # xterm:
   #   path: ../xterm.dart
-  fl_lib:
-    path: ../fl_lib
+  # fl_lib:
+  #   path: ../fl_lib
   # fl_build:
   #   path: ../fl_build
-  flutter_math_fork:
+  flutter_math_fork: # Refer to https://github.com/simpleclub/flutter_math/issues/110
     git:
       url: https://github.com/simpleclub/flutter_math
 
 dev_dependencies:
+  analyzer: ^7.3.0
   flutter_native_splash: ^2.1.6
-  hive_generator: ^2.0.0
+  hive_ce_generator: ^1.9.2
   build_runner: ^2.4.15
   flutter_lints: ^5.0.0
   json_serializable: ^6.8.0
   freezed: ^2.5.7
   riverpod_generator: ^2.6.3
-  custom_lint: ^0.7.0
-  riverpod_lint: ^2.6.3
   flutter_test:
     sdk: flutter
   fl_build:

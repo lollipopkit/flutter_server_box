@@ -14,44 +14,27 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
-Spi _$SpiFromJson(Map<String, dynamic> json) {
-  return _Spi.fromJson(json);
-}
-
 /// @nodoc
 mixin _$Spi {
-  @HiveField(0)
   String get name => throw _privateConstructorUsedError;
-  @HiveField(1)
   String get ip => throw _privateConstructorUsedError;
-  @HiveField(2)
   int get port => throw _privateConstructorUsedError;
-  @HiveField(3)
   String get user => throw _privateConstructorUsedError;
-  @HiveField(4)
   String? get pwd => throw _privateConstructorUsedError;
 
   /// [id] of private key
   @JsonKey(name: 'pubKeyId')
-  @HiveField(5)
   String? get keyId => throw _privateConstructorUsedError;
-  @HiveField(6)
   List<String>? get tags => throw _privateConstructorUsedError;
-  @HiveField(7)
   String? get alterUrl => throw _privateConstructorUsedError;
-  @HiveField(8, defaultValue: true)
   bool get autoConnect => throw _privateConstructorUsedError;
 
   /// [id] of the jump server
-  @HiveField(9)
   String? get jumpId => throw _privateConstructorUsedError;
-  @HiveField(10)
   ServerCustom? get custom => throw _privateConstructorUsedError;
-  @HiveField(11)
   WakeOnLanCfg? get wolCfg => throw _privateConstructorUsedError;
 
   /// It only applies to SSH terminal.
-  @HiveField(12)
   Map<String, String>? get envs => throw _privateConstructorUsedError;
   @JsonKey(fromJson: Spi.parseId)
   @HiveField(13, defaultValue: '')
@@ -72,19 +55,19 @@ abstract class $SpiCopyWith<$Res> {
       _$SpiCopyWithImpl<$Res, Spi>;
   @useResult
   $Res call(
-      {@HiveField(0) String name,
-      @HiveField(1) String ip,
-      @HiveField(2) int port,
-      @HiveField(3) String user,
-      @HiveField(4) String? pwd,
-      @JsonKey(name: 'pubKeyId') @HiveField(5) String? keyId,
-      @HiveField(6) List<String>? tags,
-      @HiveField(7) String? alterUrl,
-      @HiveField(8, defaultValue: true) bool autoConnect,
-      @HiveField(9) String? jumpId,
-      @HiveField(10) ServerCustom? custom,
-      @HiveField(11) WakeOnLanCfg? wolCfg,
-      @HiveField(12) Map<String, String>? envs,
+      {String name,
+      String ip,
+      int port,
+      String user,
+      String? pwd,
+      @JsonKey(name: 'pubKeyId') String? keyId,
+      List<String>? tags,
+      String? alterUrl,
+      bool autoConnect,
+      String? jumpId,
+      ServerCustom? custom,
+      WakeOnLanCfg? wolCfg,
+      Map<String, String>? envs,
       @JsonKey(fromJson: Spi.parseId)
       @HiveField(13, defaultValue: '')
       String id});
@@ -187,19 +170,19 @@ abstract class _$$SpiImplCopyWith<$Res> implements $SpiCopyWith<$Res> {
   @override
   @useResult
   $Res call(
-      {@HiveField(0) String name,
-      @HiveField(1) String ip,
-      @HiveField(2) int port,
-      @HiveField(3) String user,
-      @HiveField(4) String? pwd,
-      @JsonKey(name: 'pubKeyId') @HiveField(5) String? keyId,
-      @HiveField(6) List<String>? tags,
-      @HiveField(7) String? alterUrl,
-      @HiveField(8, defaultValue: true) bool autoConnect,
-      @HiveField(9) String? jumpId,
-      @HiveField(10) ServerCustom? custom,
-      @HiveField(11) WakeOnLanCfg? wolCfg,
-      @HiveField(12) Map<String, String>? envs,
+      {String name,
+      String ip,
+      int port,
+      String user,
+      String? pwd,
+      @JsonKey(name: 'pubKeyId') String? keyId,
+      List<String>? tags,
+      String? alterUrl,
+      bool autoConnect,
+      String? jumpId,
+      ServerCustom? custom,
+      WakeOnLanCfg? wolCfg,
+      Map<String, String>? envs,
       @JsonKey(fromJson: Spi.parseId)
       @HiveField(13, defaultValue: '')
       String id});
@@ -293,22 +276,22 @@ class __$$SpiImplCopyWithImpl<$Res> extends _$SpiCopyWithImpl<$Res, _$SpiImpl>
 }
 
 /// @nodoc
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class _$SpiImpl extends _Spi {
   const _$SpiImpl(
-      {@HiveField(0) required this.name,
-      @HiveField(1) required this.ip,
-      @HiveField(2) required this.port,
-      @HiveField(3) required this.user,
-      @HiveField(4) this.pwd,
-      @JsonKey(name: 'pubKeyId') @HiveField(5) this.keyId,
-      @HiveField(6) final List<String>? tags,
-      @HiveField(7) this.alterUrl,
-      @HiveField(8, defaultValue: true) this.autoConnect = true,
-      @HiveField(9) this.jumpId,
-      @HiveField(10) this.custom,
-      @HiveField(11) this.wolCfg,
-      @HiveField(12) final Map<String, String>? envs,
+      {required this.name,
+      required this.ip,
+      required this.port,
+      required this.user,
+      this.pwd,
+      @JsonKey(name: 'pubKeyId') this.keyId,
+      final List<String>? tags,
+      this.alterUrl,
+      this.autoConnect = true,
+      this.jumpId,
+      this.custom,
+      this.wolCfg,
+      final Map<String, String>? envs,
       @JsonKey(fromJson: Spi.parseId)
       @HiveField(13, defaultValue: '')
       required this.id})
@@ -316,33 +299,23 @@ class _$SpiImpl extends _Spi {
         _envs = envs,
         super._();
 
-  factory _$SpiImpl.fromJson(Map<String, dynamic> json) =>
-      _$$SpiImplFromJson(json);
-
   @override
-  @HiveField(0)
   final String name;
   @override
-  @HiveField(1)
   final String ip;
   @override
-  @HiveField(2)
   final int port;
   @override
-  @HiveField(3)
   final String user;
   @override
-  @HiveField(4)
   final String? pwd;
 
   /// [id] of private key
   @override
   @JsonKey(name: 'pubKeyId')
-  @HiveField(5)
   final String? keyId;
   final List<String>? _tags;
   @override
-  @HiveField(6)
   List<String>? get tags {
     final value = _tags;
     if (value == null) return null;
@@ -352,22 +325,17 @@ class _$SpiImpl extends _Spi {
   }
 
   @override
-  @HiveField(7)
   final String? alterUrl;
   @override
   @JsonKey()
-  @HiveField(8, defaultValue: true)
   final bool autoConnect;
 
   /// [id] of the jump server
   @override
-  @HiveField(9)
   final String? jumpId;
   @override
-  @HiveField(10)
   final ServerCustom? custom;
   @override
-  @HiveField(11)
   final WakeOnLanCfg? wolCfg;
 
   /// It only applies to SSH terminal.
@@ -375,7 +343,6 @@ class _$SpiImpl extends _Spi {
 
   /// It only applies to SSH terminal.
   @override
-  @HiveField(12)
   Map<String, String>? get envs {
     final value = _envs;
     if (value == null) return null;
@@ -449,71 +416,56 @@ class _$SpiImpl extends _Spi {
 
 abstract class _Spi extends Spi {
   const factory _Spi(
-      {@HiveField(0) required final String name,
-      @HiveField(1) required final String ip,
-      @HiveField(2) required final int port,
-      @HiveField(3) required final String user,
-      @HiveField(4) final String? pwd,
-      @JsonKey(name: 'pubKeyId') @HiveField(5) final String? keyId,
-      @HiveField(6) final List<String>? tags,
-      @HiveField(7) final String? alterUrl,
-      @HiveField(8, defaultValue: true) final bool autoConnect,
-      @HiveField(9) final String? jumpId,
-      @HiveField(10) final ServerCustom? custom,
-      @HiveField(11) final WakeOnLanCfg? wolCfg,
-      @HiveField(12) final Map<String, String>? envs,
+      {required final String name,
+      required final String ip,
+      required final int port,
+      required final String user,
+      final String? pwd,
+      @JsonKey(name: 'pubKeyId') final String? keyId,
+      final List<String>? tags,
+      final String? alterUrl,
+      final bool autoConnect,
+      final String? jumpId,
+      final ServerCustom? custom,
+      final WakeOnLanCfg? wolCfg,
+      final Map<String, String>? envs,
       @JsonKey(fromJson: Spi.parseId)
       @HiveField(13, defaultValue: '')
       required final String id}) = _$SpiImpl;
   const _Spi._() : super._();
 
-  factory _Spi.fromJson(Map<String, dynamic> json) = _$SpiImpl.fromJson;
-
   @override
-  @HiveField(0)
   String get name;
   @override
-  @HiveField(1)
   String get ip;
   @override
-  @HiveField(2)
   int get port;
   @override
-  @HiveField(3)
   String get user;
   @override
-  @HiveField(4)
   String? get pwd;
 
   /// [id] of private key
   @override
   @JsonKey(name: 'pubKeyId')
-  @HiveField(5)
   String? get keyId;
   @override
-  @HiveField(6)
   List<String>? get tags;
   @override
-  @HiveField(7)
   String? get alterUrl;
   @override
-  @HiveField(8, defaultValue: true)
   bool get autoConnect;
 
   /// [id] of the jump server
   @override
-  @HiveField(9)
   String? get jumpId;
   @override
-  @HiveField(10)
   ServerCustom? get custom;
   @override
-  @HiveField(11)
   WakeOnLanCfg? get wolCfg;
 
   /// It only applies to SSH terminal.
   @override
-  @HiveField(12)
   Map<String, String>? get envs;
   @override
   @JsonKey(fromJson: Spi.parseId)

@@ -1,17 +1,10 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server.dart';
 
-part 'net_view.g.dart';
-
-@HiveType(typeId: 5)
 enum NetViewType {
-  @HiveField(0)
   conn,
-  @HiveField(1)
   speed,
-  @HiveField(2)
   traffic;
 
   NetViewType get next => switch (this) {

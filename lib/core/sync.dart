@@ -1,7 +1,8 @@
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:server_box/data/model/app/backup.dart';
+import 'package:server_box/data/model/app/bak/backup2.dart';
+import 'package:server_box/data/model/app/bak/utils.dart';
 
 const bakSync = BakSyncer._();
 
@@ -11,12 +12,12 @@ final class BakSyncer extends SyncIface {
   const BakSyncer._() : super();
 
   @override
-  Future<void> saveToFile() => Backup.backup();
+  Future<void> saveToFile() => BackupV2.backup();
 
   @override
-  Future<Backup> fromFile(String path) async {
+  Future<Mergeable> fromFile(String path) async {
     final content = await File(path).readAsString();
-    return Backup.fromJsonString(content);
+    return MergeableUtils.fromJsonString(content).$1;
   }
 
   @override

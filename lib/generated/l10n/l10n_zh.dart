@@ -141,7 +141,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String dockerStatusRunningAndStoppedFmt(
-      Object runningCount, Object stoppedCount) {
+    Object runningCount,
+    Object stoppedCount,
+  ) {
     return '$runningCount 个正在运行, $stoppedCount 个已停止';
   }
 
@@ -858,7 +860,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String dockerStatusRunningAndStoppedFmt(
-      Object runningCount, Object stoppedCount) {
+    Object runningCount,
+    Object stoppedCount,
+  ) {
     return '$runningCount 個正在運行, $stoppedCount 個已停止';
   }
 

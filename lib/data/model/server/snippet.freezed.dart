@@ -20,17 +20,12 @@ Snippet _$SnippetFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Snippet {
-  @HiveField(0)
   String get name => throw _privateConstructorUsedError;
-  @HiveField(1)
   String get script => throw _privateConstructorUsedError;
-  @HiveField(2)
   List<String>? get tags => throw _privateConstructorUsedError;
-  @HiveField(3)
   String? get note => throw _privateConstructorUsedError;
 
   /// List of server id that this snippet should be auto run on
-  @HiveField(4)
   List<String>? get autoRunOn => throw _privateConstructorUsedError;
 
   /// Serializes this Snippet to a JSON map.
@@ -48,11 +43,11 @@ abstract class $SnippetCopyWith<$Res> {
       _$SnippetCopyWithImpl<$Res, Snippet>;
   @useResult
   $Res call(
-      {@HiveField(0) String name,
-      @HiveField(1) String script,
-      @HiveField(2) List<String>? tags,
-      @HiveField(3) String? note,
-      @HiveField(4) List<String>? autoRunOn});
+      {String name,
+      String script,
+      List<String>? tags,
+      String? note,
+      List<String>? autoRunOn});
 }
 
 /// @nodoc
@@ -109,11 +104,11 @@ abstract class _$$SnippetImplCopyWith<$Res> implements $SnippetCopyWith<$Res> {
   @override
   @useResult
   $Res call(
-      {@HiveField(0) String name,
-      @HiveField(1) String script,
-      @HiveField(2) List<String>? tags,
-      @HiveField(3) String? note,
-      @HiveField(4) List<String>? autoRunOn});
+      {String name,
+      String script,
+      List<String>? tags,
+      String? note,
+      List<String>? autoRunOn});
 }
 
 /// @nodoc
@@ -164,11 +159,11 @@ class __$$SnippetImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$SnippetImpl implements _Snippet {
   const _$SnippetImpl(
-      {@HiveField(0) required this.name,
-      @HiveField(1) required this.script,
-      @HiveField(2) final List<String>? tags,
-      @HiveField(3) this.note,
-      @HiveField(4) final List<String>? autoRunOn})
+      {required this.name,
+      required this.script,
+      final List<String>? tags,
+      this.note,
+      final List<String>? autoRunOn})
       : _tags = tags,
         _autoRunOn = autoRunOn;
 
@@ -176,14 +171,11 @@ class _$SnippetImpl implements _Snippet {
       _$$SnippetImplFromJson(json);
 
   @override
-  @HiveField(0)
   final String name;
   @override
-  @HiveField(1)
   final String script;
   final List<String>? _tags;
   @override
-  @HiveField(2)
   List<String>? get tags {
     final value = _tags;
     if (value == null) return null;
@@ -193,7 +185,6 @@ class _$SnippetImpl implements _Snippet {
   }
 
   @override
-  @HiveField(3)
   final String? note;
 
   /// List of server id that this snippet should be auto run on
@@ -201,7 +192,6 @@ class _$SnippetImpl implements _Snippet {
 
   /// List of server id that this snippet should be auto run on
   @override
-  @HiveField(4)
   List<String>? get autoRunOn {
     final value = _autoRunOn;
     if (value == null) return null;
@@ -256,30 +246,25 @@ class _$SnippetImpl implements _Snippet {
 
 abstract class _Snippet implements Snippet {
   const factory _Snippet(
-      {@HiveField(0) required final String name,
-      @HiveField(1) required final String script,
-      @HiveField(2) final List<String>? tags,
-      @HiveField(3) final String? note,
-      @HiveField(4) final List<String>? autoRunOn}) = _$SnippetImpl;
+      {required final String name,
+      required final String script,
+      final List<String>? tags,
+      final String? note,
+      final List<String>? autoRunOn}) = _$SnippetImpl;
 
   factory _Snippet.fromJson(Map<String, dynamic> json) = _$SnippetImpl.fromJson;
 
   @override
-  @HiveField(0)
   String get name;
   @override
-  @HiveField(1)
   String get script;
   @override
-  @HiveField(2)
   List<String>? get tags;
   @override
-  @HiveField(3)
   String? get note;
 
   /// List of server id that this snippet should be auto run on
   @override
-  @HiveField(4)
   List<String>? get autoRunOn;
 
   /// Create a copy of Snippet

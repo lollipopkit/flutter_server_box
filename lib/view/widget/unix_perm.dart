@@ -1,19 +1,19 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 
-final class RWX {
+final class UnixPermOp {
   final bool r;
   final bool w;
   final bool x;
 
-  const RWX({
+  const UnixPermOp({
     required this.r,
     required this.w,
     required this.x,
   });
 
-  RWX copyWith({bool? r, bool? w, bool? x}) {
-    return RWX(r: r ?? this.r, w: w ?? this.w, x: x ?? this.x);
+  UnixPermOp copyWith({bool? r, bool? w, bool? x}) {
+    return UnixPermOp(r: r ?? this.r, w: w ?? this.w, x: x ?? this.x);
   }
 
   int get value {
@@ -37,9 +37,9 @@ enum UnixPermScope {
 }
 
 final class UnixPerm {
-  final RWX user;
-  final RWX group;
-  final RWX other;
+  final UnixPermOp user;
+  final UnixPermOp group;
+  final UnixPermOp other;
 
   const UnixPerm({
     required this.user,
@@ -47,7 +47,7 @@ final class UnixPerm {
     required this.other,
   });
 
-  UnixPerm copyWith({RWX? user, RWX? group, RWX? other}) {
+  UnixPerm copyWith({UnixPermOp? user, UnixPermOp? group, UnixPermOp? other}) {
     return UnixPerm(
       user: user ?? this.user,
       group: group ?? this.group,
@@ -55,7 +55,7 @@ final class UnixPerm {
     );
   }
 
-  UnixPerm copyWithScope(UnixPermScope scope, RWX rwx) {
+  UnixPerm copyWithScope(UnixPermScope scope, UnixPermOp rwx) {
     switch (scope) {
       case UnixPermScope.user:
         return copyWith(user: rwx);
@@ -72,9 +72,9 @@ final class UnixPerm {
   }
 
   static UnixPerm get empty => const UnixPerm(
-        user: RWX(r: false, w: false, x: false),
-        group: RWX(r: false, w: false, x: false),
-        other: RWX(r: false, w: false, x: false),
+        user: UnixPermOp(r: false, w: false, x: false),
+        group: UnixPermOp(r: false, w: false, x: false),
+        other: UnixPermOp(r: false, w: false, x: false),
       );
 }
 
@@ -110,7 +110,7 @@ final class _UnixPermEditorState extends State<UnixPermEditor> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             Text('Read'),
-            Text('Write'),
+            Text('Writ'), // Keep it short to fit UI
             Text('Exec'),
           ],
         ).paddingOnly(left: 13),
@@ -122,7 +122,7 @@ final class _UnixPermEditorState extends State<UnixPermEditor> {
     );
   }
 
-  Widget _buildRow(UnixPermScope scope, RWX rwx) {
+  Widget _buildRow(UnixPermScope scope, UnixPermOp rwx) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [

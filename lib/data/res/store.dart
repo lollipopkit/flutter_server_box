@@ -28,17 +28,22 @@ abstract final class Stores {
     await Future.wait(_allBackup.map((store) => store.init()));
   }
 
-  static DateTime? get lastModTime {
-    DateTime? lastModTime;
+  static int get lastModTime {
+    var lastModTime = 0;
     for (final store in _allBackup) {
       final last = store.lastUpdateTs;
       if (last == null) {
         continue;
       }
-      if (lastModTime == null) {
-        lastModTime = last;
-      } else if (last.isAfter(lastModTime)) {
-        lastModTime = last;
+      var lastModTimeTs = 0;
+      for (final item in last.entries) {
+        final ts = item.value;
+        if (ts > lastModTimeTs) {
+          lastModTimeTs = ts;
+        }
+      }
+      if (lastModTimeTs > lastModTime) {
+        lastModTime = lastModTimeTs;
       }
     }
     return lastModTime;

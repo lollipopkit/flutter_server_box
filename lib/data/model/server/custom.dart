@@ -1,32 +1,27 @@
-import 'package:hive_flutter/adapters.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'custom.g.dart';
 
-@JsonSerializable()
-@HiveType(typeId: 7)
+@JsonSerializable(includeIfNull: false)
 final class ServerCustom {
   // @HiveField(0)
   // final String? temperature;
-  @HiveField(1)
+
   final String? pveAddr;
-  @HiveField(2, defaultValue: false)
+
   final bool pveIgnoreCert;
 
   /// {"title": "cmd"}
-  @HiveField(3)
   final Map<String, String>? cmds;
-  @HiveField(4)
+
   final String? preferTempDev;
-  @HiveField(5)
+
   final String? logoUrl;
 
   /// The device name of the network interface displayed in the home server card.
-  @HiveField(6)
   final String? netDev;
 
   /// The directory where the script is stored.
-  @HiveField(7)
   final String? scriptDir;
 
   const ServerCustom({
@@ -40,8 +35,7 @@ final class ServerCustom {
     this.scriptDir,
   });
 
-  factory ServerCustom.fromJson(Map<String, dynamic> json) =>
-      _$ServerCustomFromJson(json);
+  factory ServerCustom.fromJson(Map<String, dynamic> json) => _$ServerCustomFromJson(json);
 
   Map<String, dynamic> toJson() => _$ServerCustomToJson(this);
 

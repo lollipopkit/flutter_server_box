@@ -1,36 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/store.dart';
 
-part 'server_func.g.dart';
-
-@HiveType(typeId: 6)
 enum ServerFuncBtn {
-  @HiveField(0)
-  terminal._(),
-  @HiveField(1)
-  sftp._(),
-  @HiveField(2)
-  container._(),
-  @HiveField(3)
-  process._(),
-  //@HiveField(4)
-  //pkg,
-  @HiveField(5)
-  snippet._(),
-  @HiveField(6)
-  iperf._(),
-  // @HiveField(7)
-  // pve,
-  @HiveField(8)
-  systemd._(1058),
+  terminal(),
+  sftp(),
+  container(),
+  process(),
+  //pkg(),
+  snippet(),
+  iperf(),
+  // pve(),
+  systemd(1058),
   ;
 
   final int? addedVersion;
 
-  const ServerFuncBtn._([this.addedVersion]);
+  const ServerFuncBtn([this.addedVersion]);
 
   static void autoAddNewFuncs(int cur) {
     if (cur >= systemd.addedVersion!) {

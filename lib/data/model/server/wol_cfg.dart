@@ -1,19 +1,14 @@
 import 'dart:io';
 
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:wake_on_lan/wake_on_lan.dart';
 
 part 'wol_cfg.g.dart';
 
-@JsonSerializable()
-@HiveType(typeId: 8)
+@JsonSerializable(includeIfNull: false)
 final class WakeOnLanCfg {
-  @HiveField(0)
   final String mac;
-  @HiveField(1)
   final String ip;
-  @HiveField(2)
   final String? pwd;
 
   const WakeOnLanCfg({
@@ -26,18 +21,12 @@ final class WakeOnLanCfg {
     final macValidation = MACAddress.validate(mac);
     final ipValidation = IPAddress.validate(
       ip,
-      type: ip.contains(':')
-          ? InternetAddressType.IPv6
-          : InternetAddressType.IPv4,
+      type: ip.contains(':') ? InternetAddressType.IPv6 : InternetAddressType.IPv4,
     );
-    final pwdValidation = pwd != null
-        ? SecureONPassword.validate(pwd)
-        : (state: true, error: null);
+    final pwdValidation = pwd != null ? SecureONPassword.validate(pwd) : (state: true, error: null);
 
-    final valid =
-        macValidation.state && ipValidation.state && pwdValidation.state;
-    final err =
-        macValidation.error ?? ipValidation.error ?? pwdValidation.error;
+    final valid = macValidation.state && ipValidation.state && pwdValidation.state;
+    final err = macValidation.error ?? ipValidation.error ?? pwdValidation.error;
     return (err, valid);
   }
 
@@ -56,8 +45,7 @@ final class WakeOnLanCfg {
     );
   }
 
-  factory WakeOnLanCfg.fromJson(Map<String, dynamic> json) =>
-      _$WakeOnLanCfgFromJson(json);
+  factory WakeOnLanCfg.fromJson(Map<String, dynamic> json) => _$WakeOnLanCfgFromJson(json);
 
   Map<String, dynamic> toJson() => _$WakeOnLanCfgToJson(this);
 }

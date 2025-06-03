@@ -49,8 +49,7 @@ class ServerProvider extends Provider {
 
       /// #258
       /// If not [shouldReconnect], then keep the old state.
-      if (originServer != null &&
-          !originServer.value.spi.shouldReconnect(spi)) {
+      if (originServer != null && !originServer.value.spi.shouldReconnect(spi)) {
         newServer.conn = originServer.value.conn;
       }
       servers[spi.id] = newServer.vn;
@@ -174,12 +173,16 @@ class ServerProvider extends Provider {
 
   static void _closeOneServer(String id) {
     final s = servers[id];
-    final item = s?.value;
-    item?.client?.close();
-    item?.client = null;
-    item?.conn = ServerConn.disconnected;
+    if (s == null) {
+      Loggers.app.warning('Server with id $id not found');
+      return;
+    }
+    final item = s.value;
+    item.client?.close();
+    item.client = null;
+    item.conn = ServerConn.disconnected;
     _manualDisconnectedIds.add(id);
-    s?.notify();
+    s.notify();
   }
 
   static void addServer(Spi spi) {
