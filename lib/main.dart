@@ -6,19 +6,12 @@ import 'package:computer/computer.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
-import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
-import 'package:server_box/data/model/server/custom.dart';
-import 'package:server_box/data/model/server/private_key_info.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/model/server/snippet.dart';
-import 'package:server_box/data/model/server/wol_cfg.dart';
-import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/provider/sftp.dart';
@@ -26,6 +19,7 @@ import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/server.dart';
+import 'package:server_box/hive/hive_registrar.g.dart';
 
 Future<void> main() async {
   _runInZone(() async {
@@ -41,37 +35,24 @@ void _runInZone(void Function() body) {
     },
   );
 
-  runZonedGuarded(
-    body,
-    (e, s) => print('[ZONE] $e\n$s'),
-    zoneSpecification: zoneSpec,
-  );
+  runZonedGuarded(body, (e, s) => print('[ZONE] $e\n$s'), zoneSpecification: zoneSpec);
 }
 
 Future<void> _initApp() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Paths.init(BuildData.name, bakName: 'srvbox_bak.json');
   await _initData();
   _setupDebug();
   await _initWindow();
-  FontUtils.loadFrom(Stores.setting.fontPath.fetch());
 
   _doPlatformRelated();
 }
 
 Future<void> _initData() async {
-  await Hive.initFlutter();
+  await Paths.init(BuildData.name, bakName: 'srvbox_bak.json');
 
-  // Ordered by typeId
-  Hive.registerAdapter(PrivateKeyInfoAdapter()); // 1
-  Hive.registerAdapter(SnippetAdapter()); // 2
-  Hive.registerAdapter(SpiAdapter()); // 3
-  Hive.registerAdapter(VirtKeyAdapter()); // 4
-  Hive.registerAdapter(NetViewTypeAdapter()); // 5
-  Hive.registerAdapter(ServerFuncBtnAdapter()); // 6
-  Hive.registerAdapter(ServerCustomAdapter()); // 7
-  Hive.registerAdapter(WakeOnLanCfgAdapter()); // 8
+  await Hive.initFlutter();
+  Hive.registerAdapters();
 
   await PrefStore.shared.init(); // Call this before accessing any store
   await Stores.init();
@@ -87,13 +68,15 @@ Future<void> _initData() async {
   SftpProvider.instance.load();
 
   if (Stores.setting.betaTest.fetch()) AppUpdate.chan = AppUpdateChan.beta;
+
+  FontUtils.loadFrom(Stores.setting.fontPath.fetch());
 }
 
 void _setupDebug() {
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
     DebugProvider.addLog(record);
-    print(record);
+    lprint(record);
     if (record.error != null) print(record.error);
     if (record.stackTrace != null) print(record.stackTrace);
   });
@@ -106,8 +89,7 @@ void _doPlatformRelated() async {
   }
 
   final serversCount = Stores.server.keys().length;
-  // Plus 1 to avoid 0.
-  Computer.shared.turnOn(workersCount: (serversCount / 3).round() + 1);
+  Computer.shared.turnOn(workersCount: (serversCount / 3).round() + 1); // Plus 1 to avoid 0.
 
   bakSync.sync();
 }
@@ -135,7 +117,7 @@ Future<void> _initWindow() async {
   final hideTitleBar = Stores.setting.hideTitleBar.fetch();
   await SystemUIs.initDesktopWindow(
     hideTitleBar: hideTitleBar,
-    size: windowState?.size,
+    size: windowState?.size ?? Size(947, 487),
     position: windowState?.position,
     listener: WindowStateListener(windowStateProp),
   );

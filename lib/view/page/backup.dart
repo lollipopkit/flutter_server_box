@@ -6,7 +6,8 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/sync.dart';
-import 'package:server_box/data/model/app/backup.dart';
+import 'package:server_box/data/model/app/bak/backup2.dart';
+import 'package:server_box/data/model/app/bak/utils.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/snippet.dart';
@@ -27,14 +28,11 @@ class BackupPage extends StatefulWidget {
   );
 }
 
-final class _BackupPageState extends State<BackupPage>
-    with AutomaticKeepAliveClientMixin {
-  final icloudLoading = false.vn;
+final class _BackupPageState extends State<BackupPage> with AutomaticKeepAliveClientMixin {
   final webdavLoading = false.vn;
 
   @override
   void dispose() {
-    icloudLoading.dispose();
     webdavLoading.dispose();
     super.dispose();
   }
@@ -89,7 +87,7 @@ final class _BackupPageState extends State<BackupPage>
             title: Text(libL10n.backup),
             trailing: const Icon(Icons.save),
             onTap: () async {
-              final path = await Backup.backup();
+              final path = await BackupV2.backup();
               await Pfs.sharePaths(paths: [path]);
             },
           ),
@@ -110,19 +108,15 @@ final class _BackupPageState extends State<BackupPage>
         title: const Text('iCloud'),
         trailing: StoreSwitch(
           prop: PrefProps.icloudSync,
-          validator: (p0) {
+          validator: (p0) async {
             if (p0 && PrefProps.webdavSync.get()) {
               context.showSnackBar(l10n.autoBackupConflict);
               return false;
             }
-            return true;
-          },
-          callback: (val) async {
-            if (val) {
-              icloudLoading.value = true;
+            if (p0) {
               await bakSync.sync(rs: icloud);
-              icloudLoading.value = false;
             }
+            return true;
           },
         ),
       ),
@@ -145,7 +139,11 @@ final class _BackupPageState extends State<BackupPage>
             title: Text(libL10n.auto),
             trailing: StoreSwitch(
               prop: PrefProps.webdavSync,
-              validator: (p0) {
+              validator: (p0) async {
+                if (p0 && PrefProps.icloudSync.get()) {
+                  context.showSnackBar(l10n.autoBackupConflict);
+                  return false;
+                }
                 if (p0) {
                   final url = PrefProps.webdavUrl.get();
                   final user = PrefProps.webdavUser.get();
@@ -162,28 +160,20 @@ final class _BackupPageState extends State<BackupPage>
                     context.showSnackBar(l10n.webdavSettingEmpty);
                     return false;
                   }
-                }
-                if (PrefProps.icloudSync.get()) {
-                  context.showSnackBar(l10n.autoBackupConflict);
-                  return false;
-                }
-                return true;
-              },
-              callback: (val) async {
-                if (val) {
+
                   webdavLoading.value = true;
                   await bakSync.sync(rs: Webdav.shared);
                   webdavLoading.value = false;
                 }
+                return true;
               },
             ),
           ),
           ListTile(
             title: Text(l10n.manual),
-            trailing: ListenableBuilder(
-              listenable: webdavLoading,
-              builder: (_, __) {
-                if (webdavLoading.value) return SizedLoading.small;
+            trailing: webdavLoading.listenVal(
+              (loading) {
+                if (loading) return SizedLoading.small;
 
                 return Row(
                   mainAxisSize: MainAxisSize.min,
@@ -217,7 +207,7 @@ final class _BackupPageState extends State<BackupPage>
             title: Text(libL10n.backup),
             trailing: const Icon(Icons.save),
             onTap: () async {
-              final path = await Backup.backup();
+              final path = await BackupV2.backup();
               Pfs.copy(await File(path).readAsString());
               context.showSnackBar(libL10n.success);
             },
@@ -310,22 +300,18 @@ final class _BackupPageState extends State<BackupPage>
 
     try {
       final (backup, err) = await context.showLoadingDialog(
-        fn: () => Computer.shared.start(Backup.fromJsonString, text.trim()),
+        fn: () => Computer.shared.start(MergeableUtils.fromJsonString, text.trim()),
       );
       if (err != null || backup == null) return;
-      if (backupFormatVersion != backup.version) {
-        context.showSnackBar(l10n.backupVersionNotMatch);
-        return;
-      }
 
       await context.showRoundDialog(
         title: libL10n.restore,
         child: Text(libL10n.askContinue(
-          '${libL10n.restore} ${libL10n.backup}(${backup.date})',
+          '${libL10n.restore} ${libL10n.backup}(${backup.$2})',
         )),
         actions: Btn.ok(
           onTap: () async {
-            await backup.merge(force: true);
+            await backup.$1.merge(force: true);
             context.pop();
           },
         ).toList,
@@ -350,7 +336,7 @@ final class _BackupPageState extends State<BackupPage>
 
       await Webdav.shared.download(relativePath: fileName);
       final dlFile = await File('${Paths.doc}/$fileName').readAsString();
-      final dlBak = await Computer.shared.start(Backup.fromJsonString, dlFile);
+      final dlBak = await Computer.shared.start(BackupV2.fromJsonString, dlFile);
       await dlBak.merge(force: true);
     } catch (e, s) {
       context.showErrDialog(e, s, libL10n.restore);
@@ -365,7 +351,7 @@ final class _BackupPageState extends State<BackupPage>
     final date = DateTime.now().ymdhms(ymdSep: '-', hmsSep: '-', sep: '-');
     final bakName = '$date-${Miscs.bakFileName}';
     try {
-      await Backup.backup(bakName);
+      await BackupV2.backup(bakName);
       await Webdav.shared.upload(relativePath: bakName);
       Loggers.app.info('Upload webdav backup success');
     } catch (e, s) {
@@ -421,8 +407,7 @@ final class _BackupPageState extends State<BackupPage>
         await Webdav.test(url_, user_, pwd_);
         context.showSnackBar(libL10n.success);
 
-        Webdav.shared.client =
-            WebdavClient.basicAuth(url: url_, user: user_, pwd: pwd_);
+        Webdav.shared.client = WebdavClient.basicAuth(url: url_, user: user_, pwd: pwd_);
         PrefProps.webdavUrl.set(url_);
         PrefProps.webdavUser.set(user_);
         PrefProps.webdavPwd.set(pwd_);
@@ -441,23 +426,18 @@ final class _BackupPageState extends State<BackupPage>
 
     try {
       final (backup, err) = await context.showLoadingDialog(
-        fn: () => Computer.shared.start(Backup.fromJsonString, text.trim()),
+        fn: () => Computer.shared.start(MergeableUtils.fromJsonString, text.trim()),
       );
       if (err != null || backup == null) return;
-
-      if (backupFormatVersion != backup.version) {
-        context.showSnackBar(l10n.backupVersionNotMatch);
-        return;
-      }
 
       await context.showRoundDialog(
         title: libL10n.restore,
         child: Text(libL10n.askContinue(
-          '${libL10n.restore} ${libL10n.backup}(${backup.date})',
+          '${libL10n.restore} ${libL10n.backup}(${backup.$2})',
         )),
         actions: Btn.ok(
           onTap: () async {
-            await backup.merge(force: true);
+            await backup.$1.merge(force: true);
             context.pop();
           },
         ).toList,

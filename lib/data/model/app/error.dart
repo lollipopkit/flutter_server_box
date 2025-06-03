@@ -1,26 +1,5 @@
 import 'package:server_box/core/extension/context/locale.dart';
-
-enum ErrFrom {
-  unknown,
-  apt,
-  docker,
-  sftp,
-  ssh,
-  status,
-  icloud,
-  webdav,
-  ;
-}
-
-abstract class Err<T> {
-  final ErrFrom from;
-  final T type;
-  final String? message;
-
-  String? get solution;
-
-  Err({required this.from, required this.type, this.message});
-}
+import 'package:fl_lib/fl_lib.dart';
 
 enum SSHErrType {
   unknown,
@@ -35,7 +14,7 @@ enum SSHErrType {
 }
 
 class SSHErr extends Err<SSHErrType> {
-  SSHErr({required super.type, super.message}) : super(from: ErrFrom.ssh);
+  SSHErr({required super.type, super.message});
 
   @override
   String? get solution => switch (type) {
@@ -45,11 +24,6 @@ class SSHErr extends Err<SSHErrType> {
         SSHErrType.noPrivateKey => l10n.noPrivateKeyTip,
         _ => null,
       };
-
-  @override
-  String toString() {
-    return 'SSHErr<$type>: $message';
-  }
 }
 
 enum ContainerErrType {
@@ -65,16 +39,10 @@ enum ContainerErrType {
 }
 
 class ContainerErr extends Err<ContainerErrType> {
-  ContainerErr({required super.type, super.message})
-      : super(from: ErrFrom.docker);
+  ContainerErr({required super.type, super.message});
 
   @override
   String? get solution => null;
-
-  @override
-  String toString() {
-    return 'ContainerErr<$type>: $message';
-  }
 }
 
 enum ICloudErrType {
@@ -84,15 +52,10 @@ enum ICloudErrType {
 }
 
 class ICloudErr extends Err<ICloudErrType> {
-  ICloudErr({required super.type, super.message}) : super(from: ErrFrom.icloud);
+  ICloudErr({required super.type, super.message});
 
   @override
   String? get solution => null;
-
-  @override
-  String toString() {
-    return 'ICloudErr<$type>: $message';
-  }
 }
 
 enum WebdavErrType {
@@ -102,15 +65,10 @@ enum WebdavErrType {
 }
 
 class WebdavErr extends Err<WebdavErrType> {
-  WebdavErr({required super.type, super.message}) : super(from: ErrFrom.webdav);
+  WebdavErr({required super.type, super.message});
 
   @override
   String? get solution => null;
-
-  @override
-  String toString() {
-    return 'WebdavErr<$type>: $message';
-  }
 }
 
 enum PveErrType {
@@ -121,13 +79,8 @@ enum PveErrType {
 }
 
 class PveErr extends Err<PveErrType> {
-  PveErr({required super.type, super.message}) : super(from: ErrFrom.status);
+  PveErr({required super.type, super.message});
 
   @override
   String? get solution => null;
-
-  @override
-  String toString() {
-    return 'PveErr<$type>: $message';
-  }
 }

@@ -13,12 +13,6 @@ class SettingStore extends HiveStore {
 
   static final instance = SettingStore._();
 
-  // ------BEGIN------
-  //
-  // These settings are not displayed in the settings page
-  // You can edit them in the settings json editor (by long press the settings
-  // item in the drawer of the home page)
-
   /// Discussion #146
   late final serverTabUseOldUI = propertyDefault('serverTabUseOldUI', false);
 
@@ -36,8 +30,6 @@ class SettingStore extends HiveStore {
     'serverTabPreferDiskAmount',
     false,
   );
-
-  // ------END------
 
   /// Bigger for bigger font size
   /// 1.0 means 100%
@@ -65,14 +57,14 @@ class SettingStore extends HiveStore {
   late final bgRun = propertyDefault('bgRun', isAndroid);
 
   // Server order
-  late final serverOrder = propertyDefault<List<String>>('serverOrder', []);
+  late final serverOrder = listProperty<String>('serverOrder');
 
-  late final snippetOrder = propertyDefault<List<String>>('snippetOrder', []);
+  late final snippetOrder = listProperty<String>('snippetOrder');
 
   // Server details page cards order
-  late final detailCardOrder = propertyDefault(
+  late final detailCardOrder = listProperty(
     'detailCardOrder',
-    ServerDetailCards.values.map((e) => e.name).toList(),
+    defaultValue: ServerDetailCards.values.map((e) => e.name).toList(),
   );
 
   // SSH term font size
@@ -82,16 +74,14 @@ class SettingStore extends HiveStore {
   late final locale = propertyDefault('locale', '');
 
   // SSH virtual key (ctrl | alt) auto turn off
-  late final sshVirtualKeyAutoOff =
-      propertyDefault('sshVirtualKeyAutoOff', true);
+  late final sshVirtualKeyAutoOff = propertyDefault('sshVirtualKeyAutoOff', true);
 
   late final editorFontSize = propertyDefault('editorFontSize', 12.5);
 
   // Editor theme
   late final editorTheme = propertyDefault('editorTheme', Defaults.editorTheme);
 
-  late final editorDarkTheme =
-      propertyDefault('editorDarkTheme', Defaults.editorDarkTheme);
+  late final editorDarkTheme = propertyDefault('editorDarkTheme', Defaults.editorDarkTheme);
 
   late final fullScreen = propertyDefault('fullScreen', false);
 
@@ -107,31 +97,34 @@ class SettingStore extends HiveStore {
   //   TextInputType.text.index,
   // );
 
-  late final sshVirtKeys = propertyDefault(
+  late final sshVirtKeys = listProperty<int>(
     'sshVirtKeys',
-    VirtKeyX.defaultOrder.map((e) => e.index).toList(),
+    defaultValue: VirtKeyX.defaultOrder.map((e) => e.index).toList(),
+    fromObj: (val) => List<int>.from(val as List),
   );
 
-  late final netViewType = propertyDefault('netViewType', NetViewType.speed);
+  late final netViewType = propertyDefault(
+    'netViewType',
+    NetViewType.speed,
+    fromObj: (val) => NetViewType.values.firstWhereOrNull((e) => e.name == val),
+    toObj: (type) => type?.name,
+  );
 
   // Only valid on iOS
-  late final autoUpdateHomeWidget =
-      propertyDefault('autoUpdateHomeWidget', isIOS);
+  late final autoUpdateHomeWidget = propertyDefault('autoUpdateHomeWidget', isIOS);
 
   late final autoCheckAppUpdate = propertyDefault('autoCheckAppUpdate', true);
 
   /// Display server tab function buttons on the bottom of each server card if [true]
   ///
   /// Otherwise, display them on the top of server detail page
-  late final moveServerFuncs =
-      propertyDefault('moveOutServerTabFuncBtns', false);
+  late final moveServerFuncs = propertyDefault('moveOutServerTabFuncBtns', false);
 
   /// Whether use `rm -r` to delete directory on SFTP
   late final sftpRmrDir = propertyDefault('sftpRmrDir', false);
 
   /// Whether use system's primary color as the app's primary color
-  late final useSystemPrimaryColor =
-      propertyDefault('useSystemPrimaryColor', false);
+  late final useSystemPrimaryColor = propertyDefault('useSystemPrimaryColor', false);
 
   /// Only valid on iOS / Android / Windows
   late final useBioAuth = propertyDefault('useBioAuth', false);
@@ -143,8 +136,7 @@ class SettingStore extends HiveStore {
   late final sftpOpenLastPath = propertyDefault('sftpOpenLastPath', true);
 
   /// Show folders first in SFTP file browser
-  late final sftpShowFoldersFirst =
-      propertyDefault('sftpShowFoldersFirst', true);
+  late final sftpShowFoldersFirst = propertyDefault('sftpShowFoldersFirst', true);
 
   /// Show tip of suspend
   late final showSuspendTip = propertyDefault('showSuspendTip', true);
@@ -152,9 +144,9 @@ class SettingStore extends HiveStore {
   /// Whether collapse UI items by default
   late final collapseUIDefault = propertyDefault('collapseUIDefault', true);
 
-  late final serverFuncBtns = propertyDefault(
+  late final serverFuncBtns = listProperty(
     'serverBtns',
-    ServerFuncBtn.defaultIdxs,
+    defaultValue: ServerFuncBtn.defaultIdxs,
   );
 
   /// Docker is more popular than podman, set to `false` to use docker
@@ -170,8 +162,7 @@ class SettingStore extends HiveStore {
   late final containerParseStat = propertyDefault('containerParseStat', true);
 
   /// Auto refresh container status
-  late final contaienrAutoRefresh =
-      propertyDefault('contaienrAutoRefresh', true);
+  late final contaienrAutoRefresh = propertyDefault('contaienrAutoRefresh', true);
 
   /// Use double column servers page on Desktop
   late final doubleColumnServersPage = propertyDefault(
@@ -229,9 +220,8 @@ class SettingStore extends HiveStore {
   /// Record the position and size of the window.
   late final windowState = property<WindowState>(
     'windowState',
-    fromStr: (jsonStr) =>
-        WindowState.fromJson(jsonDecode(jsonStr) as Map<String, dynamic>),
-    toStr: (state) => state == null ? null : jsonEncode(state.toJson()),
+    fromObj: (raw) => WindowState.fromJson(jsonDecode(raw as String) as Map<String, dynamic>),
+    toObj: (state) => state == null ? null : jsonEncode(state.toJson()),
   );
 
   late final introVer = propertyDefault('introVer', 0);
@@ -248,15 +238,9 @@ class SettingStore extends HiveStore {
   /// Close the editor after saving
   late final closeAfterSave = propertyDefault('closeAfterSave', false);
 
-  // Never show these settings for users
-  //
-  // ------BEGIN------
-
   /// Version of store db
   late final storeVersion = propertyDefault('storeVersion', 0);
 
   /// Have notified user for notificaiton permission or not
   late final noNotiPerm = propertyDefault('noNotiPerm', false);
-
-  // ------END------
 }

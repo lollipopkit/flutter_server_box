@@ -1,5 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
 
 /// index from 0 -> n : latest -> oldest
 class _ListHistory {

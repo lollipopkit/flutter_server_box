@@ -46,7 +46,7 @@ class Backup implements Mergeable {
   Map<String, dynamic> toJson() => _$BackupToJson(this);
 
   static Future<Backup> loadFromStore() async {
-    final lastModTime = Stores.lastModTime?.millisecondsSinceEpoch;
+    final lastModTime = Stores.lastModTime;
     return Backup(
       version: backupFormatVersion,
       date: DateTime.now().toString().split('.').firstOrNull ?? '',
@@ -70,7 +70,7 @@ class Backup implements Mergeable {
 
   @override
   Future<void> merge({bool force = false}) async {
-    final curTime = Stores.lastModTime?.millisecondsSinceEpoch ?? 0;
+    final curTime = Stores.lastModTime;
     final bakTime = lastModTime ?? 0;
     final shouldRestore = force || curTime < bakTime;
     if (!shouldRestore) {
@@ -234,3 +234,4 @@ String _diyDecrypt(String raw) {
     rethrow;
   }
 }
+

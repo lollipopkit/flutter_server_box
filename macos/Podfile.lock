@@ -27,7 +27,7 @@ PODS:
     - FlutterMacOS
   - wakelock_plus (0.0.1):
     - FlutterMacOS
-  - window_manager (0.2.0):
+  - window_manager (0.5.0):
     - FlutterMacOS
 
 DEPENDENCIES:
@@ -90,7 +90,7 @@ SPEC CHECKSUMS:
   shared_preferences_foundation: 9e1978ff2562383bd5676f64ec4e9aa8fa06a6f7
   url_launcher_macos: 0fba8ddabfc33ce0a9afe7c5fef5aab3d8d2d673
   wakelock_plus: 21ddc249ac4b8d018838dbdabd65c5976c308497
-  window_manager: 1d01fa7ac65a6e6f83b965471b1a7fdd3f06166c
+  window_manager: b729e31d38fb04905235df9ea896128991cad99e
 
 PODFILE CHECKSUM: 8cdf29216ea1ab6b9743188287968d22b4579c1d
 

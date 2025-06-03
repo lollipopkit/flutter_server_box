@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:xterm/core.dart';
 
@@ -10,20 +9,19 @@ part 'snippet.g.dart';
 part 'snippet.freezed.dart';
 
 @freezed
-@HiveType(typeId: 2)
 class Snippet with _$Snippet {
   const factory Snippet({
-    @HiveField(0) required String name,
-    @HiveField(1) required String script,
-    @HiveField(2) List<String>? tags,
-    @HiveField(3) String? note,
-    
+    required String name,
+    required String script,
+    List<String>? tags,
+    String? note,
+
     /// List of server id that this snippet should be auto run on
-    @HiveField(4) List<String>? autoRunOn,
+    List<String>? autoRunOn,
   }) = _Snippet;
 
   factory Snippet.fromJson(Map<String, dynamic> json) => _$SnippetFromJson(json);
-  
+
   static const example = Snippet(
     name: 'example',
     script: 'echo hello',
@@ -59,7 +57,7 @@ extension SnippetX on Snippet {
 
     /// There is no [TerminalKey] in the script
     if (matches.isEmpty) {
-      terminal.textInput(argsFmted);  
+      terminal.textInput(argsFmted);
       if (autoEnter) terminal.keyInput(TerminalKey.enter);
       return;
     }

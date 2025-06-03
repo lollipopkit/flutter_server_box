@@ -17,8 +17,25 @@ class ServerStore extends HiveStore {
   List<Spi> fetch() {
     final List<Spi> ss = [];
     for (final id in keys()) {
-      final s = box.get(id);
-      if (s != null && s is Spi) {
+      final s = get<Spi>(
+        id,
+        fromObj: (val) {
+          if (val is Spi) return val;
+          if (val is Map<dynamic, dynamic>) {
+            final map = val.toStrDynMap;
+            if (map == null) return null;
+            try {
+              final spi = Spi.fromJson(map as Map<String, dynamic>);
+              put(spi);
+              return spi;
+            } catch (e) {
+              dprint('Parsing Spi from JSON', e);
+            }
+          }
+          return null;
+        },
+      );
+      if (s != null) {
         ss.add(s);
       }
     }
@@ -42,7 +59,7 @@ class ServerStore extends HiveStore {
   void migrateIds() {
     final ss = fetch();
     final idMap = <String, String>{};
-    
+
     // Collect all old to new ID mappings
     for (final s in ss) {
       final newId = s.migrateId();
@@ -61,7 +78,7 @@ class ServerStore extends HiveStore {
     for (final e in idMap.entries) {
       final oldId = e.key;
       final newId = e.value;
-      
+
       // Replace ids in ordering settings.
       final srvIdx = srvOrder.indexOf(oldId);
       if (srvIdx != -1) {

@@ -28,9 +28,7 @@ extension on _ServerPageState {
   Widget _buildLandscapeBody() {
     return ServerProvider.serverOrder.listenVal((order) {
       if (order.isEmpty) {
-        return Center(
-          child: Text(libL10n.empty, textAlign: TextAlign.center),
-        );
+        return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
       }
 
       return PageView.builder(
@@ -42,24 +40,18 @@ extension on _ServerPageState {
 
           return srv.listenVal((srv) {
             final title = _buildServerCardTitle(srv);
-            final List<Widget> children = [
-              title,
-              _buildNormalCard(srv.status, srv.spi),
-            ];
+            final List<Widget> children = [title, _buildNormalCard(srv.status, srv.spi)];
 
-            return Padding(
-              padding: _media.padding,
-              child: ListenableBuilder(
-                listenable: _getCardNoti(id),
-                builder: (_, __) {
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: children,
-                  );
-                },
-              ),
+            return ListenableBuilder(
+              listenable: _getCardNoti(id),
+              builder: (_, __) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: children,
+                );
+              },
             );
           });
         },

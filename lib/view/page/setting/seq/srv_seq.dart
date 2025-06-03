@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -35,17 +36,13 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
         final double scale = lerpDouble(1, 1.02, animValue)!;
         return Transform.scale(
           scale: scale,
-          // Create a Card based on the color and the content of the dragged one
-          // and set its elevation to the animated value.
           child: Card(
             elevation: elevation,
-            // color: cards[index].color,
-            // child: cards[index].child,
-            child: _buildCardTile(index),
+            child: child,
           ),
         );
       },
-      // child: child,
+      child: _buildCardTile(index),
     );
   }
 
@@ -57,28 +54,34 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
       }
       return ReorderableListView.builder(
         footer: const SizedBox(height: 77),
-        onReorder: (oldIndex, newIndex) => setState(() {
-          orders.value.move(
-            oldIndex,
-            newIndex,
-            property: Stores.setting.serverOrder,
-          );
-          orders.notify();
-        }),
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        onReorder: (oldIndex, newIndex) {
+          setState(() {
+            orders.value.move(
+              oldIndex,
+              newIndex,
+              property: Stores.setting.serverOrder,
+            );
+          });
+        },
+        padding: const EdgeInsets.all(8),
         buildDefaultDragHandles: false,
-        itemBuilder: (_, idx) => _buildItem(idx),
+        itemBuilder: (_, idx) => _buildItem(idx, order[idx]),
         itemCount: order.length,
         proxyDecorator: _proxyDecorator,
       );
     });
   }
 
-  Widget _buildItem(int index) {
+  Widget _buildItem(int index, String id) {
     return ReorderableDelayedDragStartListener(
-      key: ValueKey('$index'),
+      key: ValueKey('server_item_$id'),
       index: index,
-      child: CardX(child: _buildCardTile(index)),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: CardX(
+          child: _buildCardTile(index),
+        ),
+      ),
     );
   }
 
@@ -90,9 +93,14 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
     }
 
     return ListTile(
-      title: Text(spi.name),
-      subtitle: Text(spi.id, style: UIs.textGrey),
+      title: Text(
+        spi.name,
+        style: const TextStyle(fontWeight: FontWeight.w500),
+      ),
+      subtitle: Text(spi.oldId, style: UIs.textGrey),
       leading: CircleAvatar(
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
         child: Text(spi.name[0]),
       ),
       trailing: ReorderableDragStartListener(

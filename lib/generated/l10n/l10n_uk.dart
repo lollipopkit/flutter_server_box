@@ -149,7 +149,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String dockerStatusRunningAndStoppedFmt(
-      Object runningCount, Object stoppedCount) {
+    Object runningCount,
+    Object stoppedCount,
+  ) {
     return '$runningCount запущено, $stoppedCount контейнерів зупинено.';
   }
 

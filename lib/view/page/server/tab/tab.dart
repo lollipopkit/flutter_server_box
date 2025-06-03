@@ -37,18 +37,13 @@ class ServerPage extends StatefulWidget {
   @override
   State<ServerPage> createState() => _ServerPageState();
 
-  static const route = AppRouteNoArg(
-    page: ServerPage.new,
-    path: '/servers',
-  );
+  static const route = AppRouteNoArg(page: ServerPage.new, path: '/servers');
 }
 
 const _cardPad = 74.0;
 const _cardPadSingle = 13.0;
 
 class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
-  late MediaQueryData _media;
-
   late double _textFactorDouble;
   double _offset = 1;
   late TextScaler _textFactor;
@@ -80,7 +75,6 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _media = MediaQuery.of(context);
     _updateOffset();
     _updateTextScaler();
   }
@@ -88,24 +82,22 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return OrientationBuilder(builder: (_, orientation) {
-      if (orientation == Orientation.landscape) {
-        final useFullScreen = Stores.setting.fullScreen.fetch();
-        // Only enter landscape mode when the screen is wide enough and the
-        // full screen mode is enabled.
-        if (useFullScreen) return _buildLandscape();
-      }
-      return _buildPortrait();
-    });
+    return OrientationBuilder(
+      builder: (_, orientation) {
+        if (orientation == Orientation.landscape) {
+          final useFullScreen = Stores.setting.fullScreen.fetch();
+          // Only enter landscape mode when the screen is wide enough and the
+          // full screen mode is enabled.
+          if (useFullScreen) return _buildLandscape();
+        }
+        return _buildPortrait();
+      },
+    );
   }
 
   Widget _buildScaffold(Widget child) {
     return Scaffold(
-      appBar: _TopBar(
-        tags: ServerProvider.tags,
-        onTagChanged: (p0) => _tag.value = p0,
-        initTag: _tag.value,
-      ),
+      appBar: _TopBar(tags: ServerProvider.tags, onTagChanged: (p0) => _tag.value = p0, initTag: _tag.value),
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => _autoHideCtrl.show(),
@@ -134,27 +126,23 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
 
   Widget _buildPortrait() {
     // final isMobile = ResponsiveBreakpoints.of(context).isMobile;
-    return ServerProvider.serverOrder.listenVal(
-      (order) {
-        return _tag.listenVal(
-          (val) {
-            final filtered = _filterServers(order);
-            final child = _buildScaffold(_buildBodySmall(filtered: filtered));
-            // if (isMobile) {
-            return child;
-            // }
+    return ServerProvider.serverOrder.listenVal((order) {
+      return _tag.listenVal((val) {
+        final filtered = _filterServers(order);
+        final child = _buildScaffold(_buildBodySmall(filtered: filtered));
+        // if (isMobile) {
+        return child;
+        // }
 
-            // return SplitView(
-            //   controller: _splitViewCtrl,
-            //   leftWeight: 1,
-            //   rightWeight: 1.3,
-            //   initialRight: Center(child: CircularProgressIndicator()),
-            //   leftBuilder: (_, __) => child,
-            // );
-          },
-        );
-      },
-    );
+        // return SplitView(
+        //   controller: _splitViewCtrl,
+        //   leftWeight: 1,
+        //   rightWeight: 1.3,
+        //   initialRight: Center(child: CircularProgressIndicator()),
+        //   leftBuilder: (_, __) => child,
+        // );
+      });
+    });
   }
 
   Widget _buildBodySmall({
@@ -165,34 +153,38 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
       return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
     }
 
-    // Calculate number of columns based on available width
-    final columnsCount = math.max(1, (_media.size.width / UIs.columnWidth).floor());
+    return LayoutBuilder(
+      builder: (_, cons) {
+        // Calculate number of columns based on available width
+        final columnsCount = math.max(1, (cons.maxWidth / UIs.columnWidth).floor());
 
-    // Calculate number of rows needed
-    final rowCount = (filtered.length + columnsCount - 1) ~/ columnsCount;
-
-    return ListView.builder(
-      controller: _scrollController,
-      padding: padding,
-      itemCount: rowCount + 1, // +1 for the bottom space
-      itemBuilder: (_, rowIndex) {
-        // Bottom space
-        if (rowIndex == rowCount) return UIs.height77;
-
-        // Create a row of server cards
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: List.generate(columnsCount, (colIndex) {
-            final index = rowIndex * columnsCount + colIndex;
-            if (index >= filtered.length) return Expanded(child: Container());
-
-            final vnode = ServerProvider.pick(id: filtered[index]);
-            if (vnode == null) return Expanded(child: UIs.placeholder);
+            // Calculate which servers belong in this column
+            final serversInThisColumn = <String>[];
+            for (int i = colIndex; i < filtered.length; i += columnsCount) {
+              serversInThisColumn.add(filtered[i]);
+            }
+            final lens = serversInThisColumn.length;
 
             return Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                child: vnode.listenVal(_buildEachServerCard),
+              child: ListView.builder(
+                controller: colIndex == 0 ? _scrollController : null,
+                padding: padding,
+                itemCount: lens + 1, // Add 1 for bottom spacing
+                itemBuilder: (context, index) {
+                  // Last item is just spacing
+                  if (index == lens) return SizedBox(height: 77);
+
+                  final vnode = ServerProvider.pick(id: serversInThisColumn[index]);
+                  if (vnode == null) return UIs.placeholder;
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 0),
+                    child: vnode.listenVal(_buildEachServerCard),
+                  );
+                },
               ),
             );
           }),
@@ -227,13 +219,12 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
   /// The child's width mat not equal to 1/4 of the screen width,
   /// so we need to wrap it with a SizedBox.
   Widget _wrapWithSizedbox(Widget child, double maxWidth, [bool circle = false]) {
-    return LayoutBuilder(builder: (_, cons) {
-      final width = (maxWidth - _cardPad) / 4;
-      return SizedBox(
-        width: width,
-        child: child,
-      );
-    });
+    return LayoutBuilder(
+      builder: (_, cons) {
+        final width = (maxWidth - _cardPad) / 4;
+        return SizedBox(width: width, child: child);
+      },
+    );
   }
 
   Widget _buildRealServerCard(Server srv) {
@@ -300,55 +291,52 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
         icon: const Icon(Icons.edit, color: color),
         text: libL10n.edit,
         textStyle: textStyle,
-      )
+      ),
     ];
 
     return Padding(
       padding: const EdgeInsets.only(top: 9),
-      child: LayoutBuilder(builder: (_, cons) {
-        final width = (cons.maxWidth - _cardPad) / children.length;
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: children.map((e) {
-            if (width == 0) return e;
-            return SizedBox(width: width, child: e);
-          }).toList(),
-        );
-      }),
+      child: LayoutBuilder(
+        builder: (_, cons) {
+          final width = (cons.maxWidth - _cardPad) / children.length;
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: children.map((e) {
+              if (width == 0) return e;
+              return SizedBox(width: width, child: e);
+            }).toList(),
+          );
+        },
+      ),
     );
   }
 
   Widget _buildNormalCard(ServerStatus ss, Spi spi) {
-    return LayoutBuilder(builder: (_, cons) {
-      final maxWidth = cons.maxWidth;
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          UIs.height13,
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _wrapWithSizedbox(PercentCircle(percent: ss.cpu.usedPercent()), maxWidth, true),
-              _wrapWithSizedbox(
-                PercentCircle(percent: ss.mem.usedPercent * 100),
-                maxWidth,
-                true,
-              ),
-              _wrapWithSizedbox(_buildNet(ss, spi.id), maxWidth),
-              _wrapWithSizedbox(_buildDisk(ss, spi.id), maxWidth),
-            ],
-          ),
-          UIs.height13,
-          if (Stores.setting.moveServerFuncs.fetch() &&
-              // Discussion #146
-              !Stores.setting.serverTabUseOldUI.fetch())
-            SizedBox(
-              height: 27,
-              child: ServerFuncBtns(spi: spi),
+    return LayoutBuilder(
+      builder: (_, cons) {
+        final maxWidth = cons.maxWidth;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            UIs.height13,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _wrapWithSizedbox(PercentCircle(percent: ss.cpu.usedPercent()), maxWidth, true),
+                _wrapWithSizedbox(PercentCircle(percent: ss.mem.usedPercent * 100), maxWidth, true),
+                _wrapWithSizedbox(_buildNet(ss, spi.id), maxWidth),
+                _wrapWithSizedbox(_buildDisk(ss, spi.id), maxWidth),
+              ],
             ),
-        ],
-      );
-    });
+            UIs.height13,
+            if (Stores.setting.moveServerFuncs.fetch() &&
+                // Discussion #146
+                !Stores.setting.serverTabUseOldUI.fetch())
+              SizedBox(height: 27, child: ServerFuncBtns(spi: spi)),
+          ],
+        );
+      },
+    );
   }
 
   @override

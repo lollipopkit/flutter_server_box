@@ -1,5 +1,5 @@
 import 'package:dartssh2/dartssh2.dart';
-import 'package:server_box/data/model/app/error.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
 import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/conn.dart';

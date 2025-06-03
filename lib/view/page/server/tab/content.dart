@@ -7,29 +7,27 @@ extension on _ServerPageState {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: _media.size.width / 2.3),
-            child: Hero(
-              tag: 'home_card_title_${s.spi.id}',
-              transitionOnUserGestures: true,
-              child: Material(
-                color: Colors.transparent,
-                child: Text(
-                  s.spi.name,
-                  style: UIs.text13Bold.copyWith(
-                    color: context.isDark ? Colors.white : Colors.black,
+          LayoutBuilder(
+            builder: (_, cons) {
+              return ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: cons.maxWidth / 2.3),
+                child: Hero(
+                  tag: 'home_card_title_${s.spi.id}',
+                  transitionOnUserGestures: true,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Text(
+                      s.spi.name,
+                      style: UIs.text13Bold.copyWith(color: context.isDark ? Colors.white : Colors.black),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ),
+              );
+            },
           ),
-          const Icon(
-            Icons.keyboard_arrow_right,
-            size: 17,
-            color: Colors.grey,
-          ),
+          const Icon(Icons.keyboard_arrow_right, size: 17, color: Colors.grey),
           const Spacer(),
           _buildTopRightText(s),
           _buildTopRightWidget(s),
@@ -41,31 +39,31 @@ extension on _ServerPageState {
   Widget _buildTopRightWidget(Server s) {
     final (child, onTap) = switch (s.conn) {
       ServerConn.connecting || ServerConn.loading || ServerConn.connected => (
-          SizedBox(
-            width: 19,
-            height: 19,
-            child: CircularProgressIndicator(
-              strokeWidth: 3,
-              valueColor: AlwaysStoppedAnimation(UIs.primaryColor),
-            ),
+        SizedBox(
+          width: 19,
+          height: 19,
+          child: CircularProgressIndicator(
+            strokeWidth: 3,
+            valueColor: AlwaysStoppedAnimation(UIs.primaryColor),
           ),
-          null,
         ),
+        null,
+      ),
       ServerConn.failed => (
-          const Icon(Icons.refresh, size: 21, color: Colors.grey),
-          () {
-            TryLimiter.reset(s.spi.id);
-            ServerProvider.refresh(spi: s.spi);
-          },
-        ),
+        const Icon(Icons.refresh, size: 21, color: Colors.grey),
+        () {
+          TryLimiter.reset(s.spi.id);
+          ServerProvider.refresh(spi: s.spi);
+        },
+      ),
       ServerConn.disconnected => (
-          const Icon(MingCute.link_3_line, size: 19, color: Colors.grey),
-          () => ServerProvider.refresh(spi: s.spi)
-        ),
+        const Icon(MingCute.link_3_line, size: 19, color: Colors.grey),
+        () => ServerProvider.refresh(spi: s.spi),
+      ),
       ServerConn.finished => (
-          const Icon(MingCute.unlink_2_line, size: 17, color: Colors.grey),
-          () => ServerProvider.closeServer(id: s.spi.id),
-        ),
+        const Icon(MingCute.unlink_2_line, size: 17, color: Colors.grey),
+        () => ServerProvider.closeServer(id: s.spi.id),
+      ),
     };
 
     // Or the loading icon will be rescaled.
@@ -73,11 +71,7 @@ extension on _ServerPageState {
         ? child
         : SizedBox(height: _ServerPageState._kCardHeightMin, width: 27, child: child);
     if (onTap == null) return wrapped.paddingOnly(left: 10);
-    return InkWell(
-      borderRadius: BorderRadius.circular(7),
-      onTap: onTap,
-      child: wrapped,
-    ).paddingOnly(left: 5);
+    return InkWell(borderRadius: BorderRadius.circular(7), onTap: onTap, child: wrapped).paddingOnly(left: 5);
   }
 
   Widget _buildTopRightText(Server s) {
@@ -94,7 +88,8 @@ extension on _ServerPageState {
   }
 
   void _showFailReason(ServerStatus ss) {
-    final md = '''
+    final md =
+        '''
 ${ss.err?.solution ?? l10n.unknown}
 
 ```sh
@@ -103,12 +98,7 @@ ${ss.err?.message ?? 'null'}
     context.showRoundDialog(
       title: libL10n.error,
       child: SingleChildScrollView(child: SimpleMarkdown(data: md)),
-      actions: [
-        TextButton(
-          onPressed: () => Pfs.copy(md),
-          child: Text(libL10n.copy),
-        )
-      ],
+      actions: [TextButton(onPressed: () => Pfs.copy(md), child: Text(libL10n.copy))],
     );
   }
 
@@ -156,13 +146,7 @@ ${ss.err?.message ?? 'null'}
     );
   }
 
-  Widget _buildIOData(
-    String up,
-    String down, {
-    void Function()? onTap,
-    Key? key,
-    int maxLines = 2
-  }) {
+  Widget _buildIOData(String up, String down, {void Function()? onTap, Key? key, int maxLines = 2}) {
     final child = Column(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -181,7 +165,7 @@ ${ss.err?.message ?? 'null'}
           textAlign: TextAlign.center,
           textScaler: _textFactor,
           maxLines: maxLines,
-        )
+        ),
       ],
     );
     if (onTap == null) return child;

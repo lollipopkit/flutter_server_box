@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
@@ -20,31 +20,31 @@ part 'server_private_info.freezed.dart';
 /// Some params named as `spi` in the codebase which is the abbreviation of `ServerPrivateInfo`.
 ///
 /// Nowaday, more fields are added to this class, and it's renamed to `Spi`.
-@freezed
-@HiveType(typeId: 3)
+@Freezed(fromJson: false)
+@JsonSerializable(includeIfNull: false)
 class Spi with _$Spi {
   const Spi._();
 
   const factory Spi({
-    @HiveField(0) required String name,
-    @HiveField(1) required String ip,
-    @HiveField(2) required int port,
-    @HiveField(3) required String user,
-    @HiveField(4) String? pwd,
+    required String name,
+    required String ip,
+    required int port,
+    required String user,
+    String? pwd,
 
     /// [id] of private key
-    @JsonKey(name: 'pubKeyId') @HiveField(5) String? keyId,
-    @HiveField(6) List<String>? tags,
-    @HiveField(7) String? alterUrl,
-    @HiveField(8, defaultValue: true) @Default(true) bool autoConnect,
+    @JsonKey(name: 'pubKeyId') String? keyId,
+    List<String>? tags,
+    String? alterUrl,
+    @Default(true) @JsonKey(defaultValue: true) bool autoConnect,
 
     /// [id] of the jump server
-    @HiveField(9) String? jumpId,
-    @HiveField(10) ServerCustom? custom,
-    @HiveField(11) WakeOnLanCfg? wolCfg,
+    String? jumpId,
+    ServerCustom? custom,
+    WakeOnLanCfg? wolCfg,
 
     /// It only applies to SSH terminal.
-    @HiveField(12) Map<String, String>? envs,
+    Map<String, String>? envs,
     @JsonKey(fromJson: Spi.parseId) @HiveField(13, defaultValue: '') required String id,
   }) = _Spi;
 
