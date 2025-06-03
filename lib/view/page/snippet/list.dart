@@ -21,8 +21,7 @@ class _SnippetListPageState extends State<SnippetListPage> with AutomaticKeepAli
   final _tag = ''.vn;
   final _splitViewCtrl = SplitViewController();
 
-  static final _desiredItemHeight = isDesktop ? 113 : 97;
-  static final _childAspectRatio = UIs.columnWidth / _desiredItemHeight;
+  static const _desiredItemHeight = 77.0;
 
   @override
   void dispose() {
@@ -92,7 +91,7 @@ class _SnippetListPageState extends State<SnippetListPage> with AutomaticKeepAli
       padding: const EdgeInsets.symmetric(horizontal: 9),
       gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: UIs.columnWidth,
-        childAspectRatio: _childAspectRatio,
+        mainAxisExtent: _desiredItemHeight,
       ),
       itemCount: filtered.length,
       itemBuilder: (context, index) {

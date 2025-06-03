@@ -26,9 +26,10 @@ extension on _ServerPageState {
 
   Widget _buildTopRightWidget(Server s) {
     final (child, onTap) = switch (s.conn) {
-      ServerConn.connecting ||
-      ServerConn.loading ||
-      ServerConn.connected => (SizedLoading(23, strokeWidth: 3, padding: 5), null),
+      ServerConn.connecting || ServerConn.loading || ServerConn.connected => (
+        SizedLoading(_ServerPageState._kCardHeightMin, strokeWidth: 3, padding: 5),
+        null,
+      ),
       ServerConn.failed => (
         const Icon(Icons.refresh, size: 21, color: Colors.grey),
         () {
@@ -55,7 +56,7 @@ extension on _ServerPageState {
   }
 
   Widget _buildTopRightText(Server s) {
-    final hasErr = s.conn == ServerConn.failed && s.status.err != null;
+    final hasErr = s.status.err != null;
     final str = s._getTopRightStr(s.spi);
     if (str == null) return UIs.placeholder;
     return GestureDetector(

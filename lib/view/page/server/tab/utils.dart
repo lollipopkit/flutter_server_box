@@ -9,19 +9,13 @@ extension _Actions on _ServerPageState {
       //   key: ValueKey(srv.spi.id),
       //   args: SpiRequiredArgs(srv.spi),
       // ));
-      ServerDetailPage.route.go(
-        context,
-        SpiRequiredArgs(srv.spi),
-      );
+      ServerDetailPage.route.go(context, SpiRequiredArgs(srv.spi));
     } else {
       // _splitViewCtrl.replace(ServerEditPage(
       //   key: ValueKey(srv.spi.id),
       //   args: SpiRequiredArgs(srv.spi),
       // ));
-      ServerEditPage.route.go(
-        context,
-        args: SpiRequiredArgs(srv.spi),
-      );
+      ServerEditPage.route.go(context, args: SpiRequiredArgs(srv.spi));
     }
   }
 
@@ -29,14 +23,9 @@ extension _Actions on _ServerPageState {
     if (srv.conn == ServerConn.finished) {
       final id = srv.spi.id;
       final cardStatus = _getCardNoti(id);
-      cardStatus.value = cardStatus.value.copyWith(
-        flip: !cardStatus.value.flip,
-      );
+      cardStatus.value = cardStatus.value.copyWith(flip: !cardStatus.value.flip);
     } else {
-      ServerEditPage.route.go(
-        context,
-        args: SpiRequiredArgs(srv.spi),
-      );
+      ServerEditPage.route.go(context, args: SpiRequiredArgs(srv.spi));
     }
   }
 
@@ -57,17 +46,10 @@ extension _Operation on _ServerPageState {
     _askFor(
       func: () async {
         if (Stores.setting.showSuspendTip.fetch()) {
-          await context.showRoundDialog(
-            title: libL10n.attention,
-            child: Text(l10n.suspendTip),
-          );
+          await context.showRoundDialog(title: libL10n.attention, child: Text(l10n.suspendTip));
           Stores.setting.showSuspendTip.put(false);
         }
-        srv.client?.execWithPwd(
-          ShellFunc.suspend.exec(srv.spi.id),
-          context: context,
-          id: srv.id,
-        );
+        srv.client?.execWithPwd(ShellFunc.suspend.exec(srv.spi.id), context: context, id: srv.id);
       },
       typ: l10n.suspend,
       name: srv.spi.name,
@@ -76,11 +58,7 @@ extension _Operation on _ServerPageState {
 
   void _onTapShutdown(Server srv) {
     _askFor(
-      func: () => srv.client?.execWithPwd(
-        ShellFunc.shutdown.exec(srv.spi.id),
-        context: context,
-        id: srv.id,
-      ),
+      func: () => srv.client?.execWithPwd(ShellFunc.shutdown.exec(srv.spi.id), context: context, id: srv.id),
       typ: l10n.shutdown,
       name: srv.spi.name,
     );
@@ -88,11 +66,7 @@ extension _Operation on _ServerPageState {
 
   void _onTapReboot(Server srv) {
     _askFor(
-      func: () => srv.client?.execWithPwd(
-        ShellFunc.reboot.exec(srv.spi.id),
-        context: context,
-        id: srv.id,
-      ),
+      func: () => srv.client?.execWithPwd(ShellFunc.reboot.exec(srv.spi.id), context: context, id: srv.id),
       typ: l10n.reboot,
       name: srv.spi.name,
     );
@@ -100,15 +74,9 @@ extension _Operation on _ServerPageState {
 
   void _onTapEdit(Server srv) {
     if (srv.canViewDetails) {
-      ServerDetailPage.route.go(
-        context,
-        SpiRequiredArgs(srv.spi),
-      );
+      ServerDetailPage.route.go(context, SpiRequiredArgs(srv.spi));
     } else {
-      ServerEditPage.route.go(
-        context,
-        args: SpiRequiredArgs(srv.spi),
-      );
+      ServerEditPage.route.go(context, args: SpiRequiredArgs(srv.spi));
     }
   }
 }
@@ -140,11 +108,7 @@ extension _Utils on _ServerPageState {
     return _ServerPageState._kCardHeightNormal;
   }
 
-  void _askFor({
-    required void Function() func,
-    required String typ,
-    required String name,
-  }) {
+  void _askFor({required void Function() func, required String typ, required String name}) {
     context.showRoundDialog(
       title: libL10n.attention,
       child: Text(libL10n.askContinue('$typ ${l10n.server}($name)')),
@@ -157,10 +121,8 @@ extension _Utils on _ServerPageState {
     );
   }
 
-  _CardNotifier _getCardNoti(String id) => _cardsStatus.putIfAbsent(
-        id,
-        () => _CardNotifier(const _CardStatus()),
-      );
+  _CardNotifier _getCardNoti(String id) =>
+      _cardsStatus.putIfAbsent(id, () => _CardNotifier(const _CardStatus()));
 
   void _updateOffset() {
     if (!Stores.setting.fullScreenJitter.fetch()) return;
@@ -190,6 +152,9 @@ extension _Utils on _ServerPageState {
 
 extension _ServerX on Server {
   String? _getTopRightStr(Spi spi) {
+    if (status.err != null) {
+      return l10n.viewErr;
+    }
     switch (conn) {
       case ServerConn.disconnected:
         return null;
@@ -225,7 +190,7 @@ extension _ServerX on Server {
         final upTime = status.more[StatusCmdType.uptime];
         final items = [
           cmdTemp ?? (temperatureVal != null ? '${temperatureVal.toStringAsFixed(1)}°C' : null),
-          upTime
+          upTime,
         ];
         final str = items.where((e) => e != null && e.isNotEmpty).join(' | ');
         if (str.isEmpty) return libL10n.empty;
@@ -237,7 +202,7 @@ extension _ServerX on Server {
       case ServerConn.connecting:
         return null;
       case ServerConn.failed:
-        return status.err != null ? l10n.viewErr : libL10n.fail;
+        return libL10n.fail;
     }
   }
 }

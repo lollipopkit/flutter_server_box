@@ -143,7 +143,7 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
 
   Widget _buildBodySmall({
     required List<String> filtered,
-    EdgeInsets? padding = const EdgeInsets.fromLTRB(7, 0, 7, 7),
+    EdgeInsets? padding = const EdgeInsets.fromLTRB(0, 0, 5, 7),
   }) {
     if (filtered.isEmpty) {
       return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
