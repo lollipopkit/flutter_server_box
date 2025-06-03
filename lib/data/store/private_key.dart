@@ -12,9 +12,8 @@ class PrivateKeyStore extends HiveStore {
   }
 
   List<PrivateKeyInfo> fetch() {
-    final keys = box.keys;
     final ps = <PrivateKeyInfo>[];
-    for (final key in keys) {
+    for (final key in keys()) {
       final s = get<PrivateKeyInfo>(
         key,
         fromObj: (val) {

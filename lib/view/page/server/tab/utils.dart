@@ -164,7 +164,7 @@ extension _Utils on _ServerPageState {
 
   void _updateOffset() {
     if (!Stores.setting.fullScreenJitter.fetch()) return;
-    final x = _media.size.height * 0.03;
+    final x = MediaQuery.sizeOf(context).height * 0.03;
     final r = math.Random().nextDouble();
     final n = math.Random().nextBool() ? 1 : -1;
     _offset = x * r * n;
