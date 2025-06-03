@@ -170,8 +170,8 @@ extension _Utils on _ServerPageState {
     _offset = x * r * n;
   }
 
-  void _updateTextScaler() {
-    _textFactorDouble = Stores.setting.textFactor.fetch();
+  void _updateTextScaler(double val) {
+    _textFactorDouble = val;
     _textFactor = TextScaler.linear(_textFactorDouble);
   }
 

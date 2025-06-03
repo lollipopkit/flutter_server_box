@@ -11,19 +11,7 @@ extension on _ServerPageState {
             builder: (_, cons) {
               return ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: cons.maxWidth / 2.3),
-                child: Hero(
-                  tag: 'home_card_title_${s.spi.id}',
-                  transitionOnUserGestures: true,
-                  child: Material(
-                    color: Colors.transparent,
-                    child: Text(
-                      s.spi.name,
-                      style: UIs.text13Bold.copyWith(color: context.isDark ? Colors.white : Colors.black),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
+                child: Text(s.spi.name, style: UIs.text13Bold, maxLines: 1, overflow: TextOverflow.ellipsis),
               );
             },
           ),
@@ -38,17 +26,9 @@ extension on _ServerPageState {
 
   Widget _buildTopRightWidget(Server s) {
     final (child, onTap) = switch (s.conn) {
-      ServerConn.connecting || ServerConn.loading || ServerConn.connected => (
-        SizedBox(
-          width: 19,
-          height: 19,
-          child: CircularProgressIndicator(
-            strokeWidth: 3,
-            valueColor: AlwaysStoppedAnimation(UIs.primaryColor),
-          ),
-        ),
-        null,
-      ),
+      ServerConn.connecting ||
+      ServerConn.loading ||
+      ServerConn.connected => (SizedLoading(23, strokeWidth: 3, padding: 5), null),
       ServerConn.failed => (
         const Icon(Icons.refresh, size: 21, color: Colors.grey),
         () {

@@ -76,7 +76,6 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
   void didChangeDependencies() {
     super.didChangeDependencies();
     _updateOffset();
-    _updateTextScaler();
   }
 
   @override
@@ -100,14 +99,11 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
       appBar: _TopBar(tags: ServerProvider.tags, onTagChanged: (p0) => _tag.value = p0, initTag: _tag.value),
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () => _autoHideCtrl.show(),
-        child: ListenableBuilder(
-          listenable: Stores.setting.textFactor.listenable(),
-          builder: (_, __) {
-            _updateTextScaler();
-            return child;
-          },
-        ),
+        onTap: _autoHideCtrl.show,
+        child: Stores.setting.textFactor.listenable().listenVal((val) {
+          _updateTextScaler(val);
+          return child;
+        }),
       ),
       floatingActionButton: AutoHide(
         direction: AxisDirection.right,
