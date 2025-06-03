@@ -167,37 +167,39 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
 
     // Calculate number of columns based on available width
     final columnsCount = math.max(1, (_media.size.width / UIs.columnWidth).floor());
-
-    // Calculate number of rows needed
-    final rowCount = (filtered.length + columnsCount - 1) ~/ columnsCount;
-
-    return ListView.builder(
+    
+    // Calculate how many servers per column
+    final serversPerColumn = (filtered.length / columnsCount).ceil();
+    
+    return SingleChildScrollView(
       controller: _scrollController,
       padding: padding,
-      itemCount: rowCount + 1, // +1 for the bottom space
-      itemBuilder: (_, rowIndex) {
-        // Bottom space
-        if (rowIndex == rowCount) return UIs.height77;
-
-        // Create a row of server cards
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: List.generate(columnsCount, (colIndex) {
-            final index = rowIndex * columnsCount + colIndex;
-            if (index >= filtered.length) return Expanded(child: Container());
-
-            final vnode = ServerProvider.pick(id: filtered[index]);
-            if (vnode == null) return Expanded(child: UIs.placeholder);
-
-            return Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                child: vnode.listenVal(_buildEachServerCard),
-              ),
-            );
-          }),
-        );
-      },
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: List.generate(columnsCount, (colIndex) {
+              return Expanded(
+                child: Column(
+                  children: List.generate(serversPerColumn, (rowIndex) {
+                    final index = colIndex + (rowIndex * columnsCount);
+                    if (index >= filtered.length) return UIs.placeholder;
+                    
+                    final vnode = ServerProvider.pick(id: filtered[index]);
+                    if (vnode == null) return UIs.placeholder;
+                    
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: vnode.listenVal(_buildEachServerCard),
+                    );
+                  }),
+                ),
+              );
+            }),
+          ),
+          UIs.height77,
+        ],
+      ),
     );
   }
 

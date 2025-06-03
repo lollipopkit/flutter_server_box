@@ -76,7 +76,7 @@ void _setupDebug() {
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
     DebugProvider.addLog(record);
-    print(record);
+    lprint(record);
     if (record.error != null) print(record.error);
     if (record.stackTrace != null) print(record.stackTrace);
   });
@@ -117,7 +117,7 @@ Future<void> _initWindow() async {
   final hideTitleBar = Stores.setting.hideTitleBar.fetch();
   await SystemUIs.initDesktopWindow(
     hideTitleBar: hideTitleBar,
-    size: windowState?.size,
+    size: windowState?.size ?? Size(947, 487),
     position: windowState?.position,
     listener: WindowStateListener(windowStateProp),
   );

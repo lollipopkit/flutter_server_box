@@ -15,8 +15,25 @@ class PrivateKeyStore extends HiveStore {
     final keys = box.keys;
     final ps = <PrivateKeyInfo>[];
     for (final key in keys) {
-      final s = box.get(key);
-      if (s != null && s is PrivateKeyInfo) {
+      final s = get<PrivateKeyInfo>(
+        key,
+        fromObj: (val) {
+          if (val is PrivateKeyInfo) return val;
+          if (val is Map<dynamic, dynamic>) {
+            final map = val.toStrDynMap;
+            if (map == null) return null;
+            try {
+              final pki = PrivateKeyInfo.fromJson(map as Map<String, dynamic>);
+              put(pki);
+              return pki;
+            } catch (e) {
+              dprint('Parsing PrivateKeyInfo from JSON', e);
+            }
+          }
+          return null;
+        },
+      );
+      if (s != null) {
         ps.add(s);
       }
     }
