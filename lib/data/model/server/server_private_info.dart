@@ -36,7 +36,7 @@ class Spi with _$Spi {
     @JsonKey(name: 'pubKeyId') String? keyId,
     List<String>? tags,
     String? alterUrl,
-    @Default(true) bool autoConnect,
+    @Default(true) @JsonKey(defaultValue: true) bool autoConnect,
 
     /// [id] of the jump server
     String? jumpId,

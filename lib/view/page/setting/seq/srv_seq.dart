@@ -65,16 +65,16 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
         },
         padding: const EdgeInsets.all(8),
         buildDefaultDragHandles: false,
-        itemBuilder: (_, idx) => _buildItem(idx),
+        itemBuilder: (_, idx) => _buildItem(idx, order[idx]),
         itemCount: order.length,
         proxyDecorator: _proxyDecorator,
       );
     });
   }
 
-  Widget _buildItem(int index) {
+  Widget _buildItem(int index, String id) {
     return ReorderableDelayedDragStartListener(
-      key: ValueKey('server_item_$index'),
+      key: ValueKey('server_item_$id'),
       index: index,
       child: Padding(
         padding: const EdgeInsets.only(bottom: 8),

@@ -12,7 +12,8 @@ part of 'app.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
+);
 
 /// @nodoc
 mixin _$AppState {
@@ -47,15 +48,16 @@ class _$AppStateCopyWithImpl<$Res, $Val extends AppState>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({
-    Object? desktopMode = null,
-  }) {
-    return _then(_value.copyWith(
-      desktopMode: null == desktopMode
-          ? _value.desktopMode
-          : desktopMode // ignore: cast_nullable_to_non_nullable
-              as bool,
-    ) as $Val);
+  $Res call({Object? desktopMode = null}) {
+    return _then(
+      _value.copyWith(
+            desktopMode: null == desktopMode
+                ? _value.desktopMode
+                : desktopMode // ignore: cast_nullable_to_non_nullable
+                      as bool,
+          )
+          as $Val,
+    );
   }
 }
 
@@ -63,8 +65,9 @@ class _$AppStateCopyWithImpl<$Res, $Val extends AppState>
 abstract class _$$AppStateImplCopyWith<$Res>
     implements $AppStateCopyWith<$Res> {
   factory _$$AppStateImplCopyWith(
-          _$AppStateImpl value, $Res Function(_$AppStateImpl) then) =
-      __$$AppStateImplCopyWithImpl<$Res>;
+    _$AppStateImpl value,
+    $Res Function(_$AppStateImpl) then,
+  ) = __$$AppStateImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({bool desktopMode});
@@ -75,22 +78,23 @@ class __$$AppStateImplCopyWithImpl<$Res>
     extends _$AppStateCopyWithImpl<$Res, _$AppStateImpl>
     implements _$$AppStateImplCopyWith<$Res> {
   __$$AppStateImplCopyWithImpl(
-      _$AppStateImpl _value, $Res Function(_$AppStateImpl) _then)
-      : super(_value, _then);
+    _$AppStateImpl _value,
+    $Res Function(_$AppStateImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of AppState
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({
-    Object? desktopMode = null,
-  }) {
-    return _then(_$AppStateImpl(
-      desktopMode: null == desktopMode
-          ? _value.desktopMode
-          : desktopMode // ignore: cast_nullable_to_non_nullable
-              as bool,
-    ));
+  $Res call({Object? desktopMode = null}) {
+    return _then(
+      _$AppStateImpl(
+        desktopMode: null == desktopMode
+            ? _value.desktopMode
+            : desktopMode // ignore: cast_nullable_to_non_nullable
+                  as bool,
+      ),
+    );
   }
 }
 

@@ -12,7 +12,8 @@ part of 'snippet.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
+);
 
 Snippet _$SnippetFromJson(Map<String, dynamic> json) {
   return _Snippet.fromJson(json);
@@ -42,12 +43,13 @@ abstract class $SnippetCopyWith<$Res> {
   factory $SnippetCopyWith(Snippet value, $Res Function(Snippet) then) =
       _$SnippetCopyWithImpl<$Res, Snippet>;
   @useResult
-  $Res call(
-      {String name,
-      String script,
-      List<String>? tags,
-      String? note,
-      List<String>? autoRunOn});
+  $Res call({
+    String name,
+    String script,
+    List<String>? tags,
+    String? note,
+    List<String>? autoRunOn,
+  });
 }
 
 /// @nodoc
@@ -71,44 +73,49 @@ class _$SnippetCopyWithImpl<$Res, $Val extends Snippet>
     Object? note = freezed,
     Object? autoRunOn = freezed,
   }) {
-    return _then(_value.copyWith(
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      script: null == script
-          ? _value.script
-          : script // ignore: cast_nullable_to_non_nullable
-              as String,
-      tags: freezed == tags
-          ? _value.tags
-          : tags // ignore: cast_nullable_to_non_nullable
-              as List<String>?,
-      note: freezed == note
-          ? _value.note
-          : note // ignore: cast_nullable_to_non_nullable
-              as String?,
-      autoRunOn: freezed == autoRunOn
-          ? _value.autoRunOn
-          : autoRunOn // ignore: cast_nullable_to_non_nullable
-              as List<String>?,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            name: null == name
+                ? _value.name
+                : name // ignore: cast_nullable_to_non_nullable
+                      as String,
+            script: null == script
+                ? _value.script
+                : script // ignore: cast_nullable_to_non_nullable
+                      as String,
+            tags: freezed == tags
+                ? _value.tags
+                : tags // ignore: cast_nullable_to_non_nullable
+                      as List<String>?,
+            note: freezed == note
+                ? _value.note
+                : note // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            autoRunOn: freezed == autoRunOn
+                ? _value.autoRunOn
+                : autoRunOn // ignore: cast_nullable_to_non_nullable
+                      as List<String>?,
+          )
+          as $Val,
+    );
   }
 }
 
 /// @nodoc
 abstract class _$$SnippetImplCopyWith<$Res> implements $SnippetCopyWith<$Res> {
   factory _$$SnippetImplCopyWith(
-          _$SnippetImpl value, $Res Function(_$SnippetImpl) then) =
-      __$$SnippetImplCopyWithImpl<$Res>;
+    _$SnippetImpl value,
+    $Res Function(_$SnippetImpl) then,
+  ) = __$$SnippetImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {String name,
-      String script,
-      List<String>? tags,
-      String? note,
-      List<String>? autoRunOn});
+  $Res call({
+    String name,
+    String script,
+    List<String>? tags,
+    String? note,
+    List<String>? autoRunOn,
+  });
 }
 
 /// @nodoc
@@ -116,8 +123,9 @@ class __$$SnippetImplCopyWithImpl<$Res>
     extends _$SnippetCopyWithImpl<$Res, _$SnippetImpl>
     implements _$$SnippetImplCopyWith<$Res> {
   __$$SnippetImplCopyWithImpl(
-      _$SnippetImpl _value, $Res Function(_$SnippetImpl) _then)
-      : super(_value, _then);
+    _$SnippetImpl _value,
+    $Res Function(_$SnippetImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of Snippet
   /// with the given fields replaced by the non-null parameter values.
@@ -130,42 +138,44 @@ class __$$SnippetImplCopyWithImpl<$Res>
     Object? note = freezed,
     Object? autoRunOn = freezed,
   }) {
-    return _then(_$SnippetImpl(
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      script: null == script
-          ? _value.script
-          : script // ignore: cast_nullable_to_non_nullable
-              as String,
-      tags: freezed == tags
-          ? _value._tags
-          : tags // ignore: cast_nullable_to_non_nullable
-              as List<String>?,
-      note: freezed == note
-          ? _value.note
-          : note // ignore: cast_nullable_to_non_nullable
-              as String?,
-      autoRunOn: freezed == autoRunOn
-          ? _value._autoRunOn
-          : autoRunOn // ignore: cast_nullable_to_non_nullable
-              as List<String>?,
-    ));
+    return _then(
+      _$SnippetImpl(
+        name: null == name
+            ? _value.name
+            : name // ignore: cast_nullable_to_non_nullable
+                  as String,
+        script: null == script
+            ? _value.script
+            : script // ignore: cast_nullable_to_non_nullable
+                  as String,
+        tags: freezed == tags
+            ? _value._tags
+            : tags // ignore: cast_nullable_to_non_nullable
+                  as List<String>?,
+        note: freezed == note
+            ? _value.note
+            : note // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        autoRunOn: freezed == autoRunOn
+            ? _value._autoRunOn
+            : autoRunOn // ignore: cast_nullable_to_non_nullable
+                  as List<String>?,
+      ),
+    );
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$SnippetImpl implements _Snippet {
-  const _$SnippetImpl(
-      {required this.name,
-      required this.script,
-      final List<String>? tags,
-      this.note,
-      final List<String>? autoRunOn})
-      : _tags = tags,
-        _autoRunOn = autoRunOn;
+  const _$SnippetImpl({
+    required this.name,
+    required this.script,
+    final List<String>? tags,
+    this.note,
+    final List<String>? autoRunOn,
+  }) : _tags = tags,
+       _autoRunOn = autoRunOn;
 
   factory _$SnippetImpl.fromJson(Map<String, dynamic> json) =>
       _$$SnippetImplFromJson(json);
@@ -214,19 +224,22 @@ class _$SnippetImpl implements _Snippet {
             (identical(other.script, script) || other.script == script) &&
             const DeepCollectionEquality().equals(other._tags, _tags) &&
             (identical(other.note, note) || other.note == note) &&
-            const DeepCollectionEquality()
-                .equals(other._autoRunOn, _autoRunOn));
+            const DeepCollectionEquality().equals(
+              other._autoRunOn,
+              _autoRunOn,
+            ));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-      runtimeType,
-      name,
-      script,
-      const DeepCollectionEquality().hash(_tags),
-      note,
-      const DeepCollectionEquality().hash(_autoRunOn));
+    runtimeType,
+    name,
+    script,
+    const DeepCollectionEquality().hash(_tags),
+    note,
+    const DeepCollectionEquality().hash(_autoRunOn),
+  );
 
   /// Create a copy of Snippet
   /// with the given fields replaced by the non-null parameter values.
@@ -238,19 +251,18 @@ class _$SnippetImpl implements _Snippet {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$SnippetImplToJson(
-      this,
-    );
+    return _$$SnippetImplToJson(this);
   }
 }
 
 abstract class _Snippet implements Snippet {
-  const factory _Snippet(
-      {required final String name,
-      required final String script,
-      final List<String>? tags,
-      final String? note,
-      final List<String>? autoRunOn}) = _$SnippetImpl;
+  const factory _Snippet({
+    required final String name,
+    required final String script,
+    final List<String>? tags,
+    final String? note,
+    final List<String>? autoRunOn,
+  }) = _$SnippetImpl;
 
   factory _Snippet.fromJson(Map<String, dynamic> json) = _$SnippetImpl.fromJson;
 

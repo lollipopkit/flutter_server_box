@@ -12,7 +12,8 @@ part of 'server_private_info.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
+);
 
 /// @nodoc
 mixin _$Spi {
@@ -27,6 +28,7 @@ mixin _$Spi {
   String? get keyId => throw _privateConstructorUsedError;
   List<String>? get tags => throw _privateConstructorUsedError;
   String? get alterUrl => throw _privateConstructorUsedError;
+  @JsonKey(defaultValue: true)
   bool get autoConnect => throw _privateConstructorUsedError;
 
   /// [id] of the jump server
@@ -54,23 +56,22 @@ abstract class $SpiCopyWith<$Res> {
   factory $SpiCopyWith(Spi value, $Res Function(Spi) then) =
       _$SpiCopyWithImpl<$Res, Spi>;
   @useResult
-  $Res call(
-      {String name,
-      String ip,
-      int port,
-      String user,
-      String? pwd,
-      @JsonKey(name: 'pubKeyId') String? keyId,
-      List<String>? tags,
-      String? alterUrl,
-      bool autoConnect,
-      String? jumpId,
-      ServerCustom? custom,
-      WakeOnLanCfg? wolCfg,
-      Map<String, String>? envs,
-      @JsonKey(fromJson: Spi.parseId)
-      @HiveField(13, defaultValue: '')
-      String id});
+  $Res call({
+    String name,
+    String ip,
+    int port,
+    String user,
+    String? pwd,
+    @JsonKey(name: 'pubKeyId') String? keyId,
+    List<String>? tags,
+    String? alterUrl,
+    @JsonKey(defaultValue: true) bool autoConnect,
+    String? jumpId,
+    ServerCustom? custom,
+    WakeOnLanCfg? wolCfg,
+    Map<String, String>? envs,
+    @JsonKey(fromJson: Spi.parseId) @HiveField(13, defaultValue: '') String id,
+  });
 }
 
 /// @nodoc
@@ -102,64 +103,67 @@ class _$SpiCopyWithImpl<$Res, $Val extends Spi> implements $SpiCopyWith<$Res> {
     Object? envs = freezed,
     Object? id = null,
   }) {
-    return _then(_value.copyWith(
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      ip: null == ip
-          ? _value.ip
-          : ip // ignore: cast_nullable_to_non_nullable
-              as String,
-      port: null == port
-          ? _value.port
-          : port // ignore: cast_nullable_to_non_nullable
-              as int,
-      user: null == user
-          ? _value.user
-          : user // ignore: cast_nullable_to_non_nullable
-              as String,
-      pwd: freezed == pwd
-          ? _value.pwd
-          : pwd // ignore: cast_nullable_to_non_nullable
-              as String?,
-      keyId: freezed == keyId
-          ? _value.keyId
-          : keyId // ignore: cast_nullable_to_non_nullable
-              as String?,
-      tags: freezed == tags
-          ? _value.tags
-          : tags // ignore: cast_nullable_to_non_nullable
-              as List<String>?,
-      alterUrl: freezed == alterUrl
-          ? _value.alterUrl
-          : alterUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
-      autoConnect: null == autoConnect
-          ? _value.autoConnect
-          : autoConnect // ignore: cast_nullable_to_non_nullable
-              as bool,
-      jumpId: freezed == jumpId
-          ? _value.jumpId
-          : jumpId // ignore: cast_nullable_to_non_nullable
-              as String?,
-      custom: freezed == custom
-          ? _value.custom
-          : custom // ignore: cast_nullable_to_non_nullable
-              as ServerCustom?,
-      wolCfg: freezed == wolCfg
-          ? _value.wolCfg
-          : wolCfg // ignore: cast_nullable_to_non_nullable
-              as WakeOnLanCfg?,
-      envs: freezed == envs
-          ? _value.envs
-          : envs // ignore: cast_nullable_to_non_nullable
-              as Map<String, String>?,
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            name: null == name
+                ? _value.name
+                : name // ignore: cast_nullable_to_non_nullable
+                      as String,
+            ip: null == ip
+                ? _value.ip
+                : ip // ignore: cast_nullable_to_non_nullable
+                      as String,
+            port: null == port
+                ? _value.port
+                : port // ignore: cast_nullable_to_non_nullable
+                      as int,
+            user: null == user
+                ? _value.user
+                : user // ignore: cast_nullable_to_non_nullable
+                      as String,
+            pwd: freezed == pwd
+                ? _value.pwd
+                : pwd // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            keyId: freezed == keyId
+                ? _value.keyId
+                : keyId // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            tags: freezed == tags
+                ? _value.tags
+                : tags // ignore: cast_nullable_to_non_nullable
+                      as List<String>?,
+            alterUrl: freezed == alterUrl
+                ? _value.alterUrl
+                : alterUrl // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            autoConnect: null == autoConnect
+                ? _value.autoConnect
+                : autoConnect // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            jumpId: freezed == jumpId
+                ? _value.jumpId
+                : jumpId // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            custom: freezed == custom
+                ? _value.custom
+                : custom // ignore: cast_nullable_to_non_nullable
+                      as ServerCustom?,
+            wolCfg: freezed == wolCfg
+                ? _value.wolCfg
+                : wolCfg // ignore: cast_nullable_to_non_nullable
+                      as WakeOnLanCfg?,
+            envs: freezed == envs
+                ? _value.envs
+                : envs // ignore: cast_nullable_to_non_nullable
+                      as Map<String, String>?,
+            id: null == id
+                ? _value.id
+                : id // ignore: cast_nullable_to_non_nullable
+                      as String,
+          )
+          as $Val,
+    );
   }
 }
 
@@ -169,30 +173,29 @@ abstract class _$$SpiImplCopyWith<$Res> implements $SpiCopyWith<$Res> {
       __$$SpiImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {String name,
-      String ip,
-      int port,
-      String user,
-      String? pwd,
-      @JsonKey(name: 'pubKeyId') String? keyId,
-      List<String>? tags,
-      String? alterUrl,
-      bool autoConnect,
-      String? jumpId,
-      ServerCustom? custom,
-      WakeOnLanCfg? wolCfg,
-      Map<String, String>? envs,
-      @JsonKey(fromJson: Spi.parseId)
-      @HiveField(13, defaultValue: '')
-      String id});
+  $Res call({
+    String name,
+    String ip,
+    int port,
+    String user,
+    String? pwd,
+    @JsonKey(name: 'pubKeyId') String? keyId,
+    List<String>? tags,
+    String? alterUrl,
+    @JsonKey(defaultValue: true) bool autoConnect,
+    String? jumpId,
+    ServerCustom? custom,
+    WakeOnLanCfg? wolCfg,
+    Map<String, String>? envs,
+    @JsonKey(fromJson: Spi.parseId) @HiveField(13, defaultValue: '') String id,
+  });
 }
 
 /// @nodoc
 class __$$SpiImplCopyWithImpl<$Res> extends _$SpiCopyWithImpl<$Res, _$SpiImpl>
     implements _$$SpiImplCopyWith<$Res> {
   __$$SpiImplCopyWithImpl(_$SpiImpl _value, $Res Function(_$SpiImpl) _then)
-      : super(_value, _then);
+    : super(_value, _then);
 
   /// Create a copy of Spi
   /// with the given fields replaced by the non-null parameter values.
@@ -214,90 +217,92 @@ class __$$SpiImplCopyWithImpl<$Res> extends _$SpiCopyWithImpl<$Res, _$SpiImpl>
     Object? envs = freezed,
     Object? id = null,
   }) {
-    return _then(_$SpiImpl(
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      ip: null == ip
-          ? _value.ip
-          : ip // ignore: cast_nullable_to_non_nullable
-              as String,
-      port: null == port
-          ? _value.port
-          : port // ignore: cast_nullable_to_non_nullable
-              as int,
-      user: null == user
-          ? _value.user
-          : user // ignore: cast_nullable_to_non_nullable
-              as String,
-      pwd: freezed == pwd
-          ? _value.pwd
-          : pwd // ignore: cast_nullable_to_non_nullable
-              as String?,
-      keyId: freezed == keyId
-          ? _value.keyId
-          : keyId // ignore: cast_nullable_to_non_nullable
-              as String?,
-      tags: freezed == tags
-          ? _value._tags
-          : tags // ignore: cast_nullable_to_non_nullable
-              as List<String>?,
-      alterUrl: freezed == alterUrl
-          ? _value.alterUrl
-          : alterUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
-      autoConnect: null == autoConnect
-          ? _value.autoConnect
-          : autoConnect // ignore: cast_nullable_to_non_nullable
-              as bool,
-      jumpId: freezed == jumpId
-          ? _value.jumpId
-          : jumpId // ignore: cast_nullable_to_non_nullable
-              as String?,
-      custom: freezed == custom
-          ? _value.custom
-          : custom // ignore: cast_nullable_to_non_nullable
-              as ServerCustom?,
-      wolCfg: freezed == wolCfg
-          ? _value.wolCfg
-          : wolCfg // ignore: cast_nullable_to_non_nullable
-              as WakeOnLanCfg?,
-      envs: freezed == envs
-          ? _value._envs
-          : envs // ignore: cast_nullable_to_non_nullable
-              as Map<String, String>?,
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-    ));
+    return _then(
+      _$SpiImpl(
+        name: null == name
+            ? _value.name
+            : name // ignore: cast_nullable_to_non_nullable
+                  as String,
+        ip: null == ip
+            ? _value.ip
+            : ip // ignore: cast_nullable_to_non_nullable
+                  as String,
+        port: null == port
+            ? _value.port
+            : port // ignore: cast_nullable_to_non_nullable
+                  as int,
+        user: null == user
+            ? _value.user
+            : user // ignore: cast_nullable_to_non_nullable
+                  as String,
+        pwd: freezed == pwd
+            ? _value.pwd
+            : pwd // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        keyId: freezed == keyId
+            ? _value.keyId
+            : keyId // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        tags: freezed == tags
+            ? _value._tags
+            : tags // ignore: cast_nullable_to_non_nullable
+                  as List<String>?,
+        alterUrl: freezed == alterUrl
+            ? _value.alterUrl
+            : alterUrl // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        autoConnect: null == autoConnect
+            ? _value.autoConnect
+            : autoConnect // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        jumpId: freezed == jumpId
+            ? _value.jumpId
+            : jumpId // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        custom: freezed == custom
+            ? _value.custom
+            : custom // ignore: cast_nullable_to_non_nullable
+                  as ServerCustom?,
+        wolCfg: freezed == wolCfg
+            ? _value.wolCfg
+            : wolCfg // ignore: cast_nullable_to_non_nullable
+                  as WakeOnLanCfg?,
+        envs: freezed == envs
+            ? _value._envs
+            : envs // ignore: cast_nullable_to_non_nullable
+                  as Map<String, String>?,
+        id: null == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                  as String,
+      ),
+    );
   }
 }
 
 /// @nodoc
 @JsonSerializable(createFactory: false)
 class _$SpiImpl extends _Spi {
-  const _$SpiImpl(
-      {required this.name,
-      required this.ip,
-      required this.port,
-      required this.user,
-      this.pwd,
-      @JsonKey(name: 'pubKeyId') this.keyId,
-      final List<String>? tags,
-      this.alterUrl,
-      this.autoConnect = true,
-      this.jumpId,
-      this.custom,
-      this.wolCfg,
-      final Map<String, String>? envs,
-      @JsonKey(fromJson: Spi.parseId)
-      @HiveField(13, defaultValue: '')
-      required this.id})
-      : _tags = tags,
-        _envs = envs,
-        super._();
+  const _$SpiImpl({
+    required this.name,
+    required this.ip,
+    required this.port,
+    required this.user,
+    this.pwd,
+    @JsonKey(name: 'pubKeyId') this.keyId,
+    final List<String>? tags,
+    this.alterUrl,
+    @JsonKey(defaultValue: true) this.autoConnect = true,
+    this.jumpId,
+    this.custom,
+    this.wolCfg,
+    final Map<String, String>? envs,
+    @JsonKey(fromJson: Spi.parseId)
+    @HiveField(13, defaultValue: '')
+    required this.id,
+  }) : _tags = tags,
+       _envs = envs,
+       super._();
 
   @override
   final String name;
@@ -327,7 +332,7 @@ class _$SpiImpl extends _Spi {
   @override
   final String? alterUrl;
   @override
-  @JsonKey()
+  @JsonKey(defaultValue: true)
   final bool autoConnect;
 
   /// [id] of the jump server
@@ -382,21 +387,22 @@ class _$SpiImpl extends _Spi {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-      runtimeType,
-      name,
-      ip,
-      port,
-      user,
-      pwd,
-      keyId,
-      const DeepCollectionEquality().hash(_tags),
-      alterUrl,
-      autoConnect,
-      jumpId,
-      custom,
-      wolCfg,
-      const DeepCollectionEquality().hash(_envs),
-      id);
+    runtimeType,
+    name,
+    ip,
+    port,
+    user,
+    pwd,
+    keyId,
+    const DeepCollectionEquality().hash(_tags),
+    alterUrl,
+    autoConnect,
+    jumpId,
+    custom,
+    wolCfg,
+    const DeepCollectionEquality().hash(_envs),
+    id,
+  );
 
   /// Create a copy of Spi
   /// with the given fields replaced by the non-null parameter values.
@@ -408,30 +414,29 @@ class _$SpiImpl extends _Spi {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$SpiImplToJson(
-      this,
-    );
+    return _$$SpiImplToJson(this);
   }
 }
 
 abstract class _Spi extends Spi {
-  const factory _Spi(
-      {required final String name,
-      required final String ip,
-      required final int port,
-      required final String user,
-      final String? pwd,
-      @JsonKey(name: 'pubKeyId') final String? keyId,
-      final List<String>? tags,
-      final String? alterUrl,
-      final bool autoConnect,
-      final String? jumpId,
-      final ServerCustom? custom,
-      final WakeOnLanCfg? wolCfg,
-      final Map<String, String>? envs,
-      @JsonKey(fromJson: Spi.parseId)
-      @HiveField(13, defaultValue: '')
-      required final String id}) = _$SpiImpl;
+  const factory _Spi({
+    required final String name,
+    required final String ip,
+    required final int port,
+    required final String user,
+    final String? pwd,
+    @JsonKey(name: 'pubKeyId') final String? keyId,
+    final List<String>? tags,
+    final String? alterUrl,
+    @JsonKey(defaultValue: true) final bool autoConnect,
+    final String? jumpId,
+    final ServerCustom? custom,
+    final WakeOnLanCfg? wolCfg,
+    final Map<String, String>? envs,
+    @JsonKey(fromJson: Spi.parseId)
+    @HiveField(13, defaultValue: '')
+    required final String id,
+  }) = _$SpiImpl;
   const _Spi._() : super._();
 
   @override
@@ -454,6 +459,7 @@ abstract class _Spi extends Spi {
   @override
   String? get alterUrl;
   @override
+  @JsonKey(defaultValue: true)
   bool get autoConnect;
 
   /// [id] of the jump server

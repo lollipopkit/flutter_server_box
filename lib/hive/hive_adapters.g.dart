@@ -16,10 +16,7 @@ class PrivateKeyInfoAdapter extends TypeAdapter<PrivateKeyInfo> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return PrivateKeyInfo(
-      id: fields[0] as String,
-      key: fields[1] as String,
-    );
+    return PrivateKeyInfo(id: fields[0] as String, key: fields[1] as String);
   }
 
   @override

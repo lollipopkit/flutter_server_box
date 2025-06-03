@@ -13,8 +13,9 @@ String _$appProviderHash() => r'8378ec9d0a9c8d99cc05805047cd2d52ac4dbb56';
 final appProviderProvider = NotifierProvider<AppProvider, AppState>.internal(
   AppProvider.new,
   name: r'appProviderProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$appProviderHash,
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$appProviderHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );

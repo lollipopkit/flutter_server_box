@@ -7,10 +7,10 @@ part of 'wol_cfg.dart';
 // **************************************************************************
 
 WakeOnLanCfg _$WakeOnLanCfgFromJson(Map<String, dynamic> json) => WakeOnLanCfg(
-      mac: json['mac'] as String,
-      ip: json['ip'] as String,
-      pwd: json['pwd'] as String?,
-    );
+  mac: json['mac'] as String,
+  ip: json['ip'] as String,
+  pwd: json['pwd'] as String?,
+);
 
 Map<String, dynamic> _$WakeOnLanCfgToJson(WakeOnLanCfg instance) =>
     <String, dynamic>{

@@ -13,7 +13,4 @@ PrivateKeyInfo _$PrivateKeyInfoFromJson(Map<String, dynamic> json) =>
     );
 
 Map<String, dynamic> _$PrivateKeyInfoToJson(PrivateKeyInfo instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'private_key': instance.key,
-    };
+    <String, dynamic>{'id': instance.id, 'private_key': instance.key};

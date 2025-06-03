@@ -31,7 +31,7 @@ extension on _ServerPageState {
             color: Colors.grey,
           ),
           const Spacer(),
-          ?_buildTopRightText(s),
+          _buildTopRightText(s),
           _buildTopRightWidget(s),
         ],
       ),
@@ -80,10 +80,10 @@ extension on _ServerPageState {
     ).paddingOnly(left: 5);
   }
 
-  Widget? _buildTopRightText(Server s) {
+  Widget _buildTopRightText(Server s) {
     final hasErr = s.conn == ServerConn.failed && s.status.err != null;
     final str = s._getTopRightStr(s.spi);
-    if (str == null) return null;
+    if (str == null) return UIs.placeholder;
     return GestureDetector(
       onTap: () {
         if (!hasErr) return;
