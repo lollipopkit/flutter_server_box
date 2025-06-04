@@ -37,6 +37,7 @@
   "disconnected": "Disconnected",
   "disk": "Disk",
   "diskIgnorePath": "Ignore path for disk",
+  "diskHealth": "Disk Health",
   "displayCpuIndex": "Display CPU index",
   "dl2Local": "Download {fileName} to local?",
   "dockerEmptyRunningItems": "There are no running containers.\nThis could be because:\n- The Docker installation user is not the same as the username configured within the App.\n- The environment variable DOCKER_HOST was not read correctly. You can get it by running `echo $DOCKER_HOST` in the terminal.",

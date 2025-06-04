@@ -32,10 +32,14 @@ class ServerDetailPage extends StatefulWidget {
   @override
   State<ServerDetailPage> createState() => _ServerDetailPageState();
 
-  static const route = AppRouteArg(page: ServerDetailPage.new, path: '/servers/detail');
+  static const route = AppRouteArg(
+    page: ServerDetailPage.new,
+    path: '/servers/detail',
+  );
 }
 
-class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerProviderStateMixin {
+class _ServerDetailPageState extends State<ServerDetailPage>
+    with SingleTickerProviderStateMixin {
   late final _cardBuildMap = Map.fromIterables(ServerDetailCards.names, [
     _buildAbout,
     _buildCPUView,
@@ -43,6 +47,7 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
     _buildSwapView,
     _buildGpuView,
     _buildDiskView,
+    _buildDiskSmart,
     _buildNetView,
     _buildSensors,
     _buildTemperature,
@@ -94,7 +99,10 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
   Widget _buildMainPage(Server si) {
     final buildFuncs = !Stores.setting.moveServerFuncs.fetch();
     final logo = _buildLogo(si);
-    final children = <Widget>[if (logo != null) logo, if (buildFuncs) ServerFuncBtns(spi: si.spi)];
+    final children = <Widget>[
+      if (logo != null) logo,
+      if (buildFuncs) ServerFuncBtns(spi: si.spi),
+    ];
     for (final card in _cardsOrder) {
       final child = _cardBuildMap[card]?.call(si);
       if (child != null) {
@@ -112,14 +120,24 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
     return CustomAppBar(
       title: Text(
         si.spi.name,
-        style: TextStyle(fontSize: 20, color: context.isDark ? Colors.white : Colors.black),
+        style: TextStyle(
+          fontSize: 20,
+          color: context.isDark ? Colors.white : Colors.black,
+        ),
       ),
       actions: [
-        QrShareBtn(data: si.spi.toJsonString(), tip: si.spi.name, tip2: '${l10n.server} ~ ServerBox'),
+        QrShareBtn(
+          data: si.spi.toJsonString(),
+          tip: si.spi.name,
+          tip2: '${l10n.server} ~ ServerBox',
+        ),
         IconButton(
           icon: const Icon(Icons.edit),
           onPressed: () async {
-            final delete = await ServerEditPage.route.go(context, args: SpiRequiredArgs(si.spi));
+            final delete = await ServerEditPage.route.go(
+              context,
+              args: SpiRequiredArgs(si.spi),
+            );
             if (delete == true) {
               context.pop();
             }
@@ -130,14 +148,19 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
   }
 
   Widget? _buildLogo(Server si) {
-    var logoUrl = si.spi.custom?.logoUrl ?? _settings.serverLogoUrl.fetch().selfNotEmptyOrNull;
+    var logoUrl =
+        si.spi.custom?.logoUrl ??
+        _settings.serverLogoUrl.fetch().selfNotEmptyOrNull;
     if (logoUrl == null) return null;
 
     final dist = si.status.more[StatusCmdType.sys]?.dist;
     if (dist != null) {
       logoUrl = logoUrl.replaceFirst('{DIST}', dist.name);
     }
-    logoUrl = logoUrl.replaceFirst('{BRIGHT}', context.isDark ? 'dark' : 'light');
+    logoUrl = logoUrl.replaceFirst(
+      '{BRIGHT}',
+      context.isDark ? 'dark' : 'light',
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 13),
@@ -170,8 +193,16 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(e.key.i18n, style: UIs.text13, overflow: TextOverflow.ellipsis),
-                  Text(e.value, style: UIs.text13Grey, overflow: TextOverflow.ellipsis),
+                  Text(
+                    e.key.i18n,
+                    style: UIs.text13,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    e.value,
+                    style: UIs.text13Grey,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
             ),
@@ -203,7 +234,9 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
 
     if (ss.cpu.brand.isNotEmpty) {
       children.add(
-        Column(children: ss.cpu.brand.entries.map(_buildCpuModelItem).toList()).paddingOnly(top: 13),
+        Column(
+          children: ss.cpu.brand.entries.map(_buildCpuModelItem).toList(),
+        ).paddingOnly(top: 13),
       );
     }
 
@@ -231,11 +264,20 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
           builder: (_, cons) {
             return ConstrainedBox(
               constraints: BoxConstraints(maxWidth: cons.maxWidth * .7),
-              child: Text(name, style: UIs.text13, overflow: TextOverflow.ellipsis, maxLines: 1),
+              child: Text(
+                name,
+                style: UIs.text13,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
             );
           },
         ),
-        Text('x ${e.value}', style: UIs.text13Grey, overflow: TextOverflow.clip),
+        Text(
+          'x ${e.value}',
+          style: UIs.text13Grey,
+          overflow: TextOverflow.clip,
+        ),
       ],
     );
     return child.paddingSymmetric(horizontal: 17);
@@ -247,7 +289,11 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text('${percent.toStringAsFixed(1)}%', style: UIs.text12, textScaler: _textFactor),
+        Text(
+          '${percent.toStringAsFixed(1)}%',
+          style: UIs.text12,
+          textScaler: _textFactor,
+        ),
         Text(timeType, style: UIs.text12Grey, textScaler: _textFactor),
       ],
     );
@@ -279,7 +325,9 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 3),
-                child: _buildProgress(cs.usedPercent(coreIdx: coreNumberOneBased)),
+                child: _buildProgress(
+                  cs.usedPercent(coreIdx: coreNumberOneBased),
+                ),
               ),
             ),
           );
@@ -443,7 +491,10 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
         mainAxisAlignment: MainAxisAlignment.end,
         mainAxisSize: MainAxisSize.min,
         children: [
-          IconButton(onPressed: () => _onTapGpuItem(item), icon: const Icon(Icons.info_outline, size: 17)),
+          IconButton(
+            onPressed: () => _onTapGpuItem(item),
+            icon: const Icon(Icons.info_outline, size: 17),
+          ),
         ],
       ),
     );
@@ -533,7 +584,9 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  disk.mount.isEmpty ? disk.path : '${disk.path} (${disk.mount})',
+                  disk.mount.isEmpty
+                      ? disk.path
+                      : '${disk.path} (${disk.mount})',
                   style: UIs.text12,
                   textScaler: _textFactor,
                 ),
@@ -563,6 +616,41 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
     );
   }
 
+  Widget? _buildDiskSmart(Server si) {
+    final smarts = si.status.diskSmart;
+    if (smarts.isEmpty) return null;
+    return CardX(
+      child: ExpandTile(
+        title: Text(l10n.diskHealth),
+        leading: Icon(ServerDetailCards.smart.icon, size: 17),
+        childrenPadding: const EdgeInsets.only(bottom: 7),
+        initiallyExpanded: _getInitExpand(smarts.length),
+        children: smarts.map(_buildDiskSmartItem).toList(),
+      ),
+    );
+  }
+
+  Widget _buildDiskSmartItem(DiskSmart ds) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 5),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(ds.device, style: UIs.text12),
+          Text(
+            '${ds.temperature?.toStringAsFixed(1) ?? '--'}°C / '
+            '${ds.healthy == null
+                ? '?'
+                : ds.healthy!
+                ? 'PASS'
+                : 'FAIL'}',
+            style: UIs.text12Grey,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget? _buildNetView(Server si) {
     final ss = si.status;
     final ns = ss.netSpeed;
@@ -584,7 +672,8 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
               onTap: () => _netSortType.value = val.next,
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 377),
-                transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+                transitionBuilder: (child, animation) =>
+                    FadeTransition(opacity: animation, child: child),
                 child: Row(
                   children: [
                     const Icon(Icons.sort, size: 17),
@@ -650,7 +739,9 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
         leading: const Icon(Icons.ac_unit, size: 20),
         initiallyExpanded: _getInitExpand(ss.temps.devices.length),
         childrenPadding: const EdgeInsets.only(bottom: 7),
-        children: ss.temps.devices.map((key) => _buildTemperatureItem(key, ss.temps.get(key))).toList(),
+        children: ss.temps.devices
+            .map((key) => _buildTemperatureItem(key, ss.temps.get(key)))
+            .toList(),
       ),
     );
   }
@@ -698,10 +789,16 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('${battery.name}', style: UIs.text15),
-              Text('${battery.status.name} - ${battery.cycle}', style: UIs.text13Grey),
+              Text(
+                '${battery.status.name} - ${battery.cycle}',
+                style: UIs.text13Grey,
+              ),
             ],
           ),
-          Text('${battery.percent?.toStringAsFixed(0)}%', style: UIs.text13Grey),
+          Text(
+            '${battery.percent?.toStringAsFixed(0)}%',
+            style: UIs.text13Grey,
+          ),
         ],
       ),
     );
@@ -807,7 +904,8 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 277),
       child: Text(key: key, text, style: style, textScaler: _textFactor),
-      transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+      transitionBuilder: (child, animation) =>
+          FadeTransition(opacity: animation, child: child),
     );
   }
 }

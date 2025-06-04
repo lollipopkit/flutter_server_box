@@ -9,6 +9,7 @@ import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/nvdia.dart';
 import 'package:server_box/data/model/server/sensors.dart';
+import 'package:server_box/data/model/server/disk_smart.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/temp.dart';
@@ -19,12 +20,7 @@ class Server {
   SSHClient? client;
   ServerConn conn;
 
-  Server(
-    this.spi,
-    this.status,
-    this.conn, {
-    this.client,
-  });
+  Server(this.spi, this.status, this.conn, {this.client});
 
   bool get needGenClient => conn < ServerConn.connecting;
 
@@ -44,6 +40,7 @@ class ServerStatus {
   SystemType system;
   Err? err;
   DiskIO diskIO;
+  List<DiskSmart> diskSmart;
   List<NvidiaSmiItem>? nvidia;
   final List<Battery> batteries = [];
   final Map<StatusCmdType, String> more = {};
@@ -61,6 +58,7 @@ class ServerStatus {
     required this.temps,
     required this.system,
     required this.diskIO,
+    this.diskSmart = const [],
     this.err,
     this.nvidia,
     this.diskUsage,

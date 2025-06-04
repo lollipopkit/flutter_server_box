@@ -8,6 +8,7 @@ import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/nvdia.dart';
 import 'package:server_box/data/model/server/sensors.dart';
+import 'package:server_box/data/model/server/disk_smart.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/system.dart';
 
@@ -37,7 +38,8 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
 Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   final segments = req.segments;
 
-  final time = int.tryParse(StatusCmdType.time.find(segments)) ??
+  final time =
+      int.tryParse(StatusCmdType.time.find(segments)) ??
       DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
   try {
@@ -48,9 +50,7 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   }
 
   try {
-    final sys = _parseSysVer(
-      StatusCmdType.sys.find(segments),
-    );
+    final sys = _parseSysVer(StatusCmdType.sys.find(segments));
     if (sys != null) {
       req.ss.more[StatusCmdType.sys] = sys;
     }
@@ -126,6 +126,13 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   try {
     final diskio = DiskIO.parse(StatusCmdType.diskio.find(segments), time);
     req.ss.diskIO.update(diskio);
+  } catch (e, s) {
+    Loggers.app.warning(e, s);
+  }
+
+  try {
+    final smarts = DiskSmart.parse(StatusCmdType.diskSmart.find(segments));
+    req.ss.diskSmart = smarts;
   } catch (e, s) {
     Loggers.app.warning(e, s);
   }

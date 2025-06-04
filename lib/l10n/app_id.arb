@@ -37,6 +37,7 @@
   "disconnected": "Terputus",
   "disk": "Disk",
   "diskIgnorePath": "Abaikan jalan untuk disk",
+  "diskHealth": "Disk Health",
   "displayCpuIndex": "Tampilkan indeks CPU",
   "dl2Local": "Unduh {fileName} ke lokal?",
   "dockerEmptyRunningItems": "Tidak ada wadah yang sedang berjalan.\nHal ini dapat terjadi karena:\n- Pengguna instalasi Docker tidak sama dengan nama pengguna yang dikonfigurasi di dalam Aplikasi.\n- Variabel lingkungan DOCKER_HOST tidak terbaca dengan benar. Anda bisa mendapatkannya dengan menjalankan `echo $DOCKER_HOST` di terminal.",

@@ -37,6 +37,7 @@
   "disconnected": "Verbroken",
   "disk": "Schijf",
   "diskIgnorePath": "Pad negeren voor schijf",
+  "diskHealth": "Disk Health",
   "displayCpuIndex": "Toon de CPU-index",
   "dl2Local": "Download {fileName} naar lokaal?",
   "dockerEmptyRunningItems": "Er zijn geen actieve containers.\nDit kan komen doordat:\n- De Docker-installatiegebruiker niet overeenkomt met de gebruikersnaam die is geconfigureerd binnen de app.\n- De omgevingsvariabele DOCKER_HOST is niet correct gelezen. U kunt deze krijgen door `echo $DOCKER_HOST` in de terminal uit te voeren.",

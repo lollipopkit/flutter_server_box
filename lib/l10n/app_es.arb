@@ -37,6 +37,7 @@
   "disconnected": "Desconectado",
   "disk": "Disco",
   "diskIgnorePath": "Rutas de disco ignoradas",
+  "diskHealth": "Disk Health",
   "displayCpuIndex": "Muestre el índice de CPU",
   "dl2Local": "¿Descargar {fileName} a local?",
   "dockerEmptyRunningItems": "No hay contenedores en ejecución.\nEsto podría deberse a que:\n- El usuario con el que se instaló Docker es diferente al configurado en la app\n- La variable de entorno DOCKER_HOST no se ha leído correctamente. Puedes obtenerla ejecutando `echo $DOCKER_HOST` en el terminal.",

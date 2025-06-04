@@ -37,6 +37,7 @@
   "disconnected": "接続が切断されました",
   "disk": "ディスク",
   "diskIgnorePath": "無視されたディスクパス",
+  "diskHealth": "Disk Health",
   "displayCpuIndex": "CPUインデックスを表示する",
   "dl2Local": "{fileName}をローカルにダウンロードしますか？",
   "dockerEmptyRunningItems": "実行中のコンテナがありません。\nこれは次の理由による可能性があります：\n- Dockerのインストールユーザーとアプリ内の設定されたユーザー名が異なる\n- 環境変数DOCKER_HOSTが正しく読み込まれていない。ターミナルで`echo $DOCKER_HOST`を実行して取得できます。",

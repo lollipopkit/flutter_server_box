@@ -37,6 +37,7 @@
   "disconnected": "Bağlantı kesildi",
   "disk": "Disk",
   "diskIgnorePath": "Disk için yok sayılan yol",
+  "diskHealth": "Disk Health",
   "displayCpuIndex": "CPU indeksini göster",
   "dl2Local": "{fileName} dosyasını yerel cihaza indir?",
   "dockerEmptyRunningItems": "Çalışan konteyner yok.\nBunun nedeni şunlar olabilir:\n- Docker kurulum kullanıcısı, uygulamada yapılandırılan kullanıcı adıyla aynı değil.\n- DOCKER_HOST ortam değişkeni doğru okunmadı. Terminalde `echo $DOCKER_HOST` komutunu çalıştırarak kontrol edebilirsiniz.",
