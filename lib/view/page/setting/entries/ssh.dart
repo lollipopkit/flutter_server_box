@@ -9,6 +9,7 @@ extension _SSH on _AppSettingsPageState {
         _buildTermTheme(),
         _buildFont(),
         _buildTermFontSize(),
+        if (isDesktop) _buildDesktopTerminal(),
         _buildSSHVirtualKeyAutoOff(),
         if (isMobile) _buildSSHVirtKeys(),
       ].map((e) => CardX(child: e)).toList(),
@@ -37,15 +38,10 @@ extension _SSH on _AppSettingsPageState {
     return ListTile(
       leading: const Icon(MingCute.font_fill),
       title: Text(l10n.font),
-      trailing: _setting.fontPath.listenable().listenVal(
-        (val) {
-          final fontName = val.getFileName();
-          return Text(
-            fontName ?? libL10n.empty,
-            style: UIs.text15,
-          );
-        },
-      ),
+      trailing: _setting.fontPath.listenable().listenVal((val) {
+        final fontName = val.getFileName();
+        return Text(fontName ?? libL10n.empty, style: UIs.text15);
+      }),
       onTap: () {
         context.showRoundDialog(
           title: l10n.font,
@@ -61,7 +57,7 @@ extension _SSH on _AppSettingsPageState {
                 RNodes.app.notify();
               },
               child: Text(libL10n.clear),
-            )
+            ),
           ],
         );
       },
@@ -85,6 +81,42 @@ extension _SSH on _AppSettingsPageState {
     RNodes.app.notify();
   }
 
+  Widget _buildDesktopTerminal() {
+    return _setting.desktopTerminal.listenable().listenVal((val) {
+      return ListTile(
+        leading: const Icon(Icons.terminal),
+        title: TipText(l10n.terminal, l10n.desktopTerminalTip),
+        trailing: Text(
+          val,
+          style: UIs.text15,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        onTap: () async {
+          final ctrl = TextEditingController(text: val);
+          void onSave() {
+            _setting.desktopTerminal.put(ctrl.text.trim());
+            context.pop();
+          }
+
+          context.showRoundDialog<bool>(
+            title: libL10n.select,
+            child: Input(
+              controller: ctrl,
+              autoFocus: true,
+              label: l10n.terminal,
+              hint: 'x-terminal-emulator / gnome-terminal',
+              icon: Icons.edit,
+              suggestion: false,
+              onSubmitted: (_) => onSave(),
+            ),
+            actions: Btn.ok(onTap: onSave).toList,
+          );
+        },
+      );
+    });
+  }
+
   Widget _buildTermTheme() {
     String index2Str(int index) {
       switch (index) {
@@ -104,10 +136,7 @@ extension _SSH on _AppSettingsPageState {
       title: Text(l10n.theme),
       trailing: ValBuilder(
         listenable: _setting.termTheme.listenable(),
-        builder: (val) => Text(
-          index2Str(val),
-          style: UIs.text15,
-        ),
+        builder: (val) => Text(index2Str(val), style: UIs.text15),
       ),
       onTap: () async {
         final selected = await context.showPickSingleDialog(
@@ -140,7 +169,9 @@ extension _SSH on _AppSettingsPageState {
       //   style: UIs.textGrey,
       // ),
       title: TipText(
-          l10n.letterCache, '${l10n.letterCacheTip}\n${l10n.needRestart}'),
+        l10n.letterCache,
+        '${l10n.letterCacheTip}\n${l10n.needRestart}',
+      ),
       trailing: StoreSwitch(prop: _setting.letterCache),
     );
   }

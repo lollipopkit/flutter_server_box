@@ -115,6 +115,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteServers => 'Batch delete servers';
 
   @override
+  String get desktopTerminalTip =>
+      'Command used to open the terminal emulator when launching SSH sessions.';
+
+  @override
   String get dirEmpty => 'Make sure the folder is empty.';
 
   @override
@@ -175,6 +179,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get editorHighlightTip =>
       'The current code highlighting performance is not ideal and can be optionally turned off to improve.';
+
+  @override
+  String get emulator => 'Emulator';
 
   @override
   String get encode => 'Encode';

@@ -114,6 +114,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get deleteServers => 'Sunucuları toplu sil';
 
   @override
+  String get desktopTerminalTip =>
+      'SSH oturumları başlatılırken terminal öykünücüsünü açmak için kullanılan komut.';
+
+  @override
   String get dirEmpty => 'Klasörün boş olduğundan emin olun.';
 
   @override
@@ -174,6 +178,9 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get editorHighlightTip =>
       'Mevcut kod vurgulama performansı ideal değil ve isteğe bağlı olarak kapatılabilir.';
+
+  @override
+  String get emulator => 'Emülatör';
 
   @override
   String get encode => 'Kodla';

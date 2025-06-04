@@ -116,6 +116,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get deleteServers => 'Масове видалення серверів';
 
   @override
+  String get desktopTerminalTip =>
+      'Команда для відкриття емулятора термінала під час запуску SSH-сеансів.';
+
+  @override
   String get dirEmpty => 'Переконайтеся, що директорія пуста.';
 
   @override
@@ -176,6 +180,9 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get editorHighlightTip =>
       'Поточна підсвітка коду не ідеальна і може бути вимкнена для покращення.';
+
+  @override
+  String get emulator => 'Емулятор';
 
   @override
   String get encode => 'Кодувати';

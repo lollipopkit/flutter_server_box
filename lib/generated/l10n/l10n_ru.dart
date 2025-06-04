@@ -115,6 +115,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get deleteServers => 'Удалить серверы пакетно';
 
   @override
+  String get desktopTerminalTip =>
+      'Команда для открытия эмулятора терминала при запуске SSH-сеансов.';
+
+  @override
   String get dirEmpty => 'Пожалуйста, убедитесь, что папка пуста';
 
   @override
@@ -175,6 +179,9 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get editorHighlightTip =>
       'Текущая производительность подсветки кода неудовлетворительна, можно отключить для улучшения.';
+
+  @override
+  String get emulator => 'Эмулятор';
 
   @override
   String get encode => 'Кодировать';

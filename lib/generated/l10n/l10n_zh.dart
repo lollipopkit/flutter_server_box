@@ -108,6 +108,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deleteServers => '批量删除服务器';
 
   @override
+  String get desktopTerminalTip => '启动 SSH 连接所用的终端模拟器命令';
+
+  @override
   String get dirEmpty => '请确保文件夹为空';
 
   @override
@@ -166,6 +169,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get editorHighlightTip => '目前的代码高亮性能较为糟糕，可以选择关闭以改善。';
+
+  @override
+  String get emulator => '模拟器';
 
   @override
   String get encode => '编码';
@@ -827,6 +833,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get deleteServers => '批量刪除伺服器';
 
   @override
+  String get desktopTerminalTip => '啟動 SSH 連線時用於打開終端機模擬器的指令。';
+
+  @override
   String get dirEmpty => '請確保資料夾為空';
 
   @override
@@ -885,6 +894,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get editorHighlightTip => '目前的代碼高亮性能較為糟糕，可以選擇關閉以改善。';
+
+  @override
+  String get emulator => '模擬器';
 
   @override
   String get encode => '編碼';

@@ -115,6 +115,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get deleteServers => 'Penghapusan server secara batch';
 
   @override
+  String get desktopTerminalTip =>
+      'Perintah yang digunakan untuk membuka emulator terminal saat memulai sesi SSH.';
+
+  @override
   String get dirEmpty => 'Pastikan dir kosong.';
 
   @override
@@ -175,6 +179,9 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get editorHighlightTip =>
       'Performa penyorotan kode saat ini lebih buruk, dan dapat dimatikan secara opsional untuk perbaikan.';
+
+  @override
+  String get emulator => 'Emulator';
 
   @override
   String get encode => 'Menyandi';

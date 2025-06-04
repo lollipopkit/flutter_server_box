@@ -115,6 +115,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get deleteServers => 'Servers batchgewijs verwijderen';
 
   @override
+  String get desktopTerminalTip =>
+      'Opdracht die wordt gebruikt om de terminalemulator te openen bij het starten van SSH-sessies.';
+
+  @override
   String get dirEmpty => 'Zorg ervoor dat de map leeg is.';
 
   @override
@@ -175,6 +179,9 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get editorHighlightTip =>
       'De huidige codehighlighting-prestaties zijn slechter en kunnen optioneel worden uitgeschakeld om te verbeteren.';
+
+  @override
+  String get emulator => 'Emulator';
 
   @override
   String get encode => 'Coderen';

@@ -116,6 +116,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get deleteServers => 'Supprimer des serveurs en lot';
 
   @override
+  String get desktopTerminalTip =>
+      'Commande utilisée pour ouvrir l’émulateur de terminal lors du lancement de sessions SSH.';
+
+  @override
   String get dirEmpty => 'Assurez-vous que le répertoire est vide.';
 
   @override
@@ -176,6 +180,9 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get editorHighlightTip =>
       'La performance actuelle de mise en surbrillance du code est pire et peut être désactivée en option pour s\'améliorer.';
+
+  @override
+  String get emulator => 'Émulateur';
 
   @override
   String get encode => 'Encoder';

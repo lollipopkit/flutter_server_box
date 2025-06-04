@@ -73,14 +73,20 @@ class SettingStore extends HiveStore {
   late final locale = propertyDefault('locale', '');
 
   // SSH virtual key (ctrl | alt) auto turn off
-  late final sshVirtualKeyAutoOff = propertyDefault('sshVirtualKeyAutoOff', true);
+  late final sshVirtualKeyAutoOff = propertyDefault(
+    'sshVirtualKeyAutoOff',
+    true,
+  );
 
   late final editorFontSize = propertyDefault('editorFontSize', 12.5);
 
   // Editor theme
   late final editorTheme = propertyDefault('editorTheme', Defaults.editorTheme);
 
-  late final editorDarkTheme = propertyDefault('editorDarkTheme', Defaults.editorDarkTheme);
+  late final editorDarkTheme = propertyDefault(
+    'editorDarkTheme',
+    Defaults.editorDarkTheme,
+  );
 
   late final fullScreen = propertyDefault('fullScreen', false);
 
@@ -110,20 +116,29 @@ class SettingStore extends HiveStore {
   );
 
   // Only valid on iOS
-  late final autoUpdateHomeWidget = propertyDefault('autoUpdateHomeWidget', isIOS);
+  late final autoUpdateHomeWidget = propertyDefault(
+    'autoUpdateHomeWidget',
+    isIOS,
+  );
 
   late final autoCheckAppUpdate = propertyDefault('autoCheckAppUpdate', true);
 
   /// Display server tab function buttons on the bottom of each server card if [true]
   ///
   /// Otherwise, display them on the top of server detail page
-  late final moveServerFuncs = propertyDefault('moveOutServerTabFuncBtns', false);
+  late final moveServerFuncs = propertyDefault(
+    'moveOutServerTabFuncBtns',
+    false,
+  );
 
   /// Whether use `rm -r` to delete directory on SFTP
   late final sftpRmrDir = propertyDefault('sftpRmrDir', false);
 
   /// Whether use system's primary color as the app's primary color
-  late final useSystemPrimaryColor = propertyDefault('useSystemPrimaryColor', false);
+  late final useSystemPrimaryColor = propertyDefault(
+    'useSystemPrimaryColor',
+    false,
+  );
 
   /// Only valid on iOS / Android / Windows
   late final useBioAuth = propertyDefault('useBioAuth', false);
@@ -135,7 +150,10 @@ class SettingStore extends HiveStore {
   late final sftpOpenLastPath = propertyDefault('sftpOpenLastPath', true);
 
   /// Show folders first in SFTP file browser
-  late final sftpShowFoldersFirst = propertyDefault('sftpShowFoldersFirst', true);
+  late final sftpShowFoldersFirst = propertyDefault(
+    'sftpShowFoldersFirst',
+    true,
+  );
 
   /// Show tip of suspend
   late final showSuspendTip = propertyDefault('showSuspendTip', true);
@@ -161,7 +179,10 @@ class SettingStore extends HiveStore {
   late final containerParseStat = propertyDefault('containerParseStat', true);
 
   /// Auto refresh container status
-  late final contaienrAutoRefresh = propertyDefault('contaienrAutoRefresh', true);
+  late final contaienrAutoRefresh = propertyDefault(
+    'contaienrAutoRefresh',
+    true,
+  );
 
   /// Use double column servers page on Desktop
   late final doubleColumnServersPage = propertyDefault(
@@ -219,7 +240,8 @@ class SettingStore extends HiveStore {
   /// Record the position and size of the window.
   late final windowState = property<WindowState>(
     'windowState',
-    fromObj: (raw) => WindowState.fromJson(jsonDecode(raw as String) as Map<String, dynamic>),
+    fromObj: (raw) =>
+        WindowState.fromJson(jsonDecode(raw as String) as Map<String, dynamic>),
     toObj: (state) => state == null ? null : jsonEncode(state.toJson()),
   );
 
@@ -230,6 +252,12 @@ class SettingStore extends HiveStore {
   /// Set it to `$EDITOR`, `vim` and etc. to use remote system editor in SSH terminal.
   /// Set it empty to use local editor GUI.
   late final sftpEditor = propertyDefault('sftpEditor', '');
+
+  /// Preferred terminal emulator command on desktop
+  late final desktopTerminal = propertyDefault(
+    'desktopTerminal',
+    'x-terminal-emulator',
+  );
 
   /// Run foreground service on Android, if the SSH terminal is running
   late final fgService = propertyDefault('fgService', false);
