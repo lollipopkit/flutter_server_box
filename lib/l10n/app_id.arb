@@ -36,6 +36,7 @@
   "dirEmpty": "Pastikan dir kosong.",
   "disconnected": "Terputus",
   "disk": "Disk",
+  "diskHealth": "Kesehatan disk",
   "diskIgnorePath": "Abaikan jalan untuk disk",
   "displayCpuIndex": "Tampilkan indeks CPU",
   "dl2Local": "Unduh {fileName} ke lokal?",

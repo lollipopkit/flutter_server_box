@@ -36,6 +36,7 @@
   "dirEmpty": "Assurez-vous que le répertoire est vide.",
   "disconnected": "Déconnecté",
   "disk": "Disque",
+  "diskHealth": "Santé du disque",
   "diskIgnorePath": "Chemin à ignorer pour le disque",
   "displayCpuIndex": "Afficher l'index CPU",
   "dl2Local": "Télécharger {fileName} localement ?",

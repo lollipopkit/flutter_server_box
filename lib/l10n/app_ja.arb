@@ -36,6 +36,7 @@
   "dirEmpty": "フォルダーが空であることを確認してください",
   "disconnected": "接続が切断されました",
   "disk": "ディスク",
+  "diskHealth": "ディスクの健康状態",
   "diskIgnorePath": "無視されたディスクパス",
   "displayCpuIndex": "CPUインデックスを表示する",
   "dl2Local": "{fileName}をローカルにダウンロードしますか？",

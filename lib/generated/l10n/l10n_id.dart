@@ -128,6 +128,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get disk => 'Disk';
 
   @override
+  String get diskHealth => 'Kesehatan disk';
+
+  @override
   String get diskIgnorePath => 'Abaikan jalan untuk disk';
 
   @override

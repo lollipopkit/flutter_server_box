@@ -129,6 +129,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get disk => 'Диск';
 
   @override
+  String get diskHealth => 'Стан диска';
+
+  @override
   String get diskIgnorePath => 'Ігнорувати шлях для диска';
 
   @override

@@ -36,6 +36,7 @@
   "dirEmpty": "Stelle sicher, dass der Ordner leer ist.",
   "disconnected": "Disconnected",
   "disk": "Festplatte",
+  "diskHealth": "Festplattengesundheit",
   "diskIgnorePath": "Pfad für Datenträger ignorieren",
   "displayCpuIndex": "Zeigen Sie den CPU-Index an",
   "dl2Local": "Datei \"{fileName}\" herunterladen?",

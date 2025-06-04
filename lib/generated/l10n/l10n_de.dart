@@ -129,6 +129,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get disk => 'Festplatte';
 
   @override
+  String get diskHealth => 'Festplattengesundheit';
+
+  @override
   String get diskIgnorePath => 'Pfad für Datenträger ignorieren';
 
   @override

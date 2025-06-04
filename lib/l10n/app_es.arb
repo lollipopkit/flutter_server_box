@@ -36,6 +36,7 @@
   "dirEmpty": "Asegúrate de que el directorio esté vacío",
   "disconnected": "Desconectado",
   "disk": "Disco",
+  "diskHealth": "Salud del disco",
   "diskIgnorePath": "Rutas de disco ignoradas",
   "displayCpuIndex": "Muestre el índice de CPU",
   "dl2Local": "¿Descargar {fileName} a local?",

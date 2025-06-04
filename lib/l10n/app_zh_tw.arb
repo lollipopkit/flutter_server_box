@@ -36,6 +36,7 @@
   "dirEmpty": "請確保資料夾為空",
   "disconnected": "連接斷開",
   "disk": "磁碟",
+  "diskHealth": "磁碟健康",
   "diskIgnorePath": "忽略的磁碟路徑",
   "displayCpuIndex": "顯示 CPU 索引",
   "dl2Local": "下載 {fileName} 到本地？",
