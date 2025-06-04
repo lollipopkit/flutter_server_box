@@ -11,6 +11,7 @@ import 'package:server_box/data/model/app/shell_func.dart';
 import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
+import 'package:server_box/data/model/server/disk_smart.dart';
 import 'package:server_box/data/model/server/dist.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/nvdia.dart';
@@ -43,6 +44,7 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
     _buildSwapView,
     _buildGpuView,
     _buildDiskView,
+    _buildDiskSmart,
     _buildNetView,
     _buildSensors,
     _buildTemperature,
@@ -147,7 +149,7 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
           return ExtendedImage.network(
             logoUrl,
             cache: true,
-            height: cons.maxHeight * 0.2,
+            height: cons.maxWidth * 0.3,
             width: cons.maxWidth,
           );
         },
@@ -561,6 +563,55 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
         ],
       ),
     );
+  }
+
+  Widget? _buildDiskSmart(Server si) {
+    final smarts = si.status.diskSmart;
+    if (smarts.isEmpty) return null;
+    return CardX(
+      child: ExpandTile(
+        title: Text(l10n.diskHealth),
+        leading: Icon(ServerDetailCards.smart.icon, size: 17),
+        childrenPadding: const EdgeInsets.only(bottom: 7),
+        initiallyExpanded: _getInitExpand(smarts.length),
+        children: smarts.map(_buildDiskSmartItem).toList(),
+      ),
+    );
+  }
+
+  Widget _buildDiskSmartItem(DiskSmart smart) {
+    final isPass = smart.healthy ?? false;
+    final statusText = isPass ? 'PASS' : 'FAIL';
+    final statusColor = isPass ? Colors.green : Colors.red;
+    final statusIcon = isPass
+        ? Icon(Icons.check_circle, color: Colors.green, size: 18)
+        : Icon(Icons.error, color: Colors.red, size: 18);
+
+    return ListTile(
+      dense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+      leading: statusIcon,
+      title: Text(smart.device, style: UIs.text13, textScaler: _textFactor),
+      trailing: Text(
+        statusText,
+        style: UIs.text13.copyWith(color: statusColor, fontWeight: FontWeight.bold),
+        textScaler: _textFactor,
+      ),
+      subtitle: _buildDiskSmartDetails(smart),
+    );
+  }
+
+  Widget? _buildDiskSmartDetails(DiskSmart smart) {
+    final details = <String>[];
+    
+    if (smart.model != null) details.add(smart.model!);
+    if (smart.serial != null) details.add('S/N: ${smart.serial}');
+    if (smart.temperature != null) details.add('${smart.temperature!.toStringAsFixed(1)}°C');
+    if (smart.powerOnHours != null) details.add('${smart.powerOnHours} hours');
+    
+    if (details.isEmpty) return null;
+    
+    return Text(details.join(' | '), style: UIs.text12, textScaler: _textFactor);
   }
 
   Widget? _buildNetView(Server si) {

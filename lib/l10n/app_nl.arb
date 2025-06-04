@@ -36,6 +36,7 @@
   "dirEmpty": "Zorg ervoor dat de map leeg is.",
   "disconnected": "Verbroken",
   "disk": "Schijf",
+  "diskHealth": "Schijfgezondheid",
   "diskIgnorePath": "Pad negeren voor schijf",
   "displayCpuIndex": "Toon de CPU-index",
   "dl2Local": "Download {fileName} naar lokaal?",

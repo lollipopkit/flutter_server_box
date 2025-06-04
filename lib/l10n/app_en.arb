@@ -36,6 +36,7 @@
   "dirEmpty": "Make sure the folder is empty.",
   "disconnected": "Disconnected",
   "disk": "Disk",
+  "diskHealth": "Disk Health",
   "diskIgnorePath": "Ignore path for disk",
   "displayCpuIndex": "Display CPU index",
   "dl2Local": "Download {fileName} to local?",

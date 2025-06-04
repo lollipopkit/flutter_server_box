@@ -9,8 +9,7 @@ enum ShellFunc {
   process,
   shutdown,
   reboot,
-  suspend,
-  ;
+  suspend;
 
   static const seperator = 'SrvBoxSep';
 
@@ -29,7 +28,9 @@ enum ShellFunc {
   /// Default is [scriptDirTmp]/[scriptFile], if this path is not accessible,
   /// it will be changed to [scriptDirHome]/[scriptFile].
   static String getScriptDir(String id) {
-    final customScriptDir = ServerProvider.pick(id: id)?.value.spi.custom?.scriptDir;
+    final customScriptDir = ServerProvider.pick(
+      id: id,
+    )?.value.spi.custom?.scriptDir;
     if (customScriptDir != null) return customScriptDir;
     return _scriptDirMap.putIfAbsent(id, () {
       return scriptDirTmp;
@@ -37,10 +38,10 @@ enum ShellFunc {
   }
 
   static void switchScriptDir(String id) => switch (_scriptDirMap[id]) {
-        scriptDirTmp => _scriptDirMap[id] = scriptDirHome,
-        scriptDirHome => _scriptDirMap[id] = scriptDirTmp,
-        _ => _scriptDirMap[id] = scriptDirHome,
-      };
+    scriptDirTmp => _scriptDirMap[id] = scriptDirHome,
+    scriptDirHome => _scriptDirMap[id] = scriptDirTmp,
+    _ => _scriptDirMap[id] = scriptDirHome,
+  };
 
   static String getScriptPath(String id) {
     return '${getScriptDir(id)}/$scriptFile';
@@ -57,13 +58,13 @@ chmod 755 $scriptPath
   }
 
   String get flag => switch (this) {
-        ShellFunc.process => 'p',
-        ShellFunc.shutdown => 'sd',
-        ShellFunc.reboot => 'r',
-        ShellFunc.suspend => 'sp',
-        ShellFunc.status => 's',
-        // ShellFunc.docker=> 'd',
-      };
+    ShellFunc.process => 'p',
+    ShellFunc.shutdown => 'sd',
+    ShellFunc.reboot => 'r',
+    ShellFunc.suspend => 'sp',
+    ShellFunc.status => 's',
+    // ShellFunc.docker=> 'd',
+  };
 
   String exec(String id) => 'sh ${getScriptPath(id)} -$flag';
 
@@ -94,14 +95,14 @@ if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 else
 \t${BSDStatusCmdType.values.map((e) => e.cmd).join(cmdDivider)}
 fi''';
-//       case ShellFunc.docker:
-//         return '''
-// result=\$(docker version 2>&1 | grep "permission denied")
-// if [ "\$result" != "" ]; then
-// \t${_dockerCmds.join(_cmdDivider)}
-// else
-// \t${_dockerCmds.map((e) => "sudo -S $e").join(_cmdDivider)}
-// fi''';
+      //       case ShellFunc.docker:
+      //         return '''
+      // result=\$(docker version 2>&1 | grep "permission denied")
+      // if [ "\$result" != "" ]; then
+      // \t${_dockerCmds.join(_cmdDivider)}
+      // else
+      // \t${_dockerCmds.map((e) => "sudo -S $e").join(_cmdDivider)}
+      // fi''';
       case ShellFunc.process:
         return '''
 if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
@@ -162,7 +163,9 @@ exec 2>/dev/null
     // Write each func
     for (final func in values) {
       final customCmdsStr = () {
-        if (func == ShellFunc.status && customCmds != null && customCmds.isNotEmpty) {
+        if (func == ShellFunc.status &&
+            customCmds != null &&
+            customCmds.isNotEmpty) {
           return '$cmdDivider\n\t${customCmds.values.join(cmdDivider)}';
         }
         return '';
@@ -209,17 +212,21 @@ enum StatusCmdType {
   cpu._('cat /proc/stat | grep cpu'),
   uptime._('uptime'),
   conn._('cat /proc/net/snmp'),
-  disk._('lsblk --bytes --json --output FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID'),
+  disk._(
+    'lsblk --bytes --json --output FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID',
+  ),
   mem._("cat /proc/meminfo | grep -E 'Mem|Swap'"),
   tempType._('cat /sys/class/thermal/thermal_zone*/type'),
   tempVal._('cat /sys/class/thermal/thermal_zone*/temp'),
   host._('cat /etc/hostname'),
   diskio._('cat /proc/diskstats'),
-  battery._('for f in /sys/class/power_supply/*/uevent; do cat "\$f"; echo; done'),
+  battery._(
+    'for f in /sys/class/power_supply/*/uevent; do cat "\$f"; echo; done',
+  ),
   nvidia._('nvidia-smi -q -x'),
   sensors._('sensors'),
-  cpuBrand._('cat /proc/cpuinfo | grep "model name"'),
-  ;
+  diskSmart._('for d in \$(lsblk -dn -o KNAME); do smartctl -j /dev/\$d; echo; done'),
+  cpuBrand._('cat /proc/cpuinfo | grep "model name"');
 
   final String cmd;
 
@@ -238,8 +245,7 @@ enum BSDStatusCmdType {
   mem._('top -l 1 | grep PhysMem'),
   //temp,
   host._('hostname'),
-  cpuBrand._('sysctl -n machdep.cpu.brand_string'),
-  ;
+  cpuBrand._('sysctl -n machdep.cpu.brand_string');
 
   final String cmd;
 
@@ -248,10 +254,10 @@ enum BSDStatusCmdType {
 
 extension StatusCmdTypeX on StatusCmdType {
   String get i18n => switch (this) {
-        StatusCmdType.sys => l10n.system,
-        StatusCmdType.host => l10n.host,
-        StatusCmdType.uptime => l10n.uptime,
-        StatusCmdType.battery => l10n.battery,
-        final val => val.name,
-      };
+    StatusCmdType.sys => l10n.system,
+    StatusCmdType.host => l10n.host,
+    StatusCmdType.uptime => l10n.uptime,
+    StatusCmdType.battery => l10n.battery,
+    final val => val.name,
+  };
 }

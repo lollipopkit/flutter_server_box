@@ -335,6 +335,12 @@ abstract class AppLocalizations {
   /// **'Disk'**
   String get disk;
 
+  /// No description provided for @diskHealth.
+  ///
+  /// In en, this message translates to:
+  /// **'Disk Health'**
+  String get diskHealth;
+
   /// No description provided for @diskIgnorePath.
   ///
   /// In en, this message translates to:

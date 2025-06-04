@@ -120,6 +120,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get disk => '磁盘';
 
   @override
+  String get diskHealth => '磁盘健康';
+
+  @override
   String get diskIgnorePath => '忽略的磁盘路径';
 
   @override
@@ -843,6 +846,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get disk => '磁碟';
+
+  @override
+  String get diskHealth => '磁碟健康';
 
   @override
   String get diskIgnorePath => '忽略的磁碟路徑';

@@ -36,6 +36,7 @@
   "dirEmpty": "Certifique-se de que a pasta está vazia",
   "disconnected": "Desconectado",
   "disk": "Disco",
+  "diskHealth": "Saúde do disco",
   "diskIgnorePath": "Caminhos de disco ignorados",
   "displayCpuIndex": "Exiba o índice de CPU",
   "dl2Local": "Baixar {fileName} para o local?",

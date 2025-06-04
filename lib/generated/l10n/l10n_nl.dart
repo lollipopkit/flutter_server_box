@@ -128,6 +128,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get disk => 'Schijf';
 
   @override
+  String get diskHealth => 'Schijfgezondheid';
+
+  @override
   String get diskIgnorePath => 'Pad negeren voor schijf';
 
   @override

@@ -36,6 +36,7 @@
   "dirEmpty": "Klasörün boş olduğundan emin olun.",
   "disconnected": "Bağlantı kesildi",
   "disk": "Disk",
+  "diskHealth": "Disk sağlığı",
   "diskIgnorePath": "Disk için yok sayılan yol",
   "displayCpuIndex": "CPU indeksini göster",
   "dl2Local": "{fileName} dosyasını yerel cihaza indir?",

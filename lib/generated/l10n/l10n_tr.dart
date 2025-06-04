@@ -127,6 +127,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get disk => 'Disk';
 
   @override
+  String get diskHealth => 'Disk sağlığı';
+
+  @override
   String get diskIgnorePath => 'Disk için yok sayılan yol';
 
   @override
