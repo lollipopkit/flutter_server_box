@@ -564,6 +564,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshVirtualKeyAutoOff => '虚拟按键自动切换';
 
   @override
+  String get sshBgImage => 'SSH 页背景';
+
+  @override
+  String get sshBgOpacity => '背景透明度';
+
+  @override
+  String get sshBlurRadius => '模糊半径';
+
+  @override
   String get start => '开始';
 
   @override
@@ -1287,6 +1296,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sshVirtualKeyAutoOff => '虛擬按鍵自動切換';
+
+  @override
+  String get sshBgImage => 'SSH 頁背景';
+
+  @override
+  String get sshBgOpacity => '背景透明度';
+
+  @override
+  String get sshBlurRadius => '模糊半徑';
 
   @override
   String get start => '開始';

@@ -595,6 +595,15 @@ class AppLocalizationsFr extends AppLocalizations {
       'Activation automatique des touches virtuelles';
 
   @override
+  String get sshBgImage => 'SSH page background';
+
+  @override
+  String get sshBgOpacity => 'Background opacity';
+
+  @override
+  String get sshBlurRadius => 'Blur radius';
+
+  @override
   String get start => 'Démarrer';
 
   @override

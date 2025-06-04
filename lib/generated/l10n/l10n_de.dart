@@ -592,6 +592,15 @@ class AppLocalizationsDe extends AppLocalizations {
       'Automatische Umschaltung der virtuellen Tasten';
 
   @override
+  String get sshBgImage => 'SSH page background';
+
+  @override
+  String get sshBgOpacity => 'Background opacity';
+
+  @override
+  String get sshBlurRadius => 'Blur radius';
+
+  @override
   String get start => 'Start';
 
   @override

@@ -572,6 +572,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sshVirtualKeyAutoOff => '仮想キーの自動オフ';
 
   @override
+  String get sshBgImage => 'SSH page background';
+
+  @override
+  String get sshBgOpacity => 'Background opacity';
+
+  @override
+  String get sshBlurRadius => 'Blur radius';
+
+  @override
   String get start => '開始';
 
   @override

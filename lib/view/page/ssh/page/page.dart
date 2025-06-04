@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'dart:ui';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
@@ -144,6 +146,8 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin, Af
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final bgImage = Stores.setting.sshBgImage.fetch();
+    final hasBg = bgImage.isNotEmpty && File(bgImage).existsSync();
     Widget child = PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -156,7 +160,8 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin, Af
           actions: [_buildCopyBtn, _buildKillBtn],
           centerTitle: false,
         ),
-        backgroundColor: _terminalTheme.background,
+        backgroundColor:
+            hasBg ? Colors.transparent : _terminalTheme.background,
         body: _buildBody(),
         bottomNavigationBar: isDesktop ? null : _buildBottom(),
       ),
@@ -173,31 +178,64 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin, Af
 
   Widget _buildBody() {
     final letterCache = Stores.setting.letterCache.fetch();
-    return SizedBox(
-      height: _media.size.height - _virtKeysHeight - _media.padding.bottom - _media.padding.top,
-      child: Padding(
-        padding: EdgeInsets.only(
-          // top: widget.args.notFromTab ? CustomAppBar.sysStatusBarHeight : 0,
-          left: _horizonPadding,
-          right: _horizonPadding,
+    final bgImage = Stores.setting.sshBgImage.fetch();
+    final opacity = Stores.setting.sshBgOpacity.fetch();
+    final blur = Stores.setting.sshBlurRadius.fetch();
+    final file = File(bgImage);
+    final hasBg = bgImage.isNotEmpty && file.existsSync();
+    final theme = hasBg
+        ? _terminalTheme.copyWith(background: Colors.transparent)
+        : _terminalTheme;
+    final children = <Widget>[];
+    if (hasBg) {
+      children.add(Positioned.fill(
+        child: Image.file(
+          file,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const SizedBox(),
         ),
-        child: TerminalView(
-          _terminal,
-          key: _termKey,
-          controller: _terminalController,
-          keyboardType: TextInputType.text,
-          enableSuggestions: letterCache,
-          textStyle: _terminalStyle,
-          theme: _terminalTheme,
-          deleteDetection: isMobile,
-          autofocus: false,
-          keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,
-          showToolbar: isMobile,
-          viewOffset: Offset(2 * _horizonPadding, CustomAppBar.sysStatusBarHeight),
-          hideScrollBar: false,
-          focusNode: widget.args.focusNode,
+      ));
+      if (blur > 0) {
+        children.add(Positioned.fill(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+            child: const SizedBox(),
+          ),
+        ));
+      }
+      children.add(Positioned.fill(
+        child: ColoredBox(
+          color: _terminalTheme.background.withOpacity(opacity),
         ),
+      ));
+    }
+    children.add(Padding(
+      padding: EdgeInsets.only(
+        left: _horizonPadding,
+        right: _horizonPadding,
       ),
+      child: TerminalView(
+        _terminal,
+        key: _termKey,
+        controller: _terminalController,
+        keyboardType: TextInputType.text,
+        enableSuggestions: letterCache,
+        textStyle: _terminalStyle,
+        theme: theme,
+        deleteDetection: isMobile,
+        autofocus: false,
+        keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,
+        showToolbar: isMobile,
+        viewOffset: Offset(2 * _horizonPadding, CustomAppBar.sysStatusBarHeight),
+        hideScrollBar: false,
+        focusNode: widget.args.focusNode,
+      ),
+    ));
+
+    return SizedBox(
+      height:
+          _media.size.height - _virtKeysHeight - _media.padding.bottom - _media.padding.top,
+      child: Stack(children: children),
     );
   }
 

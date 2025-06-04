@@ -9,6 +9,9 @@ extension _SSH on _AppSettingsPageState {
         _buildTermTheme(),
         _buildFont(),
         _buildTermFontSize(),
+        _buildSshBgImage(),
+        _buildSshBgOpacity(),
+        _buildSshBlurRadius(),
         if (isDesktop) _buildDesktopTerminal(),
         _buildSSHVirtualKeyAutoOff(),
         if (isMobile) _buildSSHVirtKeys(),
@@ -75,6 +78,25 @@ extension _SSH on _AppSettingsPageState {
       final fontFile = File(path);
       await fontFile.copy(Paths.font);
       _setting.fontPath.put(Paths.font);
+    }
+
+    context.pop();
+    RNodes.app.notify();
+  }
+
+  Future<void> _pickBgImage() async {
+    final path = await Pfs.pickFilePath();
+    if (path == null) return;
+
+    if (isIOS) {
+      _setting.sshBgImage.put(path);
+    } else {
+      final file = File(path);
+      final extIndex = path.lastIndexOf('.');
+      final ext = extIndex != -1 ? path.substring(extIndex) : '';
+      final newPath = Paths.img.joinPath('ssh_bg$ext');
+      await file.copy(newPath);
+      _setting.sshBgImage.put(newPath);
     }
 
     context.pop();
@@ -173,6 +195,108 @@ extension _SSH on _AppSettingsPageState {
         '${l10n.letterCacheTip}\n${l10n.needRestart}',
       ),
       trailing: StoreSwitch(prop: _setting.letterCache),
+    );
+  }
+
+  Widget _buildSshBgImage() {
+    return ListTile(
+      leading: const Icon(Icons.image),
+      title: Text(l10n.sshBgImage),
+      trailing: _setting.sshBgImage.listenable().listenVal((val) {
+        final name = val.getFileName();
+        return Text(name ?? libL10n.empty, style: UIs.text15);
+      }),
+      onTap: () {
+        context.showRoundDialog(
+          title: l10n.sshBgImage,
+          actions: [
+            TextButton(
+              onPressed: () async => await _pickBgImage(),
+              child: Text(libL10n.file),
+            ),
+            TextButton(
+              onPressed: () {
+                _setting.sshBgImage.delete();
+                context.pop();
+                RNodes.app.notify();
+              },
+              child: Text(libL10n.clear),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildSshBgOpacity() {
+    final ctrl =
+        TextEditingController(text: _setting.sshBgOpacity.fetch().toString());
+    void onSave(String s) {
+      final val = double.tryParse(s);
+      if (val == null) {
+        context.showSnackBar(libL10n.fail);
+        return;
+      }
+      _setting.sshBgOpacity.put(val.clamp(0.0, 1.0));
+      context.pop();
+    }
+
+    return ListTile(
+      leading: const Icon(Icons.opacity),
+      title: Text(l10n.sshBgOpacity),
+      trailing: ValBuilder(
+        listenable: _setting.sshBgOpacity.listenable(),
+        builder: (val) => Text(val.toString(), style: UIs.text15),
+      ),
+      onTap: () => context.showRoundDialog(
+        title: l10n.sshBgOpacity,
+        child: Input(
+          controller: ctrl,
+          autoFocus: true,
+          type: TextInputType.number,
+          hint: '0.3',
+          icon: Icons.opacity,
+          suggestion: false,
+          onSubmitted: onSave,
+        ),
+        actions: Btn.ok(onTap: () => onSave(ctrl.text)).toList,
+      ),
+    );
+  }
+
+  Widget _buildSshBlurRadius() {
+    final ctrl =
+        TextEditingController(text: _setting.sshBlurRadius.fetch().toString());
+    void onSave(String s) {
+      final val = double.tryParse(s);
+      if (val == null) {
+        context.showSnackBar(libL10n.fail);
+        return;
+      }
+      _setting.sshBlurRadius.put(val);
+      context.pop();
+    }
+
+    return ListTile(
+      leading: const Icon(Icons.blur_on),
+      title: Text(l10n.sshBlurRadius),
+      trailing: ValBuilder(
+        listenable: _setting.sshBlurRadius.listenable(),
+        builder: (val) => Text(val.toString(), style: UIs.text15),
+      ),
+      onTap: () => context.showRoundDialog(
+        title: l10n.sshBlurRadius,
+        child: Input(
+          controller: ctrl,
+          autoFocus: true,
+          type: TextInputType.number,
+          hint: '0',
+          icon: Icons.blur_on,
+          suggestion: false,
+          onSubmitted: onSave,
+        ),
+        actions: Btn.ok(onTap: () => onSave(ctrl.text)).toList,
+      ),
     );
   }
 }

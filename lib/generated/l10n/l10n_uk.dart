@@ -594,6 +594,15 @@ class AppLocalizationsUk extends AppLocalizations {
       'Автоматичне переключення віртуальних клавіш';
 
   @override
+  String get sshBgImage => 'SSH page background';
+
+  @override
+  String get sshBgOpacity => 'Background opacity';
+
+  @override
+  String get sshBlurRadius => 'Blur radius';
+
+  @override
   String get start => 'Старт';
 
   @override
