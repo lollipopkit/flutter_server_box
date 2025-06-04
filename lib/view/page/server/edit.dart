@@ -8,11 +8,10 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/server.dart';
-import 'package:server_box/data/model/server/wol_cfg.dart';
-import 'package:server_box/data/provider/server.dart';
-
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/provider/private_key.dart';
+import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
 

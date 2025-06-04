@@ -246,8 +246,8 @@ final class _PvePageState extends State<PvePage> {
         ],
       ),
       UIs.height7,
-      AvgWidthRow(
-        width: _media.size.width,
+      AvgSize(
+        totalSize: _media.size.width,
         padding: _kHorziPadding * 2 + 26,
         children: [
           PercentCircle(percent: (item.cpu / item.maxcpu) * 100),
@@ -323,8 +323,8 @@ final class _PvePageState extends State<PvePage> {
         ],
       ),
       UIs.height7,
-      AvgWidthRow(
-        width: _media.size.width,
+      AvgSize(
+        totalSize: _media.size.width,
         padding: _kHorziPadding * 2 + 26,
         children: [
           PercentCircle(percent: (item.cpu / item.maxcpu) * 100),

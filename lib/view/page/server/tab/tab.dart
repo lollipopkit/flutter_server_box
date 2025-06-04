@@ -10,26 +10,25 @@ import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/route.dart';
+import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
+import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
+import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/edit.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/widget/percent_circle.dart';
-
-import 'package:server_box/data/model/app/net_view.dart';
-import 'package:server_box/data/model/server/server.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
 
-part 'top_bar.dart';
 part 'card_stat.dart';
-part 'utils.dart';
 part 'content.dart';
 part 'landscape.dart';
+part 'top_bar.dart';
+part 'utils.dart';
 
 class ServerPage extends StatefulWidget {
   const ServerPage({super.key});
@@ -141,10 +140,7 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
     });
   }
 
-  Widget _buildBodySmall({
-    required List<String> filtered,
-    EdgeInsets? padding = const EdgeInsets.fromLTRB(0, 0, 5, 7),
-  }) {
+  Widget _buildBodySmall({required List<String> filtered}) {
     if (filtered.isEmpty) {
       return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
     }
@@ -153,6 +149,9 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
       builder: (_, cons) {
         // Calculate number of columns based on available width
         final columnsCount = math.max(1, (cons.maxWidth / UIs.columnWidth).floor());
+        final padding = columnsCount > 1
+            ? const EdgeInsets.fromLTRB(0, 0, 5, 7)
+            : const EdgeInsets.fromLTRB(7, 0, 7, 7);
 
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,10 +175,7 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
                   final vnode = ServerProvider.pick(id: serversInThisColumn[index]);
                   if (vnode == null) return UIs.placeholder;
 
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 0),
-                    child: vnode.listenVal(_buildEachServerCard),
-                  );
+                  return vnode.listenVal(_buildEachServerCard);
                 },
               ),
             );
@@ -190,9 +186,7 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
   }
 
   Widget _buildEachServerCard(Server? srv) {
-    if (srv == null) {
-      return UIs.placeholder;
-    }
+    if (srv == null) return UIs.placeholder;
 
     return CardX(
       key: Key(srv.spi.id + _tag.value),

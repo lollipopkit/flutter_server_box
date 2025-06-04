@@ -8,12 +8,11 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/menu/base.dart';
 import 'package:server_box/data/model/app/menu/container.dart';
 import 'package:server_box/data/model/container/image.dart';
-import 'package:server_box/data/model/container/type.dart';
-import 'package:server_box/data/res/store.dart';
-
 import 'package:server_box/data/model/container/ps.dart';
+import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/container.dart';
+import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 
 class ContainerPage extends StatefulWidget {

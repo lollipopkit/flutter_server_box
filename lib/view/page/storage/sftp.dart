@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/sftpfile.dart';
 import 'package:server_box/core/utils/comparator.dart';
@@ -19,8 +20,6 @@ import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/sftp_mission.dart';
 import 'package:server_box/view/widget/omit_start_text.dart';
 import 'package:server_box/view/widget/unix_perm.dart';
-
-import 'package:icons_plus/icons_plus.dart';
 
 final class SftpPageArgs {
   final Spi spi;
@@ -76,7 +75,7 @@ class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
 
     return Scaffold(
       appBar: CustomAppBar(
-        title: TwoLineText(up: 'SFTP', down: widget.args.spi.name),
+        title: Text(widget.args.spi.name),
         actions: children,
       ),
       body: _buildFileView(),

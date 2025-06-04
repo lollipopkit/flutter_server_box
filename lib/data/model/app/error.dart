@@ -1,5 +1,5 @@
-import 'package:server_box/core/extension/context/locale.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 
 enum SSHErrType {
   unknown,

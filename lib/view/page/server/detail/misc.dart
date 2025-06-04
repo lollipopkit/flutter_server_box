@@ -19,7 +19,7 @@ extension on _ServerDetailPageState {
     );
   }
 
-  void _nTapGpuProcessItem(NvidiaSmiMemProcess process) {
+  void _onTapGpuProcessItem(NvidiaSmiMemProcess process) {
     context.showRoundDialog(
       title: '${process.pid}',
       titleMaxLines: 1,
@@ -30,30 +30,18 @@ extension on _ServerDetailPageState {
           UIs.height13,
           Text('Memory: ${process.memory} MiB'),
           UIs.height13,
-          Text('Process: ${process.name}')
+          Text('Process: ${process.name}'),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => context.pop(),
-          child: Text(libL10n.close),
-        )
-      ],
+      actions: [TextButton(onPressed: () => context.pop(), child: Text(libL10n.close))],
     );
   }
 
   void _onTapCustomItem(MapEntry<String, String> cmd) {
     context.showRoundDialog(
       title: cmd.key,
-      child: SingleChildScrollView(
-        child: Text(cmd.value, style: UIs.text13Grey),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => context.pop(),
-          child: Text(libL10n.close),
-        ),
-      ],
+      child: SingleChildScrollView(child: Text(cmd.value, style: UIs.text13Grey)),
+      actions: [TextButton(onPressed: () => context.pop(), child: Text(libL10n.close))],
     );
   }
 
@@ -76,13 +64,18 @@ extension on _ServerDetailPageState {
     Pfs.copy(key);
     context.showSnackBar('${libL10n.copy} ${libL10n.success}');
   }
+
+  bool _getInitExpand(int len, [int? max]) {
+    if (!_collapse) return true;
+    if (_size.width > UIs.columnWidth) return true;
+    return len > 0 && len <= (max ?? 3);
+  }
 }
 
 enum _NetSortType {
   device,
   trans,
-  recv,
-  ;
+  recv;
 
   bool get isDevice => this == _NetSortType.device;
   bool get isIn => this == _NetSortType.recv;
@@ -117,68 +110,55 @@ Widget _buildLineChart(
   bool curve = false,
   int verticalInterval = 20,
 }) {
-  return LineChart(LineChartData(
-    lineTouchData: LineTouchData(
-      touchTooltipData: LineTouchTooltipData(
-        tooltipPadding: const EdgeInsets.all(5),
-        tooltipBorderRadius: BorderRadius.circular(8),
-        getTooltipItems: (List<LineBarSpot> touchedSpots) {
-          return touchedSpots.map((e) {
-            return LineTooltipItem(
-              '$tooltipPrefix${e.barIndex}: ${e.y.toStringAsFixed(2)}',
-              const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            );
-          }).toList();
+  return LineChart(
+    LineChartData(
+      lineTouchData: LineTouchData(
+        touchTooltipData: LineTouchTooltipData(
+          tooltipPadding: const EdgeInsets.all(5),
+          tooltipBorderRadius: BorderRadius.circular(8),
+          getTooltipItems: (List<LineBarSpot> touchedSpots) {
+            return touchedSpots.map((e) {
+              return LineTooltipItem(
+                '$tooltipPrefix${e.barIndex}: ${e.y.toStringAsFixed(2)}',
+                const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              );
+            }).toList();
+          },
+        ),
+        handleBuiltInTouches: true,
+      ),
+      gridData: FlGridData(
+        show: true,
+        drawVerticalLine: false,
+        horizontalInterval: verticalInterval.toDouble(),
+        getDrawingHorizontalLine: (value) {
+          return const FlLine(color: Color.fromARGB(43, 88, 91, 94), strokeWidth: 1);
         },
       ),
-      handleBuiltInTouches: true,
-    ),
-    gridData: FlGridData(
-      show: true,
-      drawVerticalLine: false,
-      horizontalInterval: verticalInterval.toDouble(),
-      getDrawingHorizontalLine: (value) {
-        return const FlLine(
-          color: Color.fromARGB(43, 88, 91, 94),
-          strokeWidth: 1,
-        );
-      },
-    ),
-    titlesData: FlTitlesData(
-      show: true,
-      rightTitles: const AxisTitles(
-        sideTitles: SideTitles(showTitles: false),
-      ),
-      topTitles: const AxisTitles(
-        sideTitles: SideTitles(showTitles: false),
-      ),
-      bottomTitles: const AxisTitles(
-        sideTitles: SideTitles(showTitles: false),
-      ),
-      leftTitles: AxisTitles(
-        sideTitles: SideTitles(
-          showTitles: true,
-          interval: 20,
-          getTitlesWidget: (val, meta) {
-            if (val % verticalInterval != 0) return UIs.placeholder;
-            if (val == 0) return const Text('0 %', style: UIs.text12Grey);
-            return Text(
-              val.toInt().toString(),
-              style: UIs.text12Grey,
-            );
-          },
-          reservedSize: 27,
+      titlesData: FlTitlesData(
+        show: true,
+        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        bottomTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        leftTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: true,
+            interval: 20,
+            getTitlesWidget: (val, meta) {
+              if (val % verticalInterval != 0) return UIs.placeholder;
+              if (val == 0) return const Text('0 %', style: UIs.text12Grey);
+              return Text(val.toInt().toString(), style: UIs.text12Grey);
+            },
+            reservedSize: 27,
+          ),
         ),
       ),
-    ),
-    borderData: FlBorderData(show: false),
-    minY: -1,
-    maxY: 101,
-    lineBarsData: spots
-        .map((e) => LineChartBarData(
+      borderData: FlBorderData(show: false),
+      minY: -1,
+      maxY: 101,
+      lineBarsData: spots
+          .map(
+            (e) => LineChartBarData(
               spots: e,
               isCurved: curve,
               barWidth: 2,
@@ -186,7 +166,9 @@ Widget _buildLineChart(
               color: UIs.primaryColor,
               dotData: const FlDotData(show: false),
               belowBarData: BarAreaData(show: false),
-            ))
-        .toList(),
-  ));
+            ),
+          )
+          .toList(),
+    ),
+  );
 }

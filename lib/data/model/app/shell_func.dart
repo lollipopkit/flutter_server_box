@@ -1,8 +1,7 @@
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/provider/server.dart';
-
-import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/model/server/system.dart';
+import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/res/build_data.dart';
 
 enum ShellFunc {
   status,

@@ -5,11 +5,10 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/provider/private_key.dart';
-import 'package:server_box/data/res/misc.dart';
-
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
+import 'package:server_box/data/provider/private_key.dart';
+import 'package:server_box/data/res/misc.dart';
 
 const _format = 'text/plain';
 
