@@ -3,16 +3,15 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
+import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/provider/server.dart';
-
-import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/store/server.dart';
 
-part 'server_private_info.g.dart';
 part 'server_private_info.freezed.dart';
+part 'server_private_info.g.dart';
 
 /// In the first version, it's called `ServerPrivateInfo` which was designed to
 /// store the private information of a server.

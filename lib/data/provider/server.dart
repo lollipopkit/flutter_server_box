@@ -1,4 +1,5 @@
 import 'dart:async';
+
 // import 'dart:io';
 
 import 'package:computer/computer.dart';
@@ -6,18 +7,17 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/sync.dart';
+import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
-import 'package:server_box/data/model/server/system.dart';
-import 'package:server_box/data/res/store.dart';
-
-import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/server_status_update_req.dart';
+import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/res/status.dart';
+import 'package:server_box/data/res/store.dart';
 
 class ServerProvider extends Provider {
   const ServerProvider._();

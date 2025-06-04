@@ -55,7 +55,7 @@ final class _SystemdPageState extends State<SystemdPage> {
               curve: Curves.fastEaseInToSlowEaseOut,
               height: isBusy ? 30 : 0,
               child: isBusy
-                  ? SizedLoading.small.paddingOnly(bottom: 7)
+                  ? SizedLoading.medium
                   : const SizedBox.shrink(),
             ),
           ),

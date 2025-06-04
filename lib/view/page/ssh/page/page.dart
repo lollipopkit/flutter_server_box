@@ -5,23 +5,25 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:provider/provider.dart';
+
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/core/utils/ssh_auth.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/provider/virtual_keyboard.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
+
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
-
-import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/model/ssh/virtual_key.dart';
-import 'package:server_box/data/res/terminal.dart';
 
 part 'init.dart';
 part 'keyboard.dart';
@@ -50,18 +52,12 @@ final class SshPageArgs {
 class SSHPage extends StatefulWidget {
   final SshPageArgs args;
 
-  const SSHPage({
-    super.key,
-    required this.args,
-  });
+  const SSHPage({super.key, required this.args});
 
   @override
   State<SSHPage> createState() => SSHPageState();
 
-  static const route = AppRouteArg<void, SshPageArgs>(
-    page: SSHPage.new,
-    path: '/ssh/page',
-  );
+  static const route = AppRouteArg<void, SshPageArgs>(page: SSHPage.new, path: '/ssh/page');
 }
 
 const _horizonPadding = 7.0;
@@ -155,6 +151,11 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin, Af
         _handleEscKeyOrBackButton();
       },
       child: Scaffold(
+        appBar: CustomAppBar(
+          title: Text(widget.args.spi.name),
+          actions: [_buildCopyBtn, _buildKillBtn],
+          centerTitle: false,
+        ),
         backgroundColor: _terminalTheme.background,
         body: _buildBody(),
         bottomNavigationBar: isDesktop ? null : _buildBottom(),
@@ -176,7 +177,7 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin, Af
       height: _media.size.height - _virtKeysHeight - _media.padding.bottom - _media.padding.top,
       child: Padding(
         padding: EdgeInsets.only(
-          top: widget.args.notFromTab ? CustomAppBar.sysStatusBarHeight : 0,
+          // top: widget.args.notFromTab ? CustomAppBar.sysStatusBarHeight : 0,
           left: _horizonPadding,
           right: _horizonPadding,
         ),
@@ -192,10 +193,7 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin, Af
           autofocus: false,
           keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,
           showToolbar: isMobile,
-          viewOffset: Offset(
-            2 * _horizonPadding,
-            CustomAppBar.sysStatusBarHeight,
-          ),
+          viewOffset: Offset(2 * _horizonPadding, CustomAppBar.sysStatusBarHeight),
           hideScrollBar: false,
           focusNode: widget.args.focusNode,
         ),
@@ -214,9 +212,11 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin, Af
           height: _virtKeysHeight,
           child: ChangeNotifierProvider(
             create: (_) => _keyboard,
-            builder: (_, __) => Consumer<VirtKeyProvider>(builder: (_, __, ___) {
-              return _buildVirtualKey();
-            }),
+            builder: (_, __) => Consumer<VirtKeyProvider>(
+              builder: (_, __, ___) {
+                return _buildVirtualKey();
+              },
+            ),
           ),
         ),
       ),
@@ -227,16 +227,11 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin, Af
     if (_horizonVirtKeys) {
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: Row(
-          children: _virtKeysList.expand((e) => e).map(_buildVirtKeyItem).toList(),
-        ),
+        child: Row(children: _virtKeysList.expand((e) => e).map(_buildVirtKeyItem).toList()),
       );
     }
     final rows = _virtKeysList.map((e) => Row(children: e.map(_buildVirtKeyItem).toList())).toList();
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: rows,
-    );
+    return Column(mainAxisSize: MainAxisSize.min, children: rows);
   }
 
   Widget _buildVirtKeyItem(VirtKey item) {
@@ -253,11 +248,7 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin, Af
     }
 
     final child = item.icon != null
-        ? Icon(
-            item.icon,
-            size: 17,
-            color: _isDark ? Colors.white : Colors.black,
-          )
+        ? Icon(item.icon, size: 17, color: _isDark ? Colors.white : Colors.black)
         : Text(
             item.text,
             style: TextStyle(
@@ -283,6 +274,30 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin, Af
         height: _virtKeysHeight / _virtKeysList.length,
         child: Center(child: child),
       ),
+    );
+  }
+
+  Widget get _buildCopyBtn {
+    return Btn.icon(
+      icon: Icon(MingCute.copy_2_fill),
+      onTap: () {
+        final selected = terminalSelected;
+        if (selected == null || selected.isEmpty) {
+          return;
+        }
+        Pfs.copy(selected);
+      },
+    );
+  }
+
+  Widget get _buildKillBtn {
+    return Btn.icon(
+      icon: Icon(MingCute.close_circle_fill),
+      onTap: () {
+        if (_client == null) return;
+        _client!.close();
+        context.pop();
+      },
     );
   }
 

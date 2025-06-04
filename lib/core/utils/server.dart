@@ -4,9 +4,8 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/res/store.dart';
-
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/res/store.dart';
 
 /// Must put this func out of any Class.
 ///

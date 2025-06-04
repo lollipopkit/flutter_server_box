@@ -4,17 +4,15 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_highlight/theme_map.dart';
-import 'package:server_box/data/store/setting.dart';
-
-import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/net_view.dart';
+import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/github_id.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
-
-import 'package:server_box/data/model/app/net_view.dart';
-import 'package:server_box/data/res/build_data.dart';
+import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/backup.dart';
 import 'package:server_box/view/page/private_key/list.dart';
 import 'package:server_box/view/page/setting/platform/android.dart';
@@ -26,12 +24,12 @@ import 'package:server_box/view/page/setting/seq/virt_key.dart';
 
 part 'about.dart';
 part 'entries/app.dart';
-part 'entries/ssh.dart';
-part 'entries/sftp.dart';
-part 'entries/server.dart';
-part 'entries/full_screen.dart';
 part 'entries/container.dart';
 part 'entries/editor.dart';
+part 'entries/full_screen.dart';
+part 'entries/server.dart';
+part 'entries/sftp.dart';
+part 'entries/ssh.dart';
 
 const _kIconSize = 23.0;
 

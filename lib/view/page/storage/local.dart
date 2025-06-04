@@ -3,13 +3,12 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/path_with_prefix.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/sftp/worker.dart';
 import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/res/misc.dart';
-
-import 'package:server_box/data/model/app/path_with_prefix.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/page/storage/sftp_mission.dart';

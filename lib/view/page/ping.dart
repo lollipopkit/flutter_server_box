@@ -3,9 +3,8 @@ import 'dart:async';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/provider/server.dart';
-
 import 'package:server_box/data/model/server/ping_result.dart';
+import 'package:server_box/data/provider/server.dart';
 
 /// Only permit ipv4 / ipv6 / domain chars
 final targetReg = RegExp(r'[a-zA-Z0-9\.-_:]+');

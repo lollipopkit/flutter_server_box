@@ -11,7 +11,7 @@ include: package:flutter_lints/flutter.yaml
 
 analyzer:
   exclude:
-    - '**/*.g.dart'
+    - "**/*.g.dart"
   language:
     # strict-casts: true
     # strict-inference: true
@@ -43,8 +43,9 @@ linter:
     annotate_overrides: true
     avoid_empty_else: true
     # avoid_print: false  # Uncomment to disable the `avoid_print` rule
-    prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+    prefer_single_quotes: true # Uncomment to enable the `prefer_single_quotes` rule
     avoid_return_types_on_setters: true
+    directives_ordering: true # Enable sorting of imports
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

@@ -1,16 +1,15 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:server_box/data/model/server/battery.dart';
-import 'package:server_box/data/model/server/nvdia.dart';
-import 'package:server_box/data/model/server/sensors.dart';
-import 'package:server_box/data/model/server/server.dart';
-import 'package:server_box/data/model/server/system.dart';
-
 import 'package:server_box/data/model/app/shell_func.dart';
+import 'package:server_box/data/model/server/battery.dart';
+import 'package:server_box/data/model/server/conn.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
-import 'package:server_box/data/model/server/conn.dart';
+import 'package:server_box/data/model/server/nvdia.dart';
+import 'package:server_box/data/model/server/sensors.dart';
+import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/system.dart';
 
 class ServerStatusUpdateReq {
   final ServerStatus ss;
