@@ -11,7 +11,7 @@ enum ServerDetailCards {
   swap(Icons.swap_horiz),
   gpu(Bootstrap.gpu_card),
   disk(Bootstrap.device_hdd_fill),
-  smart(Icons.health_and_safety),
+  smart(Icons.health_and_safety, sinceBuild: 1174),
   net(ZondIcons.network),
   sensor(MingCute.dashboard_4_line),
   temp(FontAwesome.temperature_empty_solid),

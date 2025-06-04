@@ -85,7 +85,9 @@ extension Spix on Spi {
   VNode<Server>? get jumpServer => ServerProvider.pick(id: jumpId);
 
   bool shouldReconnect(Spi old) {
-    return id != old.id ||
+    return user != old.user ||
+        ip != old.ip ||
+        port != old.port ||
         pwd != old.pwd ||
         keyId != old.keyId ||
         alterUrl != old.alterUrl ||
