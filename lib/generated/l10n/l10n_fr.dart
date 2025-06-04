@@ -129,6 +129,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get disk => 'Disque';
 
   @override
+  String get diskHealth => 'Santé du disque';
+
+  @override
   String get diskIgnorePath => 'Chemin à ignorer pour le disque';
 
   @override

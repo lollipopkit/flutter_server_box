@@ -17,6 +17,11 @@ abstract final class GithubIds {
     'dccif',
     'mikropsoft',
     'CakesTwix',
+    'dsvf',
+    'fei1025',
+    'MasedMSD',
+    'GitGitro',
+    'Shin-suechtig',
   };
 
   static const participants = <GhId>{
@@ -99,6 +104,20 @@ abstract final class GithubIds {
     '88484396',
     'honggeigei',
     'likecreep',
+    'axlrose',
+    'immortal521',
+    'PRO-2684',
+    'Xiaobao-Yang',
+    'Mrhs121',
+    'Fudiautobi',
+    'papaj-na-wrotkach',
+    'kid1412621',
+    'smanx',
+    'xuanyue1024',
+    'RuofengX',
+    'rhwong',
+    'AstroEngineeer',
+    'mochasweet',
   };
 }
 
