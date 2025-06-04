@@ -567,7 +567,6 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
 
   Widget? _buildDiskSmart(Server si) {
     final smarts = si.status.diskSmart;
-    dprint('${si.spi.name} disk smart: ${smarts.length}');
     if (smarts.isEmpty) return null;
     return CardX(
       child: ExpandTile(

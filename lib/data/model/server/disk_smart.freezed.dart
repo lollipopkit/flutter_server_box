@@ -620,11 +620,6 @@ class _$SmartAttributeImpl extends _SmartAttribute {
   final SmartAttributeFlags flags;
 
   @override
-  String toString() {
-    return 'SmartAttribute(id: $id, name: $name, value: $value, worst: $worst, thresh: $thresh, whenFailed: $whenFailed, rawValue: $rawValue, rawString: $rawString, flags: $flags)';
-  }
-
-  @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
@@ -948,11 +943,6 @@ class _$SmartAttributeFlagsImpl extends _SmartAttributeFlags {
   @override
   @JsonKey()
   final bool autoKeep;
-
-  @override
-  String toString() {
-    return 'SmartAttributeFlags(value: $value, string: $string, prefailure: $prefailure, updatedOnline: $updatedOnline, performance: $performance, errorRate: $errorRate, eventCount: $eventCount, autoKeep: $autoKeep)';
-  }
 
   @override
   bool operator ==(Object other) {

@@ -49,6 +49,7 @@ class ServerProvider extends Provider {
       /// #258
       /// If not [shouldReconnect], then keep the old state.
       if (originServer != null && !originServer.value.spi.shouldReconnect(spi)) {
+        originServer.value.spi = spi;
         servers[spi.id] = originServer;
       } else {
         final newServer = genServer(spi);

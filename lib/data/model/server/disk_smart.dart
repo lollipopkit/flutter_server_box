@@ -100,6 +100,8 @@ class DiskSmart with _$DiskSmart {
     return attributes;
   }
 
+  static final _tempReg = RegExp(r'^(\d+(?:\.\d+)?)');
+
   /// Extract temperature from the data
   static double? _extractTemperature(Map<String, dynamic> data, Map<String, SmartAttribute> attrs) {
     // Directly
@@ -112,7 +114,7 @@ class DiskSmart with _$DiskSmart {
       // "35 (Min/Max 14/61)"
       final rawString = tempAttr.rawString;
       if (rawString != null) {
-        final match = RegExp(r'^(\d+)').firstMatch(rawString);
+        final match = _tempReg.firstMatch(rawString);
         if (match != null) {
           return double.tryParse(match.group(1)!);
         }
