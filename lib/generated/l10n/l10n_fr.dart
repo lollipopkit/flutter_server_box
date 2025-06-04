@@ -763,4 +763,11 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Après la connexion au serveur, un script sera écrit dans ~/.config/server_box pour surveiller l’état du système. Vous pouvez examiner le contenu du script.';
+
+  @override
+  String get desktopTerminal => 'Terminal emulator command';
+
+  @override
+  String get desktopTerminalTip =>
+      'Command used to open the terminal emulator when launching SSH sessions.';
 }

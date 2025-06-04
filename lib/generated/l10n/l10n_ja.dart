@@ -734,4 +734,11 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'サーバーに接続すると、システムの状態を監視するためのスクリプトが ~/.config/server_box に書き込まれます。スクリプトの内容を確認できます。';
+
+  @override
+  String get desktopTerminal => 'Terminal emulator command';
+
+  @override
+  String get desktopTerminalTip =>
+      'Command used to open the terminal emulator when launching SSH sessions.';
 }

@@ -23,15 +23,14 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 class ServerFuncBtnsTopRight extends StatelessWidget {
   final Spi spi;
 
-  const ServerFuncBtnsTopRight({
-    super.key,
-    required this.spi,
-  });
+  const ServerFuncBtnsTopRight({super.key, required this.spi});
 
   @override
   Widget build(BuildContext context) {
     return PopupMenu<ServerFuncBtn>(
-      items: ServerFuncBtn.values.map((e) => PopMenu.build(e, e.icon, e.toStr)).toList(),
+      items: ServerFuncBtn.values
+          .map((e) => PopMenu.build(e, e.icon, e.toStr))
+          .toList(),
       padding: const EdgeInsets.symmetric(horizontal: 10),
       onSelected: (val) => _onTapMoreBtns(val, spi, context),
     );
@@ -39,10 +38,7 @@ class ServerFuncBtnsTopRight extends StatelessWidget {
 }
 
 class ServerFuncBtns extends StatelessWidget {
-  const ServerFuncBtns({
-    super.key,
-    required this.spi,
-  });
+  const ServerFuncBtns({super.key, required this.spi});
 
   final Spi spi;
 
@@ -87,7 +83,7 @@ class ServerFuncBtns extends StatelessWidget {
             padding: EdgeInsets.zero,
             icon: Icon(e.icon, size: 17),
           ),
-          Text(e.toStr, style: UIs.text11Grey)
+          Text(e.toStr, style: UIs.text11Grey),
         ],
       ),
     );
@@ -108,11 +104,7 @@ class ServerFuncBtns extends StatelessWidget {
   }
 }
 
-void _onTapMoreBtns(
-  ServerFuncBtn value,
-  Spi spi,
-  BuildContext context,
-) async {
+void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context) async {
   // final isMobile = ResponsiveBreakpoints.of(context).isMobile;
   switch (value) {
     // case ServerFuncBtn.pkg:
@@ -182,9 +174,9 @@ void _onTapMoreBtns(
       if (isMobile) {
         ContainerPage.route.go(context, args);
       } else {
-        SplitViewNavigator.of(context)?.replace(
-          ContainerPage.route.toWidget(args: args),
-        );
+        SplitViewNavigator.of(
+          context,
+        )?.replace(ContainerPage.route.toWidget(args: args));
       }
       break;
     case ServerFuncBtn.process:
@@ -261,7 +253,9 @@ void _gotoSSH(Spi spi, BuildContext context) async {
       await Process.start('cmd', ['/c', 'start'] + sshCommand);
       break;
     case Pfs.linux:
-      await Process.start('x-terminal-emulator', ['-e'] + sshCommand);
+      var terminal = Stores.setting.desktopTerminal.fetch();
+      if (terminal.isEmpty) terminal = 'x-terminal-emulator';
+      await Process.start(terminal, ['-e'] + sshCommand);
       break;
     default:
       context.showSnackBar('Mismatch system: $system');

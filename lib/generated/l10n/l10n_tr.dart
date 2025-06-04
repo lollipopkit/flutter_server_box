@@ -754,4 +754,11 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Sunucuya bağlandıktan sonra, sistem durumunu izlemek için ~/.config/server_box dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz.';
+
+  @override
+  String get desktopTerminal => 'Terminal emulator command';
+
+  @override
+  String get desktopTerminalTip =>
+      'Command used to open the terminal emulator when launching SSH sessions.';
 }

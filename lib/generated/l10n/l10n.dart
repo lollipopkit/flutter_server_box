@@ -1477,6 +1477,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'After connecting to the server, a script will be written to ~/.config/server_box to monitor the system status. You can review the script content.'**
   String get writeScriptTip;
+
+  /// No description provided for @desktopTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal emulator command'**
+  String get desktopTerminal;
+
+  /// No description provided for @desktopTerminalTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Command used to open the terminal emulator when launching SSH sessions.'**
+  String get desktopTerminalTip;
 }
 
 class _AppLocalizationsDelegate

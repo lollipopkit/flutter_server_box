@@ -225,5 +225,7 @@
   "wolTip": "After configuring WOL (Wake-on-LAN), a WOL request is sent each time the server is connected.",
   "write": "Write",
   "writeScriptFailTip": "Writing to the script failed, possibly due to lack of permissions or the directory does not exist.",
-  "writeScriptTip": "After connecting to the server, a script will be written to ~/.config/server_box to monitor the system status. You can review the script content."
+  "writeScriptTip": "After connecting to the server, a script will be written to ~/.config/server_box to monitor the system status. You can review the script content.",
+  "desktopTerminal": "Terminal emulator command",
+  "desktopTerminalTip": "Command used to open the terminal emulator when launching SSH sessions."
 }

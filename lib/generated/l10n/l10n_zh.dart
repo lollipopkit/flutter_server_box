@@ -721,6 +721,13 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get writeScriptTip =>
       '在连接服务器后，会向 ~/.config/server_box 写入脚本来监测系统状态，你可以审查脚本内容。';
+
+  @override
+  String get desktopTerminal => 'Terminal emulator command';
+
+  @override
+  String get desktopTerminalTip =>
+      'Command used to open the terminal emulator when launching SSH sessions.';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1440,4 +1447,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get writeScriptTip =>
       '連接到伺服器後，將會在 ~/.config/server_box 中寫入一個腳本來監測系統狀態。你可以審查腳本內容。';
+
+  @override
+  String get desktopTerminal => 'Terminal emulator command';
+
+  @override
+  String get desktopTerminalTip =>
+      'Command used to open the terminal emulator when launching SSH sessions.';
 }
