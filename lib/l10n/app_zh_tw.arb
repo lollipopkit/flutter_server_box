@@ -32,6 +32,7 @@
   "decode": "解碼",
   "decompress": "解壓縮",
   "deleteServers": "批量刪除伺服器",
+  "desktopTerminalTip": "啟動 SSH 連線時用於打開終端機模擬器的指令。",
   "dirEmpty": "請確保資料夾為空",
   "disconnected": "連接斷開",
   "disk": "磁碟",
@@ -48,6 +49,7 @@
   "editVirtKeys": "編輯虛擬按鍵",
   "editor": "編輯器",
   "editorHighlightTip": "目前的代碼高亮性能較為糟糕，可以選擇關閉以改善。",
+  "emulator": "模擬器",
   "encode": "編碼",
   "envVars": "環境變量",
   "experimentalFeature": "實驗性功能",
@@ -225,7 +227,5 @@
   "wolTip": "在配置 WOL（網絡喚醒）後，每次連接伺服器都會先發送一次 WOL 請求。",
   "write": "写",
   "writeScriptFailTip": "寫入腳本失敗，可能是沒有權限/目錄不存在等。",
-  "writeScriptTip": "連接到伺服器後，將會在 ~/.config/server_box 中寫入一個腳本來監測系統狀態。你可以審查腳本內容。",
-  "desktopTerminal": "Terminal emulator command",
-  "desktopTerminalTip": "Command used to open the terminal emulator when launching SSH sessions."
+  "writeScriptTip": "連接到伺服器後，將會在 ~/.config/server_box 中寫入一個腳本來監測系統狀態。你可以審查腳本內容。"
 }

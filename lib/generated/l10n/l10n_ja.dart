@@ -109,6 +109,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get deleteServers => 'サーバーを一括削除';
 
   @override
+  String get desktopTerminalTip => 'SSHセッションを起動する際に使用されるターミナルエミュレーターを開くコマンド。';
+
+  @override
   String get dirEmpty => 'フォルダーが空であることを確認してください';
 
   @override
@@ -169,6 +172,9 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get editorHighlightTip =>
       '現在のコードハイライトのパフォーマンスはかなり悪いため、改善するために無効にすることを選択できます。';
+
+  @override
+  String get emulator => 'エミュレーター';
 
   @override
   String get encode => 'エンコード';
@@ -734,11 +740,4 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'サーバーに接続すると、システムの状態を監視するためのスクリプトが ~/.config/server_box に書き込まれます。スクリプトの内容を確認できます。';
-
-  @override
-  String get desktopTerminal => 'Terminal emulator command';
-
-  @override
-  String get desktopTerminalTip =>
-      'Command used to open the terminal emulator when launching SSH sessions.';
 }

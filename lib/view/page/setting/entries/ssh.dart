@@ -86,7 +86,12 @@ extension _SSH on _AppSettingsPageState {
       return ListTile(
         leading: const Icon(Icons.terminal),
         title: TipText(l10n.terminal, l10n.desktopTerminalTip),
-        trailing: Text(val, style: UIs.text15),
+        trailing: Text(
+          val,
+          style: UIs.text15,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         onTap: () async {
           final ctrl = TextEditingController(text: val);
           void onSave() {
@@ -94,7 +99,7 @@ extension _SSH on _AppSettingsPageState {
             context.pop();
           }
 
-          await context.showRoundDialog<bool>(
+          context.showRoundDialog<bool>(
             title: libL10n.select,
             child: Input(
               controller: ctrl,

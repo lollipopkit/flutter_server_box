@@ -114,6 +114,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get deleteServers => 'Sunucuları toplu sil';
 
   @override
+  String get desktopTerminalTip =>
+      'SSH oturumları başlatılırken terminal öykünücüsünü açmak için kullanılan komut.';
+
+  @override
   String get dirEmpty => 'Klasörün boş olduğundan emin olun.';
 
   @override
@@ -174,6 +178,9 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get editorHighlightTip =>
       'Mevcut kod vurgulama performansı ideal değil ve isteğe bağlı olarak kapatılabilir.';
+
+  @override
+  String get emulator => 'Emülatör';
 
   @override
   String get encode => 'Kodla';
@@ -754,11 +761,4 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Sunucuya bağlandıktan sonra, sistem durumunu izlemek için ~/.config/server_box dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz.';
-
-  @override
-  String get desktopTerminal => 'Terminal emulator command';
-
-  @override
-  String get desktopTerminalTip =>
-      'Command used to open the terminal emulator when launching SSH sessions.';
 }

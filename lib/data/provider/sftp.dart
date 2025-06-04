@@ -14,11 +14,7 @@ class SftpProvider extends Provider {
   }
 
   static int add(SftpReq req, {Completer? completer}) {
-    final reqStat = SftpReqStatus(
-      notifyListeners: status.notify,
-      completer: completer,
-      req: req,
-    );
+    final reqStat = SftpReqStatus(notifyListeners: status.notify, completer: completer, req: req);
     status.value.add(reqStat);
     status.notify();
     return reqStat.id;
@@ -34,6 +30,10 @@ class SftpProvider extends Provider {
 
   static void cancel(int id) {
     final idx = status.value.indexWhere((e) => e.id == id);
+    if (idx < 0 || idx >= status.value.length) {
+      dprint('SftpProvider.cancel: id $id not found');
+      return;
+    }
     status.value[idx].dispose();
     status.value.removeAt(idx);
     status.notify();

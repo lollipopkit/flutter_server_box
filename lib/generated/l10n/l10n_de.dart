@@ -116,6 +116,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get deleteServers => 'Batch-Löschung von Servern';
 
   @override
+  String get desktopTerminalTip =>
+      'Befehl zum Öffnen des Terminal-Emulators beim Starten von SSH-Sitzungen.';
+
+  @override
   String get dirEmpty => 'Stelle sicher, dass der Ordner leer ist.';
 
   @override
@@ -176,6 +180,9 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get editorHighlightTip =>
       'Die Leistung der aktuellen Codehervorhebung ist schlechter und kann zur Verbesserung optional ausgeschaltet werden.';
+
+  @override
+  String get emulator => 'Emulator';
 
   @override
   String get encode => 'Encode';
@@ -760,11 +767,4 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Nach der Verbindung mit dem Server wird ein Skript in ~/.config/server_box geschrieben, um den Systemstatus zu überwachen. Sie können den Skriptinhalt überprüfen.';
-
-  @override
-  String get desktopTerminal => 'Terminal emulator command';
-
-  @override
-  String get desktopTerminalTip =>
-      'Command used to open the terminal emulator when launching SSH sessions.';
 }

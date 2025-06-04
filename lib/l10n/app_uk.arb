@@ -32,6 +32,7 @@
   "decode": "Декодувати",
   "decompress": "Розпакувати",
   "deleteServers": "Масове видалення серверів",
+  "desktopTerminalTip": "Команда для відкриття емулятора термінала під час запуску SSH-сеансів.",
   "dirEmpty": "Переконайтеся, що директорія пуста.",
   "disconnected": "Відключено",
   "disk": "Диск",
@@ -48,6 +49,7 @@
   "editVirtKeys": "Редагувати віртуальні клавіші",
   "editor": "Редактор",
   "editorHighlightTip": "Поточна підсвітка коду не ідеальна і може бути вимкнена для покращення.",
+  "emulator": "Емулятор",
   "encode": "Кодувати",
   "envVars": "Змінні середовища",
   "experimentalFeature": "Експериментальна функція",
@@ -225,7 +227,5 @@
   "wolTip": "Після налаштування WOL (Wake-on-LAN), при кожному підключенні до сервера відправляється запит WOL.",
   "write": "Записати",
   "writeScriptFailTip": "Запис у скрипт не вдався, можливо, через брак дозволів або каталог не існує.",
-  "writeScriptTip": "Після підключення до сервера скрипт буде записано у ~/.config/server_box для моніторингу стану системи. Ви можете переглянути вміст скрипта.",
-  "desktopTerminal": "Terminal emulator command",
-  "desktopTerminalTip": "Command used to open the terminal emulator when launching SSH sessions."
+  "writeScriptTip": "Після підключення до сервера скрипт буде записано у ~/.config/server_box для моніторингу стану системи. Ви можете переглянути вміст скрипта."
 }

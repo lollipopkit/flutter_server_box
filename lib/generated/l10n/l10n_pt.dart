@@ -115,6 +115,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get deleteServers => 'Excluir servidores em lote';
 
   @override
+  String get desktopTerminalTip =>
+      'Comando usado para abrir o emulador de terminal ao iniciar sessões SSH.';
+
+  @override
   String get dirEmpty => 'Certifique-se de que a pasta está vazia';
 
   @override
@@ -175,6 +179,9 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get editorHighlightTip =>
       'O desempenho do destaque de código atualmente é ruim, pode optar por desativá-lo para melhorar.';
+
+  @override
+  String get emulator => 'Emulador';
 
   @override
   String get encode => 'Codificar';
@@ -756,11 +763,4 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Após conectar ao servidor, um script será escrito em ~/.config/server_box para monitorar o status do sistema. Você pode revisar o conteúdo do script.';
-
-  @override
-  String get desktopTerminal => 'Terminal emulator command';
-
-  @override
-  String get desktopTerminalTip =>
-      'Command used to open the terminal emulator when launching SSH sessions.';
 }

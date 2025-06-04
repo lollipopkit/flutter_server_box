@@ -108,6 +108,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deleteServers => '批量删除服务器';
 
   @override
+  String get desktopTerminalTip => '启动 SSH 连接所用的终端模拟器命令';
+
+  @override
   String get dirEmpty => '请确保文件夹为空';
 
   @override
@@ -166,6 +169,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get editorHighlightTip => '目前的代码高亮性能较为糟糕，可以选择关闭以改善。';
+
+  @override
+  String get emulator => '模拟器';
 
   @override
   String get encode => '编码';
@@ -721,13 +727,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get writeScriptTip =>
       '在连接服务器后，会向 ~/.config/server_box 写入脚本来监测系统状态，你可以审查脚本内容。';
-
-  @override
-  String get desktopTerminal => 'Terminal emulator command';
-
-  @override
-  String get desktopTerminalTip =>
-      'Command used to open the terminal emulator when launching SSH sessions.';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -834,6 +833,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get deleteServers => '批量刪除伺服器';
 
   @override
+  String get desktopTerminalTip => '啟動 SSH 連線時用於打開終端機模擬器的指令。';
+
+  @override
   String get dirEmpty => '請確保資料夾為空';
 
   @override
@@ -892,6 +894,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get editorHighlightTip => '目前的代碼高亮性能較為糟糕，可以選擇關閉以改善。';
+
+  @override
+  String get emulator => '模擬器';
 
   @override
   String get encode => '編碼';
@@ -1447,11 +1452,4 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get writeScriptTip =>
       '連接到伺服器後，將會在 ~/.config/server_box 中寫入一個腳本來監測系統狀態。你可以審查腳本內容。';
-
-  @override
-  String get desktopTerminal => 'Terminal emulator command';
-
-  @override
-  String get desktopTerminalTip =>
-      'Command used to open the terminal emulator when launching SSH sessions.';
 }

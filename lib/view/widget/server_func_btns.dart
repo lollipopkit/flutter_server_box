@@ -27,9 +27,7 @@ class ServerFuncBtnsTopRight extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PopupMenu<ServerFuncBtn>(
-      items: ServerFuncBtn.values
-          .map((e) => PopMenu.build(e, e.icon, e.toStr))
-          .toList(),
+      items: ServerFuncBtn.values.map((e) => PopMenu.build(e, e.icon, e.toStr)).toList(),
       padding: const EdgeInsets.symmetric(horizontal: 10),
       onSelected: (val) => _onTapMoreBtns(val, spi, context),
     );
@@ -145,16 +143,8 @@ void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context) async {
       final fmted = snippet.fmtWithSpi(spi);
       final sure = await context.showRoundDialog<bool>(
         title: libL10n.attention,
-        child: SingleChildScrollView(
-          child: SimpleMarkdown(data: '```shell\n$fmted\n```'),
-        ),
-        actions: [
-          CountDownBtn(
-            onTap: () => context.pop(true),
-            text: l10n.run,
-            afterColor: Colors.red,
-          ),
-        ],
+        child: SingleChildScrollView(child: SimpleMarkdown(data: '```shell\n$fmted\n```')),
+        actions: [CountDownBtn(onTap: () => context.pop(true), text: l10n.run, afterColor: Colors.red)],
       );
       if (sure != true) return;
       if (!_checkClient(context, spi.id)) return;
@@ -170,13 +160,13 @@ void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context) async {
     case ServerFuncBtn.container:
       if (!_checkClient(context, spi.id)) return;
       final args = SpiRequiredArgs(spi);
-      if (isMobile) {
-        ContainerPage.route.go(context, args);
-      } else {
-        SplitViewNavigator.of(
-          context,
-        )?.replace(ContainerPage.route.toWidget(args: args));
-      }
+      // if (isMobile) {
+      ContainerPage.route.go(context, args);
+      // } else {
+      //   SplitViewNavigator.of(
+      //     context,
+      //   )?.replace(ContainerPage.route.toWidget(args: args));
+      // }
       break;
     case ServerFuncBtn.process:
       if (!_checkClient(context, spi.id)) return;
@@ -252,9 +242,23 @@ void _gotoSSH(Spi spi, BuildContext context) async {
       await Process.start('cmd', ['/c', 'start'] + sshCommand);
       break;
     case Pfs.linux:
-      var terminal = Stores.setting.desktopTerminal.fetch();
-      if (terminal.isEmpty) terminal = 'x-terminal-emulator';
-      await Process.start(terminal, ['-e'] + sshCommand);
+      final scriptFile = File('${Directory.systemTemp.path}/srvbox_launch_term.sh');
+      await scriptFile.writeAsString(_runEmulatorShell);
+
+      if (Platform.isLinux || Platform.isMacOS) {
+        await Process.run('chmod', ['+x', scriptFile.path]);
+      }
+
+      try {
+        var terminal = Stores.setting.desktopTerminal.fetch();
+        if (terminal.isEmpty) terminal = 'x-terminal-emulator';
+
+        await Process.start(scriptFile.path, [terminal, ...sshCommand]);
+      } catch (e, s) {
+        context.showErrDialog(e, s, l10n.emulator);
+      } finally {
+        await scriptFile.delete();
+      }
       break;
     default:
       context.showSnackBar('Mismatch system: $system');
@@ -274,3 +278,62 @@ bool _checkClient(BuildContext context, String id) {
   }
   return true;
 }
+
+const _runEmulatorShell = '''
+#!/bin/sh
+# launch_terminal.sh
+
+TERMINAL="\$1"
+shift  # Remove the first argument (terminal name)
+
+# Auto detect terminal if not provided
+if [ -z "\$TERMINAL" ] || [ "\$TERMINAL" = "x-terminal-emulator" ]; then
+    # Follow the order of preference
+    for term in kitty alacritty gnome-terminal konsole xfce4-terminal terminator tilix wezterm foot; do
+        if command -v "\$term" >/dev/null 2>&1; then
+            TERMINAL="\$term"
+            break
+        fi
+    done
+
+    [ -z "\$TERMINAL" ] && TERMINAL="x-terminal-emulator"
+fi
+
+case "\$TERMINAL" in
+    gnome-terminal)
+        exec "\$TERMINAL" -- "\$@"
+        ;;
+    konsole|terminator|tilix)
+        exec "\$TERMINAL" -e "\$@"
+        ;;
+    xfce4-terminal)
+        exec "\$TERMINAL" -e "\$*"
+        ;;
+    alacritty)
+        # Check alacritty version
+        if "\$TERMINAL" --version 2>&1 | grep -q "alacritty 0\\.1[3-9]"; then
+            # 0.13.0+
+            exec "\$TERMINAL" --command "\$@"
+        else
+            # Old versions
+            exec "\$TERMINAL" -e "\$@"
+        fi
+        ;;
+    kitty)
+        exec "\$TERMINAL" "\$@"
+        ;;
+    wezterm)
+        exec "\$TERMINAL" start -- "\$@"
+        ;;
+    foot)
+        exec "\$TERMINAL" "\$@"
+        ;;
+    urxvt|rxvt-unicode)
+        exec "\$TERMINAL" -e "\$@"
+        ;;
+    x-terminal-emulator|*)
+        # Default
+        exec "\$TERMINAL" -e "\$@"
+        ;;
+esac
+''';

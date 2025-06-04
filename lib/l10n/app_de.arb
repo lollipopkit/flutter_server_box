@@ -32,6 +32,7 @@
   "decode": "Decode",
   "decompress": "Dekomprimieren",
   "deleteServers": "Batch-Löschung von Servern",
+  "desktopTerminalTip": "Befehl zum Öffnen des Terminal-Emulators beim Starten von SSH-Sitzungen.",
   "dirEmpty": "Stelle sicher, dass der Ordner leer ist.",
   "disconnected": "Disconnected",
   "disk": "Festplatte",
@@ -48,6 +49,7 @@
   "editVirtKeys": "Virtuelle Tasten bearbeiten",
   "editor": "Editor",
   "editorHighlightTip": "Die Leistung der aktuellen Codehervorhebung ist schlechter und kann zur Verbesserung optional ausgeschaltet werden.",
+  "emulator": "Emulator",
   "encode": "Encode",
   "envVars": "Umgebungsvariable",
   "experimentalFeature": "Experimentelles Feature",
@@ -225,7 +227,5 @@
   "wolTip": "Nach der Konfiguration von WOL (Wake-on-LAN) wird jedes Mal, wenn der Server verbunden wird, eine WOL-Anfrage gesendet.",
   "write": "Schreiben",
   "writeScriptFailTip": "Das Schreiben des Skripts ist fehlgeschlagen, möglicherweise aufgrund fehlender Berechtigungen oder das Verzeichnis existiert nicht.",
-  "writeScriptTip": "Nach der Verbindung mit dem Server wird ein Skript in ~/.config/server_box geschrieben, um den Systemstatus zu überwachen. Sie können den Skriptinhalt überprüfen.",
-  "desktopTerminal": "Terminal emulator command",
-  "desktopTerminalTip": "Command used to open the terminal emulator when launching SSH sessions."
+  "writeScriptTip": "Nach der Verbindung mit dem Server wird ein Skript in ~/.config/server_box geschrieben, um den Systemstatus zu überwachen. Sie können den Skriptinhalt überprüfen."
 }

@@ -32,6 +32,7 @@
   "decode": "Çöz",
   "decompress": "Sıkıştırmayı aç",
   "deleteServers": "Sunucuları toplu sil",
+  "desktopTerminalTip": "SSH oturumları başlatılırken terminal öykünücüsünü açmak için kullanılan komut.",
   "dirEmpty": "Klasörün boş olduğundan emin olun.",
   "disconnected": "Bağlantı kesildi",
   "disk": "Disk",
@@ -48,6 +49,7 @@
   "editVirtKeys": "Sanal tuşları düzenle",
   "editor": "Düzenleyici",
   "editorHighlightTip": "Mevcut kod vurgulama performansı ideal değil ve isteğe bağlı olarak kapatılabilir.",
+  "emulator": "Emülatör",
   "encode": "Kodla",
   "envVars": "Ortam değişkeni",
   "experimentalFeature": "Deneysel özellik",
@@ -225,7 +227,5 @@
   "wolTip": "WOL (Wake-on-LAN) yapılandırıldıktan sonra, sunucuya her bağlanıldığında bir WOL isteği gönderilir.",
   "write": "Yaz",
   "writeScriptFailTip": "Betik yazma başarısız oldu, muhtemelen izin eksikliği veya dizin mevcut değil.",
-  "writeScriptTip": "Sunucuya bağlandıktan sonra, sistem durumunu izlemek için ~/.config/server_box dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz.",
-  "desktopTerminal": "Terminal emulator command",
-  "desktopTerminalTip": "Command used to open the terminal emulator when launching SSH sessions."
+  "writeScriptTip": "Sunucuya bağlandıktan sonra, sistem durumunu izlemek için ~/.config/server_box dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz."
 }

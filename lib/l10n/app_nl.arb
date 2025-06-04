@@ -32,6 +32,7 @@
   "decode": "Decoderen",
   "decompress": "Decomprimeren",
   "deleteServers": "Servers batchgewijs verwijderen",
+  "desktopTerminalTip": "Opdracht die wordt gebruikt om de terminalemulator te openen bij het starten van SSH-sessies.",
   "dirEmpty": "Zorg ervoor dat de map leeg is.",
   "disconnected": "Verbroken",
   "disk": "Schijf",
@@ -48,6 +49,7 @@
   "editVirtKeys": "Virtuele toetsen bewerken",
   "editor": "Editor",
   "editorHighlightTip": "De huidige codehighlighting-prestaties zijn slechter en kunnen optioneel worden uitgeschakeld om te verbeteren.",
+  "emulator": "Emulator",
   "encode": "Coderen",
   "envVars": "Omgevingsvariabele",
   "experimentalFeature": "Experimentele functie",
@@ -225,7 +227,5 @@
   "wolTip": "Na het configureren van WOL (Wake-on-LAN), wordt elke keer dat de server wordt verbonden een WOL-verzoek verzonden.",
   "write": "Schrijven",
   "writeScriptFailTip": "Het schrijven naar het script is mislukt, mogelijk door gebrek aan rechten of omdat de map niet bestaat.",
-  "writeScriptTip": "Na het verbinden met de server wordt een script geschreven naar ~/.config/server_box om de systeemstatus te monitoren. U kunt de inhoud van het script controleren.",
-  "desktopTerminal": "Terminal emulator command",
-  "desktopTerminalTip": "Command used to open the terminal emulator when launching SSH sessions."
+  "writeScriptTip": "Na het verbinden met de server wordt een script geschreven naar ~/.config/server_box om de systeemstatus te monitoren. U kunt de inhoud van het script controleren."
 }

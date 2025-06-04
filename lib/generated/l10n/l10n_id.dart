@@ -115,6 +115,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get deleteServers => 'Penghapusan server secara batch';
 
   @override
+  String get desktopTerminalTip =>
+      'Perintah yang digunakan untuk membuka emulator terminal saat memulai sesi SSH.';
+
+  @override
   String get dirEmpty => 'Pastikan dir kosong.';
 
   @override
@@ -175,6 +179,9 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get editorHighlightTip =>
       'Performa penyorotan kode saat ini lebih buruk, dan dapat dimatikan secara opsional untuk perbaikan.';
+
+  @override
+  String get emulator => 'Emulator';
 
   @override
   String get encode => 'Menyandi';
@@ -753,11 +760,4 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Setelah terhubung ke server, sebuah skrip akan ditulis ke ~/.config/server_box untuk memantau status sistem. Anda dapat meninjau konten skrip tersebut.';
-
-  @override
-  String get desktopTerminal => 'Terminal emulator command';
-
-  @override
-  String get desktopTerminalTip =>
-      'Command used to open the terminal emulator when launching SSH sessions.';
 }

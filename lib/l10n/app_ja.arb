@@ -32,6 +32,7 @@
   "decode": "デコード",
   "decompress": "解凍",
   "deleteServers": "サーバーを一括削除",
+  "desktopTerminalTip": "SSHセッションを起動する際に使用されるターミナルエミュレーターを開くコマンド。",
   "dirEmpty": "フォルダーが空であることを確認してください",
   "disconnected": "接続が切断されました",
   "disk": "ディスク",
@@ -48,6 +49,7 @@
   "editVirtKeys": "仮想キーを編集",
   "editor": "エディター",
   "editorHighlightTip": "現在のコードハイライトのパフォーマンスはかなり悪いため、改善するために無効にすることを選択できます。",
+  "emulator": "エミュレーター",
   "encode": "エンコード",
   "envVars": "環境変数",
   "experimentalFeature": "実験的な機能",
@@ -225,7 +227,5 @@
   "wolTip": "WOL（Wake-on-LAN）を設定した後、サーバーに接続するたびにWOLリクエストが送信されます。",
   "write": "書き込み",
   "writeScriptFailTip": "スクリプトの書き込みに失敗しました。権限がないかディレクトリが存在しない可能性があります。",
-  "writeScriptTip": "サーバーに接続すると、システムの状態を監視するためのスクリプトが ~/.config/server_box に書き込まれます。スクリプトの内容を確認できます。",
-  "desktopTerminal": "Terminal emulator command",
-  "desktopTerminalTip": "Command used to open the terminal emulator when launching SSH sessions."
+  "writeScriptTip": "サーバーに接続すると、システムの状態を監視するためのスクリプトが ~/.config/server_box に書き込まれます。スクリプトの内容を確認できます。"
 }

@@ -311,6 +311,12 @@ abstract class AppLocalizations {
   /// **'Batch delete servers'**
   String get deleteServers;
 
+  /// No description provided for @desktopTerminalTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Command used to open the terminal emulator when launching SSH sessions.'**
+  String get desktopTerminalTip;
+
   /// No description provided for @dirEmpty.
   ///
   /// In en, this message translates to:
@@ -409,6 +415,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The current code highlighting performance is not ideal and can be optionally turned off to improve.'**
   String get editorHighlightTip;
+
+  /// No description provided for @emulator.
+  ///
+  /// In en, this message translates to:
+  /// **'Emulator'**
+  String get emulator;
 
   /// No description provided for @encode.
   ///
@@ -1477,18 +1489,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'After connecting to the server, a script will be written to ~/.config/server_box to monitor the system status. You can review the script content.'**
   String get writeScriptTip;
-
-  /// No description provided for @desktopTerminal.
-  ///
-  /// In en, this message translates to:
-  /// **'Terminal emulator command'**
-  String get desktopTerminal;
-
-  /// No description provided for @desktopTerminalTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Command used to open the terminal emulator when launching SSH sessions.'**
-  String get desktopTerminalTip;
 }
 
 class _AppLocalizationsDelegate

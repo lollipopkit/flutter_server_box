@@ -32,6 +32,7 @@
   "decode": "Membaca sandi",
   "decompress": "Dekompresi",
   "deleteServers": "Penghapusan server secara batch",
+  "desktopTerminalTip": "Perintah yang digunakan untuk membuka emulator terminal saat memulai sesi SSH.",
   "dirEmpty": "Pastikan dir kosong.",
   "disconnected": "Terputus",
   "disk": "Disk",
@@ -48,6 +49,7 @@
   "editVirtKeys": "Edit kunci virtual",
   "editor": "Editor",
   "editorHighlightTip": "Performa penyorotan kode saat ini lebih buruk, dan dapat dimatikan secara opsional untuk perbaikan.",
+  "emulator": "Emulator",
   "encode": "Menyandi",
   "envVars": "Variabel lingkungan",
   "experimentalFeature": "Fitur eksperimental",
@@ -225,7 +227,5 @@
   "wolTip": "Setelah mengonfigurasi WOL (Wake-on-LAN), permintaan WOL dikirim setiap kali server terhubung.",
   "write": "Tulis",
   "writeScriptFailTip": "Penulisan ke skrip gagal, mungkin karena tidak ada izin atau direktori tidak ada.",
-  "writeScriptTip": "Setelah terhubung ke server, sebuah skrip akan ditulis ke ~/.config/server_box untuk memantau status sistem. Anda dapat meninjau konten skrip tersebut.",
-  "desktopTerminal": "Terminal emulator command",
-  "desktopTerminalTip": "Command used to open the terminal emulator when launching SSH sessions."
+  "writeScriptTip": "Setelah terhubung ke server, sebuah skrip akan ditulis ke ~/.config/server_box untuk memantau status sistem. Anda dapat meninjau konten skrip tersebut."
 }
