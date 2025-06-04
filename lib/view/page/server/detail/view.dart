@@ -144,7 +144,12 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
       child: LayoutBuilder(
         builder: (_, cons) {
           if (logoUrl == null) return UIs.placeholder;
-          return ExtendedImage.network(logoUrl, cache: true, height: cons.maxWidth * 0.2);
+          return ExtendedImage.network(
+            logoUrl,
+            cache: true,
+            height: cons.maxHeight * 0.2,
+            width: cons.maxWidth,
+          );
         },
       ),
     );

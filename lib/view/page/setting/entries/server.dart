@@ -22,10 +22,7 @@ extension _Server on _AppSettingsPageState {
       title: Text(l10n.netViewType),
       trailing: ValBuilder(
         listenable: _setting.netViewType.listenable(),
-        builder: (val) => Text(
-          val.toStr,
-          style: UIs.text15,
-        ),
+        builder: (val) => Text(val.toStr, style: UIs.text15),
       ),
       onTap: () async {
         final selected = await context.showPickSingleDialog(
@@ -48,21 +45,26 @@ extension _Server on _AppSettingsPageState {
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () async {
         final keys = Stores.server.keys();
+        final names = Map.fromEntries(
+          keys.map((e) => MapEntry(e, ServerProvider.pick(id: e)?.value.spi.name ?? e)),
+        );
         final deleteKeys = await context.showPickDialog<String>(
           clearable: true,
           items: keys.toList(),
+          display: (p0) => names[p0] ?? p0,
         );
-        if (deleteKeys == null) return;
+        if (deleteKeys == null || deleteKeys.isEmpty) return;
 
-        final md = deleteKeys.map((e) => '- $e').join('\n');
+        final md = deleteKeys.map((e) => '- ${names[e] ?? e}').join('\n');
         final sure = await context.showRoundDialog(
           title: libL10n.attention,
           child: SimpleMarkdown(data: md),
+          actions: Btnx.cancelRedOk,
         );
 
         if (sure != true) return;
         for (final key in deleteKeys) {
-          Stores.server.box.delete(key);
+          Stores.server.remove(key);
         }
         context.showSnackBar(libL10n.success);
       },
@@ -77,10 +79,7 @@ extension _Server on _AppSettingsPageState {
       title: TipText(l10n.textScaler, l10n.textScalerTip),
       trailing: ValBuilder(
         listenable: _setting.textFactor.listenable(),
-        builder: (val) => Text(
-          val.toString(),
-          style: UIs.text15,
-        ),
+        builder: (val) => Text(val.toString(), style: UIs.text15),
       ),
       onTap: () => context.showRoundDialog(
         title: l10n.textScaler,
@@ -113,10 +112,7 @@ extension _Server on _AppSettingsPageState {
     return ExpandTile(
       leading: const Icon(BoxIcons.bxs_joystick_button, size: _kIconSize),
       title: Text(l10n.serverFuncBtns),
-      children: [
-        _buildServerFuncBtnsSwitch(),
-        _buildServerFuncBtnsOrder(),
-      ],
+      children: [_buildServerFuncBtnsSwitch(), _buildServerFuncBtnsOrder()],
     );
   }
 
@@ -211,10 +207,7 @@ extension _Server on _AppSettingsPageState {
 
     void onSave(EditorPageRet ret) {
       if (ret.typ != EditorPageRetType.text) {
-        context.showRoundDialog(
-          title: libL10n.fail,
-          child: Text(l10n.invalid),
-        );
+        context.showRoundDialog(title: libL10n.fail, child: Text(l10n.invalid));
         return;
       }
       try {
@@ -226,10 +219,7 @@ extension _Server on _AppSettingsPageState {
           Stores.setting.box.delete(key);
         }
       } catch (e, trace) {
-        context.showRoundDialog(
-          title: libL10n.error,
-          child: Text('${l10n.save}:\n$e'),
-        );
+        context.showRoundDialog(title: libL10n.error, child: Text('${l10n.save}:\n$e'));
         Loggers.app.warning('Update json settings failed', e, trace);
       }
     }
@@ -271,11 +261,7 @@ extension _Server on _AppSettingsPageState {
   Widget _buildServerLogoUrl() {
     void onSave(String url) {
       if (url.isEmpty || !url.startsWith('http')) {
-        context.showRoundDialog(
-          title: libL10n.fail,
-          child: Text('${l10n.invalid} URL'),
-          actions: Btnx.oks,
-        );
+        context.showRoundDialog(title: libL10n.fail, child: Text('${l10n.invalid} URL'), actions: Btnx.oks);
         return;
       }
       _setting.serverLogoUrl.put(url);
@@ -287,8 +273,7 @@ extension _Server on _AppSettingsPageState {
       title: const Text('Logo URL'),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () {
-        final ctrl =
-            TextEditingController(text: _setting.serverLogoUrl.fetch());
+        final ctrl = TextEditingController(text: _setting.serverLogoUrl.fetch());
         context.showRoundDialog(
           title: 'Logo URL',
           child: Column(
