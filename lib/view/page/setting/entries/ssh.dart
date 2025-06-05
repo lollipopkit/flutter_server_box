@@ -9,9 +9,7 @@ extension _SSH on _AppSettingsPageState {
         _buildTermTheme(),
         _buildFont(),
         _buildTermFontSize(),
-        _buildSshBgImage(),
-        _buildSshBgOpacity(),
-        _buildSshBlurRadius(),
+        _buildSshBg(),
         if (isDesktop) _buildDesktopTerminal(),
         _buildSSHVirtualKeyAutoOff(),
         if (isMobile) _buildSSHVirtKeys(),
@@ -49,10 +47,7 @@ extension _SSH on _AppSettingsPageState {
         context.showRoundDialog(
           title: l10n.font,
           actions: [
-            TextButton(
-              onPressed: () async => await _pickFontFile(),
-              child: Text(libL10n.file),
-            ),
+            TextButton(onPressed: () async => await _pickFontFile(), child: Text(libL10n.file)),
             TextButton(
               onPressed: () {
                 _setting.fontPath.delete();
@@ -108,12 +103,7 @@ extension _SSH on _AppSettingsPageState {
       return ListTile(
         leading: const Icon(Icons.terminal),
         title: TipText(l10n.terminal, l10n.desktopTerminalTip),
-        trailing: Text(
-          val,
-          style: UIs.text15,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        trailing: Text(val, style: UIs.text15, maxLines: 1, overflow: TextOverflow.ellipsis),
         onTap: () async {
           final ctrl = TextEditingController(text: val);
           void onSave() {
@@ -190,30 +180,32 @@ extension _SSH on _AppSettingsPageState {
       //   '${l10n.letterCacheTip}\n${l10n.needRestart}',
       //   style: UIs.textGrey,
       // ),
-      title: TipText(
-        l10n.letterCache,
-        '${l10n.letterCacheTip}\n${l10n.needRestart}',
-      ),
+      title: TipText(l10n.letterCache, '${l10n.letterCacheTip}\n${l10n.needRestart}'),
       trailing: StoreSwitch(prop: _setting.letterCache),
+    );
+  }
+
+  Widget _buildSshBg() {
+    return ExpandTile(
+      leading: const Icon(MingCute.background_fill),
+      title: Text(libL10n.background),
+      children: [_buildSshBgImage(), _buildSshBgOpacity(), _buildSshBlurRadius()],
     );
   }
 
   Widget _buildSshBgImage() {
     return ListTile(
       leading: const Icon(Icons.image),
-      title: Text(l10n.sshBgImage),
+      title: Text(libL10n.image),
       trailing: _setting.sshBgImage.listenable().listenVal((val) {
         final name = val.getFileName();
         return Text(name ?? libL10n.empty, style: UIs.text15);
       }),
       onTap: () {
         context.showRoundDialog(
-          title: l10n.sshBgImage,
+          title: libL10n.image,
           actions: [
-            TextButton(
-              onPressed: () async => await _pickBgImage(),
-              child: Text(libL10n.file),
-            ),
+            TextButton(onPressed: () async => await _pickBgImage(), child: Text(libL10n.file)),
             TextButton(
               onPressed: () {
                 _setting.sshBgImage.delete();
@@ -229,8 +221,7 @@ extension _SSH on _AppSettingsPageState {
   }
 
   Widget _buildSshBgOpacity() {
-    final ctrl =
-        TextEditingController(text: _setting.sshBgOpacity.fetch().toString());
+    final ctrl = TextEditingController(text: _setting.sshBgOpacity.fetch().toString());
     void onSave(String s) {
       final val = double.tryParse(s);
       if (val == null) {
@@ -243,13 +234,13 @@ extension _SSH on _AppSettingsPageState {
 
     return ListTile(
       leading: const Icon(Icons.opacity),
-      title: Text(l10n.sshBgOpacity),
+      title: Text(libL10n.opacity),
       trailing: ValBuilder(
         listenable: _setting.sshBgOpacity.listenable(),
         builder: (val) => Text(val.toString(), style: UIs.text15),
       ),
       onTap: () => context.showRoundDialog(
-        title: l10n.sshBgOpacity,
+        title: libL10n.opacity,
         child: Input(
           controller: ctrl,
           autoFocus: true,
@@ -265,8 +256,7 @@ extension _SSH on _AppSettingsPageState {
   }
 
   Widget _buildSshBlurRadius() {
-    final ctrl =
-        TextEditingController(text: _setting.sshBlurRadius.fetch().toString());
+    final ctrl = TextEditingController(text: _setting.sshBlurRadius.fetch().toString());
     void onSave(String s) {
       final val = double.tryParse(s);
       if (val == null) {
@@ -279,13 +269,13 @@ extension _SSH on _AppSettingsPageState {
 
     return ListTile(
       leading: const Icon(Icons.blur_on),
-      title: Text(l10n.sshBlurRadius),
+      title: Text(libL10n.blurRadius),
       trailing: ValBuilder(
         listenable: _setting.sshBlurRadius.listenable(),
         builder: (val) => Text(val.toString(), style: UIs.text15),
       ),
       onTap: () => context.showRoundDialog(
-        title: l10n.sshBlurRadius,
+        title: libL10n.blurRadius,
         child: Input(
           controller: ctrl,
           autoFocus: true,

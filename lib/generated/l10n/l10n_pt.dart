@@ -593,15 +593,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'Desativação automática das teclas virtuais';
 
   @override
-  String get sshBgImage => 'SSH page background';
-
-  @override
-  String get sshBgOpacity => 'Background opacity';
-
-  @override
-  String get sshBlurRadius => 'Blur radius';
-
-  @override
   String get start => 'Iniciar';
 
   @override

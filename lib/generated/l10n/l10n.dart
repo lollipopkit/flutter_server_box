@@ -1172,24 +1172,6 @@ abstract class AppLocalizations {
   /// **'Auto switching of virtual keys'**
   String get sshVirtualKeyAutoOff;
 
-  /// No description provided for @sshBgImage.
-  ///
-  /// In en, this message translates to:
-  /// **'SSH page background'**
-  String get sshBgImage;
-
-  /// No description provided for @sshBgOpacity.
-  ///
-  /// In en, this message translates to:
-  /// **'Background opacity'**
-  String get sshBgOpacity;
-
-  /// No description provided for @sshBlurRadius.
-  ///
-  /// In en, this message translates to:
-  /// **'Blur radius'**
-  String get sshBlurRadius;
-
   /// No description provided for @start.
   ///
   /// In en, this message translates to:

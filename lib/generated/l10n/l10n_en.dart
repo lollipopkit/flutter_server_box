@@ -590,15 +590,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sshVirtualKeyAutoOff => 'Auto switching of virtual keys';
 
   @override
-  String get sshBgImage => 'SSH page background';
-
-  @override
-  String get sshBgOpacity => 'Background opacity';
-
-  @override
-  String get sshBlurRadius => 'Blur radius';
-
-  @override
   String get start => 'Start';
 
   @override

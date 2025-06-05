@@ -160,8 +160,7 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin, Af
           actions: [_buildCopyBtn, _buildKillBtn],
           centerTitle: false,
         ),
-        backgroundColor:
-            hasBg ? Colors.transparent : _terminalTheme.background,
+        backgroundColor: hasBg ? Colors.transparent : _terminalTheme.background,
         body: _buildBody(),
         bottomNavigationBar: isDesktop ? null : _buildBottom(),
       ),
@@ -183,78 +182,73 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin, Af
     final blur = Stores.setting.sshBlurRadius.fetch();
     final file = File(bgImage);
     final hasBg = bgImage.isNotEmpty && file.existsSync();
-    final theme = hasBg
-        ? _terminalTheme.copyWith(background: Colors.transparent)
-        : _terminalTheme;
+    final theme = hasBg ? _terminalTheme.copyWith(background: Colors.transparent) : _terminalTheme;
     final children = <Widget>[];
     if (hasBg) {
-      children.add(Positioned.fill(
-        child: Image.file(
-          file,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const SizedBox(),
+      children.add(
+        Positioned.fill(
+          child: Image.file(file, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox()),
         ),
-      ));
+      );
       if (blur > 0) {
-        children.add(Positioned.fill(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-            child: const SizedBox(),
+        children.add(
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+              child: const SizedBox(),
+            ),
           ),
-        ));
+        );
       }
-      children.add(Positioned.fill(
-        child: ColoredBox(
-          color: _terminalTheme.background.withOpacity(opacity),
+      children.add(
+        Positioned.fill(
+          child: ColoredBox(color: _terminalTheme.background.withValues(alpha: opacity)),
         ),
-      ));
+      );
     }
-    children.add(Padding(
-      padding: EdgeInsets.only(
-        left: _horizonPadding,
-        right: _horizonPadding,
+    children.add(
+      Padding(
+        padding: EdgeInsets.only(left: _horizonPadding, right: _horizonPadding),
+        child: TerminalView(
+          _terminal,
+          key: _termKey,
+          controller: _terminalController,
+          keyboardType: TextInputType.text,
+          enableSuggestions: letterCache,
+          textStyle: _terminalStyle,
+          backgroundOpacity: 0,
+          theme: theme,
+          deleteDetection: isMobile,
+          autofocus: false,
+          keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,
+          showToolbar: isMobile,
+          viewOffset: Offset(2 * _horizonPadding, CustomAppBar.sysStatusBarHeight),
+          hideScrollBar: false,
+          focusNode: widget.args.focusNode,
+        ),
       ),
-      child: TerminalView(
-        _terminal,
-        key: _termKey,
-        controller: _terminalController,
-        keyboardType: TextInputType.text,
-        enableSuggestions: letterCache,
-        textStyle: _terminalStyle,
-        theme: theme,
-        deleteDetection: isMobile,
-        autofocus: false,
-        keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,
-        showToolbar: isMobile,
-        viewOffset: Offset(2 * _horizonPadding, CustomAppBar.sysStatusBarHeight),
-        hideScrollBar: false,
-        focusNode: widget.args.focusNode,
-      ),
-    ));
+    );
 
     return SizedBox(
-      height:
-          _media.size.height - _virtKeysHeight - _media.padding.bottom - _media.padding.top,
+      height: _media.size.height - _virtKeysHeight - _media.padding.bottom - _media.padding.top,
       child: Stack(children: children),
     );
   }
 
   Widget _buildBottom() {
-    return SafeArea(
-      child: AnimatedPadding(
-        padding: _media.viewInsets,
-        duration: const Duration(milliseconds: 23),
-        curve: Curves.fastOutSlowIn,
-        child: Container(
-          color: _terminalTheme.background,
-          height: _virtKeysHeight,
-          child: ChangeNotifierProvider(
-            create: (_) => _keyboard,
-            builder: (_, __) => Consumer<VirtKeyProvider>(
-              builder: (_, __, ___) {
-                return _buildVirtualKey();
-              },
-            ),
+    return AnimatedPadding(
+      padding: _media.viewInsets,
+      duration: const Duration(milliseconds: 23),
+      curve: Curves.fastOutSlowIn,
+      child: Container(
+        color: _terminalTheme.background,
+        height: _virtKeysHeight + _media.padding.bottom,
+        child: ChangeNotifierProvider(
+          create: (_) => _keyboard,
+          builder: (_, __) => Consumer<VirtKeyProvider>(
+            builder: (_, __, ___) {
+              return _buildVirtualKey();
+            },
           ),
         ),
       ),
