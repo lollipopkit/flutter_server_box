@@ -230,6 +230,9 @@ class SettingStore extends HiveStore {
 
   /// ssh page
   late final sshWakeLock = propertyDefault('sshWakeLock', true);
+  late final sshBgImage = propertyDefault('sshBgImage', '');
+  late final sshBgOpacity = propertyDefault('sshBgOpacity', 0.3);
+  late final sshBlurRadius = propertyDefault('sshBlurRadius', 0.0);
 
   /// fmt: https://example.com/{DIST}-{BRIGHT}.png
   late final serverLogoUrl = propertyDefault('serverLogoUrl', '');

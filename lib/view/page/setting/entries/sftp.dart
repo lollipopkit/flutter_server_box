@@ -39,39 +39,35 @@ extension _SFTP on _AppSettingsPageState {
   }
 
   Widget _buildSftpEditor() {
-    return _setting.sftpEditor.listenable().listenVal(
-      (val) {
-        return ListTile(
-          leading: const Icon(MingCute.edit_fill),
-          title: TipText(l10n.editor, l10n.sftpEditorTip),
-          trailing: Text(
-            val.isEmpty ? l10n.inner : val,
-            style: UIs.text15,
-          ),
-          onTap: () async {
-            final ctrl = TextEditingController(text: val);
-            void onSave() {
-              final s = ctrl.text.trim();
-              _setting.sftpEditor.put(s);
-              context.pop();
-            }
+    return _setting.sftpEditor.listenable().listenVal((val) {
+      return ListTile(
+        leading: const Icon(MingCute.edit_fill),
+        title: TipText(l10n.editor, l10n.sftpEditorTip),
+        trailing: Text(val.isEmpty ? l10n.inner : val, style: UIs.text15),
+        onTap: () async {
+          final ctrl = TextEditingController(text: val);
+          void onSave() {
+            final s = ctrl.text.trim();
+            _setting.sftpEditor.put(s);
+            context.pop();
+          }
 
-            await context.showRoundDialog<bool>(
-              title: libL10n.select,
-              child: Input(
-                controller: ctrl,
-                autoFocus: true,
-                label: l10n.editor,
-                hint: '\$EDITOR / vim / nano ...',
-                icon: Icons.edit,
-                suggestion: false,
-                onSubmitted: (_) => onSave(),
-              ),
-              actions: Btn.ok(onTap: onSave).toList,
-            );
-          },
-        );
-      },
-    );
+          await context.showRoundDialog<bool>(
+            title: libL10n.select,
+            child: Input(
+              controller: ctrl,
+              autoFocus: true,
+              label: l10n.editor,
+              hint: '\$EDITOR / vim / nano ...',
+              icon: Icons.edit,
+              suggestion: false,
+              onSubmitted: (_) => onSave(),
+            ),
+            actions: Btn.ok(onTap: onSave).toList,
+          );
+          ctrl.dispose();
+        },
+      );
+    });
   }
 }

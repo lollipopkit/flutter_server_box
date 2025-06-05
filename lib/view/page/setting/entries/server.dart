@@ -72,7 +72,6 @@ extension _Server on _AppSettingsPageState {
   }
 
   Widget _buildTextScaler() {
-    final ctrl = TextEditingController(text: _setting.textFactor.toString());
     return ListTile(
       // title: Text(l10n.textScaler),
       // subtitle: Text(l10n.textScalerTip, style: UIs.textGrey),
@@ -88,11 +87,11 @@ extension _Server on _AppSettingsPageState {
           type: TextInputType.number,
           hint: '1.0',
           icon: Icons.format_size,
-          controller: ctrl,
+          controller: _textScalerCtrl,
           onSubmitted: _onSaveTextScaler,
           suggestion: false,
         ),
-        actions: Btn.ok(onTap: () => _onSaveTextScaler(ctrl.text)).toList,
+        actions: Btn.ok(onTap: () => _onSaveTextScaler(_textScalerCtrl.text)).toList,
       ),
     );
   }
@@ -273,14 +272,13 @@ extension _Server on _AppSettingsPageState {
       title: const Text('Logo URL'),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () {
-        final ctrl = TextEditingController(text: _setting.serverLogoUrl.fetch());
         context.showRoundDialog(
           title: 'Logo URL',
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Input(
-                controller: ctrl,
+                controller: _serverLogoCtrl,
                 autoFocus: true,
                 hint: 'https://example.com/logo.png',
                 icon: Icons.link,
@@ -295,7 +293,7 @@ extension _Server on _AppSettingsPageState {
               ),
             ],
           ),
-          actions: Btn.ok(onTap: () => onSave(ctrl.text)).toList,
+          actions: Btn.ok(onTap: () => onSave(_serverLogoCtrl.text)).toList,
         );
       },
     );

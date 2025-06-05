@@ -100,14 +100,13 @@ extension _Editor on _AppSettingsPageState {
   }
 
   void _showFontSizeDialog(HiveProp<double> property) {
-    final ctrller = TextEditingController(text: property.get().toString());
     void onSave() {
       context.pop();
-      final fontSize = double.tryParse(ctrller.text);
+      final fontSize = double.tryParse(_editorTextSizeCtrl.text);
       if (fontSize == null) {
         context.showRoundDialog(
           title: libL10n.fail,
-          child: Text('Parsed failed: ${ctrller.text}'),
+          child: Text('Parsed failed: ${_editorTextSizeCtrl.text}'),
         );
         return;
       }
@@ -117,7 +116,7 @@ extension _Editor on _AppSettingsPageState {
     context.showRoundDialog(
       title: l10n.fontSize,
       child: Input(
-        controller: ctrller,
+        controller: _editorTextSizeCtrl,
         autoFocus: true,
         type: TextInputType.number,
         icon: Icons.font_download,
