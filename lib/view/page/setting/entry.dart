@@ -18,6 +18,7 @@ import 'package:server_box/view/page/backup.dart';
 import 'package:server_box/view/page/private_key/list.dart';
 import 'package:server_box/view/page/setting/platform/android.dart';
 import 'package:server_box/view/page/setting/platform/ios.dart';
+import 'package:server_box/view/page/setting/platform/platform_pub.dart';
 import 'package:server_box/view/page/setting/seq/srv_detail_seq.dart';
 import 'package:server_box/view/page/setting/seq/srv_func_seq.dart';
 import 'package:server_box/view/page/setting/seq/srv_seq.dart';

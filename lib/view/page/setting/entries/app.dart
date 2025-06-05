@@ -8,8 +8,9 @@ extension _App on _AppSettingsPageState {
       _buildThemeMode(),
       _buildAppColor(),
       _buildCheckUpdate(),
-      if (specific != null) specific,
+      PlatformPublicSettings.buildBioAuth(),
       _buildAppMore(),
+      if (specific != null) specific,
     ];
 
     return Column(children: children.map((e) => e.cardx).toList());

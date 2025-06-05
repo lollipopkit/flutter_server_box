@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/misc.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:server_box/view/page/setting/platform/platform_pub.dart';
 import 'package:watch_connectivity/watch_connectivity.dart';
 
 class IosSettingsPage extends StatefulWidget {
@@ -12,10 +11,7 @@ class IosSettingsPage extends StatefulWidget {
   @override
   State<IosSettingsPage> createState() => _IosSettingsPageState();
 
-  static const route = AppRouteNoArg(
-    page: IosSettingsPage.new,
-    path: '/settings/ios',
-  );
+  static const route = AppRouteNoArg(page: IosSettingsPage.new, path: '/settings/ios');
 }
 
 class _IosSettingsPageState extends State<IosSettingsPage> {
@@ -39,8 +35,6 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
           _buildPushToken(),
           _buildAutoUpdateHomeWidget(),
           _buildWatchApp(),
-          if (BioAuth.isPlatformSupported)
-            PlatformPublicSettings.buildBioAuth(),
         ].map((e) => CardX(child: e)).toList(),
       ),
     );
@@ -69,12 +63,7 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
         error: (error, trace) => Text('${libL10n.error}: $error'),
         success: (text) {
           _pushToken.value = text;
-          return Text(
-            text ?? 'null',
-            style: UIs.textGrey,
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          );
+          return Text(text ?? 'null', style: UIs.textGrey, overflow: TextOverflow.ellipsis, maxLines: 1);
         },
       ),
     );
@@ -120,15 +109,14 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
 
   void _onTapWatchApp(Map<String, dynamic> map) async {
     final urls = Map<String, String>.from(map['urls'] as Map? ?? {});
-    final result = await KvEditor.route.go(
-      context,
-      KvEditorArgs(data: urls),
-    );
+    final result = await KvEditor.route.go(context, KvEditorArgs(data: urls));
     if (result == null) return;
 
-    final (_, err) = await context.showLoadingDialog(fn: () async {
-      await wc.updateApplicationContext({'urls': result});
-    });
+    final (_, err) = await context.showLoadingDialog(
+      fn: () async {
+        await wc.updateApplicationContext({'urls': result});
+      },
+    );
     if (err == null) {
       context.showSnackBar(libL10n.success);
     }
