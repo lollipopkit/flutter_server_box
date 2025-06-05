@@ -215,10 +215,10 @@ class _HomePageState extends State<HomePage>
 
   void _goAuth() {
     if (Stores.setting.useBioAuth.fetch()) {
-      if (BioAuthPage.route.alreadyIn) return;
-      BioAuthPage.route.go(
+      if (LocalAuthPage.route.alreadyIn) return;
+      LocalAuthPage.route.go(
         context,
-        args: BioAuthPageArgs(onAuthSuccess: () => _shouldAuth = false),
+        args: LocalAuthPageArgs(onAuthSuccess: () => _shouldAuth = false),
       );
     }
   }
