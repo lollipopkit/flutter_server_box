@@ -147,7 +147,7 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin, Af
   Widget build(BuildContext context) {
     super.build(context);
     final bgImage = Stores.setting.sshBgImage.fetch();
-    final hasBg = bgImage.isNotEmpty && File(bgImage).existsSync();
+    final hasBg = bgImage.isNotEmpty;
     Widget child = PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {

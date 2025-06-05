@@ -78,10 +78,7 @@ extension _App on _AppSettingsPageState {
       },
       trailing: ValBuilder(
         listenable: _setting.serverStatusUpdateInterval.listenable(),
-        builder: (val) => Text(
-          '$val ${l10n.second}',
-          style: UIs.text15,
-        ),
+        builder: (val) => Text('$val ${l10n.second}', style: UIs.text15),
       ),
     );
   }
@@ -90,41 +87,41 @@ extension _App on _AppSettingsPageState {
     return ListTile(
       leading: const Icon(Icons.colorize),
       title: Text(libL10n.primaryColorSeed),
-      trailing: _setting.colorSeed.listenable().listenVal(
-        (val) {
-          final c = Color(val);
-          return ClipOval(child: Container(color: c, height: 27, width: 27));
-        },
-      ),
+      trailing: _setting.colorSeed.listenable().listenVal((val) {
+        final c = Color(val);
+        return ClipOval(child: Container(color: c, height: 27, width: 27));
+      }),
       onTap: () async {
         final ctrl = TextEditingController(text: UIs.primaryColor.toHex);
         await context.showRoundDialog(
           title: libL10n.primaryColorSeed,
-          child: StatefulBuilder(builder: (context, setState) {
-            final children = <Widget>[
-              /// Plugin [dynamic_color] is not supported on iOS
-              if (!isIOS)
-                ListTile(
-                  title: Text(l10n.followSystem),
-                  trailing: StoreSwitch(
-                    prop: _setting.useSystemPrimaryColor,
-                    callback: (_) => setState(() {}),
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              final children = <Widget>[
+                /// Plugin [dynamic_color] is not supported on iOS
+                if (!isIOS)
+                  ListTile(
+                    title: Text(l10n.followSystem),
+                    trailing: StoreSwitch(
+                      prop: _setting.useSystemPrimaryColor,
+                      callback: (_) => setState(() {}),
+                    ),
                   ),
-                )
-            ];
-            if (!_setting.useSystemPrimaryColor.fetch()) {
-              children.add(ColorPicker(
-                color: Color(_setting.colorSeed.fetch()),
-                onColorChanged: (c) => ctrl.text = c.toHex,
-              ));
-            }
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: children,
-            );
-          }),
+              ];
+              if (!_setting.useSystemPrimaryColor.fetch()) {
+                children.add(
+                  ColorPicker(
+                    color: Color(_setting.colorSeed.fetch()),
+                    onColorChanged: (c) => ctrl.text = c.toHex,
+                  ),
+                );
+              }
+              return Column(mainAxisSize: MainAxisSize.min, children: children);
+            },
+          ),
           actions: Btn.ok(onTap: () => _onSaveColor(ctrl.text)).toList,
         );
+        ctrl.dispose();
       },
     );
   }
@@ -157,10 +154,7 @@ extension _App on _AppSettingsPageState {
             _setting.maxRetryCount.put(selected);
           }
         },
-        trailing: Text(
-          '$val ${l10n.times}',
-          style: UIs.text15,
-        ),
+        trailing: Text('$val ${l10n.times}', style: UIs.text15),
       ),
     );
   }
@@ -185,10 +179,7 @@ extension _App on _AppSettingsPageState {
       },
       trailing: ValBuilder(
         listenable: _setting.themeMode.listenable(),
-        builder: (val) => Text(
-          _buildThemeModeStr(val),
-          style: UIs.text15,
-        ),
+        builder: (val) => Text(_buildThemeModeStr(val), style: UIs.text15),
       ),
     );
   }
@@ -216,10 +207,7 @@ extension _App on _AppSettingsPageState {
       title: TipText(l10n.fontSize, l10n.termFontSizeTip),
       trailing: ValBuilder(
         listenable: _setting.termFontSize.listenable(),
-        builder: (val) => Text(
-          val.toString(),
-          style: UIs.text15,
-        ),
+        builder: (val) => Text(val.toString(), style: UIs.text15),
       ),
       onTap: () => _showFontSizeDialog(_setting.termFontSize),
     );
@@ -244,10 +232,7 @@ extension _App on _AppSettingsPageState {
       },
       trailing: ListenBuilder(
         listenable: _setting.locale.listenable(),
-        builder: () => Text(
-          context.localeNativeName,
-          style: UIs.text15,
-        ),
+        builder: () => Text(context.localeNativeName, style: UIs.text15),
       ),
     );
   }

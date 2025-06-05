@@ -83,16 +83,16 @@ extension _SSH on _AppSettingsPageState {
     final path = await Pfs.pickFilePath();
     if (path == null) return;
 
-    if (isIOS) {
-      _setting.sshBgImage.put(path);
-    } else {
-      final file = File(path);
-      final extIndex = path.lastIndexOf('.');
-      final ext = extIndex != -1 ? path.substring(extIndex) : '';
-      final newPath = Paths.img.joinPath('ssh_bg$ext');
-      await file.copy(newPath);
-      _setting.sshBgImage.put(newPath);
+    final file = File(path);
+    final extIndex = path.lastIndexOf('.');
+    final ext = extIndex != -1 ? path.substring(extIndex) : '';
+    final newPath = Paths.img.joinPath('ssh_bg$ext');
+    final destFile = File(newPath);
+    if (await destFile.exists()) {
+      await destFile.delete();
     }
+    await file.copy(newPath);
+    _setting.sshBgImage.put(newPath);
 
     context.pop();
     RNodes.app.notify();
@@ -111,7 +111,7 @@ extension _SSH on _AppSettingsPageState {
             context.pop();
           }
 
-          context.showRoundDialog<bool>(
+          await context.showRoundDialog<bool>(
             title: libL10n.select,
             child: Input(
               controller: ctrl,
@@ -124,6 +124,7 @@ extension _SSH on _AppSettingsPageState {
             ),
             actions: Btn.ok(onTap: onSave).toList,
           );
+          ctrl.dispose();
         },
       );
     });
@@ -221,7 +222,6 @@ extension _SSH on _AppSettingsPageState {
   }
 
   Widget _buildSshBgOpacity() {
-    final ctrl = TextEditingController(text: _setting.sshBgOpacity.fetch().toString());
     void onSave(String s) {
       final val = double.tryParse(s);
       if (val == null) {
@@ -242,7 +242,7 @@ extension _SSH on _AppSettingsPageState {
       onTap: () => context.showRoundDialog(
         title: libL10n.opacity,
         child: Input(
-          controller: ctrl,
+          controller: _sshOpacityCtrl,
           autoFocus: true,
           type: TextInputType.number,
           hint: '0.3',
@@ -250,20 +250,22 @@ extension _SSH on _AppSettingsPageState {
           suggestion: false,
           onSubmitted: onSave,
         ),
-        actions: Btn.ok(onTap: () => onSave(ctrl.text)).toList,
+        actions: Btn.ok(onTap: () => onSave(_sshOpacityCtrl.text)).toList,
       ),
     );
   }
 
   Widget _buildSshBlurRadius() {
-    final ctrl = TextEditingController(text: _setting.sshBlurRadius.fetch().toString());
     void onSave(String s) {
       final val = double.tryParse(s);
       if (val == null) {
         context.showSnackBar(libL10n.fail);
         return;
       }
-      _setting.sshBlurRadius.put(val);
+      const minRadius = 0.0;
+      const maxBlur = 50.0;
+      final clampedVal = val.clamp(minRadius, maxBlur);
+      _setting.sshBlurRadius.put(clampedVal);
       context.pop();
     }
 
@@ -277,7 +279,7 @@ extension _SSH on _AppSettingsPageState {
       onTap: () => context.showRoundDialog(
         title: libL10n.blurRadius,
         child: Input(
-          controller: ctrl,
+          controller: _sshBlurCtrl,
           autoFocus: true,
           type: TextInputType.number,
           hint: '0',
@@ -285,7 +287,7 @@ extension _SSH on _AppSettingsPageState {
           suggestion: false,
           onSubmitted: onSave,
         ),
-        actions: Btn.ok(onTap: () => onSave(ctrl.text)).toList,
+        actions: Btn.ok(onTap: () => onSave(_sshBlurCtrl.text)).toList,
       ),
     );
   }
