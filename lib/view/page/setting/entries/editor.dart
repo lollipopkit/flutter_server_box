@@ -90,23 +90,21 @@ extension _Editor on _AppSettingsPageState {
       title: Text(l10n.fontSize),
       trailing: ValBuilder(
         listenable: _setting.editorFontSize.listenable(),
-        builder: (val) => Text(
-          val.toString(),
-          style: UIs.text15,
-        ),
+        builder: (val) => Text(val.toString(), style: UIs.text15),
       ),
       onTap: () => _showFontSizeDialog(_setting.editorFontSize),
     );
   }
 
   void _showFontSizeDialog(HiveProp<double> property) {
+    final ctrl = TextEditingController(text: property.fetch().toString());
     void onSave() {
       context.pop();
-      final fontSize = double.tryParse(_editorTextSizeCtrl.text);
+      final fontSize = double.tryParse(ctrl.text);
       if (fontSize == null) {
         context.showRoundDialog(
           title: libL10n.fail,
-          child: Text('Parsed failed: ${_editorTextSizeCtrl.text}'),
+          child: Text('Parsed failed: ${ctrl.text}'),
         );
         return;
       }
@@ -116,7 +114,7 @@ extension _Editor on _AppSettingsPageState {
     context.showRoundDialog(
       title: l10n.fontSize,
       child: Input(
-        controller: _editorTextSizeCtrl,
+        controller: ctrl,
         autoFocus: true,
         type: TextInputType.number,
         icon: Icons.font_download,

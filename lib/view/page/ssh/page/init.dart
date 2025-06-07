@@ -135,6 +135,7 @@ extension _Init on SSHPageState {
       actions: Btn.ok(
         onTap: () {
           contextSafe?.pop(); // Can't use tear-drop here
+          contextSafe?.pop(); // Pop the SSHPage
         },
       ).toList,
     );

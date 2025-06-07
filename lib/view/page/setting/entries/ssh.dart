@@ -79,6 +79,18 @@ extension _SSH on _AppSettingsPageState {
     RNodes.app.notify();
   }
 
+  Widget _buildTermFontSize() {
+    return ListTile(
+      leading: const Icon(MingCute.font_size_line),
+      title: TipText(l10n.fontSize, l10n.termFontSizeTip),
+      trailing: ValBuilder(
+        listenable: _setting.termFontSize.listenable(),
+        builder: (val) => Text(val.toString(), style: UIs.text15),
+      ),
+      onTap: () => _showFontSizeDialog(_setting.termFontSize),
+    );
+  }
+
   Future<void> _pickBgImage() async {
     final path = await Pfs.pickFilePath();
     if (path == null) return;

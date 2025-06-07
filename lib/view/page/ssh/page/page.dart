@@ -64,10 +64,11 @@ class SSHPage extends StatefulWidget {
 
 const _horizonPadding = 7.0;
 
-class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
+class SSHPageState extends State<SSHPage>
+    with AutomaticKeepAliveClientMixin, AfterLayoutMixin, TickerProviderStateMixin {
   final _keyboard = VirtKeyProvider();
   late final _terminal = Terminal(inputHandler: _keyboard);
-  final TerminalController _terminalController = TerminalController();
+  late final TerminalController _terminalController = TerminalController(vsync: this);
   final List<List<VirtKey>> _virtKeysList = [];
   late final _termKey = widget.args.terminalKey ?? GlobalKey<TerminalViewState>();
 
@@ -156,8 +157,9 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin, Af
       },
       child: Scaffold(
         appBar: CustomAppBar(
+          leading: BackButton(onPressed: context.pop),
           title: Text(widget.args.spi.name),
-          actions: [_buildCopyBtn, _buildKillBtn],
+          actions: [_buildCopyBtn],
           centerTitle: false,
         ),
         backgroundColor: hasBg ? Colors.transparent : _terminalTheme.background,
@@ -310,25 +312,15 @@ class SSHPageState extends State<SSHPage> with AutomaticKeepAliveClientMixin, Af
   }
 
   Widget get _buildCopyBtn {
-    return Btn.icon(
+    return IconButton(
       icon: Icon(MingCute.copy_2_fill),
-      onTap: () {
+      tooltip: libL10n.copy,
+      onPressed: () {
         final selected = terminalSelected;
         if (selected == null || selected.isEmpty) {
           return;
         }
         Pfs.copy(selected);
-      },
-    );
-  }
-
-  Widget get _buildKillBtn {
-    return Btn.icon(
-      icon: Icon(MingCute.close_circle_fill),
-      onTap: () {
-        if (_client == null) return;
-        _client!.close();
-        context.pop();
       },
     );
   }
