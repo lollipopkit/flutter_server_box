@@ -111,8 +111,6 @@ final class _AppSettingsPageState extends State<AppSettingsPage> {
   late final _sshOpacityCtrl = TextEditingController(text: _setting.sshBgOpacity.fetch().toString());
   late final _sshBlurCtrl = TextEditingController(text: _setting.sshBlurRadius.fetch().toString());
   late final _textScalerCtrl = TextEditingController(text: _setting.textFactor.toString());
-
-  late final _editorTextSizeCtrl = TextEditingController(text: _setting.editorFontSize.get().toString());
   late final _serverLogoCtrl = TextEditingController(text: _setting.serverLogoUrl.fetch());
 
   @override

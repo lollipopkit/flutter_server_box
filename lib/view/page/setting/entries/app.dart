@@ -9,8 +9,8 @@ extension _App on _AppSettingsPageState {
       _buildAppColor(),
       _buildCheckUpdate(),
       PlatformPublicSettings.buildBioAuth(),
-      _buildAppMore(),
       if (specific != null) specific,
+      _buildAppMore(),
     ];
 
     return Column(children: children.map((e) => e.cardx).toList());
@@ -198,20 +198,6 @@ extension _App on _AppSettingsPageState {
       default:
         return libL10n.auto;
     }
-  }
-
-  Widget _buildTermFontSize() {
-    return ListTile(
-      leading: const Icon(MingCute.font_size_line),
-      // title: Text(l10n.fontSize),
-      // subtitle: Text(l10n.termFontSizeTip, style: UIs.textGrey),
-      title: TipText(l10n.fontSize, l10n.termFontSizeTip),
-      trailing: ValBuilder(
-        listenable: _setting.termFontSize.listenable(),
-        builder: (val) => Text(val.toString(), style: UIs.text15),
-      ),
-      onTap: () => _showFontSizeDialog(_setting.termFontSize),
-    );
   }
 
   Widget _buildLocale() {
