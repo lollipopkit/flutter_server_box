@@ -75,7 +75,6 @@ class SSHPageState extends State<SSHPage>
   late MediaQueryData _media;
   late TerminalStyle _terminalStyle;
   late TerminalTheme _terminalTheme;
-  double _virtKeyWidth = 0;
   double _virtKeysHeight = 0;
   late final _horizonVirtKeys = Stores.setting.horizonVirtKey.fetch();
 
@@ -135,7 +134,6 @@ class SSHPageState extends State<SSHPage>
 
     // Because the virtual keyboard only displayed on mobile devices
     if (isMobile) {
-      _virtKeyWidth = _media.size.width / 7;
       if (_horizonVirtKeys) {
         _virtKeysHeight = 37;
       } else {
@@ -156,12 +154,14 @@ class SSHPageState extends State<SSHPage>
         _handleEscKeyOrBackButton();
       },
       child: Scaffold(
-        appBar: CustomAppBar(
-          leading: BackButton(onPressed: context.pop),
-          title: Text(widget.args.spi.name),
-          actions: [_buildCopyBtn],
-          centerTitle: false,
-        ),
+        appBar: widget.args.notFromTab
+            ? CustomAppBar(
+                leading: BackButton(onPressed: context.pop),
+                title: Text(widget.args.spi.name),
+                actions: [_buildCopyBtn],
+                centerTitle: false,
+              )
+            : null,
         backgroundColor: hasBg ? Colors.transparent : _terminalTheme.background,
         body: _buildBody(),
         bottomNavigationBar: isDesktop ? null : _buildBottom(),
@@ -258,17 +258,31 @@ class SSHPageState extends State<SSHPage>
   }
 
   Widget _buildVirtualKey() {
-    if (_horizonVirtKeys) {
-      return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(children: _virtKeysList.expand((e) => e).map(_buildVirtKeyItem).toList()),
-      );
-    }
-    final rows = _virtKeysList.map((e) => Row(children: e.map(_buildVirtKeyItem).toList())).toList();
-    return Column(mainAxisSize: MainAxisSize.min, children: rows);
+    final count = _horizonVirtKeys ? _virtKeysList.length : _virtKeysList.firstOrNull?.length ?? 0;
+    if (count == 0) return UIs.placeholder;
+    return LayoutBuilder(
+      builder: (_, cons) {
+        final virtKeyWidth = cons.maxWidth / count;
+        if (_horizonVirtKeys) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: _virtKeysList
+                  .expand((e) => e)
+                  .map((e) => _buildVirtKeyItem(e, virtKeyWidth))
+                  .toList(),
+            ),
+          );
+        }
+        final rows = _virtKeysList
+            .map((e) => Row(children: e.map((e) => _buildVirtKeyItem(e, virtKeyWidth)).toList()))
+            .toList();
+        return Column(mainAxisSize: MainAxisSize.min, children: rows);
+      },
+    );
   }
 
-  Widget _buildVirtKeyItem(VirtKey item) {
+  Widget _buildVirtKeyItem(VirtKey item, double virtKeyWidth) {
     var selected = false;
     switch (item.key) {
       case TerminalKey.control:
@@ -304,7 +318,7 @@ class SSHPageState extends State<SSHPage>
       onTapCancel: () => _virtKeyLongPressTimer?.cancel(),
       onTapUp: (_) => _virtKeyLongPressTimer?.cancel(),
       child: SizedBox(
-        width: _virtKeyWidth,
+        width: virtKeyWidth,
         height: _virtKeysHeight / _virtKeysList.length,
         child: Center(child: child),
       ),
