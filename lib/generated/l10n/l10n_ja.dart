@@ -425,6 +425,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get port => 'ポート';
 
   @override
+  String get preferDiskAmount => 'ディスク容量を優先的に表示';
+
+  @override
   String get preview => 'プレビュー';
 
   @override

@@ -128,6 +128,7 @@
   "pkg": "Pkg",
   "plugInType": "Einfügetyp",
   "port": "Port",
+  "preferDiskAmount": "Festplattenkapazität vorrangig anzeigen",
   "preview": "Vorschau",
   "privateKey": "Private Key",
   "process": "Prozess",

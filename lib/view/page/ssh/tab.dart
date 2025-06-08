@@ -186,7 +186,7 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
           itemCount: names.length,
           itemBuilder: (_, idx) => _buildItem(idx),
-          separatorBuilder: (_, __) => Padding(
+          separatorBuilder: (_, _) => Padding(
             padding: const EdgeInsets.symmetric(vertical: 17),
             child: Container(
               color: const Color.fromARGB(61, 158, 158, 158),

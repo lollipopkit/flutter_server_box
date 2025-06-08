@@ -443,6 +443,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get port => 'Порт';
 
   @override
+  String get preferDiskAmount => 'Пріоритетно показувати ємність диска';
+
+  @override
   String get preview => 'Попередній перегляд';
 
   @override

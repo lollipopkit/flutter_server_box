@@ -189,7 +189,7 @@ class SSHPageState extends State<SSHPage>
     if (hasBg) {
       children.add(
         Positioned.fill(
-          child: Image.file(file, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox()),
+          child: Image.file(file, fit: BoxFit.cover, errorBuilder: (_, _, _) => const SizedBox()),
         ),
       );
       if (blur > 0) {
@@ -247,8 +247,8 @@ class SSHPageState extends State<SSHPage>
         height: _virtKeysHeight + _media.padding.bottom,
         child: ChangeNotifierProvider(
           create: (_) => _keyboard,
-          builder: (_, __) => Consumer<VirtKeyProvider>(
-            builder: (_, __, ___) {
+          builder: (_, _) => Consumer<VirtKeyProvider>(
+            builder: (_, _, _) {
               return _buildVirtualKey();
             },
           ),

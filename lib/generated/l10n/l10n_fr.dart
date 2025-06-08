@@ -443,6 +443,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get port => 'Port';
 
   @override
+  String get preferDiskAmount =>
+      'Prioriser l’affichage de la capacité du disque';
+
+  @override
   String get preview => 'Aperçu';
 
   @override

@@ -442,6 +442,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get port => 'Puerto';
 
   @override
+  String get preferDiskAmount =>
+      'Priorizar la visualización de la capacidad del disco';
+
+  @override
   String get preview => 'Vista previa';
 
   @override
