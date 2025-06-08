@@ -9,6 +9,23 @@ rootProject.buildDir = '../build'
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
+
+subprojects { subproject ->
+  // Only works on com.android.application(the main app module)
+  if (subproject.plugins.hasPlugin('com.android.application')) {
+    subproject.afterEvaluate {
+      android.buildTypes.matching { it.name == 'profile' }.all { buildType ->
+        buildType.applicationIdSuffix = ".profile"
+        buildTypes.profile.resValue 'string', 'app_name', 'SrvBxP'
+      }
+      android.buildTypes.matching { it.name == 'debug' }.all { buildType ->
+        buildType.applicationIdSuffix = ".debug"
+        buildTypes.debug.resValue 'string', 'app_name', 'SrvBxD'
+      }
+    }
+  }
+}
+
 subprojects {
     project.evaluationDependsOn(':app')
 }
