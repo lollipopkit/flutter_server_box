@@ -439,6 +439,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get port => 'Port';
 
   @override
+  String get preferDiskAmount => 'Prioritaskan tampilan kapasitas disk';
+
+  @override
   String get preview => 'Pratinjau';
 
   @override

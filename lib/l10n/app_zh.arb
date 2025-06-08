@@ -128,6 +128,7 @@
   "pkg": "包管理",
   "plugInType": "插入类型",
   "port": "端口",
+  "preferDiskAmount": "优先显示硬盘容量",
   "preview": "预览",
   "privateKey": "私钥",
   "process": "进程",

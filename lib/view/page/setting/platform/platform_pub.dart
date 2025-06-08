@@ -11,7 +11,7 @@ abstract final class PlatformPublicSettings {
         title: Text(libL10n.bioAuth),
         subtitle: const Text('...', style: UIs.textGrey),
       ),
-      error: (e, __) => ListTile(
+      error: (e, _) => ListTile(
         title: Text(libL10n.bioAuth),
         subtitle: Text('${libL10n.fail}: $e', style: UIs.textGrey),
       ),

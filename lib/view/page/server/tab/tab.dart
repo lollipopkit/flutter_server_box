@@ -319,9 +319,7 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
               ],
             ),
             UIs.height13,
-            if (Stores.setting.moveServerFuncs.fetch() &&
-                // Discussion #146
-                !Stores.setting.serverTabUseOldUI.fetch())
+            if (Stores.setting.moveServerFuncs.fetch())
               SizedBox(height: 27, child: ServerFuncBtns(spi: spi)),
           ],
         );

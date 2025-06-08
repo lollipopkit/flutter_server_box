@@ -890,6 +890,12 @@ abstract class AppLocalizations {
   /// **'Port'**
   String get port;
 
+  /// No description provided for @preferDiskAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Prioritize displaying disk capacity'**
+  String get preferDiskAmount;
+
   /// No description provided for @preview.
   ///
   /// In en, this message translates to:

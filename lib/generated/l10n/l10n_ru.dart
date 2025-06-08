@@ -441,6 +441,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get port => 'Порт';
 
   @override
+  String get preferDiskAmount => 'Приоритетное отображение объёма диска';
+
+  @override
   String get preview => 'Предпросмотр';
 
   @override

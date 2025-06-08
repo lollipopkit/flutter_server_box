@@ -441,6 +441,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get port => 'Port';
 
   @override
+  String get preferDiskAmount => 'Festplattenkapazität vorrangig anzeigen';
+
+  @override
   String get preview => 'Vorschau';
 
   @override

@@ -12,9 +12,6 @@ class SettingStore extends HiveStore {
 
   static final instance = SettingStore._();
 
-  /// Discussion #146
-  late final serverTabUseOldUI = propertyDefault('serverTabUseOldUI', false);
-
   /// Time out for server connect and more...
   late final timeout = propertyDefault('timeOut', 5);
 

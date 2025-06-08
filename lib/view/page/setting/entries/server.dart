@@ -173,6 +173,7 @@ extension _Server on _AppSettingsPageState {
       title: Text(l10n.more),
       initiallyExpanded: false,
       children: [
+        _buildServerTabPreferDiskAmount(),
         _buildRememberPwdInMem(),
         _buildTextScaler(),
         _buildKeepStatusWhenErr(),
@@ -296,6 +297,13 @@ extension _Server on _AppSettingsPageState {
           actions: Btn.ok(onTap: () => onSave(_serverLogoCtrl.text)).toList,
         );
       },
+    );
+  }
+
+  Widget _buildServerTabPreferDiskAmount() {
+    return ListTile(
+      title: Text(l10n.preferDiskAmount),
+      trailing: StoreSwitch(prop: Stores.setting.serverTabPreferDiskAmount),
     );
   }
 }

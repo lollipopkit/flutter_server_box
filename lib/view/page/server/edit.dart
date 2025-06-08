@@ -20,10 +20,7 @@ class ServerEditPage extends StatefulWidget {
 
   const ServerEditPage({super.key, this.args});
 
-  static const route = AppRoute<bool, SpiRequiredArgs>(
-    page: ServerEditPage.new,
-    path: '/servers/edit',
-  );
+  static const route = AppRoute<bool, SpiRequiredArgs>(page: ServerEditPage.new, path: '/servers/edit');
 
   @override
   State<ServerEditPage> createState() => _ServerEditPageState();
@@ -118,15 +115,9 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   }
 
   Widget _buildForm() {
-    final topItems = [
-      _buildWriteScriptTip(),
-      if (isMobile) _buildQrScan(),
-    ];
+    final topItems = [_buildWriteScriptTip(), if (isMobile) _buildQrScan()];
     final children = [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: topItems.joinWith(UIs.width13).toList(),
-      ),
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: topItems.joinWith(UIs.width13).toList()),
       Input(
         autoFocus: true,
         controller: _nameController,
@@ -173,10 +164,9 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       TagTile(tags: _tags, allTags: ServerProvider.tags.value).cardx,
       ListTile(
         title: Text(l10n.autoConnect),
-        trailing: ListenableBuilder(
-          listenable: _autoConnect,
-          builder: (_, __) => Switch(
-            value: _autoConnect.value,
+        trailing: _autoConnect.listenVal(
+          (val) => Switch(
+            value: val,
             onChanged: (val) {
               _autoConnect.value = val;
             },
@@ -193,10 +183,9 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   Widget _buildAuth() {
     final switch_ = ListTile(
       title: Text(l10n.keyAuth),
-      trailing: ListenableBuilder(
-        listenable: _keyIdx,
-        builder: (_, __) => Switch(
-          value: _keyIdx.value != null,
+      trailing: _keyIdx.listenVal(
+        (v) => Switch(
+          value: v != null,
           onChanged: (val) {
             if (val) {
               _keyIdx.value = -1;
@@ -209,14 +198,13 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     );
 
     /// Put [switch_] out of [ValueBuilder] to avoid rebuild
-    return ListenableBuilder(
-      listenable: _keyIdx,
-      builder: (_, __) {
-        final children = <Widget>[switch_];
-        if (_keyIdx.value != null) {
-          children.add(_buildKeyAuth());
-        } else {
-          children.add(Input(
+    return _keyIdx.listenVal((v) {
+      final children = <Widget>[switch_];
+      if (v != null) {
+        children.add(_buildKeyAuth());
+      } else {
+        children.add(
+          Input(
             controller: _passwordController,
             obscureText: true,
             type: TextInputType.text,
@@ -225,52 +213,43 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
             hint: l10n.pwd,
             suggestion: false,
             onSubmitted: (_) => _onSave(),
-          ));
-        }
-        return Column(children: children);
-      },
-    );
+          ),
+        );
+      }
+      return Column(children: children);
+    });
   }
 
   Widget _buildKeyAuth() {
-    return PrivateKeyProvider.pkis.listenVal(
-      (pkis) {
-        final tiles = List<Widget>.generate(pkis.length, (index) {
-          final e = pkis[index];
-          return ListTile(
-            contentPadding: const EdgeInsets.only(left: 10, right: 15),
-            leading: Radio<int>(
-              value: index,
-              groupValue: _keyIdx.value,
-              onChanged: (value) => _keyIdx.value = value,
-            ),
-            title: Text(e.id, textAlign: TextAlign.start),
-            subtitle: Text(
-              e.type ?? l10n.unknown,
-              textAlign: TextAlign.start,
-              style: UIs.textGrey,
-            ),
-            trailing: Btn.icon(
-              icon: const Icon(Icons.edit),
-              onTap: () => PrivateKeyEditPage.route.go(
-                context,
-                args: PrivateKeyEditPageArgs(pki: e),
-              ),
-            ),
-            onTap: () => _keyIdx.value = index,
-          );
-        });
-        tiles.add(
-          ListTile(
-            title: Text(libL10n.add),
-            contentPadding: const EdgeInsets.only(left: 23, right: 23),
-            trailing: const Icon(Icons.add),
-            onTap: () => PrivateKeyEditPage.route.go(context),
+    return PrivateKeyProvider.pkis.listenVal((pkis) {
+      final tiles = List<Widget>.generate(pkis.length, (index) {
+        final e = pkis[index];
+        return ListTile(
+          contentPadding: const EdgeInsets.only(left: 10, right: 15),
+          leading: Radio<int>(
+            value: index,
+            groupValue: _keyIdx.value,
+            onChanged: (value) => _keyIdx.value = value,
           ),
+          title: Text(e.id, textAlign: TextAlign.start),
+          subtitle: Text(e.type ?? l10n.unknown, textAlign: TextAlign.start, style: UIs.textGrey),
+          trailing: Btn.icon(
+            icon: const Icon(Icons.edit),
+            onTap: () => PrivateKeyEditPage.route.go(context, args: PrivateKeyEditPageArgs(pki: e)),
+          ),
+          onTap: () => _keyIdx.value = index,
         );
-        return _keyIdx.listenVal((_) => Column(children: tiles)).cardx;
-      },
-    );
+      });
+      tiles.add(
+        ListTile(
+          title: Text(libL10n.add),
+          contentPadding: const EdgeInsets.only(left: 23, right: 23),
+          trailing: const Icon(Icons.add),
+          onTap: () => PrivateKeyEditPage.route.go(context),
+        ),
+      );
+      return _keyIdx.listenVal((_) => Column(children: tiles)).cardx;
+    });
   }
 
   Widget _buildEnvs() {
@@ -282,10 +261,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         title: Text(l10n.envVars),
         trailing: const Icon(Icons.keyboard_arrow_right),
         onTap: () async {
-          final res = await KvEditor.route.go(
-            context,
-            KvEditorArgs(data: spi?.envs ?? {}),
-          );
+          final res = await KvEditor.route.go(context, KvEditorArgs(data: spi?.envs ?? {}));
           if (res == null) return;
           _env.value = res;
         },
@@ -385,10 +361,9 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         ListTile(
           leading: const Icon(MingCute.certificate_line),
           title: TipText('PVE ${l10n.ignoreCert}', l10n.pveIgnoreCertTip),
-          trailing: ListenableBuilder(
-            listenable: _pveIgnoreCert,
-            builder: (_, __) => Switch(
-              value: _pveIgnoreCert.value,
+          trailing: _pveIgnoreCert.listenVal(
+            (v) => Switch(
+              value: v,
               onChanged: (val) {
                 _pveIgnoreCert.value = val;
               },
@@ -404,17 +379,15 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       mainAxisSize: MainAxisSize.min,
       children: [
         CenterGreyTitle(l10n.customCmd),
-        _customCmds.listenVal(
-          (vals) {
-            return ListTile(
-              leading: const Icon(BoxIcons.bxs_file_json),
-              title: const Text('JSON'),
-              subtitle: vals.isEmpty ? null : Text(vals.keys.join(','), style: UIs.textGrey),
-              trailing: const Icon(Icons.keyboard_arrow_right),
-              onTap: _onTapCustomItem,
-            );
-          },
-        ).cardx,
+        _customCmds.listenVal((vals) {
+          return ListTile(
+            leading: const Icon(BoxIcons.bxs_file_json),
+            title: const Text('JSON'),
+            subtitle: vals.isEmpty ? null : Text(vals.keys.join(','), style: UIs.textGrey),
+            trailing: const Icon(Icons.keyboard_arrow_right),
+            onTap: _onTapCustomItem,
+          );
+        }).cardx,
         ListTile(
           leading: const Icon(MingCute.doc_line),
           title: Text(libL10n.doc),
@@ -464,10 +437,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   }
 
   Widget _buildFAB() {
-    return FloatingActionButton(
-      onPressed: _onSave,
-      child: const Icon(Icons.save),
-    );
+    return FloatingActionButton(onPressed: _onSave, child: const Icon(Icons.save));
   }
 
   Widget _buildJumpServer() {
@@ -477,36 +447,31 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         .where((e) => e.spi.jumpId == null)
         .where((e) => e.spi.id != spi?.id)
         .toList();
-    final choice = _jumpServer.listenVal(
-      (val) {
-        final srv = srvs.firstWhereOrNull((e) => e.id == _jumpServer.value);
-        return Choice<Server>(
-          multiple: false,
-          clearable: true,
-          value: srv != null ? [srv] : [],
-          builder: (state, _) => Wrap(
-            children: List<Widget>.generate(
-              srvs.length,
-              (index) {
-                final item = srvs[index];
-                return ChoiceChipX<Server>(
-                  label: item.spi.name,
-                  state: state,
-                  value: item,
-                  onSelected: (srv, on) {
-                    if (on) {
-                      _jumpServer.value = srv.spi.id;
-                    } else {
-                      _jumpServer.value = null;
-                    }
-                  },
-                );
+    final choice = _jumpServer.listenVal((val) {
+      final srv = srvs.firstWhereOrNull((e) => e.id == _jumpServer.value);
+      return Choice<Server>(
+        multiple: false,
+        clearable: true,
+        value: srv != null ? [srv] : [],
+        builder: (state, _) => Wrap(
+          children: List<Widget>.generate(srvs.length, (index) {
+            final item = srvs[index];
+            return ChoiceChipX<Server>(
+              label: item.spi.name,
+              state: state,
+              value: item,
+              onSelected: (srv, on) {
+                if (on) {
+                  _jumpServer.value = srv.spi.id;
+                } else {
+                  _jumpServer.value = null;
+                }
               },
-            ),
-          ),
-        );
-      },
-    );
+            );
+          }),
+        ),
+      );
+    });
     return ExpandTile(
       leading: const Icon(Icons.map),
       initiallyExpanded: _jumpServer.value != null,
@@ -537,10 +502,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       text: libL10n.import,
       icon: const Icon(Icons.qr_code, color: Colors.grey),
       onTap: () async {
-        final ret = await BarcodeScannerPage.route.go(
-          context,
-          args: const BarcodeScannerPageArgs(),
-        );
+        final ret = await BarcodeScannerPage.route.go(context, args: const BarcodeScannerPageArgs());
         final code = ret?.text;
         if (code == null) return;
         try {
@@ -560,9 +522,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
       onPressed: () {
         context.showRoundDialog(
           title: libL10n.attention,
-          child: Text(libL10n.askContinue(
-            '${libL10n.delete} ${l10n.server}(${spi!.name})',
-          )),
+          child: Text(libL10n.askContinue('${libL10n.delete} ${l10n.server}(${spi!.name})')),
           actions: Btn.ok(
             onTap: () async {
               context.pop();
@@ -587,10 +547,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
 
 extension on _ServerEditPageState {
   void _onTapCustomItem() async {
-    final res = await KvEditor.route.go(
-      context,
-      KvEditorArgs(data: _customCmds.value),
-    );
+    final res = await KvEditor.route.go(context, KvEditorArgs(data: _customCmds.value));
     if (res == null) return;
     _customCmds.value = res;
   }
@@ -602,21 +559,12 @@ extension on _ServerEditPageState {
     }
 
     if (_keyIdx.value == null && _passwordController.text.isEmpty) {
-      final cancel = await context.showRoundDialog<bool>(
+      final ok = await context.showRoundDialog<bool>(
         title: libL10n.attention,
         child: Text(libL10n.askContinue(l10n.useNoPwd)),
-        actions: [
-          TextButton(
-            onPressed: () => context.pop(false),
-            child: Text(libL10n.ok),
-          ),
-          TextButton(
-            onPressed: () => context.pop(true),
-            child: Text(libL10n.cancel),
-          )
-        ],
+        actions: Btnx.cancelRedOk,
       );
-      if (cancel != false) return;
+      if (ok != true) return;
     }
 
     // If [_pubKeyIndex] is -1, it means that the user has not selected
@@ -644,11 +592,7 @@ extension on _ServerEditPageState {
     final wolEmpty = _wolMacCtrl.text.isEmpty && _wolIpCtrl.text.isEmpty && _wolPwdCtrl.text.isEmpty;
     final wol = wolEmpty
         ? null
-        : WakeOnLanCfg(
-            mac: _wolMacCtrl.text,
-            ip: _wolIpCtrl.text,
-            pwd: _wolPwdCtrl.text.selfNotEmptyOrNull,
-          );
+        : WakeOnLanCfg(mac: _wolMacCtrl.text, ip: _wolIpCtrl.text, pwd: _wolPwdCtrl.text.selfNotEmptyOrNull);
     if (wol != null) {
       final wolValidation = wol.validate();
       if (!wolValidation.$2) {
@@ -696,9 +640,7 @@ extension on _ServerEditPageState {
     if (spi.keyId == null) {
       _passwordController.text = spi.pwd ?? '';
     } else {
-      _keyIdx.value = PrivateKeyProvider.pkis.value.indexWhere(
-        (e) => e.id == spi.keyId,
-      );
+      _keyIdx.value = PrivateKeyProvider.pkis.value.indexWhere((e) => e.id == spi.keyId);
     }
 
     /// List in dart is passed by pointer, so you need to copy it here

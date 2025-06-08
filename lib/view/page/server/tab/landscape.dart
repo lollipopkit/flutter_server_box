@@ -42,17 +42,14 @@ extension on _ServerPageState {
             final title = _buildServerCardTitle(srv);
             final List<Widget> children = [title, _buildNormalCard(srv.status, srv.spi)];
 
-            return ListenableBuilder(
-              listenable: _getCardNoti(id),
-              builder: (_, __) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: children,
-                );
-              },
-            );
+            return _getCardNoti(id).listenVal((_) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: children,
+              );
+            });
           });
         },
       );

@@ -439,6 +439,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get port => 'Poort';
 
   @override
+  String get preferDiskAmount =>
+      'Geef de schijfcapaciteit prioriteit bij weergave';
+
+  @override
   String get preview => 'Voorbeeld';
 
   @override

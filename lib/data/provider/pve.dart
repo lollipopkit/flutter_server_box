@@ -47,11 +47,11 @@ final class PveProvider extends ChangeNotifier {
         final client = HttpClient();
         client.connectionFactory = cf;
         if (_ignoreCert) {
-          client.badCertificateCallback = (_, __, ___) => true;
+          client.badCertificateCallback = (_, _, _) => true;
         }
         return client;
       },
-      validateCertificate: _ignoreCert ? (_, __, ___) => true : null,
+      validateCertificate: _ignoreCert ? (_, _, _) => true : null,
     );
 
   final data = ValueNotifier<PveRes?>(null);

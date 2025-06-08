@@ -438,6 +438,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get port => 'Port';
 
   @override
+  String get preferDiskAmount => 'Disk kapasitesini öncelikli olarak göster';
+
+  @override
   String get preview => 'Önizleme';
 
   @override

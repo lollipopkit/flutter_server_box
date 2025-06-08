@@ -85,29 +85,26 @@ ${ss.err?.message ?? 'null'}
 
   Widget _buildDisk(ServerStatus ss, String id) {
     final cardNoti = _getCardNoti(id);
-    return ListenableBuilder(
-      listenable: cardNoti,
-      builder: (_, __) {
-        final isSpeed = cardNoti.value.diskIO ?? !Stores.setting.serverTabPreferDiskAmount.fetch();
+    return cardNoti.listenVal((v) {
+      final isSpeed = v.diskIO ?? !Stores.setting.serverTabPreferDiskAmount.fetch();
 
-        final (r, w) = ss.diskIO.cachedAllSpeed;
+      final (r, w) = ss.diskIO.cachedAllSpeed;
 
-        return AnimatedSwitcher(
-          duration: const Duration(milliseconds: 377),
-          transitionBuilder: (Widget child, Animation<double> animation) {
-            return FadeTransition(opacity: animation, child: child);
+      return AnimatedSwitcher(
+        duration: const Duration(milliseconds: 377),
+        transitionBuilder: (child, animation) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        child: _buildIOData(
+          isSpeed ? '${l10n.read}:\n$r' : 'Total:\n${ss.diskUsage?.size.kb2Str}',
+          isSpeed ? '${l10n.write}:\n$w' : 'Used:\n${ss.diskUsage?.used.kb2Str}',
+          onTap: () {
+            cardNoti.value = v.copyWith(diskIO: !isSpeed);
           },
-          child: _buildIOData(
-            isSpeed ? '${l10n.read}:\n$r' : 'Total:\n${ss.diskUsage?.size.kb2Str}',
-            isSpeed ? '${l10n.write}:\n$w' : 'Used:\n${ss.diskUsage?.used.kb2Str}',
-            onTap: () {
-              cardNoti.value = cardNoti.value.copyWith(diskIO: !isSpeed);
-            },
-            key: ValueKey(isSpeed),
-          ),
-        );
-      },
-    );
+          key: ValueKey(isSpeed),
+        ),
+      );
+    });
   }
 
   Widget _buildNet(ServerStatus ss, String id) {

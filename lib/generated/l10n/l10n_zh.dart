@@ -420,6 +420,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get port => '端口';
 
   @override
+  String get preferDiskAmount => '优先显示硬盘容量';
+
+  @override
   String get preview => '预览';
 
   @override
@@ -1146,6 +1149,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get port => '埠';
+
+  @override
+  String get preferDiskAmount => '優先顯示硬碟容量';
 
   @override
   String get preview => '預覽';

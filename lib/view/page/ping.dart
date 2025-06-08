@@ -15,14 +15,10 @@ class PingPage extends StatefulWidget {
   @override
   State<PingPage> createState() => _PingPageState();
 
-  static const route = AppRouteNoArg(
-    page: PingPage.new,
-    path: '/ping',
-  );
+  static const route = AppRouteNoArg(page: PingPage.new, path: '/ping');
 }
 
-class _PingPageState extends State<PingPage>
-    with AutomaticKeepAliveClientMixin {
+class _PingPageState extends State<PingPage> with AutomaticKeepAliveClientMixin {
   late TextEditingController _textEditingController;
   final _results = ValueNotifier(<PingResult>[]);
   bool get isInit => _results.value.isEmpty;
@@ -43,13 +39,7 @@ class _PingPageState extends State<PingPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Scaffold(
-      body: ListenableBuilder(
-        listenable: _results,
-        builder: (_, __) => _buildBody(),
-      ),
-      floatingActionButton: _buildFAB(),
-    );
+    return Scaffold(body: _results.listenVal(_buildBody), floatingActionButton: _buildFAB());
   }
 
   Widget _buildFAB() {
@@ -81,26 +71,21 @@ class _PingPageState extends State<PingPage>
       context.showRoundDialog(
         title: libL10n.error,
         child: Text(e.toString()),
-        actions: [
-          TextButton(
-            onPressed: () => Pfs.copy(e.toString()),
-            child: Text(libL10n.copy),
-          ),
-        ],
+        actions: [TextButton(onPressed: () => Pfs.copy(e.toString()), child: Text(libL10n.copy))],
       );
       rethrow;
     }
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(List<PingResult> results) {
     if (isInit) {
       return Center(child: Text(libL10n.empty));
     }
     return ListView.builder(
       padding: const EdgeInsets.all(11),
       controller: ScrollController(),
-      itemCount: _results.value.length,
-      itemBuilder: (_, index) => _buildResultItem(_results.value[index]),
+      itemCount: results.length,
+      itemBuilder: (_, index) => _buildResultItem(results[index]),
     );
   }
 
@@ -112,22 +97,12 @@ class _PingPageState extends State<PingPage>
         contentPadding: const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
         title: Text(
           result.serverName,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: UIs.primaryColor,
-          ),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: UIs.primaryColor),
         ),
-        subtitle: Text(
-          _buildPingSummary(result, unknown, ms),
-          style: UIs.text11,
-        ),
+        subtitle: Text(_buildPingSummary(result, unknown, ms), style: UIs.text11),
         trailing: Text(
           '${l10n.pingAvg}${result.statistic?.avg?.toStringAsFixed(2) ?? l10n.unknown} $ms',
-          style: TextStyle(
-            fontSize: 14,
-            color: UIs.primaryColor,
-          ),
+          style: TextStyle(fontSize: 14, color: UIs.primaryColor),
         ),
       ),
     );
@@ -165,20 +140,22 @@ class _PingPageState extends State<PingPage>
       return;
     }
 
-    await Future.wait(ServerProvider.servers.values.map((v) async {
-      final e = v.value;
-      if (e.client == null) {
-        return;
-      }
-      final result = await e.client!.run('ping -c 3 $target').string;
-      _results.value.add(PingResult.parse(e.spi.name, result));
-      // [ValueNotifier] only notify when value is changed
-      // But we just add a element to list without changing the list itself
-      // So we need to notify manually
-      //
-      // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
-      _results.notifyListeners();
-    }));
+    await Future.wait(
+      ServerProvider.servers.values.map((v) async {
+        final e = v.value;
+        if (e.client == null) {
+          return;
+        }
+        final result = await e.client!.run('ping -c 3 $target').string;
+        _results.value.add(PingResult.parse(e.spi.name, result));
+        // [ValueNotifier] only notify when value is changed
+        // But we just add a element to list without changing the list itself
+        // So we need to notify manually
+        //
+        // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
+        _results.notifyListeners();
+      }),
+    );
   }
 
   @override
