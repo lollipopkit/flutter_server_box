@@ -9,11 +9,11 @@ const moreBuildDataPath = 'more_build_data.json';
 
 void main(List<String> args) async {
   final cmd = args.firstOrNull;
+  print('Running make.dart with command: $cmd');
   switch (cmd) {
     case 'before':
-      final data = {
-        'script': await getScriptCommitCount(),
-      };
+      final scriptModCount = await getScriptCommitCount();
+      final data = {'script': scriptModCount};
       await File(moreBuildDataPath).writeAsString(json.encode(data));
       break;
     case 'after':
@@ -28,10 +28,6 @@ Future<int> getScriptCommitCount() async {
     print('File not found: $shellScriptPath');
     exit(1);
   }
-  final result =
-      await Process.run('git', ['log', '--format=format:%h', shellScriptPath]);
-  return (result.stdout as String)
-      .split('\n')
-      .where((line) => line.isNotEmpty)
-      .length;
+  final result = await Process.run('git', ['log', '--format=format:%h', shellScriptPath]);
+  return (result.stdout as String).split('\n').where((line) => line.isNotEmpty).length;
 }
