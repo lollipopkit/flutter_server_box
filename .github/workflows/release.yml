@@ -66,8 +66,7 @@ jobs:
           sudo chmod +x /bin/appimagetool
       - name: Build
         run: |
-          dart run fl_build
-          dart run flutter_distributor:main package --platform=linux --target=appimage
+          dart run fl_build -p linux
       - name: Rename artifacts
         run: |
           appimage_name=$(ls dist/*/*.AppImage)
