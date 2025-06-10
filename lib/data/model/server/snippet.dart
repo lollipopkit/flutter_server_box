@@ -9,7 +9,7 @@ part 'snippet.g.dart';
 part 'snippet.freezed.dart';
 
 @freezed
-class Snippet with _$Snippet {
+abstract class Snippet with _$Snippet {
   const factory Snippet({
     required String name,
     required String script,

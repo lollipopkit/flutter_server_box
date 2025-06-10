@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/server.dart';
@@ -19,11 +18,11 @@ part 'server_private_info.g.dart';
 /// Some params named as `spi` in the codebase which is the abbreviation of `ServerPrivateInfo`.
 ///
 /// Nowaday, more fields are added to this class, and it's renamed to `Spi`.
-@Freezed(fromJson: false)
-@JsonSerializable(includeIfNull: false)
-class Spi with _$Spi {
+@freezed
+abstract class Spi with _$Spi {
   const Spi._();
 
+  @JsonSerializable(includeIfNull: false)
   const factory Spi({
     required String name,
     required String ip,
@@ -35,7 +34,7 @@ class Spi with _$Spi {
     @JsonKey(name: 'pubKeyId') String? keyId,
     List<String>? tags,
     String? alterUrl,
-    @Default(true) @JsonKey(defaultValue: true) bool autoConnect,
+    @Default(true) bool autoConnect,
 
     /// [id] of the jump server
     String? jumpId,
@@ -44,7 +43,7 @@ class Spi with _$Spi {
 
     /// It only applies to SSH terminal.
     Map<String, String>? envs,
-    @JsonKey(fromJson: Spi.parseId) @HiveField(13, defaultValue: '') required String id,
+    @Default('') @JsonKey(fromJson: Spi.parseId) String id,
   }) = _Spi;
 
   factory Spi.fromJson(Map<String, dynamic> json) => _$SpiFromJson(json);

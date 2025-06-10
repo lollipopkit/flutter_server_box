@@ -1,3 +1,4 @@
+// dart format width=80
 // coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint
@@ -9,140 +10,133 @@ part of 'app.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
-
 /// @nodoc
 mixin _$AppState {
-  bool get desktopMode => throw _privateConstructorUsedError;
 
-  /// Create a copy of AppState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $AppStateCopyWith<AppState> get copyWith =>
-      throw _privateConstructorUsedError;
+ bool get desktopMode;
+/// Create a copy of AppState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$AppStateCopyWith<AppState> get copyWith => _$AppStateCopyWithImpl<AppState>(this as AppState, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppState&&(identical(other.desktopMode, desktopMode) || other.desktopMode == desktopMode));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,desktopMode);
+
+@override
+String toString() {
+  return 'AppState(desktopMode: $desktopMode)';
+}
+
+
 }
 
 /// @nodoc
-abstract class $AppStateCopyWith<$Res> {
-  factory $AppStateCopyWith(AppState value, $Res Function(AppState) then) =
-      _$AppStateCopyWithImpl<$Res, AppState>;
-  @useResult
-  $Res call({bool desktopMode});
-}
+abstract mixin class $AppStateCopyWith<$Res>  {
+  factory $AppStateCopyWith(AppState value, $Res Function(AppState) _then) = _$AppStateCopyWithImpl;
+@useResult
+$Res call({
+ bool desktopMode
+});
 
+
+
+
+}
 /// @nodoc
-class _$AppStateCopyWithImpl<$Res, $Val extends AppState>
+class _$AppStateCopyWithImpl<$Res>
     implements $AppStateCopyWith<$Res> {
-  _$AppStateCopyWithImpl(this._value, this._then);
+  _$AppStateCopyWithImpl(this._self, this._then);
 
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
+  final AppState _self;
+  final $Res Function(AppState) _then;
 
-  /// Create a copy of AppState
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({Object? desktopMode = null}) {
-    return _then(
-      _value.copyWith(
-            desktopMode: null == desktopMode
-                ? _value.desktopMode
-                : desktopMode // ignore: cast_nullable_to_non_nullable
-                      as bool,
-          )
-          as $Val,
-    );
-  }
+/// Create a copy of AppState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? desktopMode = null,}) {
+  return _then(_self.copyWith(
+desktopMode: null == desktopMode ? _self.desktopMode : desktopMode // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
 }
 
-/// @nodoc
-abstract class _$$AppStateImplCopyWith<$Res>
-    implements $AppStateCopyWith<$Res> {
-  factory _$$AppStateImplCopyWith(
-    _$AppStateImpl value,
-    $Res Function(_$AppStateImpl) then,
-  ) = __$$AppStateImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({bool desktopMode});
 }
 
-/// @nodoc
-class __$$AppStateImplCopyWithImpl<$Res>
-    extends _$AppStateCopyWithImpl<$Res, _$AppStateImpl>
-    implements _$$AppStateImplCopyWith<$Res> {
-  __$$AppStateImplCopyWithImpl(
-    _$AppStateImpl _value,
-    $Res Function(_$AppStateImpl) _then,
-  ) : super(_value, _then);
-
-  /// Create a copy of AppState
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({Object? desktopMode = null}) {
-    return _then(
-      _$AppStateImpl(
-        desktopMode: null == desktopMode
-            ? _value.desktopMode
-            : desktopMode // ignore: cast_nullable_to_non_nullable
-                  as bool,
-      ),
-    );
-  }
-}
 
 /// @nodoc
 
-class _$AppStateImpl implements _AppState {
-  const _$AppStateImpl({this.desktopMode = false});
 
-  @override
-  @JsonKey()
-  final bool desktopMode;
+class _AppState implements AppState {
+  const _AppState({this.desktopMode = false});
+  
 
-  @override
-  String toString() {
-    return 'AppState(desktopMode: $desktopMode)';
-  }
+@override@JsonKey() final  bool desktopMode;
 
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$AppStateImpl &&
-            (identical(other.desktopMode, desktopMode) ||
-                other.desktopMode == desktopMode));
-  }
+/// Create a copy of AppState
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$AppStateCopyWith<_AppState> get copyWith => __$AppStateCopyWithImpl<_AppState>(this, _$identity);
 
-  @override
-  int get hashCode => Object.hash(runtimeType, desktopMode);
 
-  /// Create a copy of AppState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$AppStateImplCopyWith<_$AppStateImpl> get copyWith =>
-      __$$AppStateImplCopyWithImpl<_$AppStateImpl>(this, _$identity);
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppState&&(identical(other.desktopMode, desktopMode) || other.desktopMode == desktopMode));
 }
 
-abstract class _AppState implements AppState {
-  const factory _AppState({final bool desktopMode}) = _$AppStateImpl;
 
-  @override
-  bool get desktopMode;
+@override
+int get hashCode => Object.hash(runtimeType,desktopMode);
 
-  /// Create a copy of AppState
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$AppStateImplCopyWith<_$AppStateImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+@override
+String toString() {
+  return 'AppState(desktopMode: $desktopMode)';
 }
+
+
+}
+
+/// @nodoc
+abstract mixin class _$AppStateCopyWith<$Res> implements $AppStateCopyWith<$Res> {
+  factory _$AppStateCopyWith(_AppState value, $Res Function(_AppState) _then) = __$AppStateCopyWithImpl;
+@override @useResult
+$Res call({
+ bool desktopMode
+});
+
+
+
+
+}
+/// @nodoc
+class __$AppStateCopyWithImpl<$Res>
+    implements _$AppStateCopyWith<$Res> {
+  __$AppStateCopyWithImpl(this._self, this._then);
+
+  final _AppState _self;
+  final $Res Function(_AppState) _then;
+
+/// Create a copy of AppState
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? desktopMode = null,}) {
+  return _then(_AppState(
+desktopMode: null == desktopMode ? _self.desktopMode : desktopMode // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+
+}
+
+// dart format on

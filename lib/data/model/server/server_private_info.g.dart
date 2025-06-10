@@ -6,7 +6,7 @@ part of 'server_private_info.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-Spi _$SpiFromJson(Map<String, dynamic> json) => Spi(
+_Spi _$SpiFromJson(Map<String, dynamic> json) => _Spi(
   name: json['name'] as String,
   ip: json['ip'] as String,
   port: (json['port'] as num).toInt(),
@@ -26,10 +26,10 @@ Spi _$SpiFromJson(Map<String, dynamic> json) => Spi(
   envs: (json['envs'] as Map<String, dynamic>?)?.map(
     (k, e) => MapEntry(k, e as String),
   ),
-  id: Spi.parseId(json['id']),
+  id: json['id'] == null ? '' : Spi.parseId(json['id']),
 );
 
-Map<String, dynamic> _$SpiToJson(Spi instance) => <String, dynamic>{
+Map<String, dynamic> _$SpiToJson(_Spi instance) => <String, dynamic>{
   'name': instance.name,
   'ip': instance.ip,
   'port': instance.port,
@@ -43,22 +43,5 @@ Map<String, dynamic> _$SpiToJson(Spi instance) => <String, dynamic>{
   if (instance.custom case final value?) 'custom': value,
   if (instance.wolCfg case final value?) 'wolCfg': value,
   if (instance.envs case final value?) 'envs': value,
-  'id': instance.id,
-};
-
-Map<String, dynamic> _$$SpiImplToJson(_$SpiImpl instance) => <String, dynamic>{
-  'name': instance.name,
-  'ip': instance.ip,
-  'port': instance.port,
-  'user': instance.user,
-  'pwd': instance.pwd,
-  'pubKeyId': instance.keyId,
-  'tags': instance.tags,
-  'alterUrl': instance.alterUrl,
-  'autoConnect': instance.autoConnect,
-  'jumpId': instance.jumpId,
-  'custom': instance.custom,
-  'wolCfg': instance.wolCfg,
-  'envs': instance.envs,
   'id': instance.id,
 };

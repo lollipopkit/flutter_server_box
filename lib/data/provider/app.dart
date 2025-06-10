@@ -6,7 +6,7 @@ part 'app.g.dart';
 part 'app.freezed.dart';
 
 @freezed
-class AppState with _$AppState {
+abstract class AppState with _$AppState {
   const factory AppState({
     @Default(false) bool desktopMode,
   }) = _AppState;

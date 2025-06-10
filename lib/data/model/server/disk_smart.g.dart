@@ -6,23 +6,21 @@ part of 'disk_smart.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$DiskSmartImpl _$$DiskSmartImplFromJson(Map<String, dynamic> json) =>
-    _$DiskSmartImpl(
-      device: json['device'] as String,
-      healthy: json['healthy'] as bool?,
-      temperature: (json['temperature'] as num?)?.toDouble(),
-      model: json['model'] as String?,
-      serial: json['serial'] as String?,
-      powerOnHours: (json['powerOnHours'] as num?)?.toInt(),
-      powerCycleCount: (json['powerCycleCount'] as num?)?.toInt(),
-      rawData: json['rawData'] as Map<String, dynamic>,
-      smartAttributes: (json['smartAttributes'] as Map<String, dynamic>).map(
-        (k, e) =>
-            MapEntry(k, SmartAttribute.fromJson(e as Map<String, dynamic>)),
-      ),
-    );
+_DiskSmart _$DiskSmartFromJson(Map<String, dynamic> json) => _DiskSmart(
+  device: json['device'] as String,
+  healthy: json['healthy'] as bool?,
+  temperature: (json['temperature'] as num?)?.toDouble(),
+  model: json['model'] as String?,
+  serial: json['serial'] as String?,
+  powerOnHours: (json['powerOnHours'] as num?)?.toInt(),
+  powerCycleCount: (json['powerCycleCount'] as num?)?.toInt(),
+  rawData: json['rawData'] as Map<String, dynamic>,
+  smartAttributes: (json['smartAttributes'] as Map<String, dynamic>).map(
+    (k, e) => MapEntry(k, SmartAttribute.fromJson(e as Map<String, dynamic>)),
+  ),
+);
 
-Map<String, dynamic> _$$DiskSmartImplToJson(_$DiskSmartImpl instance) =>
+Map<String, dynamic> _$DiskSmartToJson(_DiskSmart instance) =>
     <String, dynamic>{
       'device': instance.device,
       'healthy': instance.healthy,
@@ -35,8 +33,8 @@ Map<String, dynamic> _$$DiskSmartImplToJson(_$DiskSmartImpl instance) =>
       'smartAttributes': instance.smartAttributes,
     };
 
-_$SmartAttributeImpl _$$SmartAttributeImplFromJson(Map<String, dynamic> json) =>
-    _$SmartAttributeImpl(
+_SmartAttribute _$SmartAttributeFromJson(Map<String, dynamic> json) =>
+    _SmartAttribute(
       id: (json['id'] as num?)?.toInt(),
       name: json['name'] as String,
       value: (json['value'] as num?)?.toInt(),
@@ -50,35 +48,33 @@ _$SmartAttributeImpl _$$SmartAttributeImplFromJson(Map<String, dynamic> json) =>
       ),
     );
 
-Map<String, dynamic> _$$SmartAttributeImplToJson(
-  _$SmartAttributeImpl instance,
-) => <String, dynamic>{
-  'id': instance.id,
-  'name': instance.name,
-  'value': instance.value,
-  'worst': instance.worst,
-  'thresh': instance.thresh,
-  'whenFailed': instance.whenFailed,
-  'rawValue': instance.rawValue,
-  'rawString': instance.rawString,
-  'flags': instance.flags,
-};
+Map<String, dynamic> _$SmartAttributeToJson(_SmartAttribute instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'value': instance.value,
+      'worst': instance.worst,
+      'thresh': instance.thresh,
+      'whenFailed': instance.whenFailed,
+      'rawValue': instance.rawValue,
+      'rawString': instance.rawString,
+      'flags': instance.flags,
+    };
 
-_$SmartAttributeFlagsImpl _$$SmartAttributeFlagsImplFromJson(
-  Map<String, dynamic> json,
-) => _$SmartAttributeFlagsImpl(
-  value: (json['value'] as num?)?.toInt(),
-  string: json['string'] as String?,
-  prefailure: json['prefailure'] as bool? ?? false,
-  updatedOnline: json['updatedOnline'] as bool? ?? false,
-  performance: json['performance'] as bool? ?? false,
-  errorRate: json['errorRate'] as bool? ?? false,
-  eventCount: json['eventCount'] as bool? ?? false,
-  autoKeep: json['autoKeep'] as bool? ?? false,
-);
+_SmartAttributeFlags _$SmartAttributeFlagsFromJson(Map<String, dynamic> json) =>
+    _SmartAttributeFlags(
+      value: (json['value'] as num?)?.toInt(),
+      string: json['string'] as String?,
+      prefailure: json['prefailure'] as bool? ?? false,
+      updatedOnline: json['updatedOnline'] as bool? ?? false,
+      performance: json['performance'] as bool? ?? false,
+      errorRate: json['errorRate'] as bool? ?? false,
+      eventCount: json['eventCount'] as bool? ?? false,
+      autoKeep: json['autoKeep'] as bool? ?? false,
+    );
 
-Map<String, dynamic> _$$SmartAttributeFlagsImplToJson(
-  _$SmartAttributeFlagsImpl instance,
+Map<String, dynamic> _$SmartAttributeFlagsToJson(
+  _SmartAttributeFlags instance,
 ) => <String, dynamic>{
   'value': instance.value,
   'string': instance.string,

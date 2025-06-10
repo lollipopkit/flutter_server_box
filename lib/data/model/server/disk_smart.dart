@@ -7,7 +7,7 @@ part 'disk_smart.freezed.dart';
 part 'disk_smart.g.dart';
 
 @freezed
-class DiskSmart with _$DiskSmart {
+abstract class DiskSmart with _$DiskSmart {
   const DiskSmart._();
 
   const factory DiskSmart({
@@ -144,7 +144,7 @@ class DiskSmart with _$DiskSmart {
 }
 
 @freezed
-class SmartAttribute with _$SmartAttribute {
+abstract class SmartAttribute with _$SmartAttribute {
   const SmartAttribute._();
 
   const factory SmartAttribute({
@@ -168,7 +168,7 @@ class SmartAttribute with _$SmartAttribute {
 }
 
 @freezed
-class SmartAttributeFlags with _$SmartAttributeFlags {
+abstract class SmartAttributeFlags with _$SmartAttributeFlags {
   const SmartAttributeFlags._();
 
   const factory SmartAttributeFlags({
