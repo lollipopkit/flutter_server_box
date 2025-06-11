@@ -914,6 +914,12 @@ abstract class AppLocalizations {
   /// **'Process'**
   String get process;
 
+  /// No description provided for @prune.
+  ///
+  /// In en, this message translates to:
+  /// **'Prune'**
+  String get prune;
+
   /// No description provided for @pushToken.
   ///
   /// In en, this message translates to:

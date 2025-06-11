@@ -451,6 +451,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get process => 'Process';
 
   @override
+  String get prune => 'Prune';
+
+  @override
   String get pushToken => 'Push token';
 
   @override

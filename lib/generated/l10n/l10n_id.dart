@@ -451,6 +451,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get process => 'Proses';
 
   @override
+  String get prune => 'Pangkas';
+
+  @override
   String get pushToken => 'Dorong token';
 
   @override

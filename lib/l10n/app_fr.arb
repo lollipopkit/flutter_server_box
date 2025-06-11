@@ -132,6 +132,7 @@
   "preview": "Aperçu",
   "privateKey": "Clé privée",
   "process": "Processus",
+  "prune": "Élaguer",
   "pushToken": "Jeton d'identification",
   "pveIgnoreCertTip": "Il n'est pas recommandé de l'activer, attention aux risques de sécurité ! Si vous utilisez le certificat par défaut de PVE, vous devez activer cette option.",
   "pveLoginFailed": "Échec de la connexion. Impossible d'authentifier avec le nom d'utilisateur / mot de passe de la configuration du serveur pour la connexion Linux PAM.",

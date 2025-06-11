@@ -132,6 +132,7 @@
   "preview": "Vista previa",
   "privateKey": "Llave privada",
   "process": "Proceso",
+  "prune": "Podar",
   "pushToken": "Token de notificaciones",
   "pveIgnoreCertTip": "No se recomienda activarlo, ¡tenga cuidado con los riesgos de seguridad! Si está utilizando el certificado predeterminado de PVE, debe habilitar esta opción.",
   "pveLoginFailed": "Fallo al iniciar sesión. No se puede autenticar con el nombre de usuario/contraseña de la configuración del servidor para el inicio de sesión de Linux PAM.",

@@ -437,6 +437,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get process => 'プロセス';
 
   @override
+  String get prune => '剪定する';
+
+  @override
   String get pushToken => 'プッシュトークン';
 
   @override

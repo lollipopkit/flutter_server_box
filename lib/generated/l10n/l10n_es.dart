@@ -455,6 +455,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get process => 'Proceso';
 
   @override
+  String get prune => 'Podar';
+
+  @override
   String get pushToken => 'Token de notificaciones';
 
   @override
