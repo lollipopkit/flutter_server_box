@@ -22,10 +22,7 @@ class ContainerPage extends StatefulWidget {
   @override
   State<ContainerPage> createState() => _ContainerPageState();
 
-  static const route = AppRouteArg(
-    page: ContainerPage.new,
-    path: '/container',
-  );
+  static const route = AppRouteArg(page: ContainerPage.new, path: '/container');
 }
 
 class _ContainerPageState extends State<ContainerPage> {
@@ -36,7 +33,6 @@ class _ContainerPageState extends State<ContainerPage> {
     hostId: widget.args.spi.id,
     context: context,
   );
-  late Size _size;
 
   @override
   void dispose() {
@@ -52,38 +48,32 @@ class _ContainerPageState extends State<ContainerPage> {
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _size = MediaQuery.of(context).size;
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Consumer<ContainerProvider>(
-      builder: (_, _, _) {
-        return Scaffold(
-          appBar: CustomAppBar(
-            centerTitle: true,
-            title: TwoLineText(up: l10n.container, down: widget.args.spi.name),
-            actions: [
-              IconButton(
-                onPressed: () => context.showLoadingDialog(fn: () => _container.refresh()),
-                icon: const Icon(Icons.refresh),
-              )
-            ],
-          ),
-          body: _buildMain(),
-          floatingActionButton: _container.error == null ? _buildFAB() : null,
-        );
-      },
+    return ChangeNotifierProvider(
+      create: (_) => _container,
+      builder: (_, _) => Consumer<ContainerProvider>(
+        builder: (_, _, _) {
+          return Scaffold(
+            appBar: CustomAppBar(
+              centerTitle: true,
+              title: TwoLineText(up: l10n.container, down: widget.args.spi.name),
+              actions: [
+                IconButton(
+                  onPressed: () => context.showLoadingDialog(fn: () => _container.refresh()),
+                  icon: const Icon(Icons.refresh),
+                ),
+              ],
+            ),
+            body: _buildMain(),
+            floatingActionButton: _container.error == null ? _buildFAB() : null,
+          );
+        },
+      ),
     );
   }
 
   Widget _buildFAB() {
-    return FloatingActionButton(
-      onPressed: () async => await _showAddFAB(),
-      child: const Icon(Icons.add),
-    );
+    return FloatingActionButton(onPressed: () async => await _showAddFAB(), child: const Icon(Icons.add));
   }
 
   Widget _buildMain() {
@@ -92,10 +82,7 @@ class _ContainerPageState extends State<ContainerPage> {
         child: Column(
           children: [
             const Spacer(),
-            const Icon(
-              Icons.error,
-              size: 37,
-            ),
+            const Icon(Icons.error, size: 37),
             UIs.height13,
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 23),
@@ -128,15 +115,13 @@ class _ContainerPageState extends State<ContainerPage> {
 
   Widget _buildImage() {
     return CardX(
-        child: ExpandTile(
-      title: Text(l10n.imagesList),
-      subtitle: Text(
-        l10n.dockerImagesFmt(_container.images!.length),
-        style: UIs.textGrey,
+      child: ExpandTile(
+        title: Text(l10n.imagesList),
+        subtitle: Text(l10n.dockerImagesFmt(_container.images!.length), style: UIs.textGrey),
+        initiallyExpanded: (_container.images?.length ?? 0) <= 3,
+        children: _container.images?.map(_buildImageItem).toList() ?? [],
       ),
-      initiallyExpanded: (_container.images?.length ?? 0) <= 3,
-      children: _container.images?.map(_buildImageItem).toList() ?? [],
-    ));
+    );
   }
 
   Widget _buildImageItem(ContainerImg e) {
@@ -158,9 +143,7 @@ class _ContainerPageState extends State<ContainerPage> {
       padding: const EdgeInsets.all(17),
       child: Column(
         children: [
-          const Center(
-            child: CircularProgressIndicator(),
-          ),
+          const Center(child: CircularProgressIndicator()),
           UIs.height13,
           Text(_container.runLog ?? '...'),
         ],
@@ -170,24 +153,20 @@ class _ContainerPageState extends State<ContainerPage> {
 
   Widget _buildVersion() {
     return CardX(
-        child: Padding(
-      padding: const EdgeInsets.all(17),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(_container.type.name.capitalize),
-          Text(_container.version ?? l10n.unknown),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(17),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [Text(_container.type.name.capitalize), Text(_container.version ?? l10n.unknown)],
+        ),
       ),
-    ));
+    );
   }
 
   Widget _buildPs() {
     final items = _container.items;
     if (items == null) return UIs.placeholder;
-    return Column(
-      children: items.map(_buildPsItem).toList(),
-    );
+    return Column(children: items.map(_buildPsItem).toList());
   }
 
   Widget _buildPsItem(ContainerPs item) {
@@ -222,30 +201,35 @@ class _ContainerPageState extends State<ContainerPage> {
 
   Widget _buildPsItemStats(ContainerPs item) {
     if (item.cpu == null || item.mem == null) return UIs.placeholder;
-    return Column(
-      children: [
-        UIs.height13,
-        Row(
+    return LayoutBuilder(
+      builder: (_, cons) {
+        final width = cons.maxWidth / 2 - 41;
+        return Column(
           children: [
-            _buildPsItemStatsItem('CPU', item.cpu, Icons.memory),
-            UIs.width13,
-            _buildPsItemStatsItem('Net', item.net, Icons.network_cell),
+            UIs.height13,
+            Row(
+              children: [
+                _buildPsItemStatsItem('CPU', item.cpu, Icons.memory, width: width),
+                UIs.width13,
+                _buildPsItemStatsItem('Net', item.net, Icons.network_cell, width: width),
+              ],
+            ),
+            Row(
+              children: [
+                _buildPsItemStatsItem('Mem', item.mem, Icons.settings_input_component, width: width),
+                UIs.width13,
+                _buildPsItemStatsItem('Disk', item.disk, Icons.storage, width: width),
+              ],
+            ),
           ],
-        ),
-        Row(
-          children: [
-            _buildPsItemStatsItem('Mem', item.mem, Icons.settings_input_component),
-            UIs.width13,
-            _buildPsItemStatsItem('Disk', item.disk, Icons.storage),
-          ],
-        ),
-      ],
+        );
+      },
     );
   }
 
-  Widget _buildPsItemStatsItem(String title, String? value, IconData icon) {
+  Widget _buildPsItemStatsItem(String title, String? value, IconData icon, {required double width}) {
     return SizedBox(
-      width: _size.width / 2 - 41,
+      width: width,
       child: Column(
         children: [
           Row(
@@ -254,7 +238,7 @@ class _ContainerPageState extends State<ContainerPage> {
               UIs.width7,
               Text(value ?? l10n.unknown, style: UIs.text11Grey),
             ],
-          )
+          ),
         ],
       ),
     );
@@ -281,21 +265,15 @@ class _ContainerPageState extends State<ContainerPage> {
     final emptyImgs = _container.images?.isEmpty ?? false;
     final emptyPs = _container.items?.isEmpty ?? false;
     if (emptyPs && emptyImgs) {
-      children.add(Padding(
-        padding: const EdgeInsets.fromLTRB(17, 17, 17, 0),
-        child: SimpleMarkdown(data: l10n.dockerEmptyRunningItems),
-      ));
+      children.add(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(17, 17, 17, 0),
+          child: SimpleMarkdown(data: l10n.dockerEmptyRunningItems),
+        ),
+      );
     }
-    children.add(
-      TextButton(
-        onPressed: _showEditHostDialog,
-        child: Text('${libL10n.edit} DOCKER_HOST'),
-      ),
-    );
-    return CardX(
-        child: Column(
-      children: children,
-    ));
+    children.add(TextButton(onPressed: _showEditHostDialog, child: Text('${libL10n.edit} DOCKER_HOST')));
+    return CardX(child: Column(children: children));
   }
 
   Widget _buildSwitchProvider() {
@@ -323,44 +301,43 @@ class _ContainerPageState extends State<ContainerPage> {
     final nameCtrl = TextEditingController();
     final argsCtrl = TextEditingController();
     await context.showRoundDialog(
-        title: l10n.newContainer,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Input(
-              autoFocus: true,
-              type: TextInputType.text,
-              label: l10n.image,
-              hint: 'xxx:1.1',
-              controller: imageCtrl,
-              suggestion: false,
-            ),
-            Input(
-              type: TextInputType.text,
-              controller: nameCtrl,
-              label: libL10n.name,
-              hint: 'xxx',
-              suggestion: false,
-            ),
-            Input(
-              type: TextInputType.text,
-              controller: argsCtrl,
-              label: l10n.extraArgs,
-              hint: '-p 2222:22 -v ~/.xxx/:/xxx',
-              suggestion: false,
-            ),
-          ],
-        ),
-        actions: Btn.ok(onTap: () async {
+      title: l10n.newContainer,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Input(
+            autoFocus: true,
+            type: TextInputType.text,
+            label: l10n.image,
+            hint: 'xxx:1.1',
+            controller: imageCtrl,
+            suggestion: false,
+          ),
+          Input(
+            type: TextInputType.text,
+            controller: nameCtrl,
+            label: libL10n.name,
+            hint: 'xxx',
+            suggestion: false,
+          ),
+          Input(
+            type: TextInputType.text,
+            controller: argsCtrl,
+            label: l10n.extraArgs,
+            hint: '-p 2222:22 -v ~/.xxx/:/xxx',
+            suggestion: false,
+          ),
+        ],
+      ),
+      actions: Btn.ok(
+        onTap: () async {
           context.pop();
           await _showAddCmdPreview(
-            _buildAddCmd(
-              imageCtrl.text.trim(),
-              nameCtrl.text.trim(),
-              argsCtrl.text.trim(),
-            ),
+            _buildAddCmd(imageCtrl.text.trim(), nameCtrl.text.trim(), argsCtrl.text.trim()),
           );
-        }).toList);
+        },
+      ).toList,
+    );
   }
 
   Future<void> _showAddCmdPreview(String cmd) async {
@@ -368,27 +345,19 @@ class _ContainerPageState extends State<ContainerPage> {
       title: l10n.preview,
       child: Text(cmd),
       actions: [
-        TextButton(
-          onPressed: () => context.pop(),
-          child: Text(libL10n.cancel),
-        ),
+        TextButton(onPressed: () => context.pop(), child: Text(libL10n.cancel)),
         TextButton(
           onPressed: () async {
             context.pop();
 
-            final (result, err) = await context.showLoadingDialog(
-              fn: () => _container.run(cmd),
-            );
+            final (result, err) = await context.showLoadingDialog(fn: () => _container.run(cmd));
             if (err != null || result != null) {
               final e = result?.message ?? err?.toString();
-              context.showRoundDialog(
-                title: libL10n.error,
-                child: Text(e.toString()),
-              );
+              context.showRoundDialog(title: libL10n.error, child: Text(e.toString()));
             }
           },
           child: Text(l10n.run),
-        )
+        ),
       ],
     );
   }
@@ -432,9 +401,7 @@ class _ContainerPageState extends State<ContainerPage> {
   void _showImageRmDialog(ContainerImg e) {
     context.showRoundDialog(
       title: libL10n.attention,
-      child: Text(
-        libL10n.askContinue('${libL10n.delete} Image(${e.repository})'),
-      ),
+      child: Text(libL10n.askContinue('${libL10n.delete} Image(${e.repository})')),
       actions: Btn.ok(
         onTap: () async {
           context.pop();
@@ -462,94 +429,73 @@ class _ContainerPageState extends State<ContainerPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(libL10n.askContinue(
-                '${libL10n.delete} Container(${dItem.name})',
-              )),
+              Text(libL10n.askContinue('${libL10n.delete} Container(${dItem.name})')),
               UIs.height13,
               Row(
                 children: [
-                  StatefulBuilder(builder: (_, setState) {
-                    return Checkbox(
-                      value: force,
-                      onChanged: (val) => setState(
-                        () => force = val ?? false,
-                      ),
-                    );
-                  }),
+                  StatefulBuilder(
+                    builder: (_, setState) {
+                      return Checkbox(value: force, onChanged: (val) => setState(() => force = val ?? false));
+                    },
+                  ),
                   Text(l10n.force),
                 ],
-              )
+              ),
             ],
           ),
-          actions: Btn.ok(onTap: () async {
-            context.pop();
+          actions: Btn.ok(
+            onTap: () async {
+              context.pop();
 
-            final (result, err) = await context.showLoadingDialog(
-              fn: () => _container.delete(id, force),
-            );
-            if (err != null || result != null) {
-              final e = result?.message ?? err?.toString();
-              context.showRoundDialog(
-                title: libL10n.error,
-                child: Text(e ?? 'null'),
-              );
-            }
-          }).toList,
+              final (result, err) = await context.showLoadingDialog(fn: () => _container.delete(id, force));
+              if (err != null || result != null) {
+                final e = result?.message ?? err?.toString();
+                context.showRoundDialog(title: libL10n.error, child: Text(e ?? 'null'));
+              }
+            },
+          ).toList,
         );
         break;
       case ContainerMenu.start:
-        final (result, err) = await context.showLoadingDialog(
-          fn: () => _container.start(id),
-        );
+        final (result, err) = await context.showLoadingDialog(fn: () => _container.start(id));
         if (err != null || result != null) {
           final e = result?.message ?? err?.toString();
-          context.showRoundDialog(
-            title: libL10n.error,
-            child: Text(e ?? 'null'),
-          );
+          context.showRoundDialog(title: libL10n.error, child: Text(e ?? 'null'));
         }
         break;
       case ContainerMenu.stop:
-        final (result, err) = await context.showLoadingDialog(
-          fn: () => _container.stop(id),
-        );
+        final (result, err) = await context.showLoadingDialog(fn: () => _container.stop(id));
         if (err != null || result != null) {
           final e = result?.message ?? err?.toString();
-          context.showRoundDialog(
-            title: libL10n.error,
-            child: Text(e ?? 'null'),
-          );
+          context.showRoundDialog(title: libL10n.error, child: Text(e ?? 'null'));
         }
         break;
       case ContainerMenu.restart:
-        final (result, err) = await context.showLoadingDialog(
-          fn: () => _container.restart(id),
-        );
+        final (result, err) = await context.showLoadingDialog(fn: () => _container.restart(id));
         if (err != null || result != null) {
           final e = result?.message ?? err?.toString();
-          context.showRoundDialog(
-            title: libL10n.error,
-            child: Text(e ?? 'null'),
-          );
+          context.showRoundDialog(title: libL10n.error, child: Text(e ?? 'null'));
         }
         break;
       case ContainerMenu.logs:
         final args = SshPageArgs(
           spi: widget.args.spi,
-          initCmd: '${switch (_container.type) {
-            ContainerType.podman => 'podman',
-            ContainerType.docker => 'docker',
-          }} logs -f --tail 100 ${dItem.id}',
+          initCmd:
+              '${switch (_container.type) {
+                ContainerType.podman => 'podman',
+                ContainerType.docker => 'docker',
+              }} logs -f --tail 100 ${dItem.id}',
         );
         SSHPage.route.go(context, args);
         break;
       case ContainerMenu.terminal:
         final args = SshPageArgs(
           spi: widget.args.spi,
-          initCmd: '${switch (_container.type) {
-            ContainerType.podman => 'podman',
-            ContainerType.docker => 'docker',
-          }} exec -it ${dItem.id} sh',
+          initCmd:
+              '${switch (_container.type) {
+                ContainerType.podman => 'podman',
+                ContainerType.docker => 'docker',
+              }} exec -it ${dItem.id} sh',
         );
         SSHPage.route.go(context, args);
         break;
@@ -576,16 +522,13 @@ class _ContainerPageState extends State<ContainerPage> {
 
   void _initAutoRefresh() {
     if (Stores.setting.contaienrAutoRefresh.fetch()) {
-      Timer.periodic(
-        Duration(seconds: Stores.setting.serverStatusUpdateInterval.fetch()),
-        (timer) {
-          if (mounted) {
-            _container.refresh(isAuto: true);
-          } else {
-            timer.cancel();
-          }
-        },
-      );
+      Timer.periodic(Duration(seconds: Stores.setting.serverStatusUpdateInterval.fetch()), (timer) {
+        if (mounted) {
+          _container.refresh(isAuto: true);
+        } else {
+          timer.cancel();
+        }
+      });
     }
   }
 }
