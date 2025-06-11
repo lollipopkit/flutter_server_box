@@ -176,8 +176,8 @@ class SettingStore extends HiveStore {
   late final containerParseStat = propertyDefault('containerParseStat', true);
 
   /// Auto refresh container status
-  late final contaienrAutoRefresh = propertyDefault(
-    'contaienrAutoRefresh',
+  late final containerAutoRefresh = propertyDefault(
+    'containerAutoRefresh',
     true,
   );
 

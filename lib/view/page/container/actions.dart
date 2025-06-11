@@ -219,7 +219,7 @@ extension on _ContainerPageState {
   }
 
   void _initAutoRefresh() {
-    if (Stores.setting.contaienrAutoRefresh.fetch()) {
+    if (Stores.setting.containerAutoRefresh.fetch()) {
       Timer.periodic(Duration(seconds: Stores.setting.serverStatusUpdateInterval.fetch()), (timer) {
         if (mounted) {
           _container.refresh(isAuto: true);

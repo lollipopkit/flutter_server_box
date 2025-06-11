@@ -99,6 +99,7 @@ class _ContainerPageState extends State<ContainerPage> {
             ),
             const Spacer(),
             UIs.height13,
+            _buildSettingsBtns,
           ],
         ),
       );
@@ -148,7 +149,8 @@ class _ContainerPageState extends State<ContainerPage> {
 
   Widget _buildImageItem(ContainerImg e) {
     final repoSplited = e.repository?.split('/');
-    final title = repoSplited?.lastOrNull ?? e.repository;repoSplited?.removeLast();
+    final title = repoSplited?.lastOrNull ?? e.repository;
+    repoSplited?.removeLast();
     final reg = repoSplited?.join('/');
     return ListTile(
       title: Text(title ?? l10n.unknown, style: UIs.text15),
@@ -333,6 +335,7 @@ class _ContainerPageState extends State<ContainerPage> {
     return ExpandTile(
       leading: const Icon(Icons.settings),
       title: Text(libL10n.setting),
+      initiallyExpanded: _container.error != null,
       children: _SettingsMenuItems.values.map(_buildSettingTile).toList(),
     ).cardx;
   }

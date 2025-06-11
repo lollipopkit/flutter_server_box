@@ -223,7 +223,7 @@ class ContainerProvider extends ChangeNotifier {
   Future<ContainerErr?> restart(String id) async => await run('restart $id');
 
   Future<ContainerErr?> pruneImages({bool all = true}) async {
-    final cmd = 'image prune ${all ? "-a" : ""} -f';
+    final cmd = 'image prune${all ? " -a" : ""} -f';
     return await run(cmd);
   }
 
