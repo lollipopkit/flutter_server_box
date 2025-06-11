@@ -455,6 +455,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get process => 'Процес';
 
   @override
+  String get prune => 'Обрізати';
+
+  @override
   String get pushToken => 'Надіслати токен';
 
   @override

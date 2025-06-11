@@ -432,6 +432,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get process => '进程';
 
   @override
+  String get prune => '修剪';
+
+  @override
   String get pushToken => '消息推送 Token';
 
   @override
@@ -1161,6 +1164,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get process => '行程';
+
+  @override
+  String get prune => '修剪';
 
   @override
   String get pushToken => '消息推送 Token';

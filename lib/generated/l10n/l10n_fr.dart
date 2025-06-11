@@ -456,6 +456,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get process => 'Processus';
 
   @override
+  String get prune => 'Élaguer';
+
+  @override
   String get pushToken => 'Jeton d\'identification';
 
   @override

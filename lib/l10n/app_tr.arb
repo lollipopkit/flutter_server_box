@@ -132,6 +132,7 @@
   "preview": "Önizleme",
   "privateKey": "Özel Anahtar",
   "process": "İşlem",
+  "prune": "Budamak",
   "pushToken": "Push belirteci",
   "pveIgnoreCertTip": "Etkinleştirilmesi önerilmez, güvenlik risklerine dikkat edin! PVE'den varsayılan sertifikayı kullanıyorsanız, bu seçeneği etkinleştirmeniz gerekir.",
   "pveLoginFailed": "Giriş başarısız. Linux PAM girişi için sunucu yapılandırmasındaki kullanıcı adı/şifre ile kimlik doğrulama yapılamadı.",

@@ -132,6 +132,7 @@
   "preview": "Preview",
   "privateKey": "Private Key",
   "process": "Process",
+  "prune": "Prune",
   "pushToken": "Push token",
   "pveIgnoreCertTip": "Not recommended to enable, beware of security risks! If you are using the default certificate from PVE, you need to enable this option.",
   "pveLoginFailed": "Login failed. Unable to authenticate with username/password from server configuration for Linux PAM login.",

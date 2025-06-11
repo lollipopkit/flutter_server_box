@@ -450,6 +450,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get process => 'İşlem';
 
   @override
+  String get prune => 'Budamak';
+
+  @override
   String get pushToken => 'Push belirteci';
 
   @override

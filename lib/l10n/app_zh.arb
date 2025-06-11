@@ -132,6 +132,7 @@
   "preview": "预览",
   "privateKey": "私钥",
   "process": "进程",
+  "prune": "修剪",
   "pushToken": "消息推送 Token",
   "pveIgnoreCertTip": "不推荐开启，注意安全隐患！如果你使用的 PVE 默认证书，需要开启该选项",
   "pveLoginFailed": "登录失败。无法使用服务器配置内的用户/密码，以 Linux PAM 方式登录。",

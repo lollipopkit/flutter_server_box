@@ -452,6 +452,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get process => 'Proces';
 
   @override
+  String get prune => 'Snoeien';
+
+  @override
   String get pushToken => 'Push-token';
 
   @override

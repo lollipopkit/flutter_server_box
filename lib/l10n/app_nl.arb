@@ -132,6 +132,7 @@
   "preview": "Voorbeeld",
   "privateKey": "Privésleutel",
   "process": "Proces",
+  "prune": "Snoeien",
   "pushToken": "Push-token",
   "pveIgnoreCertTip": "Niet aanbevolen om in te schakelen, let op beveiligingsrisico's! Als u de standaardcertificaat van PVE gebruikt, moet u deze optie inschakelen.",
   "pveLoginFailed": "Aanmelden mislukt. Kan niet authenticeren met gebruikersnaam/wachtwoord van serverconfiguratie voor Linux PAM-login.",

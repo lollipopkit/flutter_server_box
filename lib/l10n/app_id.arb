@@ -132,6 +132,7 @@
   "preview": "Pratinjau",
   "privateKey": "Kunci Pribadi",
   "process": "Proses",
+  "prune": "Pangkas",
   "pushToken": "Dorong token",
   "pveIgnoreCertTip": "Tidak disarankan untuk diaktifkan, waspadai risiko keamanan! Jika Anda menggunakan sertifikat default dari PVE, Anda perlu mengaktifkan opsi ini.",
   "pveLoginFailed": "Login gagal. Tidak dapat mengautentikasi dengan nama pengguna/kata sandi dari konfigurasi server untuk login Linux PAM.",

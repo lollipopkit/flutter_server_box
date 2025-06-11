@@ -222,6 +222,23 @@ class ContainerProvider extends ChangeNotifier {
 
   Future<ContainerErr?> restart(String id) async => await run('restart $id');
 
+  Future<ContainerErr?> pruneImages({bool all = true}) async {
+    final cmd = 'image prune ${all ? "-a" : ""} -f';
+    return await run(cmd);
+  }
+
+  Future<ContainerErr?> pruneContainers() async {
+    return await run('container prune -f');
+  }
+
+  Future<ContainerErr?> pruneVolumes() async {
+    return await run('volume prune -f');
+  }
+
+  Future<ContainerErr?> pruneSystem() async {
+    return await run('system prune -a -f --volumes');
+  }
+
   Future<ContainerErr?> run(String cmd, {bool autoRefresh = true}) async {
     cmd = switch (type) {
       ContainerType.docker => 'docker $cmd',
@@ -272,6 +289,8 @@ enum ContainerCmdType {
   ps,
   stats,
   images,
+  // No specific commands needed for prune actions as they are simple
+  // and don't require splitting output with ShellFunc.seperator
   ;
 
   String exec(

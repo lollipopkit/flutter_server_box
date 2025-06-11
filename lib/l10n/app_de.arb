@@ -132,6 +132,7 @@
   "preview": "Vorschau",
   "privateKey": "Private Key",
   "process": "Prozess",
+  "prune": "Beschneiden",
   "pushToken": "Push Token",
   "pveIgnoreCertTip": "Nicht empfohlen, Achten Sie auf Sicherheitsrisiken! Wenn Sie das Standardzertifikat von PVE verwenden, müssen Sie diese Option aktivieren.",
   "pveLoginFailed": "Anmeldung fehlgeschlagen. Kann nicht mit Benutzername/Passwort aus der Serverkonfiguration angemeldet werden, um sich über Linux PAM anzumelden.",

@@ -12,7 +12,7 @@ import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:server_box/view/page/container.dart';
+import 'package:server_box/view/page/container/container.dart';
 import 'package:server_box/view/page/iperf.dart';
 import 'package:server_box/view/page/process.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
