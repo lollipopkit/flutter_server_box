@@ -15,8 +15,8 @@
 特别感谢 <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a> & <a href="https://github.com/TerminalStudio/xterm.dart">xterm.dart</a>。
 </p>
 
-
 ## 🏙️ 截屏
+
 <table>
   <tr>
     <td><img width="200px" src="https://cdn.lpkt.cn/serverbox/screenshot/1.jpg"></td>
@@ -26,20 +26,19 @@
   </tr>
 </table>
 
-
 ## 📥 安装
 
-平台            | 下载
-----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+平台|下载
+--|--
 iOS / macOS     | [AppStore](https://apps.apple.com/app/id1586449703)
 Android         | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid) / [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [OpenAPK](https://www.openapk.net/serverbox/tech.lolli.toolbox/)
 Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid)
 
 请从 **信任** 的来源下载!
 
-
 ## 🔖 特点
-- `状态图表`（CPU、传感器、GPU 等）, `SSH` 终端, `SFTP`, `Docker & 进程 & Systemd` 管理...
+
+- `状态图表`（CPU、传感器、GPU 等）, `SSH` 终端, `SFTP`, `Docker & 进程 & Systemd` 管理，`S.M.A.R.T`...
 - 特殊支持：`生物认证`、`推送`、`桌面小部件`、`watchOS App`、`跟随系统颜色`...
 - 本地化
   - English, 简体中文
@@ -47,10 +46,10 @@ Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/rel
   - Deutsch [@its-tom](https://github.com/its-tom), 繁體中文 [@kalashnikov](https://github.com/kalashnikov), Indonesian [@azkadev](https://github.com/azkadev), Français [@FrancXPT](https://github.com/FrancXPT), Dutch [@QazCetelic](https://github.com/QazCetelic), Türkçe [@mikropsoft](https://github.com/mikropsoft), Українська мова [@CakesTwix](https://github.com/CakesTwix);
   - 感谢贡献者们！
 
-
 ## 🆘 帮助
 
 <div align="center">
+  <a href="https://qm.qq.com/q/daCGa7eShG"><img alt="qq" src="https://img.shields.io/badge/QQ-群-pink"></a>
   <a href="https://t.me/lpktg"><img alt="donate" src="https://img.shields.io/badge/Telegram-lpktg-green"></a>
   <a href="https://discord.gg/SsVNbRhK7w"><img alt="discord" src="https://img.shields.io/badge/Discord-lpkt-purple"></a>
 </div>
@@ -59,26 +58,30 @@ Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/rel
 - **常见问题** 可以在 [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki/主页) 查看。
 
 反馈前须知：
+
 1. 反馈问题请附带 log（点击首页右上角），并以 bug 模版提交。
 2. 反馈问题前请检查是否是 serverbox 的问题。
 3. 欢迎所有有效、正面的反馈，主观（比如你觉得其他UI更好看）的反馈不一定会接受
 
-
 ## 🧱 贡献
+
 任何正面的贡献都欢迎。
 
 ### 开发
+
 1. 安装 [Flutter](https://flutter.dev/docs/get-started/install)
 2. 克隆这个仓库, 运行 `flutter run` 启动应用
 3. 运行 `dart run fl_build -p PLATFORM` 构建应用
 
 ### 翻译
+
 [指南](https://blog.lpkt.cn/faq/) 可在我的博客中找到。
 
 ## 💡 我的其它 Apps
+
 - [GPT Box](https://github.com/lollipopkit/flutter_gpt_box) - 支持 OpenAI API 的 第三方全平台客户端。
 - [更多](https://github.com/lollipopkit) - 工具 & etc.
 
-
 ## 📝 协议
+
 `GPL v3 lollipopkit`

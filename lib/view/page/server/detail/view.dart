@@ -580,38 +580,133 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
   }
 
   Widget _buildDiskSmartItem(DiskSmart smart) {
-    final isPass = smart.healthy ?? false;
-    final statusText = isPass ? 'PASS' : 'FAIL';
-    final statusColor = isPass ? Colors.green : Colors.red;
-    final statusIcon = isPass
-        ? Icon(Icons.check_circle, color: Colors.green, size: 18)
-        : Icon(Icons.error, color: Colors.red, size: 18);
+    final healthStatus = _getDiskHealthStatus(smart);
 
     return ListTile(
       dense: true,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-      leading: statusIcon,
+      leading: healthStatus.icon,
       title: Text(smart.device, style: UIs.text13, textScaler: _textFactor),
       trailing: Text(
-        statusText,
-        style: UIs.text13.copyWith(color: statusColor, fontWeight: FontWeight.bold),
+        healthStatus.text,
+        style: UIs.text13.copyWith(fontWeight: FontWeight.bold),
         textScaler: _textFactor,
       ),
       subtitle: _buildDiskSmartDetails(smart),
+      onTap: () => _onTapDiskSmartItem(smart),
     );
+  }
+
+  ({String text, Color color, Widget icon}) _getDiskHealthStatus(DiskSmart smart) {
+    if (smart.healthy == null) {
+      return (
+        text: libL10n.unknown,
+        color: Colors.orange,
+        icon: const Icon(Icons.help_outline, color: Colors.orange, size: 18),
+      );
+    } else if (smart.healthy!) {
+      return (
+        text: 'PASS',
+        color: Colors.green,
+        icon: const Icon(Icons.check_circle, color: Colors.green, size: 18),
+      );
+    } else {
+      return (text: 'FAIL', color: Colors.red, icon: const Icon(Icons.error, color: Colors.red, size: 18));
+    }
   }
 
   Widget? _buildDiskSmartDetails(DiskSmart smart) {
     final details = <String>[];
-    
-    if (smart.model != null) details.add(smart.model!);
-    if (smart.serial != null) details.add('S/N: ${smart.serial}');
-    if (smart.temperature != null) details.add('${smart.temperature!.toStringAsFixed(1)}°C');
-    if (smart.powerOnHours != null) details.add('${smart.powerOnHours} hours');
-    
+
+    if (smart.model != null) {
+      details.add(smart.model!);
+    }
+
+    if (smart.temperature != null) {
+      details.add('${smart.temperature!.toStringAsFixed(1)}°C');
+    }
+
+    if (smart.powerOnHours != null) {
+      final hours = smart.powerOnHours!;
+      details.add('$hours ${libL10n.hour}');
+    }
+
+    if (smart.ssdLifeLeft != null) {
+      details.add('Life left: ${smart.ssdLifeLeft}%');
+    }
+
     if (details.isEmpty) return null;
-    
-    return Text(details.join(' | '), style: UIs.text12, textScaler: _textFactor);
+
+    return Text(
+      details.join(' | '),
+      style: UIs.text12Grey,
+      textScaler: _textFactor,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  void _onTapDiskSmartItem(DiskSmart smart) {
+    final details = <String>[];
+
+    if (smart.model != null) details.add('Model: ${smart.model}');
+    if (smart.serial != null) details.add('Serial: ${smart.serial}');
+    if (smart.temperature != null) details.add('Temperature: ${smart.temperature!.toStringAsFixed(1)}°C');
+
+    if (smart.powerOnHours != null) {
+      details.add('Power On: ${smart.powerOnHours} ${libL10n.hour}');
+    }
+    if (smart.powerCycleCount != null) {
+      details.add('Power Cycle: ${smart.powerCycleCount}');
+    }
+
+    if (smart.ssdLifeLeft != null) {
+      details.add('Life Left: ${smart.ssdLifeLeft}%');
+    }
+    if (smart.lifetimeWritesGiB != null) {
+      details.add('Lifetime Write: ${smart.lifetimeWritesGiB} GiB');
+    }
+    if (smart.lifetimeReadsGiB != null) {
+      details.add('Lifetime Read: ${smart.lifetimeReadsGiB} GiB');
+    }
+    if (smart.averageEraseCount != null) {
+      details.add('Avg. Erase: ${smart.averageEraseCount}');
+    }
+    if (smart.unsafeShutdownCount != null) {
+      details.add('Unsafe Shutdown: ${smart.unsafeShutdownCount}');
+    }
+
+    final criticalAttrs = [
+      'Reallocated_Sector_Ct',
+      'Current_Pending_Sector',
+      'Offline_Uncorrectable',
+      'UDMA_CRC_Error_Count',
+    ];
+
+    for (final attrName in criticalAttrs) {
+      final attr = smart.getAttribute(attrName);
+      if (attr != null && attr.rawValue != null) {
+        final value = attr.rawValue.toString();
+        details.add('${attrName.replaceAll('_', ' ')}: $value');
+      }
+    }
+
+    if (details.isEmpty) {
+      return;
+    }
+
+    final markdown = details.join('\n\n- ');
+    context.showRoundDialog(
+      title: smart.device,
+      child: MarkdownBody(
+        data: '- $markdown',
+        selectable: true,
+        styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+          p: UIs.text13Grey,
+          h2: UIs.text15,
+        ),
+      ),
+      actions: Btnx.oks,
+    );
   }
 
   Widget? _buildNetView(Server si) {

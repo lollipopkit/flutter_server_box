@@ -225,7 +225,7 @@ enum StatusCmdType {
   ),
   nvidia._('nvidia-smi -q -x'),
   sensors._('sensors'),
-  diskSmart._('for d in \$(lsblk -dn -o KNAME); do smartctl -j /dev/\$d; echo; done'),
+  diskSmart._('for d in \$(lsblk -dn -o KNAME); do smartctl -a -j /dev/\$d; echo; done'),
   cpuBrand._('cat /proc/cpuinfo | grep "model name"');
 
   final String cmd;
