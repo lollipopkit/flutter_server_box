@@ -35,7 +35,10 @@ abstract class DiskSmart with _$DiskSmart {
 
         // Basic
         final device = data['device']?['name']?.toString() ?? '';
-        final healthy = data['smart_status']?['passed'] as bool?;
+
+        if (!_isPhysicalDisk(device)) continue;
+
+        final healthy = _parseHealthStatus(data);
 
         // Model and Serial
         final model =
@@ -70,6 +73,92 @@ abstract class DiskSmart with _$DiskSmart {
       }
     }
     return results;
+  }
+
+  static bool _isPhysicalDisk(String device) {
+    if (device.isEmpty) return false;
+
+    // Common patterns for physical disks
+    final patterns = [
+      RegExp(r'^/dev/sd[a-z]$'), // SATA/SCSI: /dev/sda, /dev/sdb
+      RegExp(r'^/dev/hd[a-z]$'), // IDE: /dev/hda, /dev/hdb
+      RegExp(r'^/dev/nvme\d+n\d+$'), // NVMe: /dev/nvme0n1, /dev/nvme1n1
+      RegExp(r'^/dev/mmcblk\d+$'), // MMC: /dev/mmcblk0
+      RegExp(r'^/dev/vd[a-z]$'), // VirtIO: /dev/vda, /dev/vdb
+      RegExp(r'^/dev/xvd[a-z]$'), // Xen: /dev/xvda, /dev/xvdb
+    ];
+
+    return patterns.any((pattern) => pattern.hasMatch(device));
+  }
+
+  static bool? _parseHealthStatus(Map<String, dynamic> data) {
+    // smart_status.passed
+    final smartStatus = data['smart_status'];
+    if (smartStatus is Map<String, dynamic>) {
+      final passed = smartStatus['passed'];
+      if (passed is bool) return passed;
+    }
+
+    // smart_status.status
+    if (smartStatus is Map<String, dynamic>) {
+      final status = smartStatus['status']?.toString().toLowerCase();
+      if (status != null) {
+        if (status.contains('pass') || status.contains('ok')) return true;
+        if (status.contains('fail')) return false;
+      }
+    }
+
+    // smart_status
+    final rootSmartStatus = data['smart_status']?.toString().toLowerCase();
+    if (rootSmartStatus != null) {
+      if (rootSmartStatus.contains('pass') || rootSmartStatus.contains('ok')) return true;
+      if (rootSmartStatus.contains('fail')) return false;
+    }
+
+    // health attrs
+    final attrTable = data['ata_smart_attributes']?['table'] as List?;
+    if (attrTable != null) {
+      var hasFailingAttributes = false;
+
+      for (final attr in attrTable) {
+        if (attr is Map<String, dynamic>) {
+          final whenFailed = attr['when_failed']?.toString();
+          if (whenFailed != null && whenFailed.isNotEmpty && whenFailed != 'never') {
+            hasFailingAttributes = true;
+            break;
+          }
+
+          // Whether the attribute is critical
+          final name = attr['name']?.toString();
+          final value = attr['value'] as int?;
+          final thresh = attr['thresh'] as int?;
+
+          if (name != null && value != null && thresh != null && thresh > 0) {
+            const criticalAttrs = [
+              'Reallocated_Sector_Ct',
+              'Reallocated_Event_Count',
+              'Current_Pending_Sector',
+              'Offline_Uncorrectable',
+              'UDMA_CRC_Error_Count',
+            ];
+
+            if (criticalAttrs.contains(name) && value < thresh) {
+              hasFailingAttributes = true;
+              break;
+            }
+          }
+        }
+      }
+
+      if (hasFailingAttributes) return false;
+    }
+
+    if (attrTable != null && attrTable.isNotEmpty) {
+      return true;
+    }
+
+    // Uncertain status, assume healthy
+    return true;
   }
 
   static Map<String, SmartAttribute> _parseSmartAttributes(Map<String, dynamic> data) {
