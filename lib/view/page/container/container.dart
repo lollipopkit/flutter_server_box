@@ -60,7 +60,7 @@ class _ContainerPageState extends State<ContainerPage> {
         builder: (_, _, _) {
           return Scaffold(
             appBar: _buildAppBar,
-            body: _buildMain,
+            body: SafeArea(child: _buildMain),
             floatingActionButton: _container.error == null ? _buildFAB : null,
           );
         },
@@ -101,25 +101,23 @@ class _ContainerPageState extends State<ContainerPage> {
             UIs.height13,
             _buildSettingsBtns,
           ],
-        ),
+        ).paddingSymmetric(horizontal: 13),
       );
     }
     if (_container.items == null || _container.images == null) {
       return UIs.centerLoading;
     }
 
-    return SafeArea(
-      child: AutoMultiList(
-        children: <Widget>[
-          _buildLoading(),
-          _buildVersion(),
-          _buildPs(),
-          _buildImage(),
-          _buildEmptyStateMessage(),
-          _buildPruneBtns,
-          _buildSettingsBtns,
-        ],
-      ),
+    return AutoMultiList(
+      children: <Widget>[
+        _buildLoading(),
+        _buildVersion(),
+        _buildPs(),
+        _buildImage(),
+        _buildEmptyStateMessage(),
+        _buildPruneBtns,
+        _buildSettingsBtns,
+      ],
     );
   }
 
@@ -155,10 +153,10 @@ class _ContainerPageState extends State<ContainerPage> {
     return ListTile(
       title: Text(title ?? l10n.unknown, style: UIs.text15),
       subtitle: Text('${reg ?? ''} - ${e.tag} - ${e.sizeMB}', style: UIs.text13Grey),
-      trailing: IconButton(
+      trailing: Btn.icon(
         padding: EdgeInsets.zero,
         icon: const Icon(Icons.delete),
-        onPressed: () => _showImageRmDialog(e),
+        onTap: () => _showImageRmDialog(e),
       ),
     );
   }
@@ -318,7 +316,7 @@ class _ContainerPageState extends State<ContainerPage> {
           message: type.tip,
           onConfirm: switch (type) {
             _PruneTypes.images => _container.pruneImages,
-            _PruneTypes.containers => () => _container.pruneContainers(),
+            _PruneTypes.containers => _container.pruneContainers,
             _PruneTypes.volumes => _container.pruneVolumes,
             _PruneTypes.system => _container.pruneSystem,
           },

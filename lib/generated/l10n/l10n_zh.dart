@@ -749,10 +749,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get acceptBeta => '接受測試版更新推送';
 
   @override
-  String get addSystemPrivateKeyTip => '當前沒有任何私鑰，是否添加系統自帶的 (~/.ssh/id_rsa)？';
+  String get addSystemPrivateKeyTip => '目前沒有任何私鑰，是否新增系統原有的 (~/.ssh/id_rsa)？';
 
   @override
-  String get added2List => '已添加至任務列表';
+  String get added2List => '已新增至任務清單';
 
   @override
   String get addr => '位址';
@@ -761,54 +761,54 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get alreadyLastDir => '已經是最上層目錄了';
 
   @override
-  String get authFailTip => '認證失敗，請檢查密碼/密鑰/主機/用戶等是否錯誤。';
+  String get authFailTip => '認證失敗，請檢查密碼/金鑰/主機/使用者等是否錯誤。';
 
   @override
   String get autoBackupConflict => '只能同時開啓一個自動備份';
 
   @override
-  String get autoConnect => '自動連接';
+  String get autoConnect => '自動連線';
 
   @override
-  String get autoRun => '自動運行';
+  String get autoRun => '自動執行';
 
   @override
-  String get autoUpdateHomeWidget => '自動更新桌面小部件';
+  String get autoUpdateHomeWidget => '自動更新桌面小工具';
 
   @override
   String get backupTip => '匯出的資料僅進行了簡單加密，請妥善保管。';
 
   @override
-  String get backupVersionNotMatch => '備份版本不匹配，無法還原';
+  String get backupVersionNotMatch => '備份版本不相符，無法還原';
 
   @override
   String get battery => '電池';
 
   @override
-  String get bgRun => '後台運行';
+  String get bgRun => '背景執行';
 
   @override
   String get bgRunTip =>
-      '此開關只代表程式會嘗試在後台運行，具體能否在後臺運行取決於是否開啟了權限。 原生 Android 請關閉本 App 的“電池優化”，MIUI / HyperOS 請修改省電策略為“無限制”。';
+      '此開關只代表程式會嘗試在背景執行，具體能否在後臺執行取決於是否開啟了權限。 原生 Android 請關閉本 App 的“電池最佳化”，MIUI / HyperOS 請修改省電策略為“無限制”。';
 
   @override
   String get closeAfterSave => '儲存後關閉';
 
   @override
-  String get cmd => '命令';
+  String get cmd => '指令';
 
   @override
   String get collapseUITip => '是否預設折疊 UI 中存在的長列表';
 
   @override
-  String get conn => '連接';
+  String get conn => '連線';
 
   @override
   String get container => '容器';
 
   @override
   String get containerTrySudoTip =>
-      '例如：App 內設置使用者為 aaa，但是 Docker 安裝在 root 使用者，這時就需要開啟此選項';
+      '例如：App 內設定使用者為 aaa，但是 Docker 安裝在 root 使用者，這時就需要開啟此選項';
 
   @override
   String get convert => '轉換';
@@ -823,14 +823,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get cursorType => '游標類型';
 
   @override
-  String get customCmd => '自訂命令';
+  String get customCmd => '自訂指令';
 
   @override
   String get customCmdDocUrl =>
-      'https://github.com/lollipopkit/flutter_server_box/wiki/主页#自定义命令';
+      'https://github.com/lollipopkit/flutter_server_box/wiki/主页#自定义指令';
 
   @override
-  String get customCmdHint => '\"命令名稱\": \"命令\"';
+  String get customCmdHint => '\"指令名稱\": \"指令\"';
 
   @override
   String get decode => '解碼';
@@ -839,7 +839,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get decompress => '解壓縮';
 
   @override
-  String get deleteServers => '批量刪除伺服器';
+  String get deleteServers => '大量刪除伺服器';
 
   @override
   String get desktopTerminalTip => '啟動 SSH 連線時用於打開終端機模擬器的指令。';
@@ -848,7 +848,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get dirEmpty => '請確保資料夾為空';
 
   @override
-  String get disconnected => '連接斷開';
+  String get disconnected => '連線中斷';
 
   @override
   String get disk => '磁碟';
@@ -869,11 +869,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get dockerEmptyRunningItems =>
-      '沒有正在運行的容器。\n這可能是因為：\n- Docker 安裝使用者與 App 內配置的使用者名稱不同\n- 環境變量 DOCKER_HOST 沒有被正確讀取。你可以通過在終端內運行 `echo \$DOCKER_HOST` 來獲取。';
+      '沒有正在執行的容器。\n這可能是因為：\n- Docker 安裝使用者與 App 內配置的使用者名稱不同\n- 環境變數 DOCKER_HOST 沒有被正確讀取。你可以通過在終端機內執行 `echo \$DOCKER_HOST` 來獲取。';
 
   @override
   String dockerImagesFmt(Object count) {
-    return '共 $count 個鏡像';
+    return '共 $count 個映像檔';
   }
 
   @override
@@ -884,19 +884,19 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
     Object runningCount,
     Object stoppedCount,
   ) {
-    return '$runningCount 個正在運行, $stoppedCount 個已停止';
+    return '$runningCount 個正在執行, $stoppedCount 個已停止';
   }
 
   @override
   String dockerStatusRunningFmt(Object count) {
-    return '$count 個容器正在運行';
+    return '$count 個容器正在執行';
   }
 
   @override
   String get doubleColumnMode => '雙列模式';
 
   @override
-  String get doubleColumnTip => '此選項僅開啟功能，實際是否能開啟還取決於設備的寬度';
+  String get doubleColumnTip => '此選項僅開啟功能，實際是否能開啟還取決於設備的頻寬';
 
   @override
   String get editVirtKeys => '編輯虛擬按鍵';
@@ -905,7 +905,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get editor => '編輯器';
 
   @override
-  String get editorHighlightTip => '目前的代碼高亮性能較為糟糕，可以選擇關閉以改善。';
+  String get editorHighlightTip => '目前的程式碼標記效能較為糟糕，可以選擇關閉以改善。';
 
   @override
   String get emulator => '模擬器';
@@ -914,7 +914,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get encode => '編碼';
 
   @override
-  String get envVars => '環境變量';
+  String get envVars => '環境變數';
 
   @override
   String get experimentalFeature => '實驗性功能';
@@ -926,18 +926,18 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get fallbackSshDest => '備選 SSH 目標';
 
   @override
-  String get fdroidReleaseTip => '如果你是從 F-Droid 下載的本應用，推薦關閉此選項';
+  String get fdroidReleaseTip => '如果你是從 F-Droid 下載的本App，推薦關閉此選項';
 
   @override
   String get fgService => '前台服務';
 
   @override
   String get fgServiceTip =>
-      '開啟後，可能會導致部分機型閃退。關閉可能導致部分機型無法後台保持 SSH 連接。請在系統設置內允許 ServerBox 通知權限、後台運行、自我喚醒。';
+      '開啟後，可能會導致部分機型閃退。關閉可能導致部分機型無法背景保持 SSH 連線。請在系統設定內允許 ServerBox 通知權限、背景執行、自我喚醒。';
 
   @override
   String fileTooLarge(Object file, Object size, Object sizeMax) {
-    return '文件 \'$file\' 過大 \'$size\'，超過了 $sizeMax';
+    return '檔案 \'$file\' 過大 \'$size\'，超過了 $sizeMax';
   }
 
   @override
@@ -959,10 +959,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get fullScreenJitter => '全螢幕模式抖動';
 
   @override
-  String get fullScreenJitterHelp => '防止燒屏';
+  String get fullScreenJitterHelp => '防止烙印';
 
   @override
-  String get fullScreenTip => '當設備旋轉為橫屏時，是否開啟全熒幕模式？此選項僅適用於伺服器選項卡。';
+  String get fullScreenTip => '當設備旋轉為橫向時，是否開啟全螢幕模式？此選項僅適用於伺服器分頁。';
 
   @override
   String get goBackQ => '返回？';
@@ -974,10 +974,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get hideTitleBar => '隱藏標題欄';
 
   @override
-  String get highlight => '代碼高亮';
+  String get highlight => '程式碼標記';
 
   @override
-  String get homeWidgetUrlConfig => '桌面部件鏈接配置';
+  String get homeWidgetUrlConfig => '桌面小工具連結配置';
 
   @override
   String get host => '主機';
@@ -988,13 +988,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get ignoreCert => '忽略證書';
+  String get ignoreCert => '忽略憑證';
 
   @override
-  String get image => '鏡像';
+  String get image => '映像檔';
 
   @override
-  String get imagesList => '鏡像列表';
+  String get imagesList => '映像檔列表';
 
   @override
   String get init => '初始化';
@@ -1016,7 +1016,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get jumpServer => '跳板伺服器';
 
   @override
-  String get keepForeground => '請保持應用處於前台！';
+  String get keepForeground => '請保持App處於前端！';
 
   @override
   String get keepStatusWhenErr => '保留上次的伺服器狀態';
@@ -1025,22 +1025,22 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get keepStatusWhenErrTip => '僅在執行腳本出錯時';
 
   @override
-  String get keyAuth => '密鑰認證';
+  String get keyAuth => '金鑰認證';
 
   @override
-  String get letterCache => '输入法字符緩存';
+  String get letterCache => '輸入法字符快取';
 
   @override
   String get letterCacheTip => '建議關閉，但關閉後將無法輸入 CJK 等文字。';
 
   @override
-  String get license => '證書';
+  String get license => '憑證';
 
   @override
   String get location => '位置';
 
   @override
-  String get loss => '丟包率';
+  String get loss => '逾時';
 
   @override
   String madeWithLove(Object myGithub) {
@@ -1077,16 +1077,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get needHomeDir =>
-      '如果你是群暉用戶，[看這裡](https://kb.synology.com/DSM/tutorial/user_enable_home_service)。其他系統用戶，需搜索如何創建家目錄（home directory）。';
+      '如果你是群暉使用者，[看這裡](https://kb.synology.com/DSM/tutorial/user_enable_home_service)。其他系統使用者，需搜尋如何建立家目錄（home directory）。';
 
   @override
-  String get needRestart => '需要重啓 App';
+  String get needRestart => '需要重開 App';
 
   @override
   String get net => '網路';
 
   @override
-  String get netViewType => '網路視圖類型';
+  String get netViewType => '網路檢視類型';
 
   @override
   String get newContainer => '新建容器';
@@ -1113,7 +1113,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get onServerDetailPage => '在伺服器詳情頁';
 
   @override
-  String get onlyOneLine => '僅顯示為一行（可滾動）';
+  String get onlyOneLine => '僅顯示為一行（可捲動）';
 
   @override
   String get onlyWhenCoreBiggerThan8 => '僅當核心數大於 8 時生效';
@@ -1125,7 +1125,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get openLastPathTip => '不同的伺服器會有不同的記錄，且記錄的是退出時的路徑';
 
   @override
-  String get parseContainerStatsTip => 'Docker 解析佔用狀態較為緩慢';
+  String get parseContainerStatsTip => 'Docker 解析消耗狀態較為緩慢';
 
   @override
   String percentOfSize(Object percent, Object size) {
@@ -1145,7 +1145,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get pingNoServer => '沒有伺服器可用於 Ping\n請在伺服器 Tab 新增伺服器後再試';
 
   @override
-  String get pkg => '包管理';
+  String get pkg => '套件管理';
 
   @override
   String get plugInType => '插入類型';
@@ -1163,7 +1163,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get privateKey => '私鑰';
 
   @override
-  String get process => '行程';
+  String get process => '處理程序';
 
   @override
   String get prune => '修剪';
@@ -1172,7 +1172,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get pushToken => '消息推送 Token';
 
   @override
-  String get pveIgnoreCertTip => '不建議啟用，請注意安全風險！如果您使用的是 PVE 的默認證書，則需要啟用此選項。';
+  String get pveIgnoreCertTip => '不建議啟用，請注意安全風險！如果您使用的是 PVE 的預設憑證，則需要啟用此選項。';
 
   @override
   String get pveLoginFailed => '登錄失敗。無法使用伺服器配置中的使用者名稱/密碼以 Linux PAM 方式登錄。';
@@ -1184,10 +1184,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get pwd => '密碼';
 
   @override
-  String get read => '读';
+  String get read => '讀取';
 
   @override
-  String get reboot => '重启';
+  String get reboot => '重開';
 
   @override
   String get rememberPwdInMem => '在記憶體中記住密碼';
@@ -1196,13 +1196,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get rememberPwdInMemTip => '用於容器、暫停等';
 
   @override
-  String get rememberWindowSize => '記住窗口大小';
+  String get rememberWindowSize => '記住視窗大小';
 
   @override
   String get remotePath => '遠端路徑';
 
   @override
-  String get restart => '重啓';
+  String get restart => '重開';
 
   @override
   String get result => '結果';
@@ -1214,7 +1214,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get route => '路由';
 
   @override
-  String get run => '運行';
+  String get run => '執行';
 
   @override
   String get running => '運作中';
@@ -1223,16 +1223,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sameIdServerExist => '已存在相同 ID 的伺服器';
 
   @override
-  String get save => '保存';
+  String get save => '儲存';
 
   @override
-  String get saved => '已保存';
+  String get saved => '已儲存';
 
   @override
   String get second => '秒';
 
   @override
-  String get sensors => '感測器';
+  String get sensors => '感應器';
 
   @override
   String get sequence => '順序';
@@ -1250,17 +1250,17 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get serverOrder => '伺服器順序';
 
   @override
-  String get sftpDlPrepare => '準備連接至伺服器...';
+  String get sftpDlPrepare => '準備連線至伺服器...';
 
   @override
   String get sftpEditorTip =>
-      '如果為空, 使用App內置的文件編輯器。如果有值, 則使用遠程伺服器的編輯器, 例如 `vim`（建議根據 `EDITOR` 自動獲取）。';
+      '如果為空, 使用App內建的檔案編輯器。如果有值, 則使用遠端伺服器的編輯器, 例如 `vim`（建議根據 `EDITOR` 自動獲取）。';
 
   @override
-  String get sftpRmrDirSummary => '在 SFTP 中使用 `rm -r` 來刪除文件夾';
+  String get sftpRmrDirSummary => '在 SFTP 中使用 `rm -r` 來刪除檔案夾';
 
   @override
-  String get sftpSSHConnected => 'SFTP 已連接...';
+  String get sftpSSHConnected => 'SFTP 已連線...';
 
   @override
   String get sftpShowFoldersFirst => '資料夾顯示在前';
@@ -1296,11 +1296,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sshTermHelp =>
-      '在終端可滾動時，橫向拖動可以選中文字。點擊鍵盤按鈕可以開啟/關閉鍵盤。文件圖標會打開當前路徑 SFTP。剪貼簿按鈕會在有選中文字時複製內容，在未選中並且剪貼簿有內容時貼上內容到終端。代碼圖標會貼上代碼片段到終端並執行。';
+      '在終端機可捲動時，橫向拖動可以選中文字。點擊鍵盤按鈕可以開啟/關閉鍵盤。檔案圖示會打開目前路徑 SFTP。剪貼簿按鈕會在有選中文字時複製內容，在未選中並且剪貼簿有內容時貼上內容到終端機。程式碼圖示會貼上程式碼片段到終端機並執行。';
 
   @override
   String sshTip(Object url) {
-    return '該功能目前處於測試階段。\n\n請在 $url 反饋問題，或者加入我們開發。';
+    return '該功能目前處於測試階段。\n\n請在 $url 回饋問題，或者加入我們開發。';
   }
 
   @override
@@ -1328,10 +1328,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get supportFmtArgs => '支援以下格式化參數：';
 
   @override
-  String get suspend => '挂起';
+  String get suspend => '當機';
 
   @override
-  String get suspendTip => 'suspend 功能需要 root 權限及 systemd 支持。';
+  String get suspendTip => 'suspend 功能需要 root 權限及 systemd 支援。';
 
   @override
   String switchTo(Object val) {
@@ -1348,13 +1348,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get system => '系統';
 
   @override
-  String get tag => '标签';
+  String get tag => '標籤';
 
   @override
   String get temperature => '溫度';
 
   @override
-  String get termFontSizeTip => '此設置將影響終端大小（寬度和高度）。您可以在終端頁面縮放，來調整當前會話的字型大小。';
+  String get termFontSizeTip => '此設定將影響終端機大小（寬度和高度）。您可以在終端機頁面縮放，來調整目前會話的字型大小。';
 
   @override
   String get terminal => '终端機';
@@ -1399,7 +1399,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get update => '更新';
 
   @override
-  String get updateIntervalEqual0 => '你設置為 0，伺服器狀態不會自動更新。\n且不能計算CPU使用情況。';
+  String get updateIntervalEqual0 => '你設定為 0，伺服器狀態不會自動更新。\n且不能計算CPU使用情況。';
 
   @override
   String get updateServerStatusInterval => '伺服器狀態更新間隔';
@@ -1411,40 +1411,40 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get upsideDown => '上下交換';
 
   @override
-  String get uptime => '啟動時長';
+  String get uptime => '運作時間';
 
   @override
   String get useCdn => '使用 CDN';
 
   @override
-  String get useCdnTip => '非中國大陸用戶建議使用 CDN，是否使用？';
+  String get useCdnTip => '非中國使用者建議使用 CDN，是否使用？';
 
   @override
-  String get useNoPwd => '将使用無密碼';
+  String get useNoPwd => '將使用無密碼';
 
   @override
-  String get usePodmanByDefault => '默認使用 Podman';
+  String get usePodmanByDefault => '預設使用 Podman';
 
   @override
-  String get used => '已用';
+  String get used => '已使用';
 
   @override
-  String get view => '視圖';
+  String get view => '檢視';
 
   @override
   String get viewErr => '查看錯誤';
 
   @override
-  String get virtKeyHelpClipboard => '如果終端有選中字元，則復製選中字元至剪貼簿，否則粘貼剪貼簿內容至終端。';
+  String get virtKeyHelpClipboard => '如果終端機有選中字元，則復製選中字元至剪貼簿，否則貼上剪貼簿內容至終端機。';
 
   @override
   String get virtKeyHelpIME => '打開/關閉鍵盤';
 
   @override
-  String get virtKeyHelpSFTP => '在 SFTP 中打開當前路徑。';
+  String get virtKeyHelpSFTP => '在 SFTP 中打開目前路徑。';
 
   @override
-  String get waitConnection => '請等待連接建立';
+  String get waitConnection => '請等待連線建立';
 
   @override
   String get wakeLock => '保持喚醒';
@@ -1453,21 +1453,21 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get watchNotPaired => '沒有已配對的 Apple Watch';
 
   @override
-  String get webdavSettingEmpty => 'WebDav 設置項爲空';
+  String get webdavSettingEmpty => 'WebDav 設定項爲空';
 
   @override
   String get whenOpenApp => '當打開 App 時';
 
   @override
-  String get wolTip => '在配置 WOL（網絡喚醒）後，每次連接伺服器都會先發送一次 WOL 請求。';
+  String get wolTip => '在配置 WOL（網絡喚醒）後，每次連線伺服器都會先發送一次 WOL 請求。';
 
   @override
-  String get write => '写';
+  String get write => '寫入';
 
   @override
   String get writeScriptFailTip => '寫入腳本失敗，可能是沒有權限/目錄不存在等。';
 
   @override
   String get writeScriptTip =>
-      '連接到伺服器後，將會在 ~/.config/server_box 中寫入一個腳本來監測系統狀態。你可以審查腳本內容。';
+      '連線到伺服器後，將會在 ~/.config/server_box 中寫入一個腳本來監測系統狀態。你可以審查腳本內容。';
 }
