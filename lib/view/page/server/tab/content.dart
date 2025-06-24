@@ -7,19 +7,58 @@ extension on _ServerPageState {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          LayoutBuilder(
-            builder: (_, cons) {
-              return ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: cons.maxWidth / 2.3),
-                child: Text(s.spi.name, style: UIs.text13Bold, maxLines: 1, overflow: TextOverflow.ellipsis),
-              );
-            },
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildSmallLogo(s),
+              const SizedBox(width: 8),
+              LayoutBuilder(
+                builder: (_, cons) {
+                  return ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: cons.maxWidth / 2.3 - 32),
+                    child: Text(
+                      s.spi.name,
+                      style: UIs.text13Bold,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
           const Icon(Icons.keyboard_arrow_right, size: 17, color: Colors.grey),
           const Spacer(),
           _buildTopRightText(s),
           _buildTopRightWidget(s),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSmallLogo(Server s) {
+    var logoUrl = s.spi.custom?.logoUrl ?? Stores.setting.serverLogoUrl.fetch().selfNotEmptyOrNull;
+    if (logoUrl == null) return const SizedBox(width: 20, height: 20);
+
+    final dist = s.status.more[StatusCmdType.sys]?.dist;
+    if (dist != null) {
+      logoUrl = logoUrl.replaceFirst('{DIST}', dist.name);
+    }
+    logoUrl = logoUrl.replaceFirst('{BRIGHT}', context.isDark ? 'dark' : 'light');
+
+    return SizedBox(
+      width: 20,
+      height: 20,
+      child: ExtendedImage.network(
+        logoUrl,
+        cache: true,
+        fit: BoxFit.contain,
+        loadStateChanged: (state) {
+          if (state.extendedImageLoadState == LoadState.failed) {
+            return const SizedBox(width: 20, height: 20);
+          }
+          return null;
+        },
       ),
     );
   }
