@@ -11,14 +11,9 @@ extension on _ServerPageState {
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildSmallLogo(s),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Flexible(
-                child: Text(
-                  s.spi.name,
-                  style: UIs.text13Bold,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                child: Text(s.spi.name, style: UIs.text13Bold, maxLines: 1, overflow: TextOverflow.ellipsis),
               ),
             ],
           ),
@@ -33,7 +28,9 @@ extension on _ServerPageState {
 
   Widget _buildSmallLogo(Server s) {
     var logoUrl = s.spi.custom?.logoUrl ?? Stores.setting.serverLogoUrl.fetch().selfNotEmptyOrNull;
-    if (logoUrl == null) return const SizedBox(width: 20, height: 20);
+    const width = 16.0, height = 16.0;
+
+    if (logoUrl == null) return const SizedBox(width: width, height: height);
 
     final dist = s.status.more[StatusCmdType.sys]?.dist;
     if (dist != null) {
@@ -42,15 +39,15 @@ extension on _ServerPageState {
     logoUrl = logoUrl.replaceFirst('{BRIGHT}', context.isDark ? 'dark' : 'light');
 
     return SizedBox(
-      width: 20,
-      height: 20,
+      width: width,
+      height: height,
       child: ExtendedImage.network(
         logoUrl,
         cache: true,
         fit: BoxFit.contain,
         loadStateChanged: (state) {
           if (state.extendedImageLoadState == LoadState.failed) {
-            return const SizedBox(width: 20, height: 20);
+            return const SizedBox(width: width, height: height);
           }
           return null;
         },
