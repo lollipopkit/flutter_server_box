@@ -12,18 +12,13 @@ extension on _ServerPageState {
             children: [
               _buildSmallLogo(s),
               const SizedBox(width: 8),
-              LayoutBuilder(
-                builder: (_, cons) {
-                  return ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: cons.maxWidth / 2.3 - 32),
-                    child: Text(
-                      s.spi.name,
-                      style: UIs.text13Bold,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  );
-                },
+              Flexible(
+                child: Text(
+                  s.spi.name,
+                  style: UIs.text13Bold,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
