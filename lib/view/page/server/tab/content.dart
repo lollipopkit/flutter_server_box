@@ -2,6 +2,13 @@ part of 'tab.dart';
 
 extension on _ServerPageState {
   Widget _buildServerCardTitle(Server s) {
+    const width = 16.0, height = 16.0;
+
+    final logoUrl = s.getLogoUrl(context);
+    if (logoUrl == null) {
+      return const SizedBox(width: width, height: height);
+    }
+
     return Padding(
       padding: const EdgeInsets.only(left: 7, right: 13),
       child: Row(
@@ -10,7 +17,21 @@ extension on _ServerPageState {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildSmallLogo(s),
+              SizedBox(
+                width: width,
+                height: height,
+                child: ExtendedImage.network(
+                  logoUrl,
+                  cache: true,
+                  fit: BoxFit.contain,
+                  loadStateChanged: (state) {
+                    if (state.extendedImageLoadState == LoadState.failed) {
+                      return const SizedBox(width: width, height: height);
+                    }
+                    return null;
+                  },
+                ),
+              ),
               const SizedBox(width: 6),
               Flexible(
                 child: Text(s.spi.name, style: UIs.text13Bold, maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -22,35 +43,6 @@ extension on _ServerPageState {
           _buildTopRightText(s),
           _buildTopRightWidget(s),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSmallLogo(Server s) {
-    var logoUrl = s.spi.custom?.logoUrl ?? Stores.setting.serverLogoUrl.fetch().selfNotEmptyOrNull;
-    const width = 16.0, height = 16.0;
-
-    if (logoUrl == null) return const SizedBox(width: width, height: height);
-
-    final dist = s.status.more[StatusCmdType.sys]?.dist;
-    if (dist != null) {
-      logoUrl = logoUrl.replaceFirst('{DIST}', dist.name);
-    }
-    logoUrl = logoUrl.replaceFirst('{BRIGHT}', context.isDark ? 'dark' : 'light');
-
-    return SizedBox(
-      width: width,
-      height: height,
-      child: ExtendedImage.network(
-        logoUrl,
-        cache: true,
-        fit: BoxFit.contain,
-        loadStateChanged: (state) {
-          if (state.extendedImageLoadState == LoadState.failed) {
-            return const SizedBox(width: width, height: height);
-          }
-          return null;
-        },
       ),
     );
   }

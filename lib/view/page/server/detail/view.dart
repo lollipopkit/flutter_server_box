@@ -12,7 +12,6 @@ import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/disk_smart.dart';
-import 'package:server_box/data/model/server/dist.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/nvdia.dart';
 import 'package:server_box/data/model/server/sensors.dart';
@@ -22,6 +21,8 @@ import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/pve.dart';
 import 'package:server_box/view/page/server/edit.dart';
+import 'package:server_box/view/page/server/logo.dart';
+
 import 'package:server_box/view/widget/server_func_btns.dart';
 
 part 'misc.dart';
@@ -132,20 +133,15 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
   }
 
   Widget? _buildLogo(Server si) {
-    var logoUrl = si.spi.custom?.logoUrl ?? _settings.serverLogoUrl.fetch().selfNotEmptyOrNull;
-    if (logoUrl == null) return null;
-
-    final dist = si.status.more[StatusCmdType.sys]?.dist;
-    if (dist != null) {
-      logoUrl = logoUrl.replaceFirst('{DIST}', dist.name);
-    }
-    logoUrl = logoUrl.replaceFirst('{BRIGHT}', context.isDark ? 'dark' : 'light');
+    final logoUrl = si.getLogoUrl(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 13),
       child: LayoutBuilder(
         builder: (_, cons) {
-          if (logoUrl == null) return UIs.placeholder;
+          if (logoUrl == null) {
+            return UIs.placeholder;
+          }
           return ExtendedImage.network(
             logoUrl,
             cache: true,
@@ -700,10 +696,9 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
       child: MarkdownBody(
         data: '- $markdown',
         selectable: true,
-        styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-          p: UIs.text13Grey,
-          h2: UIs.text15,
-        ),
+        styleSheet: MarkdownStyleSheet.fromTheme(
+          Theme.of(context),
+        ).copyWith(p: UIs.text13Grey, h2: UIs.text15),
       ),
       actions: Btnx.oks,
     );
