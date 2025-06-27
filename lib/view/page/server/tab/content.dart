@@ -2,18 +2,41 @@ part of 'tab.dart';
 
 extension on _ServerPageState {
   Widget _buildServerCardTitle(Server s) {
+    const width = 16.0, height = 16.0;
+
+    final logoUrl = s.getLogoUrl(context);
+    if (logoUrl == null) {
+      return const SizedBox(width: width, height: height);
+    }
+
     return Padding(
       padding: const EdgeInsets.only(left: 7, right: 13),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          LayoutBuilder(
-            builder: (_, cons) {
-              return ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: cons.maxWidth / 2.3),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: width,
+                height: height,
+                child: ExtendedImage.network(
+                  logoUrl,
+                  cache: true,
+                  fit: BoxFit.contain,
+                  loadStateChanged: (state) {
+                    if (state.extendedImageLoadState == LoadState.failed) {
+                      return const SizedBox(width: width, height: height);
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              const SizedBox(width: 6),
+              Flexible(
                 child: Text(s.spi.name, style: UIs.text13Bold, maxLines: 1, overflow: TextOverflow.ellipsis),
-              );
-            },
+              ),
+            ],
           ),
           const Icon(Icons.keyboard_arrow_right, size: 17, color: Colors.grey),
           const Spacer(),
