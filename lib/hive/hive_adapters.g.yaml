@@ -59,7 +59,7 @@ types:
         index: 13
   VirtKey:
     typeId: 4
-    nextIndex: 44
+    nextIndex: 45
     fields:
       esc:
         index: 0
@@ -149,6 +149,8 @@ types:
         index: 42
       f12:
         index: 43
+      shift:
+        index: 44
   NetViewType:
     typeId: 5
     nextIndex: 3

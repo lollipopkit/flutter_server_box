@@ -254,6 +254,8 @@ class VirtKeyAdapter extends TypeAdapter<VirtKey> {
         return VirtKey.f11;
       case 43:
         return VirtKey.f12;
+      case 44:
+        return VirtKey.shift;
       default:
         return VirtKey.esc;
     }
@@ -350,6 +352,8 @@ class VirtKeyAdapter extends TypeAdapter<VirtKey> {
         writer.writeByte(42);
       case VirtKey.f12:
         writer.writeByte(43);
+      case VirtKey.shift:
+        writer.writeByte(44);
     }
   }
 

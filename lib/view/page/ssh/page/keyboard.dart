@@ -13,6 +13,13 @@ extension _Keyboard on SSHPageState {
         _handleEscKeyOrBackButton();
         return true; // Mark as handled so it doesn't propagate
       }
+      if (event.logicalKey == LogicalKeyboardKey.shiftLeft || 
+          event.logicalKey == LogicalKeyboardKey.shiftRight) {
+        // Handle shift key press
+        _terminal.keyInput(TerminalKey.shift);
+        HapticFeedback.lightImpact();
+        return true;
+      }
     }
     return false; // Let other handlers process this event
   }

@@ -291,6 +291,9 @@ class SSHPageState extends State<SSHPage>
       case TerminalKey.alt:
         selected = _keyboard.alt;
         break;
+      case TerminalKey.shift:
+        selected = _keyboard.shift;
+        break;
       default:
         break;
     }
