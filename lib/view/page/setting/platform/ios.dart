@@ -114,7 +114,20 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
 
     final (_, err) = await context.showLoadingDialog(
       fn: () async {
-        await wc.updateApplicationContext({'urls': result});
+        final data = {'urls': result};
+
+        // Try realtime update (app must be running foreground).
+        try {
+          if (await wc.isReachable) {
+            await wc.sendMessage(data);
+            return;
+          }
+        } catch (e) {
+          Loggers.app.warning('Failed to send message to watch', e);
+        }
+
+        // fallback
+        await wc.updateApplicationContext(data);
       },
     );
     if (err == null) {
