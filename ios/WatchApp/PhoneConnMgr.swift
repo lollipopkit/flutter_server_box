@@ -82,16 +82,39 @@ class PhoneConnMgr: NSObject, WCSessionDelegate, ObservableObject {
         }
     }
 
-    private func requestLatestData() {
+    private func requestLatestData(timeout: TimeInterval = 5.0, maxRetries: Int = 1) {
         guard let session = session, session.isReachable else { return }
 
-        // Send a message to request the latest data
-        session.sendMessage(["action": "requestData"]) { response in
-            DispatchQueue.main.async {
-                self.ctx = response
+        var didReceiveResponse = false
+        var retries = 0
+
+        func sendRequest() {
+            session.sendMessage(["action": "requestData"]) { response in
+                didReceiveResponse = true
+                DispatchQueue.main.async {
+                    self.ctx = response
+                }
+            } errorHandler: { error in
+                print("Request data failed: \(error)")
+                // Optionally, handle error UI here
             }
-        } errorHandler: { error in
-            print("Request data failed: \(error)")
+
+            // Timeout handling
+            DispatchQueue.main.asyncAfter(deadline: .now() + timeout) { [weak self] in
+                guard let self = self else { return }
+                if !didReceiveResponse {
+                    if retries < maxRetries {
+                        retries += 1
+                        print("No response, retrying requestLatestData (\(retries))...")
+                        sendRequest()
+                    } else {
+                        print("Request data timed out after \(retries + 1) attempts.")
+                        // Optionally, update UI to indicate timeout
+                    }
+                }
+            }
         }
+
+        sendRequest()
     }
 }
