@@ -14,7 +14,8 @@
         android:label="@string/app_name"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:allowBackup="true"
+        android:allowBackup="true" 
+        android:fullBackupContent="@xml/backup_rules"
         android:hasFragileUserData="true"
         android:restoreAnyVersion="true"
         tools:targetApi="q">

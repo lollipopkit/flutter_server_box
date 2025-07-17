@@ -3,7 +3,6 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:extended_image/extended_image.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
@@ -21,7 +20,6 @@ import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/edit.dart';
-import 'package:server_box/view/page/server/logo.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/widget/percent_circle.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
