@@ -26,6 +26,9 @@ extension _VirtKey on SSHPageState {
       case TerminalKey.alt:
         _keyboard.alt = !_keyboard.alt;
         break;
+      case TerminalKey.shift:
+        _keyboard.shift = !_keyboard.shift;
+        break;
       default:
         _terminal.keyInput(key);
         break;

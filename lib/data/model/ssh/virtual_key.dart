@@ -21,6 +21,7 @@ enum VirtKey {
   right,
   clipboard,
   ime,
+  shift,
   pgup,
   pgdn,
   slash,
@@ -105,6 +106,7 @@ extension VirtKeyX on VirtKey {
     VirtKey.right,
     VirtKey.clipboard,
     VirtKey.ime,
+    VirtKey.shift,
   ];
 
   /// Corresponding [TerminalKey]
@@ -119,6 +121,7 @@ extension VirtKeyX on VirtKey {
         VirtKey.left => TerminalKey.arrowLeft,
         VirtKey.down => TerminalKey.arrowDown,
         VirtKey.right => TerminalKey.arrowRight,
+        VirtKey.shift => TerminalKey.shift,
         VirtKey.pgup => TerminalKey.pageUp,
         VirtKey.pgdn => TerminalKey.pageDown,
         VirtKey.f1 => TerminalKey.f1,
@@ -161,7 +164,7 @@ extension VirtKeyX on VirtKey {
       };
 
   bool get toggleable => switch (this) {
-        VirtKey.alt || VirtKey.ctrl => true,
+        VirtKey.alt || VirtKey.ctrl || VirtKey.shift => true,
         _ => false,
       };
 

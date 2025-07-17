@@ -23,12 +23,24 @@ class VirtKeyProvider extends TerminalInputHandler with ChangeNotifier {
     }
   }
 
+  bool _shift = false;
+  bool get shift => _shift;
+  set shift(bool value) {
+    if (value != _shift) {
+      _shift = value;
+      notifyListeners();
+    }
+  }
+
   void reset(TerminalKeyboardEvent e) {
     if (e.ctrl) {
       ctrl = false;
     }
     if (e.alt) {
       alt = false;
+    }
+    if (e.shift) {
+      shift = false;
     }
     notifyListeners();
   }
@@ -38,6 +50,7 @@ class VirtKeyProvider extends TerminalInputHandler with ChangeNotifier {
     final e = event.copyWith(
       ctrl: event.ctrl || ctrl,
       alt: event.alt || alt,
+      shift: event.shift || shift,
     );
     if (Stores.setting.sshVirtualKeyAutoOff.fetch()) {
       reset(e);
