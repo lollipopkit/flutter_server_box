@@ -775,5 +775,5 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get writeScriptTip =>
-      'Після підключення до сервера скрипт буде записано у ~/.config/server_box для моніторингу стану системи. Ви можете переглянути вміст скрипта.';
+      'Після підключення до сервера скрипт буде записано у `~/.config/server_box` \n | `/tmp/server_box` для моніторингу стану системи. Ви можете переглянути вміст скрипта.';
 }

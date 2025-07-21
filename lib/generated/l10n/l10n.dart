@@ -1505,7 +1505,7 @@ abstract class AppLocalizations {
   /// No description provided for @writeScriptTip.
   ///
   /// In en, this message translates to:
-  /// **'After connecting to the server, a script will be written to ~/.config/server_box to monitor the system status. You can review the script content.'**
+  /// **'After connecting to the server, a script will be written to `~/.config/server_box` \n | `/tmp/server_box` to monitor the system status. You can review the script content.'**
   String get writeScriptTip;
 }
 

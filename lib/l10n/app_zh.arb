@@ -230,5 +230,5 @@
   "wolTip": "在配置 WOL 后，每次连接服务器都会先发送一次 WOL 请求",
   "write": "写",
   "writeScriptFailTip": "写入脚本失败，可能是没有权限/目录不存在等",
-  "writeScriptTip": "在连接服务器后，会向 ~/.config/server_box 写入脚本来监测系统状态，你可以审查脚本内容。"
+  "writeScriptTip": "在连接服务器后，会向 `~/.config/server_box` \n | `/tmp/server_box` 写入脚本来监测系统状态，你可以审查脚本内容。"
 }
