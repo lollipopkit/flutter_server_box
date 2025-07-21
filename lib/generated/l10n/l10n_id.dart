@@ -768,5 +768,5 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get writeScriptTip =>
-      'Setelah terhubung ke server, sebuah skrip akan ditulis ke ~/.config/server_box untuk memantau status sistem. Anda dapat meninjau konten skrip tersebut.';
+      'Setelah terhubung ke server, sebuah skrip akan ditulis ke `~/.config/server_box` \n | `/tmp/server_box` untuk memantau status sistem. Anda dapat meninjau konten skrip tersebut.';
 }

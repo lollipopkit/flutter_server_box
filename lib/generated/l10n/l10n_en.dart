@@ -769,5 +769,5 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get writeScriptTip =>
-      'After connecting to the server, a script will be written to ~/.config/server_box to monitor the system status. You can review the script content.';
+      'After connecting to the server, a script will be written to `~/.config/server_box` \n | `/tmp/server_box` to monitor the system status. You can review the script content.';
 }

@@ -769,5 +769,5 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get writeScriptTip =>
-      'Sunucuya bağlandıktan sonra, sistem durumunu izlemek için ~/.config/server_box dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz.';
+      'Sunucuya bağlandıktan sonra, sistem durumunu izlemek için `~/.config/server_box` \n | `/tmp/server_box` dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz.';
 }

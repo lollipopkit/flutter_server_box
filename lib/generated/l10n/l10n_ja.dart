@@ -748,5 +748,5 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get writeScriptTip =>
-      'サーバーに接続すると、システムの状態を監視するためのスクリプトが ~/.config/server_box に書き込まれます。スクリプトの内容を確認できます。';
+      'サーバーに接続すると、システムの状態を監視するためのスクリプトが `~/.config/server_box` \n | `/tmp/server_box` に書き込まれます。スクリプトの内容を確認できます。';
 }
