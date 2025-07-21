@@ -164,8 +164,4 @@ extension _VirtKey on SSHPageState {
       }
     }
   }
-
-  FutureOr<List<String>?> _onKeyboardInteractive(SSHUserInfoRequest req) {
-    return KeybordInteractive.defaultHandle(widget.args.spi, ctx: context);
-  }
 }

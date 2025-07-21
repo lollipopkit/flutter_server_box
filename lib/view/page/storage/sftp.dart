@@ -537,7 +537,7 @@ extension _Actions on _SftpPageState {
 
   /// Local file dir + server id + remote path
   String _getLocalPath(String remotePath) {
-    return Paths.file.joinPath(widget.args.spi.id).joinPath(remotePath);
+    return Paths.file.joinPath(widget.args.spi.oldId).joinPath(remotePath);
   }
 
   /// Only return true if the path is changed

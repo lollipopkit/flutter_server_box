@@ -73,11 +73,24 @@ class _LocalFilePageState extends State<LocalFilePage> with AutomaticKeepAliveCl
               },
               icon: const Icon(Icons.add),
             ),
+          if (!isMobile)
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: MaterialLocalizations.of(context).refreshIndicatorSemanticLabel,
+              onPressed: () => setState(() {}),
+            ),
           if (!isPickFile) _buildMissionBtn(),
           _buildSortBtn(),
         ],
       ),
-      body: _sortType.listen(_buildBody),
+      body: isMobile
+          ? RefreshIndicator(
+              onRefresh: () async {
+                setState(() {});
+              },
+              child: _sortType.listen(_buildBody),
+            )
+          : _sortType.listen(_buildBody),
     );
   }
 

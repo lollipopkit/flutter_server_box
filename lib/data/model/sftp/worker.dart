@@ -99,16 +99,21 @@ Future<void> _download(
     mainSendPort.send(size);
     mainSendPort.send(SftpWorkerStatus.loading);
 
-    // Read 2m each time
     // Issue #161
-    // The download speed is about 2m/s may due to single core performance
-    const defaultChunkSize = 1024 * 1024 * 2;
-    final chunkSize = size > defaultChunkSize ? defaultChunkSize : size;
-    for (var i = 0; i < size; i += chunkSize) {
-      final fileData = file.read(length: chunkSize);
-      await for (var form in fileData) {
-        localFile.add(form);
-        mainSendPort.send((i + form.length) / size * 100);
+    // Due to single core performance, limit the chunk size
+    const defaultChunkSize = 1024 * 1024 * 5;
+    var totalRead = 0;
+    
+    while (totalRead < size) {
+      final remaining = size - totalRead;
+      final chunkSize = remaining > defaultChunkSize ? defaultChunkSize : remaining;
+      dprint('Size: $size, Total Read: $totalRead, Chunk Size: $chunkSize');
+      
+      final fileData = file.read(offset: totalRead, length: chunkSize);
+      await for (var chunk in fileData) {
+        localFile.add(chunk);
+        totalRead += chunk.length;
+        mainSendPort.send(totalRead / size * 100);
       }
     }
 

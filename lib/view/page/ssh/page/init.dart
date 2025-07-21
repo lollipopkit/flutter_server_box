@@ -4,10 +4,7 @@ extension _Init on SSHPageState {
   void _initStoredCfg() {
     final fontFamilly = Stores.setting.fontPath.fetch().getFileName();
     final textSize = Stores.setting.termFontSize.fetch();
-    final textStyle = TextStyle(
-      fontFamily: fontFamilly,
-      fontSize: textSize,
-    );
+    final textStyle = TextStyle(fontFamily: fontFamilly, fontSize: textSize);
 
     _terminalStyle = TerminalStyle.fromTextStyle(textStyle);
   }
@@ -37,15 +34,12 @@ extension _Init on SSHPageState {
       onStatus: (p0) {
         _writeLn(p0.toString());
       },
-      onKeyboardInteractive: _onKeyboardInteractive,
+      onKeyboardInteractive: (_) => KeybordInteractive.defaultHandle(widget.args.spi, ctx: context),
     );
 
     _writeLn('${libL10n.execute}: Shell');
     final session = await _client?.shell(
-      pty: SSHPtyConfig(
-        width: _terminal.viewWidth,
-        height: _terminal.viewHeight,
-      ),
+      pty: SSHPtyConfig(width: _terminal.viewWidth, height: _terminal.viewHeight),
       environment: widget.args.spi.envs,
     );
 
@@ -98,30 +92,30 @@ extension _Init on SSHPageState {
       return;
     }
 
-    stream.cast<List<int>>().transform(const Utf8Decoder()).listen(
-      _terminal.write,
-      onError: (Object error, StackTrace stack) {
-        // _terminal.write('Stream error: $error\n');
-        Loggers.root.warning('Error in SSH stream', error, stack);
-      },
-      cancelOnError: false,
-    );
+    stream
+        .cast<List<int>>()
+        .transform(const Utf8Decoder())
+        .listen(
+          _terminal.write,
+          onError: (Object error, StackTrace stack) {
+            // _terminal.write('Stream error: $error\n');
+            Loggers.root.warning('Error in SSH stream', error, stack);
+          },
+          cancelOnError: false,
+        );
   }
 
   void _setupDiscontinuityTimer() {
-    _discontinuityTimer = Timer.periodic(
-      const Duration(seconds: 5),
-      (_) async {
-        var throwTimeout = true;
-        Future.delayed(const Duration(seconds: 3), () {
-          if (throwTimeout) {
-            _catchTimeout();
-          }
-        });
-        await _client?.ping();
-        throwTimeout = false;
-      },
-    );
+    _discontinuityTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
+      var throwTimeout = true;
+      Future.delayed(const Duration(seconds: 3), () {
+        if (throwTimeout) {
+          _catchTimeout();
+        }
+      });
+      await _client?.ping();
+      throwTimeout = false;
+    });
   }
 
   void _catchTimeout() {
