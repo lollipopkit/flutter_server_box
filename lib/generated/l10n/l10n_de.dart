@@ -47,11 +47,33 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get backupTip =>
-      'Das Backup wird nur einfach verschlüsselt.\nBitte bewahre die Datei sicher auf.';
+      'Die exportierten Daten können mit einem Passwort verschlüsselt werden. \nBitte sicher aufbewahren.';
 
   @override
   String get backupVersionNotMatch =>
       'Die Backup-Version stimmt nicht überein.';
+
+  @override
+  String get backupPassword => 'Backup-Passwort';
+
+  @override
+  String get backupPasswordTip =>
+      'Setzen Sie ein Passwort, um Backup-Dateien zu verschlüsseln. Leer lassen, um Verschlüsselung zu deaktivieren.';
+
+  @override
+  String get backupPasswordWrong => 'Falsches Backup-Passwort';
+
+  @override
+  String get backupEncrypted => 'Backup ist verschlüsselt';
+
+  @override
+  String get backupNotEncrypted => 'Backup ist nicht verschlüsselt';
+
+  @override
+  String get backupPasswordSet => 'Backup-Passwort gesetzt';
+
+  @override
+  String get backupPasswordRemoved => 'Backup-Passwort entfernt';
 
   @override
   String get battery => 'Batterie';
@@ -469,9 +491,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get pveVersionLow =>
       'Diese Funktion befindet sich derzeit in der Testphase und wurde nur auf PVE 8+ getestet. Bitte verwenden Sie sie mit Vorsicht.';
-
-  @override
-  String get pwd => 'Passwort';
 
   @override
   String get read => 'Lesen';

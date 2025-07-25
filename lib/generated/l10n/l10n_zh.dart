@@ -42,10 +42,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get autoUpdateHomeWidget => '自动更新桌面小部件';
 
   @override
-  String get backupTip => '导出的数据仅进行了简单加密，请妥善保管。';
+  String get backupTip => '导出的数据可以使用密码加密，请妥善保管。';
 
   @override
   String get backupVersionNotMatch => '备份版本不匹配，无法恢复';
+
+  @override
+  String get backupPassword => '备份密码';
+
+  @override
+  String get backupPasswordTip => '设置密码以加密备份文件。留空则禁用加密。';
+
+  @override
+  String get backupPasswordWrong => '备份密码错误';
+
+  @override
+  String get backupEncrypted => '备份已加密';
+
+  @override
+  String get backupNotEncrypted => '备份未加密';
+
+  @override
+  String get backupPasswordSet => '备份密码已设置';
+
+  @override
+  String get backupPasswordRemoved => '备份密码已移除';
 
   @override
   String get battery => '电池';
@@ -447,9 +468,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pveVersionLow => '当前该功能处于测试阶段，仅在 PVE 8+ 上测试过，请谨慎使用';
 
   @override
-  String get pwd => '密码';
-
-  @override
   String get read => '读';
 
   @override
@@ -776,10 +794,31 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get autoUpdateHomeWidget => '自動更新桌面小工具';
 
   @override
-  String get backupTip => '匯出的資料僅進行了簡單加密，請妥善保管。';
+  String get backupTip => '匯出的資料可以使用密碼加密。 \n請妥善保管。';
 
   @override
   String get backupVersionNotMatch => '備份版本不相符，無法還原';
+
+  @override
+  String get backupPassword => '備份密碼';
+
+  @override
+  String get backupPasswordTip => '設定密碼來加密備份檔案。留空則停用加密。';
+
+  @override
+  String get backupPasswordWrong => '備份密碼錯誤';
+
+  @override
+  String get backupEncrypted => '備份已加密';
+
+  @override
+  String get backupNotEncrypted => '備份未加密';
+
+  @override
+  String get backupPasswordSet => '備份密碼已設定';
+
+  @override
+  String get backupPasswordRemoved => '備份密碼已移除';
 
   @override
   String get battery => '電池';
@@ -1179,9 +1218,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get pveVersionLow => '此功能目前處於測試階段，僅在 PVE 8+ 上進行過測試。請謹慎使用。';
-
-  @override
-  String get pwd => '密碼';
 
   @override
   String get read => '讀取';

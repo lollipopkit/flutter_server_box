@@ -47,11 +47,33 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get backupTip =>
-      'Os dados exportados são criptografados de forma simples, por favor, guarde-os com segurança.';
+      'Os dados exportados podem ser criptografados com senha. \nPor favor, guarde-os com segurança.';
 
   @override
   String get backupVersionNotMatch =>
       'Versão de backup não compatível, não é possível restaurar';
+
+  @override
+  String get backupPassword => 'Senha de backup';
+
+  @override
+  String get backupPasswordTip =>
+      'Defina uma senha para criptografar arquivos de backup. Deixe vazio para desabilitar a criptografia.';
+
+  @override
+  String get backupPasswordWrong => 'Senha de backup incorreta';
+
+  @override
+  String get backupEncrypted => 'Backup está criptografado';
+
+  @override
+  String get backupNotEncrypted => 'Backup não está criptografado';
+
+  @override
+  String get backupPasswordSet => 'Senha de backup definida';
+
+  @override
+  String get backupPasswordRemoved => 'Senha de backup removida';
 
   @override
   String get battery => 'Bateria';
@@ -468,9 +490,6 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get pveVersionLow =>
       'Esta funcionalidade está atualmente em fase de teste e foi testada apenas no PVE 8+. Por favor, use com cautela.';
-
-  @override
-  String get pwd => 'Senha';
 
   @override
   String get read => 'Leitura';

@@ -43,10 +43,32 @@ class AppLocalizationsJa extends AppLocalizations {
   String get autoUpdateHomeWidget => 'ホームウィジェットを自動更新';
 
   @override
-  String get backupTip => 'エクスポートされたデータは簡単に暗号化されています。適切に保管してください。';
+  String get backupTip => 'エクスポートされたデータはパスワードで暗号化できます。 \n適切に保管してください。';
 
   @override
   String get backupVersionNotMatch => 'バックアップバージョンが一致しないため、復元できません';
+
+  @override
+  String get backupPassword => 'バックアップパスワード';
+
+  @override
+  String get backupPasswordTip =>
+      'バックアップファイルを暗号化するためのパスワードを設定してください。暗号化を無効にするには空白のままにしてください。';
+
+  @override
+  String get backupPasswordWrong => 'バックアップパスワードが間違っています';
+
+  @override
+  String get backupEncrypted => 'バックアップは暗号化されています';
+
+  @override
+  String get backupNotEncrypted => 'バックアップは暗号化されていません';
+
+  @override
+  String get backupPasswordSet => 'バックアップパスワードが設定されました';
+
+  @override
+  String get backupPasswordRemoved => 'バックアップパスワードが削除されました';
 
   @override
   String get battery => 'バッテリー';
@@ -452,9 +474,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get pveVersionLow => 'この機能は現在テスト段階にあり、PVE 8+でのみテストされています。ご利用の際は慎重に。';
-
-  @override
-  String get pwd => 'パスワード';
 
   @override
   String get read => '読み取り';

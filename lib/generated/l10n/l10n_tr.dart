@@ -46,10 +46,32 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get backupTip =>
-      'Dışa aktarılan veriler zayıf bir şekilde şifrelenmiştir. \nLütfen güvenli bir şekilde saklayın.';
+      'Dışa aktarılan veriler parola ile şifrelenebilir. \nLütfen güvenli bir şekilde saklayın.';
 
   @override
   String get backupVersionNotMatch => 'Yedekleme sürümü eşleşmiyor.';
+
+  @override
+  String get backupPassword => 'Yedekleme parolası';
+
+  @override
+  String get backupPasswordTip =>
+      'Yedekleme dosyalarını şifrelemek için bir parola belirleyin. Şifrelemeyi devre dışı bırakmak için boş bırakın.';
+
+  @override
+  String get backupPasswordWrong => 'Yanlış yedekleme parolası';
+
+  @override
+  String get backupEncrypted => 'Yedekleme şifrelenmiş';
+
+  @override
+  String get backupNotEncrypted => 'Yedekleme şifreli değil';
+
+  @override
+  String get backupPasswordSet => 'Yedekleme parolası ayarlandı';
+
+  @override
+  String get backupPasswordRemoved => 'Yedekleme parolası kaldırıldı';
 
   @override
   String get battery => 'Pil';
@@ -466,9 +488,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get pveVersionLow =>
       'Bu özellik şu anda test aşamasında ve yalnızca PVE 8+ üzerinde test edildi. Lütfen dikkatli kullanın.';
-
-  @override
-  String get pwd => 'Şifre';
 
   @override
   String get read => 'Oku';
