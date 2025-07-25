@@ -270,4 +270,7 @@ class SettingStore extends HiveStore {
 
   /// Have notified user for notificaiton permission or not
   late final noNotiPerm = propertyDefault('noNotiPerm', false);
+
+  /// The backup password
+  late final backupasswd = SecureProp('bakPasswd');
 }

@@ -47,10 +47,32 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get backupTip =>
-      'Data yang diekspor hanya dienkripsi.\nTolong jaga keamanannya.';
+      'Data yang diekspor dapat dienkripsi dengan kata sandi. \nHarap jaga keamanannya.';
 
   @override
   String get backupVersionNotMatch => 'Versi cadangan tidak cocok.';
+
+  @override
+  String get backupPassword => 'Kata sandi cadangan';
+
+  @override
+  String get backupPasswordTip =>
+      'Setel kata sandi untuk mengenkripsi file cadangan. Biarkan kosong untuk menonaktifkan enkripsi.';
+
+  @override
+  String get backupPasswordWrong => 'Kata sandi cadangan salah';
+
+  @override
+  String get backupEncrypted => 'Cadangan telah dienkripsi';
+
+  @override
+  String get backupNotEncrypted => 'Cadangan tidak dienkripsi';
+
+  @override
+  String get backupPasswordSet => 'Kata sandi cadangan ditetapkan';
+
+  @override
+  String get backupPasswordRemoved => 'Kata sandi cadangan dihapus';
 
   @override
   String get battery => 'Baterai';
@@ -467,9 +489,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get pveVersionLow =>
       'Fitur ini saat ini sedang dalam tahap pengujian dan hanya diuji pada PVE 8+. Gunakan dengan hati-hati.';
-
-  @override
-  String get pwd => 'Kata sandi';
 
   @override
   String get read => 'Baca';

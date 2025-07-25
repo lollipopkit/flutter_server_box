@@ -190,7 +190,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
           type: TextInputType.text,
           node: _pwdNode,
           obscureText: true,
-          label: l10n.pwd,
+          label: libL10n.pwd,
           icon: Icons.password,
           suggestion: false,
           onSubmitted: (_) => _onTapSave(),

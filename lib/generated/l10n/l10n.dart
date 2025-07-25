@@ -188,7 +188,7 @@ abstract class AppLocalizations {
   /// No description provided for @backupTip.
   ///
   /// In en, this message translates to:
-  /// **'The exported data is weakly encrypted. \nPlease keep it safe.'**
+  /// **'The exported data can be encrypted with password. \nPlease keep it safe.'**
   String get backupTip;
 
   /// No description provided for @backupVersionNotMatch.
@@ -196,6 +196,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Backup version is not match.'**
   String get backupVersionNotMatch;
+
+  /// No description provided for @backupPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup password'**
+  String get backupPassword;
+
+  /// No description provided for @backupPasswordTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a password to encrypt backup files. Leave empty to disable encryption.'**
+  String get backupPasswordTip;
+
+  /// No description provided for @backupPasswordWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Incorrect backup password'**
+  String get backupPasswordWrong;
+
+  /// No description provided for @backupEncrypted.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup is encrypted'**
+  String get backupEncrypted;
+
+  /// No description provided for @backupNotEncrypted.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup is not encrypted'**
+  String get backupNotEncrypted;
+
+  /// No description provided for @backupPasswordSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup password set'**
+  String get backupPasswordSet;
+
+  /// No description provided for @backupPasswordRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup password removed'**
+  String get backupPasswordRemoved;
 
   /// No description provided for @battery.
   ///
@@ -943,12 +985,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This feature is currently in the testing phase and has only been tested on PVE 8+. Please use it with caution.'**
   String get pveVersionLow;
-
-  /// No description provided for @pwd.
-  ///
-  /// In en, this message translates to:
-  /// **'Password'**
-  String get pwd;
 
   /// No description provided for @read.
   ///

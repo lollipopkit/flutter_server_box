@@ -74,15 +74,27 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     );
   }
 
-  static Future<String> backup([String? name]) async {
+  static Future<String> backup([String? name, String? password]) async {
     final bak = await BackupV2.loadFromStore();
-    final result = json.encode(bak.toJson());
+    var result = json.encode(bak.toJson());
+
+    if (password != null && password.isNotEmpty) {
+      result = Cryptor.encrypt(result, password);
+    }
+    
     final path = Paths.doc.joinPath(name ?? Miscs.bakFileName);
     await File(path).writeAsString(result);
     return path;
   }
 
-  factory BackupV2.fromJsonString(String jsonString) {
+  factory BackupV2.fromJsonString(String jsonString, [String? password]) {
+    if (Cryptor.isEncrypted(jsonString)) {
+      if (password == null || password.isEmpty) {
+        throw Exception('Backup is encrypted but no password provided');
+      }
+      jsonString = Cryptor.decrypt(jsonString, password);
+    }
+    
     final map = json.decode(jsonString) as Map<String, dynamic>;
     return BackupV2.fromJson(map);
   }

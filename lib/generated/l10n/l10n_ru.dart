@@ -47,11 +47,33 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get backupTip =>
-      'Экспортированные данные зашифрованы простым способом \nПожалуйста, храните их в безопасности.';
+      'Экспортированные данные могут быть зашифрованы паролем. \nПожалуйста, храните их в безопасности.';
 
   @override
   String get backupVersionNotMatch =>
       'Версия резервной копии не совпадает, восстановление невозможно';
+
+  @override
+  String get backupPassword => 'Пароль резервной копии';
+
+  @override
+  String get backupPasswordTip =>
+      'Установите пароль для шифрования файлов резервных копий. Оставьте пустым, чтобы отключить шифрование.';
+
+  @override
+  String get backupPasswordWrong => 'Неверный пароль резервной копии';
+
+  @override
+  String get backupEncrypted => 'Резервная копия зашифрована';
+
+  @override
+  String get backupNotEncrypted => 'Резервная копия не зашифрована';
+
+  @override
+  String get backupPasswordSet => 'Пароль резервной копии установлен';
+
+  @override
+  String get backupPasswordRemoved => 'Пароль резервной копии удален';
 
   @override
   String get battery => 'Батарея';
@@ -469,9 +491,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get pveVersionLow =>
       'Эта функция в настоящее время находится на стадии тестирования и была протестирована только на PVE 8+. Используйте ее с осторожностью.';
-
-  @override
-  String get pwd => 'Пароль';
 
   @override
   String get read => 'Чтение';
