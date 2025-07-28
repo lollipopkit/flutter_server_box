@@ -513,7 +513,6 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
   }
 
   Widget _buildAmdGpuProcessItem(AmdSmiMemProcess process) {
-    final memUnit = process.memory > 1024 ? 'MB' : 'KB';
     return ListTile(
       title: Text(
         process.name,
@@ -523,7 +522,7 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
         textScaler: _textFactor,
       ),
       subtitle: Text(
-        'PID: ${process.pid} - ${process.memory} $memUnit',
+        'PID: ${process.pid} - ${process.memory} MiB',
         style: UIs.text12Grey,
         textScaler: _textFactor,
       ),
