@@ -3,6 +3,6 @@
 
 abstract class BuildData {
   static const String name = "ServerBox";
-  static const int build = 1195;
-  static const int script = 64;
+  static const int build = 1201;
+  static const int script = 65;
 }
