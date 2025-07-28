@@ -8,6 +8,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
+import 'package:server_box/data/model/server/amd.dart';
 import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
@@ -410,9 +411,23 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
 
   Widget? _buildGpuView(Server si) {
     final ss = si.status;
-    if (ss.nvidia == null || ss.nvidia?.isEmpty == true) return null;
+    final hasNvidia = ss.nvidia != null && ss.nvidia!.isNotEmpty;
+    final hasAmd = ss.amd != null && ss.amd!.isNotEmpty;
 
-    final children = ss.nvidia?.map((e) => _buildGpuItem(e)).toList() ?? [];
+    if (!hasNvidia && !hasAmd) return null;
+
+    final children = <Widget>[];
+
+    // Add NVIDIA GPUs
+    if (hasNvidia) {
+      children.addAll(ss.nvidia!.map((e) => _buildNvidiaGpuItem(e)));
+    }
+
+    // Add AMD GPUs
+    if (hasAmd) {
+      children.addAll(ss.amd!.map((e) => _buildAmdGpuItem(e)));
+    }
+
     return ExpandTile(
       title: const Text('GPU'),
       leading: const Icon(Icons.memory, size: 17),
@@ -421,7 +436,7 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
     ).cardx;
   }
 
-  Widget _buildGpuItem(NvidiaSmiItem item) {
+  Widget _buildNvidiaGpuItem(NvidiaSmiItem item) {
     final mem = item.memory;
     return ListTile(
       title: Text(item.name, style: UIs.text13),
@@ -441,7 +456,36 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
         mainAxisAlignment: MainAxisAlignment.end,
         mainAxisSize: MainAxisSize.min,
         children: [
-          IconButton(onPressed: () => _onTapGpuItem(item), icon: const Icon(Icons.info_outline, size: 17)),
+          IconButton(
+            onPressed: () => _onTapNvidiaGpuItem(item),
+            icon: const Icon(Icons.info_outline, size: 17),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAmdGpuItem(AmdSmiItem item) {
+    final mem = item.memory;
+    return ListTile(
+      title: Text('${item.name} (AMD)', style: UIs.text13),
+      leading: Text(
+        '${item.utilization}%\n${item.temp} °C',
+        style: UIs.text12Grey,
+        textScaler: _textFactor,
+        textAlign: TextAlign.center,
+      ),
+      subtitle: Text(
+        '${item.power} - FAN ${item.fanSpeed} RPM\n${item.clockSpeed} MHz\n${mem.used} / ${mem.total} ${mem.unit}',
+        style: UIs.text12Grey,
+        textScaler: _textFactor,
+      ),
+      contentPadding: const EdgeInsets.only(left: 17, right: 17),
+      trailing: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(onPressed: () => _onTapAmdGpuItem(item), icon: const Icon(Icons.info_outline, size: 17)),
         ],
       ),
     );
@@ -463,6 +507,27 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
       ),
       trailing: InkWell(
         onTap: () => _onTapGpuProcessItem(process),
+        child: const Icon(Icons.info_outline, size: 17),
+      ),
+    );
+  }
+
+  Widget _buildAmdGpuProcessItem(AmdSmiMemProcess process) {
+    return ListTile(
+      title: Text(
+        process.name,
+        style: UIs.text12,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textScaler: _textFactor,
+      ),
+      subtitle: Text(
+        'PID: ${process.pid} - ${process.memory} MiB',
+        style: UIs.text12Grey,
+        textScaler: _textFactor,
+      ),
+      trailing: InkWell(
+        onTap: () => _onTapAmdGpuProcessItem(process),
         child: const Icon(Icons.info_outline, size: 17),
       ),
     );
@@ -646,7 +711,9 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
 
     if (smart.model != null) details.add('Model: ${smart.model}');
     if (smart.serial != null) details.add('Serial: ${smart.serial}');
-    if (smart.temperature != null) details.add('Temperature: ${smart.temperature!.toStringAsFixed(1)}°C');
+    if (smart.temperature != null) {
+      details.add('Temperature: ${smart.temperature!.toStringAsFixed(1)}°C');
+    }
 
     if (smart.powerOnHours != null) {
       details.add('Power On: ${smart.powerOnHours} ${libL10n.hour}');

@@ -1,7 +1,7 @@
 part of 'view.dart';
 
 extension on _ServerDetailPageState {
-  void _onTapGpuItem(NvidiaSmiItem item) {
+  void _onTapNvidiaGpuItem(NvidiaSmiItem item) {
     final processes = item.memory.processes;
     final displayCount = processes.length > 5 ? 5 : processes.length;
     final height = displayCount * 47.0;
@@ -19,6 +19,24 @@ extension on _ServerDetailPageState {
     );
   }
 
+  void _onTapAmdGpuItem(AmdSmiItem item) {
+    final processes = item.memory.processes;
+    final displayCount = processes.length > 5 ? 5 : processes.length;
+    final height = displayCount * 47.0;
+    context.showRoundDialog(
+      title: item.name,
+      child: SizedBox(
+        width: double.maxFinite,
+        height: height,
+        child: ListView.builder(
+          itemCount: processes.length,
+          itemBuilder: (_, idx) => _buildAmdGpuProcessItem(processes[idx]),
+        ),
+      ),
+      actions: Btnx.oks,
+    );
+  }
+
   void _onTapGpuProcessItem(NvidiaSmiMemProcess process) {
     context.showRoundDialog(
       title: '${process.pid}',
@@ -29,6 +47,24 @@ extension on _ServerDetailPageState {
         children: [
           UIs.height13,
           Text('Memory: ${process.memory} MiB'),
+          UIs.height13,
+          Text('Process: ${process.name}'),
+        ],
+      ),
+      actions: [TextButton(onPressed: () => context.pop(), child: Text(libL10n.close))],
+    );
+  }
+
+  void _onTapAmdGpuProcessItem(AmdSmiMemProcess process) {
+    context.showRoundDialog(
+      title: '${process.pid}',
+      titleMaxLines: 1,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,  
+        children: [
+          UIs.height13,
+          Text('Memory: ${process.memory} ${process.memory > 1024 ? 'MB' : 'KB'}'),
           UIs.height13,
           Text('Process: ${process.name}'),
         ],

@@ -1,6 +1,7 @@
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
+import 'package:server_box/data/model/server/amd.dart';
 import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/conn.dart';
 import 'package:server_box/data/model/server/cpu.dart';
@@ -42,6 +43,7 @@ class ServerStatus {
   DiskIO diskIO;
   List<DiskSmart> diskSmart;
   List<NvidiaSmiItem>? nvidia;
+  List<AmdSmiItem>? amd;
   final List<Battery> batteries = [];
   final Map<StatusCmdType, String> more = {};
   final List<SensorItem> sensors = [];
