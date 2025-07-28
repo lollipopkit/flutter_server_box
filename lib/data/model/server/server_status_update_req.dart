@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
+import 'package:server_box/data/model/server/amd.dart';
 import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/conn.dart';
 import 'package:server_box/data/model/server/cpu.dart';
@@ -139,6 +140,12 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
 
   try {
     req.ss.nvidia = NvidiaSmi.fromXml(StatusCmdType.nvidia.find(segments));
+  } catch (e, s) {
+    Loggers.app.warning(e, s);
+  }
+
+  try {
+    req.ss.amd = AmdSmi.fromJson(StatusCmdType.amd.find(segments));
   } catch (e, s) {
     Loggers.app.warning(e, s);
   }

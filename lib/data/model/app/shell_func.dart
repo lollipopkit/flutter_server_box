@@ -16,6 +16,12 @@ enum ShellFunc {
   /// The suffix `\t` is for formatting
   static const cmdDivider = '\necho $seperator\n\t';
 
+  /// Cached Linux status commands string
+  static final _linuxStatusCmds = StatusCmdType.values.map((e) => e.cmd).join(cmdDivider);
+
+  /// Cached BSD status commands string
+  static final _bsdStatusCmds = BSDStatusCmdType.values.map((e) => e.cmd).join(cmdDivider);
+
   /// srvboxm -> ServerBox Mobile
   static const scriptFile = 'srvboxm_v${BuildData.script}.sh';
   static const scriptDirHome = '~/.config/server_box';
@@ -28,13 +34,10 @@ enum ShellFunc {
   /// Default is [scriptDirTmp]/[scriptFile], if this path is not accessible,
   /// it will be changed to [scriptDirHome]/[scriptFile].
   static String getScriptDir(String id) {
-    final customScriptDir = ServerProvider.pick(
-      id: id,
-    )?.value.spi.custom?.scriptDir;
+    final customScriptDir = ServerProvider.pick(id: id)?.value.spi.custom?.scriptDir;
     if (customScriptDir != null) return customScriptDir;
-    return _scriptDirMap.putIfAbsent(id, () {
-      return scriptDirTmp;
-    });
+    _scriptDirMap[id] ??= scriptDirTmp;
+    return _scriptDirMap[id]!;
   }
 
   static void switchScriptDir(String id) => switch (_scriptDirMap[id]) {
@@ -68,43 +71,24 @@ chmod 755 $scriptPath
 
   String exec(String id) => 'sh ${getScriptPath(id)} -$flag';
 
-  String get name {
-    switch (this) {
-      case ShellFunc.status:
-        return 'status';
-      // case ShellFunc.docker:
-      //   // `dockeR` -> avoid conflict with `docker` command
-      //   return 'dockeR';
-      case ShellFunc.process:
-        return 'process';
-      case ShellFunc.shutdown:
-        return 'ShutDown';
-      case ShellFunc.reboot:
-        return 'Reboot';
-      case ShellFunc.suspend:
-        return 'Suspend';
-    }
-  }
+  String get name => switch (this) {
+    ShellFunc.status => 'status',
+    ShellFunc.process => 'process',
+    ShellFunc.shutdown => 'ShutDown',
+    ShellFunc.reboot => 'Reboot',
+    ShellFunc.suspend => 'Suspend',
+  };
 
-  String get _cmd {
-    switch (this) {
-      case ShellFunc.status:
-        return '''
+  String get _cmd => switch (this) {
+    ShellFunc.status =>
+      '''
 if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
-\t${StatusCmdType.values.map((e) => e.cmd).join(cmdDivider)}
+\t$_linuxStatusCmds
 else
-\t${BSDStatusCmdType.values.map((e) => e.cmd).join(cmdDivider)}
-fi''';
-      //       case ShellFunc.docker:
-      //         return '''
-      // result=\$(docker version 2>&1 | grep "permission denied")
-      // if [ "\$result" != "" ]; then
-      // \t${_dockerCmds.join(_cmdDivider)}
-      // else
-      // \t${_dockerCmds.map((e) => "sudo -S $e").join(_cmdDivider)}
-      // fi''';
-      case ShellFunc.process:
-        return '''
+\t$_bsdStatusCmds
+fi''',
+    ShellFunc.process =>
+      '''
 if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 \tif [ "\$isBusybox" != "" ]; then
 \t\tps w
@@ -114,30 +98,29 @@ if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 else
 \tps -ax
 fi
-''';
-      case ShellFunc.shutdown:
-        return '''
+''',
+    ShellFunc.shutdown =>
+      '''
 if [ "\$userId" = "0" ]; then
 \tshutdown -h now
 else
 \tsudo -S shutdown -h now
-fi''';
-      case ShellFunc.reboot:
-        return '''
+fi''',
+    ShellFunc.reboot =>
+      '''
 if [ "\$userId" = "0" ]; then
 \treboot
 else
 \tsudo -S reboot
-fi''';
-      case ShellFunc.suspend:
-        return '''
+fi''',
+    ShellFunc.suspend =>
+      '''
 if [ "\$userId" = "0" ]; then
 \tsystemctl suspend
 else
 \tsudo -S systemctl suspend
-fi''';
-    }
-  }
+fi''',
+  };
 
   static String allScript(Map<String, String>? customCmds) {
     final sb = StringBuffer();
@@ -163,9 +146,7 @@ exec 2>/dev/null
     // Write each func
     for (final func in values) {
       final customCmdsStr = () {
-        if (func == ShellFunc.status &&
-            customCmds != null &&
-            customCmds.isNotEmpty) {
+        if (func == ShellFunc.status && customCmds != null && customCmds.isNotEmpty) {
           return '$cmdDivider\n\t${customCmds.values.join(cmdDivider)}';
         }
         return '';
@@ -212,18 +193,15 @@ enum StatusCmdType {
   cpu._('cat /proc/stat | grep cpu'),
   uptime._('uptime'),
   conn._('cat /proc/net/snmp'),
-  disk._(
-    'lsblk --bytes --json --output FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID',
-  ),
+  disk._('lsblk --bytes --json --output FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID'),
   mem._("cat /proc/meminfo | grep -E 'Mem|Swap'"),
   tempType._('cat /sys/class/thermal/thermal_zone*/type'),
   tempVal._('cat /sys/class/thermal/thermal_zone*/temp'),
   host._('cat /etc/hostname'),
   diskio._('cat /proc/diskstats'),
-  battery._(
-    'for f in /sys/class/power_supply/*/uevent; do cat "\$f"; echo; done',
-  ),
+  battery._('for f in /sys/class/power_supply/*/uevent; do cat "\$f"; echo; done'),
   nvidia._('nvidia-smi -q -x'),
+  amd._('if command -v amd-smi >/dev/null 2>&1; then amd-smi list --json && amd-smi metric --json; elif command -v rocm-smi >/dev/null 2>&1; then rocm-smi --json || rocm-smi --showunique --showuse --showtemp --showfan --showclocks --showmemuse --showpower; elif command -v radeontop >/dev/null 2>&1; then timeout 2s radeontop -d - -l 1 | tail -n +2; else echo "No AMD GPU monitoring tools found"; fi'),
   sensors._('sensors'),
   diskSmart._('for d in \$(lsblk -dn -o KNAME); do smartctl -a -j /dev/\$d; echo; done'),
   cpuBrand._('cat /proc/cpuinfo | grep "model name"');
@@ -258,6 +236,8 @@ extension StatusCmdTypeX on StatusCmdType {
     StatusCmdType.host => l10n.host,
     StatusCmdType.uptime => l10n.uptime,
     StatusCmdType.battery => l10n.battery,
+    StatusCmdType.sensors => l10n.sensors,
+    StatusCmdType.disk => l10n.disk,
     final val => val.name,
   };
 }
