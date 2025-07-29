@@ -305,11 +305,29 @@ class ServerProvider extends Provider {
       _setServerState(s, ServerConn.connected);
 
       try {
+        // First, check if custom system type is defined, otherwise detect system type
+        SystemType? detectedSystemType = spi.customSystemType;
+        if (detectedSystemType == null) {
+          try {
+            final systemDetectResult = await sv.client?.run('echo ${SystemType.windowsSign} 2>/dev/null || echo ${SystemType.linuxSign}').string;
+            if (systemDetectResult?.contains(SystemType.windowsSign) == true) {
+              detectedSystemType = SystemType.windows;
+            } else if (systemDetectResult?.contains('Darwin') == true) {
+              detectedSystemType = SystemType.bsd;
+            } else {
+              detectedSystemType = SystemType.linux;
+            }
+          } catch (e) {
+            // Default to Unix if detection fails
+            detectedSystemType = SystemType.linux;
+          }
+        }
+
         final (_, writeScriptResult) = await sv.client!.exec((session) async {
-          final scriptRaw = ShellFunc.allScript(spi.custom?.cmds).uint8List;
+          final scriptRaw = ShellFunc.allScript(spi.custom?.cmds, systemType: detectedSystemType).uint8List;
           session.stdin.add(scriptRaw);
           session.stdin.close();
-        }, entry: ShellFunc.getInstallShellCmd(spi.id));
+        }, entry: ShellFunc.getInstallShellCmd(spi.id, systemType: detectedSystemType));
         if (writeScriptResult.isNotEmpty) {
           ShellFunc.switchScriptDir(spi.id);
           throw writeScriptResult;
@@ -351,7 +369,9 @@ class ServerProvider extends Provider {
     String? raw;
 
     try {
-      raw = await sv.client?.run(ShellFunc.status.exec(spi.id)).string;
+      // Use system type for script execution if we have it from previous status
+      final systemType = sv.status.system;
+      raw = await sv.client?.run(ShellFunc.status.exec(spi.id, systemType: systemType)).string;
       segments = raw?.split(ShellFunc.seperator).map((e) => e.trim()).toList();
       if (raw == null || raw.isEmpty || segments == null || segments.isEmpty) {
         if (Stores.setting.keepStatusWhenErr.fetch()) {

@@ -111,13 +111,14 @@ class SpiAdapter extends TypeAdapter<Spi> {
       wolCfg: fields[11] as WakeOnLanCfg?,
       envs: (fields[12] as Map?)?.cast<String, String>(),
       id: fields[13] == null ? '' : fields[13] as String,
+      customSystemType: fields[14] as SystemType?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Spi obj) {
     writer
-      ..writeByte(14)
+      ..writeByte(15)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -145,7 +146,9 @@ class SpiAdapter extends TypeAdapter<Spi> {
       ..writeByte(12)
       ..write(obj.envs)
       ..writeByte(13)
-      ..write(obj.id);
+      ..write(obj.id)
+      ..writeByte(14)
+      ..write(obj.customSystemType);
   }
 
   @override

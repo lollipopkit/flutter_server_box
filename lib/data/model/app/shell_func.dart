@@ -22,10 +22,16 @@ enum ShellFunc {
   /// Cached BSD status commands string
   static final _bsdStatusCmds = BSDStatusCmdType.values.map((e) => e.cmd).join(cmdDivider);
 
+  /// Cached Windows status commands string
+  static final _windowsStatusCmds = WindowsStatusCmdType.values.map((e) => e.cmd).join(cmdDivider);
+
   /// srvboxm -> ServerBox Mobile
   static const scriptFile = 'srvboxm_v${BuildData.script}.sh';
+  static const scriptFileWindows = 'srvboxm_v${BuildData.script}.ps1';
   static const scriptDirHome = '~/.config/server_box';
   static const scriptDirTmp = '/tmp/server_box';
+  static const scriptDirHomeWindows = '%USERPROFILE%/.config/server_box';
+  static const scriptDirTmpWindows = '%TEMP%/server_box';
 
   static final _scriptDirMap = <String, String>{};
 
@@ -46,18 +52,29 @@ enum ShellFunc {
     _ => _scriptDirMap[id] = scriptDirHome,
   };
 
-  static String getScriptPath(String id) {
-    return '${getScriptDir(id)}/$scriptFile';
+  static String getScriptPath(String id, {SystemType? systemType}) {
+    final dir = getScriptDir(id);
+    final fileName = systemType == SystemType.windows ? scriptFileWindows : scriptFile;
+    return '$dir/$fileName';
   }
 
-  static String getInstallShellCmd(String id) {
+  static String getInstallShellCmd(String id, {SystemType? systemType}) {
     final scriptDir = getScriptDir(id);
-    final scriptPath = '$scriptDir/$scriptFile';
-    return '''
+    final fileName = systemType == SystemType.windows ? scriptFileWindows : scriptFile;
+    final scriptPath = '$scriptDir/$fileName';
+    
+    if (systemType == SystemType.windows) {
+      return '''
+New-Item -ItemType Directory -Force -Path "$scriptDir"
+Set-Content -Path "$scriptPath" -Value \$input
+''';
+    } else {
+      return '''
 mkdir -p $scriptDir
 cat > $scriptPath
 chmod 755 $scriptPath
 ''';
+    }
   }
 
   String get flag => switch (this) {
@@ -69,7 +86,22 @@ chmod 755 $scriptPath
     // ShellFunc.docker=> 'd',
   };
 
-  String exec(String id) => 'sh ${getScriptPath(id)} -$flag';
+  String exec(String id, {SystemType? systemType}) {
+    final scriptPath = getScriptPath(id, systemType: systemType);
+    if (systemType == SystemType.windows) {
+      return 'powershell -ExecutionPolicy Bypass -File "$scriptPath" -$flag';
+    } else {
+      return 'sh $scriptPath -$flag';
+    }
+  }
+
+  /// Legacy exec method that tries to execute both script types
+  /// Used when system type is unknown
+  String execLegacy(String id) {
+    final unixPath = getScriptPath(id, systemType: SystemType.linux);
+    final windowsPath = getScriptPath(id, systemType: SystemType.windows);
+    return 'if [ -f "$windowsPath" ]; then powershell -ExecutionPolicy Bypass -File "$windowsPath" -$flag; else sh $unixPath -$flag; fi';
+  }
 
   String get name => switch (this) {
     ShellFunc.status => 'status',
@@ -79,7 +111,15 @@ chmod 755 $scriptPath
     ShellFunc.suspend => 'Suspend',
   };
 
-  String get _cmd => switch (this) {
+  String get _windowsCmd => switch (this) {
+    ShellFunc.status => _windowsStatusCmds,
+    ShellFunc.process => 'Get-Process | Select-Object ProcessName, Id, CPU, WorkingSet | ConvertTo-Json',
+    ShellFunc.shutdown => 'Stop-Computer -Force',
+    ShellFunc.reboot => 'Restart-Computer -Force',
+    ShellFunc.suspend => 'Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Application]::SetSuspendState(\'Suspend\', \$false, \$false)',
+  };
+
+  String get _unixCmd => switch (this) {
     ShellFunc.status =>
       '''
 if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
@@ -122,7 +162,52 @@ else
 fi''',
   };
 
-  static String allScript(Map<String, String>? customCmds) {
+  /// Generate Windows PowerShell script
+  static String windowsScript(Map<String, String>? customCmds) {
+    final sb = StringBuffer();
+    sb.write('''
+# PowerShell script for ServerBox app v1.0.${BuildData.build}
+# DO NOT delete this file while app is running
+
+\$ErrorActionPreference = "SilentlyContinue"
+
+''');
+    
+    // Write each func
+    for (final func in values) {
+      final customCmdsStr = () {
+        if (func == ShellFunc.status && customCmds != null && customCmds.isNotEmpty) {
+          return '\n${customCmds.values.map((cmd) => '\t$cmd').join('\n')}';
+        }
+        return '';
+      }();
+      
+      sb.write('''
+function ${func.name} {
+    ${func._windowsCmd.split('\n').map((e) => e.isEmpty ? '' : '    $e').join('\n')}$customCmdsStr
+}
+
+''');
+    }
+
+    // Write switch case
+    sb.write('''
+switch (\$args[0]) {
+''');
+    for (final func in values) {
+      sb.write('''
+    "-${func.flag}" { ${func.name} }
+''');
+    }
+    sb.write('''
+    default { Write-Host "Invalid argument \$(\$args[0])" }
+}
+''');
+    return sb.toString();
+  }
+
+  /// Generate Unix shell script  
+  static String unixScript(Map<String, String>? customCmds) {
     final sb = StringBuffer();
     sb.write('''
 #!/bin/sh
@@ -153,7 +238,7 @@ exec 2>/dev/null
       }();
       sb.write('''
 ${func.name}() {
-${func._cmd.split('\n').map((e) => '\t$e').join('\n')}
+${func._unixCmd.split('\n').map((e) => '\t$e').join('\n')}
 $customCmdsStr
 }
 
@@ -175,6 +260,15 @@ $customCmdsStr
     ;;
 esac''');
     return sb.toString();
+  }
+
+  /// Generate script based on system type
+  static String allScript(Map<String, String>? customCmds, {SystemType? systemType}) {
+    if (systemType == SystemType.windows) {
+      return windowsScript(customCmds);
+    } else {
+      return unixScript(customCmds);
+    }
   }
 }
 
@@ -240,4 +334,30 @@ extension StatusCmdTypeX on StatusCmdType {
     StatusCmdType.disk => l10n.disk,
     final val => val.name,
   };
+}
+
+enum WindowsStatusCmdType {
+  echo._('echo ${SystemType.windowsSign}'),
+  time._('powershell -c "[DateTimeOffset]::UtcNow.ToUnixTimeSeconds()"'),
+  net._('powershell -c "Get-NetAdapter | Where-Object {\$_.Status -eq \'Up\'} | ForEach-Object { Get-Counter -Counter \\"\\\\Network Interface(\$(\$_.Name))\\\\Bytes Received/sec\\", \\"\\\\Network Interface(\$(\$_.Name))\\\\Bytes Sent/sec\\" -SampleInterval 1 -MaxSamples 1 -ErrorAction SilentlyContinue } | ConvertTo-Json"'),
+  sys._('powershell -c "(Get-ComputerInfo).OsName"'),
+  cpu._('powershell -c "Get-WmiObject -Class Win32_Processor | Select-Object Name, LoadPercentage | ConvertTo-Json"'),
+  uptime._('powershell -c "(Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime"'),
+  conn._('powershell -c "netstat -an | findstr ESTABLISHED | measure-object -line | select-object -expandproperty count"'),
+  disk._('powershell -c "Get-WmiObject -Class Win32_LogicalDisk | Select-Object DeviceID, Size, FreeSpace, FileSystem | ConvertTo-Json"'),
+  mem._('powershell -c "Get-WmiObject -Class Win32_OperatingSystem | Select-Object TotalVisibleMemorySize, FreePhysicalMemory | ConvertTo-Json"'),
+  tempType._('powershell -c "Get-WmiObject -Namespace root/OpenHardwareMonitor -Class Sensor | Where-Object {\$_.SensorType -eq \'Temperature\'} | Select-Object Name | ConvertTo-Json"'),
+  tempVal._('powershell -c "Get-WmiObject -Namespace root/OpenHardwareMonitor -Class Sensor | Where-Object {\$_.SensorType -eq \'Temperature\'} | Select-Object Value | ConvertTo-Json"'),
+  host._('powershell -c "\$env:COMPUTERNAME"'),
+  diskio._('powershell -c "Get-Counter -Counter \\"\\\\PhysicalDisk(*)\\\\Disk Reads/sec\\", \\"\\\\PhysicalDisk(*)\\\\Disk Writes/sec\\" -SampleInterval 1 -MaxSamples 1 | ConvertTo-Json"'),
+  battery._('powershell -c "Get-WmiObject -Class Win32_Battery | Select-Object EstimatedChargeRemaining, BatteryStatus | ConvertTo-Json"'),
+  nvidia._('powershell -c "if (Get-Command nvidia-smi -ErrorAction SilentlyContinue) { nvidia-smi -q -x } else { echo \'NVIDIA driver not found\' }"'),
+  amd._('powershell -c "if (Get-Command amd-smi -ErrorAction SilentlyContinue) { amd-smi list --json } else { echo \'AMD driver not found\' }"'),
+  sensors._('powershell -c "Get-WmiObject -Namespace root/OpenHardwareMonitor -Class Sensor | ConvertTo-Json"'),
+  diskSmart._('powershell -c "Get-PhysicalDisk | Get-StorageReliabilityCounter | ConvertTo-Json"'),
+  cpuBrand._('powershell -c "(Get-WmiObject -Class Win32_Processor).Name"');
+
+  final String cmd;
+
+  const WindowsStatusCmdType._(this.cmd);
 }

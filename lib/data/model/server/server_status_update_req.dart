@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
 import 'package:server_box/data/model/server/amd.dart';
@@ -12,6 +14,7 @@ import 'package:server_box/data/model/server/nvdia.dart';
 import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/system.dart';
+import 'package:server_box/data/model/server/temp.dart';
 
 class ServerStatusUpdateReq {
   final ServerStatus ss;
@@ -31,6 +34,7 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
   return switch (req.system) {
     SystemType.linux => _getLinuxStatus(req),
     SystemType.bsd => _getBsdStatus(req),
+    SystemType.windows => _getWindowsStatus(req),
   };
 }
 
@@ -258,4 +262,352 @@ String? _parseHostName(String raw) {
   if (raw.isEmpty) return null;
   if (raw.contains(ShellFunc.scriptFile)) return null;
   return raw;
+}
+
+// Windows status parsing implementation
+Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
+  final segments = req.segments;
+
+  // Parse time for potential future use in network/disk I/O monitoring
+  // ignore: unused_local_variable
+  final time =
+      int.tryParse(WindowsStatusCmdType.time.find(segments)) ??
+      DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+  try {
+    // Windows network parsing - JSON format from PowerShell
+    final netRaw = WindowsStatusCmdType.net.find(segments);
+    if (netRaw.isNotEmpty && netRaw != 'null' && !netRaw.contains('error')) {
+      // TODO: Implement full Windows network speed parsing from JSON
+      // For now, create empty network speed to avoid errors
+      final emptyNetParts = <NetSpeedPart>[];
+      req.ss.netSpeed.update(emptyNetParts);
+    }
+  } catch (e, s) {
+    Loggers.app.warning(e, s);
+  }
+
+  try {
+    final sys = WindowsStatusCmdType.sys.find(segments);
+    if (sys.isNotEmpty) {
+      req.ss.more[StatusCmdType.sys] = sys;
+    }
+  } catch (e, s) {
+    Loggers.app.warning(e, s);
+  }
+
+  try {
+    final host = _parseHostName(WindowsStatusCmdType.host.find(segments));
+    if (host != null) {
+      req.ss.more[StatusCmdType.host] = host;
+    }
+  } catch (e, s) {
+    Loggers.app.warning(e, s);
+  }
+
+  try {
+    // Windows CPU parsing - JSON format from PowerShell
+    final cpuRaw = WindowsStatusCmdType.cpu.find(segments);
+    if (cpuRaw.isNotEmpty && cpuRaw != 'null') {
+      final cpus = _parseWindowsCpu(cpuRaw);
+      if (cpus.isNotEmpty) {
+        req.ss.cpu.update(cpus);
+      }
+    }
+    
+    // Windows CPU brand parsing
+    final brandRaw = WindowsStatusCmdType.cpuBrand.find(segments);
+    if (brandRaw.isNotEmpty && brandRaw != 'null') {
+      req.ss.cpu.brand.clear();
+      req.ss.cpu.brand[brandRaw.trim()] = 1;
+    }
+  } catch (e, s) {
+    Loggers.app.warning(e, s);
+  }
+
+  try {
+    // Windows memory parsing - JSON format from PowerShell
+    final memRaw = WindowsStatusCmdType.mem.find(segments);
+    if (memRaw.isNotEmpty && memRaw != 'null') {
+      final memory = _parseWindowsMemory(memRaw);
+      if (memory != null) {
+        req.ss.mem = memory;
+      }
+    }
+  } catch (e, s) {
+    Loggers.app.warning(e, s);
+  }
+
+  try {
+    // Windows disk parsing - JSON format from PowerShell
+    final diskRaw = WindowsStatusCmdType.disk.find(segments);
+    if (diskRaw.isNotEmpty && diskRaw != 'null') {
+      final disks = _parseWindowsDisks(diskRaw);
+      req.ss.disk = disks;
+      req.ss.diskUsage = DiskUsage.parse(disks);
+    }
+  } catch (e, s) {
+    Loggers.app.warning(e, s);
+  }
+
+  try {
+    final uptime = _parseWindowsUpTime(WindowsStatusCmdType.uptime.find(segments));
+    if (uptime != null) {
+      req.ss.more[StatusCmdType.uptime] = uptime;
+    }
+  } catch (e, s) {
+    Loggers.app.warning(e, s);
+  }
+
+  try {
+    // Windows connection count parsing
+    final connStr = WindowsStatusCmdType.conn.find(segments);
+    final connCount = int.tryParse(connStr.trim());
+    if (connCount != null) {
+      req.ss.tcp = Conn(
+        maxConn: 0,
+        active: connCount,
+        passive: 0,
+        fail: 0,
+      );
+    }
+  } catch (e, s) {
+    Loggers.app.warning(e, s);
+  }
+
+  try {
+    // Windows battery parsing - JSON format
+    final batteryRaw = WindowsStatusCmdType.battery.find(segments);
+    if (batteryRaw.isNotEmpty && batteryRaw != 'null') {
+      final batteries = _parseWindowsBatteries(batteryRaw);
+      req.ss.batteries.clear();
+      if (batteries.isNotEmpty) {
+        req.ss.batteries.addAll(batteries);
+      }
+    }
+  } catch (e, s) {
+    Loggers.app.warning(e, s);
+  }
+
+  try {
+    // Windows temperature parsing - JSON format
+    final tempTypeRaw = WindowsStatusCmdType.tempType.find(segments);
+    final tempValRaw = WindowsStatusCmdType.tempVal.find(segments);
+    if (tempTypeRaw.isNotEmpty && tempValRaw.isNotEmpty && 
+        tempTypeRaw != 'null' && tempValRaw != 'null') {
+      _parseWindowsTemperatures(req.ss.temps, tempTypeRaw, tempValRaw);
+    }
+  } catch (e, s) {
+    Loggers.app.warning(e, s);
+  }
+
+  try {
+    // Windows GPU parsing (NVIDIA/AMD)
+    req.ss.nvidia = NvidiaSmi.fromXml(WindowsStatusCmdType.nvidia.find(segments));
+  } catch (e, s) {
+    Loggers.app.warning(e, s);
+  }
+
+  try {
+    req.ss.amd = AmdSmi.fromJson(WindowsStatusCmdType.amd.find(segments));
+  } catch (e, s) {
+    Loggers.app.warning(e, s);
+  }
+
+  try {
+    for (int idx = 0; idx < req.customCmds.length; idx++) {
+      final key = req.customCmds.keys.elementAt(idx);
+      final value = req.segments[idx + req.system.segmentsLen];
+      req.ss.customCmds[key] = value;
+    }
+  } catch (e, s) {
+    Loggers.app.warning(e, s);
+  }
+
+  return req.ss;
+}
+
+String? _parseWindowsUpTime(String raw) {
+  try {
+    // Parse Windows DateTime and calculate uptime
+    final bootTime = DateTime.parse(raw);
+    final now = DateTime.now();
+    final uptime = now.difference(bootTime);
+    
+    final days = uptime.inDays;
+    final hours = uptime.inHours % 24;
+    final minutes = uptime.inMinutes % 60;
+    
+    if (days > 0) {
+      return '$days days, $hours:${minutes.toString().padLeft(2, '0')}';
+    } else {
+      return '$hours:${minutes.toString().padLeft(2, '0')}';
+    }
+  } catch (e) {
+    return null;
+  }
+}
+
+List<SingleCpuCore> _parseWindowsCpu(String raw) {
+  try {
+    final dynamic jsonData = json.decode(raw);
+    final List<SingleCpuCore> cpus = [];
+    
+    if (jsonData is List) {
+      for (int i = 0; i < jsonData.length; i++) {
+        final cpu = jsonData[i];
+        final loadPercentage = cpu['LoadPercentage'] ?? 0;
+        // Windows doesn't provide detailed CPU stats like Linux, so we simulate them
+        final usage = loadPercentage as int;
+        final idle = 100 - usage;
+        
+        cpus.add(SingleCpuCore(
+          'cpu$i',
+          usage, // user
+          0,     // sys (not available)
+          0,     // nice (not available)  
+          idle,  // idle
+          0,     // iowait (not available)
+          0,     // irq (not available)
+          0,     // softirq (not available)
+        ));
+      }
+    } else if (jsonData is Map) {
+      // Single CPU core
+      final loadPercentage = jsonData['LoadPercentage'] ?? 0;
+      final usage = loadPercentage as int;
+      final idle = 100 - usage;
+      
+      cpus.add(SingleCpuCore(
+        'cpu0',
+        usage, // user
+        0,     // sys
+        0,     // nice
+        idle,  // idle
+        0,     // iowait
+        0,     // irq
+        0,     // softirq
+      ));
+    }
+    
+    return cpus;
+  } catch (e) {
+    return [];
+  }
+}
+
+Memory? _parseWindowsMemory(String raw) {
+  try {
+    final dynamic jsonData = json.decode(raw);
+    final data = jsonData is List ? jsonData.first : jsonData;
+    
+    final totalKB = data['TotalVisibleMemorySize'] as int? ?? 0;
+    final freeKB = data['FreePhysicalMemory'] as int? ?? 0;
+    
+    return Memory(
+      total: totalKB,
+      free: freeKB, 
+      avail: freeKB, // Windows doesn't distinguish between free and available
+    );
+  } catch (e) {
+    return null;
+  }
+}
+
+List<Disk> _parseWindowsDisks(String raw) {
+  try {
+    final dynamic jsonData = json.decode(raw);
+    final List<Disk> disks = [];
+    
+    final diskList = jsonData is List ? jsonData : [jsonData];
+    
+    for (final diskData in diskList) {
+      final deviceId = diskData['DeviceID']?.toString() ?? '';
+      final size = BigInt.tryParse(diskData['Size']?.toString() ?? '0') ?? BigInt.zero;
+      final freeSpace = BigInt.tryParse(diskData['FreeSpace']?.toString() ?? '0') ?? BigInt.zero;
+      final fileSystem = diskData['FileSystem']?.toString();
+      
+      if (deviceId.isEmpty || size == BigInt.zero) continue;
+      
+      final sizeKB = size ~/ BigInt.from(1024);
+      final freeKB = freeSpace ~/ BigInt.from(1024);
+      final usedKB = sizeKB - freeKB;
+      final usedPercent = sizeKB > BigInt.zero ? 
+        ((usedKB * BigInt.from(100)) ~/ sizeKB).toInt() : 0;
+      
+      disks.add(Disk(
+        path: deviceId,
+        fsTyp: fileSystem,
+        mount: deviceId,
+        usedPercent: usedPercent,
+        used: usedKB,
+        size: sizeKB,
+        avail: freeKB,
+      ));
+    }
+    
+    return disks;
+  } catch (e) {
+    return [];
+  }
+}
+
+List<Battery> _parseWindowsBatteries(String raw) {
+  try {
+    final dynamic jsonData = json.decode(raw);
+    final List<Battery> batteries = [];
+    
+    final batteryList = jsonData is List ? jsonData : [jsonData];
+    
+    for (final batteryData in batteryList) {
+      final chargeRemaining = batteryData['EstimatedChargeRemaining'] as int? ?? 0;
+      final batteryStatus = batteryData['BatteryStatus'] as int? ?? 0;
+      
+      // Windows battery status: 1=Other, 2=Unknown, 3=Full, 4=Low, 5=Critical, 6=Charging, 7=ChargingAndLow, 8=ChargingAndCritical, 9=Undefined, 10=PartiallyCharged
+      final isCharging = batteryStatus == 6 || batteryStatus == 7 || batteryStatus == 8;
+      
+      batteries.add(Battery(
+        name: 'Battery',
+        percent: chargeRemaining,
+        status: isCharging ? BatteryStatus.charging : BatteryStatus.discharging,
+      ));
+    }
+    
+    return batteries;
+  } catch (e) {
+    return [];
+  }
+}
+
+void _parseWindowsTemperatures(Temperatures temps, String typeRaw, String valRaw) {
+  try {
+    final dynamic typeData = json.decode(typeRaw);
+    final dynamic valData = json.decode(valRaw);
+    
+    final typeList = typeData is List ? typeData : [typeData];
+    final valList = valData is List ? valData : [valData];
+    
+    // Since we can't access _map directly, we'll need to simulate the Linux parse method
+    // by creating fake type and value strings that the existing parse method can handle
+    final typeLines = <String>[];
+    final valueLines = <String>[];
+    
+    for (int i = 0; i < typeList.length && i < valList.length; i++) {
+      final name = typeList[i]['Name']?.toString() ?? 'Unknown';
+      final value = valList[i]['Value'] as double?;
+      
+      if (value != null) {
+        // Convert to the format expected by the existing parse method
+        typeLines.add('/sys/class/thermal/thermal_zone$i/$name');
+        // Convert to millicelsius (multiply by 1000) as expected by Linux parsing
+        valueLines.add((value * 1000).round().toString());
+      }
+    }
+    
+    if (typeLines.isNotEmpty && valueLines.isNotEmpty) {
+      temps.parse(typeLines.join('\n'), valueLines.join('\n'));
+    }
+  } catch (e) {
+    // If JSON parsing fails, ignore temperature data
+  }
 }

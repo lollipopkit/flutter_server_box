@@ -5,6 +5,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/store/server.dart';
@@ -44,6 +45,9 @@ abstract class Spi with _$Spi {
     /// It only applies to SSH terminal.
     Map<String, String>? envs,
     @Default('') @JsonKey(fromJson: Spi.parseId) String id,
+
+    /// Custom system type (unix or windows). If set, skip auto-detection.
+    SystemType? customSystemType,
   }) = _Spi;
 
   factory Spi.fromJson(Map<String, dynamic> json) => _$SpiFromJson(json);

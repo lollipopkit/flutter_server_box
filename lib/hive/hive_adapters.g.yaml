@@ -27,7 +27,7 @@ types:
         index: 4
   Spi:
     typeId: 3
-    nextIndex: 14
+    nextIndex: 15
     fields:
       name:
         index: 0
@@ -57,6 +57,8 @@ types:
         index: 12
       id:
         index: 13
+      customSystemType:
+        index: 14
   VirtKey:
     typeId: 4
     nextIndex: 45
