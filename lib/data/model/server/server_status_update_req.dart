@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:intl/intl.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
 import 'package:server_box/data/model/server/amd.dart';
 import 'package:server_box/data/model/server/battery.dart';
@@ -418,10 +419,11 @@ Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
 
 String? _parseWindowsUpTime(String raw) {
   try {
-    // Parse Windows DateTime and calculate uptime
-    final bootTime = DateTime.parse(raw);
+    final formatter = DateFormat('EEEE, MMMM d, yyyy h:mm:ss a', 'en_US');
+    final dateTime = formatter.tryParseLoose(raw.trim().split('\n').firstOrNull ?? '');
+    if (dateTime == null) return null;
     final now = DateTime.now();
-    final uptime = now.difference(bootTime);
+    final uptime = now.difference(dateTime);
 
     final days = uptime.inDays;
     final hours = uptime.inHours % 24;
@@ -432,7 +434,8 @@ String? _parseWindowsUpTime(String raw) {
     } else {
       return '$hours:${minutes.toString().padLeft(2, '0')}';
     }
-  } catch (e) {
+  } catch (e, s) {
+    Loggers.app.warning(e, s);
     return null;
   }
 }

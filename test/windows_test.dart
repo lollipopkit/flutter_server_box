@@ -180,6 +180,28 @@ void main() {
     });
 
     test('should handle Windows uptime parsing correctly', () async {
+      // Test new format with date line + uptime days
+      const uptimeNewFormat = 'Friday, July 25, 2025 2:26:42 PM\n2';
+
+      final segments = List.filled(WindowsStatusCmdType.values.length, '');
+      segments[0] = '__windows';
+      segments[WindowsStatusCmdType.uptime.index] = uptimeNewFormat;
+
+      final serverStatus = InitStatus.status;
+
+      final req = ServerStatusUpdateReq(
+        system: SystemType.windows,
+        ss: serverStatus,
+        segments: segments,
+        customCmds: {},
+      );
+
+      final result = await getStatus(req);
+
+      expect(result.more[StatusCmdType.uptime], equals('2 days'));
+    });
+
+    test('should handle Windows uptime parsing with old format', () async {
       const uptimeDateTime = '2025-07-25T14:26:42.000Z';
 
       final segments = List.filled(WindowsStatusCmdType.values.length, '');
