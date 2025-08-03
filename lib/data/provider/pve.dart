@@ -86,15 +86,18 @@ final class PveProvider extends ChangeNotifier {
         forward.stream.cast<List<int>>().pipe(socket);
         socket.cast<List<int>>().pipe(forward.sink);
       });
-      final newUrl = Uri.parse(addr)
-          .replace(host: 'localhost', port: _localPort)
-          .toString();
+      final newUrl = Uri.parse(
+        addr,
+      ).replace(host: 'localhost', port: _localPort).toString();
       debugPrint('Forwarding $newUrl to $addr');
     }
   }
 
   Future<ConnectionTask<Socket>> cf(
-      Uri url, String? proxyHost, int? proxyPort) async {
+    Uri url,
+    String? proxyHost,
+    int? proxyPort,
+  ) async {
     /* final serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, 0);
     final _localPort = serverSocket.port;
     serverSocket.listen((socket) async {
@@ -105,8 +108,11 @@ final class PveProvider extends ChangeNotifier {
     });*/
 
     if (url.isScheme('https')) {
-      return SecureSocket.startConnect('localhost', _localPort,
-          onBadCertificate: (_) => true);
+      return SecureSocket.startConnect(
+        'localhost',
+        _localPort,
+        onBadCertificate: (_) => true,
+      );
     } else {
       return Socket.startConnect('localhost', _localPort);
     }
@@ -119,7 +125,7 @@ final class PveProvider extends ChangeNotifier {
         'username': spi.user,
         'password': spi.pwd,
         'realm': 'pam',
-        'new-format': '1'
+        'new-format': '1',
       },
       options: Options(
         headers: {HttpHeaders.contentTypeHeader: Headers.jsonContentType},
@@ -151,8 +157,10 @@ final class PveProvider extends ChangeNotifier {
     try {
       final resp = await session.get('$addr/api2/json/cluster/resources');
       final res = resp.data['data'] as List;
-      final result =
-          await Computer.shared.start(PveRes.parse, (res, data.value));
+      final result = await Computer.shared.start(PveRes.parse, (
+        res,
+        data.value,
+      ));
       data.value = result;
     } catch (e) {
       Loggers.app.warning('PVE list failed', e);
@@ -164,29 +172,33 @@ final class PveProvider extends ChangeNotifier {
 
   Future<bool> reboot(String node, String id) async {
     await connected.future;
-    final resp =
-        await session.post('$addr/api2/json/nodes/$node/$id/status/reboot');
+    final resp = await session.post(
+      '$addr/api2/json/nodes/$node/$id/status/reboot',
+    );
     return _isCtrlSuc(resp);
   }
 
   Future<bool> start(String node, String id) async {
     await connected.future;
-    final resp =
-        await session.post('$addr/api2/json/nodes/$node/$id/status/start');
+    final resp = await session.post(
+      '$addr/api2/json/nodes/$node/$id/status/start',
+    );
     return _isCtrlSuc(resp);
   }
 
   Future<bool> stop(String node, String id) async {
     await connected.future;
-    final resp =
-        await session.post('$addr/api2/json/nodes/$node/$id/status/stop');
+    final resp = await session.post(
+      '$addr/api2/json/nodes/$node/$id/status/stop',
+    );
     return _isCtrlSuc(resp);
   }
 
   Future<bool> shutdown(String node, String id) async {
     await connected.future;
-    final resp =
-        await session.post('$addr/api2/json/nodes/$node/$id/status/shutdown');
+    final resp = await session.post(
+      '$addr/api2/json/nodes/$node/$id/status/shutdown',
+    );
     return _isCtrlSuc(resp);
   }
 

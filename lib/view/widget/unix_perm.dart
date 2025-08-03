@@ -6,11 +6,7 @@ final class UnixPermOp {
   final bool w;
   final bool x;
 
-  const UnixPermOp({
-    required this.r,
-    required this.w,
-    required this.x,
-  });
+  const UnixPermOp({required this.r, required this.w, required this.x});
 
   UnixPermOp copyWith({bool? r, bool? w, bool? x}) {
     return UnixPermOp(r: r ?? this.r, w: w ?? this.w, x: x ?? this.x);
@@ -24,8 +20,7 @@ final class UnixPermOp {
 enum UnixPermScope {
   user,
   group,
-  other,
-  ;
+  other;
 
   String get title {
     return switch (this) {
@@ -72,10 +67,10 @@ final class UnixPerm {
   }
 
   static UnixPerm get empty => const UnixPerm(
-        user: UnixPermOp(r: false, w: false, x: false),
-        group: UnixPermOp(r: false, w: false, x: false),
-        other: UnixPermOp(r: false, w: false, x: false),
-      );
+    user: UnixPermOp(r: false, w: false, x: false),
+    group: UnixPermOp(r: false, w: false, x: false),
+    other: UnixPermOp(r: false, w: false, x: false),
+  );
 }
 
 final class UnixPermEditor extends StatefulWidget {
@@ -150,9 +145,6 @@ final class _UnixPermEditorState extends State<UnixPermEditor> {
   }
 
   Widget _buildSwitch(bool value, void Function(bool) onChanged) {
-    return Switch(
-      value: value,
-      onChanged: onChanged,
-    );
+    return Switch(value: value, onChanged: onChanged);
   }
 }

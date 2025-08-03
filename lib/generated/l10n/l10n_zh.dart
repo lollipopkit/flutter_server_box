@@ -15,7 +15,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get acceptBeta => '接受测试版更新推送';
 
   @override
-  String get addSystemPrivateKeyTip => '当前没有任何私钥，是否添加系统自带的（~/.ssh/id_rsa）？';
+  String get addSystemPrivateKeyTip => '检测到暂无私钥，是否添加系统默认的私钥（~/.ssh/id_rsa）？';
 
   @override
   String get added2List => '已添加至任务列表';
@@ -24,13 +24,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get addr => '地址';
 
   @override
-  String get alreadyLastDir => '已经是最上层目录了';
+  String get alreadyLastDir => '已是顶级目录';
 
   @override
-  String get authFailTip => '认证失败，请检查密码/密钥/主机/用户等是否错误';
+  String get authFailTip => '认证失败，请检查连接信息是否正确';
 
   @override
-  String get autoBackupConflict => '只能同时开启一个自动备份';
+  String get autoBackupConflict => '仅可启用一个自动备份任务';
 
   @override
   String get autoConnect => '自动连接';
@@ -42,10 +42,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get autoUpdateHomeWidget => '自动更新桌面小部件';
 
   @override
-  String get backupTip => '导出的数据可以使用密码加密，请妥善保管。';
+  String get backupTip => '导出数据可通过密码加密，请妥善保管。';
 
   @override
-  String get backupVersionNotMatch => '备份版本不匹配，无法恢复';
+  String get backupVersionNotMatch => '备份版本不兼容，无法恢复';
 
   @override
   String get backupPassword => '备份密码';
@@ -76,7 +76,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get bgRunTip =>
-      '此开关只代表程序会尝试在后台运行，具体能否后台运行取决于是否开启了权限。原生 Android 请关闭本 App 的“电池优化”，MIUI / HyperOS 请修改省电策略为“无限制”。';
+      '此开关只代表程序会尝试在后台运行，具体能否后台运行取决于是否开启了权限。原生 Android 请关闭本 App 的“电池优化”，MIUI / HyperOS 请将省电策略改为“无限制”。';
 
   @override
   String get closeAfterSave => '保存后关闭';
@@ -132,10 +132,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get desktopTerminalTip => '启动 SSH 连接所用的终端模拟器命令';
 
   @override
-  String get dirEmpty => '请确保文件夹为空';
+  String get dirEmpty => '请确保目录为空';
 
   @override
-  String get disconnected => '连接断开';
+  String get disconnected => '已断开连接';
 
   @override
   String get disk => '磁盘';
@@ -160,11 +160,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String dockerImagesFmt(Object count) {
-    return '共 $count 个镜像';
+    return '$count 个镜像';
   }
 
   @override
-  String get dockerNotInstalled => 'Docker 未安装';
+  String get dockerNotInstalled => '未安装 Docker';
 
   @override
   String dockerStatusRunningAndStoppedFmt(
@@ -183,7 +183,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get doubleColumnMode => '双列模式';
 
   @override
-  String get doubleColumnTip => '此选项仅开启功能，实际是否能开启还取决于设备的宽度';
+  String get doubleColumnTip => '此选项仅用于启用该功能，是否生效取决于设备宽度';
 
   @override
   String get editVirtKeys => '编辑虚拟按键';
@@ -192,7 +192,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get editor => '编辑器';
 
   @override
-  String get editorHighlightTip => '目前的代码高亮性能较为糟糕，可以选择关闭以改善。';
+  String get editorHighlightTip => '代码高亮功能可能影响性能，可选择关闭。';
 
   @override
   String get emulator => '模拟器';
@@ -246,7 +246,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fullScreenJitter => '全屏模式抖动';
 
   @override
-  String get fullScreenJitterHelp => '防止烧屏';
+  String get fullScreenJitterHelp => '用于防止屏幕烧屏';
 
   @override
   String get fullScreenTip => '当设备旋转为横屏时，是否开启全屏模式。此选项仅作用于服务器 Tab 页。';
@@ -271,7 +271,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String httpFailedWithCode(Object code) {
-    return '请求失败, 状态码: $code';
+    return '请求失败，状态码: $code';
   }
 
   @override
@@ -294,7 +294,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get installDockerWithUrl =>
-      '请先 https://docs.docker.com/engine/install docker';
+      '请先前往 https://docs.docker.com/engine/install 安装 Docker';
 
   @override
   String get invalid => '无效';
@@ -303,7 +303,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get jumpServer => '跳板服务器';
 
   @override
-  String get keepForeground => '请保持应用处于前台！';
+  String get keepForeground => '请将应用保持在前台运行';
 
   @override
   String get keepStatusWhenErr => '保留上次的服务器状态';
@@ -344,7 +344,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get maxRetryCount => '服务器尝试重连次数';
 
   @override
-  String get maxRetryCountEqual0 => '会无限重试';
+  String get maxRetryCountEqual0 => '将无限次重试';
 
   @override
   String get min => '最小';
@@ -409,7 +409,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get openLastPath => '打开上次的路径';
 
   @override
-  String get openLastPathTip => '不同的服务器会有不同的记录，且记录的是退出时的路径';
+  String get openLastPathTip => '将为每台服务器记录其最后访问路径';
 
   @override
   String get parseContainerStatsTip => 'Docker 解析占用状态较为缓慢';
@@ -462,7 +462,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pveIgnoreCertTip => '不推荐开启，注意安全隐患！如果你使用的 PVE 默认证书，需要开启该选项';
 
   @override
-  String get pveLoginFailed => '登录失败。无法使用服务器配置内的用户/密码，以 Linux PAM 方式登录。';
+  String get pveLoginFailed => '登录失败。无法使用服务器配置中的用户名或密码通过 Linux PAM 方式认证。';
 
   @override
   String get pveVersionLow => '当前该功能处于测试阶段，仅在 PVE 8+ 上测试过，请谨慎使用';
@@ -544,7 +544,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sftpRmrDirSummary => '在 SFTP 中使用 `rm -r` 来删除文件夹';
 
   @override
-  String get sftpSSHConnected => 'SFTP 已连接...';
+  String get sftpSSHConnected => 'SFTP 已连接';
 
   @override
   String get sftpShowFoldersFirst => '文件夹显示在前';
@@ -575,7 +575,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String spentTime(Object time) {
-    return '耗时: $time';
+    return '耗时：$time';
   }
 
   @override
@@ -683,7 +683,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get update => '更新';
 
   @override
-  String get updateIntervalEqual0 => '你设置为 0，服务器状态不会自动刷新。\n且不能计算 CPU 使用情况。';
+  String get updateIntervalEqual0 => '设置为 0 将不自动刷新服务器状态。\n且无法计算 CPU 使用率。';
 
   @override
   String get updateServerStatusInterval => '服务器状态刷新间隔';
@@ -743,7 +743,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get whenOpenApp => '当打开 App 时';
 
   @override
-  String get wolTip => '在配置 WOL 后，每次连接服务器都会先发送一次 WOL 请求';
+  String get wolTip => '配置 WOL 后，每次连接服务器时将自动发送唤醒请求';
 
   @override
   String get write => '写';
@@ -767,7 +767,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get acceptBeta => '接受測試版更新推送';
 
   @override
-  String get addSystemPrivateKeyTip => '目前沒有任何私鑰，是否新增系統原有的 (~/.ssh/id_rsa)？';
+  String get addSystemPrivateKeyTip => '偵測到尚無私鑰，是否要加入系統預設的私鑰（~/.ssh/id_rsa）？';
 
   @override
   String get added2List => '已新增至任務清單';
@@ -776,13 +776,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get addr => '位址';
 
   @override
-  String get alreadyLastDir => '已經是最上層目錄了';
+  String get alreadyLastDir => '已是頂層目錄';
 
   @override
-  String get authFailTip => '認證失敗，請檢查密碼/金鑰/主機/使用者等是否錯誤。';
+  String get authFailTip => '認證失敗，請檢查連線資訊是否正確';
 
   @override
-  String get autoBackupConflict => '只能同時開啓一個自動備份';
+  String get autoBackupConflict => '僅能啟用一項自動備份任務';
 
   @override
   String get autoConnect => '自動連線';
@@ -794,10 +794,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get autoUpdateHomeWidget => '自動更新桌面小工具';
 
   @override
-  String get backupTip => '匯出的資料可以使用密碼加密。 \n請妥善保管。';
+  String get backupTip => '匯出的資料可透過密碼加密，請妥善保管。';
 
   @override
-  String get backupVersionNotMatch => '備份版本不相符，無法還原';
+  String get backupVersionNotMatch => '備份版本不相容，無法還原';
 
   @override
   String get backupPassword => '備份密碼';
@@ -828,7 +828,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get bgRunTip =>
-      '此開關只代表程式會嘗試在背景執行，具體能否在後臺執行取決於是否開啟了權限。 原生 Android 請關閉本 App 的“電池最佳化”，MIUI / HyperOS 請修改省電策略為“無限制”。';
+      '此開關僅代表程式會嘗試於背景執行，能否成功取決於系統權限。在原生 Android 上，請關閉本應用的「電池最佳化」；在 MIUI / HyperOS 上，請將省電策略調整為「無限制」。';
 
   @override
   String get closeAfterSave => '儲存後關閉';
@@ -884,10 +884,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get desktopTerminalTip => '啟動 SSH 連線時用於打開終端機模擬器的指令。';
 
   @override
-  String get dirEmpty => '請確保資料夾為空';
+  String get dirEmpty => '請確保目錄為空';
 
   @override
-  String get disconnected => '連線中斷';
+  String get disconnected => '已中斷連線';
 
   @override
   String get disk => '磁碟';
@@ -912,11 +912,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String dockerImagesFmt(Object count) {
-    return '共 $count 個映像檔';
+    return '$count 個映像檔';
   }
 
   @override
-  String get dockerNotInstalled => 'Docker 未安裝';
+  String get dockerNotInstalled => '未安裝 Docker';
 
   @override
   String dockerStatusRunningAndStoppedFmt(
@@ -935,7 +935,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get doubleColumnMode => '雙列模式';
 
   @override
-  String get doubleColumnTip => '此選項僅開啟功能，實際是否能開啟還取決於設備的頻寬';
+  String get doubleColumnTip => '此選項僅用於啟用此功能，是否生效取決於裝置寬度';
 
   @override
   String get editVirtKeys => '編輯虛擬按鍵';
@@ -944,7 +944,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get editor => '編輯器';
 
   @override
-  String get editorHighlightTip => '目前的程式碼標記效能較為糟糕，可以選擇關閉以改善。';
+  String get editorHighlightTip => '程式碼高亮功能可能影響效能，可選擇性關閉。';
 
   @override
   String get emulator => '模擬器';
@@ -998,7 +998,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get fullScreenJitter => '全螢幕模式抖動';
 
   @override
-  String get fullScreenJitterHelp => '防止烙印';
+  String get fullScreenJitterHelp => '防止螢幕烙印';
 
   @override
   String get fullScreenTip => '當設備旋轉為橫向時，是否開啟全螢幕模式？此選項僅適用於伺服器分頁。';
@@ -1023,7 +1023,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String httpFailedWithCode(Object code) {
-    return '請求失敗, 狀態碼: $code';
+    return '請求失敗，狀態碼：$code';
   }
 
   @override
@@ -1046,7 +1046,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get installDockerWithUrl =>
-      '請先 https://docs.docker.com/engine/install docker';
+      '請先前往 https://docs.docker.com/engine/install 安裝 Docker';
 
   @override
   String get invalid => '無效';
@@ -1055,7 +1055,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get jumpServer => '跳板伺服器';
 
   @override
-  String get keepForeground => '請保持App處於前端！';
+  String get keepForeground => '請讓 App 保持在前景執行';
 
   @override
   String get keepStatusWhenErr => '保留上次的伺服器狀態';
@@ -1096,7 +1096,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get maxRetryCount => '伺服器嘗試重連次數';
 
   @override
-  String get maxRetryCountEqual0 => '會無限重試';
+  String get maxRetryCountEqual0 => '將無限次重試';
 
   @override
   String get min => '最小';
@@ -1161,7 +1161,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get openLastPath => '打開上次的路徑';
 
   @override
-  String get openLastPathTip => '不同的伺服器會有不同的記錄，且記錄的是退出時的路徑';
+  String get openLastPathTip => '將為每台伺服器紀錄其最後存取路徑';
 
   @override
   String get parseContainerStatsTip => 'Docker 解析消耗狀態較為緩慢';
@@ -1214,7 +1214,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get pveIgnoreCertTip => '不建議啟用，請注意安全風險！如果您使用的是 PVE 的預設憑證，則需要啟用此選項。';
 
   @override
-  String get pveLoginFailed => '登錄失敗。無法使用伺服器配置中的使用者名稱/密碼以 Linux PAM 方式登錄。';
+  String get pveLoginFailed => '登入失敗。無法使用伺服器設定中的使用者名稱或密碼透過 Linux PAM 方式認證。';
 
   @override
   String get pveVersionLow => '此功能目前處於測試階段，僅在 PVE 8+ 上進行過測試。請謹慎使用。';
@@ -1296,7 +1296,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sftpRmrDirSummary => '在 SFTP 中使用 `rm -r` 來刪除檔案夾';
 
   @override
-  String get sftpSSHConnected => 'SFTP 已連線...';
+  String get sftpSSHConnected => 'SFTP 已連線';
 
   @override
   String get sftpShowFoldersFirst => '資料夾顯示在前';
@@ -1327,7 +1327,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String spentTime(Object time) {
-    return '耗時: $time';
+    return '耗時：$time';
   }
 
   @override
@@ -1435,7 +1435,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get update => '更新';
 
   @override
-  String get updateIntervalEqual0 => '你設定為 0，伺服器狀態不會自動更新。\n且不能計算CPU使用情況。';
+  String get updateIntervalEqual0 => '設定為 0 將不自動刷新伺服器狀態，\n也無法計算 CPU 使用率。';
 
   @override
   String get updateServerStatusInterval => '伺服器狀態更新間隔';
@@ -1495,7 +1495,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get whenOpenApp => '當打開 App 時';
 
   @override
-  String get wolTip => '在配置 WOL（網絡喚醒）後，每次連線伺服器都會先發送一次 WOL 請求。';
+  String get wolTip => '設定 WOL 後，每次連線伺服器時將自動發送喚醒請求';
 
   @override
   String get write => '寫入';

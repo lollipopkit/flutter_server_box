@@ -81,7 +81,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     if (password != null && password.isNotEmpty) {
       result = Cryptor.encrypt(result, password);
     }
-    
+
     final path = Paths.doc.joinPath(name ?? Miscs.bakFileName);
     await File(path).writeAsString(result);
     return path;
@@ -94,7 +94,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       }
       jsonString = Cryptor.decrypt(jsonString, password);
     }
-    
+
     final map = json.decode(jsonString) as Map<String, dynamic>;
     return BackupV2.fromJson(map);
   }

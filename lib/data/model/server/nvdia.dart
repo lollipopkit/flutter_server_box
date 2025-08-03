@@ -35,25 +35,17 @@ class NvidiaSmi {
           .firstOrNull
           ?.innerText;
       final power = gpu.findElements('gpu_power_readings').firstOrNull;
-      final powerDraw =
-          power?.findElements('power_draw').firstOrNull?.innerText;
-      final powerLimit =
-          power?.findElements('current_power_limit').firstOrNull?.innerText;
+      final powerDraw = power?.findElements('power_draw').firstOrNull?.innerText;
+      final powerLimit = power?.findElements('current_power_limit').firstOrNull?.innerText;
       final memory = gpu.findElements('fb_memory_usage').firstOrNull;
       final memoryUsed = memory?.findElements('used').firstOrNull?.innerText;
       final memoryTotal = memory?.findElements('total').firstOrNull?.innerText;
-      final processes = gpu
-          .findElements('processes')
-          .firstOrNull
-          ?.findElements('process_info');
-      final memoryProcesses =
-          List<NvidiaSmiMemProcess?>.generate(processes?.length ?? 0, (index) {
+      final processes = gpu.findElements('processes').firstOrNull?.findElements('process_info');
+      final memoryProcesses = List<NvidiaSmiMemProcess?>.generate(processes?.length ?? 0, (index) {
         final process = processes?.elementAt(index);
         final pid = process?.findElements('pid').firstOrNull?.innerText;
-        final name =
-            process?.findElements('process_name').firstOrNull?.innerText;
-        final memory =
-            process?.findElements('used_memory').firstOrNull?.innerText;
+        final name = process?.findElements('process_name').firstOrNull?.innerText;
+        final memory = process?.findElements('used_memory').firstOrNull?.innerText;
         if (pid != null && name != null && memory != null) {
           return NvidiaSmiMemProcess(
             int.tryParse(pid) ?? 0,

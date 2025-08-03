@@ -5,11 +5,7 @@ final class _TopBar extends StatelessWidget implements PreferredSizeWidget {
   final void Function(String) onTagChanged;
   final String initTag;
 
-  const _TopBar({
-    required this.initTag,
-    required this.onTagChanged,
-    required this.tags,
-  });
+  const _TopBar({required this.initTag, required this.onTagChanged, required this.tags});
 
   @override
   Widget build(BuildContext context) {
@@ -31,15 +27,9 @@ final class _TopBar extends StatelessWidget implements PreferredSizeWidget {
               padding: EdgeInsets.symmetric(horizontal: 7, vertical: 3),
               child: Row(
                 children: [
-                  Text(
-                    BuildData.name,
-                    style: TextStyle(fontSize: 19),
-                  ),
+                  Text(BuildData.name, style: TextStyle(fontSize: 19)),
                   SizedBox(width: 5),
-                  Icon(
-                    Icons.settings,
-                    size: 17,
-                  ),
+                  Icon(Icons.settings, size: 17),
                 ],
               ),
             ),

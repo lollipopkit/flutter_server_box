@@ -32,7 +32,7 @@ class AmdSmi {
     try {
       final jsonData = json.decode(raw);
       if (jsonData is! List) return [];
-      
+
       return jsonData
           .map((gpu) => _parseGpuItem(gpu))
           .where((item) => item != null)
@@ -47,28 +47,28 @@ class AmdSmi {
     try {
       final name = gpu['name'] ?? gpu['card_model'] ?? gpu['device_name'] ?? 'Unknown AMD GPU';
       final deviceId = gpu['device_id']?.toString() ?? gpu['gpu_id']?.toString() ?? '0';
-      
+
       // Temperature parsing
       final tempRaw = gpu['temperature'] ?? gpu['temp'] ?? gpu['gpu_temp'];
       final temp = _parseIntValue(tempRaw);
-      
+
       // Power parsing
       final powerDraw = gpu['power_draw'] ?? gpu['current_power'];
       final powerCap = gpu['power_cap'] ?? gpu['power_limit'] ?? gpu['max_power'];
       final power = _formatPower(powerDraw, powerCap);
-      
+
       // Memory parsing
       final memory = _parseMemory(gpu['memory'] ?? gpu['vram'] ?? {});
-      
+
       // Utilization parsing
       final utilization = _parseIntValue(gpu['utilization'] ?? gpu['gpu_util'] ?? gpu['activity']);
-      
+
       // Fan speed parsing
       final fanSpeed = _parseIntValue(gpu['fan_speed'] ?? gpu['fan_rpm']);
-      
+
       // Clock speed parsing
       final clockSpeed = _parseIntValue(gpu['clock_speed'] ?? gpu['gpu_clock'] ?? gpu['sclk']);
-      
+
       return AmdSmiItem(
         deviceId: deviceId,
         name: name,
@@ -98,7 +98,7 @@ class AmdSmi {
   static String _formatPower(dynamic draw, dynamic cap) {
     final drawValue = _parseIntValue(draw);
     final capValue = _parseIntValue(cap);
-    
+
     if (drawValue == 0 && capValue == 0) return 'N/A';
     if (capValue == 0) return '${drawValue}W';
     return '${drawValue}W / ${capValue}W';
@@ -108,7 +108,7 @@ class AmdSmi {
     final total = _parseIntValue(memData['total'] ?? memData['total_memory']);
     final used = _parseIntValue(memData['used'] ?? memData['used_memory']);
     final unit = memData['unit']?.toString() ?? 'MB';
-    
+
     final processes = <AmdSmiMemProcess>[];
     final processesData = memData['processes'];
     if (processesData is List) {
@@ -119,7 +119,7 @@ class AmdSmi {
         }
       }
     }
-    
+
     return AmdSmiMem(total, used, unit, processes);
   }
 
@@ -127,7 +127,7 @@ class AmdSmi {
     final pid = _parseIntValue(procData['pid']);
     final name = procData['name']?.toString() ?? procData['process_name']?.toString() ?? 'Unknown';
     final memory = _parseIntValue(procData['memory'] ?? procData['used_memory']);
-    
+
     if (pid == 0) return null;
     return AmdSmiMemProcess(pid, name, memory);
   }

@@ -214,8 +214,16 @@ Cpus parseBsdCpu(String raw) {
 
   final init = InitStatus.cpus;
   init.add([
-    SingleCpuCore('cpu', percents[0].toInt(), 0, 0,
-        percents[2].toInt() + percents[1].toInt(), 0, 0, 0),
+    SingleCpuCore(
+      'cpu',
+      percents[0].toInt(),
+      0,
+      0,
+      percents[2].toInt() + percents[1].toInt(),
+      0,
+      0,
+      0,
+    ),
   ]);
   return init;
 }

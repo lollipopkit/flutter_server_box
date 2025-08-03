@@ -8,7 +8,7 @@ enum ContainerMenu {
   restart,
   rm,
   logs,
-  terminal,
+  terminal
   //stats,
   ;
 
@@ -27,22 +27,22 @@ enum ContainerMenu {
   }
 
   IconData get icon => switch (this) {
-        ContainerMenu.start => Icons.play_arrow,
-        ContainerMenu.stop => Icons.stop,
-        ContainerMenu.restart => Icons.restart_alt,
-        ContainerMenu.rm => Icons.delete,
-        ContainerMenu.logs => Icons.logo_dev,
-        ContainerMenu.terminal => Icons.terminal,
-        // DockerMenuType.stats => Icons.bar_chart,
-      };
+    ContainerMenu.start => Icons.play_arrow,
+    ContainerMenu.stop => Icons.stop,
+    ContainerMenu.restart => Icons.restart_alt,
+    ContainerMenu.rm => Icons.delete,
+    ContainerMenu.logs => Icons.logo_dev,
+    ContainerMenu.terminal => Icons.terminal,
+    // DockerMenuType.stats => Icons.bar_chart,
+  };
 
   String get toStr => switch (this) {
-        ContainerMenu.start => l10n.start,
-        ContainerMenu.stop => l10n.stop,
-        ContainerMenu.restart => l10n.restart,
-        ContainerMenu.rm => libL10n.delete,
-        ContainerMenu.logs => libL10n.log,
-        ContainerMenu.terminal => l10n.terminal,
-        // DockerMenuType.stats => s.stats,
-      };
+    ContainerMenu.start => l10n.start,
+    ContainerMenu.stop => l10n.stop,
+    ContainerMenu.restart => l10n.restart,
+    ContainerMenu.rm => libL10n.delete,
+    ContainerMenu.logs => libL10n.log,
+    ContainerMenu.terminal => l10n.terminal,
+    // DockerMenuType.stats => s.stats,
+  };
 }

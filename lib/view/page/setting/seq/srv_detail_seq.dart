@@ -10,10 +10,7 @@ class ServerDetailOrderPage extends StatefulWidget {
   @override
   State<ServerDetailOrderPage> createState() => _ServerDetailOrderPageState();
 
-  static const route = AppRouteNoArg(
-    page: ServerDetailOrderPage.new,
-    path: '/settings/order/server_detail',
-  );
+  static const route = AppRouteNoArg(page: ServerDetailOrderPage.new, path: '/settings/order/server_detail');
 }
 
 class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
@@ -31,8 +28,7 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
     return ValBuilder(
       listenable: prop.listenable(),
       builder: (keys) {
-        final disabled =
-            ServerDetailCards.names.where((e) => !keys.contains(e)).toList();
+        final disabled = ServerDetailCards.names.where((e) => !keys.contains(e)).toList();
         final allKeys = [...keys, ...disabled];
         return ReorderableListView.builder(
           padding: const EdgeInsets.all(7),

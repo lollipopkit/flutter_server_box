@@ -44,10 +44,8 @@ final class SystemdProvider {
         }
       }
 
-      final parsedUserUnits =
-          await _parseUnitObj(userUnits, SystemdUnitScope.user);
-      final parsedSystemUnits =
-          await _parseUnitObj(systemUnits, SystemdUnitScope.system);
+      final parsedUserUnits = await _parseUnitObj(userUnits, SystemdUnitScope.user);
+      final parsedSystemUnits = await _parseUnitObj(systemUnits, SystemdUnitScope.system);
       this.units.value = [...parsedUserUnits, ...parsedSystemUnits];
     } catch (e, s) {
       Loggers.app.warning('Parse systemd', e, s);
@@ -56,14 +54,10 @@ final class SystemdProvider {
     isBusy.value = false;
   }
 
-  Future<List<SystemdUnit>> _parseUnitObj(
-    List<String> unitNames,
-    SystemdUnitScope scope,
-  ) async {
-    final unitNames_ = unitNames
-        .map((e) => e.trim().split('/').last.split('.').first)
-        .toList();
-    final script = '''
+  Future<List<SystemdUnit>> _parseUnitObj(List<String> unitNames, SystemdUnitScope scope) async {
+    final unitNames_ = unitNames.map((e) => e.trim().split('/').last.split('.').first).toList();
+    final script =
+        '''
 for unit in ${unitNames_.join(' ')}; do
   state=\$(systemctl show --no-pager \$unit)
   echo -n "${ShellFunc.seperator}\n\$state"
@@ -108,13 +102,9 @@ done
         continue;
       }
 
-      parsedUnits.add(SystemdUnit(
-        name: name,
-        type: unitType,
-        scope: scope,
-        state: unitState,
-        description: description,
-      ));
+      parsedUnits.add(
+        SystemdUnit(name: name, type: unitType, scope: scope, state: unitState, description: description),
+      );
     }
 
     parsedUnits.sort((a, b) {
@@ -131,7 +121,8 @@ done
     return parsedUnits;
   }
 
-  late final _getUnitsCmd = '''
+  late final _getUnitsCmd =
+      '''
 get_files() {
   unit_type=\$1
   base_dir=\$2

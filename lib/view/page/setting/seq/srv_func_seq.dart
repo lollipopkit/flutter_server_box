@@ -10,10 +10,7 @@ class ServerFuncBtnsOrderPage extends StatefulWidget {
   @override
   State<ServerFuncBtnsOrderPage> createState() => _ServerDetailOrderPageState();
 
-  static const route = AppRouteNoArg(
-    page: ServerFuncBtnsOrderPage.new,
-    path: '/setting/seq/srv_func',
-  );
+  static const route = AppRouteNoArg(page: ServerFuncBtnsOrderPage.new, path: '/setting/seq/srv_func');
 }
 
 class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
@@ -67,12 +64,7 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
     );
   }
 
-  Widget _buildCheckBox(
-    List<int> keys,
-    int key,
-    int idx,
-    bool value,
-  ) {
+  Widget _buildCheckBox(List<int> keys, int key, int idx, bool value) {
     return Checkbox(
       value: value,
       onChanged: (val) {

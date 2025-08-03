@@ -4,26 +4,21 @@ import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/res/build_data.dart';
 
 enum ShellFunc {
-  status,
+  status('SbStatus'),
   //docker,
-  process,
-  shutdown,
-  reboot,
-  suspend;
+  process('SbProcess'),
+  shutdown('SbShutdown'),
+  reboot('SbReboot'),
+  suspend('SbSuspend');
+
+  final String name;
+
+  const ShellFunc(this.name);
 
   static const seperator = 'SrvBoxSep';
 
   /// The suffix `\t` is for formatting
   static const cmdDivider = '\necho $seperator\n\t';
-
-  /// Cached Linux status commands string
-  static final _linuxStatusCmds = StatusCmdType.values.map((e) => e.cmd).join(cmdDivider);
-
-  /// Cached BSD status commands string
-  static final _bsdStatusCmds = BSDStatusCmdType.values.map((e) => e.cmd).join(cmdDivider);
-
-  /// Cached Windows status commands string
-  static final _windowsStatusCmds = WindowsStatusCmdType.values.map((e) => e.cmd).join(cmdDivider);
 
   /// srvboxm -> ServerBox Mobile
   static const scriptFile = 'srvboxm_v${BuildData.script}.sh';
@@ -39,35 +34,38 @@ enum ShellFunc {
   ///
   /// Default is [scriptDirTmp]/[scriptFile], if this path is not accessible,
   /// it will be changed to [scriptDirHome]/[scriptFile].
-  static String getScriptDir(String id) {
+  static String getScriptDir(String id, {SystemType? systemType}) {
     final customScriptDir = ServerProvider.pick(id: id)?.value.spi.custom?.scriptDir;
     if (customScriptDir != null) return customScriptDir;
-    _scriptDirMap[id] ??= scriptDirTmp;
+
+    final defaultTmpDir = systemType == SystemType.windows ? scriptDirTmpWindows : scriptDirTmp;
+    _scriptDirMap[id] ??= defaultTmpDir;
     return _scriptDirMap[id]!;
   }
 
-  static void switchScriptDir(String id) => switch (_scriptDirMap[id]) {
+  static void switchScriptDir(String id, {SystemType? systemType}) => switch (_scriptDirMap[id]) {
     scriptDirTmp => _scriptDirMap[id] = scriptDirHome,
+    scriptDirTmpWindows => _scriptDirMap[id] = scriptDirHomeWindows,
     scriptDirHome => _scriptDirMap[id] = scriptDirTmp,
-    _ => _scriptDirMap[id] = scriptDirHome,
+    scriptDirHomeWindows => _scriptDirMap[id] = scriptDirTmpWindows,
+    _ => _scriptDirMap[id] = systemType == SystemType.windows ? scriptDirHomeWindows : scriptDirHome,
   };
 
   static String getScriptPath(String id, {SystemType? systemType}) {
-    final dir = getScriptDir(id);
+    final dir = getScriptDir(id, systemType: systemType);
     final fileName = systemType == SystemType.windows ? scriptFileWindows : scriptFile;
-    return '$dir/$fileName';
+    final separator = systemType == SystemType.windows ? '\\' : '/';
+    return '$dir$separator$fileName';
   }
 
   static String getInstallShellCmd(String id, {SystemType? systemType}) {
-    final scriptDir = getScriptDir(id);
+    final scriptDir = getScriptDir(id, systemType: systemType);
     final fileName = systemType == SystemType.windows ? scriptFileWindows : scriptFile;
-    final scriptPath = '$scriptDir/$fileName';
-    
+    final separator = systemType == SystemType.windows ? '\\' : '/';
+    final scriptPath = '$scriptDir$separator$fileName';
+
     if (systemType == SystemType.windows) {
-      return '''
-New-Item -ItemType Directory -Force -Path "$scriptDir"
-Set-Content -Path "$scriptPath" -Value \$input
-''';
+      return 'powershell -c "New-Item -ItemType Directory -Force -Path \'$scriptDir\' | Out-Null; \$content = [System.Console]::In.ReadToEnd(); Set-Content -Path \'$scriptPath\' -Value \$content -Encoding UTF8"';
     } else {
       return '''
 mkdir -p $scriptDir
@@ -95,28 +93,13 @@ chmod 755 $scriptPath
     }
   }
 
-  /// Legacy exec method that tries to execute both script types
-  /// Used when system type is unknown
-  String execLegacy(String id) {
-    final unixPath = getScriptPath(id, systemType: SystemType.linux);
-    final windowsPath = getScriptPath(id, systemType: SystemType.windows);
-    return 'if [ -f "$windowsPath" ]; then powershell -ExecutionPolicy Bypass -File "$windowsPath" -$flag; else sh $unixPath -$flag; fi';
-  }
-
-  String get name => switch (this) {
-    ShellFunc.status => 'status',
-    ShellFunc.process => 'process',
-    ShellFunc.shutdown => 'ShutDown',
-    ShellFunc.reboot => 'Reboot',
-    ShellFunc.suspend => 'Suspend',
-  };
-
   String get _windowsCmd => switch (this) {
     ShellFunc.status => _windowsStatusCmds,
     ShellFunc.process => 'Get-Process | Select-Object ProcessName, Id, CPU, WorkingSet | ConvertTo-Json',
     ShellFunc.shutdown => 'Stop-Computer -Force',
     ShellFunc.reboot => 'Restart-Computer -Force',
-    ShellFunc.suspend => 'Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Application]::SetSuspendState(\'Suspend\', \$false, \$false)',
+    ShellFunc.suspend =>
+      'Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Application]::SetSuspendState(\'Suspend\', \$false, \$false)',
   };
 
   String get _unixCmd => switch (this) {
@@ -172,7 +155,7 @@ fi''',
 \$ErrorActionPreference = "SilentlyContinue"
 
 ''');
-    
+
     // Write each func
     for (final func in values) {
       final customCmdsStr = () {
@@ -181,7 +164,7 @@ fi''',
         }
         return '';
       }();
-      
+
       sb.write('''
 function ${func.name} {
     ${func._windowsCmd.split('\n').map((e) => e.isEmpty ? '' : '    $e').join('\n')}$customCmdsStr
@@ -206,7 +189,7 @@ switch (\$args[0]) {
     return sb.toString();
   }
 
-  /// Generate Unix shell script  
+  /// Generate Unix shell script
   static String unixScript(Map<String, String>? customCmds) {
     final sb = StringBuffer();
     sb.write('''
@@ -270,13 +253,15 @@ esac''');
       return unixScript(customCmds);
     }
   }
-}
 
-extension EnumX on Enum {
-  /// Find out the required segment from [segments]
-  String find(List<String> segments) {
-    return segments[index];
-  }
+  /// Cached Linux status commands string
+  static final _linuxStatusCmds = StatusCmdType.values.map((e) => e.cmd).join(cmdDivider);
+
+  /// Cached BSD status commands string
+  static final _bsdStatusCmds = BSDStatusCmdType.values.map((e) => e.cmd).join(cmdDivider);
+
+  /// Cached Windows status commands string
+  static final _windowsStatusCmds = WindowsStatusCmdType.values.map((e) => e.cmd).join(cmdDivider);
 }
 
 enum StatusCmdType {
@@ -295,7 +280,9 @@ enum StatusCmdType {
   diskio._('cat /proc/diskstats'),
   battery._('for f in /sys/class/power_supply/*/uevent; do cat "\$f"; echo; done'),
   nvidia._('nvidia-smi -q -x'),
-  amd._('if command -v amd-smi >/dev/null 2>&1; then amd-smi list --json && amd-smi metric --json; elif command -v rocm-smi >/dev/null 2>&1; then rocm-smi --json || rocm-smi --showunique --showuse --showtemp --showfan --showclocks --showmemuse --showpower; elif command -v radeontop >/dev/null 2>&1; then timeout 2s radeontop -d - -l 1 | tail -n +2; else echo "No AMD GPU monitoring tools found"; fi'),
+  amd._(
+    'if command -v amd-smi >/dev/null 2>&1; then amd-smi list --json && amd-smi metric --json; elif command -v rocm-smi >/dev/null 2>&1; then rocm-smi --json || rocm-smi --showunique --showuse --showtemp --showfan --showclocks --showmemuse --showpower; elif command -v radeontop >/dev/null 2>&1; then timeout 2s radeontop -d - -l 1 | tail -n +2; else echo "No AMD GPU monitoring tools found"; fi',
+  ),
   sensors._('sensors'),
   diskSmart._('for d in \$(lsblk -dn -o KNAME); do smartctl -a -j /dev/\$d; echo; done'),
   cpuBrand._('cat /proc/cpuinfo | grep "model name"');
@@ -339,25 +326,56 @@ extension StatusCmdTypeX on StatusCmdType {
 enum WindowsStatusCmdType {
   echo._('echo ${SystemType.windowsSign}'),
   time._('powershell -c "[DateTimeOffset]::UtcNow.ToUnixTimeSeconds()"'),
-  net._('powershell -c "Get-NetAdapter | Where-Object {\$_.Status -eq \'Up\'} | ForEach-Object { Get-Counter -Counter \\"\\\\Network Interface(\$(\$_.Name))\\\\Bytes Received/sec\\", \\"\\\\Network Interface(\$(\$_.Name))\\\\Bytes Sent/sec\\" -SampleInterval 1 -MaxSamples 1 -ErrorAction SilentlyContinue } | ConvertTo-Json"'),
+  net._(
+    r'powershell -c "Get-NetAdapter | Where-Object {$_.Status -eq \"Up\"} | Select-Object Name, @{Name=\"BytesReceived\";Expression={0}}, @{Name=\"BytesSent\";Expression={0}} | ConvertTo-Json"',
+  ),
   sys._('powershell -c "(Get-ComputerInfo).OsName"'),
-  cpu._('powershell -c "Get-WmiObject -Class Win32_Processor | Select-Object Name, LoadPercentage | ConvertTo-Json"'),
+  cpu._(
+    'powershell -c "Get-WmiObject -Class Win32_Processor | Select-Object Name, LoadPercentage | ConvertTo-Json"',
+  ),
   uptime._('powershell -c "(Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime"'),
-  conn._('powershell -c "netstat -an | findstr ESTABLISHED | measure-object -line | select-object -expandproperty count"'),
-  disk._('powershell -c "Get-WmiObject -Class Win32_LogicalDisk | Select-Object DeviceID, Size, FreeSpace, FileSystem | ConvertTo-Json"'),
-  mem._('powershell -c "Get-WmiObject -Class Win32_OperatingSystem | Select-Object TotalVisibleMemorySize, FreePhysicalMemory | ConvertTo-Json"'),
-  tempType._('powershell -c "Get-WmiObject -Namespace root/OpenHardwareMonitor -Class Sensor | Where-Object {\$_.SensorType -eq \'Temperature\'} | Select-Object Name | ConvertTo-Json"'),
-  tempVal._('powershell -c "Get-WmiObject -Namespace root/OpenHardwareMonitor -Class Sensor | Where-Object {\$_.SensorType -eq \'Temperature\'} | Select-Object Value | ConvertTo-Json"'),
-  host._('powershell -c "\$env:COMPUTERNAME"'),
-  diskio._('powershell -c "Get-Counter -Counter \\"\\\\PhysicalDisk(*)\\\\Disk Reads/sec\\", \\"\\\\PhysicalDisk(*)\\\\Disk Writes/sec\\" -SampleInterval 1 -MaxSamples 1 | ConvertTo-Json"'),
-  battery._('powershell -c "Get-WmiObject -Class Win32_Battery | Select-Object EstimatedChargeRemaining, BatteryStatus | ConvertTo-Json"'),
-  nvidia._('powershell -c "if (Get-Command nvidia-smi -ErrorAction SilentlyContinue) { nvidia-smi -q -x } else { echo \'NVIDIA driver not found\' }"'),
-  amd._('powershell -c "if (Get-Command amd-smi -ErrorAction SilentlyContinue) { amd-smi list --json } else { echo \'AMD driver not found\' }"'),
-  sensors._('powershell -c "Get-WmiObject -Namespace root/OpenHardwareMonitor -Class Sensor | ConvertTo-Json"'),
-  diskSmart._('powershell -c "Get-PhysicalDisk | Get-StorageReliabilityCounter | ConvertTo-Json"'),
+  conn._('powershell -c "(netstat -an | findstr ESTABLISHED | Measure-Object -Line).Count"'),
+  disk._(
+    'powershell -c "Get-WmiObject -Class Win32_LogicalDisk | Select-Object DeviceID, Size, FreeSpace, FileSystem | ConvertTo-Json"',
+  ),
+  mem._(
+    'powershell -c "Get-WmiObject -Class Win32_OperatingSystem | Select-Object TotalVisibleMemorySize, FreePhysicalMemory | ConvertTo-Json"',
+  ),
+  tempType._(
+    'powershell -c "Get-CimInstance -ClassName MSAcpi_ThermalZoneTemperature -Namespace root/wmi -ErrorAction SilentlyContinue | Select-Object InstanceName | ConvertTo-Json"',
+  ),
+  tempVal._(
+    r'powershell -c "Get-CimInstance -ClassName MSAcpi_ThermalZoneTemperature -Namespace root/wmi -ErrorAction SilentlyContinue | ForEach-Object { [PSCustomObject]@{ Value = [math]::Round(($_.CurrentTemperature - 2732) / 10, 1) } } | ConvertTo-Json"',
+  ),
+  host._(r'powershell -c "Write-Output $env:COMPUTERNAME"'),
+  diskio._(
+    r'powershell -c "Get-Counter -Counter \"\\PhysicalDisk(*)\\Disk Reads/sec\", \"\\PhysicalDisk(*)\\Disk Writes/sec\" -SampleInterval 1 -MaxSamples 1 | ConvertTo-Json"',
+  ),
+  battery._(
+    'powershell -c "Get-WmiObject -Class Win32_Battery | Select-Object EstimatedChargeRemaining, BatteryStatus | ConvertTo-Json"',
+  ),
+  nvidia._(
+    'powershell -c "if (Get-Command nvidia-smi -ErrorAction SilentlyContinue) { nvidia-smi -q -x } else { echo \'NVIDIA driver not found\' }"',
+  ),
+  amd._(
+    'powershell -c "if (Get-Command amd-smi -ErrorAction SilentlyContinue) { amd-smi list --json } else { echo \'AMD driver not found\' }"',
+  ),
+  sensors._(
+    'powershell -c "Get-CimInstance -ClassName Win32_TemperatureProbe -ErrorAction SilentlyContinue | Select-Object Name, CurrentReading | ConvertTo-Json"',
+  ),
+  diskSmart._(
+    'powershell -c "Get-PhysicalDisk | Get-StorageReliabilityCounter | Select-Object DeviceId, Temperature, TemperatureMax, Wear, PowerOnHours | ConvertTo-Json"',
+  ),
   cpuBrand._('powershell -c "(Get-WmiObject -Class Win32_Processor).Name"');
 
   final String cmd;
 
   const WindowsStatusCmdType._(this.cmd);
+}
+
+extension EnumX on Enum {
+  /// Find out the required segment from [segments]
+  String find(List<String> segments) {
+    return segments[index];
+  }
 }

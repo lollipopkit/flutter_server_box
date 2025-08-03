@@ -308,28 +308,35 @@ class ServerProvider extends Provider {
         // First, check if custom system type is defined, otherwise detect system type
         SystemType? detectedSystemType = spi.customSystemType;
         if (detectedSystemType == null) {
-          try {
-            final systemDetectResult = await sv.client?.run('echo ${SystemType.windowsSign} 2>/dev/null || echo ${SystemType.linuxSign}').string;
-            if (systemDetectResult?.contains(SystemType.windowsSign) == true) {
-              detectedSystemType = SystemType.windows;
-            } else if (systemDetectResult?.contains('Darwin') == true) {
-              detectedSystemType = SystemType.bsd;
-            } else {
-              detectedSystemType = SystemType.linux;
-            }
-          } catch (e) {
-            // Default to Unix if detection fails
+          // Try to detect Unix/Linux/BSD systems first (most common case)
+          final unixResult = await sv.client?.run('uname -a').string ?? '';
+          if (unixResult.contains('Linux')) {
             detectedSystemType = SystemType.linux;
+            dprint('Detected Linux system type for ${spi.oldId}');
+          } else if (unixResult.contains('Darwin') || unixResult.contains('BSD')) {
+            detectedSystemType = SystemType.bsd;
+            dprint('Detected BSD system type for ${spi.oldId}');
+          } else {
+            // Try alternative Windows detection methods
+            final powershellResult =
+                await sv.client?.run('powershell -c "Get-ComputerInfo -Property OsName" 2>nul').string ?? '';
+            if (powershellResult.isNotEmpty && powershellResult.contains('Windows')) {
+              detectedSystemType = SystemType.windows;
+              dprint('Detected Windows system type for ${spi.oldId}');
+            }
           }
         }
+
+        detectedSystemType ??= SystemType.linux;
+        sv.status.system = detectedSystemType;
 
         final (_, writeScriptResult) = await sv.client!.exec((session) async {
           final scriptRaw = ShellFunc.allScript(spi.custom?.cmds, systemType: detectedSystemType).uint8List;
           session.stdin.add(scriptRaw);
           session.stdin.close();
         }, entry: ShellFunc.getInstallShellCmd(spi.id, systemType: detectedSystemType));
-        if (writeScriptResult.isNotEmpty) {
-          ShellFunc.switchScriptDir(spi.id);
+        if (writeScriptResult.isNotEmpty && detectedSystemType != SystemType.windows) {
+          ShellFunc.switchScriptDir(spi.id, systemType: detectedSystemType);
           throw writeScriptResult;
         }
       } on SSHAuthAbortError catch (e) {
@@ -372,6 +379,7 @@ class ServerProvider extends Provider {
       // Use system type for script execution if we have it from previous status
       final systemType = sv.status.system;
       raw = await sv.client?.run(ShellFunc.status.exec(spi.id, systemType: systemType)).string;
+      dprint('Get status from ${spi.name}:\n$raw');
       segments = raw?.split(ShellFunc.seperator).map((e) => e.trim()).toList();
       if (raw == null || raw.isEmpty || segments == null || segments.isEmpty) {
         if (Stores.setting.keepStatusWhenErr.fetch()) {

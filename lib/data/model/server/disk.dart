@@ -70,14 +70,14 @@ class Disk with EquatableMixin {
     if (disk != null) {
       list.add(disk);
     }
-    
+
     // For devices with children (like physical disks with partitions),
     // also process each child individually to ensure BTRFS RAID disks are properly handled
     final List<dynamic> childDevices = device['children'] ?? [];
     for (final childDevice in childDevices) {
       final String childPath = childDevice['path']?.toString() ?? '';
       final String childFsType = childDevice['fstype']?.toString() ?? '';
-      
+
       // If this is a BTRFS partition, add it directly to ensure it's properly represented
       if (childFsType == 'btrfs' && childPath.isNotEmpty) {
         final childDisk = _processSingleDevice(childDevice);
@@ -93,11 +93,11 @@ class Disk with EquatableMixin {
     final fstype = device['fstype']?.toString();
     final String mountpoint = device['mountpoint']?.toString() ?? '';
     final String path = device['path']?.toString() ?? '';
-    
+
     if (path.isEmpty || (fstype == null && mountpoint.isEmpty)) {
       return null;
     }
-    
+
     if (!_shouldCalc(fstype ?? '', mountpoint)) {
       return null;
     }
@@ -154,8 +154,7 @@ class Disk with EquatableMixin {
     }
 
     // Handle common filesystem cases or parent devices with children
-    if ((fstype != null && _shouldCalc(fstype, mount)) ||
-        (childDisks.isNotEmpty && path.isNotEmpty)) {
+    if ((fstype != null && _shouldCalc(fstype, mount)) || (childDisks.isNotEmpty && path.isNotEmpty)) {
       final sizeStr = device['fssize']?.toString() ?? '0';
       final size = (BigInt.tryParse(sizeStr) ?? BigInt.zero) ~/ BigInt.from(1024);
 
@@ -221,14 +220,16 @@ class Disk with EquatableMixin {
         final fs = vals[0];
         final mount = vals[5];
         if (!_shouldCalc(fs, mount)) continue;
-        list.add(Disk(
-          path: fs,
-          mount: mount,
-          usedPercent: int.parse(vals[4].replaceFirst('%', '')),
-          used: BigInt.parse(vals[2]) ~/ BigInt.from(1024),
-          size: BigInt.parse(vals[1]) ~/ BigInt.from(1024),
-          avail: BigInt.parse(vals[3]) ~/ BigInt.from(1024),
-        ));
+        list.add(
+          Disk(
+            path: fs,
+            mount: mount,
+            usedPercent: int.parse(vals[4].replaceFirst('%', '')),
+            used: BigInt.parse(vals[2]) ~/ BigInt.from(1024),
+            size: BigInt.parse(vals[1]) ~/ BigInt.from(1024),
+            avail: BigInt.parse(vals[3]) ~/ BigInt.from(1024),
+          ),
+        );
       } catch (e) {
         continue;
       }
@@ -237,8 +238,19 @@ class Disk with EquatableMixin {
   }
 
   @override
-  List<Object?> get props =>
-      [path, name, kname, fsTyp, mount, usedPercent, used, size, avail, uuid, children];
+  List<Object?> get props => [
+    path,
+    name,
+    kname,
+    fsTyp,
+    mount,
+    usedPercent,
+    used,
+    size,
+    avail,
+    uuid,
+    children,
+  ];
 }
 
 class DiskIO extends TimeSeq<List<DiskIOPiece>> {
@@ -314,12 +326,14 @@ class DiskIO extends TimeSeq<List<DiskIOPiece>> {
       try {
         final dev = vals[2];
         if (dev.startsWith('loop')) continue;
-        items.add(DiskIOPiece(
-          dev: dev,
-          sectorsRead: int.parse(vals[5]),
-          sectorsWrite: int.parse(vals[9]),
-          time: time,
-        ));
+        items.add(
+          DiskIOPiece(
+            dev: dev,
+            sectorsRead: int.parse(vals[5]),
+            sectorsWrite: int.parse(vals[9]),
+            time: time,
+          ),
+        );
       } catch (e) {
         continue;
       }
@@ -334,12 +348,7 @@ class DiskIOPiece extends TimeSeqIface<DiskIOPiece> {
   final int sectorsWrite;
   final int time;
 
-  DiskIOPiece({
-    required this.dev,
-    required this.sectorsRead,
-    required this.sectorsWrite,
-    required this.time,
-  });
+  DiskIOPiece({required this.dev, required this.sectorsRead, required this.sectorsWrite, required this.time});
 
   @override
   bool same(DiskIOPiece other) => dev == other.dev;
@@ -349,10 +358,7 @@ class DiskUsage {
   final BigInt used;
   final BigInt size;
 
-  DiskUsage({
-    required this.used,
-    required this.size,
-  });
+  DiskUsage({required this.used, required this.size});
 
   double get usedPercent {
     // Avoid division by zero

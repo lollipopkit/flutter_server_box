@@ -12,10 +12,7 @@ class ServerOrderPage extends StatefulWidget {
   @override
   State<ServerOrderPage> createState() => _ServerOrderPageState();
 
-  static const route = AppRouteNoArg(
-    page: ServerOrderPage.new,
-    path: '/settings/order/server',
-  );
+  static const route = AppRouteNoArg(page: ServerOrderPage.new, path: '/settings/order/server');
 }
 
 class _ServerOrderPageState extends State<ServerOrderPage> {
@@ -36,10 +33,7 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
         final double scale = lerpDouble(1, 1.02, animValue)!;
         return Transform.scale(
           scale: scale,
-          child: Card(
-            elevation: elevation,
-            child: child,
-          ),
+          child: Card(elevation: elevation, child: child),
         );
       },
       child: _buildCardTile(index),
@@ -56,11 +50,7 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
         footer: const SizedBox(height: 77),
         onReorder: (oldIndex, newIndex) {
           setState(() {
-            orders.value.move(
-              oldIndex,
-              newIndex,
-              property: Stores.setting.serverOrder,
-            );
+            orders.value.move(oldIndex, newIndex, property: Stores.setting.serverOrder);
           });
         },
         padding: const EdgeInsets.all(8),
@@ -78,9 +68,7 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
       index: index,
       child: Padding(
         padding: const EdgeInsets.only(bottom: 8),
-        child: CardX(
-          child: _buildCardTile(index),
-        ),
+        child: CardX(child: _buildCardTile(index)),
       ),
     );
   }
@@ -93,20 +81,14 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
     }
 
     return ListTile(
-      title: Text(
-        spi.name,
-        style: const TextStyle(fontWeight: FontWeight.w500),
-      ),
+      title: Text(spi.name, style: const TextStyle(fontWeight: FontWeight.w500)),
       subtitle: Text(spi.oldId, style: UIs.textGrey),
       leading: CircleAvatar(
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Theme.of(context).colorScheme.onPrimary,
         child: Text(spi.name[0]),
       ),
-      trailing: ReorderableDragStartListener(
-        index: index,
-        child: const Icon(Icons.drag_handle),
-      ),
+      trailing: ReorderableDragStartListener(index: index, child: const Icon(Icons.drag_handle)),
     );
   }
 }

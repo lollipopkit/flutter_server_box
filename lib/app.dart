@@ -40,17 +40,13 @@ class MyApp extends StatelessWidget {
       light: ThemeData(
         useMaterial3: true,
         colorSchemeSeed: UIs.colorSeed,
-        appBarTheme: AppBarTheme(
-          scrolledUnderElevation: 0.0,
-        ),
+        appBarTheme: AppBarTheme(scrolledUnderElevation: 0.0),
       ),
       dark: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
         colorSchemeSeed: UIs.colorSeed,
-        appBarTheme: AppBarTheme(
-          scrolledUnderElevation: 0.0,
-        ),
+        appBarTheme: AppBarTheme(scrolledUnderElevation: 0.0),
       ),
     );
   }
@@ -58,15 +54,8 @@ class MyApp extends StatelessWidget {
   Widget _buildDynamicColor(BuildContext context) {
     return DynamicColorBuilder(
       builder: (light, dark) {
-        final lightTheme = ThemeData(
-          useMaterial3: true,
-          colorScheme: light,
-        );
-        final darkTheme = ThemeData(
-          useMaterial3: true,
-          brightness: Brightness.dark,
-          colorScheme: dark,
-        );
+        final lightTheme = ThemeData(useMaterial3: true, colorScheme: light);
+        final darkTheme = ThemeData(useMaterial3: true, brightness: Brightness.dark, colorScheme: dark);
         if (context.isDark && dark != null) {
           UIs.primaryColor = dark.primary;
         } else if (!context.isDark && light != null) {
@@ -78,11 +67,7 @@ class MyApp extends StatelessWidget {
     );
   }
 
-  Widget _buildApp(
-    BuildContext ctx, {
-    required ThemeData light,
-    required ThemeData dark,
-  }) {
+  Widget _buildApp(BuildContext ctx, {required ThemeData light, required ThemeData dark}) {
     final tMode = Stores.setting.themeMode.fetch();
     // Issue #57
     final themeMode = switch (tMode) {
@@ -103,10 +88,7 @@ class MyApp extends StatelessWidget {
         ],
       ),
       locale: locale,
-      localizationsDelegates: const [
-        LibLocalizations.delegate,
-        ...AppLocalizations.localizationsDelegates,
-      ],
+      localizationsDelegates: const [LibLocalizations.delegate, ...AppLocalizations.localizationsDelegates],
       supportedLocales: AppLocalizations.supportedLocales,
       localeListResolutionCallback: LocaleUtil.resolve,
       navigatorObservers: [AppRouteObserver.instance],
@@ -128,10 +110,7 @@ class MyApp extends StatelessWidget {
 
           child = const HomePage();
 
-          return VirtualWindowFrame(
-            title: BuildData.name,
-            child: child,
-          );
+          return VirtualWindowFrame(title: BuildData.name, child: child);
         },
       ),
     );

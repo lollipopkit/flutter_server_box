@@ -6,17 +6,11 @@ class Conn {
   final int passive;
   final int fail;
 
-  const Conn({
-    required this.maxConn,
-    required this.active,
-    required this.passive,
-    required this.fail,
-  });
+  const Conn({required this.maxConn, required this.active, required this.passive, required this.fail});
 
   static Conn? parse(String raw) {
     final lines = raw.split('\n');
-    final idx = lines.lastWhere((element) => element.startsWith('Tcp:'),
-        orElse: () => '');
+    final idx = lines.lastWhere((element) => element.startsWith('Tcp:'), orElse: () => '');
     if (idx != '') {
       final vals = idx.split(Miscs.blankReg);
       return Conn(

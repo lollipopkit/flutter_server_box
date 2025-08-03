@@ -61,7 +61,7 @@ extension on _ServerDetailPageState {
       titleMaxLines: 1,
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,  
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           UIs.height13,
           Text('Memory: ${process.memory} ${process.memory > 1024 ? 'MB' : 'KB'}'),

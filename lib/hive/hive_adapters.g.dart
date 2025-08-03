@@ -560,3 +560,44 @@ class WakeOnLanCfgAdapter extends TypeAdapter<WakeOnLanCfg> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+class SystemTypeAdapter extends TypeAdapter<SystemType> {
+  @override
+  final typeId = 9;
+
+  @override
+  SystemType read(BinaryReader reader) {
+    switch (reader.readByte()) {
+      case 0:
+        return SystemType.linux;
+      case 1:
+        return SystemType.bsd;
+      case 2:
+        return SystemType.windows;
+      default:
+        return SystemType.linux;
+    }
+  }
+
+  @override
+  void write(BinaryWriter writer, SystemType obj) {
+    switch (obj) {
+      case SystemType.linux:
+        writer.writeByte(0);
+      case SystemType.bsd:
+        writer.writeByte(1);
+      case SystemType.windows:
+        writer.writeByte(2);
+    }
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SystemTypeAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}

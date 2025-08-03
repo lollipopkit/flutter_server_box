@@ -107,10 +107,7 @@ class PsResult {
   final List<Proc> procs;
   final String? error;
 
-  const PsResult({
-    required this.procs,
-    this.error,
-  });
+  const PsResult({required this.procs, this.error});
 
   factory PsResult.parse(String raw, {ProcSortMode sort = ProcSortMode.cpu}) {
     final lines = raw.split('\n').map((e) => e.trim()).toList();
@@ -167,14 +164,7 @@ class PsResult {
   }
 }
 
-enum ProcSortMode {
-  cpu,
-  mem,
-  pid,
-  user,
-  name,
-  ;
-}
+enum ProcSortMode { cpu, mem, pid, user, name }
 
 extension _StrIndex on List<String> {
   int? indexOfOrNull(String val) {

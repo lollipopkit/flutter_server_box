@@ -5,9 +5,7 @@ final class _IntroPage extends StatelessWidget {
 
   const _IntroPage(this.pages);
 
-  static const _builders = {
-    1: _buildAppSettings,
-  };
+  static const _builders = {1: _buildAppSettings};
 
   @override
   Widget build(BuildContext context) {
@@ -20,9 +18,7 @@ final class _IntroPage extends StatelessWidget {
             pages: pages_,
             onDone: (ctx) {
               Stores.setting.introVer.put(BuildData.build);
-              Navigator.of(ctx).pushReplacement(
-                MaterialPageRoute(builder: (_) => const HomePage()),
-              );
+              Navigator.of(ctx).pushReplacement(MaterialPageRoute(builder: (_) => const HomePage()));
             },
           ),
         );
@@ -52,17 +48,12 @@ final class _IntroPage extends StatelessWidget {
               RNodes.app.notify();
             }
           },
-          trailing: Text(
-            ctx.localeNativeName,
-            style: const TextStyle(fontSize: 15, color: Colors.grey),
-          ),
+          trailing: Text(ctx.localeNativeName, style: const TextStyle(fontSize: 15, color: Colors.grey)),
         ).cardx,
         ListTile(
           leading: const Icon(Icons.update),
           title: Text(libL10n.checkUpdate),
-          subtitle: isAndroid
-              ? Text(l10n.fdroidReleaseTip, style: UIs.textGrey)
-              : null,
+          subtitle: isAndroid ? Text(l10n.fdroidReleaseTip, style: UIs.textGrey) : null,
           trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),
         ).cardx,
         ListTile(
@@ -87,10 +78,7 @@ final class _IntroPage extends StatelessWidget {
 
   static List<IntroPageBuilder> get builders {
     final storedVer = _setting.introVer.fetch();
-    return _builders.entries
-        .where((e) => e.key > storedVer)
-        .map((e) => e.value)
-        .toList();
+    return _builders.entries.where((e) => e.key > storedVer).map((e) => e.value).toList();
   }
 
   static final _setting = Stores.setting;

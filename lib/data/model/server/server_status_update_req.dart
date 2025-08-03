@@ -44,8 +44,7 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   final segments = req.segments;
 
   final time =
-      int.tryParse(StatusCmdType.time.find(segments)) ??
-      DateTime.now().millisecondsSinceEpoch ~/ 1000;
+      int.tryParse(StatusCmdType.time.find(segments)) ?? DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
   try {
     final net = NetSpeed.parse(StatusCmdType.net.find(segments), time);
@@ -83,10 +82,7 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   }
 
   try {
-    req.ss.temps.parse(
-      StatusCmdType.tempType.find(segments),
-      StatusCmdType.tempVal.find(segments),
-    );
+    req.ss.temps.parse(StatusCmdType.tempType.find(segments), StatusCmdType.tempVal.find(segments));
   } catch (e, s) {
     Loggers.app.warning(e, s);
   }
@@ -271,8 +267,7 @@ Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
   // Parse time for potential future use in network/disk I/O monitoring
   // ignore: unused_local_variable
   final time =
-      int.tryParse(WindowsStatusCmdType.time.find(segments)) ??
-      DateTime.now().millisecondsSinceEpoch ~/ 1000;
+      int.tryParse(WindowsStatusCmdType.time.find(segments)) ?? DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
   try {
     // Windows network parsing - JSON format from PowerShell
@@ -309,12 +304,12 @@ Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
     // Windows CPU parsing - JSON format from PowerShell
     final cpuRaw = WindowsStatusCmdType.cpu.find(segments);
     if (cpuRaw.isNotEmpty && cpuRaw != 'null') {
-      final cpus = _parseWindowsCpu(cpuRaw);
+      final cpus = _parseWindowsCpu(cpuRaw, req.ss);
       if (cpus.isNotEmpty) {
         req.ss.cpu.update(cpus);
       }
     }
-    
+
     // Windows CPU brand parsing
     final brandRaw = WindowsStatusCmdType.cpuBrand.find(segments);
     if (brandRaw.isNotEmpty && brandRaw != 'null') {
@@ -364,12 +359,7 @@ Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
     final connStr = WindowsStatusCmdType.conn.find(segments);
     final connCount = int.tryParse(connStr.trim());
     if (connCount != null) {
-      req.ss.tcp = Conn(
-        maxConn: 0,
-        active: connCount,
-        passive: 0,
-        fail: 0,
-      );
+      req.ss.tcp = Conn(maxConn: 0, active: connCount, passive: 0, fail: 0);
     }
   } catch (e, s) {
     Loggers.app.warning(e, s);
@@ -393,8 +383,7 @@ Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
     // Windows temperature parsing - JSON format
     final tempTypeRaw = WindowsStatusCmdType.tempType.find(segments);
     final tempValRaw = WindowsStatusCmdType.tempVal.find(segments);
-    if (tempTypeRaw.isNotEmpty && tempValRaw.isNotEmpty && 
-        tempTypeRaw != 'null' && tempValRaw != 'null') {
+    if (tempTypeRaw.isNotEmpty && tempValRaw.isNotEmpty && tempTypeRaw != 'null' && tempValRaw != 'null') {
       _parseWindowsTemperatures(req.ss.temps, tempTypeRaw, tempValRaw);
     }
   } catch (e, s) {
@@ -433,11 +422,11 @@ String? _parseWindowsUpTime(String raw) {
     final bootTime = DateTime.parse(raw);
     final now = DateTime.now();
     final uptime = now.difference(bootTime);
-    
+
     final days = uptime.inDays;
     final hours = uptime.inHours % 24;
     final minutes = uptime.inMinutes % 60;
-    
+
     if (days > 0) {
       return '$days days, $hours:${minutes.toString().padLeft(2, '0')}';
     } else {
@@ -448,48 +437,68 @@ String? _parseWindowsUpTime(String raw) {
   }
 }
 
-List<SingleCpuCore> _parseWindowsCpu(String raw) {
+List<SingleCpuCore> _parseWindowsCpu(String raw, ServerStatus serverStatus) {
   try {
     final dynamic jsonData = json.decode(raw);
     final List<SingleCpuCore> cpus = [];
-    
+
     if (jsonData is List) {
       for (int i = 0; i < jsonData.length; i++) {
         final cpu = jsonData[i];
         final loadPercentage = cpu['LoadPercentage'] ?? 0;
-        // Windows doesn't provide detailed CPU stats like Linux, so we simulate them
         final usage = loadPercentage as int;
         final idle = 100 - usage;
-        
-        cpus.add(SingleCpuCore(
-          'cpu$i',
-          usage, // user
-          0,     // sys (not available)
-          0,     // nice (not available)  
-          idle,  // idle
-          0,     // iowait (not available)
-          0,     // irq (not available)
-          0,     // softirq (not available)
-        ));
+
+        // Get previous CPU data to calculate cumulative values
+        final prevCpus = serverStatus.cpu.now;
+        final prevCpu = i < prevCpus.length ? prevCpus[i] : null;
+
+        // Create cumulative counters by adding current percentages to previous totals
+        // This allows the existing delta-based calculation to work properly
+        final newUser = (prevCpu?.user ?? 0) + usage;
+        final newIdle = (prevCpu?.idle ?? 0) + idle;
+
+        cpus.add(
+          SingleCpuCore(
+            'cpu$i',
+            newUser, // cumulative user time
+            0, // sys (not available)
+            0, // nice (not available)
+            newIdle, // cumulative idle time
+            0, // iowait (not available)
+            0, // irq (not available)
+            0, // softirq (not available)
+          ),
+        );
       }
     } else if (jsonData is Map) {
       // Single CPU core
       final loadPercentage = jsonData['LoadPercentage'] ?? 0;
       final usage = loadPercentage as int;
       final idle = 100 - usage;
-      
-      cpus.add(SingleCpuCore(
-        'cpu0',
-        usage, // user
-        0,     // sys
-        0,     // nice
-        idle,  // idle
-        0,     // iowait
-        0,     // irq
-        0,     // softirq
-      ));
+
+      // Get previous CPU data to calculate cumulative values
+      final prevCpus = serverStatus.cpu.now;
+      final prevCpu = prevCpus.isNotEmpty ? prevCpus[0] : null;
+
+      // Create cumulative counters by adding current percentages to previous totals
+      final newUser = (prevCpu?.user ?? 0) + usage;
+      final newIdle = (prevCpu?.idle ?? 0) + idle;
+
+      cpus.add(
+        SingleCpuCore(
+          'cpu0',
+          newUser, // cumulative user time
+          0, // sys
+          0, // nice
+          newIdle, // cumulative idle time
+          0, // iowait
+          0, // irq
+          0, // softirq
+        ),
+      );
     }
-    
+
     return cpus;
   } catch (e) {
     return [];
@@ -500,13 +509,13 @@ Memory? _parseWindowsMemory(String raw) {
   try {
     final dynamic jsonData = json.decode(raw);
     final data = jsonData is List ? jsonData.first : jsonData;
-    
+
     final totalKB = data['TotalVisibleMemorySize'] as int? ?? 0;
     final freeKB = data['FreePhysicalMemory'] as int? ?? 0;
-    
+
     return Memory(
       total: totalKB,
-      free: freeKB, 
+      free: freeKB,
       avail: freeKB, // Windows doesn't distinguish between free and available
     );
   } catch (e) {
@@ -518,34 +527,35 @@ List<Disk> _parseWindowsDisks(String raw) {
   try {
     final dynamic jsonData = json.decode(raw);
     final List<Disk> disks = [];
-    
+
     final diskList = jsonData is List ? jsonData : [jsonData];
-    
+
     for (final diskData in diskList) {
       final deviceId = diskData['DeviceID']?.toString() ?? '';
       final size = BigInt.tryParse(diskData['Size']?.toString() ?? '0') ?? BigInt.zero;
       final freeSpace = BigInt.tryParse(diskData['FreeSpace']?.toString() ?? '0') ?? BigInt.zero;
       final fileSystem = diskData['FileSystem']?.toString();
-      
+
       if (deviceId.isEmpty || size == BigInt.zero) continue;
-      
+
       final sizeKB = size ~/ BigInt.from(1024);
       final freeKB = freeSpace ~/ BigInt.from(1024);
       final usedKB = sizeKB - freeKB;
-      final usedPercent = sizeKB > BigInt.zero ? 
-        ((usedKB * BigInt.from(100)) ~/ sizeKB).toInt() : 0;
-      
-      disks.add(Disk(
-        path: deviceId,
-        fsTyp: fileSystem,
-        mount: deviceId,
-        usedPercent: usedPercent,
-        used: usedKB,
-        size: sizeKB,
-        avail: freeKB,
-      ));
+      final usedPercent = sizeKB > BigInt.zero ? ((usedKB * BigInt.from(100)) ~/ sizeKB).toInt() : 0;
+
+      disks.add(
+        Disk(
+          path: deviceId,
+          fsTyp: fileSystem,
+          mount: deviceId,
+          usedPercent: usedPercent,
+          used: usedKB,
+          size: sizeKB,
+          avail: freeKB,
+        ),
+      );
     }
-    
+
     return disks;
   } catch (e) {
     return [];
@@ -556,23 +566,25 @@ List<Battery> _parseWindowsBatteries(String raw) {
   try {
     final dynamic jsonData = json.decode(raw);
     final List<Battery> batteries = [];
-    
+
     final batteryList = jsonData is List ? jsonData : [jsonData];
-    
+
     for (final batteryData in batteryList) {
       final chargeRemaining = batteryData['EstimatedChargeRemaining'] as int? ?? 0;
       final batteryStatus = batteryData['BatteryStatus'] as int? ?? 0;
-      
+
       // Windows battery status: 1=Other, 2=Unknown, 3=Full, 4=Low, 5=Critical, 6=Charging, 7=ChargingAndLow, 8=ChargingAndCritical, 9=Undefined, 10=PartiallyCharged
       final isCharging = batteryStatus == 6 || batteryStatus == 7 || batteryStatus == 8;
-      
-      batteries.add(Battery(
-        name: 'Battery',
-        percent: chargeRemaining,
-        status: isCharging ? BatteryStatus.charging : BatteryStatus.discharging,
-      ));
+
+      batteries.add(
+        Battery(
+          name: 'Battery',
+          percent: chargeRemaining,
+          status: isCharging ? BatteryStatus.charging : BatteryStatus.discharging,
+        ),
+      );
     }
-    
+
     return batteries;
   } catch (e) {
     return [];
@@ -583,19 +595,19 @@ void _parseWindowsTemperatures(Temperatures temps, String typeRaw, String valRaw
   try {
     final dynamic typeData = json.decode(typeRaw);
     final dynamic valData = json.decode(valRaw);
-    
+
     final typeList = typeData is List ? typeData : [typeData];
     final valList = valData is List ? valData : [valData];
-    
+
     // Since we can't access _map directly, we'll need to simulate the Linux parse method
     // by creating fake type and value strings that the existing parse method can handle
     final typeLines = <String>[];
     final valueLines = <String>[];
-    
+
     for (int i = 0; i < typeList.length && i < valList.length; i++) {
       final name = typeList[i]['Name']?.toString() ?? 'Unknown';
       final value = valList[i]['Value'] as double?;
-      
+
       if (value != null) {
         // Convert to the format expected by the existing parse method
         typeLines.add('/sys/class/thermal/thermal_zone$i/$name');
@@ -603,7 +615,7 @@ void _parseWindowsTemperatures(Temperatures temps, String typeRaw, String valRaw
         valueLines.add((value * 1000).round().toString());
       }
     }
-    
+
     if (typeLines.isNotEmpty && valueLines.isNotEmpty) {
       temps.parse(typeLines.join('\n'), valueLines.join('\n'));
     }

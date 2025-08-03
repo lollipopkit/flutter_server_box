@@ -11,19 +11,14 @@ class SftpMissionPage extends StatefulWidget {
   @override
   State<SftpMissionPage> createState() => _SftpMissionPageState();
 
-  static const route = AppRouteNoArg(
-    page: SftpMissionPage.new,
-    path: '/sftp/mission',
-  );
+  static const route = AppRouteNoArg(page: SftpMissionPage.new, path: '/sftp/mission');
 }
 
 class _SftpMissionPageState extends State<SftpMissionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-        title: Text(l10n.mission, style: UIs.text18),
-      ),
+      appBar: CustomAppBar(title: Text(l10n.mission, style: UIs.text18)),
       body: _buildBody(),
     );
   }
@@ -50,10 +45,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
         status: status,
         subtitle: libL10n.error,
         trailing: IconButton(
-          onPressed: () => context.showRoundDialog(
-            title: libL10n.error,
-            child: Text(err.toString()),
-          ),
+          onPressed: () => context.showRoundDialog(title: libL10n.error, child: Text(err.toString())),
           icon: const Icon(Icons.error),
         ),
       );
@@ -109,9 +101,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
 
   Widget _buildFinished(SftpReqStatus status) {
     final time = status.spentTime.toString();
-    final str = l10n.spentTime(
-      time == 'null' ? l10n.unknown : (time.substring(0, time.length - 7)),
-    );
+    final str = l10n.spentTime(time == 'null' ? l10n.unknown : (time.substring(0, time.length - 7)));
 
     final btns = Row(
       mainAxisSize: MainAxisSize.min,
@@ -120,41 +110,26 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
           onPressed: () {
             final idx = status.req.localPath.lastIndexOf(Pfs.seperator);
             final dir = status.req.localPath.substring(0, idx);
-            LocalFilePage.route.go(
-              context,
-              args: LocalFilePageArgs(initDir: dir),
-            );
+            LocalFilePage.route.go(context, args: LocalFilePageArgs(initDir: dir));
           },
           icon: const Icon(Icons.file_open),
         ),
         IconButton(
           onPressed: () => Pfs.sharePaths(paths: [status.req.localPath]),
           icon: const Icon(Icons.open_in_new),
-        )
+        ),
       ],
     );
 
-    return _wrapInCard(
-      status: status,
-      subtitle: str,
-      trailing: btns,
-    );
+    return _wrapInCard(status: status, subtitle: str, trailing: btns);
   }
 
-  Widget _wrapInCard({
-    required SftpReqStatus status,
-    String? subtitle,
-    Widget? trailing,
-  }) {
+  Widget _wrapInCard({required SftpReqStatus status, String? subtitle, Widget? trailing}) {
     final time = DateTime.fromMicrosecondsSinceEpoch(status.id);
     return CardX(
       child: ListTile(
         leading: Text(time.hourMinute),
-        title: Text(
-          status.fileName,
-          overflow: TextOverflow.ellipsis,
-          maxLines: 1,
-        ),
+        title: Text(status.fileName, overflow: TextOverflow.ellipsis, maxLines: 1),
         subtitle: subtitle == null ? null : Text(subtitle, style: UIs.textGrey),
         trailing: trailing,
       ),
@@ -165,9 +140,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
     return IconButton(
       onPressed: () => context.showRoundDialog(
         title: libL10n.attention,
-        child: Text(libL10n.askContinue(
-          '${libL10n.delete} ${l10n.mission}($name)',
-        )),
+        child: Text(libL10n.askContinue('${libL10n.delete} ${l10n.mission}($name)')),
         actions: Btn.ok(
           onTap: () {
             SftpProvider.cancel(id);

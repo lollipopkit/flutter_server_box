@@ -16,10 +16,7 @@ import 'package:server_box/view/page/storage/sftp_mission.dart';
 final class LocalFilePageArgs {
   final bool? isPickFile;
   final String? initDir;
-  const LocalFilePageArgs({
-    this.isPickFile,
-    this.initDir,
-  });
+  const LocalFilePageArgs({this.isPickFile, this.initDir});
 }
 
 class LocalFilePage extends StatefulWidget {
@@ -27,10 +24,7 @@ class LocalFilePage extends StatefulWidget {
 
   const LocalFilePage({super.key, this.args});
 
-  static const route = AppRoute<String, LocalFilePageArgs>(
-    page: LocalFilePage.new,
-    path: '/files/local',
-  );
+  static const route = AppRoute<String, LocalFilePageArgs>(page: LocalFilePage.new, path: '/files/local');
 
   @override
   State<LocalFilePage> createState() => _LocalFilePageState();
@@ -98,9 +92,7 @@ class _LocalFilePageState extends State<LocalFilePage> with AutomaticKeepAliveCl
     Future<List<(FileSystemEntity, FileStat)>> getEntities() async {
       final files = await Directory(_path.path).list().toList();
       final sorted = _sortType.value.sort(files);
-      final stats = await Future.wait(
-        sorted.map((e) async => (e, await e.stat())),
-      );
+      final stats = await Future.wait(sorted.map((e) async => (e, await e.stat())));
       return stats;
     }
 
@@ -133,12 +125,7 @@ class _LocalFilePageState extends State<LocalFilePage> with AutomaticKeepAliveCl
             final stat = item.$2;
             final isDir = stat.type == FileSystemEntityType.directory;
 
-            return _buildItem(
-              file: file,
-              fileName: fileName,
-              stat: stat,
-              isDir: isDir,
-            );
+            return _buildItem(file: file, fileName: fileName, stat: stat, isDir: isDir);
           },
         );
       },
@@ -156,10 +143,7 @@ class _LocalFilePageState extends State<LocalFilePage> with AutomaticKeepAliveCl
         leading: isDir ? const Icon(Icons.folder_open) : const Icon(Icons.insert_drive_file),
         title: Text(fileName),
         subtitle: isDir ? null : Text(stat.size.bytes2Str, style: UIs.textGrey),
-        trailing: Text(
-          stat.modified.ymdhms(),
-          style: UIs.textGrey,
-        ),
+        trailing: Text(stat.modified.ymdhms(), style: UIs.textGrey),
         onLongPress: () {
           if (isDir) {
             _showDirActionDialog(file);
@@ -187,17 +171,15 @@ class _LocalFilePageState extends State<LocalFilePage> with AutomaticKeepAliveCl
   }
 
   Widget _buildSortBtn() {
-    return _sortType.listenVal(
-      (value) {
-        return PopupMenuButton<_SortType>(
-          icon: const Icon(Icons.sort),
-          itemBuilder: (_) => _SortType.values.map((e) => e.menuItem).toList(),
-          onSelected: (value) {
-            _sortType.value = value;
-          },
-        );
-      },
-    );
+    return _sortType.listenVal((value) {
+      return PopupMenuButton<_SortType>(
+        icon: const Icon(Icons.sort),
+        itemBuilder: (_) => _SortType.values.map((e) => e.menuItem).toList(),
+        onSelected: (value) {
+          _sortType.value = value;
+        },
+      );
+    });
   }
 
   @override
@@ -238,10 +220,12 @@ extension _Actions on _LocalFilePageState {
         title: libL10n.file,
         child: Text(fileName),
         actions: [
-          Btn.ok(onTap: () {
-            context.pop();
-            context.pop(file.path);
-          }),
+          Btn.ok(
+            onTap: () {
+              context.pop();
+              context.pop(file.path);
+            },
+          ),
         ],
       );
       return;
@@ -382,21 +366,13 @@ extension _OnTapFile on _LocalFilePageState {
     );
     if (spi == null) return;
 
-    final args = SftpPageArgs(
-      spi: spi,
-      isSelect: true,
-    );
+    final args = SftpPageArgs(spi: spi, isSelect: true);
     final remotePath = await SftpPage.route.go(context, args);
     if (remotePath == null) {
       return;
     }
 
-    SftpProvider.add(SftpReq(
-      spi,
-      '$remotePath/$fileName',
-      file.absolute.path,
-      SftpReqType.upload,
-    ));
+    SftpProvider.add(SftpReq(spi, '$remotePath/$fileName', file.absolute.path, SftpReqType.upload));
     context.showSnackBar(l10n.added2List);
   }
 }
@@ -404,8 +380,7 @@ extension _OnTapFile on _LocalFilePageState {
 enum _SortType {
   name,
   size,
-  time,
-  ;
+  time;
 
   List<FileSystemEntity> sort(List<FileSystemEntity> files) {
     switch (this) {
@@ -423,27 +398,21 @@ enum _SortType {
   }
 
   String get i18n => switch (this) {
-        name => libL10n.name,
-        size => l10n.size,
-        time => l10n.time,
-      };
+    name => libL10n.name,
+    size => l10n.size,
+    time => l10n.time,
+  };
 
   IconData get icon => switch (this) {
-        name => Icons.sort_by_alpha,
-        size => Icons.sort,
-        time => Icons.access_time,
-      };
+    name => Icons.sort_by_alpha,
+    size => Icons.sort,
+    time => Icons.access_time,
+  };
 
   PopupMenuItem<_SortType> get menuItem {
     return PopupMenuItem(
       value: this,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          Icon(icon),
-          Text(i18n),
-        ],
-      ),
+      child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [Icon(icon), Text(i18n)]),
     );
   }
 }

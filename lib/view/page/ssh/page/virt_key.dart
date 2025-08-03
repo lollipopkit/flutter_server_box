@@ -88,10 +88,7 @@ extension _VirtKey on SSHPageState {
         while (initPath == null) {
           // Check if we've exceeded timeout
           if (DateTime.now().difference(startTime) > timeout) {
-            contextSafe?.showRoundDialog(
-              title: libL10n.error,
-              child: Text(libL10n.empty),
-            );
+            contextSafe?.showRoundDialog(title: libL10n.error, child: Text(libL10n.empty));
             return;
           }
 
@@ -119,10 +116,7 @@ extension _VirtKey on SSHPageState {
         }
 
         if (!initPath.startsWith('/')) {
-          context.showRoundDialog(
-            title: libL10n.error,
-            child: Text('${l10n.remotePath}: $initPath'),
-          );
+          context.showRoundDialog(title: libL10n.error, child: Text('${l10n.remotePath}: $initPath'));
           return;
         }
 
@@ -138,10 +132,7 @@ extension _VirtKey on SSHPageState {
       if (text != null) {
         _terminal.textInput(text);
       } else {
-        context.showRoundDialog(
-          title: libL10n.error,
-          child: Text(libL10n.empty),
-        );
+        context.showRoundDialog(title: libL10n.error, child: Text(libL10n.empty));
       }
     });
   }

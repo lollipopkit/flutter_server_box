@@ -8,10 +8,7 @@ class PrivateKeyInfo {
   @JsonKey(name: 'private_key')
   final String key;
 
-  const PrivateKeyInfo({
-    required this.id,
-    required this.key,
-  });
+  const PrivateKeyInfo({required this.id, required this.key});
 
   factory PrivateKeyInfo.fromJson(Map<String, dynamic> json) => _$PrivateKeyInfoFromJson(json);
 

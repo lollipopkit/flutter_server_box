@@ -5,18 +5,13 @@ import 'package:flutter/material.dart';
 final class PercentCircle extends StatelessWidget {
   final double percent;
 
-  const PercentCircle({
-    super.key,
-    required this.percent,
-  });
+  const PercentCircle({super.key, required this.percent});
 
   @override
   Widget build(BuildContext context) {
     final percent = switch (this.percent) {
-      0 => 0.01,
-      100 => 99.9,
-      // NaN
-      final val when val.isNaN => 0.01,
+      <= 0.01 => 0.01,
+      >= 99.9 => 99.9,
       _ => this.percent,
     };
     return Stack(

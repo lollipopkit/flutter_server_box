@@ -76,9 +76,9 @@ final class _BackupPageState extends State<BackupPage> with AutomaticKeepAliveCl
         initiallyExpanded: false,
         children: [
           ListTile(
-            title: Text(libL10n.backup), 
-            trailing: const Icon(Icons.save), 
-            onTap: () => BackupService.backup(context, FileBackupSource())
+            title: Text(libL10n.backup),
+            trailing: const Icon(Icons.save),
+            onTap: () => BackupService.backup(context, FileBackupSource()),
           ),
           ListTile(
             trailing: const Icon(Icons.restore),
@@ -264,7 +264,6 @@ final class _BackupPageState extends State<BackupPage> with AutomaticKeepAliveCl
     ).cardx;
   }
 
-
   Future<void> _onTapWebdavDl(BuildContext context) async {
     webdavLoading.value = true;
     try {
@@ -357,7 +356,6 @@ final class _BackupPageState extends State<BackupPage> with AutomaticKeepAliveCl
     }
   }
 
-
   void _onBulkImportServers(BuildContext context) async {
     final data = await context.showImportDialog(title: l10n.server, modelDef: Spix.example.toJson());
     if (data == null) return;
@@ -393,11 +391,6 @@ final class _BackupPageState extends State<BackupPage> with AutomaticKeepAliveCl
       Loggers.app.warning('Import servers failed', e, s);
     }
   }
-
-
-
-
-
 
   @override
   bool get wantKeepAlive => true;

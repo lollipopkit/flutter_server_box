@@ -11,10 +11,7 @@ class SnippetListPage extends StatefulWidget {
   @override
   State<SnippetListPage> createState() => _SnippetListPageState();
 
-  static const route = AppRouteNoArg(
-    page: SnippetListPage.new,
-    path: '/snippets',
-  );
+  static const route = AppRouteNoArg(page: SnippetListPage.new, path: '/snippets');
 }
 
 class _SnippetListPageState extends State<SnippetListPage> with AutomaticKeepAliveClientMixin {
@@ -38,24 +35,22 @@ class _SnippetListPageState extends State<SnippetListPage> with AutomaticKeepAli
 
   Widget _buildBody() {
     // final isMobile = ResponsiveBreakpoints.of(context).isMobile;
-    return SnippetProvider.snippets.listenVal(
-      (snippets) {
-        return _tag.listenVal((tag) {
-          final child = _buildScaffold(snippets, tag);
-          // if (isMobile) {
-          return child;
-          // }
+    return SnippetProvider.snippets.listenVal((snippets) {
+      return _tag.listenVal((tag) {
+        final child = _buildScaffold(snippets, tag);
+        // if (isMobile) {
+        return child;
+        // }
 
-          // return SplitView(
-          //   controller: _splitViewCtrl,
-          //   leftWeight: 1,
-          //   rightWeight: 1.3,
-          //   initialRight: Center(child: Text(libL10n.empty)),
-          //   leftBuilder: (_, __) => child,
-          // );
-        });
-      },
-    );
+        // return SplitView(
+        //   controller: _splitViewCtrl,
+        //   leftWeight: 1,
+        //   rightWeight: 1.3,
+        //   initialRight: Center(child: Text(libL10n.empty)),
+        //   leftBuilder: (_, __) => child,
+        // );
+      });
+    });
   }
 
   Widget _buildScaffold(List<Snippet> snippets, String tag) {
@@ -104,11 +99,7 @@ class _SnippetListPageState extends State<SnippetListPage> with AutomaticKeepAli
   Widget _buildSnippetItem(Snippet snippet) {
     return ListTile(
       contentPadding: const EdgeInsets.only(left: 23, right: 17),
-      title: Text(
-        snippet.name,
-        overflow: TextOverflow.ellipsis,
-        maxLines: 1,
-      ),
+      title: Text(snippet.name, overflow: TextOverflow.ellipsis, maxLines: 1),
       subtitle: Text(
         snippet.note ?? snippet.script,
         overflow: TextOverflow.ellipsis,
@@ -119,10 +110,7 @@ class _SnippetListPageState extends State<SnippetListPage> with AutomaticKeepAli
       onTap: () {
         // final isMobile = ResponsiveBreakpoints.of(context).isMobile;
         // if (isMobile) {
-        SnippetEditPage.route.go(
-          context,
-          args: SnippetEditPageArgs(snippet: snippet),
-        );
+        SnippetEditPage.route.go(context, args: SnippetEditPageArgs(snippet: snippet));
         // } else {
         //   _splitViewCtrl.replace(SnippetEditPage(
         //     args: SnippetEditPageArgs(snippet: snippet),

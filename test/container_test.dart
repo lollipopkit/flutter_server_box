@@ -15,7 +15,7 @@ fa1215b4be74    Up 12 hours                    firefly                          
     const images = [
       'rustdesk/rustdesk-server:latest',
       'rustdesk/rustdesk-server:latest',
-      'uusec/firefly:latest'
+      'uusec/firefly:latest',
     ];
     const states = ['Up 2 hours', 'Up 41 minutes', 'Up 12 hours'];
     for (var idx = 1; idx < lines.length; idx++) {

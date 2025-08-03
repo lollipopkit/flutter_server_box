@@ -313,7 +313,7 @@ void main() {
         }
       ]
       ''';
-      
+
       final gpu = AmdSmi.fromJson(jsonWithInvalidProcess)[0];
       expect(gpu.memory.processes.length, 1);
       expect(gpu.memory.processes[0].pid, 1234);

@@ -11,12 +11,12 @@ void main() {
         expect(disks, isNotEmpty);
       }
     });
-    
+
     test('parse lsblk JSON output', () {
       final disks = Disk.parse(_jsonLsblkOutput);
       expect(disks, isNotEmpty);
-      expect(disks.length, 6);  // Should find ext4 root, vfat efi, and ext2 boot
-      
+      expect(disks.length, 6); // Should find ext4 root, vfat efi, and ext2 boot
+
       // Verify root filesystem
       final rootFs = disks.firstWhere((disk) => disk.mount == '/');
       expect(rootFs.fsTyp, 'ext4');
@@ -24,44 +24,44 @@ void main() {
       expect(rootFs.used, BigInt.parse('552718364672') ~/ BigInt.from(1024));
       expect(rootFs.avail, BigInt.parse('379457622016') ~/ BigInt.from(1024));
       expect(rootFs.usedPercent, 56);
-      
+
       // Verify boot/efi filesystem
       final efiFs = disks.firstWhere((disk) => disk.mount == '/boot/efi');
       expect(efiFs.fsTyp, 'vfat');
       expect(efiFs.size, BigInt.parse('535805952') ~/ BigInt.from(1024));
       expect(efiFs.usedPercent, 1);
-      
+
       // Verify boot filesystem
       final bootFs = disks.firstWhere((disk) => disk.mount == '/boot');
       expect(bootFs.fsTyp, 'ext2');
       expect(bootFs.usedPercent, 34);
     });
-    
+
     test('parse nested lsblk JSON output with parent/child relationships', () {
       final disks = Disk.parse(_nestedJsonLsblkOutput);
       expect(disks, isNotEmpty);
-      
+
       // Check parent device with children
       final parentDisk = disks.firstWhere((disk) => disk.path == '/dev/nvme0n1');
       expect(parentDisk.children, isNotEmpty);
       expect(parentDisk.children.length, 3);
-      
+
       // Check one of the children
       final rootPartition = parentDisk.children.firstWhere((disk) => disk.mount == '/');
       expect(rootPartition.fsTyp, 'ext4');
       expect(rootPartition.path, '/dev/nvme0n1p2');
       expect(rootPartition.usedPercent, 45);
-      
+
       // Verify we have a child partition with UUID
       final bootPartition = parentDisk.children.firstWhere((disk) => disk.mount == '/boot');
       expect(bootPartition.uuid, '12345678-abcd-1234-abcd-1234567890ab');
     });
-    
+
     test('DiskUsage handles zero size correctly', () {
       final usage = DiskUsage(used: BigInt.from(1000), size: BigInt.zero);
       expect(usage.usedPercent, 0); // Should return 0 instead of throwing
     });
-    
+
     test('DiskUsage handles null kname', () {
       final disks = [
         Disk(
@@ -74,7 +74,7 @@ void main() {
           kname: null, // Explicitly null kname
         ),
       ];
-      
+
       final usage = DiskUsage.parse(disks);
       expect(usage.used, BigInt.from(5000));
       expect(usage.size, BigInt.from(10000));
@@ -198,16 +198,16 @@ const _nestedJsonLsblkOutput = '''
 ''';
 
 const _raws = [
-//   '''
-// Filesystem     1K-blocks     Used Available Use% Mounted on
-// udev              864088        0    864088   0% /dev
-// tmpfs             176724      688    176036   1% /run
-// /dev/vda3       40910528 18067948  20951380  47% /
-// tmpfs             883612        0    883612   0% /dev/shm
-// tmpfs               5120        0      5120   0% /run/lock
-// /dev/vda2         192559    11807    180752   7% /boot/efi
-// tmpfs             176720      104    176616   1% /run/user/1000
-// ''',
+  //   '''
+  // Filesystem     1K-blocks     Used Available Use% Mounted on
+  // udev              864088        0    864088   0% /dev
+  // tmpfs             176724      688    176036   1% /run
+  // /dev/vda3       40910528 18067948  20951380  47% /
+  // tmpfs             883612        0    883612   0% /dev/shm
+  // tmpfs               5120        0      5120   0% /run/lock
+  // /dev/vda2         192559    11807    180752   7% /boot/efi
+  // tmpfs             176720      104    176616   1% /run/user/1000
+  // ''',
   '''
 Filesystem                                                   1K-blocks        Used   Available Use% Mounted on
 udev                                                          16181648           0    16181648   0% /dev

@@ -16,19 +16,14 @@ class SSHTabPage extends StatefulWidget {
   @override
   State<SSHTabPage> createState() => _SSHTabPageState();
 
-  static const route = AppRouteNoArg(
-    page: SSHTabPage.new,
-    path: '/ssh',
-  );
+  static const route = AppRouteNoArg(page: SSHTabPage.new, path: '/ssh');
 }
 
 typedef _TabMap = Map<String, ({Widget page, FocusNode? focus})>;
 
 class _SSHTabPageState extends State<SSHTabPage>
     with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
-  late final _TabMap _tabMap = {
-    libL10n.add: (page: _AddPage(onTapInitCard: _onTapInitCard), focus: null),
-  };
+  late final _TabMap _tabMap = {libL10n.add: (page: _AddPage(onTapInitCard: _onTapInitCard), focus: null)};
   final _pageCtrl = PageController();
   final _fabVN = 0.vn;
   final _tabRN = RNode();
@@ -48,12 +43,7 @@ class _SSHTabPageState extends State<SSHTabPage>
       appBar: PreferredSizeListenBuilder(
         listenable: _tabRN,
         builder: () {
-          return _TabBar(
-            idxVN: _fabVN,
-            map: _tabMap,
-            onTap: _onTapTab,
-            onClose: _onTapClose,
-          );
+          return _TabBar(idxVN: _fabVN, map: _tabMap, onTap: _onTapTab, onClose: _onTapClose);
         },
       ),
       body: _buildBody(),
@@ -159,12 +149,7 @@ extension on _SSHTabPageState {
 }
 
 final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
-  const _TabBar({
-    required this.idxVN,
-    required this.map,
-    required this.onTap,
-    required this.onClose,
-  });
+  const _TabBar({required this.idxVN, required this.map, required this.onTap, required this.onClose});
 
   final ValueListenable<int> idxVN;
   final _TabMap map;
@@ -188,10 +173,7 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
           itemBuilder: (_, idx) => _buildItem(idx),
           separatorBuilder: (_, _) => Padding(
             padding: const EdgeInsets.symmetric(vertical: 17),
-            child: Container(
-              color: const Color.fromARGB(61, 158, 158, 158),
-              width: 3,
-            ),
+            child: Container(color: const Color.fromARGB(61, 158, 158, 158), width: 3),
           ),
         );
       },
@@ -242,10 +224,7 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
         width: selected ? kWideWidth : kNarrowWidth,
         duration: Durations.medium3,
         curve: Curves.fastEaseInToSlowEaseOut,
-        child: OverflowBox(
-          maxWidth: selected ? kWideWidth : null,
-          child: btn,
-        ),
+        child: OverflowBox(maxWidth: selected ? kWideWidth : null, child: btn),
       );
     }
 
@@ -280,9 +259,7 @@ class _AddPage extends StatelessWidget {
 
     return ServerProvider.serverOrder.listenVal((order) {
       if (order.isEmpty) {
-        return Center(
-          child: Text(libL10n.empty, textAlign: TextAlign.center),
-        );
+        return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
       }
 
       // Custom grid
@@ -316,7 +293,7 @@ class _AddPage extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const Icon(Icons.chevron_right)
+                          const Icon(Icons.chevron_right),
                         ],
                       ),
                     ),

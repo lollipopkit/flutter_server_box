@@ -35,23 +35,16 @@ extension SnippetX on Snippet {
   static final fmtFinder = RegExp(r'\$\{[^{}]+\}');
 
   String fmtWithSpi(Spi spi) {
-    return script.replaceAllMapped(
-      fmtFinder,
-      (match) {
-        final key = match.group(0);
-        final func = fmtArgs[key];
-        if (func != null) return func(spi);
-        // If not found, return the original content for further processing
-        return key ?? '';
-      },
-    );
+    return script.replaceAllMapped(fmtFinder, (match) {
+      final key = match.group(0);
+      final func = fmtArgs[key];
+      if (func != null) return func(spi);
+      // If not found, return the original content for further processing
+      return key ?? '';
+    });
   }
 
-  Future<void> runInTerm(
-    Terminal terminal,
-    Spi spi, {
-    bool autoEnter = false,
-  }) async {
+  Future<void> runInTerm(Terminal terminal, Spi spi, {bool autoEnter = false}) async {
     final argsFmted = fmtWithSpi(spi);
     final matches = fmtFinder.allMatches(argsFmted);
 
@@ -119,11 +112,7 @@ extension SnippetX on Snippet {
     if (autoEnter) terminal.keyInput(TerminalKey.enter);
   }
 
-  Future<void> _doTermKeys(
-    Terminal terminal,
-    MapEntry<String, TerminalKey> termKey,
-    String key,
-  ) async {
+  Future<void> _doTermKeys(Terminal terminal, MapEntry<String, TerminalKey> termKey, String key) async {
     // if (termKey.value == TerminalKey.enter) {
     //   terminal.keyInput(TerminalKey.enter);
     //   return;
@@ -140,11 +129,7 @@ extension SnippetX on Snippet {
     // `${ctrl+ad}` -> `ctrla + d`
     final chars = key.substring(termKey.key.length + 1, key.length - 1);
     if (chars.isEmpty) return;
-    final ok = terminal.charInput(
-      chars.codeUnitAt(0),
-      ctrl: ctrlAlt.ctrl,
-      alt: ctrlAlt.alt,
-    );
+    final ok = terminal.charInput(chars.codeUnitAt(0), ctrl: ctrlAlt.ctrl, alt: ctrlAlt.alt);
     if (!ok) {
       Loggers.app.warning('Failed to input: $key');
     }
@@ -166,10 +151,7 @@ extension SnippetX on Snippet {
   };
 
   /// r'${ctrl+ad}' -> TerminalKey.control, a, d
-  static final fmtTermKeys = {
-    r'${ctrl': TerminalKey.control,
-    r'${alt': TerminalKey.alt,
-  };
+  static final fmtTermKeys = {r'${ctrl': TerminalKey.control, r'${alt': TerminalKey.alt};
 }
 
 class SnippetResult {
@@ -177,11 +159,7 @@ class SnippetResult {
   final String result;
   final Duration time;
 
-  SnippetResult({
-    required this.dest,
-    required this.result,
-    required this.time,
-  });
+  SnippetResult({required this.dest, required this.result, required this.time});
 }
 
 typedef SnippetFuncCtx = ({Terminal term, String raw});
@@ -193,10 +171,7 @@ abstract final class SnippetFuncs {
     r'${enter': SnippetFuncs.enter,
   };
 
-  static const help = {
-    'sleep': 'Sleep for a few seconds',
-    'enter': 'Enter a few times',
-  };
+  static const help = {'sleep': 'Sleep for a few seconds', 'enter': 'Enter a few times'};
 
   static FutureOr<void> sleep(SnippetFuncCtx ctx) async {
     final seconds = int.tryParse(ctx.raw);

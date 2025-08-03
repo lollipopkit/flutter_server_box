@@ -24,19 +24,12 @@ String decyptPem(List<String> args) {
   return sshKey.first.toPem();
 }
 
-enum GenSSHClientStatus {
-  socket,
-  key,
-  pwd,
-}
+enum GenSSHClientStatus { socket, key, pwd }
 
 String getPrivateKey(String id) {
   final pki = Stores.key.fetchOne(id);
   if (pki == null) {
-    throw SSHErr(
-      type: SSHErrType.noPrivateKey,
-      message: 'key [$id] not found',
-    );
+    throw SSHErr(type: SSHErrType.noPrivateKey, message: 'key [$id] not found');
   }
   return pki.key;
 }
@@ -73,36 +66,21 @@ Future<SSHClient> genClient(
       if (spi.jumpId != null) return Stores.server.box.get(spi.jumpId);
     }();
     if (jumpSpi_ != null) {
-      final jumpClient = await genClient(
-        jumpSpi_,
-        privateKey: jumpPrivateKey,
-        timeout: timeout,
-      );
+      final jumpClient = await genClient(jumpSpi_, privateKey: jumpPrivateKey, timeout: timeout);
 
-      return await jumpClient.forwardLocal(
-        spi.ip,
-        spi.port,
-      );
+      return await jumpClient.forwardLocal(spi.ip, spi.port);
     }
 
     // Direct
     try {
-      return await SSHSocket.connect(
-        spi.ip,
-        spi.port,
-        timeout: timeout,
-      );
+      return await SSHSocket.connect(spi.ip, spi.port, timeout: timeout);
     } catch (e) {
       Loggers.app.warning('genClient', e);
       if (spi.alterUrl == null) rethrow;
       try {
         final res = spi.fromStringUrl();
         alterUser = res.$2;
-        return await SSHSocket.connect(
-          res.$1,
-          res.$3,
-          timeout: timeout,
-        );
+        return await SSHSocket.connect(res.$1, res.$3, timeout: timeout);
       } catch (e) {
         Loggers.app.warning('genClient alterUrl', e);
         rethrow;

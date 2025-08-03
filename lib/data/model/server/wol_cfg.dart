@@ -11,11 +11,7 @@ final class WakeOnLanCfg {
   final String ip;
   final String? pwd;
 
-  const WakeOnLanCfg({
-    required this.mac,
-    required this.ip,
-    this.pwd,
-  });
+  const WakeOnLanCfg({required this.mac, required this.ip, this.pwd});
 
   (Object?, bool) validate() {
     final macValidation = MACAddress.validate(mac);
@@ -39,10 +35,7 @@ final class WakeOnLanCfg {
     final mac_ = MACAddress(mac);
     final pwd_ = pwd != null ? SecureONPassword(pwd!) : null;
     final obj = WakeOnLAN(ip_, mac_, password: pwd_);
-    return obj.wake(
-      repeat: 3,
-      repeatDelay: const Duration(milliseconds: 500),
-    );
+    return obj.wake(repeat: 3, repeatDelay: const Duration(milliseconds: 500));
   }
 
   factory WakeOnLanCfg.fromJson(Map<String, dynamic> json) => _$WakeOnLanCfgFromJson(json);

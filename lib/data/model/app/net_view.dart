@@ -8,16 +8,16 @@ enum NetViewType {
   traffic;
 
   NetViewType get next => switch (this) {
-        conn => speed,
-        speed => traffic,
-        traffic => conn,
-      };
+    conn => speed,
+    speed => traffic,
+    traffic => conn,
+  };
 
   String get toStr => switch (this) {
-        NetViewType.conn => l10n.conn,
-        NetViewType.traffic => l10n.traffic,
-        NetViewType.speed => l10n.speed,
-      };
+    NetViewType.conn => l10n.conn,
+    NetViewType.traffic => l10n.traffic,
+    NetViewType.speed => l10n.speed,
+  };
 
   /// If no device is specified, return the cached value (only real devices,
   /// such as ethX, wlanX...).
@@ -26,32 +26,17 @@ enum NetViewType {
     try {
       switch (this) {
         case NetViewType.conn:
-          return (
-            '${l10n.conn}:\n${ss.tcp.maxConn}',
-            '${libL10n.fail}:\n${ss.tcp.fail}',
-          );
+          return ('${l10n.conn}:\n${ss.tcp.maxConn}', '${libL10n.fail}:\n${ss.tcp.fail}');
         case NetViewType.speed:
           if (notSepcifyDev) {
-            return (
-              '↓:\n${ss.netSpeed.cachedVals.speedIn}',
-              '↑:\n${ss.netSpeed.cachedVals.speedOut}',
-            );
+            return ('↓:\n${ss.netSpeed.cachedVals.speedIn}', '↑:\n${ss.netSpeed.cachedVals.speedOut}');
           }
-          return (
-            '↓:\n${ss.netSpeed.speedIn(device: dev)}',
-            '↑:\n${ss.netSpeed.speedOut(device: dev)}',
-          );
+          return ('↓:\n${ss.netSpeed.speedIn(device: dev)}', '↑:\n${ss.netSpeed.speedOut(device: dev)}');
         case NetViewType.traffic:
           if (notSepcifyDev) {
-            return (
-              '↓:\n${ss.netSpeed.cachedVals.sizeIn}',
-              '↑:\n${ss.netSpeed.cachedVals.sizeOut}',
-            );
+            return ('↓:\n${ss.netSpeed.cachedVals.sizeIn}', '↑:\n${ss.netSpeed.cachedVals.sizeOut}');
           }
-          return (
-            '↓:\n${ss.netSpeed.sizeIn(device: dev)}',
-            '↑:\n${ss.netSpeed.sizeOut(device: dev)}',
-          );
+          return ('↓:\n${ss.netSpeed.sizeIn(device: dev)}', '↑:\n${ss.netSpeed.sizeOut(device: dev)}');
       }
     } catch (e, s) {
       Loggers.app.warning('NetViewType.build', e, s);
@@ -60,14 +45,14 @@ enum NetViewType {
   }
 
   int toJson() => switch (this) {
-        NetViewType.conn => 0,
-        NetViewType.speed => 1,
-        NetViewType.traffic => 2,
-      };
+    NetViewType.conn => 0,
+    NetViewType.speed => 1,
+    NetViewType.traffic => 2,
+  };
 
   static NetViewType fromJson(int json) => switch (json) {
-        0 => NetViewType.conn,
-        1 => NetViewType.speed,
-        _ => NetViewType.traffic,
-      };
+    0 => NetViewType.conn,
+    1 => NetViewType.speed,
+    _ => NetViewType.traffic,
+  };
 }

@@ -24,14 +24,7 @@ final class PodmanImg implements ContainerImg {
   final int? size;
   final int? containers;
 
-  PodmanImg({
-    this.repository,
-    this.tag,
-    this.id,
-    this.created,
-    this.size,
-    this.containers,
-  });
+  PodmanImg({this.repository, this.tag, this.id, this.created, this.size, this.containers});
 
   @override
   String? get sizeMB => size?.bytes2Str;
@@ -39,28 +32,27 @@ final class PodmanImg implements ContainerImg {
   @override
   int? get containersCount => containers;
 
-  factory PodmanImg.fromRawJson(String str) =>
-      PodmanImg.fromJson(json.decode(str));
+  factory PodmanImg.fromRawJson(String str) => PodmanImg.fromJson(json.decode(str));
 
   String toRawJson() => json.encode(toJson());
 
   factory PodmanImg.fromJson(Map<String, dynamic> json) => PodmanImg(
-        repository: json['repository'],
-        tag: json['tag'],
-        id: json['Id'],
-        created: json['Created'],
-        size: json['Size'],
-        containers: json['Containers'],
-      );
+    repository: json['repository'],
+    tag: json['tag'],
+    id: json['Id'],
+    created: json['Created'],
+    size: json['Size'],
+    containers: json['Containers'],
+  );
 
   Map<String, dynamic> toJson() => {
-        'repository': repository,
-        'tag': tag,
-        'Id': id,
-        'Created': created,
-        'Size': size,
-        'Containers': containers,
-      };
+    'repository': repository,
+    'tag': tag,
+    'Id': id,
+    'Created': created,
+    'Size': size,
+    'Containers': containers,
+  };
 }
 
 final class DockerImg implements ContainerImg {
@@ -87,11 +79,9 @@ final class DockerImg implements ContainerImg {
   String? get sizeMB => size;
 
   @override
-  int? get containersCount =>
-      containers == 'N/A' ? 0 : int.tryParse(containers);
+  int? get containersCount => containers == 'N/A' ? 0 : int.tryParse(containers);
 
-  factory DockerImg.fromRawJson(String str) =>
-      DockerImg.fromJson(json.decode(str));
+  factory DockerImg.fromRawJson(String str) => DockerImg.fromJson(json.decode(str));
 
   String toRawJson() => json.encode(toJson());
 
@@ -121,11 +111,11 @@ final class DockerImg implements ContainerImg {
   }
 
   Map<String, dynamic> toJson() => {
-        'Containers': containers,
-        'CreatedAt': createdAt,
-        'ID': id,
-        'Repository': repository,
-        'Size': size,
-        'Tag': tag,
-      };
+    'Containers': containers,
+    'CreatedAt': createdAt,
+    'ID': id,
+    'Repository': repository,
+    'Size': size,
+    'Tag': tag,
+  };
 }

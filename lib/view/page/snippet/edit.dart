@@ -19,10 +19,7 @@ class SnippetEditPage extends StatefulWidget {
   @override
   State<SnippetEditPage> createState() => _SnippetEditPageState();
 
-  static const route = AppRoute(
-    page: SnippetEditPage.new,
-    path: '/snippets/edit',
-  );
+  static const route = AppRoute(page: SnippetEditPage.new, path: '/snippets/edit');
 }
 
 class _SnippetEditPageState extends State<SnippetEditPage> with AfterLayoutMixin {
@@ -47,10 +44,7 @@ class _SnippetEditPageState extends State<SnippetEditPage> with AfterLayoutMixin
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-        title: Text(libL10n.edit),
-        actions: _buildAppBarActions(),
-      ),
+      appBar: CustomAppBar(title: Text(libL10n.edit), actions: _buildAppBarActions()),
       body: _buildBody(),
       floatingActionButton: _buildFAB(),
     );
@@ -64,9 +58,7 @@ class _SnippetEditPageState extends State<SnippetEditPage> with AfterLayoutMixin
         onPressed: () {
           context.showRoundDialog(
             title: libL10n.attention,
-            child: Text(libL10n.askContinue(
-              '${libL10n.delete} ${l10n.snippet}(${snippet.name})',
-            )),
+            child: Text(libL10n.askContinue('${libL10n.delete} ${l10n.snippet}(${snippet.name})')),
             actions: Btn.ok(
               onTap: () {
                 SnippetProvider.del(snippet);
@@ -79,7 +71,7 @@ class _SnippetEditPageState extends State<SnippetEditPage> with AfterLayoutMixin
         },
         tooltip: libL10n.delete,
         icon: const Icon(Icons.delete),
-      )
+      ),
     ];
   }
 
@@ -168,12 +160,7 @@ class _SnippetEditPageState extends State<SnippetEditPage> with AfterLayoutMixin
             trailing: const Icon(Icons.keyboard_arrow_right),
             subtitle: subtitle == null
                 ? null
-                : Text(
-                    subtitle,
-                    maxLines: 1,
-                    style: UIs.textGrey,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                : Text(subtitle, maxLines: 1, style: UIs.textGrey, overflow: TextOverflow.ellipsis),
             onTap: () async {
               vals.removeWhere((e) => !ServerProvider.serverOrder.value.contains(e));
               final serverIds = await context.showPickDialog(
@@ -198,7 +185,8 @@ class _SnippetEditPageState extends State<SnippetEditPage> with AfterLayoutMixin
       child: Padding(
         padding: const EdgeInsets.all(13),
         child: SimpleMarkdown(
-          data: '''
+          data:
+              '''
 📌 ${l10n.supportFmtArgs}\n
 ${SnippetX.fmtArgs.keys.map((e) => '`$e`').join(', ')}\n
 
@@ -207,11 +195,7 @@ ${libL10n.example}:
 - `\${ctrl+c}` (Control + C)
 - `\${ctrl+b}d` (Tmux Detach)
 ''',
-          styleSheet: MarkdownStyleSheet(
-            codeblockDecoration: const BoxDecoration(
-              color: Colors.transparent,
-            ),
-          ),
+          styleSheet: MarkdownStyleSheet(codeblockDecoration: const BoxDecoration(color: Colors.transparent)),
         ),
       ),
     );

@@ -123,26 +123,25 @@ extension Spix on Spi {
   ///
   /// **NOT** the default value.
   static final example = Spi(
-      name: 'name',
-      ip: 'ip',
-      port: 22,
-      user: 'root',
-      pwd: 'pwd',
-      keyId: 'private_key_id',
-      tags: ['tag1', 'tag2'],
-      alterUrl: 'user@ip:port',
-      autoConnect: true,
-      jumpId: 'jump_server_id',
-      custom: ServerCustom(
-        pveAddr: 'http://localhost:8006',
-        pveIgnoreCert: false,
-        cmds: {
-          'echo': 'echo hello',
-        },
-        preferTempDev: 'nvme-pci-0400',
-        logoUrl: 'https://example.com/logo.png',
-      ),
-      id: 'id');
+    name: 'name',
+    ip: 'ip',
+    port: 22,
+    user: 'root',
+    pwd: 'pwd',
+    keyId: 'private_key_id',
+    tags: ['tag1', 'tag2'],
+    alterUrl: 'user@ip:port',
+    autoConnect: true,
+    jumpId: 'jump_server_id',
+    custom: ServerCustom(
+      pveAddr: 'http://localhost:8006',
+      pveIgnoreCert: false,
+      cmds: {'echo': 'echo hello'},
+      preferTempDev: 'nvme-pci-0400',
+      logoUrl: 'https://example.com/logo.png',
+    ),
+    id: 'id',
+  );
 
   bool get isRoot => user == 'root';
 }

@@ -213,13 +213,10 @@ class Backup implements Mergeable {
     _logger.info('Restore success');
   }
 
-  factory Backup.fromJsonString(String raw) =>
-      Backup.fromJson(json.decode(_diyDecrypt(raw)));
+  factory Backup.fromJsonString(String raw) => Backup.fromJson(json.decode(_diyDecrypt(raw)));
 }
 
-String _diyEncrypt(String raw) => json.encode(
-      raw.codeUnits.map((e) => e * 2 + 1).toList(growable: false),
-    );
+String _diyEncrypt(String raw) => json.encode(raw.codeUnits.map((e) => e * 2 + 1).toList(growable: false));
 
 String _diyDecrypt(String raw) {
   try {
@@ -234,4 +231,3 @@ String _diyDecrypt(String raw) {
     rethrow;
   }
 }
-

@@ -9,12 +9,7 @@ class SftpReq {
   Spi? jumpSpi;
   String? jumpPrivateKey;
 
-  SftpReq(
-    this.spi,
-    this.remotePath,
-    this.localPath,
-    this.type,
-  ) {
+  SftpReq(this.spi, this.remotePath, this.localPath, this.type) {
     final keyId = spi.keyId;
     if (keyId != null) {
       privateKey = getPrivateKey(keyId);
@@ -44,15 +39,9 @@ class SftpReqStatus {
   Exception? error;
   Duration? spentTime;
 
-  SftpReqStatus({
-    required this.req,
-    required this.notifyListeners,
-    this.completer,
-  }) : id = DateTime.now().microsecondsSinceEpoch {
-    worker = SftpWorker(
-      onNotify: onNotify,
-      req: req,
-    )..init();
+  SftpReqStatus({required this.req, required this.notifyListeners, this.completer})
+    : id = DateTime.now().microsecondsSinceEpoch {
+    worker = SftpWorker(onNotify: onNotify, req: req)..init();
   }
 
   @override

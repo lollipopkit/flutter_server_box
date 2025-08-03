@@ -113,15 +113,12 @@ void main() {
       SensorAdaptor.virtual,
       SensorAdaptor.pci,
     ]);
-    expect(
-      sensors.map((e) => e.summary),
-      [
-        '+56.0°C  (high = +105.0°C, crit = +105.0°C)',
-        '+27.8°C  (crit = +119.0°C)',
-        '+56.0°C',
-        '+45.9°C  (low  = -273.1°C, high = +83.8°C)',
-      ],
-    );
+    expect(sensors.map((e) => e.summary), [
+      '+56.0°C  (high = +105.0°C, crit = +105.0°C)',
+      '+27.8°C  (crit = +119.0°C)',
+      '+56.0°C',
+      '+45.9°C  (low  = -273.1°C, high = +83.8°C)',
+    ]);
   });
 
   test('parse sensors2', () {
@@ -138,14 +135,11 @@ void main() {
       SensorAdaptor.pci,
       SensorAdaptor.pci,
     ]);
-    expect(
-      sensors.map((e) => e.summary),
-      [
-        '1.26 V',
-        '1.19 V  (min =  +0.00 V, max =  +1.74 V)',
-        '+45.9°C  (low  = -273.1°C, high = +69.8°C)',
-        '+44.9°C',
-      ],
-    );
+    expect(sensors.map((e) => e.summary), [
+      '1.26 V',
+      '1.19 V  (min =  +0.00 V, max =  +1.74 V)',
+      '+45.9°C  (low  = -273.1°C, high = +69.8°C)',
+      '+44.9°C',
+    ]);
   });
 }

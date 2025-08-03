@@ -42,15 +42,7 @@ final class PodmanPs implements ContainerPs {
   @override
   String? disk;
 
-  PodmanPs({
-    this.command,
-    this.created,
-    this.exited,
-    this.id,
-    this.image,
-    this.names,
-    this.startedAt,
-  });
+  PodmanPs({this.command, this.created, this.exited, this.id, this.image, this.names, this.startedAt});
 
   @override
   String? get name => names?.firstOrNull;
@@ -78,36 +70,29 @@ final class PodmanPs implements ContainerPs {
     disk = '${l10n.read} $diskOut / ${l10n.write} $diskIn';
   }
 
-  factory PodmanPs.fromRawJson(String str) =>
-      PodmanPs.fromJson(json.decode(str));
+  factory PodmanPs.fromRawJson(String str) => PodmanPs.fromJson(json.decode(str));
 
   String toRawJson() => json.encode(toJson());
 
   factory PodmanPs.fromJson(Map<String, dynamic> json) => PodmanPs(
-        command: json['Command'] == null
-            ? []
-            : List<String>.from(json['Command']!.map((x) => x)),
-        created:
-            json['Created'] == null ? null : DateTime.parse(json['Created']),
-        exited: json['Exited'],
-        id: json['Id'],
-        image: json['Image'],
-        names: json['Names'] == null
-            ? []
-            : List<String>.from(json['Names']!.map((x) => x)),
-        startedAt: json['StartedAt'],
-      );
+    command: json['Command'] == null ? [] : List<String>.from(json['Command']!.map((x) => x)),
+    created: json['Created'] == null ? null : DateTime.parse(json['Created']),
+    exited: json['Exited'],
+    id: json['Id'],
+    image: json['Image'],
+    names: json['Names'] == null ? [] : List<String>.from(json['Names']!.map((x) => x)),
+    startedAt: json['StartedAt'],
+  );
 
   Map<String, dynamic> toJson() => {
-        'Command':
-            command == null ? [] : List<dynamic>.from(command!.map((x) => x)),
-        'Created': created?.toIso8601String(),
-        'Exited': exited,
-        'Id': id,
-        'Image': image,
-        'Names': names == null ? [] : List<dynamic>.from(names!.map((x) => x)),
-        'StartedAt': startedAt,
-      };
+    'Command': command == null ? [] : List<dynamic>.from(command!.map((x) => x)),
+    'Created': created?.toIso8601String(),
+    'Exited': exited,
+    'Id': id,
+    'Image': image,
+    'Names': names == null ? [] : List<dynamic>.from(names!.map((x) => x)),
+    'StartedAt': startedAt,
+  };
 }
 
 final class DockerPs implements ContainerPs {
@@ -127,12 +112,7 @@ final class DockerPs implements ContainerPs {
   @override
   String? disk;
 
-  DockerPs({
-    this.id,
-    this.image,
-    this.names,
-    this.state,
-  });
+  DockerPs({this.id, this.image, this.names, this.state});
 
   @override
   String? get name => names;
@@ -159,11 +139,6 @@ final class DockerPs implements ContainerPs {
   /// a049d689e7a1                   aria2-pro                      p3terx/aria2-pro               Up 3 weeks
   factory DockerPs.parse(String raw) {
     final parts = raw.split(Miscs.multiBlankreg);
-    return DockerPs(
-      id: parts[0],
-      state: parts[1],
-      names: parts[2],
-      image: parts[3].trim(),
-    );
+    return DockerPs(id: parts[0], state: parts[1], names: parts[2], image: parts[3].trim());
   }
 }
