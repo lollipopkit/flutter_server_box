@@ -45,7 +45,8 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   final segments = req.segments;
 
   final time =
-      int.tryParse(StatusCmdType.time.find(segments)) ?? DateTime.now().millisecondsSinceEpoch ~/ 1000;
+      int.tryParse(StatusCmdType.time.find(segments)) ??
+      DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
   try {
     final net = NetSpeed.parse(StatusCmdType.net.find(segments), time);
@@ -83,7 +84,10 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   }
 
   try {
-    req.ss.temps.parse(StatusCmdType.tempType.find(segments), StatusCmdType.tempVal.find(segments));
+    req.ss.temps.parse(
+      StatusCmdType.tempType.find(segments),
+      StatusCmdType.tempVal.find(segments),
+    );
   } catch (e, s) {
     Loggers.app.warning(e, s);
   }
@@ -244,34 +248,38 @@ String? _parseUpTime(String raw) {
   if (splitedUp.length == 2) {
     final uptimePart = splitedUp[1];
     final splitedComma = uptimePart.split(', ');
-    
+
     if (splitedComma.isEmpty) return null;
-    
+
     // Handle different uptime formats
     final firstPart = splitedComma[0].trim();
-    
+
     // Case 1: "61 days" or "1 day" - need to get the time part from next segment
     if (firstPart.contains('day')) {
       if (splitedComma.length >= 2) {
         final timePart = splitedComma[1].trim();
         // Check if it's in HH:MM format
-        if (timePart.contains(':') && !timePart.contains('user') && !timePart.contains('load')) {
+        if (timePart.contains(':') &&
+            !timePart.contains('user') &&
+            !timePart.contains('load')) {
           return '$firstPart, $timePart';
         }
       }
       return firstPart;
     }
-    
+
     // Case 2: "2:34" (hours:minutes) - already in good format
-    if (firstPart.contains(':') && !firstPart.contains('user') && !firstPart.contains('load')) {
+    if (firstPart.contains(':') &&
+        !firstPart.contains('user') &&
+        !firstPart.contains('load')) {
       return firstPart;
     }
-    
-    // Case 3: "34 min" - already in good format  
+
+    // Case 3: "34 min" - already in good format
     if (firstPart.contains('min')) {
       return firstPart;
     }
-    
+
     // Fallback: return first part
     return firstPart;
   }
@@ -299,16 +307,15 @@ Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
   // Parse time for potential future use in network/disk I/O monitoring
   // ignore: unused_local_variable
   final time =
-      int.tryParse(WindowsStatusCmdType.time.find(segments)) ?? DateTime.now().millisecondsSinceEpoch ~/ 1000;
+      int.tryParse(WindowsStatusCmdType.time.find(segments)) ??
+      DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
   try {
     // Windows network parsing - JSON format from PowerShell
     final netRaw = WindowsStatusCmdType.net.find(segments);
     if (netRaw.isNotEmpty && netRaw != 'null' && !netRaw.contains('error')) {
-      // TODO: Implement full Windows network speed parsing from JSON
-      // For now, create empty network speed to avoid errors
-      final emptyNetParts = <NetSpeedPart>[];
-      req.ss.netSpeed.update(emptyNetParts);
+      final netParts = _parseWindowsNetwork(netRaw, time);
+      req.ss.netSpeed.update(netParts);
     }
   } catch (e, s) {
     Loggers.app.warning(e, s);
@@ -378,9 +385,22 @@ Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
   }
 
   try {
-    final uptime = _parseWindowsUpTime(WindowsStatusCmdType.uptime.find(segments));
+    final uptime = _parseWindowsUpTime(
+      WindowsStatusCmdType.uptime.find(segments),
+    );
     if (uptime != null) {
       req.ss.more[StatusCmdType.uptime] = uptime;
+    }
+  } catch (e, s) {
+    Loggers.app.warning(e, s);
+  }
+
+  try {
+    // Windows disk I/O parsing - JSON format from PowerShell
+    final diskIOraw = WindowsStatusCmdType.diskio.find(segments);
+    if (diskIOraw.isNotEmpty && diskIOraw != 'null') {
+      final diskio = _parseWindowsDiskIO(diskIOraw, time);
+      req.ss.diskIO.update(diskio);
     }
   } catch (e, s) {
     Loggers.app.warning(e, s);
@@ -413,10 +433,9 @@ Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
 
   try {
     // Windows temperature parsing - JSON format
-    final tempTypeRaw = WindowsStatusCmdType.tempType.find(segments);
-    final tempValRaw = WindowsStatusCmdType.tempVal.find(segments);
-    if (tempTypeRaw.isNotEmpty && tempValRaw.isNotEmpty && tempTypeRaw != 'null' && tempValRaw != 'null') {
-      _parseWindowsTemperatures(req.ss.temps, tempTypeRaw, tempValRaw);
+    final tempRaw = WindowsStatusCmdType.temp.find(segments);
+    if (tempRaw.isNotEmpty && tempRaw != 'null') {
+      _parseWindowsTemperatures(req.ss.temps, tempRaw);
     }
   } catch (e, s) {
     Loggers.app.warning(e, s);
@@ -424,7 +443,9 @@ Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
 
   try {
     // Windows GPU parsing (NVIDIA/AMD)
-    req.ss.nvidia = NvidiaSmi.fromXml(WindowsStatusCmdType.nvidia.find(segments));
+    req.ss.nvidia = NvidiaSmi.fromXml(
+      WindowsStatusCmdType.nvidia.find(segments),
+    );
   } catch (e, s) {
     Loggers.app.warning(e, s);
   }
@@ -451,7 +472,9 @@ Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
 String? _parseWindowsUpTime(String raw) {
   try {
     final formatter = DateFormat('EEEE, MMMM d, yyyy h:mm:ss a', 'en_US');
-    final dateTime = formatter.tryParseLoose(raw.trim().split('\n').firstOrNull ?? '');
+    final dateTime = formatter.tryParseLoose(
+      raw.trim().split('\n').firstOrNull ?? '',
+    );
     if (dateTime == null) return null;
     final now = DateTime.now();
     final uptime = now.difference(dateTime);
@@ -566,8 +589,11 @@ List<Disk> _parseWindowsDisks(String raw) {
 
     for (final diskData in diskList) {
       final deviceId = diskData['DeviceID']?.toString() ?? '';
-      final size = BigInt.tryParse(diskData['Size']?.toString() ?? '0') ?? BigInt.zero;
-      final freeSpace = BigInt.tryParse(diskData['FreeSpace']?.toString() ?? '0') ?? BigInt.zero;
+      final size =
+          BigInt.tryParse(diskData['Size']?.toString() ?? '0') ?? BigInt.zero;
+      final freeSpace =
+          BigInt.tryParse(diskData['FreeSpace']?.toString() ?? '0') ??
+          BigInt.zero;
       final fileSystem = diskData['FileSystem']?.toString();
 
       if (deviceId.isEmpty || size == BigInt.zero) continue;
@@ -575,7 +601,9 @@ List<Disk> _parseWindowsDisks(String raw) {
       final sizeKB = size ~/ BigInt.from(1024);
       final freeKB = freeSpace ~/ BigInt.from(1024);
       final usedKB = sizeKB - freeKB;
-      final usedPercent = sizeKB > BigInt.zero ? ((usedKB * BigInt.from(100)) ~/ sizeKB).toInt() : 0;
+      final usedPercent = sizeKB > BigInt.zero
+          ? ((usedKB * BigInt.from(100)) ~/ sizeKB).toInt()
+          : 0;
 
       disks.add(
         Disk(
@@ -604,17 +632,21 @@ List<Battery> _parseWindowsBatteries(String raw) {
     final batteryList = jsonData is List ? jsonData : [jsonData];
 
     for (final batteryData in batteryList) {
-      final chargeRemaining = batteryData['EstimatedChargeRemaining'] as int? ?? 0;
+      final chargeRemaining =
+          batteryData['EstimatedChargeRemaining'] as int? ?? 0;
       final batteryStatus = batteryData['BatteryStatus'] as int? ?? 0;
 
       // Windows battery status: 1=Other, 2=Unknown, 3=Full, 4=Low, 5=Critical, 6=Charging, 7=ChargingAndLow, 8=ChargingAndCritical, 9=Undefined, 10=PartiallyCharged
-      final isCharging = batteryStatus == 6 || batteryStatus == 7 || batteryStatus == 8;
+      final isCharging =
+          batteryStatus == 6 || batteryStatus == 7 || batteryStatus == 8;
 
       batteries.add(
         Battery(
           name: 'Battery',
           percent: chargeRemaining,
-          status: isCharging ? BatteryStatus.charging : BatteryStatus.discharging,
+          status: isCharging
+              ? BatteryStatus.charging
+              : BatteryStatus.discharging,
         ),
       );
     }
@@ -625,28 +657,151 @@ List<Battery> _parseWindowsBatteries(String raw) {
   }
 }
 
-void _parseWindowsTemperatures(Temperatures temps, String typeRaw, String valRaw) {
+List<NetSpeedPart> _parseWindowsNetwork(String raw, int currentTime) {
   try {
-    final dynamic typeData = json.decode(typeRaw);
-    final dynamic valData = json.decode(valRaw);
+    final dynamic jsonData = json.decode(raw);
+    final List<NetSpeedPart> netParts = [];
 
-    final typeList = typeData is List ? typeData : [typeData];
-    final valList = valData is List ? valData : [valData];
+    // PowerShell Get-Counter returns a structure with CounterSamples
+    if (jsonData is Map && jsonData.containsKey('CounterSamples')) {
+      final samples = jsonData['CounterSamples'] as List?;
+      if (samples != null && samples.length >= 2) {
+        // We need 2 samples to calculate speed (interval between them)
+        final Map<String, double> interfaceRx = {};
+        final Map<String, double> interfaceTx = {};
 
-    // Since we can't access _map directly, we'll need to simulate the Linux parse method
-    // by creating fake type and value strings that the existing parse method can handle
+        for (final sample in samples) {
+          final path = sample['Path']?.toString() ?? '';
+          final cookedValue = sample['CookedValue'] as num? ?? 0;
+
+          if (path.contains('Bytes Received/sec')) {
+            final interfaceName = _extractInterfaceName(path);
+            if (interfaceName.isNotEmpty) {
+              interfaceRx[interfaceName] = cookedValue.toDouble();
+            }
+          } else if (path.contains('Bytes Sent/sec')) {
+            final interfaceName = _extractInterfaceName(path);
+            if (interfaceName.isNotEmpty) {
+              interfaceTx[interfaceName] = cookedValue.toDouble();
+            }
+          }
+        }
+
+        // Create NetSpeedPart for each interface
+        for (final interfaceName in interfaceRx.keys) {
+          final rx = interfaceRx[interfaceName] ?? 0;
+          final tx = interfaceTx[interfaceName] ?? 0;
+
+          netParts.add(
+            NetSpeedPart(
+              interfaceName,
+              BigInt.from(rx.toInt()),
+              BigInt.from(tx.toInt()),
+              currentTime,
+            ),
+          );
+        }
+      }
+    }
+
+    return netParts;
+  } catch (e) {
+    return [];
+  }
+}
+
+String _extractInterfaceName(String path) {
+  // Extract interface name from path like "\\Computer\\NetworkInterface(Interface Name)\\..."
+  final match = RegExp(r'\\NetworkInterface\(([^)]+)\)\\').firstMatch(path);
+  return match?.group(1) ?? '';
+}
+
+List<DiskIOPiece> _parseWindowsDiskIO(String raw, int currentTime) {
+  try {
+    final dynamic jsonData = json.decode(raw);
+    final List<DiskIOPiece> diskParts = [];
+
+    // PowerShell Get-Counter returns a structure with CounterSamples
+    if (jsonData is Map && jsonData.containsKey('CounterSamples')) {
+      final samples = jsonData['CounterSamples'] as List?;
+      if (samples != null) {
+        final Map<String, double> diskReads = {};
+        final Map<String, double> diskWrites = {};
+
+        for (final sample in samples) {
+          final path = sample['Path']?.toString() ?? '';
+          final cookedValue = sample['CookedValue'] as num? ?? 0;
+
+          if (path.contains('Disk Read Bytes/sec')) {
+            final diskName = _extractDiskName(path);
+            if (diskName.isNotEmpty) {
+              diskReads[diskName] = cookedValue.toDouble();
+            }
+          } else if (path.contains('Disk Write Bytes/sec')) {
+            final diskName = _extractDiskName(path);
+            if (diskName.isNotEmpty) {
+              diskWrites[diskName] = cookedValue.toDouble();
+            }
+          }
+        }
+
+        // Create DiskIOPiece for each disk - convert bytes to sectors (assuming 512 bytes per sector)
+        for (final diskName in diskReads.keys) {
+          final readBytes = diskReads[diskName] ?? 0;
+          final writeBytes = diskWrites[diskName] ?? 0;
+          final sectorsRead = (readBytes / 512).round();
+          final sectorsWrite = (writeBytes / 512).round();
+
+          diskParts.add(
+            DiskIOPiece(
+              dev: diskName,
+              sectorsRead: sectorsRead,
+              sectorsWrite: sectorsWrite,
+              time: currentTime,
+            ),
+          );
+        }
+      }
+    }
+
+    return diskParts;
+  } catch (e) {
+    return [];
+  }
+}
+
+String _extractDiskName(String path) {
+  // Extract disk name from path like "\\Computer\\PhysicalDisk(Disk Name)\\..."
+  final match = RegExp(r'\\PhysicalDisk\(([^)]+)\)\\').firstMatch(path);
+  return match?.group(1) ?? '';
+}
+
+void _parseWindowsTemperatures(Temperatures temps, String raw) {
+  try {
+    // Handle error output
+    if (raw.contains('Error') ||
+        raw.contains('Exception') ||
+        raw.contains('The term')) {
+      return;
+    }
+
+    final dynamic jsonData = json.decode(raw);
+    final tempList = jsonData is List ? jsonData : [jsonData];
+
+    // Create fake type and value strings that the existing parse method can handle
     final typeLines = <String>[];
     final valueLines = <String>[];
 
-    for (int i = 0; i < typeList.length && i < valList.length; i++) {
-      final name = typeList[i]['Name']?.toString() ?? 'Unknown';
-      final value = valList[i]['Value'] as double?;
+    for (int i = 0; i < tempList.length; i++) {
+      final item = tempList[i];
+      final typeName = item['InstanceName']?.toString() ?? 'Unknown';
+      final temperature = item['Temperature'] as num?;
 
-      if (value != null) {
+      if (temperature != null) {
         // Convert to the format expected by the existing parse method
-        typeLines.add('/sys/class/thermal/thermal_zone$i/$name');
+        typeLines.add('/sys/class/thermal/thermal_zone$i/$typeName');
         // Convert to millicelsius (multiply by 1000) as expected by Linux parsing
-        valueLines.add((value * 1000).round().toString());
+        valueLines.add((temperature * 1000).round().toString());
       }
     }
 

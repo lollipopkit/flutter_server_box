@@ -47,7 +47,7 @@ abstract class Spi with _$Spi {
     @Default('') @JsonKey(fromJson: Spi.parseId) String id,
 
     /// Custom system type (unix or windows). If set, skip auto-detection.
-    SystemType? customSystemType,
+    @JsonKey(includeIfNull: false) SystemType? customSystemType,
   }) = _Spi;
 
   factory Spi.fromJson(Map<String, dynamic> json) => _$SpiFromJson(json);

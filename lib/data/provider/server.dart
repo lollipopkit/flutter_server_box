@@ -32,6 +32,8 @@ class ServerProvider extends Provider {
 
   static final _manualDisconnectedIds = <String>{};
 
+  static final _serverIdsUpdating = <String, bool>{};
+
   @override
   Future<void> load() async {
     super.load();
@@ -124,7 +126,14 @@ class ServerProvider extends Provider {
           return;
         }
 
-        return await _getData(s.spi);
+        if (_serverIdsUpdating[s.spi.id] == true) {
+          // Already updating, skip this
+          return;
+        }
+
+        _serverIdsUpdating[s.spi.id] = true;
+        await _getData(s.spi);
+        _serverIdsUpdating.remove(s.spi.id);
       }),
     );
   }
@@ -308,22 +317,32 @@ class ServerProvider extends Provider {
         // First, check if custom system type is defined, otherwise detect system type
         SystemType? detectedSystemType = spi.customSystemType;
         if (detectedSystemType == null) {
-          // Try to detect Unix/Linux/BSD systems first (most common case)
-          final unixResult = await sv.client?.run('uname -a').string ?? '';
-          if (unixResult.contains('Linux')) {
-            detectedSystemType = SystemType.linux;
-            dprint('Detected Linux system type for ${spi.oldId}');
-          } else if (unixResult.contains('Darwin') || unixResult.contains('BSD')) {
-            detectedSystemType = SystemType.bsd;
-            dprint('Detected BSD system type for ${spi.oldId}');
+          // Try to detect Windows systems first (more reliable detection)
+          final powershellResult =
+              await sv.client?.run('powershell -c "Get-ComputerInfo -Property OsName" 2>nul').string ?? '';
+          if (powershellResult.isNotEmpty && powershellResult.contains('Windows')) {
+            detectedSystemType = SystemType.windows;
+            dprint('Detected Windows system type for ${spi.oldId}');
           } else {
-            // Try alternative Windows detection methods
-            final powershellResult =
-                await sv.client?.run('powershell -c "Get-ComputerInfo -Property OsName" 2>nul').string ?? '';
-            if (powershellResult.isNotEmpty && powershellResult.contains('Windows')) {
-              detectedSystemType = SystemType.windows;
-              dprint('Detected Windows system type for ${spi.oldId}');
+            // Try to detect Unix/Linux/BSD systems
+            final unixResult = await sv.client?.run('uname -a').string ?? '';
+            if (unixResult.contains('Linux')) {
+              detectedSystemType = SystemType.linux;
+              dprint('Detected Linux system type for ${spi.oldId}');
+            } else if (unixResult.contains('Darwin') || unixResult.contains('BSD')) {
+              detectedSystemType = SystemType.bsd;
+              dprint('Detected BSD system type for ${spi.oldId}');
             }
+          }
+        }
+
+        // If still not detected, try alternative Windows detection methods
+        if (detectedSystemType == null) {
+          // Try alternative Windows detection using ver command
+          final verResult = await sv.client?.run('ver 2>nul').string ?? '';
+          if (verResult.isNotEmpty && (verResult.contains('Windows') || verResult.contains('NT'))) {
+            detectedSystemType = SystemType.windows;
+            dprint('Detected Windows system type via ver command for ${spi.oldId}');
           }
         }
 
@@ -376,9 +395,7 @@ class ServerProvider extends Provider {
     String? raw;
 
     try {
-      // Use system type for script execution if we have it from previous status
-      final systemType = sv.status.system;
-      raw = await sv.client?.run(ShellFunc.status.exec(spi.id, systemType: systemType)).string;
+      raw = await sv.client?.run(ShellFunc.status.exec(spi.id, systemType: sv.status.system)).string;
       dprint('Get status from ${spi.name}:\n$raw');
       segments = raw?.split(ShellFunc.seperator).map((e) => e.trim()).toList();
       if (raw == null || raw.isEmpty || segments == null || segments.isEmpty) {

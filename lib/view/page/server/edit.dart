@@ -9,6 +9,7 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/provider/server.dart';
@@ -59,6 +60,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   final _env = <String, String>{}.vn;
   final _customCmds = <String, String>{}.vn;
   final _tags = <String>{}.vn;
+  final _systemType = ValueNotifier<SystemType?>(null);
 
   @override
   void dispose() {
@@ -91,6 +93,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     _env.dispose();
     _customCmds.dispose();
     _tags.dispose();
+    _systemType.dispose();
   }
 
   @override
@@ -174,6 +177,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         ),
       ),
       _buildAuth(),
+      _buildSystemType(),
       _buildJumpServer(),
       _buildMore(),
     ];
@@ -329,6 +333,26 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         ),
       ],
     );
+  }
+
+  Widget _buildSystemType() {
+    return _systemType.listenVal((val) {
+      return ListTile(
+        leading: Icon(MingCute.laptop_2_line),
+        title: Text(l10n.system),
+        trailing: PopupMenu<SystemType?>(
+          initialValue: val,
+          items: [
+            PopupMenuItem(value: null, child: Text(libL10n.auto)),
+            PopupMenuItem(value: SystemType.linux, child: Text('Linux')),
+            PopupMenuItem(value: SystemType.bsd, child: Text('BSD')),
+            PopupMenuItem(value: SystemType.windows, child: Text('Windows')),
+          ],
+          onSelected: (value) => _systemType.value = value,
+          child: Text(val?.name ?? libL10n.auto, style: TextStyle(color: val == null ? Colors.grey : null)),
+        ),
+      ).cardx;
+    });
   }
 
   Widget _buildAltUrl() {
@@ -614,6 +638,7 @@ extension on _ServerEditPageState {
       wolCfg: wol,
       envs: _env.value.isEmpty ? null : _env.value,
       id: widget.args?.spi.id ?? ShortId.generate(),
+      customSystemType: _systemType.value,
     );
 
     if (this.spi == null) {
@@ -668,5 +693,7 @@ extension on _ServerEditPageState {
 
     _netDevCtrl.text = spi.custom?.netDev ?? '';
     _scriptDirCtrl.text = spi.custom?.scriptDir ?? '';
+
+    _systemType.value = spi.customSystemType;
   }
 }

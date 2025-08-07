@@ -35,32 +35,44 @@ enum ShellFunc {
   /// Default is [scriptDirTmp]/[scriptFile], if this path is not accessible,
   /// it will be changed to [scriptDirHome]/[scriptFile].
   static String getScriptDir(String id, {SystemType? systemType}) {
-    final customScriptDir = ServerProvider.pick(id: id)?.value.spi.custom?.scriptDir;
+    final customScriptDir = ServerProvider.pick(
+      id: id,
+    )?.value.spi.custom?.scriptDir;
     if (customScriptDir != null) return customScriptDir;
 
-    final defaultTmpDir = systemType == SystemType.windows ? scriptDirTmpWindows : scriptDirTmp;
+    final defaultTmpDir = systemType == SystemType.windows
+        ? scriptDirTmpWindows
+        : scriptDirTmp;
     _scriptDirMap[id] ??= defaultTmpDir;
     return _scriptDirMap[id]!;
   }
 
-  static void switchScriptDir(String id, {SystemType? systemType}) => switch (_scriptDirMap[id]) {
-    scriptDirTmp => _scriptDirMap[id] = scriptDirHome,
-    scriptDirTmpWindows => _scriptDirMap[id] = scriptDirHomeWindows,
-    scriptDirHome => _scriptDirMap[id] = scriptDirTmp,
-    scriptDirHomeWindows => _scriptDirMap[id] = scriptDirTmpWindows,
-    _ => _scriptDirMap[id] = systemType == SystemType.windows ? scriptDirHomeWindows : scriptDirHome,
-  };
+  static void switchScriptDir(String id, {SystemType? systemType}) =>
+      switch (_scriptDirMap[id]) {
+        scriptDirTmp => _scriptDirMap[id] = scriptDirHome,
+        scriptDirTmpWindows => _scriptDirMap[id] = scriptDirHomeWindows,
+        scriptDirHome => _scriptDirMap[id] = scriptDirTmp,
+        scriptDirHomeWindows => _scriptDirMap[id] = scriptDirTmpWindows,
+        _ =>
+          _scriptDirMap[id] = systemType == SystemType.windows
+              ? scriptDirHomeWindows
+              : scriptDirHome,
+      };
 
   static String getScriptPath(String id, {SystemType? systemType}) {
     final dir = getScriptDir(id, systemType: systemType);
-    final fileName = systemType == SystemType.windows ? scriptFileWindows : scriptFile;
+    final fileName = systemType == SystemType.windows
+        ? scriptFileWindows
+        : scriptFile;
     final separator = systemType == SystemType.windows ? '\\' : '/';
     return '$dir$separator$fileName';
   }
 
   static String getInstallShellCmd(String id, {SystemType? systemType}) {
     final scriptDir = getScriptDir(id, systemType: systemType);
-    final fileName = systemType == SystemType.windows ? scriptFileWindows : scriptFile;
+    final fileName = systemType == SystemType.windows
+        ? scriptFileWindows
+        : scriptFile;
     final separator = systemType == SystemType.windows ? '\\' : '/';
     final scriptPath = '$scriptDir$separator$fileName';
 
@@ -95,7 +107,8 @@ chmod 755 $scriptPath
 
   String get _windowsCmd => switch (this) {
     ShellFunc.status => _windowsStatusCmds,
-    ShellFunc.process => 'Get-Process | Select-Object ProcessName, Id, CPU, WorkingSet | ConvertTo-Json',
+    ShellFunc.process =>
+      'Get-Process | Select-Object ProcessName, Id, CPU, WorkingSet | ConvertTo-Json',
     ShellFunc.shutdown => 'Stop-Computer -Force',
     ShellFunc.reboot => 'Restart-Computer -Force',
     ShellFunc.suspend =>
@@ -159,7 +172,9 @@ fi''',
     // Write each func
     for (final func in values) {
       final customCmdsStr = () {
-        if (func == ShellFunc.status && customCmds != null && customCmds.isNotEmpty) {
+        if (func == ShellFunc.status &&
+            customCmds != null &&
+            customCmds.isNotEmpty) {
           return '\n${customCmds.values.map((cmd) => '\t$cmd').join('\n')}';
         }
         return '';
@@ -214,7 +229,9 @@ exec 2>/dev/null
     // Write each func
     for (final func in values) {
       final customCmdsStr = () {
-        if (func == ShellFunc.status && customCmds != null && customCmds.isNotEmpty) {
+        if (func == ShellFunc.status &&
+            customCmds != null &&
+            customCmds.isNotEmpty) {
           return '$cmdDivider\n\t${customCmds.values.join(cmdDivider)}';
         }
         return '';
@@ -246,7 +263,10 @@ esac''');
   }
 
   /// Generate script based on system type
-  static String allScript(Map<String, String>? customCmds, {SystemType? systemType}) {
+  static String allScript(
+    Map<String, String>? customCmds, {
+    SystemType? systemType,
+  }) {
     if (systemType == SystemType.windows) {
       return windowsScript(customCmds);
     } else {
@@ -255,13 +275,19 @@ esac''');
   }
 
   /// Cached Linux status commands string
-  static final _linuxStatusCmds = StatusCmdType.values.map((e) => e.cmd).join(cmdDivider);
+  static final _linuxStatusCmds = StatusCmdType.values
+      .map((e) => e.cmd)
+      .join(cmdDivider);
 
   /// Cached BSD status commands string
-  static final _bsdStatusCmds = BSDStatusCmdType.values.map((e) => e.cmd).join(cmdDivider);
+  static final _bsdStatusCmds = BSDStatusCmdType.values
+      .map((e) => e.cmd)
+      .join(cmdDivider);
 
   /// Cached Windows status commands string
-  static final _windowsStatusCmds = WindowsStatusCmdType.values.map((e) => e.cmd).join(cmdDivider);
+  static final _windowsStatusCmds = WindowsStatusCmdType.values
+      .map((e) => e.cmd)
+      .join(cmdDivider);
 }
 
 enum StatusCmdType {
@@ -272,19 +298,25 @@ enum StatusCmdType {
   cpu._('cat /proc/stat | grep cpu'),
   uptime._('uptime'),
   conn._('cat /proc/net/snmp'),
-  disk._('lsblk --bytes --json --output FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID'),
+  disk._(
+    'lsblk --bytes --json --output FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID',
+  ),
   mem._("cat /proc/meminfo | grep -E 'Mem|Swap'"),
   tempType._('cat /sys/class/thermal/thermal_zone*/type'),
   tempVal._('cat /sys/class/thermal/thermal_zone*/temp'),
   host._('cat /etc/hostname'),
   diskio._('cat /proc/diskstats'),
-  battery._('for f in /sys/class/power_supply/*/uevent; do cat "\$f"; echo; done'),
+  battery._(
+    'for f in /sys/class/power_supply/*/uevent; do cat "\$f"; echo; done',
+  ),
   nvidia._('nvidia-smi -q -x'),
   amd._(
     'if command -v amd-smi >/dev/null 2>&1; then amd-smi list --json && amd-smi metric --json; elif command -v rocm-smi >/dev/null 2>&1; then rocm-smi --json || rocm-smi --showunique --showuse --showtemp --showfan --showclocks --showmemuse --showpower; elif command -v radeontop >/dev/null 2>&1; then timeout 2s radeontop -d - -l 1 | tail -n +2; else echo "No AMD GPU monitoring tools found"; fi',
   ),
   sensors._('sensors'),
-  diskSmart._('for d in \$(lsblk -dn -o KNAME); do smartctl -a -j /dev/\$d; echo; done'),
+  diskSmart._(
+    'for d in \$(lsblk -dn -o KNAME); do smartctl -a -j /dev/\$d; echo; done',
+  ),
   cpuBrand._('cat /proc/cpuinfo | grep "model name"');
 
   final String cmd;
@@ -327,29 +359,30 @@ enum WindowsStatusCmdType {
   echo._('echo ${SystemType.windowsSign}'),
   time._('powershell -c "[DateTimeOffset]::UtcNow.ToUnixTimeSeconds()"'),
   net._(
-    r'powershell -c "Get-NetAdapter | Where-Object {$_.Status -eq \"Up\"} | Select-Object Name, @{Name=\"BytesReceived\";Expression={0}}, @{Name=\"BytesSent\";Expression={0}} | ConvertTo-Json"',
+    r'powershell -c "Get-Counter -Counter \"\\NetworkInterface(*)\\Bytes Received/sec\", \"\\NetworkInterface(*)\\Bytes Sent/sec\" -SampleInterval 1 -MaxSamples 2 | ConvertTo-Json"',
   ),
   sys._('powershell -c "(Get-ComputerInfo).OsName"'),
   cpu._(
     'powershell -c "Get-WmiObject -Class Win32_Processor | Select-Object Name, LoadPercentage | ConvertTo-Json"',
   ),
-  uptime._('powershell -c "(Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime"'),
-  conn._('powershell -c "(netstat -an | findstr ESTABLISHED | Measure-Object -Line).Count"'),
+  uptime._(
+    'powershell -c "(Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime"',
+  ),
+  conn._(
+    'powershell -c "(netstat -an | findstr ESTABLISHED | Measure-Object -Line).Count"',
+  ),
   disk._(
     'powershell -c "Get-WmiObject -Class Win32_LogicalDisk | Select-Object DeviceID, Size, FreeSpace, FileSystem | ConvertTo-Json"',
   ),
   mem._(
     'powershell -c "Get-WmiObject -Class Win32_OperatingSystem | Select-Object TotalVisibleMemorySize, FreePhysicalMemory | ConvertTo-Json"',
   ),
-  tempType._(
-    'powershell -c "Get-CimInstance -ClassName MSAcpi_ThermalZoneTemperature -Namespace root/wmi -ErrorAction SilentlyContinue | Select-Object InstanceName | ConvertTo-Json"',
-  ),
-  tempVal._(
-    r'powershell -c "Get-CimInstance -ClassName MSAcpi_ThermalZoneTemperature -Namespace root/wmi -ErrorAction SilentlyContinue | ForEach-Object { [PSCustomObject]@{ Value = [math]::Round(($_.CurrentTemperature - 2732) / 10, 1) } } | ConvertTo-Json"',
+  temp._(
+    'powershell -c "Get-CimInstance -ClassName MSAcpi_ThermalZoneTemperature -Namespace root/wmi -ErrorAction SilentlyContinue | Select-Object InstanceName, @{Name=\'Temperature\';Expression={[math]::Round((\$_.CurrentTemperature - 2732) / 10, 1)}} | ConvertTo-Json"',
   ),
   host._(r'powershell -c "Write-Output $env:COMPUTERNAME"'),
   diskio._(
-    r'powershell -c "Get-Counter -Counter \"\\PhysicalDisk(*)\\Disk Reads/sec\", \"\\PhysicalDisk(*)\\Disk Writes/sec\" -SampleInterval 1 -MaxSamples 1 | ConvertTo-Json"',
+    r'powershell -c "Get-Counter -Counter \"\\PhysicalDisk(*)\\Disk Read Bytes/sec\", \"\\PhysicalDisk(*)\\Disk Write Bytes/sec\" -SampleInterval 1 -MaxSamples 2 | ConvertTo-Json"',
   ),
   battery._(
     'powershell -c "Get-WmiObject -Class Win32_Battery | Select-Object EstimatedChargeRemaining, BatteryStatus | ConvertTo-Json"',

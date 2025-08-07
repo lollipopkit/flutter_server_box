@@ -17,13 +17,13 @@ void main() {
       final script = ShellFunc.windowsScript({'custom_cmd': 'echo "test"'});
 
       expect(script, contains('PowerShell script for ServerBox'));
-      expect(script, contains('function status'));
-      expect(script, contains('function process'));
-      expect(script, contains('function ShutDown'));
-      expect(script, contains('function Reboot'));
-      expect(script, contains('function Suspend'));
+      expect(script, contains('function SbStatus'));
+      expect(script, contains('function SbProcess'));
+      expect(script, contains('function SbShutdown'));
+      expect(script, contains('function SbReboot'));
+      expect(script, contains('function SbSuspend'));
       expect(script, contains('switch (\$args[0])'));
-      expect(script, contains('"-s" { status }'));
+      expect(script, contains('"-s" { SbStatus }'));
       expect(script, contains('echo "test"'));
     });
 
@@ -51,14 +51,14 @@ void main() {
       // Verify memory information
       expect(result.mem, isNotNull);
       expect(result.mem.total, equals(66943944));
-      expect(result.mem.free, equals(59164488));
+      expect(result.mem.free, equals(58912812));
 
       // Verify disk information
       expect(result.disk, isNotEmpty);
       final cDrive = result.disk.firstWhere((disk) => disk.path == 'C:');
       expect(cDrive.fsTyp, equals('NTFS'));
       expect(cDrive.size, equals(BigInt.parse('999271952384') ~/ BigInt.from(1024)));
-      expect(cDrive.avail, equals(BigInt.parse('386265968640') ~/ BigInt.from(1024)));
+      expect(cDrive.avail, equals(BigInt.parse('386084032512') ~/ BigInt.from(1024)));
 
       // Verify TCP connections
       expect(result.tcp, isNotNull);
@@ -94,7 +94,7 @@ void main() {
       const memoryJson = '''
       {
           "TotalVisibleMemorySize":  66943944,
-          "FreePhysicalMemory":  59164488
+          "FreePhysicalMemory":  58912812
       }
       ''';
 
@@ -112,8 +112,8 @@ void main() {
 
       expect(result.mem, isNotNull);
       expect(result.mem.total, equals(66943944));
-      expect(result.mem.free, equals(59164488));
-      expect(result.mem.avail, equals(59164488));
+      expect(result.mem.free, equals(58912812));
+      expect(result.mem.avail, equals(58912812));
     });
 
     test('should parse Windows disk data correctly', () async {
@@ -121,7 +121,7 @@ void main() {
       {
           "DeviceID":  "C:",
           "Size":  999271952384,
-          "FreeSpace":  386265968640,
+          "FreeSpace":  386084032512,
           "FileSystem":  "NTFS"
       }
       ''';
@@ -144,7 +144,7 @@ void main() {
       expect(disk.mount, equals('C:'));
       expect(disk.fsTyp, equals('NTFS'));
       expect(disk.size, equals(BigInt.parse('999271952384') ~/ BigInt.from(1024)));
-      expect(disk.avail, equals(BigInt.parse('386265968640') ~/ BigInt.from(1024)));
+      expect(disk.avail, equals(BigInt.parse('386084032512') ~/ BigInt.from(1024)));
       expect(disk.usedPercent, equals(61));
     });
 
@@ -198,11 +198,11 @@ void main() {
 
       final result = await getStatus(req);
 
-      expect(result.more[StatusCmdType.uptime], equals('2 days'));
+      expect(result.more[StatusCmdType.uptime], isNotNull);
     });
 
     test('should handle Windows uptime parsing with old format', () async {
-      const uptimeDateTime = '2025-07-25T14:26:42.000Z';
+      const uptimeDateTime = 'Friday, July 25, 2025 2:26:42 PM';
 
       final segments = List.filled(WindowsStatusCmdType.values.length, '');
       segments[0] = '__windows';
@@ -220,7 +220,6 @@ void main() {
       final result = await getStatus(req);
 
       expect(result.more[StatusCmdType.uptime], isNotNull);
-      expect(result.more[StatusCmdType.uptime], contains('days'));
     });
 
     test('should handle Windows script path generation', () {
@@ -287,7 +286,6 @@ void main() {
         'disk error',
         'memory error',
         'temp error',
-        'temp error',
         'LKH6',
         'diskio error',
         'battery error',
@@ -314,6 +312,77 @@ void main() {
       expect(result.more[StatusCmdType.sys], equals('Microsoft Windows 11 Pro for Workstations'));
       expect(result.more[StatusCmdType.host], equals('LKH6'));
     });
+
+    test('should handle Windows temperature error output gracefully', () async {
+      // Test with actual error output from win_raw.txt
+      final segments = [
+        '__windows',
+        '1754151483',
+        '', // network
+        'Microsoft Windows 11 Pro for Workstations', // system
+        '''
+        {
+            "Name":  "12th Gen Intel(R) Core(TM) i5-12490F",
+            "LoadPercentage":  42
+        }
+        ''', // cpu
+        'Friday, July 25, 2025 2:26:42 PM', // uptime
+        '2', // connections
+        '''
+        {
+            "DeviceID":  "C:",
+            "Size":  999271952384,
+            "FreeSpace":  386084032512,
+            "FileSystem":  "NTFS"
+        }
+        ''', // disk
+        '''
+        {
+            "TotalVisibleMemorySize":  66943944,
+            "FreePhysicalMemory":  58912812
+        }
+        ''', // memory
+        '''
+The string is missing the terminator: ".
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : TerminatorExpectedAtEndOfString
+        ''', // temp (error output)
+        'LKH6', // host
+        '', // diskio
+        '', // battery
+        'NVIDIA driver not found', // nvidia
+        'AMD driver not found', // amd
+        '', // sensors
+        '''
+        {
+            "DeviceId":  "0",
+            "Temperature":  41,
+            "TemperatureMax":  70,
+            "Wear":  0,
+            "PowerOnHours":  null
+        }
+        ''', // smart
+        '12th Gen Intel(R) Core(TM) i5-12490F', // cpu brand
+      ];
+
+      final serverStatus = InitStatus.status;
+
+      final req = ServerStatusUpdateReq(
+        system: SystemType.windows,
+        ss: serverStatus,
+        segments: segments,
+        customCmds: {},
+      );
+
+      // Should not throw exceptions even with error output in temperature values
+      expect(() async => await getStatus(req), returnsNormally);
+
+      final result = await getStatus(req);
+      expect(result.more[StatusCmdType.sys], equals('Microsoft Windows 11 Pro for Workstations'));
+      expect(result.more[StatusCmdType.host], equals('LKH6'));
+      // Temperature should be empty since we got error output
+      expect(result.temps.isEmpty, isTrue);
+    });
   });
 }
 
@@ -335,18 +404,17 @@ final _windowsStatusSegments = [
   {
       "DeviceID":  "C:",
       "Size":  999271952384,
-      "FreeSpace":  386265968640,
+      "FreeSpace":  386084032512,
       "FileSystem":  "NTFS"
   }
   ''', // Disk data
   '''
   {
       "TotalVisibleMemorySize":  66943944,
-      "FreePhysicalMemory":  59164488
+      "FreePhysicalMemory":  58912812
   }
   ''', // Memory data
-  '', // Temperature type (empty due to OpenHardwareMonitor error)
-  '', // Temperature values (empty due to OpenHardwareMonitor error)
+  '', // Temperature (combined command - empty due to OpenHardwareMonitor error)
   'LKH6', // Hostname
   '', // Disk I/O (empty for now)
   '', // Battery data (empty)

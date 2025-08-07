@@ -20,7 +20,7 @@ mixin _$Spi {
 @JsonKey(name: 'pubKeyId') String? get keyId; List<String>? get tags; String? get alterUrl; bool get autoConnect;/// [id] of the jump server
  String? get jumpId; ServerCustom? get custom; WakeOnLanCfg? get wolCfg;/// It only applies to SSH terminal.
  Map<String, String>? get envs;@JsonKey(fromJson: Spi.parseId) String get id;/// Custom system type (unix or windows). If set, skip auto-detection.
- SystemType? get customSystemType;
+@JsonKey(includeIfNull: false) SystemType? get customSystemType;
 /// Create a copy of Spi
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -49,7 +49,7 @@ abstract mixin class $SpiCopyWith<$Res>  {
   factory $SpiCopyWith(Spi value, $Res Function(Spi) _then) = _$SpiCopyWithImpl;
 @useResult
 $Res call({
- String name, String ip, int port, String user, String? pwd,@JsonKey(name: 'pubKeyId') String? keyId, List<String>? tags, String? alterUrl, bool autoConnect, String? jumpId, ServerCustom? custom, WakeOnLanCfg? wolCfg, Map<String, String>? envs,@JsonKey(fromJson: Spi.parseId) String id, SystemType? customSystemType
+ String name, String ip, int port, String user, String? pwd,@JsonKey(name: 'pubKeyId') String? keyId, List<String>? tags, String? alterUrl, bool autoConnect, String? jumpId, ServerCustom? custom, WakeOnLanCfg? wolCfg, Map<String, String>? envs,@JsonKey(fromJson: Spi.parseId) String id,@JsonKey(includeIfNull: false) SystemType? customSystemType
 });
 
 
@@ -94,7 +94,7 @@ as SystemType?,
 
 @JsonSerializable(includeIfNull: false)
 class _Spi extends Spi {
-  const _Spi({required this.name, required this.ip, required this.port, required this.user, this.pwd, @JsonKey(name: 'pubKeyId') this.keyId, final  List<String>? tags, this.alterUrl, this.autoConnect = true, this.jumpId, this.custom, this.wolCfg, final  Map<String, String>? envs, @JsonKey(fromJson: Spi.parseId) this.id = '', this.customSystemType}): _tags = tags,_envs = envs,super._();
+  const _Spi({required this.name, required this.ip, required this.port, required this.user, this.pwd, @JsonKey(name: 'pubKeyId') this.keyId, final  List<String>? tags, this.alterUrl, this.autoConnect = true, this.jumpId, this.custom, this.wolCfg, final  Map<String, String>? envs, @JsonKey(fromJson: Spi.parseId) this.id = '', @JsonKey(includeIfNull: false) this.customSystemType}): _tags = tags,_envs = envs,super._();
   factory _Spi.fromJson(Map<String, dynamic> json) => _$SpiFromJson(json);
 
 @override final  String name;
@@ -132,7 +132,7 @@ class _Spi extends Spi {
 
 @override@JsonKey(fromJson: Spi.parseId) final  String id;
 /// Custom system type (unix or windows). If set, skip auto-detection.
-@override final  SystemType? customSystemType;
+@override@JsonKey(includeIfNull: false) final  SystemType? customSystemType;
 
 /// Create a copy of Spi
 /// with the given fields replaced by the non-null parameter values.
@@ -163,7 +163,7 @@ abstract mixin class _$SpiCopyWith<$Res> implements $SpiCopyWith<$Res> {
   factory _$SpiCopyWith(_Spi value, $Res Function(_Spi) _then) = __$SpiCopyWithImpl;
 @override @useResult
 $Res call({
- String name, String ip, int port, String user, String? pwd,@JsonKey(name: 'pubKeyId') String? keyId, List<String>? tags, String? alterUrl, bool autoConnect, String? jumpId, ServerCustom? custom, WakeOnLanCfg? wolCfg, Map<String, String>? envs,@JsonKey(fromJson: Spi.parseId) String id, SystemType? customSystemType
+ String name, String ip, int port, String user, String? pwd,@JsonKey(name: 'pubKeyId') String? keyId, List<String>? tags, String? alterUrl, bool autoConnect, String? jumpId, ServerCustom? custom, WakeOnLanCfg? wolCfg, Map<String, String>? envs,@JsonKey(fromJson: Spi.parseId) String id,@JsonKey(includeIfNull: false) SystemType? customSystemType
 });
 
 
