@@ -200,30 +200,88 @@ final class CpuBrand {
 }
 
 final _bsdCpuPercentReg = RegExp(r'(\d+\.\d+)%');
+final _macCpuPercentReg = RegExp(
+    r'CPU usage: ([\d.]+)% user, ([\d.]+)% sys, ([\d.]+)% idle');
+final _freebsdCpuPercentReg = RegExp(
+    r'CPU: ([\d.]+)% user, ([\d.]+)% nice, ([\d.]+)% system, '
+    r'([\d.]+)% interrupt, ([\d.]+)% idle');
 
-/// TODO: Change this implementation to parse cpu status on BSD system
+/// Parse CPU status on BSD system with support for different BSD variants
 ///
-/// [raw]:
-/// CPU usage: 14.70% user, 12.76% sys, 72.52% idle
+/// Supports multiple formats:
+/// - macOS: "CPU usage: 14.70% user, 12.76% sys, 72.52% idle"
+/// - FreeBSD: "CPU: 5.2% user, 0.0% nice, 3.1% system, 0.1% interrupt, 91.6% idle"
+/// - Generic BSD: fallback to percentage extraction
 Cpus parseBsdCpu(String raw) {
+  final init = InitStatus.cpus;
+  
+  // Try macOS format first
+  final macMatch = _macCpuPercentReg.firstMatch(raw);
+  if (macMatch != null) {
+    final userPercent = (double.parse(macMatch.group(1)!) * 100).toInt();
+    final sysPercent = (double.parse(macMatch.group(2)!) * 100).toInt();
+    final idlePercent = (double.parse(macMatch.group(3)!) * 100).toInt();
+    
+    init.add([
+      SingleCpuCore(
+        'cpu0',
+        userPercent,
+        sysPercent,
+        0, // nice
+        idlePercent,
+        0, // iowait
+        0, // irq
+        0, // softirq
+      ),
+    ]);
+    return init;
+  }
+  
+  // Try FreeBSD format
+  final freebsdMatch = _freebsdCpuPercentReg.firstMatch(raw);
+  if (freebsdMatch != null) {
+    final userPercent = (double.parse(freebsdMatch.group(1)!) * 100).toInt();
+    final nicePercent = (double.parse(freebsdMatch.group(2)!) * 100).toInt();
+    final sysPercent = (double.parse(freebsdMatch.group(3)!) * 100).toInt();
+    final irqPercent = (double.parse(freebsdMatch.group(4)!) * 100).toInt();
+    final idlePercent = (double.parse(freebsdMatch.group(5)!) * 100).toInt();
+    
+    init.add([
+      SingleCpuCore(
+        'cpu0',
+        userPercent,
+        sysPercent,
+        nicePercent,
+        idlePercent,
+        0, // iowait
+        irqPercent,
+        0, // softirq
+      ),
+    ]);
+    return init;
+  }
+  
+  // Fallback to generic percentage extraction
   final percents = _bsdCpuPercentReg
       .allMatches(raw)
       .map((e) => double.parse(e.group(1) ?? '0') * 100)
       .toList();
-  if (percents.length != 3) return InitStatus.cpus;
-
-  final init = InitStatus.cpus;
-  init.add([
-    SingleCpuCore(
-      'cpu',
-      percents[0].toInt(),
-      0,
-      0,
-      percents[2].toInt() + percents[1].toInt(),
-      0,
-      0,
-      0,
-    ),
-  ]);
+  
+  if (percents.length >= 3) {
+    init.add([
+      SingleCpuCore(
+        'cpu0',
+        percents[0].toInt(), // user
+        percents.length > 1 ? percents[1].toInt() : 0, // sys
+        0, // nice
+        percents.length > 2 ? percents[2].toInt() : 0, // idle
+        0, // iowait
+        0, // irq
+        0, // softirq
+      ),
+    ]);
+    return init;
+  }
+  
   return init;
 }

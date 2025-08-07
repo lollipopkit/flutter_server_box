@@ -44,8 +44,7 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
 Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   final segments = req.segments;
 
-  final time =
-      int.tryParse(StatusCmdType.time.find(segments)) ??
+  final time = int.tryParse(StatusCmdType.time.find(segments)) ??
       DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
   try {
@@ -215,11 +214,11 @@ Future<ServerStatus> _getBsdStatus(ServerStatusUpdateReq req) async {
     Loggers.app.warning(e, s);
   }
 
-  // try {
-  //   req.ss.mem = parseBsdMem(BSDStatusCmdType.mem.find(segments));
-  // } catch (e, s) {
-  //   Loggers.app.warning(e, s);
-  // }
+  try {
+    req.ss.mem = parseBsdMemory(BSDStatusCmdType.mem.find(segments));
+  } catch (e, s) {
+    Loggers.app.warning(e, s);
+  }
 
   try {
     final uptime = _parseUpTime(BSDStatusCmdType.uptime.find(segments));
@@ -306,19 +305,24 @@ Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
 
   // Parse time for potential future use in network/disk I/O monitoring
   // ignore: unused_local_variable
-  final time =
-      int.tryParse(WindowsStatusCmdType.time.find(segments)) ??
+  final time = int.tryParse(WindowsStatusCmdType.time.find(segments)) ??
       DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
   try {
     // Windows network parsing - JSON format from PowerShell
     final netRaw = WindowsStatusCmdType.net.find(segments);
-    if (netRaw.isNotEmpty && netRaw != 'null' && !netRaw.contains('error')) {
+    if (netRaw.isNotEmpty &&
+        netRaw != 'null' &&
+        !netRaw.contains('network_error') &&
+        !netRaw.contains('error') &&
+        !netRaw.contains('Exception')) {
       final netParts = _parseWindowsNetwork(netRaw, time);
-      req.ss.netSpeed.update(netParts);
+      if (netParts.isNotEmpty) {
+        req.ss.netSpeed.update(netParts);
+      }
     }
   } catch (e, s) {
-    Loggers.app.warning(e, s);
+    Loggers.app.warning('Windows network parsing failed: $e', s);
   }
 
   try {
@@ -342,7 +346,10 @@ Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
   try {
     // Windows CPU parsing - JSON format from PowerShell
     final cpuRaw = WindowsStatusCmdType.cpu.find(segments);
-    if (cpuRaw.isNotEmpty && cpuRaw != 'null') {
+    if (cpuRaw.isNotEmpty &&
+        cpuRaw != 'null' &&
+        !cpuRaw.contains('error') &&
+        !cpuRaw.contains('Exception')) {
       final cpus = _parseWindowsCpu(cpuRaw, req.ss);
       if (cpus.isNotEmpty) {
         req.ss.cpu.update(cpus);
@@ -362,14 +369,17 @@ Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
   try {
     // Windows memory parsing - JSON format from PowerShell
     final memRaw = WindowsStatusCmdType.mem.find(segments);
-    if (memRaw.isNotEmpty && memRaw != 'null') {
+    if (memRaw.isNotEmpty &&
+        memRaw != 'null' &&
+        !memRaw.contains('error') &&
+        !memRaw.contains('Exception')) {
       final memory = _parseWindowsMemory(memRaw);
       if (memory != null) {
         req.ss.mem = memory;
       }
     }
   } catch (e, s) {
-    Loggers.app.warning(e, s);
+    Loggers.app.warning('Windows memory parsing failed: $e', s);
   }
 
   try {
@@ -473,8 +483,7 @@ String? _parseWindowsUpTime(String raw) {
   try {
     final formatter = DateFormat('EEEE, MMMM d, yyyy h:mm:ss a', 'en_US');
     final dateTime = formatter.tryParseLoose(
-      raw.trim().split('\n').firstOrNull ?? '',
-    );
+        raw.trim().split('\n').firstOrNull ?? '');
     if (dateTime == null) return null;
     final now = DateTime.now();
     final uptime = now.difference(dateTime);
@@ -636,9 +645,12 @@ List<Battery> _parseWindowsBatteries(String raw) {
           batteryData['EstimatedChargeRemaining'] as int? ?? 0;
       final batteryStatus = batteryData['BatteryStatus'] as int? ?? 0;
 
-      // Windows battery status: 1=Other, 2=Unknown, 3=Full, 4=Low, 5=Critical, 6=Charging, 7=ChargingAndLow, 8=ChargingAndCritical, 9=Undefined, 10=PartiallyCharged
-      final isCharging =
-          batteryStatus == 6 || batteryStatus == 7 || batteryStatus == 8;
+      // Windows battery status: 1=Other, 2=Unknown, 3=Full, 4=Low, 
+      // 5=Critical, 6=Charging, 7=ChargingAndLow, 8=ChargingAndCritical, 
+      // 9=Undefined, 10=PartiallyCharged
+      final isCharging = batteryStatus == 6 || 
+          batteryStatus == 7 || 
+          batteryStatus == 8;
 
       batteries.add(
         Battery(
@@ -711,7 +723,8 @@ List<NetSpeedPart> _parseWindowsNetwork(String raw, int currentTime) {
 }
 
 String _extractInterfaceName(String path) {
-  // Extract interface name from path like "\\Computer\\NetworkInterface(Interface Name)\\..."
+  // Extract interface name from path like 
+  // "\\Computer\\NetworkInterface(Interface Name)\\..."
   final match = RegExp(r'\\NetworkInterface\(([^)]+)\)\\').firstMatch(path);
   return match?.group(1) ?? '';
 }
@@ -745,7 +758,8 @@ List<DiskIOPiece> _parseWindowsDiskIO(String raw, int currentTime) {
           }
         }
 
-        // Create DiskIOPiece for each disk - convert bytes to sectors (assuming 512 bytes per sector)
+        // Create DiskIOPiece for each disk - convert bytes to sectors 
+        // (assuming 512 bytes per sector)
         for (final diskName in diskReads.keys) {
           final readBytes = diskReads[diskName] ?? 0;
           final writeBytes = diskWrites[diskName] ?? 0;
@@ -771,7 +785,8 @@ List<DiskIOPiece> _parseWindowsDiskIO(String raw, int currentTime) {
 }
 
 String _extractDiskName(String path) {
-  // Extract disk name from path like "\\Computer\\PhysicalDisk(Disk Name)\\..."
+  // Extract disk name from path like 
+  // "\\Computer\\PhysicalDisk(Disk Name)\\..."
   final match = RegExp(r'\\PhysicalDisk\(([^)]+)\)\\').firstMatch(path);
   return match?.group(1) ?? '';
 }
@@ -800,7 +815,8 @@ void _parseWindowsTemperatures(Temperatures temps, String raw) {
       if (temperature != null) {
         // Convert to the format expected by the existing parse method
         typeLines.add('/sys/class/thermal/thermal_zone$i/$typeName');
-        // Convert to millicelsius (multiply by 1000) as expected by Linux parsing
+        // Convert to millicelsius (multiply by 1000) 
+        // as expected by Linux parsing
         valueLines.add((temperature * 1000).round().toString());
       }
     }

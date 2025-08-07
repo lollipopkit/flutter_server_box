@@ -48,14 +48,14 @@ enum ShellFunc {
   }
 
   static void switchScriptDir(String id, {SystemType? systemType}) =>
-      switch (_scriptDirMap[id]) {
+    switch (_scriptDirMap[id]) {
         scriptDirTmp => _scriptDirMap[id] = scriptDirHome,
         scriptDirTmpWindows => _scriptDirMap[id] = scriptDirHomeWindows,
         scriptDirHome => _scriptDirMap[id] = scriptDirTmp,
         scriptDirHomeWindows => _scriptDirMap[id] = scriptDirTmpWindows,
         _ =>
-          _scriptDirMap[id] = systemType == SystemType.windows
-              ? scriptDirHomeWindows
+        _scriptDirMap[id] = systemType == SystemType.windows
+            ? scriptDirHomeWindows
               : scriptDirHome,
       };
 
@@ -115,16 +115,17 @@ chmod 755 $scriptPath
       'Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Application]::SetSuspendState(\'Suspend\', \$false, \$false)',
   };
 
-  String get _unixCmd => switch (this) {
-    ShellFunc.status =>
-      '''
+  String get _unixCmd {
+    switch (this) {
+      case ShellFunc.status:
+        return '''
 if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 \t$_linuxStatusCmds
 else
 \t$_bsdStatusCmds
-fi''',
-    ShellFunc.process =>
-      '''
+fi''';
+      case ShellFunc.process:
+        return '''
 if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 \tif [ "\$isBusybox" != "" ]; then
 \t\tps w
@@ -134,29 +135,48 @@ if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 else
 \tps -ax
 fi
-''',
-    ShellFunc.shutdown =>
-      '''
+''';
+      case ShellFunc.shutdown:
+        return '''
 if [ "\$userId" = "0" ]; then
 \tshutdown -h now
 else
 \tsudo -S shutdown -h now
-fi''',
-    ShellFunc.reboot =>
-      '''
+fi''';
+      case ShellFunc.reboot:
+        return '''
 if [ "\$userId" = "0" ]; then
 \treboot
 else
 \tsudo -S reboot
-fi''',
-    ShellFunc.suspend =>
-      '''
+fi''';
+      case ShellFunc.suspend:
+        return '''
 if [ "\$userId" = "0" ]; then
 \tsystemctl suspend
 else
 \tsudo -S systemctl suspend
-fi''',
-  };
+fi''';
+    }
+  }
+
+  /// Helper method to generate custom commands string
+  static String _getCustomCmdsStr(
+    ShellFunc func,
+    Map<String, String>? customCmds, {
+    required bool isWindows,
+  }) {
+    if (func == ShellFunc.status &&
+        customCmds != null &&
+        customCmds.isNotEmpty) {
+      if (isWindows) {
+        return '\n${customCmds.values.map((cmd) => '\t$cmd').join('\n')}';
+      } else {
+        return '$cmdDivider\n\t${customCmds.values.join(cmdDivider)}';
+      }
+    }
+    return '';
+  }
 
   /// Generate Windows PowerShell script
   static String windowsScript(Map<String, String>? customCmds) {
@@ -171,14 +191,11 @@ fi''',
 
     // Write each func
     for (final func in values) {
-      final customCmdsStr = () {
-        if (func == ShellFunc.status &&
-            customCmds != null &&
-            customCmds.isNotEmpty) {
-          return '\n${customCmds.values.map((cmd) => '\t$cmd').join('\n')}';
-        }
-        return '';
-      }();
+      final customCmdsStr = _getCustomCmdsStr(
+        func,
+        customCmds,
+        isWindows: true,
+      );
 
       sb.write('''
 function ${func.name} {
@@ -228,14 +245,11 @@ exec 2>/dev/null
 ''');
     // Write each func
     for (final func in values) {
-      final customCmdsStr = () {
-        if (func == ShellFunc.status &&
-            customCmds != null &&
-            customCmds.isNotEmpty) {
-          return '$cmdDivider\n\t${customCmds.values.join(cmdDivider)}';
-        }
-        return '';
-      }();
+      final customCmdsStr = _getCustomCmdsStr(
+        func,
+        customCmds,
+        isWindows: false,
+      );
       sb.write('''
 ${func.name}() {
 ${func._unixCmd.split('\n').map((e) => '\t$e').join('\n')}
@@ -299,7 +313,8 @@ enum StatusCmdType {
   uptime._('uptime'),
   conn._('cat /proc/net/snmp'),
   disk._(
-    'lsblk --bytes --json --output FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID',
+    'lsblk --bytes --json --output '
+    'FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID',
   ),
   mem._("cat /proc/meminfo | grep -E 'Mem|Swap'"),
   tempType._('cat /sys/class/thermal/thermal_zone*/type'),
@@ -311,7 +326,14 @@ enum StatusCmdType {
   ),
   nvidia._('nvidia-smi -q -x'),
   amd._(
-    'if command -v amd-smi >/dev/null 2>&1; then amd-smi list --json && amd-smi metric --json; elif command -v rocm-smi >/dev/null 2>&1; then rocm-smi --json || rocm-smi --showunique --showuse --showtemp --showfan --showclocks --showmemuse --showpower; elif command -v radeontop >/dev/null 2>&1; then timeout 2s radeontop -d - -l 1 | tail -n +2; else echo "No AMD GPU monitoring tools found"; fi',
+    'if command -v amd-smi >/dev/null 2>&1; then '
+    'amd-smi list --json && amd-smi metric --json; '
+    'elif command -v rocm-smi >/dev/null 2>&1; then '
+    'rocm-smi --json || rocm-smi --showunique --showuse --showtemp '
+    '--showfan --showclocks --showmemuse --showpower; '
+    'elif command -v radeontop >/dev/null 2>&1; then '
+    'timeout 2s radeontop -d - -l 1 | tail -n +2; '
+    'else echo "No AMD GPU monitoring tools found"; fi',
   ),
   sensors._('sensors'),
   diskSmart._(
@@ -359,11 +381,15 @@ enum WindowsStatusCmdType {
   echo._('echo ${SystemType.windowsSign}'),
   time._('powershell -c "[DateTimeOffset]::UtcNow.ToUnixTimeSeconds()"'),
   net._(
-    r'powershell -c "Get-Counter -Counter \"\\NetworkInterface(*)\\Bytes Received/sec\", \"\\NetworkInterface(*)\\Bytes Sent/sec\" -SampleInterval 1 -MaxSamples 2 | ConvertTo-Json"',
+    r'powershell -c "Get-Counter -Counter '
+    r'\"\\NetworkInterface(*)\\Bytes Received/sec\", '
+    r'\"\\NetworkInterface(*)\\Bytes Sent/sec\" '
+    r'-SampleInterval 1 -MaxSamples 2 | ConvertTo-Json"',
   ),
   sys._('powershell -c "(Get-ComputerInfo).OsName"'),
   cpu._(
-    'powershell -c "Get-WmiObject -Class Win32_Processor | Select-Object Name, LoadPercentage | ConvertTo-Json"',
+    'powershell -c "Get-WmiObject -Class Win32_Processor | '
+    'Select-Object Name, LoadPercentage | ConvertTo-Json"',
   ),
   uptime._(
     'powershell -c "(Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime"',
@@ -372,32 +398,48 @@ enum WindowsStatusCmdType {
     'powershell -c "(netstat -an | findstr ESTABLISHED | Measure-Object -Line).Count"',
   ),
   disk._(
-    'powershell -c "Get-WmiObject -Class Win32_LogicalDisk | Select-Object DeviceID, Size, FreeSpace, FileSystem | ConvertTo-Json"',
+    'powershell -c "Get-WmiObject -Class Win32_LogicalDisk | '
+    'Select-Object DeviceID, Size, FreeSpace, FileSystem | ConvertTo-Json"',
   ),
   mem._(
-    'powershell -c "Get-WmiObject -Class Win32_OperatingSystem | Select-Object TotalVisibleMemorySize, FreePhysicalMemory | ConvertTo-Json"',
+    'powershell -c "Get-WmiObject -Class Win32_OperatingSystem | '
+    'Select-Object TotalVisibleMemorySize, FreePhysicalMemory | ConvertTo-Json"',
   ),
   temp._(
-    'powershell -c "Get-CimInstance -ClassName MSAcpi_ThermalZoneTemperature -Namespace root/wmi -ErrorAction SilentlyContinue | Select-Object InstanceName, @{Name=\'Temperature\';Expression={[math]::Round((\$_.CurrentTemperature - 2732) / 10, 1)}} | ConvertTo-Json"',
+    'powershell -c "Get-CimInstance -ClassName MSAcpi_ThermalZoneTemperature '
+    '-Namespace root/wmi -ErrorAction SilentlyContinue | '
+    'Select-Object InstanceName, @{Name=\'Temperature\';'
+    'Expression={[math]::Round((\$_.CurrentTemperature - 2732) / 10, 1)}} | '
+    'ConvertTo-Json"',
   ),
   host._(r'powershell -c "Write-Output $env:COMPUTERNAME"'),
   diskio._(
-    r'powershell -c "Get-Counter -Counter \"\\PhysicalDisk(*)\\Disk Read Bytes/sec\", \"\\PhysicalDisk(*)\\Disk Write Bytes/sec\" -SampleInterval 1 -MaxSamples 2 | ConvertTo-Json"',
+    r'powershell -c "Get-Counter -Counter '
+    r'\"\\PhysicalDisk(*)\\Disk Read Bytes/sec\", '
+    r'\"\\PhysicalDisk(*)\\Disk Write Bytes/sec\" '
+    r'-SampleInterval 1 -MaxSamples 2 | ConvertTo-Json"',
   ),
   battery._(
-    'powershell -c "Get-WmiObject -Class Win32_Battery | Select-Object EstimatedChargeRemaining, BatteryStatus | ConvertTo-Json"',
+    'powershell -c "Get-WmiObject -Class Win32_Battery | '
+    'Select-Object EstimatedChargeRemaining, BatteryStatus | ConvertTo-Json"',
   ),
   nvidia._(
-    'powershell -c "if (Get-Command nvidia-smi -ErrorAction SilentlyContinue) { nvidia-smi -q -x } else { echo \'NVIDIA driver not found\' }"',
+    'powershell -c "if (Get-Command nvidia-smi -ErrorAction SilentlyContinue) { '
+    'nvidia-smi -q -x } else { echo \'NVIDIA driver not found\' }"',
   ),
   amd._(
-    'powershell -c "if (Get-Command amd-smi -ErrorAction SilentlyContinue) { amd-smi list --json } else { echo \'AMD driver not found\' }"',
+    'powershell -c "if (Get-Command amd-smi -ErrorAction SilentlyContinue) { '
+    'amd-smi list --json } else { echo \'AMD driver not found\' }"',
   ),
   sensors._(
-    'powershell -c "Get-CimInstance -ClassName Win32_TemperatureProbe -ErrorAction SilentlyContinue | Select-Object Name, CurrentReading | ConvertTo-Json"',
+    'powershell -c "Get-CimInstance -ClassName Win32_TemperatureProbe '
+    '-ErrorAction SilentlyContinue | '
+    'Select-Object Name, CurrentReading | ConvertTo-Json"',
   ),
   diskSmart._(
-    'powershell -c "Get-PhysicalDisk | Get-StorageReliabilityCounter | Select-Object DeviceId, Temperature, TemperatureMax, Wear, PowerOnHours | ConvertTo-Json"',
+    'powershell -c "Get-PhysicalDisk | Get-StorageReliabilityCounter | '
+    'Select-Object DeviceId, Temperature, TemperatureMax, Wear, PowerOnHours | '
+    'ConvertTo-Json"',
   ),
   cpuBrand._('powershell -c "(Get-WmiObject -Class Win32_Processor).Name"');
 
