@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:intl/intl.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
 import 'package:server_box/data/model/server/amd.dart';
 import 'package:server_box/data/model/server/battery.dart';
@@ -16,6 +15,7 @@ import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/temp.dart';
+import 'package:server_box/data/model/server/windows_parser.dart';
 
 class ServerStatusUpdateReq {
   final ServerStatus ss;
@@ -318,7 +318,7 @@ Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
   _parseWindowsBatteryData(req, segments);
   _parseWindowsTemperatureData(req, segments);
   _parseWindowsGpuData(req, segments);
-  _parseWindowsCustomCommands(req);
+  WindowsParser.parseCustomCommands(req.ss, segments, req.customCmds, req.system.segmentsLen);
 
   return req.ss;
 }
@@ -375,7 +375,7 @@ void _parseWindowsCpuData(ServerStatusUpdateReq req, List<String> segments) {
         cpuRaw != 'null' &&
         !cpuRaw.contains('error') &&
         !cpuRaw.contains('Exception')) {
-      final cpus = _parseWindowsCpu(cpuRaw, req.ss);
+      final cpus = WindowsParser.parseCpu(cpuRaw, req.ss);
       if (cpus.isNotEmpty) {
         req.ss.cpu.update(cpus);
       }
@@ -400,7 +400,7 @@ void _parseWindowsMemoryData(ServerStatusUpdateReq req, List<String> segments) {
         memRaw != 'null' &&
         !memRaw.contains('error') &&
         !memRaw.contains('Exception')) {
-      final memory = _parseWindowsMemory(memRaw);
+      final memory = WindowsParser.parseMemory(memRaw);
       if (memory != null) {
         req.ss.mem = memory;
       }
@@ -415,7 +415,7 @@ void _parseWindowsDiskData(ServerStatusUpdateReq req, List<String> segments) {
   try {
     final diskRaw = WindowsStatusCmdType.disk.find(segments);
     if (diskRaw.isNotEmpty && diskRaw != 'null') {
-      final disks = _parseWindowsDisks(diskRaw);
+      final disks = WindowsParser.parseDisks(diskRaw);
       req.ss.disk = disks;
       req.ss.diskUsage = DiskUsage.parse(disks);
     }
@@ -427,7 +427,7 @@ void _parseWindowsDiskData(ServerStatusUpdateReq req, List<String> segments) {
 /// Parse Windows uptime data
 void _parseWindowsUptimeData(ServerStatusUpdateReq req, List<String> segments) {
   try {
-    final uptime = _parseWindowsUpTime(WindowsStatusCmdType.uptime.find(segments));
+    final uptime = WindowsParser.parseUpTime(WindowsStatusCmdType.uptime.find(segments));
     if (uptime != null) {
       req.ss.more[StatusCmdType.uptime] = uptime;
     }
@@ -505,213 +505,6 @@ void _parseWindowsGpuData(ServerStatusUpdateReq req, List<String> segments) {
   }
 }
 
-/// Parse Windows custom commands
-void _parseWindowsCustomCommands(ServerStatusUpdateReq req) {
-  try {
-    for (int idx = 0; idx < req.customCmds.length; idx++) {
-      final key = req.customCmds.keys.elementAt(idx);
-      final value = req.segments[idx + req.system.segmentsLen];
-      req.ss.customCmds[key] = value;
-    }
-  } catch (e, s) {
-    Loggers.app.warning('Windows custom commands parsing failed: $e', s);
-  }
-}
-
-String? _parseWindowsUpTime(String raw) {
-  try {
-    // Clean the input - trim whitespace and get the first non-empty line
-    final cleanedInput = raw.trim().split('\n')
-        .where((line) => line.trim().isNotEmpty)
-        .firstOrNull;
-    
-    if (cleanedInput == null || cleanedInput.isEmpty) {
-      Loggers.app.warning('Windows uptime parsing: empty or null input');
-      return null;
-    }
-    
-    // Try multiple date formats to handle different Windows locale/version outputs
-    final formatters = [
-      DateFormat('EEEE, MMMM d, yyyy h:mm:ss a', 'en_US'), // Original format
-      DateFormat('EEEE, MMMM dd, yyyy h:mm:ss a', 'en_US'), // Double-digit day
-      DateFormat('EEE, MMM d, yyyy h:mm:ss a', 'en_US'), // Shortened format
-      DateFormat('EEE, MMM dd, yyyy h:mm:ss a', 'en_US'), // Shortened with double-digit day
-      DateFormat('M/d/yyyy h:mm:ss a', 'en_US'), // Short US format
-      DateFormat('MM/dd/yyyy h:mm:ss a', 'en_US'), // Short US format with zero padding
-      DateFormat('d/M/yyyy h:mm:ss a', 'en_US'), // Short European format
-      DateFormat('dd/MM/yyyy h:mm:ss a', 'en_US'), // Short European format with zero padding
-    ];
-    
-    DateTime? dateTime;
-    for (final formatter in formatters) {
-      dateTime = formatter.tryParseLoose(cleanedInput);
-      if (dateTime != null) break;
-    }
-    
-    if (dateTime == null) {
-      Loggers.app.warning('Windows uptime parsing: could not parse date format for: $cleanedInput');
-      return null;
-    }
-    
-    final now = DateTime.now();
-    final uptime = now.difference(dateTime);
-    
-    // Validate that the uptime is reasonable (not negative, not too far in the future)
-    if (uptime.isNegative || uptime.inDays > 3650) { // More than 10 years seems unreasonable
-      Loggers.app.warning('Windows uptime parsing: unreasonable uptime calculated: ${uptime.inDays} days for date: $cleanedInput');
-      return null;
-    }
-
-    final days = uptime.inDays;
-    final hours = uptime.inHours % 24;
-    final minutes = uptime.inMinutes % 60;
-
-    if (days > 0) {
-      return '$days days, $hours:${minutes.toString().padLeft(2, '0')}';
-    } else {
-      return '$hours:${minutes.toString().padLeft(2, '0')}';
-    }
-  } catch (e, s) {
-    Loggers.app.warning('Windows uptime parsing failed: $e for input: $raw', s);
-    return null;
-  }
-}
-
-List<SingleCpuCore> _parseWindowsCpu(String raw, ServerStatus serverStatus) {
-  try {
-    final dynamic jsonData = json.decode(raw);
-    final List<SingleCpuCore> cpus = [];
-
-    if (jsonData is List) {
-      for (int i = 0; i < jsonData.length; i++) {
-        final cpu = jsonData[i];
-        final loadPercentage = cpu['LoadPercentage'] ?? 0;
-        final usage = loadPercentage as int;
-        final idle = 100 - usage;
-
-        // Get previous CPU data to calculate cumulative values
-        final prevCpus = serverStatus.cpu.now;
-        final prevCpu = i < prevCpus.length ? prevCpus[i] : null;
-
-        // LIMITATION: Windows CPU counters approach
-        // PowerShell provides LoadPercentage as instantaneous percentage, not cumulative time.
-        // We simulate cumulative counters by adding current percentages to previous totals.
-        // This approach has limitations:
-        // 1. Not as accurate as true cumulative time counters (Linux /proc/stat)
-        // 2. May drift over time with variable polling intervals
-        // 3. Results depend on consistent polling frequency
-        // However, this allows compatibility with existing delta-based CPU calculation logic.
-        final newUser = (prevCpu?.user ?? 0) + usage;
-        final newIdle = (prevCpu?.idle ?? 0) + idle;
-
-        cpus.add(
-          SingleCpuCore(
-            'cpu$i',
-            newUser, // cumulative user time
-            0, // sys (not available)
-            0, // nice (not available)
-            newIdle, // cumulative idle time
-            0, // iowait (not available)
-            0, // irq (not available)
-            0, // softirq (not available)
-          ),
-        );
-      }
-    } else if (jsonData is Map) {
-      // Single CPU core
-      final loadPercentage = jsonData['LoadPercentage'] ?? 0;
-      final usage = loadPercentage as int;
-      final idle = 100 - usage;
-
-      // Get previous CPU data to calculate cumulative values
-      final prevCpus = serverStatus.cpu.now;
-      final prevCpu = prevCpus.isNotEmpty ? prevCpus[0] : null;
-
-      // LIMITATION: See comment above for Windows CPU counter limitations
-      final newUser = (prevCpu?.user ?? 0) + usage;
-      final newIdle = (prevCpu?.idle ?? 0) + idle;
-
-      cpus.add(
-        SingleCpuCore(
-          'cpu0',
-          newUser, // cumulative user time
-          0, // sys
-          0, // nice
-          newIdle, // cumulative idle time
-          0, // iowait
-          0, // irq
-          0, // softirq
-        ),
-      );
-    }
-
-    return cpus;
-  } catch (e) {
-    return [];
-  }
-}
-
-Memory? _parseWindowsMemory(String raw) {
-  try {
-    final dynamic jsonData = json.decode(raw);
-    final data = jsonData is List ? jsonData.first : jsonData;
-
-    final totalKB = data['TotalVisibleMemorySize'] as int? ?? 0;
-    final freeKB = data['FreePhysicalMemory'] as int? ?? 0;
-
-    return Memory(
-      total: totalKB,
-      free: freeKB,
-      avail: freeKB, // Windows doesn't distinguish between free and available
-    );
-  } catch (e) {
-    return null;
-  }
-}
-
-List<Disk> _parseWindowsDisks(String raw) {
-  try {
-    final dynamic jsonData = json.decode(raw);
-    final List<Disk> disks = [];
-
-    final diskList = jsonData is List ? jsonData : [jsonData];
-
-    for (final diskData in diskList) {
-      final deviceId = diskData['DeviceID']?.toString() ?? '';
-      final size =
-          BigInt.tryParse(diskData['Size']?.toString() ?? '0') ?? BigInt.zero;
-      final freeSpace =
-          BigInt.tryParse(diskData['FreeSpace']?.toString() ?? '0') ??
-          BigInt.zero;
-      final fileSystem = diskData['FileSystem']?.toString();
-
-      if (deviceId.isEmpty || size == BigInt.zero) continue;
-
-      final sizeKB = size ~/ BigInt.from(1024);
-      final freeKB = freeSpace ~/ BigInt.from(1024);
-      final usedKB = sizeKB - freeKB;
-      final usedPercent = sizeKB > BigInt.zero
-          ? ((usedKB * BigInt.from(100)) ~/ sizeKB).toInt()
-          : 0;
-
-      disks.add(
-        Disk(
-          path: deviceId,
-          fsTyp: fileSystem,
-          mount: deviceId,
-          usedPercent: usedPercent,
-          used: usedKB,
-          size: sizeKB,
-          avail: freeKB,
-        ),
-      );
-    }
-
-    return disks;
-  } catch (e) {
-    return [];
-  }
-}
 
 List<Battery> _parseWindowsBatteries(String raw) {
   try {

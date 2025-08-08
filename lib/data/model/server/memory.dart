@@ -45,72 +45,44 @@ Memory parseBsdMemory(String raw) {
   final macMemReg = RegExp(
       r'PhysMem:\s*([\d.]+)([KMGT])\s*used.*?,\s*([\d.]+)([KMGT])\s*unused');
   final macMatch = macMemReg.firstMatch(raw);
-  
+
   if (macMatch != null) {
     final usedAmount = double.parse(macMatch.group(1)!);
     final usedUnit = macMatch.group(2)!;
     final freeAmount = double.parse(macMatch.group(3)!);
     final freeUnit = macMatch.group(4)!;
-    
+
     final usedKB = _convertToKB(usedAmount, usedUnit);
     final freeKB = _convertToKB(freeAmount, freeUnit);
-    final totalKB = usedKB + freeKB;
-    
-    return Memory(total: totalKB, free: freeKB, avail: freeKB);
+    return Memory(total: usedKB + freeKB, free: freeKB, avail: freeKB);
   }
-  
+
   // Try FreeBSD format: "Mem: 456M Active, 2918M Inact, 1127M Wired, 187M Cache, 829M Buf, 3535M Free"
-  final freebsdMemReg = RegExp(r'Mem:.*?([\d.]+)([KMGT])\s*Free');
-  final freebsdMatch = freebsdMemReg.firstMatch(raw);
-  
-  if (freebsdMatch != null) {
-    final freeAmount = double.parse(freebsdMatch.group(1)!);
-    final freeUnit = freebsdMatch.group(2)!;
-    final freeKB = _convertToKB(freeAmount, freeUnit);
-    
-    // Extract other components for total calculation
-    final components = RegExp(
-            r'([\d.]+)([KMGT])\s*(?:Active|Inact|Wired|Cache|Buf|Free)')
-        .allMatches(raw)
-        .map((m) => _convertToKB(double.parse(m.group(1)!), m.group(2)!))
-        .toList();
-    
-    final totalKB = components.isNotEmpty 
-        ? components.reduce((a, b) => a + b) 
-        : freeKB;
-    
-    return Memory(total: totalKB, free: freeKB, avail: freeKB);
-  }
-  
-  // Fallback: try to extract numbers and assume they're in some unit
-  // This is a best-effort attempt and may not be accurate for all BSD systems
-  final numberMatches = RegExp(r'(\d+(?:\.\d+)?)\s*([KMGT]?)')
-      .allMatches(raw)
-      .toList();
-  if (numberMatches.length >= 2) {
-    try {
-      final total = _convertToKB(
-          double.parse(numberMatches[0].group(1)!), 
-          numberMatches[0].group(2) ?? '');
-      final free = _convertToKB(
-          double.parse(numberMatches[1].group(1)!), 
-          numberMatches[1].group(2) ?? '');
-      
-      // Validate that total >= free to ensure reasonable values
-      if (total >= free && total > 0) {
-        return Memory(total: total, free: free, avail: free);
-      } else {
-        Loggers.app.warning('BSD memory fallback parsing produced invalid values: total=$total, free=$free for input: $raw');
+  final freeBsdReg = RegExp(
+      r'(\d+)([KMGT])\s+(Active|Inact|Wired|Cache|Buf|Free)', caseSensitive: false);
+  final matches = freeBsdReg.allMatches(raw);
+
+  if (matches.isNotEmpty) {
+    double usedKB = 0;
+    double freeKB = 0;
+    for (final match in matches) {
+      final amount = double.parse(match.group(1)!);
+      final unit = match.group(2)!;
+      final keyword = match.group(3)!.toLowerCase();
+      final kb = _convertToKB(amount, unit);
+
+      // Only sum known keywords
+      if (keyword == 'active' || keyword == 'inact' || keyword == 'wired' || keyword == 'cache' || keyword == 'buf') {
+        usedKB += kb;
+      } else if (keyword == 'free') {
+        freeKB += kb;
       }
-    } catch (e) {
-      Loggers.app.warning('BSD memory fallback parsing failed: $e for input: $raw');
     }
-  } else {
-    Loggers.app.warning('BSD memory fallback could not find enough numbers in input: $raw');
+    return Memory(total: (usedKB + freeKB).round(), free: freeKB.round(), avail: freeKB.round());
   }
-  
-  // Return minimal valid memory info if parsing fails
-  return const Memory(total: 1, free: 0, avail: 0);
+
+  // If neither format matches, throw an error to avoid misinterpretation
+  throw FormatException('Unrecognized BSD/macOS memory format: $raw');
 }
 
 /// Convert memory size to KB based on unit

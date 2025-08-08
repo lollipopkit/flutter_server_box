@@ -14,7 +14,7 @@ void main() {
     });
 
     test('should generate Windows PowerShell script correctly', () {
-      final script = ShellFunc.windowsScript({'custom_cmd': 'echo "test"'});
+      final script = ShellFunc.allScript({'custom_cmd': 'echo "test"'}, systemType: SystemType.windows);
 
       expect(script, contains('PowerShell script for ServerBox'));
       expect(script, contains('function SbStatus'));

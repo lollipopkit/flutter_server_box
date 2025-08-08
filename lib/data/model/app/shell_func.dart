@@ -1,4 +1,5 @@
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/script_builders.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/res/build_data.dart';
@@ -60,19 +61,12 @@ enum ShellFunc {
 
   static String getInstallShellCmd(String id, {SystemType? systemType}) {
     final scriptDir = getScriptDir(id, systemType: systemType);
-    final fileName = systemType == SystemType.windows ? scriptFileWindows : scriptFile;
-    final separator = systemType == SystemType.windows ? '\\' : '/';
-    final scriptPath = '$scriptDir$separator$fileName';
+    final isWindows = systemType == SystemType.windows;
+    final builder = ScriptBuilderFactory.getBuilder(isWindows);
+    final separator = isWindows ? '\\' : '/';
+    final scriptPath = '$scriptDir$separator${builder.scriptFileName}';
 
-    if (systemType == SystemType.windows) {
-      return 'New-Item -ItemType Directory -Force -Path \'$scriptDir\' | Out-Null; \$content = [System.Console]::In.ReadToEnd(); Set-Content -Path \'$scriptPath\' -Value \$content -Encoding UTF8';
-    } else {
-      return '''
-mkdir -p $scriptDir
-cat > $scriptPath
-chmod 755 $scriptPath
-''';
-    }
+    return builder.getInstallCommand(scriptDir, scriptPath);
   }
 
   String get flag => switch (this) {
@@ -86,190 +80,22 @@ chmod 755 $scriptPath
 
   String exec(String id, {SystemType? systemType}) {
     final scriptPath = getScriptPath(id, systemType: systemType);
-    if (systemType == SystemType.windows) {
-      return 'powershell -ExecutionPolicy Bypass -File "$scriptPath" -$flag';
-    } else {
-      return 'sh $scriptPath -$flag';
-    }
+    final isWindows = systemType == SystemType.windows;
+    final builder = ScriptBuilderFactory.getBuilder(isWindows);
+    
+    return builder.getExecCommand(scriptPath, this);
   }
 
-  String get _windowsCmd => switch (this) {
-    ShellFunc.status => _windowsStatusCmds,
-    ShellFunc.process => 'Get-Process | Select-Object ProcessName, Id, CPU, WorkingSet | ConvertTo-Json',
-    ShellFunc.shutdown => 'Stop-Computer -Force',
-    ShellFunc.reboot => 'Restart-Computer -Force',
-    ShellFunc.suspend =>
-      'Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Application]::SetSuspendState(\'Suspend\', \$false, \$false)',
-  };
 
-  String get _unixCmd {
-    switch (this) {
-      case ShellFunc.status:
-        return '''
-if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
-\t$_linuxStatusCmds
-else
-\t$_bsdStatusCmds
-fi''';
-      case ShellFunc.process:
-        return '''
-if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
-\tif [ "\$isBusybox" != "" ]; then
-\t\tps w
-\telse
-\t\tps -aux
-\tfi
-else
-\tps -ax
-fi
-''';
-      case ShellFunc.shutdown:
-        return '''
-if [ "\$userId" = "0" ]; then
-\tshutdown -h now
-else
-\tsudo -S shutdown -h now
-fi''';
-      case ShellFunc.reboot:
-        return '''
-if [ "\$userId" = "0" ]; then
-\treboot
-else
-\tsudo -S reboot
-fi''';
-      case ShellFunc.suspend:
-        return '''
-if [ "\$userId" = "0" ]; then
-\tsystemctl suspend
-else
-\tsudo -S systemctl suspend
-fi''';
-    }
-  }
-
-  /// Helper method to generate custom commands string
-  static String _getCustomCmdsStr(
-    ShellFunc func,
-    Map<String, String>? customCmds, {
-    required bool isWindows,
-  }) {
-    if (func == ShellFunc.status && customCmds != null && customCmds.isNotEmpty) {
-      if (isWindows) {
-        return '\n${customCmds.values.map((cmd) => '\t$cmd').join('\n')}';
-      } else {
-        return '$cmdDivider\n\t${customCmds.values.join(cmdDivider)}';
-      }
-    }
-    return '';
-  }
-
-  /// Generate Windows PowerShell script
-  static String windowsScript(Map<String, String>? customCmds) {
-    final sb = StringBuffer();
-    sb.write('''
-# PowerShell script for ServerBox app v1.0.${BuildData.build}
-# DO NOT delete this file while app is running
-
-\$ErrorActionPreference = "SilentlyContinue"
-
-''');
-
-    // Write each func
-    for (final func in values) {
-      final customCmdsStr = _getCustomCmdsStr(func, customCmds, isWindows: true);
-
-      sb.write('''
-function ${func.name} {
-    ${func._windowsCmd.split('\n').map((e) => e.isEmpty ? '' : '    $e').join('\n')}$customCmdsStr
-}
-
-''');
-    }
-
-    // Write switch case
-    sb.write('''
-switch (\$args[0]) {
-''');
-    for (final func in values) {
-      sb.write('''
-    "-${func.flag}" { ${func.name} }
-''');
-    }
-    sb.write('''
-    default { Write-Host "Invalid argument \$(\$args[0])" }
-}
-''');
-    return sb.toString();
-  }
-
-  /// Generate Unix shell script
-  static String unixScript(Map<String, String>? customCmds) {
-    final sb = StringBuffer();
-    sb.write('''
-#!/bin/sh
-# Script for ServerBox app v1.0.${BuildData.build}
-# DO NOT delete this file while app is running
-
-export LANG=en_US.UTF-8
-
-# If macSign & bsdSign are both empty, then it's linux
-macSign=\$(uname -a 2>&1 | grep "Darwin")
-bsdSign=\$(uname -a 2>&1 | grep "BSD")
-
-# Link /bin/sh to busybox?
-isBusybox=\$(ls -l /bin/sh | grep "busybox")
-
-userId=\$(id -u)
-
-exec 2>/dev/null
-
-''');
-    // Write each func
-    for (final func in values) {
-      final customCmdsStr = _getCustomCmdsStr(func, customCmds, isWindows: false);
-      sb.write('''
-${func.name}() {
-${func._unixCmd.split('\n').map((e) => '\t$e').join('\n')}
-$customCmdsStr
-}
-
-''');
-    }
-
-    // Write switch case
-    sb.write('case \$1 in\n');
-    for (final func in values) {
-      sb.write('''
-  '-${func.flag}')
-    ${func.name}
-    ;;
-''');
-    }
-    sb.write('''
-  *)
-    echo "Invalid argument \$1"
-    ;;
-esac''');
-    return sb.toString();
-  }
 
   /// Generate script based on system type
   static String allScript(Map<String, String>? customCmds, {SystemType? systemType}) {
-    if (systemType == SystemType.windows) {
-      return windowsScript(customCmds);
-    } else {
-      return unixScript(customCmds);
-    }
+    final isWindows = systemType == SystemType.windows;
+    final builder = ScriptBuilderFactory.getBuilder(isWindows);
+    
+    return builder.buildScript(customCmds);
   }
 
-  /// Cached Linux status commands string
-  static final _linuxStatusCmds = StatusCmdType.values.map((e) => e.cmd).join(cmdDivider);
-
-  /// Cached BSD status commands string
-  static final _bsdStatusCmds = BSDStatusCmdType.values.map((e) => e.cmd).join(cmdDivider);
-
-  /// Cached Windows status commands string
-  static final _windowsStatusCmds = WindowsStatusCmdType.values.map((e) => e.cmd).join(cmdDivider);
 }
 
 enum StatusCmdType {
