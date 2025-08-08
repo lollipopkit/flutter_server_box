@@ -82,9 +82,9 @@ class MyApp extends StatelessWidget {
       builder: (context, child) => ResponsiveBreakpoints.builder(
         child: child ?? UIs.placeholder,
         breakpoints: const [
-          Breakpoint(start: 0, end: 450, name: MOBILE),
-          Breakpoint(start: 451, end: 800, name: TABLET),
-          Breakpoint(start: 801, end: 1920, name: DESKTOP),
+          Breakpoint(start: 0, end: 600, name: MOBILE),
+          Breakpoint(start: 600, end: 1199, name: TABLET),
+          Breakpoint(start: 1199, end: 3840, name: DESKTOP),
         ],
       ),
       locale: locale,
