@@ -230,9 +230,9 @@ void main() {
       expect(scriptPath, contains('\\'));
 
       final installCmd = ShellFunc.getInstallShellCmd(serverId, systemType: SystemType.windows);
-      expect(installCmd, contains('powershell'));
       expect(installCmd, contains('New-Item'));
       expect(installCmd, contains('Set-Content'));
+      // No longer contains 'powershell' prefix as commands now run in PowerShell session
     });
 
     test('should execute Windows commands correctly', () {

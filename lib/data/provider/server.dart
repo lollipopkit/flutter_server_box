@@ -318,9 +318,9 @@ class ServerProvider extends Provider {
         SystemType? detectedSystemType = spi.customSystemType;
         if (detectedSystemType == null) {
           // Try to detect Windows systems first (more reliable detection)
-          final powershellResult =
-              await sv.client?.run('powershell -c "Get-ComputerInfo -Property OsName" 2>nul').string ?? '';
-          if (powershellResult.isNotEmpty && powershellResult.contains('Windows')) {
+          final powershellResult = await sv.client?.run('ver 2>nul').string ?? '';
+          if (powershellResult.isNotEmpty &&
+              (powershellResult.contains('Windows') || powershellResult.contains('NT'))) {
             detectedSystemType = SystemType.windows;
             dprint('Detected Windows system type for ${spi.oldId}');
           } else {
@@ -333,16 +333,6 @@ class ServerProvider extends Provider {
               detectedSystemType = SystemType.bsd;
               dprint('Detected BSD system type for ${spi.oldId}');
             }
-          }
-        }
-
-        // If still not detected, try alternative Windows detection methods
-        if (detectedSystemType == null) {
-          // Try alternative Windows detection using ver command
-          final verResult = await sv.client?.run('ver 2>nul').string ?? '';
-          if (verResult.isNotEmpty && (verResult.contains('Windows') || verResult.contains('NT'))) {
-            detectedSystemType = SystemType.windows;
-            dprint('Detected Windows system type via ver command for ${spi.oldId}');
           }
         }
 
