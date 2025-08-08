@@ -9,6 +9,7 @@ import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
+import 'package:server_box/data/helper/system_detector.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
 import 'package:server_box/data/model/server/server.dart';
@@ -32,7 +33,7 @@ class ServerProvider extends Provider {
 
   static final _manualDisconnectedIds = <String>{};
 
-  static final _serverIdsUpdating = <String, bool>{};
+  static final _serverIdsUpdating = <String, Future<void>?>{};
 
   @override
   Future<void> load() async {
@@ -126,16 +127,33 @@ class ServerProvider extends Provider {
           return;
         }
 
-        if (_serverIdsUpdating[s.spi.id] == true) {
-          // Already updating, skip this
+        // Check if already updating, and if so, wait for it to complete
+        final existingUpdate = _serverIdsUpdating[s.spi.id];
+        if (existingUpdate != null) {
+          // Already updating, wait for the existing update to complete
+          try {
+            await existingUpdate;
+          } catch (e) {
+            // Ignore errors from the existing update, we'll try our own
+          }
           return;
         }
 
-        _serverIdsUpdating[s.spi.id] = true;
-        await _getData(s.spi);
-        _serverIdsUpdating.remove(s.spi.id);
+        // Start a new update operation
+        final updateFuture = _updateServer(s.spi);
+        _serverIdsUpdating[s.spi.id] = updateFuture;
+        
+        try {
+          await updateFuture;
+        } finally {
+          _serverIdsUpdating.remove(s.spi.id);
+        }
       }),
     );
+  }
+
+  static Future<void> _updateServer(Spi spi) async {
+    await _getData(spi);
   }
 
   static Future<void> startAutoRefresh() async {
@@ -314,29 +332,8 @@ class ServerProvider extends Provider {
       _setServerState(s, ServerConn.connected);
 
       try {
-        // First, check if custom system type is defined, otherwise detect system type
-        SystemType? detectedSystemType = spi.customSystemType;
-        if (detectedSystemType == null) {
-          // Try to detect Windows systems first (more reliable detection)
-          final powershellResult = await sv.client?.run('ver 2>nul').string ?? '';
-          if (powershellResult.isNotEmpty &&
-              (powershellResult.contains('Windows') || powershellResult.contains('NT'))) {
-            detectedSystemType = SystemType.windows;
-            dprint('Detected Windows system type for ${spi.oldId}');
-          } else {
-            // Try to detect Unix/Linux/BSD systems
-            final unixResult = await sv.client?.run('uname -a').string ?? '';
-            if (unixResult.contains('Linux')) {
-              detectedSystemType = SystemType.linux;
-              dprint('Detected Linux system type for ${spi.oldId}');
-            } else if (unixResult.contains('Darwin') || unixResult.contains('BSD')) {
-              detectedSystemType = SystemType.bsd;
-              dprint('Detected BSD system type for ${spi.oldId}');
-            }
-          }
-        }
-
-        detectedSystemType ??= SystemType.linux;
+        // Detect system type using helper
+        final detectedSystemType = await SystemDetector.detect(sv.client!, spi);
         sv.status.system = detectedSystemType;
 
         final (_, writeScriptResult) = await sv.client!.exec((session) async {

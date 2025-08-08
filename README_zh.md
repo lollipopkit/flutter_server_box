@@ -10,7 +10,7 @@
 </div>
 
 <p align="center">
-使用 Flutter 开发的 <a href="https://github.com/lollipopkit/flutter_server_box/issues/43">Linux</a> 服务器工具箱，提供服务器状态图表和管理工具。
+使用 Flutter 开发的 Linux, Unix, Windows 服务器工具箱，提供服务器状态图表和管理工具。
 <br>
 特别感谢 <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a> & <a href="https://github.com/TerminalStudio/xterm.dart">xterm.dart</a>。
 </p>

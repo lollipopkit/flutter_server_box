@@ -83,17 +83,30 @@ Memory parseBsdMemory(String raw) {
   }
   
   // Fallback: try to extract numbers and assume they're in some unit
+  // This is a best-effort attempt and may not be accurate for all BSD systems
   final numberMatches = RegExp(r'(\d+(?:\.\d+)?)\s*([KMGT]?)')
       .allMatches(raw)
       .toList();
   if (numberMatches.length >= 2) {
-    final total = _convertToKB(
-        double.parse(numberMatches[0].group(1)!), 
-        numberMatches[0].group(2)!);
-    final free = _convertToKB(
-        double.parse(numberMatches[1].group(1)!), 
-        numberMatches[1].group(2)!);
-    return Memory(total: total, free: free, avail: free);
+    try {
+      final total = _convertToKB(
+          double.parse(numberMatches[0].group(1)!), 
+          numberMatches[0].group(2) ?? '');
+      final free = _convertToKB(
+          double.parse(numberMatches[1].group(1)!), 
+          numberMatches[1].group(2) ?? '');
+      
+      // Validate that total >= free to ensure reasonable values
+      if (total >= free && total > 0) {
+        return Memory(total: total, free: free, avail: free);
+      } else {
+        Loggers.app.warning('BSD memory fallback parsing produced invalid values: total=$total, free=$free for input: $raw');
+      }
+    } catch (e) {
+      Loggers.app.warning('BSD memory fallback parsing failed: $e for input: $raw');
+    }
+  } else {
+    Loggers.app.warning('BSD memory fallback could not find enough numbers in input: $raw');
   }
   
   // Return minimal valid memory info if parsing fails
@@ -124,9 +137,9 @@ class Swap {
 
   const Swap({required this.total, required this.free, required this.cached});
 
-  double get usedPercent => 1 - free / total;
+  double get usedPercent => total == 0 ? 0.0 : 1 - free / total;
 
-  double get freePercent => free / total;
+  double get freePercent => total == 0 ? 0.0 : free / total;
 
   @override
   String toString() {

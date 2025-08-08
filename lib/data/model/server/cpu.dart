@@ -218,9 +218,9 @@ Cpus parseBsdCpu(String raw) {
   // Try macOS format first
   final macMatch = _macCpuPercentReg.firstMatch(raw);
   if (macMatch != null) {
-    final userPercent = (double.parse(macMatch.group(1)!) * 100).toInt();
-    final sysPercent = (double.parse(macMatch.group(2)!) * 100).toInt();
-    final idlePercent = (double.parse(macMatch.group(3)!) * 100).toInt();
+    final userPercent = double.parse(macMatch.group(1)!).toInt();
+    final sysPercent = double.parse(macMatch.group(2)!).toInt();
+    final idlePercent = double.parse(macMatch.group(3)!).toInt();
     
     init.add([
       SingleCpuCore(
@@ -240,11 +240,11 @@ Cpus parseBsdCpu(String raw) {
   // Try FreeBSD format
   final freebsdMatch = _freebsdCpuPercentReg.firstMatch(raw);
   if (freebsdMatch != null) {
-    final userPercent = (double.parse(freebsdMatch.group(1)!) * 100).toInt();
-    final nicePercent = (double.parse(freebsdMatch.group(2)!) * 100).toInt();
-    final sysPercent = (double.parse(freebsdMatch.group(3)!) * 100).toInt();
-    final irqPercent = (double.parse(freebsdMatch.group(4)!) * 100).toInt();
-    final idlePercent = (double.parse(freebsdMatch.group(5)!) * 100).toInt();
+    final userPercent = double.parse(freebsdMatch.group(1)!).toInt();
+    final nicePercent = double.parse(freebsdMatch.group(2)!).toInt();
+    final sysPercent = double.parse(freebsdMatch.group(3)!).toInt();
+    final irqPercent = double.parse(freebsdMatch.group(4)!).toInt();
+    final idlePercent = double.parse(freebsdMatch.group(5)!).toInt();
     
     init.add([
       SingleCpuCore(
@@ -264,10 +264,16 @@ Cpus parseBsdCpu(String raw) {
   // Fallback to generic percentage extraction
   final percents = _bsdCpuPercentReg
       .allMatches(raw)
-      .map((e) => double.parse(e.group(1) ?? '0') * 100)
+      .map((e) => double.parse(e.group(1) ?? '0'))
       .toList();
   
   if (percents.length >= 3) {
+    // Validate that percentages are reasonable (0-100 range)
+    final validPercents = percents.where((p) => p >= 0 && p <= 100).toList();
+    if (validPercents.length != percents.length) {
+      Loggers.app.warning('BSD CPU fallback parsing found invalid percentages in: $raw');
+    }
+    
     init.add([
       SingleCpuCore(
         'cpu0',
@@ -281,6 +287,10 @@ Cpus parseBsdCpu(String raw) {
       ),
     ]);
     return init;
+  } else if (percents.isNotEmpty) {
+    Loggers.app.warning('BSD CPU fallback parsing found ${percents.length} percentages (expected at least 3) in: $raw');
+  } else {
+    Loggers.app.warning('BSD CPU fallback parsing found no percentages in: $raw');
   }
   
   return init;

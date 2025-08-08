@@ -302,14 +302,30 @@ String? _parseHostName(String raw) {
 // Windows status parsing implementation
 Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
   final segments = req.segments;
-
-  // Parse time for potential future use in network/disk I/O monitoring
-  // ignore: unused_local_variable
   final time = int.tryParse(WindowsStatusCmdType.time.find(segments)) ??
       DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
+  // Parse all different resource types using helper methods
+  _parseWindowsNetworkData(req, segments, time);
+  _parseWindowsSystemData(req, segments);
+  _parseWindowsHostData(req, segments);
+  _parseWindowsCpuData(req, segments);
+  _parseWindowsMemoryData(req, segments);
+  _parseWindowsDiskData(req, segments);
+  _parseWindowsUptimeData(req, segments);
+  _parseWindowsDiskIOData(req, segments, time);
+  _parseWindowsConnectionData(req, segments);
+  _parseWindowsBatteryData(req, segments);
+  _parseWindowsTemperatureData(req, segments);
+  _parseWindowsGpuData(req, segments);
+  _parseWindowsCustomCommands(req);
+
+  return req.ss;
+}
+
+/// Parse Windows network data
+void _parseWindowsNetworkData(ServerStatusUpdateReq req, List<String> segments, int time) {
   try {
-    // Windows network parsing - JSON format from PowerShell
     final netRaw = WindowsStatusCmdType.net.find(segments);
     if (netRaw.isNotEmpty &&
         netRaw != 'null' &&
@@ -324,25 +340,34 @@ Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
   } catch (e, s) {
     Loggers.app.warning('Windows network parsing failed: $e', s);
   }
+}
 
+/// Parse Windows system information
+void _parseWindowsSystemData(ServerStatusUpdateReq req, List<String> segments) {
   try {
     final sys = WindowsStatusCmdType.sys.find(segments);
     if (sys.isNotEmpty) {
       req.ss.more[StatusCmdType.sys] = sys;
     }
   } catch (e, s) {
-    Loggers.app.warning(e, s);
+    Loggers.app.warning('Windows system parsing failed: $e', s);
   }
+}
 
+/// Parse Windows host information
+void _parseWindowsHostData(ServerStatusUpdateReq req, List<String> segments) {
   try {
     final host = _parseHostName(WindowsStatusCmdType.host.find(segments));
     if (host != null) {
       req.ss.more[StatusCmdType.host] = host;
     }
   } catch (e, s) {
-    Loggers.app.warning(e, s);
+    Loggers.app.warning('Windows host parsing failed: $e', s);
   }
+}
 
+/// Parse Windows CPU data and brand information
+void _parseWindowsCpuData(ServerStatusUpdateReq req, List<String> segments) {
   try {
     // Windows CPU parsing - JSON format from PowerShell
     final cpuRaw = WindowsStatusCmdType.cpu.find(segments);
@@ -363,11 +388,13 @@ Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
       req.ss.cpu.brand[brandRaw.trim()] = 1;
     }
   } catch (e, s) {
-    Loggers.app.warning(e, s);
+    Loggers.app.warning('Windows CPU parsing failed: $e', s);
   }
+}
 
+/// Parse Windows memory data
+void _parseWindowsMemoryData(ServerStatusUpdateReq req, List<String> segments) {
   try {
-    // Windows memory parsing - JSON format from PowerShell
     final memRaw = WindowsStatusCmdType.mem.find(segments);
     if (memRaw.isNotEmpty &&
         memRaw != 'null' &&
@@ -381,9 +408,11 @@ Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
   } catch (e, s) {
     Loggers.app.warning('Windows memory parsing failed: $e', s);
   }
+}
 
+/// Parse Windows disk data
+void _parseWindowsDiskData(ServerStatusUpdateReq req, List<String> segments) {
   try {
-    // Windows disk parsing - JSON format from PowerShell
     final diskRaw = WindowsStatusCmdType.disk.find(segments);
     if (diskRaw.isNotEmpty && diskRaw != 'null') {
       final disks = _parseWindowsDisks(diskRaw);
@@ -391,44 +420,51 @@ Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
       req.ss.diskUsage = DiskUsage.parse(disks);
     }
   } catch (e, s) {
-    Loggers.app.warning(e, s);
+    Loggers.app.warning('Windows disk parsing failed: $e', s);
   }
+}
 
+/// Parse Windows uptime data
+void _parseWindowsUptimeData(ServerStatusUpdateReq req, List<String> segments) {
   try {
-    final uptime = _parseWindowsUpTime(
-      WindowsStatusCmdType.uptime.find(segments),
-    );
+    final uptime = _parseWindowsUpTime(WindowsStatusCmdType.uptime.find(segments));
     if (uptime != null) {
       req.ss.more[StatusCmdType.uptime] = uptime;
     }
   } catch (e, s) {
-    Loggers.app.warning(e, s);
+    Loggers.app.warning('Windows uptime parsing failed: $e', s);
   }
+}
 
+/// Parse Windows disk I/O data
+void _parseWindowsDiskIOData(ServerStatusUpdateReq req, List<String> segments, int time) {
   try {
-    // Windows disk I/O parsing - JSON format from PowerShell
     final diskIOraw = WindowsStatusCmdType.diskio.find(segments);
     if (diskIOraw.isNotEmpty && diskIOraw != 'null') {
       final diskio = _parseWindowsDiskIO(diskIOraw, time);
       req.ss.diskIO.update(diskio);
     }
   } catch (e, s) {
-    Loggers.app.warning(e, s);
+    Loggers.app.warning('Windows disk I/O parsing failed: $e', s);
   }
+}
 
+/// Parse Windows connection data
+void _parseWindowsConnectionData(ServerStatusUpdateReq req, List<String> segments) {
   try {
-    // Windows connection count parsing
     final connStr = WindowsStatusCmdType.conn.find(segments);
     final connCount = int.tryParse(connStr.trim());
     if (connCount != null) {
       req.ss.tcp = Conn(maxConn: 0, active: connCount, passive: 0, fail: 0);
     }
   } catch (e, s) {
-    Loggers.app.warning(e, s);
+    Loggers.app.warning('Windows connection parsing failed: $e', s);
   }
+}
 
+/// Parse Windows battery data
+void _parseWindowsBatteryData(ServerStatusUpdateReq req, List<String> segments) {
   try {
-    // Windows battery parsing - JSON format
     final batteryRaw = WindowsStatusCmdType.battery.find(segments);
     if (batteryRaw.isNotEmpty && batteryRaw != 'null') {
       final batteries = _parseWindowsBatteries(batteryRaw);
@@ -438,34 +474,39 @@ Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
       }
     }
   } catch (e, s) {
-    Loggers.app.warning(e, s);
+    Loggers.app.warning('Windows battery parsing failed: $e', s);
   }
+}
 
+/// Parse Windows temperature data
+void _parseWindowsTemperatureData(ServerStatusUpdateReq req, List<String> segments) {
   try {
-    // Windows temperature parsing - JSON format
     final tempRaw = WindowsStatusCmdType.temp.find(segments);
     if (tempRaw.isNotEmpty && tempRaw != 'null') {
       _parseWindowsTemperatures(req.ss.temps, tempRaw);
     }
   } catch (e, s) {
-    Loggers.app.warning(e, s);
+    Loggers.app.warning('Windows temperature parsing failed: $e', s);
   }
+}
 
+/// Parse Windows GPU data (NVIDIA/AMD)
+void _parseWindowsGpuData(ServerStatusUpdateReq req, List<String> segments) {
   try {
-    // Windows GPU parsing (NVIDIA/AMD)
-    req.ss.nvidia = NvidiaSmi.fromXml(
-      WindowsStatusCmdType.nvidia.find(segments),
-    );
+    req.ss.nvidia = NvidiaSmi.fromXml(WindowsStatusCmdType.nvidia.find(segments));
   } catch (e, s) {
-    Loggers.app.warning(e, s);
+    Loggers.app.warning('Windows NVIDIA GPU parsing failed: $e', s);
   }
 
   try {
     req.ss.amd = AmdSmi.fromJson(WindowsStatusCmdType.amd.find(segments));
   } catch (e, s) {
-    Loggers.app.warning(e, s);
+    Loggers.app.warning('Windows AMD GPU parsing failed: $e', s);
   }
+}
 
+/// Parse Windows custom commands
+void _parseWindowsCustomCommands(ServerStatusUpdateReq req) {
   try {
     for (int idx = 0; idx < req.customCmds.length; idx++) {
       final key = req.customCmds.keys.elementAt(idx);
@@ -473,20 +514,53 @@ Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
       req.ss.customCmds[key] = value;
     }
   } catch (e, s) {
-    Loggers.app.warning(e, s);
+    Loggers.app.warning('Windows custom commands parsing failed: $e', s);
   }
-
-  return req.ss;
 }
 
 String? _parseWindowsUpTime(String raw) {
   try {
-    final formatter = DateFormat('EEEE, MMMM d, yyyy h:mm:ss a', 'en_US');
-    final dateTime = formatter.tryParseLoose(
-        raw.trim().split('\n').firstOrNull ?? '');
-    if (dateTime == null) return null;
+    // Clean the input - trim whitespace and get the first non-empty line
+    final cleanedInput = raw.trim().split('\n')
+        .where((line) => line.trim().isNotEmpty)
+        .firstOrNull;
+    
+    if (cleanedInput == null || cleanedInput.isEmpty) {
+      Loggers.app.warning('Windows uptime parsing: empty or null input');
+      return null;
+    }
+    
+    // Try multiple date formats to handle different Windows locale/version outputs
+    final formatters = [
+      DateFormat('EEEE, MMMM d, yyyy h:mm:ss a', 'en_US'), // Original format
+      DateFormat('EEEE, MMMM dd, yyyy h:mm:ss a', 'en_US'), // Double-digit day
+      DateFormat('EEE, MMM d, yyyy h:mm:ss a', 'en_US'), // Shortened format
+      DateFormat('EEE, MMM dd, yyyy h:mm:ss a', 'en_US'), // Shortened with double-digit day
+      DateFormat('M/d/yyyy h:mm:ss a', 'en_US'), // Short US format
+      DateFormat('MM/dd/yyyy h:mm:ss a', 'en_US'), // Short US format with zero padding
+      DateFormat('d/M/yyyy h:mm:ss a', 'en_US'), // Short European format
+      DateFormat('dd/MM/yyyy h:mm:ss a', 'en_US'), // Short European format with zero padding
+    ];
+    
+    DateTime? dateTime;
+    for (final formatter in formatters) {
+      dateTime = formatter.tryParseLoose(cleanedInput);
+      if (dateTime != null) break;
+    }
+    
+    if (dateTime == null) {
+      Loggers.app.warning('Windows uptime parsing: could not parse date format for: $cleanedInput');
+      return null;
+    }
+    
     final now = DateTime.now();
     final uptime = now.difference(dateTime);
+    
+    // Validate that the uptime is reasonable (not negative, not too far in the future)
+    if (uptime.isNegative || uptime.inDays > 3650) { // More than 10 years seems unreasonable
+      Loggers.app.warning('Windows uptime parsing: unreasonable uptime calculated: ${uptime.inDays} days for date: $cleanedInput');
+      return null;
+    }
 
     final days = uptime.inDays;
     final hours = uptime.inHours % 24;
@@ -498,7 +572,7 @@ String? _parseWindowsUpTime(String raw) {
       return '$hours:${minutes.toString().padLeft(2, '0')}';
     }
   } catch (e, s) {
-    Loggers.app.warning(e, s);
+    Loggers.app.warning('Windows uptime parsing failed: $e for input: $raw', s);
     return null;
   }
 }
@@ -519,8 +593,14 @@ List<SingleCpuCore> _parseWindowsCpu(String raw, ServerStatus serverStatus) {
         final prevCpus = serverStatus.cpu.now;
         final prevCpu = i < prevCpus.length ? prevCpus[i] : null;
 
-        // Create cumulative counters by adding current percentages to previous totals
-        // This allows the existing delta-based calculation to work properly
+        // LIMITATION: Windows CPU counters approach
+        // PowerShell provides LoadPercentage as instantaneous percentage, not cumulative time.
+        // We simulate cumulative counters by adding current percentages to previous totals.
+        // This approach has limitations:
+        // 1. Not as accurate as true cumulative time counters (Linux /proc/stat)
+        // 2. May drift over time with variable polling intervals
+        // 3. Results depend on consistent polling frequency
+        // However, this allows compatibility with existing delta-based CPU calculation logic.
         final newUser = (prevCpu?.user ?? 0) + usage;
         final newIdle = (prevCpu?.idle ?? 0) + idle;
 
@@ -547,7 +627,7 @@ List<SingleCpuCore> _parseWindowsCpu(String raw, ServerStatus serverStatus) {
       final prevCpus = serverStatus.cpu.now;
       final prevCpu = prevCpus.isNotEmpty ? prevCpus[0] : null;
 
-      // Create cumulative counters by adding current percentages to previous totals
+      // LIMITATION: See comment above for Windows CPU counter limitations
       final newUser = (prevCpu?.user ?? 0) + usage;
       final newIdle = (prevCpu?.idle ?? 0) + idle;
 
