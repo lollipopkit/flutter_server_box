@@ -40,6 +40,18 @@ enum ShellFunc {
 class ShellFuncManager {
   const ShellFuncManager._();
   
+  /// Normalize a directory path to ensure it doesn't end with a trailing separator
+  static String _normalizeDir(String dir, bool isWindows) {
+    final separator = isWindows 
+        ? ScriptConstants.windowsPathSeparator 
+        : ScriptConstants.unixPathSeparator;
+    
+    if (dir.endsWith(separator)) {
+      return dir.substring(0, dir.length - 1);
+    }
+    return dir;
+  }
+  
   /// Get the script directory for the given [id].
   ///
   /// Checks for custom script directory first, then falls back to default.
@@ -62,13 +74,14 @@ class ShellFuncManager {
     final customScriptDir = ServerProvider.pick(id: id)?.value.spi.custom?.scriptDir;
     if (customScriptDir != null) {
       final isWindows = systemType == SystemType.windows;
+      final normalizedDir = _normalizeDir(customScriptDir, isWindows);
       final fileName = isWindows 
           ? ScriptConstants.scriptFileWindows 
           : ScriptConstants.scriptFile;
       final separator = isWindows 
           ? ScriptConstants.windowsPathSeparator 
           : ScriptConstants.unixPathSeparator;
-      return '$customScriptDir$separator$fileName';
+      return '$normalizedDir$separator$fileName';
     }
     
     final isWindows = systemType == SystemType.windows;
@@ -79,13 +92,14 @@ class ShellFuncManager {
   static String getInstallShellCmd(String id, {SystemType? systemType}) {
     final scriptDir = getScriptDir(id, systemType: systemType);
     final isWindows = systemType == SystemType.windows;
+    final normalizedDir = _normalizeDir(scriptDir, isWindows);
     final builder = ScriptBuilderFactory.getBuilder(isWindows);
     final separator = isWindows 
         ? ScriptConstants.windowsPathSeparator 
         : ScriptConstants.unixPathSeparator;
-    final scriptPath = '$scriptDir$separator${builder.scriptFileName}';
+    final scriptPath = '$normalizedDir$separator${builder.scriptFileName}';
     
-    return builder.getInstallCommand(scriptDir, scriptPath);
+    return builder.getInstallCommand(normalizedDir, scriptPath);
   }
   
   /// Generate complete script based on system type
