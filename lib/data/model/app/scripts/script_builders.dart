@@ -1,5 +1,6 @@
-import 'package:server_box/data/model/app/shell_func.dart';
-import 'package:server_box/data/res/build_data.dart';
+import 'package:server_box/data/model/app/scripts/cmd_types.dart';
+import 'package:server_box/data/model/app/scripts/script_consts.dart';
+import 'package:server_box/data/model/app/scripts/shell_func.dart';
 
 /// Abstract base class for platform-specific script builders
 abstract class ScriptBuilder {
@@ -22,6 +23,12 @@ abstract class ScriptBuilder {
     ShellFunc func, 
     Map<String, String>? customCmds,
   );
+  
+  /// Get the script header for this platform
+  String get scriptHeader;
+  
+  /// Get the command divider for this platform
+  String get cmdDivider => ScriptConstants.cmdDivider;
 }
 
 /// Windows PowerShell script builder
@@ -29,7 +36,10 @@ class WindowsScriptBuilder extends ScriptBuilder {
   const WindowsScriptBuilder();
 
   @override
-  String get scriptFileName => 'srvboxm_v${BuildData.script}.ps1';
+  String get scriptFileName => ScriptConstants.scriptFileWindows;
+  
+  @override
+  String get scriptHeader => ScriptConstants.windowsScriptHeader;
 
   @override
   String getInstallCommand(String scriptDir, String scriptPath) {
@@ -57,13 +67,7 @@ class WindowsScriptBuilder extends ScriptBuilder {
   @override
   String buildScript(Map<String, String>? customCmds) {
     final sb = StringBuffer();
-    sb.write('''
-# PowerShell script for ServerBox app v1.0.${BuildData.build}
-# DO NOT delete this file while app is running
-
-\$ErrorActionPreference = "SilentlyContinue"
-
-''');
+    sb.write(scriptHeader);
 
     // Write each function
     for (final func in ShellFunc.values) {
@@ -93,8 +97,9 @@ switch (\$args[0]) {
     return sb.toString();
   }
 
+  /// Get Windows-specific command for a shell function
   String _getWindowsCommand(ShellFunc func) => switch (func) {
-    ShellFunc.status => WindowsStatusCmdType.values.map((e) => e.cmd).join(ShellFunc.cmdDivider),
+    ShellFunc.status => WindowsStatusCmdType.values.map((e) => e.cmd).join(cmdDivider),
     ShellFunc.process => 'Get-Process | Select-Object ProcessName, Id, CPU, WorkingSet | ConvertTo-Json',
     ShellFunc.shutdown => 'Stop-Computer -Force',
     ShellFunc.reboot => 'Restart-Computer -Force',
@@ -108,7 +113,10 @@ class UnixScriptBuilder extends ScriptBuilder {
   const UnixScriptBuilder();
 
   @override
-  String get scriptFileName => 'srvboxm_v${BuildData.script}.sh';
+  String get scriptFileName => ScriptConstants.scriptFile;
+  
+  @override
+  String get scriptHeader => ScriptConstants.unixScriptHeader;
 
   @override
   String getInstallCommand(String scriptDir, String scriptPath) {
@@ -130,7 +138,7 @@ chmod 755 $scriptPath
     Map<String, String>? customCmds,
   ) {
     if (func == ShellFunc.status && customCmds != null && customCmds.isNotEmpty) {
-      return '${ShellFunc.cmdDivider}\n\t${customCmds.values.join(ShellFunc.cmdDivider)}';
+      return '$cmdDivider\n\t${customCmds.values.join(cmdDivider)}';
     }
     return '';
   }
@@ -138,25 +146,7 @@ chmod 755 $scriptPath
   @override
   String buildScript(Map<String, String>? customCmds) {
     final sb = StringBuffer();
-    sb.write('''
-#!/bin/sh
-# Script for ServerBox app v1.0.${BuildData.build}
-# DO NOT delete this file while app is running
-
-export LANG=en_US.UTF-8
-
-# If macSign & bsdSign are both empty, then it's linux
-macSign=\$(uname -a 2>&1 | grep "Darwin")
-bsdSign=\$(uname -a 2>&1 | grep "BSD")
-
-# Link /bin/sh to busybox?
-isBusybox=\$(ls -l /bin/sh | grep "busybox")
-
-userId=\$(id -u)
-
-exec 2>/dev/null
-
-''');
+    sb.write(scriptHeader);
     // Write each function
     for (final func in ShellFunc.values) {
       final customCmdsStr = getCustomCmdsString(func, customCmds);
@@ -186,17 +176,35 @@ esac''');
     return sb.toString();
   }
 
+  /// Get Unix-specific command for a shell function
   String _getUnixCommand(ShellFunc func) {
     switch (func) {
       case ShellFunc.status:
-        return '''
-if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
-\t${StatusCmdType.values.map((e) => e.cmd).join(ShellFunc.cmdDivider)}
-else
-\t${BSDStatusCmdType.values.map((e) => e.cmd).join(ShellFunc.cmdDivider)}
-fi''';
+        return _getUnixStatusCommand();
       case ShellFunc.process:
-        return '''
+        return _getUnixProcessCommand();
+      case ShellFunc.shutdown:
+        return _getUnixShutdownCommand();
+      case ShellFunc.reboot:
+        return _getUnixRebootCommand();
+      case ShellFunc.suspend:
+        return _getUnixSuspendCommand();
+    }
+  }
+  
+  /// Get Unix status command with OS detection
+  String _getUnixStatusCommand() {
+    return '''
+if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
+\t${StatusCmdType.values.map((e) => e.cmd).join(cmdDivider)}
+else
+\t${BSDStatusCmdType.values.map((e) => e.cmd).join(cmdDivider)}
+fi''';
+  }
+  
+  /// Get Unix process command with busybox detection
+  String _getUnixProcessCommand() {
+    return '''
 if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 \tif [ "\$isBusybox" != "" ]; then
 \t\tps w
@@ -205,38 +213,51 @@ if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 \tfi
 else
 \tps -ax
-fi
-''';
-      case ShellFunc.shutdown:
-        return '''
+fi''';
+  }
+  
+  /// Get Unix shutdown command with privilege detection
+  String _getUnixShutdownCommand() {
+    return '''
 if [ "\$userId" = "0" ]; then
 \tshutdown -h now
 else
 \tsudo -S shutdown -h now
 fi''';
-      case ShellFunc.reboot:
-        return '''
+  }
+  
+  /// Get Unix reboot command with privilege detection
+  String _getUnixRebootCommand() {
+    return '''
 if [ "\$userId" = "0" ]; then
 \treboot
 else
 \tsudo -S reboot
 fi''';
-      case ShellFunc.suspend:
-        return '''
+  }
+  
+  /// Get Unix suspend command with privilege detection
+  String _getUnixSuspendCommand() {
+    return '''
 if [ "\$userId" = "0" ]; then
 \tsystemctl suspend
 else
 \tsudo -S systemctl suspend
 fi''';
-    }
   }
 }
 
 /// Factory class to get appropriate script builder for platform
 class ScriptBuilderFactory {
   const ScriptBuilderFactory._();
-
+  
+  /// Get the appropriate script builder based on platform
   static ScriptBuilder getBuilder(bool isWindows) {
     return isWindows ? const WindowsScriptBuilder() : const UnixScriptBuilder();
+  }
+  
+  /// Get all available builders (useful for testing)
+  static List<ScriptBuilder> getAllBuilders() {
+    return const [WindowsScriptBuilder(), UnixScriptBuilder()];
   }
 }

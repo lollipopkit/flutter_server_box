@@ -6,7 +6,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/model/app/shell_func.dart';
+import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/container/image.dart';
 import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/container/type.dart';
@@ -109,7 +109,7 @@ class ContainerProvider extends ChangeNotifier {
     }
 
     // Check result segments count
-    final segments = raw.split(ShellFunc.seperator);
+    final segments = raw.split(ScriptConstants.separator);
     if (segments.length != ContainerCmdType.values.length) {
       error = ContainerErr(
         type: ContainerErrType.segmentsNotMatch,
@@ -270,7 +270,7 @@ enum ContainerCmdType {
   stats,
   images
   // No specific commands needed for prune actions as they are simple
-  // and don't require splitting output with ShellFunc.seperator
+  // and don't require splitting output with ScriptConstants.separator
   ;
 
   String exec(ContainerType type, {bool sudo = false, bool includeStats = false}) {
@@ -296,6 +296,11 @@ enum ContainerCmdType {
   static String execAll(ContainerType type, {bool sudo = false, bool includeStats = false}) {
     return ContainerCmdType.values
         .map((e) => e.exec(type, sudo: sudo, includeStats: includeStats))
-        .join('\necho ${ShellFunc.seperator}\n');
+        .join('\necho ${ScriptConstants.separator}\n');
+  }
+  
+  /// Find out the required segment from [segments]
+  String find(List<String> segments) {
+    return segments[index];
   }
 }

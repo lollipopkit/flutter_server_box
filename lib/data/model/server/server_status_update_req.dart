@@ -1,7 +1,8 @@
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:server_box/data/model/app/shell_func.dart';
+import 'package:server_box/data/model/app/scripts/cmd_types.dart';
+import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/server/amd.dart';
 import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/conn.dart';
@@ -295,7 +296,7 @@ String? _parseSysVer(String raw) {
 
 String? _parseHostName(String raw) {
   if (raw.isEmpty) return null;
-  if (raw.contains(ShellFunc.scriptFile)) return null;
+  if (raw.contains(ScriptConstants.scriptFile)) return null;
   return raw;
 }
 

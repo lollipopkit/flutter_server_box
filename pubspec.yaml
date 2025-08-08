@@ -47,7 +47,7 @@ dependencies:
   xterm:
     git:
       url: https://github.com/lollipopkit/xterm.dart
-      ref: v1.0.588
+      ref: v4.0.3
   computer:
     git:
       url: https://github.com/lollipopkit/dart_computer
