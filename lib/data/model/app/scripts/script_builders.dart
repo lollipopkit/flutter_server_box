@@ -8,25 +8,22 @@ abstract class ScriptBuilder {
 
   /// Generate a complete script for all shell functions
   String buildScript(Map<String, String>? customCmds);
-  
+
   /// Get the script file name for this platform
   String get scriptFileName;
-  
+
   /// Get the command to install the script
   String getInstallCommand(String scriptDir, String scriptPath);
-  
+
   /// Get the execution command for a specific function
   String getExecCommand(String scriptPath, ShellFunc func);
-  
+
   /// Get custom commands string for this platform
-  String getCustomCmdsString(
-    ShellFunc func, 
-    Map<String, String>? customCmds,
-  );
-  
+  String getCustomCmdsString(ShellFunc func, Map<String, String>? customCmds);
+
   /// Get the script header for this platform
   String get scriptHeader;
-  
+
   /// Get the command divider for this platform
   String get cmdDivider => ScriptConstants.cmdDivider;
 }
@@ -37,15 +34,15 @@ class WindowsScriptBuilder extends ScriptBuilder {
 
   @override
   String get scriptFileName => ScriptConstants.scriptFileWindows;
-  
+
   @override
   String get scriptHeader => ScriptConstants.windowsScriptHeader;
 
   @override
   String getInstallCommand(String scriptDir, String scriptPath) {
     return 'New-Item -ItemType Directory -Force -Path \'$scriptDir\' | Out-Null; '
-           '\$content = [System.Console]::In.ReadToEnd(); '
-           'Set-Content -Path \'$scriptPath\' -Value \$content -Encoding UTF8';
+        '\$content = [System.Console]::In.ReadToEnd(); '
+        'Set-Content -Path \'$scriptPath\' -Value \$content -Encoding UTF8';
   }
 
   @override
@@ -54,10 +51,7 @@ class WindowsScriptBuilder extends ScriptBuilder {
   }
 
   @override
-  String getCustomCmdsString(
-    ShellFunc func, 
-    Map<String, String>? customCmds,
-  ) {
+  String getCustomCmdsString(ShellFunc func, Map<String, String>? customCmds) {
     if (func == ShellFunc.status && customCmds != null && customCmds.isNotEmpty) {
       return '\n${customCmds.values.map((cmd) => '\t$cmd').join('\n')}';
     }
@@ -103,18 +97,18 @@ switch (\$args[0]) {
     ShellFunc.process => 'Get-Process | Select-Object ProcessName, Id, CPU, WorkingSet | ConvertTo-Json',
     ShellFunc.shutdown => 'Stop-Computer -Force',
     ShellFunc.reboot => 'Restart-Computer -Force',
-    ShellFunc.suspend => 
+    ShellFunc.suspend =>
       'Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Application]::SetSuspendState(\'Suspend\', \$false, \$false)',
   };
 }
 
-/// Unix shell script builder  
+/// Unix shell script builder
 class UnixScriptBuilder extends ScriptBuilder {
   const UnixScriptBuilder();
 
   @override
   String get scriptFileName => ScriptConstants.scriptFile;
-  
+
   @override
   String get scriptHeader => ScriptConstants.unixScriptHeader;
 
@@ -133,10 +127,7 @@ chmod 755 $scriptPath
   }
 
   @override
-  String getCustomCmdsString(
-    ShellFunc func, 
-    Map<String, String>? customCmds,
-  ) {
+  String getCustomCmdsString(ShellFunc func, Map<String, String>? customCmds) {
     if (func == ShellFunc.status && customCmds != null && customCmds.isNotEmpty) {
       return '$cmdDivider\n\t${customCmds.values.join(cmdDivider)}';
     }
@@ -191,17 +182,22 @@ esac''');
         return _getUnixSuspendCommand();
     }
   }
-  
+
   /// Get Unix status command with OS detection
   String _getUnixStatusCommand() {
+    // Generate command lists for better readability
+    final linuxCommands = StatusCmdType.values.map((e) => e.cmd).join(cmdDivider);
+
+    final bsdCommands = BSDStatusCmdType.values.map((e) => e.cmd).join(cmdDivider);
+
     return '''
 if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
-\t${StatusCmdType.values.map((e) => e.cmd).join(cmdDivider)}
+\t$linuxCommands
 else
-\t${BSDStatusCmdType.values.map((e) => e.cmd).join(cmdDivider)}
+\t$bsdCommands
 fi''';
   }
-  
+
   /// Get Unix process command with busybox detection
   String _getUnixProcessCommand() {
     return '''
@@ -215,7 +211,7 @@ else
 \tps -ax
 fi''';
   }
-  
+
   /// Get Unix shutdown command with privilege detection
   String _getUnixShutdownCommand() {
     return '''
@@ -225,7 +221,7 @@ else
 \tsudo -S shutdown -h now
 fi''';
   }
-  
+
   /// Get Unix reboot command with privilege detection
   String _getUnixRebootCommand() {
     return '''
@@ -235,7 +231,7 @@ else
 \tsudo -S reboot
 fi''';
   }
-  
+
   /// Get Unix suspend command with privilege detection
   String _getUnixSuspendCommand() {
     return '''
@@ -250,12 +246,12 @@ fi''';
 /// Factory class to get appropriate script builder for platform
 class ScriptBuilderFactory {
   const ScriptBuilderFactory._();
-  
+
   /// Get the appropriate script builder based on platform
   static ScriptBuilder getBuilder(bool isWindows) {
     return isWindows ? const WindowsScriptBuilder() : const UnixScriptBuilder();
   }
-  
+
   /// Get all available builders (useful for testing)
   static List<ScriptBuilder> getAllBuilders() {
     return const [WindowsScriptBuilder(), UnixScriptBuilder()];
