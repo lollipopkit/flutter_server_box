@@ -1,5 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:server_box/data/model/app/shell_func.dart';
+import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 
 enum SystemType {
   linux(linuxSign),

@@ -5,7 +5,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
-import 'package:server_box/data/model/app/shell_func.dart';
+import 'package:server_box/data/model/app/scripts/shell_func.dart';
 import 'package:server_box/data/model/server/proc.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';

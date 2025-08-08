@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/app/shell_func.dart';
+import 'package:server_box/data/model/app/scripts/cmd_types.dart';
+import 'package:server_box/data/model/app/scripts/shell_func.dart';
 import 'package:server_box/data/model/server/server_status_update_req.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/res/status.dart';
@@ -14,7 +15,7 @@ void main() {
     });
 
     test('should generate Windows PowerShell script correctly', () {
-      final script = ShellFunc.allScript({'custom_cmd': 'echo "test"'}, systemType: SystemType.windows);
+      final script = ShellFuncManager.allScript({'custom_cmd': 'echo "test"'}, systemType: SystemType.windows);
 
       expect(script, contains('PowerShell script for ServerBox'));
       expect(script, contains('function SbStatus'));
@@ -225,11 +226,11 @@ void main() {
     test('should handle Windows script path generation', () {
       const serverId = 'test-server';
 
-      final scriptPath = ShellFunc.getScriptPath(serverId, systemType: SystemType.windows);
+      final scriptPath = ShellFuncManager.getScriptPath(serverId, systemType: SystemType.windows);
       expect(scriptPath, contains('.ps1'));
       expect(scriptPath, contains('\\'));
 
-      final installCmd = ShellFunc.getInstallShellCmd(serverId, systemType: SystemType.windows);
+      final installCmd = ShellFuncManager.getInstallShellCmd(serverId, systemType: SystemType.windows);
       expect(installCmd, contains('New-Item'));
       expect(installCmd, contains('Set-Content'));
       // No longer contains 'powershell' prefix as commands now run in PowerShell session

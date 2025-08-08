@@ -11,7 +11,8 @@ import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/data/helper/system_detector.dart';
 import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/model/app/shell_func.dart';
+import 'package:server_box/data/model/app/scripts/script_consts.dart';
+import 'package:server_box/data/model/app/scripts/shell_func.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/server_status_update_req.dart';
@@ -337,12 +338,12 @@ class ServerProvider extends Provider {
         sv.status.system = detectedSystemType;
 
         final (_, writeScriptResult) = await sv.client!.exec((session) async {
-          final scriptRaw = ShellFunc.allScript(spi.custom?.cmds, systemType: detectedSystemType).uint8List;
+          final scriptRaw = ShellFuncManager.allScript(spi.custom?.cmds, systemType: detectedSystemType).uint8List;
           session.stdin.add(scriptRaw);
           session.stdin.close();
-        }, entry: ShellFunc.getInstallShellCmd(spi.id, systemType: detectedSystemType));
+        }, entry: ShellFuncManager.getInstallShellCmd(spi.id, systemType: detectedSystemType));
         if (writeScriptResult.isNotEmpty && detectedSystemType != SystemType.windows) {
-          ShellFunc.switchScriptDir(spi.id, systemType: detectedSystemType);
+          ShellFuncManager.switchScriptDir(spi.id, systemType: detectedSystemType);
           throw writeScriptResult;
         }
       } on SSHAuthAbortError catch (e) {
@@ -384,7 +385,7 @@ class ServerProvider extends Provider {
     try {
       raw = await sv.client?.run(ShellFunc.status.exec(spi.id, systemType: sv.status.system)).string;
       dprint('Get status from ${spi.name}:\n$raw');
-      segments = raw?.split(ShellFunc.seperator).map((e) => e.trim()).toList();
+      segments = raw?.split(ScriptConstants.separator).map((e) => e.trim()).toList();
       if (raw == null || raw.isEmpty || segments == null || segments.isEmpty) {
         if (Stores.setting.keepStatusWhenErr.fetch()) {
           // Keep previous server status when err occurs

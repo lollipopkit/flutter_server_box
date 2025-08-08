@@ -65,6 +65,8 @@ After you read the above, you can open an [issue](https://github.com/lollipopkit
 
 Any positive contribution is welcome.
 
+If I forgot to add your name to the contributors list, please add a comment in the issue or PR you opened to let me know, I will add it as soon as possible.
+
 ### Development
 
 1. Setup [Flutter](https://flutter.dev/docs/get-started/install) environment.

@@ -67,6 +67,8 @@ Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/rel
 
 任何正面的贡献都欢迎。
 
+如果我忘记在贡献者列表中添加你的名字，请在你打开的 issue 或 PR 中添加评论让我知道，我会尽快添加。
+
 ### 开发
 
 1. 安装 [Flutter](https://flutter.dev/docs/get-started/install)

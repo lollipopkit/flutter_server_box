@@ -6,8 +6,8 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
+import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
-import 'package:server_box/data/model/app/shell_func.dart';
 import 'package:server_box/data/model/server/amd.dart';
 import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/cpu.dart';
@@ -23,7 +23,6 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/pve.dart';
 import 'package:server_box/view/page/server/edit.dart';
 import 'package:server_box/view/page/server/logo.dart';
-
 import 'package:server_box/view/widget/server_func_btns.dart';
 
 part 'misc.dart';

@@ -1,6 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
-import 'package:server_box/data/model/app/shell_func.dart';
+import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/systemd.dart';
@@ -60,12 +60,12 @@ final class SystemdProvider {
         '''
 for unit in ${unitNames_.join(' ')}; do
   state=\$(systemctl show --no-pager \$unit)
-  echo -n "${ShellFunc.seperator}\n\$state"
+  echo -n "${ScriptConstants.separator}\n\$state"
 done
 ''';
     final client = _si.value.client!;
     final result = await client.execForOutput(script);
-    final units = result.split(ShellFunc.seperator);
+    final units = result.split(ScriptConstants.separator);
 
     final parsedUnits = <SystemdUnit>[];
     for (final unit in units) {
