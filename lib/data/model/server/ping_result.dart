@@ -1,7 +1,6 @@
 final parseFailed = Exception('Parse failed');
 final seqReg = RegExp(r'seq=(.+) ttl=(.+) time=(.+) ms');
-final packetReg =
-    RegExp(r'(.+) packets transmitted, (.+) received, (.+)% packet loss');
+final packetReg = RegExp(r'(.+) packets transmitted, (.+) received, (.+)% packet loss');
 final timeReg = RegExp(r'min/avg/max/mdev = (.+)/(.+)/(.+)/(.+) ms');
 final timeAlpineReg = RegExp(r'round-trip min/avg/max = (.+)/(.+)/(.+) ms');
 final ipReg = RegExp(r' \((\S+)\)');
@@ -15,17 +14,13 @@ class PingResult {
   PingResult.parse(this.serverName, String raw) {
     final lines = raw.split('\n');
     lines.removeWhere((element) => element.isEmpty);
-    final statisticIndex =
-        lines.indexWhere((element) => element.startsWith('---'));
+    final statisticIndex = lines.indexWhere((element) => element.startsWith('---'));
     if (statisticIndex == -1) {
       throw parseFailed;
     }
     final statisticRaw = lines.sublist(statisticIndex + 1);
     statistic = PingStatistics.parse(statisticRaw);
-    results = lines
-        .sublist(1, statisticIndex)
-        .map((e) => PingSeqResult.parse(e))
-        .toList();
+    results = lines.sublist(1, statisticIndex).map((e) => PingSeqResult.parse(e)).toList();
     ip = ipReg.firstMatch(lines[0])?.group(1);
   }
 }

@@ -18,18 +18,12 @@ final class PvePageArgs {
 final class PvePage extends StatefulWidget {
   final PvePageArgs args;
 
-  const PvePage({
-    super.key,
-    required this.args,
-  });
+  const PvePage({super.key, required this.args});
 
   @override
   State<PvePage> createState() => _PvePageState();
 
-  static const route = AppRouteArg<void, PvePageArgs>(
-    page: PvePage.new,
-    path: '/pve',
-  );
+  static const route = AppRouteArg<void, PvePageArgs>(page: PvePage.new, path: '/pve');
 }
 
 const _kHorziPadding = 11.0;
@@ -87,9 +81,7 @@ final class _PvePageState extends State<PvePage> {
             _timer?.cancel();
             return Padding(
               padding: const EdgeInsets.all(13),
-              child: Center(
-                child: Text(val),
-              ),
+              child: Center(child: Text(val)),
             );
           }
           return ValBuilder(
@@ -110,10 +102,7 @@ final class _PvePageState extends State<PvePage> {
 
     PveResType? lastType;
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(
-        horizontal: _kHorziPadding,
-        vertical: 7,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: _kHorziPadding, vertical: 7),
       itemCount: data.length * 2,
       itemBuilder: (context, index) {
         final item = data[index ~/ 2];
@@ -135,10 +124,7 @@ final class _PvePageState extends State<PvePage> {
               alignment: Alignment.center,
               child: Text(
                 type.toStr,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey,
-                ),
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
                 textAlign: TextAlign.start,
               ),
             ),
@@ -183,18 +169,11 @@ final class _PvePageState extends State<PvePage> {
               UIs.width7,
               const Text('CPU', style: UIs.text12Grey),
               const Spacer(),
-              Text(
-                '${(item.cpu * 100).toStringAsFixed(1)} %',
-                style: UIs.text12Grey,
-              ),
+              Text('${(item.cpu * 100).toStringAsFixed(1)} %', style: UIs.text12Grey),
             ],
           ),
           const SizedBox(height: 3),
-          LinearProgressIndicator(
-            value: item.cpu / item.maxcpu,
-            minHeight: 7,
-            valueColor: valueAnim,
-          ),
+          LinearProgressIndicator(value: item.cpu / item.maxcpu, minHeight: 7, valueColor: valueAnim),
           UIs.height7,
           Row(
             children: [
@@ -202,18 +181,11 @@ final class _PvePageState extends State<PvePage> {
               UIs.width7,
               const Text('RAM', style: UIs.text12Grey),
               const Spacer(),
-              Text(
-                '${item.mem.bytes2Str} / ${item.maxmem.bytes2Str}',
-                style: UIs.text12Grey,
-              ),
+              Text('${item.mem.bytes2Str} / ${item.maxmem.bytes2Str}', style: UIs.text12Grey),
             ],
           ),
           const SizedBox(height: 3),
-          LinearProgressIndicator(
-            value: item.mem / item.maxmem,
-            minHeight: 7,
-            valueColor: valueAnim,
-          ),
+          LinearProgressIndicator(value: item.mem / item.maxmem, minHeight: 7, valueColor: valueAnim),
         ],
       ),
     ).cardx;
@@ -232,14 +204,8 @@ final class _PvePageState extends State<PvePage> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           const SizedBox(width: 15),
-          Text(
-            _wrapNodeName(item),
-            style: UIs.text13Bold,
-          ),
-          Text(
-            '  /  ${item.summary}',
-            style: UIs.text12Grey,
-          ),
+          Text(_wrapNodeName(item), style: UIs.text13Bold),
+          Text('  /  ${item.summary}', style: UIs.text12Grey),
           const Spacer(),
           _buildCtrlBtns(item),
           UIs.width13,
@@ -266,34 +232,23 @@ final class _PvePageState extends State<PvePage> {
                 '${l10n.write}:\n${item.diskwrite.bytes2Str}',
                 style: UIs.text11Grey,
                 textAlign: TextAlign.center,
-              )
+              ),
             ],
           ),
           Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                '↓:\n${item.netin.bytes2Str}',
-                style: UIs.text11Grey,
-                textAlign: TextAlign.center,
-              ),
+              Text('↓:\n${item.netin.bytes2Str}', style: UIs.text11Grey, textAlign: TextAlign.center),
               const SizedBox(height: 3),
-              Text(
-                '↑:\n${item.netout.bytes2Str}',
-                style: UIs.text11Grey,
-                textAlign: TextAlign.center,
-              )
+              Text('↑:\n${item.netout.bytes2Str}', style: UIs.text11Grey, textAlign: TextAlign.center),
             ],
           ),
         ],
       ),
-      const SizedBox(height: 21)
+      const SizedBox(height: 21),
     ];
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: children,
-    ).cardx;
+    return Column(mainAxisSize: MainAxisSize.min, children: children).cardx;
   }
 
   Widget _buildLxc(PveLxc item) {
@@ -309,14 +264,8 @@ final class _PvePageState extends State<PvePage> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           const SizedBox(width: 15),
-          Text(
-            _wrapNodeName(item),
-            style: UIs.text13Bold,
-          ),
-          Text(
-            '  /  ${item.summary}',
-            style: UIs.text12Grey,
-          ),
+          Text(_wrapNodeName(item), style: UIs.text13Bold),
+          Text('  /  ${item.summary}', style: UIs.text12Grey),
           const Spacer(),
           _buildCtrlBtns(item),
           UIs.width13,
@@ -343,34 +292,23 @@ final class _PvePageState extends State<PvePage> {
                 '${l10n.write}:\n${item.diskwrite.bytes2Str}',
                 style: UIs.text11Grey,
                 textAlign: TextAlign.center,
-              )
+              ),
             ],
           ),
           Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                '↓:\n${item.netin.bytes2Str}',
-                style: UIs.text11Grey,
-                textAlign: TextAlign.center,
-              ),
+              Text('↓:\n${item.netin.bytes2Str}', style: UIs.text11Grey, textAlign: TextAlign.center),
               const SizedBox(height: 3),
-              Text(
-                '↑:\n${item.netout.bytes2Str}',
-                style: UIs.text11Grey,
-                textAlign: TextAlign.center,
-              )
+              Text('↑:\n${item.netout.bytes2Str}', style: UIs.text11Grey, textAlign: TextAlign.center),
             ],
           ),
         ],
       ),
-      const SizedBox(height: 21)
+      const SizedBox(height: 21),
     ];
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: children,
-    ).cardx;
+    return Column(mainAxisSize: MainAxisSize.min, children: children).cardx;
   }
 
   Widget _buildStorage(PveStorage item) {
@@ -396,33 +334,34 @@ final class _PvePageState extends State<PvePage> {
   }
 
   Widget _buildSdn(PveSdn item) {
-    return ListTile(
-      title: Text(_wrapNodeName(item)),
-      trailing: Text(item.summary),
-    ).cardx;
+    return ListTile(title: Text(_wrapNodeName(item)), trailing: Text(item.summary)).cardx;
   }
 
   Widget _buildCtrlBtns(PveCtrlIface item) {
     const pad = EdgeInsets.symmetric(horizontal: 7, vertical: 5);
     if (!item.available) {
       return Btn.icon(
-          icon: const Icon(Icons.play_arrow, color: Colors.grey),
-          onTap: () => _onCtrl(_pve.start, l10n.start, item));
+        icon: const Icon(Icons.play_arrow, color: Colors.grey),
+        onTap: () => _onCtrl(_pve.start, l10n.start, item),
+      );
     }
     return Row(
       children: [
         Btn.icon(
-            icon: const Icon(Icons.stop, color: Colors.grey, size: 20),
-            padding: pad,
-            onTap: () => _onCtrl(_pve.stop, l10n.stop, item)),
+          icon: const Icon(Icons.stop, color: Colors.grey, size: 20),
+          padding: pad,
+          onTap: () => _onCtrl(_pve.stop, l10n.stop, item),
+        ),
         Btn.icon(
-            icon: const Icon(Icons.refresh, color: Colors.grey, size: 20),
-            padding: pad,
-            onTap: () => _onCtrl(_pve.reboot, l10n.reboot, item)),
+          icon: const Icon(Icons.refresh, color: Colors.grey, size: 20),
+          padding: pad,
+          onTap: () => _onCtrl(_pve.reboot, l10n.reboot, item),
+        ),
         Btn.icon(
-            icon: const Icon(Icons.power_off, color: Colors.grey, size: 20),
-            padding: pad,
-            onTap: () => _onCtrl(_pve.shutdown, l10n.shutdown, item)),
+          icon: const Icon(Icons.power_off, color: Colors.grey, size: 20),
+          padding: pad,
+          onTap: () => _onCtrl(_pve.shutdown, l10n.shutdown, item),
+        ),
       ],
     );
   }
@@ -437,9 +376,7 @@ extension on _PvePageState {
     );
     if (sure != true) return;
 
-    final (suc, err) = await context.showLoadingDialog(
-      fn: () => func(item.node, item.id),
-    );
+    final (suc, err) = await context.showLoadingDialog(fn: () => func(item.node, item.id));
     if (suc == true) {
       context.showSnackBar(libL10n.success);
     } else {

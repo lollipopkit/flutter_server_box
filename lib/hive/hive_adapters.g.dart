@@ -111,13 +111,14 @@ class SpiAdapter extends TypeAdapter<Spi> {
       wolCfg: fields[11] as WakeOnLanCfg?,
       envs: (fields[12] as Map?)?.cast<String, String>(),
       id: fields[13] == null ? '' : fields[13] as String,
+      customSystemType: fields[14] as SystemType?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Spi obj) {
     writer
-      ..writeByte(14)
+      ..writeByte(15)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -145,7 +146,9 @@ class SpiAdapter extends TypeAdapter<Spi> {
       ..writeByte(12)
       ..write(obj.envs)
       ..writeByte(13)
-      ..write(obj.id);
+      ..write(obj.id)
+      ..writeByte(14)
+      ..write(obj.customSystemType);
   }
 
   @override
@@ -554,6 +557,47 @@ class WakeOnLanCfgAdapter extends TypeAdapter<WakeOnLanCfg> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is WakeOnLanCfgAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class SystemTypeAdapter extends TypeAdapter<SystemType> {
+  @override
+  final typeId = 9;
+
+  @override
+  SystemType read(BinaryReader reader) {
+    switch (reader.readByte()) {
+      case 0:
+        return SystemType.linux;
+      case 1:
+        return SystemType.bsd;
+      case 2:
+        return SystemType.windows;
+      default:
+        return SystemType.linux;
+    }
+  }
+
+  @override
+  void write(BinaryWriter writer, SystemType obj) {
+    switch (obj) {
+      case SystemType.linux:
+        writer.writeByte(0);
+      case SystemType.bsd:
+        writer.writeByte(1);
+      case SystemType.windows:
+        writer.writeByte(2);
+    }
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SystemTypeAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

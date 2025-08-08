@@ -40,11 +40,7 @@ class Fifo<T> extends ListBase<T> {
 abstract class TimeSeq<T extends List<TimeSeqIface>> extends Fifo<T> {
   /// Due to the design, at least two elements are required, otherwise [pre] /
   /// [now] will throw.
-  TimeSeq(
-    T init1,
-    T init2, {
-    super.capacity,
-  }) : super(list: [init1, init2]);
+  TimeSeq(T init1, T init2, {super.capacity}) : super(list: [init1, init2]);
 
   T get pre {
     return _list[length - 2];

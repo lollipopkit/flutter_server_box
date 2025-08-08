@@ -12,16 +12,13 @@ import 'package:server_box/data/res/store.dart';
 
 class ProcessPage extends StatefulWidget {
   final SpiRequiredArgs args;
-  
+
   const ProcessPage({super.key, required this.args});
 
   @override
   State<ProcessPage> createState() => _ProcessPageState();
 
-  static const route = AppRouteArg(
-    page: ProcessPage.new,
-    path: '/process',
-  );
+  static const route = AppRouteArg(page: ProcessPage.new, path: '/process');
 }
 
 class _ProcessPageState extends State<ProcessPage> {
@@ -49,8 +46,7 @@ class _ProcessPageState extends State<ProcessPage> {
   void initState() {
     super.initState();
     _client = widget.args.spi.server?.value.client;
-    final duration =
-        Duration(seconds: Stores.setting.serverStatusUpdateInterval.fetch());
+    final duration = Duration(seconds: Stores.setting.serverStatusUpdateInterval.fetch());
     _timer = Timer.periodic(duration, (_) => _refresh());
   }
 
@@ -62,8 +58,10 @@ class _ProcessPageState extends State<ProcessPage> {
 
   Future<void> _refresh() async {
     if (mounted) {
-      final result =
-          await _client?.run(ShellFunc.process.exec(widget.args.spi.id)).string;
+      final systemType = widget.args.spi.server?.value.status.system;
+      final result = await _client
+          ?.run(ShellFunc.process.exec(widget.args.spi.id, systemType: systemType))
+          .string;
       if (result == null || result.isEmpty) {
         context.showSnackBar(libL10n.empty);
         return;
@@ -72,8 +70,7 @@ class _ProcessPageState extends State<ProcessPage> {
 
       // If there are any [Proc]'s data is not complete,
       // the option to sort by cpu/mem will not be available.
-      final isAnyProcDataNotComplete =
-          _result.procs.any((e) => e.cpu == null || e.mem == null);
+      final isAnyProcDataNotComplete = _result.procs.any((e) => e.cpu == null || e.mem == null);
       if (isAnyProcDataNotComplete) {
         _sortModes.removeWhere((e) => e == ProcSortMode.cpu);
         _sortModes.removeWhere((e) => e == ProcSortMode.mem);
@@ -97,25 +94,20 @@ class _ProcessPageState extends State<ProcessPage> {
         },
         icon: const Icon(Icons.sort),
         initialValue: _procSortMode,
-        itemBuilder: (_) => _sortModes
-            .map((e) => PopupMenuItem(value: e, child: Text(e.name)))
-            .toList(),
+        itemBuilder: (_) => _sortModes.map((e) => PopupMenuItem(value: e, child: Text(e.name))).toList(),
       ),
     ];
     if (_result.error != null) {
-      actions.add(IconButton(
-        icon: const Icon(Icons.error),
-        onPressed: () => context.showRoundDialog(
-          title: libL10n.error,
-          child: SingleChildScrollView(child: Text(_result.error!)),
-          actions: [
-            TextButton(
-              onPressed: () => Pfs.copy(_result.error!),
-              child: Text(libL10n.copy),
-            ),
-          ],
+      actions.add(
+        IconButton(
+          icon: const Icon(Icons.error),
+          onPressed: () => context.showRoundDialog(
+            title: libL10n.error,
+            child: SingleChildScrollView(child: Text(_result.error!)),
+            actions: [TextButton(onPressed: () => Pfs.copy(_result.error!), child: Text(libL10n.copy))],
+          ),
         ),
-      ));
+      );
     }
     Widget child;
     if (_result.procs.isEmpty) {
@@ -144,32 +136,26 @@ class _ProcessPageState extends State<ProcessPage> {
     return CardX(
       key: ValueKey(proc.pid),
       child: ListTile(
-        leading: SizedBox(
-          width: _media.size.width / 6,
-          child: leading,
-        ),
+        leading: SizedBox(width: _media.size.width / 6, child: leading),
         title: Text(proc.binary),
-        subtitle: Text(
-          proc.command,
-          style: UIs.textGrey,
-          maxLines: 3,
-          overflow: TextOverflow.fade,
-        ),
+        subtitle: Text(proc.command, style: UIs.textGrey, maxLines: 3, overflow: TextOverflow.fade),
         trailing: _buildItemTrail(proc),
         onTap: () => _lastFocusId = proc.pid,
         onLongPress: () {
           context.showRoundDialog(
             title: libL10n.attention,
-            child: Text(libL10n.askContinue(
-              '${l10n.stop} ${l10n.process}(${proc.pid})',
-            )),
-            actions: Btn.ok(onTap: () async {
-              context.pop();
-              await context.showLoadingDialog(fn: () async {
-                await _client?.run('kill ${proc.pid}');
-                await _refresh();
-              });
-            }).toList,
+            child: Text(libL10n.askContinue('${l10n.stop} ${l10n.process}(${proc.pid})')),
+            actions: Btn.ok(
+              onTap: () async {
+                context.pop();
+                await context.showLoadingDialog(
+                  fn: () async {
+                    await _client?.run('kill ${proc.pid}');
+                    await _refresh();
+                  },
+                );
+              },
+            ).toList,
           );
         },
         selected: _lastFocusId == proc.pid,
@@ -185,17 +171,9 @@ class _ProcessPageState extends State<ProcessPage> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (proc.cpu != null)
-          TwoLineText(
-            up: proc.cpu!.toStringAsFixed(1),
-            down: 'cpu',
-          ),
+        if (proc.cpu != null) TwoLineText(up: proc.cpu!.toStringAsFixed(1), down: 'cpu'),
         UIs.width13,
-        if (proc.mem != null)
-          TwoLineText(
-            up: proc.mem!.toStringAsFixed(1),
-            down: 'mem',
-          ),
+        if (proc.mem != null) TwoLineText(up: proc.mem!.toStringAsFixed(1), down: 'mem'),
       ],
     );
   }

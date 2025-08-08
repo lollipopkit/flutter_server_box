@@ -9,6 +9,7 @@ import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
+import 'package:server_box/data/helper/system_detector.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/shell_func.dart';
 import 'package:server_box/data/model/server/server.dart';
@@ -31,6 +32,8 @@ class ServerProvider extends Provider {
   static Timer? _timer;
 
   static final _manualDisconnectedIds = <String>{};
+
+  static final _serverIdsUpdating = <String, Future<void>?>{};
 
   @override
   Future<void> load() async {
@@ -124,9 +127,33 @@ class ServerProvider extends Provider {
           return;
         }
 
-        return await _getData(s.spi);
+        // Check if already updating, and if so, wait for it to complete
+        final existingUpdate = _serverIdsUpdating[s.spi.id];
+        if (existingUpdate != null) {
+          // Already updating, wait for the existing update to complete
+          try {
+            await existingUpdate;
+          } catch (e) {
+            // Ignore errors from the existing update, we'll try our own
+          }
+          return;
+        }
+
+        // Start a new update operation
+        final updateFuture = _updateServer(s.spi);
+        _serverIdsUpdating[s.spi.id] = updateFuture;
+        
+        try {
+          await updateFuture;
+        } finally {
+          _serverIdsUpdating.remove(s.spi.id);
+        }
       }),
     );
+  }
+
+  static Future<void> _updateServer(Spi spi) async {
+    await _getData(spi);
   }
 
   static Future<void> startAutoRefresh() async {
@@ -305,13 +332,17 @@ class ServerProvider extends Provider {
       _setServerState(s, ServerConn.connected);
 
       try {
+        // Detect system type using helper
+        final detectedSystemType = await SystemDetector.detect(sv.client!, spi);
+        sv.status.system = detectedSystemType;
+
         final (_, writeScriptResult) = await sv.client!.exec((session) async {
-          final scriptRaw = ShellFunc.allScript(spi.custom?.cmds).uint8List;
+          final scriptRaw = ShellFunc.allScript(spi.custom?.cmds, systemType: detectedSystemType).uint8List;
           session.stdin.add(scriptRaw);
           session.stdin.close();
-        }, entry: ShellFunc.getInstallShellCmd(spi.id));
-        if (writeScriptResult.isNotEmpty) {
-          ShellFunc.switchScriptDir(spi.id);
+        }, entry: ShellFunc.getInstallShellCmd(spi.id, systemType: detectedSystemType));
+        if (writeScriptResult.isNotEmpty && detectedSystemType != SystemType.windows) {
+          ShellFunc.switchScriptDir(spi.id, systemType: detectedSystemType);
           throw writeScriptResult;
         }
       } on SSHAuthAbortError catch (e) {
@@ -351,7 +382,8 @@ class ServerProvider extends Provider {
     String? raw;
 
     try {
-      raw = await sv.client?.run(ShellFunc.status.exec(spi.id)).string;
+      raw = await sv.client?.run(ShellFunc.status.exec(spi.id, systemType: sv.status.system)).string;
+      dprint('Get status from ${spi.name}:\n$raw');
       segments = raw?.split(ShellFunc.seperator).map((e) => e.trim()).toList();
       if (raw == null || raw.isEmpty || segments == null || segments.isEmpty) {
         if (Stores.setting.keepStatusWhenErr.fetch()) {

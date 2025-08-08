@@ -7,8 +7,7 @@ final class _AppAboutPage extends StatefulWidget {
   State<_AppAboutPage> createState() => _AppAboutPageState();
 }
 
-final class _AppAboutPageState extends State<_AppAboutPage>
-    with AutomaticKeepAliveClientMixin {
+final class _AppAboutPageState extends State<_AppAboutPage> with AutomaticKeepAliveClientMixin {
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -16,15 +15,8 @@ final class _AppAboutPageState extends State<_AppAboutPage>
       padding: const EdgeInsets.all(13),
       children: [
         UIs.height13,
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 47, maxWidth: 47),
-          child: UIs.appIcon,
-        ),
-        const Text(
-          '${BuildData.name}\nv${BuildData.build}',
-          textAlign: TextAlign.center,
-          style: UIs.text15,
-        ),
+        ConstrainedBox(constraints: const BoxConstraints(maxHeight: 47, maxWidth: 47), child: UIs.appIcon),
+        const Text('${BuildData.name}\nv${BuildData.build}', textAlign: TextAlign.center, style: UIs.text15),
         UIs.height13,
         SizedBox(
           height: 77,
@@ -52,7 +44,8 @@ final class _AppAboutPageState extends State<_AppAboutPage>
         ),
         UIs.height13,
         SimpleMarkdown(
-          data: '''
+          data:
+              '''
 #### Contributors
 ${GithubIds.contributors.map((e) => '[$e](${e.url})').join(' ')}
 

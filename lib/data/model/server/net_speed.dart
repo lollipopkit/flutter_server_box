@@ -16,12 +16,7 @@ class NetSpeedPart extends TimeSeqIface<NetSpeedPart> {
   bool same(NetSpeedPart other) => device == other.device;
 }
 
-typedef CachedNetVals = ({
-  String sizeIn,
-  String sizeOut,
-  String speedIn,
-  String speedOut,
-});
+typedef CachedNetVals = ({String sizeIn, String sizeOut, String speedIn, String speedOut});
 
 class NetSpeed extends TimeSeq<List<NetSpeedPart>> {
   NetSpeed(super.init1, super.init2);
@@ -32,20 +27,14 @@ class NetSpeed extends TimeSeq<List<NetSpeedPart>> {
     devices.addAll(now.map((e) => e.device).toList());
 
     realIfaces.clear();
-    realIfaces.addAll(devices
-        .where((e) => realIfacePrefixs.any((prefix) => e.startsWith(prefix))));
+    realIfaces.addAll(devices.where((e) => realIfacePrefixs.any((prefix) => e.startsWith(prefix))));
 
     final sizeIn = this.sizeIn();
     final sizeOut = this.sizeOut();
     final speedIn = this.speedIn();
     final speedOut = this.speedOut();
 
-    cachedVals = (
-      sizeIn: sizeIn,
-      sizeOut: sizeOut,
-      speedIn: speedIn,
-      speedOut: speedOut,
-    );
+    cachedVals = (sizeIn: sizeIn, sizeOut: sizeOut, speedIn: speedIn, speedOut: speedOut);
   }
 
   /// Cached network device list
@@ -58,15 +47,13 @@ class NetSpeed extends TimeSeq<List<NetSpeedPart>> {
   /// Cached non-virtual network device prefix
   final realIfaces = <String>[];
 
-  CachedNetVals cachedVals =
-      (sizeIn: '0kb', sizeOut: '0kb', speedIn: '0kb/s', speedOut: '0kb/s');
+  CachedNetVals cachedVals = (sizeIn: '0kb', sizeOut: '0kb', speedIn: '0kb/s', speedOut: '0kb/s');
 
   /// Time diff between [pre] and [now]
   BigInt get _timeDiff => BigInt.from(now[0].time - pre[0].time);
 
   double speedInBytes(int i) => (now[i].bytesIn - pre[i].bytesIn) / _timeDiff;
-  double speedOutBytes(int i) =>
-      (now[i].bytesOut - pre[i].bytesOut) / _timeDiff;
+  double speedOutBytes(int i) => (now[i].bytesOut - pre[i].bytesOut) / _timeDiff;
   BigInt sizeInBytes(int i) => now[i].bytesIn;
   BigInt sizeOutBytes(int i) => now[i].bytesOut;
 

@@ -8,10 +8,7 @@ class SnippetResultPage extends StatelessWidget {
 
   const SnippetResultPage({super.key, required this.args});
 
-  static const route = AppRouteArg(
-    page: SnippetResultPage.new,
-    path: '/snippets/result',
-  );
+  static const route = AppRouteArg(page: SnippetResultPage.new, path: '/snippets/result');
 
   @override
   Widget build(BuildContext context) {
@@ -37,10 +34,7 @@ class SnippetResultPage extends StatelessWidget {
               SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 17),
                 scrollDirection: Axis.horizontal,
-                child: Text(
-                  item.result,
-                  textAlign: TextAlign.start,
-                ),
+                child: Text(item.result, textAlign: TextAlign.start),
               ),
             ],
           ),

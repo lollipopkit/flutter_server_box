@@ -19,13 +19,7 @@ class Battery {
   final int? cycle;
   final String? tech;
 
-  const Battery({
-    required this.status,
-    this.percent,
-    this.name,
-    this.cycle,
-    this.tech,
-  });
+  const Battery({required this.status, this.percent, this.name, this.cycle, this.tech});
 
   factory Battery.fromRaw(String raw) {
     final lines = raw.split('\n');
@@ -63,8 +57,7 @@ enum BatteryStatus {
   charging,
   discharging,
   full,
-  unknown,
-  ;
+  unknown;
 
   static BatteryStatus parse(String? status) {
     switch (status) {

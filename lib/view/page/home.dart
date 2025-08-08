@@ -17,10 +17,7 @@ class HomePage extends StatefulWidget {
   @override
   State<HomePage> createState() => _HomePageState();
 
-  static const route = AppRouteNoArg(
-    page: HomePage.new,
-    path: '/',
-  );
+  static const route = AppRouteNoArg(page: HomePage.new, path: '/');
 }
 
 class _HomePageState extends State<HomePage>
@@ -181,11 +178,7 @@ class _HomePageState extends State<HomePage>
     //_reqNotiPerm();
 
     if (Stores.setting.autoCheckAppUpdate.fetch()) {
-      AppUpdateIface.doUpdate(
-        build: BuildData.build,
-        url: Urls.updateCfg,
-        context: context,
-      );
+      AppUpdateIface.doUpdate(build: BuildData.build, url: Urls.updateCfg, context: context);
     }
     MethodChans.updateHomeWidget();
     await ServerProvider.refresh();
@@ -216,10 +209,7 @@ class _HomePageState extends State<HomePage>
   void _goAuth() {
     if (Stores.setting.useBioAuth.fetch()) {
       if (LocalAuthPage.route.alreadyIn) return;
-      LocalAuthPage.route.go(
-        context,
-        args: LocalAuthPageArgs(onAuthSuccess: () => _shouldAuth = false),
-      );
+      LocalAuthPage.route.go(context, args: LocalAuthPageArgs(onAuthSuccess: () => _shouldAuth = false));
     }
   }
 
@@ -245,9 +235,7 @@ final class _AppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: preferredSize.height,
-    );
+    return SizedBox(height: preferredSize.height);
   }
 
   @override

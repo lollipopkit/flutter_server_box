@@ -62,8 +62,7 @@ enum PkgManager {
       case PkgManager.yum:
         list = list.sublist(2);
         list.removeWhere((element) => element.isEmpty);
-        final endLine = list.lastIndexWhere(
-            (element) => element.contains('Obsoleting Packages'));
+        final endLine = list.lastIndexWhere((element) => element.contains('Obsoleting Packages'));
         if (endLine != -1 && list.isNotEmpty) {
           list = list.sublist(0, endLine);
         }
@@ -71,8 +70,7 @@ enum PkgManager {
       case PkgManager.apt:
         // avoid other outputs
         // such as: [Could not chdir to home directory /home/test: No such file or directory, , WARNING: apt does not have a stable CLI interface. Use with caution in scripts., , Listing...]
-        final idx =
-            list.indexWhere((element) => element.contains('[upgradable from:'));
+        final idx = list.indexWhere((element) => element.contains('[upgradable from:'));
         if (idx == -1) {
           return [];
         }

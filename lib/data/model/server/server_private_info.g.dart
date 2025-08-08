@@ -27,6 +27,10 @@ _Spi _$SpiFromJson(Map<String, dynamic> json) => _Spi(
     (k, e) => MapEntry(k, e as String),
   ),
   id: json['id'] == null ? '' : Spi.parseId(json['id']),
+  customSystemType: $enumDecodeNullable(
+    _$SystemTypeEnumMap,
+    json['customSystemType'],
+  ),
 );
 
 Map<String, dynamic> _$SpiToJson(_Spi instance) => <String, dynamic>{
@@ -44,4 +48,12 @@ Map<String, dynamic> _$SpiToJson(_Spi instance) => <String, dynamic>{
   if (instance.wolCfg case final value?) 'wolCfg': value,
   if (instance.envs case final value?) 'envs': value,
   'id': instance.id,
+  if (_$SystemTypeEnumMap[instance.customSystemType] case final value?)
+    'customSystemType': value,
+};
+
+const _$SystemTypeEnumMap = {
+  SystemType.linux: 'linux',
+  SystemType.bsd: 'bsd',
+  SystemType.windows: 'windows',
 };

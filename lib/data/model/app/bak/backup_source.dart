@@ -7,13 +7,13 @@ import 'package:flutter/material.dart';
 abstract class BackupSource {
   /// Get content from this source for restore
   Future<String?> getContent();
-  
+
   /// Save content to this source for backup
   Future<void> saveContent(String filePath);
-  
+
   /// Display name for this source
   String get displayName;
-  
+
   /// Icon for this source
   IconData get icon;
 }

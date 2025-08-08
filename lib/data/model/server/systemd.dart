@@ -8,26 +8,24 @@ enum SystemdUnitFunc {
   reload,
   enable,
   disable,
-  status,
-  ;
+  status;
 
   IconData get icon => switch (this) {
-        start => Icons.play_arrow,
-        stop => Icons.stop,
-        restart => Icons.refresh,
-        reload => Icons.refresh,
-        enable => Icons.check,
-        disable => Icons.close,
-        status => Icons.info,
-      };
+    start => Icons.play_arrow,
+    stop => Icons.stop,
+    restart => Icons.refresh,
+    reload => Icons.refresh,
+    enable => Icons.check,
+    disable => Icons.close,
+    status => Icons.info,
+  };
 }
 
 enum SystemdUnitType {
   service,
   socket,
   mount,
-  timer,
-  ;
+  timer;
 
   static SystemdUnitType? fromString(String? value) {
     return values.firstWhereOrNull((e) => e.name == value?.toLowerCase());
@@ -36,13 +34,12 @@ enum SystemdUnitType {
 
 enum SystemdUnitScope {
   system,
-  user,
-  ;
+  user;
 
   Color? get color => switch (this) {
-        system => Colors.red,
-        _ => null,
-      };
+    system => Colors.red,
+    _ => null,
+  };
 
   String getCmdPrefix(bool isRoot) {
     if (this == system) {
@@ -57,17 +54,16 @@ enum SystemdUnitState {
   inactive,
   failed,
   activating,
-  deactivating,
-  ;
+  deactivating;
 
   static SystemdUnitState? fromString(String? value) {
     return values.firstWhereOrNull((e) => e.name == value?.toLowerCase());
   }
 
   Color? get color => switch (this) {
-        failed => Colors.red,
-        _ => null,
-      };
+    failed => Colors.red,
+    _ => null,
+  };
 }
 
 final class SystemdUnit {
@@ -85,10 +81,7 @@ final class SystemdUnit {
     required this.state,
   });
 
-  String getCmd({
-    required SystemdUnitFunc func,
-    required bool isRoot,
-  }) {
+  String getCmd({required SystemdUnitFunc func, required bool isRoot}) {
     final prefix = scope.getCmdPrefix(isRoot);
     return '$prefix ${func.name} $name';
   }

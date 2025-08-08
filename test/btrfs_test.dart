@@ -9,25 +9,25 @@ void main() {
       final disks = Disk.parse(_btrfsRaidJsonOutput);
       expect(disks, isNotEmpty);
       expect(disks.length, 4); // Should have 2 parent disks + 2 BTRFS partitions
-      
+
       // We should get two distinct disks with the same UUID but different paths
       final nvme1Disk = disks.firstWhere((disk) => disk.path == '/dev/nvme1n1p1');
       final nvme2Disk = disks.firstWhere((disk) => disk.path == '/dev/nvme2n1p1');
-      
+
       // Both should exist
       expect(nvme1Disk, isNotNull);
       expect(nvme2Disk, isNotNull);
-      
+
       // They should have the same UUID (since they're part of the same BTRFS volume)
       expect(nvme1Disk.uuid, nvme2Disk.uuid);
-      
+
       // But they should be treated as distinct disks
       expect(identical(nvme1Disk, nvme2Disk), isFalse);
-      
+
       // Verify DiskUsage counts physical disks correctly
       final usage = DiskUsage.parse(disks);
       // With our unique path+kname identifier, both disks should be counted
-      expect(usage.size, nvme1Disk.size + nvme2Disk.size); 
+      expect(usage.size, nvme1Disk.size + nvme2Disk.size);
       expect(usage.used, nvme1Disk.used + nvme2Disk.used);
     });
   });

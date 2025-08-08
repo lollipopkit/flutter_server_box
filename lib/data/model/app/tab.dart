@@ -12,7 +12,7 @@ enum AppTab {
   server,
   ssh,
   file,
-  snippet,
+  snippet
   //settings,
   ;
 
@@ -29,60 +29,60 @@ enum AppTab {
   NavigationDestination get navDestination {
     return switch (this) {
       server => NavigationDestination(
-          icon: const Icon(BoxIcons.bx_server),
-          label: l10n.server,
-          selectedIcon: const Icon(BoxIcons.bxs_server),
-        ),
+        icon: const Icon(BoxIcons.bx_server),
+        label: l10n.server,
+        selectedIcon: const Icon(BoxIcons.bxs_server),
+      ),
       // settings => NavigationDestination(
       //     icon: const Icon(Icons.settings),
       //     label: libL10n.setting,
       //     selectedIcon: const Icon(Icons.settings),
       //   ),
       ssh => const NavigationDestination(
-          icon: Icon(Icons.terminal_outlined),
-          label: 'SSH',
-          selectedIcon: Icon(Icons.terminal),
-        ),
+        icon: Icon(Icons.terminal_outlined),
+        label: 'SSH',
+        selectedIcon: Icon(Icons.terminal),
+      ),
       snippet => NavigationDestination(
-          icon: const Icon(Icons.code),
-          label: l10n.snippet,
-          selectedIcon: const Icon(Icons.code),
-        ),
+        icon: const Icon(Icons.code),
+        label: l10n.snippet,
+        selectedIcon: const Icon(Icons.code),
+      ),
       file => NavigationDestination(
-          icon: const Icon(Icons.folder_open),
-          label: libL10n.file,
-          selectedIcon: const Icon(Icons.folder),
-        ),
+        icon: const Icon(Icons.folder_open),
+        label: libL10n.file,
+        selectedIcon: const Icon(Icons.folder),
+      ),
     };
   }
 
   NavigationRailDestination get navRailDestination {
     return switch (this) {
       server => NavigationRailDestination(
-          icon: const Icon(BoxIcons.bx_server),
-          label: Text(l10n.server),
-          selectedIcon: const Icon(BoxIcons.bxs_server),
-        ),
+        icon: const Icon(BoxIcons.bx_server),
+        label: Text(l10n.server),
+        selectedIcon: const Icon(BoxIcons.bxs_server),
+      ),
       // settings => NavigationRailDestination(
       //     icon: const Icon(Icons.settings),
       //     label: libL10n.setting,
       //     selectedIcon: const Icon(Icons.settings),
       //   ),
       ssh => const NavigationRailDestination(
-          icon: Icon(Icons.terminal_outlined),
-          label: Text('SSH'),
-          selectedIcon: Icon(Icons.terminal),
-        ),
+        icon: Icon(Icons.terminal_outlined),
+        label: Text('SSH'),
+        selectedIcon: Icon(Icons.terminal),
+      ),
       snippet => NavigationRailDestination(
-          icon: const Icon(Icons.code),
-          label: Text(l10n.snippet),
-          selectedIcon: const Icon(Icons.code),
-        ),
+        icon: const Icon(Icons.code),
+        label: Text(l10n.snippet),
+        selectedIcon: const Icon(Icons.code),
+      ),
       file => NavigationRailDestination(
-          icon: const Icon(Icons.folder_open),
-          label: Text(libL10n.file),
-          selectedIcon: const Icon(Icons.folder),
-        ),
+        icon: const Icon(Icons.folder_open),
+        label: Text(libL10n.file),
+        selectedIcon: const Icon(Icons.folder),
+      ),
     };
   }
 

@@ -1,31 +1,33 @@
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/script_builders.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/res/build_data.dart';
 
 enum ShellFunc {
-  status,
+  status('SbStatus'),
   //docker,
-  process,
-  shutdown,
-  reboot,
-  suspend;
+  process('SbProcess'),
+  shutdown('SbShutdown'),
+  reboot('SbReboot'),
+  suspend('SbSuspend');
+
+  final String name;
+
+  const ShellFunc(this.name);
 
   static const seperator = 'SrvBoxSep';
 
   /// The suffix `\t` is for formatting
   static const cmdDivider = '\necho $seperator\n\t';
 
-  /// Cached Linux status commands string
-  static final _linuxStatusCmds = StatusCmdType.values.map((e) => e.cmd).join(cmdDivider);
-
-  /// Cached BSD status commands string
-  static final _bsdStatusCmds = BSDStatusCmdType.values.map((e) => e.cmd).join(cmdDivider);
-
   /// srvboxm -> ServerBox Mobile
   static const scriptFile = 'srvboxm_v${BuildData.script}.sh';
+  static const scriptFileWindows = 'srvboxm_v${BuildData.script}.ps1';
   static const scriptDirHome = '~/.config/server_box';
   static const scriptDirTmp = '/tmp/server_box';
+  static const scriptDirHomeWindows = '%USERPROFILE%/.config/server_box';
+  static const scriptDirTmpWindows = '%TEMP%/server_box';
 
   static final _scriptDirMap = <String, String>{};
 
@@ -33,31 +35,38 @@ enum ShellFunc {
   ///
   /// Default is [scriptDirTmp]/[scriptFile], if this path is not accessible,
   /// it will be changed to [scriptDirHome]/[scriptFile].
-  static String getScriptDir(String id) {
+  static String getScriptDir(String id, {SystemType? systemType}) {
     final customScriptDir = ServerProvider.pick(id: id)?.value.spi.custom?.scriptDir;
     if (customScriptDir != null) return customScriptDir;
-    _scriptDirMap[id] ??= scriptDirTmp;
+
+    final defaultTmpDir = systemType == SystemType.windows ? scriptDirTmpWindows : scriptDirTmp;
+    _scriptDirMap[id] ??= defaultTmpDir;
     return _scriptDirMap[id]!;
   }
 
-  static void switchScriptDir(String id) => switch (_scriptDirMap[id]) {
+  static void switchScriptDir(String id, {SystemType? systemType}) => switch (_scriptDirMap[id]) {
     scriptDirTmp => _scriptDirMap[id] = scriptDirHome,
+    scriptDirTmpWindows => _scriptDirMap[id] = scriptDirHomeWindows,
     scriptDirHome => _scriptDirMap[id] = scriptDirTmp,
-    _ => _scriptDirMap[id] = scriptDirHome,
+    scriptDirHomeWindows => _scriptDirMap[id] = scriptDirTmpWindows,
+    _ => _scriptDirMap[id] = systemType == SystemType.windows ? scriptDirHomeWindows : scriptDirHome,
   };
 
-  static String getScriptPath(String id) {
-    return '${getScriptDir(id)}/$scriptFile';
+  static String getScriptPath(String id, {SystemType? systemType}) {
+    final dir = getScriptDir(id, systemType: systemType);
+    final fileName = systemType == SystemType.windows ? scriptFileWindows : scriptFile;
+    final separator = systemType == SystemType.windows ? '\\' : '/';
+    return '$dir$separator$fileName';
   }
 
-  static String getInstallShellCmd(String id) {
-    final scriptDir = getScriptDir(id);
-    final scriptPath = '$scriptDir/$scriptFile';
-    return '''
-mkdir -p $scriptDir
-cat > $scriptPath
-chmod 755 $scriptPath
-''';
+  static String getInstallShellCmd(String id, {SystemType? systemType}) {
+    final scriptDir = getScriptDir(id, systemType: systemType);
+    final isWindows = systemType == SystemType.windows;
+    final builder = ScriptBuilderFactory.getBuilder(isWindows);
+    final separator = isWindows ? '\\' : '/';
+    final scriptPath = '$scriptDir$separator${builder.scriptFileName}';
+
+    return builder.getInstallCommand(scriptDir, scriptPath);
   }
 
   String get flag => switch (this) {
@@ -69,120 +78,24 @@ chmod 755 $scriptPath
     // ShellFunc.docker=> 'd',
   };
 
-  String exec(String id) => 'sh ${getScriptPath(id)} -$flag';
-
-  String get name => switch (this) {
-    ShellFunc.status => 'status',
-    ShellFunc.process => 'process',
-    ShellFunc.shutdown => 'ShutDown',
-    ShellFunc.reboot => 'Reboot',
-    ShellFunc.suspend => 'Suspend',
-  };
-
-  String get _cmd => switch (this) {
-    ShellFunc.status =>
-      '''
-if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
-\t$_linuxStatusCmds
-else
-\t$_bsdStatusCmds
-fi''',
-    ShellFunc.process =>
-      '''
-if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
-\tif [ "\$isBusybox" != "" ]; then
-\t\tps w
-\telse
-\t\tps -aux
-\tfi
-else
-\tps -ax
-fi
-''',
-    ShellFunc.shutdown =>
-      '''
-if [ "\$userId" = "0" ]; then
-\tshutdown -h now
-else
-\tsudo -S shutdown -h now
-fi''',
-    ShellFunc.reboot =>
-      '''
-if [ "\$userId" = "0" ]; then
-\treboot
-else
-\tsudo -S reboot
-fi''',
-    ShellFunc.suspend =>
-      '''
-if [ "\$userId" = "0" ]; then
-\tsystemctl suspend
-else
-\tsudo -S systemctl suspend
-fi''',
-  };
-
-  static String allScript(Map<String, String>? customCmds) {
-    final sb = StringBuffer();
-    sb.write('''
-#!/bin/sh
-# Script for ServerBox app v1.0.${BuildData.build}
-# DO NOT delete this file while app is running
-
-export LANG=en_US.UTF-8
-
-# If macSign & bsdSign are both empty, then it's linux
-macSign=\$(uname -a 2>&1 | grep "Darwin")
-bsdSign=\$(uname -a 2>&1 | grep "BSD")
-
-# Link /bin/sh to busybox?
-isBusybox=\$(ls -l /bin/sh | grep "busybox")
-
-userId=\$(id -u)
-
-exec 2>/dev/null
-
-''');
-    // Write each func
-    for (final func in values) {
-      final customCmdsStr = () {
-        if (func == ShellFunc.status && customCmds != null && customCmds.isNotEmpty) {
-          return '$cmdDivider\n\t${customCmds.values.join(cmdDivider)}';
-        }
-        return '';
-      }();
-      sb.write('''
-${func.name}() {
-${func._cmd.split('\n').map((e) => '\t$e').join('\n')}
-$customCmdsStr
-}
-
-''');
-    }
-
-    // Write switch case
-    sb.write('case \$1 in\n');
-    for (final func in values) {
-      sb.write('''
-  '-${func.flag}')
-    ${func.name}
-    ;;
-''');
-    }
-    sb.write('''
-  *)
-    echo "Invalid argument \$1"
-    ;;
-esac''');
-    return sb.toString();
+  String exec(String id, {SystemType? systemType}) {
+    final scriptPath = getScriptPath(id, systemType: systemType);
+    final isWindows = systemType == SystemType.windows;
+    final builder = ScriptBuilderFactory.getBuilder(isWindows);
+    
+    return builder.getExecCommand(scriptPath, this);
   }
-}
 
-extension EnumX on Enum {
-  /// Find out the required segment from [segments]
-  String find(List<String> segments) {
-    return segments[index];
+
+
+  /// Generate script based on system type
+  static String allScript(Map<String, String>? customCmds, {SystemType? systemType}) {
+    final isWindows = systemType == SystemType.windows;
+    final builder = ScriptBuilderFactory.getBuilder(isWindows);
+    
+    return builder.buildScript(customCmds);
   }
+
 }
 
 enum StatusCmdType {
@@ -193,7 +106,10 @@ enum StatusCmdType {
   cpu._('cat /proc/stat | grep cpu'),
   uptime._('uptime'),
   conn._('cat /proc/net/snmp'),
-  disk._('lsblk --bytes --json --output FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID'),
+  disk._(
+    'lsblk --bytes --json --output '
+    'FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID',
+  ),
   mem._("cat /proc/meminfo | grep -E 'Mem|Swap'"),
   tempType._('cat /sys/class/thermal/thermal_zone*/type'),
   tempVal._('cat /sys/class/thermal/thermal_zone*/temp'),
@@ -201,7 +117,16 @@ enum StatusCmdType {
   diskio._('cat /proc/diskstats'),
   battery._('for f in /sys/class/power_supply/*/uevent; do cat "\$f"; echo; done'),
   nvidia._('nvidia-smi -q -x'),
-  amd._('if command -v amd-smi >/dev/null 2>&1; then amd-smi list --json && amd-smi metric --json; elif command -v rocm-smi >/dev/null 2>&1; then rocm-smi --json || rocm-smi --showunique --showuse --showtemp --showfan --showclocks --showmemuse --showpower; elif command -v radeontop >/dev/null 2>&1; then timeout 2s radeontop -d - -l 1 | tail -n +2; else echo "No AMD GPU monitoring tools found"; fi'),
+  amd._(
+    'if command -v amd-smi >/dev/null 2>&1; then '
+    'amd-smi list --json && amd-smi metric --json; '
+    'elif command -v rocm-smi >/dev/null 2>&1; then '
+    'rocm-smi --json || rocm-smi --showunique --showuse --showtemp '
+    '--showfan --showclocks --showmemuse --showpower; '
+    'elif command -v radeontop >/dev/null 2>&1; then '
+    'timeout 2s radeontop -d - -l 1 | tail -n +2; '
+    'else echo "No AMD GPU monitoring tools found"; fi',
+  ),
   sensors._('sensors'),
   diskSmart._('for d in \$(lsblk -dn -o KNAME); do smartctl -a -j /dev/\$d; echo; done'),
   cpuBrand._('cat /proc/cpuinfo | grep "model name"');
@@ -240,4 +165,78 @@ extension StatusCmdTypeX on StatusCmdType {
     StatusCmdType.disk => l10n.disk,
     final val => val.name,
   };
+}
+
+enum WindowsStatusCmdType {
+  echo._('echo ${SystemType.windowsSign}'),
+  time._('[DateTimeOffset]::UtcNow.ToUnixTimeSeconds()'),
+  net._(
+    r'Get-Counter -Counter '
+    r'"\\NetworkInterface(*)\\Bytes Received/sec", '
+    r'"\\NetworkInterface(*)\\Bytes Sent/sec" '
+    r'-SampleInterval 1 -MaxSamples 2 | ConvertTo-Json',
+  ),
+  sys._('(Get-ComputerInfo).OsName'),
+  cpu._(
+    'Get-WmiObject -Class Win32_Processor | '
+    'Select-Object Name, LoadPercentage | ConvertTo-Json',
+  ),
+  uptime._('(Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime'),
+  conn._('(netstat -an | findstr ESTABLISHED | Measure-Object -Line).Count'),
+  disk._(
+    'Get-WmiObject -Class Win32_LogicalDisk | '
+    'Select-Object DeviceID, Size, FreeSpace, FileSystem | ConvertTo-Json',
+  ),
+  mem._(
+    'Get-WmiObject -Class Win32_OperatingSystem | '
+    'Select-Object TotalVisibleMemorySize, FreePhysicalMemory | ConvertTo-Json',
+  ),
+  temp._(
+    'Get-CimInstance -ClassName MSAcpi_ThermalZoneTemperature '
+    '-Namespace root/wmi -ErrorAction SilentlyContinue | '
+    'Select-Object InstanceName, @{Name=\'Temperature\';'
+    'Expression={[math]::Round((\$_.CurrentTemperature - 2732) / 10, 1)}} | '
+    'ConvertTo-Json',
+  ),
+  host._(r'Write-Output $env:COMPUTERNAME'),
+  diskio._(
+    r'Get-Counter -Counter '
+    r'"\\PhysicalDisk(*)\\Disk Read Bytes/sec", '
+    r'"\\PhysicalDisk(*)\\Disk Write Bytes/sec" '
+    r'-SampleInterval 1 -MaxSamples 2 | ConvertTo-Json',
+  ),
+  battery._(
+    'Get-WmiObject -Class Win32_Battery | '
+    'Select-Object EstimatedChargeRemaining, BatteryStatus | ConvertTo-Json',
+  ),
+  nvidia._(
+    'if (Get-Command nvidia-smi -ErrorAction SilentlyContinue) { '
+    'nvidia-smi -q -x } else { echo "NVIDIA driver not found" }',
+  ),
+  amd._(
+    'if (Get-Command amd-smi -ErrorAction SilentlyContinue) { '
+    'amd-smi list --json } else { echo "AMD driver not found" }',
+  ),
+  sensors._(
+    'Get-CimInstance -ClassName Win32_TemperatureProbe '
+    '-ErrorAction SilentlyContinue | '
+    'Select-Object Name, CurrentReading | ConvertTo-Json',
+  ),
+  diskSmart._(
+    'Get-PhysicalDisk | Get-StorageReliabilityCounter | '
+    'Select-Object DeviceId, Temperature, TemperatureMax, Wear, PowerOnHours | '
+    'ConvertTo-Json',
+  ),
+  cpuBrand._('(Get-WmiObject -Class Win32_Processor).Name');
+
+  final String cmd;
+
+  const WindowsStatusCmdType._(this.cmd);
+}
+
+extension EnumX on Enum {
+  /// Find out the required segment from [segments]
+  String find(List<String> segments) {
+    return segments[index];
+  }
 }

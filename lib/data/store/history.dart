@@ -7,12 +7,10 @@ class _ListHistory {
   final String _name;
   final Box _box;
 
-  _ListHistory({
-    required Box box,
-    required String name,
-  })  : _box = box,
-        _name = name,
-        _history = box.get(name, defaultValue: [])!;
+  _ListHistory({required Box box, required String name})
+    : _box = box,
+      _name = name,
+      _history = box.get(name, defaultValue: [])!;
 
   void add(String path) {
     _history.remove(path);
@@ -28,12 +26,10 @@ class _MapHistory {
   final String _name;
   final Box _box;
 
-  _MapHistory({
-    required Box box,
-    required String name,
-  })  : _box = box,
-        _name = name,
-        _history = box.get(name, defaultValue: <dynamic, dynamic>{})!;
+  _MapHistory({required Box box, required String name})
+    : _box = box,
+      _name = name,
+      _history = box.get(name, defaultValue: <dynamic, dynamic>{})!;
 
   void put(String id, String val) {
     _history[id] = val;
@@ -56,6 +52,5 @@ class HistoryStore extends HiveStore {
   late final sshCmds = _ListHistory(box: box, name: 'sshCmds');
 
   /// Notify users that this app will write script to server to works properly
-  late final writeScriptTipShown =
-      propertyDefault('writeScriptTipShown', false);
+  late final writeScriptTipShown = propertyDefault('writeScriptTipShown', false);
 }

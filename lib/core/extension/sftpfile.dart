@@ -12,21 +12,9 @@ extension SftpFileX on SftpFileMode {
 
   UnixPerm toUnixPerm() {
     return UnixPerm(
-      user: UnixPermOp(
-        r: userRead,
-        w: userWrite,
-        x: userExecute,
-      ),
-      group: UnixPermOp(
-        r: groupRead,
-        w: groupWrite,
-        x: groupExecute,
-      ),
-      other: UnixPermOp(
-        r: otherRead,
-        w: otherWrite,
-        x: otherExecute,
-      ),
+      user: UnixPermOp(r: userRead, w: userWrite, x: userExecute),
+      group: UnixPermOp(r: groupRead, w: groupWrite, x: groupExecute),
+      other: UnixPermOp(r: otherRead, w: otherWrite, x: otherExecute),
     );
   }
 }

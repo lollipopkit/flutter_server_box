@@ -18,10 +18,7 @@ class SftpWorker {
 
   final worker = Worker();
 
-  SftpWorker({
-    required this.onNotify,
-    required this.req,
-  });
+  SftpWorker({required this.onNotify, required this.req});
 
   void _dispose() {
     worker.dispose();
@@ -31,11 +28,7 @@ class SftpWorker {
   /// the threads
   Future<void> init() async {
     if (worker.isInitialized) worker.dispose();
-    await worker.init(
-      mainMessageHandler,
-      isolateMessageHandler,
-      errorHandler: print,
-    );
+    await worker.init(mainMessageHandler, isolateMessageHandler, errorHandler: print);
     worker.sendMessage(req);
   }
 
@@ -46,11 +39,7 @@ class SftpWorker {
 }
 
 /// Handle the messages coming from the main
-Future<void> isolateMessageHandler(
-  dynamic data,
-  SendPort mainSendPort,
-  SendErrorFunction sendError,
-) async {
+Future<void> isolateMessageHandler(dynamic data, SendPort mainSendPort, SendErrorFunction sendError) async {
   switch (data) {
     case final SftpReq val:
       switch (val.type) {
@@ -67,11 +56,7 @@ Future<void> isolateMessageHandler(
   }
 }
 
-Future<void> _download(
-  SftpReq req,
-  SendPort mainSendPort,
-  SendErrorFunction sendError,
-) async {
+Future<void> _download(SftpReq req, SendPort mainSendPort, SendErrorFunction sendError) async {
   try {
     mainSendPort.send(SftpWorkerStatus.preparing);
     final watch = Stopwatch()..start();
@@ -103,12 +88,12 @@ Future<void> _download(
     // Due to single core performance, limit the chunk size
     const defaultChunkSize = 1024 * 1024 * 5;
     var totalRead = 0;
-    
+
     while (totalRead < size) {
       final remaining = size - totalRead;
       final chunkSize = remaining > defaultChunkSize ? defaultChunkSize : remaining;
       dprint('Size: $size, Total Read: $totalRead, Chunk Size: $chunkSize');
-      
+
       final fileData = file.read(offset: totalRead, length: chunkSize);
       await for (var chunk in fileData) {
         localFile.add(chunk);
@@ -127,11 +112,7 @@ Future<void> _download(
   }
 }
 
-Future<void> _upload(
-  SftpReq req,
-  SendPort mainSendPort,
-  SendErrorFunction sendError,
-) async {
+Future<void> _upload(SftpReq req, SendPort mainSendPort, SendErrorFunction sendError) async {
   try {
     mainSendPort.send(SftpWorkerStatus.preparing);
     final watch = Stopwatch()..start();
@@ -156,9 +137,7 @@ Future<void> _upload(
     // If remote exists, overwrite it
     final file = await sftp.open(
       req.remotePath,
-      mode: SftpFileOpenMode.truncate |
-          SftpFileOpenMode.create |
-          SftpFileOpenMode.write,
+      mode: SftpFileOpenMode.truncate | SftpFileOpenMode.create | SftpFileOpenMode.write,
     );
     final writer = file.write(
       localFile,

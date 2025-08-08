@@ -7,9 +7,7 @@ part 'app.freezed.dart';
 
 @freezed
 abstract class AppState with _$AppState {
-  const factory AppState({
-    @Default(false) bool desktopMode,
-  }) = _AppState;
+  const factory AppState({@Default(false) bool desktopMode}) = _AppState;
 }
 
 @Riverpod(keepAlive: true)
