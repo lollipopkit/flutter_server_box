@@ -15,27 +15,17 @@ import 'package:server_box/data/model/server/server.dart';
 class WindowsParser {
   const WindowsParser._();
 
-  /// Parse Windows custom commands from segments
+  /// Parse Windows custom commands from parsed output
   static void parseCustomCommands(
     ServerStatus serverStatus,
-    List<String> segments,
+    Map<String, String> parsedOutput,
     Map<String, String> customCmds,
-    int systemSegmentsLength,
   ) {
     try {
-      for (int idx = 0; idx < customCmds.length; idx++) {
-        final key = customCmds.keys.elementAt(idx);
-        // Ensure we don't go out of bounds when accessing segments
-        final segmentIndex = idx + systemSegmentsLength;
-        if (segmentIndex < segments.length) {
-          final value = segments[segmentIndex];
-          serverStatus.customCmds[key] = value;
-        } else {
-          Loggers.app.warning(
-            'Windows custom commands: segment index $segmentIndex out of bounds '
-            '(segments length: ${segments.length}, systemSegmentsLength: $systemSegmentsLength)'
-          );
-        }
+      for (final entry in customCmds.entries) {
+        final key = entry.key;
+        final value = parsedOutput[key] ?? '';
+        serverStatus.customCmds[key] = value;
       }
     } catch (e, s) {
       Loggers.app.warning('Windows custom commands parsing failed: $e', s);

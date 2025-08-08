@@ -17,8 +17,58 @@ class ScriptConstants {
   // Command separators and dividers
   static const String separator = 'SrvBoxSep';
 
-  /// The suffix `\t` is for formatting
-  static const String cmdDivider = '\necho $separator\n\t';
+  /// Custom command separator
+  static const String customCmdSep = 'SrvBoxCusCmdSep';
+
+  /// Generate command-specific separator
+  static String getCmdSeparator(String cmdName) => '$separator.$cmdName';
+
+  /// Generate command-specific divider for custom commands
+  static String getCustomCmdSeparator(String cmdName) => '$customCmdSep.$cmdName';
+
+  /// Generate command-specific divider
+  static String getCmdDivider(String cmdName) => '\necho ${getCmdSeparator(cmdName)}\n\t';
+
+  /// Parse script output into command-specific map
+  static Map<String, String> parseScriptOutput(String raw) {
+    final result = <String, String>{};
+    
+    if (raw.isEmpty) return result;
+    
+    // Parse line by line to properly handle command-specific separators
+    final lines = raw.split('\n');
+    String? currentCmd;
+    final buffer = StringBuffer();
+    
+    for (final line in lines) {
+      if (line.startsWith('$separator.')) {
+        // Save previous command content
+        if (currentCmd != null) {
+          result[currentCmd] = buffer.toString().trim();
+          buffer.clear();
+        }
+        // Start new command
+        currentCmd = line.substring('$separator.'.length);
+      } else if (line.startsWith('$customCmdSep.')) {
+        // Save previous command content
+        if (currentCmd != null) {
+          result[currentCmd] = buffer.toString().trim();
+          buffer.clear();
+        }
+        // Start new custom command
+        currentCmd = line.substring('$customCmdSep.'.length);
+      } else if (currentCmd != null) {
+        buffer.writeln(line);
+      }
+    }
+    
+    // Don't forget the last command
+    if (currentCmd != null) {
+      result[currentCmd] = buffer.toString().trim();
+    }
+    
+    return result;
+  }
 
   // Path separators
   static const String unixPathSeparator = '/';

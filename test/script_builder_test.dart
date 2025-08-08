@@ -128,15 +128,6 @@ void main() {
       expect(unixBuilder.scriptHeader, contains('export LANG=en_US.UTF-8'));
     });
 
-    test('command dividers are consistent', () {
-      final windowsBuilder = ScriptBuilderFactory.getBuilder(true);
-      final unixBuilder = ScriptBuilderFactory.getBuilder(false);
-
-      expect(windowsBuilder.cmdDivider, equals(ScriptConstants.cmdDivider));
-      expect(unixBuilder.cmdDivider, equals(ScriptConstants.cmdDivider));
-      expect(ScriptConstants.cmdDivider, contains(ScriptConstants.separator));
-    });
-
     test('scripts handle all system types properly', () {
       // Test that system type detection is properly handled
       final unixScript = ShellFuncManager.allScript(null, systemType: SystemType.linux);

@@ -3,7 +3,7 @@ import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/app/scripts/shell_func.dart';
 
 /// Abstract base class for platform-specific script builders
-abstract class ScriptBuilder {
+sealed class ScriptBuilder {
   const ScriptBuilder();
 
   /// Generate a complete script for all shell functions
@@ -23,9 +23,6 @@ abstract class ScriptBuilder {
 
   /// Get the script header for this platform
   String get scriptHeader;
-
-  /// Get the command divider for this platform
-  String get cmdDivider => ScriptConstants.cmdDivider;
 }
 
 /// Windows PowerShell script builder
@@ -53,7 +50,13 @@ class WindowsScriptBuilder extends ScriptBuilder {
   @override
   String getCustomCmdsString(ShellFunc func, Map<String, String>? customCmds) {
     if (func == ShellFunc.status && customCmds != null && customCmds.isNotEmpty) {
-      return '\n${customCmds.values.map((cmd) => '\t$cmd').join('\n')}';
+      final sb = StringBuffer();
+      for (final e in customCmds.entries) {
+        final cmdDivider = ScriptConstants.getCustomCmdSeparator(e.key);
+        sb.writeln('    Write-Host "$cmdDivider"');
+        sb.writeln('    ${e.value}');
+      }
+      return '\n$sb';
     }
     return '';
   }
@@ -93,13 +96,21 @@ switch (\$args[0]) {
 
   /// Get Windows-specific command for a shell function
   String _getWindowsCommand(ShellFunc func) => switch (func) {
-    ShellFunc.status => WindowsStatusCmdType.values.map((e) => e.cmd).join(cmdDivider),
+    ShellFunc.status => _getWindowsStatusCommand(),
     ShellFunc.process => 'Get-Process | Select-Object ProcessName, Id, CPU, WorkingSet | ConvertTo-Json',
     ShellFunc.shutdown => 'Stop-Computer -Force',
     ShellFunc.reboot => 'Restart-Computer -Force',
     ShellFunc.suspend =>
       'Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Application]::SetSuspendState(\'Suspend\', \$false, \$false)',
   };
+
+  /// Get Windows status command with command-specific separators
+  String _getWindowsStatusCommand() {
+    return WindowsStatusCmdType.values
+        .map((e) => '${e.divider}${e.cmd}')
+        .join('')
+        .trimRight(); // Remove trailing divider
+  }
 }
 
 /// Unix shell script builder
@@ -129,7 +140,13 @@ chmod 755 $scriptPath
   @override
   String getCustomCmdsString(ShellFunc func, Map<String, String>? customCmds) {
     if (func == ShellFunc.status && customCmds != null && customCmds.isNotEmpty) {
-      return '$cmdDivider\n\t${customCmds.values.join(cmdDivider)}';
+      final sb = StringBuffer();
+      for (final e in customCmds.entries) {
+        final cmdDivider = ScriptConstants.getCustomCmdSeparator(e.key);
+        sb.writeln('echo "$cmdDivider"');
+        sb.writeln(e.value);
+      }
+      return '\n$sb';
     }
     return '';
   }
@@ -169,26 +186,21 @@ esac''');
 
   /// Get Unix-specific command for a shell function
   String _getUnixCommand(ShellFunc func) {
-    switch (func) {
-      case ShellFunc.status:
-        return _getUnixStatusCommand();
-      case ShellFunc.process:
-        return _getUnixProcessCommand();
-      case ShellFunc.shutdown:
-        return _getUnixShutdownCommand();
-      case ShellFunc.reboot:
-        return _getUnixRebootCommand();
-      case ShellFunc.suspend:
-        return _getUnixSuspendCommand();
-    }
+    return switch (func) {
+      ShellFunc.status => _getUnixStatusCommand(),
+      ShellFunc.process => _getUnixProcessCommand(),
+      ShellFunc.shutdown => _getUnixShutdownCommand(),
+      ShellFunc.reboot => _getUnixRebootCommand(),
+      ShellFunc.suspend => _getUnixSuspendCommand(),
+    };
   }
 
   /// Get Unix status command with OS detection
   String _getUnixStatusCommand() {
-    // Generate command lists for better readability
-    final linuxCommands = StatusCmdType.values.map((e) => e.cmd).join(cmdDivider);
+    // Generate command lists with command-specific separators
+    final linuxCommands = StatusCmdType.values.map((e) => '${e.divider}${e.cmd}').join('').trimRight();
 
-    final bsdCommands = BSDStatusCmdType.values.map((e) => e.cmd).join(cmdDivider);
+    final bsdCommands = BSDStatusCmdType.values.map((e) => '${e.divider}${e.cmd}').join('').trimRight();
 
     return '''
 if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then

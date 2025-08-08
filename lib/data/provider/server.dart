@@ -406,31 +406,14 @@ class ServerProvider extends Provider {
       return;
     }
 
-    final systemType = SystemType.parse(segments[0]);
-    final customCmdLen = spi.custom?.cmds?.length ?? 0;
-    if (!systemType.isSegmentsLenMatch(segments.length - customCmdLen)) {
-      TryLimiter.inc(sid);
-      if (raw.contains('Could not chdir to home directory /var/services/')) {
-        sv.status.err = SSHErr(type: SSHErrType.chdir, message: raw);
-        _setServerState(s, ServerConn.failed);
-        return;
-      }
-      final expected = systemType.segmentsLen;
-      final actual = segments.length;
-      sv.status.err = SSHErr(
-        type: SSHErrType.segements,
-        message: 'Segments: expect $expected, got $actual, raw:\n\n$raw',
-      );
-      _setServerState(s, ServerConn.failed);
-      return;
-    }
-    sv.status.system = systemType;
-
     try {
+      // Parse script output into command-specific map
+      final parsedOutput = ScriptConstants.parseScriptOutput(raw);
+      
       final req = ServerStatusUpdateReq(
         ss: sv.status,
-        segments: segments,
-        system: systemType,
+        parsedOutput: parsedOutput,
+        system: sv.status.system,
         customCmds: spi.custom?.cmds ?? {},
       );
       sv.status = await Computer.shared.start(getStatus, req, taskName: 'StatusUpdateReq<${sv.id}>');
