@@ -597,23 +597,48 @@ extension on _ServerEditPageState {
   }
 
   void _onTapDisabledCmdTypes() async {
-    final allCmdTypes = <String>[];
+    final allCmdTypes = <String>{};
     allCmdTypes.addAll(StatusCmdType.values.map((e) => e.name));
     allCmdTypes.addAll(BSDStatusCmdType.values.map((e) => e.name));
     allCmdTypes.addAll(WindowsStatusCmdType.values.map((e) => e.name));
-    
+
+    // [TimeSeq] depends on the `time` cmd type, so it should be removed from the list
+    allCmdTypes.remove(StatusCmdType.time.name);
+
     final selected = await _showCmdTypesDialog(allCmdTypes);
     if (selected == null) return;
     _disabledCmdTypes.value = selected;
   }
 
-  Future<Set<String>?> _showCmdTypesDialog(List<String> allCmdTypes) {
-    return showDialog<Set<String>>(
-      context: context,
-      builder: (context) => _CmdTypesDialog(
-        allCmdTypes: allCmdTypes,
-        selectedTypes: _disabledCmdTypes.value,
+  Future<Set<String>?> _showCmdTypesDialog(Set<String> allCmdTypes) {
+    return context.showRoundDialog<Set<String>>(
+      title: '${libL10n.disabled} ${l10n.cmd}',
+      child: SizedBox(
+        width: 270,
+        child: _disabledCmdTypes.listenVal((disabled) {
+          return ListView.builder(
+            itemCount: allCmdTypes.length,
+            itemExtent: 50,
+            itemBuilder: (context, index) {
+              final cmdType = allCmdTypes.elementAtOrNull(index);
+              if (cmdType == null) return UIs.placeholder;
+              return CheckboxListTile(
+                title: Text(cmdType),
+                value: disabled.contains(cmdType),
+                onChanged: (value) {
+                  if (value == null) return;
+                  if (value) {
+                    _disabledCmdTypes.value.add(cmdType);
+                  } else {
+                    _disabledCmdTypes.value.remove(cmdType);
+                  }
+                },
+              );
+            },
+          );
+        }),
       ),
+      actions: Btnx.oks,
     );
   }
 
@@ -740,68 +765,5 @@ extension on _ServerEditPageState {
 
     _systemType.value = spi.customSystemType;
     _disabledCmdTypes.value = spi.disabledCmdTypes?.toSet() ?? {};
-  }
-}
-
-class _CmdTypesDialog extends StatefulWidget {
-  final List<String> allCmdTypes;
-  final Set<String> selectedTypes;
-
-  const _CmdTypesDialog({
-    required this.allCmdTypes,
-    required this.selectedTypes,
-  });
-
-  @override
-  State<_CmdTypesDialog> createState() => _CmdTypesDialogState();
-}
-
-class _CmdTypesDialogState extends State<_CmdTypesDialog> {
-  late Set<String> _selected;
-
-  @override
-  void initState() {
-    super.initState();
-    _selected = Set.from(widget.selectedTypes);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text('${libL10n.disabled} ${l10n.cmd}'),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: ListView.builder(
-          shrinkWrap: true,
-          itemCount: widget.allCmdTypes.length,
-          itemBuilder: (context, index) {
-            final cmdType = widget.allCmdTypes[index];
-            return CheckboxListTile(
-              title: Text(cmdType),
-              value: _selected.contains(cmdType),
-              onChanged: (value) {
-                setState(() {
-                  if (value == true) {
-                    _selected.add(cmdType);
-                  } else {
-                    _selected.remove(cmdType);
-                  }
-                });
-              },
-            );
-          },
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(libL10n.cancel),
-        ),
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(_selected),
-          child: Text(libL10n.ok),
-        ),
-      ],
-    );
   }
 }
