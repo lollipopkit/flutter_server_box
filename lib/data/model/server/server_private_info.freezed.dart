@@ -20,7 +20,8 @@ mixin _$Spi {
 @JsonKey(name: 'pubKeyId') String? get keyId; List<String>? get tags; String? get alterUrl; bool get autoConnect;/// [id] of the jump server
  String? get jumpId; ServerCustom? get custom; WakeOnLanCfg? get wolCfg;/// It only applies to SSH terminal.
  Map<String, String>? get envs;@JsonKey(fromJson: Spi.parseId) String get id;/// Custom system type (unix or windows). If set, skip auto-detection.
-@JsonKey(includeIfNull: false) SystemType? get customSystemType;
+@JsonKey(includeIfNull: false) SystemType? get customSystemType;/// Disabled command types for this server
+@JsonKey(includeIfNull: false) List<String>? get disabledCmdTypes;
 /// Create a copy of Spi
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -33,12 +34,12 @@ $SpiCopyWith<Spi> get copyWith => _$SpiCopyWithImpl<Spi>(this as Spi, _$identity
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Spi&&(identical(other.name, name) || other.name == name)&&(identical(other.ip, ip) || other.ip == ip)&&(identical(other.port, port) || other.port == port)&&(identical(other.user, user) || other.user == user)&&(identical(other.pwd, pwd) || other.pwd == pwd)&&(identical(other.keyId, keyId) || other.keyId == keyId)&&const DeepCollectionEquality().equals(other.tags, tags)&&(identical(other.alterUrl, alterUrl) || other.alterUrl == alterUrl)&&(identical(other.autoConnect, autoConnect) || other.autoConnect == autoConnect)&&(identical(other.jumpId, jumpId) || other.jumpId == jumpId)&&(identical(other.custom, custom) || other.custom == custom)&&(identical(other.wolCfg, wolCfg) || other.wolCfg == wolCfg)&&const DeepCollectionEquality().equals(other.envs, envs)&&(identical(other.id, id) || other.id == id)&&(identical(other.customSystemType, customSystemType) || other.customSystemType == customSystemType));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Spi&&(identical(other.name, name) || other.name == name)&&(identical(other.ip, ip) || other.ip == ip)&&(identical(other.port, port) || other.port == port)&&(identical(other.user, user) || other.user == user)&&(identical(other.pwd, pwd) || other.pwd == pwd)&&(identical(other.keyId, keyId) || other.keyId == keyId)&&const DeepCollectionEquality().equals(other.tags, tags)&&(identical(other.alterUrl, alterUrl) || other.alterUrl == alterUrl)&&(identical(other.autoConnect, autoConnect) || other.autoConnect == autoConnect)&&(identical(other.jumpId, jumpId) || other.jumpId == jumpId)&&(identical(other.custom, custom) || other.custom == custom)&&(identical(other.wolCfg, wolCfg) || other.wolCfg == wolCfg)&&const DeepCollectionEquality().equals(other.envs, envs)&&(identical(other.id, id) || other.id == id)&&(identical(other.customSystemType, customSystemType) || other.customSystemType == customSystemType)&&const DeepCollectionEquality().equals(other.disabledCmdTypes, disabledCmdTypes));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,ip,port,user,pwd,keyId,const DeepCollectionEquality().hash(tags),alterUrl,autoConnect,jumpId,custom,wolCfg,const DeepCollectionEquality().hash(envs),id,customSystemType);
+int get hashCode => Object.hash(runtimeType,name,ip,port,user,pwd,keyId,const DeepCollectionEquality().hash(tags),alterUrl,autoConnect,jumpId,custom,wolCfg,const DeepCollectionEquality().hash(envs),id,customSystemType,const DeepCollectionEquality().hash(disabledCmdTypes));
 
 
 
@@ -49,7 +50,7 @@ abstract mixin class $SpiCopyWith<$Res>  {
   factory $SpiCopyWith(Spi value, $Res Function(Spi) _then) = _$SpiCopyWithImpl;
 @useResult
 $Res call({
- String name, String ip, int port, String user, String? pwd,@JsonKey(name: 'pubKeyId') String? keyId, List<String>? tags, String? alterUrl, bool autoConnect, String? jumpId, ServerCustom? custom, WakeOnLanCfg? wolCfg, Map<String, String>? envs,@JsonKey(fromJson: Spi.parseId) String id,@JsonKey(includeIfNull: false) SystemType? customSystemType
+ String name, String ip, int port, String user, String? pwd,@JsonKey(name: 'pubKeyId') String? keyId, List<String>? tags, String? alterUrl, bool autoConnect, String? jumpId, ServerCustom? custom, WakeOnLanCfg? wolCfg, Map<String, String>? envs,@JsonKey(fromJson: Spi.parseId) String id,@JsonKey(includeIfNull: false) SystemType? customSystemType,@JsonKey(includeIfNull: false) List<String>? disabledCmdTypes
 });
 
 
@@ -66,7 +67,7 @@ class _$SpiCopyWithImpl<$Res>
 
 /// Create a copy of Spi
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? ip = null,Object? port = null,Object? user = null,Object? pwd = freezed,Object? keyId = freezed,Object? tags = freezed,Object? alterUrl = freezed,Object? autoConnect = null,Object? jumpId = freezed,Object? custom = freezed,Object? wolCfg = freezed,Object? envs = freezed,Object? id = null,Object? customSystemType = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? ip = null,Object? port = null,Object? user = null,Object? pwd = freezed,Object? keyId = freezed,Object? tags = freezed,Object? alterUrl = freezed,Object? autoConnect = null,Object? jumpId = freezed,Object? custom = freezed,Object? wolCfg = freezed,Object? envs = freezed,Object? id = null,Object? customSystemType = freezed,Object? disabledCmdTypes = freezed,}) {
   return _then(_self.copyWith(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,ip: null == ip ? _self.ip : ip // ignore: cast_nullable_to_non_nullable
@@ -83,7 +84,8 @@ as ServerCustom?,wolCfg: freezed == wolCfg ? _self.wolCfg : wolCfg // ignore: ca
 as WakeOnLanCfg?,envs: freezed == envs ? _self.envs : envs // ignore: cast_nullable_to_non_nullable
 as Map<String, String>?,id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,customSystemType: freezed == customSystemType ? _self.customSystemType : customSystemType // ignore: cast_nullable_to_non_nullable
-as SystemType?,
+as SystemType?,disabledCmdTypes: freezed == disabledCmdTypes ? _self.disabledCmdTypes : disabledCmdTypes // ignore: cast_nullable_to_non_nullable
+as List<String>?,
   ));
 }
 
@@ -94,7 +96,7 @@ as SystemType?,
 
 @JsonSerializable(includeIfNull: false)
 class _Spi extends Spi {
-  const _Spi({required this.name, required this.ip, required this.port, required this.user, this.pwd, @JsonKey(name: 'pubKeyId') this.keyId, final  List<String>? tags, this.alterUrl, this.autoConnect = true, this.jumpId, this.custom, this.wolCfg, final  Map<String, String>? envs, @JsonKey(fromJson: Spi.parseId) this.id = '', @JsonKey(includeIfNull: false) this.customSystemType}): _tags = tags,_envs = envs,super._();
+  const _Spi({required this.name, required this.ip, required this.port, required this.user, this.pwd, @JsonKey(name: 'pubKeyId') this.keyId, final  List<String>? tags, this.alterUrl, this.autoConnect = true, this.jumpId, this.custom, this.wolCfg, final  Map<String, String>? envs, @JsonKey(fromJson: Spi.parseId) this.id = '', @JsonKey(includeIfNull: false) this.customSystemType, @JsonKey(includeIfNull: false) final  List<String>? disabledCmdTypes}): _tags = tags,_envs = envs,_disabledCmdTypes = disabledCmdTypes,super._();
   factory _Spi.fromJson(Map<String, dynamic> json) => _$SpiFromJson(json);
 
 @override final  String name;
@@ -133,6 +135,17 @@ class _Spi extends Spi {
 @override@JsonKey(fromJson: Spi.parseId) final  String id;
 /// Custom system type (unix or windows). If set, skip auto-detection.
 @override@JsonKey(includeIfNull: false) final  SystemType? customSystemType;
+/// Disabled command types for this server
+ final  List<String>? _disabledCmdTypes;
+/// Disabled command types for this server
+@override@JsonKey(includeIfNull: false) List<String>? get disabledCmdTypes {
+  final value = _disabledCmdTypes;
+  if (value == null) return null;
+  if (_disabledCmdTypes is EqualUnmodifiableListView) return _disabledCmdTypes;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(value);
+}
+
 
 /// Create a copy of Spi
 /// with the given fields replaced by the non-null parameter values.
@@ -147,12 +160,12 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Spi&&(identical(other.name, name) || other.name == name)&&(identical(other.ip, ip) || other.ip == ip)&&(identical(other.port, port) || other.port == port)&&(identical(other.user, user) || other.user == user)&&(identical(other.pwd, pwd) || other.pwd == pwd)&&(identical(other.keyId, keyId) || other.keyId == keyId)&&const DeepCollectionEquality().equals(other._tags, _tags)&&(identical(other.alterUrl, alterUrl) || other.alterUrl == alterUrl)&&(identical(other.autoConnect, autoConnect) || other.autoConnect == autoConnect)&&(identical(other.jumpId, jumpId) || other.jumpId == jumpId)&&(identical(other.custom, custom) || other.custom == custom)&&(identical(other.wolCfg, wolCfg) || other.wolCfg == wolCfg)&&const DeepCollectionEquality().equals(other._envs, _envs)&&(identical(other.id, id) || other.id == id)&&(identical(other.customSystemType, customSystemType) || other.customSystemType == customSystemType));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Spi&&(identical(other.name, name) || other.name == name)&&(identical(other.ip, ip) || other.ip == ip)&&(identical(other.port, port) || other.port == port)&&(identical(other.user, user) || other.user == user)&&(identical(other.pwd, pwd) || other.pwd == pwd)&&(identical(other.keyId, keyId) || other.keyId == keyId)&&const DeepCollectionEquality().equals(other._tags, _tags)&&(identical(other.alterUrl, alterUrl) || other.alterUrl == alterUrl)&&(identical(other.autoConnect, autoConnect) || other.autoConnect == autoConnect)&&(identical(other.jumpId, jumpId) || other.jumpId == jumpId)&&(identical(other.custom, custom) || other.custom == custom)&&(identical(other.wolCfg, wolCfg) || other.wolCfg == wolCfg)&&const DeepCollectionEquality().equals(other._envs, _envs)&&(identical(other.id, id) || other.id == id)&&(identical(other.customSystemType, customSystemType) || other.customSystemType == customSystemType)&&const DeepCollectionEquality().equals(other._disabledCmdTypes, _disabledCmdTypes));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,ip,port,user,pwd,keyId,const DeepCollectionEquality().hash(_tags),alterUrl,autoConnect,jumpId,custom,wolCfg,const DeepCollectionEquality().hash(_envs),id,customSystemType);
+int get hashCode => Object.hash(runtimeType,name,ip,port,user,pwd,keyId,const DeepCollectionEquality().hash(_tags),alterUrl,autoConnect,jumpId,custom,wolCfg,const DeepCollectionEquality().hash(_envs),id,customSystemType,const DeepCollectionEquality().hash(_disabledCmdTypes));
 
 
 
@@ -163,7 +176,7 @@ abstract mixin class _$SpiCopyWith<$Res> implements $SpiCopyWith<$Res> {
   factory _$SpiCopyWith(_Spi value, $Res Function(_Spi) _then) = __$SpiCopyWithImpl;
 @override @useResult
 $Res call({
- String name, String ip, int port, String user, String? pwd,@JsonKey(name: 'pubKeyId') String? keyId, List<String>? tags, String? alterUrl, bool autoConnect, String? jumpId, ServerCustom? custom, WakeOnLanCfg? wolCfg, Map<String, String>? envs,@JsonKey(fromJson: Spi.parseId) String id,@JsonKey(includeIfNull: false) SystemType? customSystemType
+ String name, String ip, int port, String user, String? pwd,@JsonKey(name: 'pubKeyId') String? keyId, List<String>? tags, String? alterUrl, bool autoConnect, String? jumpId, ServerCustom? custom, WakeOnLanCfg? wolCfg, Map<String, String>? envs,@JsonKey(fromJson: Spi.parseId) String id,@JsonKey(includeIfNull: false) SystemType? customSystemType,@JsonKey(includeIfNull: false) List<String>? disabledCmdTypes
 });
 
 
@@ -180,7 +193,7 @@ class __$SpiCopyWithImpl<$Res>
 
 /// Create a copy of Spi
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? ip = null,Object? port = null,Object? user = null,Object? pwd = freezed,Object? keyId = freezed,Object? tags = freezed,Object? alterUrl = freezed,Object? autoConnect = null,Object? jumpId = freezed,Object? custom = freezed,Object? wolCfg = freezed,Object? envs = freezed,Object? id = null,Object? customSystemType = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? ip = null,Object? port = null,Object? user = null,Object? pwd = freezed,Object? keyId = freezed,Object? tags = freezed,Object? alterUrl = freezed,Object? autoConnect = null,Object? jumpId = freezed,Object? custom = freezed,Object? wolCfg = freezed,Object? envs = freezed,Object? id = null,Object? customSystemType = freezed,Object? disabledCmdTypes = freezed,}) {
   return _then(_Spi(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,ip: null == ip ? _self.ip : ip // ignore: cast_nullable_to_non_nullable
@@ -197,7 +210,8 @@ as ServerCustom?,wolCfg: freezed == wolCfg ? _self.wolCfg : wolCfg // ignore: ca
 as WakeOnLanCfg?,envs: freezed == envs ? _self._envs : envs // ignore: cast_nullable_to_non_nullable
 as Map<String, String>?,id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,customSystemType: freezed == customSystemType ? _self.customSystemType : customSystemType // ignore: cast_nullable_to_non_nullable
-as SystemType?,
+as SystemType?,disabledCmdTypes: freezed == disabledCmdTypes ? _self._disabledCmdTypes : disabledCmdTypes // ignore: cast_nullable_to_non_nullable
+as List<String>?,
   ));
 }
 

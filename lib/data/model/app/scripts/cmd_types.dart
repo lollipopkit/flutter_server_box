@@ -1,9 +1,16 @@
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/server/system.dart';
 
 /// Base class for all command type enums
-abstract class CommandType {
+abstract class CommandType implements Enum {
   String get cmd;
+  
+  /// Get command-specific separator
+  String get separator;
+  
+  /// Get command-specific divider (separator with echo and formatting)
+  String get divider;
 }
 
 /// Linux/Unix status commands
@@ -83,6 +90,12 @@ enum StatusCmdType implements CommandType {
   final String cmd;
 
   const StatusCmdType(this.cmd);
+  
+  @override
+  String get separator => ScriptConstants.getCmdSeparator(name);
+  
+  @override
+  String get divider => ScriptConstants.getCmdDivider(name);
 }
 
 /// BSD/macOS status commands
@@ -102,6 +115,12 @@ enum BSDStatusCmdType implements CommandType {
   final String cmd;
 
   const BSDStatusCmdType(this.cmd);
+  
+  @override
+  String get separator => ScriptConstants.getCmdSeparator(name);
+  
+  @override
+  String get divider => ScriptConstants.getCmdDivider(name);
 }
 
 /// Windows PowerShell status commands
@@ -225,6 +244,12 @@ enum WindowsStatusCmdType implements CommandType {
   final String cmd;
 
   const WindowsStatusCmdType(this.cmd);
+  
+  @override
+  String get separator => ScriptConstants.getCmdSeparator(name);
+  
+  @override
+  String get divider => ScriptConstants.getCmdDivider(name);
 }
 
 /// Extensions for StatusCmdType
@@ -240,10 +265,10 @@ extension StatusCmdTypeX on StatusCmdType {
   };
 }
 
-/// Generic extension for Enum types
-extension EnumX on Enum {
-  /// Find out the required segment from [segments]
-  String find(List<String> segments) {
-    return segments[index];
+/// Extension for CommandType to find content in parsed map
+extension CommandTypeX on CommandType {
+  /// Find the command output from the parsed script output map
+  String findInMap(Map<String, String> parsedOutput) {
+    return parsedOutput[name] ?? '';
   }
 }

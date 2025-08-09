@@ -1,5 +1,4 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 
 enum SystemType {
   linux(linuxSign),
@@ -53,16 +52,4 @@ enum SystemType {
     return SystemType.linux;
   }
 
-  bool isSegmentsLenMatch(int len) => len == segmentsLen;
-
-  int get segmentsLen {
-    switch (this) {
-      case SystemType.linux:
-        return StatusCmdType.values.length;
-      case SystemType.bsd:
-        return BSDStatusCmdType.values.length;
-      case SystemType.windows:
-        return WindowsStatusCmdType.values.length;
-    }
-  }
 }

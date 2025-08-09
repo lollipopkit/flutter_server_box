@@ -93,10 +93,10 @@ class ShellFuncManager {
   }
 
   /// Generate complete script based on system type
-  static String allScript(Map<String, String>? customCmds, {SystemType? systemType}) {
+  static String allScript(Map<String, String>? customCmds, {SystemType? systemType, List<String>? disabledCmdTypes}) {
     final isWindows = systemType == SystemType.windows;
     final builder = ScriptBuilderFactory.getBuilder(isWindows);
 
-    return builder.buildScript(customCmds);
+    return builder.buildScript(customCmds, disabledCmdTypes);
   }
 }
