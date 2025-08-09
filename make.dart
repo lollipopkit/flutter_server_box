@@ -4,7 +4,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-const shellScriptPath = 'lib/data/model/app/shell_func.dart';
+const shellScriptPath = 'lib/data/model/app/scripts/cmd_types.dart';
 const moreBuildDataPath = 'more_build_data.json';
 
 void main(List<String> args) async {
@@ -12,7 +12,7 @@ void main(List<String> args) async {
   print('Running make.dart with command: $cmd');
   switch (cmd) {
     case 'before':
-      final scriptModCount = await getScriptCommitCount();
+      final scriptModCount = await getScriptCommitCount() + 65;
       final data = {'script': scriptModCount};
       await File(moreBuildDataPath).writeAsString(json.encode(data));
       break;
