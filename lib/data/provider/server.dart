@@ -338,7 +338,7 @@ class ServerProvider extends Provider {
         sv.status.system = detectedSystemType;
 
         final (_, writeScriptResult) = await sv.client!.exec((session) async {
-          final scriptRaw = ShellFuncManager.allScript(spi.custom?.cmds, systemType: detectedSystemType).uint8List;
+          final scriptRaw = ShellFuncManager.allScript(spi.custom?.cmds, systemType: detectedSystemType, disabledCmdTypes: spi.disabledCmdTypes).uint8List;
           session.stdin.add(scriptRaw);
           session.stdin.close();
         }, entry: ShellFuncManager.getInstallShellCmd(spi.id, systemType: detectedSystemType));

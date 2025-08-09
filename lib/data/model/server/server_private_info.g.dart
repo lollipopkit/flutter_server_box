@@ -31,6 +31,9 @@ _Spi _$SpiFromJson(Map<String, dynamic> json) => _Spi(
     _$SystemTypeEnumMap,
     json['customSystemType'],
   ),
+  disabledCmdTypes: (json['disabledCmdTypes'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
 );
 
 Map<String, dynamic> _$SpiToJson(_Spi instance) => <String, dynamic>{
@@ -50,6 +53,7 @@ Map<String, dynamic> _$SpiToJson(_Spi instance) => <String, dynamic>{
   'id': instance.id,
   if (_$SystemTypeEnumMap[instance.customSystemType] case final value?)
     'customSystemType': value,
+  if (instance.disabledCmdTypes case final value?) 'disabledCmdTypes': value,
 };
 
 const _$SystemTypeEnumMap = {

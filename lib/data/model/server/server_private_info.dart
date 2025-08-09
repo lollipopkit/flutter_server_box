@@ -48,6 +48,9 @@ abstract class Spi with _$Spi {
 
     /// Custom system type (unix or windows). If set, skip auto-detection.
     @JsonKey(includeIfNull: false) SystemType? customSystemType,
+
+    /// Disabled command types for this server
+    @JsonKey(includeIfNull: false) List<String>? disabledCmdTypes,
   }) = _Spi;
 
   factory Spi.fromJson(Map<String, dynamic> json) => _$SpiFromJson(json);

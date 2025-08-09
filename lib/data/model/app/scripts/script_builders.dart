@@ -7,7 +7,7 @@ sealed class ScriptBuilder {
   const ScriptBuilder();
 
   /// Generate a complete script for all shell functions
-  String buildScript(Map<String, String>? customCmds);
+  String buildScript(Map<String, String>? customCmds, [List<String>? disabledCmdTypes]);
 
   /// Get the script file name for this platform
   String get scriptFileName;
@@ -62,7 +62,7 @@ class WindowsScriptBuilder extends ScriptBuilder {
   }
 
   @override
-  String buildScript(Map<String, String>? customCmds) {
+  String buildScript(Map<String, String>? customCmds, [List<String>? disabledCmdTypes]) {
     final sb = StringBuffer();
     sb.write(scriptHeader);
 
@@ -72,7 +72,7 @@ class WindowsScriptBuilder extends ScriptBuilder {
 
       sb.write('''
 function ${func.name} {
-    ${_getWindowsCommand(func).split('\n').map((e) => e.isEmpty ? '' : '    $e').join('\n')}$customCmdsStr
+    ${_getWindowsCommand(func, disabledCmdTypes).split('\n').map((e) => e.isEmpty ? '' : '    $e').join('\n')}$customCmdsStr
 }
 
 ''');
@@ -95,8 +95,8 @@ switch (\$args[0]) {
   }
 
   /// Get Windows-specific command for a shell function
-  String _getWindowsCommand(ShellFunc func) => switch (func) {
-    ShellFunc.status => _getWindowsStatusCommand(),
+  String _getWindowsCommand(ShellFunc func, [List<String>? disabledCmdTypes]) => switch (func) {
+    ShellFunc.status => _getWindowsStatusCommand(disabledCmdTypes: disabledCmdTypes ?? []),
     ShellFunc.process => 'Get-Process | Select-Object ProcessName, Id, CPU, WorkingSet | ConvertTo-Json',
     ShellFunc.shutdown => 'Stop-Computer -Force',
     ShellFunc.reboot => 'Restart-Computer -Force',
@@ -105,11 +105,9 @@ switch (\$args[0]) {
   };
 
   /// Get Windows status command with command-specific separators
-  String _getWindowsStatusCommand() {
-    return WindowsStatusCmdType.values
-        .map((e) => '${e.divider}${e.cmd}')
-        .join('')
-        .trimRight(); // Remove trailing divider
+  String _getWindowsStatusCommand({required List<String> disabledCmdTypes}) {
+    final cmdTypes = WindowsStatusCmdType.values.where((e) => !disabledCmdTypes.contains(e.name));
+    return cmdTypes.map((e) => '${e.divider}${e.cmd}').join('').trimRight(); // Remove trailing divider
   }
 }
 
@@ -152,7 +150,7 @@ chmod 755 $scriptPath
   }
 
   @override
-  String buildScript(Map<String, String>? customCmds) {
+  String buildScript(Map<String, String>? customCmds, [List<String>? disabledCmdTypes]) {
     final sb = StringBuffer();
     sb.write(scriptHeader);
     // Write each function
@@ -160,7 +158,7 @@ chmod 755 $scriptPath
       final customCmdsStr = getCustomCmdsString(func, customCmds);
       sb.write('''
 ${func.name}() {
-${_getUnixCommand(func).split('\n').map((e) => '\t$e').join('\n')}
+${_getUnixCommand(func, disabledCmdTypes).split('\n').map((e) => '\t$e').join('\n')}
 $customCmdsStr
 }
 
@@ -185,9 +183,9 @@ esac''');
   }
 
   /// Get Unix-specific command for a shell function
-  String _getUnixCommand(ShellFunc func) {
+  String _getUnixCommand(ShellFunc func, [List<String>? disabledCmdTypes]) {
     return switch (func) {
-      ShellFunc.status => _getUnixStatusCommand(),
+      ShellFunc.status => _getUnixStatusCommand(disabledCmdTypes: disabledCmdTypes ?? []),
       ShellFunc.process => _getUnixProcessCommand(),
       ShellFunc.shutdown => _getUnixShutdownCommand(),
       ShellFunc.reboot => _getUnixRebootCommand(),
@@ -196,11 +194,13 @@ esac''');
   }
 
   /// Get Unix status command with OS detection
-  String _getUnixStatusCommand() {
-    // Generate command lists with command-specific separators
-    final linuxCommands = StatusCmdType.values.map((e) => '${e.divider}${e.cmd}').join('').trimRight();
+  String _getUnixStatusCommand({required List<String> disabledCmdTypes}) {
+    // Generate command lists with command-specific separators, filtering disabled commands
+    final filteredLinuxCmdTypes = StatusCmdType.values.where((e) => !disabledCmdTypes.contains(e.name));
+    final linuxCommands = filteredLinuxCmdTypes.map((e) => '${e.divider}${e.cmd}').join('').trimRight();
 
-    final bsdCommands = BSDStatusCmdType.values.map((e) => '${e.divider}${e.cmd}').join('').trimRight();
+    final filteredBsdCmdTypes = BSDStatusCmdType.values.where((e) => !disabledCmdTypes.contains(e.name));
+    final bsdCommands = filteredBsdCmdTypes.map((e) => '${e.divider}${e.cmd}').join('').trimRight();
 
     return '''
 if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then

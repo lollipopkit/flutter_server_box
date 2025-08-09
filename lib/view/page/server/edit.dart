@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
+import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -61,6 +62,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   final _customCmds = <String, String>{}.vn;
   final _tags = <String>{}.vn;
   final _systemType = ValueNotifier<SystemType?>(null);
+  final _disabledCmdTypes = <String>{}.vn;
 
   @override
   void dispose() {
@@ -94,6 +96,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
     _customCmds.dispose();
     _tags.dispose();
     _systemType.dispose();
+    _disabledCmdTypes.dispose();
   }
 
   @override
@@ -289,6 +292,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         _buildEnvs(),
         _buildPVEs(),
         _buildCustomCmds(),
+        _buildDisabledCmdTypes(),
         _buildCustomDev(),
         _buildWOLs(),
       ],
@@ -417,6 +421,24 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
           trailing: const Icon(Icons.open_in_new, size: 17),
           onTap: l10n.customCmdDocUrl.launchUrl,
         ).cardx,
+      ],
+    );
+  }
+
+  Widget _buildDisabledCmdTypes() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CenterGreyTitle('${libL10n.disabled} ${l10n.cmd}'),
+        _disabledCmdTypes.listenVal((disabled) {
+          return ListTile(
+            leading: const Icon(Icons.disabled_by_default),
+            title: Text('${libL10n.disabled} ${l10n.cmd}'),
+            subtitle: disabled.isEmpty ? null : Text(disabled.join(', '), style: UIs.textGrey),
+            trailing: const Icon(Icons.keyboard_arrow_right),
+            onTap: _onTapDisabledCmdTypes,
+          );
+        }).cardx,
       ],
     );
   }
@@ -574,6 +596,27 @@ extension on _ServerEditPageState {
     _customCmds.value = res;
   }
 
+  void _onTapDisabledCmdTypes() async {
+    final allCmdTypes = <String>[];
+    allCmdTypes.addAll(StatusCmdType.values.map((e) => e.name));
+    allCmdTypes.addAll(BSDStatusCmdType.values.map((e) => e.name));
+    allCmdTypes.addAll(WindowsStatusCmdType.values.map((e) => e.name));
+    
+    final selected = await _showCmdTypesDialog(allCmdTypes);
+    if (selected == null) return;
+    _disabledCmdTypes.value = selected;
+  }
+
+  Future<Set<String>?> _showCmdTypesDialog(List<String> allCmdTypes) {
+    return showDialog<Set<String>>(
+      context: context,
+      builder: (context) => _CmdTypesDialog(
+        allCmdTypes: allCmdTypes,
+        selectedTypes: _disabledCmdTypes.value,
+      ),
+    );
+  }
+
   void _onSave() async {
     if (_ipController.text.isEmpty) {
       context.showSnackBar('${libL10n.empty} ${l10n.host}');
@@ -639,6 +682,7 @@ extension on _ServerEditPageState {
       envs: _env.value.isEmpty ? null : _env.value,
       id: widget.args?.spi.id ?? ShortId.generate(),
       customSystemType: _systemType.value,
+      disabledCmdTypes: _disabledCmdTypes.value.isEmpty ? null : _disabledCmdTypes.value.toList(),
     );
 
     if (this.spi == null) {
@@ -695,5 +739,69 @@ extension on _ServerEditPageState {
     _scriptDirCtrl.text = spi.custom?.scriptDir ?? '';
 
     _systemType.value = spi.customSystemType;
+    _disabledCmdTypes.value = spi.disabledCmdTypes?.toSet() ?? {};
+  }
+}
+
+class _CmdTypesDialog extends StatefulWidget {
+  final List<String> allCmdTypes;
+  final Set<String> selectedTypes;
+
+  const _CmdTypesDialog({
+    required this.allCmdTypes,
+    required this.selectedTypes,
+  });
+
+  @override
+  State<_CmdTypesDialog> createState() => _CmdTypesDialogState();
+}
+
+class _CmdTypesDialogState extends State<_CmdTypesDialog> {
+  late Set<String> _selected;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = Set.from(widget.selectedTypes);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('${libL10n.disabled} ${l10n.cmd}'),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: ListView.builder(
+          shrinkWrap: true,
+          itemCount: widget.allCmdTypes.length,
+          itemBuilder: (context, index) {
+            final cmdType = widget.allCmdTypes[index];
+            return CheckboxListTile(
+              title: Text(cmdType),
+              value: _selected.contains(cmdType),
+              onChanged: (value) {
+                setState(() {
+                  if (value == true) {
+                    _selected.add(cmdType);
+                  } else {
+                    _selected.remove(cmdType);
+                  }
+                });
+              },
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(libL10n.cancel),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(_selected),
+          child: Text(libL10n.ok),
+        ),
+      ],
+    );
   }
 }
