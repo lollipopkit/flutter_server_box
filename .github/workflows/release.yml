@@ -20,7 +20,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: "stable"
-          flutter-version: "3.32.2"
+          flutter-version: "3.32.8"
       - uses: actions/setup-java@v4
         with:
           distribution: "zulu"
@@ -58,24 +58,17 @@ jobs:
         run: |
           sudo apt update
           # Basic
-          sudo apt install -y clang cmake ninja-build pkg-config libgtk-3-dev libvulkan-dev desktop-file-utils wget
+          sudo apt install -y clang cmake ninja-build pkg-config libgtk-3-dev mesa-utils libvulkan-dev desktop-file-utils wget
           # App Specific
-          sudo apt install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libunwind-dev
-          # Packaging
-          sudo wget https://github.com/AppImage/appimagetool/releases/download/1.9.0/appimagetool-x86_64.AppImage -O /bin/appimagetool
-          sudo chmod +x /bin/appimagetool
+          sudo apt install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libunwind-dev libsecret-1-dev
       - name: Build
         run: |
           dart run fl_build -p linux
-      - name: Rename artifacts
-        run: |
-          appimage_name=$(ls dist/*/*.AppImage)
-          mv $appimage_name ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.appimage
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.appimage
+            ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
