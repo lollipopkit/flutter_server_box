@@ -41,6 +41,8 @@
 		<array>
 			<string>ConfigurationIntent</string>
 		</array>
+		<key>NSSupportsLiveActivities</key>
+		<true/>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true />
 		<key>UIBackgroundModes</key>

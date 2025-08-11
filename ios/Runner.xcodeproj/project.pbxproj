@@ -36,6 +36,10 @@
 		E3AE8AEB2AB601DB000A6459 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3AE8AE92AB601DB000A6459 /* Utils.swift */; };
 		E3AE8AEC2AB601DB000A6459 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3AE8AE92AB601DB000A6459 /* Utils.swift */; };
 		E3DB67ED2A31FE200027B8CB /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E3DB67EB2A31FE200027B8CB /* LaunchScreen.storyboard */; };
+\t\tE3A100110000000000000001 /* TerminalLiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A100010000000000000001 /* TerminalLiveActivityAttributes.swift */; };
+\t\tE3A100120000000000000002 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A100020000000000000002 /* LiveActivityManager.swift */; };
+\t\tE3A100130000000000000003 /* TerminalLiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A100030000000000000003 /* TerminalLiveActivityAttributes.swift */; };
+\t\tE3A100140000000000000004 /* TerminalLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A100040000000000000004 /* TerminalLiveActivity.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -156,6 +160,10 @@
 		E3D26BD22B9966EC00D83425 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Main.strings; sourceTree = "<group>"; };
 		E3D26BD32B9966EC00D83425 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/LaunchScreen.strings; sourceTree = "<group>"; };
 		E3DB67EC2A31FE200027B8CB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		E3A100010000000000000001 /* TerminalLiveActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalLiveActivityAttributes.swift; sourceTree = "<group>"; };
+		E3A100020000000000000002 /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
+		E3A100030000000000000003 /* TerminalLiveActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalLiveActivityAttributes.swift; sourceTree = "<group>"; };
+		E3A100040000000000000004 /* TerminalLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalLiveActivity.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -244,6 +252,8 @@
 				1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */,
 				1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */,
 				E3AE8AE92AB601DB000A6459 /* Utils.swift */,
+				E3A100010000000000000001 /* TerminalLiveActivityAttributes.swift */,
+				E3A100020000000000000002 /* LiveActivityManager.swift */,
 				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 			);
@@ -266,6 +276,8 @@
 				7538AEC42BB83FC8002AB82A /* PrivacyInfo.xcprivacy */,
 				E33A3E3B2A626DCE009744AB /* StatusWidgetBundle.swift */,
 				E33A3E3F2A626DCE009744AB /* StatusWidget.swift */,
+				E3A100040000000000000004 /* TerminalLiveActivity.swift */,
+				E3A100030000000000000003 /* TerminalLiveActivityAttributes.swift */,
 				E37C48ED2B9C30EE00E542D2 /* StatusWidget.intentdefinition */,
 				E33A3E442A626DD0009744AB /* Info.plist */,
 			);
@@ -516,6 +528,8 @@
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 				E37C48EA2B9C30EE00E542D2 /* StatusWidget.intentdefinition in Sources */,
 				E3AE8AEA2AB601DB000A6459 /* Utils.swift in Sources */,
+				E3A100110000000000000001 /* TerminalLiveActivityAttributes.swift in Sources */,
+				E3A100120000000000000002 /* LiveActivityManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -527,6 +541,8 @@
 				E37C48EB2B9C30EE00E542D2 /* StatusWidget.intentdefinition in Sources */,
 				E33A3E3C2A626DCE009744AB /* StatusWidgetBundle.swift in Sources */,
 				E3AE8AEB2AB601DB000A6459 /* Utils.swift in Sources */,
+				E3A100140000000000000004 /* TerminalLiveActivity.swift in Sources */,
+				E3A100130000000000000003 /* TerminalLiveActivityAttributes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

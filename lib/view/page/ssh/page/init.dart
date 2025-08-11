@@ -61,6 +61,11 @@ extension _Init on SSHPageState {
     _listen(session.stdout);
     _listen(session.stderr);
 
+    // Hold the session for external control (disconnect)
+    _session = session;
+    // Mark status connected for notifications / live activities
+    TermSessionManager.updateStatus(_sessionId, 'connected');
+
     for (final snippet in SnippetProvider.snippets.value) {
       if (snippet.autoRunOn?.contains(widget.args.spi.id) == true) {
         snippet.runInTerm(_terminal, widget.args.spi);
@@ -85,6 +90,7 @@ extension _Init on SSHPageState {
       context.pop();
     }
     widget.args.onSessionEnd?.call();
+    TermSessionManager.remove(_sessionId);
   }
 
   void _listen(Stream<Uint8List>? stream) {
@@ -122,6 +128,7 @@ extension _Init on SSHPageState {
     _discontinuityTimer?.cancel();
     if (!mounted) return;
     _writeLn('\n\nConnection lost\r\n');
+    TermSessionManager.updateStatus(_sessionId, 'disconnected');
     context.showRoundDialog(
       title: libL10n.attention,
       child: Text('${l10n.disconnected}\n${l10n.goBackQ}'),
@@ -137,5 +144,16 @@ extension _Init on SSHPageState {
 
   void _writeLn(String p0) {
     _terminal.write('$p0\r\n');
+  }
+}
+
+extension on SSHPageState {
+  void _disconnectFromNotification() {
+    // Prefer to close the SSH session directly if available
+    try {
+      _session?.close();
+    } catch (_) {}
+    // Ensure the page is closed
+    contextSafe?.pop();
   }
 }

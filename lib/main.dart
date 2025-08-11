@@ -18,6 +18,7 @@ import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
 
@@ -46,6 +47,9 @@ Future<void> _initApp() async {
   await _initWindow();
 
   _doPlatformRelated();
+
+  // Initialize Android session notification channel/handler
+  TermSessionManager.init();
 }
 
 Future<void> _initData() async {
