@@ -29,11 +29,13 @@ struct Provider: IntentTimelineProvider {
         var url = configuration.url
         
         let family = context.family
+        #if os(iOS)
         if #available(iOSApplicationExtension 16.0, *) {
             if family == .accessoryInline || family == .accessoryRectangular {
                 url = UserDefaults.standard.string(forKey: accessoryKey)
             }
         }
+        #endif
 
         let currentDate = Date()
         let refreshDate = Calendar.current.date(byAdding: .minute, value: 15, to: currentDate)!
@@ -123,6 +125,104 @@ struct StatusWidgetEntryView : View {
             case .normal(let data):
                 let sumColor: Color = .primary.opacity(0.7)
                 switch family {
+                    case .systemExtraLarge:
+                        VStack(alignment: .leading, spacing: 12) {
+                            if #available(iOS 17.0, *) {
+                                HStack {
+                                    Text(data.name).font(.system(.title2, design: .monospaced))
+                                    Spacer()
+                                    Button(intent: RefreshIntent()) {
+                                        Image(systemName: "arrow.clockwise")
+                                            .resizable()
+                                            .frame(width: 11, height: 14)
+                                    }.tint(.gray)
+                                }
+                            } else {
+                                Text(data.name).font(.system(.title2, design: .monospaced))
+                            }
+                            Spacer(minLength: 8)
+                            HStack(spacing: 24) {
+                                GaugeTile(label: "CPU", value: parsePercent(data.cpu), display: data.cpu, diameter: 72)
+                                GaugeTile(label: "MEM", value: parseUsagePercent(data.mem), display: percentStr(parseUsagePercent(data.mem)), diameter: 72)
+                                GaugeTile(label: "DISK", value: parseUsagePercent(data.disk), display: percentStr(parseUsagePercent(data.disk)), diameter: 72)
+                                GaugeTile(label: "NET", value: 0, display: data.net, diameter: 72)
+                            }
+                            Spacer(minLength: 6)
+                            DetailItem(icon: "clock", text: entry.date.toStr(), color: sumColor)
+                                .padding(.bottom, 4)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        .autoPadding()
+                        .widgetBackground()
+                    case .systemMedium:
+                        VStack(alignment: .leading, spacing: 8) {
+                            // Title + refresh
+                            if #available(iOS 17.0, *) {
+                                HStack {
+                                    Text(data.name).font(.system(.title3, design: .monospaced))
+                                    Spacer()
+                                    Button(intent: RefreshIntent()) {
+                                        Image(systemName: "arrow.clockwise")
+                                            .resizable()
+                                            .frame(width: 10, height: 12.7)
+                                    }.tint(.gray)
+                                }
+                            } else {
+                                Text(data.name).font(.system(.title3, design: .monospaced))
+                            }
+                            Spacer(minLength: 6)
+                            // Gauges row
+                            HStack(spacing: 14) {
+                                GaugeTile(label: "CPU", value: parsePercent(data.cpu), display: data.cpu, diameter: 54)
+                                GaugeTile(label: "MEM", value: parseUsagePercent(data.mem), display: percentStr(parseUsagePercent(data.mem)), diameter: 54)
+                                GaugeTile(label: "DISK", value: parseUsagePercent(data.disk), display: percentStr(parseUsagePercent(data.disk)), diameter: 54)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            Spacer(minLength: 4)
+                            // Network summary
+                            DetailItem(icon: "network", text: data.net, color: sumColor)
+                            DetailItem(icon: "clock", text: entry.date.toStr(), color: sumColor)
+                                .padding(.bottom, 3)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        .autoPadding()
+                        .widgetBackground()
+                    case .systemLarge:
+                        VStack(alignment: .leading, spacing: 10) {
+                            if #available(iOS 17.0, *) {
+                                HStack {
+                                    Text(data.name).font(.system(.title3, design: .monospaced))
+                                    Spacer()
+                                    Button(intent: RefreshIntent()) {
+                                        Image(systemName: "arrow.clockwise")
+                                            .resizable()
+                                            .frame(width: 10, height: 12.7)
+                                    }.tint(.gray)
+                                }
+                            } else {
+                                Text(data.name).font(.system(.title3, design: .monospaced))
+                            }
+                            Spacer(minLength: 8)
+                            // Two rows layout for more breathing room
+                            HStack(spacing: 18) {
+                                GaugeTile(label: "CPU", value: parsePercent(data.cpu), display: data.cpu, diameter: 62)
+                                GaugeTile(label: "MEM", value: parseUsagePercent(data.mem), display: percentStr(parseUsagePercent(data.mem)), diameter: 62)
+                                GaugeTile(label: "DISK", value: parseUsagePercent(data.disk), display: percentStr(parseUsagePercent(data.disk)), diameter: 62)
+                            }
+                            Spacer(minLength: 6)
+                            HStack(spacing: 12) {
+                                DetailItem(icon: "memorychip", text: data.mem, color: sumColor)
+                                DetailItem(icon: "externaldrive", text: data.disk, color: sumColor)
+                            }
+                            DetailItem(icon: "network", text: data.net, color: sumColor)
+                            Spacer(minLength: 2)
+                            DetailItem(icon: "clock", text: entry.date.toStr(), color: sumColor)
+                                .padding(.bottom, 3)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        .autoPadding()
+                        .widgetBackground()
+                    #if os(iOS)
                     case .accessoryRectangular:
                         VStack(alignment: .leading, spacing: 2) {
                             HStack {
@@ -142,6 +242,7 @@ struct StatusWidgetEntryView : View {
                         .widgetBackground()
                     case .accessoryInline:
                         Text("\(data.name) \(data.cpu)").widgetBackground()
+                    #endif
                     default:
                         VStack(alignment: .leading, spacing: 3.7) {
                             if #available(iOS 17.0, *) {
@@ -207,11 +308,19 @@ struct StatusWidget: Widget {
         }
         .configurationDisplayName("Status")
         .description("Status of your servers.")
-        if #available(iOSApplicationExtension 16.0, *) {            
-            return cfg.supportedFamilies([.systemSmall, .accessoryRectangular, .accessoryInline])
+        #if os(iOS)
+        if #available(iOSApplicationExtension 16.0, *) {
+            return cfg.supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .accessoryRectangular, .accessoryInline])
         } else {
-            return cfg.supportedFamilies([.systemSmall])
+            return cfg.supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
         }
+        #else
+        if #available(macOSApplicationExtension 13.0, *) {
+            return cfg.supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .systemExtraLarge])
+        } else {
+            return cfg.supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        }
+        #endif
     }
 }
 
@@ -250,6 +359,94 @@ struct CirclePercent: View {
             .trim(from: 0, to: CGFloat(double))
             .stroke(Color.primary, lineWidth: 3)
             .animation(.easeInOut(duration: 0.5))
+    }
+}
+
+// 简单环形图块（用于中/大型部件）
+struct GaugeTile: View {
+    let label: String
+    // 0..1
+    let value: Double
+    // eg: "31.7%"
+    let display: String
+    let diameter: CGFloat
+    
+    var body: some View {
+        VStack(spacing: 6) {
+            ZStack {
+                Circle()
+                    .stroke(Color.primary.opacity(0.14), lineWidth: 6)
+                Circle()
+                    .trim(from: 0, to: CGFloat(max(0, min(1, value))))
+                    .stroke(thresholdColor(value), style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .animation(.easeInOut(duration: 0.5), value: value)
+                Text(display)
+                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
+            }
+            .frame(width: diameter, height: diameter)
+            Text(label)
+                .font(.system(size: 11, design: .monospaced))
+                .foregroundColor(thresholdColor(value).opacity(0.9))
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+func parsePercent(_ text: String) -> Double {
+    let trimmed = text.trimmingCharacters(in: CharacterSet(charactersIn: "% "))
+    if let v = Double(trimmed) { return max(0, min(1, v / 100.0)) }
+    return 0
+}
+
+func parseUsagePercent(_ text: String) -> Double {
+    let parts = text.split(separator: "/").map { String($0).trimmingCharacters(in: .whitespaces) }
+    guard parts.count == 2 else { return 0 }
+    let used = parseSizeToBytes(parts[0])
+    let total = parseSizeToBytes(parts[1])
+    if total <= 0 { return 0 }
+    return max(0, min(1, used / total))
+}
+
+func parseSizeToBytes(_ text: String) -> Double {
+    let lower = text.lowercased().replacingOccurrences(of: "b", with: "")
+    let unitChar = lower.trimmingCharacters(in: .whitespaces).last
+    let numberPart: String
+    let unit: Character
+    if let u = unitChar, ("kmgtp".contains(u)) {
+        unit = u
+        numberPart = String(lower.dropLast())
+    } else {
+        unit = "b"
+        numberPart = lower
+    }
+    let value = Double(numberPart.trimmingCharacters(in: .whitespaces)) ?? 0
+    switch unit {
+    case "k": return value * 1024
+    case "m": return value * pow(1024, 2)
+    case "g": return value * pow(1024, 3)
+    case "t": return value * pow(1024, 4)
+    case "p": return value * pow(1024, 5)
+    default: return value
+    }
+}
+
+func percentStr(_ value: Double) -> String {
+    let pct = max(0, min(1, value)) * 100
+    let rounded = (pct * 10).rounded() / 10
+    if rounded.truncatingRemainder(dividingBy: 1) == 0 {
+        return String(format: "%.0f%%", rounded)
+    } else {
+        return String(format: "%.1f%%", rounded)
+    }
+}
+
+func thresholdColor(_ value: Double) -> Color {
+    let v = max(0, min(1, value))
+    switch v {
+    case ..<0.6: return .green
+    case ..<0.85: return .orange
+    default: return .red
     }
 }
 

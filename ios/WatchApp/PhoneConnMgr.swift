@@ -44,7 +44,9 @@ class PhoneConnMgr: NSObject, WCSessionDelegate, ObservableObject {
     func updateUrls(_ val: [String: Any]) {
         if let urls = val["urls"] as? [String] {
             DispatchQueue.main.async {
-                self.urls = urls.filter { !$0.isEmpty }
+                let list = urls.filter { !$0.isEmpty }
+                self.urls = list
+                SharedStore.saveUrls(list)
             }
         }
     }
