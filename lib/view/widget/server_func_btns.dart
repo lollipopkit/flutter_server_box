@@ -289,18 +289,29 @@ shift  # Remove the first argument (terminal name)
 # Auto detect terminal if not provided
 if [ -z "\$TERMINAL" ] || [ "\$TERMINAL" = "x-terminal-emulator" ]; then
     # Follow the order of preference
-    for term in kitty alacritty gnome-terminal konsole xfce4-terminal terminator tilix wezterm foot; do
+    for term in kitty alacritty gnome-terminal gnome-console kgx konsole xfce4-terminal terminator tilix wezterm foot xterm mate-terminal qterminal lxterminal deepin-terminal; do
         if command -v "\$term" >/dev/null 2>&1; then
             TERMINAL="\$term"
             break
         fi
     done
 
-    [ -z "\$TERMINAL" ] && TERMINAL="x-terminal-emulator"
+    # Fallbacks: try xterm if nothing found, otherwise keep x-terminal-emulator
+    if [ -z "\$TERMINAL" ]; then
+        if command -v xterm >/dev/null 2>&1; then
+            TERMINAL="xterm"
+        else
+            TERMINAL="x-terminal-emulator"
+        fi
+    fi
 fi
 
 case "\$TERMINAL" in
     gnome-terminal)
+        exec "\$TERMINAL" -- "\$@"
+        ;;
+    gnome-console|kgx)
+        # GNOME Console (kgx)
         exec "\$TERMINAL" -- "\$@"
         ;;
     konsole|terminator|tilix)
@@ -328,7 +339,7 @@ case "\$TERMINAL" in
     foot)
         exec "\$TERMINAL" "\$@"
         ;;
-    urxvt|rxvt-unicode)
+    urxvt|rxvt-unicode|xterm|mate-terminal|qterminal|lxterminal|deepin-terminal)
         exec "\$TERMINAL" -e "\$@"
         ;;
     x-terminal-emulator|*)
