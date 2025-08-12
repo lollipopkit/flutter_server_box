@@ -46,7 +46,11 @@ class PhoneConnMgr: NSObject, WCSessionDelegate, ObservableObject {
             DispatchQueue.main.async {
                 let list = urls.filter { !$0.isEmpty }
                 self.urls = list
-                SharedStore.saveUrls(list)
+                // Save URLs to App Group for widget access
+                let appGroupId = "group.com.lollipopkit.toolbox"
+                if let defaults = UserDefaults(suiteName: appGroupId) {
+                    defaults.set(list, forKey: "watch_shared_urls")
+                }
             }
         }
     }

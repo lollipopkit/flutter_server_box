@@ -41,11 +41,15 @@ struct ContentView: View {
         }
         // 持久化当前选择，供 Widget 使用
         .onChange(of: selection) { newIndex in
-            SharedStore.saveSelectedIndex(newIndex)
+            let appGroupId = "group.com.lollipopkit.toolbox"
+            if let defaults = UserDefaults(suiteName: appGroupId) {
+                defaults.set(newIndex, forKey: "watch_shared_selected_index")
+            }
         }
         .onAppear {
             // 尽量恢复上一次的选择
-            let saved = SharedStore.getSelectedIndex()
+            let appGroupId = "group.com.lollipopkit.toolbox"
+            let saved = UserDefaults(suiteName: appGroupId)?.integer(forKey: "watch_shared_selected_index") ?? 0
             if !_mgr.urls.isEmpty {
                 selection = min(max(0, saved), _mgr.urls.count - 1)
             } else {
@@ -182,7 +186,18 @@ struct PageView: View {
             let status = Status(name: name, cpu: cpu, mem: mem, disk: disk, net: net)
             setStateOnMain(.normal(status))
             // 将最新数据写入 App Group，供表盘/叠放的 Widget 使用
-            SharedStore.saveStatus(url: url.absoluteString, status: status)
+            let appGroupId = "group.com.lollipopkit.toolbox"
+            if let defaults = UserDefaults(suiteName: appGroupId) {
+                var statusMap = (defaults.dictionary(forKey: "watch_shared_status_by_url") as? [String: [String: String]]) ?? [:]
+                statusMap[url.absoluteString] = [
+                    "name": status.name,
+                    "cpu": status.cpu,
+                    "mem": status.mem,
+                    "disk": status.disk,
+                    "net": status.net
+                ]
+                defaults.set(statusMap, forKey: "watch_shared_status_by_url")
+            }
         }
         task.resume()
     }

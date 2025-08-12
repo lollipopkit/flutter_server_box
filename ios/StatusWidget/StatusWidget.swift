@@ -15,6 +15,93 @@ let demoStatus = Status(name: "Server", cpu: "31.7%", mem: "1.3g / 1.9g", disk: 
 let domain = "com.lollipopkit.toolbox"
 let bgColor = DynamicColor(dark: UIColor.black, light: UIColor.white)
 
+// Widget-specific constants
+enum WidgetConstants {
+    enum Dimensions {
+        static let smallGauge: CGFloat = 54
+        static let mediumGauge: CGFloat = 62
+        static let largeGauge: CGFloat = 72
+        static let refreshIconSmall: CGFloat = 10
+        static let refreshIconLarge: CGFloat = 11
+    }
+    enum Thresholds {
+        static let warningThreshold: Double = 0.6
+        static let criticalThreshold: Double = 0.85
+    }
+    static let appGroupId = "group.com.lollipopkit.toolbox"
+}
+
+// Performance optimization: cache parsed values
+struct ParseCache {
+    private static var percentCache: [String: Double] = [:]
+    private static var usagePercentCache: [String: Double] = [:]
+    
+    static func parsePercent(_ text: String) -> Double {
+        if let cached = percentCache[text] { return cached }
+        let trimmed = text.trimmingCharacters(in: CharacterSet(charactersIn: "% "))
+        let result = Double(trimmed).map { max(0, min(1, $0 / 100.0)) } ?? 0
+        percentCache[text] = result
+        return result
+    }
+    
+    static func parseUsagePercent(_ text: String) -> Double {
+        if let cached = usagePercentCache[text] { return cached }
+        let parts = text.split(separator: "/").map { String($0).trimmingCharacters(in: .whitespaces) }
+        guard parts.count == 2 else { return 0 }
+        let used = PerformanceUtils.parseSizeToBytes(parts[0])
+        let total = PerformanceUtils.parseSizeToBytes(parts[1])
+        let result = total <= 0 ? 0 : max(0, min(1, used / total))
+        usagePercentCache[text] = result
+        return result
+    }
+}
+
+struct PerformanceUtils {
+    // Precomputed multipliers for performance
+    private static let sizeMultipliers: [Character: Double] = [
+        "k": 1024,
+        "m": pow(1024, 2),
+        "g": pow(1024, 3),
+        "t": pow(1024, 4),
+        "p": pow(1024, 5)
+    ]
+    
+    static func parseSizeToBytes(_ text: String) -> Double {
+        let lower = text.lowercased().replacingOccurrences(of: "b", with: "")
+        let unitChar = lower.trimmingCharacters(in: .whitespaces).last
+        let numberPart: String
+        let multiplier: Double
+        
+        if let u = unitChar, let mult = sizeMultipliers[u] {
+            multiplier = mult
+            numberPart = String(lower.dropLast())
+        } else {
+            multiplier = 1.0
+            numberPart = lower
+        }
+        
+        let value = Double(numberPart.trimmingCharacters(in: .whitespaces)) ?? 0
+        return value * multiplier
+    }
+    
+    static func percentStr(_ value: Double) -> String {
+        let pct = max(0, min(1, value)) * 100
+        let rounded = (pct * 10).rounded() / 10
+        return rounded.truncatingRemainder(dividingBy: 1) == 0 
+            ? String(format: "%.0f%%", rounded)
+            : String(format: "%.1f%%", rounded)
+    }
+    
+    static func thresholdColor(_ value: Double) -> Color {
+        let v = max(0, min(1, value))
+        switch v {
+        case ..<WidgetConstants.Thresholds.warningThreshold: return .green
+        case ..<WidgetConstants.Thresholds.criticalThreshold: return .orange
+        default: return .red
+        }
+    }
+}
+
 struct Provider: IntentTimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
         SimpleEntry(date: Date(), configuration: ConfigurationIntent(), state: .normal(demoStatus))
@@ -32,7 +119,7 @@ struct Provider: IntentTimelineProvider {
         #if os(iOS)
         if #available(iOSApplicationExtension 16.0, *) {
             if family == .accessoryInline || family == .accessoryRectangular {
-                url = UserDefaults.standard.string(forKey: accessoryKey)
+                url = UserDefaults(suiteName: WidgetConstants.appGroupId)?.string(forKey: "accessory_widget_url")
             }
         }
         #endif
@@ -113,7 +200,7 @@ struct StatusWidgetEntryView : View {
                             Button(intent: RefreshIntent()) {
                                 Image(systemName: "arrow.clockwise")
                                     .resizable()
-                                    .frame(width: 10, height: 12.7)
+                                    .frame(width: WidgetConstants.Dimensions.refreshIconSmall, height: WidgetConstants.Dimensions.refreshIconSmall * 1.27)
                             }.tint(.gray)
                         }
                     }
@@ -134,7 +221,7 @@ struct StatusWidgetEntryView : View {
                                     Button(intent: RefreshIntent()) {
                                         Image(systemName: "arrow.clockwise")
                                             .resizable()
-                                            .frame(width: 11, height: 14)
+                                            .frame(width: WidgetConstants.Dimensions.refreshIconLarge, height: WidgetConstants.Dimensions.refreshIconLarge * 1.27)
                                     }.tint(.gray)
                                 }
                             } else {
@@ -142,10 +229,10 @@ struct StatusWidgetEntryView : View {
                             }
                             Spacer(minLength: 8)
                             HStack(spacing: 24) {
-                                GaugeTile(label: "CPU", value: parsePercent(data.cpu), display: data.cpu, diameter: 72)
-                                GaugeTile(label: "MEM", value: parseUsagePercent(data.mem), display: percentStr(parseUsagePercent(data.mem)), diameter: 72)
-                                GaugeTile(label: "DISK", value: parseUsagePercent(data.disk), display: percentStr(parseUsagePercent(data.disk)), diameter: 72)
-                                GaugeTile(label: "NET", value: 0, display: data.net, diameter: 72)
+                                GaugeTile(label: "CPU", value: ParseCache.parsePercent(data.cpu), display: data.cpu, diameter: WidgetConstants.Dimensions.largeGauge)
+                                GaugeTile(label: "MEM", value: ParseCache.parseUsagePercent(data.mem), display: PerformanceUtils.percentStr(ParseCache.parseUsagePercent(data.mem)), diameter: WidgetConstants.Dimensions.largeGauge)
+                                GaugeTile(label: "DISK", value: ParseCache.parseUsagePercent(data.disk), display: PerformanceUtils.percentStr(ParseCache.parseUsagePercent(data.disk)), diameter: WidgetConstants.Dimensions.largeGauge)
+                                GaugeTile(label: "NET", value: 0, display: data.net, diameter: WidgetConstants.Dimensions.largeGauge)
                             }
                             Spacer(minLength: 6)
                             DetailItem(icon: "clock", text: entry.date.toStr(), color: sumColor)
@@ -164,7 +251,7 @@ struct StatusWidgetEntryView : View {
                                     Button(intent: RefreshIntent()) {
                                         Image(systemName: "arrow.clockwise")
                                             .resizable()
-                                            .frame(width: 10, height: 12.7)
+                                            .frame(width: WidgetConstants.Dimensions.refreshIconSmall, height: WidgetConstants.Dimensions.refreshIconSmall * 1.27)
                                     }.tint(.gray)
                                 }
                             } else {
@@ -173,9 +260,9 @@ struct StatusWidgetEntryView : View {
                             Spacer(minLength: 6)
                             // Gauges row
                             HStack(spacing: 14) {
-                                GaugeTile(label: "CPU", value: parsePercent(data.cpu), display: data.cpu, diameter: 54)
-                                GaugeTile(label: "MEM", value: parseUsagePercent(data.mem), display: percentStr(parseUsagePercent(data.mem)), diameter: 54)
-                                GaugeTile(label: "DISK", value: parseUsagePercent(data.disk), display: percentStr(parseUsagePercent(data.disk)), diameter: 54)
+                                GaugeTile(label: "CPU", value: ParseCache.parsePercent(data.cpu), display: data.cpu, diameter: WidgetConstants.Dimensions.smallGauge)
+                                GaugeTile(label: "MEM", value: ParseCache.parseUsagePercent(data.mem), display: PerformanceUtils.percentStr(ParseCache.parseUsagePercent(data.mem)), diameter: WidgetConstants.Dimensions.smallGauge)
+                                GaugeTile(label: "DISK", value: ParseCache.parseUsagePercent(data.disk), display: PerformanceUtils.percentStr(ParseCache.parseUsagePercent(data.disk)), diameter: WidgetConstants.Dimensions.smallGauge)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             Spacer(minLength: 4)
@@ -196,7 +283,7 @@ struct StatusWidgetEntryView : View {
                                     Button(intent: RefreshIntent()) {
                                         Image(systemName: "arrow.clockwise")
                                             .resizable()
-                                            .frame(width: 10, height: 12.7)
+                                            .frame(width: WidgetConstants.Dimensions.refreshIconSmall, height: WidgetConstants.Dimensions.refreshIconSmall * 1.27)
                                     }.tint(.gray)
                                 }
                             } else {
@@ -205,9 +292,9 @@ struct StatusWidgetEntryView : View {
                             Spacer(minLength: 8)
                             // Two rows layout for more breathing room
                             HStack(spacing: 18) {
-                                GaugeTile(label: "CPU", value: parsePercent(data.cpu), display: data.cpu, diameter: 62)
-                                GaugeTile(label: "MEM", value: parseUsagePercent(data.mem), display: percentStr(parseUsagePercent(data.mem)), diameter: 62)
-                                GaugeTile(label: "DISK", value: parseUsagePercent(data.disk), display: percentStr(parseUsagePercent(data.disk)), diameter: 62)
+                                GaugeTile(label: "CPU", value: ParseCache.parsePercent(data.cpu), display: data.cpu, diameter: WidgetConstants.Dimensions.mediumGauge)
+                                GaugeTile(label: "MEM", value: ParseCache.parseUsagePercent(data.mem), display: PerformanceUtils.percentStr(ParseCache.parseUsagePercent(data.mem)), diameter: WidgetConstants.Dimensions.mediumGauge)
+                                GaugeTile(label: "DISK", value: ParseCache.parseUsagePercent(data.disk), display: PerformanceUtils.percentStr(ParseCache.parseUsagePercent(data.disk)), diameter: WidgetConstants.Dimensions.mediumGauge)
                             }
                             Spacer(minLength: 6)
                             HStack(spacing: 12) {
@@ -252,7 +339,7 @@ struct StatusWidgetEntryView : View {
                                     Button(intent: RefreshIntent()) {
                                         Image(systemName: "arrow.clockwise")
                                             .resizable()
-                                            .frame(width: 10, height: 12.7)
+                                            .frame(width: WidgetConstants.Dimensions.refreshIconSmall, height: WidgetConstants.Dimensions.refreshIconSmall * 1.27)
                                     }.tint(.gray)
                                 }
                             } else {
@@ -378,7 +465,7 @@ struct GaugeTile: View {
                     .stroke(Color.primary.opacity(0.14), lineWidth: 6)
                 Circle()
                     .trim(from: 0, to: CGFloat(max(0, min(1, value))))
-                    .stroke(thresholdColor(value), style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                    .stroke(PerformanceUtils.thresholdColor(value), style: StrokeStyle(lineWidth: 6, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                     .animation(.easeInOut(duration: 0.5), value: value)
                 Text(display)
@@ -387,67 +474,31 @@ struct GaugeTile: View {
             .frame(width: diameter, height: diameter)
             Text(label)
                 .font(.system(size: 11, design: .monospaced))
-                .foregroundColor(thresholdColor(value).opacity(0.9))
+                .foregroundColor(PerformanceUtils.thresholdColor(value).opacity(0.9))
         }
         .frame(maxWidth: .infinity)
     }
 }
 
+// Legacy functions maintained for compatibility - now delegate to optimized versions
 func parsePercent(_ text: String) -> Double {
-    let trimmed = text.trimmingCharacters(in: CharacterSet(charactersIn: "% "))
-    if let v = Double(trimmed) { return max(0, min(1, v / 100.0)) }
-    return 0
+    return ParseCache.parsePercent(text)
 }
 
 func parseUsagePercent(_ text: String) -> Double {
-    let parts = text.split(separator: "/").map { String($0).trimmingCharacters(in: .whitespaces) }
-    guard parts.count == 2 else { return 0 }
-    let used = parseSizeToBytes(parts[0])
-    let total = parseSizeToBytes(parts[1])
-    if total <= 0 { return 0 }
-    return max(0, min(1, used / total))
+    return ParseCache.parseUsagePercent(text)
 }
 
 func parseSizeToBytes(_ text: String) -> Double {
-    let lower = text.lowercased().replacingOccurrences(of: "b", with: "")
-    let unitChar = lower.trimmingCharacters(in: .whitespaces).last
-    let numberPart: String
-    let unit: Character
-    if let u = unitChar, ("kmgtp".contains(u)) {
-        unit = u
-        numberPart = String(lower.dropLast())
-    } else {
-        unit = "b"
-        numberPart = lower
-    }
-    let value = Double(numberPart.trimmingCharacters(in: .whitespaces)) ?? 0
-    switch unit {
-    case "k": return value * 1024
-    case "m": return value * pow(1024, 2)
-    case "g": return value * pow(1024, 3)
-    case "t": return value * pow(1024, 4)
-    case "p": return value * pow(1024, 5)
-    default: return value
-    }
+    return PerformanceUtils.parseSizeToBytes(text)
 }
 
 func percentStr(_ value: Double) -> String {
-    let pct = max(0, min(1, value)) * 100
-    let rounded = (pct * 10).rounded() / 10
-    if rounded.truncatingRemainder(dividingBy: 1) == 0 {
-        return String(format: "%.0f%%", rounded)
-    } else {
-        return String(format: "%.1f%%", rounded)
-    }
+    return PerformanceUtils.percentStr(value)
 }
 
 func thresholdColor(_ value: Double) -> Color {
-    let v = max(0, min(1, value))
-    switch v {
-    case ..<0.6: return .green
-    case ..<0.85: return .orange
-    default: return .red
-    }
+    return PerformanceUtils.thresholdColor(value)
 }
 
 struct DynamicColor {

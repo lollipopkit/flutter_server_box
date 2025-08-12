@@ -34,13 +34,30 @@ struct WatchProvider: TimelineProvider {
     }
 
     private func loadEntry() -> WatchEntry {
-        let urls = WidgetSharedStore.readUrls()
-        let idx = WidgetSharedStore.readSelectedIndex()
+        let appGroupId = "group.com.lollipopkit.toolbox"
+        guard let defaults = UserDefaults(suiteName: appGroupId) else {
+            return WatchEntry(date: Date(), status: Status(name: "Server", cpu: "--%", mem: "-", disk: "-", net: "-"))
+        }
+        
+        let urls = (defaults.array(forKey: "watch_shared_urls") as? [String]) ?? []
+        let idx = defaults.integer(forKey: "watch_shared_selected_index")
         var status: Status? = nil
+        
         if !urls.isEmpty {
             let i = min(max(0, idx), urls.count - 1)
             let url = urls[i]
-            status = WidgetSharedStore.readStatus(url: url)
+            
+            // Load status from shared defaults
+            if let statusMap = defaults.dictionary(forKey: "watch_shared_status_by_url") as? [String: [String: String]],
+               let statusDict = statusMap[url] {
+                status = Status(
+                    name: statusDict["name"] ?? "",
+                    cpu: statusDict["cpu"] ?? "",
+                    mem: statusDict["mem"] ?? "",
+                    disk: statusDict["disk"] ?? "",
+                    net: statusDict["net"] ?? ""
+                )
+            }
         }
         return WatchEntry(
             date: Date(),
