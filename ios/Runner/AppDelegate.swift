@@ -65,4 +65,11 @@ import ActivityKit
         }
         return true
     }
+    
+    override func applicationWillTerminate(_ application: UIApplication) {
+        // Stop Live Activity when app is about to terminate
+        if #available(iOS 16.2, *) {
+            LiveActivityManager.stop()
+        }
+    }
 }

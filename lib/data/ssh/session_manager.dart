@@ -162,6 +162,18 @@ abstract final class TermSessionManager {
       _sync();
     }
   }
+
+  /// Stop Live Activity when app is closed/terminated (iOS only).
+  static Future<void> stopLiveActivityOnAppClose() async {
+    if (!isIOS) return;
+    
+    // Cancel any running timers
+    _updateTimer?.cancel();
+    _updateTimer = null;
+    
+    // Stop the Live Activity
+    await MethodChans.stopLiveActivity();
+  }
 }
 
 class _Entry {
