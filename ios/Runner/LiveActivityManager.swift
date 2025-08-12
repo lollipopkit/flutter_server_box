@@ -19,6 +19,7 @@ class LiveActivityManager {
         let startTimeMs: Int
         let status: String
         let hasTerminal: Bool?
+        let connectionCount: Int?
     }
 
     private static func parse(_ json: String) -> Payload? {
@@ -37,7 +38,8 @@ class LiveActivityManager {
             subtitle: p.subtitle,
             status: p.status,
             startTime: date,
-            hasTerminal: p.hasTerminal ?? true
+            hasTerminal: p.hasTerminal ?? true,
+            connectionCount: p.connectionCount ?? 1
         )
         let content = ActivityContent(state: state, staleDate: nil)
         do {
@@ -57,7 +59,8 @@ class LiveActivityManager {
             subtitle: p.subtitle,
             status: p.status,
             startTime: date,
-            hasTerminal: p.hasTerminal ?? true
+            hasTerminal: p.hasTerminal ?? true,
+            connectionCount: p.connectionCount ?? 1
         )
         if let activity = current {
             Task { await activity.update(ActivityContent(state: state, staleDate: nil)) }

@@ -16,9 +16,16 @@ struct TerminalLiveActivity: Widget {
             let state = context.state
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(state.hasTerminal ? "Terminal" : "SSH")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    HStack {
+                        Text(state.hasTerminal ? "Terminal" : "SSH")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        if state.connectionCount > 1 {
+                            Text("(\(state.connectionCount))")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                     Text(state.title)
                         .font(.headline)
                         .lineLimit(1)
@@ -42,9 +49,16 @@ struct TerminalLiveActivity: Widget {
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
                     VStack(alignment: .leading) {
-                        Text(context.state.hasTerminal ? "Terminal" : "SSH")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                        HStack {
+                            Text(context.state.hasTerminal ? "Terminal" : "SSH")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                            if context.state.connectionCount > 1 {
+                                Text("(\(context.state.connectionCount))")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
                         Text(context.state.title)
                             .font(.subheadline)
                             .lineLimit(1)

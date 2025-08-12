@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
@@ -34,6 +35,8 @@ class TermSessionInfo {
 abstract final class TermSessionManager {
   static final Map<String, _Entry> _entries = {};
   static String? _activeId; // For iOS Live Activity
+  static Timer? _updateTimer; // Timer for iOS Live Activity updates
+  static const _updateInterval = Duration(seconds: 5); // 5-second update interval
 
   static void init() {
     if (isAndroid) {
@@ -103,20 +106,50 @@ abstract final class TermSessionManager {
       }
     }
 
-    // iOS: update Live Activity for active session
+    // iOS: manage Live Activity timer
     if (isIOS) {
       if (_entries.isEmpty) {
+        _updateTimer?.cancel();
+        _updateTimer = null;
         await MethodChans.stopLiveActivity();
       } else {
-        final id = _activeId ?? _entries.keys.first;
-        final entry = _entries[id]!;
-        final payload = jsonEncode({
-          ...entry.info.toJson(),
-          'hasTerminal': entry.hasTerminalUI,
-        });
-        // Start or update depending on existence is handled natively
-        await MethodChans.updateLiveActivity(payload);
+        // Start timer if not already running
+        _updateTimer ??= Timer.periodic(_updateInterval, (_) => _updateLiveActivity());
+        // Immediately update for immediate feedback
+        await _updateLiveActivity();
       }
+    }
+  }
+  
+  static Future<void> _updateLiveActivity() async {
+    if (!isIOS || _entries.isEmpty) return;
+    
+    final connectionCount = _entries.length;
+    
+    if (connectionCount == 1) {
+      // Single connection: show hostname
+      final id = _activeId ?? _entries.keys.first;
+      final entry = _entries[id]!;
+      final payload = jsonEncode({
+        ...entry.info.toJson(),
+        'hasTerminal': entry.hasTerminalUI,
+        'connectionCount': connectionCount,
+      });
+      await MethodChans.updateLiveActivity(payload);
+    } else {
+      // Multiple connections: show connection count
+      final id = _activeId ?? _entries.keys.first;
+      final entry = _entries[id]!;
+      final payload = jsonEncode({
+        'id': 'multi_connections',
+        'title': '$connectionCount connections',
+        'subtitle': 'Multiple SSH sessions active',
+        'startTimeMs': entry.info.startTimeMs,
+        'status': 'connected',
+        'hasTerminal': entry.hasTerminalUI,
+        'connectionCount': connectionCount,
+      });
+      await MethodChans.updateLiveActivity(payload);
     }
   }
 

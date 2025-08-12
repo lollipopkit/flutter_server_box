@@ -17,14 +17,16 @@ public struct TerminalAttributes: ActivityAttributes {
         public var status: String
         public var startTime: Date
         public var hasTerminal: Bool
+        public var connectionCount: Int
 
-        public init(id: String, title: String, subtitle: String, status: String, startTime: Date, hasTerminal: Bool) {
+        public init(id: String, title: String, subtitle: String, status: String, startTime: Date, hasTerminal: Bool, connectionCount: Int = 1) {
             self.id = id
             self.title = title
             self.subtitle = subtitle
             self.status = status
             self.startTime = startTime
             self.hasTerminal = hasTerminal
+            self.connectionCount = connectionCount
         }
     }
 
