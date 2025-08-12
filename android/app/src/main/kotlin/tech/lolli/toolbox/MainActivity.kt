@@ -28,9 +28,17 @@ class MainActivity: FlutterFragmentActivity() {
                         moveTaskToBack(true)
                         result.success(null)
                     }
+                    "isServiceRunning" -> {
+                        result.success(ForegroundService.isRunning)
+                    }
                     "startService" -> {
                         try {
                             reqPerm()
+                            if (!notificationsAllowed()) {
+                                // Don't start foreground service without notification permission on API 33+
+                                result.error("NOTIFICATION_PERMISSION_DENIED", "Notification permission not granted", null)
+                                return@setMethodCallHandler
+                            }
                             val serviceIntent = Intent(this@MainActivity, ForegroundService::class.java)
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                                 startForegroundService(serviceIntent)
@@ -57,6 +65,11 @@ class MainActivity: FlutterFragmentActivity() {
                     }
                     "updateSessions" -> {
                         try {
+                            if (!notificationsAllowed()) {
+                                // Avoid starting/continuing service updates when notifications are blocked
+                                result.error("NOTIFICATION_PERMISSION_DENIED", "Notification permission not granted", null)
+                                return@setMethodCallHandler
+                            }
                             val serviceIntent = Intent(this@MainActivity, ForegroundService::class.java)
                             serviceIntent.action = ACTION_UPDATE_SESSIONS
                             serviceIntent.putExtra("payload", method.arguments as String)
@@ -97,6 +110,14 @@ class MainActivity: FlutterFragmentActivity() {
                 // Log error but don't crash
                 android.util.Log.e("MainActivity", "Failed to request permissions: ${e.message}")
             }
+        }
+    }
+
+    private fun notificationsAllowed(): Boolean {
+        return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            true
+        } else {
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
         }
     }
 

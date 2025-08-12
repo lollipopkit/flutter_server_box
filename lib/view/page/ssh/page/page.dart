@@ -27,6 +27,7 @@ import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
+import 'package:uuid/uuid.dart';
 
 part 'init.dart';
 part 'keyboard.dart';
@@ -87,7 +88,7 @@ class SSHPageState extends State<SSHPage>
 
   /// Used for (de)activate the wake lock and forground service
   static var _sshConnCount = 0;
-  late final String _sessionId = ShortId.generate();
+  late final String _sessionId = const Uuid().v4();
   late final int _sessionStartMs = DateTime.now().millisecondsSinceEpoch;
 
   @override

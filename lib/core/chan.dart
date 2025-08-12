@@ -40,6 +40,17 @@ abstract final class MethodChans {
     }
   }
 
+  /// Query whether the Android foreground service is currently running.
+  static Future<bool> isServiceRunning() async {
+    if (!isAndroid) return false;
+    try {
+      final res = await _channel.invokeMethod('isServiceRunning');
+      return res == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   // iOS Live Activities controls
   static Future<void> startLiveActivity(String payload) async {
     if (!isIOS) return;

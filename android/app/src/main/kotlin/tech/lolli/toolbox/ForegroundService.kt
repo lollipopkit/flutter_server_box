@@ -11,6 +11,10 @@ import java.io.File
 import java.util.*
 
 class ForegroundService : Service() {
+    companion object {
+        @Volatile
+        var isRunning: Boolean = false
+    }
     private val chanId = "ForegroundServiceChannel"
     private val GROUP_KEY = "ssh_sessions_group"
     private val SUMMARY_ID = 1000
@@ -39,6 +43,7 @@ class ForegroundService : Service() {
     override fun onCreate() {
         super.onCreate()
         Log.d("ForegroundService", "Service onCreate")
+        isRunning = true
         createNotificationChannel()
     }
 
@@ -238,7 +243,14 @@ class ForegroundService : Service() {
         postedIds.addAll(currentIds)
 
         // Post/update summary and ensure foreground
-        val summary = createSummaryNotification(sessions.size, summaryLines.take(5))
+        val maxSummaryLines = 5
+        val truncated = summaryLines.size > maxSummaryLines
+        val displaySummaryLines = if (truncated) {
+            summaryLines.take(maxSummaryLines) + "...and ${summaryLines.size - maxSummaryLines} more"
+        } else {
+            summaryLines
+        }
+        val summary = createSummaryNotification(sessions.size, displaySummaryLines)
         ensureForeground(summary)
     }
 
@@ -271,5 +283,6 @@ class ForegroundService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         Log.d("ForegroundService", "Service onDestroy")
+        isRunning = false
     }
 }
