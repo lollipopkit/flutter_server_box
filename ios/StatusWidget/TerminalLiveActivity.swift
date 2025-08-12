@@ -9,19 +9,43 @@ import SwiftUI
 import WidgetKit
 import ActivityKit
 
-// Helper to map exact status strings to a color dot.
-// Hard-coded equality checks (no substring matching).
+// Helper to map status strings to a color dot (case-insensitive).
 @inline(__always)
 private func getStatusDotColor(_ status: String) -> Color {
-    switch status {
-    case "Connected", "connected":
+    switch status.lowercased() {
+    case "connected":
         return .green
-    case "Connecting", "connecting":
+    case "connecting":
         return .yellow
-    case "Disconnected", "disconnected":
+    case "disconnected":
         return .red
     default:
         return .secondary
+    }
+}
+
+// Normalize status for display: capitalize first letter only.
+@inline(__always)
+private func formatStatus(_ status: String) -> String {
+    let trimmed = status.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard let first = trimmed.first else { return status }
+    let head = String(first).uppercased()
+    let tail = String(trimmed.dropFirst()).lowercased()
+    return head + tail
+}
+
+// Localize known statuses; fall back to formatted original.
+@inline(__always)
+private func localizedStatus(_ status: String) -> String {
+    switch status.lowercased() {
+    case "connected":
+        return NSLocalizedString("Connected", comment: "Session connected status")
+    case "connecting":
+        return NSLocalizedString("Connecting", comment: "Session connecting status")
+    case "disconnected":
+        return NSLocalizedString("Disconnected", comment: "Session disconnected status")
+    default:
+        return formatStatus(status)
     }
 }
 
@@ -34,7 +58,7 @@ struct TerminalLiveActivity: Widget {
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 6) {
-                        Text(state.hasTerminal ? "Terminal" : "SSH")
+                        Text(state.hasTerminal ? NSLocalizedString("Terminal", comment: "Terminal label") : "SSH")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         if state.connectionCount > 1 {
@@ -55,7 +79,7 @@ struct TerminalLiveActivity: Widget {
                         Circle()
                             .fill(getStatusDotColor(state.status))
                             .frame(width: 6, height: 6)
-                        Text(state.status)
+                        Text(localizedStatus(state.status))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -72,7 +96,7 @@ struct TerminalLiveActivity: Widget {
                 DynamicIslandExpandedRegion(.leading) {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack(spacing: 4) {
-                            Text(context.state.hasTerminal ? "Terminal" : "SSH")
+                            Text(context.state.hasTerminal ? NSLocalizedString("Terminal", comment: "Terminal label") : "SSH")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                             if context.state.connectionCount > 1 {
@@ -95,7 +119,7 @@ struct TerminalLiveActivity: Widget {
                             Circle()
                                 .fill(getStatusDotColor(context.state.status))
                                 .frame(width: 6, height: 6)
-                            Text(context.state.status)
+                            Text(localizedStatus(context.state.status))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }

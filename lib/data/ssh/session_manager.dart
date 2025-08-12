@@ -161,7 +161,7 @@ abstract final class TermSessionManager {
         'title': '$connectionCount connections',
         'subtitle': 'Multiple SSH sessions active',
         'startTimeMs': entry.info.startTimeMs,
-        'status': 'connected',
+        'status': TermSessionStatus.connected.toString(),
         'hasTerminal': entry.hasTerminalUI,
         'connectionCount': connectionCount,
       });

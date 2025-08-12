@@ -1,0 +1,8 @@
+"Terminal" = "终端";
+"Connected" = "已连接";
+"Connecting" = "连接中";
+"Disconnected" = "已断开连接";
+"Multiple SSH sessions active" = "多个 SSH 会话正在活动";
+"1 connection" = "1 个连接";
+"%d connections" = "%d 个连接";
+

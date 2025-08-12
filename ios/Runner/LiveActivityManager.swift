@@ -32,10 +32,18 @@ class LiveActivityManager {
         guard let p = parse(json) else { return }
         let attributes = TerminalAttributes(id: p.id)
         let date = Date(timeIntervalSince1970: TimeInterval(p.startTimeMs) / 1000.0)
+        // Localize multi-connection title/subtitle on iOS side
+        let isMulti = (p.id == "multi_connections")
+        let title = isMulti
+            ? String(format: NSLocalizedString("%d connections", comment: "Title for multiple connections"), p.connectionCount ?? 1)
+            : p.title
+        let subtitle = isMulti
+            ? NSLocalizedString("Multiple SSH sessions active", comment: "Subtitle for multiple connections")
+            : p.subtitle
         let state = TerminalAttributes.ContentState(
             id: p.id,
-            title: p.title,
-            subtitle: p.subtitle,
+            title: title,
+            subtitle: subtitle,
             status: p.status,
             startTime: date,
             hasTerminal: p.hasTerminal ?? true,
@@ -53,10 +61,18 @@ class LiveActivityManager {
         guard #available(iOS 16.2, *) else { return }
         guard let p = parse(json) else { return }
         let date = Date(timeIntervalSince1970: TimeInterval(p.startTimeMs) / 1000.0)
+        // Localize multi-connection title/subtitle on iOS side
+        let isMulti = (p.id == "multi_connections")
+        let title = isMulti
+            ? String(format: NSLocalizedString("%d connections", comment: "Title for multiple connections"), p.connectionCount ?? 1)
+            : p.title
+        let subtitle = isMulti
+            ? NSLocalizedString("Multiple SSH sessions active", comment: "Subtitle for multiple connections")
+            : p.subtitle
         let state = TerminalAttributes.ContentState(
             id: p.id,
-            title: p.title,
-            subtitle: p.subtitle,
+            title: title,
+            subtitle: subtitle,
             status: p.status,
             startTime: date,
             hasTerminal: p.hasTerminal ?? true,
@@ -77,4 +93,3 @@ class LiveActivityManager {
         }
     }
 }
-

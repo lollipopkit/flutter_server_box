@@ -1,0 +1,8 @@
+"Terminal" = "Terminal";
+"Connected" = "Terhubung";
+"Connecting" = "Menghubungkan";
+"Disconnected" = "Terputus";
+"Multiple SSH sessions active" = "Beberapa sesi SSH aktif";
+"1 connection" = "1 koneksi";
+"%d connections" = "%d koneksi";
+
