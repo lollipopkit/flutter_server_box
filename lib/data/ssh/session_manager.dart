@@ -6,13 +6,24 @@ import 'package:flutter/foundation.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
+enum TermSessionStatus {
+  connecting,
+  connected,
+  disconnected;
+
+  @override
+  String toString() {
+    return name.capitalize;
+  }
+}
+
 /// Represents a running SSH terminal session for Android notifications and iOS Live Activities.
 class TermSessionInfo {
   final String id;
   final String title; // e.g. server name
   final String subtitle; // e.g. user@ip:port
   final int startTimeMs;
-  final String status; // connecting | connected | disconnected
+  final TermSessionStatus status;
 
   TermSessionInfo({
     required this.id,
@@ -23,12 +34,12 @@ class TermSessionInfo {
   });
 
   Map<String, Object> toJson() => {
-        'id': id,
-        'title': title,
-        'subtitle': subtitle,
-        'startTimeMs': startTimeMs,
-        'status': status,
-      };
+    'id': id,
+    'title': title,
+    'subtitle': subtitle,
+    'startTimeMs': startTimeMs,
+    'status': status.toString(),
+  };
 }
 
 /// Singleton to track active SSH sessions and sync to Android notifications.
@@ -52,7 +63,7 @@ abstract final class TermSessionManager {
     required Spi spi,
     required int startTimeMs,
     required VoidCallback disconnect,
-    String status = 'connecting',
+    TermSessionStatus status = TermSessionStatus.connecting,
   }) {
     final info = TermSessionInfo(
       id: id,
@@ -66,7 +77,7 @@ abstract final class TermSessionManager {
     _sync();
   }
 
-  static void updateStatus(String id, String status) {
+  static void updateStatus(String id, TermSessionStatus status) {
     final old = _entries[id];
     if (old == null) return;
     _entries[id] = _Entry(
@@ -99,9 +110,7 @@ abstract final class TermSessionManager {
         await MethodChans.updateSessions(jsonEncode({'sessions': []}));
       } else {
         MethodChans.startService();
-        final payload = jsonEncode({
-          'sessions': _entries.values.map((e) => e.info.toJson()).toList(),
-        });
+        final payload = jsonEncode({'sessions': _entries.values.map((e) => e.info.toJson()).toList()});
         await MethodChans.updateSessions(payload);
       }
     }
@@ -120,16 +129,17 @@ abstract final class TermSessionManager {
       }
     }
   }
-  
+
   static Future<void> _updateLiveActivity() async {
     if (!isIOS || _entries.isEmpty) return;
-    
+
     final connectionCount = _entries.length;
-    
+
     if (connectionCount == 1) {
       // Single connection: show hostname
       final id = _activeId ?? _entries.keys.first;
-      final entry = _entries[id]!;
+      final entry = _entries[id];
+      if (entry == null) return;
       final payload = jsonEncode({
         ...entry.info.toJson(),
         'hasTerminal': entry.hasTerminalUI,
@@ -139,7 +149,8 @@ abstract final class TermSessionManager {
     } else {
       // Multiple connections: show connection count
       final id = _activeId ?? _entries.keys.first;
-      final entry = _entries[id]!;
+      final entry = _entries[id];
+      if (entry == null) return;
       final payload = jsonEncode({
         'id': 'multi_connections',
         'title': '$connectionCount connections',
@@ -166,11 +177,11 @@ abstract final class TermSessionManager {
   /// Stop Live Activity when app is closed/terminated (iOS only).
   static Future<void> stopLiveActivityOnAppClose() async {
     if (!isIOS) return;
-    
+
     // Cancel any running timers
     _updateTimer?.cancel();
     _updateTimer = null;
-    
+
     // Stop the Live Activity
     await MethodChans.stopLiveActivity();
   }

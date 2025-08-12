@@ -64,7 +64,7 @@ extension _Init on SSHPageState {
     // Hold the session for external control (disconnect)
     _session = session;
     // Mark status connected for notifications / live activities
-    TermSessionManager.updateStatus(_sessionId, 'connected');
+    TermSessionManager.updateStatus(_sessionId, TermSessionStatus.connected);
 
     for (final snippet in SnippetProvider.snippets.value) {
       if (snippet.autoRunOn?.contains(widget.args.spi.id) == true) {
@@ -128,7 +128,7 @@ extension _Init on SSHPageState {
     _discontinuityTimer?.cancel();
     if (!mounted) return;
     _writeLn('\n\nConnection lost\r\n');
-    TermSessionManager.updateStatus(_sessionId, 'disconnected');
+    TermSessionManager.updateStatus(_sessionId, TermSessionStatus.disconnected);
     context.showRoundDialog(
       title: libL10n.attention,
       child: Text('${l10n.disconnected}\n${l10n.goBackQ}'),

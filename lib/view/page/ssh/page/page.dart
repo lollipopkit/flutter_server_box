@@ -131,7 +131,7 @@ class SSHPageState extends State<SSHPage>
       spi: widget.args.spi,
       startTimeMs: _sessionStartMs,
       disconnect: _disconnectFromNotification,
-      status: 'connecting',
+      status: TermSessionStatus.connecting,
     );
     TermSessionManager.setActive(_sessionId, hasTerminal: true);
   }
