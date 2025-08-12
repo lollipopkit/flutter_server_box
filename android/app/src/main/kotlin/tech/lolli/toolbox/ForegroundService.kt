@@ -20,6 +20,9 @@ class ForegroundService : Service() {
 
     private var isFgStarted = false
     private val postedIds = mutableSetOf<Int>()
+    // Stable mapping from session-id -> notification-id to avoid hash collisions
+    private val notificationIdMap = mutableMapOf<String, Int>()
+    private val nextNotificationId = java.util.concurrent.atomic.AtomicInteger(2001)
 
     private fun logError(message: String, error: Throwable? = null) {
         Log.e("ForegroundService", message, error)
@@ -188,7 +191,8 @@ class ForegroundService : Service() {
         val currentIds = mutableSetOf<Int>()
         val summaryLines = mutableListOf<String>()
         sessions.forEach { s ->
-            val nid = s.id.hashCode()
+            // Assign a stable, collision-resistant id per session for this service lifecycle
+            val nid = notificationIdMap.getOrPut(s.id) { nextNotificationId.getAndIncrement() }
             currentIds.add(nid)
             summaryLines.add("${s.title}: ${s.status}")
 
@@ -225,6 +229,11 @@ class ForegroundService : Service() {
         // Cancel stale ones
         val toCancel = postedIds - currentIds
         toCancel.forEach { nm.cancel(it) }
+        // Clean up id mappings for canceled notifications to prevent growth
+        if (toCancel.isNotEmpty()) {
+            val keysToRemove = notificationIdMap.filterValues { it in toCancel }.keys
+            keysToRemove.forEach { notificationIdMap.remove(it) }
+        }
         postedIds.clear()
         postedIds.addAll(currentIds)
 

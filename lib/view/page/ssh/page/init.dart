@@ -152,7 +152,10 @@ extension on SSHPageState {
     // Prefer to close the SSH session directly if available
     try {
       _session?.close();
-    } catch (_) {}
+    } catch (e, stackTrace) {
+      // Log the exception for debugging purposes
+      Loggers.app.warning('Error closing SSH session: $e\n$stackTrace');
+    }
     // Ensure the page is closed
     contextSafe?.pop();
   }
