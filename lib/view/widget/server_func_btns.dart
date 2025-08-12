@@ -281,59 +281,24 @@ bool _checkClient(BuildContext context, String id) {
 
 const _runEmulatorShell = '''
 #!/bin/sh
-# launch_terminal.sh
-
 TERMINAL="\$1"
-shift  # Remove the first argument (terminal name)
+shift
 
-# Auto detect terminal if not provided
 if [ -z "\$TERMINAL" ] || [ "\$TERMINAL" = "x-terminal-emulator" ]; then
-    # Follow the order of preference
-    for term in kitty alacritty gnome-terminal konsole xfce4-terminal terminator tilix wezterm foot; do
-        if command -v "\$term" >/dev/null 2>&1; then
-            TERMINAL="\$term"
-            break
-        fi
+    for term in kitty alacritty gnome-terminal gnome-console konsole xfce4-terminal terminator tilix wezterm foot xterm; do
+        command -v "\$term" >/dev/null 2>&1 && { TERMINAL="\$term"; break; }
     done
-
     [ -z "\$TERMINAL" ] && TERMINAL="x-terminal-emulator"
 fi
 
 case "\$TERMINAL" in
-    gnome-terminal)
-        exec "\$TERMINAL" -- "\$@"
-        ;;
-    konsole|terminator|tilix)
-        exec "\$TERMINAL" -e "\$@"
-        ;;
-    xfce4-terminal)
-        exec "\$TERMINAL" -e "\$*"
-        ;;
-    alacritty)
-        # Check alacritty version
-        if "\$TERMINAL" --version 2>&1 | grep -q "alacritty 0\\.1[3-9]"; then
-            # 0.13.0+
-            exec "\$TERMINAL" --command "\$@"
-        else
-            # Old versions
-            exec "\$TERMINAL" -e "\$@"
-        fi
-        ;;
-    kitty)
-        exec "\$TERMINAL" "\$@"
-        ;;
-    wezterm)
-        exec "\$TERMINAL" start -- "\$@"
-        ;;
-    foot)
-        exec "\$TERMINAL" "\$@"
-        ;;
-    urxvt|rxvt-unicode)
-        exec "\$TERMINAL" -e "\$@"
-        ;;
-    x-terminal-emulator|*)
-        # Default
-        exec "\$TERMINAL" -e "\$@"
-        ;;
+    gnome-terminal|gnome-console) exec "\$TERMINAL" -- "\$@" ;;
+    alacritty) 
+        "\$TERMINAL" --version 2>&1 | grep -q "alacritty 0\\.1[3-9]" && 
+        exec "\$TERMINAL" --command "\$@" || exec "\$TERMINAL" -e "\$@" ;;
+    kitty|foot) exec "\$TERMINAL" "\$@" ;;
+    wezterm) exec "\$TERMINAL" start -- "\$@" ;;
+    xfce4-terminal) exec "\$TERMINAL" -e "\$*" ;;
+    *) exec "\$TERMINAL" -e "\$@" ;;
 esac
 ''';
