@@ -28,7 +28,6 @@ dependencies:
   hive_ce_flutter: ^2.3.1
   intl: ^0.20.2
   json_annotation: ^4.9.0
-  uuid: ^4.5.1
   responsive_framework: ^1.5.1
   re_editor: ^0.7.0
   riverpod_annotation: ^2.6.1

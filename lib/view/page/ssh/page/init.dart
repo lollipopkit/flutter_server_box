@@ -149,14 +149,14 @@ extension _Init on SSHPageState {
 
 extension on SSHPageState {
   void _disconnectFromNotification() {
-    // Prefer to close the SSH session directly if available
+    // Mark as disconnected in session manager for immediate UI/notification feedback
+    TermSessionManager.updateStatus(_sessionId, TermSessionStatus.disconnected);
+
+    // Try to close the running SSH session, if any
     try {
       _session?.close();
     } catch (e, stackTrace) {
-      // Log the exception for debugging purposes
       Loggers.app.warning('Error closing SSH session: $e\n$stackTrace');
     }
-    // Ensure the page is closed
-    contextSafe?.pop();
   }
 }

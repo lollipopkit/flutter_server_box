@@ -9,14 +9,31 @@ import SwiftUI
 import WidgetKit
 import ActivityKit
 
+// Helper to map exact status strings to a color dot.
+// Hard-coded equality checks (no substring matching).
+@inline(__always)
+private func getStatusDotColor(_ status: String) -> Color {
+    switch status {
+    case "Connected", "connected":
+        return .green
+    case "Connecting", "connecting":
+        return .yellow
+    case "Disconnected", "disconnected":
+        return .red
+    default:
+        return .secondary
+    }
+}
+
 @available(iOS 16.1, *)
 struct TerminalLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: TerminalAttributes.self) { context in
             let state = context.state
-            HStack(alignment: .center) {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
+
+            HStack(alignment: .center, spacing: 12) {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 6) {
                         Text(state.hasTerminal ? "Terminal" : "SSH")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -29,28 +46,32 @@ struct TerminalLiveActivity: Widget {
                     Text(state.title)
                         .font(.headline)
                         .lineLimit(1)
+                        .truncationMode(.tail)
                     Text(state.subtitle)
                         .font(.subheadline)
                         .lineLimit(1)
                         .foregroundStyle(.secondary)
                     HStack(spacing: 8) {
+                        Circle()
+                            .fill(getStatusDotColor(state.status))
+                            .frame(width: 6, height: 6)
                         Text(state.status)
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        Text(state.startTime, style: .timer)
-                            .font(.caption)
-                            .monospacedDigit()
                     }
                 }
-                Spacer()
+                Spacer(minLength: 8)
                 Image(systemName: state.hasTerminal ? "terminal" : "bolt.horizontal.circle")
+                    .font(.title3)
+                    .foregroundStyle(.secondary)
             }
-            .padding()
+            .padding(.horizontal)
+            .padding(.vertical, 10)
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    VStack(alignment: .leading) {
-                        HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 4) {
                             Text(context.state.hasTerminal ? "Terminal" : "SSH")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
@@ -63,18 +84,24 @@ struct TerminalLiveActivity: Widget {
                         Text(context.state.title)
                             .font(.subheadline)
                             .lineLimit(1)
-                    }.padding()
+                            .truncationMode(.tail)
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 8)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    VStack(alignment: .trailing) {
-                        Text(context.state.status)
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                        Text(context.state.startTime, style: .timer)
-                            .font(.caption2)
-                            .frame(width: 40, height: 20, alignment: .trailing)
-                            .monospacedDigit()
-                    }.padding()
+                    VStack(alignment: .trailing, spacing: 6) {
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(getStatusDotColor(context.state.status))
+                                .frame(width: 6, height: 6)
+                            Text(context.state.status)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 8)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     Text(context.state.subtitle)
