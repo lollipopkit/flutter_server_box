@@ -9,6 +9,10 @@
 /* Begin PBXBuildFile section */
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
+		4A2DCD6B2E4B127100CF68B7 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2DCD692E4B127100CF68B7 /* LiveActivityManager.swift */; };
+		4A2DCD6C2E4B127100CF68B7 /* TerminalLiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2DCD6A2E4B127100CF68B7 /* TerminalLiveActivityAttributes.swift */; };
+		4A2DCD6F2E4B128100CF68B7 /* TerminalLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2DCD6D2E4B128100CF68B7 /* TerminalLiveActivity.swift */; };
+		4A2DCD702E4B128100CF68B7 /* TerminalLiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2DCD6E2E4B128100CF68B7 /* TerminalLiveActivityAttributes.swift */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		7538AEC32BB83FAB002AB82A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 7538AEC22BB83FAB002AB82A /* PrivacyInfo.xcprivacy */; };
 		7538AEC52BB83FC8002AB82A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 7538AEC42BB83FC8002AB82A /* PrivacyInfo.xcprivacy */; };
@@ -36,10 +40,6 @@
 		E3AE8AEB2AB601DB000A6459 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3AE8AE92AB601DB000A6459 /* Utils.swift */; };
 		E3AE8AEC2AB601DB000A6459 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3AE8AE92AB601DB000A6459 /* Utils.swift */; };
 		E3DB67ED2A31FE200027B8CB /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E3DB67EB2A31FE200027B8CB /* LaunchScreen.storyboard */; };
-\t\tE3A100110000000000000001 /* TerminalLiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A100010000000000000001 /* TerminalLiveActivityAttributes.swift */; };
-\t\tE3A100120000000000000002 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A100020000000000000002 /* LiveActivityManager.swift */; };
-\t\tE3A100130000000000000003 /* TerminalLiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A100030000000000000003 /* TerminalLiveActivityAttributes.swift */; };
-\t\tE3A100140000000000000004 /* TerminalLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A100040000000000000004 /* TerminalLiveActivity.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -99,6 +99,10 @@
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
 		278C1EB3935F9285537B0516 /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
+		4A2DCD692E4B127100CF68B7 /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
+		4A2DCD6A2E4B127100CF68B7 /* TerminalLiveActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalLiveActivityAttributes.swift; sourceTree = "<group>"; };
+		4A2DCD6D2E4B128100CF68B7 /* TerminalLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalLiveActivity.swift; sourceTree = "<group>"; };
+		4A2DCD6E2E4B128100CF68B7 /* TerminalLiveActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalLiveActivityAttributes.swift; sourceTree = "<group>"; };
 		5A4B3EB10512B2EB8E10213B /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
 		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -160,10 +164,6 @@
 		E3D26BD22B9966EC00D83425 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Main.strings; sourceTree = "<group>"; };
 		E3D26BD32B9966EC00D83425 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/LaunchScreen.strings; sourceTree = "<group>"; };
 		E3DB67EC2A31FE200027B8CB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		E3A100010000000000000001 /* TerminalLiveActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalLiveActivityAttributes.swift; sourceTree = "<group>"; };
-		E3A100020000000000000002 /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
-		E3A100030000000000000003 /* TerminalLiveActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalLiveActivityAttributes.swift; sourceTree = "<group>"; };
-		E3A100040000000000000004 /* TerminalLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalLiveActivity.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -250,10 +250,10 @@
 				E39A76AD2AB9A2F70067C641 /* Info-Profile.plist */,
 				E39A76AC2AB9A2F70067C641 /* Info-Release.plist */,
 				1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */,
+				4A2DCD692E4B127100CF68B7 /* LiveActivityManager.swift */,
+				4A2DCD6A2E4B127100CF68B7 /* TerminalLiveActivityAttributes.swift */,
 				1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */,
 				E3AE8AE92AB601DB000A6459 /* Utils.swift */,
-				E3A100010000000000000001 /* TerminalLiveActivityAttributes.swift */,
-				E3A100020000000000000002 /* LiveActivityManager.swift */,
 				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 			);
@@ -275,9 +275,9 @@
 			children = (
 				7538AEC42BB83FC8002AB82A /* PrivacyInfo.xcprivacy */,
 				E33A3E3B2A626DCE009744AB /* StatusWidgetBundle.swift */,
+				4A2DCD6D2E4B128100CF68B7 /* TerminalLiveActivity.swift */,
+				4A2DCD6E2E4B128100CF68B7 /* TerminalLiveActivityAttributes.swift */,
 				E33A3E3F2A626DCE009744AB /* StatusWidget.swift */,
-				E3A100040000000000000004 /* TerminalLiveActivity.swift */,
-				E3A100030000000000000003 /* TerminalLiveActivityAttributes.swift */,
 				E37C48ED2B9C30EE00E542D2 /* StatusWidget.intentdefinition */,
 				E33A3E442A626DD0009744AB /* Info.plist */,
 			);
@@ -528,8 +528,8 @@
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 				E37C48EA2B9C30EE00E542D2 /* StatusWidget.intentdefinition in Sources */,
 				E3AE8AEA2AB601DB000A6459 /* Utils.swift in Sources */,
-				E3A100110000000000000001 /* TerminalLiveActivityAttributes.swift in Sources */,
-				E3A100120000000000000002 /* LiveActivityManager.swift in Sources */,
+				4A2DCD6B2E4B127100CF68B7 /* LiveActivityManager.swift in Sources */,
+				4A2DCD6C2E4B127100CF68B7 /* TerminalLiveActivityAttributes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -539,10 +539,10 @@
 			files = (
 				E33A3E402A626DCE009744AB /* StatusWidget.swift in Sources */,
 				E37C48EB2B9C30EE00E542D2 /* StatusWidget.intentdefinition in Sources */,
+				4A2DCD6F2E4B128100CF68B7 /* TerminalLiveActivity.swift in Sources */,
+				4A2DCD702E4B128100CF68B7 /* TerminalLiveActivityAttributes.swift in Sources */,
 				E33A3E3C2A626DCE009744AB /* StatusWidgetBundle.swift in Sources */,
 				E3AE8AEB2AB601DB000A6459 /* Utils.swift in Sources */,
-				E3A100140000000000000004 /* TerminalLiveActivity.swift in Sources */,
-				E3A100130000000000000003 /* TerminalLiveActivityAttributes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

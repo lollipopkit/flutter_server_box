@@ -8,7 +8,7 @@
 import Foundation
 import ActivityKit
 
-@available(iOS 16.1, *)
+@available(iOS 16.2, *)
 class LiveActivityManager {
     static var current: Activity<TerminalAttributes>?
 
@@ -27,6 +27,7 @@ class LiveActivityManager {
     }
 
     static func start(json: String) {
+        guard #available(iOS 16.2, *) else { return }
         guard let p = parse(json) else { return }
         let attributes = TerminalAttributes(id: p.id)
         let date = Date(timeIntervalSince1970: TimeInterval(p.startTimeMs) / 1000.0)
@@ -47,6 +48,7 @@ class LiveActivityManager {
     }
 
     static func update(json: String) {
+        guard #available(iOS 16.2, *) else { return }
         guard let p = parse(json) else { return }
         let date = Date(timeIntervalSince1970: TimeInterval(p.startTimeMs) / 1000.0)
         let state = TerminalAttributes.ContentState(
@@ -58,13 +60,14 @@ class LiveActivityManager {
             hasTerminal: p.hasTerminal ?? true
         )
         if let activity = current {
-            Task { await activity.update(ActivityContent(state: state)) }
+            Task { await activity.update(ActivityContent(state: state, staleDate: nil)) }
         } else {
             start(json: json)
         }
     }
 
     static func stop() {
+        guard #available(iOS 16.2, *) else { return }
         if let activity = current {
             Task { await activity.end(dismissalPolicy: .immediate) }
             current = nil

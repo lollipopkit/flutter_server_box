@@ -15,8 +15,6 @@
 		</dict>
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.widgetkit-extension</string>
-		<key>NSExtensionPrincipalClass</key>
-		<string>$(PRODUCT_MODULE_NAME).StatusWidgetBundle</string>
 	</dict>
 </dict>
 </plist>

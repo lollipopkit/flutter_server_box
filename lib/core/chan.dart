@@ -33,6 +33,7 @@ abstract final class MethodChans {
   static Future<void> updateSessions(String payload) async {
     if (!isAndroid) return;
     try {
+      Loggers.app.info('Updating Android sessions: $payload');
       await _channel.invokeMethod('updateSessions', payload);
     } catch (_) {
       // ignore
@@ -43,6 +44,7 @@ abstract final class MethodChans {
   static Future<void> startLiveActivity(String payload) async {
     if (!isIOS) return;
     try {
+      Loggers.app.info('Starting iOS Live Activity: $payload');
       await _channel.invokeMethod('startLiveActivity', payload);
     } catch (_) {}
   }
@@ -50,6 +52,7 @@ abstract final class MethodChans {
   static Future<void> updateLiveActivity(String payload) async {
     if (!isIOS) return;
     try {
+      Loggers.app.info('Updating iOS Live Activity: $payload');
       await _channel.invokeMethod('updateLiveActivity', payload);
     } catch (_) {}
   }
@@ -57,6 +60,7 @@ abstract final class MethodChans {
   static Future<void> stopLiveActivity() async {
     if (!isIOS) return;
     try {
+      Loggers.app.info('Stopping iOS Live Activity');
       await _channel.invokeMethod('stopLiveActivity');
     } catch (_) {}
   }

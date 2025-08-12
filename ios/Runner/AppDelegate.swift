@@ -32,21 +32,21 @@ import ActivityKit
                 }
                 result(nil)
             case "startLiveActivity":
-                if #available(iOS 16.1, *) {
+                if #available(iOS 16.2, *) {
                     if let payload = call.arguments as? String {
                         LiveActivityManager.start(json: payload)
                     }
                 }
                 result(nil)
             case "updateLiveActivity":
-                if #available(iOS 16.1, *) {
+                if #available(iOS 16.2, *) {
                     if let payload = call.arguments as? String {
                         LiveActivityManager.update(json: payload)
                     }
                 }
                 result(nil)
             case "stopLiveActivity":
-                if #available(iOS 16.1, *) {
+                if #available(iOS 16.2, *) {
                     LiveActivityManager.stop()
                 }
                 result(nil)
