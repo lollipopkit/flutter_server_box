@@ -1,0 +1,8 @@
+"Terminal" = "Терминал";
+"Connected" = "Подключено";
+"Connecting" = "Подключение";
+"Disconnected" = "Отключено";
+"Multiple SSH sessions active" = "Несколько активных сеансов SSH";
+"1 connection" = "1 подключение";
+"%d connections" = "%d подключений";
+

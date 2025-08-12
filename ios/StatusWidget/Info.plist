@@ -4,6 +4,15 @@
 <dict>
 	<key>NSExtension</key>
 	<dict>
+		<key>NSExtensionAttributes</key>
+		<dict>
+			<key>IntentsSupportedIntents</key>
+			<array>
+				<string>ConfigurationIntent</string>
+			</array>
+			<key>NSSupportsLiveActivities</key>
+			<true/>
+		</dict>
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.widgetkit-extension</string>
 	</dict>

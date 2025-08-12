@@ -21,6 +21,7 @@ import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/provider/virtual_keyboard.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/terminal.dart';
+import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -81,10 +82,13 @@ class SSHPageState extends State<SSHPage>
   bool _isDark = false;
   Timer? _virtKeyLongPressTimer;
   late SSHClient? _client = widget.args.spi.server?.value.client;
+  SSHSession? _session;
   Timer? _discontinuityTimer;
 
   /// Used for (de)activate the wake lock and forground service
   static var _sshConnCount = 0;
+  late final String _sessionId = ShortId.generate();
+  late final int _sessionStartMs = DateTime.now().millisecondsSinceEpoch;
 
   @override
   void dispose() {
@@ -100,6 +104,9 @@ class SSHPageState extends State<SSHPage>
         MethodChans.stopService();
       }
     }
+
+    // Remove session entry
+    TermSessionManager.remove(_sessionId);
 
     super.dispose();
   }
@@ -117,6 +124,16 @@ class SSHPageState extends State<SSHPage>
         MethodChans.startService();
       }
     }
+
+    // Add session entry (for Android notifications & iOS Live Activities)
+    TermSessionManager.add(
+      id: _sessionId,
+      spi: widget.args.spi,
+      startTimeMs: _sessionStartMs,
+      disconnect: _disconnectFromNotification,
+      status: TermSessionStatus.connecting,
+    );
+    TermSessionManager.setActive(_sessionId, hasTerminal: true);
   }
 
   @override

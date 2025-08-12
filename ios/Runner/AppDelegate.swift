@@ -1,6 +1,7 @@
 import UIKit
 import WidgetKit
 import Flutter
+import ActivityKit
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -11,12 +12,46 @@ import Flutter
         GeneratedPluginRegistrant.register(with: self)
     
         let controller : FlutterViewController = window?.rootViewController as! FlutterViewController
-        let methodChannel = FlutterMethodChannel(name: "tech.lolli.toolbox/home_widget", binaryMessenger: controller.binaryMessenger)
-        methodChannel.setMethodCallHandler({(call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
+        // Home widget channel (legacy)
+        let homeWidgetChannel = FlutterMethodChannel(name: "tech.lolli.toolbox/home_widget", binaryMessenger: controller.binaryMessenger)
+        homeWidgetChannel.setMethodCallHandler({(call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
             if call.method == "update" {
                 if #available(iOS 14.0, *) {
                     WidgetCenter.shared.reloadTimelines(ofKind: "StatusWidget")
                 }
+            }
+        })
+
+        // Main channel for cross-platform calls (incl. Live Activities)
+        let mainChannel = FlutterMethodChannel(name: "tech.lolli.toolbox/main_chan", binaryMessenger: controller.binaryMessenger)
+        mainChannel.setMethodCallHandler({(call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
+            switch call.method {
+            case "updateHomeWidget":
+                if #available(iOS 14.0, *) {
+                    WidgetCenter.shared.reloadTimelines(ofKind: "StatusWidget")
+                }
+                result(nil)
+            case "startLiveActivity":
+                if #available(iOS 16.2, *) {
+                    if let payload = call.arguments as? String {
+                        LiveActivityManager.start(json: payload)
+                    }
+                }
+                result(nil)
+            case "updateLiveActivity":
+                if #available(iOS 16.2, *) {
+                    if let payload = call.arguments as? String {
+                        LiveActivityManager.update(json: payload)
+                    }
+                }
+                result(nil)
+            case "stopLiveActivity":
+                if #available(iOS 16.2, *) {
+                    LiveActivityManager.stop()
+                }
+                result(nil)
+            default:
+                result(FlutterMethodNotImplemented)
             }
         })
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
@@ -29,5 +64,12 @@ import Flutter
             // Pass
         }
         return true
+    }
+    
+    override func applicationWillTerminate(_ application: UIApplication) {
+        // Stop Live Activity when app is about to terminate
+        if #available(iOS 16.2, *) {
+            LiveActivityManager.stop()
+        }
     }
 }

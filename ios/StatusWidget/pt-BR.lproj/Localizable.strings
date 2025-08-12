@@ -1,0 +1,8 @@
+"Terminal" = "Terminal";
+"Connected" = "Conectado";
+"Connecting" = "Conectando";
+"Disconnected" = "Desconectado";
+"Multiple SSH sessions active" = "Várias sessões SSH ativas";
+"1 connection" = "1 conexão";
+"%d connections" = "%d conexões";
+

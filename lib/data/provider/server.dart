@@ -20,6 +20,7 @@ import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/res/status.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/ssh/session_manager.dart';
 
 class ServerProvider extends Provider {
   const ServerProvider._();
@@ -183,6 +184,10 @@ class ServerProvider extends Provider {
     for (final s in servers.values) {
       s.value.conn = ServerConn.disconnected;
       s.notify();
+
+      // Update SSH session status to disconnected
+      final sessionId = 'ssh_${s.value.spi.id}';
+      TermSessionManager.updateStatus(sessionId, TermSessionStatus.disconnected);
     }
     //TryLimiter.clear();
   }
@@ -209,6 +214,10 @@ class ServerProvider extends Provider {
     item.conn = ServerConn.disconnected;
     _manualDisconnectedIds.add(id);
     s.notify();
+
+    // Remove SSH session when server is manually closed
+    final sessionId = 'ssh_$id';
+    TermSessionManager.remove(sessionId);
   }
 
   static void addServer(Spi spi) {
@@ -229,10 +238,21 @@ class ServerProvider extends Provider {
     Stores.setting.serverOrder.put(serverOrder.value);
     Stores.server.delete(id);
     _updateTags();
+
+    // Remove SSH session when server is deleted
+    final sessionId = 'ssh_$id';
+    TermSessionManager.remove(sessionId);
+
     bakSync.sync(milliDelay: 1000);
   }
 
   static void deleteAll() {
+    // Remove all SSH sessions before clearing servers
+    for (final id in servers.keys) {
+      final sessionId = 'ssh_$id';
+      TermSessionManager.remove(sessionId);
+    }
+
     servers.clear();
     serverOrder.value.clear();
     serverOrder.notify();
@@ -253,6 +273,11 @@ class ServerProvider extends Provider {
         serverOrder.value.update(old.id, newSpi.id);
         Stores.setting.serverOrder.put(serverOrder.value);
         serverOrder.notify();
+
+        // Update SSH session ID when server ID changes
+        final oldSessionId = 'ssh_${old.id}';
+        TermSessionManager.remove(oldSessionId);
+        // Session will be re-added when reconnecting if necessary
       }
 
       // Only reconnect if neccessary
@@ -320,10 +345,25 @@ class ServerProvider extends Provider {
         } else {
           Loggers.app.info('Jump to ${spi.name} in $spentTime ms.');
         }
+
+        // Add SSH session to TermSessionManager
+        final sessionId = 'ssh_${spi.id}';
+        TermSessionManager.add(
+          id: sessionId,
+          spi: spi,
+          startTimeMs: time1.millisecondsSinceEpoch,
+          disconnect: () => _closeOneServer(spi.id),
+          status: TermSessionStatus.connecting,
+        );
+        TermSessionManager.setActive(sessionId, hasTerminal: false);
       } catch (e) {
         TryLimiter.inc(sid);
         sv.status.err = SSHErr(type: SSHErrType.connect, message: e.toString());
         _setServerState(s, ServerConn.failed);
+
+        // Remove SSH session on connection failure
+        final sessionId = 'ssh_${spi.id}';
+        TermSessionManager.remove(sessionId);
 
         /// In order to keep privacy, print [spi.name] instead of [spi.id]
         Loggers.app.warning('Connect to ${spi.name} failed', e);
@@ -331,6 +371,10 @@ class ServerProvider extends Provider {
       }
 
       _setServerState(s, ServerConn.connected);
+
+      // Update SSH session status to connected
+      final sessionId = 'ssh_${spi.id}';
+      TermSessionManager.updateStatus(sessionId, TermSessionStatus.connected);
 
       try {
         // Detect system type using helper
@@ -352,6 +396,10 @@ class ServerProvider extends Provider {
         sv.status.err = err;
         Loggers.app.warning(err);
         _setServerState(s, ServerConn.failed);
+        
+        // Update SSH session status to disconnected
+        final sessionId = 'ssh_${spi.id}';
+        TermSessionManager.updateStatus(sessionId, TermSessionStatus.disconnected);
         return;
       } on SSHAuthFailError catch (e) {
         TryLimiter.inc(sid);
@@ -359,6 +407,10 @@ class ServerProvider extends Provider {
         sv.status.err = err;
         Loggers.app.warning(err);
         _setServerState(s, ServerConn.failed);
+        
+        // Update SSH session status to disconnected
+        final sessionId = 'ssh_${spi.id}';
+        TermSessionManager.updateStatus(sessionId, TermSessionStatus.disconnected);
         return;
       } catch (e) {
         // If max try times < 2 and can't write script, this will stop the status getting and etc.
@@ -367,6 +419,10 @@ class ServerProvider extends Provider {
         sv.status.err = err;
         Loggers.app.warning(err);
         _setServerState(s, ServerConn.failed);
+        
+        // Update SSH session status to disconnected
+        final sessionId = 'ssh_${spi.id}';
+        TermSessionManager.updateStatus(sessionId, TermSessionStatus.disconnected);
       }
     }
 
@@ -396,6 +452,10 @@ class ServerProvider extends Provider {
         TryLimiter.inc(sid);
         sv.status.err = SSHErr(type: SSHErrType.segements, message: 'Seperate segments failed, raw:\n$raw');
         _setServerState(s, ServerConn.failed);
+        
+        // Update SSH session status to disconnected on segments error
+        final sessionId = 'ssh_${spi.id}';
+        TermSessionManager.updateStatus(sessionId, TermSessionStatus.disconnected);
         return;
       }
     } catch (e) {
@@ -403,6 +463,10 @@ class ServerProvider extends Provider {
       sv.status.err = SSHErr(type: SSHErrType.getStatus, message: e.toString());
       _setServerState(s, ServerConn.failed);
       Loggers.app.warning('Get status from ${spi.name} failed', e);
+      
+      // Update SSH session status to disconnected on status error
+      final sessionId = 'ssh_${spi.id}';
+      TermSessionManager.updateStatus(sessionId, TermSessionStatus.disconnected);
       return;
     }
 
@@ -422,6 +486,10 @@ class ServerProvider extends Provider {
       sv.status.err = SSHErr(type: SSHErrType.getStatus, message: 'Parse failed: $e\n\n$raw');
       _setServerState(s, ServerConn.failed);
       Loggers.app.warning('Server status', e, trace);
+      
+      // Update SSH session status to disconnected on parse error
+      final sessionId = 'ssh_${spi.id}';
+      TermSessionManager.updateStatus(sessionId, TermSessionStatus.disconnected);
       return;
     }
 

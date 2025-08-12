@@ -1,0 +1,8 @@
+"Terminal" = "終端機";
+"Connected" = "已連線";
+"Connecting" = "連線中";
+"Disconnected" = "已中斷連線";
+"Multiple SSH sessions active" = "多個 SSH 連線運行中";
+"1 connection" = "1 個連線";
+"%d connections" = "%d 個連線";
+

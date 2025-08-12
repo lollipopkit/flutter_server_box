@@ -17,6 +17,8 @@
 			<string>en</string>
 			<string>zh</string>
 		</array>
+		<key>NSSupportsLiveActivities</key>
+		<true/>
 		<key>CFBundleName</key>
 		<string>ServerBox</string>
 		<key>CFBundlePackageType</key>
