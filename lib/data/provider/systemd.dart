@@ -44,8 +44,14 @@ final class SystemdProvider {
         }
       }
 
-      final parsedUserUnits = await _parseUnitObj(userUnits, SystemdUnitScope.user);
-      final parsedSystemUnits = await _parseUnitObj(systemUnits, SystemdUnitScope.system);
+      final parsedUserUnits = await _parseUnitObj(
+        userUnits,
+        SystemdUnitScope.user,
+      );
+      final parsedSystemUnits = await _parseUnitObj(
+        systemUnits,
+        SystemdUnitScope.system,
+      );
       this.units.value = [...parsedUserUnits, ...parsedSystemUnits];
     } catch (e, s) {
       Loggers.app.warning('Parse systemd', e, s);
@@ -54,8 +60,13 @@ final class SystemdProvider {
     isBusy.value = false;
   }
 
-  Future<List<SystemdUnit>> _parseUnitObj(List<String> unitNames, SystemdUnitScope scope) async {
-    final unitNames_ = unitNames.map((e) => e.trim().split('/').last.split('.').first).toList();
+  Future<List<SystemdUnit>> _parseUnitObj(
+    List<String> unitNames,
+    SystemdUnitScope scope,
+  ) async {
+    final unitNames_ = unitNames
+        .map((e) => e.trim().split('/').last.split('.').first)
+        .toList();
     final script =
         '''
 for unit in ${unitNames_.join(' ')}; do
@@ -103,7 +114,13 @@ done
       }
 
       parsedUnits.add(
-        SystemdUnit(name: name, type: unitType, scope: scope, state: unitState, description: description),
+        SystemdUnit(
+          name: name,
+          type: unitType,
+          scope: scope,
+          state: unitState,
+          description: description,
+        ),
       );
     }
 
@@ -121,36 +138,23 @@ done
     return parsedUnits;
   }
 
-  late final _getUnitsCmd =
-      '''
-get_files() {
-  unit_type=\$1
-  base_dir=\$2
+  late final _getUnitsCmd = '''
+    types="service socket mount timer"
 
-  # If base_dir is not a directory, return
-  if [ ! -d "\$base_dir" ]; then
-    return
-  fi
+    get_files() {
+      unit_type=\$1
+      base_dir=\$2
+      [ -d "\$base_dir" ] || return
+      find "\$base_dir" -type f -name "*.\$unit_type" -print
+    }
 
-  find "\$base_dir" -type f -name "*.\$unit_type" -print | sort
-}
-
-get_type_files() {
-    unit_type=\$1
-    base_dir=""
-
-${_isRoot ? """
-get_files \$unit_type /etc/systemd/system
-get_files \$unit_type ~/.config/systemd/user""" : """
-get_files \$unit_type ~/.config/systemd/user"""}
-}
-
-types="service socket mount timer"
-
-for type in \$types; do
-    get_type_files \$type
-done
-''';
+    for type in \$types; do
+      get_files \$type /etc/systemd/system
+      get_files \$type /lib/systemd/system
+      get_files \$type /usr/lib/systemd/system
+      get_files \$type ~/.config/systemd/user
+    done | sort
+    ''';
 }
 
 String _getIniVal(String line) {
