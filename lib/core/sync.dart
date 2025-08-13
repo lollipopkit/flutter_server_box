@@ -28,6 +28,9 @@ final class BakSyncer extends SyncIface {
     final webdavEnabled = PrefProps.webdavSync.get();
     if (webdavEnabled) return Webdav.shared;
 
+    final gistEnabled = PrefProps.gistSync.get();
+    if (gistEnabled) return GistRs.shared;
+
     return null;
   }
 }
