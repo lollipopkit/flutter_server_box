@@ -46,6 +46,7 @@ final class _SystemdPageState extends State<SystemdPage> {
               duration: Durations.medium1,
               curve: Curves.fastEaseInToSlowEaseOut,
               height: isBusy ? SizedLoading.medium.size : 0,
+              width: isBusy ? SizedLoading.medium.size : 0,
               child: isBusy ? SizedLoading.medium : const SizedBox.shrink(),
             ),
           ),

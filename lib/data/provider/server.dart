@@ -440,7 +440,7 @@ class ServerProvider extends Provider {
 
     try {
       raw = await sv.client?.run(ShellFunc.status.exec(spi.id, systemType: sv.status.system)).string;
-      dprint('Get status from ${spi.name}:\n$raw');
+      //dprint('Get status from ${spi.name}:\n$raw');
       segments = raw?.split(ScriptConstants.separator).map((e) => e.trim()).toList();
       if (raw == null || raw.isEmpty || segments == null || segments.isEmpty) {
         if (Stores.setting.keepStatusWhenErr.fetch()) {
