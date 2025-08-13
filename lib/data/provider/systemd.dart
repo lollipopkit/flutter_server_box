@@ -8,20 +8,31 @@ import 'package:server_box/data/provider/server.dart';
 
 final class SystemdProvider {
   late final VNode<Server> _si;
-  late final bool _isRoot;
 
   SystemdProvider.init(Spi spi) {
-    _isRoot = spi.isRoot;
     _si = ServerProvider.pick(spi: spi)!;
     getUnits();
   }
 
   final isBusy = false.vn;
   final units = <SystemdUnit>[].vn;
+  final scopeFilter = SystemdScopeFilter.all.vn;
 
   void dispose() {
     isBusy.dispose();
     units.dispose();
+    scopeFilter.dispose();
+  }
+
+  List<SystemdUnit> get filteredUnits {
+    switch (scopeFilter.value) {
+      case SystemdScopeFilter.all:
+        return units.value;
+      case SystemdScopeFilter.system:
+        return units.value.where((unit) => unit.scope == SystemdUnitScope.system).toList();
+      case SystemdScopeFilter.user:
+        return units.value.where((unit) => unit.scope == SystemdUnitScope.user).toList();
+    }
   }
 
   Future<void> getUnits() async {
@@ -35,43 +46,33 @@ final class SystemdProvider {
       final userUnits = <String>[];
       final systemUnits = <String>[];
       for (final unit in units) {
-        if (unit.startsWith('/etc/systemd/system')) {
+        final maybeSystem = unit.contains('/systemd/system');
+        final maybeUser = unit.contains('/.config/systemd/user');
+        if (maybeSystem && !maybeUser) {
           systemUnits.add(unit);
-        } else if (unit.startsWith('~/.config/systemd/user')) {
+        } else {
           userUnits.add(unit);
-        } else if (unit.trim().isNotEmpty) {
-          Loggers.app.warning('Unknown unit: $unit');
         }
       }
 
-      final parsedUserUnits = await _parseUnitObj(
-        userUnits,
-        SystemdUnitScope.user,
-      );
-      final parsedSystemUnits = await _parseUnitObj(
-        systemUnits,
-        SystemdUnitScope.system,
-      );
+      final parsedUserUnits = await _parseUnitObj(userUnits, SystemdUnitScope.user);
+      final parsedSystemUnits = await _parseUnitObj(systemUnits, SystemdUnitScope.system);
       this.units.value = [...parsedUserUnits, ...parsedSystemUnits];
     } catch (e, s) {
-      Loggers.app.warning('Parse systemd', e, s);
+      dprint('Parse systemd', e, s);
     }
 
     isBusy.value = false;
   }
 
-  Future<List<SystemdUnit>> _parseUnitObj(
-    List<String> unitNames,
-    SystemdUnitScope scope,
-  ) async {
-    final unitNames_ = unitNames
-        .map((e) => e.trim().split('/').last.split('.').first)
-        .toList();
+  Future<List<SystemdUnit>> _parseUnitObj(List<String> unitNames, SystemdUnitScope scope) async {
+    final unitNames_ = unitNames.map((e) => e.trim().split('/').last.split('.').first).toList();
     final script =
         '''
 for unit in ${unitNames_.join(' ')}; do
   state=\$(systemctl show --no-pager \$unit)
-  echo -n "${ScriptConstants.separator}\n\$state"
+  echo "\$state"
+  echo -n "\n${ScriptConstants.separator}\n"
 done
 ''';
     final client = _si.value.client!;
@@ -79,21 +80,30 @@ done
     final units = result.split(ScriptConstants.separator);
 
     final parsedUnits = <SystemdUnit>[];
-    for (final unit in units) {
-      final parts = unit.split('\n');
+    for (final unit in units.where((e) => e.trim().isNotEmpty)) {
+      final parts = unit
+          .split('\n')
+          .where((e) => e.trim().isNotEmpty)
+          .toList();
+      if (parts.isEmpty) continue;
       var name = '';
       var type = '';
       var state = '';
       String? description;
       for (final part in parts) {
         if (part.startsWith('Id=')) {
-          final val = _getIniVal(part).split('.');
-          name = val.first;
-          type = val.last;
+          final val = _getIniVal(part);
+          if (val == null) continue;
+          // Id=sshd.service
+          final vals = val.split('.');
+          name = vals.first;
+          type = vals.last;
           continue;
         }
         if (part.startsWith('ActiveState=')) {
-          state = _getIniVal(part);
+          final val = _getIniVal(part);
+          if (val == null) continue;
+          state = val;
           continue;
         }
         if (part.startsWith('Description=')) {
@@ -104,23 +114,17 @@ done
 
       final unitType = SystemdUnitType.fromString(type);
       if (unitType == null) {
-        Loggers.app.warning('Unit type: $type');
+        dprint('Unit type: $type');
         continue;
       }
       final unitState = SystemdUnitState.fromString(state);
       if (unitState == null) {
-        Loggers.app.warning('Unit state: $state');
+        dprint('Unit state: $state');
         continue;
       }
 
       parsedUnits.add(
-        SystemdUnit(
-          name: name,
-          type: unitType,
-          scope: scope,
-          state: unitState,
-          description: description,
-        ),
+        SystemdUnit(name: name, type: unitType, scope: scope, state: unitState, description: description),
       );
     }
 
@@ -150,13 +154,16 @@ done
 
     for type in \$types; do
       get_files \$type /etc/systemd/system
-      get_files \$type /lib/systemd/system
-      get_files \$type /usr/lib/systemd/system
+      # Parsing these paths can lead to SSH transport closed errors
+      # get_files \$type /lib/systemd/system
+      # get_files \$type /usr/lib/systemd/system
       get_files \$type ~/.config/systemd/user
     done | sort
     ''';
 }
 
-String _getIniVal(String line) {
-  return line.split('=').last;
+String? _getIniVal(String line) {
+  final idx = line.indexOf('=');
+  if (idx < 0) return null;
+  return line.substring(idx + 1).trim();
 }

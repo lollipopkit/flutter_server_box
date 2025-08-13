@@ -132,8 +132,9 @@ extension SSHClientX on SSHClient {
         if (data.contains('[sudo] password for ')) {
           isRequestingPwd = true;
           final user = Miscs.pwdRequestWithUserReg.firstMatch(data)?.group(1);
-          if (context == null) return;
-          final pwd = context.mounted ? await context.showPwdDialog(title: user, id: id) : null;
+          final ctx = context ?? WidgetsBinding.instance.focusManager.primaryFocus?.context;
+          if (ctx == null) return;
+          final pwd = ctx.mounted ? await ctx.showPwdDialog(title: user, id: id) : null;
           if (pwd == null || pwd.isEmpty) {
             session.stdin.close();
           } else {

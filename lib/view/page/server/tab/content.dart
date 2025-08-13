@@ -20,7 +20,10 @@ extension on _ServerPageState {
   Widget _buildTopRightWidget(Server s) {
     final (child, onTap) = switch (s.conn) {
       ServerConn.connecting || ServerConn.loading || ServerConn.connected => (
-        SizedLoading(_ServerPageState._kCardHeightMin, strokeWidth: 3, padding: 5),
+        SizedBox.square(
+          dimension: _ServerPageState._kCardHeightMin,
+          child: SizedLoading(_ServerPageState._kCardHeightMin, strokeWidth: 3, padding: 3),
+        ),
         null,
       ),
       ServerConn.failed => (

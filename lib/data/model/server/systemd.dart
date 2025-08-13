@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 
 enum SystemdUnitFunc {
   start,
@@ -47,6 +48,18 @@ enum SystemdUnitScope {
     }
     return 'systemctl --user';
   }
+}
+
+enum SystemdScopeFilter {
+  all,
+  system,
+  user;
+
+  String get displayName => switch (this) {
+    all => libL10n.all,
+    system => l10n.system,
+    user => libL10n.user,
+  };
 }
 
 enum SystemdUnitState {
