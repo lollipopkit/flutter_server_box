@@ -1,20 +1,48 @@
+import 'package:flutter/material.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/server/system.dart';
 
+/// Enum representing different command types for various systems
+enum CmdTypeSys {
+  linux('Linux'),
+  bsd('BSD'),
+  windows('Windows');
+
+  final String sign;
+  const CmdTypeSys(this.sign);
+
+  IconData get icon {
+    return switch (this) {
+      CmdTypeSys.linux => MingCute.linux_line,
+      CmdTypeSys.bsd => LineAwesome.freebsd,
+      CmdTypeSys.windows => MingCute.windows_line,
+    };
+  }
+}
+
 /// Base class for all command type enums
-abstract class CommandType implements Enum {
+abstract class ShellCmdType implements Enum {
   String get cmd;
-  
+
   /// Get command-specific separator
   String get separator;
-  
+
   /// Get command-specific divider (separator with echo and formatting)
   String get divider;
+
+  /// Get corresponding system type
+  CmdTypeSys get sysType;
+}
+
+extension ShellCmdTypeX on ShellCmdType {
+  /// Display name of the command type
+  String get displayName => '${sysType.sign}.$name';
 }
 
 /// Linux/Unix status commands
-enum StatusCmdType implements CommandType {
+enum StatusCmdType implements ShellCmdType {
   echo('echo ${SystemType.linuxSign}'),
   time('date +%s'),
   net('cat /proc/net/dev'),
@@ -90,16 +118,19 @@ enum StatusCmdType implements CommandType {
   final String cmd;
 
   const StatusCmdType(this.cmd);
-  
+
   @override
   String get separator => ScriptConstants.getCmdSeparator(name);
-  
+
   @override
   String get divider => ScriptConstants.getCmdDivider(name);
+
+  @override
+  CmdTypeSys get sysType => CmdTypeSys.linux;
 }
 
 /// BSD/macOS status commands
-enum BSDStatusCmdType implements CommandType {
+enum BSDStatusCmdType implements ShellCmdType {
   echo('echo ${SystemType.bsdSign}'),
   time('date +%s'),
   net('netstat -ibn'),
@@ -115,16 +146,19 @@ enum BSDStatusCmdType implements CommandType {
   final String cmd;
 
   const BSDStatusCmdType(this.cmd);
-  
+
   @override
   String get separator => ScriptConstants.getCmdSeparator(name);
-  
+
   @override
   String get divider => ScriptConstants.getCmdDivider(name);
+
+  @override
+  CmdTypeSys get sysType => CmdTypeSys.bsd;
 }
 
 /// Windows PowerShell status commands
-enum WindowsStatusCmdType implements CommandType {
+enum WindowsStatusCmdType implements ShellCmdType {
   echo('echo ${SystemType.windowsSign}'),
   time('[DateTimeOffset]::UtcNow.ToUnixTimeSeconds()'),
 
@@ -244,12 +278,15 @@ enum WindowsStatusCmdType implements CommandType {
   final String cmd;
 
   const WindowsStatusCmdType(this.cmd);
-  
+
   @override
   String get separator => ScriptConstants.getCmdSeparator(name);
-  
+
   @override
   String get divider => ScriptConstants.getCmdDivider(name);
+
+  @override
+  CmdTypeSys get sysType => CmdTypeSys.windows;
 }
 
 /// Extensions for StatusCmdType
@@ -266,7 +303,7 @@ extension StatusCmdTypeX on StatusCmdType {
 }
 
 /// Extension for CommandType to find content in parsed map
-extension CommandTypeX on CommandType {
+extension CommandTypeX on ShellCmdType {
   /// Find the command output from the parsed script output map
   String findInMap(Map<String, String> parsedOutput) {
     return parsedOutput[name] ?? '';
