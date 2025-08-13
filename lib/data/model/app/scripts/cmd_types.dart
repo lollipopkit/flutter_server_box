@@ -23,7 +23,7 @@ enum CmdTypeSys {
 }
 
 /// Base class for all command type enums
-abstract class ShellCmdType implements Enum {
+sealed class ShellCmdType implements Enum {
   String get cmd;
 
   /// Get command-specific separator
@@ -34,6 +34,10 @@ abstract class ShellCmdType implements Enum {
 
   /// Get corresponding system type
   CmdTypeSys get sysType;
+
+  static Set<ShellCmdType> get all {
+    return {...StatusCmdType.values, ...BSDStatusCmdType.values, ...WindowsStatusCmdType.values};
+  }
 }
 
 extension ShellCmdTypeX on ShellCmdType {

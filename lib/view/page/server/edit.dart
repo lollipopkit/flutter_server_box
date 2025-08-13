@@ -597,10 +597,7 @@ extension on _ServerEditPageState {
   }
 
   void _onTapDisabledCmdTypes() async {
-    final allCmdTypes = <ShellCmdType>{};
-    allCmdTypes.addAll(StatusCmdType.values);
-    allCmdTypes.addAll(BSDStatusCmdType.values);
-    allCmdTypes.addAll(WindowsStatusCmdType.values);
+    final allCmdTypes = ShellCmdType.all;
 
     // [TimeSeq] depends on the `time` cmd type, so it should be removed from the list
     allCmdTypes.remove(StatusCmdType.time);
@@ -778,10 +775,7 @@ extension on _ServerEditPageState {
     _systemType.value = spi.customSystemType;
 
     final disabledCmdTypes = spi.disabledCmdTypes?.toSet() ?? {};
-    final allAvailableCmdTypes = <String>{};
-    allAvailableCmdTypes.addAll(StatusCmdType.values.map((e) => e.displayName));
-    allAvailableCmdTypes.addAll(BSDStatusCmdType.values.map((e) => e.displayName));
-    allAvailableCmdTypes.addAll(WindowsStatusCmdType.values.map((e) => e.displayName));
+    final allAvailableCmdTypes = ShellCmdType.all.map((e) => e.displayName);
     disabledCmdTypes.removeWhere((e) => !allAvailableCmdTypes.contains(e));
     _disabledCmdTypes.value = disabledCmdTypes;
   }
