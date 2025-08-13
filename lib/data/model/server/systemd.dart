@@ -49,6 +49,18 @@ enum SystemdUnitScope {
   }
 }
 
+enum SystemdScopeFilter {
+  all,
+  system,
+  user;
+
+  String get displayName => switch (this) {
+    all => 'All',
+    system => 'System',
+    user => 'User',
+  };
+}
+
 enum SystemdUnitState {
   active,
   inactive,

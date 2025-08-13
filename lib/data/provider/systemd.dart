@@ -16,10 +16,23 @@ final class SystemdProvider {
 
   final isBusy = false.vn;
   final units = <SystemdUnit>[].vn;
+  final scopeFilter = SystemdScopeFilter.all.vn;
 
   void dispose() {
     isBusy.dispose();
     units.dispose();
+    scopeFilter.dispose();
+  }
+
+  List<SystemdUnit> get filteredUnits {
+    switch (scopeFilter.value) {
+      case SystemdScopeFilter.all:
+        return units.value;
+      case SystemdScopeFilter.system:
+        return units.value.where((unit) => unit.scope == SystemdUnitScope.system).toList();
+      case SystemdScopeFilter.user:
+        return units.value.where((unit) => unit.scope == SystemdUnitScope.user).toList();
+    }
   }
 
   Future<void> getUnits() async {
