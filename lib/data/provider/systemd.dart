@@ -80,8 +80,11 @@ done
     final units = result.split(ScriptConstants.separator);
 
     final parsedUnits = <SystemdUnit>[];
-    for (final unit in units.skipWhile((e) => e.trim().isEmpty)) {
-      final parts = unit.split('\n').skipWhile((e) => e.trim().isEmpty);
+    for (final unit in units.where((e) => e.trim().isNotEmpty)) {
+      final parts = unit
+          .split('\n')
+          .where((e) => e.trim().isNotEmpty)
+          .toList();
       if (parts.isEmpty) continue;
       var name = '';
       var type = '';
@@ -89,13 +92,18 @@ done
       String? description;
       for (final part in parts) {
         if (part.startsWith('Id=')) {
-          final val = _getIniVal(part).split('.');
-          name = val.first;
-          type = val.last;
+          final val = _getIniVal(part);
+          if (val == null) continue;
+          // Id=sshd.service
+          final vals = val.split('.');
+          name = vals.first;
+          type = vals.last;
           continue;
         }
         if (part.startsWith('ActiveState=')) {
-          state = _getIniVal(part);
+          final val = _getIniVal(part);
+          if (val == null) continue;
+          state = val;
           continue;
         }
         if (part.startsWith('Description=')) {
@@ -154,8 +162,8 @@ done
     ''';
 }
 
-String _getIniVal(String line) {
+String? _getIniVal(String line) {
   final idx = line.indexOf('=');
-  if (idx < 0) return line;
+  if (idx < 0) return null;
   return line.substring(idx + 1).trim();
 }
