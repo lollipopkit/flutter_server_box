@@ -106,7 +106,7 @@ switch (\$args[0]) {
 
   /// Get Windows status command with command-specific separators
   String _getWindowsStatusCommand({required List<String> disabledCmdTypes}) {
-    final cmdTypes = WindowsStatusCmdType.values.where((e) => !disabledCmdTypes.contains(e.name));
+    final cmdTypes = WindowsStatusCmdType.values.where((e) => !disabledCmdTypes.contains(e.displayName));
     return cmdTypes.map((e) => '${e.divider}${e.cmd}').join('').trimRight(); // Remove trailing divider
   }
 }
@@ -196,10 +196,10 @@ esac''');
   /// Get Unix status command with OS detection
   String _getUnixStatusCommand({required List<String> disabledCmdTypes}) {
     // Generate command lists with command-specific separators, filtering disabled commands
-    final filteredLinuxCmdTypes = StatusCmdType.values.where((e) => !disabledCmdTypes.contains(e.name));
+    final filteredLinuxCmdTypes = StatusCmdType.values.where((e) => !disabledCmdTypes.contains(e.displayName));
     final linuxCommands = filteredLinuxCmdTypes.map((e) => '${e.divider}${e.cmd}').join('').trimRight();
 
-    final filteredBsdCmdTypes = BSDStatusCmdType.values.where((e) => !disabledCmdTypes.contains(e.name));
+    final filteredBsdCmdTypes = BSDStatusCmdType.values.where((e) => !disabledCmdTypes.contains(e.displayName));
     final bsdCommands = filteredBsdCmdTypes.map((e) => '${e.divider}${e.cmd}').join('').trimRight();
 
     return '''

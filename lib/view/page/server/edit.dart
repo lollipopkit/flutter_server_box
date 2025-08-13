@@ -597,21 +597,16 @@ extension on _ServerEditPageState {
   }
 
   void _onTapDisabledCmdTypes() async {
-    final allCmdTypes = <String>{};
-    allCmdTypes.addAll(StatusCmdType.values.map((e) => e.name));
-    allCmdTypes.addAll(BSDStatusCmdType.values.map((e) => e.name));
-    allCmdTypes.addAll(WindowsStatusCmdType.values.map((e) => e.name));
+    final allCmdTypes = ShellCmdType.all;
 
     // [TimeSeq] depends on the `time` cmd type, so it should be removed from the list
-    allCmdTypes.remove(StatusCmdType.time.name);
+    allCmdTypes.remove(StatusCmdType.time);
 
-    final selected = await _showCmdTypesDialog(allCmdTypes);
-    if (selected == null) return;
-    _disabledCmdTypes.value = selected;
+    await _showCmdTypesDialog(allCmdTypes);
   }
 
-  Future<Set<String>?> _showCmdTypesDialog(Set<String> allCmdTypes) {
-    return context.showRoundDialog<Set<String>>(
+  Future<void> _showCmdTypesDialog(Set<ShellCmdType> allCmdTypes) {
+    return context.showRoundDialog(
       title: '${libL10n.disabled} ${l10n.cmd}',
       child: SizedBox(
         width: 270,
@@ -622,16 +617,30 @@ extension on _ServerEditPageState {
             itemBuilder: (context, index) {
               final cmdType = allCmdTypes.elementAtOrNull(index);
               if (cmdType == null) return UIs.placeholder;
-              return CheckboxListTile(
-                title: Text(cmdType),
-                value: disabled.contains(cmdType),
-                onChanged: (value) {
-                  if (value == null) return;
-                  if (value) {
-                    _disabledCmdTypes.value.add(cmdType);
+              final display = cmdType.displayName;
+              return ListTile(
+                leading: Icon(cmdType.sysType.icon, size: 20),
+                title: Text(cmdType.name, style: const TextStyle(fontSize: 16)),
+                trailing: Checkbox(
+                  value: disabled.contains(display),
+                  onChanged: (value) {
+                    if (value == null) return;
+                    if (value) {
+                      _disabledCmdTypes.value.add(display);
+                    } else {
+                      _disabledCmdTypes.value.remove(display);
+                    }
+                    _disabledCmdTypes.notify();
+                  },
+                ),
+                onTap: () {
+                  final isDisabled = disabled.contains(display);
+                  if (isDisabled) {
+                    _disabledCmdTypes.value.remove(display);
                   } else {
-                    _disabledCmdTypes.value.remove(cmdType);
+                    _disabledCmdTypes.value.add(display);
                   }
+                  _disabledCmdTypes.notify();
                 },
               );
             },
@@ -764,6 +773,10 @@ extension on _ServerEditPageState {
     _scriptDirCtrl.text = spi.custom?.scriptDir ?? '';
 
     _systemType.value = spi.customSystemType;
-    _disabledCmdTypes.value = spi.disabledCmdTypes?.toSet() ?? {};
+
+    final disabledCmdTypes = spi.disabledCmdTypes?.toSet() ?? {};
+    final allAvailableCmdTypes = ShellCmdType.all.map((e) => e.displayName);
+    disabledCmdTypes.removeWhere((e) => !allAvailableCmdTypes.contains(e));
+    _disabledCmdTypes.value = disabledCmdTypes;
   }
 }
