@@ -5,7 +5,7 @@ final class _IntroPage extends StatelessWidget {
 
   const _IntroPage(this.pages);
 
-  static const _builders = {1: _buildAppSettings};
+  static const _builders = {1: _buildAppSettings, 2: _buildBackupPasswordMigration};
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +33,43 @@ final class _IntroPage extends StatelessWidget {
         SizedBox(height: padTop),
         IntroPage.title(text: l10n.init, big: true),
         SizedBox(height: padTop),
+        // Prompt to set backup password after migration or on first launch
+        ListTile(
+          leading: const Icon(Icons.lock),
+          title: Text(l10n.backupPassword),
+          subtitle: Text(l10n.backupPasswordTip, style: UIs.textGrey),
+          trailing: const Icon(Icons.keyboard_arrow_right),
+          onTap: () async {
+            final currentPwd = await SecureStoreProps.bakPwd.read();
+            final controller = TextEditingController(text: currentPwd ?? '');
+            final result = await ctx.showRoundDialog<bool>(
+              title: l10n.backupPassword,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(l10n.backupPasswordTip, style: UIs.textGrey),
+                  UIs.height13,
+                  Input(
+                    label: l10n.backupPassword,
+                    controller: controller,
+                    obscureText: true,
+                    onSubmitted: (_) => ctx.pop(true),
+                  ),
+                ],
+              ),
+              actions: Btnx.oks,
+            );
+            if (result == true) {
+              final pwd = controller.text.trim();
+              if (pwd.isEmpty) {
+                ctx.showSnackBar(libL10n.empty);
+                return;
+              }
+              await SecureStoreProps.bakPwd.write(pwd);
+              ctx.showSnackBar(l10n.backupPasswordSet);
+            }
+          },
+        ).cardx,
         ListTile(
           leading: const Icon(IonIcons.language),
           title: Text(libL10n.language),
@@ -76,9 +113,86 @@ final class _IntroPage extends StatelessWidget {
     );
   }
 
-  static List<IntroPageBuilder> get builders {
+  static Widget _buildBackupPasswordMigration(BuildContext ctx, double padTop) {
+    return ListView(
+      padding: _introListPad,
+      children: [
+        SizedBox(height: padTop),
+        IntroPage.title(text: l10n.backupPassword, big: true),
+        SizedBox(height: padTop * 0.5),
+        Text(
+          '${l10n.backupTip}\n\n${l10n.backupPasswordTip}',
+          style: const TextStyle(fontSize: 16),
+          textAlign: TextAlign.center,
+        ),
+        SizedBox(height: padTop * 0.5),
+        ListTile(
+          leading: const Icon(Icons.lock, color: Colors.orange),
+          title: Text(l10n.backupPassword),
+          subtitle: Text(l10n.backupPasswordTip, style: UIs.textGrey),
+          trailing: const Icon(Icons.keyboard_arrow_right),
+          onTap: () async {
+            final controller = TextEditingController();
+            final result = await ctx.showRoundDialog<bool>(
+              title: l10n.backupPassword,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(l10n.backupPasswordTip, style: UIs.textGrey),
+                  UIs.height13,
+                  Input(
+                    label: l10n.backupPassword,
+                    controller: controller,
+                    obscureText: true,
+                    onSubmitted: (_) => ctx.pop(true),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(onPressed: () => ctx.pop(false), child: Text(libL10n.cancel)),
+                TextButton(onPressed: () => ctx.pop(true), child: Text(libL10n.ok)),
+              ],
+            );
+            if (result == true) {
+              final pwd = controller.text.trim();
+              if (pwd.isNotEmpty) {
+                await SecureStoreProps.bakPwd.write(pwd);
+                ctx.showSnackBar(l10n.backupPasswordSet);
+              }
+            }
+          },
+        ).cardx,
+        SizedBox(height: padTop),
+        Text(
+          'This step is recommended for secure backup functionality.',
+          style: UIs.textGrey,
+          textAlign: TextAlign.center,
+        ),
+        UIs.height77,
+      ],
+    );
+  }
+
+  static Future<List<IntroPageBuilder>> get builders async {
     final storedVer = _setting.introVer.fetch();
-    return _builders.entries.where((e) => e.key > storedVer).map((e) => e.value).toList();
+    final lastVer = _setting.lastVer.fetch();
+
+    // If user is upgrading from older version and doesn't have backup password set,
+    // show the backup password migration page
+    final hasBackupPwd = (await SecureStoreProps.bakPwd.read())?.isNotEmpty == true;
+    final isUpgrading = lastVer > 0 && storedVer < 2; // lastVer > 0 means not first install
+
+    final builders = _builders.entries
+        .where((e) {
+          if (e.key == 2 && (!isUpgrading || hasBackupPwd)) {
+            return false; // Skip backup password migration if not upgrading or already has password
+          }
+          return e.key > storedVer;
+        })
+        .map((e) => e.value)
+        .toList();
+
+    return builders;
   }
 
   static final _setting = Stores.setting;

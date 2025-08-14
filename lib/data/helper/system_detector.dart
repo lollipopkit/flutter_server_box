@@ -6,17 +6,14 @@ import 'package:server_box/data/model/server/system.dart';
 /// Helper class for detecting remote system types
 class SystemDetector {
   /// Detects the system type of a remote server
-  /// 
+  ///
   /// First checks if a custom system type is configured in [spi].
   /// If not, attempts to detect the system by running commands:
   /// 1. 'ver' command to detect Windows
   /// 2. 'uname -a' command to detect Linux/BSD/Darwin
-  /// 
+  ///
   /// Returns [SystemType.linux] as default if detection fails.
-  static Future<SystemType> detect(
-    SSHClient client,
-    Spi spi,
-  ) async {
+  static Future<SystemType> detect(SSHClient client, Spi spi) async {
     // First, check if custom system type is defined
     SystemType? detectedSystemType = spi.customSystemType;
     if (detectedSystemType != null) {

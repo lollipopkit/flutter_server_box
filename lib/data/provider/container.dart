@@ -298,7 +298,7 @@ enum ContainerCmdType {
         .map((e) => e.exec(type, sudo: sudo, includeStats: includeStats))
         .join('\necho ${ScriptConstants.separator}\n');
   }
-  
+
   /// Find out the required segment from [segments]
   String find(List<String> segments) {
     return segments[index];

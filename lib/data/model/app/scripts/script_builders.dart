@@ -196,10 +196,14 @@ esac''');
   /// Get Unix status command with OS detection
   String _getUnixStatusCommand({required List<String> disabledCmdTypes}) {
     // Generate command lists with command-specific separators, filtering disabled commands
-    final filteredLinuxCmdTypes = StatusCmdType.values.where((e) => !disabledCmdTypes.contains(e.displayName));
+    final filteredLinuxCmdTypes = StatusCmdType.values.where(
+      (e) => !disabledCmdTypes.contains(e.displayName),
+    );
     final linuxCommands = filteredLinuxCmdTypes.map((e) => '${e.divider}${e.cmd}').join('').trimRight();
 
-    final filteredBsdCmdTypes = BSDStatusCmdType.values.where((e) => !disabledCmdTypes.contains(e.displayName));
+    final filteredBsdCmdTypes = BSDStatusCmdType.values.where(
+      (e) => !disabledCmdTypes.contains(e.displayName),
+    );
     final bsdCommands = filteredBsdCmdTypes.map((e) => '${e.divider}${e.cmd}').join('').trimRight();
 
     return '''

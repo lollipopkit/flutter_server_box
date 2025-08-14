@@ -12,12 +12,28 @@ final class BakSyncer extends SyncIface {
   const BakSyncer._() : super();
 
   @override
-  Future<void> saveToFile() => BackupV2.backup();
+  Future<void> saveToFile() async {
+    final pwd = await SecureStoreProps.bakPwd.read();
+    if (pwd == null || pwd.isEmpty) {
+      // Enforce password for non-clipboard backups
+      throw Exception('Backup password not set');
+    }
+    await BackupV2.backup(null, pwd);
+  }
 
   @override
   Future<Mergeable> fromFile(String path) async {
     final content = await File(path).readAsString();
-    return MergeableUtils.fromJsonString(content).$1;
+    final pwd = await SecureStoreProps.bakPwd.read();
+    try {
+      if (Cryptor.isEncrypted(content)) {
+        return MergeableUtils.fromJsonString(content, pwd).$1;
+      }
+      return MergeableUtils.fromJsonString(content).$1;
+    } catch (_) {
+      // Fallback: try without password if detection failed
+      return MergeableUtils.fromJsonString(content).$1;
+    }
   }
 
   @override
@@ -27,6 +43,9 @@ final class BakSyncer extends SyncIface {
 
     final webdavEnabled = PrefProps.webdavSync.get();
     if (webdavEnabled) return Webdav.shared;
+
+    final gistEnabled = PrefProps.gistSync.get();
+    if (gistEnabled) return GistRs.shared;
 
     return null;
   }

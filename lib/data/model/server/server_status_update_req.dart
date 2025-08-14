@@ -45,7 +45,8 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
 Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   final parsedOutput = req.parsedOutput;
 
-  final time = int.tryParse(StatusCmdType.time.findInMap(parsedOutput)) ??
+  final time =
+      int.tryParse(StatusCmdType.time.findInMap(parsedOutput)) ??
       DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
   try {
@@ -259,9 +260,7 @@ String? _parseUpTime(String raw) {
       if (splitedComma.length >= 2) {
         final timePart = splitedComma[1].trim();
         // Check if it's in HH:MM format
-        if (timePart.contains(':') &&
-            !timePart.contains('user') &&
-            !timePart.contains('load')) {
+        if (timePart.contains(':') && !timePart.contains('user') && !timePart.contains('load')) {
           return '$firstPart, $timePart';
         }
       }
@@ -269,9 +268,7 @@ String? _parseUpTime(String raw) {
     }
 
     // Case 2: "2:34" (hours:minutes) - already in good format
-    if (firstPart.contains(':') &&
-        !firstPart.contains('user') &&
-        !firstPart.contains('load')) {
+    if (firstPart.contains(':') && !firstPart.contains('user') && !firstPart.contains('load')) {
       return firstPart;
     }
 
@@ -303,7 +300,8 @@ String? _parseHostName(String raw) {
 // Windows status parsing implementation
 Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
   final parsedOutput = req.parsedOutput;
-  final time = int.tryParse(WindowsStatusCmdType.time.findInMap(parsedOutput)) ??
+  final time =
+      int.tryParse(WindowsStatusCmdType.time.findInMap(parsedOutput)) ??
       DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
   // Parse all different resource types using helper methods
@@ -372,10 +370,7 @@ void _parseWindowsCpuData(ServerStatusUpdateReq req, Map<String, String> parsedO
   try {
     // Windows CPU parsing - JSON format from PowerShell
     final cpuRaw = WindowsStatusCmdType.cpu.findInMap(parsedOutput);
-    if (cpuRaw.isNotEmpty &&
-        cpuRaw != 'null' &&
-        !cpuRaw.contains('error') &&
-        !cpuRaw.contains('Exception')) {
+    if (cpuRaw.isNotEmpty && cpuRaw != 'null' && !cpuRaw.contains('error') && !cpuRaw.contains('Exception')) {
       final cpus = WindowsParser.parseCpu(cpuRaw, req.ss);
       if (cpus.isNotEmpty) {
         req.ss.cpu.update(cpus);
@@ -397,10 +392,7 @@ void _parseWindowsCpuData(ServerStatusUpdateReq req, Map<String, String> parsedO
 void _parseWindowsMemoryData(ServerStatusUpdateReq req, Map<String, String> parsedOutput) {
   try {
     final memRaw = WindowsStatusCmdType.mem.findInMap(parsedOutput);
-    if (memRaw.isNotEmpty &&
-        memRaw != 'null' &&
-        !memRaw.contains('error') &&
-        !memRaw.contains('Exception')) {
+    if (memRaw.isNotEmpty && memRaw != 'null' && !memRaw.contains('error') && !memRaw.contains('Exception')) {
       final memory = WindowsParser.parseMemory(memRaw);
       if (memory != null) {
         req.ss.mem = memory;
@@ -506,7 +498,6 @@ void _parseWindowsGpuData(ServerStatusUpdateReq req, Map<String, String> parsedO
   }
 }
 
-
 List<Battery> _parseWindowsBatteries(String raw) {
   try {
     final dynamic jsonData = json.decode(raw);
@@ -515,24 +506,19 @@ List<Battery> _parseWindowsBatteries(String raw) {
     final batteryList = jsonData is List ? jsonData : [jsonData];
 
     for (final batteryData in batteryList) {
-      final chargeRemaining =
-          batteryData['EstimatedChargeRemaining'] as int? ?? 0;
+      final chargeRemaining = batteryData['EstimatedChargeRemaining'] as int? ?? 0;
       final batteryStatus = batteryData['BatteryStatus'] as int? ?? 0;
 
-      // Windows battery status: 1=Other, 2=Unknown, 3=Full, 4=Low, 
-      // 5=Critical, 6=Charging, 7=ChargingAndLow, 8=ChargingAndCritical, 
+      // Windows battery status: 1=Other, 2=Unknown, 3=Full, 4=Low,
+      // 5=Critical, 6=Charging, 7=ChargingAndLow, 8=ChargingAndCritical,
       // 9=Undefined, 10=PartiallyCharged
-      final isCharging = batteryStatus == 6 || 
-          batteryStatus == 7 || 
-          batteryStatus == 8;
+      final isCharging = batteryStatus == 6 || batteryStatus == 7 || batteryStatus == 8;
 
       batteries.add(
         Battery(
           name: 'Battery',
           percent: chargeRemaining,
-          status: isCharging
-              ? BatteryStatus.charging
-              : BatteryStatus.discharging,
+          status: isCharging ? BatteryStatus.charging : BatteryStatus.discharging,
         ),
       );
     }
@@ -579,12 +565,7 @@ List<NetSpeedPart> _parseWindowsNetwork(String raw, int currentTime) {
           final tx = interfaceTx[interfaceName] ?? 0;
 
           netParts.add(
-            NetSpeedPart(
-              interfaceName,
-              BigInt.from(rx.toInt()),
-              BigInt.from(tx.toInt()),
-              currentTime,
-            ),
+            NetSpeedPart(interfaceName, BigInt.from(rx.toInt()), BigInt.from(tx.toInt()), currentTime),
           );
         }
       }
@@ -597,7 +578,7 @@ List<NetSpeedPart> _parseWindowsNetwork(String raw, int currentTime) {
 }
 
 String _extractInterfaceName(String path) {
-  // Extract interface name from path like 
+  // Extract interface name from path like
   // "\\Computer\\NetworkInterface(Interface Name)\\..."
   final match = RegExp(r'\\NetworkInterface\(([^)]+)\)\\').firstMatch(path);
   return match?.group(1) ?? '';
@@ -632,7 +613,7 @@ List<DiskIOPiece> _parseWindowsDiskIO(String raw, int currentTime) {
           }
         }
 
-        // Create DiskIOPiece for each disk - convert bytes to sectors 
+        // Create DiskIOPiece for each disk - convert bytes to sectors
         // (assuming 512 bytes per sector)
         for (final diskName in diskReads.keys) {
           final readBytes = diskReads[diskName] ?? 0;
@@ -659,7 +640,7 @@ List<DiskIOPiece> _parseWindowsDiskIO(String raw, int currentTime) {
 }
 
 String _extractDiskName(String path) {
-  // Extract disk name from path like 
+  // Extract disk name from path like
   // "\\Computer\\PhysicalDisk(Disk Name)\\..."
   final match = RegExp(r'\\PhysicalDisk\(([^)]+)\)\\').firstMatch(path);
   return match?.group(1) ?? '';
@@ -668,9 +649,7 @@ String _extractDiskName(String path) {
 void _parseWindowsTemperatures(Temperatures temps, String raw) {
   try {
     // Handle error output
-    if (raw.contains('Error') ||
-        raw.contains('Exception') ||
-        raw.contains('The term')) {
+    if (raw.contains('Error') || raw.contains('Exception') || raw.contains('The term')) {
       return;
     }
 
@@ -689,7 +668,7 @@ void _parseWindowsTemperatures(Temperatures temps, String raw) {
       if (temperature != null) {
         // Convert to the format expected by the existing parse method
         typeLines.add('/sys/class/thermal/thermal_zone$i/$typeName');
-        // Convert to millicelsius (multiply by 1000) 
+        // Convert to millicelsius (multiply by 1000)
         // as expected by Linux parsing
         valueLines.add((temperature * 1000).round().toString());
       }

@@ -19,15 +19,11 @@ class Memory {
   static Memory parse(String raw) {
     final items = raw.split('\n').map((e) => memItemReg.firstMatch(e)).toList();
 
-    final total = int.tryParse(
-            items.firstWhereOrNull((e) => e?.group(1) == 'MemTotal:')
-                ?.group(2) ?? '1') ?? 1;
-    final free = int.tryParse(
-            items.firstWhereOrNull((e) => e?.group(1) == 'MemFree:')
-                ?.group(2) ?? '0') ?? 0;
-    final available = int.tryParse(
-            items.firstWhereOrNull((e) => e?.group(1) == 'MemAvailable:')
-                ?.group(2) ?? '0') ?? 0;
+    final total =
+        int.tryParse(items.firstWhereOrNull((e) => e?.group(1) == 'MemTotal:')?.group(2) ?? '1') ?? 1;
+    final free = int.tryParse(items.firstWhereOrNull((e) => e?.group(1) == 'MemFree:')?.group(2) ?? '0') ?? 0;
+    final available =
+        int.tryParse(items.firstWhereOrNull((e) => e?.group(1) == 'MemAvailable:')?.group(2) ?? '0') ?? 0;
 
     return Memory(total: total, free: free, avail: available);
   }
@@ -36,14 +32,13 @@ class Memory {
 final memItemReg = RegExp(r'([A-Z].+:)\s+([0-9]+) kB');
 
 /// Parse BSD/macOS memory from top output
-/// 
+///
 /// Supports formats like:
 /// - macOS: "PhysMem: 32G used (1536M wired), 64G unused."
 /// - FreeBSD: "Mem: 456M Active, 2918M Inact, 1127M Wired, 187M Cache, 829M Buf, 3535M Free"
 Memory parseBsdMemory(String raw) {
   // Try macOS format first: "PhysMem: 32G used (1536M wired), 64G unused."
-  final macMemReg = RegExp(
-      r'PhysMem:\s*([\d.]+)([KMGT])\s*used.*?,\s*([\d.]+)([KMGT])\s*unused');
+  final macMemReg = RegExp(r'PhysMem:\s*([\d.]+)([KMGT])\s*used.*?,\s*([\d.]+)([KMGT])\s*unused');
   final macMatch = macMemReg.firstMatch(raw);
 
   if (macMatch != null) {
@@ -58,8 +53,7 @@ Memory parseBsdMemory(String raw) {
   }
 
   // Try FreeBSD format: "Mem: 456M Active, 2918M Inact, 1127M Wired, 187M Cache, 829M Buf, 3535M Free"
-  final freeBsdReg = RegExp(
-      r'(\d+)([KMGT])\s+(Active|Inact|Wired|Cache|Buf|Free)', caseSensitive: false);
+  final freeBsdReg = RegExp(r'(\d+)([KMGT])\s+(Active|Inact|Wired|Cache|Buf|Free)', caseSensitive: false);
   final matches = freeBsdReg.allMatches(raw);
 
   if (matches.isNotEmpty) {
@@ -72,7 +66,11 @@ Memory parseBsdMemory(String raw) {
       final kb = _convertToKB(amount, unit);
 
       // Only sum known keywords
-      if (keyword == 'active' || keyword == 'inact' || keyword == 'wired' || keyword == 'cache' || keyword == 'buf') {
+      if (keyword == 'active' ||
+          keyword == 'inact' ||
+          keyword == 'wired' ||
+          keyword == 'cache' ||
+          keyword == 'buf') {
         usedKB += kb;
       } else if (keyword == 'free') {
         freeKB += kb;
@@ -121,15 +119,12 @@ class Swap {
   static Swap parse(String raw) {
     final items = raw.split('\n').map((e) => memItemReg.firstMatch(e)).toList();
 
-    final total = int.tryParse(
-            items.firstWhereOrNull((e) => e?.group(1) == 'SwapTotal:')
-                ?.group(2) ?? '1') ?? 0;
-    final free = int.tryParse(
-            items.firstWhereOrNull((e) => e?.group(1) == 'SwapFree:')
-                ?.group(2) ?? '1') ?? 0;
-    final cached = int.tryParse(
-            items.firstWhereOrNull((e) => e?.group(1) == 'SwapCached:')
-                ?.group(2) ?? '0') ?? 0;
+    final total =
+        int.tryParse(items.firstWhereOrNull((e) => e?.group(1) == 'SwapTotal:')?.group(2) ?? '1') ?? 0;
+    final free =
+        int.tryParse(items.firstWhereOrNull((e) => e?.group(1) == 'SwapFree:')?.group(2) ?? '1') ?? 0;
+    final cached =
+        int.tryParse(items.firstWhereOrNull((e) => e?.group(1) == 'SwapCached:')?.group(2) ?? '0') ?? 0;
 
     return Swap(total: total, free: free, cached: cached);
   }

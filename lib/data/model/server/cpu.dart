@@ -142,16 +142,7 @@ class SingleCpuCore extends TimeSeqIface<SingleCpuCore> {
   final int irq;
   final int softirq;
 
-  SingleCpuCore(
-    this.id,
-    this.user,
-    this.sys,
-    this.nice,
-    this.idle,
-    this.iowait,
-    this.irq,
-    this.softirq,
-  );
+  SingleCpuCore(this.id, this.user, this.sys, this.nice, this.idle, this.iowait, this.irq, this.softirq);
 
   int get total => user + sys + nice + idle + iowait + irq + softirq;
 
@@ -200,11 +191,11 @@ final class CpuBrand {
 }
 
 final _bsdCpuPercentReg = RegExp(r'(\d+\.\d+)%');
-final _macCpuPercentReg = RegExp(
-    r'CPU usage: ([\d.]+)% user, ([\d.]+)% sys, ([\d.]+)% idle');
+final _macCpuPercentReg = RegExp(r'CPU usage: ([\d.]+)% user, ([\d.]+)% sys, ([\d.]+)% idle');
 final _freebsdCpuPercentReg = RegExp(
-    r'CPU: ([\d.]+)% user, ([\d.]+)% nice, ([\d.]+)% system, '
-    r'([\d.]+)% interrupt, ([\d.]+)% idle');
+  r'CPU: ([\d.]+)% user, ([\d.]+)% nice, ([\d.]+)% system, '
+  r'([\d.]+)% interrupt, ([\d.]+)% idle',
+);
 
 /// Parse CPU status on BSD system with support for different BSD variants
 ///
@@ -214,14 +205,14 @@ final _freebsdCpuPercentReg = RegExp(
 /// - Generic BSD: fallback to percentage extraction
 Cpus parseBsdCpu(String raw) {
   final init = InitStatus.cpus;
-  
+
   // Try macOS format first
   final macMatch = _macCpuPercentReg.firstMatch(raw);
   if (macMatch != null) {
     final userPercent = double.parse(macMatch.group(1)!).toInt();
     final sysPercent = double.parse(macMatch.group(2)!).toInt();
     final idlePercent = double.parse(macMatch.group(3)!).toInt();
-    
+
     init.add([
       SingleCpuCore(
         'cpu0',
@@ -236,7 +227,7 @@ Cpus parseBsdCpu(String raw) {
     ]);
     return init;
   }
-  
+
   // Try FreeBSD format
   final freebsdMatch = _freebsdCpuPercentReg.firstMatch(raw);
   if (freebsdMatch != null) {
@@ -245,7 +236,7 @@ Cpus parseBsdCpu(String raw) {
     final sysPercent = double.parse(freebsdMatch.group(3)!).toInt();
     final irqPercent = double.parse(freebsdMatch.group(4)!).toInt();
     final idlePercent = double.parse(freebsdMatch.group(5)!).toInt();
-    
+
     init.add([
       SingleCpuCore(
         'cpu0',
@@ -260,20 +251,28 @@ Cpus parseBsdCpu(String raw) {
     ]);
     return init;
   }
-  
+
   // Fallback to generic percentage extraction
   final percents = _bsdCpuPercentReg
       .allMatches(raw)
-      .map((e) => double.parse(e.group(1) ?? '0'))
+      .map((e) {
+        final valueStr = e.group(1) ?? '0';
+        final value = double.tryParse(valueStr);
+        if (value == null) {
+          dprint('Warning: Failed to parse CPU percentage from "$valueStr"');
+          return 0.0;
+        }
+        return value;
+      })
       .toList();
-  
+
   if (percents.length >= 3) {
     // Validate that percentages are reasonable (0-100 range)
     final validPercents = percents.where((p) => p >= 0 && p <= 100).toList();
     if (validPercents.length != percents.length) {
       Loggers.app.warning('BSD CPU fallback parsing found invalid percentages in: $raw');
     }
-    
+
     init.add([
       SingleCpuCore(
         'cpu0',
@@ -288,10 +287,12 @@ Cpus parseBsdCpu(String raw) {
     ]);
     return init;
   } else if (percents.isNotEmpty) {
-    Loggers.app.warning('BSD CPU fallback parsing found ${percents.length} percentages (expected at least 3) in: $raw');
+    Loggers.app.warning(
+      'BSD CPU fallback parsing found ${percents.length} percentages (expected at least 3) in: $raw',
+    );
   } else {
     Loggers.app.warning('BSD CPU fallback parsing found no percentages in: $raw');
   }
-  
+
   return init;
 }
