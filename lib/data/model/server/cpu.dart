@@ -253,7 +253,18 @@ Cpus parseBsdCpu(String raw) {
   }
 
   // Fallback to generic percentage extraction
-  final percents = _bsdCpuPercentReg.allMatches(raw).map((e) => double.parse(e.group(1) ?? '0')).toList();
+  final percents = _bsdCpuPercentReg
+      .allMatches(raw)
+      .map((e) {
+        final valueStr = e.group(1) ?? '0';
+        final value = double.tryParse(valueStr);
+        if (value == null) {
+          dprint('Warning: Failed to parse CPU percentage from "$valueStr"');
+          return 0.0;
+        }
+        return value;
+      })
+      .toList();
 
   if (percents.length >= 3) {
     // Validate that percentages are reasonable (0-100 range)

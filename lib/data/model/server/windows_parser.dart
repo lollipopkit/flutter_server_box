@@ -220,7 +220,9 @@ class WindowsParser {
         final sizeKB = size ~/ BigInt.from(1024);
         final freeKB = freeSpace ~/ BigInt.from(1024);
         final usedKB = sizeKB - freeKB;
-        final usedPercent = sizeKB > BigInt.zero ? ((usedKB * BigInt.from(100)) ~/ sizeKB).toInt() : 0;
+        final usedPercent = sizeKB > BigInt.zero
+            ? ((usedKB * BigInt.from(100)) ~/ sizeKB).toInt().clamp(0, 100)
+            : 0;
 
         disks.add(
           Disk(
