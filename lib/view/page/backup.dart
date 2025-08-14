@@ -50,6 +50,7 @@ final class _BackupPageState extends State<BackupPage> with AutomaticKeepAliveCl
         [
           CenterGreyTitle(libL10n.sync),
           _buildTip,
+          _buildBakPwd,
           if (isMacOS || isIOS) _buildIcloud,
           _buildWebdav,
           _buildGist,
@@ -59,6 +60,82 @@ final class _BackupPageState extends State<BackupPage> with AutomaticKeepAliveCl
         [CenterGreyTitle(libL10n.import), _buildBulkImportServers, _buildImportSnippet],
       ],
     );
+  }
+
+  Widget get _buildBakPwd {
+    return FutureBuilder<String?>(
+      future: SecureStoreProps.bakPwd.read(),
+      builder: (context, snapshot) {
+        final hasPwd = snapshot.data?.isNotEmpty == true;
+        return CardX(
+          child: ListTile(
+            leading: const Icon(Icons.lock),
+            title: Text(l10n.backupPassword),
+            subtitle: Text(hasPwd ? l10n.backupEncrypted : l10n.backupNotEncrypted, style: UIs.textGrey),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton(onPressed: () async => _onTapSetBakPwd(context), child: Text(libL10n.setting)),
+                if (hasPwd) ...[
+                  UIs.width7,
+                  TextButton(
+                    onPressed: () async {
+                      await SecureStoreProps.bakPwd.write(null);
+                      context.showSnackBar(l10n.backupPasswordRemoved);
+                      setState(() {});
+                    },
+                    child: Text(libL10n.delete),
+                  ),
+                ],
+              ],
+            ),
+            onTap: () async => _onTapSetBakPwd(context),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _onTapSetBakPwd(BuildContext context) async {
+    final currentPwd = await SecureStoreProps.bakPwd.read();
+    final controller = TextEditingController(text: currentPwd ?? '');
+    final node = FocusNode();
+    final result = await context.showRoundDialog<bool>(
+      title: l10n.backupPassword,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(l10n.backupPasswordTip, style: UIs.textGrey),
+          UIs.height13,
+          Input(
+            label: l10n.backupPassword,
+            controller: controller,
+            node: node,
+            obscureText: true,
+            onSubmitted: (_) => context.pop(true),
+          ),
+        ],
+      ),
+      actions: Btnx.oks,
+    );
+    if (result == true) {
+      final pwd = controller.text.trim();
+      if (pwd.isEmpty) {
+        context.showSnackBar(libL10n.empty);
+        return;
+      }
+      await SecureStoreProps.bakPwd.write(pwd);
+      context.showSnackBar(l10n.backupPasswordSet);
+      setState(() {});
+    }
+  }
+
+  Future<bool> _ensureBakPwd(BuildContext context) async {
+    final saved = await SecureStoreProps.bakPwd.read();
+    if (saved != null && saved.isNotEmpty) return true;
+    await _onTapSetBakPwd(context);
+    final after = await SecureStoreProps.bakPwd.read();
+    return after != null && after.isNotEmpty;
   }
 
   Widget get _buildTip {
@@ -106,6 +183,10 @@ final class _BackupPageState extends State<BackupPage> with AutomaticKeepAliveCl
               return false;
             }
             if (p0) {
+              final ok = await _ensureBakPwd(context);
+              if (!ok) return false;
+            }
+            if (p0) {
               await bakSync.sync(rs: icloud);
             }
             return true;
@@ -135,6 +216,10 @@ final class _BackupPageState extends State<BackupPage> with AutomaticKeepAliveCl
                 if (p0 && PrefProps.icloudSync.get()) {
                   context.showSnackBar(l10n.autoBackupConflict);
                   return false;
+                }
+                if (p0) {
+                  final ok = await _ensureBakPwd(context);
+                  if (!ok) return false;
                 }
                 if (p0) {
                   final url = PrefProps.webdavUrl.get();
@@ -201,6 +286,10 @@ final class _BackupPageState extends State<BackupPage> with AutomaticKeepAliveCl
                 if (p0 && (PrefProps.icloudSync.get() || PrefProps.webdavSync.get())) {
                   context.showSnackBar(l10n.autoBackupConflict);
                   return false;
+                }
+                if (p0) {
+                  final ok = await _ensureBakPwd(context);
+                  if (!ok) return false;
                 }
                 if (p0) {
                   final token = PrefProps.githubToken.get();
@@ -349,7 +438,9 @@ final class _BackupPageState extends State<BackupPage> with AutomaticKeepAliveCl
     final date = DateTime.now().ymdhms(ymdSep: '-', hmsSep: '-', sep: '-');
     final bakName = '$date-${Miscs.bakFileName}';
     try {
-      final savedPassword = await Stores.setting.backupasswd.read();
+      final ok = await _ensureBakPwd(context);
+      if (!ok) return;
+      final savedPassword = await SecureStoreProps.bakPwd.read();
       await BackupV2.backup(bakName, savedPassword);
       await Webdav.shared.upload(relativePath: bakName);
       Loggers.app.info('Upload webdav backup success');
@@ -386,7 +477,9 @@ final class _BackupPageState extends State<BackupPage> with AutomaticKeepAliveCl
     final date = DateTime.now().ymdhms(ymdSep: '-', hmsSep: '-', sep: '-');
     final bakName = '$date-${Miscs.bakFileName}';
     try {
-      final savedPassword = await Stores.setting.backupasswd.read();
+      final ok = await _ensureBakPwd(context);
+      if (!ok) return;
+      final savedPassword = await SecureStoreProps.bakPwd.read();
       await BackupV2.backup(bakName, savedPassword);
       await GistRs.shared.upload(relativePath: bakName);
       Loggers.app.info('Upload gist backup success');
@@ -407,12 +500,7 @@ final class _BackupPageState extends State<BackupPage> with AutomaticKeepAliveCl
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Input(
-            label: 'Token',
-            controller: tokenCtrl,
-            suggestion: false,
-            node: nodeToken,
-          ),
+          Input(label: 'Token', controller: tokenCtrl, suggestion: false, node: nodeToken),
           Input(
             label: 'Gist ID (optional)',
             controller: gistIdCtrl,

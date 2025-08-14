@@ -5,20 +5,35 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/bak/backup_source.dart';
 import 'package:server_box/data/model/app/bak/utils.dart';
-import 'package:server_box/data/res/store.dart';
 
 /// Service class for handling backup operations
 class BackupService {
   /// Perform backup operation with the given source
   static Future<void> backup(BuildContext context, BackupSource source) async {
-    final password = await _getBackupPassword(context);
-    if (password == null) return;
-
     try {
+      String? password;
+
+      if (source is ClipboardBackupSource) {
+        // Clipboard backup: allow optional password
+        password = await _getClipboardPassword(context);
+        if (password == null) return; // canceled
+      } else {
+        // All other backups require pre-set bakPwd (SecureStore)
+        final saved = await SecureStoreProps.bakPwd.read();
+        if (saved == null || saved.isEmpty) {
+          // Prompt to set before proceeding
+          password = await _showPasswordDialog(context, hint: l10n.backupPasswordTip);
+          if (password == null || password.isEmpty) return; // Not set
+          await SecureStoreProps.bakPwd.write(password);
+          context.showSnackBar(l10n.backupPasswordSet);
+        } else {
+          password = saved;
+        }
+      }
+
       final path = await BackupV2.backup(null, password.isEmpty ? null : password);
       await source.saveContent(path);
 
-      // Show success message for clipboard source
       if (source is ClipboardBackupSource) {
         context.showSnackBar(libL10n.success);
       }
@@ -42,12 +57,12 @@ class BackupService {
   }
 
   /// Handle password dialog for backup operations
-  static Future<String?> _getBackupPassword(BuildContext context) async {
-    final savedPassword = await Stores.setting.backupasswd.read();
+  static Future<String?> _getClipboardPassword(BuildContext context) async {
+    // Use saved bakPwd as default for clipboard flow if exists, but allow empty/custom
+    final savedPassword = await SecureStoreProps.bakPwd.read();
     String? password;
 
     if (savedPassword != null && savedPassword.isNotEmpty) {
-      // Use saved password or ask for custom password
       final useCustom = await context.showRoundDialog<bool>(
         title: l10n.backupPassword,
         child: Text(l10n.backupPasswordTip),
@@ -57,19 +72,15 @@ class BackupService {
           TextButton(onPressed: () => context.pop(true), child: Text(libL10n.custom)),
         ],
       );
-
       if (useCustom == null) return null;
-
       if (useCustom) {
         password = await _showPasswordDialog(context, initial: savedPassword);
       } else {
         password = savedPassword;
       }
     } else {
-      // No saved password, ask if user wants to set one
       password = await _showPasswordDialog(context);
     }
-
     return password;
   }
 
@@ -95,7 +106,7 @@ class BackupService {
     }
 
     // Try with saved password first
-    final savedPassword = await Stores.setting.backupasswd.read();
+    final savedPassword = await SecureStoreProps.bakPwd.read();
     if (savedPassword != null && savedPassword.isNotEmpty) {
       try {
         final (backup, err) = await context.showLoadingDialog(

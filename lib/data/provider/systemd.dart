@@ -81,10 +81,7 @@ done
 
     final parsedUnits = <SystemdUnit>[];
     for (final unit in units.where((e) => e.trim().isNotEmpty)) {
-      final parts = unit
-          .split('\n')
-          .where((e) => e.trim().isNotEmpty)
-          .toList();
+      final parts = unit.split('\n').where((e) => e.trim().isNotEmpty).toList();
       if (parts.isEmpty) continue;
       var name = '';
       var type = '';

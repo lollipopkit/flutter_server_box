@@ -32,14 +32,14 @@ class ScriptConstants {
   /// Parse script output into command-specific map
   static Map<String, String> parseScriptOutput(String raw) {
     final result = <String, String>{};
-    
+
     if (raw.isEmpty) return result;
-    
+
     // Parse line by line to properly handle command-specific separators
     final lines = raw.split('\n');
     String? currentCmd;
     final buffer = StringBuffer();
-    
+
     for (final line in lines) {
       if (line.startsWith('$separator.')) {
         // Save previous command content
@@ -61,12 +61,12 @@ class ScriptConstants {
         buffer.writeln(line);
       }
     }
-    
+
     // Don't forget the last command
     if (currentCmd != null) {
       result[currentCmd] = buffer.toString().trim();
     }
-    
+
     return result;
   }
 

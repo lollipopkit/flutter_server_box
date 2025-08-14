@@ -96,19 +96,24 @@ class MyApp extends StatelessWidget {
       themeMode: themeMode,
       theme: light.fixWindowsFont,
       darkTheme: (tMode < 3 ? dark : dark.toAmoled).fixWindowsFont,
-      home: Builder(
-        builder: (context) {
+      home: FutureBuilder<List<IntroPageBuilder>>(
+        future: _IntroPage.builders,
+        builder: (context, snapshot) {
           context.setLibL10n();
           final appL10n = AppLocalizations.of(context);
           if (appL10n != null) l10n = appL10n;
 
           Widget child;
-          final intros = _IntroPage.builders;
-          if (intros.isNotEmpty) {
-            child = _IntroPage(intros);
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            child = const Scaffold(body: Center(child: CircularProgressIndicator()));
+          } else {
+            final intros = snapshot.data ?? [];
+            if (intros.isNotEmpty) {
+              child = _IntroPage(intros);
+            } else {
+              child = const HomePage();
+            }
           }
-
-          child = const HomePage();
 
           return VirtualWindowFrame(title: BuildData.name, child: child);
         },

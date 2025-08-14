@@ -8,7 +8,7 @@ import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/server.dart';
 
 /// Windows-specific status parsing utilities
-/// 
+///
 /// This module handles parsing of Windows PowerShell command outputs
 /// for server monitoring. It extracts the Windows parsing logic
 /// to improve maintainability and readability.
@@ -36,15 +36,13 @@ class WindowsParser {
   static String? parseUpTime(String raw) {
     try {
       // Clean the input - trim whitespace and get the first non-empty line
-      final cleanedInput = raw.trim().split('\n')
-          .where((line) => line.trim().isNotEmpty)
-          .firstOrNull;
-      
+      final cleanedInput = raw.trim().split('\n').where((line) => line.trim().isNotEmpty).firstOrNull;
+
       if (cleanedInput == null || cleanedInput.isEmpty) {
         Loggers.app.warning('Windows uptime parsing: empty or null input');
         return null;
       }
-      
+
       // Try multiple date formats to handle different Windows locale/version outputs
       final formatters = [
         DateFormat('EEEE, MMMM d, yyyy h:mm:ss a', 'en_US'), // Original format
@@ -56,24 +54,27 @@ class WindowsParser {
         DateFormat('d/M/yyyy h:mm:ss a', 'en_US'), // Short European format
         DateFormat('dd/MM/yyyy h:mm:ss a', 'en_US'), // Short European format with zero padding
       ];
-      
+
       DateTime? dateTime;
       for (final formatter in formatters) {
         dateTime = formatter.tryParseLoose(cleanedInput);
         if (dateTime != null) break;
       }
-      
+
       if (dateTime == null) {
         Loggers.app.warning('Windows uptime parsing: could not parse date format for: $cleanedInput');
         return null;
       }
-      
+
       final now = DateTime.now();
       final uptime = now.difference(dateTime);
-      
+
       // Validate that the uptime is reasonable (not negative, not too far in the future)
-      if (uptime.isNegative || uptime.inDays > 3650) { // More than 10 years seems unreasonable
-        Loggers.app.warning('Windows uptime parsing: unreasonable uptime calculated: ${uptime.inDays} days for date: $cleanedInput');
+      if (uptime.isNegative || uptime.inDays > 3650) {
+        // More than 10 years seems unreasonable
+        Loggers.app.warning(
+          'Windows uptime parsing: unreasonable uptime calculated: ${uptime.inDays} days for date: $cleanedInput',
+        );
         return null;
       }
 
@@ -168,8 +169,8 @@ class WindowsParser {
   }
 
   /// Parse Windows memory information from PowerShell output
-  /// 
-  /// NOTE: Windows Win32_OperatingSystem properties TotalVisibleMemorySize 
+  ///
+  /// NOTE: Windows Win32_OperatingSystem properties TotalVisibleMemorySize
   /// and FreePhysicalMemory are returned in KB units.
   static Memory? parseMemory(String raw) {
     try {
@@ -200,31 +201,26 @@ class WindowsParser {
 
       for (final diskData in diskList) {
         final deviceId = diskData['DeviceID']?.toString() ?? '';
-        final size =
-            BigInt.tryParse(diskData['Size']?.toString() ?? '0') ?? BigInt.zero;
-        final freeSpace =
-            BigInt.tryParse(diskData['FreeSpace']?.toString() ?? '0') ??
-            BigInt.zero;
+        final size = BigInt.tryParse(diskData['Size']?.toString() ?? '0') ?? BigInt.zero;
+        final freeSpace = BigInt.tryParse(diskData['FreeSpace']?.toString() ?? '0') ?? BigInt.zero;
         final fileSystem = diskData['FileSystem']?.toString() ?? '';
 
         // Validate all required fields
-        final hasRequiredFields = deviceId.isNotEmpty &&
-            size != BigInt.zero &&
-            freeSpace != BigInt.zero &&
-            fileSystem.isNotEmpty;
+        final hasRequiredFields =
+            deviceId.isNotEmpty && size != BigInt.zero && freeSpace != BigInt.zero && fileSystem.isNotEmpty;
 
         if (!hasRequiredFields) {
-          Loggers.app.warning('Windows disk parsing: skipping disk with missing required fields. '
-              'DeviceID: $deviceId, Size: $size, FreeSpace: $freeSpace, FileSystem: $fileSystem');
+          Loggers.app.warning(
+            'Windows disk parsing: skipping disk with missing required fields. '
+            'DeviceID: $deviceId, Size: $size, FreeSpace: $freeSpace, FileSystem: $fileSystem',
+          );
           continue;
         }
 
         final sizeKB = size ~/ BigInt.from(1024);
         final freeKB = freeSpace ~/ BigInt.from(1024);
         final usedKB = sizeKB - freeKB;
-        final usedPercent = sizeKB > BigInt.zero
-            ? ((usedKB * BigInt.from(100)) ~/ sizeKB).toInt()
-            : 0;
+        final usedPercent = sizeKB > BigInt.zero ? ((usedKB * BigInt.from(100)) ~/ sizeKB).toInt() : 0;
 
         disks.add(
           Disk(
