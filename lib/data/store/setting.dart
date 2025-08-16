@@ -140,6 +140,9 @@ class SettingStore extends HiveStore {
   /// Only valid on iOS / Android / Windows
   late final useBioAuth = propertyDefault('useBioAuth', false);
 
+  /// Delay to lock the App with BioAuth
+  late final delayBioAuthLock = propertyDefault('delayBioAuthLock', false);
+
   /// The performance of highlight is bad
   late final editorHighlight = propertyDefault('editorHighlight', true);
 

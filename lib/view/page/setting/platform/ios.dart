@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/misc.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/setting/platform/platform_pub.dart';
 import 'package:watch_connectivity/watch_connectivity.dart';
 
 class IosSettingsPage extends StatefulWidget {
@@ -35,6 +36,8 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
           _buildPushToken(),
           _buildAutoUpdateHomeWidget(),
           _buildWatchApp(),
+          PlatformPublicSettings.buildBioAuth(),
+          PlatformPublicSettings.buildBioAuthDelay(),
         ].map((e) => CardX(child: e)).toList(),
       ),
     );
