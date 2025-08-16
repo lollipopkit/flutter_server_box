@@ -2,6 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/setting/platform/platform_pub.dart';
 
 class AndroidSettingsPage extends StatefulWidget {
   const AndroidSettingsPage({super.key});
@@ -28,6 +29,8 @@ class _AndroidSettingsPageState extends State<AndroidSettingsPage> {
           // _buildFgService(),
           _buildBgRun(),
           _buildAndroidWidgetSharedPreference(),
+          PlatformPublicSettings.buildBioAuth(),
+          PlatformPublicSettings.buildBioAuthDelay(),
         ].map((e) => CardX(child: e)).toList(),
       ),
     );
