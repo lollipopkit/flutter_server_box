@@ -6,6 +6,7 @@
     android:minHeight="110dp"
     android:updatePeriodMillis="1800001"
     android:initialLayout="@layout/home_widget"
+    android:configure="tech.lolli.toolbox.widget.WidgetConfigureActivity"
     android:resizeMode="none"
     android:widgetCategory="home_screen">
 </appwidget-provider>

@@ -13,13 +13,24 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
+import org.json.JSONException
 import tech.lolli.toolbox.R
 import java.net.URL
 import java.net.HttpURLConnection
+import java.net.SocketTimeoutException
 import java.io.FileNotFoundException
+import java.io.IOException
+import java.util.concurrent.ConcurrentHashMap
 
 class HomeWidget : AppWidgetProvider() {
+    companion object {
+        private const val TAG = "HomeWidget"
+        private const val NETWORK_TIMEOUT = 10_000L // 10 seconds
+        private const val COROUTINE_TIMEOUT = 15_000L // 15 seconds
+        private val activeUpdates = ConcurrentHashMap<Int, Boolean>()
+    }
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         for (appWidgetId in appWidgetIds) {
             updateAppWidget(context, appWidgetManager, appWidgetId)
@@ -27,105 +38,184 @@ class HomeWidget : AppWidgetProvider() {
     }
 
     private fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
-        val views = RemoteViews(context.packageName, R.layout.home_widget)
-        val sp = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-        var url = sp.getString("widget_$appWidgetId", null)
-        if (url.isNullOrEmpty()) {
-            url = sp.getString("$appWidgetId", null)
-        }
-        if (url.isNullOrEmpty()) {
-            val gUrl = sp.getString("widget_*", null)
-            url = gUrl
-        }
-
-        if (url.isNullOrEmpty()) {
-            Log.e("HomeWidget", "URL not found")
-        }
-
-        val intentUpdate = Intent(context, HomeWidget::class.java)
-        intentUpdate.action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-        val ids = intArrayOf(appWidgetId)
-        intentUpdate.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
-
-        var flag = PendingIntent.FLAG_UPDATE_CURRENT
-        if (Build.VERSION_CODES.O <= Build.VERSION.SDK_INT) {    
-            flag = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        }
-
-        val pendingUpdate: PendingIntent = PendingIntent.getBroadcast(
-                context,
-                appWidgetId,
-                intentUpdate,
-                flag)
-        views.setOnClickPendingIntent(R.id.widget_container, pendingUpdate)
-
-        if (url.isNullOrEmpty()) {
-            views.setTextViewText(R.id.widget_name, "No URL")
-            // Update the widget to display a message for missing URL
-            views.setViewVisibility(R.id.error_message, View.VISIBLE)
-            views.setTextViewText(R.id.error_message, "Please configure the widget URL.")
-            views.setViewVisibility(R.id.widget_content, View.GONE)
-            views.setFloat(R.id.widget_name, "setAlpha", 1f)
-            views.setFloat(R.id.error_message, "setAlpha", 1f)
-            appWidgetManager.updateAppWidget(appWidgetId, views)
+        // Prevent concurrent updates for the same widget
+        if (activeUpdates.putIfAbsent(appWidgetId, true) == true) {
+            Log.d(TAG, "Widget $appWidgetId is already updating, skipping")
             return
-        } else {
-            views.setViewVisibility(R.id.widget_cpu_label, View.VISIBLE)
-            views.setViewVisibility(R.id.widget_mem_label, View.VISIBLE)
-            views.setViewVisibility(R.id.widget_disk_label, View.VISIBLE)
-            views.setViewVisibility(R.id.widget_net_label, View.VISIBLE)
         }
+
+        val views = RemoteViews(context.packageName, R.layout.home_widget)
+        val url = getWidgetUrl(context, appWidgetId)
+
+        if (url.isNullOrEmpty()) {
+            Log.w(TAG, "URL not found for widget $appWidgetId")
+            showErrorState(views, appWidgetManager, appWidgetId, "Please configure the widget URL.")
+            activeUpdates.remove(appWidgetId)
+            return
+        }
+
+        setupClickIntent(context, views, appWidgetId)
+
+        showLoadingState(views, appWidgetManager, appWidgetId)
 
         CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val connection = URL(url).openConnection() as HttpURLConnection
-                connection.requestMethod = "GET"
-                val responseCode = connection.responseCode
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    val jsonStr = connection.inputStream.bufferedReader().use { it.readText() }
-                    val jsonObject = JSONObject(jsonStr)
-                    val data = jsonObject.getJSONObject("data")
-                    val server = data.getString("name")
-                    val cpu = data.getString("cpu")
-                    val mem = data.getString("mem")
-                    val disk = data.getString("disk")
-                    val net = data.getString("net")
-                    withContext(Dispatchers.Main) {
-                        if (mem.isEmpty() || disk.isEmpty()) {
-                            Log.e("HomeWidget", "Failed to retrieve status: Memory or disk information is empty")
-                            return@withContext
+            withTimeoutOrNull(COROUTINE_TIMEOUT) {
+                try {
+                    val serverData = fetchServerData(url)
+                    if (serverData != null) {
+                        withContext(Dispatchers.Main) {
+                            showSuccessState(views, appWidgetManager, appWidgetId, serverData)
                         }
-                        views.setTextViewText(R.id.widget_name, server)
-                        views.setTextViewText(R.id.widget_cpu, cpu)
-                        views.setTextViewText(R.id.widget_mem, mem)
-                        views.setTextViewText(R.id.widget_disk, disk)
-                        views.setTextViewText(R.id.widget_net, net)
-                        val timeStr = android.text.format.DateFormat.format("HH:mm", java.util.Date()).toString()
-                        views.setTextViewText(R.id.widget_time, timeStr)
-                        views.setFloat(R.id.widget_name, "setAlpha", 1f)
-                        views.setFloat(R.id.widget_cpu_label, "setAlpha", 1f)
-                        views.setFloat(R.id.widget_mem_label, "setAlpha", 1f)
-                        views.setFloat(R.id.widget_disk_label, "setAlpha", 1f)
-                        views.setFloat(R.id.widget_net_label, "setAlpha", 1f)
-                        views.setFloat(R.id.widget_time, "setAlpha", 1f)
-                        appWidgetManager.updateAppWidget(appWidgetId, views)
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            showErrorState(views, appWidgetManager, appWidgetId, "Invalid server data received.")
+                        }
                     }
-                } else {
-                    throw FileNotFoundException("HTTP response code: $responseCode")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error updating widget $appWidgetId: ${e.message}", e)
+                    withContext(Dispatchers.Main) {
+                        val errorMessage = when (e) {
+                            is SocketTimeoutException -> "Connection timeout. Please check your network."
+                            is IOException -> "Network error. Please check your connection."
+                            is JSONException -> "Invalid data format received from server."
+                            else -> "Failed to retrieve data: ${e.message}"
+                        }
+                        showErrorState(views, appWidgetManager, appWidgetId, errorMessage)
+                    }
                 }
-            } catch (e: Exception) {
-                Log.e("HomeWidget", "Error updating widget: ${e.localizedMessage}", e)
+            } ?: run {
+                Log.w(TAG, "Widget update timed out for widget $appWidgetId")
                 withContext(Dispatchers.Main) {
-                    views.setTextViewText(R.id.widget_name, "Error")
-                    // Update the widget to display a message for data retrieval failure
-                    views.setViewVisibility(R.id.error_message, View.VISIBLE)
-                    views.setTextViewText(R.id.error_message, "Failed to retrieve data.")
-                    views.setViewVisibility(R.id.widget_content, View.GONE)
-                    views.setFloat(R.id.widget_name, "setAlpha", 1f)
-                    views.setFloat(R.id.error_message, "setAlpha", 1f)
-                    appWidgetManager.updateAppWidget(appWidgetId, views)
+                    showErrorState(views, appWidgetManager, appWidgetId, "Update timed out. Please try again.")
                 }
             }
+            activeUpdates.remove(appWidgetId)
         }
     }
+
+    private fun getWidgetUrl(context: Context, appWidgetId: Int): String? {
+        val sp = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+        return sp.getString("widget_$appWidgetId", null)
+            ?: sp.getString("$appWidgetId", null)
+            ?: sp.getString("widget_*", null)
+    }
+
+    private fun setupClickIntent(context: Context, views: RemoteViews, appWidgetId: Int) {
+        val intentConfigure = Intent(context, WidgetConfigureActivity::class.java).apply {
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+        }
+
+        val flag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        } else {
+            PendingIntent.FLAG_UPDATE_CURRENT
+        }
+
+        val pendingConfigure = PendingIntent.getActivity(context, appWidgetId, intentConfigure, flag)
+        views.setOnClickPendingIntent(R.id.widget_container, pendingConfigure)
+    }
+
+    private suspend fun fetchServerData(url: String): ServerData? = withContext(Dispatchers.IO) {
+        var connection: HttpURLConnection? = null
+        try {
+            connection = (URL(url).openConnection() as HttpURLConnection).apply {
+                requestMethod = "GET"
+                connectTimeout = NETWORK_TIMEOUT.toInt()
+                readTimeout = NETWORK_TIMEOUT.toInt()
+                setRequestProperty("User-Agent", "ServerBox-Widget/1.0")
+                setRequestProperty("Accept", "application/json")
+            }
+
+            if (connection.responseCode != HttpURLConnection.HTTP_OK) {
+                throw IOException("HTTP ${connection.responseCode}: ${connection.responseMessage}")
+            }
+
+            val jsonStr = connection.inputStream.bufferedReader().use { it.readText() }
+            parseServerData(jsonStr)
+        } finally {
+            connection?.disconnect()
+        }
+    }
+
+    private fun parseServerData(jsonStr: String): ServerData? {
+        return try {
+            val jsonObject = JSONObject(jsonStr)
+            val data = jsonObject.getJSONObject("data")
+            
+            val server = data.optString("name", "Unknown Server")
+            val cpu = data.optString("cpu", "N/A")
+            val mem = data.optString("mem", "N/A")
+            val disk = data.optString("disk", "N/A")
+            val net = data.optString("net", "N/A")
+            
+            if (mem.isNotBlank() && disk.isNotBlank() && mem != "N/A" && disk != "N/A") {
+                ServerData(server, cpu, mem, disk, net)
+            } else {
+                Log.w(TAG, "Invalid server data: mem=$mem, disk=$disk")
+                null
+            }
+        } catch (e: JSONException) {
+            Log.e(TAG, "JSON parsing error: ${e.message}", e)
+            null
+        }
+    }
+
+    private fun showLoadingState(views: RemoteViews, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
+        views.apply {
+            setTextViewText(R.id.widget_name, "Loading...")
+            setViewVisibility(R.id.error_message, View.GONE)
+            setViewVisibility(R.id.widget_content, View.VISIBLE)
+            setViewVisibility(R.id.widget_cpu_label, View.VISIBLE)
+            setViewVisibility(R.id.widget_mem_label, View.VISIBLE)
+            setViewVisibility(R.id.widget_disk_label, View.VISIBLE)
+            setViewVisibility(R.id.widget_net_label, View.VISIBLE)
+            setFloat(R.id.widget_name, "setAlpha", 0.7f)
+        }
+        appWidgetManager.updateAppWidget(appWidgetId, views)
+    }
+
+    private fun showSuccessState(views: RemoteViews, appWidgetManager: AppWidgetManager, appWidgetId: Int, data: ServerData) {
+        views.apply {
+            setTextViewText(R.id.widget_name, data.name)
+            setTextViewText(R.id.widget_cpu, data.cpu)
+            setTextViewText(R.id.widget_mem, data.mem)
+            setTextViewText(R.id.widget_disk, data.disk)
+            setTextViewText(R.id.widget_net, data.net)
+            
+            val timeStr = android.text.format.DateFormat.format("HH:mm", java.util.Date()).toString()
+            setTextViewText(R.id.widget_time, timeStr)
+            
+            setViewVisibility(R.id.error_message, View.GONE)
+            setViewVisibility(R.id.widget_content, View.VISIBLE)
+            
+            // Smooth fade-in animation
+            setFloat(R.id.widget_name, "setAlpha", 1f)
+            setFloat(R.id.widget_cpu_label, "setAlpha", 1f)
+            setFloat(R.id.widget_mem_label, "setAlpha", 1f)
+            setFloat(R.id.widget_disk_label, "setAlpha", 1f)
+            setFloat(R.id.widget_net_label, "setAlpha", 1f)
+            setFloat(R.id.widget_time, "setAlpha", 1f)
+        }
+        appWidgetManager.updateAppWidget(appWidgetId, views)
+    }
+
+    private fun showErrorState(views: RemoteViews, appWidgetManager: AppWidgetManager, appWidgetId: Int, errorMessage: String) {
+        views.apply {
+            setTextViewText(R.id.widget_name, "Error")
+            setViewVisibility(R.id.error_message, View.VISIBLE)
+            setTextViewText(R.id.error_message, errorMessage)
+            setViewVisibility(R.id.widget_content, View.GONE)
+            setFloat(R.id.widget_name, "setAlpha", 1f)
+            setFloat(R.id.error_message, "setAlpha", 1f)
+        }
+        appWidgetManager.updateAppWidget(appWidgetId, views)
+    }
+
+    data class ServerData(
+        val name: String,
+        val cpu: String,
+        val mem: String,
+        val disk: String,
+        val net: String
+    )
 }

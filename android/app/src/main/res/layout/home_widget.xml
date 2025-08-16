@@ -10,14 +10,17 @@
 
     <TextView
         android:id="@+id/widget_name"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textColor="@color/widgetText"
-        android:textSize="23sp"
+        android:textSize="20sp"
         android:textStyle="bold"
         android:maxLines="1"
+        android:ellipsize="end"
         android:alpha="0"
         android:animateLayoutChanges="true"
+        android:fadingEdge="horizontal"
+        android:singleLine="true"
         tools:text="Server Name" />
 
     <!-- Wrap the content in a LinearLayout for easy visibility management -->
@@ -27,121 +30,138 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:layout_below="@id/widget_name"
-        android:paddingTop="13dp">
+        android:layout_marginTop="8dp">
 
         <RelativeLayout
             android:id="@+id/widget_container_inner"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:paddingTop="13dp"
+            android:layout_height="wrap_content"
             android:animateLayoutChanges="true">
 
             <LinearLayout
                 android:id="@+id/widget_cpu_label"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingBottom="2.7dp"
+                android:layout_marginBottom="4dp"
                 android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:alpha="0"
+                android:animateLayoutChanges="true">
 
                 <ImageView
-                    android:layout_width="17dp"
-                    android:layout_height="17dp"
-                    android:src="@drawable/speed_24">
-                </ImageView>
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/speed_24"
+                    android:layout_gravity="center_vertical"
+                    android:contentDescription="CPU usage" />
 
                 <TextView
                     android:id="@+id/widget_cpu"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="11dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
                     android:singleLine="true"
-                    android:ellipsize = "marquee"
+                    android:ellipsize="end"
                     android:textColor="@color/widgetSummaryText"
-                    android:textSize="12.7sp"
-                    tools:text="CPU" />
+                    android:textSize="12sp"
+                    tools:text="CPU: 25.6%" />
 
 
             </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/widget_mem_label"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingBottom="2.7dp"
+                android:layout_marginBottom="4dp"
                 android:layout_below="@id/widget_cpu_label"
                 android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:alpha="0"
+                android:animateLayoutChanges="true">
 
                 <ImageView
-                    android:layout_width="17dp"
-                    android:layout_height="17dp"
-                    android:src="@drawable/memory_24">
-                </ImageView>
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/memory_24"
+                    android:layout_gravity="center_vertical"
+                    android:contentDescription="Memory usage" />
 
                 <TextView
                     android:id="@+id/widget_mem"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="11dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
                     android:maxLines="1"
+                    android:ellipsize="end"
                     android:textColor="@color/widgetSummaryText"
-                    android:textSize="12.7sp"
-                    tools:text="Mem" />
+                    android:textSize="12sp"
+                    tools:text="Memory: 4.2GB / 8GB" />
 
             </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/widget_disk_label"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingBottom="2.7dp"
+                android:layout_marginBottom="4dp"
                 android:layout_below="@id/widget_mem_label"
                 android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:alpha="0"
+                android:animateLayoutChanges="true">
 
                 <ImageView
-                    android:layout_width="17dp"
-                    android:layout_height="17dp"
-                    android:src="@drawable/storage_24">
-                </ImageView>
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/storage_24"
+                    android:layout_gravity="center_vertical"
+                    android:contentDescription="Disk usage" />
 
                 <TextView
                     android:id="@+id/widget_disk"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="11dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
                     android:maxLines="1"
+                    android:ellipsize="end"
                     android:textColor="@color/widgetSummaryText"
-                    android:textSize="12.7sp"
-                    tools:text="Disk" />
+                    android:textSize="12sp"
+                    tools:text="Disk: 125GB / 250GB" />
 
             </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/widget_net_label"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/widget_disk_label"
                 android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:alpha="0"
+                android:animateLayoutChanges="true">
 
                 <ImageView
-                    android:layout_width="17dp"
-                    android:layout_height="17dp"
-                    android:src="@drawable/net_24">
-                </ImageView>
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/net_24"
+                    android:layout_gravity="center_vertical"
+                    android:contentDescription="Network usage" />
 
                 <TextView
                     android:id="@+id/widget_net"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="11dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
                     android:maxLines="1"
+                    android:ellipsize="end"
                     android:textColor="@color/widgetSummaryText"
-                    android:textSize="12.7sp"
-                    tools:text="Net" />
+                    android:textSize="12sp"
+                    tools:text="Network: 15MB/s ↓ 8MB/s ↑" />
 
             </LinearLayout>
 
@@ -149,29 +169,35 @@
 
     </LinearLayout>
 
-    <!-- Add a TextView for error messages -->
+    <!-- Error message display -->
     <TextView
         android:id="@+id/error_message"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/widget_name"
+        android:layout_marginTop="8dp"
         android:textColor="@color/widgetSummaryText"
-        android:textSize="12sp"
+        android:textSize="11sp"
         android:visibility="gone"
         android:alpha="0"
         android:animateLayoutChanges="true"
-        tools:text="Error message" />
+        android:lineSpacingMultiplier="1.2"
+        android:maxLines="3"
+        android:ellipsize="end"
+        tools:text="Error message text that might be longer than usual" />
 
     <TextView
         android:id="@+id/widget_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:maxLines="2"
+        android:layout_alignParentEnd="true"
+        android:maxLines="1"
         android:textColor="@color/widgetSummaryText"
-        android:textSize="11sp"
+        android:textSize="10sp"
         android:alpha="0"
         android:animateLayoutChanges="true"
-        tools:text="UpdateTime" />
+        android:fontFamily="monospace"
+        tools:text="12:34" />
 
 </RelativeLayout>

@@ -46,6 +46,15 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
+        <activity
+            android:name=".widget.WidgetConfigureActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Material.Light.Dialog">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
         <receiver
             android:name=".widget.HomeWidget"
             android:exported="false"
