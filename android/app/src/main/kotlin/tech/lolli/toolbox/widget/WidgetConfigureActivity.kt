@@ -4,6 +4,7 @@ import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.os.Bundle
+import android.util.Patterns
 import android.widget.Button
 import android.widget.EditText
 import tech.lolli.toolbox.R
@@ -47,25 +48,35 @@ class WidgetConfigureActivity : Activity() {
         // 设置保存按钮点击事件
         saveButton.setOnClickListener {
             val url = urlEditText.text.toString().trim()
-            if (url.isNotEmpty()) {
-                // 保存 URL 到 SharedPreferences
-                val editor = sp.edit()
-                editor.putString("widget_$appWidgetId", url)
-                editor.apply()
-
-                // 更新 widget
-                val appWidgetManager = AppWidgetManager.getInstance(this)
-                val homeWidget = HomeWidget()
-                homeWidget.onUpdate(this, appWidgetManager, intArrayOf(appWidgetId))
-
-                // 设置结果并结束 activity
-                val resultValue = Intent()
-                resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-                setResult(RESULT_OK, resultValue)
-                finish()
-            } else {
+            if (url.isEmpty()) {
                 urlEditText.error = "Please enter a URL"
+                return@setOnClickListener
             }
+            
+            // 验证 URL 格式
+            if (!Patterns.WEB_URL.matcher(url).matches()) {
+                urlEditText.error = "Please enter a valid URL"
+                return@setOnClickListener
+            }
+
+            // 保存 URL 到 SharedPreferences
+            val editor = sp.edit()
+            editor.putString("widget_$appWidgetId", url)
+            editor.apply()
+
+            // 更新 widget 使用 AppWidgetManager
+            val appWidgetManager = AppWidgetManager.getInstance(this)
+            val updateIntent = Intent(this, HomeWidget::class.java).apply {
+                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, intArrayOf(appWidgetId))
+            }
+            sendBroadcast(updateIntent)
+
+            // 设置结果并结束 activity
+            val resultValue = Intent()
+            resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            setResult(RESULT_OK, resultValue)
+            finish()
         }
     }
 }

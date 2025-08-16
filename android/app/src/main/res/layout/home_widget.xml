@@ -200,4 +200,14 @@
         android:fontFamily="monospace"
         tools:text="12:34" />
 
+    <!-- Progress indicator for loading state -->
+    <ProgressBar
+        android:id="@+id/widget_progress"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_centerInParent="true"
+        android:visibility="gone"
+        android:indeterminate="true" />
+
 </RelativeLayout>

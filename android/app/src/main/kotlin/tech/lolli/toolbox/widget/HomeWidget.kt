@@ -105,7 +105,7 @@ class HomeWidget : AppWidgetProvider() {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
-        val flag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        val flag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         } else {
             PendingIntent.FLAG_UPDATE_CURRENT
@@ -143,17 +143,14 @@ class HomeWidget : AppWidgetProvider() {
             val data = jsonObject.getJSONObject("data")
             
             val server = data.optString("name", "Unknown Server")
-            val cpu = data.optString("cpu", "N/A")
-            val mem = data.optString("mem", "N/A")
-            val disk = data.optString("disk", "N/A")
-            val net = data.optString("net", "N/A")
+            val cpu = data.optString("cpu", "").takeIf { it.isNotBlank() } ?: "N/A"
+            val mem = data.optString("mem", "").takeIf { it.isNotBlank() } ?: "N/A"
+            val disk = data.optString("disk", "").takeIf { it.isNotBlank() } ?: "N/A"
+            val net = data.optString("net", "").takeIf { it.isNotBlank() } ?: "N/A"
             
-            if (mem.isNotBlank() && disk.isNotBlank() && mem != "N/A" && disk != "N/A") {
-                ServerData(server, cpu, mem, disk, net)
-            } else {
-                Log.w(TAG, "Invalid server data: mem=$mem, disk=$disk")
-                null
-            }
+            // Return data even if some fields are missing, providing defaults
+            // Only reject if we can't parse the JSON structure properly
+            ServerData(server, cpu, mem, disk, net)
         } catch (e: JSONException) {
             Log.e(TAG, "JSON parsing error: ${e.message}", e)
             null
@@ -169,6 +166,7 @@ class HomeWidget : AppWidgetProvider() {
             setViewVisibility(R.id.widget_mem_label, View.VISIBLE)
             setViewVisibility(R.id.widget_disk_label, View.VISIBLE)
             setViewVisibility(R.id.widget_net_label, View.VISIBLE)
+            setViewVisibility(R.id.widget_progress, View.VISIBLE)
             setFloat(R.id.widget_name, "setAlpha", 0.7f)
         }
         appWidgetManager.updateAppWidget(appWidgetId, views)
@@ -187,6 +185,7 @@ class HomeWidget : AppWidgetProvider() {
             
             setViewVisibility(R.id.error_message, View.GONE)
             setViewVisibility(R.id.widget_content, View.VISIBLE)
+            setViewVisibility(R.id.widget_progress, View.GONE)
             
             // Smooth fade-in animation
             setFloat(R.id.widget_name, "setAlpha", 1f)
@@ -205,6 +204,7 @@ class HomeWidget : AppWidgetProvider() {
             setViewVisibility(R.id.error_message, View.VISIBLE)
             setTextViewText(R.id.error_message, errorMessage)
             setViewVisibility(R.id.widget_content, View.GONE)
+            setViewVisibility(R.id.widget_progress, View.GONE)
             setFloat(R.id.widget_name, "setAlpha", 1f)
             setFloat(R.id.error_message, "setAlpha", 1f)
         }
