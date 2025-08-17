@@ -4,23 +4,27 @@ import 'package:server_box/data/res/store.dart';
 
 abstract final class PlatformPublicSettings {
   static Widget get buildBioAuth {
-    return ExpandTile(title: Text(libL10n.bioAuth), children: [_buildBioAuth(), _buildBioAuthDelay()]);
+    return ExpandTile(
+      leading: const Icon(Icons.fingerprint),
+      title: Text(libL10n.bioAuth),
+      children: [_buildBioAuth(), _buildBioAuthDelay()],
+    );
   }
 
   static Widget _buildBioAuthDelay() {
     return FutureWidget<bool>(
       future: LocalAuth.isAvail,
       loading: ListTile(
-        title: Text(libL10n.delay),
+        title: Text('${libL10n.delay} (${libL10n.second})'),
         subtitle: const Text('...', style: UIs.textGrey),
       ),
       error: (e, _) => ListTile(
-        title: Text(libL10n.delay),
+        title: Text('${libL10n.delay} (${libL10n.second})'),
         subtitle: Text('${libL10n.fail}: $e', style: UIs.textGrey),
       ),
       success: (can) {
         return ListTile(
-          title: Text(libL10n.delay),
+          title: Text('${libL10n.delay} (${libL10n.second})'),
           trailing: can == true ? Stores.setting.delayBioAuthLock.fieldWidget() : null,
         );
       },
@@ -31,7 +35,6 @@ abstract final class PlatformPublicSettings {
     return FutureWidget<bool>(
       future: LocalAuth.isAvail,
       loading: ListTile(
-        leading: const Icon(Icons.fingerprint),
         title: Text(libL10n.switch_),
         subtitle: const Text('...', style: UIs.textGrey),
       ),
@@ -42,7 +45,6 @@ abstract final class PlatformPublicSettings {
       success: (can) {
         can ??= false;
         return ListTile(
-          leading: const Icon(Icons.fingerprint),
           title: Text(libL10n.switch_),
           subtitle: can ? null : Text(libL10n.notExistFmt(libL10n.bioAuth), style: UIs.textGrey),
           trailing: can

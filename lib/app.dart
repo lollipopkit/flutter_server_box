@@ -3,7 +3,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:responsive_framework/responsive_framework.dart';
+import 'package:responsive_framework/responsive_framework.dart' hide ResponsiveUtils;
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
@@ -79,14 +79,7 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       key: ValueKey(locale),
-      builder: (context, child) => ResponsiveBreakpoints.builder(
-        child: child ?? UIs.placeholder,
-        breakpoints: const [
-          Breakpoint(start: 0, end: 600, name: MOBILE),
-          Breakpoint(start: 600, end: 1199, name: TABLET),
-          Breakpoint(start: 1199, end: 3840, name: DESKTOP),
-        ],
-      ),
+      builder: ResponsivePoints.builder,
       locale: locale,
       localizationsDelegates: const [LibLocalizations.delegate, ...AppLocalizations.localizationsDelegates],
       supportedLocales: AppLocalizations.supportedLocales,
