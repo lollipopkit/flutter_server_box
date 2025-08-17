@@ -232,11 +232,7 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         final e = pkis[index];
         return ListTile(
           contentPadding: const EdgeInsets.only(left: 10, right: 15),
-          leading: Radio<int>(
-            value: index,
-            groupValue: _keyIdx.value,
-            onChanged: (value) => _keyIdx.value = value,
-          ),
+          leading: Radio<int>(value: index),
           title: Text(e.id, textAlign: TextAlign.start),
           subtitle: Text(e.type ?? l10n.unknown, textAlign: TextAlign.start, style: UIs.textGrey),
           trailing: Btn.icon(
@@ -254,7 +250,10 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
           onTap: () => PrivateKeyEditPage.route.go(context),
         ),
       );
-      return _keyIdx.listenVal((_) => Column(children: tiles)).cardx;
+      return RadioGroup<int>(
+        onChanged: (val) => _keyIdx.value = val,
+        child: _keyIdx.listenVal((_) => Column(children: tiles)).cardx,
+      );
     });
   }
 

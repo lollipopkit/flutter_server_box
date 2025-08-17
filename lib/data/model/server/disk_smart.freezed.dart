@@ -1,6 +1,5 @@
-// dart format width=80
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -79,6 +78,136 @@ as Map<String, SmartAttribute>,
 
 }
 
+
+/// Adds pattern-matching-related methods to [DiskSmart].
+extension DiskSmartPatterns on DiskSmart {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _DiskSmart value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _DiskSmart() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _DiskSmart value)  $default,){
+final _that = this;
+switch (_that) {
+case _DiskSmart():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _DiskSmart value)?  $default,){
+final _that = this;
+switch (_that) {
+case _DiskSmart() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String device,  bool? healthy,  double? temperature,  String? model,  String? serial,  int? powerOnHours,  int? powerCycleCount,  Map<String, dynamic> rawData,  Map<String, SmartAttribute> smartAttributes)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _DiskSmart() when $default != null:
+return $default(_that.device,_that.healthy,_that.temperature,_that.model,_that.serial,_that.powerOnHours,_that.powerCycleCount,_that.rawData,_that.smartAttributes);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String device,  bool? healthy,  double? temperature,  String? model,  String? serial,  int? powerOnHours,  int? powerCycleCount,  Map<String, dynamic> rawData,  Map<String, SmartAttribute> smartAttributes)  $default,) {final _that = this;
+switch (_that) {
+case _DiskSmart():
+return $default(_that.device,_that.healthy,_that.temperature,_that.model,_that.serial,_that.powerOnHours,_that.powerCycleCount,_that.rawData,_that.smartAttributes);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String device,  bool? healthy,  double? temperature,  String? model,  String? serial,  int? powerOnHours,  int? powerCycleCount,  Map<String, dynamic> rawData,  Map<String, SmartAttribute> smartAttributes)?  $default,) {final _that = this;
+switch (_that) {
+case _DiskSmart() when $default != null:
+return $default(_that.device,_that.healthy,_that.temperature,_that.model,_that.serial,_that.powerOnHours,_that.powerCycleCount,_that.rawData,_that.smartAttributes);case _:
+  return null;
+
+}
+}
+
+}
 
 /// @nodoc
 @JsonSerializable()
@@ -250,6 +379,136 @@ $SmartAttributeFlagsCopyWith<$Res> get flags {
 }
 
 
+/// Adds pattern-matching-related methods to [SmartAttribute].
+extension SmartAttributePatterns on SmartAttribute {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _SmartAttribute value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _SmartAttribute() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _SmartAttribute value)  $default,){
+final _that = this;
+switch (_that) {
+case _SmartAttribute():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _SmartAttribute value)?  $default,){
+final _that = this;
+switch (_that) {
+case _SmartAttribute() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int? id,  String name,  int? value,  int? worst,  int? thresh,  String? whenFailed,  dynamic rawValue,  String? rawString,  SmartAttributeFlags flags)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _SmartAttribute() when $default != null:
+return $default(_that.id,_that.name,_that.value,_that.worst,_that.thresh,_that.whenFailed,_that.rawValue,_that.rawString,_that.flags);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int? id,  String name,  int? value,  int? worst,  int? thresh,  String? whenFailed,  dynamic rawValue,  String? rawString,  SmartAttributeFlags flags)  $default,) {final _that = this;
+switch (_that) {
+case _SmartAttribute():
+return $default(_that.id,_that.name,_that.value,_that.worst,_that.thresh,_that.whenFailed,_that.rawValue,_that.rawString,_that.flags);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int? id,  String name,  int? value,  int? worst,  int? thresh,  String? whenFailed,  dynamic rawValue,  String? rawString,  SmartAttributeFlags flags)?  $default,) {final _that = this;
+switch (_that) {
+case _SmartAttribute() when $default != null:
+return $default(_that.id,_that.name,_that.value,_that.worst,_that.thresh,_that.whenFailed,_that.rawValue,_that.rawString,_that.flags);case _:
+  return null;
+
+}
+}
+
+}
+
 /// @nodoc
 @JsonSerializable()
 
@@ -406,6 +665,136 @@ as bool,
 
 }
 
+
+/// Adds pattern-matching-related methods to [SmartAttributeFlags].
+extension SmartAttributeFlagsPatterns on SmartAttributeFlags {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _SmartAttributeFlags value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _SmartAttributeFlags() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _SmartAttributeFlags value)  $default,){
+final _that = this;
+switch (_that) {
+case _SmartAttributeFlags():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _SmartAttributeFlags value)?  $default,){
+final _that = this;
+switch (_that) {
+case _SmartAttributeFlags() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int? value,  String? string,  bool prefailure,  bool updatedOnline,  bool performance,  bool errorRate,  bool eventCount,  bool autoKeep)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _SmartAttributeFlags() when $default != null:
+return $default(_that.value,_that.string,_that.prefailure,_that.updatedOnline,_that.performance,_that.errorRate,_that.eventCount,_that.autoKeep);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int? value,  String? string,  bool prefailure,  bool updatedOnline,  bool performance,  bool errorRate,  bool eventCount,  bool autoKeep)  $default,) {final _that = this;
+switch (_that) {
+case _SmartAttributeFlags():
+return $default(_that.value,_that.string,_that.prefailure,_that.updatedOnline,_that.performance,_that.errorRate,_that.eventCount,_that.autoKeep);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int? value,  String? string,  bool prefailure,  bool updatedOnline,  bool performance,  bool errorRate,  bool eventCount,  bool autoKeep)?  $default,) {final _that = this;
+switch (_that) {
+case _SmartAttributeFlags() when $default != null:
+return $default(_that.value,_that.string,_that.prefailure,_that.updatedOnline,_that.performance,_that.errorRate,_that.eventCount,_that.autoKeep);case _:
+  return null;
+
+}
+}
+
+}
 
 /// @nodoc
 @JsonSerializable()

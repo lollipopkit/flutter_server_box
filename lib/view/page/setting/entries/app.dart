@@ -8,7 +8,7 @@ extension _App on _AppSettingsPageState {
       _buildThemeMode(),
       _buildAppColor(),
       _buildCheckUpdate(),
-      PlatformPublicSettings.buildBioAuth(),
+      PlatformPublicSettings.buildBioAuth,
       if (specific != null) specific,
       _buildAppMore(),
     ];

@@ -64,8 +64,10 @@ class _HomePageState extends State<HomePage>
     switch (state) {
       case AppLifecycleState.resumed:
         if (_shouldAuth) {
-          if (Stores.setting.delayBioAuthLock.fetch() == true && _pausedTime != null) {
-            if (DateTime.now().difference(_pausedTime ?? DateTime.now()).inSeconds > 10) {
+          final delay = Stores.setting.delayBioAuthLock.fetch();
+          if (delay > 0 && _pausedTime != null) {
+            final now = DateTime.now();
+            if (now.difference(_pausedTime ?? now).inSeconds > delay) {
               _goAuth();
             } else {
               _shouldAuth = false;

@@ -51,7 +51,7 @@ class ChainComparator<T> {
   }
 
   ChainComparator<T> reversed() {
-    return ChainComparator._create(null, (a, b) => this.compare(b, a));
+    return ChainComparator._create(null, (a, b) => compare(b, a));
   }
 }
 
