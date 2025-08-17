@@ -7,19 +7,15 @@ part 'app.freezed.dart';
 
 @freezed
 abstract class AppState with _$AppState {
-  const factory AppState({@Default(false) bool desktopMode}) = _AppState;
+  const factory AppState() = _AppState;
 }
 
 @Riverpod(keepAlive: true)
-class AppProvider extends _$AppProvider {
+class AppStates extends _$AppStates {
   static BuildContext? ctx;
 
   @override
   AppState build() {
     return const AppState();
-  }
-
-  void setDesktop(bool desktopMode) {
-    state = state.copyWith(desktopMode: desktopMode);
   }
 }

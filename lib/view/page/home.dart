@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/data/model/app/tab.dart';
-import 'package:server_box/data/provider/app.dart';
 import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
@@ -28,6 +27,7 @@ class _HomePageState extends State<HomePage>
 
   bool _switchingPage = false;
   bool _shouldAuth = false;
+  DateTime? _pausedTime;
 
   @override
   void dispose() {
@@ -62,13 +62,27 @@ class _HomePageState extends State<HomePage>
 
     switch (state) {
       case AppLifecycleState.resumed:
-        if (_shouldAuth) _goAuth();
+        if (_shouldAuth) {
+          final delay = Stores.setting.delayBioAuthLock.fetch();
+          if (delay > 0 && _pausedTime != null) {
+            final now = DateTime.now();
+            if (now.difference(_pausedTime ?? now).inSeconds > delay) {
+              _goAuth();
+            } else {
+              _shouldAuth = false;
+            }
+            _pausedTime = null;
+          } else {
+            _goAuth();
+          }
+        }
         if (!ServerProvider.isAutoRefreshOn) {
           ServerProvider.startAutoRefresh();
         }
         MethodChans.updateHomeWidget();
         break;
       case AppLifecycleState.paused:
+        _pausedTime = DateTime.now();
         _shouldAuth = true;
         // Keep running in background on Android device
         if (isAndroid && Stores.setting.bgRun.fetch()) {
@@ -89,7 +103,6 @@ class _HomePageState extends State<HomePage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    AppProvider.ctx = context;
     final isMobile = ResponsiveBreakpoints.of(context).isMobile;
 
     return Scaffold(
