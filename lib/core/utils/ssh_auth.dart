@@ -3,15 +3,11 @@ import 'dart:async';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/provider/app.dart';
 
 abstract final class KeybordInteractive {
-  static FutureOr<List<String>?> defaultHandle(
-    Spi spi, {
-    BuildContext? ctx,
-  }) async {
+  static FutureOr<List<String>?> defaultHandle(Spi spi, {BuildContext? ctx}) async {
     try {
-      final res = await (ctx ?? AppProvider.ctx)?.showPwdDialog(
+      final res = await (ctx ?? WidgetsBinding.instance.focusManager.primaryFocus?.context)?.showPwdDialog(
         title: libL10n.pwd,
         id: spi.id,
         label: spi.id,

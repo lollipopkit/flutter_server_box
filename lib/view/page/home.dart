@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/data/model/app/tab.dart';
-import 'package:server_box/data/provider/app.dart';
 import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
@@ -104,7 +103,6 @@ class _HomePageState extends State<HomePage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    AppProvider.ctx = context;
     final isMobile = ResponsiveBreakpoints.of(context).isMobile;
 
     return Scaffold(
