@@ -64,6 +64,7 @@ dependencies:
     git:
       url: https://github.com/lppcg/fl_lib
       ref: v1.0.338
+  flutter_gbk2utf8: ^1.0.1
 
 dependency_overrides:
   # webdav_client_plus:

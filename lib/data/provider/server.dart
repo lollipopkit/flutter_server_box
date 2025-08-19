@@ -5,6 +5,9 @@ import 'dart:async';
 import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter_gbk2utf8/flutter_gbk2utf8.dart';
+import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/server.dart';
@@ -443,7 +446,30 @@ class ServerProvider extends Provider {
     String? raw;
 
     try {
-      raw = await sv.client?.run(ShellFunc.status.exec(spi.id, systemType: sv.status.system)).string;
+        final execResult = await sv.client?.run(ShellFunc.status.exec(spi.id, systemType: sv.status.system));
+        if (execResult != null) {
+          String? rawStr;
+          bool needGbk = false;
+          try {
+            rawStr = utf8.decode(execResult, allowMalformed: true);
+            if (rawStr.runes.where((c) => c == 0xfffd).length > 5 || rawStr.contains('��')) {
+              needGbk = true;
+            }
+          } catch (e) {
+            Loggers.app.warning('UTF8 decoding failed, use GBK decoding', e);
+            needGbk = true;
+          }
+          if (needGbk) {
+            try {
+              rawStr = gbk.decode(execResult);
+            } catch (e2) {
+              Loggers.app.warning('GBK decoding failed', e2);
+            }
+          }
+          raw = rawStr;
+        } else {
+          raw = execResult.toString();
+        }
       //dprint('Get status from ${spi.name}:\n$raw');
       segments = raw?.split(ScriptConstants.separator).map((e) => e.trim()).toList();
       if (raw == null || raw.isEmpty || segments == null || segments.isEmpty) {
@@ -467,6 +493,7 @@ class ServerProvider extends Provider {
       sv.status.err = SSHErr(type: SSHErrType.getStatus, message: e.toString());
       _setServerState(s, ServerConn.failed);
       Loggers.app.warning('Get status from ${spi.name} failed', e);
+      debugPrint('错误 $raw');
 
       // Update SSH session status to disconnected on status error
       final sessionId = 'ssh_${spi.id}';
