@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_gbk2utf8/flutter_gbk2utf8.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/sync.dart';
@@ -451,25 +452,44 @@ class ServerProvider extends Provider {
           bool needGbk = false;
           try {
             rawStr = utf8.decode(execResult, allowMalformed: true);
-            if (rawStr.runes.where((c) => c == 0xfffd).length > 5 || rawStr.contains('��')) {
+            // If there are characters that cannot be parsed, try to fallback to gbk decoding
+            if (rawStr.contains('�')) {
+              Loggers.app.warning('UTF8 decoding failed, use GBK decoding');
               needGbk = true;
             }
           } catch (e) {
             Loggers.app.warning('UTF8 decoding failed, use GBK decoding', e);
             needGbk = true;
-          }
-          if (needGbk) {
+          }if (needGbk) {
             try {
               rawStr = gbk.decode(execResult);
             } catch (e2) {
               Loggers.app.warning('GBK decoding failed', e2);
-              rawStr = 'decode failed, please submit the issues with the log';
+              rawStr = null;
             }
           }
-          raw = rawStr ?? 'decode failed, please submit the issues with the log';
+          if (rawStr == null) {
+            Loggers.app.warning('Decoding failed, execResult: $execResult');
+          }
+          raw = rawStr;
         } else {
           raw = execResult.toString();
         }
+
+      if (raw == null || raw.isEmpty) {
+        TryLimiter.inc(sid);
+        sv.status.err = SSHErr(
+          type: SSHErrType.segements,
+          message: 'decode or split failed, raw:\n$raw',
+        );
+        _setServerState(s, ServerConn.failed);
+
+        // Update SSH session status to disconnected on segments error
+        final sessionId = 'ssh_${spi.id}';
+        TermSessionManager.updateStatus(sessionId, TermSessionStatus.disconnected);
+        return;
+      }
+
       //dprint('Get status from ${spi.name}:\n$raw');
       segments = raw.split(ScriptConstants.separator).map((e) => e.trim()).toList();
       if (raw.isEmpty || segments.isEmpty) {
