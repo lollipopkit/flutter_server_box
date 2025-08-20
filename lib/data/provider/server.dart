@@ -467,7 +467,7 @@ class ServerProvider extends Provider {
               rawStr = 'decode failed, please submit the issues with the log';
             }
           }
-          raw = rawStr;
+          raw = rawStr ?? 'decode failed, please submit the issues with the log';
         } else {
           raw = execResult.toString();
         }
