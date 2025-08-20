@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 // import 'dart:io';
 
@@ -6,8 +7,6 @@ import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_gbk2utf8/flutter_gbk2utf8.dart';
-import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/server.dart';
@@ -472,8 +471,8 @@ class ServerProvider extends Provider {
           raw = execResult.toString();
         }
       //dprint('Get status from ${spi.name}:\n$raw');
-      segments = raw?.split(ScriptConstants.separator).map((e) => e.trim()).toList();
-      if (raw == null || raw.isEmpty || segments == null || segments.isEmpty) {
+      segments = raw.split(ScriptConstants.separator).map((e) => e.trim()).toList();
+      if (raw.isEmpty || segments.isEmpty) {
         if (Stores.setting.keepStatusWhenErr.fetch()) {
           // Keep previous server status when err occurs
           if (sv.conn != ServerConn.failed && sv.status.more.isNotEmpty) {
