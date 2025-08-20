@@ -464,6 +464,7 @@ class ServerProvider extends Provider {
               rawStr = gbk.decode(execResult);
             } catch (e2) {
               Loggers.app.warning('GBK decoding failed', e2);
+              rawStr = 'decode failed, please submit the issues with the log';
             }
           }
           raw = rawStr;
@@ -493,7 +494,6 @@ class ServerProvider extends Provider {
       sv.status.err = SSHErr(type: SSHErrType.getStatus, message: e.toString());
       _setServerState(s, ServerConn.failed);
       Loggers.app.warning('Get status from ${spi.name} failed', e);
-      debugPrint('错误 $raw');
 
       // Update SSH session status to disconnected on status error
       final sessionId = 'ssh_${spi.id}';
