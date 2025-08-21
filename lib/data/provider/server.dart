@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
 
 // import 'dart:io';
 
 import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_gbk2utf8/flutter_gbk2utf8.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/server.dart';
@@ -443,10 +446,53 @@ class ServerProvider extends Provider {
     String? raw;
 
     try {
-      raw = await sv.client?.run(ShellFunc.status.exec(spi.id, systemType: sv.status.system)).string;
+        final execResult = await sv.client?.run(ShellFunc.status.exec(spi.id, systemType: sv.status.system));
+        if (execResult != null) {
+          String? rawStr;
+          bool needGbk = false;
+          try {
+            rawStr = utf8.decode(execResult, allowMalformed: true);
+            // If there are characters that cannot be parsed, try to fallback to gbk decoding
+            if (rawStr.contains('�')) {
+              Loggers.app.warning('UTF8 decoding failed, use GBK decoding');
+              needGbk = true;
+            }
+          } catch (e) {
+            Loggers.app.warning('UTF8 decoding failed, use GBK decoding', e);
+            needGbk = true;
+          }if (needGbk) {
+            try {
+              rawStr = gbk.decode(execResult);
+            } catch (e2) {
+              Loggers.app.warning('GBK decoding failed', e2);
+              rawStr = null;
+            }
+          }
+          if (rawStr == null) {
+            Loggers.app.warning('Decoding failed, execResult: $execResult');
+          }
+          raw = rawStr;
+        } else {
+          raw = execResult.toString();
+        }
+
+      if (raw == null || raw.isEmpty) {
+        TryLimiter.inc(sid);
+        sv.status.err = SSHErr(
+          type: SSHErrType.segements,
+          message: 'decode or split failed, raw:\n$raw',
+        );
+        _setServerState(s, ServerConn.failed);
+
+        // Update SSH session status to disconnected on segments error
+        final sessionId = 'ssh_${spi.id}';
+        TermSessionManager.updateStatus(sessionId, TermSessionStatus.disconnected);
+        return;
+      }
+
       //dprint('Get status from ${spi.name}:\n$raw');
-      segments = raw?.split(ScriptConstants.separator).map((e) => e.trim()).toList();
-      if (raw == null || raw.isEmpty || segments == null || segments.isEmpty) {
+      segments = raw.split(ScriptConstants.separator).map((e) => e.trim()).toList();
+      if (raw.isEmpty || segments.isEmpty) {
         if (Stores.setting.keepStatusWhenErr.fetch()) {
           // Keep previous server status when err occurs
           if (sv.conn != ServerConn.failed && sv.status.more.isNotEmpty) {
