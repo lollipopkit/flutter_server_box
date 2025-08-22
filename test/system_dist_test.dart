@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/dist.dart';
+import 'package:server_box/data/model/server/system.dart';
 
 void main() {
   group('SystemType Tests', () {
