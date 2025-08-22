@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/sftpfile.dart';
@@ -29,18 +30,18 @@ final class SftpPageArgs {
   const SftpPageArgs({required this.spi, this.isSelect = false, this.initPath});
 }
 
-class SftpPage extends StatefulWidget {
+class SftpPage extends ConsumerStatefulWidget {
   final SftpPageArgs args;
 
   const SftpPage({super.key, required this.args});
 
   @override
-  State<SftpPage> createState() => _SftpPageState();
+  ConsumerState<SftpPage> createState() => _SftpPageState();
 
   static const route = AppRouteArg<String, SftpPageArgs>(page: SftpPage.new, path: '/sftp');
 }
 
-class _SftpPageState extends State<SftpPage> with AfterLayoutMixin {
+class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
   late final _status = SftpBrowserStatus(_client);
   late final _client = widget.args.spi.server!.value.client!;
   final _sortOption = _SortOption().vn;
@@ -280,7 +281,7 @@ extension _Actions on _SftpPageState {
     final localPath = _getLocalPath(remotePath);
     final completer = Completer();
     final req = SftpReq(widget.args.spi, remotePath, localPath, SftpReqType.download);
-    SftpProvider.add(req, completer: completer);
+    ref.read(sftpNotifierProvider.notifier).add(req, completer: completer);
     final (suc, err) = await context.showLoadingDialog(fn: () => completer.future);
     if (suc == null || err != null) return;
 
@@ -289,7 +290,9 @@ extension _Actions on _SftpPageState {
       args: EditorPageArgs(
         path: localPath,
         onSave: (_) {
-          SftpProvider.add(SftpReq(req.spi, remotePath, localPath, SftpReqType.upload));
+          ref
+              .read(sftpNotifierProvider.notifier)
+              .add(SftpReq(req.spi, remotePath, localPath, SftpReqType.upload));
           context.showSnackBar(l10n.added2List);
         },
         closeAfterSave: SettingStore.instance.closeAfterSave.fetch(),
@@ -310,9 +313,9 @@ extension _Actions on _SftpPageState {
             context.pop();
             final remotePath = _getRemotePath(name);
 
-            SftpProvider.add(
-              SftpReq(widget.args.spi, remotePath, _getLocalPath(remotePath), SftpReqType.download),
-            );
+            ref
+                .read(sftpNotifierProvider.notifier)
+                .add(SftpReq(widget.args.spi, remotePath, _getLocalPath(remotePath), SftpReqType.download));
 
             context.pop();
           },
@@ -640,7 +643,9 @@ extension _Actions on _SftpPageState {
         final fileName = path.split(Platform.pathSeparator).lastOrNull;
         final remotePath = '$remoteDir/$fileName';
         Loggers.app.info('SFTP upload local: $path, remote: $remotePath');
-        SftpProvider.add(SftpReq(widget.args.spi, remotePath, path, SftpReqType.upload));
+        ref
+            .read(sftpNotifierProvider.notifier)
+            .add(SftpReq(widget.args.spi, remotePath, path, SftpReqType.upload));
       },
       icon: const Icon(Icons.upload_file),
     );

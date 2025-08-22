@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:provider/provider.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -20,30 +20,29 @@ import 'package:server_box/view/page/ssh/page/page.dart';
 part 'actions.dart';
 part 'types.dart';
 
-class ContainerPage extends StatefulWidget {
+class ContainerPage extends ConsumerStatefulWidget {
   final SpiRequiredArgs args;
   const ContainerPage({required this.args, super.key});
 
   @override
-  State<ContainerPage> createState() => _ContainerPageState();
+  ConsumerState<ContainerPage> createState() => _ContainerPageState();
 
   static const route = AppRouteArg(page: ContainerPage.new, path: '/container');
 }
 
-class _ContainerPageState extends State<ContainerPage> {
+class _ContainerPageState extends ConsumerState<ContainerPage> {
   final _textController = TextEditingController();
-  late final _container = ContainerProvider(
-    client: widget.args.spi.server?.value.client,
-    userName: widget.args.spi.user,
-    hostId: widget.args.spi.id,
-    context: context,
+  late final _provider = containerNotifierProvider(
+    widget.args.spi.server?.value.client,
+    widget.args.spi.user,
+    widget.args.spi.id,
+    context,
   );
 
   @override
   void dispose() {
     super.dispose();
     _textController.dispose();
-    _container.dispose();
   }
 
   @override
@@ -54,39 +53,36 @@ class _ContainerPageState extends State<ContainerPage> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => _container,
-      builder: (_, _) => Consumer<ContainerProvider>(
-        builder: (_, _, _) {
-          return Scaffold(
-            appBar: _buildAppBar,
-            body: SafeArea(child: _buildMain),
-            floatingActionButton: _container.error == null ? _buildFAB : null,
-          );
-        },
-      ),
+    final err = ref.watch(_provider.select((p) => p.error));
+
+    return Scaffold(
+      appBar: _buildAppBar(),
+      body: SafeArea(child: _buildMain()),
+      floatingActionButton: err == null ? _buildFAB() : null,
     );
   }
 
-  CustomAppBar get _buildAppBar {
+  CustomAppBar _buildAppBar() {
     return CustomAppBar(
       centerTitle: true,
       title: TwoLineText(up: l10n.container, down: widget.args.spi.name),
       actions: [
         IconButton(
-          onPressed: () => context.showLoadingDialog(fn: () => _container.refresh()),
+          onPressed: () => context.showLoadingDialog(fn: () => _containerNotifier.refresh()),
           icon: const Icon(Icons.refresh),
         ),
       ],
     );
   }
 
-  Widget get _buildFAB {
+  Widget _buildFAB() {
     return FloatingActionButton(onPressed: () async => await _showAddFAB(), child: const Icon(Icons.add));
   }
 
-  Widget get _buildMain {
-    if (_container.error != null && _container.items == null) {
+  Widget _buildMain() {
+    final containerState = _containerState;
+
+    if (containerState.error != null && containerState.items == null) {
       return SizedBox.expand(
         child: Column(
           children: [
@@ -95,7 +91,7 @@ class _ContainerPageState extends State<ContainerPage> {
             UIs.height13,
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 23),
-              child: Text(_container.error.toString()),
+              child: Text(containerState.error.toString()),
             ),
             const Spacer(),
             UIs.height13,
@@ -104,27 +100,27 @@ class _ContainerPageState extends State<ContainerPage> {
         ).paddingSymmetric(horizontal: 13),
       );
     }
-    if (_container.items == null || _container.images == null) {
+    if (containerState.items == null || containerState.images == null) {
       return UIs.centerLoading;
     }
 
     return AutoMultiList(
       children: <Widget>[
-        _buildLoading(),
-        _buildVersion(),
-        _buildPs(),
-        _buildImage(),
-        _buildEmptyStateMessage(),
+        _buildLoading(containerState),
+        _buildVersion(containerState),
+        _buildPs(containerState),
+        _buildImage(containerState),
+        _buildEmptyStateMessage(containerState),
         _buildPruneBtns,
         _buildSettingsBtns,
       ],
     );
   }
 
-  Widget _buildEmptyStateMessage() {
-    final emptyImgs = _container.images?.isEmpty ?? true;
-    final emptyPs = _container.items?.isEmpty ?? true;
-    if (emptyPs && emptyImgs && _container.runLog == null) {
+  Widget _buildEmptyStateMessage(ContainerState containerState) {
+    final emptyImgs = containerState.images?.isEmpty ?? true;
+    final emptyPs = containerState.items?.isEmpty ?? true;
+    if (emptyPs && emptyImgs && containerState.runLog == null) {
       return CardX(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(17, 17, 17, 7),
@@ -135,13 +131,13 @@ class _ContainerPageState extends State<ContainerPage> {
     return UIs.placeholder;
   }
 
-  Widget _buildImage() {
+  Widget _buildImage(ContainerState containerState) {
     return ExpandTile(
       leading: const Icon(MingCute.clapperboard_line),
       title: Text(l10n.imagesList),
-      subtitle: Text(l10n.dockerImagesFmt(_container.images!.length), style: UIs.textGrey),
-      initiallyExpanded: (_container.images?.length ?? 0) <= 3,
-      children: _container.images?.map(_buildImageItem).toList() ?? [],
+      subtitle: Text(l10n.dockerImagesFmt(containerState.images?.length ?? 'null'), style: UIs.textGrey),
+      initiallyExpanded: (containerState.images?.length ?? 0) <= 3,
+      children: containerState.images?.map(_buildImageItem).toList() ?? [],
     ).cardx;
   }
 
@@ -161,34 +157,34 @@ class _ContainerPageState extends State<ContainerPage> {
     );
   }
 
-  Widget _buildLoading() {
-    if (_container.runLog == null) return UIs.placeholder;
+  Widget _buildLoading(ContainerState containerState) {
+    if (containerState.runLog == null) return UIs.placeholder;
     return Padding(
       padding: const EdgeInsets.all(17),
       child: Column(
         children: [
           const Center(child: CircularProgressIndicator()),
           UIs.height13,
-          Text(_container.runLog ?? '...'),
+          Text(containerState.runLog ?? '...'),
         ],
       ),
     );
   }
 
-  Widget _buildVersion() {
+  Widget _buildVersion(ContainerState containerState) {
     return CardX(
       child: Padding(
         padding: const EdgeInsets.all(17),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [Text(_container.type.name.capitalize), Text(_container.version ?? l10n.unknown)],
+          children: [Text(containerState.type.name.capitalize), Text(containerState.version ?? l10n.unknown)],
         ),
       ),
     );
   }
 
-  Widget _buildPs() {
-    final items = _container.items;
+  Widget _buildPs(ContainerState containerState) {
+    final items = containerState.items;
     if (items == null) return UIs.placeholder;
     final running = items.where((e) => e.running).length;
     final stopped = items.length - running;
@@ -309,16 +305,17 @@ class _ContainerPageState extends State<ContainerPage> {
 
   Widget _buildPruneBtn(_PruneTypes type) {
     final title = type.name.capitalize;
+    final containerNotifier = _containerNotifier;
     return ListTile(
       onTap: () async {
         await _showPruneDialog(
           title: title,
           message: type.tip,
           onConfirm: switch (type) {
-            _PruneTypes.images => _container.pruneImages,
-            _PruneTypes.containers => _container.pruneContainers,
-            _PruneTypes.volumes => _container.pruneVolumes,
-            _PruneTypes.system => _container.pruneSystem,
+            _PruneTypes.images => containerNotifier.pruneImages,
+            _PruneTypes.containers => containerNotifier.pruneContainers,
+            _PruneTypes.volumes => containerNotifier.pruneVolumes,
+            _PruneTypes.system => containerNotifier.pruneSystem,
           },
         );
       },
@@ -330,22 +327,26 @@ class _ContainerPageState extends State<ContainerPage> {
   Widget get _buildSettingsBtns {
     final len = _SettingsMenuItems.values.length;
     if (len == 0) return UIs.placeholder;
+    final containerState = _containerState;
+
     return ExpandTile(
       leading: const Icon(Icons.settings),
       title: Text(libL10n.setting),
-      initiallyExpanded: _container.error != null,
-      children: _SettingsMenuItems.values.map(_buildSettingTile).toList(),
+      initiallyExpanded: containerState.error != null,
+      children: _SettingsMenuItems.values.map((item) => _buildSettingTile(item, containerState)).toList(),
     ).cardx;
   }
 
-  Widget _buildSettingTile(_SettingsMenuItems item) {
+  Widget _buildSettingTile(_SettingsMenuItems item, ContainerState containerState) {
     final String title;
     switch (item) {
       case _SettingsMenuItems.editDockerHost:
         title = '${libL10n.edit} DOCKER_HOST';
         break;
       case _SettingsMenuItems.switchProvider:
-        title = _container.type == ContainerType.podman ? l10n.switchTo('Docker') : l10n.switchTo('Podman');
+        title = containerState.type == ContainerType.podman
+            ? l10n.switchTo('Docker')
+            : l10n.switchTo('Podman');
         break;
     }
     return ListTile(
@@ -355,9 +356,11 @@ class _ContainerPageState extends State<ContainerPage> {
             _showEditHostDialog();
             break;
           case _SettingsMenuItems.switchProvider:
-            _container.setType(
-              _container.type == ContainerType.docker ? ContainerType.podman : ContainerType.docker,
-            );
+            ref
+                .read(_provider.notifier)
+                .setType(
+                  containerState.type == ContainerType.docker ? ContainerType.podman : ContainerType.docker,
+                );
             break;
         }
       },

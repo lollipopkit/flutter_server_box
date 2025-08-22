@@ -1,4 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/server/server.dart';
@@ -6,37 +8,47 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/systemd.dart';
 import 'package:server_box/data/provider/server.dart';
 
-final class SystemdProvider {
+part 'systemd.freezed.dart';
+part 'systemd.g.dart';
+
+@freezed
+abstract class SystemdState with _$SystemdState {
+  const factory SystemdState({
+    @Default(false) bool isBusy,
+    @Default(<SystemdUnit>[]) List<SystemdUnit> units,
+    @Default(SystemdScopeFilter.all) SystemdScopeFilter scopeFilter,
+  }) = _SystemdState;
+}
+
+@riverpod
+class SystemdNotifier extends _$SystemdNotifier {
   late final VNode<Server> _si;
 
-  SystemdProvider.init(Spi spi) {
+  @override
+  SystemdState build(Spi spi) {
     _si = ServerProvider.pick(spi: spi)!;
-    getUnits();
-  }
-
-  final isBusy = false.vn;
-  final units = <SystemdUnit>[].vn;
-  final scopeFilter = SystemdScopeFilter.all.vn;
-
-  void dispose() {
-    isBusy.dispose();
-    units.dispose();
-    scopeFilter.dispose();
+    // 异步初始化
+    Future.microtask(() => getUnits());
+    return const SystemdState();
   }
 
   List<SystemdUnit> get filteredUnits {
-    switch (scopeFilter.value) {
+    switch (state.scopeFilter) {
       case SystemdScopeFilter.all:
-        return units.value;
+        return state.units;
       case SystemdScopeFilter.system:
-        return units.value.where((unit) => unit.scope == SystemdUnitScope.system).toList();
+        return state.units.where((unit) => unit.scope == SystemdUnitScope.system).toList();
       case SystemdScopeFilter.user:
-        return units.value.where((unit) => unit.scope == SystemdUnitScope.user).toList();
+        return state.units.where((unit) => unit.scope == SystemdUnitScope.user).toList();
     }
   }
 
+  void setScopeFilter(SystemdScopeFilter filter) {
+    state = state.copyWith(scopeFilter: filter);
+  }
+
   Future<void> getUnits() async {
-    isBusy.value = true;
+    state = state.copyWith(isBusy: true);
 
     try {
       final client = _si.value.client;
@@ -57,12 +69,14 @@ final class SystemdProvider {
 
       final parsedUserUnits = await _parseUnitObj(userUnits, SystemdUnitScope.user);
       final parsedSystemUnits = await _parseUnitObj(systemUnits, SystemdUnitScope.system);
-      this.units.value = [...parsedUserUnits, ...parsedSystemUnits];
+      state = state.copyWith(
+        units: [...parsedUserUnits, ...parsedSystemUnits],
+        isBusy: false,
+      );
     } catch (e, s) {
       dprint('Parse systemd', e, s);
+      state = state.copyWith(isBusy: false);
     }
-
-    isBusy.value = false;
   }
 
   Future<List<SystemdUnit>> _parseUnitObj(List<String> unitNames, SystemdUnitScope scope) async {

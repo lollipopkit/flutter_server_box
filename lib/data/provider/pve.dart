@@ -7,71 +7,88 @@ import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
+part 'pve.freezed.dart';
+part 'pve.g.dart';
+
 typedef PveCtrlFunc = Future<bool> Function(String node, String id);
 
-final class PveProvider extends ChangeNotifier {
-  final Spi spi;
+@freezed
+abstract class PveState with _$PveState {
+  const factory PveState({
+    @Default(null) String? error,
+    @Default(null) PveRes? data,
+    @Default(null) String? release,
+    @Default(false) bool isBusy,
+    @Default(false) bool isConnected,
+  }) = _PveState;
+}
+
+@riverpod
+class PveNotifier extends _$PveNotifier {
+  late final Spi spi;
   late String addr;
   late final SSHClient _client;
   late final ServerSocket _serverSocket;
   final List<SSHForwardChannel> _forwards = [];
   int _localPort = 0;
+  late final Dio session;
+  late final bool _ignoreCert;
 
-  PveProvider({required this.spi}) {
+  @override
+  PveState build(Spi spiParam) {
+    spi = spiParam;
     final client = spi.server?.value.client;
     if (client == null) {
-      throw Exception('Server client is null');
+      return const PveState(error: 'Server client is null');
     }
     _client = client;
     final addr = spi.custom?.pveAddr;
     if (addr == null) {
-      err.value = 'PVE address is null';
-      return;
+      return const PveState(error: 'PVE address is null');
     }
     this.addr = addr;
-    _init();
+    _ignoreCert = spi.custom?.pveIgnoreCert ?? false;
+    _initSession();
+    // 异步初始化
+    Future.microtask(() => _init());
+    return const PveState();
   }
 
-  final err = ValueNotifier<String?>(null);
-  final connected = Completer<void>();
+  void _initSession() {
+    session = Dio()
+      ..httpClientAdapter = IOHttpClientAdapter(
+        createHttpClient: () {
+          final client = HttpClient();
+          client.connectionFactory = cf;
+          if (_ignoreCert) {
+            client.badCertificateCallback = (_, _, _) => true;
+          }
+          return client;
+        },
+        validateCertificate: _ignoreCert ? (_, _, _) => true : null,
+      );
+  }
 
-  late final _ignoreCert = spi.custom?.pveIgnoreCert ?? false;
-  late final session = Dio()
-    ..httpClientAdapter = IOHttpClientAdapter(
-      createHttpClient: () {
-        final client = HttpClient();
-        client.connectionFactory = cf;
-        if (_ignoreCert) {
-          client.badCertificateCallback = (_, _, _) => true;
-        }
-        return client;
-      },
-      validateCertificate: _ignoreCert ? (_, _, _) => true : null,
-    );
-
-  final data = ValueNotifier<PveRes?>(null);
-
-  bool get onlyOneNode => data.value?.nodes.length == 1;
-  String? release;
-  bool isBusy = false;
+  bool get onlyOneNode => state.data?.nodes.length == 1;
 
   Future<void> _init() async {
     try {
       await _forward();
       await _login();
       await _getRelease();
+      state = state.copyWith(isConnected: true);
     } on PveErr {
-      err.value = l10n.pveLoginFailed;
+      state = state.copyWith(error: l10n.pveLoginFailed);
     } catch (e, s) {
       Loggers.app.warning('PVE init failed', e, s);
-      err.value = e.toString();
-    } finally {
-      connected.complete();
+      state = state.copyWith(error: e.toString());
     }
   }
 
@@ -146,72 +163,81 @@ final class PveProvider extends ChangeNotifier {
     final resp = await session.get('$addr/api2/extjs/version');
     final version = resp.data['data']['release'] as String?;
     if (version != null) {
-      release = version;
+      state = state.copyWith(release: version);
     }
   }
 
   Future<void> list() async {
-    await connected.future;
-    if (isBusy) return;
-    isBusy = true;
+    if (!state.isConnected || state.isBusy) return;
+    state = state.copyWith(isBusy: true);
     try {
       final resp = await session.get('$addr/api2/json/cluster/resources');
       final res = resp.data['data'] as List;
       final result = await Computer.shared.start(PveRes.parse, (
         res,
-        data.value,
+        state.data,
       ));
-      data.value = result;
+      state = state.copyWith(data: result, error: null);
     } catch (e) {
       Loggers.app.warning('PVE list failed', e);
-      err.value = e.toString();
+      state = state.copyWith(error: e.toString());
     } finally {
-      isBusy = false;
+      state = state.copyWith(isBusy: false);
     }
   }
 
   Future<bool> reboot(String node, String id) async {
-    await connected.future;
+    if (!state.isConnected) return false;
     final resp = await session.post(
       '$addr/api2/json/nodes/$node/$id/status/reboot',
     );
-    return _isCtrlSuc(resp);
+    final success = _isCtrlSuc(resp);
+    if (success) await list(); // 刷新数据
+    return success;
   }
 
   Future<bool> start(String node, String id) async {
-    await connected.future;
+    if (!state.isConnected) return false;
     final resp = await session.post(
       '$addr/api2/json/nodes/$node/$id/status/start',
     );
-    return _isCtrlSuc(resp);
+    final success = _isCtrlSuc(resp);
+    if (success) await list(); // 刷新数据
+    return success;
   }
 
   Future<bool> stop(String node, String id) async {
-    await connected.future;
+    if (!state.isConnected) return false;
     final resp = await session.post(
       '$addr/api2/json/nodes/$node/$id/status/stop',
     );
-    return _isCtrlSuc(resp);
+    final success = _isCtrlSuc(resp);
+    if (success) await list(); // 刷新数据
+    return success;
   }
 
   Future<bool> shutdown(String node, String id) async {
-    await connected.future;
+    if (!state.isConnected) return false;
     final resp = await session.post(
       '$addr/api2/json/nodes/$node/$id/status/shutdown',
     );
-    return _isCtrlSuc(resp);
+    final success = _isCtrlSuc(resp);
+    if (success) await list(); // 刷新数据
+    return success;
   }
 
   bool _isCtrlSuc(Response resp) {
     return resp.statusCode == 200;
   }
 
-  @override
   Future<void> dispose() async {
-    super.dispose();
-    await _serverSocket.close();
+    try {
+      await _serverSocket.close();
+    } catch (_) {}
     for (final forward in _forwards) {
-      forward.close();
+      try {
+        forward.close();
+      } catch (_) {}
     }
   }
 }

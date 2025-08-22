@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:choice/choice.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
@@ -17,7 +18,7 @@ import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
 
-class ServerEditPage extends StatefulWidget {
+class ServerEditPage extends ConsumerStatefulWidget {
   final SpiRequiredArgs? args;
 
   const ServerEditPage({super.key, this.args});
@@ -25,10 +26,10 @@ class ServerEditPage extends StatefulWidget {
   static const route = AppRoute<bool, SpiRequiredArgs>(page: ServerEditPage.new, path: '/servers/edit');
 
   @override
-  State<ServerEditPage> createState() => _ServerEditPageState();
+  ConsumerState<ServerEditPage> createState() => _ServerEditPageState();
 }
 
-class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
+class _ServerEditPageState extends ConsumerState<ServerEditPage> with AfterLayoutMixin {
   late final spi = widget.args?.spi;
   final _nameController = TextEditingController();
   final _ipController = TextEditingController();
@@ -227,12 +228,14 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
   }
 
   Widget _buildKeyAuth() {
-    return PrivateKeyProvider.pkis.listenVal((pkis) {
-      final tiles = List<Widget>.generate(pkis.length, (index) {
-        final e = pkis[index];
-        return ListTile(
-          contentPadding: const EdgeInsets.only(left: 10, right: 15),
-          leading: Radio<int>(value: index),
+    final privateKeyState = ref.watch(privateKeyNotifierProvider);
+    final pkis = privateKeyState.keys;
+    
+    final tiles = List<Widget>.generate(pkis.length, (index) {
+      final e = pkis[index];
+      return ListTile(
+        contentPadding: const EdgeInsets.only(left: 10, right: 15),
+        leading: Radio<int>(value: index),
           title: Text(e.id, textAlign: TextAlign.start),
           subtitle: Text(e.type ?? l10n.unknown, textAlign: TextAlign.start, style: UIs.textGrey),
           trailing: Btn.icon(
@@ -254,7 +257,6 @@ class _ServerEditPageState extends State<ServerEditPage> with AfterLayoutMixin {
         onChanged: (val) => _keyIdx.value = val,
         child: _keyIdx.listenVal((_) => Column(children: tiles)).cardx,
       );
-    });
   }
 
   Widget _buildEnvs() {
@@ -705,7 +707,7 @@ extension on _ServerEditPageState {
       port: int.parse(_portController.text),
       user: _usernameController.text,
       pwd: _passwordController.text.selfNotEmptyOrNull,
-      keyId: _keyIdx.value != null ? PrivateKeyProvider.pkis.value.elementAt(_keyIdx.value!).id : null,
+      keyId: _keyIdx.value != null ? ref.read(privateKeyNotifierProvider).keys.elementAt(_keyIdx.value!).id : null,
       tags: _tags.value.isEmpty ? null : _tags.value.toList(),
       alterUrl: _altUrlController.text.selfNotEmptyOrNull,
       autoConnect: _autoConnect.value,
@@ -740,7 +742,7 @@ extension on _ServerEditPageState {
     if (spi.keyId == null) {
       _passwordController.text = spi.pwd ?? '';
     } else {
-      _keyIdx.value = PrivateKeyProvider.pkis.value.indexWhere((e) => e.id == spi.keyId);
+      _keyIdx.value = ref.read(privateKeyNotifierProvider).keys.indexWhere((e) => e.id == spi.keyId);
     }
 
     /// List in dart is passed by pointer, so you need to copy it here

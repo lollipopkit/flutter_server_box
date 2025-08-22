@@ -22,7 +22,7 @@ extension on _ServerPageState {
       ServerConn.connecting || ServerConn.loading || ServerConn.connected => (
         SizedBox.square(
           dimension: _ServerPageState._kCardHeightMin,
-          child: SizedLoading(_ServerPageState._kCardHeightMin, strokeWidth: 3, padding: 3),
+          child: SizedLoading(_ServerPageState._kCardHeightMin, padding: 3),
         ),
         null,
       ),

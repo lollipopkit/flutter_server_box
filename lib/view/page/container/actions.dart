@@ -1,6 +1,12 @@
 part of 'container.dart';
 
 extension on _ContainerPageState {
+  /// The notifier for the container state.
+  ContainerNotifier get _containerNotifier => ref.read(_provider.notifier);
+
+  /// Watch the current state of the container.
+  ContainerState get _containerState => ref.watch(_provider);
+
   Future<void> _showAddFAB() async {
     final imageCtrl = TextEditingController();
     final nameCtrl = TextEditingController();
@@ -79,7 +85,7 @@ extension on _ContainerPageState {
           onPressed: () async {
             context.pop();
 
-            final (result, err) = await context.showLoadingDialog(fn: () => _container.run(cmd));
+            final (result, err) = await context.showLoadingDialog(fn: () => _containerNotifier.run(cmd));
             if (err != null || result != null) {
               final e = result?.message ?? err?.toString();
               context.showRoundDialog(title: libL10n.error, child: Text(e.toString()));
@@ -111,7 +117,7 @@ extension on _ContainerPageState {
   void _onSaveDockerHost(String val) {
     context.pop();
     Stores.container.put(widget.args.spi.id, val.trim());
-    _container.refresh();
+    _containerNotifier.refresh();
   }
 
   void _showImageRmDialog(ContainerImg e) {
@@ -121,7 +127,7 @@ extension on _ContainerPageState {
       actions: Btn.ok(
         onTap: () async {
           context.pop();
-          final result = await _container.run('rmi ${e.id} -f');
+          final result = await _containerNotifier.run('rmi ${e.id} -f');
           if (result != null) {
             context.showSnackBar(result.message ?? 'null');
           }
@@ -163,7 +169,9 @@ extension on _ContainerPageState {
             onTap: () async {
               context.pop();
 
-              final (result, err) = await context.showLoadingDialog(fn: () => _container.delete(id, force));
+              final (result, err) = await context.showLoadingDialog(
+                fn: () => _containerNotifier.delete(id, force),
+              );
               if (err != null || result != null) {
                 final e = result?.message ?? err?.toString();
                 context.showRoundDialog(title: libL10n.error, child: Text(e ?? 'null'));
@@ -173,21 +181,21 @@ extension on _ContainerPageState {
         );
         break;
       case ContainerMenu.start:
-        final (result, err) = await context.showLoadingDialog(fn: () => _container.start(id));
+        final (result, err) = await context.showLoadingDialog(fn: () => _containerNotifier.start(id));
         if (err != null || result != null) {
           final e = result?.message ?? err?.toString();
           context.showRoundDialog(title: libL10n.error, child: Text(e ?? 'null'));
         }
         break;
       case ContainerMenu.stop:
-        final (result, err) = await context.showLoadingDialog(fn: () => _container.stop(id));
+        final (result, err) = await context.showLoadingDialog(fn: () => _containerNotifier.stop(id));
         if (err != null || result != null) {
           final e = result?.message ?? err?.toString();
           context.showRoundDialog(title: libL10n.error, child: Text(e ?? 'null'));
         }
         break;
       case ContainerMenu.restart:
-        final (result, err) = await context.showLoadingDialog(fn: () => _container.restart(id));
+        final (result, err) = await context.showLoadingDialog(fn: () => _containerNotifier.restart(id));
         if (err != null || result != null) {
           final e = result?.message ?? err?.toString();
           context.showRoundDialog(title: libL10n.error, child: Text(e ?? 'null'));
@@ -197,7 +205,7 @@ extension on _ContainerPageState {
         final args = SshPageArgs(
           spi: widget.args.spi,
           initCmd:
-              '${switch (_container.type) {
+              '${switch (_containerState.type) {
                 ContainerType.podman => 'podman',
                 ContainerType.docker => 'docker',
               }} logs -f --tail 100 ${dItem.id}',
@@ -208,7 +216,7 @@ extension on _ContainerPageState {
         final args = SshPageArgs(
           spi: widget.args.spi,
           initCmd:
-              '${switch (_container.type) {
+              '${switch (_containerState.type) {
                 ContainerType.podman => 'podman',
                 ContainerType.docker => 'docker',
               }} exec -it ${dItem.id} sh',
@@ -222,7 +230,7 @@ extension on _ContainerPageState {
     if (Stores.setting.containerAutoRefresh.fetch()) {
       Timer.periodic(Duration(seconds: Stores.setting.serverStatusUpdateInterval.fetch()), (timer) {
         if (mounted) {
-          _container.refresh(isAuto: true);
+          _containerNotifier.refresh(isAuto: true);
         } else {
           timer.cancel();
         }

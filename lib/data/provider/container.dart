@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
@@ -12,63 +14,66 @@ import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/res/store.dart';
 
+part 'container.freezed.dart';
+part 'container.g.dart';
+
 final _dockerNotFound = RegExp(r"command not found|Unknown command|Command '\w+' not found");
 
-class ContainerProvider extends ChangeNotifier {
-  final SSHClient? client;
-  final String userName;
-  final String hostId;
-  final BuildContext context;
-  List<ContainerPs>? items;
-  List<ContainerImg>? images;
-  String? version;
-  ContainerErr? error;
-  String? runLog;
-  ContainerType type;
-  var sudoCompleter = Completer<bool>();
-  bool isBusy = false;
+@freezed
+abstract class ContainerState with _$ContainerState {
+  const factory ContainerState({
+    @Default(null) List<ContainerPs>? items,
+    @Default(null) List<ContainerImg>? images,
+    @Default(null) String? version,
+    @Default(null) ContainerErr? error,
+    @Default(null) String? runLog,
+    @Default(ContainerType.docker) ContainerType type,
+    @Default(false) bool isBusy,
+  }) = _ContainerState;
+}
 
-  ContainerProvider({
-    required this.client,
-    required this.userName,
-    required this.hostId,
-    required this.context,
-  }) : type = Stores.container.getType(hostId) {
-    refresh();
+@riverpod
+class ContainerNotifier extends _$ContainerNotifier {
+  var sudoCompleter = Completer<bool>();
+
+  @override
+  ContainerState build(SSHClient? client, String userName, String hostId, BuildContext context) {
+    this.client = client;
+    this.userName = userName;
+    this.hostId = hostId;
+    this.context = context;
+    
+    final type = Stores.container.getType(hostId);
+    final initialState = ContainerState(type: type);
+    
+    // 异步初始化
+    Future.microtask(() => refresh());
+    
+    return initialState;
   }
 
   Future<void> setType(ContainerType type) async {
-    this.type = type;
+    state = state.copyWith(
+      type: type,
+      error: null,
+      runLog: null,
+      items: null,
+      images: null,
+      version: null,
+    );
     Stores.container.setType(type, hostId);
-    error = runLog = items = images = version = null;
     sudoCompleter = Completer<bool>();
-    notifyListeners();
     await refresh();
   }
 
-  // Future<bool> _checkDockerInstalled(SSHClient client) async {
-  //   final session = await client.execute("docker");
-  //   await session.done;
-  //   // debugPrint('docker code: ${session.exitCode}');
-  //   return session.exitCode == 0;
-  // }
-
-  // String _removeSudoPrompts(String value) {
-  //   final regex = RegExp(r"\[sudo\] password for \w+:");
-  //   if (value.startsWith(regex)) {
-  //     return value.replaceFirstMapped(regex, (match) => "");
-  //   }
-  //   return value;
-  // }
-
   void _requiresSudo() async {
     /// Podman is rootless
-    if (type == ContainerType.podman) return sudoCompleter.complete(false);
+    if (state.type == ContainerType.podman) return sudoCompleter.complete(false);
     if (!Stores.setting.containerTrySudo.fetch()) {
       return sudoCompleter.complete(false);
     }
 
-    final res = await client?.run(_wrap(ContainerCmdType.images.exec(type)));
+    final res = await client?.run(_wrap(ContainerCmdType.images.exec(state.type)));
     if (res?.string.toLowerCase().contains('permission denied') ?? false) {
       return sudoCompleter.complete(true);
     }
@@ -76,8 +81,8 @@ class ContainerProvider extends ChangeNotifier {
   }
 
   Future<void> refresh({bool isAuto = false}) async {
-    if (isBusy) return;
-    isBusy = true;
+    if (state.isBusy) return;
+    state = state.copyWith(isBusy: true);
 
     if (!sudoCompleter.isCompleted) _requiresSudo();
 
@@ -85,11 +90,14 @@ class ContainerProvider extends ChangeNotifier {
 
     /// If sudo is required and auto refresh is enabled, skip the refresh.
     /// Or this will ask for pwd again and again.
-    if (sudo && isAuto) return;
+    if (sudo && isAuto) {
+      state = state.copyWith(isBusy: false);
+      return;
+    }
     final includeStats = Stores.setting.containerParseStat.fetch();
 
     var raw = '';
-    final cmd = _wrap(ContainerCmdType.execAll(type, sudo: sudo, includeStats: includeStats));
+    final cmd = _wrap(ContainerCmdType.execAll(state.type, sudo: sudo, includeStats: includeStats));
     final code = await client?.execWithPwd(
       cmd,
       context: context,
@@ -97,75 +105,79 @@ class ContainerProvider extends ChangeNotifier {
       id: hostId,
     );
 
-    isBusy = false;
+    state = state.copyWith(isBusy: false);
 
     if (!context.mounted) return;
 
     /// Code 127 means command not found
     if (code == 127 || raw.contains(_dockerNotFound)) {
-      error = ContainerErr(type: ContainerErrType.notInstalled);
-      notifyListeners();
+      state = state.copyWith(error: ContainerErr(type: ContainerErrType.notInstalled));
       return;
     }
 
     // Check result segments count
     final segments = raw.split(ScriptConstants.separator);
     if (segments.length != ContainerCmdType.values.length) {
-      error = ContainerErr(
-        type: ContainerErrType.segmentsNotMatch,
-        message: 'Container segments: ${segments.length}',
+      state = state.copyWith(
+        error: ContainerErr(
+          type: ContainerErrType.segmentsNotMatch,
+          message: 'Container segments: ${segments.length}',
+        ),
       );
       Loggers.app.warning('Container segments: ${segments.length}\n$raw');
-      notifyListeners();
       return;
     }
 
     // Parse version
     final verRaw = ContainerCmdType.version.find(segments);
     try {
-      version = json.decode(verRaw)['Client']['Version'];
+      final version = json.decode(verRaw)['Client']['Version'];
+      state = state.copyWith(version: version, error: null);
     } catch (e, trace) {
-      error = ContainerErr(type: ContainerErrType.invalidVersion, message: '$e');
+      state = state.copyWith(
+        error: ContainerErr(type: ContainerErrType.invalidVersion, message: '$e'),
+      );
       Loggers.app.warning('Container version failed', e, trace);
-    } finally {
-      notifyListeners();
     }
 
     // Parse ps
     final psRaw = ContainerCmdType.ps.find(segments);
     try {
       final lines = psRaw.split('\n');
-      if (type == ContainerType.docker) {
+      if (state.type == ContainerType.docker) {
         /// Due to the fetched data is not in json format, skip table header
         lines.removeWhere((element) => element.contains('CONTAINER ID'));
       }
       lines.removeWhere((element) => element.isEmpty);
-      items = lines.map((e) => ContainerPs.fromRaw(e, type)).toList();
+      final items = lines.map((e) => ContainerPs.fromRaw(e, state.type)).toList();
+      state = state.copyWith(items: items);
     } catch (e, trace) {
-      error = ContainerErr(type: ContainerErrType.parsePs, message: '$e');
+      state = state.copyWith(
+        error: ContainerErr(type: ContainerErrType.parsePs, message: '$e'),
+      );
       Loggers.app.warning('Container ps failed', e, trace);
-    } finally {
-      notifyListeners();
     }
 
     // Parse images
     final imageRaw = ContainerCmdType.images.find(segments).trim();
     final isEntireJson = imageRaw.startsWith('[') && imageRaw.endsWith(']');
     try {
+      List<ContainerImg> images;
       if (isEntireJson) {
         images = (json.decode(imageRaw) as List)
-            .map((e) => ContainerImg.fromRawJson(json.encode(e), type))
+            .map((e) => ContainerImg.fromRawJson(json.encode(e), state.type))
             .toList();
       } else {
         final lines = imageRaw.split('\n');
         lines.removeWhere((element) => element.isEmpty);
-        images = lines.map((e) => ContainerImg.fromRawJson(e, type)).toList();
+        images = lines.map((e) => ContainerImg.fromRawJson(e, state.type)).toList();
       }
+      state = state.copyWith(images: images);
     } catch (e, trace) {
-      error = ContainerErr(type: ContainerErrType.parseImages, message: '$e');
+      state = state.copyWith(
+        error: ContainerErr(type: ContainerErrType.parseImages, message: '$e'),
+      );
       Loggers.app.warning('Container images failed', e, trace);
-    } finally {
-      notifyListeners();
     }
 
     // Parse stats
@@ -173,7 +185,7 @@ class ContainerProvider extends ChangeNotifier {
     try {
       final statsLines = statsRaw.split('\n');
       statsLines.removeWhere((element) => element.isEmpty);
-      for (var item in items!) {
+      for (var item in state.items!) {
         final id = item.id;
         if (id == null) continue;
         final statsLine = statsLines.firstWhereOrNull(
@@ -185,10 +197,10 @@ class ContainerProvider extends ChangeNotifier {
         item.parseStats(statsLine);
       }
     } catch (e, trace) {
-      error = ContainerErr(type: ContainerErrType.parseStats, message: '$e');
+      state = state.copyWith(
+        error: ContainerErr(type: ContainerErrType.parseStats, message: '$e'),
+      );
       Loggers.app.warning('Parse docker stats: $statsRaw', e, trace);
-    } finally {
-      notifyListeners();
     }
   }
 
@@ -223,25 +235,23 @@ class ContainerProvider extends ChangeNotifier {
   }
 
   Future<ContainerErr?> run(String cmd, {bool autoRefresh = true}) async {
-    cmd = switch (type) {
+    cmd = switch (state.type) {
       ContainerType.docker => 'docker $cmd',
       ContainerType.podman => 'podman $cmd',
     };
 
-    runLog = '';
+    state = state.copyWith(runLog: '');
     final errs = <String>[];
     final code = await client?.execWithPwd(
       _wrap((await sudoCompleter.future) ? 'sudo -S $cmd' : cmd),
       context: context,
       onStdout: (data, _) {
-        runLog = '$runLog$data';
-        notifyListeners();
+        state = state.copyWith(runLog: '${state.runLog}$data');
       },
       onStderr: (data, _) => errs.add(data),
       id: hostId,
     );
-    runLog = null;
-    notifyListeners();
+    state = state.copyWith(runLog: null);
 
     if (code != 0) {
       return ContainerErr(type: ContainerErrType.unknown, message: errs.join('\n').trim());
@@ -261,6 +271,7 @@ class ContainerProvider extends ChangeNotifier {
     return cmd;
   }
 }
+
 
 const _jsonFmt = '--format "{{json .}}"';
 
