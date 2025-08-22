@@ -294,7 +294,9 @@ String? _parseSysVer(String raw) {
 String? _parseHostName(String raw) {
   if (raw.isEmpty) return null;
   if (raw.contains(ScriptConstants.scriptFile)) return null;
-  return raw;
+  final trimmed = raw.trim();
+  if (trimmed.isEmpty) return null;
+  return trimmed;
 }
 
 // Windows status parsing implementation

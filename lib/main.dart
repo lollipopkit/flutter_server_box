@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:computer/computer.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
@@ -93,6 +94,7 @@ void _doPlatformRelated() async {
   }
 
   final serversCount = Stores.server.keys().length;
+  BackgroundIsolateBinaryMessenger.ensureInitialized(RootIsolateToken.instance!);
   Computer.shared.turnOn(workersCount: (serversCount / 3).round() + 1); // Plus 1 to avoid 0.
 
   bakSync.sync();
