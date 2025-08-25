@@ -4,6 +4,7 @@ import 'package:computer/computer.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
@@ -17,17 +18,17 @@ final class PrivateKeyEditPageArgs {
   const PrivateKeyEditPageArgs({this.pki});
 }
 
-class PrivateKeyEditPage extends StatefulWidget {
+class PrivateKeyEditPage extends ConsumerStatefulWidget {
   final PrivateKeyEditPageArgs? args;
   const PrivateKeyEditPage({super.key, this.args});
 
   @override
-  State<PrivateKeyEditPage> createState() => _PrivateKeyEditPageState();
+  ConsumerState<PrivateKeyEditPage> createState() => _PrivateKeyEditPageState();
 
   static const route = AppRoute(page: PrivateKeyEditPage.new, path: '/private_key/edit');
 }
 
-class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
+class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
   final _nameController = TextEditingController();
   final _keyController = TextEditingController();
   final _pwdController = TextEditingController();
@@ -38,6 +39,8 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
   late FocusScopeNode _focusScope;
 
   final _loading = ValueNotifier<Widget?>(null);
+
+  late final _notifier = ref.read(privateKeyNotifierProvider.notifier);
 
   PrivateKeyInfo? get pki => widget.args?.pki;
 
@@ -94,7 +97,7 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
                   child: Text(libL10n.askContinue('${libL10n.delete} ${l10n.privateKey}(${pki.id})')),
                   actions: Btn.ok(
                     onTap: () {
-                      PrivateKeyProvider.delete(pki);
+                      _notifier.delete(pki);
                       context.pop();
                       context.pop();
                     },
@@ -196,9 +199,9 @@ class _PrivateKeyEditPageState extends State<PrivateKeyEditPage> {
       final pki = PrivateKeyInfo(id: name, key: decrypted);
       final originPki = this.pki;
       if (originPki != null) {
-        PrivateKeyProvider.update(originPki, pki);
+        _notifier.update(originPki, pki);
       } else {
-        PrivateKeyProvider.add(pki);
+        _notifier.add(pki);
       }
     } catch (e) {
       context.showSnackBar(e.toString());

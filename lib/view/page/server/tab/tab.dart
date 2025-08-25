@@ -5,6 +5,7 @@ import 'dart:math' as math;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/extension/context/locale.dart';
@@ -31,11 +32,11 @@ part 'landscape.dart';
 part 'top_bar.dart';
 part 'utils.dart';
 
-class ServerPage extends StatefulWidget {
+class ServerPage extends ConsumerStatefulWidget {
   const ServerPage({super.key});
 
   @override
-  State<ServerPage> createState() => _ServerPageState();
+  ConsumerState<ServerPage> createState() => _ServerPageState();
 
   static const route = AppRouteNoArg(page: ServerPage.new, path: '/servers');
 }
@@ -43,12 +44,14 @@ class ServerPage extends StatefulWidget {
 const _cardPad = 74.0;
 const _cardPadSingle = 13.0;
 
-class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
+class _ServerPageState extends ConsumerState<ServerPage>
+    with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
   late double _textFactorDouble;
   double _offset = 1;
   late TextScaler _textFactor;
 
   final _cardsStatus = <String, _CardNotifier>{};
+  late final ValueNotifier<Set<String>> _tags;
 
   Timer? _timer;
 
@@ -64,11 +67,13 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
     _scrollController.dispose();
     _autoHideCtrl.dispose();
     _tag.dispose();
+    _tags.dispose();
   }
 
   @override
   void initState() {
     super.initState();
+    _tags = ValueNotifier(ref.read(serverNotifierProvider).tags);
     _startAvoidJitterTimer();
   }
 
@@ -78,9 +83,23 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
     _updateOffset();
   }
 
+  // Helper method to create Server objects from provider data
+  Server? _createServerFromProvider(String id) {
+    final serverState = ref.watch(serverNotifierProvider);
+    final spi = serverState.servers[id];
+    if (spi == null) return null;
+
+    final individualState = ref.watch(individualServerNotifierProvider(id));
+    return Server(spi, individualState.status, individualState.conn, client: individualState.client);
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    // Listen to provider changes and update the ValueNotifier
+    ref.listen(serverNotifierProvider, (previous, next) {
+      _tags.value = next.tags;
+    });
     return OrientationBuilder(
       builder: (_, orientation) {
         if (orientation == Orientation.landscape) {
@@ -96,7 +115,7 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
 
   Widget _buildScaffold(Widget child) {
     return Scaffold(
-      appBar: _TopBar(tags: ServerProvider.tags, onTagChanged: (p0) => _tag.value = p0, initTag: _tag.value),
+      appBar: _TopBar(tags: _tags, onTagChanged: (p0) => _tag.value = p0, initTag: _tag.value),
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: _autoHideCtrl.show,
@@ -122,22 +141,21 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
 
   Widget _buildPortrait() {
     // final isMobile = ResponsiveBreakpoints.of(context).isMobile;
-    return ServerProvider.serverOrder.listenVal((order) {
-      return _tag.listenVal((val) {
-        final filtered = _filterServers(order);
-        final child = _buildScaffold(_buildBodySmall(filtered: filtered));
-        // if (isMobile) {
-        return child;
-        // }
+    final serverState = ref.watch(serverNotifierProvider);
+    return _tag.listenVal((val) {
+      final filtered = _filterServers(serverState.serverOrder);
+      final child = _buildScaffold(_buildBodySmall(filtered: filtered));
+      // if (isMobile) {
+      return child;
+      // }
 
-        // return SplitView(
-        //   controller: _splitViewCtrl,
-        //   leftWeight: 1,
-        //   rightWeight: 1.3,
-        //   initialRight: Center(child: CircularProgressIndicator()),
-        //   leftBuilder: (_, __) => child,
-        // );
-      });
+      // return SplitView(
+      //   controller: _splitViewCtrl,
+      //   leftWeight: 1,
+      //   rightWeight: 1.3,
+      //   initialRight: Center(child: CircularProgressIndicator()),
+      //   leftBuilder: (_, __) => child,
+      // );
     });
   }
 
@@ -173,10 +191,10 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
                   // Last item is just spacing
                   if (index == lens) return SizedBox(height: 77);
 
-                  final vnode = ServerProvider.pick(id: serversInThisColumn[index]);
-                  if (vnode == null) return UIs.placeholder;
+                  final srv = _createServerFromProvider(serversInThisColumn[index]);
+                  if (srv == null) return UIs.placeholder;
 
-                  return vnode.listenVal(_buildEachServerCard);
+                  return _buildEachServerCard(srv);
                 },
               ),
             );
@@ -332,8 +350,8 @@ class _ServerPageState extends State<ServerPage> with AutomaticKeepAliveClientMi
 
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
-    ServerProvider.refresh();
-    ServerProvider.startAutoRefresh();
+    ref.read(serverNotifierProvider.notifier).refresh();
+    ref.read(serverNotifierProvider.notifier).startAutoRefresh();
   }
 
   static const _kCardHeightMin = 23.0;

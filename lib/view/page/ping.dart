@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/ping_result.dart';
 import 'package:server_box/data/provider/server.dart';
@@ -9,16 +10,16 @@ import 'package:server_box/data/provider/server.dart';
 /// Only permit ipv4 / ipv6 / domain chars
 final targetReg = RegExp(r'[a-zA-Z0-9\.-_:]+');
 
-class PingPage extends StatefulWidget {
+class PingPage extends ConsumerStatefulWidget {
   const PingPage({super.key});
 
   @override
-  State<PingPage> createState() => _PingPageState();
+  ConsumerState<PingPage> createState() => _PingPageState();
 
   static const route = AppRouteNoArg(page: PingPage.new, path: '/ping');
 }
 
-class _PingPageState extends State<PingPage> with AutomaticKeepAliveClientMixin {
+class _PingPageState extends ConsumerState<PingPage> with AutomaticKeepAliveClientMixin {
   late TextEditingController _textEditingController;
   final _results = ValueNotifier(<PingResult>[]);
   bool get isInit => _results.value.isEmpty;
@@ -129,7 +130,7 @@ class _PingPageState extends State<PingPage> with AutomaticKeepAliveClientMixin 
       return;
     }
 
-    if (ServerProvider.serverOrder.value.isEmpty) {
+    if (ref.read(serverNotifierProvider).serverOrder.isEmpty) {
       context.showSnackBar(l10n.pingNoServer);
       return;
     }
@@ -141,13 +142,13 @@ class _PingPageState extends State<PingPage> with AutomaticKeepAliveClientMixin 
     }
 
     await Future.wait(
-      ServerProvider.servers.values.map((v) async {
-        final e = v.value;
-        if (e.client == null) {
+      ref.read(serverNotifierProvider).servers.values.map((spi) async {
+        final serverState = ref.read(individualServerNotifierProvider(spi.id));
+        if (serverState.client == null) {
           return;
         }
-        final result = await e.client!.run('ping -c 3 $target').string;
-        _results.value.add(PingResult.parse(e.spi.name, result));
+        final result = await serverState.client!.run('ping -c 3 $target').string;
+        _results.value.add(PingResult.parse(spi.name, result));
         // [ValueNotifier] only notify when value is changed
         // But we just add a element to list without changing the list itself
         // So we need to notify manually

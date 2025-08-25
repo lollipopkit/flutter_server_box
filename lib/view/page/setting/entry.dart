@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_highlight/theme_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/net_view.dart';
@@ -35,16 +36,16 @@ part 'entries/ssh.dart';
 
 const _kIconSize = 23.0;
 
-class SettingsPage extends StatefulWidget {
+class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
 
   static const route = AppRouteNoArg(page: SettingsPage.new, path: '/settings');
 
   @override
-  State<SettingsPage> createState() => _SettingsPageState();
+  ConsumerState<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderStateMixin {
+class _SettingsPageState extends ConsumerState<SettingsPage> with SingleTickerProviderStateMixin {
   late final _tabCtrl = TabController(length: SettingsTabs.values.length, vsync: this);
 
   @override
@@ -98,14 +99,14 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
   }
 }
 
-final class AppSettingsPage extends StatefulWidget {
+final class AppSettingsPage extends ConsumerStatefulWidget {
   const AppSettingsPage({super.key});
 
   @override
-  State<AppSettingsPage> createState() => _AppSettingsPageState();
+  ConsumerState<AppSettingsPage> createState() => _AppSettingsPageState();
 }
 
-final class _AppSettingsPageState extends State<AppSettingsPage> {
+final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
   final _setting = Stores.setting;
 
   late final _sshOpacityCtrl = TextEditingController(text: _setting.sshBgOpacity.fetch().toString());

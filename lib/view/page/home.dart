@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/data/model/app/tab.dart';
@@ -10,16 +11,16 @@ import 'package:server_box/data/res/url.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  ConsumerState<HomePage> createState() => _HomePageState();
 
   static const route = AppRouteNoArg(page: HomePage.new, path: '/');
 }
 
-class _HomePageState extends State<HomePage>
+class _HomePageState extends ConsumerState<HomePage>
     with AutomaticKeepAliveClientMixin, AfterLayoutMixin, WidgetsBindingObserver {
   late final PageController _pageController;
 
@@ -29,11 +30,14 @@ class _HomePageState extends State<HomePage>
   bool _shouldAuth = false;
   DateTime? _pausedTime;
 
+  late final _notifier = ref.read(serverNotifierProvider.notifier);
+  late final _provider = ref.read(serverNotifierProvider);
+
   @override
   void dispose() {
     super.dispose();
     WidgetsBinding.instance.removeObserver(this);
-    ServerProvider.closeServer();
+    _notifier.closeServer();
     _pageController.dispose();
     WakelockPlus.disable();
 
@@ -76,8 +80,9 @@ class _HomePageState extends State<HomePage>
             _goAuth();
           }
         }
-        if (!ServerProvider.isAutoRefreshOn) {
-          ServerProvider.startAutoRefresh();
+        final serverNotifier = _notifier;
+        if (_provider.autoRefreshTimer == null) {
+          serverNotifier.startAutoRefresh();
         }
         MethodChans.updateHomeWidget();
         break;
@@ -92,7 +97,7 @@ class _HomePageState extends State<HomePage>
           // }
         } else {
           //Pros.server.setDisconnected();
-          ServerProvider.stopAutoRefresh();
+          _notifier.stopAutoRefresh();
         }
         break;
       default:
@@ -194,7 +199,7 @@ class _HomePageState extends State<HomePage>
       AppUpdateIface.doUpdate(build: BuildData.build, url: Urls.updateCfg, context: context);
     }
     MethodChans.updateHomeWidget();
-    await ServerProvider.refresh();
+    await _notifier.refresh();
   }
 
   // Future<void> _reqNotiPerm() async {

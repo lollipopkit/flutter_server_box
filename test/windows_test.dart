@@ -122,7 +122,7 @@ void main() {
     });
 
     test('should handle Windows script path generation', () {
-      final scriptPath = ShellFunc.status.exec('test-server', systemType: SystemType.windows);
+      final scriptPath = ShellFunc.status.exec('test-server', systemType: SystemType.windows, customDir: null);
       
       expect(scriptPath, contains('powershell'));
       expect(scriptPath, contains('-ExecutionPolicy Bypass'));
@@ -131,7 +131,7 @@ void main() {
 
     test('should execute Windows commands correctly', () {
       for (final func in ShellFunc.values) {
-        final command = func.exec('test-server', systemType: SystemType.windows);
+        final command = func.exec('test-server', systemType: SystemType.windows, customDir: null);
         expect(command, isNotEmpty);
         expect(command, contains('powershell'));
       }

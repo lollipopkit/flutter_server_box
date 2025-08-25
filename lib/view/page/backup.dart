@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:computer/computer.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/sync.dart';
@@ -17,16 +18,16 @@ import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:webdav_client_plus/webdav_client_plus.dart';
 
-class BackupPage extends StatefulWidget {
+class BackupPage extends ConsumerStatefulWidget {
   const BackupPage({super.key});
 
   @override
-  State<BackupPage> createState() => _BackupPageState();
+  ConsumerState<BackupPage> createState() => _BackupPageState();
 
   static const route = AppRouteNoArg(page: BackupPage.new, path: '/backup');
 }
 
-final class _BackupPageState extends State<BackupPage> with AutomaticKeepAliveClientMixin {
+final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKeepAliveClientMixin {
   final webdavLoading = false.vn;
   final gistLoading = false.vn;
 
@@ -401,8 +402,9 @@ final class _BackupPageState extends State<BackupPage> with AutomaticKeepAliveCl
           child: SingleChildScrollView(child: Text(libL10n.askContinue('${libL10n.import} [$snippetNames]'))),
           actions: Btn.ok(
             onTap: () {
+              final notifier = ref.read(snippetNotifierProvider.notifier);
               for (final snippet in snippets) {
-                SnippetProvider.add(snippet);
+                notifier.add(snippet);
               }
               context.pop();
               context.pop();

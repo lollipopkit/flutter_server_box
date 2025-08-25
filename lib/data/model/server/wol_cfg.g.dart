@@ -16,5 +16,5 @@ Map<String, dynamic> _$WakeOnLanCfgToJson(WakeOnLanCfg instance) =>
     <String, dynamic>{
       'mac': instance.mac,
       'ip': instance.ip,
-      'pwd': ?instance.pwd,
+      if (instance.pwd case final value?) 'pwd': value,
     };

@@ -20,11 +20,11 @@ ServerCustom _$ServerCustomFromJson(Map<String, dynamic> json) => ServerCustom(
 
 Map<String, dynamic> _$ServerCustomToJson(ServerCustom instance) =>
     <String, dynamic>{
-      'pveAddr': ?instance.pveAddr,
+      if (instance.pveAddr case final value?) 'pveAddr': value,
       'pveIgnoreCert': instance.pveIgnoreCert,
-      'cmds': ?instance.cmds,
-      'preferTempDev': ?instance.preferTempDev,
-      'logoUrl': ?instance.logoUrl,
-      'netDev': ?instance.netDev,
-      'scriptDir': ?instance.scriptDir,
+      if (instance.cmds case final value?) 'cmds': value,
+      if (instance.preferTempDev case final value?) 'preferTempDev': value,
+      if (instance.logoUrl case final value?) 'logoUrl': value,
+      if (instance.netDev case final value?) 'netDev': value,
+      if (instance.scriptDir case final value?) 'scriptDir': value,
     };

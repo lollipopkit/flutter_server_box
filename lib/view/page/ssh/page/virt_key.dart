@@ -1,7 +1,7 @@
 part of 'page.dart';
 
 extension _VirtKey on SSHPageState {
-  void _doVirtualKey(VirtKey item) {
+  void _doVirtualKey(VirtKey item, VirtKeyboard virtKeyNotifier) {
     if (item.func != null) {
       HapticFeedback.mediumImpact();
       _doVirtualKeyFunc(item.func!);
@@ -9,7 +9,7 @@ extension _VirtKey on SSHPageState {
     }
     if (item.key != null) {
       HapticFeedback.mediumImpact();
-      _doVirtualKeyInput(item.key!);
+      _doVirtualKeyInput(item.key!, virtKeyNotifier);
     }
     final inputRaw = item.inputRaw;
     if (inputRaw != null) {
@@ -18,16 +18,16 @@ extension _VirtKey on SSHPageState {
     }
   }
 
-  void _doVirtualKeyInput(TerminalKey key) {
+  void _doVirtualKeyInput(TerminalKey key, VirtKeyboard virtKeyNotifier) {
     switch (key) {
       case TerminalKey.control:
-        _keyboard.ctrl = !_keyboard.ctrl;
+        virtKeyNotifier.setCtrl(!virtKeyNotifier.ctrl);
         break;
       case TerminalKey.alt:
-        _keyboard.alt = !_keyboard.alt;
+        virtKeyNotifier.setAlt(!virtKeyNotifier.alt);
         break;
       case TerminalKey.shift:
-        _keyboard.shift = !_keyboard.shift;
+        virtKeyNotifier.setShift(!virtKeyNotifier.shift);
         break;
       default:
         _terminal.keyInput(key);
@@ -52,14 +52,15 @@ extension _VirtKey on SSHPageState {
         }
         break;
       case VirtualKeyFunc.snippet:
+        final snippetState = ref.read(snippetNotifierProvider);
         final snippets = await context.showPickWithTagDialog<Snippet>(
           title: l10n.snippet,
-          tags: SnippetProvider.tags,
+          tags: snippetState.tags.vn,
           itemsBuilder: (e) {
             if (e == TagSwitcher.kDefaultTag) {
-              return SnippetProvider.snippets.value;
+              return snippetState.snippets;
             }
-            return SnippetProvider.snippets.value
+            return snippetState.snippets
                 .where((element) => element.tags?.contains(e) ?? false)
                 .toList();
           },

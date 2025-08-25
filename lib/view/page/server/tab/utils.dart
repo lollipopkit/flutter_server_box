@@ -50,7 +50,7 @@ extension _Operation on _ServerPageState {
           Stores.setting.showSuspendTip.put(false);
         }
         srv.client?.execWithPwd(
-          ShellFunc.suspend.exec(srv.spi.id, systemType: srv.status.system),
+          ShellFunc.suspend.exec(srv.spi.id, systemType: srv.status.system, customDir: null),
           context: context,
           id: srv.id,
         );
@@ -63,7 +63,7 @@ extension _Operation on _ServerPageState {
   void _onTapShutdown(Server srv) {
     _askFor(
       func: () => srv.client?.execWithPwd(
-        ShellFunc.shutdown.exec(srv.spi.id, systemType: srv.status.system),
+        ShellFunc.shutdown.exec(srv.spi.id, systemType: srv.status.system, customDir: null),
         context: context,
         id: srv.id,
       ),
@@ -75,7 +75,7 @@ extension _Operation on _ServerPageState {
   void _onTapReboot(Server srv) {
     _askFor(
       func: () => srv.client?.execWithPwd(
-        ShellFunc.reboot.exec(srv.spi.id, systemType: srv.status.system),
+        ShellFunc.reboot.exec(srv.spi.id, systemType: srv.status.system, customDir: null),
         context: context,
         id: srv.id,
       ),
@@ -98,7 +98,7 @@ extension _Utils on _ServerPageState {
     final tag = _tag.value;
     if (tag == TagSwitcher.kDefaultTag) return order;
     return order.where((e) {
-      final tags = ServerProvider.pick(id: e)?.value.spi.tags;
+      final tags = ref.read(serverNotifierProvider).servers[e]?.tags;
       if (tags == null) return false;
       return tags.contains(tag);
     }).toList();

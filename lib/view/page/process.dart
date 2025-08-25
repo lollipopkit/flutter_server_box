@@ -3,25 +3,26 @@ import 'dart:async';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/scripts/shell_func.dart';
 import 'package:server_box/data/model/server/proc.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/res/store.dart';
 
-class ProcessPage extends StatefulWidget {
+class ProcessPage extends ConsumerStatefulWidget {
   final SpiRequiredArgs args;
 
   const ProcessPage({super.key, required this.args});
 
   @override
-  State<ProcessPage> createState() => _ProcessPageState();
+  ConsumerState<ProcessPage> createState() => _ProcessPageState();
 
   static const route = AppRouteArg(page: ProcessPage.new, path: '/process');
 }
 
-class _ProcessPageState extends State<ProcessPage> {
+class _ProcessPageState extends ConsumerState<ProcessPage> {
   late Timer _timer;
   late MediaQueryData _media;
 
@@ -36,6 +37,8 @@ class _ProcessPageState extends State<ProcessPage> {
   ProcSortMode _procSortMode = ProcSortMode.cpu;
   List<ProcSortMode> _sortModes = List.from(ProcSortMode.values);
 
+  late final _provider = individualServerNotifierProvider(widget.args.spi.id);
+
   @override
   void dispose() {
     super.dispose();
@@ -45,7 +48,8 @@ class _ProcessPageState extends State<ProcessPage> {
   @override
   void initState() {
     super.initState();
-    _client = widget.args.spi.server?.value.client;
+    final serverState = ref.read(_provider);
+    _client = serverState.client;
     final duration = Duration(seconds: Stores.setting.serverStatusUpdateInterval.fetch());
     _timer = Timer.periodic(duration, (_) => _refresh());
   }
@@ -58,9 +62,10 @@ class _ProcessPageState extends State<ProcessPage> {
 
   Future<void> _refresh() async {
     if (mounted) {
-      final systemType = widget.args.spi.server?.value.status.system;
+      final serverState = ref.read(_provider);
+      final systemType = serverState.status.system;
       final result = await _client
-          ?.run(ShellFunc.process.exec(widget.args.spi.id, systemType: systemType))
+          ?.run(ShellFunc.process.exec(widget.args.spi.id, systemType: systemType, customDir: null))
           .string;
       if (result == null || result.isEmpty) {
         context.showSnackBar(libL10n.empty);

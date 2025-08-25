@@ -3,22 +3,23 @@ import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
 
-class PrivateKeysListPage extends StatefulWidget {
+class PrivateKeysListPage extends ConsumerStatefulWidget {
   const PrivateKeysListPage({super.key});
 
   @override
-  State<PrivateKeysListPage> createState() => _PrivateKeyListState();
+  ConsumerState<PrivateKeysListPage> createState() => _PrivateKeyListState();
 
   static const route = AppRouteNoArg(page: PrivateKeysListPage.new, path: '/private_key');
 }
 
-class _PrivateKeyListState extends State<PrivateKeysListPage> with AfterLayoutMixin {
+class _PrivateKeyListState extends ConsumerState<PrivateKeysListPage> with AfterLayoutMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -31,14 +32,15 @@ class _PrivateKeyListState extends State<PrivateKeysListPage> with AfterLayoutMi
   }
 
   Widget _buildBody() {
-    return PrivateKeyProvider.pkis.listenVal((pkis) {
-      if (pkis.isEmpty) {
-        return Center(child: Text(libL10n.empty));
-      }
+    final privateKeyState = ref.watch(privateKeyNotifierProvider);
+    final pkis = privateKeyState.keys;
+    
+    if (pkis.isEmpty) {
+      return Center(child: Text(libL10n.empty));
+    }
 
-      final children = pkis.map(_buildKeyItem).toList();
-      return AutoMultiList(children: children);
-    });
+    final children = pkis.map(_buildKeyItem).toList();
+    return AutoMultiList(children: children);
   }
 
   Widget _buildKeyItem(PrivateKeyInfo item) {

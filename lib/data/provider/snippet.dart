@@ -1,22 +1,31 @@
 import 'package:fl_lib/fl_lib.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/res/store.dart';
 
-class SnippetProvider extends Provider {
-  const SnippetProvider._();
-  static const instance = SnippetProvider._();
+part 'snippet.freezed.dart';
+part 'snippet.g.dart';
 
-  static final snippets = <Snippet>[].vn;
-  static final tags = <String>{}.vn;
+@freezed
+abstract class SnippetState with _$SnippetState {
+  const factory SnippetState({
+    @Default(<Snippet>[]) List<Snippet> snippets,
+    @Default(<String>{}) Set<String> tags,
+  }) = _SnippetState;
+}
 
+@Riverpod(keepAlive: true)
+class SnippetNotifier extends _$SnippetNotifier {
   @override
-  void load() {
-    super.load();
-    final snippets_ = Stores.snippet.fetch();
+  SnippetState build() {
+    final snippets = Stores.snippet.fetch();
     final order = Stores.setting.snippetOrder.fetch();
+    
+    List<Snippet> orderedSnippets = snippets;
     if (order.isNotEmpty) {
-      final surplus = snippets_.reorder(
+      final surplus = snippets.reorder(
         order: order,
         finder: (n, name) => n.name == name,
       );
@@ -24,57 +33,65 @@ class SnippetProvider extends Provider {
       if (order != Stores.setting.snippetOrder.fetch()) {
         Stores.setting.snippetOrder.put(order);
       }
+      orderedSnippets = snippets;
     }
-    snippets.value = snippets_;
-    _updateTags();
+    
+    final tags = _computeTags(orderedSnippets);
+    return SnippetState(snippets: orderedSnippets, tags: tags);
   }
 
-  static void _updateTags() {
-    final tags_ = <String>{};
-    for (final s in snippets.value) {
+  Set<String> _computeTags(List<Snippet> snippets) {
+    final tags = <String>{};
+    for (final s in snippets) {
       final t = s.tags;
       if (t != null) {
-        tags_.addAll(t);
+        tags.addAll(t);
       }
     }
-    tags.value = tags_;
+    return tags;
   }
 
-  static void add(Snippet snippet) {
-    snippets.value.add(snippet);
-    snippets.notify();
+  void add(Snippet snippet) {
+    final newSnippets = [...state.snippets, snippet];
+    final newTags = _computeTags(newSnippets);
+    state = state.copyWith(snippets: newSnippets, tags: newTags);
     Stores.snippet.put(snippet);
-    _updateTags();
     bakSync.sync(milliDelay: 1000);
   }
 
-  static void del(Snippet snippet) {
-    snippets.value.remove(snippet);
-    snippets.notify();
+  void del(Snippet snippet) {
+    final newSnippets = state.snippets.where((s) => s != snippet).toList();
+    final newTags = _computeTags(newSnippets);
+    state = state.copyWith(snippets: newSnippets, tags: newTags);
     Stores.snippet.delete(snippet);
-    _updateTags();
     bakSync.sync(milliDelay: 1000);
   }
 
-  static void update(Snippet old, Snippet newOne) {
-    snippets.value.remove(old);
-    snippets.value.add(newOne);
-    snippets.notify();
+  void update(Snippet old, Snippet newOne) {
+    final newSnippets = state.snippets.map((s) => s == old ? newOne : s).toList();
+    final newTags = _computeTags(newSnippets);
+    state = state.copyWith(snippets: newSnippets, tags: newTags);
     Stores.snippet.delete(old);
     Stores.snippet.put(newOne);
-    _updateTags();
     bakSync.sync(milliDelay: 1000);
   }
 
-  static void renameTag(String old, String newOne) {
-    for (final s in snippets.value) {
+  void renameTag(String old, String newOne) {
+    final updatedSnippets = <Snippet>[];
+    for (final s in state.snippets) {
       if (s.tags?.contains(old) ?? false) {
-        s.tags?.remove(old);
-        s.tags?.add(newOne);
-        Stores.snippet.put(s);
+        final newTags = Set<String>.from(s.tags!);
+        newTags.remove(old);
+        newTags.add(newOne);
+        final updatedSnippet = s.copyWith(tags: newTags.toList());
+        updatedSnippets.add(updatedSnippet);
+        Stores.snippet.put(updatedSnippet);
+      } else {
+        updatedSnippets.add(s);
       }
     }
-    _updateTags();
+    final newTags = _computeTags(updatedSnippets);
+    state = state.copyWith(snippets: updatedSnippets, tags: newTags);
     bakSync.sync(milliDelay: 1000);
   }
 }
