@@ -63,7 +63,7 @@ dependencies:
   fl_lib:
     git:
       url: https://github.com/lppcg/fl_lib
-      ref: v1.0.339
+      ref: v1.0.341
   flutter_gbk2utf8: ^1.0.1
 
 dependency_overrides:
@@ -73,16 +73,14 @@ dependency_overrides:
   #   path: ../dartssh2
   # xterm:
   #   path: ../xterm.dart
-  fl_lib:
-    path: ../fl_lib
+  # fl_lib:
+  #   path: ../fl_lib
   # fl_build:
   #   path: ../fl_build
   gtk:
     git:
       url: https://github.com/lollipopkit/gtk.dart
       ref: v0.0.36
-  riverpod_reg:
-    path: ../reg_provider
 
 dev_dependencies:
   analyzer: ^7.3.0
@@ -96,10 +94,10 @@ dev_dependencies:
   test: ^1.24.0
   flutter_test:
     sdk: flutter
-  riverpod_reg:
-    git:
-      url: https://github.com/lollipopkit/riverpod_reg
-      ref: v0.0.2
+  # riverpod_reg:
+  #   git:
+  #     url: https://github.com/lollipopkit/riverpod_reg
+  #     ref: v0.0.2
   fl_build:
     git:
       url: https://github.com/lppcg/fl_build.git

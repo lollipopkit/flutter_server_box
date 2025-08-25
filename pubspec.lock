@@ -496,9 +496,11 @@ packages:
   fl_lib:
     dependency: "direct main"
     description:
-      path: "../fl_lib"
-      relative: true
-    source: path
+      path: "."
+      ref: "v1.0.341"
+      resolved-ref: "8e3a40c7bd2f1f3dd46fd59809c9de39d921ba69"
+      url: "https://github.com/lppcg/fl_lib"
+    source: git
     version: "0.0.1"
   flutter:
     dependency: "direct main"
@@ -1290,13 +1292,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.6.5"
-  riverpod_reg:
-    dependency: "direct dev"
-    description:
-      path: "../reg_provider"
-      relative: true
-    source: path
-    version: "1.0.0"
   screen_retriever:
     dependency: transitive
     description:
