@@ -157,7 +157,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> with AfterLay
         builder: (vals) {
           final subtitle = vals.isEmpty
               ? null
-              : vals.map((e) => ServerProvider.pick(id: e)?.value.spi.name ?? e).join(', ');
+              : vals.map((e) => ref.read(serverNotifierProvider).servers[e]?.name ?? e).join(', ');
           return ListTile(
             leading: const Padding(
               padding: EdgeInsets.only(left: 5),
@@ -169,11 +169,11 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> with AfterLay
                 ? null
                 : Text(subtitle, maxLines: 1, style: UIs.textGrey, overflow: TextOverflow.ellipsis),
             onTap: () async {
-              vals.removeWhere((e) => !ServerProvider.serverOrder.value.contains(e));
+              vals.removeWhere((e) => !ref.read(serverNotifierProvider).serverOrder.contains(e));
               final serverIds = await context.showPickDialog(
                 title: l10n.autoRun,
-                items: ServerProvider.serverOrder.value,
-                display: (e) => ServerProvider.pick(id: e)?.value.spi.name ?? e,
+                items: ref.read(serverNotifierProvider).serverOrder,
+                display: (e) => ref.read(serverNotifierProvider).servers[e]?.name ?? e,
                 initial: vals,
                 clearable: true,
               );

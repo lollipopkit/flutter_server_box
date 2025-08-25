@@ -46,7 +46,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     final type = Stores.container.getType(hostId);
     final initialState = ContainerState(type: type);
     
-    // 异步初始化
+    // Async initialization
     Future.microtask(() => refresh());
     
     return initialState;

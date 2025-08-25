@@ -13,6 +13,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/server.dart';
 
 part 'pve.freezed.dart';
 part 'pve.g.dart';
@@ -44,7 +45,8 @@ class PveNotifier extends _$PveNotifier {
   @override
   PveState build(Spi spiParam) {
     spi = spiParam;
-    final client = spi.server?.value.client;
+    final serverState = ref.watch(individualServerNotifierProvider(spi.id));
+    final client = serverState.client;
     if (client == null) {
       return const PveState(error: 'Server client is null');
     }
@@ -56,7 +58,7 @@ class PveNotifier extends _$PveNotifier {
     this.addr = addr;
     _ignoreCert = spi.custom?.pveIgnoreCert ?? false;
     _initSession();
-    // 异步初始化
+    // Async initialization
     Future.microtask(() => _init());
     return const PveState();
   }
@@ -192,7 +194,7 @@ class PveNotifier extends _$PveNotifier {
       '$addr/api2/json/nodes/$node/$id/status/reboot',
     );
     final success = _isCtrlSuc(resp);
-    if (success) await list(); // 刷新数据
+    if (success) await list(); // Refresh data
     return success;
   }
 
@@ -202,7 +204,7 @@ class PveNotifier extends _$PveNotifier {
       '$addr/api2/json/nodes/$node/$id/status/start',
     );
     final success = _isCtrlSuc(resp);
-    if (success) await list(); // 刷新数据
+    if (success) await list(); // Refresh data
     return success;
   }
 
@@ -212,7 +214,7 @@ class PveNotifier extends _$PveNotifier {
       '$addr/api2/json/nodes/$node/$id/status/stop',
     );
     final success = _isCtrlSuc(resp);
-    if (success) await list(); // 刷新数据
+    if (success) await list(); // Refresh data
     return success;
   }
 
@@ -222,7 +224,7 @@ class PveNotifier extends _$PveNotifier {
       '$addr/api2/json/nodes/$node/$id/status/shutdown',
     );
     final success = _isCtrlSuc(resp);
-    if (success) await list(); // 刷新数据
+    if (success) await list(); // Refresh data
     return success;
   }
 

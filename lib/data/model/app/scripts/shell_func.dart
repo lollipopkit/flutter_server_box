@@ -1,7 +1,6 @@
 import 'package:server_box/data/model/app/scripts/script_builders.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/server/system.dart';
-import 'package:server_box/data/provider/server.dart';
 
 /// Shell functions available in the ServerBox application
 enum ShellFunc {
@@ -26,8 +25,8 @@ enum ShellFunc {
   };
 
   /// Execute this shell function on the specified server
-  String exec(String id, {SystemType? systemType}) {
-    final scriptPath = ShellFuncManager.getScriptPath(id, systemType: systemType);
+  String exec(String id, {SystemType? systemType, required String? customDir}) {
+    final scriptPath = ShellFuncManager.getScriptPath(id, systemType: systemType, customDir: customDir);
     final isWindows = systemType == SystemType.windows;
     final builder = ScriptBuilderFactory.getBuilder(isWindows);
 
@@ -51,11 +50,10 @@ class ShellFuncManager {
   /// Get the script directory for the given [id].
   ///
   /// Checks for custom script directory first, then falls back to default.
-  static String getScriptDir(String id, {SystemType? systemType}) {
-    final customScriptDir = ServerProvider.pick(id: id)?.value.spi.custom?.scriptDir;
+  static String getScriptDir(String id, {SystemType? systemType, required String? customDir}) {
     final isWindows = systemType == SystemType.windows;
 
-    if (customScriptDir != null) return _normalizeDir(customScriptDir, isWindows);
+    if (customDir != null) return _normalizeDir(customDir, isWindows);
     return ScriptPaths.getScriptDir(id, isWindows: isWindows);
   }
 
@@ -66,11 +64,10 @@ class ShellFuncManager {
   }
 
   /// Get the full script path for the given [id]
-  static String getScriptPath(String id, {SystemType? systemType}) {
-    final customScriptDir = ServerProvider.pick(id: id)?.value.spi.custom?.scriptDir;
-    if (customScriptDir != null) {
+  static String getScriptPath(String id, {SystemType? systemType, required String? customDir}) {
+    if (customDir != null) {
       final isWindows = systemType == SystemType.windows;
-      final normalizedDir = _normalizeDir(customScriptDir, isWindows);
+      final normalizedDir = _normalizeDir(customDir, isWindows);
       final fileName = isWindows ? ScriptConstants.scriptFileWindows : ScriptConstants.scriptFile;
       final separator = isWindows ? ScriptConstants.windowsPathSeparator : ScriptConstants.unixPathSeparator;
       return '$normalizedDir$separator$fileName';
@@ -81,8 +78,8 @@ class ShellFuncManager {
   }
 
   /// Get the installation shell command for the script
-  static String getInstallShellCmd(String id, {SystemType? systemType}) {
-    final scriptDir = getScriptDir(id, systemType: systemType);
+  static String getInstallShellCmd(String id, {SystemType? systemType, required String? customDir}) {
+    final scriptDir = getScriptDir(id, systemType: systemType, customDir: customDir);
     final isWindows = systemType == SystemType.windows;
     final normalizedDir = _normalizeDir(scriptDir, isWindows);
     final builder = ScriptBuilderFactory.getBuilder(isWindows);

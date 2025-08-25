@@ -35,13 +35,13 @@ class ServerFuncBtnsTopRight extends ConsumerWidget {
   }
 }
 
-class ServerFuncBtns extends ConsumerWidget {
+class ServerFuncBtns extends StatelessWidget {
   const ServerFuncBtns({super.key, required this.spi});
 
   final Spi spi;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final btns = this.btns;
     if (btns.isEmpty) return UIs.placeholder;
 
@@ -53,7 +53,7 @@ class ServerFuncBtns extends ConsumerWidget {
         padding: EdgeInsets.symmetric(horizontal: 13),
         itemBuilder: (context, index) {
           final value = btns[index];
-          final item = _buildItem(context, value, ref);
+          final item = Consumer(builder: (_, ref, _) => _buildItem(context, value, ref));
           return item.paddingSymmetric(horizontal: 7);
         },
       ),
@@ -109,7 +109,7 @@ void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context, WidgetRe
     //   _onPkg(context, spi);
     //   break;
     case ServerFuncBtn.sftp:
-      if (!_checkClient(context, spi.id)) return;
+      if (!_checkClient(context, spi.id, ref)) return;
       final args = SftpPageArgs(spi: spi);
       // if (isMobile) {
       SftpPage.route.go(context, args);
@@ -149,7 +149,7 @@ void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context, WidgetRe
         actions: [CountDownBtn(onTap: () => context.pop(true), text: l10n.run, afterColor: Colors.red)],
       );
       if (sure != true) return;
-      if (!_checkClient(context, spi.id)) return;
+      if (!_checkClient(context, spi.id, ref)) return;
       final args = SshPageArgs(spi: spi, initSnippet: snippet);
       // if (isMobile) {
       SSHPage.route.go(context, args);
@@ -160,7 +160,7 @@ void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context, WidgetRe
       // }
       break;
     case ServerFuncBtn.container:
-      if (!_checkClient(context, spi.id)) return;
+      if (!_checkClient(context, spi.id, ref)) return;
       final args = SpiRequiredArgs(spi);
       // if (isMobile) {
       ContainerPage.route.go(context, args);
@@ -171,7 +171,7 @@ void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context, WidgetRe
       // }
       break;
     case ServerFuncBtn.process:
-      if (!_checkClient(context, spi.id)) return;
+      if (!_checkClient(context, spi.id, ref)) return;
       final args = SpiRequiredArgs(spi);
       // if (isMobile) {
       ProcessPage.route.go(context, args);
@@ -185,7 +185,7 @@ void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context, WidgetRe
       _gotoSSH(spi, context);
       break;
     case ServerFuncBtn.iperf:
-      if (!_checkClient(context, spi.id)) return;
+      if (!_checkClient(context, spi.id, ref)) return;
       final args = SpiRequiredArgs(spi);
       // if (isMobile) {
       IPerfPage.route.go(context, args);
@@ -196,7 +196,7 @@ void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context, WidgetRe
       // }
       break;
     case ServerFuncBtn.systemd:
-      if (!_checkClient(context, spi.id)) return;
+      if (!_checkClient(context, spi.id, ref)) return;
       final args = SpiRequiredArgs(spi);
       // if (isMobile) {
       SystemdPage.route.go(context, args);
@@ -272,9 +272,9 @@ void _gotoSSH(Spi spi, BuildContext context) async {
   }
 }
 
-bool _checkClient(BuildContext context, String id) {
-  final server = ServerProvider.pick(id: id)?.value;
-  if (server == null || server.client == null) {
+bool _checkClient(BuildContext context, String id, WidgetRef ref) {
+  final serverState = ref.read(individualServerNotifierProvider(id));
+  if (serverState.client == null) {
     context.showSnackBar(l10n.waitConnection);
     return false;
   }

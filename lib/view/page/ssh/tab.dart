@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -10,18 +11,18 @@ import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/view/page/server/edit.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 
-class SSHTabPage extends StatefulWidget {
+class SSHTabPage extends ConsumerStatefulWidget {
   const SSHTabPage({super.key});
 
   @override
-  State<SSHTabPage> createState() => _SSHTabPageState();
+  ConsumerState<SSHTabPage> createState() => _SSHTabPageState();
 
   static const route = AppRouteNoArg(page: SSHTabPage.new, path: '/ssh');
 }
 
 typedef _TabMap = Map<String, ({Widget page, FocusNode? focus})>;
 
-class _SSHTabPageState extends State<SSHTabPage>
+class _SSHTabPageState extends ConsumerState<SSHTabPage>
     with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   late final _TabMap _tabMap = {libL10n.add: (page: _AddPage(onTapInitCard: _onTapInitCard), focus: null)};
   final _pageCtrl = PageController();
@@ -236,7 +237,7 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-class _AddPage extends StatelessWidget {
+class _AddPage extends ConsumerWidget {
   const _AddPage({required this.onTapInitCard});
 
   final void Function(Spi spi) onTapInitCard;
@@ -244,11 +245,12 @@ class _AddPage extends StatelessWidget {
   Widget get _placeholder => const Expanded(child: UIs.placeholder);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     const viewPadding = 7.0;
-    final viewWidth = context.mediaQuery.size.width - 2 * viewPadding;
+    final viewWidth = context.windowSize.width - 2 * viewPadding;
 
-    final itemCount = ServerProvider.servers.length;
+    final serverState = ref.watch(serverNotifierProvider);
+    final itemCount = serverState.servers.length;
     const itemPadding = 1.0;
     const itemWidth = 150.0;
     const itemHeight = 50.0;
@@ -257,53 +259,53 @@ class _AddPage extends StatelessWidget {
     final crossCount = max(viewWidth ~/ (visualCrossCount * itemPadding + itemWidth), 1);
     final mainCount = itemCount ~/ crossCount + 1;
 
-    return ServerProvider.serverOrder.listenVal((order) {
-      if (order.isEmpty) {
-        return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
-      }
+    final order = serverState.serverOrder;
+    
+    if (order.isEmpty) {
+      return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
+    }
 
-      // Custom grid
-      return ListView(
-        padding: const EdgeInsets.all(viewPadding),
-        children: List.generate(
-          mainCount,
-          (rowIndex) => Row(
-            children: List.generate(crossCount, (columnIndex) {
-              final idx = rowIndex * crossCount + columnIndex;
-              final id = order.elementAtOrNull(idx);
-              final spi = ServerProvider.pick(id: id)?.value.spi;
-              if (spi == null) return _placeholder;
+    // Custom grid
+    return ListView(
+      padding: const EdgeInsets.all(viewPadding),
+      children: List.generate(
+        mainCount,
+        (rowIndex) => Row(
+          children: List.generate(crossCount, (columnIndex) {
+            final idx = rowIndex * crossCount + columnIndex;
+            final id = order.elementAtOrNull(idx);
+            final spi = serverState.servers[id];
+            if (spi == null) return _placeholder;
 
-              return Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(itemPadding),
-                  child: InkWell(
-                    onTap: () => onTapInitCard(spi),
-                    child: Container(
-                      height: itemHeight,
-                      alignment: Alignment.centerLeft,
-                      padding: const EdgeInsets.only(left: 17, right: 7),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              spi.name,
-                              style: UIs.text18,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(itemPadding),
+                child: InkWell(
+                  onTap: () => onTapInitCard(spi),
+                  child: Container(
+                    height: itemHeight,
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.only(left: 17, right: 7),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            spi.name,
+                            style: UIs.text18,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          const Icon(Icons.chevron_right),
-                        ],
-                      ),
+                        ),
+                        const Icon(Icons.chevron_right),
+                      ],
                     ),
-                  ).cardx,
-                ),
-              );
-            }),
-          ),
+                  ),
+                ).cardx,
+              ),
+            );
+          }),
         ),
-      );
-    });
+      ),
+    );
   }
 }

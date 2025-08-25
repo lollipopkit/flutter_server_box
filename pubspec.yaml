@@ -81,6 +81,8 @@ dependency_overrides:
     git:
       url: https://github.com/lollipopkit/gtk.dart
       ref: v0.0.36
+  riverpod_reg:
+    path: ../reg_provider
 
 dev_dependencies:
   analyzer: ^7.3.0
@@ -94,6 +96,10 @@ dev_dependencies:
   test: ^1.24.0
   flutter_test:
     sdk: flutter
+  riverpod_reg:
+    git:
+      url: https://github.com/lollipopkit/riverpod_reg
+      ref: v0.0.2
   fl_build:
     git:
       url: https://github.com/lppcg/fl_build.git
@@ -120,18 +126,15 @@ flutter:
   #       - asset: fonts/TrajanPro.ttf
   #       - asset: fonts/TrajanPro_Bold.ttf
   #         weight: 700
+
+riverpod_reg:
+  class_name: Riverpods
+  gen_path: lib/generated/riverpod_reg.dart
+
 flutter_native_splash:
   color: "#ffffff"
   image: assets/app_icon.png
   color_dark: "#121212"
-  #background_image_dark: "assets/dark-background.png"
-  #image_dark: assets/splash-invert.png
-  #android: false
-  #ios: false
-  #web: false
-  #android_gravity: center
-  #ios_content_mode: center
-  #fullscreen: true
   info_plist_files:
     - "ios/Runner/Info-Debug.plist"
     - "ios/Runner/Info-Profile.plist"

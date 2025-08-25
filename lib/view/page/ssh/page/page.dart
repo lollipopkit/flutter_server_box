@@ -16,6 +16,7 @@ import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
+import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/provider/virtual_keyboard.dart';
 import 'package:server_box/data/res/store.dart';
@@ -79,7 +80,7 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   bool _isDark = false;
   Timer? _virtKeyLongPressTimer;
-  late SSHClient? _client = widget.args.spi.server?.value.client;
+  SSHClient? _client;
   SSHSession? _session;
   Timer? _discontinuityTimer;
 
@@ -115,6 +116,10 @@ class SSHPageState extends ConsumerState<SSHPage>
     _initStoredCfg();
     _initVirtKeys();
     _setupDiscontinuityTimer();
+    
+    // Initialize client from provider
+    final serverState = ref.read(individualServerNotifierProvider(widget.args.spi.id));
+    _client = serverState.client;
 
     if (++_sshConnCount == 1) {
       WakelockPlus.enable();

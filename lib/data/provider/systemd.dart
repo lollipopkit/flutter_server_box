@@ -3,7 +3,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
-import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/systemd.dart';
 import 'package:server_box/data/provider/server.dart';
@@ -22,12 +21,13 @@ abstract class SystemdState with _$SystemdState {
 
 @riverpod
 class SystemdNotifier extends _$SystemdNotifier {
-  late final VNode<Server> _si;
+  late final IndividualServerState _si;
 
   @override
   SystemdState build(Spi spi) {
-    _si = ServerProvider.pick(spi: spi)!;
-    // 异步初始化
+    final si = ref.read(individualServerNotifierProvider(spi.id));
+    _si = si;
+    // Async initialization
     Future.microtask(() => getUnits());
     return const SystemdState();
   }
@@ -51,7 +51,7 @@ class SystemdNotifier extends _$SystemdNotifier {
     state = state.copyWith(isBusy: true);
 
     try {
-      final client = _si.value.client;
+      final client = _si.client;
       final result = await client!.execForOutput(_getUnitsCmd);
       final units = result.split('\n');
 
@@ -69,10 +69,7 @@ class SystemdNotifier extends _$SystemdNotifier {
 
       final parsedUserUnits = await _parseUnitObj(userUnits, SystemdUnitScope.user);
       final parsedSystemUnits = await _parseUnitObj(systemUnits, SystemdUnitScope.system);
-      state = state.copyWith(
-        units: [...parsedUserUnits, ...parsedSystemUnits],
-        isBusy: false,
-      );
+      state = state.copyWith(units: [...parsedUserUnits, ...parsedSystemUnits], isBusy: false);
     } catch (e, s) {
       dprint('Parse systemd', e, s);
       state = state.copyWith(isBusy: false);
@@ -89,7 +86,7 @@ for unit in ${unitNames_.join(' ')}; do
   echo -n "\n${ScriptConstants.separator}\n"
 done
 ''';
-    final client = _si.value.client!;
+    final client = _si.client!;
     final result = await client.execForOutput(script);
     final units = result.split(ScriptConstants.separator);
 

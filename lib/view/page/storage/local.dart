@@ -359,10 +359,7 @@ extension _OnTapFile on _LocalFilePageState {
 
     final spi = await context.showPickSingleDialog<Spi>(
       title: libL10n.select,
-      items: ServerProvider.serverOrder.value
-          .map((e) => ServerProvider.pick(id: e)?.value.spi)
-          .whereType<Spi>()
-          .toList(),
+      items: ref.read(serverNotifierProvider).servers.values.toList(),
       display: (e) => e.name,
     );
     if (spi == null) return;

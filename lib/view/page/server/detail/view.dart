@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
@@ -19,6 +20,7 @@ import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
+import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/pve.dart';
 import 'package:server_box/view/page/server/edit.dart';
@@ -27,17 +29,17 @@ import 'package:server_box/view/widget/server_func_btns.dart';
 
 part 'misc.dart';
 
-class ServerDetailPage extends StatefulWidget {
+class ServerDetailPage extends ConsumerStatefulWidget {
   final SpiRequiredArgs args;
   const ServerDetailPage({super.key, required this.args});
 
   @override
-  State<ServerDetailPage> createState() => _ServerDetailPageState();
+  ConsumerState<ServerDetailPage> createState() => _ServerDetailPageState();
 
   static const route = AppRouteArg(page: ServerDetailPage.new, path: '/servers/detail');
 }
 
-class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerProviderStateMixin {
+class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with SingleTickerProviderStateMixin {
   late final _cardBuildMap = Map.fromIterables(ServerDetailCards.names, [
     _buildAbout,
     _buildCPUView,
@@ -84,14 +86,15 @@ class _ServerDetailPageState extends State<ServerDetailPage> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
-    final s = widget.args.spi.server;
-    if (s == null) {
+    final serverState = ref.watch(individualServerNotifierProvider(widget.args.spi.id));
+    if (serverState.client == null) {
       return Scaffold(
         appBar: CustomAppBar(),
         body: Center(child: Text(libL10n.empty)),
       );
     }
-    return s.listenVal(_buildMainPage);
+    final server = Server(serverState.spi, serverState.status, serverState.conn, client: serverState.client);
+    return _buildMainPage(server);
   }
 
   Widget _buildMainPage(Server si) {

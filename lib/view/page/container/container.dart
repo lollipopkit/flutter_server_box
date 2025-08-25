@@ -12,8 +12,8 @@ import 'package:server_box/data/model/app/menu/container.dart';
 import 'package:server_box/data/model/container/image.dart';
 import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/container/type.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/container.dart';
+import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 
@@ -32,12 +32,7 @@ class ContainerPage extends ConsumerStatefulWidget {
 
 class _ContainerPageState extends ConsumerState<ContainerPage> {
   final _textController = TextEditingController();
-  late final _provider = containerNotifierProvider(
-    widget.args.spi.server?.value.client,
-    widget.args.spi.user,
-    widget.args.spi.id,
-    context,
-  );
+  late final ContainerNotifierProvider _provider;
 
   @override
   void dispose() {
@@ -48,6 +43,13 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
   @override
   void initState() {
     super.initState();
+    final serverState = ref.read(individualServerNotifierProvider(widget.args.spi.id));
+    _provider = containerNotifierProvider(
+      serverState.client,
+      widget.args.spi.user,
+      widget.args.spi.id,
+      context,
+    );
     _initAutoRefresh();
   }
 

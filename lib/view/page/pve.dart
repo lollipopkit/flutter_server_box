@@ -59,7 +59,7 @@ final class _PvePageState extends ConsumerState<PvePage> {
   Widget build(BuildContext context) {
     final pveState = ref.watch(_provider);
 
-    // 如果有错误，停止定时器
+    // If there is an error, stop the timer
     if (pveState.error != null) {
       _timer?.cancel();
     }

@@ -12,6 +12,7 @@ import 'package:server_box/core/utils/comparator.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/sftp/browser_status.dart';
 import 'package:server_box/data/model/sftp/worker.dart';
+import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
@@ -42,9 +43,17 @@ class SftpPage extends ConsumerStatefulWidget {
 }
 
 class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
-  late final _status = SftpBrowserStatus(_client);
-  late final _client = widget.args.spi.server!.value.client!;
+  late final SftpBrowserStatus _status;
+  late final SSHClient _client;
   final _sortOption = _SortOption().vn;
+  
+  @override
+  void initState() {
+    super.initState();
+    final serverState = ref.read(individualServerNotifierProvider(widget.args.spi.id));
+    _client = serverState.client!;
+    _status = SftpBrowserStatus(_client);
+  }
 
   @override
   void dispose() {

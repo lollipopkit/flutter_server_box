@@ -14,7 +14,6 @@ import 'package:server_box/app.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
-import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
@@ -63,8 +62,6 @@ Future<void> _initData() async {
   // It may effect the following logic, so await it.
   // DO DB migration before load any provider.
   await _doDbMigrate();
-
-  ServerProvider.instance.load();
 
   if (Stores.setting.betaTest.fetch()) AppUpdate.chan = AppUpdateChan.beta;
 

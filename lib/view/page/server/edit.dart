@@ -9,7 +9,6 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/custom.dart';
-import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
@@ -168,7 +167,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage> with AfterLayou
         hint: 'root',
         suggestion: false,
       ),
-      TagTile(tags: _tags, allTags: ServerProvider.tags.value).cardx,
+      TagTile(tags: _tags, allTags: ref.watch(serverNotifierProvider).tags).cardx,
       ListTile(
         title: Text(l10n.autoConnect),
         trailing: _autoConnect.listenVal(
@@ -487,27 +486,26 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage> with AfterLayou
 
   Widget _buildJumpServer() {
     const padding = EdgeInsets.only(left: 13, right: 13, bottom: 7);
-    final srvs = ServerProvider.servers.values
-        .map((e) => e.value)
-        .where((e) => e.spi.jumpId == null)
-        .where((e) => e.spi.id != spi?.id)
+    final srvs = ref.watch(serverNotifierProvider).servers.values
+        .where((e) => e.jumpId == null)
+        .where((e) => e.id != spi?.id)
         .toList();
     final choice = _jumpServer.listenVal((val) {
       final srv = srvs.firstWhereOrNull((e) => e.id == _jumpServer.value);
-      return Choice<Server>(
+      return Choice<Spi>(
         multiple: false,
         clearable: true,
         value: srv != null ? [srv] : [],
         builder: (state, _) => Wrap(
           children: List<Widget>.generate(srvs.length, (index) {
             final item = srvs[index];
-            return ChoiceChipX<Server>(
-              label: item.spi.name,
+            return ChoiceChipX<Spi>(
+              label: item.name,
               state: state,
               value: item,
               onSelected: (srv, on) {
                 if (on) {
-                  _jumpServer.value = srv.spi.id;
+                  _jumpServer.value = srv.id;
                 } else {
                   _jumpServer.value = null;
                 }
@@ -571,7 +569,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage> with AfterLayou
           actions: Btn.ok(
             onTap: () async {
               context.pop();
-              ServerProvider.delServer(spi!.id);
+              ref.read(serverNotifierProvider.notifier).delServer(spi!.id);
               context.pop(true);
             },
             red: true,
@@ -726,9 +724,9 @@ extension on _ServerEditPageState {
         context.showSnackBar('${l10n.sameIdServerExist}: ${spi.id}');
         return;
       }
-      ServerProvider.addServer(spi);
+      ref.read(serverNotifierProvider.notifier).addServer(spi);
     } else {
-      ServerProvider.updateServer(this.spi!, spi);
+      ref.read(serverNotifierProvider.notifier).updateServer(this.spi!, spi);
     }
 
     context.pop();
