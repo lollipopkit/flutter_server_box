@@ -6,6 +6,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
@@ -17,14 +18,13 @@ import 'package:server_box/data/model/server/disk_smart.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/nvdia.dart';
 import 'package:server_box/data/model/server/sensors.dart';
-import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/server.dart' as server_model;
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/pve.dart';
 import 'package:server_box/view/page/server/edit.dart';
-import 'package:server_box/view/page/server/logo.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
 
 part 'misc.dart';
@@ -93,11 +93,10 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
         body: Center(child: Text(libL10n.empty)),
       );
     }
-    final server = Server(serverState.spi, serverState.status, serverState.conn, client: serverState.client);
-    return _buildMainPage(server);
+    return _buildMainPage(serverState);
   }
 
-  Widget _buildMainPage(Server si) {
+  Widget _buildMainPage(ServerState si) {
     final buildFuncs = !Stores.setting.moveServerFuncs.fetch();
     final logo = _buildLogo(si);
     final children = <Widget>[if (logo != null) logo, if (buildFuncs) ServerFuncBtns(spi: si.spi)];
@@ -114,7 +113,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
     );
   }
 
-  CustomAppBar _buildAppBar(Server si) {
+  CustomAppBar _buildAppBar(ServerState si) {
     return CustomAppBar(
       title: Text(
         si.spi.name,
@@ -135,7 +134,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
     );
   }
 
-  Widget? _buildLogo(Server si) {
+  Widget? _buildLogo(ServerState si) {
     final logoUrl = si.getLogoUrl(context);
 
     return Padding(
@@ -156,7 +155,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
     );
   }
 
-  Widget? _buildAbout(Server si) {
+  Widget? _buildAbout(ServerState si) {
     final ss = si.status;
     return ExpandTile(
       key: ValueKey(ss.more.hashCode), // Use hashCode to avoid perf issue
@@ -181,7 +180,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
     ).cardx;
   }
 
-  Widget? _buildCPUView(Server si) {
+  Widget? _buildCPUView(ServerState si) {
     final ss = si.status;
     final percent = ss.cpu.usedPercent(coreIdx: 0).toInt();
     final details = [
@@ -308,7 +307,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
     return children;
   }
 
-  Widget _buildCPUChart(ServerStatus ss) {
+  Widget _buildCPUChart(server_model.ServerStatus ss) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 13),
       child: LayoutBuilder(
@@ -338,7 +337,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
     );
   }
 
-  Widget? _buildMemView(Server si) {
+  Widget? _buildMemView(ServerState si) {
     final ss = si.status;
     final free = ss.mem.free / ss.mem.total * 100;
     final avail = ss.mem.availPercent * 100;
@@ -379,7 +378,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
     ).cardx;
   }
 
-  Widget? _buildSwapView(Server si) {
+  Widget? _buildSwapView(ServerState si) {
     final ss = si.status;
     if (ss.swap.total == 0) return null;
 
@@ -411,7 +410,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
     ).cardx;
   }
 
-  Widget? _buildGpuView(Server si) {
+  Widget? _buildGpuView(ServerState si) {
     final ss = si.status;
     final hasNvidia = ss.nvidia != null && ss.nvidia!.isNotEmpty;
     final hasAmd = ss.amd != null && ss.amd!.isNotEmpty;
@@ -535,7 +534,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
     );
   }
 
-  Widget? _buildDiskView(Server si) {
+  Widget? _buildDiskView(ServerState si) {
     final ss = si.status;
     final children = <Widget>[];
 
@@ -556,7 +555,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
     ).cardx;
   }
 
-  Widget _buildDiskItemWithHierarchy(Disk disk, ServerStatus ss, int depth) {
+  Widget _buildDiskItemWithHierarchy(Disk disk, server_model.ServerStatus ss, int depth) {
     // Create a list to hold this disk and its children
     final items = <Widget>[];
 
@@ -573,7 +572,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
     return Column(children: items);
   }
 
-  Widget _buildDiskItem(Disk disk, ServerStatus ss, int depth) {
+  Widget _buildDiskItem(Disk disk, server_model.ServerStatus ss, int depth) {
     final (read, write) = ss.diskIO.getSpeed(disk.path);
     final text = () {
       final use = '${l10n.used} ${disk.used.kb2Str} / ${disk.size.kb2Str}';
@@ -628,7 +627,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
     );
   }
 
-  Widget? _buildDiskSmart(Server si) {
+  Widget? _buildDiskSmart(ServerState si) {
     final smarts = si.status.diskSmart;
     if (smarts.isEmpty) return null;
     return CardX(
@@ -773,7 +772,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
     );
   }
 
-  Widget? _buildNetView(Server si) {
+  Widget? _buildNetView(ServerState si) {
     final ss = si.status;
     final ns = ss.netSpeed;
     final children = <Widget>[];
@@ -850,7 +849,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
     );
   }
 
-  Widget? _buildTemperature(Server si) {
+  Widget? _buildTemperature(ServerState si) {
     final ss = si.status;
     if (ss.temps.isEmpty) return null;
 
@@ -882,7 +881,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
     );
   }
 
-  Widget? _buildBatteries(Server si) {
+  Widget? _buildBatteries(ServerState si) {
     final ss = si.status;
     if (ss.batteries.isEmpty) return null;
 
@@ -917,7 +916,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
     );
   }
 
-  Widget? _buildSensors(Server si) {
+  Widget? _buildSensors(ServerState si) {
     final ss = si.status;
     if (ss.sensors.isEmpty) return UIs.placeholder;
     return CardX(
@@ -970,7 +969,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
     );
   }
 
-  Widget? _buildPve(Server si) {
+  Widget? _buildPve(ServerState si) {
     final addr = si.spi.custom?.pveAddr;
     if (addr == null || addr.isEmpty) return null;
     return CardX(
@@ -983,7 +982,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
     );
   }
 
-  Widget? _buildCustomCmd(Server si) {
+  Widget? _buildCustomCmd(ServerState si) {
     final ss = si.status;
     if (ss.customCmds.isEmpty) return null;
     return CardX(

@@ -1,7 +1,7 @@
 part of 'tab.dart';
 
 extension on _ServerPageState {
-  Widget _buildServerCardTitle(Server s) {
+  Widget _buildServerCardTitle(ServerState s) {
     return Padding(
       padding: const EdgeInsets.only(left: 7, right: 13),
       child: Row(
@@ -17,7 +17,7 @@ extension on _ServerPageState {
     );
   }
 
-  Widget _buildTopRightWidget(Server s) {
+  Widget _buildTopRightWidget(ServerState s) {
     final (child, onTap) = switch (s.conn) {
       ServerConn.connecting || ServerConn.loading || ServerConn.connected => (
         SizedBox.square(
@@ -51,7 +51,7 @@ extension on _ServerPageState {
     return InkWell(borderRadius: BorderRadius.circular(7), onTap: onTap, child: wrapped).paddingOnly(left: 5);
   }
 
-  Widget _buildTopRightText(Server s) {
+  Widget _buildTopRightText(ServerState s) {
     final hasErr = s.status.err != null;
     final str = s._getTopRightStr(s.spi);
     if (str == null) return UIs.placeholder;

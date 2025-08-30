@@ -23,7 +23,7 @@ typedef PveCtrlFunc = Future<bool> Function(String node, String id);
 @freezed
 abstract class PveState with _$PveState {
   const factory PveState({
-    @Default(null) String? error,
+    @Default(null) PveErr? error,
     @Default(null) PveRes? data,
     @Default(null) String? release,
     @Default(false) bool isBusy,
@@ -48,12 +48,12 @@ class PveNotifier extends _$PveNotifier {
     final serverState = ref.watch(individualServerNotifierProvider(spi.id));
     final client = serverState.client;
     if (client == null) {
-      return const PveState(error: 'Server client is null');
+      return const PveState(error: PveErr(type: PveErrType.net, message: 'Server client is null'));
     }
     _client = client;
     final addr = spi.custom?.pveAddr;
     if (addr == null) {
-      return const PveState(error: 'PVE address is null');
+      return PveState(error: PveErr(type: PveErrType.net, message: 'PVE address is null'));
     }
     this.addr = addr;
     _ignoreCert = spi.custom?.pveIgnoreCert ?? false;
@@ -87,10 +87,10 @@ class PveNotifier extends _$PveNotifier {
       await _getRelease();
       state = state.copyWith(isConnected: true);
     } on PveErr {
-      state = state.copyWith(error: l10n.pveLoginFailed);
+      state = state.copyWith(error: PveErr(type: PveErrType.loginFailed, message: l10n.pveLoginFailed));
     } catch (e, s) {
       Loggers.app.warning('PVE init failed', e, s);
-      state = state.copyWith(error: e.toString());
+      state = state.copyWith(error: PveErr(type: PveErrType.unknown, message: e.toString()));
     }
   }
 
@@ -182,7 +182,7 @@ class PveNotifier extends _$PveNotifier {
       state = state.copyWith(data: result, error: null);
     } catch (e) {
       Loggers.app.warning('PVE list failed', e);
-      state = state.copyWith(error: e.toString());
+      state = state.copyWith(error: PveErr(type: PveErrType.unknown, message: e.toString()));
     } finally {
       state = state.copyWith(isBusy: false);
     }

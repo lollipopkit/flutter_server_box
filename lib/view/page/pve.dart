@@ -82,7 +82,7 @@ final class _PvePageState extends ConsumerState<PvePage> {
       body: pveState.error != null
           ? Padding(
               padding: const EdgeInsets.all(13),
-              child: Center(child: Text(pveState.error!)),
+              child: Center(child: Text(pveState.error.toString())),
             )
           : _buildBody(pveState.data),
     );

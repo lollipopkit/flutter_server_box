@@ -37,8 +37,7 @@ extension on _ServerPageState {
       itemCount: order.length,
       itemBuilder: (_, idx) {
         final id = order[idx];
-        final srv = _createServerFromProvider(id);
-        if (srv == null) return UIs.placeholder;
+        final srv = ref.watch(individualServerNotifierProvider(id));
 
         final title = _buildServerCardTitle(srv);
         final List<Widget> children = [title, _buildNormalCard(srv.status, srv.spi)];

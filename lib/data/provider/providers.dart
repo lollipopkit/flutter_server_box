@@ -45,7 +45,7 @@ final class ReadMyProvider {
   T call<T>(ProviderBase<T> provider) => ref.read(provider);
   
   // Specific provider getters
-  ServerState get server => ref.read(serverNotifierProvider);
+  ServersState get server => ref.read(serverNotifierProvider);
   SnippetState get snippet => ref.read(snippetNotifierProvider);
   AppState get app => ref.read(appStatesProvider);
   PrivateKeyState get privateKey => ref.read(privateKeyNotifierProvider);
@@ -59,7 +59,7 @@ final class WatchMyProvider {
   T call<T>(ProviderBase<T> provider) => ref.watch(provider);
   
   // Specific provider getters
-  ServerState get server => ref.watch(serverNotifierProvider);
+  ServersState get server => ref.watch(serverNotifierProvider);
   SnippetState get snippet => ref.watch(snippetNotifierProvider);
   AppState get app => ref.watch(appStatesProvider);
   PrivateKeyState get privateKey => ref.watch(privateKeyNotifierProvider);

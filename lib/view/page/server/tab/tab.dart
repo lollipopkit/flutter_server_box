@@ -83,15 +83,6 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _updateOffset();
   }
 
-  // Helper method to create Server objects from provider data
-  Server? _createServerFromProvider(String id) {
-    final serverState = ref.watch(serverNotifierProvider);
-    final spi = serverState.servers[id];
-    if (spi == null) return null;
-
-    final individualState = ref.watch(individualServerNotifierProvider(id));
-    return Server(spi, individualState.status, individualState.conn, client: individualState.client);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -191,10 +182,9 @@ class _ServerPageState extends ConsumerState<ServerPage>
                   // Last item is just spacing
                   if (index == lens) return SizedBox(height: 77);
 
-                  final srv = _createServerFromProvider(serversInThisColumn[index]);
-                  if (srv == null) return UIs.placeholder;
+                  final individualState = ref.watch(individualServerNotifierProvider(serversInThisColumn[index]));
 
-                  return _buildEachServerCard(srv);
+                  return _buildEachServerCard(individualState);
                 },
               ),
             );
@@ -204,9 +194,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     );
   }
 
-  Widget _buildEachServerCard(Server? srv) {
-    if (srv == null) return UIs.placeholder;
-
+  Widget _buildEachServerCard(ServerState srv) {
     return CardX(
       key: Key(srv.spi.id + _tag.value),
       child: InkWell(
@@ -236,7 +224,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     );
   }
 
-  Widget _buildRealServerCard(Server srv) {
+  Widget _buildRealServerCard(ServerState srv) {
     final id = srv.spi.id;
     final cardStatus = _getCardNoti(id);
     final title = _buildServerCardTitle(srv);
@@ -273,7 +261,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     });
   }
 
-  Widget _buildFlippedCard(Server srv) {
+  Widget _buildFlippedCard(ServerState srv) {
     const color = Colors.grey;
     const textStyle = TextStyle(fontSize: 13, color: color);
     final children = [

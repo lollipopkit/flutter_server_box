@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/chan.dart';
+import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/res/build_data.dart';
@@ -200,6 +201,8 @@ class _HomePageState extends ConsumerState<HomePage>
     }
     MethodChans.updateHomeWidget();
     await _notifier.refresh();
+
+    bakSync.sync(milliDelay: 1000);
   }
 
   // Future<void> _reqNotiPerm() async {
@@ -207,7 +210,6 @@ class _HomePageState extends ConsumerState<HomePage>
   //   final suc = await PermUtils.request(Permission.notification);
   //   if (!suc) {
   //     final noNotiPerm = Stores.setting.noNotiPerm;
-  //     if (noNotiPerm.fetch()) return;
   //     context.showRoundDialog(
   //       title: l10n.error,
   //       child: Text(l10n.noNotiPerm),
@@ -217,6 +219,7 @@ class _HomePageState extends ConsumerState<HomePage>
   //             noNotiPerm.put(true);
   //             context.pop();
   //           },
+  //     if (noNotiPerm.fetch()) return;
   //           child: Text(l10n.ok),
   //         ),
   //       ],

@@ -7,7 +7,7 @@ part of 'server.dart';
 // **************************************************************************
 
 String _$individualServerNotifierHash() =>
-    r'e1bfdb51edb9a79bcd759a866687ea117e8cf639';
+    r'e3d74fb95ca994cd8419b1deab743e8b3e21bee2';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -31,10 +31,10 @@ class _SystemHash {
 }
 
 abstract class _$IndividualServerNotifier
-    extends BuildlessAutoDisposeNotifier<IndividualServerState> {
+    extends BuildlessAutoDisposeNotifier<ServerState> {
   late final String serverId;
 
-  IndividualServerState build(String serverId);
+  ServerState build(String serverId);
 }
 
 /// See also [IndividualServerNotifier].
@@ -42,7 +42,7 @@ abstract class _$IndividualServerNotifier
 const individualServerNotifierProvider = IndividualServerNotifierFamily();
 
 /// See also [IndividualServerNotifier].
-class IndividualServerNotifierFamily extends Family<IndividualServerState> {
+class IndividualServerNotifierFamily extends Family<ServerState> {
   /// See also [IndividualServerNotifier].
   const IndividualServerNotifierFamily();
 
@@ -76,10 +76,7 @@ class IndividualServerNotifierFamily extends Family<IndividualServerState> {
 /// See also [IndividualServerNotifier].
 class IndividualServerNotifierProvider
     extends
-        AutoDisposeNotifierProviderImpl<
-          IndividualServerNotifier,
-          IndividualServerState
-        > {
+        AutoDisposeNotifierProviderImpl<IndividualServerNotifier, ServerState> {
   /// See also [IndividualServerNotifier].
   IndividualServerNotifierProvider(String serverId)
     : this._internal(
@@ -108,9 +105,7 @@ class IndividualServerNotifierProvider
   final String serverId;
 
   @override
-  IndividualServerState runNotifierBuild(
-    covariant IndividualServerNotifier notifier,
-  ) {
+  ServerState runNotifierBuild(covariant IndividualServerNotifier notifier) {
     return notifier.build(serverId);
   }
 
@@ -131,10 +126,7 @@ class IndividualServerNotifierProvider
   }
 
   @override
-  AutoDisposeNotifierProviderElement<
-    IndividualServerNotifier,
-    IndividualServerState
-  >
+  AutoDisposeNotifierProviderElement<IndividualServerNotifier, ServerState>
   createElement() {
     return _IndividualServerNotifierProviderElement(this);
   }
@@ -157,7 +149,7 @@ class IndividualServerNotifierProvider
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 mixin IndividualServerNotifierRef
-    on AutoDisposeNotifierProviderRef<IndividualServerState> {
+    on AutoDisposeNotifierProviderRef<ServerState> {
   /// The parameter `serverId` of this provider.
   String get serverId;
 }
@@ -166,7 +158,7 @@ class _IndividualServerNotifierProviderElement
     extends
         AutoDisposeNotifierProviderElement<
           IndividualServerNotifier,
-          IndividualServerState
+          ServerState
         >
     with IndividualServerNotifierRef {
   _IndividualServerNotifierProviderElement(super.provider);
@@ -175,12 +167,12 @@ class _IndividualServerNotifierProviderElement
   String get serverId => (origin as IndividualServerNotifierProvider).serverId;
 }
 
-String _$serverNotifierHash() => r'48be756781d2ce3e0aabc59974a1c5888226985a';
+String _$serverNotifierHash() => r'8e2bc3aef3c56263f88df3c2bb1ba88b6cf83c8f';
 
 /// See also [ServerNotifier].
 @ProviderFor(ServerNotifier)
 final serverNotifierProvider =
-    NotifierProvider<ServerNotifier, ServerState>.internal(
+    NotifierProvider<ServerNotifier, ServersState>.internal(
       ServerNotifier.new,
       name: r'serverNotifierProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -190,6 +182,6 @@ final serverNotifierProvider =
       allTransitiveDependencies: null,
     );
 
-typedef _$ServerNotifier = Notifier<ServerState>;
+typedef _$ServerNotifier = Notifier<ServersState>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

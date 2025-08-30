@@ -4,7 +4,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 enum SSHErrType { unknown, connect, auth, noPrivateKey, chdir, segements, writeScript, getStatus }
 
 class SSHErr extends Err<SSHErrType> {
-  SSHErr({required super.type, super.message});
+  const SSHErr({required super.type, super.message});
 
   @override
   String? get solution => switch (type) {
@@ -29,7 +29,7 @@ enum ContainerErrType {
 }
 
 class ContainerErr extends Err<ContainerErrType> {
-  ContainerErr({required super.type, super.message});
+  const ContainerErr({required super.type, super.message});
 
   @override
   String? get solution => null;
@@ -38,7 +38,7 @@ class ContainerErr extends Err<ContainerErrType> {
 enum ICloudErrType { generic, notFound, multipleFiles }
 
 class ICloudErr extends Err<ICloudErrType> {
-  ICloudErr({required super.type, super.message});
+  const ICloudErr({required super.type, super.message});
 
   @override
   String? get solution => null;
@@ -47,7 +47,7 @@ class ICloudErr extends Err<ICloudErrType> {
 enum WebdavErrType { generic, notFound }
 
 class WebdavErr extends Err<WebdavErrType> {
-  WebdavErr({required super.type, super.message});
+  const WebdavErr({required super.type, super.message});
 
   @override
   String? get solution => null;
@@ -56,7 +56,7 @@ class WebdavErr extends Err<WebdavErrType> {
 enum PveErrType { unknown, net, loginFailed }
 
 class PveErr extends Err<PveErrType> {
-  PveErr({required super.type, super.message});
+  const PveErr({required super.type, super.message});
 
   @override
   String? get solution => null;

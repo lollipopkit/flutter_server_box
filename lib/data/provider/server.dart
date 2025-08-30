@@ -28,40 +28,48 @@ part 'server.freezed.dart';
 part 'server.g.dart';
 
 @freezed
-abstract class ServerState with _$ServerState {
-  const factory ServerState({
-    @Default({}) Map<String, Spi> servers, // Only store server configuration information
+abstract class ServersState with _$ServersState {
+  const factory ServersState({
+    @Default({}) Map<String, Spi> servers,
     @Default([]) List<String> serverOrder,
     @Default(<String>{}) Set<String> tags,
     @Default(<String>{}) Set<String> manualDisconnectedIds,
     Timer? autoRefreshTimer,
-  }) = _ServerState;
+  }) = _ServersState;
 }
 
 // Individual server state, including connection and status information
 @freezed
-abstract class IndividualServerState with _$IndividualServerState {
-  const factory IndividualServerState({
+abstract class ServerState with _$ServerState {
+  const factory ServerState({
     required Spi spi,
     required ServerStatus status,
     @Default(ServerConn.disconnected) ServerConn conn,
     SSHClient? client,
     Future<void>? updateFuture,
-  }) = _IndividualServerState;
+  }) = _ServerState;
+}
+
+extension IndividualServerStateExtension on ServerState {
+  bool get needGenClient => conn < ServerConn.connecting;
+
+  bool get canViewDetails => conn == ServerConn.finished;
+
+  String get id => spi.id;
 }
 
 // Individual server state management
 @riverpod
 class IndividualServerNotifier extends _$IndividualServerNotifier {
   @override
-  IndividualServerState build(String serverId) {
+  ServerState build(String serverId) {
     final serverNotifier = ref.read(serverNotifierProvider);
     final spi = serverNotifier.servers[serverId];
     if (spi == null) {
       throw StateError('Server $serverId not found');
     }
 
-    return IndividualServerState(spi: spi, status: InitStatus.status);
+    return ServerState(spi: spi, status: InitStatus.status);
   }
 
   // Update connection status
@@ -366,10 +374,10 @@ class IndividualServerNotifier extends _$IndividualServerNotifier {
 @Riverpod(keepAlive: true)
 class ServerNotifier extends _$ServerNotifier {
   @override
-  ServerState build() {
+  ServersState build() {
     // Initialize with empty state, load data asynchronously
     Future.microtask(() => _load());
-    return const ServerState();
+    return const ServersState();
   }
 
   Future<void> _load() async {
@@ -564,7 +572,7 @@ class ServerNotifier extends _$ServerNotifier {
       TermSessionManager.remove(sessionId);
     }
 
-    state = const ServerState();
+    state = const ServersState();
 
     Stores.setting.serverOrder.put([]);
     Stores.server.clear();
@@ -608,3 +616,4 @@ class ServerNotifier extends _$ServerNotifier {
     bakSync.sync(milliDelay: 1000);
   }
 }
+

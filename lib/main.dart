@@ -11,7 +11,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:server_box/app.dart';
-import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/res/build_data.dart';
@@ -85,13 +84,7 @@ void _doPlatformRelated() async {
   }
 
   final serversCount = Stores.server.keys().length;
-  final isoToken = RootIsolateToken.instance;
-  if (isoToken != null) {
-    BackgroundIsolateBinaryMessenger.ensureInitialized(isoToken);
-  }
   Computer.shared.turnOn(workersCount: (serversCount / 3).round() + 1); // Plus 1 to avoid 0.
-
-  bakSync.sync();
 }
 
 // It may contains some async heavy funcs.

@@ -21,7 +21,7 @@ abstract class SystemdState with _$SystemdState {
 
 @riverpod
 class SystemdNotifier extends _$SystemdNotifier {
-  late final IndividualServerState _si;
+  late final ServerState _si;
 
   @override
   SystemdState build(Spi spi) {

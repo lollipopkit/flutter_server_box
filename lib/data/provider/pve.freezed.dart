@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PveState {
 
- String? get error; PveRes? get data; String? get release; bool get isBusy; bool get isConnected;
+ PveErr? get error; PveRes? get data; String? get release; bool get isBusy; bool get isConnected;
 /// Create a copy of PveState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -45,7 +45,7 @@ abstract mixin class $PveStateCopyWith<$Res>  {
   factory $PveStateCopyWith(PveState value, $Res Function(PveState) _then) = _$PveStateCopyWithImpl;
 @useResult
 $Res call({
- String? error, PveRes? data, String? release, bool isBusy, bool isConnected
+ PveErr? error, PveRes? data, String? release, bool isBusy, bool isConnected
 });
 
 
@@ -65,7 +65,7 @@ class _$PveStateCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') @override $Res call({Object? error = freezed,Object? data = freezed,Object? release = freezed,Object? isBusy = null,Object? isConnected = null,}) {
   return _then(_self.copyWith(
 error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
-as String?,data: freezed == data ? _self.data : data // ignore: cast_nullable_to_non_nullable
+as PveErr?,data: freezed == data ? _self.data : data // ignore: cast_nullable_to_non_nullable
 as PveRes?,release: freezed == release ? _self.release : release // ignore: cast_nullable_to_non_nullable
 as String?,isBusy: null == isBusy ? _self.isBusy : isBusy // ignore: cast_nullable_to_non_nullable
 as bool,isConnected: null == isConnected ? _self.isConnected : isConnected // ignore: cast_nullable_to_non_nullable
@@ -154,7 +154,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? error,  PveRes? data,  String? release,  bool isBusy,  bool isConnected)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PveErr? error,  PveRes? data,  String? release,  bool isBusy,  bool isConnected)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PveState() when $default != null:
 return $default(_that.error,_that.data,_that.release,_that.isBusy,_that.isConnected);case _:
@@ -175,7 +175,7 @@ return $default(_that.error,_that.data,_that.release,_that.isBusy,_that.isConnec
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? error,  PveRes? data,  String? release,  bool isBusy,  bool isConnected)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PveErr? error,  PveRes? data,  String? release,  bool isBusy,  bool isConnected)  $default,) {final _that = this;
 switch (_that) {
 case _PveState():
 return $default(_that.error,_that.data,_that.release,_that.isBusy,_that.isConnected);case _:
@@ -195,7 +195,7 @@ return $default(_that.error,_that.data,_that.release,_that.isBusy,_that.isConnec
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? error,  PveRes? data,  String? release,  bool isBusy,  bool isConnected)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PveErr? error,  PveRes? data,  String? release,  bool isBusy,  bool isConnected)?  $default,) {final _that = this;
 switch (_that) {
 case _PveState() when $default != null:
 return $default(_that.error,_that.data,_that.release,_that.isBusy,_that.isConnected);case _:
@@ -213,7 +213,7 @@ class _PveState implements PveState {
   const _PveState({this.error = null, this.data = null, this.release = null, this.isBusy = false, this.isConnected = false});
   
 
-@override@JsonKey() final  String? error;
+@override@JsonKey() final  PveErr? error;
 @override@JsonKey() final  PveRes? data;
 @override@JsonKey() final  String? release;
 @override@JsonKey() final  bool isBusy;
@@ -249,7 +249,7 @@ abstract mixin class _$PveStateCopyWith<$Res> implements $PveStateCopyWith<$Res>
   factory _$PveStateCopyWith(_PveState value, $Res Function(_PveState) _then) = __$PveStateCopyWithImpl;
 @override @useResult
 $Res call({
- String? error, PveRes? data, String? release, bool isBusy, bool isConnected
+ PveErr? error, PveRes? data, String? release, bool isBusy, bool isConnected
 });
 
 
@@ -269,7 +269,7 @@ class __$PveStateCopyWithImpl<$Res>
 @override @pragma('vm:prefer-inline') $Res call({Object? error = freezed,Object? data = freezed,Object? release = freezed,Object? isBusy = null,Object? isConnected = null,}) {
   return _then(_PveState(
 error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
-as String?,data: freezed == data ? _self.data : data // ignore: cast_nullable_to_non_nullable
+as PveErr?,data: freezed == data ? _self.data : data // ignore: cast_nullable_to_non_nullable
 as PveRes?,release: freezed == release ? _self.release : release // ignore: cast_nullable_to_non_nullable
 as String?,isBusy: null == isBusy ? _self.isBusy : isBusy // ignore: cast_nullable_to_non_nullable
 as bool,isConnected: null == isConnected ? _self.isConnected : isConnected // ignore: cast_nullable_to_non_nullable
