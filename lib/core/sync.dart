@@ -14,11 +14,7 @@ final class BakSyncer extends SyncIface {
   @override
   Future<void> saveToFile() async {
     final pwd = await SecureStoreProps.bakPwd.read();
-    if (pwd == null || pwd.isEmpty) {
-      // Enforce password for non-clipboard backups
-      throw Exception('Backup password not set');
-    }
-    await BackupV2.backup(null, pwd);
+    await BackupV2.backup(null, pwd?.isEmpty == true ? null : pwd);
   }
 
   @override
