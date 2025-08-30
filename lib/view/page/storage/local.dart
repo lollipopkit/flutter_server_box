@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/path_with_prefix.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -19,7 +20,7 @@ final class LocalFilePageArgs {
   const LocalFilePageArgs({this.isPickFile, this.initDir});
 }
 
-class LocalFilePage extends StatefulWidget {
+class LocalFilePage extends ConsumerStatefulWidget {
   final LocalFilePageArgs? args;
 
   const LocalFilePage({super.key, this.args});
@@ -27,10 +28,10 @@ class LocalFilePage extends StatefulWidget {
   static const route = AppRoute<String, LocalFilePageArgs>(page: LocalFilePage.new, path: '/files/local');
 
   @override
-  State<LocalFilePage> createState() => _LocalFilePageState();
+  ConsumerState<LocalFilePage> createState() => _LocalFilePageState();
 }
 
-class _LocalFilePageState extends State<LocalFilePage> with AutomaticKeepAliveClientMixin {
+class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKeepAliveClientMixin {
   late final _path = LocalPath(widget.args?.initDir ?? Paths.file);
   final _sortType = _SortType.name.vn;
   bool get isPickFile => widget.args?.isPickFile ?? false;
@@ -358,10 +359,7 @@ extension _OnTapFile on _LocalFilePageState {
 
     final spi = await context.showPickSingleDialog<Spi>(
       title: libL10n.select,
-      items: ServerProvider.serverOrder.value
-          .map((e) => ServerProvider.pick(id: e)?.value.spi)
-          .whereType<Spi>()
-          .toList(),
+      items: ref.read(serverNotifierProvider).servers.values.toList(),
       display: (e) => e.name,
     );
     if (spi == null) return;
@@ -372,7 +370,7 @@ extension _OnTapFile on _LocalFilePageState {
       return;
     }
 
-    SftpProvider.add(SftpReq(spi, '$remotePath/$fileName', file.absolute.path, SftpReqType.upload));
+    ref.read(sftpNotifierProvider.notifier).add(SftpReq(spi, '$remotePath/$fileName', file.absolute.path, SftpReqType.upload));
     context.showSnackBar(l10n.added2List);
   }
 }

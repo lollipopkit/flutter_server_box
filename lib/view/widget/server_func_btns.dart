@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/server.dart';
@@ -19,17 +20,17 @@ import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/page/systemd.dart';
 
-class ServerFuncBtnsTopRight extends StatelessWidget {
+class ServerFuncBtnsTopRight extends ConsumerWidget {
   final Spi spi;
 
   const ServerFuncBtnsTopRight({super.key, required this.spi});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return PopupMenu<ServerFuncBtn>(
       items: ServerFuncBtn.values.map((e) => PopMenu.build(e, e.icon, e.toStr)).toList(),
       padding: const EdgeInsets.symmetric(horizontal: 10),
-      onSelected: (val) => _onTapMoreBtns(val, spi, context),
+      onSelected: (val) => _onTapMoreBtns(val, spi, context, ref),
     );
   }
 }
@@ -52,18 +53,18 @@ class ServerFuncBtns extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 13),
         itemBuilder: (context, index) {
           final value = btns[index];
-          final item = _buildItem(context, value);
+          final item = Consumer(builder: (_, ref, _) => _buildItem(context, value, ref));
           return item.paddingSymmetric(horizontal: 7);
         },
       ),
     );
   }
 
-  Widget _buildItem(BuildContext context, ServerFuncBtn e) {
+  Widget _buildItem(BuildContext context, ServerFuncBtn e, WidgetRef ref) {
     final move = Stores.setting.moveServerFuncs.fetch();
     if (move) {
       return IconButton(
-        onPressed: () => _onTapMoreBtns(e, spi, context),
+        onPressed: () => _onTapMoreBtns(e, spi, context, ref),
         padding: EdgeInsets.zero,
         tooltip: e.toStr,
         icon: Icon(e.icon, size: 15),
@@ -76,7 +77,7 @@ class ServerFuncBtns extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            onPressed: () => _onTapMoreBtns(e, spi, context),
+            onPressed: () => _onTapMoreBtns(e, spi, context, ref),
             padding: EdgeInsets.zero,
             icon: Icon(e.icon, size: 17),
           ),
@@ -101,14 +102,14 @@ class ServerFuncBtns extends StatelessWidget {
   }
 }
 
-void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context) async {
+void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context, WidgetRef ref) async {
   // final isMobile = ResponsiveBreakpoints.of(context).isMobile;
   switch (value) {
     // case ServerFuncBtn.pkg:
     //   _onPkg(context, spi);
     //   break;
     case ServerFuncBtn.sftp:
-      if (!_checkClient(context, spi.id)) return;
+      if (!_checkClient(context, spi.id, ref)) return;
       final args = SftpPageArgs(spi: spi);
       // if (isMobile) {
       SftpPage.route.go(context, args);
@@ -120,18 +121,19 @@ void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context) async {
 
       break;
     case ServerFuncBtn.snippet:
-      if (SnippetProvider.snippets.value.isEmpty) {
+      final snippetState = ref.read(snippetNotifierProvider);
+      if (snippetState.snippets.isEmpty) {
         context.showSnackBar(libL10n.empty);
         return;
       }
       final snippets = await context.showPickWithTagDialog<Snippet>(
         title: l10n.snippet,
-        tags: SnippetProvider.tags,
+        tags: snippetState.tags.vn,
         itemsBuilder: (e) {
           if (e == TagSwitcher.kDefaultTag) {
-            return SnippetProvider.snippets.value;
+            return snippetState.snippets;
           }
-          return SnippetProvider.snippets.value
+          return snippetState.snippets
               .where((element) => element.tags?.contains(e) ?? false)
               .toList();
         },
@@ -147,7 +149,7 @@ void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context) async {
         actions: [CountDownBtn(onTap: () => context.pop(true), text: l10n.run, afterColor: Colors.red)],
       );
       if (sure != true) return;
-      if (!_checkClient(context, spi.id)) return;
+      if (!_checkClient(context, spi.id, ref)) return;
       final args = SshPageArgs(spi: spi, initSnippet: snippet);
       // if (isMobile) {
       SSHPage.route.go(context, args);
@@ -158,7 +160,7 @@ void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context) async {
       // }
       break;
     case ServerFuncBtn.container:
-      if (!_checkClient(context, spi.id)) return;
+      if (!_checkClient(context, spi.id, ref)) return;
       final args = SpiRequiredArgs(spi);
       // if (isMobile) {
       ContainerPage.route.go(context, args);
@@ -169,7 +171,7 @@ void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context) async {
       // }
       break;
     case ServerFuncBtn.process:
-      if (!_checkClient(context, spi.id)) return;
+      if (!_checkClient(context, spi.id, ref)) return;
       final args = SpiRequiredArgs(spi);
       // if (isMobile) {
       ProcessPage.route.go(context, args);
@@ -183,7 +185,7 @@ void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context) async {
       _gotoSSH(spi, context);
       break;
     case ServerFuncBtn.iperf:
-      if (!_checkClient(context, spi.id)) return;
+      if (!_checkClient(context, spi.id, ref)) return;
       final args = SpiRequiredArgs(spi);
       // if (isMobile) {
       IPerfPage.route.go(context, args);
@@ -194,7 +196,7 @@ void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context) async {
       // }
       break;
     case ServerFuncBtn.systemd:
-      if (!_checkClient(context, spi.id)) return;
+      if (!_checkClient(context, spi.id, ref)) return;
       final args = SpiRequiredArgs(spi);
       // if (isMobile) {
       SystemdPage.route.go(context, args);
@@ -270,9 +272,9 @@ void _gotoSSH(Spi spi, BuildContext context) async {
   }
 }
 
-bool _checkClient(BuildContext context, String id) {
-  final server = ServerProvider.pick(id: id)?.value;
-  if (server == null || server.client == null) {
+bool _checkClient(BuildContext context, String id, WidgetRef ref) {
+  final serverState = ref.read(individualServerNotifierProvider(id));
+  if (serverState.client == null) {
     context.showSnackBar(l10n.waitConnection);
     return false;
   }

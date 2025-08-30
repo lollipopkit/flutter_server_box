@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/server.dart';
@@ -11,18 +12,18 @@ final class SnippetEditPageArgs {
   const SnippetEditPageArgs({this.snippet});
 }
 
-class SnippetEditPage extends StatefulWidget {
+class SnippetEditPage extends ConsumerStatefulWidget {
   final SnippetEditPageArgs? args;
 
   const SnippetEditPage({super.key, this.args});
 
   @override
-  State<SnippetEditPage> createState() => _SnippetEditPageState();
+  ConsumerState<SnippetEditPage> createState() => _SnippetEditPageState();
 
   static const route = AppRoute(page: SnippetEditPage.new, path: '/snippets/edit');
 }
 
-class _SnippetEditPageState extends State<SnippetEditPage> with AfterLayoutMixin {
+class _SnippetEditPageState extends ConsumerState<SnippetEditPage> with AfterLayoutMixin {
   final _nameController = TextEditingController();
   final _scriptController = TextEditingController();
   final _noteController = TextEditingController();
@@ -61,7 +62,7 @@ class _SnippetEditPageState extends State<SnippetEditPage> with AfterLayoutMixin
             child: Text(libL10n.askContinue('${libL10n.delete} ${l10n.snippet}(${snippet.name})')),
             actions: Btn.ok(
               onTap: () {
-                SnippetProvider.del(snippet);
+                ref.read(snippetNotifierProvider.notifier).del(snippet);
                 context.pop();
                 context.pop();
               },
@@ -95,10 +96,11 @@ class _SnippetEditPageState extends State<SnippetEditPage> with AfterLayoutMixin
           autoRunOn: _autoRunOn.value.isEmpty ? null : _autoRunOn.value,
         );
         final oldSnippet = widget.args?.snippet;
+        final notifier = ref.read(snippetNotifierProvider.notifier);
         if (oldSnippet != null) {
-          SnippetProvider.update(oldSnippet, snippet);
+          notifier.update(oldSnippet, snippet);
         } else {
-          SnippetProvider.add(snippet);
+          notifier.add(snippet);
         }
         context.pop();
       },
@@ -126,7 +128,12 @@ class _SnippetEditPageState extends State<SnippetEditPage> with AfterLayoutMixin
           icon: Icons.note,
           suggestion: true,
         ),
-        TagTile(tags: _tags, allTags: SnippetProvider.tags.value).cardx,
+        Consumer(
+          builder: (_, ref, _) {
+            final tags = ref.watch(snippetNotifierProvider.select((p) => p.tags));
+            return TagTile(tags: _tags, allTags: tags).cardx;
+          },
+        ),
         Input(
           controller: _scriptController,
           node: _scriptNode,
@@ -150,7 +157,7 @@ class _SnippetEditPageState extends State<SnippetEditPage> with AfterLayoutMixin
         builder: (vals) {
           final subtitle = vals.isEmpty
               ? null
-              : vals.map((e) => ServerProvider.pick(id: e)?.value.spi.name ?? e).join(', ');
+              : vals.map((e) => ref.read(serverNotifierProvider).servers[e]?.name ?? e).join(', ');
           return ListTile(
             leading: const Padding(
               padding: EdgeInsets.only(left: 5),
@@ -162,11 +169,11 @@ class _SnippetEditPageState extends State<SnippetEditPage> with AfterLayoutMixin
                 ? null
                 : Text(subtitle, maxLines: 1, style: UIs.textGrey, overflow: TextOverflow.ellipsis),
             onTap: () async {
-              vals.removeWhere((e) => !ServerProvider.serverOrder.value.contains(e));
+              vals.removeWhere((e) => !ref.read(serverNotifierProvider).serverOrder.contains(e));
               final serverIds = await context.showPickDialog(
                 title: l10n.autoRun,
-                items: ServerProvider.serverOrder.value,
-                display: (e) => ServerProvider.pick(id: e)?.value.spi.name ?? e,
+                items: ref.read(serverNotifierProvider).serverOrder,
+                display: (e) => ref.read(serverNotifierProvider).servers[e]?.name ?? e,
                 initial: vals,
                 clearable: true,
               );

@@ -1,45 +1,53 @@
-import 'package:fl_lib/fl_lib.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/res/store.dart';
 
-class PrivateKeyProvider extends Provider {
-  const PrivateKeyProvider._();
-  static const instance = PrivateKeyProvider._();
+part 'private_key.freezed.dart';
+part 'private_key.g.dart';
 
-  static final pkis = <PrivateKeyInfo>[].vn;
+@freezed
+abstract class PrivateKeyState with _$PrivateKeyState {
+  const factory PrivateKeyState({
+    @Default(<PrivateKeyInfo>[]) List<PrivateKeyInfo> keys,
+  }) = _PrivateKeyState;
+}
 
+@Riverpod(keepAlive: true)
+class PrivateKeyNotifier extends _$PrivateKeyNotifier {
   @override
-  void load() {
-    super.load();
-    pkis.value = Stores.key.fetch();
+  PrivateKeyState build() {
+    final keys = Stores.key.fetch();
+    return PrivateKeyState(keys: keys);
   }
 
-  static void add(PrivateKeyInfo info) {
-    pkis.value.add(info);
-    pkis.notify();
+  void add(PrivateKeyInfo info) {
+    final newKeys = [...state.keys, info];
+    state = state.copyWith(keys: newKeys);
     Stores.key.put(info);
     bakSync.sync(milliDelay: 1000);
   }
 
-  static void delete(PrivateKeyInfo info) {
-    pkis.value.removeWhere((e) => e.id == info.id);
-    pkis.notify();
+  void delete(PrivateKeyInfo info) {
+    final newKeys = state.keys.where((e) => e.id != info.id).toList();
+    state = state.copyWith(keys: newKeys);
     Stores.key.delete(info);
     bakSync.sync(milliDelay: 1000);
   }
 
-  static void update(PrivateKeyInfo old, PrivateKeyInfo newInfo) {
-    final idx = pkis.value.indexWhere((e) => e.id == old.id);
+  void update(PrivateKeyInfo old, PrivateKeyInfo newInfo) {
+    final keys = [...state.keys];
+    final idx = keys.indexWhere((e) => e.id == old.id);
     if (idx == -1) {
-      pkis.value.add(newInfo);
+      keys.add(newInfo);
       Stores.key.put(newInfo);
       Stores.key.delete(old);
     } else {
-      pkis.value[idx] = newInfo;
+      keys[idx] = newInfo;
       Stores.key.put(newInfo);
     }
-    pkis.notify();
+    state = state.copyWith(keys: keys);
     bakSync.sync(milliDelay: 1000);
   }
 }

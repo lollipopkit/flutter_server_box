@@ -66,7 +66,8 @@ extension _Init on SSHPageState {
     // Mark status connected for notifications / live activities
     TermSessionManager.updateStatus(_sessionId, TermSessionStatus.connected);
 
-    for (final snippet in SnippetProvider.snippets.value) {
+    final snippets = ref.read(snippetNotifierProvider.select((p) => p.snippets));
+    for (final snippet in snippets) {
       if (snippet.autoRunOn?.contains(widget.args.spi.id) == true) {
         snippet.runInTerm(_terminal, widget.args.spi);
       }

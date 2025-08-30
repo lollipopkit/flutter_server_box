@@ -4,10 +4,8 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/custom.dart';
-import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
-import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/store/server.dart';
 
 part 'server_private_info.freezed.dart';
@@ -86,9 +84,6 @@ extension Spix on Spi {
   }
 
   String toJsonString() => json.encode(toJson());
-
-  VNode<Server>? get server => ServerProvider.pick(spi: this);
-  VNode<Server>? get jumpServer => ServerProvider.pick(id: jumpId);
 
   bool shouldReconnect(Spi old) {
     return user != old.user ||

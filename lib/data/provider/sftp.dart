@@ -1,41 +1,69 @@
 import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/data/model/sftp/worker.dart';
 
-class SftpProvider extends Provider {
-  const SftpProvider._();
-  static const instance = SftpProvider._();
+part 'sftp.freezed.dart';
+part 'sftp.g.dart';
 
-  static final status = <SftpReqStatus>[].vn;
+@freezed
+abstract class SftpState with _$SftpState {
+  const factory SftpState({
+    @Default(<SftpReqStatus>[]) List<SftpReqStatus> requests,
+  }) = _SftpState;
+}
 
-  static SftpReqStatus? get(int id) {
-    return status.value.singleWhere((element) => element.id == id);
+@Riverpod(keepAlive: true)
+class SftpNotifier extends _$SftpNotifier {
+  @override
+  SftpState build() {
+    return const SftpState();
   }
 
-  static int add(SftpReq req, {Completer? completer}) {
-    final reqStat = SftpReqStatus(notifyListeners: status.notify, completer: completer, req: req);
-    status.value.add(reqStat);
-    status.notify();
+  SftpReqStatus? get(int id) {
+    try {
+      return state.requests.singleWhere((element) => element.id == id);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  int add(SftpReq req, {Completer? completer}) {
+    final reqStat = SftpReqStatus(
+      notifyListeners: _notifyListeners,
+      completer: completer,
+      req: req,
+    );
+    state = state.copyWith(
+      requests: [...state.requests, reqStat],
+    );
     return reqStat.id;
   }
 
-  static void dispose() {
-    for (final item in status.value) {
+  void dispose() {
+    for (final item in state.requests) {
       item.dispose();
     }
-    status.value.clear();
-    status.notify();
+    state = state.copyWith(requests: []);
   }
 
-  static void cancel(int id) {
-    final idx = status.value.indexWhere((e) => e.id == id);
-    if (idx < 0 || idx >= status.value.length) {
+  void cancel(int id) {
+    final idx = state.requests.indexWhere((e) => e.id == id);
+    if (idx < 0 || idx >= state.requests.length) {
       dprint('SftpProvider.cancel: id $id not found');
       return;
     }
-    status.value[idx].dispose();
-    status.value.removeAt(idx);
-    status.notify();
+    final item = state.requests[idx];
+    item.dispose();
+    final newRequests = List<SftpReqStatus>.from(state.requests)
+      ..removeAt(idx);
+    state = state.copyWith(requests: newRequests);
+  }
+
+  void _notifyListeners() {
+    // Force state update to notify listeners
+    state = state.copyWith();
   }
 }

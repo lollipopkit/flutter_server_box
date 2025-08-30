@@ -2,10 +2,10 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/dist.dart';
-import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/res/store.dart';
 
-extension LogoExt on Server {
+extension LogoExt on ServerState {
   String? getLogoUrl(BuildContext context) {
     var logoUrl = spi.custom?.logoUrl ?? Stores.setting.serverLogoUrl.fetch().selfNotEmptyOrNull;
     if (logoUrl == null) {

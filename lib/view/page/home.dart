@@ -1,7 +1,9 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/chan.dart';
+import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/res/build_data.dart';
@@ -10,16 +12,16 @@ import 'package:server_box/data/res/url.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  ConsumerState<HomePage> createState() => _HomePageState();
 
   static const route = AppRouteNoArg(page: HomePage.new, path: '/');
 }
 
-class _HomePageState extends State<HomePage>
+class _HomePageState extends ConsumerState<HomePage>
     with AutomaticKeepAliveClientMixin, AfterLayoutMixin, WidgetsBindingObserver {
   late final PageController _pageController;
 
@@ -29,11 +31,14 @@ class _HomePageState extends State<HomePage>
   bool _shouldAuth = false;
   DateTime? _pausedTime;
 
+  late final _notifier = ref.read(serverNotifierProvider.notifier);
+  late final _provider = ref.read(serverNotifierProvider);
+
   @override
   void dispose() {
     super.dispose();
     WidgetsBinding.instance.removeObserver(this);
-    ServerProvider.closeServer();
+    Future(() => _notifier.closeServer());
     _pageController.dispose();
     WakelockPlus.disable();
 
@@ -76,8 +81,9 @@ class _HomePageState extends State<HomePage>
             _goAuth();
           }
         }
-        if (!ServerProvider.isAutoRefreshOn) {
-          ServerProvider.startAutoRefresh();
+        final serverNotifier = _notifier;
+        if (_provider.autoRefreshTimer == null) {
+          serverNotifier.startAutoRefresh();
         }
         MethodChans.updateHomeWidget();
         break;
@@ -92,7 +98,7 @@ class _HomePageState extends State<HomePage>
           // }
         } else {
           //Pros.server.setDisconnected();
-          ServerProvider.stopAutoRefresh();
+          _notifier.stopAutoRefresh();
         }
         break;
       default:
@@ -194,7 +200,9 @@ class _HomePageState extends State<HomePage>
       AppUpdateIface.doUpdate(build: BuildData.build, url: Urls.updateCfg, context: context);
     }
     MethodChans.updateHomeWidget();
-    await ServerProvider.refresh();
+    await _notifier.refresh();
+
+    bakSync.sync(milliDelay: 1000);
   }
 
   // Future<void> _reqNotiPerm() async {
@@ -202,7 +210,6 @@ class _HomePageState extends State<HomePage>
   //   final suc = await PermUtils.request(Permission.notification);
   //   if (!suc) {
   //     final noNotiPerm = Stores.setting.noNotiPerm;
-  //     if (noNotiPerm.fetch()) return;
   //     context.showRoundDialog(
   //       title: l10n.error,
   //       child: Text(l10n.noNotiPerm),
@@ -212,6 +219,7 @@ class _HomePageState extends State<HomePage>
   //             noNotiPerm.put(true);
   //             context.pop();
   //           },
+  //     if (noNotiPerm.fetch()) return;
   //           child: Text(l10n.ok),
   //         ),
   //       ],

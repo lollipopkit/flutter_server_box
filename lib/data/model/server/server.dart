@@ -1,4 +1,3 @@
-import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/amd.dart';
@@ -11,24 +10,8 @@ import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/nvdia.dart';
 import 'package:server_box/data/model/server/sensors.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/temp.dart';
-
-class Server {
-  Spi spi;
-  ServerStatus status;
-  SSHClient? client;
-  ServerConn conn;
-
-  Server(this.spi, this.status, this.conn, {this.client});
-
-  bool get needGenClient => conn < ServerConn.connecting;
-
-  bool get canViewDetails => conn == ServerConn.finished;
-
-  String get id => spi.id;
-}
 
 class ServerStatus {
   Cpus cpu;

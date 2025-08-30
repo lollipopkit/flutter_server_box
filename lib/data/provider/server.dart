@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 
-// import 'dart:io';
-
 import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_gbk2utf8/flutter_gbk2utf8.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/server.dart';
@@ -24,322 +24,138 @@ import 'package:server_box/data/res/status.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
 
-class ServerProvider extends Provider {
-  const ServerProvider._();
-  static const instance = ServerProvider._();
+part 'server.freezed.dart';
+part 'server.g.dart';
 
-  static final Map<String, VNode<Server>> servers = {};
-  static final serverOrder = <String>[].vn;
-  static final _tags = <String>{}.vn;
-  static VNode<Set<String>> get tags => _tags;
+@freezed
+abstract class ServersState with _$ServersState {
+  const factory ServersState({
+    @Default({}) Map<String, Spi> servers,
+    @Default([]) List<String> serverOrder,
+    @Default(<String>{}) Set<String> tags,
+    @Default(<String>{}) Set<String> manualDisconnectedIds,
+    Timer? autoRefreshTimer,
+  }) = _ServersState;
+}
 
-  static Timer? _timer;
+// Individual server state, including connection and status information
+@freezed
+abstract class ServerState with _$ServerState {
+  const factory ServerState({
+    required Spi spi,
+    required ServerStatus status,
+    @Default(ServerConn.disconnected) ServerConn conn,
+    SSHClient? client,
+    Future<void>? updateFuture,
+  }) = _ServerState;
+}
 
-  static final _manualDisconnectedIds = <String>{};
+extension IndividualServerStateExtension on ServerState {
+  bool get needGenClient => conn < ServerConn.connecting;
 
-  static final _serverIdsUpdating = <String, Future<void>?>{};
+  bool get canViewDetails => conn == ServerConn.finished;
 
+  String get id => spi.id;
+}
+
+// Individual server state management
+@riverpod
+class IndividualServerNotifier extends _$IndividualServerNotifier {
   @override
-  Future<void> load() async {
-    super.load();
-    // #147
-    // Clear all servers because of restarting app will cause duplicate servers
-    final oldServers = Map<String, VNode<Server>>.from(servers);
-    servers.clear();
-    serverOrder.value.clear();
+  ServerState build(String serverId) {
+    final serverNotifier = ref.read(serverNotifierProvider);
+    final spi = serverNotifier.servers[serverId];
+    if (spi == null) {
+      throw StateError('Server $serverId not found');
+    }
 
-    final spis = Stores.server.fetch();
-    for (int idx = 0; idx < spis.length; idx++) {
-      final spi = spis[idx];
-      final originServer = oldServers[spi.id];
-
-      /// #258
-      /// If not [shouldReconnect], then keep the old state.
-      if (originServer != null && !originServer.value.spi.shouldReconnect(spi)) {
-        originServer.value.spi = spi;
-        servers[spi.id] = originServer;
-      } else {
-        final newServer = genServer(spi);
-        servers[spi.id] = newServer.vn;
-      }
-    }
-    final serverOrder_ = Stores.setting.serverOrder.fetch();
-    if (serverOrder_.isNotEmpty) {
-      spis.reorder(order: serverOrder_, finder: (n, id) => n.id == id);
-      serverOrder.value.addAll(spis.map((e) => e.id));
-    } else {
-      serverOrder.value.addAll(servers.keys);
-    }
-    // Must use [equals] to compare [Order] here.
-    if (!serverOrder.value.equals(serverOrder_)) {
-      Stores.setting.serverOrder.put(serverOrder.value);
-    }
-    _updateTags();
-    // Must notify here, or the UI will not be updated.
-    serverOrder.notify();
+    return ServerState(spi: spi, status: InitStatus.status);
   }
 
-  /// Get a [Server] by [spi] or [id].
-  ///
-  /// Priority: [spi] > [id]
-  static VNode<Server>? pick({Spi? spi, String? id}) {
-    if (spi != null) {
-      return servers[spi.id];
-    }
-    if (id != null) {
-      return servers[id];
-    }
-    return null;
+  // Update connection status
+  void updateConnection(ServerConn conn) {
+    state = state.copyWith(conn: conn);
   }
 
-  static void _updateTags() {
-    final tags = <String>{};
-    for (final s in servers.values) {
-      final spiTags = s.value.spi.tags;
-      if (spiTags == null) continue;
-      for (final t in spiTags) {
-        tags.add(t);
-      }
-    }
-    _tags.value = tags;
+  // Update server status
+  void updateStatus(ServerStatus status) {
+    state = state.copyWith(status: status);
   }
 
-  static Server genServer(Spi spi) {
-    return Server(spi, InitStatus.status, ServerConn.disconnected);
+  // Update SSH client
+  void updateClient(SSHClient? client) {
+    state = state.copyWith(client: client);
   }
 
-  /// if [spi] is specificed then only refresh this server
-  /// [onlyFailed] only refresh failed servers
-  static Future<void> refresh({Spi? spi, bool onlyFailed = false}) async {
-    if (spi != null) {
-      _manualDisconnectedIds.remove(spi.id);
-      await _getData(spi);
+  // Update SPI configuration
+  void updateSpi(Spi spi) {
+    state = state.copyWith(spi: spi);
+  }
+
+  // Close connection
+  void closeConnection() {
+    final client = state.client;
+    client?.close();
+    state = state.copyWith(client: null, conn: ServerConn.disconnected);
+  }
+
+  // Refresh server status
+  Future<void> refresh() async {
+    if (state.updateFuture != null) {
+      await state.updateFuture;
       return;
     }
 
-    await Future.wait(
-      servers.values.map((val) async {
-        final s = val.value;
-        if (onlyFailed) {
-          if (s.conn != ServerConn.failed) return;
-          TryLimiter.reset(s.spi.id);
-        }
+    final updateFuture = _updateServer();
+    state = state.copyWith(updateFuture: updateFuture);
 
-        if (_manualDisconnectedIds.contains(s.spi.id)) return;
-
-        if (s.conn == ServerConn.disconnected && !s.spi.autoConnect) {
-          return;
-        }
-
-        // Check if already updating, and if so, wait for it to complete
-        final existingUpdate = _serverIdsUpdating[s.spi.id];
-        if (existingUpdate != null) {
-          // Already updating, wait for the existing update to complete
-          try {
-            await existingUpdate;
-          } catch (e) {
-            // Ignore errors from the existing update, we'll try our own
-          }
-          return;
-        }
-
-        // Start a new update operation
-        final updateFuture = _updateServer(s.spi);
-        _serverIdsUpdating[s.spi.id] = updateFuture;
-
-        try {
-          await updateFuture;
-        } finally {
-          _serverIdsUpdating.remove(s.spi.id);
-        }
-      }),
-    );
-  }
-
-  static Future<void> _updateServer(Spi spi) async {
-    await _getData(spi);
-  }
-
-  static Future<void> startAutoRefresh() async {
-    var duration = Stores.setting.serverStatusUpdateInterval.fetch();
-    stopAutoRefresh();
-    if (duration == 0) return;
-    if (duration < 0 || duration > 10 || duration == 1) {
-      duration = 3;
-      Loggers.app.warning('Invalid duration: $duration, use default 3');
-    }
-    _timer = Timer.periodic(Duration(seconds: duration), (_) async {
-      await refresh();
-    });
-  }
-
-  static void stopAutoRefresh() {
-    if (_timer != null) {
-      _timer!.cancel();
-      _timer = null;
+    try {
+      await updateFuture;
+    } finally {
+      state = state.copyWith(updateFuture: null);
     }
   }
 
-  static bool get isAutoRefreshOn => _timer != null;
-
-  static void setDisconnected() {
-    for (final s in servers.values) {
-      s.value.conn = ServerConn.disconnected;
-      s.notify();
-
-      // Update SSH session status to disconnected
-      final sessionId = 'ssh_${s.value.spi.id}';
-      TermSessionManager.updateStatus(sessionId, TermSessionStatus.disconnected);
-    }
-    //TryLimiter.clear();
+  Future<void> _updateServer() async {
+    await _getData();
   }
 
-  static void closeServer({String? id}) {
-    if (id == null) {
-      for (final s in servers.values) {
-        _closeOneServer(s.value.spi.id);
-      }
-      return;
-    }
-    _closeOneServer(id);
-  }
-
-  static void _closeOneServer(String id) {
-    final s = servers[id];
-    if (s == null) {
-      Loggers.app.warning('Server with id $id not found');
-      return;
-    }
-    final item = s.value;
-    item.client?.close();
-    item.client = null;
-    item.conn = ServerConn.disconnected;
-    _manualDisconnectedIds.add(id);
-    s.notify();
-
-    // Remove SSH session when server is manually closed
-    final sessionId = 'ssh_$id';
-    TermSessionManager.remove(sessionId);
-  }
-
-  static void addServer(Spi spi) {
-    servers[spi.id] = genServer(spi).vn;
-    Stores.server.put(spi);
-    serverOrder.value.add(spi.id);
-    serverOrder.notify();
-    Stores.setting.serverOrder.put(serverOrder.value);
-    _updateTags();
-    refresh(spi: spi);
-    bakSync.sync(milliDelay: 1000);
-  }
-
-  static void delServer(String id) {
-    servers.remove(id);
-    serverOrder.value.remove(id);
-    serverOrder.notify();
-    Stores.setting.serverOrder.put(serverOrder.value);
-    Stores.server.delete(id);
-    _updateTags();
-
-    // Remove SSH session when server is deleted
-    final sessionId = 'ssh_$id';
-    TermSessionManager.remove(sessionId);
-
-    bakSync.sync(milliDelay: 1000);
-  }
-
-  static void deleteAll() {
-    // Remove all SSH sessions before clearing servers
-    for (final id in servers.keys) {
-      final sessionId = 'ssh_$id';
-      TermSessionManager.remove(sessionId);
-    }
-
-    servers.clear();
-    serverOrder.value.clear();
-    serverOrder.notify();
-    Stores.setting.serverOrder.put(serverOrder.value);
-    Stores.server.clear();
-    _updateTags();
-    bakSync.sync(milliDelay: 1000);
-  }
-
-  static Future<void> updateServer(Spi old, Spi newSpi) async {
-    if (old != newSpi) {
-      Stores.server.update(old, newSpi);
-      servers[old.id]?.value.spi = newSpi;
-
-      if (newSpi.id != old.id) {
-        servers[newSpi.id] = servers[old.id]!;
-        servers.remove(old.id);
-        serverOrder.value.update(old.id, newSpi.id);
-        Stores.setting.serverOrder.put(serverOrder.value);
-        serverOrder.notify();
-
-        // Update SSH session ID when server ID changes
-        final oldSessionId = 'ssh_${old.id}';
-        TermSessionManager.remove(oldSessionId);
-        // Session will be re-added when reconnecting if necessary
-      }
-
-      // Only reconnect if neccessary
-      if (newSpi.shouldReconnect(old)) {
-        // Use [newSpi.id] instead of [old.id] because [old.id] may be changed
-        TryLimiter.reset(newSpi.id);
-        refresh(spi: newSpi);
-      }
-    }
-    _updateTags();
-    bakSync.sync(milliDelay: 1000);
-  }
-
-  static void _setServerState(VNode<Server> s, ServerConn ss) {
-    s.value.conn = ss;
-    s.notify();
-  }
-
-  static Future<void> _getData(Spi spi) async {
+  Future<void> _getData() async {
+    final spi = state.spi;
     final sid = spi.id;
-    final s = servers[sid];
 
-    if (s == null) return;
-
-    final sv = s.value;
     if (!TryLimiter.canTry(sid)) {
-      if (sv.conn != ServerConn.failed) {
-        _setServerState(s, ServerConn.failed);
+      if (state.conn != ServerConn.failed) {
+        updateConnection(ServerConn.failed);
       }
       return;
     }
 
-    sv.status.err = null;
+    final newStatus = state.status..err = null; // Clear previous error
+    updateStatus(newStatus);
 
-    if (sv.needGenClient || (sv.client?.isClosed ?? true)) {
-      _setServerState(s, ServerConn.connecting);
+    if (state.conn < ServerConn.connecting || (state.client?.isClosed ?? true)) {
+      updateConnection(ServerConn.connecting);
 
+      // Wake on LAN
       final wol = spi.wolCfg;
       if (wol != null) {
         try {
           await wol.wake();
         } catch (e) {
-          // TryLimiter.inc(sid);
-          // s.status.err = SSHErr(
-          //   type: SSHErrType.connect,
-          //   message: 'Wake on lan failed: $e',
-          // );
-          // _setServerState(s, ServerConn.failed);
           Loggers.app.warning('Wake on lan failed', e);
-          // return;
         }
       }
 
       try {
         final time1 = DateTime.now();
-        sv.client = await genClient(
+        final client = await genClient(
           spi,
           timeout: Duration(seconds: Stores.setting.timeout.fetch()),
           onKeyboardInteractive: (_) => KeybordInteractive.defaultHandle(spi),
         );
+        updateClient(client);
+
         final time2 = DateTime.now();
         final spentTime = time2.difference(time1).inMilliseconds;
         if (spi.jumpId == null) {
@@ -348,50 +164,57 @@ class ServerProvider extends Provider {
           Loggers.app.info('Jump to ${spi.name} in $spentTime ms.');
         }
 
-        // Add SSH session to TermSessionManager
         final sessionId = 'ssh_${spi.id}';
         TermSessionManager.add(
           id: sessionId,
           spi: spi,
           startTimeMs: time1.millisecondsSinceEpoch,
-          disconnect: () => _closeOneServer(spi.id),
+          disconnect: () => ref.read(serverNotifierProvider.notifier)._closeOneServer(spi.id),
           status: TermSessionStatus.connecting,
         );
         TermSessionManager.setActive(sessionId, hasTerminal: false);
       } catch (e) {
         TryLimiter.inc(sid);
-        sv.status.err = SSHErr(type: SSHErrType.connect, message: e.toString());
-        _setServerState(s, ServerConn.failed);
+        final newStatus = state.status..err = SSHErr(type: SSHErrType.connect, message: e.toString());
+        updateStatus(newStatus);
+        updateConnection(ServerConn.failed);
 
-        // Remove SSH session on connection failure
+        // Remove SSH session when connection fails
         final sessionId = 'ssh_${spi.id}';
         TermSessionManager.remove(sessionId);
 
-        /// In order to keep privacy, print [spi.name] instead of [spi.id]
         Loggers.app.warning('Connect to ${spi.name} failed', e);
         return;
       }
 
-      _setServerState(s, ServerConn.connected);
+      updateConnection(ServerConn.connected);
 
       // Update SSH session status to connected
       final sessionId = 'ssh_${spi.id}';
       TermSessionManager.updateStatus(sessionId, TermSessionStatus.connected);
 
       try {
-        // Detect system type using helper
-        final detectedSystemType = await SystemDetector.detect(sv.client!, spi);
-        sv.status.system = detectedSystemType;
+        // Detect system type
+        final detectedSystemType = await SystemDetector.detect(state.client!, spi);
+        final newStatus = state.status..system = detectedSystemType;
+        updateStatus(newStatus);
 
-        final (_, writeScriptResult) = await sv.client!.exec((session) async {
-          final scriptRaw = ShellFuncManager.allScript(
-            spi.custom?.cmds,
+        final (_, writeScriptResult) = await state.client!.exec(
+          (session) async {
+            final scriptRaw = ShellFuncManager.allScript(
+              spi.custom?.cmds,
+              systemType: detectedSystemType,
+              disabledCmdTypes: spi.disabledCmdTypes,
+            ).uint8List;
+            session.stdin.add(scriptRaw);
+            session.stdin.close();
+          },
+          entry: ShellFuncManager.getInstallShellCmd(
+            spi.id,
             systemType: detectedSystemType,
-            disabledCmdTypes: spi.disabledCmdTypes,
-          ).uint8List;
-          session.stdin.add(scriptRaw);
-          session.stdin.close();
-        }, entry: ShellFuncManager.getInstallShellCmd(spi.id, systemType: detectedSystemType));
+            customDir: spi.custom?.scriptDir,
+          ),
+        );
         if (writeScriptResult.isNotEmpty && detectedSystemType != SystemType.windows) {
           ShellFuncManager.switchScriptDir(spi.id, systemType: detectedSystemType);
           throw writeScriptResult;
@@ -399,152 +222,398 @@ class ServerProvider extends Provider {
       } on SSHAuthAbortError catch (e) {
         TryLimiter.inc(sid);
         final err = SSHErr(type: SSHErrType.auth, message: e.toString());
-        sv.status.err = err;
+        final newStatus = state.status..err = err;
+        updateStatus(newStatus);
         Loggers.app.warning(err);
-        _setServerState(s, ServerConn.failed);
+        updateConnection(ServerConn.failed);
 
-        // Update SSH session status to disconnected
         final sessionId = 'ssh_${spi.id}';
         TermSessionManager.updateStatus(sessionId, TermSessionStatus.disconnected);
         return;
       } on SSHAuthFailError catch (e) {
         TryLimiter.inc(sid);
         final err = SSHErr(type: SSHErrType.auth, message: e.toString());
-        sv.status.err = err;
+        final newStatus = state.status..err = err;
+        updateStatus(newStatus);
         Loggers.app.warning(err);
-        _setServerState(s, ServerConn.failed);
+        updateConnection(ServerConn.failed);
 
-        // Update SSH session status to disconnected
         final sessionId = 'ssh_${spi.id}';
         TermSessionManager.updateStatus(sessionId, TermSessionStatus.disconnected);
         return;
       } catch (e) {
-        // If max try times < 2 and can't write script, this will stop the status getting and etc.
-        // TryLimiter.inc(sid);
         final err = SSHErr(type: SSHErrType.writeScript, message: e.toString());
-        sv.status.err = err;
+        final newStatus = state.status..err = err;
+        updateStatus(newStatus);
         Loggers.app.warning(err);
-        _setServerState(s, ServerConn.failed);
+        updateConnection(ServerConn.failed);
 
-        // Update SSH session status to disconnected
         final sessionId = 'ssh_${spi.id}';
         TermSessionManager.updateStatus(sessionId, TermSessionStatus.disconnected);
       }
     }
 
-    if (sv.conn == ServerConn.connecting) return;
+    if (state.conn == ServerConn.connecting) return;
 
-    /// Keep [finished] state, or the UI will be refreshed to [loading] state
-    /// instead of the '$Temp | $Uptime'.
-    /// eg: '32C | 7 days'
-    if (sv.conn != ServerConn.finished) {
-      _setServerState(s, ServerConn.loading);
+    // Keep finished status to prevent UI from refreshing to loading state
+    if (state.conn != ServerConn.finished) {
+      updateConnection(ServerConn.loading);
     }
 
     List<String>? segments;
     String? raw;
 
     try {
-        final execResult = await sv.client?.run(ShellFunc.status.exec(spi.id, systemType: sv.status.system));
-        if (execResult != null) {
-          String? rawStr;
-          bool needGbk = false;
-          try {
-            rawStr = utf8.decode(execResult, allowMalformed: true);
-            // If there are characters that cannot be parsed, try to fallback to gbk decoding
-            if (rawStr.contains('�')) {
-              Loggers.app.warning('UTF8 decoding failed, use GBK decoding');
-              needGbk = true;
-            }
-          } catch (e) {
-            Loggers.app.warning('UTF8 decoding failed, use GBK decoding', e);
+      final execResult = await state.client?.run(
+        ShellFunc.status.exec(spi.id, systemType: state.status.system, customDir: spi.custom?.scriptDir),
+      );
+      if (execResult != null) {
+        String? rawStr;
+        bool needGbk = false;
+        try {
+          rawStr = utf8.decode(execResult, allowMalformed: true);
+          // If there are unparseable characters, try fallback to GBK decoding
+          if (rawStr.contains('�')) {
+            Loggers.app.warning('UTF8 decoding failed, use GBK decoding');
             needGbk = true;
-          }if (needGbk) {
-            try {
-              rawStr = gbk.decode(execResult);
-            } catch (e2) {
-              Loggers.app.warning('GBK decoding failed', e2);
-              rawStr = null;
-            }
           }
-          if (rawStr == null) {
-            Loggers.app.warning('Decoding failed, execResult: $execResult');
-          }
-          raw = rawStr;
-        } else {
-          raw = execResult.toString();
+        } catch (e) {
+          Loggers.app.warning('UTF8 decoding failed, use GBK decoding', e);
+          needGbk = true;
         }
+        if (needGbk) {
+          try {
+            rawStr = gbk.decode(execResult);
+          } catch (e2) {
+            Loggers.app.warning('GBK decoding failed', e2);
+            rawStr = null;
+          }
+        }
+        if (rawStr == null) {
+          Loggers.app.warning('Decoding failed, execResult: $execResult');
+        }
+        raw = rawStr;
+      } else {
+        raw = execResult.toString();
+      }
 
       if (raw == null || raw.isEmpty) {
         TryLimiter.inc(sid);
-        sv.status.err = SSHErr(
-          type: SSHErrType.segements,
-          message: 'decode or split failed, raw:\n$raw',
-        );
-        _setServerState(s, ServerConn.failed);
+        final newStatus = state.status
+          ..err = SSHErr(type: SSHErrType.segements, message: 'decode or split failed, raw:\n$raw');
+        updateStatus(newStatus);
+        updateConnection(ServerConn.failed);
 
-        // Update SSH session status to disconnected on segments error
         final sessionId = 'ssh_${spi.id}';
         TermSessionManager.updateStatus(sessionId, TermSessionStatus.disconnected);
         return;
       }
 
-      //dprint('Get status from ${spi.name}:\n$raw');
       segments = raw.split(ScriptConstants.separator).map((e) => e.trim()).toList();
       if (raw.isEmpty || segments.isEmpty) {
         if (Stores.setting.keepStatusWhenErr.fetch()) {
-          // Keep previous server status when err occurs
-          if (sv.conn != ServerConn.failed && sv.status.more.isNotEmpty) {
+          // Keep previous server status when error occurs
+          if (state.conn != ServerConn.failed && state.status.more.isNotEmpty) {
             return;
           }
         }
         TryLimiter.inc(sid);
-        sv.status.err = SSHErr(type: SSHErrType.segements, message: 'Seperate segments failed, raw:\n$raw');
-        _setServerState(s, ServerConn.failed);
+        final newStatus = state.status
+          ..err = SSHErr(type: SSHErrType.segements, message: 'Seperate segments failed, raw:\n$raw');
+        updateStatus(newStatus);
+        updateConnection(ServerConn.failed);
 
-        // Update SSH session status to disconnected on segments error
         final sessionId = 'ssh_${spi.id}';
         TermSessionManager.updateStatus(sessionId, TermSessionStatus.disconnected);
         return;
       }
     } catch (e) {
       TryLimiter.inc(sid);
-      sv.status.err = SSHErr(type: SSHErrType.getStatus, message: e.toString());
-      _setServerState(s, ServerConn.failed);
+      final newStatus = state.status..err = SSHErr(type: SSHErrType.getStatus, message: e.toString());
+      updateStatus(newStatus);
+      updateConnection(ServerConn.failed);
       Loggers.app.warning('Get status from ${spi.name} failed', e);
 
-      // Update SSH session status to disconnected on status error
       final sessionId = 'ssh_${spi.id}';
       TermSessionManager.updateStatus(sessionId, TermSessionStatus.disconnected);
       return;
     }
 
     try {
-      // Parse script output into command-specific map
+      // Parse script output into command-specific mappings
       final parsedOutput = ScriptConstants.parseScriptOutput(raw);
 
       final req = ServerStatusUpdateReq(
-        ss: sv.status,
+        ss: state.status,
         parsedOutput: parsedOutput,
-        system: sv.status.system,
+        system: state.status.system,
         customCmds: spi.custom?.cmds ?? {},
       );
-      sv.status = await Computer.shared.start(getStatus, req, taskName: 'StatusUpdateReq<${sv.id}>');
+      final newStatus = await Computer.shared.start(getStatus, req, taskName: 'StatusUpdateReq<${spi.id}>');
+      updateStatus(newStatus);
     } catch (e, trace) {
       TryLimiter.inc(sid);
-      sv.status.err = SSHErr(type: SSHErrType.getStatus, message: 'Parse failed: $e\n\n$raw');
-      _setServerState(s, ServerConn.failed);
+      final newStatus = state.status
+        ..err = SSHErr(type: SSHErrType.getStatus, message: 'Parse failed: $e\n\n$raw');
+      updateStatus(newStatus);
+      updateConnection(ServerConn.failed);
       Loggers.app.warning('Server status', e, trace);
 
-      // Update SSH session status to disconnected on parse error
       final sessionId = 'ssh_${spi.id}';
       TermSessionManager.updateStatus(sessionId, TermSessionStatus.disconnected);
       return;
     }
 
-    /// Call this every time for setting [Server.isBusy] to false
-    _setServerState(s, ServerConn.finished);
-    // reset try times only after prepared successfully
+    // Set Server.isBusy to false each time this method is called
+    updateConnection(ServerConn.finished);
+    // Reset retry count only after successful preparation
     TryLimiter.reset(sid);
   }
 }
+
+@Riverpod(keepAlive: true)
+class ServerNotifier extends _$ServerNotifier {
+  @override
+  ServersState build() {
+    // Initialize with empty state, load data asynchronously
+    Future.microtask(() => _load());
+    return const ServersState();
+  }
+
+  Future<void> _load() async {
+    final spis = Stores.server.fetch();
+    final newServers = <String, Spi>{};
+    final newServerOrder = <String>[];
+
+    for (final spi in spis) {
+      newServers[spi.id] = spi;
+    }
+
+    final serverOrder_ = Stores.setting.serverOrder.fetch();
+    if (serverOrder_.isNotEmpty) {
+      spis.reorder(order: serverOrder_, finder: (n, id) => n.id == id);
+      newServerOrder.addAll(spis.map((e) => e.id));
+    } else {
+      newServerOrder.addAll(newServers.keys);
+    }
+
+    // Must use [equals] to compare [Order] here.
+    if (!newServerOrder.equals(serverOrder_)) {
+      Stores.setting.serverOrder.put(newServerOrder);
+    }
+
+    final newTags = _calculateTags(newServers);
+
+    state = state.copyWith(servers: newServers, serverOrder: newServerOrder, tags: newTags);
+  }
+
+  Set<String> _calculateTags(Map<String, Spi> servers) {
+    final tags = <String>{};
+    for (final spi in servers.values) {
+      final spiTags = spi.tags;
+      if (spiTags == null) continue;
+      for (final t in spiTags) {
+        tags.add(t);
+      }
+    }
+    return tags;
+  }
+
+  /// Get a [Spi] by [spi] or [id].
+  ///
+  /// Priority: [spi] > [id]
+  Spi? pick({Spi? spi, String? id}) {
+    if (spi != null) {
+      return state.servers[spi.id];
+    }
+    if (id != null) {
+      return state.servers[id];
+    }
+    return null;
+  }
+
+  /// if [spi] is specificed then only refresh this server
+  /// [onlyFailed] only refresh failed servers
+  Future<void> refresh({Spi? spi, bool onlyFailed = false}) async {
+    if (spi != null) {
+      final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)..remove(spi.id);
+      state = state.copyWith(manualDisconnectedIds: newManualDisconnected);
+      final serverNotifier = ref.read(individualServerNotifierProvider(spi.id).notifier);
+      await serverNotifier.refresh();
+      return;
+    }
+
+    await Future.wait(
+      state.servers.entries.map((entry) async {
+        final serverId = entry.key;
+        final spi = entry.value;
+
+        if (onlyFailed) {
+          final serverState = ref.read(individualServerNotifierProvider(serverId));
+          if (serverState.conn != ServerConn.failed) return;
+          TryLimiter.reset(serverId);
+        }
+
+        if (state.manualDisconnectedIds.contains(serverId)) return;
+
+        final serverState = ref.read(individualServerNotifierProvider(serverId));
+        if (serverState.conn == ServerConn.disconnected && !spi.autoConnect) {
+          return;
+        }
+
+        final serverNotifier = ref.read(individualServerNotifierProvider(serverId).notifier);
+        await serverNotifier.refresh();
+      }),
+    );
+  }
+
+  Future<void> startAutoRefresh() async {
+    var duration = Stores.setting.serverStatusUpdateInterval.fetch();
+    stopAutoRefresh();
+    if (duration == 0) return;
+    if (duration < 0 || duration > 10 || duration == 1) {
+      duration = 3;
+      Loggers.app.warning('Invalid duration: $duration, use default 3');
+    }
+    final timer = Timer.periodic(Duration(seconds: duration), (_) async {
+      await refresh();
+    });
+    state = state.copyWith(autoRefreshTimer: timer);
+  }
+
+  void stopAutoRefresh() {
+    final timer = state.autoRefreshTimer;
+    if (timer != null) {
+      timer.cancel();
+      state = state.copyWith(autoRefreshTimer: null);
+    }
+  }
+
+  bool get isAutoRefreshOn => state.autoRefreshTimer != null;
+
+  void setDisconnected() {
+    for (final serverId in state.servers.keys) {
+      final serverNotifier = ref.read(individualServerNotifierProvider(serverId).notifier);
+      serverNotifier.updateConnection(ServerConn.disconnected);
+
+      // Update SSH session status to disconnected
+      final sessionId = 'ssh_$serverId';
+      TermSessionManager.updateStatus(sessionId, TermSessionStatus.disconnected);
+    }
+    //TryLimiter.clear();
+  }
+
+  void closeServer({String? id}) {
+    if (id == null) {
+      for (final serverId in state.servers.keys) {
+        _closeOneServer(serverId);
+      }
+      return;
+    }
+    _closeOneServer(id);
+  }
+
+  void _closeOneServer(String id) {
+    final spi = state.servers[id];
+    if (spi == null) {
+      Loggers.app.warning('Server with id $id not found');
+      return;
+    }
+
+    final serverNotifier = ref.read(individualServerNotifierProvider(id).notifier);
+    serverNotifier.closeConnection();
+
+    final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)..add(id);
+    state = state.copyWith(manualDisconnectedIds: newManualDisconnected);
+
+    // Remove SSH session when server is manually closed
+    final sessionId = 'ssh_$id';
+    TermSessionManager.remove(sessionId);
+  }
+
+  void addServer(Spi spi) {
+    final newServers = Map<String, Spi>.from(state.servers);
+    newServers[spi.id] = spi;
+
+    final newOrder = List<String>.from(state.serverOrder)..add(spi.id);
+    final newTags = _calculateTags(newServers);
+
+    state = state.copyWith(servers: newServers, serverOrder: newOrder, tags: newTags);
+
+    Stores.server.put(spi);
+    Stores.setting.serverOrder.put(newOrder);
+    refresh(spi: spi);
+    bakSync.sync(milliDelay: 1000);
+  }
+
+  void delServer(String id) {
+    final newServers = Map<String, Spi>.from(state.servers);
+    newServers.remove(id);
+
+    final newOrder = List<String>.from(state.serverOrder)..remove(id);
+    final newTags = _calculateTags(newServers);
+
+    state = state.copyWith(servers: newServers, serverOrder: newOrder, tags: newTags);
+
+    Stores.setting.serverOrder.put(newOrder);
+    Stores.server.delete(id);
+
+    // Remove SSH session when server is deleted
+    final sessionId = 'ssh_$id';
+    TermSessionManager.remove(sessionId);
+
+    bakSync.sync(milliDelay: 1000);
+  }
+
+  void deleteAll() {
+    // Remove all SSH sessions before clearing servers
+    for (final id in state.servers.keys) {
+      final sessionId = 'ssh_$id';
+      TermSessionManager.remove(sessionId);
+    }
+
+    state = const ServersState();
+
+    Stores.setting.serverOrder.put([]);
+    Stores.server.clear();
+    bakSync.sync(milliDelay: 1000);
+  }
+
+  Future<void> updateServer(Spi old, Spi newSpi) async {
+    if (old != newSpi) {
+      Stores.server.update(old, newSpi);
+
+      final newServers = Map<String, Spi>.from(state.servers);
+      final newOrder = List<String>.from(state.serverOrder);
+
+      if (newSpi.id != old.id) {
+        newServers[newSpi.id] = newSpi;
+        newServers.remove(old.id);
+        newOrder.update(old.id, newSpi.id);
+        Stores.setting.serverOrder.put(newOrder);
+
+        // Update SSH session ID when server ID changes
+        final oldSessionId = 'ssh_${old.id}';
+        TermSessionManager.remove(oldSessionId);
+        // Session will be re-added when reconnecting if necessary
+      } else {
+        newServers[old.id] = newSpi;
+        // Update SPI in the corresponding IndividualServerNotifier
+        final serverNotifier = ref.read(individualServerNotifierProvider(old.id).notifier);
+        serverNotifier.updateSpi(newSpi);
+      }
+
+      final newTags = _calculateTags(newServers);
+      state = state.copyWith(servers: newServers, serverOrder: newOrder, tags: newTags);
+
+      // Only reconnect if neccessary
+      if (newSpi.shouldReconnect(old)) {
+        // Use [newSpi.id] instead of [old.id] because [old.id] may be changed
+        TryLimiter.reset(newSpi.id);
+        refresh(spi: newSpi);
+      }
+    }
+    bakSync.sync(milliDelay: 1000);
+  }
+}
+

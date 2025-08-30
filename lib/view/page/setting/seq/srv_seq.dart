@@ -1,21 +1,22 @@
 import 'dart:ui';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server.dart';
 import 'package:server_box/data/res/store.dart';
 
-class ServerOrderPage extends StatefulWidget {
+class ServerOrderPage extends ConsumerStatefulWidget {
   const ServerOrderPage({super.key});
 
   @override
-  State<ServerOrderPage> createState() => _ServerOrderPageState();
+  ConsumerState<ServerOrderPage> createState() => _ServerOrderPageState();
 
   static const route = AppRouteNoArg(page: ServerOrderPage.new, path: '/settings/order/server');
 }
 
-class _ServerOrderPageState extends State<ServerOrderPage> {
+class _ServerOrderPageState extends ConsumerState<ServerOrderPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,25 +42,27 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
   }
 
   Widget _buildBody() {
-    final orders = ServerProvider.serverOrder;
-    return orders.listenVal((order) {
-      if (order.isEmpty) {
-        return Center(child: Text(libL10n.empty));
-      }
-      return ReorderableListView.builder(
-        footer: const SizedBox(height: 77),
-        onReorder: (oldIndex, newIndex) {
-          setState(() {
-            orders.value.move(oldIndex, newIndex, property: Stores.setting.serverOrder);
-          });
-        },
-        padding: const EdgeInsets.all(8),
-        buildDefaultDragHandles: false,
-        itemBuilder: (_, idx) => _buildItem(idx, order[idx]),
-        itemCount: order.length,
-        proxyDecorator: _proxyDecorator,
-      );
-    });
+    final serverState = ref.watch(serverNotifierProvider);
+    final order = serverState.serverOrder;
+    
+    if (order.isEmpty) {
+      return Center(child: Text(libL10n.empty));
+    }
+    return ReorderableListView.builder(
+      footer: const SizedBox(height: 77),
+      onReorder: (oldIndex, newIndex) {
+        setState(() {
+          final newOrder = List<String>.from(order);
+          newOrder.move(oldIndex, newIndex);
+          Stores.setting.serverOrder.put(newOrder);
+        });
+      },
+      padding: const EdgeInsets.all(8),
+      buildDefaultDragHandles: false,
+      itemBuilder: (_, idx) => _buildItem(idx, order[idx]),
+      itemCount: order.length,
+      proxyDecorator: _proxyDecorator,
+    );
   }
 
   Widget _buildItem(int index, String id) {
@@ -74,8 +77,10 @@ class _ServerOrderPageState extends State<ServerOrderPage> {
   }
 
   Widget _buildCardTile(int index) {
-    final id = ServerProvider.serverOrder.value[index];
-    final spi = ServerProvider.pick(id: id)?.value.spi;
+    final serverState = ref.watch(serverNotifierProvider);
+    final order = serverState.serverOrder;
+    final id = order[index];
+    final spi = serverState.servers[id];
     if (spi == null) {
       return const SizedBox();
     }

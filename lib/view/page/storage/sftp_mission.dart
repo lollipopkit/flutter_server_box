@@ -1,20 +1,21 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/sftp/worker.dart';
 import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/view/page/storage/local.dart';
 
-class SftpMissionPage extends StatefulWidget {
+class SftpMissionPage extends ConsumerStatefulWidget {
   const SftpMissionPage({super.key});
 
   @override
-  State<SftpMissionPage> createState() => _SftpMissionPageState();
+  ConsumerState<SftpMissionPage> createState() => _SftpMissionPageState();
 
   static const route = AppRouteNoArg(page: SftpMissionPage.new, path: '/sftp/mission');
 }
 
-class _SftpMissionPageState extends State<SftpMissionPage> {
+class _SftpMissionPageState extends ConsumerState<SftpMissionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,18 +25,17 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
   }
 
   Widget _buildBody() {
-    return SftpProvider.status.listenVal((status) {
-      if (status.isEmpty) {
-        return Center(child: Text(libL10n.empty));
-      }
-      return ListView.builder(
-        padding: const EdgeInsets.all(11),
-        itemCount: status.length,
-        itemBuilder: (context, index) {
-          return _buildItem(status[index]);
-        },
-      );
-    });
+    final status = ref.watch(sftpNotifierProvider.select((pro) => pro.requests));
+    if (status.isEmpty) {
+      return Center(child: Text(libL10n.empty));
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(11),
+      itemCount: status.length,
+      itemBuilder: (context, index) {
+        return _buildItem(status[index]);
+      },
+    );
   }
 
   Widget _buildItem(SftpReqStatus status) {
@@ -143,7 +143,7 @@ class _SftpMissionPageState extends State<SftpMissionPage> {
         child: Text(libL10n.askContinue('${libL10n.delete} ${l10n.mission}($name)')),
         actions: Btn.ok(
           onTap: () {
-            SftpProvider.cancel(id);
+            ref.read(sftpNotifierProvider.notifier).cancel(id);
             context.pop();
           },
         ).toList,

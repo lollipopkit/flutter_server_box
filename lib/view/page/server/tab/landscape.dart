@@ -26,33 +26,31 @@ extension on _ServerPageState {
   }
 
   Widget _buildLandscapeBody() {
-    return ServerProvider.serverOrder.listenVal((order) {
-      if (order.isEmpty) {
-        return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
-      }
+    final serverState = ref.watch(serverNotifierProvider);
+    final order = serverState.serverOrder;
+    
+    if (order.isEmpty) {
+      return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
+    }
 
-      return PageView.builder(
-        itemCount: order.length,
-        itemBuilder: (_, idx) {
-          final id = order[idx];
-          final srv = ServerProvider.pick(id: id);
-          if (srv == null) return UIs.placeholder;
+    return PageView.builder(
+      itemCount: order.length,
+      itemBuilder: (_, idx) {
+        final id = order[idx];
+        final srv = ref.watch(individualServerNotifierProvider(id));
 
-          return srv.listenVal((srv) {
-            final title = _buildServerCardTitle(srv);
-            final List<Widget> children = [title, _buildNormalCard(srv.status, srv.spi)];
+        final title = _buildServerCardTitle(srv);
+        final List<Widget> children = [title, _buildNormalCard(srv.status, srv.spi)];
 
-            return _getCardNoti(id).listenVal((_) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: children,
-              );
-            });
-          });
-        },
-      );
-    });
+        return _getCardNoti(id).listenVal((_) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: children,
+          );
+        });
+      },
+    );
   }
 }

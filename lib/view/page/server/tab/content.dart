@@ -1,7 +1,7 @@
 part of 'tab.dart';
 
 extension on _ServerPageState {
-  Widget _buildServerCardTitle(Server s) {
+  Widget _buildServerCardTitle(ServerState s) {
     return Padding(
       padding: const EdgeInsets.only(left: 7, right: 13),
       child: Row(
@@ -17,12 +17,12 @@ extension on _ServerPageState {
     );
   }
 
-  Widget _buildTopRightWidget(Server s) {
+  Widget _buildTopRightWidget(ServerState s) {
     final (child, onTap) = switch (s.conn) {
       ServerConn.connecting || ServerConn.loading || ServerConn.connected => (
         SizedBox.square(
           dimension: _ServerPageState._kCardHeightMin,
-          child: SizedLoading(_ServerPageState._kCardHeightMin, strokeWidth: 3, padding: 3),
+          child: SizedLoading(_ServerPageState._kCardHeightMin, padding: 3),
         ),
         null,
       ),
@@ -30,16 +30,16 @@ extension on _ServerPageState {
         const Icon(Icons.refresh, size: 21, color: Colors.grey),
         () {
           TryLimiter.reset(s.spi.id);
-          ServerProvider.refresh(spi: s.spi);
+          ref.read(serverNotifierProvider.notifier).refresh(spi: s.spi);
         },
       ),
       ServerConn.disconnected => (
         const Icon(MingCute.link_3_line, size: 19, color: Colors.grey),
-        () => ServerProvider.refresh(spi: s.spi),
+        () => ref.read(serverNotifierProvider.notifier).refresh(spi: s.spi),
       ),
       ServerConn.finished => (
         const Icon(MingCute.unlink_2_line, size: 17, color: Colors.grey),
-        () => ServerProvider.closeServer(id: s.spi.id),
+        () => ref.read(serverNotifierProvider.notifier).closeServer(id: s.spi.id),
       ),
     };
 
@@ -51,7 +51,7 @@ extension on _ServerPageState {
     return InkWell(borderRadius: BorderRadius.circular(7), onTap: onTap, child: wrapped).paddingOnly(left: 5);
   }
 
-  Widget _buildTopRightText(Server s) {
+  Widget _buildTopRightText(ServerState s) {
     final hasErr = s.status.err != null;
     final str = s._getTopRightStr(s.spi);
     if (str == null) return UIs.placeholder;
@@ -106,7 +106,7 @@ ${ss.err?.message ?? 'null'}
   Widget _buildNet(ServerStatus ss, String id) {
     final cardNoti = _getCardNoti(id);
     final type = cardNoti.value.net ?? Stores.setting.netViewType.fetch();
-    final device = ServerProvider.pick(id: id)?.value.spi.custom?.netDev;
+    final device = ref.watch(serverNotifierProvider).servers[id]?.custom?.netDev;
     final (a, b) = type.build(ss, dev: device);
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 377),

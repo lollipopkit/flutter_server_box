@@ -1,20 +1,21 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/view/page/snippet/edit.dart';
 
-class SnippetListPage extends StatefulWidget {
+class SnippetListPage extends ConsumerStatefulWidget {
   const SnippetListPage({super.key});
 
   @override
-  State<SnippetListPage> createState() => _SnippetListPageState();
+  ConsumerState<SnippetListPage> createState() => _SnippetListPageState();
 
   static const route = AppRouteNoArg(page: SnippetListPage.new, path: '/snippets');
 }
 
-class _SnippetListPageState extends State<SnippetListPage> with AutomaticKeepAliveClientMixin {
+class _SnippetListPageState extends ConsumerState<SnippetListPage> with AutomaticKeepAliveClientMixin {
   final _tag = ''.vn;
   final _splitViewCtrl = SplitViewController();
 
@@ -35,12 +36,14 @@ class _SnippetListPageState extends State<SnippetListPage> with AutomaticKeepAli
 
   Widget _buildBody() {
     // final isMobile = ResponsiveBreakpoints.of(context).isMobile;
-    return SnippetProvider.snippets.listenVal((snippets) {
-      return _tag.listenVal((tag) {
-        final child = _buildScaffold(snippets, tag);
-        // if (isMobile) {
-        return child;
-        // }
+    final snippetState = ref.watch(snippetNotifierProvider);
+    final snippets = snippetState.snippets;
+    
+    return _tag.listenVal((tag) {
+      final child = _buildScaffold(snippets, tag);
+      // if (isMobile) {
+      return child;
+      // }
 
         // return SplitView(
         //   controller: _splitViewCtrl,
@@ -49,14 +52,14 @@ class _SnippetListPageState extends State<SnippetListPage> with AutomaticKeepAli
         //   initialRight: Center(child: Text(libL10n.empty)),
         //   leftBuilder: (_, __) => child,
         // );
-      });
     });
   }
 
   Widget _buildScaffold(List<Snippet> snippets, String tag) {
+    final snippetState = ref.watch(snippetNotifierProvider);
     return Scaffold(
       appBar: TagSwitcher(
-        tags: SnippetProvider.tags,
+        tags: snippetState.tags.vn,
         onTagChanged: (tag) => _tag.value = tag,
         initTag: _tag.value,
       ),

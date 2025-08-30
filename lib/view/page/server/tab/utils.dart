@@ -3,7 +3,7 @@
 part of 'tab.dart';
 
 extension _Actions on _ServerPageState {
-  void _onTapCard(Server srv) {
+  void _onTapCard(ServerState srv) {
     if (srv.canViewDetails) {
       // _splitViewCtrl.replace(ServerDetailPage(
       //   key: ValueKey(srv.spi.id),
@@ -19,7 +19,7 @@ extension _Actions on _ServerPageState {
     }
   }
 
-  void _onLongPressCard(Server srv) {
+  void _onLongPressCard(ServerState srv) {
     if (srv.conn == ServerConn.finished) {
       final id = srv.spi.id;
       final cardStatus = _getCardNoti(id);
@@ -42,7 +42,7 @@ extension _Actions on _ServerPageState {
 }
 
 extension _Operation on _ServerPageState {
-  void _onTapSuspend(Server srv) {
+  void _onTapSuspend(ServerState srv) {
     _askFor(
       func: () async {
         if (Stores.setting.showSuspendTip.fetch()) {
@@ -50,7 +50,7 @@ extension _Operation on _ServerPageState {
           Stores.setting.showSuspendTip.put(false);
         }
         srv.client?.execWithPwd(
-          ShellFunc.suspend.exec(srv.spi.id, systemType: srv.status.system),
+          ShellFunc.suspend.exec(srv.spi.id, systemType: srv.status.system, customDir: null),
           context: context,
           id: srv.id,
         );
@@ -60,10 +60,10 @@ extension _Operation on _ServerPageState {
     );
   }
 
-  void _onTapShutdown(Server srv) {
+  void _onTapShutdown(ServerState srv) {
     _askFor(
       func: () => srv.client?.execWithPwd(
-        ShellFunc.shutdown.exec(srv.spi.id, systemType: srv.status.system),
+        ShellFunc.shutdown.exec(srv.spi.id, systemType: srv.status.system, customDir: null),
         context: context,
         id: srv.id,
       ),
@@ -72,10 +72,10 @@ extension _Operation on _ServerPageState {
     );
   }
 
-  void _onTapReboot(Server srv) {
+  void _onTapReboot(ServerState srv) {
     _askFor(
       func: () => srv.client?.execWithPwd(
-        ShellFunc.reboot.exec(srv.spi.id, systemType: srv.status.system),
+        ShellFunc.reboot.exec(srv.spi.id, systemType: srv.status.system, customDir: null),
         context: context,
         id: srv.id,
       ),
@@ -84,7 +84,7 @@ extension _Operation on _ServerPageState {
     );
   }
 
-  void _onTapEdit(Server srv) {
+  void _onTapEdit(ServerState srv) {
     if (srv.canViewDetails) {
       ServerDetailPage.route.go(context, SpiRequiredArgs(srv.spi));
     } else {
@@ -98,7 +98,7 @@ extension _Utils on _ServerPageState {
     final tag = _tag.value;
     if (tag == TagSwitcher.kDefaultTag) return order;
     return order.where((e) {
-      final tags = ServerProvider.pick(id: e)?.value.spi.tags;
+      final tags = ref.read(serverNotifierProvider).servers[e]?.tags;
       if (tags == null) return false;
       return tags.contains(tag);
     }).toList();
@@ -160,7 +160,7 @@ extension _Utils on _ServerPageState {
   }
 }
 
-extension _ServerX on Server {
+extension _ServerX on ServerState {
   String? _getTopRightStr(Spi spi) {
     if (status.err != null) {
       return l10n.viewErr;
