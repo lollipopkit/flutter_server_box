@@ -85,10 +85,6 @@ extension Spix on Spi {
 
   String toJsonString() => json.encode(toJson());
 
-  // TODO: These getters need to be updated to work with new architecture
-  // VNode<Server>? get server => ServerProvider.pick(spi: this);
-  // VNode<Server>? get jumpServer => ServerProvider.pick(id: jumpId);
-
   bool shouldReconnect(Spi old) {
     return user != old.user ||
         ip != old.ip ||
