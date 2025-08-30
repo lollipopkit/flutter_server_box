@@ -38,7 +38,7 @@ class _HomePageState extends ConsumerState<HomePage>
   void dispose() {
     super.dispose();
     WidgetsBinding.instance.removeObserver(this);
-    _notifier.closeServer();
+    Future(() => _notifier.closeServer());
     _pageController.dispose();
     WakelockPlus.disable();
 
