@@ -4,6 +4,9 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logging/logging.dart';
+import 'package:server_box/data/provider/private_key.dart';
+import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -44,17 +47,17 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   Future<void> merge({bool force = false}) async {
     _loggerV2.info('Merging...');
 
-    // Merge each store
-    await Mergeable.mergeStore(backupData: spis, store: Stores.server, force: force);
-    await Mergeable.mergeStore(backupData: snippets, store: Stores.snippet, force: force);
-    await Mergeable.mergeStore(backupData: keys, store: Stores.key, force: force);
+    // Merge each store and check if changes were made
+    final serverChanged = await Mergeable.mergeStore(backupData: spis, store: Stores.server, force: force);
+    final snippetChanged = await Mergeable.mergeStore(backupData: snippets, store: Stores.snippet, force: force);
+    final keyChanged = await Mergeable.mergeStore(backupData: keys, store: Stores.key, force: force);
     await Mergeable.mergeStore(backupData: container, store: Stores.container, force: force);
     await Mergeable.mergeStore(backupData: history, store: Stores.history, force: force);
     await Mergeable.mergeStore(backupData: settings, store: Stores.setting, force: force);
 
-    // Reload providers and notify listeners
-    Provider.reload();
-    RNodes.app.notify();
+    if (serverChanged) GlobalRef.gRef?.read(serversNotifierProvider.notifier).reload();
+    if (snippetChanged) GlobalRef.gRef?.read(snippetNotifierProvider.notifier).reload();
+    if (keyChanged) GlobalRef.gRef?.read(privateKeyNotifierProvider.notifier).reload();
 
     _loggerV2.info('Merge completed');
   }

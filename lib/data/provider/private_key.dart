@@ -9,17 +9,25 @@ part 'private_key.g.dart';
 
 @freezed
 abstract class PrivateKeyState with _$PrivateKeyState {
-  const factory PrivateKeyState({
-    @Default(<PrivateKeyInfo>[]) List<PrivateKeyInfo> keys,
-  }) = _PrivateKeyState;
+  const factory PrivateKeyState({@Default(<PrivateKeyInfo>[]) List<PrivateKeyInfo> keys}) = _PrivateKeyState;
 }
 
 @Riverpod(keepAlive: true)
 class PrivateKeyNotifier extends _$PrivateKeyNotifier {
   @override
   PrivateKeyState build() {
+    return _load();
+  }
+
+  void reload() {
+    final newState = _load();
+    if (newState == state) return;
+    state = newState;
+  }
+
+  PrivateKeyState _load() {
     final keys = Stores.key.fetch();
-    return PrivateKeyState(keys: keys);
+    return stateOrNull?.copyWith(keys: keys) ?? PrivateKeyState(keys: keys);
   }
 
   void add(PrivateKeyInfo info) {

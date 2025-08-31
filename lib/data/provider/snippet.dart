@@ -20,24 +20,32 @@ abstract class SnippetState with _$SnippetState {
 class SnippetNotifier extends _$SnippetNotifier {
   @override
   SnippetState build() {
+    return _load();
+  }
+
+  void reload() {
+    final newState = _load();
+    if (newState == state) return;
+    state = newState;
+  }
+
+  SnippetState _load() {
     final snippets = Stores.snippet.fetch();
     final order = Stores.setting.snippetOrder.fetch();
-    
+
     List<Snippet> orderedSnippets = snippets;
     if (order.isNotEmpty) {
-      final surplus = snippets.reorder(
-        order: order,
-        finder: (n, name) => n.name == name,
-      );
+      final surplus = snippets.reorder(order: order, finder: (n, name) => n.name == name);
       order.removeWhere((e) => surplus.any((ele) => ele == e));
       if (order != Stores.setting.snippetOrder.fetch()) {
         Stores.setting.snippetOrder.put(order);
       }
       orderedSnippets = snippets;
     }
-    
-    final tags = _computeTags(orderedSnippets);
-    return SnippetState(snippets: orderedSnippets, tags: tags);
+
+    final newTags = _computeTags(orderedSnippets);
+    return stateOrNull?.copyWith(snippets: orderedSnippets, tags: newTags) ??
+        SnippetState(snippets: orderedSnippets, tags: newTags);
   }
 
   Set<String> _computeTags(List<Snippet> snippets) {

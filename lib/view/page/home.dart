@@ -22,7 +22,7 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage>
-    with AutomaticKeepAliveClientMixin, AfterLayoutMixin, WidgetsBindingObserver {
+    with AutomaticKeepAliveClientMixin, AfterLayoutMixin, WidgetsBindingObserver, GlobalRef {
   late final PageController _pageController;
 
   final _selectIndex = ValueNotifier(0);

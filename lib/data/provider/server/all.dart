@@ -1,4 +1,3 @@
-
 import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
@@ -30,12 +29,17 @@ abstract class ServersState with _$ServersState {
 class ServersNotifier extends _$ServersNotifier {
   @override
   ServersState build() {
-    // Initialize with empty state, load data asynchronously
-    Future.microtask(() => _load());
-    return const ServersState();
+    return _load();
   }
 
-  Future<void> _load() async {
+  Future<void> reload() async {
+    final newState = _load();
+    if (newState == state) return;
+    state = newState;
+    await refresh();
+  }
+
+  ServersState _load() {
     final spis = Stores.server.fetch();
     final newServers = <String, Spi>{};
     final newServerOrder = <String>[];
@@ -59,7 +63,8 @@ class ServersNotifier extends _$ServersNotifier {
 
     final newTags = _calculateTags(newServers);
 
-    state = state.copyWith(servers: newServers, serverOrder: newServerOrder, tags: newTags);
+    return stateOrNull?.copyWith(servers: newServers, serverOrder: newServerOrder, tags: newTags) ??
+        ServersState(servers: newServers, serverOrder: newServerOrder, tags: newTags);
   }
 
   Set<String> _calculateTags(Map<String, Spi> servers) {
