@@ -46,15 +46,19 @@ class AppLocalizationsUk extends AppLocalizations {
       'Автоматичне оновлення віджетів на головному екрані';
 
   @override
-  String get backupTip =>
-      'Експортовані дані можуть бути зашифровані паролем. \nБудь ласка, зберігайте їх у безпеці.';
+  String get backupEncrypted => 'Резервна копія зашифрована';
 
   @override
-  String get backupVersionNotMatch =>
-      'Версія резервного копіювання не збіглася.';
+  String get backupNotEncrypted => 'Резервна копія не зашифрована';
 
   @override
   String get backupPassword => 'Пароль резервного копіювання';
+
+  @override
+  String get backupPasswordRemoved => 'Пароль резервного копіювання видалено';
+
+  @override
+  String get backupPasswordSet => 'Пароль резервного копіювання встановлено';
 
   @override
   String get backupPasswordTip =>
@@ -64,16 +68,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get backupPasswordWrong => 'Неправильний пароль резервного копіювання';
 
   @override
-  String get backupEncrypted => 'Резервна копія зашифрована';
+  String get backupTip =>
+      'Експортовані дані можуть бути зашифровані паролем. \nБудь ласка, зберігайте їх у безпеці.';
 
   @override
-  String get backupNotEncrypted => 'Резервна копія не зашифрована';
-
-  @override
-  String get backupPasswordSet => 'Пароль резервного копіювання встановлено';
-
-  @override
-  String get backupPasswordRemoved => 'Пароль резервного копіювання видалено';
+  String get backupVersionNotMatch =>
+      'Версія резервного копіювання не збіглася.';
 
   @override
   String get battery => 'Акумулятор';
@@ -609,6 +609,60 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String sshConfigAllExist(Object duplicateCount) {
+    return 'Всі сервери вже існують (знайдено $duplicateCount дублікатів)';
+  }
+
+  @override
+  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+    return '$duplicateCount дублікатів буде пропущено';
+  }
+
+  @override
+  String get sshConfigFound => 'Ми знайшли SSH-конфігурацію у вашій системі';
+
+  @override
+  String sshConfigFoundServers(Object totalCount) {
+    return 'Знайдено $totalCount серверів';
+  }
+
+  @override
+  String get sshConfigImport => 'Імпорт SSH Конфігурації';
+
+  @override
+  String get sshConfigImportHelp =>
+      'Можна імпортувати лише базову інформацію, наприклад: IP/порт.';
+
+  @override
+  String get sshConfigImportPermission =>
+      'Чи хочете ви надати дозвіл на читання ~/.ssh/config та автоматичний імпорт налаштувань сервера?';
+
+  @override
+  String get sshConfigImportTip =>
+      'Пропозиція прочитати ~/.ssh/config при створенні першого сервера';
+
+  @override
+  String sshConfigImported(Object count) {
+    return 'Імпортовано $count серверів з SSH-конфігурації';
+  }
+
+  @override
+  String get sshConfigManualSelect =>
+      'Чи хочете ви вручну вибрати файл конфігурації SSH?';
+
+  @override
+  String get sshConfigNoServers => 'Сервери не знайдені в SSH-конфігурації';
+
+  @override
+  String get sshConfigPermissionDenied =>
+      'Неможливо отримати доступ до файлу конфігурації SSH через дозволи macOS.';
+
+  @override
+  String sshConfigServersToImport(Object importCount) {
+    return '$importCount серверів буде імпортовано';
+  }
+
+  @override
   String get sshTermHelp =>
       'Коли термінал прокрутний, горизонтальне проведення вибирає текст. Натискання кнопки клавіатури вмикає/вимикає клавіатуру. Іконка файлу відкриває поточний шлях SFTP. Кнопка буфера обміну копіює вміст, коли текст вибрано, і вставляє вміст з буфера обміну в термінал, коли текст не вибрано і є вміст у буфері обміну. Іконка коду вставляє фрагменти коду в термінал і виконує їх.';
 
@@ -795,50 +849,4 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Після підключення до сервера скрипт буде записано у `~/.config/server_box` \n | `/tmp/server_box` для моніторингу стану системи. Ви можете переглянути вміст скрипта.';
-
-  @override
-  String get sshConfigImport => 'Імпорт SSH Конфігурації';
-
-  @override
-  String get sshConfigFound => 'Ми знайшли SSH-конфігурацію у вашій системі';
-
-  @override
-  String get sshConfigImportPermission =>
-      'Чи хочете ви надати дозвіл на читання ~/.ssh/config та автоматичний імпорт налаштувань сервера?';
-
-  @override
-  String get sshConfigImportHelp =>
-      'Це допоможе вам швидко налаштувати сервери, які ви вже маєте налаштовані';
-
-  @override
-  String get sshConfigNoServers => 'Сервери не знайдені в SSH-конфігурації';
-
-  @override
-  String sshConfigAllExist(Object duplicateCount) {
-    return 'Всі сервери вже існують (знайдено $duplicateCount дублікатів)';
-  }
-
-  @override
-  String sshConfigFoundServers(Object totalCount) {
-    return 'Знайдено $totalCount серверів';
-  }
-
-  @override
-  String sshConfigDuplicatesSkipped(Object duplicateCount) {
-    return '$duplicateCount дублікатів буде пропущено';
-  }
-
-  @override
-  String sshConfigServersToImport(Object importCount) {
-    return '$importCount серверів буде імпортовано';
-  }
-
-  @override
-  String sshConfigImported(Object count) {
-    return 'Імпортовано $count серверів з SSH-конфігурації';
-  }
-
-  @override
-  String get sshConfigImportTip =>
-      'Пропозиція прочитати ~/.ssh/config при створенні першого сервера';
 }

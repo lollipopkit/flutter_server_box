@@ -46,15 +46,19 @@ class AppLocalizationsDe extends AppLocalizations {
   String get autoUpdateHomeWidget => 'Home-Widget automatisch aktualisieren';
 
   @override
-  String get backupTip =>
-      'Die exportierten Daten können mit einem Passwort verschlüsselt werden. \nBitte sicher aufbewahren.';
+  String get backupEncrypted => 'Backup ist verschlüsselt';
 
   @override
-  String get backupVersionNotMatch =>
-      'Die Backup-Version stimmt nicht überein.';
+  String get backupNotEncrypted => 'Backup ist nicht verschlüsselt';
 
   @override
   String get backupPassword => 'Backup-Passwort';
+
+  @override
+  String get backupPasswordRemoved => 'Backup-Passwort entfernt';
+
+  @override
+  String get backupPasswordSet => 'Backup-Passwort gesetzt';
 
   @override
   String get backupPasswordTip =>
@@ -64,16 +68,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get backupPasswordWrong => 'Falsches Backup-Passwort';
 
   @override
-  String get backupEncrypted => 'Backup ist verschlüsselt';
+  String get backupTip =>
+      'Die exportierten Daten können mit einem Passwort verschlüsselt werden. \nBitte sicher aufbewahren.';
 
   @override
-  String get backupNotEncrypted => 'Backup ist nicht verschlüsselt';
-
-  @override
-  String get backupPasswordSet => 'Backup-Passwort gesetzt';
-
-  @override
-  String get backupPasswordRemoved => 'Backup-Passwort entfernt';
+  String get backupVersionNotMatch =>
+      'Die Backup-Version stimmt nicht überein.';
 
   @override
   String get battery => 'Batterie';
@@ -607,6 +607,62 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String sshConfigAllExist(Object duplicateCount) {
+    return 'Alle Server existieren bereits ($duplicateCount Duplikate gefunden)';
+  }
+
+  @override
+  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+    return '$duplicateCount Duplikate werden übersprungen';
+  }
+
+  @override
+  String get sshConfigFound =>
+      'Wir haben SSH-Konfiguration auf Ihrem System gefunden.';
+
+  @override
+  String sshConfigFoundServers(Object totalCount) {
+    return '$totalCount Server gefunden';
+  }
+
+  @override
+  String get sshConfigImport => 'SSH-Konfiguration importieren';
+
+  @override
+  String get sshConfigImportHelp =>
+      'Es können nur Basisinformationen importiert werden, zum Beispiel: IP/Port.';
+
+  @override
+  String get sshConfigImportPermission =>
+      'Möchten Sie die Berechtigung erteilen, ~/.ssh/config zu lesen und Server-Einstellungen automatisch zu importieren?';
+
+  @override
+  String get sshConfigImportTip =>
+      'Bei der ersten Server-Erstellung zum Lesen von ~/.ssh/config auffordern';
+
+  @override
+  String sshConfigImported(Object count) {
+    return '$count Server aus SSH-Konfiguration importiert';
+  }
+
+  @override
+  String get sshConfigManualSelect =>
+      'Möchten Sie die SSH-Konfigurationsdatei manuell auswählen?';
+
+  @override
+  String get sshConfigNoServers =>
+      'Keine Server in der SSH-Konfiguration gefunden';
+
+  @override
+  String get sshConfigPermissionDenied =>
+      'Aufgrund der macOS-Berechtigungen kann nicht auf die SSH-Konfigurationsdatei zugegriffen werden.';
+
+  @override
+  String sshConfigServersToImport(Object importCount) {
+    return '$importCount Server werden importiert';
+  }
+
+  @override
   String get sshTermHelp =>
       'Wenn das Terminal scrollbar ist, kann durch horizontales Ziehen Text ausgewählt werden. Durch Klicken auf die Tastentaste wird die Tastatur ein- oder ausgeschaltet. Das Dateisymbol öffnet den aktuellen Pfad SFTP. Die Zwischenablage-Schaltfläche kopiert den Inhalt, wenn Text ausgewählt ist, und fügt Inhalte aus der Zwischenablage in das Terminal ein, wenn kein Text ausgewählt ist und Inhalte in der Zwischenablage vorhanden sind. Das Codesymbol fügt Code-Schnipsel ins Terminal ein und führt sie aus.';
 
@@ -795,52 +851,4 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Nach der Verbindung mit dem Server wird ein Skript in `~/.config/server_box` \n | `/tmp/server_box` geschrieben, um den Systemstatus zu überwachen. Sie können den Skriptinhalt überprüfen.';
-
-  @override
-  String get sshConfigImport => 'SSH-Konfiguration importieren';
-
-  @override
-  String get sshConfigFound =>
-      'Wir haben SSH-Konfiguration auf Ihrem System gefunden.';
-
-  @override
-  String get sshConfigImportPermission =>
-      'Möchten Sie die Berechtigung erteilen, ~/.ssh/config zu lesen und Server-Einstellungen automatisch zu importieren?';
-
-  @override
-  String get sshConfigImportHelp =>
-      'Dies hilft Ihnen, bereits konfigurierte Server schnell einzurichten.';
-
-  @override
-  String get sshConfigNoServers =>
-      'Keine Server in der SSH-Konfiguration gefunden';
-
-  @override
-  String sshConfigAllExist(Object duplicateCount) {
-    return 'Alle Server existieren bereits ($duplicateCount Duplikate gefunden)';
-  }
-
-  @override
-  String sshConfigFoundServers(Object totalCount) {
-    return '$totalCount Server gefunden';
-  }
-
-  @override
-  String sshConfigDuplicatesSkipped(Object duplicateCount) {
-    return '$duplicateCount Duplikate werden übersprungen';
-  }
-
-  @override
-  String sshConfigServersToImport(Object importCount) {
-    return '$importCount Server werden importiert';
-  }
-
-  @override
-  String sshConfigImported(Object count) {
-    return '$count Server aus SSH-Konfiguration importiert';
-  }
-
-  @override
-  String get sshConfigImportTip =>
-      'Bei der ersten Server-Erstellung zum Lesen von ~/.ssh/config auffordern';
 }

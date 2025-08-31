@@ -46,15 +46,19 @@ class AppLocalizationsPt extends AppLocalizations {
       'Atualização automática do widget da tela inicial';
 
   @override
-  String get backupTip =>
-      'Os dados exportados podem ser criptografados com senha. \nPor favor, guarde-os com segurança.';
+  String get backupEncrypted => 'Backup está criptografado';
 
   @override
-  String get backupVersionNotMatch =>
-      'Versão de backup não compatível, não é possível restaurar';
+  String get backupNotEncrypted => 'Backup não está criptografado';
 
   @override
   String get backupPassword => 'Senha de backup';
+
+  @override
+  String get backupPasswordRemoved => 'Senha de backup removida';
+
+  @override
+  String get backupPasswordSet => 'Senha de backup definida';
 
   @override
   String get backupPasswordTip =>
@@ -64,16 +68,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get backupPasswordWrong => 'Senha de backup incorreta';
 
   @override
-  String get backupEncrypted => 'Backup está criptografado';
+  String get backupTip =>
+      'Os dados exportados podem ser criptografados com senha. \nPor favor, guarde-os com segurança.';
 
   @override
-  String get backupNotEncrypted => 'Backup não está criptografado';
-
-  @override
-  String get backupPasswordSet => 'Senha de backup definida';
-
-  @override
-  String get backupPasswordRemoved => 'Senha de backup removida';
+  String get backupVersionNotMatch =>
+      'Versão de backup não compatível, não é possível restaurar';
 
   @override
   String get battery => 'Bateria';
@@ -605,6 +605,61 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String sshConfigAllExist(Object duplicateCount) {
+    return 'Todos os servidores já existem (encontradas $duplicateCount duplicatas)';
+  }
+
+  @override
+  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+    return '$duplicateCount duplicatas serão ignoradas';
+  }
+
+  @override
+  String get sshConfigFound => 'Encontramos configuração SSH no seu sistema';
+
+  @override
+  String sshConfigFoundServers(Object totalCount) {
+    return 'Encontrados $totalCount servidores';
+  }
+
+  @override
+  String get sshConfigImport => 'Importar Configuração SSH';
+
+  @override
+  String get sshConfigImportHelp =>
+      'Só é possível importar informações básicas, por exemplo: IP/Porta.';
+
+  @override
+  String get sshConfigImportPermission =>
+      'Gostaria de dar permissão para ler ~/.ssh/config e importar automaticamente as configurações do servidor?';
+
+  @override
+  String get sshConfigImportTip =>
+      'Sugestão para ler ~/.ssh/config na criação do primeiro servidor';
+
+  @override
+  String sshConfigImported(Object count) {
+    return 'Importados $count servidores da configuração SSH';
+  }
+
+  @override
+  String get sshConfigManualSelect =>
+      'Gostaria de selecionar manualmente o arquivo de configuração SSH?';
+
+  @override
+  String get sshConfigNoServers =>
+      'Nenhum servidor encontrado na configuração SSH';
+
+  @override
+  String get sshConfigPermissionDenied =>
+      'Não é possível acessar o arquivo de configuração SSH devido às permissões do macOS.';
+
+  @override
+  String sshConfigServersToImport(Object importCount) {
+    return '$importCount servidores serão importados';
+  }
+
+  @override
   String get sshTermHelp =>
       'Quando o terminal é rolável, arrastar horizontalmente pode selecionar texto. Clicar no botão do teclado ativa/desativa o teclado. O ícone de arquivo abre o SFTP do caminho atual. O botão da área de transferência copia o conteúdo quando o texto é selecionado e cola o conteúdo da área de transferência no terminal quando nenhum texto é selecionado e há conteúdo na área de transferência. O ícone de código cola trechos de código no terminal e os executa.';
 
@@ -791,51 +846,4 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Após conectar ao servidor, um script será escrito em `~/.config/server_box` \n | `/tmp/server_box` para monitorar o status do sistema. Você pode revisar o conteúdo do script.';
-
-  @override
-  String get sshConfigImport => 'Importar Configuração SSH';
-
-  @override
-  String get sshConfigFound => 'Encontramos configuração SSH no seu sistema';
-
-  @override
-  String get sshConfigImportPermission =>
-      'Gostaria de dar permissão para ler ~/.ssh/config e importar automaticamente as configurações do servidor?';
-
-  @override
-  String get sshConfigImportHelp =>
-      'Isso ajudará você a configurar rapidamente servidores que já tem configurados';
-
-  @override
-  String get sshConfigNoServers =>
-      'Nenhum servidor encontrado na configuração SSH';
-
-  @override
-  String sshConfigAllExist(Object duplicateCount) {
-    return 'Todos os servidores já existem (encontradas $duplicateCount duplicatas)';
-  }
-
-  @override
-  String sshConfigFoundServers(Object totalCount) {
-    return 'Encontrados $totalCount servidores';
-  }
-
-  @override
-  String sshConfigDuplicatesSkipped(Object duplicateCount) {
-    return '$duplicateCount duplicatas serão ignoradas';
-  }
-
-  @override
-  String sshConfigServersToImport(Object importCount) {
-    return '$importCount servidores serão importados';
-  }
-
-  @override
-  String sshConfigImported(Object count) {
-    return 'Importados $count servidores da configuração SSH';
-  }
-
-  @override
-  String get sshConfigImportTip =>
-      'Sugestão para ler ~/.ssh/config na criação do primeiro servidor';
 }

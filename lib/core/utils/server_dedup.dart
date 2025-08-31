@@ -20,21 +20,8 @@ class ServerDeduplication {
   /// Check if an imported server is a duplicate of an existing server
   static bool _isDuplicate(Spi imported, List<Spi> existing) {
     for (final existingSpi in existing) {
-      // Check for exact match on ip:port@user combination
-      if (existingSpi.ip == imported.ip && 
-          existingSpi.port == imported.port && 
-          existingSpi.user == imported.user) {
+      if (imported.isSameAs(existingSpi)) {
         return true;
-      }
-      
-      // Check for name conflict (same name but different connection details)
-      if (existingSpi.name == imported.name &&
-          (existingSpi.ip != imported.ip || 
-           existingSpi.port != imported.port || 
-           existingSpi.user != imported.user)) {
-        // This is a name conflict but not the same server
-        // We'll keep the imported one with a modified name
-        return false;
       }
     }
     

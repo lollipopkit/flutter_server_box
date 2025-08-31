@@ -43,13 +43,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get autoUpdateHomeWidget => 'ホームウィジェットを自動更新';
 
   @override
-  String get backupTip => 'エクスポートされたデータはパスワードで暗号化できます。 \n適切に保管してください。';
+  String get backupEncrypted => 'バックアップは暗号化されています';
 
   @override
-  String get backupVersionNotMatch => 'バックアップバージョンが一致しないため、復元できません';
+  String get backupNotEncrypted => 'バックアップは暗号化されていません';
 
   @override
   String get backupPassword => 'バックアップパスワード';
+
+  @override
+  String get backupPasswordRemoved => 'バックアップパスワードが削除されました';
+
+  @override
+  String get backupPasswordSet => 'バックアップパスワードが設定されました';
 
   @override
   String get backupPasswordTip =>
@@ -59,16 +65,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get backupPasswordWrong => 'バックアップパスワードが間違っています';
 
   @override
-  String get backupEncrypted => 'バックアップは暗号化されています';
+  String get backupTip => 'エクスポートされたデータはパスワードで暗号化できます。 \n適切に保管してください。';
 
   @override
-  String get backupNotEncrypted => 'バックアップは暗号化されていません';
-
-  @override
-  String get backupPasswordSet => 'バックアップパスワードが設定されました';
-
-  @override
-  String get backupPasswordRemoved => 'バックアップパスワードが削除されました';
+  String get backupVersionNotMatch => 'バックアップバージョンが一致しないため、復元できません';
 
   @override
   String get battery => 'バッテリー';
@@ -588,6 +588,56 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String sshConfigAllExist(Object duplicateCount) {
+    return 'すべてのサーバーがすでに存在します（$duplicateCount個の重複が見つかりました）';
+  }
+
+  @override
+  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+    return '$duplicateCount個の重複がスキップされます';
+  }
+
+  @override
+  String get sshConfigFound => 'システムにSSH設定が見つかりました。';
+
+  @override
+  String sshConfigFoundServers(Object totalCount) {
+    return '$totalCount個のサーバーが見つかりました';
+  }
+
+  @override
+  String get sshConfigImport => 'SSH設定のインポート';
+
+  @override
+  String get sshConfigImportHelp => 'インポートできるのは基本情報のみです。例：IP/ポート。';
+
+  @override
+  String get sshConfigImportPermission =>
+      '~/.ssh/configを読み取ってサーバー設定を自動的にインポートする権限を与えますか？';
+
+  @override
+  String get sshConfigImportTip => '初回サーバー作成時に~/.ssh/configの読み取りを促す';
+
+  @override
+  String sshConfigImported(Object count) {
+    return 'SSH設定から$count個のサーバーをインポートしました';
+  }
+
+  @override
+  String get sshConfigManualSelect => 'SSH設定ファイルを手動で選択しますか？';
+
+  @override
+  String get sshConfigNoServers => 'SSH設定でサーバーが見つかりませんでした';
+
+  @override
+  String get sshConfigPermissionDenied => 'macOSの権限により、SSH設定ファイルにアクセスできません。';
+
+  @override
+  String sshConfigServersToImport(Object importCount) {
+    return '$importCount個のサーバーがインポートされます';
+  }
+
+  @override
   String get sshTermHelp =>
       'ターミナルがスクロール可能な場合、横にドラッグするとテキストを選択できます。キーボードボタンをクリックするとキーボードのオン/オフが切り替わります。ファイルアイコンは現在のパスSFTPを開きます。クリップボードボタンは、テキストが選択されているときに内容をコピーし、テキストが選択されておらずクリップボードに内容がある場合には、その内容をターミナルに貼り付けます。コードアイコンは、コードスニペットをターミナルに貼り付けて実行します。';
 
@@ -768,48 +818,4 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'サーバーに接続すると、システムの状態を監視するためのスクリプトが `~/.config/server_box` \n | `/tmp/server_box` に書き込まれます。スクリプトの内容を確認できます。';
-
-  @override
-  String get sshConfigImport => 'SSH設定のインポート';
-
-  @override
-  String get sshConfigFound => 'システムにSSH設定が見つかりました。';
-
-  @override
-  String get sshConfigImportPermission =>
-      '~/.ssh/configを読み取ってサーバー設定を自動的にインポートする権限を与えますか？';
-
-  @override
-  String get sshConfigImportHelp => 'これにより、すでに設定されているサーバーを素早くセットアップできます。';
-
-  @override
-  String get sshConfigNoServers => 'SSH設定でサーバーが見つかりませんでした';
-
-  @override
-  String sshConfigAllExist(Object duplicateCount) {
-    return 'すべてのサーバーがすでに存在します（$duplicateCount個の重複が見つかりました）';
-  }
-
-  @override
-  String sshConfigFoundServers(Object totalCount) {
-    return '$totalCount個のサーバーが見つかりました';
-  }
-
-  @override
-  String sshConfigDuplicatesSkipped(Object duplicateCount) {
-    return '$duplicateCount個の重複がスキップされます';
-  }
-
-  @override
-  String sshConfigServersToImport(Object importCount) {
-    return '$importCount個のサーバーがインポートされます';
-  }
-
-  @override
-  String sshConfigImported(Object count) {
-    return 'SSH設定から$count個のサーバーをインポートしました';
-  }
-
-  @override
-  String get sshConfigImportTip => '初回サーバー作成時に~/.ssh/configの読み取りを促す';
 }

@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:choice/choice.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -616,17 +618,53 @@ extension _Actions on _ServerEditPageState {
         return;
       }
 
-      final deduplicated = ServerDeduplication.deduplicateServers(servers);
-      final resolved = ServerDeduplication.resolveNameConflicts(deduplicated);
-      final summary = ServerDeduplication.getImportSummary(servers, resolved);
+      dprint('Parsed ${servers.length} servers from SSH config');
+      await _processSSHServers(servers);
+      dprint('Finished processing SSH config servers');
+    } catch (e, s) {
+      _handleImportSSHCfgPermissionIssue(e, s);
+    }
+  }
 
-      if (!summary.hasItemsToImport) {
-        context.showSnackBar(l10n.sshConfigAllExist('${summary.duplicates}'));
-        return;
-      }
-
-      final shouldImport = await context.showRoundDialog<bool>(
+  void _handleImportSSHCfgPermissionIssue(Object e, StackTrace s) async {
+    dprint('Error importing SSH config: $e');
+    // Check if it's a permission error and offer file picker as fallback
+    if (e is PathAccessException || e.toString().contains('Operation not permitted')) {
+      final useFilePicker = await context.showRoundDialog<bool>(
         title: l10n.sshConfigImport,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.sshConfigPermissionDenied),
+            const SizedBox(height: 8),
+            Text(l10n.sshConfigManualSelect),
+          ],
+        ),
+        actions: Btnx.cancelOk,
+      );
+
+      if (useFilePicker == true) {
+        await _onTapSSHImportWithFilePicker();
+      }
+    } else {
+      context.showErrDialog(e, s);
+    }
+  }
+
+  Future<void> _processSSHServers(List<Spi> servers) async {
+    final deduplicated = ServerDeduplication.deduplicateServers(servers);
+    final resolved = ServerDeduplication.resolveNameConflicts(deduplicated);
+    final summary = ServerDeduplication.getImportSummary(servers, resolved);
+
+    if (!summary.hasItemsToImport) {
+      context.showSnackBar(l10n.sshConfigAllExist('${summary.duplicates}'));
+      return;
+    }
+
+    final shouldImport = await context.showRoundDialog<bool>(
+      title: l10n.sshConfigImport,
+      child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -639,17 +677,34 @@ extension _Actions on _ServerEditPageState {
             ...resolved.map((s) => Text('• ${s.name} (${s.user}@${s.ip}:${s.port})')),
           ],
         ),
-        actions: [
-          TextButton(onPressed: () => context.pop(false), child: Text(libL10n.cancel)),
-          TextButton(onPressed: () => context.pop(true), child: Text(libL10n.ok)),
-        ],
+      ),
+      actions: Btnx.cancelOk,
+    );
+
+    if (shouldImport == true) {
+      for (final server in resolved) {
+        ref.read(serverNotifierProvider.notifier).addServer(server);
+      }
+      context.showSnackBar(l10n.sshConfigImported('${resolved.length}'));
+    }
+  }
+
+  Future<void> _onTapSSHImportWithFilePicker() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.any,
+        allowMultiple: false,
+        dialogTitle: 'SSH ${libL10n.select}',
       );
 
-      if (shouldImport == true) {
-        for (final server in resolved) {
-          ref.read(serverNotifierProvider.notifier).addServer(server);
+      if (result?.files.single.path case final path?) {
+        final servers = await SSHConfig.parseConfig(path);
+        if (servers.isEmpty) {
+          context.showSnackBar(l10n.sshConfigNoServers);
+          return;
         }
-        context.showSnackBar(l10n.sshConfigImported('${resolved.length}'));
+
+        await _processSSHServers(servers);
       }
     } catch (e, s) {
       context.showErrDialog(e, s);
@@ -781,19 +836,10 @@ extension _Utils on _ServerEditPageState {
             Text(l10n.sshConfigImportHelp, style: UIs.textGrey),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              // prop.put(false);
-              context.pop(false);
-            },
-            child: Text(libL10n.cancel),
-          ),
-          TextButton(onPressed: () => context.pop(true), child: Text(libL10n.ok)),
-        ],
+        actions: Btnx.cancelOk,
       );
 
-      // prop.put(false);
+      prop.put(false);
 
       if (hasPermission == true) {
         // Parse and import SSH config
@@ -818,9 +864,8 @@ extension _Utils on _ServerEditPageState {
         }
         context.showSnackBar(l10n.sshConfigImported('${resolved.length}'));
       }
-    } catch (e) {
-      // Silently fail to avoid interrupting user experience
-      Loggers.app.warning('Failed to check SSH config: $e');
+    } catch (e, s) {
+      _handleImportSSHCfgPermissionIssue(e, s);
     }
   }
 
