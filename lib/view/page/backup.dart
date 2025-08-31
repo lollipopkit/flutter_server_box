@@ -619,7 +619,9 @@ extension on _BackupPageState {
         final (suc, err) = await context.showLoadingDialog(
           fn: () async {
             for (var spi in spis) {
-              Stores.server.put(spi);
+              // Ensure each server has a unique ID
+              final spiWithId = spi.id.isEmpty ? spi.copyWith(id: ShortId.generate()) : spi;
+              Stores.server.put(spiWithId);
             }
             return true;
           },
