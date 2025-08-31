@@ -618,8 +618,15 @@ extension on _BackupPageState {
       if (sure == true) {
         final (suc, err) = await context.showLoadingDialog(
           fn: () async {
+            final usedIds = <String>{};
             for (var spi in spis) {
-              Stores.server.put(spi);
+              // Ensure each server has a unique ID
+
+              // Only generate a new ID if the imported one is empty or already used in importing stage
+              final isIdUsed = spi.id.isNotEmpty || usedIds.contains(spi.id);
+              final spiWithId = isIdUsed ? spi.copyWith(id: ShortId.generate()) : spi;
+              Stores.server.put(spiWithId);
+              usedIds.add(spiWithId.id);
             }
             return true;
           },
