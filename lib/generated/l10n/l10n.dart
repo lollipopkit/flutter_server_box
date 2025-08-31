@@ -1543,6 +1543,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'After connecting to the server, a script will be written to `~/.config/server_box` \n | `/tmp/server_box` to monitor the system status. You can review the script content.'**
   String get writeScriptTip;
+
+  /// No description provided for @sshConfigImport.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH Config Import'**
+  String get sshConfigImport;
+
+  /// No description provided for @sshConfigFound.
+  ///
+  /// In en, this message translates to:
+  /// **'We found SSH configuration on your system.'**
+  String get sshConfigFound;
+
+  /// No description provided for @sshConfigImportPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Would you like to give permission to read ~/.ssh/config and automatically import server settings?'**
+  String get sshConfigImportPermission;
+
+  /// No description provided for @sshConfigImportHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'This will help you quickly set up servers you already have configured.'**
+  String get sshConfigImportHelp;
+
+  /// No description provided for @sshConfigNoServers.
+  ///
+  /// In en, this message translates to:
+  /// **'No servers found in SSH config'**
+  String get sshConfigNoServers;
+
+  /// No description provided for @sshConfigAllExist.
+  ///
+  /// In en, this message translates to:
+  /// **'All servers already exist ({duplicateCount} duplicates found)'**
+  String sshConfigAllExist(Object duplicateCount);
+
+  /// No description provided for @sshConfigFoundServers.
+  ///
+  /// In en, this message translates to:
+  /// **'Found {totalCount} servers'**
+  String sshConfigFoundServers(Object totalCount);
+
+  /// No description provided for @sshConfigDuplicatesSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'{duplicateCount} duplicates will be skipped'**
+  String sshConfigDuplicatesSkipped(Object duplicateCount);
+
+  /// No description provided for @sshConfigServersToImport.
+  ///
+  /// In en, this message translates to:
+  /// **'{importCount} servers will be imported'**
+  String sshConfigServersToImport(Object importCount);
+
+  /// No description provided for @sshConfigImported.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported {count} servers from SSH config'**
+  String sshConfigImported(Object count);
+
+  /// No description provided for @sshConfigImportTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Prompt to read ~/.ssh/config on first server creation'**
+  String get sshConfigImportTip;
 }
 
 class _AppLocalizationsDelegate

@@ -754,6 +754,49 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get writeScriptTip =>
       '在连接服务器后，会向 `~/.config/server_box` \n | `/tmp/server_box` 写入脚本来监测系统状态，你可以审查脚本内容。';
+
+  @override
+  String get sshConfigImport => 'SSH 配置导入';
+
+  @override
+  String get sshConfigFound => '我们在您的系统中发现了 SSH 配置。';
+
+  @override
+  String get sshConfigImportPermission => '是否允许读取 ~/.ssh/config 并自动导入服务器设置？';
+
+  @override
+  String get sshConfigImportHelp => '这将帮助您快速设置已配置的服务器。';
+
+  @override
+  String get sshConfigNoServers => 'SSH 配置中未找到服务器';
+
+  @override
+  String sshConfigAllExist(Object duplicateCount) {
+    return '所有服务器已存在（发现 $duplicateCount 个重复项）';
+  }
+
+  @override
+  String sshConfigFoundServers(Object totalCount) {
+    return '发现 $totalCount 个服务器';
+  }
+
+  @override
+  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+    return '$duplicateCount 个重复项将被跳过';
+  }
+
+  @override
+  String sshConfigServersToImport(Object importCount) {
+    return '$importCount 个服务器将被导入';
+  }
+
+  @override
+  String sshConfigImported(Object count) {
+    return '从 SSH 配置导入了 $count 个服务器';
+  }
+
+  @override
+  String get sshConfigImportTip => '首次创建服务器时提示读取 ~/.ssh/config';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1506,4 +1549,47 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get writeScriptTip =>
       '連線到伺服器後，將會在 `~/.config/server_box` \n | `/tmp/server_box` 中寫入一個腳本來監測系統狀態。你可以審查腳本內容。';
+
+  @override
+  String get sshConfigImport => '匯入SSH設定';
+
+  @override
+  String get sshConfigFound => '我們在您的系統中發現了SSH設定';
+
+  @override
+  String get sshConfigImportPermission => '您是否希望允許讀取 ~/.ssh/config 並自動匯入伺服器設定？';
+
+  @override
+  String get sshConfigImportHelp => '這將幫助您快速設定已經配置過的伺服器';
+
+  @override
+  String get sshConfigNoServers => 'SSH設定中未找到伺服器';
+
+  @override
+  String sshConfigAllExist(Object duplicateCount) {
+    return '所有伺服器均已存在（發現$duplicateCount個重複項）';
+  }
+
+  @override
+  String sshConfigFoundServers(Object totalCount) {
+    return '發現$totalCount個伺服器';
+  }
+
+  @override
+  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+    return '將跳過$duplicateCount個重複項';
+  }
+
+  @override
+  String sshConfigServersToImport(Object importCount) {
+    return '將匯入$importCount個伺服器';
+  }
+
+  @override
+  String sshConfigImported(Object count) {
+    return '已從SSH設定匯入$count個伺服器';
+  }
+
+  @override
+  String get sshConfigImportTip => '在建立第一個伺服器時提示讀取 ~/.ssh/config';
 }

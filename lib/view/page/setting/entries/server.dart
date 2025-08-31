@@ -180,6 +180,7 @@ extension _Server on _AppSettingsPageState {
         _buildDoubleColumnServersPage(),
         _buildUpdateInterval(),
         _buildMaxRetry(),
+        _buildSSHConfigImport(),
       ],
     );
   }
@@ -304,6 +305,14 @@ extension _Server on _AppSettingsPageState {
     return ListTile(
       title: Text(l10n.preferDiskAmount),
       trailing: StoreSwitch(prop: Stores.setting.serverTabPreferDiskAmount),
+    );
+  }
+
+  Widget _buildSSHConfigImport() {
+    return ListTile(
+      title: Text(l10n.sshConfigImport),
+      subtitle: Text(l10n.sshConfigImportTip, style: UIs.textGrey),
+      trailing: StoreSwitch(prop: _setting.firstTimeReadSSHCfg),
     );
   }
 }

@@ -236,5 +236,16 @@
   "wolTip": "WOL（Wake-on-LAN）を設定した後、サーバーに接続するたびにWOLリクエストが送信されます。",
   "write": "書き込み",
   "writeScriptFailTip": "スクリプトの書き込みに失敗しました。権限がないかディレクトリが存在しない可能性があります。",
-  "writeScriptTip": "サーバーに接続すると、システムの状態を監視するためのスクリプトが `~/.config/server_box` \n | `/tmp/server_box` に書き込まれます。スクリプトの内容を確認できます。"
+  "writeScriptTip": "サーバーに接続すると、システムの状態を監視するためのスクリプトが `~/.config/server_box` \n | `/tmp/server_box` に書き込まれます。スクリプトの内容を確認できます。",
+  "sshConfigImport": "SSH設定のインポート",
+  "sshConfigFound": "システムにSSH設定が見つかりました。",
+  "sshConfigImportPermission": "~/.ssh/configを読み取ってサーバー設定を自動的にインポートする権限を与えますか？",
+  "sshConfigImportHelp": "これにより、すでに設定されているサーバーを素早くセットアップできます。",
+  "sshConfigNoServers": "SSH設定でサーバーが見つかりませんでした",
+  "sshConfigAllExist": "すべてのサーバーがすでに存在します（{duplicateCount}個の重複が見つかりました）",
+  "sshConfigFoundServers": "{totalCount}個のサーバーが見つかりました",
+  "sshConfigDuplicatesSkipped": "{duplicateCount}個の重複がスキップされます",
+  "sshConfigServersToImport": "{importCount}個のサーバーがインポートされます",
+  "sshConfigImported": "SSH設定から{count}個のサーバーをインポートしました",
+  "sshConfigImportTip": "初回サーバー作成時に~/.ssh/configの読み取りを促す"
 }

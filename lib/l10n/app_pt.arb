@@ -236,5 +236,16 @@
   "wolTip": "Após configurar o WOL (Wake-on-LAN), um pedido de WOL é enviado cada vez que o servidor é conectado.",
   "write": "Escrita",
   "writeScriptFailTip": "Falha ao escrever no script, possivelmente devido à falta de permissões ou o diretório não existe.",
-  "writeScriptTip": "Após conectar ao servidor, um script será escrito em `~/.config/server_box` \n | `/tmp/server_box` para monitorar o status do sistema. Você pode revisar o conteúdo do script."
+  "writeScriptTip": "Após conectar ao servidor, um script será escrito em `~/.config/server_box` \n | `/tmp/server_box` para monitorar o status do sistema. Você pode revisar o conteúdo do script.",
+  "sshConfigImport": "Importar Configuração SSH",
+  "sshConfigFound": "Encontramos configuração SSH no seu sistema",
+  "sshConfigImportPermission": "Gostaria de dar permissão para ler ~/.ssh/config e importar automaticamente as configurações do servidor?",
+  "sshConfigImportHelp": "Isso ajudará você a configurar rapidamente servidores que já tem configurados",
+  "sshConfigNoServers": "Nenhum servidor encontrado na configuração SSH",
+  "sshConfigAllExist": "Todos os servidores já existem (encontradas {duplicateCount} duplicatas)",
+  "sshConfigFoundServers": "Encontrados {totalCount} servidores",
+  "sshConfigDuplicatesSkipped": "{duplicateCount} duplicatas serão ignoradas",
+  "sshConfigServersToImport": "{importCount} servidores serão importados",
+  "sshConfigImported": "Importados {count} servidores da configuração SSH",
+  "sshConfigImportTip": "Sugestão para ler ~/.ssh/config na criação do primeiro servidor"
 }

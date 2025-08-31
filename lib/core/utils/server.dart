@@ -78,7 +78,7 @@ Future<SSHClient> genClient(
       Loggers.app.warning('genClient', e);
       if (spi.alterUrl == null) rethrow;
       try {
-        final res = spi.fromStringUrl();
+        final res = spi.parseAlterUrl();
         alterUser = res.$2;
         return await SSHSocket.connect(res.$1, res.$3, timeout: timeout);
       } catch (e) {

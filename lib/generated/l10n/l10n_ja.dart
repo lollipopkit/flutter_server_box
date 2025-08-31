@@ -768,4 +768,48 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'サーバーに接続すると、システムの状態を監視するためのスクリプトが `~/.config/server_box` \n | `/tmp/server_box` に書き込まれます。スクリプトの内容を確認できます。';
+
+  @override
+  String get sshConfigImport => 'SSH設定のインポート';
+
+  @override
+  String get sshConfigFound => 'システムにSSH設定が見つかりました。';
+
+  @override
+  String get sshConfigImportPermission =>
+      '~/.ssh/configを読み取ってサーバー設定を自動的にインポートする権限を与えますか？';
+
+  @override
+  String get sshConfigImportHelp => 'これにより、すでに設定されているサーバーを素早くセットアップできます。';
+
+  @override
+  String get sshConfigNoServers => 'SSH設定でサーバーが見つかりませんでした';
+
+  @override
+  String sshConfigAllExist(Object duplicateCount) {
+    return 'すべてのサーバーがすでに存在します（$duplicateCount個の重複が見つかりました）';
+  }
+
+  @override
+  String sshConfigFoundServers(Object totalCount) {
+    return '$totalCount個のサーバーが見つかりました';
+  }
+
+  @override
+  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+    return '$duplicateCount個の重複がスキップされます';
+  }
+
+  @override
+  String sshConfigServersToImport(Object importCount) {
+    return '$importCount個のサーバーがインポートされます';
+  }
+
+  @override
+  String sshConfigImported(Object count) {
+    return 'SSH設定から$count個のサーバーをインポートしました';
+  }
+
+  @override
+  String get sshConfigImportTip => '初回サーバー作成時に~/.ssh/configの読み取りを促す';
 }

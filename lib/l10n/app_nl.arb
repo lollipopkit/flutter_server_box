@@ -236,5 +236,16 @@
   "wolTip": "Na het configureren van WOL (Wake-on-LAN), wordt elke keer dat de server wordt verbonden een WOL-verzoek verzonden.",
   "write": "Schrijven",
   "writeScriptFailTip": "Het schrijven naar het script is mislukt, mogelijk door gebrek aan rechten of omdat de map niet bestaat.",
-  "writeScriptTip": "Na het verbinden met de server wordt een script geschreven naar `~/.config/server_box` \n | `/tmp/server_box` om de systeemstatus te monitoren. U kunt de inhoud van het script controleren."
+  "writeScriptTip": "Na het verbinden met de server wordt een script geschreven naar `~/.config/server_box` \n | `/tmp/server_box` om de systeemstatus te monitoren. U kunt de inhoud van het script controleren.",
+  "sshConfigImport": "SSH Configuratie Importeren",
+  "sshConfigFound": "We hebben SSH-configuratie op uw systeem gevonden",
+  "sshConfigImportPermission": "Wilt u toestemming geven om ~/.ssh/config te lezen en automatisch serverinstellingen te importeren?",
+  "sshConfigImportHelp": "Dit helpt u om snel servers in te stellen die u al hebt geconfigureerd",
+  "sshConfigNoServers": "Geen servers gevonden in SSH-configuratie",
+  "sshConfigAllExist": "Alle servers bestaan al ({duplicateCount} duplicaten gevonden)",
+  "sshConfigFoundServers": "{totalCount} servers gevonden",
+  "sshConfigDuplicatesSkipped": "{duplicateCount} duplicaten worden overgeslagen",
+  "sshConfigServersToImport": "{importCount} servers worden geïmporteerd",
+  "sshConfigImported": "{count} servers geïmporteerd uit SSH-configuratie",
+  "sshConfigImportTip": "Prompt om ~/.ssh/config te lezen bij het aanmaken van de eerste server"
 }

@@ -236,5 +236,16 @@
   "wolTip": "После настройки WOL (Wake-on-LAN) при каждом подключении к серверу отправляется запрос WOL.",
   "write": "Запись",
   "writeScriptFailTip": "Запись скрипта не удалась, возможно, из-за отсутствия прав или потому что, директории не существует.",
-  "writeScriptTip": "После подключения к серверу скрипт будет записан в `~/.config/server_box` \n | `/tmp/server_box` для мониторинга состояния системы. Вы можете проверить содержимое скрипта."
+  "writeScriptTip": "После подключения к серверу скрипт будет записан в `~/.config/server_box` \n | `/tmp/server_box` для мониторинга состояния системы. Вы можете проверить содержимое скрипта.",
+  "sshConfigImport": "Импорт SSH Конфигурации",
+  "sshConfigFound": "Мы нашли SSH-конфигурацию в вашей системе",
+  "sshConfigImportPermission": "Хотите ли вы дать разрешение на чтение ~/.ssh/config и автоматический импорт настроек сервера?",
+  "sshConfigImportHelp": "Это поможет вам быстро настроить серверы, которые у вас уже настроены",
+  "sshConfigNoServers": "Серверы не найдены в SSH-конфигурации",
+  "sshConfigAllExist": "Все серверы уже существуют (найдено {duplicateCount} дубликатов)",
+  "sshConfigFoundServers": "Найдено {totalCount} серверов",
+  "sshConfigDuplicatesSkipped": "{duplicateCount} дубликатов будут пропущены",
+  "sshConfigServersToImport": "{importCount} серверов будут импортированы",
+  "sshConfigImported": "Импортировано {count} серверов из SSH-конфигурации",
+  "sshConfigImportTip": "Предложение прочитать ~/.ssh/config при создании первого сервера"
 }

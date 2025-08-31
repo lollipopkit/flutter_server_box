@@ -791,4 +791,51 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Após conectar ao servidor, um script será escrito em `~/.config/server_box` \n | `/tmp/server_box` para monitorar o status do sistema. Você pode revisar o conteúdo do script.';
+
+  @override
+  String get sshConfigImport => 'Importar Configuração SSH';
+
+  @override
+  String get sshConfigFound => 'Encontramos configuração SSH no seu sistema';
+
+  @override
+  String get sshConfigImportPermission =>
+      'Gostaria de dar permissão para ler ~/.ssh/config e importar automaticamente as configurações do servidor?';
+
+  @override
+  String get sshConfigImportHelp =>
+      'Isso ajudará você a configurar rapidamente servidores que já tem configurados';
+
+  @override
+  String get sshConfigNoServers =>
+      'Nenhum servidor encontrado na configuração SSH';
+
+  @override
+  String sshConfigAllExist(Object duplicateCount) {
+    return 'Todos os servidores já existem (encontradas $duplicateCount duplicatas)';
+  }
+
+  @override
+  String sshConfigFoundServers(Object totalCount) {
+    return 'Encontrados $totalCount servidores';
+  }
+
+  @override
+  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+    return '$duplicateCount duplicatas serão ignoradas';
+  }
+
+  @override
+  String sshConfigServersToImport(Object importCount) {
+    return '$importCount servidores serão importados';
+  }
+
+  @override
+  String sshConfigImported(Object count) {
+    return 'Importados $count servidores da configuração SSH';
+  }
+
+  @override
+  String get sshConfigImportTip =>
+      'Sugestão para ler ~/.ssh/config na criação do primeiro servidor';
 }

@@ -798,5 +798,53 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get writeScriptTip =>
-      'Après la connexion au serveur, un script sera écrit dans `~/.config/server_box` \n | `/tmp/server_box` pour surveiller l’état du système. Vous pouvez examiner le contenu du script.';
+      'Après la connexion au serveur, un script sera écrit dans `~/.config/server_box` \n | `/tmp/server_box` pour surveiller l\'état du système. Vous pouvez examiner le contenu du script.';
+
+  @override
+  String get sshConfigImport => 'Importation de configuration SSH';
+
+  @override
+  String get sshConfigFound =>
+      'Nous avons trouvé une configuration SSH sur votre système.';
+
+  @override
+  String get sshConfigImportPermission =>
+      'Souhaitez-vous donner la permission de lire ~/.ssh/config et d\'importer automatiquement les paramètres du serveur ?';
+
+  @override
+  String get sshConfigImportHelp =>
+      'Cela vous aidera à configurer rapidement les serveurs que vous avez déjà configurés.';
+
+  @override
+  String get sshConfigNoServers =>
+      'Aucun serveur trouvé dans la configuration SSH';
+
+  @override
+  String sshConfigAllExist(Object duplicateCount) {
+    return 'Tous les serveurs existent déjà ($duplicateCount doublons trouvés)';
+  }
+
+  @override
+  String sshConfigFoundServers(Object totalCount) {
+    return '$totalCount serveurs trouvés';
+  }
+
+  @override
+  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+    return '$duplicateCount doublons seront ignorés';
+  }
+
+  @override
+  String sshConfigServersToImport(Object importCount) {
+    return '$importCount serveurs seront importés';
+  }
+
+  @override
+  String sshConfigImported(Object count) {
+    return '$count serveurs importés depuis la configuration SSH';
+  }
+
+  @override
+  String get sshConfigImportTip =>
+      'Proposer de lire ~/.ssh/config lors de la première création de serveur';
 }

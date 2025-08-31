@@ -236,5 +236,16 @@
   "wolTip": "Setelah mengonfigurasi WOL (Wake-on-LAN), permintaan WOL dikirim setiap kali server terhubung.",
   "write": "Tulis",
   "writeScriptFailTip": "Penulisan ke skrip gagal, mungkin karena tidak ada izin atau direktori tidak ada.",
-  "writeScriptTip": "Setelah terhubung ke server, sebuah skrip akan ditulis ke `~/.config/server_box` \n | `/tmp/server_box` untuk memantau status sistem. Anda dapat meninjau konten skrip tersebut."
+  "writeScriptTip": "Setelah terhubung ke server, sebuah skrip akan ditulis ke `~/.config/server_box` \n | `/tmp/server_box` untuk memantau status sistem. Anda dapat meninjau konten skrip tersebut.",
+  "sshConfigImport": "Impor Konfigurasi SSH",
+  "sshConfigFound": "Kami menemukan konfigurasi SSH di sistem Anda",
+  "sshConfigImportPermission": "Apakah Anda ingin memberikan izin untuk membaca ~/.ssh/config dan secara otomatis mengimpor pengaturan server?",
+  "sshConfigImportHelp": "Ini akan membantu Anda dengan cepat mengatur server yang sudah Anda konfigurasi",
+  "sshConfigNoServers": "Tidak ada server yang ditemukan dalam konfigurasi SSH",
+  "sshConfigAllExist": "Semua server sudah ada (ditemukan {duplicateCount} duplikat)",
+  "sshConfigFoundServers": "Ditemukan {totalCount} server",
+  "sshConfigDuplicatesSkipped": "{duplicateCount} duplikat akan dilewati",
+  "sshConfigServersToImport": "{importCount} server akan diimpor",
+  "sshConfigImported": "Berhasil mengimpor {count} server dari konfigurasi SSH",
+  "sshConfigImportTip": "Prompt untuk membaca ~/.ssh/config saat pembuatan server pertama"
 }

@@ -236,5 +236,16 @@
   "wolTip": "配置 WOL 后，每次连接服务器时将自动发送唤醒请求",
   "write": "写",
   "writeScriptFailTip": "写入脚本失败，可能是没有权限/目录不存在等",
-  "writeScriptTip": "在连接服务器后，会向 `~/.config/server_box` \n | `/tmp/server_box` 写入脚本来监测系统状态，你可以审查脚本内容。"
+  "writeScriptTip": "在连接服务器后，会向 `~/.config/server_box` \n | `/tmp/server_box` 写入脚本来监测系统状态，你可以审查脚本内容。",
+  "sshConfigImport": "SSH 配置导入",
+  "sshConfigFound": "我们在您的系统中发现了 SSH 配置。",
+  "sshConfigImportPermission": "是否允许读取 ~/.ssh/config 并自动导入服务器设置？",
+  "sshConfigImportHelp": "这将帮助您快速设置已配置的服务器。",
+  "sshConfigNoServers": "SSH 配置中未找到服务器",
+  "sshConfigAllExist": "所有服务器已存在（发现 {duplicateCount} 个重复项）",
+  "sshConfigFoundServers": "发现 {totalCount} 个服务器",
+  "sshConfigDuplicatesSkipped": "{duplicateCount} 个重复项将被跳过",
+  "sshConfigServersToImport": "{importCount} 个服务器将被导入",
+  "sshConfigImported": "从 SSH 配置导入了 {count} 个服务器",
+  "sshConfigImportTip": "首次创建服务器时提示读取 ~/.ssh/config"
 }

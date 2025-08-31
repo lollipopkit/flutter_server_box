@@ -236,5 +236,16 @@
   "wolTip": "WOL (Wake-on-LAN) yapılandırıldıktan sonra, sunucuya her bağlanıldığında bir WOL isteği gönderilir.",
   "write": "Yaz",
   "writeScriptFailTip": "Betik yazma başarısız oldu, muhtemelen izin eksikliği veya dizin mevcut değil.",
-  "writeScriptTip": "Sunucuya bağlandıktan sonra, sistem durumunu izlemek için `~/.config/server_box` \n | `/tmp/server_box` dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz."
+  "writeScriptTip": "Sunucuya bağlandıktan sonra, sistem durumunu izlemek için `~/.config/server_box` \n | `/tmp/server_box` dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz.",
+  "sshConfigImport": "SSH Yapılandırma İçe Aktarma",
+  "sshConfigFound": "Sisteminizde SSH yapılandırması bulduk",
+  "sshConfigImportPermission": "~/.ssh/config dosyasını okumak ve sunucu ayarlarını otomatik olarak içe aktarmak için izin vermek ister misiniz?",
+  "sshConfigImportHelp": "Bu, zaten yapılandırdığınız sunucuları hızlıca ayarlamanıza yardımcı olacak",
+  "sshConfigNoServers": "SSH yapılandırmasında sunucu bulunamadı",
+  "sshConfigAllExist": "Tüm sunucular zaten mevcut ({duplicateCount} kopya bulundu)",
+  "sshConfigFoundServers": "{totalCount} sunucu bulundu",
+  "sshConfigDuplicatesSkipped": "{duplicateCount} kopya atlanacak",
+  "sshConfigServersToImport": "{importCount} sunucu içe aktarılacak",
+  "sshConfigImported": "SSH yapılandırmasından {count} sunucu içe aktarıldı",
+  "sshConfigImportTip": "İlk sunucu oluşturulurken ~/.ssh/config okuma istemi"
 }

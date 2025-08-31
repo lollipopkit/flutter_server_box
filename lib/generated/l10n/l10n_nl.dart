@@ -794,4 +794,51 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Na het verbinden met de server wordt een script geschreven naar `~/.config/server_box` \n | `/tmp/server_box` om de systeemstatus te monitoren. U kunt de inhoud van het script controleren.';
+
+  @override
+  String get sshConfigImport => 'SSH Configuratie Importeren';
+
+  @override
+  String get sshConfigFound =>
+      'We hebben SSH-configuratie op uw systeem gevonden';
+
+  @override
+  String get sshConfigImportPermission =>
+      'Wilt u toestemming geven om ~/.ssh/config te lezen en automatisch serverinstellingen te importeren?';
+
+  @override
+  String get sshConfigImportHelp =>
+      'Dit helpt u om snel servers in te stellen die u al hebt geconfigureerd';
+
+  @override
+  String get sshConfigNoServers => 'Geen servers gevonden in SSH-configuratie';
+
+  @override
+  String sshConfigAllExist(Object duplicateCount) {
+    return 'Alle servers bestaan al ($duplicateCount duplicaten gevonden)';
+  }
+
+  @override
+  String sshConfigFoundServers(Object totalCount) {
+    return '$totalCount servers gevonden';
+  }
+
+  @override
+  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+    return '$duplicateCount duplicaten worden overgeslagen';
+  }
+
+  @override
+  String sshConfigServersToImport(Object importCount) {
+    return '$importCount servers worden geïmporteerd';
+  }
+
+  @override
+  String sshConfigImported(Object count) {
+    return '$count servers geïmporteerd uit SSH-configuratie';
+  }
+
+  @override
+  String get sshConfigImportTip =>
+      'Prompt om ~/.ssh/config te lezen bij het aanmaken van de eerste server';
 }

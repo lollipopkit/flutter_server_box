@@ -794,4 +794,50 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'После подключения к серверу скрипт будет записан в `~/.config/server_box` \n | `/tmp/server_box` для мониторинга состояния системы. Вы можете проверить содержимое скрипта.';
+
+  @override
+  String get sshConfigImport => 'Импорт SSH Конфигурации';
+
+  @override
+  String get sshConfigFound => 'Мы нашли SSH-конфигурацию в вашей системе';
+
+  @override
+  String get sshConfigImportPermission =>
+      'Хотите ли вы дать разрешение на чтение ~/.ssh/config и автоматический импорт настроек сервера?';
+
+  @override
+  String get sshConfigImportHelp =>
+      'Это поможет вам быстро настроить серверы, которые у вас уже настроены';
+
+  @override
+  String get sshConfigNoServers => 'Серверы не найдены в SSH-конфигурации';
+
+  @override
+  String sshConfigAllExist(Object duplicateCount) {
+    return 'Все серверы уже существуют (найдено $duplicateCount дубликатов)';
+  }
+
+  @override
+  String sshConfigFoundServers(Object totalCount) {
+    return 'Найдено $totalCount серверов';
+  }
+
+  @override
+  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+    return '$duplicateCount дубликатов будут пропущены';
+  }
+
+  @override
+  String sshConfigServersToImport(Object importCount) {
+    return '$importCount серверов будут импортированы';
+  }
+
+  @override
+  String sshConfigImported(Object count) {
+    return 'Импортировано $count серверов из SSH-конфигурации';
+  }
+
+  @override
+  String get sshConfigImportTip =>
+      'Предложение прочитать ~/.ssh/config при создании первого сервера';
 }

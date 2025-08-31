@@ -788,4 +788,51 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Setelah terhubung ke server, sebuah skrip akan ditulis ke `~/.config/server_box` \n | `/tmp/server_box` untuk memantau status sistem. Anda dapat meninjau konten skrip tersebut.';
+
+  @override
+  String get sshConfigImport => 'Impor Konfigurasi SSH';
+
+  @override
+  String get sshConfigFound => 'Kami menemukan konfigurasi SSH di sistem Anda';
+
+  @override
+  String get sshConfigImportPermission =>
+      'Apakah Anda ingin memberikan izin untuk membaca ~/.ssh/config dan secara otomatis mengimpor pengaturan server?';
+
+  @override
+  String get sshConfigImportHelp =>
+      'Ini akan membantu Anda dengan cepat mengatur server yang sudah Anda konfigurasi';
+
+  @override
+  String get sshConfigNoServers =>
+      'Tidak ada server yang ditemukan dalam konfigurasi SSH';
+
+  @override
+  String sshConfigAllExist(Object duplicateCount) {
+    return 'Semua server sudah ada (ditemukan $duplicateCount duplikat)';
+  }
+
+  @override
+  String sshConfigFoundServers(Object totalCount) {
+    return 'Ditemukan $totalCount server';
+  }
+
+  @override
+  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+    return '$duplicateCount duplikat akan dilewati';
+  }
+
+  @override
+  String sshConfigServersToImport(Object importCount) {
+    return '$importCount server akan diimpor';
+  }
+
+  @override
+  String sshConfigImported(Object count) {
+    return 'Berhasil mengimpor $count server dari konfigurasi SSH';
+  }
+
+  @override
+  String get sshConfigImportTip =>
+      'Prompt untuk membaca ~/.ssh/config saat pembuatan server pertama';
 }

@@ -789,4 +789,50 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Sunucuya bağlandıktan sonra, sistem durumunu izlemek için `~/.config/server_box` \n | `/tmp/server_box` dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz.';
+
+  @override
+  String get sshConfigImport => 'SSH Yapılandırma İçe Aktarma';
+
+  @override
+  String get sshConfigFound => 'Sisteminizde SSH yapılandırması bulduk';
+
+  @override
+  String get sshConfigImportPermission =>
+      '~/.ssh/config dosyasını okumak ve sunucu ayarlarını otomatik olarak içe aktarmak için izin vermek ister misiniz?';
+
+  @override
+  String get sshConfigImportHelp =>
+      'Bu, zaten yapılandırdığınız sunucuları hızlıca ayarlamanıza yardımcı olacak';
+
+  @override
+  String get sshConfigNoServers => 'SSH yapılandırmasında sunucu bulunamadı';
+
+  @override
+  String sshConfigAllExist(Object duplicateCount) {
+    return 'Tüm sunucular zaten mevcut ($duplicateCount kopya bulundu)';
+  }
+
+  @override
+  String sshConfigFoundServers(Object totalCount) {
+    return '$totalCount sunucu bulundu';
+  }
+
+  @override
+  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+    return '$duplicateCount kopya atlanacak';
+  }
+
+  @override
+  String sshConfigServersToImport(Object importCount) {
+    return '$importCount sunucu içe aktarılacak';
+  }
+
+  @override
+  String sshConfigImported(Object count) {
+    return 'SSH yapılandırmasından $count sunucu içe aktarıldı';
+  }
+
+  @override
+  String get sshConfigImportTip =>
+      'İlk sunucu oluşturulurken ~/.ssh/config okuma istemi';
 }
