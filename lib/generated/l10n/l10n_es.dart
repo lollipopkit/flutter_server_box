@@ -46,15 +46,19 @@ class AppLocalizationsEs extends AppLocalizations {
       'Actualizar automáticamente el widget del escritorio';
 
   @override
-  String get backupTip =>
-      'Los datos exportados pueden ser encriptados con contraseña. \nPor favor guárdalos en un lugar seguro.';
+  String get backupEncrypted => 'El respaldo está encriptado';
 
   @override
-  String get backupVersionNotMatch =>
-      'La versión de la copia de seguridad no coincide, no se puede restaurar';
+  String get backupNotEncrypted => 'El respaldo no está encriptado';
 
   @override
   String get backupPassword => 'Contraseña de respaldo';
+
+  @override
+  String get backupPasswordRemoved => 'Contraseña de respaldo eliminada';
+
+  @override
+  String get backupPasswordSet => 'Contraseña de respaldo establecida';
 
   @override
   String get backupPasswordTip =>
@@ -64,16 +68,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get backupPasswordWrong => 'Contraseña de respaldo incorrecta';
 
   @override
-  String get backupEncrypted => 'El respaldo está encriptado';
+  String get backupTip =>
+      'Los datos exportados pueden ser encriptados con contraseña. \nPor favor guárdalos en un lugar seguro.';
 
   @override
-  String get backupNotEncrypted => 'El respaldo no está encriptado';
-
-  @override
-  String get backupPasswordSet => 'Contraseña de respaldo establecida';
-
-  @override
-  String get backupPasswordRemoved => 'Contraseña de respaldo eliminada';
+  String get backupVersionNotMatch =>
+      'La versión de la copia de seguridad no coincide, no se puede restaurar';
 
   @override
   String get battery => 'Batería';
@@ -607,6 +607,61 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String spentTime(Object time) {
     return 'Tiempo gastado: $time';
+  }
+
+  @override
+  String sshConfigAllExist(Object duplicateCount) {
+    return 'Todos los servidores ya existen (se encontraron $duplicateCount duplicados)';
+  }
+
+  @override
+  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+    return 'Se omitirán $duplicateCount duplicados';
+  }
+
+  @override
+  String get sshConfigFound => 'Encontramos configuración SSH en tu sistema';
+
+  @override
+  String sshConfigFoundServers(Object totalCount) {
+    return 'Se encontraron $totalCount servidores';
+  }
+
+  @override
+  String get sshConfigImport => 'Importar Configuración SSH';
+
+  @override
+  String get sshConfigImportHelp =>
+      'Solo se pueden importar datos básicos, por ejemplo: IP/Puerto.';
+
+  @override
+  String get sshConfigImportPermission =>
+      '¿Te gustaría dar permiso para leer ~/.ssh/config e importar automáticamente la configuración de servidores?';
+
+  @override
+  String get sshConfigImportTip =>
+      'Sugerencia para leer ~/.ssh/config al crear el primer servidor';
+
+  @override
+  String sshConfigImported(Object count) {
+    return 'Se importaron $count servidores desde la configuración SSH';
+  }
+
+  @override
+  String get sshConfigManualSelect =>
+      '¿Te gustaría seleccionar manualmente el archivo de configuración SSH?';
+
+  @override
+  String get sshConfigNoServers =>
+      'No se encontraron servidores en la configuración SSH';
+
+  @override
+  String get sshConfigPermissionDenied =>
+      'No se puede acceder al archivo de configuración SSH debido a los permisos de macOS.';
+
+  @override
+  String sshConfigServersToImport(Object importCount) {
+    return 'Se importarán $importCount servidores';
   }
 
   @override

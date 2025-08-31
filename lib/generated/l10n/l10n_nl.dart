@@ -46,14 +46,19 @@ class AppLocalizationsNl extends AppLocalizations {
   String get autoUpdateHomeWidget => 'Automatische update van home-widget';
 
   @override
-  String get backupTip =>
-      'De geëxporteerde gegevens kunnen worden versleuteld met een wachtwoord. \nBewaar deze aub veilig.';
+  String get backupEncrypted => 'Back-up is versleuteld';
 
   @override
-  String get backupVersionNotMatch => 'Back-upversie komt niet overeen.';
+  String get backupNotEncrypted => 'Back-up is niet versleuteld';
 
   @override
   String get backupPassword => 'Back-up wachtwoord';
+
+  @override
+  String get backupPasswordRemoved => 'Back-up wachtwoord verwijderd';
+
+  @override
+  String get backupPasswordSet => 'Back-up wachtwoord ingesteld';
 
   @override
   String get backupPasswordTip =>
@@ -63,16 +68,11 @@ class AppLocalizationsNl extends AppLocalizations {
   String get backupPasswordWrong => 'Onjuist back-up wachtwoord';
 
   @override
-  String get backupEncrypted => 'Back-up is versleuteld';
+  String get backupTip =>
+      'De geëxporteerde gegevens kunnen worden versleuteld met een wachtwoord. \nBewaar deze aub veilig.';
 
   @override
-  String get backupNotEncrypted => 'Back-up is niet versleuteld';
-
-  @override
-  String get backupPasswordSet => 'Back-up wachtwoord ingesteld';
-
-  @override
-  String get backupPasswordRemoved => 'Back-up wachtwoord verwijderd';
+  String get backupVersionNotMatch => 'Back-upversie komt niet overeen.';
 
   @override
   String get battery => 'Batterij';
@@ -603,6 +603,61 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String spentTime(Object time) {
     return 'Gebruikte tijd: $time';
+  }
+
+  @override
+  String sshConfigAllExist(Object duplicateCount) {
+    return 'Alle servers bestaan al ($duplicateCount duplicaten gevonden)';
+  }
+
+  @override
+  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+    return '$duplicateCount duplicaten worden overgeslagen';
+  }
+
+  @override
+  String get sshConfigFound =>
+      'We hebben SSH-configuratie op uw systeem gevonden';
+
+  @override
+  String sshConfigFoundServers(Object totalCount) {
+    return '$totalCount servers gevonden';
+  }
+
+  @override
+  String get sshConfigImport => 'SSH Configuratie Importeren';
+
+  @override
+  String get sshConfigImportHelp =>
+      'Alleen basisinformatie kan worden geïmporteerd, bijvoorbeeld: IP/Poort.';
+
+  @override
+  String get sshConfigImportPermission =>
+      'Wilt u toestemming geven om ~/.ssh/config te lezen en automatisch serverinstellingen te importeren?';
+
+  @override
+  String get sshConfigImportTip =>
+      'Prompt om ~/.ssh/config te lezen bij het aanmaken van de eerste server';
+
+  @override
+  String sshConfigImported(Object count) {
+    return '$count servers geïmporteerd uit SSH-configuratie';
+  }
+
+  @override
+  String get sshConfigManualSelect =>
+      'Wilt u het SSH-configuratiebestand handmatig selecteren?';
+
+  @override
+  String get sshConfigNoServers => 'Geen servers gevonden in SSH-configuratie';
+
+  @override
+  String get sshConfigPermissionDenied =>
+      'Kan geen toegang krijgen tot SSH-configuratiebestand vanwege macOS-rechten.';
+
+  @override
+  String sshConfigServersToImport(Object importCount) {
+    return '$importCount servers worden geïmporteerd';
   }
 
   @override

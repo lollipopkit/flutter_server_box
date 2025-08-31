@@ -277,4 +277,7 @@ class SettingStore extends HiveStore {
 
   /// The backup password
   late final backupasswd = SecureProp('bakPasswd');
+
+  /// Whether to read SSH config from ~/.ssh/config on first time
+  late final firstTimeReadSSHCfg = propertyDefault('firstTimeReadSSHCfg', true);
 }

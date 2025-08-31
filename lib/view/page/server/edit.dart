@@ -1,12 +1,16 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:choice/choice.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
+import 'package:server_box/core/utils/server_dedup.dart';
+import 'package:server_box/core/utils/ssh_config.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -14,6 +18,7 @@ import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
 
@@ -121,7 +126,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage> with AfterLayou
   }
 
   Widget _buildForm() {
-    final topItems = [_buildWriteScriptTip(), if (isMobile) _buildQrScan()];
+    final topItems = [_buildWriteScriptTip(), if (isMobile) _buildQrScan(), if (isDesktop) _buildSSHImport()];
     final children = [
       Row(mainAxisAlignment: MainAxisAlignment.center, children: topItems.joinWith(UIs.width13).toList()),
       Input(
@@ -229,33 +234,33 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage> with AfterLayou
   Widget _buildKeyAuth() {
     final privateKeyState = ref.watch(privateKeyNotifierProvider);
     final pkis = privateKeyState.keys;
-    
+
     final tiles = List<Widget>.generate(pkis.length, (index) {
       final e = pkis[index];
       return ListTile(
         contentPadding: const EdgeInsets.only(left: 10, right: 15),
         leading: Radio<int>(value: index),
-          title: Text(e.id, textAlign: TextAlign.start),
-          subtitle: Text(e.type ?? l10n.unknown, textAlign: TextAlign.start, style: UIs.textGrey),
-          trailing: Btn.icon(
-            icon: const Icon(Icons.edit),
-            onTap: () => PrivateKeyEditPage.route.go(context, args: PrivateKeyEditPageArgs(pki: e)),
-          ),
-          onTap: () => _keyIdx.value = index,
-        );
-      });
-      tiles.add(
-        ListTile(
-          title: Text(libL10n.add),
-          contentPadding: const EdgeInsets.only(left: 23, right: 23),
-          trailing: const Icon(Icons.add),
-          onTap: () => PrivateKeyEditPage.route.go(context),
+        title: Text(e.id, textAlign: TextAlign.start),
+        subtitle: Text(e.type ?? l10n.unknown, textAlign: TextAlign.start, style: UIs.textGrey),
+        trailing: Btn.icon(
+          icon: const Icon(Icons.edit),
+          onTap: () => PrivateKeyEditPage.route.go(context, args: PrivateKeyEditPageArgs(pki: e)),
         ),
+        onTap: () => _keyIdx.value = index,
       );
-      return RadioGroup<int>(
-        onChanged: (val) => _keyIdx.value = val,
-        child: _keyIdx.listenVal((_) => Column(children: tiles)).cardx,
-      );
+    });
+    tiles.add(
+      ListTile(
+        title: Text(libL10n.add),
+        contentPadding: const EdgeInsets.only(left: 23, right: 23),
+        trailing: const Icon(Icons.add),
+        onTap: () => PrivateKeyEditPage.route.go(context),
+      ),
+    );
+    return RadioGroup<int>(
+      onChanged: (val) => _keyIdx.value = val,
+      child: _keyIdx.listenVal((_) => Column(children: tiles)).cardx,
+    );
   }
 
   Widget _buildEnvs() {
@@ -486,7 +491,10 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage> with AfterLayou
 
   Widget _buildJumpServer() {
     const padding = EdgeInsets.only(left: 13, right: 13, bottom: 7);
-    final srvs = ref.watch(serverNotifierProvider).servers.values
+    final srvs = ref
+        .watch(serverNotifierProvider)
+        .servers
+        .values
         .where((e) => e.jumpId == null)
         .where((e) => e.id != spi?.id)
         .toList();
@@ -560,6 +568,16 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage> with AfterLayou
     );
   }
 
+  Widget _buildSSHImport() {
+    return Btn.tile(
+      text: l10n.sshConfigImport,
+      icon: const Icon(Icons.settings, color: Colors.grey),
+      onTap: _onTapSSHImport,
+      textStyle: UIs.textGrey,
+      mainAxisSize: MainAxisSize.min,
+    );
+  }
+
   Widget _buildDelBtn() {
     return IconButton(
       onPressed: () {
@@ -584,11 +602,115 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage> with AfterLayou
   void afterFirstLayout(BuildContext context) {
     if (spi != null) {
       _initWithSpi(spi!);
+    } else {
+      // Only for new servers, check SSH config import on first time
+      _checkSSHConfigImport();
     }
   }
 }
 
-extension on _ServerEditPageState {
+extension _Actions on _ServerEditPageState {
+  void _onTapSSHImport() async {
+    try {
+      final servers = await SSHConfig.parseConfig();
+      if (servers.isEmpty) {
+        context.showSnackBar(l10n.sshConfigNoServers);
+        return;
+      }
+
+      dprint('Parsed ${servers.length} servers from SSH config');
+      await _processSSHServers(servers);
+      dprint('Finished processing SSH config servers');
+    } catch (e, s) {
+      _handleImportSSHCfgPermissionIssue(e, s);
+    }
+  }
+
+  void _handleImportSSHCfgPermissionIssue(Object e, StackTrace s) async {
+    dprint('Error importing SSH config: $e');
+    // Check if it's a permission error and offer file picker as fallback
+    if (e is PathAccessException || e.toString().contains('Operation not permitted')) {
+      final useFilePicker = await context.showRoundDialog<bool>(
+        title: l10n.sshConfigImport,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.sshConfigPermissionDenied),
+            const SizedBox(height: 8),
+            Text(l10n.sshConfigManualSelect),
+          ],
+        ),
+        actions: Btnx.cancelOk,
+      );
+
+      if (useFilePicker == true) {
+        await _onTapSSHImportWithFilePicker();
+      }
+    } else {
+      context.showErrDialog(e, s);
+    }
+  }
+
+  Future<void> _processSSHServers(List<Spi> servers) async {
+    final deduplicated = ServerDeduplication.deduplicateServers(servers);
+    final resolved = ServerDeduplication.resolveNameConflicts(deduplicated);
+    final summary = ServerDeduplication.getImportSummary(servers, resolved);
+
+    if (!summary.hasItemsToImport) {
+      context.showSnackBar(l10n.sshConfigAllExist('${summary.duplicates}'));
+      return;
+    }
+
+    final shouldImport = await context.showRoundDialog<bool>(
+      title: l10n.sshConfigImport,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.sshConfigFoundServers('${summary.total}')),
+            if (summary.hasDuplicates)
+              Text(l10n.sshConfigDuplicatesSkipped('${summary.duplicates}'), style: UIs.textGrey),
+            Text(l10n.sshConfigServersToImport('${summary.toImport}')),
+            const SizedBox(height: 16),
+            ...resolved.map((s) => Text('• ${s.name} (${s.user}@${s.ip}:${s.port})')),
+          ],
+        ),
+      ),
+      actions: Btnx.cancelOk,
+    );
+
+    if (shouldImport == true) {
+      for (final server in resolved) {
+        ref.read(serverNotifierProvider.notifier).addServer(server);
+      }
+      context.showSnackBar(l10n.sshConfigImported('${resolved.length}'));
+    }
+  }
+
+  Future<void> _onTapSSHImportWithFilePicker() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.any,
+        allowMultiple: false,
+        dialogTitle: 'SSH ${libL10n.select}',
+      );
+
+      if (result?.files.single.path case final path?) {
+        final servers = await SSHConfig.parseConfig(path);
+        if (servers.isEmpty) {
+          context.showSnackBar(l10n.sshConfigNoServers);
+          return;
+        }
+
+        await _processSSHServers(servers);
+      }
+    } catch (e, s) {
+      context.showErrDialog(e, s);
+    }
+  }
+
   void _onTapCustomItem() async {
     final res = await KvEditor.route.go(context, KvEditorArgs(data: _customCmds.value));
     if (res == null) return;
@@ -602,52 +724,6 @@ extension on _ServerEditPageState {
     allCmdTypes.remove(StatusCmdType.time);
 
     await _showCmdTypesDialog(allCmdTypes);
-  }
-
-  Future<void> _showCmdTypesDialog(Set<ShellCmdType> allCmdTypes) {
-    return context.showRoundDialog(
-      title: '${libL10n.disabled} ${l10n.cmd}',
-      child: SizedBox(
-        width: 270,
-        child: _disabledCmdTypes.listenVal((disabled) {
-          return ListView.builder(
-            itemCount: allCmdTypes.length,
-            itemExtent: 50,
-            itemBuilder: (context, index) {
-              final cmdType = allCmdTypes.elementAtOrNull(index);
-              if (cmdType == null) return UIs.placeholder;
-              final display = cmdType.displayName;
-              return ListTile(
-                leading: Icon(cmdType.sysType.icon, size: 20),
-                title: Text(cmdType.name, style: const TextStyle(fontSize: 16)),
-                trailing: Checkbox(
-                  value: disabled.contains(display),
-                  onChanged: (value) {
-                    if (value == null) return;
-                    if (value) {
-                      _disabledCmdTypes.value.add(display);
-                    } else {
-                      _disabledCmdTypes.value.remove(display);
-                    }
-                    _disabledCmdTypes.notify();
-                  },
-                ),
-                onTap: () {
-                  final isDisabled = disabled.contains(display);
-                  if (isDisabled) {
-                    _disabledCmdTypes.value.remove(display);
-                  } else {
-                    _disabledCmdTypes.value.add(display);
-                  }
-                  _disabledCmdTypes.notify();
-                },
-              );
-            },
-          );
-        }),
-      ),
-      actions: Btnx.oks,
-    );
   }
 
   void _onSave() async {
@@ -705,7 +781,9 @@ extension on _ServerEditPageState {
       port: int.parse(_portController.text),
       user: _usernameController.text,
       pwd: _passwordController.text.selfNotEmptyOrNull,
-      keyId: _keyIdx.value != null ? ref.read(privateKeyNotifierProvider).keys.elementAt(_keyIdx.value!).id : null,
+      keyId: _keyIdx.value != null
+          ? ref.read(privateKeyNotifierProvider).keys.elementAt(_keyIdx.value!).id
+          : null,
       tags: _tags.value.isEmpty ? null : _tags.value.toList(),
       alterUrl: _altUrlController.text.selfNotEmptyOrNull,
       autoConnect: _autoConnect.value,
@@ -730,6 +808,111 @@ extension on _ServerEditPageState {
     }
 
     context.pop();
+  }
+}
+
+extension _Utils on _ServerEditPageState {
+  void _checkSSHConfigImport() async {
+    final prop = Stores.setting.firstTimeReadSSHCfg;
+    // Only check if it's first time and user hasn't disabled it
+    if (!prop.fetch()) return;
+
+    try {
+      // Check if SSH config exists
+      final (_, configExists) = SSHConfig.configExists();
+      if (!configExists) return;
+
+      // Ask for permission
+      final hasPermission = await context.showRoundDialog<bool>(
+        title: l10n.sshConfigImport,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.sshConfigFound),
+            UIs.height7,
+            Text(l10n.sshConfigImportPermission),
+            UIs.height7,
+            Text(l10n.sshConfigImportHelp, style: UIs.textGrey),
+          ],
+        ),
+        actions: Btnx.cancelOk,
+      );
+
+      prop.put(false);
+
+      if (hasPermission == true) {
+        // Parse and import SSH config
+        final servers = await SSHConfig.parseConfig();
+        if (servers.isEmpty) {
+          context.showSnackBar(l10n.sshConfigNoServers);
+          return;
+        }
+
+        final deduplicated = ServerDeduplication.deduplicateServers(servers);
+        final resolved = ServerDeduplication.resolveNameConflicts(deduplicated);
+        final summary = ServerDeduplication.getImportSummary(servers, resolved);
+
+        if (!summary.hasItemsToImport) {
+          context.showSnackBar(l10n.sshConfigAllExist('${summary.duplicates}'));
+          return;
+        }
+
+        // Import without asking again since user already gave permission
+        for (final server in resolved) {
+          ref.read(serverNotifierProvider.notifier).addServer(server);
+        }
+        context.showSnackBar(l10n.sshConfigImported('${resolved.length}'));
+      }
+    } catch (e, s) {
+      _handleImportSSHCfgPermissionIssue(e, s);
+    }
+  }
+
+  Future<void> _showCmdTypesDialog(Set<ShellCmdType> allCmdTypes) {
+    return context.showRoundDialog(
+      title: '${libL10n.disabled} ${l10n.cmd}',
+      child: SizedBox(
+        width: 270,
+        child: _disabledCmdTypes.listenVal((disabled) {
+          return ListView.builder(
+            itemCount: allCmdTypes.length,
+            itemExtent: 50,
+            itemBuilder: (context, index) {
+              final cmdType = allCmdTypes.elementAtOrNull(index);
+              if (cmdType == null) return UIs.placeholder;
+              final display = cmdType.displayName;
+              return ListTile(
+                leading: Icon(cmdType.sysType.icon, size: 20),
+                title: Text(cmdType.name, style: const TextStyle(fontSize: 16)),
+                trailing: Checkbox(
+                  value: disabled.contains(display),
+                  onChanged: (value) {
+                    if (value == null) return;
+                    if (value) {
+                      _disabledCmdTypes.value.add(display);
+                    } else {
+                      _disabledCmdTypes.value.remove(display);
+                    }
+                    _disabledCmdTypes.notify();
+                  },
+                ),
+                onTap: () {
+                  final isDisabled = disabled.contains(display);
+                  if (isDisabled) {
+                    _disabledCmdTypes.value.remove(display);
+                  } else {
+                    _disabledCmdTypes.value.add(display);
+                  }
+                  _disabledCmdTypes.notify();
+                },
+              );
+            },
+          );
+        }),
+      ),
+      actions: Btnx.oks,
+    );
   }
 
   void _initWithSpi(Spi spi) {

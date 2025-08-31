@@ -46,14 +46,19 @@ class AppLocalizationsId extends AppLocalizations {
   String get autoUpdateHomeWidget => 'Widget Rumah Pembaruan Otomatis';
 
   @override
-  String get backupTip =>
-      'Data yang diekspor dapat dienkripsi dengan kata sandi. \nHarap jaga keamanannya.';
+  String get backupEncrypted => 'Cadangan telah dienkripsi';
 
   @override
-  String get backupVersionNotMatch => 'Versi cadangan tidak cocok.';
+  String get backupNotEncrypted => 'Cadangan tidak dienkripsi';
 
   @override
   String get backupPassword => 'Kata sandi cadangan';
+
+  @override
+  String get backupPasswordRemoved => 'Kata sandi cadangan dihapus';
+
+  @override
+  String get backupPasswordSet => 'Kata sandi cadangan ditetapkan';
 
   @override
   String get backupPasswordTip =>
@@ -63,16 +68,11 @@ class AppLocalizationsId extends AppLocalizations {
   String get backupPasswordWrong => 'Kata sandi cadangan salah';
 
   @override
-  String get backupEncrypted => 'Cadangan telah dienkripsi';
+  String get backupTip =>
+      'Data yang diekspor dapat dienkripsi dengan kata sandi. \nHarap jaga keamanannya.';
 
   @override
-  String get backupNotEncrypted => 'Cadangan tidak dienkripsi';
-
-  @override
-  String get backupPasswordSet => 'Kata sandi cadangan ditetapkan';
-
-  @override
-  String get backupPasswordRemoved => 'Kata sandi cadangan dihapus';
+  String get backupVersionNotMatch => 'Versi cadangan tidak cocok.';
 
   @override
   String get battery => 'Baterai';
@@ -601,6 +601,61 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String spentTime(Object time) {
     return 'Menghabiskan waktu: $time';
+  }
+
+  @override
+  String sshConfigAllExist(Object duplicateCount) {
+    return 'Semua server sudah ada (ditemukan $duplicateCount duplikat)';
+  }
+
+  @override
+  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+    return '$duplicateCount duplikat akan dilewati';
+  }
+
+  @override
+  String get sshConfigFound => 'Kami menemukan konfigurasi SSH di sistem Anda';
+
+  @override
+  String sshConfigFoundServers(Object totalCount) {
+    return 'Ditemukan $totalCount server';
+  }
+
+  @override
+  String get sshConfigImport => 'Impor Konfigurasi SSH';
+
+  @override
+  String get sshConfigImportHelp =>
+      'Hanya informasi dasar yang dapat diimpor, misalnya: IP/Port.';
+
+  @override
+  String get sshConfigImportPermission =>
+      'Apakah Anda ingin memberikan izin untuk membaca ~/.ssh/config dan secara otomatis mengimpor pengaturan server?';
+
+  @override
+  String get sshConfigImportTip =>
+      'Prompt untuk membaca ~/.ssh/config saat pembuatan server pertama';
+
+  @override
+  String sshConfigImported(Object count) {
+    return 'Berhasil mengimpor $count server dari konfigurasi SSH';
+  }
+
+  @override
+  String get sshConfigManualSelect =>
+      'Apakah Anda ingin memilih file konfigurasi SSH secara manual?';
+
+  @override
+  String get sshConfigNoServers =>
+      'Tidak ada server yang ditemukan dalam konfigurasi SSH';
+
+  @override
+  String get sshConfigPermissionDenied =>
+      'Tidak dapat mengakses file konfigurasi SSH karena izin macOS.';
+
+  @override
+  String sshConfigServersToImport(Object importCount) {
+    return '$importCount server akan diimpor';
   }
 
   @override

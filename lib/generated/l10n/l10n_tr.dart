@@ -45,14 +45,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get autoUpdateHomeWidget => 'Ana ekran bileşenini otomatik güncelle';
 
   @override
-  String get backupTip =>
-      'Dışa aktarılan veriler parola ile şifrelenebilir. \nLütfen güvenli bir şekilde saklayın.';
+  String get backupEncrypted => 'Yedekleme şifrelenmiş';
 
   @override
-  String get backupVersionNotMatch => 'Yedekleme sürümü eşleşmiyor.';
+  String get backupNotEncrypted => 'Yedekleme şifreli değil';
 
   @override
   String get backupPassword => 'Yedekleme parolası';
+
+  @override
+  String get backupPasswordRemoved => 'Yedekleme parolası kaldırıldı';
+
+  @override
+  String get backupPasswordSet => 'Yedekleme parolası ayarlandı';
 
   @override
   String get backupPasswordTip =>
@@ -62,16 +67,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String get backupPasswordWrong => 'Yanlış yedekleme parolası';
 
   @override
-  String get backupEncrypted => 'Yedekleme şifrelenmiş';
+  String get backupTip =>
+      'Dışa aktarılan veriler parola ile şifrelenebilir. \nLütfen güvenli bir şekilde saklayın.';
 
   @override
-  String get backupNotEncrypted => 'Yedekleme şifreli değil';
-
-  @override
-  String get backupPasswordSet => 'Yedekleme parolası ayarlandı';
-
-  @override
-  String get backupPasswordRemoved => 'Yedekleme parolası kaldırıldı';
+  String get backupVersionNotMatch => 'Yedekleme sürümü eşleşmiyor.';
 
   @override
   String get battery => 'Pil';
@@ -601,6 +601,60 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String spentTime(Object time) {
     return 'Harcanan süre: $time';
+  }
+
+  @override
+  String sshConfigAllExist(Object duplicateCount) {
+    return 'Tüm sunucular zaten mevcut ($duplicateCount kopya bulundu)';
+  }
+
+  @override
+  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+    return '$duplicateCount kopya atlanacak';
+  }
+
+  @override
+  String get sshConfigFound => 'Sisteminizde SSH yapılandırması bulduk';
+
+  @override
+  String sshConfigFoundServers(Object totalCount) {
+    return '$totalCount sunucu bulundu';
+  }
+
+  @override
+  String get sshConfigImport => 'SSH Yapılandırma İçe Aktarma';
+
+  @override
+  String get sshConfigImportHelp =>
+      'Yalnızca temel bilgiler içe aktarılabilir, örneğin: IP/Port.';
+
+  @override
+  String get sshConfigImportPermission =>
+      '~/.ssh/config dosyasını okumak ve sunucu ayarlarını otomatik olarak içe aktarmak için izin vermek ister misiniz?';
+
+  @override
+  String get sshConfigImportTip =>
+      'İlk sunucu oluşturulurken ~/.ssh/config okuma istemi';
+
+  @override
+  String sshConfigImported(Object count) {
+    return 'SSH yapılandırmasından $count sunucu içe aktarıldı';
+  }
+
+  @override
+  String get sshConfigManualSelect =>
+      'SSH yapılandırma dosyasını manuel olarak seçmek ister misiniz?';
+
+  @override
+  String get sshConfigNoServers => 'SSH yapılandırmasında sunucu bulunamadı';
+
+  @override
+  String get sshConfigPermissionDenied =>
+      'macOS izinleri nedeniyle SSH yapılandırma dosyasına erişilemiyor.';
+
+  @override
+  String sshConfigServersToImport(Object importCount) {
+    return '$importCount sunucu içe aktarılacak';
   }
 
   @override

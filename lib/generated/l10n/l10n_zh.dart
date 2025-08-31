@@ -42,13 +42,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get autoUpdateHomeWidget => '自动更新桌面小部件';
 
   @override
-  String get backupTip => '导出数据可通过密码加密，请妥善保管。';
+  String get backupEncrypted => '备份已加密';
 
   @override
-  String get backupVersionNotMatch => '备份版本不兼容，无法恢复';
+  String get backupNotEncrypted => '备份未加密';
 
   @override
   String get backupPassword => '备份密码';
+
+  @override
+  String get backupPasswordRemoved => '备份密码已移除';
+
+  @override
+  String get backupPasswordSet => '备份密码已设置';
 
   @override
   String get backupPasswordTip => '设置密码以加密备份文件。留空则禁用加密。';
@@ -57,16 +63,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupPasswordWrong => '备份密码错误';
 
   @override
-  String get backupEncrypted => '备份已加密';
+  String get backupTip => '导出数据可通过密码加密，请妥善保管。';
 
   @override
-  String get backupNotEncrypted => '备份未加密';
-
-  @override
-  String get backupPasswordSet => '备份密码已设置';
-
-  @override
-  String get backupPasswordRemoved => '备份密码已移除';
+  String get backupVersionNotMatch => '备份版本不兼容，无法恢复';
 
   @override
   String get battery => '电池';
@@ -579,6 +579,55 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String sshConfigAllExist(Object duplicateCount) {
+    return '所有服务器已存在（发现 $duplicateCount 个重复项）';
+  }
+
+  @override
+  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+    return '$duplicateCount 个重复项将被跳过';
+  }
+
+  @override
+  String get sshConfigFound => '我们在您的系统中发现了 SSH 配置。';
+
+  @override
+  String sshConfigFoundServers(Object totalCount) {
+    return '发现 $totalCount 个服务器';
+  }
+
+  @override
+  String get sshConfigImport => 'SSH 配置导入';
+
+  @override
+  String get sshConfigImportHelp => '只能导入基础信息，例如：IP/端口';
+
+  @override
+  String get sshConfigImportPermission => '是否允许读取 ~/.ssh/config 并自动导入服务器设置？';
+
+  @override
+  String get sshConfigImportTip => '首次创建服务器时提示读取 ~/.ssh/config';
+
+  @override
+  String sshConfigImported(Object count) {
+    return '从 SSH 配置导入了 $count 个服务器';
+  }
+
+  @override
+  String get sshConfigManualSelect => '是否要手动选择 SSH 配置文件？';
+
+  @override
+  String get sshConfigNoServers => 'SSH 配置中未找到服务器';
+
+  @override
+  String get sshConfigPermissionDenied => '由于 macOS 权限限制，无法访问 SSH 配置文件。';
+
+  @override
+  String sshConfigServersToImport(Object importCount) {
+    return '$importCount 个服务器将被导入';
+  }
+
+  @override
   String get sshTermHelp =>
       '在终端可滚动时，横向拖动可以选中文字。点击键盘按钮可以开启/关闭键盘。文件图标会打开当前路径 SFTP。剪切板按钮会在有选中文字时复制内容，在未选中并且剪切板有内容时粘贴内容到终端。代码图标会粘贴代码片段到终端并执行。';
 
@@ -794,13 +843,19 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get autoUpdateHomeWidget => '自動更新桌面小工具';
 
   @override
-  String get backupTip => '匯出的資料可透過密碼加密，請妥善保管。';
+  String get backupEncrypted => '備份已加密';
 
   @override
-  String get backupVersionNotMatch => '備份版本不相容，無法還原';
+  String get backupNotEncrypted => '備份未加密';
 
   @override
   String get backupPassword => '備份密碼';
+
+  @override
+  String get backupPasswordRemoved => '備份密碼已移除';
+
+  @override
+  String get backupPasswordSet => '備份密碼已設定';
 
   @override
   String get backupPasswordTip => '設定密碼來加密備份檔案。留空則停用加密。';
@@ -809,16 +864,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get backupPasswordWrong => '備份密碼錯誤';
 
   @override
-  String get backupEncrypted => '備份已加密';
+  String get backupTip => '匯出的資料可透過密碼加密，請妥善保管。';
 
   @override
-  String get backupNotEncrypted => '備份未加密';
-
-  @override
-  String get backupPasswordSet => '備份密碼已設定';
-
-  @override
-  String get backupPasswordRemoved => '備份密碼已移除';
+  String get backupVersionNotMatch => '備份版本不相容，無法還原';
 
   @override
   String get battery => '電池';
@@ -1328,6 +1377,55 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String spentTime(Object time) {
     return '耗時：$time';
+  }
+
+  @override
+  String sshConfigAllExist(Object duplicateCount) {
+    return '所有伺服器均已存在（發現$duplicateCount個重複項）';
+  }
+
+  @override
+  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+    return '將跳過$duplicateCount個重複項';
+  }
+
+  @override
+  String get sshConfigFound => '我們在您的系統中發現了SSH設定';
+
+  @override
+  String sshConfigFoundServers(Object totalCount) {
+    return '發現$totalCount個伺服器';
+  }
+
+  @override
+  String get sshConfigImport => '匯入SSH設定';
+
+  @override
+  String get sshConfigImportHelp => '只能匯入基礎資訊，例如：IP/端口。';
+
+  @override
+  String get sshConfigImportPermission => '您是否希望允許讀取 ~/.ssh/config 並自動匯入伺服器設定？';
+
+  @override
+  String get sshConfigImportTip => '在建立第一個伺服器時提示讀取 ~/.ssh/config';
+
+  @override
+  String sshConfigImported(Object count) {
+    return '已從SSH設定匯入$count個伺服器';
+  }
+
+  @override
+  String get sshConfigManualSelect => '是否要手動選擇 SSH 設定檔案？';
+
+  @override
+  String get sshConfigNoServers => 'SSH設定中未找到伺服器';
+
+  @override
+  String get sshConfigPermissionDenied => '由於 macOS 權限限制，無法存取 SSH 設定檔案。';
+
+  @override
+  String sshConfigServersToImport(Object importCount) {
+    return '將匯入$importCount個伺服器';
   }
 
   @override

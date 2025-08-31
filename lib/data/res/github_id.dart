@@ -125,6 +125,7 @@ abstract final class GithubIds {
     'zxf945',
     'cnen2018',
     'xiaomeng9597',
+    'mingzhao2019',
   };
 }
 

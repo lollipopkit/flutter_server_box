@@ -32,5 +32,9 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSFileProviderExtensionAccessControlPolicy</key>
+	<string>NSFileProviderExtensionAccessControlPolicyRequiresExplicitAccess</string>
+	<key>NSFileProviderExtensionUsageDescription</key>
+	<string>This app needs to access SSH configuration files to import server connection settings from ~/.ssh/config. This allows users to quickly add their existing SSH servers without manual configuration.</string>
 </dict>
 </plist>

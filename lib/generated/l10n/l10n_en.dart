@@ -46,14 +46,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get autoUpdateHomeWidget => 'Automatic home widget update';
 
   @override
-  String get backupTip =>
-      'The exported data can be encrypted with password. \nPlease keep it safe.';
+  String get backupEncrypted => 'Backup is encrypted';
 
   @override
-  String get backupVersionNotMatch => 'Backup version is not match.';
+  String get backupNotEncrypted => 'Backup is not encrypted';
 
   @override
   String get backupPassword => 'Backup password';
+
+  @override
+  String get backupPasswordRemoved => 'Backup password removed';
+
+  @override
+  String get backupPasswordSet => 'Backup password set';
 
   @override
   String get backupPasswordTip =>
@@ -63,16 +68,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupPasswordWrong => 'Incorrect backup password';
 
   @override
-  String get backupEncrypted => 'Backup is encrypted';
+  String get backupTip =>
+      'The exported data can be encrypted with password. \nPlease keep it safe.';
 
   @override
-  String get backupNotEncrypted => 'Backup is not encrypted';
-
-  @override
-  String get backupPasswordSet => 'Backup password set';
-
-  @override
-  String get backupPasswordRemoved => 'Backup password removed';
+  String get backupVersionNotMatch => 'Backup version is not match.';
 
   @override
   String get battery => 'Battery';
@@ -600,6 +600,60 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String spentTime(Object time) {
     return 'Spent time: $time';
+  }
+
+  @override
+  String sshConfigAllExist(Object duplicateCount) {
+    return 'All servers already exist ($duplicateCount duplicates found)';
+  }
+
+  @override
+  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+    return '$duplicateCount duplicates will be skipped';
+  }
+
+  @override
+  String get sshConfigFound => 'We found SSH configuration on your system.';
+
+  @override
+  String sshConfigFoundServers(Object totalCount) {
+    return 'Found $totalCount servers';
+  }
+
+  @override
+  String get sshConfigImport => 'SSH Config Import';
+
+  @override
+  String get sshConfigImportHelp =>
+      'Only basic information can be imported, for example: IP/Port.';
+
+  @override
+  String get sshConfigImportPermission =>
+      'Would you like to give permission to read ~/.ssh/config and automatically import server settings?';
+
+  @override
+  String get sshConfigImportTip =>
+      'Prompt to read ~/.ssh/config on first server creation';
+
+  @override
+  String sshConfigImported(Object count) {
+    return 'Imported $count servers from SSH config';
+  }
+
+  @override
+  String get sshConfigManualSelect =>
+      'Would you like to select the SSH config file manually?';
+
+  @override
+  String get sshConfigNoServers => 'No servers found in SSH config';
+
+  @override
+  String get sshConfigPermissionDenied =>
+      'Cannot access SSH config file due to macOS permissions.';
+
+  @override
+  String sshConfigServersToImport(Object importCount) {
+    return '$importCount servers will be imported';
   }
 
   @override
