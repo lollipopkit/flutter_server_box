@@ -4,7 +4,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/snippet.dart';
-import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/snippet.dart';
 
 final class SnippetEditPageArgs {
@@ -157,7 +157,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> with AfterLay
         builder: (vals) {
           final subtitle = vals.isEmpty
               ? null
-              : vals.map((e) => ref.read(serverNotifierProvider).servers[e]?.name ?? e).join(', ');
+              : vals.map((e) => ref.read(serversNotifierProvider).servers[e]?.name ?? e).join(', ');
           return ListTile(
             leading: const Padding(
               padding: EdgeInsets.only(left: 5),
@@ -169,12 +169,13 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> with AfterLay
                 ? null
                 : Text(subtitle, maxLines: 1, style: UIs.textGrey, overflow: TextOverflow.ellipsis),
             onTap: () async {
-              vals.removeWhere((e) => !ref.read(serverNotifierProvider).serverOrder.contains(e));
+              // Create a filtered copy for the dialog, don't modify the original
+              final validServerIds = vals.where((e) => ref.read(serversNotifierProvider).serverOrder.contains(e)).toList();
               final serverIds = await context.showPickDialog(
                 title: l10n.autoRun,
-                items: ref.read(serverNotifierProvider).serverOrder,
-                display: (e) => ref.read(serverNotifierProvider).servers[e]?.name ?? e,
-                initial: vals,
+                items: ref.read(serversNotifierProvider).serverOrder,
+                display: (e) => ref.read(serversNotifierProvider).servers[e]?.name ?? e,
+                initial: validServerIds,
                 clearable: true,
               );
               if (serverIds != null) {

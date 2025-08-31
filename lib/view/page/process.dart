@@ -8,7 +8,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/scripts/shell_func.dart';
 import 'package:server_box/data/model/server/proc.dart';
-import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 
 class ProcessPage extends ConsumerStatefulWidget {
@@ -37,7 +37,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
   ProcSortMode _procSortMode = ProcSortMode.cpu;
   List<ProcSortMode> _sortModes = List.from(ProcSortMode.values);
 
-  late final _provider = individualServerNotifierProvider(widget.args.spi.id);
+  late final _provider = serverNotifierProvider(widget.args.spi.id);
 
   @override
   void dispose() {

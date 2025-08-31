@@ -16,7 +16,7 @@ import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
-import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/provider/virtual_keyboard.dart';
 import 'package:server_box/data/res/store.dart';
@@ -118,7 +118,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     _setupDiscontinuityTimer();
     
     // Initialize client from provider
-    final serverState = ref.read(individualServerNotifierProvider(widget.args.spi.id));
+    final serverState = ref.read(serverNotifierProvider(widget.args.spi.id));
     _client = serverState.client;
 
     if (++_sshConnCount == 1) {

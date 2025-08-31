@@ -5,7 +5,7 @@ import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/app/tab.dart';
-import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
@@ -31,8 +31,8 @@ class _HomePageState extends ConsumerState<HomePage>
   bool _shouldAuth = false;
   DateTime? _pausedTime;
 
-  late final _notifier = ref.read(serverNotifierProvider.notifier);
-  late final _provider = ref.read(serverNotifierProvider);
+  late final _notifier = ref.read(serversNotifierProvider.notifier);
+  late final _provider = ref.read(serversNotifierProvider);
 
   @override
   void dispose() {

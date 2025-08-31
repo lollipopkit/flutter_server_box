@@ -13,7 +13,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/provider/server/single.dart';
 
 part 'pve.freezed.dart';
 part 'pve.g.dart';
@@ -45,7 +45,7 @@ class PveNotifier extends _$PveNotifier {
   @override
   PveState build(Spi spiParam) {
     spi = spiParam;
-    final serverState = ref.watch(individualServerNotifierProvider(spi.id));
+    final serverState = ref.watch(serverNotifierProvider(spi.id));
     final client = serverState.client;
     if (client == null) {
       return const PveState(error: PveErr(type: PveErrType.net, message: 'Server client is null'));

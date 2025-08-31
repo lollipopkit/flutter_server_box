@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:server_box/data/provider/app.dart';
 import 'package:server_box/data/provider/private_key.dart';
-import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/provider/snippet.dart';
 
@@ -45,7 +45,7 @@ final class ReadMyProvider {
   T call<T>(ProviderBase<T> provider) => ref.read(provider);
   
   // Specific provider getters
-  ServersState get server => ref.read(serverNotifierProvider);
+  ServersState get server => ref.read(serversNotifierProvider);
   SnippetState get snippet => ref.read(snippetNotifierProvider);
   AppState get app => ref.read(appStatesProvider);
   PrivateKeyState get privateKey => ref.read(privateKeyNotifierProvider);
@@ -59,7 +59,7 @@ final class WatchMyProvider {
   T call<T>(ProviderBase<T> provider) => ref.watch(provider);
   
   // Specific provider getters
-  ServersState get server => ref.watch(serverNotifierProvider);
+  ServersState get server => ref.watch(serversNotifierProvider);
   SnippetState get snippet => ref.watch(snippetNotifierProvider);
   AppState get app => ref.watch(appStatesProvider);
   PrivateKeyState get privateKey => ref.watch(privateKeyNotifierProvider);
@@ -74,7 +74,7 @@ final class UseNotifierMyProvider {
       ref.read(provider.notifier);
   
   // Specific provider notifier getters
-  ServerNotifier get server => ref.read(serverNotifierProvider.notifier);
+  ServersNotifier get server => ref.read(serversNotifierProvider.notifier);
   SnippetNotifier get snippet => ref.read(snippetNotifierProvider.notifier);
   AppStates get app => ref.read(appStatesProvider.notifier);
   PrivateKeyNotifier get privateKey => ref.read(privateKeyNotifierProvider.notifier);

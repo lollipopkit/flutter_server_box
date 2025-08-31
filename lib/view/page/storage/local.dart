@@ -7,7 +7,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/path_with_prefix.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/sftp/worker.dart';
-import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -359,7 +359,7 @@ extension _OnTapFile on _LocalFilePageState {
 
     final spi = await context.showPickSingleDialog<Spi>(
       title: libL10n.select,
-      items: ref.read(serverNotifierProvider).servers.values.toList(),
+      items: ref.read(serversNotifierProvider).servers.values.toList(),
       display: (e) => e.name,
     );
     if (spi == null) return;

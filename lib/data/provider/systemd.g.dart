@@ -6,7 +6,7 @@ part of 'systemd.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$systemdNotifierHash() => r'617fb7637fbc5c5100e5b522d246984f22b44cca';
+String _$systemdNotifierHash() => r'98466bd176518545be49cae52f8dbe12af3a88a6';
 
 /// Copied from Dart SDK
 class _SystemHash {

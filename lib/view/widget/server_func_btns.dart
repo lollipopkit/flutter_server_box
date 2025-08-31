@@ -10,7 +10,7 @@ import 'package:server_box/data/model/app/menu/base.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
-import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/container/container.dart';
@@ -273,7 +273,7 @@ void _gotoSSH(Spi spi, BuildContext context) async {
 }
 
 bool _checkClient(BuildContext context, String id, WidgetRef ref) {
-  final serverState = ref.read(individualServerNotifierProvider(id));
+  final serverState = ref.read(serverNotifierProvider(id));
   if (serverState.client == null) {
     context.showSnackBar(l10n.waitConnection);
     return false;

@@ -6,7 +6,7 @@ part of 'pve.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$pveNotifierHash() => r'667cfb11cd7118d57b29918d137ef2cda2bad7ad';
+String _$pveNotifierHash() => r'b5da7240db1b9ee7d61f238cebca45821b7a3445';
 
 /// Copied from Dart SDK
 class _SystemHash {

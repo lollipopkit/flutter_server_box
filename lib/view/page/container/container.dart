@@ -13,7 +13,7 @@ import 'package:server_box/data/model/container/image.dart';
 import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/provider/container.dart';
-import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 
@@ -43,7 +43,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
   @override
   void initState() {
     super.initState();
-    final serverState = ref.read(individualServerNotifierProvider(widget.args.spi.id));
+    final serverState = ref.read(serverNotifierProvider(widget.args.spi.id));
     _provider = containerNotifierProvider(
       serverState.client,
       widget.args.spi.user,

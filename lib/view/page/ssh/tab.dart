@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/view/page/server/edit.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 
@@ -249,7 +249,7 @@ class _AddPage extends ConsumerWidget {
     const viewPadding = 7.0;
     final viewWidth = context.windowSize.width - 2 * viewPadding;
 
-    final serverState = ref.watch(serverNotifierProvider);
+    final serverState = ref.watch(serversNotifierProvider);
     final itemCount = serverState.servers.length;
     const itemPadding = 1.0;
     const itemWidth = 150.0;

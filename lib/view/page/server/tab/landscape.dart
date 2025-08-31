@@ -26,7 +26,7 @@ extension on _ServerPageState {
   }
 
   Widget _buildLandscapeBody() {
-    final serverState = ref.watch(serverNotifierProvider);
+    final serverState = ref.watch(serversNotifierProvider);
     final order = serverState.serverOrder;
     
     if (order.isEmpty) {
@@ -37,7 +37,7 @@ extension on _ServerPageState {
       itemCount: order.length,
       itemBuilder: (_, idx) {
         final id = order[idx];
-        final srv = ref.watch(individualServerNotifierProvider(id));
+        final srv = ref.watch(serverNotifierProvider(id));
 
         final title = _buildServerCardTitle(srv);
         final List<Widget> children = [title, _buildNormalCard(srv.status, srv.spi)];

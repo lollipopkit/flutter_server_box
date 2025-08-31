@@ -21,7 +21,7 @@ import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart' as server_model;
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
-import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/pve.dart';
 import 'package:server_box/view/page/server/edit.dart';
@@ -86,7 +86,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
 
   @override
   Widget build(BuildContext context) {
-    final serverState = ref.watch(individualServerNotifierProvider(widget.args.spi.id));
+    final serverState = ref.watch(serverNotifierProvider(widget.args.spi.id));
     if (serverState.client == null) {
       return Scaffold(
         appBar: CustomAppBar(),

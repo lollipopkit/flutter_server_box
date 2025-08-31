@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/ping_result.dart';
-import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/single.dart';
 
 /// Only permit ipv4 / ipv6 / domain chars
 final targetReg = RegExp(r'[a-zA-Z0-9\.-_:]+');
@@ -130,7 +131,7 @@ class _PingPageState extends ConsumerState<PingPage> with AutomaticKeepAliveClie
       return;
     }
 
-    if (ref.read(serverNotifierProvider).serverOrder.isEmpty) {
+    if (ref.read(serversNotifierProvider).serverOrder.isEmpty) {
       context.showSnackBar(l10n.pingNoServer);
       return;
     }
@@ -142,8 +143,8 @@ class _PingPageState extends ConsumerState<PingPage> with AutomaticKeepAliveClie
     }
 
     await Future.wait(
-      ref.read(serverNotifierProvider).servers.values.map((spi) async {
-        final serverState = ref.read(individualServerNotifierProvider(spi.id));
+      ref.read(serversNotifierProvider).servers.values.map((spi) async {
+        final serverState = ref.read(serverNotifierProvider(spi.id));
         if (serverState.client == null) {
           return;
         }

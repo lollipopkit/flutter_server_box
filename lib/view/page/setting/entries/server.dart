@@ -46,7 +46,7 @@ extension _Server on _AppSettingsPageState {
       onTap: () async {
         final keys = Stores.server.keys();
         final names = Map.fromEntries(
-          keys.map((e) => MapEntry(e, ref.read(serverNotifierProvider).servers[e]?.name ?? e)),
+          keys.map((e) => MapEntry(e, ref.read(serversNotifierProvider).servers[e]?.name ?? e)),
         );
         final deleteKeys = await context.showPickDialog<String>(
           clearable: true,

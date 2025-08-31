@@ -17,7 +17,8 @@ import 'package:server_box/data/model/app/scripts/shell_func.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
-import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
@@ -73,7 +74,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
   @override
   void initState() {
     super.initState();
-    _tags = ValueNotifier(ref.read(serverNotifierProvider).tags);
+    _tags = ValueNotifier(ref.read(serversNotifierProvider).tags);
     _startAvoidJitterTimer();
   }
 
@@ -88,7 +89,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
   Widget build(BuildContext context) {
     super.build(context);
     // Listen to provider changes and update the ValueNotifier
-    ref.listen(serverNotifierProvider, (previous, next) {
+    ref.listen(serversNotifierProvider, (previous, next) {
       _tags.value = next.tags;
     });
     return OrientationBuilder(
@@ -132,7 +133,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
   Widget _buildPortrait() {
     // final isMobile = ResponsiveBreakpoints.of(context).isMobile;
-    final serverState = ref.watch(serverNotifierProvider);
+    final serverState = ref.watch(serversNotifierProvider);
     return _tag.listenVal((val) {
       final filtered = _filterServers(serverState.serverOrder);
       final child = _buildScaffold(_buildBodySmall(filtered: filtered));
@@ -182,7 +183,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
                   // Last item is just spacing
                   if (index == lens) return SizedBox(height: 77);
 
-                  final individualState = ref.watch(individualServerNotifierProvider(serversInThisColumn[index]));
+                  final individualState = ref.watch(serverNotifierProvider(serversInThisColumn[index]));
 
                   return _buildEachServerCard(individualState);
                 },
@@ -338,8 +339,8 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
-    ref.read(serverNotifierProvider.notifier).refresh();
-    ref.read(serverNotifierProvider.notifier).startAutoRefresh();
+    ref.read(serversNotifierProvider.notifier).refresh();
+    ref.read(serversNotifierProvider.notifier).startAutoRefresh();
   }
 
   static const _kCardHeightMin = 23.0;

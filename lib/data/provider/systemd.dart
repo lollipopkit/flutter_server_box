@@ -5,7 +5,7 @@ import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/systemd.dart';
-import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/provider/server/single.dart';
 
 part 'systemd.freezed.dart';
 part 'systemd.g.dart';
@@ -25,7 +25,7 @@ class SystemdNotifier extends _$SystemdNotifier {
 
   @override
   SystemdState build(Spi spi) {
-    final si = ref.read(individualServerNotifierProvider(spi.id));
+    final si = ref.read(serverNotifierProvider(spi.id));
     _si = si;
     // Async initialization
     Future.microtask(() => getUnits());

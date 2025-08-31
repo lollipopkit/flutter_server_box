@@ -17,7 +17,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/provider/private_key.dart';
-import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
@@ -172,7 +172,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage> with AfterLayou
         hint: 'root',
         suggestion: false,
       ),
-      TagTile(tags: _tags, allTags: ref.watch(serverNotifierProvider).tags).cardx,
+      TagTile(tags: _tags, allTags: ref.watch(serversNotifierProvider).tags).cardx,
       ListTile(
         title: Text(l10n.autoConnect),
         trailing: _autoConnect.listenVal(
@@ -492,7 +492,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage> with AfterLayou
   Widget _buildJumpServer() {
     const padding = EdgeInsets.only(left: 13, right: 13, bottom: 7);
     final srvs = ref
-        .watch(serverNotifierProvider)
+        .watch(serversNotifierProvider)
         .servers
         .values
         .where((e) => e.jumpId == null)
@@ -587,7 +587,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage> with AfterLayou
           actions: Btn.ok(
             onTap: () async {
               context.pop();
-              ref.read(serverNotifierProvider.notifier).delServer(spi!.id);
+              ref.read(serversNotifierProvider.notifier).delServer(spi!.id);
               context.pop(true);
             },
             red: true,
@@ -683,7 +683,7 @@ extension _Actions on _ServerEditPageState {
 
     if (shouldImport == true) {
       for (final server in resolved) {
-        ref.read(serverNotifierProvider.notifier).addServer(server);
+        ref.read(serversNotifierProvider.notifier).addServer(server);
       }
       context.showSnackBar(l10n.sshConfigImported('${resolved.length}'));
     }
@@ -802,9 +802,9 @@ extension _Actions on _ServerEditPageState {
         context.showSnackBar('${l10n.sameIdServerExist}: ${spi.id}');
         return;
       }
-      ref.read(serverNotifierProvider.notifier).addServer(spi);
+      ref.read(serversNotifierProvider.notifier).addServer(spi);
     } else {
-      ref.read(serverNotifierProvider.notifier).updateServer(this.spi!, spi);
+      ref.read(serversNotifierProvider.notifier).updateServer(this.spi!, spi);
     }
 
     context.pop();
@@ -860,7 +860,7 @@ extension _Utils on _ServerEditPageState {
 
         // Import without asking again since user already gave permission
         for (final server in resolved) {
-          ref.read(serverNotifierProvider.notifier).addServer(server);
+          ref.read(serversNotifierProvider.notifier).addServer(server);
         }
         context.showSnackBar(l10n.sshConfigImported('${resolved.length}'));
       }

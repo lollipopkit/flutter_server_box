@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/provider/server.dart';
+import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 
 class ServerOrderPage extends ConsumerStatefulWidget {
@@ -42,7 +42,7 @@ class _ServerOrderPageState extends ConsumerState<ServerOrderPage> {
   }
 
   Widget _buildBody() {
-    final serverState = ref.watch(serverNotifierProvider);
+    final serverState = ref.watch(serversNotifierProvider);
     final order = serverState.serverOrder;
     
     if (order.isEmpty) {
@@ -77,7 +77,7 @@ class _ServerOrderPageState extends ConsumerState<ServerOrderPage> {
   }
 
   Widget _buildCardTile(int index) {
-    final serverState = ref.watch(serverNotifierProvider);
+    final serverState = ref.watch(serversNotifierProvider);
     final order = serverState.serverOrder;
     final id = order[index];
     final spi = serverState.servers[id];

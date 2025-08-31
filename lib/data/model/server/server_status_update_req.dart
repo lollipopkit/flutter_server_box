@@ -104,6 +104,11 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
 
   try {
     req.ss.disk = Disk.parse(StatusCmdType.disk.findInMap(parsedOutput));
+  } catch (e, s) {
+    Loggers.app.warning(e, s);
+  }
+
+  try {
     req.ss.diskUsage = DiskUsage.parse(req.ss.disk);
   } catch (e, s) {
     Loggers.app.warning(e, s);
