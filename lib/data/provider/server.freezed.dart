@@ -14,8 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ServersState {
 
- Map<String, Spi> get servers;// Only store server configuration information
- List<String> get serverOrder; Set<String> get tags; Set<String> get manualDisconnectedIds; Timer? get autoRefreshTimer;
+ Map<String, Spi> get servers; List<String> get serverOrder; Set<String> get tags; Set<String> get manualDisconnectedIds; Timer? get autoRefreshTimer;
 /// Create a copy of ServersState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -221,9 +220,7 @@ class _ServersState implements ServersState {
   return EqualUnmodifiableMapView(_servers);
 }
 
-// Only store server configuration information
  final  List<String> _serverOrder;
-// Only store server configuration information
 @override@JsonKey() List<String> get serverOrder {
   if (_serverOrder is EqualUnmodifiableListView) return _serverOrder;
   // ignore: implicit_dynamic_type

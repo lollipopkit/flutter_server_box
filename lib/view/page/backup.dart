@@ -131,14 +131,6 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
     }
   }
 
-  Future<bool> _ensureBakPwd(BuildContext context) async {
-    final saved = await SecureStoreProps.bakPwd.read();
-    if (saved != null && saved.isNotEmpty) return true;
-    await _onTapSetBakPwd(context);
-    final after = await SecureStoreProps.bakPwd.read();
-    return after != null && after.isNotEmpty;
-  }
-
   Widget get _buildTip {
     return CardX(
       child: ListTile(
@@ -415,6 +407,11 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
     ).cardx;
   }
 
+  @override
+  bool get wantKeepAlive => true;
+}
+
+extension on _BackupPageState {
   Future<void> _onTapWebdavDl(BuildContext context) async {
     webdavLoading.value = true;
     try {
@@ -443,7 +440,7 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
       final ok = await _ensureBakPwd(context);
       if (!ok) return;
       final savedPassword = await SecureStoreProps.bakPwd.read();
-      await BackupV2.backup(bakName, savedPassword);
+      await BackupV2.backup(bakName, savedPassword?.isEmpty == true ? null : savedPassword);
       await Webdav.shared.upload(relativePath: bakName);
       Loggers.app.info('Upload webdav backup success');
     } catch (e, s) {
@@ -482,7 +479,7 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
       final ok = await _ensureBakPwd(context);
       if (!ok) return;
       final savedPassword = await SecureStoreProps.bakPwd.read();
-      await BackupV2.backup(bakName, savedPassword);
+      await BackupV2.backup(bakName, savedPassword?.isEmpty == true ? null : savedPassword);
       await GistRs.shared.upload(relativePath: bakName);
       Loggers.app.info('Upload gist backup success');
     } catch (e, s) {
@@ -624,6 +621,29 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
     }
   }
 
-  @override
-  bool get wantKeepAlive => true;
+  Future<bool> _ensureBakPwd(BuildContext context) async {
+    final saved = await SecureStoreProps.bakPwd.read();
+    if (saved != null && saved.isNotEmpty) return true;
+
+    // Show dialog asking if user wants to set password or continue without
+    final result = await context.showRoundDialog<bool>(
+      title: l10n.backupPassword,
+      child: Text(l10n.backupPasswordTip, style: UIs.textGrey),
+      actions: [
+        TextButton(onPressed: () => context.pop(true), child: Text(libL10n.cancel)),
+        TextButton(onPressed: () => context.pop(false), child: Text(libL10n.setting)),
+      ],
+    );
+
+    if (result == true) {
+      // Continue without password
+      return true;
+    } else if (result == false) {
+      // User wants to set password
+      await _onTapSetBakPwd(context);
+      return true; // Allow continuing even if password setting was cancelled
+    }
+
+    return false; // User cancelled the dialog
+  }
 }

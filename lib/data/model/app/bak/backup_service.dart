@@ -11,27 +11,10 @@ class BackupService {
   /// Perform backup operation with the given source
   static Future<void> backup(BuildContext context, BackupSource source) async {
     try {
-      String? password;
+      final saved = await SecureStoreProps.bakPwd.read();
+      final password = saved?.isEmpty == true ? null : saved;
 
-      if (source is ClipboardBackupSource) {
-        // Clipboard backup: allow optional password
-        password = await _getClipboardPassword(context);
-        if (password == null) return; // canceled
-      } else {
-        // All other backups require pre-set bakPwd (SecureStore)
-        final saved = await SecureStoreProps.bakPwd.read();
-        if (saved == null || saved.isEmpty) {
-          // Prompt to set before proceeding
-          password = await _showPasswordDialog(context, hint: l10n.backupPasswordTip);
-          if (password == null || password.isEmpty) return; // Not set
-          await SecureStoreProps.bakPwd.write(password);
-          context.showSnackBar(l10n.backupPasswordSet);
-        } else {
-          password = saved;
-        }
-      }
-
-      final path = await BackupV2.backup(null, password.isEmpty ? null : password);
+      final path = await BackupV2.backup(null, password?.isEmpty == true ? null : password);
       await source.saveContent(path);
 
       if (source is ClipboardBackupSource) {
@@ -54,34 +37,6 @@ class BackupService {
     }
 
     await restoreFromText(context, text);
-  }
-
-  /// Handle password dialog for backup operations
-  static Future<String?> _getClipboardPassword(BuildContext context) async {
-    // Use saved bakPwd as default for clipboard flow if exists, but allow empty/custom
-    final savedPassword = await SecureStoreProps.bakPwd.read();
-    String? password;
-
-    if (savedPassword != null && savedPassword.isNotEmpty) {
-      final useCustom = await context.showRoundDialog<bool>(
-        title: l10n.backupPassword,
-        child: Text(l10n.backupPasswordTip),
-        actions: [
-          Btn.cancel(),
-          TextButton(onPressed: () => context.pop(false), child: Text(l10n.backupPasswordSet)),
-          TextButton(onPressed: () => context.pop(true), child: Text(libL10n.custom)),
-        ],
-      );
-      if (useCustom == null) return null;
-      if (useCustom) {
-        password = await _showPasswordDialog(context, initial: savedPassword);
-      } else {
-        password = savedPassword;
-      }
-    } else {
-      password = await _showPasswordDialog(context);
-    }
-    return password;
   }
 
   /// Handle restore from text with decryption support
