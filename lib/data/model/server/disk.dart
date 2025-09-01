@@ -44,22 +44,36 @@ class Disk with EquatableMixin {
   static List<Disk> parse(String raw) {
     final list = <Disk>[];
     raw = raw.trim();
+    
+    if (raw.isEmpty) {
+      dprint('Empty disk info data received');
+      return list;
+    }
+
     try {
       if (raw.startsWith('{')) {
         // Parse JSON output from lsblk command
-        final Map<String, dynamic> jsonData = json.decode(raw);
-        final List<dynamic> blockdevices = jsonData['blockdevices'] ?? [];
+        try {
+          final Map<String, dynamic> jsonData = json.decode(raw);
+          final List<dynamic> blockdevices = jsonData['blockdevices'] ?? [];
 
-        for (final device in blockdevices) {
-          // Process each device
-          _processTopLevelDevice(device, list);
+          for (final device in blockdevices) {
+            // Process each device
+            _processTopLevelDevice(device, list);
+          }
+        } on FormatException catch (e) {
+          Loggers.app.warning('JSON parsing failed, falling back to legacy method: $e');
+          return _parseWithOldMethod(raw);
+        } catch (e) {
+          Loggers.app.warning('Error processing JSON disk data: $e', e);
+          return _parseWithOldMethod(raw);
         }
       } else {
         // Fallback to the old parsing method in case of non-JSON output
         return _parseWithOldMethod(raw);
       }
     } catch (e) {
-      Loggers.app.warning('Failed to parse disk info: $e', e);
+      Loggers.app.warning('Failed to parse disk info with both methods: $e', e);
     }
     return list;
   }
@@ -88,20 +102,8 @@ class Disk with EquatableMixin {
     }
   }
 
-  /// Process a single device without recursively processing its children
-  static Disk? _processSingleDevice(Map<String, dynamic> device) {
-    final fstype = device['fstype']?.toString();
-    final String mountpoint = device['mountpoint']?.toString() ?? '';
-    final String path = device['path']?.toString() ?? '';
-
-    if (path.isEmpty || (fstype == null && mountpoint.isEmpty)) {
-      return null;
-    }
-
-    if (!_shouldCalc(fstype ?? '', mountpoint)) {
-      return null;
-    }
-
+  /// Parse filesystem fields from device data
+  static ({BigInt size, BigInt used, BigInt avail, int usedPercent}) _parseFilesystemFields(Map<String, dynamic> device) {
     // Handle size fields - may not be available in fallback mode
     final sizeStr = device['fssize']?.toString() ?? '0';
     BigInt size = BigInt.zero;
@@ -129,6 +131,24 @@ class Disk with EquatableMixin {
       usedPercent = int.tryParse(usePercentStr) ?? 0;
     }
 
+    return (size: size, used: used, avail: avail, usedPercent: usedPercent);
+  }
+
+  /// Process a single device without recursively processing its children
+  static Disk? _processSingleDevice(Map<String, dynamic> device) {
+    final fstype = device['fstype']?.toString();
+    final String mountpoint = device['mountpoint']?.toString() ?? '';
+    final String path = device['path']?.toString() ?? '';
+
+    if (path.isEmpty || (fstype == null && mountpoint.isEmpty)) {
+      return null;
+    }
+
+    if (!_shouldCalc(fstype ?? '', mountpoint)) {
+      return null;
+    }
+
+    final fsFields = _parseFilesystemFields(device);
     final name = device['name']?.toString();
     final kname = device['kname']?.toString();
     final uuid = device['uuid']?.toString();
@@ -137,10 +157,10 @@ class Disk with EquatableMixin {
       path: path,
       fsTyp: fstype,
       mount: mountpoint,
-      usedPercent: usedPercent,
-      used: used,
-      size: size,
-      avail: avail,
+      usedPercent: fsFields.usedPercent,
+      used: fsFields.used,
+      size: fsFields.size,
+      avail: fsFields.avail,
       name: name,
       kname: kname,
       uuid: uuid,
@@ -168,33 +188,7 @@ class Disk with EquatableMixin {
 
     // Handle common filesystem cases or parent devices with children
     if ((fstype != null && _shouldCalc(fstype, mount)) || (childDisks.isNotEmpty && path.isNotEmpty)) {
-      // Handle size fields - may not be available in fallback mode
-      final sizeStr = device['fssize']?.toString() ?? '0';
-      BigInt size = BigInt.zero;
-      if (sizeStr != '0' && sizeStr.isNotEmpty && sizeStr != 'null') {
-        size = (BigInt.tryParse(sizeStr) ?? BigInt.zero) ~/ BigInt.from(1024);
-      }
-
-      final usedStr = device['fsused']?.toString() ?? '0';
-      BigInt used = BigInt.zero;
-      if (usedStr != '0' && usedStr.isNotEmpty && usedStr != 'null') {
-        used = (BigInt.tryParse(usedStr) ?? BigInt.zero) ~/ BigInt.from(1024);
-      }
-
-      final availStr = device['fsavail']?.toString() ?? '0';
-      BigInt avail = BigInt.zero;
-      if (availStr != '0' && availStr.isNotEmpty && availStr != 'null') {
-        avail = (BigInt.tryParse(availStr) ?? BigInt.zero) ~/ BigInt.from(1024);
-      }
-
-      // Parse fsuse% which is usually in the format "45%"
-      String usePercentStr = device['fsuse%']?.toString() ?? '0';
-      usePercentStr = usePercentStr.replaceAll('%', '');
-      int usedPercent = 0;
-      if (usePercentStr.isNotEmpty && usePercentStr != 'null') {
-        usedPercent = int.tryParse(usePercentStr) ?? 0;
-      }
-
+      final fsFields = _parseFilesystemFields(device);
       final name = device['name']?.toString();
       final kname = device['kname']?.toString();
       final uuid = device['uuid']?.toString();
@@ -203,10 +197,10 @@ class Disk with EquatableMixin {
         path: path,
         fsTyp: fstype,
         mount: mount,
-        usedPercent: usedPercent,
-        used: used,
-        size: size,
-        avail: avail,
+        usedPercent: fsFields.usedPercent,
+        used: fsFields.used,
+        size: fsFields.size,
+        avail: fsFields.avail,
         name: name,
         kname: kname,
         uuid: uuid,
