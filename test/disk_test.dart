@@ -81,6 +81,32 @@ void main() {
       expect(usage.usedPercent, 50);
       // This would use the "unknown" fallback for kname
     });
+
+    test('parse df -k output (fallback mode)', () {
+      final disks = Disk.parse(_dfOutput);
+      expect(disks, isNotEmpty);
+      expect(disks.length, 3); // Should find 3 valid filesystems: udev, /dev/vda3, /dev/vda2
+
+      // Verify root filesystem
+      final rootFs = disks.firstWhere((disk) => disk.mount == '/');
+      expect(rootFs.path, '/dev/vda3');
+      expect(rootFs.usedPercent, 47);
+      expect(rootFs.size, BigInt.from(40910528 ~/ 1024)); // df -k output divided by 1024 = MB
+      expect(rootFs.used, BigInt.from(18067948 ~/ 1024));
+      expect(rootFs.avail, BigInt.from(20951380 ~/ 1024));
+
+      // Verify boot/efi filesystem
+      final efiFs = disks.firstWhere((disk) => disk.mount == '/boot/efi');
+      expect(efiFs.path, '/dev/vda2');
+      expect(efiFs.usedPercent, 7);
+      expect(efiFs.size, BigInt.from(192559 ~/ 1024));
+      
+      // Verify udev filesystem is included (virtual filesystem)
+      final udevFs = disks.firstWhere((disk) => disk.path == 'udev');
+      expect(udevFs.mount, '/dev');
+      expect(udevFs.usedPercent, 0);
+      expect(udevFs.size, BigInt.from(864088 ~/ 1024));
+    });
   });
 }
 
@@ -278,3 +304,14 @@ overlay                                                     1907116416      5470
 v2000pro/pve                                                1906694784      125440  1906569344   1% /mnt/v2000pro/pve
 v2000pro/download                                           1906569472         128  1906569344   1% /mnt/v2000pro/download''',
 ];
+
+const _dfOutput = '''
+Filesystem     1K-blocks     Used Available Use% Mounted on
+udev              864088        0    864088   0% /dev
+tmpfs             176724      688    176036   1% /run
+/dev/vda3       40910528 18067948  20951380  47% /
+tmpfs             883612        0    883612   0% /dev/shm
+tmpfs               5120        0      5120   0% /run/lock
+/dev/vda2         192559    11807    180752   7% /boot/efi
+tmpfs             176720      104    176616   1% /run/user/1000
+''';

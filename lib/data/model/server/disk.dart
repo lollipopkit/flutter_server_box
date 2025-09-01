@@ -102,19 +102,32 @@ class Disk with EquatableMixin {
       return null;
     }
 
+    // Handle size fields - may not be available in fallback mode
     final sizeStr = device['fssize']?.toString() ?? '0';
-    final size = (BigInt.tryParse(sizeStr) ?? BigInt.zero) ~/ BigInt.from(1024);
+    BigInt size = BigInt.zero;
+    if (sizeStr != '0' && sizeStr.isNotEmpty && sizeStr != 'null') {
+      size = (BigInt.tryParse(sizeStr) ?? BigInt.zero) ~/ BigInt.from(1024);
+    }
 
     final usedStr = device['fsused']?.toString() ?? '0';
-    final used = (BigInt.tryParse(usedStr) ?? BigInt.zero) ~/ BigInt.from(1024);
+    BigInt used = BigInt.zero;
+    if (usedStr != '0' && usedStr.isNotEmpty && usedStr != 'null') {
+      used = (BigInt.tryParse(usedStr) ?? BigInt.zero) ~/ BigInt.from(1024);
+    }
 
     final availStr = device['fsavail']?.toString() ?? '0';
-    final avail = (BigInt.tryParse(availStr) ?? BigInt.zero) ~/ BigInt.from(1024);
+    BigInt avail = BigInt.zero;
+    if (availStr != '0' && availStr.isNotEmpty && availStr != 'null') {
+      avail = (BigInt.tryParse(availStr) ?? BigInt.zero) ~/ BigInt.from(1024);
+    }
 
     // Parse fsuse% which is usually in the format "45%"
     String usePercentStr = device['fsuse%']?.toString() ?? '0';
     usePercentStr = usePercentStr.replaceAll('%', '');
-    final usedPercent = int.tryParse(usePercentStr) ?? 0;
+    int usedPercent = 0;
+    if (usePercentStr.isNotEmpty && usePercentStr != 'null') {
+      usedPercent = int.tryParse(usePercentStr) ?? 0;
+    }
 
     final name = device['name']?.toString();
     final kname = device['kname']?.toString();
@@ -155,19 +168,32 @@ class Disk with EquatableMixin {
 
     // Handle common filesystem cases or parent devices with children
     if ((fstype != null && _shouldCalc(fstype, mount)) || (childDisks.isNotEmpty && path.isNotEmpty)) {
+      // Handle size fields - may not be available in fallback mode
       final sizeStr = device['fssize']?.toString() ?? '0';
-      final size = (BigInt.tryParse(sizeStr) ?? BigInt.zero) ~/ BigInt.from(1024);
+      BigInt size = BigInt.zero;
+      if (sizeStr != '0' && sizeStr.isNotEmpty && sizeStr != 'null') {
+        size = (BigInt.tryParse(sizeStr) ?? BigInt.zero) ~/ BigInt.from(1024);
+      }
 
       final usedStr = device['fsused']?.toString() ?? '0';
-      final used = (BigInt.tryParse(usedStr) ?? BigInt.zero) ~/ BigInt.from(1024);
+      BigInt used = BigInt.zero;
+      if (usedStr != '0' && usedStr.isNotEmpty && usedStr != 'null') {
+        used = (BigInt.tryParse(usedStr) ?? BigInt.zero) ~/ BigInt.from(1024);
+      }
 
       final availStr = device['fsavail']?.toString() ?? '0';
-      final avail = (BigInt.tryParse(availStr) ?? BigInt.zero) ~/ BigInt.from(1024);
+      BigInt avail = BigInt.zero;
+      if (availStr != '0' && availStr.isNotEmpty && availStr != 'null') {
+        avail = (BigInt.tryParse(availStr) ?? BigInt.zero) ~/ BigInt.from(1024);
+      }
 
       // Parse fsuse% which is usually in the format "45%"
       String usePercentStr = device['fsuse%']?.toString() ?? '0';
       usePercentStr = usePercentStr.replaceAll('%', '');
-      final usedPercent = int.tryParse(usePercentStr) ?? 0;
+      int usedPercent = 0;
+      if (usePercentStr.isNotEmpty && usePercentStr != 'null') {
+        usedPercent = int.tryParse(usePercentStr) ?? 0;
+      }
 
       final name = device['name']?.toString();
       final kname = device['kname']?.toString();
