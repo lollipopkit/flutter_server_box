@@ -7,7 +7,7 @@ part of 'private_key.dart';
 // **************************************************************************
 
 String _$privateKeyNotifierHash() =>
-    r'404836a4409f64d305c1e22f4a57b52985a57b68';
+    r'12edd05dca29d1cbc9e2a3e047c3d417d22f7bb7';
 
 /// See also [PrivateKeyNotifier].
 @ProviderFor(PrivateKeyNotifier)

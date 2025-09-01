@@ -232,35 +232,64 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage> with AfterLayou
   }
 
   Widget _buildKeyAuth() {
+    const padding = EdgeInsets.only(left: 13, right: 13, bottom: 7);
     final privateKeyState = ref.watch(privateKeyNotifierProvider);
     final pkis = privateKeyState.keys;
 
-    final tiles = List<Widget>.generate(pkis.length, (index) {
-      final e = pkis[index];
-      return ListTile(
-        contentPadding: const EdgeInsets.only(left: 10, right: 15),
-        leading: Radio<int>(value: index),
-        title: Text(e.id, textAlign: TextAlign.start),
-        subtitle: Text(e.type ?? l10n.unknown, textAlign: TextAlign.start, style: UIs.textGrey),
-        trailing: Btn.icon(
-          icon: const Icon(Icons.edit),
-          onTap: () => PrivateKeyEditPage.route.go(context, args: PrivateKeyEditPageArgs(pki: e)),
+    final choice = _keyIdx.listenVal((val) {
+      final selectedPki = val != null && val >= 0 && val < pkis.length ? pkis[val] : null;
+      return Choice<int>(
+        multiple: false,
+        clearable: true,
+        value: selectedPki != null ? [val!] : [],
+        builder: (state, _) => Column(
+          children: [
+            Wrap(
+              children: List<Widget>.generate(pkis.length, (index) {
+                final item = pkis[index];
+                return ChoiceChipX<int>(
+                  label: item.id,
+                  state: state,
+                  value: index,
+                  onSelected: (idx, on) {
+                    if (on) {
+                      _keyIdx.value = idx;
+                    } else {
+                      _keyIdx.value = -1;
+                    }
+                  },
+                );
+              }),
+            ),
+            UIs.height7,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                if (selectedPki != null)
+                  Btn.icon(
+                    icon: const Icon(Icons.edit, size: 20),
+                    text: libL10n.edit,
+                    onTap: () => PrivateKeyEditPage.route.go(context, args: PrivateKeyEditPageArgs(pki: selectedPki)),
+                  ),
+                Btn.icon(
+                  icon: const Icon(Icons.add, size: 20),
+                  text: libL10n.add,
+                  onTap: () => PrivateKeyEditPage.route.go(context),
+                ),
+              ],
+            ),
+          ],
         ),
-        onTap: () => _keyIdx.value = index,
       );
     });
-    tiles.add(
-      ListTile(
-        title: Text(libL10n.add),
-        contentPadding: const EdgeInsets.only(left: 23, right: 23),
-        trailing: const Icon(Icons.add),
-        onTap: () => PrivateKeyEditPage.route.go(context),
-      ),
-    );
-    return RadioGroup<int>(
-      onChanged: (val) => _keyIdx.value = val,
-      child: _keyIdx.listenVal((_) => Column(children: tiles)).cardx,
-    );
+    
+    return ExpandTile(
+      leading: const Icon(Icons.key),
+      initiallyExpanded: _keyIdx.value != null && _keyIdx.value! >= 0,
+      childrenPadding: padding,
+      title: Text(l10n.privateKey),
+      children: [choice],
+    ).cardx;
   }
 
   Widget _buildEnvs() {
