@@ -63,6 +63,7 @@ abstract final class SSHConfig {
     void addServer() {
       if (currentHost != null && currentHost != '*' && hostname != null) {
         final spi = Spi(
+          id: ShortId.generate(),
           name: currentHost,
           ip: hostname,
           port: port,

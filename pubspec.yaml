@@ -65,6 +65,7 @@ dependencies:
       url: https://github.com/lppcg/fl_lib
       ref: v1.0.345
   flutter_gbk2utf8: ^1.0.1
+  get_it: ^8.2.0
 
 dependency_overrides:
   # webdav_client_plus:
@@ -77,7 +78,7 @@ dependency_overrides:
   #   path: ../fl_lib
   # fl_build:
   #   path: ../fl_build
-  gtk:
+  gtk: # TODO: remove it after fixed in upstream
     git:
       url: https://github.com/lollipopkit/gtk.dart
       ref: v0.0.36
