@@ -195,6 +195,24 @@ void main() {
       // Should handle inconsistent formatting
       expect(disks.length, greaterThan(0));
     });
+
+    test('handle lsblk with success marker', () {
+      final disks = Disk.parse(_lsblkWithSuccessMarker);
+      expect(disks, isNotEmpty);
+      
+      // Should parse JSON and ignore success marker
+      final rootFs = disks.firstWhere((disk) => disk.mount == '/');
+      expect(rootFs.fsTyp, 'ext4');
+      expect(rootFs.usedPercent, 56);
+    });
+
+    test('handle malformed lsblk output fallback', () {
+      final disks = Disk.parse(_malformedLsblkWithDfFallback);
+      expect(disks, isNotEmpty);
+      
+      // Should fallback to df -k parsing when lsblk output is malformed
+      expect(disks.length, 3);
+    });
   });
 }
 
@@ -511,4 +529,32 @@ Filesystem    1K-blocks    Used    Available   Use%   Mounted on
 /dev/sda1     1000000      500000  500000      50%    /
 /dev/sda2     2000000      1000000 1000000     50%    /home
    udev       864088       0       864088      0%     /dev
+''';
+
+const _lsblkWithSuccessMarker = '''
+{
+  "blockdevices": [
+    {
+      "fstype": "ext4",
+      "mountpoint": "/",
+      "fssize": 982141468672,
+      "fsused": 552718364672,
+      "fsavail": 379457622016,
+      "fsuse%": "56%",
+      "path": "/dev/sda1"
+    }
+  ]
+}
+LSBLK_SUCCESS
+''';
+
+const _malformedLsblkWithDfFallback = '''
+Filesystem     1K-blocks     Used Available Use% Mounted on
+udev              864088        0    864088   0% /dev
+tmpfs             176724      688    176036   1% /run
+/dev/vda3       40910528 18067948  20951380  47% /
+tmpfs             883612        0    883612   0% /dev/shm
+tmpfs               5120        0      5120   0% /run/lock
+/dev/vda2         192559    11807    180752   7% /boot/efi
+tmpfs             176720      104    176616   1% /run/user/1000
 ''';

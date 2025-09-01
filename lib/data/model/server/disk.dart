@@ -51,27 +51,40 @@ class Disk with EquatableMixin {
     }
 
     try {
+      // Check if we have lsblk JSON output with success marker
       if (raw.startsWith('{')) {
-        // Parse JSON output from lsblk command
+        // Extract JSON part (excluding the success marker if present)
+        final jsonEnd = raw.indexOf('\nLSBLK_SUCCESS');
+        final jsonPart = jsonEnd > 0 ? raw.substring(0, jsonEnd) : raw;
+        
         try {
-          final Map<String, dynamic> jsonData = json.decode(raw);
+          final Map<String, dynamic> jsonData = json.decode(jsonPart);
           final List<dynamic> blockdevices = jsonData['blockdevices'] ?? [];
 
           for (final device in blockdevices) {
             // Process each device
             _processTopLevelDevice(device, list);
           }
+          
+          // If we successfully parsed JSON and have valid disks, return them
+          if (list.isNotEmpty) {
+            return list;
+          }
         } on FormatException catch (e) {
-          Loggers.app.warning('JSON parsing failed, falling back to legacy method: $e');
-          return _parseWithOldMethod(raw);
+          Loggers.app.warning('JSON parsing failed, falling back to df -k output: $e');
         } catch (e) {
-          Loggers.app.warning('Error processing JSON disk data: $e', e);
-          return _parseWithOldMethod(raw);
+          Loggers.app.warning('Error processing JSON disk data, falling back to df -k output: $e', e);
         }
-      } else {
-        // Fallback to the old parsing method in case of non-JSON output
+      }
+      
+      // Check if we have df -k output (fallback case)
+      if (raw.contains('Filesystem') && raw.contains('Mounted on')) {
         return _parseWithOldMethod(raw);
       }
+      
+      // If we reach here, both parsing methods failed
+      Loggers.app.warning('Unable to parse disk info with any method');
+      
     } catch (e) {
       Loggers.app.warning('Failed to parse disk info with both methods: $e', e);
     }

@@ -55,9 +55,8 @@ enum StatusCmdType implements ShellCmdType {
   uptime('uptime'),
   conn('cat /proc/net/snmp'),
   disk(
-    'lsblk --bytes --json --output '
-    'FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID '
-    '|| df -k'
+    '(lsblk --bytes --json --output '
+    'FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID 2>/dev/null && echo "LSBLK_SUCCESS") || df -k'
   ),
   mem("cat /proc/meminfo | grep -E 'Mem|Swap'"),
   tempType('cat /sys/class/thermal/thermal_zone*/type'),
