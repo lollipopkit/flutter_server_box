@@ -6,7 +6,7 @@ part of 'snippet.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$snippetNotifierHash() => r'caf0361f9a0346fb99cb90f032f1ceb29446dd71';
+String _$snippetNotifierHash() => r'8285c7edf905a4aaa41cd8b65b0a6755c8b97fc9';
 
 /// See also [SnippetNotifier].
 @ProviderFor(SnippetNotifier)
