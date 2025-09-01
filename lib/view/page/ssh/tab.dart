@@ -8,7 +8,7 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
-import 'package:server_box/view/page/server/edit.dart';
+import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 
 class SSHTabPage extends ConsumerStatefulWidget {
