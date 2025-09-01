@@ -44,22 +44,49 @@ class Disk with EquatableMixin {
   static List<Disk> parse(String raw) {
     final list = <Disk>[];
     raw = raw.trim();
-    try {
-      if (raw.startsWith('{')) {
-        // Parse JSON output from lsblk command
-        final Map<String, dynamic> jsonData = json.decode(raw);
-        final List<dynamic> blockdevices = jsonData['blockdevices'] ?? [];
+    
+    if (raw.isEmpty) {
+      dprint('Empty disk info data received');
+      return list;
+    }
 
-        for (final device in blockdevices) {
-          // Process each device
-          _processTopLevelDevice(device, list);
+    try {
+      // Check if we have lsblk JSON output with success marker
+      if (raw.startsWith('{')) {
+        // Extract JSON part (excluding the success marker if present)
+        final jsonEnd = raw.indexOf('\nLSBLK_SUCCESS');
+        final jsonPart = jsonEnd > 0 ? raw.substring(0, jsonEnd) : raw;
+        
+        try {
+          final Map<String, dynamic> jsonData = json.decode(jsonPart);
+          final List<dynamic> blockdevices = jsonData['blockdevices'] ?? [];
+
+          for (final device in blockdevices) {
+            // Process each device
+            _processTopLevelDevice(device, list);
+          }
+          
+          // If we successfully parsed JSON and have valid disks, return them
+          if (list.isNotEmpty) {
+            return list;
+          }
+        } on FormatException catch (e) {
+          Loggers.app.warning('JSON parsing failed, falling back to df -k output: $e');
+        } catch (e) {
+          Loggers.app.warning('Error processing JSON disk data, falling back to df -k output: $e', e);
         }
-      } else {
-        // Fallback to the old parsing method in case of non-JSON output
+      }
+      
+      // Check if we have df -k output (fallback case)
+      if (raw.contains('Filesystem') && raw.contains('Mounted on')) {
         return _parseWithOldMethod(raw);
       }
+      
+      // If we reach here, both parsing methods failed
+      Loggers.app.warning('Unable to parse disk info with any method');
+      
     } catch (e) {
-      Loggers.app.warning('Failed to parse disk info: $e', e);
+      Loggers.app.warning('Failed to parse disk info with both methods: $e', e);
     }
     return list;
   }
@@ -88,6 +115,32 @@ class Disk with EquatableMixin {
     }
   }
 
+  /// Parse filesystem fields from device data
+  static ({BigInt size, BigInt used, BigInt avail, int usedPercent}) _parseFilesystemFields(Map<String, dynamic> device) {
+    // Helper function to parse size strings safely
+    BigInt parseSize(String? sizeStr) {
+      if (sizeStr == null || sizeStr.isEmpty || sizeStr == 'null' || sizeStr == '0') {
+        return BigInt.zero;
+      }
+      return (BigInt.tryParse(sizeStr) ?? BigInt.zero) ~/ BigInt.from(1024);
+    }
+
+    // Helper function to parse percentage strings
+    int parsePercent(String? percentStr) {
+      if (percentStr == null || percentStr.isEmpty || percentStr == 'null') {
+        return 0;
+      }
+      return int.tryParse(percentStr.replaceAll('%', '')) ?? 0;
+    }
+
+    return (
+      size: parseSize(device['fssize']?.toString()),
+      used: parseSize(device['fsused']?.toString()),
+      avail: parseSize(device['fsavail']?.toString()),
+      usedPercent: parsePercent(device['fsuse%']?.toString()),
+    );
+  }
+
   /// Process a single device without recursively processing its children
   static Disk? _processSingleDevice(Map<String, dynamic> device) {
     final fstype = device['fstype']?.toString();
@@ -102,20 +155,7 @@ class Disk with EquatableMixin {
       return null;
     }
 
-    final sizeStr = device['fssize']?.toString() ?? '0';
-    final size = (BigInt.tryParse(sizeStr) ?? BigInt.zero) ~/ BigInt.from(1024);
-
-    final usedStr = device['fsused']?.toString() ?? '0';
-    final used = (BigInt.tryParse(usedStr) ?? BigInt.zero) ~/ BigInt.from(1024);
-
-    final availStr = device['fsavail']?.toString() ?? '0';
-    final avail = (BigInt.tryParse(availStr) ?? BigInt.zero) ~/ BigInt.from(1024);
-
-    // Parse fsuse% which is usually in the format "45%"
-    String usePercentStr = device['fsuse%']?.toString() ?? '0';
-    usePercentStr = usePercentStr.replaceAll('%', '');
-    final usedPercent = int.tryParse(usePercentStr) ?? 0;
-
+    final fsFields = _parseFilesystemFields(device);
     final name = device['name']?.toString();
     final kname = device['kname']?.toString();
     final uuid = device['uuid']?.toString();
@@ -124,10 +164,10 @@ class Disk with EquatableMixin {
       path: path,
       fsTyp: fstype,
       mount: mountpoint,
-      usedPercent: usedPercent,
-      used: used,
-      size: size,
-      avail: avail,
+      usedPercent: fsFields.usedPercent,
+      used: fsFields.used,
+      size: fsFields.size,
+      avail: fsFields.avail,
       name: name,
       kname: kname,
       uuid: uuid,
@@ -155,20 +195,7 @@ class Disk with EquatableMixin {
 
     // Handle common filesystem cases or parent devices with children
     if ((fstype != null && _shouldCalc(fstype, mount)) || (childDisks.isNotEmpty && path.isNotEmpty)) {
-      final sizeStr = device['fssize']?.toString() ?? '0';
-      final size = (BigInt.tryParse(sizeStr) ?? BigInt.zero) ~/ BigInt.from(1024);
-
-      final usedStr = device['fsused']?.toString() ?? '0';
-      final used = (BigInt.tryParse(usedStr) ?? BigInt.zero) ~/ BigInt.from(1024);
-
-      final availStr = device['fsavail']?.toString() ?? '0';
-      final avail = (BigInt.tryParse(availStr) ?? BigInt.zero) ~/ BigInt.from(1024);
-
-      // Parse fsuse% which is usually in the format "45%"
-      String usePercentStr = device['fsuse%']?.toString() ?? '0';
-      usePercentStr = usePercentStr.replaceAll('%', '');
-      final usedPercent = int.tryParse(usePercentStr) ?? 0;
-
+      final fsFields = _parseFilesystemFields(device);
       final name = device['name']?.toString();
       final kname = device['kname']?.toString();
       final uuid = device['uuid']?.toString();
@@ -177,10 +204,10 @@ class Disk with EquatableMixin {
         path: path,
         fsTyp: fstype,
         mount: mount,
-        usedPercent: usedPercent,
-        used: used,
-        size: size,
-        avail: avail,
+        usedPercent: fsFields.usedPercent,
+        used: fsFields.used,
+        size: fsFields.size,
+        avail: fsFields.avail,
         name: name,
         kname: kname,
         uuid: uuid,
