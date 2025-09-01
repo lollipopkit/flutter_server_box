@@ -107,6 +107,94 @@ void main() {
       expect(udevFs.usedPercent, 0);
       expect(udevFs.size, BigInt.from(864088 ~/ 1024));
     });
+
+    test('handle empty input gracefully', () {
+      final disks = Disk.parse('');
+      expect(disks, isEmpty);
+    });
+
+    test('handle whitespace-only input', () {
+      final disks = Disk.parse('   \n\t  \r\n  ');
+      expect(disks, isEmpty);
+    });
+
+    test('handle JSON with null filesystem fields', () {
+      final disks = Disk.parse(_jsonWithNullFields);
+      expect(disks, isNotEmpty);
+      
+      // Should handle null filesystem fields gracefully
+      final disk = disks.firstWhere((disk) => disk.mount == '/');
+      expect(disk.size, BigInt.zero);
+      expect(disk.used, BigInt.zero);
+      expect(disk.avail, BigInt.zero);
+      expect(disk.usedPercent, 0);
+    });
+
+    test('handle JSON with string "null" values', () {
+      final disks = Disk.parse(_jsonWithStringNulls);
+      expect(disks, isNotEmpty);
+      
+      // Should handle string "null" filesystem fields gracefully
+      final disk = disks.firstWhere((disk) => disk.mount == '/');
+      expect(disk.size, BigInt.zero);
+      expect(disk.used, BigInt.zero);
+      expect(disk.avail, BigInt.zero);
+      expect(disk.usedPercent, 0);
+    });
+
+    test('handle JSON with empty string values', () {
+      final disks = Disk.parse(_jsonWithEmptyStrings);
+      expect(disks, isNotEmpty);
+      
+      // Should handle empty string filesystem fields gracefully
+      final disk = disks.firstWhere((disk) => disk.mount == '/');
+      expect(disk.size, BigInt.zero);
+      expect(disk.used, BigInt.zero);
+      expect(disk.avail, BigInt.zero);
+      expect(disk.usedPercent, 0);
+    });
+
+    test('handle JSON with invalid percentage format', () {
+      final disks = Disk.parse(_jsonWithInvalidPercent);
+      expect(disks, isNotEmpty);
+      
+      // Should handle invalid percentage gracefully
+      final disk = disks.firstWhere((disk) => disk.mount == '/');
+      expect(disk.usedPercent, 0);
+    });
+
+    test('handle JSON with malformed numbers', () {
+      final disks = Disk.parse(_jsonWithMalformedNumbers);
+      expect(disks, isNotEmpty);
+      
+      // Should handle malformed numbers gracefully
+      final disk = disks.firstWhere((disk) => disk.mount == '/');
+      expect(disk.size, BigInt.zero);
+      expect(disk.used, BigInt.zero);
+      expect(disk.avail, BigInt.zero);
+    });
+
+    test('handle JSON parsing errors gracefully', () {
+      final disks = Disk.parse(_malformedJson);
+      expect(disks, isEmpty); // Should fallback to legacy method, which also fails
+    });
+
+    test('handle df output with missing fields', () {
+      final disks = Disk.parse(_dfWithMissingFields);
+      expect(disks, isNotEmpty);
+      
+      // Should handle missing fields gracefully
+      final disk = disks.firstWhere((disk) => disk.mount == '/');
+      expect(disk.usedPercent, 47);
+    });
+
+    test('handle df output with inconsistent formatting', () {
+      final disks = Disk.parse(_dfWithInconsistentFormatting);
+      expect(disks, isNotEmpty);
+      
+      // Should handle inconsistent formatting
+      expect(disks.length, greaterThan(0));
+    });
   });
 }
 
@@ -314,4 +402,113 @@ tmpfs             883612        0    883612   0% /dev/shm
 tmpfs               5120        0      5120   0% /run/lock
 /dev/vda2         192559    11807    180752   7% /boot/efi
 tmpfs             176720      104    176616   1% /run/user/1000
+''';
+
+// Test data for edge cases
+const _jsonWithNullFields = '''
+{
+  "blockdevices": [
+    {
+      "fstype": "ext4",
+      "mountpoint": "/",
+      "fssize": null,
+      "fsused": null,
+      "fsavail": null,
+      "fsuse%": null,
+      "path": "/dev/sda1"
+    }
+  ]
+}
+''';
+
+const _jsonWithStringNulls = '''
+{
+  "blockdevices": [
+    {
+      "fstype": "ext4",
+      "mountpoint": "/",
+      "fssize": "null",
+      "fsused": "null",
+      "fsavail": "null",
+      "fsuse%": "null",
+      "path": "/dev/sda1"
+    }
+  ]
+}
+''';
+
+const _jsonWithEmptyStrings = '''
+{
+  "blockdevices": [
+    {
+      "fstype": "ext4",
+      "mountpoint": "/",
+      "fssize": "",
+      "fsused": "",
+      "fsavail": "",
+      "fsuse%": "",
+      "path": "/dev/sda1"
+    }
+  ]
+}
+''';
+
+const _jsonWithInvalidPercent = '''
+{
+  "blockdevices": [
+    {
+      "fstype": "ext4",
+      "mountpoint": "/",
+      "fssize": "1000000",
+      "fsused": "500000",
+      "fsavail": "500000",
+      "fsuse%": "invalid_percent",
+      "path": "/dev/sda1"
+    }
+  ]
+}
+''';
+
+const _jsonWithMalformedNumbers = '''
+{
+  "blockdevices": [
+    {
+      "fstype": "ext4",
+      "mountpoint": "/",
+      "fssize": "not_a_number",
+      "fsused": "invalid",
+      "fsavail": "broken",
+      "fsuse%": "50%",
+      "path": "/dev/sda1"
+    }
+  ]
+}
+''';
+
+const _malformedJson = '''
+{
+  "blockdevices": [
+    {
+      "fstype": "ext4",
+      "mountpoint": "/",
+      "fssize": "1000000",
+      "fsused": "500000",
+      "fsavail": "500000",
+      "fsuse%": "50%",
+      "path": "/dev/sda1"
+    }
+  ]
+  // Missing closing brace and malformed structure
+''';
+
+const _dfWithMissingFields = '''
+Filesystem     1K-blocks     Used Available Use% Mounted on
+/dev/vda3       40910528 18067948  20951380  47% /
+''';
+
+const _dfWithInconsistentFormatting = '''
+Filesystem    1K-blocks    Used    Available   Use%   Mounted on
+/dev/sda1     1000000      500000  500000      50%    /
+/dev/sda2     2000000      1000000 1000000     50%    /home
+   udev       864088       0       864088      0%     /dev
 ''';

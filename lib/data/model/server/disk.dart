@@ -104,34 +104,28 @@ class Disk with EquatableMixin {
 
   /// Parse filesystem fields from device data
   static ({BigInt size, BigInt used, BigInt avail, int usedPercent}) _parseFilesystemFields(Map<String, dynamic> device) {
-    // Handle size fields - may not be available in fallback mode
-    final sizeStr = device['fssize']?.toString() ?? '0';
-    BigInt size = BigInt.zero;
-    if (sizeStr != '0' && sizeStr.isNotEmpty && sizeStr != 'null') {
-      size = (BigInt.tryParse(sizeStr) ?? BigInt.zero) ~/ BigInt.from(1024);
+    // Helper function to parse size strings safely
+    BigInt parseSize(String? sizeStr) {
+      if (sizeStr == null || sizeStr.isEmpty || sizeStr == 'null' || sizeStr == '0') {
+        return BigInt.zero;
+      }
+      return (BigInt.tryParse(sizeStr) ?? BigInt.zero) ~/ BigInt.from(1024);
     }
 
-    final usedStr = device['fsused']?.toString() ?? '0';
-    BigInt used = BigInt.zero;
-    if (usedStr != '0' && usedStr.isNotEmpty && usedStr != 'null') {
-      used = (BigInt.tryParse(usedStr) ?? BigInt.zero) ~/ BigInt.from(1024);
+    // Helper function to parse percentage strings
+    int parsePercent(String? percentStr) {
+      if (percentStr == null || percentStr.isEmpty || percentStr == 'null') {
+        return 0;
+      }
+      return int.tryParse(percentStr.replaceAll('%', '')) ?? 0;
     }
 
-    final availStr = device['fsavail']?.toString() ?? '0';
-    BigInt avail = BigInt.zero;
-    if (availStr != '0' && availStr.isNotEmpty && availStr != 'null') {
-      avail = (BigInt.tryParse(availStr) ?? BigInt.zero) ~/ BigInt.from(1024);
-    }
-
-    // Parse fsuse% which is usually in the format "45%"
-    String usePercentStr = device['fsuse%']?.toString() ?? '0';
-    usePercentStr = usePercentStr.replaceAll('%', '');
-    int usedPercent = 0;
-    if (usePercentStr.isNotEmpty && usePercentStr != 'null') {
-      usedPercent = int.tryParse(usePercentStr) ?? 0;
-    }
-
-    return (size: size, used: used, avail: avail, usedPercent: usedPercent);
+    return (
+      size: parseSize(device['fssize']?.toString()),
+      used: parseSize(device['fsused']?.toString()),
+      avail: parseSize(device['fsavail']?.toString()),
+      usedPercent: parsePercent(device['fsuse%']?.toString()),
+    );
   }
 
   /// Process a single device without recursively processing its children
