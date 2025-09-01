@@ -1,4 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
+import 'package:get_it/get_it.dart';
 import 'package:server_box/data/store/container.dart';
 import 'package:server_box/data/store/history.dart';
 import 'package:server_box/data/store/private_key.dart';
@@ -6,25 +7,34 @@ import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/snippet.dart';
 
+final GetIt getIt = GetIt.instance;
+
 abstract final class Stores {
-  static final setting = SettingStore.instance;
-  static final server = ServerStore.instance;
-  static final container = ContainerStore.instance;
-  static final key = PrivateKeyStore.instance;
-  static final snippet = SnippetStore.instance;
-  static final history = HistoryStore.instance;
+  static SettingStore get setting => getIt<SettingStore>();
+  static ServerStore get server => getIt<ServerStore>();
+  static ContainerStore get container => getIt<ContainerStore>();
+  static PrivateKeyStore get key => getIt<PrivateKeyStore>();
+  static SnippetStore get snippet => getIt<SnippetStore>();
+  static HistoryStore get history => getIt<HistoryStore>();
 
   /// All stores that need backup
-  static final List<HiveStore> _allBackup = [
-    SettingStore.instance,
-    ServerStore.instance,
-    ContainerStore.instance,
-    PrivateKeyStore.instance,
-    SnippetStore.instance,
-    HistoryStore.instance,
-  ];
+  static List<HiveStore> get _allBackup => [
+        setting,
+        server,
+        container,
+        key,
+        snippet,
+        history,
+      ];
 
   static Future<void> init() async {
+    getIt.registerLazySingleton<SettingStore>(() => SettingStore.instance);
+    getIt.registerLazySingleton<ServerStore>(() => ServerStore.instance);
+    getIt.registerLazySingleton<ContainerStore>(() => ContainerStore.instance);
+    getIt.registerLazySingleton<PrivateKeyStore>(() => PrivateKeyStore.instance);
+    getIt.registerLazySingleton<SnippetStore>(() => SnippetStore.instance);
+    getIt.registerLazySingleton<HistoryStore>(() => HistoryStore.instance);
+    
     await Future.wait(_allBackup.map((store) => store.init()));
   }
 
