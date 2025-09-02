@@ -92,4 +92,4 @@ This is a Flutter application for managing Linux servers with the following key 
   - `libL10n` is from `fl_lib` package, and `l10n` is from this project.
   - Before adding new strings, check if it already exists in `libL10n`.
   - Prioritize using strings from `libL10n` to avoid duplication, even if the meaning is not 100% exact, just use the substitution of `libL10n`.
-- Split UI into Widget build, Actions, Utils. use `extension on` to archive this
+- Split UI into Widget build, Actions, Utils. use `extension on` to achieve this

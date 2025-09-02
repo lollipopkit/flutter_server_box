@@ -11,7 +11,6 @@ class ConnectionStatsPage extends StatefulWidget {
   State<ConnectionStatsPage> createState() => _ConnectionStatsPageState();
 }
 
-
 class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
   List<ServerConnectionStats> _serverStats = [];
   bool _isLoading = true;
@@ -74,7 +73,9 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
   }
 
   Widget _buildServerStatsCard(ServerConnectionStats stats) {
-    final successRate = (stats.successRate * 100).toStringAsFixed(1);
+    final successRate = stats.totalAttempts == 0
+        ? 'N/A'
+        : '${(stats.successRate * 100).toStringAsFixed(1)}%';
     final lastSuccessTime = stats.lastSuccessTime;
     final lastFailureTime = stats.lastFailureTime;
 
@@ -324,10 +325,7 @@ extension on _ConnectionStatsPageState {
       title: l10n.clearAllStatsTitle,
       child: Text(l10n.clearAllStatsContent),
       actions: [
-        TextButton(
-          onPressed: context.pop,
-          child: Text(libL10n.cancel),
-        ),
+        TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
         CountDownBtn(
           onTap: () {
             context.pop();
@@ -346,10 +344,7 @@ extension on _ConnectionStatsPageState {
       title: l10n.clearServerStatsTitle(stats.serverName),
       child: Text(l10n.clearServerStatsContent(stats.serverName)),
       actions: [
-        TextButton(
-          onPressed: context.pop,
-          child: Text(libL10n.cancel),
-        ),
+        TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
         CountDownBtn(
           onTap: () {
             context.pop();
