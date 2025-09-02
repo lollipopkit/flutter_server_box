@@ -276,5 +276,10 @@
         "type": "String"
       }
     }
-  }
+  },
+  "homeTabs": "Home-tabbladen",
+  "homeTabsCustomizeDesc": "Pas aan welke tabbladen op de startpagina worden weergegeven en hun volgorde",
+  "reset": "Resetten",
+  "availableTabs": "Beschikbare tabbladen",
+  "atLeastOneTab": "Er moet minimaal één tabblad worden geselecteerd"
 }

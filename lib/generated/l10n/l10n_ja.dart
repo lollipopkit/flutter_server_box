@@ -861,4 +861,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String clearServerStatsContent(String serverName) {
     return 'サーバー\"$serverName\"の接続統計を削除してもよろしいですか？この操作は元に戻せません。';
   }
+
+  @override
+  String get homeTabs => 'ホームタブ';
+
+  @override
+  String get homeTabsCustomizeDesc => 'ホームページに表示するタブとその順序をカスタマイズします';
+
+  @override
+  String get reset => 'リセット';
+
+  @override
+  String get availableTabs => '利用可能なタブ';
+
+  @override
+  String get atLeastOneTab => '少なくとも1つのタブを選択する必要があります';
 }

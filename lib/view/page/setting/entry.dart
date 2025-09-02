@@ -18,6 +18,7 @@ import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/backup.dart';
 import 'package:server_box/view/page/private_key/list.dart';
 import 'package:server_box/view/page/server/connection_stats.dart';
+import 'package:server_box/view/page/setting/entries/home_tabs.dart';
 import 'package:server_box/view/page/setting/platform/android.dart';
 import 'package:server_box/view/page/setting/platform/ios.dart';
 import 'package:server_box/view/page/setting/platform/platform_pub.dart';

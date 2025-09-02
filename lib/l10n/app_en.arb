@@ -276,5 +276,10 @@
         "type": "String"
       }
     }
-  }
+  },
+  "homeTabs": "Home Tabs",
+  "homeTabsCustomizeDesc": "Customize which tabs appear on the home page and their order",
+  "reset": "Reset",
+  "availableTabs": "Available Tabs",
+  "atLeastOneTab": "At least one tab must be selected"
 }

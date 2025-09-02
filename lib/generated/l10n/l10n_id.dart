@@ -887,4 +887,20 @@ class AppLocalizationsId extends AppLocalizations {
   String clearServerStatsContent(String serverName) {
     return 'Apakah Anda yakin ingin menghapus statistik koneksi untuk server \"$serverName\"? Tindakan ini tidak dapat dibatalkan.';
   }
+
+  @override
+  String get homeTabs => 'Tab Beranda';
+
+  @override
+  String get homeTabsCustomizeDesc =>
+      'Sesuaikan tab mana yang muncul di halaman beranda dan urutannya';
+
+  @override
+  String get reset => 'Reset';
+
+  @override
+  String get availableTabs => 'Tab Tersedia';
+
+  @override
+  String get atLeastOneTab => 'Setidaknya satu tab harus dipilih';
 }

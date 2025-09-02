@@ -887,4 +887,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String clearServerStatsContent(String serverName) {
     return 'Are you sure you want to clear connection statistics for server \"$serverName\"? This action cannot be undone.';
   }
+
+  @override
+  String get homeTabs => 'Home Tabs';
+
+  @override
+  String get homeTabsCustomizeDesc =>
+      'Customize which tabs appear on the home page and their order';
+
+  @override
+  String get reset => 'Reset';
+
+  @override
+  String get availableTabs => 'Available Tabs';
+
+  @override
+  String get atLeastOneTab => 'At least one tab must be selected';
 }

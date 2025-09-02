@@ -3,11 +3,13 @@
 // Check in to version control
 
 import 'package:hive_ce/hive.dart';
+import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
 import 'package:server_box/hive/hive_adapters.dart';
 
 extension HiveRegistrar on HiveInterface {
   void registerAdapters() {
+    registerAdapter(AppTabAdapter());
     registerAdapter(ConnectionResultAdapter());
     registerAdapter(ConnectionStatAdapter());
     registerAdapter(NetViewTypeAdapter());
@@ -25,6 +27,7 @@ extension HiveRegistrar on HiveInterface {
 
 extension IsolatedHiveRegistrar on IsolatedHiveInterface {
   void registerAdapters() {
+    registerAdapter(AppTabAdapter());
     registerAdapter(ConnectionResultAdapter());
     registerAdapter(ConnectionStatAdapter());
     registerAdapter(NetViewTypeAdapter());

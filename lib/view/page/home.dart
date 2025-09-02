@@ -33,6 +33,7 @@ class _HomePageState extends ConsumerState<HomePage>
 
   late final _notifier = ref.read(serversNotifierProvider.notifier);
   late final _provider = ref.read(serversNotifierProvider);
+  late final List<AppTab> _tabs = Stores.setting.homeTabs.fetch();
 
   @override
   void dispose() {
@@ -51,7 +52,7 @@ class _HomePageState extends ConsumerState<HomePage>
     SystemUIs.switchStatusBar(hide: false);
     WidgetsBinding.instance.addObserver(this);
     // avoid index out of range
-    if (_selectIndex.value >= AppTab.values.length || _selectIndex.value < 0) {
+    if (_selectIndex.value >= _tabs.length || _selectIndex.value < 0) {
       _selectIndex.value = 0;
     }
     _pageController = PageController(initialPage: _selectIndex.value);
@@ -119,9 +120,9 @@ class _HomePageState extends ConsumerState<HomePage>
           Expanded(
             child: PageView.builder(
               controller: _pageController,
-              itemCount: AppTab.values.length,
+              itemCount: _tabs.length,
               physics: const NeverScrollableScrollPhysics(),
-              itemBuilder: (_, index) => AppTab.values[index].page,
+              itemBuilder: (_, index) => _tabs[index].page,
               onPageChanged: (value) {
                 FocusScope.of(context).unfocus();
                 if (!_switchingPage) {
@@ -146,7 +147,7 @@ class _HomePageState extends ConsumerState<HomePage>
         animationDuration: const Duration(milliseconds: 250),
         onDestinationSelected: _onDestinationSelected,
         labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-        destinations: AppTab.navDestinations,
+        destinations: _tabs.map((tab) => tab.navDestination).toList(),
       ),
     );
   }
@@ -165,7 +166,7 @@ class _HomePageState extends ConsumerState<HomePage>
             trailing: extended ? const SizedBox(height: 20) : null,
             labelType: extended ? NavigationRailLabelType.none : NavigationRailLabelType.all,
             selectedIndex: idx,
-            destinations: AppTab.navRailDestinations,
+            destinations: _tabs.map((tab) => tab.navRailDestination).toList(),
             onDestinationSelected: _onDestinationSelected,
           ),
         ),
@@ -236,6 +237,7 @@ class _HomePageState extends ConsumerState<HomePage>
 
   void _onDestinationSelected(int index) {
     if (_selectIndex.value == index) return;
+    if (index < 0 || index >= _tabs.length) return;
     _selectIndex.value = index;
     _switchingPage = true;
     _pageController.animateToPage(

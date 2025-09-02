@@ -8,6 +8,7 @@ extension _App on _AppSettingsPageState {
       _buildThemeMode(),
       _buildAppColor(),
       _buildCheckUpdate(),
+      _buildHomeTabs(),
       PlatformPublicSettings.buildBioAuth,
       if (specific != null) specific,
       _buildAppMore(),
@@ -272,6 +273,17 @@ extension _App on _AppSettingsPageState {
     return ListTile(
       title: Text(l10n.hideTitleBar),
       trailing: StoreSwitch(prop: _setting.hideTitleBar),
+    );
+  }
+
+  Widget _buildHomeTabs() {
+    return ListTile(
+      leading: const Icon(Icons.tab),
+      title: Text(l10n.homeTabs),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: () {
+        HomeTabsConfigPage.route.go(context);
+      },
     );
   }
 }

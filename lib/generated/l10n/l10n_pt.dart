@@ -890,4 +890,20 @@ class AppLocalizationsPt extends AppLocalizations {
   String clearServerStatsContent(String serverName) {
     return 'Tem certeza de que deseja limpar as estatísticas de conexão para o servidor \"$serverName\"? Esta ação não pode ser desfeita.';
   }
+
+  @override
+  String get homeTabs => 'Abas iniciais';
+
+  @override
+  String get homeTabsCustomizeDesc =>
+      'Personalize quais abas aparecem na página inicial e sua ordem';
+
+  @override
+  String get reset => 'Redefinir';
+
+  @override
+  String get availableTabs => 'Abas disponíveis';
+
+  @override
+  String get atLeastOneTab => 'Pelo menos uma aba deve ser selecionada';
 }

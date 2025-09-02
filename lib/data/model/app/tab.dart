@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:hive_ce_flutter/adapters.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/view/page/server/tab/tab.dart';
@@ -8,10 +9,17 @@ import 'package:server_box/view/page/snippet/list.dart';
 import 'package:server_box/view/page/ssh/tab.dart';
 import 'package:server_box/view/page/storage/local.dart';
 
+part 'tab.g.dart';
+
+@HiveType(typeId: 103)
 enum AppTab {
+  @HiveField(0)
   server,
+  @HiveField(1)
   ssh,
+  @HiveField(2)
   file,
+  @HiveField(3)
   snippet
   //settings,
   ;
