@@ -38,11 +38,6 @@ class ContainerNotifier extends _$ContainerNotifier {
 
   @override
   ContainerState build(SSHClient? client, String userName, String hostId, BuildContext context) {
-    this.client = client;
-    this.userName = userName;
-    this.hostId = hostId;
-    this.context = context;
-    
     final type = Stores.container.getType(hostId);
     final initialState = ContainerState(type: type);
     
