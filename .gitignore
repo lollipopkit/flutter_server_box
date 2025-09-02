@@ -1,2 +1,6 @@
 .config
 server_box_monitor
+frontend/node_modules
+target
+serverbox_monitor.db
+.env

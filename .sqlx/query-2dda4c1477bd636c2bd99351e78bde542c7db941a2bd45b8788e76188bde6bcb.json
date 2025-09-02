@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO cpu_core_metrics (\n                timestamp, server_name, core_id, used_time, total_time, usage_percent\n            ) VALUES (?, ?, ?, ?, ?, ?)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "2dda4c1477bd636c2bd99351e78bde542c7db941a2bd45b8788e76188bde6bcb"
+}
