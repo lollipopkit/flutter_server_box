@@ -121,7 +121,7 @@ final class _IntroPage extends StatelessWidget {
         IntroPage.title(text: l10n.backupPassword, big: true),
         SizedBox(height: padTop * 0.5),
         Text(
-          '${l10n.backupTip}\n\n${l10n.backupPasswordTip}',
+          l10n.backupTip,
           style: const TextStyle(fontSize: 16),
           textAlign: TextAlign.center,
         ),
@@ -148,10 +148,7 @@ final class _IntroPage extends StatelessWidget {
                   ),
                 ],
               ),
-              actions: [
-                TextButton(onPressed: () => ctx.pop(false), child: Text(libL10n.cancel)),
-                TextButton(onPressed: () => ctx.pop(true), child: Text(libL10n.ok)),
-              ],
+              actions: Btnx.cancelOk,
             );
             if (result == true) {
               final pwd = controller.text.trim();

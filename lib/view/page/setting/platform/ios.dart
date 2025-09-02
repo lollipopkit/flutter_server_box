@@ -108,14 +108,13 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
   }
 
   void _onTapWatchApp(Map<String, dynamic> map) async {
-    final urls = Map<String, String>.from(map['urls'] as Map? ?? {});
-    final result = await KvEditor.route.go(context, KvEditorArgs(data: urls));
+    final cfgs = List<String>.from(map['urls'] as List? ?? []);
+    final result = await JsonListEditor.route.go(context, JsonListEditorArgs(data: cfgs));
     if (result == null) return;
 
     final (_, err) = await context.showLoadingDialog(
       fn: () async {
         final data = {'urls': result};
-
         // Try realtime update (app must be running foreground).
         try {
           if (await wc.isReachable) {
