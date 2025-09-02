@@ -8,7 +8,7 @@ class ConnectionStatsStore extends HiveStore {
   
   // Record a connection attempt
   void recordConnection(ConnectionStat stat) {
-    final key = '${stat.serverId}_${stat.timestamp.millisecondsSinceEpoch}';
+    final key = '${stat.serverId}_${ShortId.generate()}';
     set(key, stat);
     _cleanOldRecords(stat.serverId);
   }
