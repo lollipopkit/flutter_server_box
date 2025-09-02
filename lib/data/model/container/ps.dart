@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/container/status.dart';
 import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/res/misc.dart';
 
@@ -10,7 +11,7 @@ sealed class ContainerPs {
   final String? image = null;
   String? get name;
   String? get cmd;
-  bool get running;
+  ContainerStatus get status;
 
   String? cpu;
   String? mem;
@@ -51,7 +52,7 @@ final class PodmanPs implements ContainerPs {
   String? get cmd => command?.firstOrNull;
 
   @override
-  bool get running => exited != true;
+  ContainerStatus get status => ContainerStatus.fromPodmanExited(exited);
 
   @override
   void parseStats(String s) {
@@ -121,10 +122,7 @@ final class DockerPs implements ContainerPs {
   String? get cmd => null;
 
   @override
-  bool get running {
-    if (state?.contains('Exited') == true) return false;
-    return true;
-  }
+  ContainerStatus get status => ContainerStatus.fromDockerState(state);
 
   @override
   void parseStats(String s) {

@@ -188,7 +188,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
   Widget _buildPs(ContainerState containerState) {
     final items = containerState.items;
     if (items == null) return UIs.placeholder;
-    final running = items.where((e) => e.running).length;
+    final running = items.where((e) => e.status.isRunning).length;
     final stopped = items.length - running;
     final subtitle = stopped > 0
         ? l10n.dockerStatusRunningAndStoppedFmt(running, stopped)
@@ -219,8 +219,8 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
           ),
           Text(
             '${item.image ?? l10n.unknown} - ${switch (item) {
-              final PodmanPs ps => ps.running ? l10n.running : l10n.stopped,
-              final DockerPs ps => ps.state,
+              final PodmanPs ps => ps.status.displayName,
+              final DockerPs ps => ps.state ?? ps.status.displayName,
             }}',
             style: UIs.text13Grey,
           ),
@@ -277,7 +277,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
 
   Widget _buildMoreBtn(ContainerPs dItem) {
     return PopupMenu(
-      items: ContainerMenu.items(dItem.running).map((e) => PopMenu.build(e, e.icon, e.toStr)).toList(),
+      items: ContainerMenu.items(dItem.status.isRunning).map((e) => PopMenu.build(e, e.icon, e.toStr)).toList(),
       onSelected: (item) => _onTapMoreBtn(item, dItem),
     );
   }
