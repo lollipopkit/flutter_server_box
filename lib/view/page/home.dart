@@ -33,7 +33,7 @@ class _HomePageState extends ConsumerState<HomePage>
 
   late final _notifier = ref.read(serversNotifierProvider.notifier);
   late final _provider = ref.read(serversNotifierProvider);
-  late final List<AppTab> _tabs = Stores.setting.homeTabs.fetch();
+  late List<AppTab> _tabs = Stores.setting.homeTabs.fetch();
 
   @override
   void dispose() {
@@ -59,6 +59,23 @@ class _HomePageState extends ConsumerState<HomePage>
     if (Stores.setting.generalWakeLock.fetch()) {
       WakelockPlus.enable();
     }
+
+    // Listen to homeTabs changes
+    Stores.setting.homeTabs.listenable().addListener(() {
+      final newTabs = Stores.setting.homeTabs.fetch();
+      if (mounted && newTabs != _tabs) {
+        setState(() {
+          _tabs = newTabs;
+          // Ensure current page index is valid
+          if (_selectIndex.value >= _tabs.length) {
+            _selectIndex.value = _tabs.length - 1;
+          }
+          if (_selectIndex.value < 0 && _tabs.isNotEmpty) {
+            _selectIndex.value = 0;
+          }
+        });
+      }
+    });
   }
 
   @override

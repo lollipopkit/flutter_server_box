@@ -8,10 +8,7 @@ import 'package:server_box/data/res/store.dart';
 class HomeTabsConfigPage extends ConsumerStatefulWidget {
   const HomeTabsConfigPage({super.key});
 
-  static final route = AppRouteNoArg(
-    page: HomeTabsConfigPage.new,
-    path: '/settings/home-tabs',
-  );
+  static final route = AppRouteNoArg(page: HomeTabsConfigPage.new, path: '/settings/home-tabs');
 
   @override
   ConsumerState<HomeTabsConfigPage> createState() => _HomeTabsConfigPageState();
@@ -35,10 +32,7 @@ class _HomeTabsConfigPageState extends ConsumerState<HomeTabsConfigPage> {
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Text(
-              l10n.homeTabsCustomizeDesc,
-              style: context.theme.textTheme.bodyMedium,
-            ),
+            child: Text(l10n.homeTabsCustomizeDesc, style: context.theme.textTheme.bodyMedium),
           ),
           Expanded(
             child: ReorderableListView.builder(
@@ -54,10 +48,7 @@ class _HomeTabsConfigPageState extends ConsumerState<HomeTabsConfigPage> {
           const Divider(),
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Text(
-              l10n.availableTabs,
-              style: context.theme.textTheme.titleMedium,
-            ),
+            child: Text(l10n.availableTabs, style: context.theme.textTheme.titleMedium),
           ),
           Expanded(
             child: ListView.builder(
@@ -77,23 +68,25 @@ class _HomeTabsConfigPageState extends ConsumerState<HomeTabsConfigPage> {
   }
 
   Widget _buildTabItem(AppTab tab, int index, bool isSelected) {
+    final canRemove = _selectedTabs.length > 1;
+    final child = ListTile(
+      leading: tab.navDestination.icon,
+      title: Text(tab.navDestination.label),
+      trailing: isSelected
+          ? IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: canRemove ? () => _removeTab(tab) : null,
+              color: canRemove ? null : Theme.of(context).disabledColor,
+              tooltip: canRemove ? libL10n.delete : l10n.atLeastOneTab,
+            )
+          : IconButton(icon: const Icon(Icons.add), onPressed: () => _addTab(tab)),
+      onTap: isSelected && canRemove ? () => _removeTab(tab) : null,
+    );
+
     return Card(
-      key: ValueKey('${tab.name}_$index'),
+      key: ValueKey(tab.name),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: ReorderableDragStartListener(
-        index: index,
-        child: ListTile(
-          leading: tab.navDestination.icon,
-          title: Text(tab.navDestination.label),
-          trailing: isSelected
-              ? const Icon(Icons.delete)
-              : IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () => _addTab(tab),
-                ),
-          onTap: isSelected ? () => _removeTab(tab) : null,
-        ),
-      ),
+      child: isSelected ? ReorderableDragStartListener(index: index, child: child) : child,
     );
   }
 

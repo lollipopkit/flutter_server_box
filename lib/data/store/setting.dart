@@ -252,29 +252,7 @@ class SettingStore extends HiveStore {
   late final homeTabs = listProperty(
     'homeTabs',
     defaultValue: AppTab.values,
-    fromObj: (val) {
-      if (val is List) {
-        final tabs = <AppTab>[];
-        for (final e in val) {
-          if (e is AppTab) {
-            tabs.add(e);
-          } else if (e is String) {
-            final tab = AppTab.values.firstWhereOrNull((t) => t.name == e);
-            if (tab != null) {
-              tabs.add(tab);
-            }
-          } else if (e is int) {
-            if (e >= 0 && e < AppTab.values.length) {
-              tabs.add(AppTab.values[e]);
-            }
-          }
-          dprint('Parsed home tab: $e, runtime type: ${e.runtimeType}');
-        }
-        dprint('Loaded home tabs: $tabs');
-        if (tabs.isNotEmpty) return tabs;
-      }
-      return AppTab.values;
-    },
+    fromObj: AppTab.parseAppTabsFromObj,
     toObj: (val) {
       return val?.map((e) => e.name).toList() ?? [];
     },
