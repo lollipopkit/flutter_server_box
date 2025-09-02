@@ -803,6 +803,49 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get writeScriptTip =>
       '在连接服务器后，会向 `~/.config/server_box` \n | `/tmp/server_box` 写入脚本来监测系统状态，你可以审查脚本内容。';
+
+  @override
+  String get connectionStats => '连接统计';
+
+  @override
+  String get noConnectionStatsData => '暂无连接统计数据';
+
+  @override
+  String get totalAttempts => '总次数';
+
+  @override
+  String get lastSuccess => '最后成功';
+
+  @override
+  String get lastFailure => '最后失败';
+
+  @override
+  String get recentConnections => '最近连接记录';
+
+  @override
+  String get viewDetails => '查看详情';
+
+  @override
+  String get connectionDetails => '连接详情';
+
+  @override
+  String get clearThisServerStats => '清空此服务器统计';
+
+  @override
+  String get clearAllStatsTitle => '清空所有统计';
+
+  @override
+  String get clearAllStatsContent => '确定要清空所有服务器的连接统计数据吗？此操作无法撤销。';
+
+  @override
+  String clearServerStatsTitle(String serverName) {
+    return '清空 $serverName 统计';
+  }
+
+  @override
+  String clearServerStatsContent(String serverName) {
+    return '确定要清空服务器 \"$serverName\" 的连接统计数据吗？此操作无法撤销。';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1604,4 +1647,47 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get writeScriptTip =>
       '連線到伺服器後，將會在 `~/.config/server_box` \n | `/tmp/server_box` 中寫入一個腳本來監測系統狀態。你可以審查腳本內容。';
+
+  @override
+  String get connectionStats => '連線統計';
+
+  @override
+  String get noConnectionStatsData => '暫無連線統計資料';
+
+  @override
+  String get totalAttempts => '總次數';
+
+  @override
+  String get lastSuccess => '最後成功';
+
+  @override
+  String get lastFailure => '最後失敗';
+
+  @override
+  String get recentConnections => '最近連線記錄';
+
+  @override
+  String get viewDetails => '檢視詳情';
+
+  @override
+  String get connectionDetails => '連線詳情';
+
+  @override
+  String get clearThisServerStats => '清空此伺服器統計';
+
+  @override
+  String get clearAllStatsTitle => '清空所有統計';
+
+  @override
+  String get clearAllStatsContent => '確定要清空所有伺服器的連線統計資料嗎？此操作無法撤銷。';
+
+  @override
+  String clearServerStatsTitle(String serverName) {
+    return '清空 $serverName 統計';
+  }
+
+  @override
+  String clearServerStatsContent(String serverName) {
+    return '確定要清空伺服器 \"$serverName\" 的連線統計資料嗎？此操作無法撤銷。';
+  }
 }

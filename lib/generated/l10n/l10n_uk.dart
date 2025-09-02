@@ -849,4 +849,48 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Після підключення до сервера скрипт буде записано у `~/.config/server_box` \n | `/tmp/server_box` для моніторингу стану системи. Ви можете переглянути вміст скрипта.';
+
+  @override
+  String get connectionStats => 'Статистика з\'єднань';
+
+  @override
+  String get noConnectionStatsData => 'Немає даних статистики з\'єднань';
+
+  @override
+  String get totalAttempts => 'Загальна кількість';
+
+  @override
+  String get lastSuccess => 'Останній успіх';
+
+  @override
+  String get lastFailure => 'Остання помилка';
+
+  @override
+  String get recentConnections => 'Останні з\'єднання';
+
+  @override
+  String get viewDetails => 'Переглянути деталі';
+
+  @override
+  String get connectionDetails => 'Деталі з\'єднання';
+
+  @override
+  String get clearThisServerStats => 'Очистити статистику цього сервера';
+
+  @override
+  String get clearAllStatsTitle => 'Очистити всю статистику';
+
+  @override
+  String get clearAllStatsContent =>
+      'Ви впевнені, що хочете очистити всю статистику з\'єднань сервера? Цю дію не можна скасувати.';
+
+  @override
+  String clearServerStatsTitle(String serverName) {
+    return 'Очистити статистику $serverName';
+  }
+
+  @override
+  String clearServerStatsContent(String serverName) {
+    return 'Ви впевнені, що хочете очистити статистику з\'єднань для сервера \"$serverName\"? Цю дію не можна скасувати.';
+  }
 }

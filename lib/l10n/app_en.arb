@@ -249,5 +249,32 @@
   "wolTip": "After configuring WOL (Wake-on-LAN), a WOL request is sent each time the server is connected.",
   "write": "Write",
   "writeScriptFailTip": "Writing to the script failed, possibly due to lack of permissions or the directory does not exist.",
-  "writeScriptTip": "After connecting to the server, a script will be written to `~/.config/server_box` \n | `/tmp/server_box` to monitor the system status. You can review the script content."
+  "writeScriptTip": "After connecting to the server, a script will be written to `~/.config/server_box` \n | `/tmp/server_box` to monitor the system status. You can review the script content.",
+  "connectionStats": "Connection Statistics",
+  "noConnectionStatsData": "No connection statistics data",
+  "totalAttempts": "Total",
+  "lastSuccess": "Last Success",
+  "lastFailure": "Last Failure",
+  "recentConnections": "Recent Connections",
+  "viewDetails": "View Details",
+  "connectionDetails": "Connection Details",
+  "clearThisServerStats": "Clear This Server Statistics",
+  "clearAllStatsTitle": "Clear All Statistics",
+  "clearAllStatsContent": "Are you sure you want to clear all server connection statistics? This action cannot be undone.",
+  "clearServerStatsTitle": "Clear {serverName} Statistics",
+  "@clearServerStatsTitle": {
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  },
+  "clearServerStatsContent": "Are you sure you want to clear connection statistics for server \"{serverName}\"? This action cannot be undone.",
+  "@clearServerStatsContent": {
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  }
 }

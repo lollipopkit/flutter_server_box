@@ -249,5 +249,32 @@
   "wolTip": "WOL（Wake-on-LAN）を設定した後、サーバーに接続するたびにWOLリクエストが送信されます。",
   "write": "書き込み",
   "writeScriptFailTip": "スクリプトの書き込みに失敗しました。権限がないかディレクトリが存在しない可能性があります。",
-  "writeScriptTip": "サーバーに接続すると、システムの状態を監視するためのスクリプトが `~/.config/server_box` \n | `/tmp/server_box` に書き込まれます。スクリプトの内容を確認できます。"
+  "writeScriptTip": "サーバーに接続すると、システムの状態を監視するためのスクリプトが `~/.config/server_box` \n | `/tmp/server_box` に書き込まれます。スクリプトの内容を確認できます。",
+  "connectionStats": "接続統計",
+  "noConnectionStatsData": "接続統計データがありません",
+  "totalAttempts": "総計",
+  "lastSuccess": "最後の成功",
+  "lastFailure": "最後の失敗",
+  "recentConnections": "最近の接続",
+  "viewDetails": "詳細を表示",
+  "connectionDetails": "接続の詳細",
+  "clearThisServerStats": "このサーバーの統計をクリア",
+  "clearAllStatsTitle": "すべての統計をクリア",
+  "clearAllStatsContent": "すべてのサーバー接続統計を削除してもよろしいですか？この操作は元に戻せません。",
+  "clearServerStatsTitle": "{serverName}の統計をクリア",
+  "@clearServerStatsTitle": {
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  },
+  "clearServerStatsContent": "サーバー\"{serverName}\"の接続統計を削除してもよろしいですか？この操作は元に戻せません。",
+  "@clearServerStatsContent": {
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -1621,6 +1621,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'After connecting to the server, a script will be written to `~/.config/server_box` \n | `/tmp/server_box` to monitor the system status. You can review the script content.'**
   String get writeScriptTip;
+
+  /// No description provided for @connectionStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection Statistics'**
+  String get connectionStats;
+
+  /// No description provided for @noConnectionStatsData.
+  ///
+  /// In en, this message translates to:
+  /// **'No connection statistics data'**
+  String get noConnectionStatsData;
+
+  /// No description provided for @totalAttempts.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get totalAttempts;
+
+  /// No description provided for @lastSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Success'**
+  String get lastSuccess;
+
+  /// No description provided for @lastFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Failure'**
+  String get lastFailure;
+
+  /// No description provided for @recentConnections.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Connections'**
+  String get recentConnections;
+
+  /// No description provided for @viewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'View Details'**
+  String get viewDetails;
+
+  /// No description provided for @connectionDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection Details'**
+  String get connectionDetails;
+
+  /// No description provided for @clearThisServerStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear This Server Statistics'**
+  String get clearThisServerStats;
+
+  /// No description provided for @clearAllStatsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear All Statistics'**
+  String get clearAllStatsTitle;
+
+  /// No description provided for @clearAllStatsContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to clear all server connection statistics? This action cannot be undone.'**
+  String get clearAllStatsContent;
+
+  /// No description provided for @clearServerStatsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear {serverName} Statistics'**
+  String clearServerStatsTitle(String serverName);
+
+  /// No description provided for @clearServerStatsContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to clear connection statistics for server \"{serverName}\"? This action cannot be undone.'**
+  String clearServerStatsContent(String serverName);
 }
 
 class _AppLocalizationsDelegate

@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:get_it/get_it.dart';
+import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/container.dart';
 import 'package:server_box/data/store/history.dart';
 import 'package:server_box/data/store/private_key.dart';
@@ -16,6 +17,7 @@ abstract final class Stores {
   static PrivateKeyStore get key => getIt<PrivateKeyStore>();
   static SnippetStore get snippet => getIt<SnippetStore>();
   static HistoryStore get history => getIt<HistoryStore>();
+  static ConnectionStatsStore get connectionStats => getIt<ConnectionStatsStore>();
 
   /// All stores that need backup
   static List<HiveStore> get _allBackup => [
@@ -25,6 +27,7 @@ abstract final class Stores {
         key,
         snippet,
         history,
+        connectionStats,
       ];
 
   static Future<void> init() async {
@@ -34,6 +37,7 @@ abstract final class Stores {
     getIt.registerLazySingleton<PrivateKeyStore>(() => PrivateKeyStore.instance);
     getIt.registerLazySingleton<SnippetStore>(() => SnippetStore.instance);
     getIt.registerLazySingleton<HistoryStore>(() => HistoryStore.instance);
+    getIt.registerLazySingleton<ConnectionStatsStore>(() => ConnectionStatsStore.instance);
     
     await Future.wait(_allBackup.map((store) => store.init()));
   }

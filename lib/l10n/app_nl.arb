@@ -249,5 +249,32 @@
   "wolTip": "Na het configureren van WOL (Wake-on-LAN), wordt elke keer dat de server wordt verbonden een WOL-verzoek verzonden.",
   "write": "Schrijven",
   "writeScriptFailTip": "Het schrijven naar het script is mislukt, mogelijk door gebrek aan rechten of omdat de map niet bestaat.",
-  "writeScriptTip": "Na het verbinden met de server wordt een script geschreven naar `~/.config/server_box` \n | `/tmp/server_box` om de systeemstatus te monitoren. U kunt de inhoud van het script controleren."
+  "writeScriptTip": "Na het verbinden met de server wordt een script geschreven naar `~/.config/server_box` \n | `/tmp/server_box` om de systeemstatus te monitoren. U kunt de inhoud van het script controleren.",
+  "connectionStats": "Verbindingsstatistieken",
+  "noConnectionStatsData": "Geen verbindingsstatistiekgegevens",
+  "totalAttempts": "Totaal",
+  "lastSuccess": "Laatst succesvol",
+  "lastFailure": "Laatst gefaald",
+  "recentConnections": "Recente verbindingen",
+  "viewDetails": "Details bekijken",
+  "connectionDetails": "Verbindingsdetails",
+  "clearThisServerStats": "Statistieken van deze server wissen",
+  "clearAllStatsTitle": "Alle statistieken wissen",
+  "clearAllStatsContent": "Weet u zeker dat u alle serververbindingsstatistieken wilt wissen? Deze actie kan niet ongedaan worden gemaakt.",
+  "clearServerStatsTitle": "Statistieken van {serverName} wissen",
+  "@clearServerStatsTitle": {
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  },
+  "clearServerStatsContent": "Weet u zeker dat u de verbindingsstatistieken voor server \"{serverName}\" wilt wissen? Deze actie kan niet ongedaan worden gemaakt.",
+  "@clearServerStatsContent": {
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  }
 }

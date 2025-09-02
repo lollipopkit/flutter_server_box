@@ -843,4 +843,48 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Setelah terhubung ke server, sebuah skrip akan ditulis ke `~/.config/server_box` \n | `/tmp/server_box` untuk memantau status sistem. Anda dapat meninjau konten skrip tersebut.';
+
+  @override
+  String get connectionStats => 'Statistik Koneksi';
+
+  @override
+  String get noConnectionStatsData => 'Tidak ada data statistik koneksi';
+
+  @override
+  String get totalAttempts => 'Total';
+
+  @override
+  String get lastSuccess => 'Sukses Terakhir';
+
+  @override
+  String get lastFailure => 'Gagal Terakhir';
+
+  @override
+  String get recentConnections => 'Koneksi Terkini';
+
+  @override
+  String get viewDetails => 'Lihat Detail';
+
+  @override
+  String get connectionDetails => 'Detail Koneksi';
+
+  @override
+  String get clearThisServerStats => 'Hapus Statistik Server Ini';
+
+  @override
+  String get clearAllStatsTitle => 'Hapus Semua Statistik';
+
+  @override
+  String get clearAllStatsContent =>
+      'Apakah Anda yakin ingin menghapus semua statistik koneksi server? Tindakan ini tidak dapat dibatalkan.';
+
+  @override
+  String clearServerStatsTitle(String serverName) {
+    return 'Hapus Statistik $serverName';
+  }
+
+  @override
+  String clearServerStatsContent(String serverName) {
+    return 'Apakah Anda yakin ingin menghapus statistik koneksi untuk server \"$serverName\"? Tindakan ini tidak dapat dibatalkan.';
+  }
 }

@@ -249,5 +249,32 @@
   "wolTip": "Setelah mengonfigurasi WOL (Wake-on-LAN), permintaan WOL dikirim setiap kali server terhubung.",
   "write": "Tulis",
   "writeScriptFailTip": "Penulisan ke skrip gagal, mungkin karena tidak ada izin atau direktori tidak ada.",
-  "writeScriptTip": "Setelah terhubung ke server, sebuah skrip akan ditulis ke `~/.config/server_box` \n | `/tmp/server_box` untuk memantau status sistem. Anda dapat meninjau konten skrip tersebut."
+  "writeScriptTip": "Setelah terhubung ke server, sebuah skrip akan ditulis ke `~/.config/server_box` \n | `/tmp/server_box` untuk memantau status sistem. Anda dapat meninjau konten skrip tersebut.",
+  "connectionStats": "Statistik Koneksi",
+  "noConnectionStatsData": "Tidak ada data statistik koneksi",
+  "totalAttempts": "Total",
+  "lastSuccess": "Sukses Terakhir",
+  "lastFailure": "Gagal Terakhir",
+  "recentConnections": "Koneksi Terkini",
+  "viewDetails": "Lihat Detail",
+  "connectionDetails": "Detail Koneksi",
+  "clearThisServerStats": "Hapus Statistik Server Ini",
+  "clearAllStatsTitle": "Hapus Semua Statistik",
+  "clearAllStatsContent": "Apakah Anda yakin ingin menghapus semua statistik koneksi server? Tindakan ini tidak dapat dibatalkan.",
+  "clearServerStatsTitle": "Hapus Statistik {serverName}",
+  "@clearServerStatsTitle": {
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  },
+  "clearServerStatsContent": "Apakah Anda yakin ingin menghapus statistik koneksi untuk server \"{serverName}\"? Tindakan ini tidak dapat dibatalkan.",
+  "@clearServerStatsContent": {
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  }
 }

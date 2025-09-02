@@ -249,5 +249,32 @@
   "wolTip": "WOL (Wake-on-LAN) yapılandırıldıktan sonra, sunucuya her bağlanıldığında bir WOL isteği gönderilir.",
   "write": "Yaz",
   "writeScriptFailTip": "Betik yazma başarısız oldu, muhtemelen izin eksikliği veya dizin mevcut değil.",
-  "writeScriptTip": "Sunucuya bağlandıktan sonra, sistem durumunu izlemek için `~/.config/server_box` \n | `/tmp/server_box` dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz."
+  "writeScriptTip": "Sunucuya bağlandıktan sonra, sistem durumunu izlemek için `~/.config/server_box` \n | `/tmp/server_box` dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz.",
+  "connectionStats": "Bağlantı İstatistikleri",
+  "noConnectionStatsData": "Bağlantı istatistik verisi yok",
+  "totalAttempts": "Toplam",
+  "lastSuccess": "Son Başarı",
+  "lastFailure": "Son Başarısızlık",
+  "recentConnections": "Son Bağlantılar",
+  "viewDetails": "Detayları Görüntüle",
+  "connectionDetails": "Bağlantı Detayları",
+  "clearThisServerStats": "Bu Sunucu İstatistiklerini Temizle",
+  "clearAllStatsTitle": "Tüm İstatistikleri Temizle",
+  "clearAllStatsContent": "Tüm sunucu bağlantı istatistiklerini temizlemek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+  "clearServerStatsTitle": "{serverName} İstatistiklerini Temizle",
+  "@clearServerStatsTitle": {
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  },
+  "clearServerStatsContent": "\"{serverName}\" sunucusu için bağlantı istatistiklerini temizlemek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+  "@clearServerStatsContent": {
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  }
 }

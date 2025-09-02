@@ -249,5 +249,32 @@
   "wolTip": "Après avoir configuré le WOL (Wake-on-LAN), une requête WOL est envoyée chaque fois que le serveur est connecté.",
   "write": "Écrire",
   "writeScriptFailTip": "Échec de l'écriture dans le script, probablement en raison d'un manque de permissions ou que le répertoire n'existe pas.",
-  "writeScriptTip": "Après la connexion au serveur, un script sera écrit dans `~/.config/server_box` \n | `/tmp/server_box` pour surveiller l'état du système. Vous pouvez examiner le contenu du script."
+  "writeScriptTip": "Après la connexion au serveur, un script sera écrit dans `~/.config/server_box` \n | `/tmp/server_box` pour surveiller l'état du système. Vous pouvez examiner le contenu du script.",
+  "connectionStats": "Statistiques de connexion",
+  "noConnectionStatsData": "Aucune donnée de statistiques de connexion",
+  "totalAttempts": "Total",
+  "lastSuccess": "Dernier succès",
+  "lastFailure": "Dernier échec",
+  "recentConnections": "Connexions récentes",
+  "viewDetails": "Voir les détails",
+  "connectionDetails": "Détails de connexion",
+  "clearThisServerStats": "Effacer les statistiques de ce serveur",
+  "clearAllStatsTitle": "Effacer toutes les statistiques",
+  "clearAllStatsContent": "Êtes-vous sûr de vouloir effacer toutes les statistiques de connexion des serveurs ? Cette action ne peut pas être annulée.",
+  "clearServerStatsTitle": "Effacer les statistiques de {serverName}",
+  "@clearServerStatsTitle": {
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  },
+  "clearServerStatsContent": "Êtes-vous sûr de vouloir effacer les statistiques de connexion du serveur \"{serverName}\" ? Cette action ne peut pas être annulée.",
+  "@clearServerStatsContent": {
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -843,4 +843,48 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Sunucuya bağlandıktan sonra, sistem durumunu izlemek için `~/.config/server_box` \n | `/tmp/server_box` dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz.';
+
+  @override
+  String get connectionStats => 'Bağlantı İstatistikleri';
+
+  @override
+  String get noConnectionStatsData => 'Bağlantı istatistik verisi yok';
+
+  @override
+  String get totalAttempts => 'Toplam';
+
+  @override
+  String get lastSuccess => 'Son Başarı';
+
+  @override
+  String get lastFailure => 'Son Başarısızlık';
+
+  @override
+  String get recentConnections => 'Son Bağlantılar';
+
+  @override
+  String get viewDetails => 'Detayları Görüntüle';
+
+  @override
+  String get connectionDetails => 'Bağlantı Detayları';
+
+  @override
+  String get clearThisServerStats => 'Bu Sunucu İstatistiklerini Temizle';
+
+  @override
+  String get clearAllStatsTitle => 'Tüm İstatistikleri Temizle';
+
+  @override
+  String get clearAllStatsContent =>
+      'Tüm sunucu bağlantı istatistiklerini temizlemek istediğinizden emin misiniz? Bu işlem geri alınamaz.';
+
+  @override
+  String clearServerStatsTitle(String serverName) {
+    return '$serverName İstatistiklerini Temizle';
+  }
+
+  @override
+  String clearServerStatsContent(String serverName) {
+    return '\"$serverName\" sunucusu için bağlantı istatistiklerini temizlemek istediğinizden emin misiniz? Bu işlem geri alınamaz.';
+  }
 }

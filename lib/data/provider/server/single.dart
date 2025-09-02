@@ -14,6 +14,7 @@ import 'package:server_box/data/helper/system_detector.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/app/scripts/shell_func.dart';
+import 'package:server_box/data/model/server/connection_stat.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/server_status_update_req.dart';
@@ -145,6 +146,15 @@ class ServerNotifier extends _$ServerNotifier {
           Loggers.app.info('Jump to ${spi.name} in $spentTime ms.');
         }
 
+        // Record successful connection
+        Stores.connectionStats.recordConnection(ConnectionStat(
+          serverId: spi.id,
+          serverName: spi.name,
+          timestamp: time1,
+          result: ConnectionResult.success,
+          durationMs: spentTime,
+        ));
+
         final sessionId = 'ssh_${spi.id}';
         TermSessionManager.add(
           id: sessionId,
@@ -156,6 +166,29 @@ class ServerNotifier extends _$ServerNotifier {
         TermSessionManager.setActive(sessionId, hasTerminal: false);
       } catch (e) {
         TryLimiter.inc(sid);
+        
+        // Determine connection failure type
+        ConnectionResult failureResult;
+        if (e.toString().contains('timeout') || e.toString().contains('Timeout')) {
+          failureResult = ConnectionResult.timeout;
+        } else if (e.toString().contains('auth') || e.toString().contains('Authentication')) {
+          failureResult = ConnectionResult.authFailed;
+        } else if (e.toString().contains('network') || e.toString().contains('Network')) {
+          failureResult = ConnectionResult.networkError;
+        } else {
+          failureResult = ConnectionResult.unknownError;
+        }
+        
+        // Record failed connection
+        Stores.connectionStats.recordConnection(ConnectionStat(
+          serverId: spi.id,
+          serverName: spi.name,
+          timestamp: DateTime.now(),
+          result: failureResult,
+          errorMessage: e.toString(),
+          durationMs: 0,
+        ));
+        
         final newStatus = state.status..err = SSHErr(type: SSHErrType.connect, message: e.toString());
         updateStatus(newStatus);
         updateConnection(ServerConn.failed);

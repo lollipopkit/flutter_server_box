@@ -249,5 +249,32 @@
   "wolTip": "Después de configurar WOL (Wake-on-LAN), se envía una solicitud de WOL cada vez que se conecta el servidor.",
   "write": "Escribir",
   "writeScriptFailTip": "La escritura en el script falló, posiblemente por falta de permisos o porque el directorio no existe.",
-  "writeScriptTip": "Después de conectarse al servidor, se escribirá un script en `~/.config/server_box` \n | `/tmp/server_box` para monitorear el estado del sistema. Puedes revisar el contenido del script."
+  "writeScriptTip": "Después de conectarse al servidor, se escribirá un script en `~/.config/server_box` \n | `/tmp/server_box` para monitorear el estado del sistema. Puedes revisar el contenido del script.",
+  "connectionStats": "Estadísticas de conexión",
+  "noConnectionStatsData": "No hay datos de estadísticas de conexión",
+  "totalAttempts": "Total",
+  "lastSuccess": "Último éxito",
+  "lastFailure": "Último fallo",
+  "recentConnections": "Conexiones recientes",
+  "viewDetails": "Ver detalles",
+  "connectionDetails": "Detalles de conexión",
+  "clearThisServerStats": "Limpiar estadísticas de este servidor",
+  "clearAllStatsTitle": "Limpiar todas las estadísticas",
+  "clearAllStatsContent": "¿Estás seguro de que quieres limpiar todas las estadísticas de conexión del servidor? Esta acción no se puede deshacer.",
+  "clearServerStatsTitle": "Limpiar estadísticas de {serverName}",
+  "@clearServerStatsTitle": {
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  },
+  "clearServerStatsContent": "¿Estás seguro de que quieres limpiar las estadísticas de conexión del servidor \"{serverName}\"? Esta acción no se puede deshacer.",
+  "@clearServerStatsContent": {
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  }
 }
