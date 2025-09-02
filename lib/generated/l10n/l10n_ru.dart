@@ -848,4 +848,48 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'После подключения к серверу скрипт будет записан в `~/.config/server_box` \n | `/tmp/server_box` для мониторинга состояния системы. Вы можете проверить содержимое скрипта.';
+
+  @override
+  String get connectionStats => 'Статистика соединений';
+
+  @override
+  String get noConnectionStatsData => 'Нет данных статистики соединений';
+
+  @override
+  String get totalAttempts => 'Общее';
+
+  @override
+  String get lastSuccess => 'Последний успех';
+
+  @override
+  String get lastFailure => 'Последний сбой';
+
+  @override
+  String get recentConnections => 'Недавние соединения';
+
+  @override
+  String get viewDetails => 'Просмотр деталей';
+
+  @override
+  String get connectionDetails => 'Детали соединения';
+
+  @override
+  String get clearThisServerStats => 'Очистить статистику этого сервера';
+
+  @override
+  String get clearAllStatsTitle => 'Очистить всю статистику';
+
+  @override
+  String get clearAllStatsContent =>
+      'Вы уверены, что хотите очистить всю статистику соединений сервера? Это действие не может быть отменено.';
+
+  @override
+  String clearServerStatsTitle(String serverName) {
+    return 'Очистить статистику $serverName';
+  }
+
+  @override
+  String clearServerStatsContent(String serverName) {
+    return 'Вы уверены, что хотите очистить статистику соединений для сервера \"$serverName\"? Это действие не может быть отменено.';
+  }
 }

@@ -851,4 +851,48 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Nach der Verbindung mit dem Server wird ein Skript in `~/.config/server_box` \n | `/tmp/server_box` geschrieben, um den Systemstatus zu überwachen. Sie können den Skriptinhalt überprüfen.';
+
+  @override
+  String get connectionStats => 'Verbindungsstatistiken';
+
+  @override
+  String get noConnectionStatsData => 'Keine Verbindungsstatistikdaten';
+
+  @override
+  String get totalAttempts => 'Gesamt';
+
+  @override
+  String get lastSuccess => 'Letzter Erfolg';
+
+  @override
+  String get lastFailure => 'Letzter Fehler';
+
+  @override
+  String get recentConnections => 'Kürzliche Verbindungen';
+
+  @override
+  String get viewDetails => 'Details anzeigen';
+
+  @override
+  String get connectionDetails => 'Verbindungsdetails';
+
+  @override
+  String get clearThisServerStats => 'Statistiken dieses Servers löschen';
+
+  @override
+  String get clearAllStatsTitle => 'Alle Statistiken löschen';
+
+  @override
+  String get clearAllStatsContent =>
+      'Sind Sie sicher, dass Sie alle Server-Verbindungsstatistiken löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.';
+
+  @override
+  String clearServerStatsTitle(String serverName) {
+    return '$serverName Statistiken löschen';
+  }
+
+  @override
+  String clearServerStatsContent(String serverName) {
+    return 'Sind Sie sicher, dass Sie die Verbindungsstatistiken für Server \"$serverName\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.';
+  }
 }

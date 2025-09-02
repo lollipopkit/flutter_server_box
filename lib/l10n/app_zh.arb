@@ -249,5 +249,32 @@
   "wolTip": "配置 WOL 后，每次连接服务器时将自动发送唤醒请求",
   "write": "写",
   "writeScriptFailTip": "写入脚本失败，可能是没有权限/目录不存在等",
-  "writeScriptTip": "在连接服务器后，会向 `~/.config/server_box` \n | `/tmp/server_box` 写入脚本来监测系统状态，你可以审查脚本内容。"
+  "writeScriptTip": "在连接服务器后，会向 `~/.config/server_box` \n | `/tmp/server_box` 写入脚本来监测系统状态，你可以审查脚本内容。",
+  "connectionStats": "连接统计",
+  "noConnectionStatsData": "暂无连接统计数据",
+  "totalAttempts": "总次数",
+  "lastSuccess": "最后成功",
+  "lastFailure": "最后失败",
+  "recentConnections": "最近连接记录",
+  "viewDetails": "查看详情",
+  "connectionDetails": "连接详情",
+  "clearThisServerStats": "清空此服务器统计",
+  "clearAllStatsTitle": "清空所有统计",
+  "clearAllStatsContent": "确定要清空所有服务器的连接统计数据吗？此操作无法撤销。",
+  "clearServerStatsTitle": "清空 {serverName} 统计",
+  "@clearServerStatsTitle": {
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  },
+  "clearServerStatsContent": "确定要清空服务器 \"{serverName}\" 的连接统计数据吗？此操作无法撤销。",
+  "@clearServerStatsContent": {
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  }
 }

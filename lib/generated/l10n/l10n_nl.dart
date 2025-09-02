@@ -849,4 +849,48 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Na het verbinden met de server wordt een script geschreven naar `~/.config/server_box` \n | `/tmp/server_box` om de systeemstatus te monitoren. U kunt de inhoud van het script controleren.';
+
+  @override
+  String get connectionStats => 'Verbindingsstatistieken';
+
+  @override
+  String get noConnectionStatsData => 'Geen verbindingsstatistiekgegevens';
+
+  @override
+  String get totalAttempts => 'Totaal';
+
+  @override
+  String get lastSuccess => 'Laatst succesvol';
+
+  @override
+  String get lastFailure => 'Laatst gefaald';
+
+  @override
+  String get recentConnections => 'Recente verbindingen';
+
+  @override
+  String get viewDetails => 'Details bekijken';
+
+  @override
+  String get connectionDetails => 'Verbindingsdetails';
+
+  @override
+  String get clearThisServerStats => 'Statistieken van deze server wissen';
+
+  @override
+  String get clearAllStatsTitle => 'Alle statistieken wissen';
+
+  @override
+  String get clearAllStatsContent =>
+      'Weet u zeker dat u alle serververbindingsstatistieken wilt wissen? Deze actie kan niet ongedaan worden gemaakt.';
+
+  @override
+  String clearServerStatsTitle(String serverName) {
+    return 'Statistieken van $serverName wissen';
+  }
+
+  @override
+  String clearServerStatsContent(String serverName) {
+    return 'Weet u zeker dat u de verbindingsstatistieken voor server \"$serverName\" wilt wissen? Deze actie kan niet ongedaan worden gemaakt.';
+  }
 }

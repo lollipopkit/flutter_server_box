@@ -7,11 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Development
 
 - `flutter run` - Run the app in development mode
-- `flutter test` - Run all tests
 - `dart run fl_build -p PLATFORM` - Build the app for specific platform (see fl_build package)
-
-### Code Generation
-
 - `dart run build_runner build --delete-conflicting-outputs` - Generate code for models with annotations (json_serializable, freezed, hive, riverpod)
   - Every time you change model files, run this command to regenerate code (Hive adapters, Riverpod providers, etc.)
   - Generated files include: `*.g.dart`, `*.freezed.dart` files
@@ -87,3 +83,13 @@ This is a Flutter application for managing Linux servers with the following key 
 - AGAIN, NEVER run code formatting commands.
 - USE dependency injection via GetIt for services like Stores, Services and etc.
 - Generate all l10n files using `flutter gen-l10n` command after modifying ARB files.
+- USE `hive_ce` not `hive` package for Hive integration.
+  - Which no need to config `HiveField` and `HiveType` manually.
+- USE widgets and utilities from `fl_lib` package for common functionalities.
+  - Such as `CustomAppBar`, `context.showRoundDialog`, `Input`, `Btnx.cancelOk`, etc.
+  - You can use context7 MCP to search `lppcg fl_lib KEYWORD` to find relevant widgets and utilities.
+- USE `libL10n` and `l10n` for localization strings.
+  - `libL10n` is from `fl_lib` package, and `l10n` is from this project.
+  - Before adding new strings, check if it already exists in `libL10n`.
+  - Prioritize using strings from `libL10n` to avoid duplication, even if the meaning is not 100% exact, just use the substitution of `libL10n`.
+- Split UI into Widget build, Actions, Utils. use `extension on` to archive this

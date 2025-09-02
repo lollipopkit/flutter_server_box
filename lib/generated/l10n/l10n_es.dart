@@ -852,4 +852,49 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Después de conectarse al servidor, se escribirá un script en `~/.config/server_box` \n | `/tmp/server_box` para monitorear el estado del sistema. Puedes revisar el contenido del script.';
+
+  @override
+  String get connectionStats => 'Estadísticas de conexión';
+
+  @override
+  String get noConnectionStatsData =>
+      'No hay datos de estadísticas de conexión';
+
+  @override
+  String get totalAttempts => 'Total';
+
+  @override
+  String get lastSuccess => 'Último éxito';
+
+  @override
+  String get lastFailure => 'Último fallo';
+
+  @override
+  String get recentConnections => 'Conexiones recientes';
+
+  @override
+  String get viewDetails => 'Ver detalles';
+
+  @override
+  String get connectionDetails => 'Detalles de conexión';
+
+  @override
+  String get clearThisServerStats => 'Limpiar estadísticas de este servidor';
+
+  @override
+  String get clearAllStatsTitle => 'Limpiar todas las estadísticas';
+
+  @override
+  String get clearAllStatsContent =>
+      '¿Estás seguro de que quieres limpiar todas las estadísticas de conexión del servidor? Esta acción no se puede deshacer.';
+
+  @override
+  String clearServerStatsTitle(String serverName) {
+    return 'Limpiar estadísticas de $serverName';
+  }
+
+  @override
+  String clearServerStatsContent(String serverName) {
+    return '¿Estás seguro de que quieres limpiar las estadísticas de conexión del servidor \"$serverName\"? Esta acción no se puede deshacer.';
+  }
 }

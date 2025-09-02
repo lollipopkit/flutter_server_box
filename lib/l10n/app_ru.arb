@@ -249,5 +249,32 @@
   "wolTip": "После настройки WOL (Wake-on-LAN) при каждом подключении к серверу отправляется запрос WOL.",
   "write": "Запись",
   "writeScriptFailTip": "Запись скрипта не удалась, возможно, из-за отсутствия прав или потому что, директории не существует.",
-  "writeScriptTip": "После подключения к серверу скрипт будет записан в `~/.config/server_box` \n | `/tmp/server_box` для мониторинга состояния системы. Вы можете проверить содержимое скрипта."
+  "writeScriptTip": "После подключения к серверу скрипт будет записан в `~/.config/server_box` \n | `/tmp/server_box` для мониторинга состояния системы. Вы можете проверить содержимое скрипта.",
+  "connectionStats": "Статистика соединений",
+  "noConnectionStatsData": "Нет данных статистики соединений",
+  "totalAttempts": "Общее",
+  "lastSuccess": "Последний успех",
+  "lastFailure": "Последний сбой",
+  "recentConnections": "Недавние соединения",
+  "viewDetails": "Просмотр деталей",
+  "connectionDetails": "Детали соединения",
+  "clearThisServerStats": "Очистить статистику этого сервера",
+  "clearAllStatsTitle": "Очистить всю статистику",
+  "clearAllStatsContent": "Вы уверены, что хотите очистить всю статистику соединений сервера? Это действие не может быть отменено.",
+  "clearServerStatsTitle": "Очистить статистику {serverName}",
+  "@clearServerStatsTitle": {
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  },
+  "clearServerStatsContent": "Вы уверены, что хотите очистить статистику соединений для сервера \"{serverName}\"? Это действие не может быть отменено.",
+  "@clearServerStatsContent": {
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  }
 }

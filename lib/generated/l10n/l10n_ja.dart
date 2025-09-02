@@ -818,4 +818,47 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'サーバーに接続すると、システムの状態を監視するためのスクリプトが `~/.config/server_box` \n | `/tmp/server_box` に書き込まれます。スクリプトの内容を確認できます。';
+
+  @override
+  String get connectionStats => '接続統計';
+
+  @override
+  String get noConnectionStatsData => '接続統計データがありません';
+
+  @override
+  String get totalAttempts => '総計';
+
+  @override
+  String get lastSuccess => '最後の成功';
+
+  @override
+  String get lastFailure => '最後の失敗';
+
+  @override
+  String get recentConnections => '最近の接続';
+
+  @override
+  String get viewDetails => '詳細を表示';
+
+  @override
+  String get connectionDetails => '接続の詳細';
+
+  @override
+  String get clearThisServerStats => 'このサーバーの統計をクリア';
+
+  @override
+  String get clearAllStatsTitle => 'すべての統計をクリア';
+
+  @override
+  String get clearAllStatsContent => 'すべてのサーバー接続統計を削除してもよろしいですか？この操作は元に戻せません。';
+
+  @override
+  String clearServerStatsTitle(String serverName) {
+    return '$serverNameの統計をクリア';
+  }
+
+  @override
+  String clearServerStatsContent(String serverName) {
+    return 'サーバー\"$serverName\"の接続統計を削除してもよろしいですか？この操作は元に戻せません。';
+  }
 }

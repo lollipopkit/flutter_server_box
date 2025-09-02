@@ -249,5 +249,32 @@
   "wolTip": "Nach der Konfiguration von WOL (Wake-on-LAN) wird jedes Mal, wenn der Server verbunden wird, eine WOL-Anfrage gesendet.",
   "write": "Schreiben",
   "writeScriptFailTip": "Das Schreiben des Skripts ist fehlgeschlagen, möglicherweise aufgrund fehlender Berechtigungen oder das Verzeichnis existiert nicht.",
-  "writeScriptTip": "Nach der Verbindung mit dem Server wird ein Skript in `~/.config/server_box` \n | `/tmp/server_box` geschrieben, um den Systemstatus zu überwachen. Sie können den Skriptinhalt überprüfen."
+  "writeScriptTip": "Nach der Verbindung mit dem Server wird ein Skript in `~/.config/server_box` \n | `/tmp/server_box` geschrieben, um den Systemstatus zu überwachen. Sie können den Skriptinhalt überprüfen.",
+  "connectionStats": "Verbindungsstatistiken",
+  "noConnectionStatsData": "Keine Verbindungsstatistikdaten",
+  "totalAttempts": "Gesamt",
+  "lastSuccess": "Letzter Erfolg",
+  "lastFailure": "Letzter Fehler",
+  "recentConnections": "Kürzliche Verbindungen",
+  "viewDetails": "Details anzeigen",
+  "connectionDetails": "Verbindungsdetails",
+  "clearThisServerStats": "Statistiken dieses Servers löschen",
+  "clearAllStatsTitle": "Alle Statistiken löschen",
+  "clearAllStatsContent": "Sind Sie sicher, dass Sie alle Server-Verbindungsstatistiken löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+  "clearServerStatsTitle": "{serverName} Statistiken löschen",
+  "@clearServerStatsTitle": {
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  },
+  "clearServerStatsContent": "Sind Sie sicher, dass Sie die Verbindungsstatistiken für Server \"{serverName}\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+  "@clearServerStatsContent": {
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  }
 }

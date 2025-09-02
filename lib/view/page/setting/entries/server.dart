@@ -9,6 +9,7 @@ extension _Server on _AppSettingsPageState {
         _buildNetViewType(),
         _buildServerSeq(),
         _buildServerDetailCardSeq(),
+        _buildConnectionStats(),
         _buildDeleteServers(),
         _buildCpuView(),
         _buildServerMore(),
@@ -34,6 +35,22 @@ extension _Server on _AppSettingsPageState {
         if (selected != null) {
           _setting.netViewType.put(selected);
         }
+      },
+    );
+  }
+
+  Widget _buildConnectionStats() {
+    return ListTile(
+      leading: const Icon(Icons.analytics, size: _kIconSize),
+      title: const Text('连接统计'),
+      subtitle: const Text('查看服务器连接成功率和历史记录'),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const ConnectionStatsPage(),
+          ),
+        );
       },
     );
   }
