@@ -276,5 +276,10 @@
         "type": "String"
       }
     }
-  }
+  },
+  "homeTabs": "Pestañas de inicio",
+  "homeTabsCustomizeDesc": "Personaliza qué pestañas aparecen en la página de inicio y su orden",
+  "reset": "Restablecer",
+  "availableTabs": "Pestañas disponibles",
+  "atLeastOneTab": "Al menos una pestaña debe estar seleccionada"
 }

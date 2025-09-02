@@ -893,4 +893,20 @@ class AppLocalizationsUk extends AppLocalizations {
   String clearServerStatsContent(String serverName) {
     return 'Ви впевнені, що хочете очистити статистику з\'єднань для сервера \"$serverName\"? Цю дію не можна скасувати.';
   }
+
+  @override
+  String get homeTabs => 'Домашні вкладки';
+
+  @override
+  String get homeTabsCustomizeDesc =>
+      'Налаштуйте, які вкладки відображаються на головній сторінці та їх порядок';
+
+  @override
+  String get reset => 'Скинути';
+
+  @override
+  String get availableTabs => 'Доступні вкладки';
+
+  @override
+  String get atLeastOneTab => 'Потрібно вибрати принаймні одну вкладку';
 }

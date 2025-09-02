@@ -900,4 +900,20 @@ class AppLocalizationsFr extends AppLocalizations {
   String clearServerStatsContent(String serverName) {
     return 'Êtes-vous sûr de vouloir effacer les statistiques de connexion du serveur \"$serverName\" ? Cette action ne peut pas être annulée.';
   }
+
+  @override
+  String get homeTabs => 'Onglets d\'accueil';
+
+  @override
+  String get homeTabsCustomizeDesc =>
+      'Personnalisez les onglets qui apparaissent sur la page d\'accueil et leur ordre';
+
+  @override
+  String get reset => 'Réinitialiser';
+
+  @override
+  String get availableTabs => 'Onglets disponibles';
+
+  @override
+  String get atLeastOneTab => 'Au moins un onglet doit être sélectionné';
 }

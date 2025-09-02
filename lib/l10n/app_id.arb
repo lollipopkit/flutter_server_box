@@ -276,5 +276,10 @@
         "type": "String"
       }
     }
-  }
+  },
+  "homeTabs": "Tab Beranda",
+  "homeTabsCustomizeDesc": "Sesuaikan tab mana yang muncul di halaman beranda dan urutannya",
+  "reset": "Reset",
+  "availableTabs": "Tab Tersedia",
+  "atLeastOneTab": "Setidaknya satu tab harus dipilih"
 }

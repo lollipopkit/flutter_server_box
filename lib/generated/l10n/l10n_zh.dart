@@ -846,6 +846,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String clearServerStatsContent(String serverName) {
     return '确定要清空服务器 \"$serverName\" 的连接统计数据吗？此操作无法撤销。';
   }
+
+  @override
+  String get homeTabs => '主页标签';
+
+  @override
+  String get homeTabsCustomizeDesc => '自定义主页上显示的标签及其顺序';
+
+  @override
+  String get reset => '重置';
+
+  @override
+  String get availableTabs => '可用标签';
+
+  @override
+  String get atLeastOneTab => '至少需要选择一个标签';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1690,4 +1705,19 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String clearServerStatsContent(String serverName) {
     return '確定要清空伺服器 \"$serverName\" 的連線統計資料嗎？此操作無法撤銷。';
   }
+
+  @override
+  String get homeTabs => '主頁標籤';
+
+  @override
+  String get homeTabsCustomizeDesc => '自訂主頁上顯示的標籤及其順序';
+
+  @override
+  String get reset => '重置';
+
+  @override
+  String get availableTabs => '可用標籤';
+
+  @override
+  String get atLeastOneTab => '至少需要選擇一個標籤';
 }

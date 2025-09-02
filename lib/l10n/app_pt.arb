@@ -276,5 +276,10 @@
         "type": "String"
       }
     }
-  }
+  },
+  "homeTabs": "Abas iniciais",
+  "homeTabsCustomizeDesc": "Personalize quais abas aparecem na página inicial e sua ordem",
+  "reset": "Redefinir",
+  "availableTabs": "Abas disponíveis",
+  "atLeastOneTab": "Pelo menos uma aba deve ser selecionada"
 }

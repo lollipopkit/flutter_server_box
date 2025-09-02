@@ -887,4 +887,20 @@ class AppLocalizationsTr extends AppLocalizations {
   String clearServerStatsContent(String serverName) {
     return '\"$serverName\" sunucusu için bağlantı istatistiklerini temizlemek istediğinizden emin misiniz? Bu işlem geri alınamaz.';
   }
+
+  @override
+  String get homeTabs => 'Ana Sayfa Sekmeleri';
+
+  @override
+  String get homeTabsCustomizeDesc =>
+      'Ana sayfada görünecek sekmeleri ve sıralarını özelleştirin';
+
+  @override
+  String get reset => 'Sıfırla';
+
+  @override
+  String get availableTabs => 'Mevcut Sekmeler';
+
+  @override
+  String get atLeastOneTab => 'En az bir sekme seçilmelidir';
 }

@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
+import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/res/default.dart';
 
@@ -22,10 +23,7 @@ class SettingStore extends HiveStore {
   // late final launchPage = property('launchPage', Defaults.launchPageIdx);
 
   /// Disk view: amount / IO
-  late final serverTabPreferDiskAmount = propertyDefault(
-    'serverTabPreferDiskAmount',
-    false,
-  );
+  late final serverTabPreferDiskAmount = propertyDefault('serverTabPreferDiskAmount', false);
 
   /// Bigger for bigger font size
   /// 1.0 means 100%
@@ -70,20 +68,14 @@ class SettingStore extends HiveStore {
   late final locale = propertyDefault('locale', '');
 
   // SSH virtual key (ctrl | alt) auto turn off
-  late final sshVirtualKeyAutoOff = propertyDefault(
-    'sshVirtualKeyAutoOff',
-    true,
-  );
+  late final sshVirtualKeyAutoOff = propertyDefault('sshVirtualKeyAutoOff', true);
 
   late final editorFontSize = propertyDefault('editorFontSize', 12.5);
 
   // Editor theme
   late final editorTheme = propertyDefault('editorTheme', Defaults.editorTheme);
 
-  late final editorDarkTheme = propertyDefault(
-    'editorDarkTheme',
-    Defaults.editorDarkTheme,
-  );
+  late final editorDarkTheme = propertyDefault('editorDarkTheme', Defaults.editorDarkTheme);
 
   late final fullScreen = propertyDefault('fullScreen', false);
 
@@ -113,29 +105,20 @@ class SettingStore extends HiveStore {
   );
 
   // Only valid on iOS
-  late final autoUpdateHomeWidget = propertyDefault(
-    'autoUpdateHomeWidget',
-    isIOS,
-  );
+  late final autoUpdateHomeWidget = propertyDefault('autoUpdateHomeWidget', isIOS);
 
   late final autoCheckAppUpdate = propertyDefault('autoCheckAppUpdate', true);
 
   /// Display server tab function buttons on the bottom of each server card if [true]
   ///
   /// Otherwise, display them on the top of server detail page
-  late final moveServerFuncs = propertyDefault(
-    'moveOutServerTabFuncBtns',
-    false,
-  );
+  late final moveServerFuncs = propertyDefault('moveOutServerTabFuncBtns', false);
 
   /// Whether use `rm -r` to delete directory on SFTP
   late final sftpRmrDir = propertyDefault('sftpRmrDir', false);
 
   /// Whether use system's primary color as the app's primary color
-  late final useSystemPrimaryColor = propertyDefault(
-    'useSystemPrimaryColor',
-    false,
-  );
+  late final useSystemPrimaryColor = propertyDefault('useSystemPrimaryColor', false);
 
   /// Only valid on iOS / Android / Windows
   late final useBioAuth = propertyDefault('useBioAuth', false);
@@ -151,10 +134,7 @@ class SettingStore extends HiveStore {
   late final sftpOpenLastPath = propertyDefault('sftpOpenLastPath', true);
 
   /// Show folders first in SFTP file browser
-  late final sftpShowFoldersFirst = propertyDefault(
-    'sftpShowFoldersFirst',
-    true,
-  );
+  late final sftpShowFoldersFirst = propertyDefault('sftpShowFoldersFirst', true);
 
   /// Show tip of suspend
   late final showSuspendTip = propertyDefault('showSuspendTip', true);
@@ -162,10 +142,7 @@ class SettingStore extends HiveStore {
   /// Whether collapse UI items by default
   late final collapseUIDefault = propertyDefault('collapseUIDefault', true);
 
-  late final serverFuncBtns = listProperty(
-    'serverBtns',
-    defaultValue: ServerFuncBtn.defaultIdxs,
-  );
+  late final serverFuncBtns = listProperty('serverBtns', defaultValue: ServerFuncBtn.defaultIdxs);
 
   /// Docker is more popular than podman, set to `false` to use docker
   late final usePodman = propertyDefault('usePodman', false);
@@ -180,16 +157,10 @@ class SettingStore extends HiveStore {
   late final containerParseStat = propertyDefault('containerParseStat', true);
 
   /// Auto refresh container status
-  late final containerAutoRefresh = propertyDefault(
-    'containerAutoRefresh',
-    true,
-  );
+  late final containerAutoRefresh = propertyDefault('containerAutoRefresh', true);
 
   /// Use double column servers page on Desktop
-  late final doubleColumnServersPage = propertyDefault(
-    'doubleColumnServersPage',
-    true,
-  );
+  late final doubleColumnServersPage = propertyDefault('doubleColumnServersPage', true);
 
   /// Ignore local network device (eg: br-xxx, ovs-system...)
   /// when building traffic view on server tab
@@ -244,8 +215,7 @@ class SettingStore extends HiveStore {
   /// Record the position and size of the window.
   late final windowState = property<WindowState>(
     'windowState',
-    fromObj: (raw) =>
-        WindowState.fromJson(jsonDecode(raw as String) as Map<String, dynamic>),
+    fromObj: (raw) => WindowState.fromJson(jsonDecode(raw as String) as Map<String, dynamic>),
     toObj: (state) => state == null ? null : jsonEncode(state.toJson()),
   );
 
@@ -258,10 +228,7 @@ class SettingStore extends HiveStore {
   late final sftpEditor = propertyDefault('sftpEditor', '');
 
   /// Preferred terminal emulator command on desktop
-  late final desktopTerminal = propertyDefault(
-    'desktopTerminal',
-    'x-terminal-emulator',
-  );
+  late final desktopTerminal = propertyDefault('desktopTerminal', 'x-terminal-emulator');
 
   /// Run foreground service on Android, if the SSH terminal is running
   late final fgService = propertyDefault('fgService', false);
@@ -280,4 +247,14 @@ class SettingStore extends HiveStore {
 
   /// Whether to read SSH config from ~/.ssh/config on first time
   late final firstTimeReadSSHCfg = propertyDefault('firstTimeReadSSHCfg', true);
+
+  /// Tabs at home page
+  late final homeTabs = listProperty(
+    'homeTabs',
+    defaultValue: AppTab.values,
+    fromObj: AppTab.parseAppTabsFromObj,
+    toObj: (val) {
+      return val?.map((e) => e.name).toList() ?? [];
+    },
+  );
 }

@@ -63,7 +63,7 @@ dependencies:
   fl_lib:
     git:
       url: https://github.com/lppcg/fl_lib
-      ref: v1.0.345
+      ref: v1.0.346
   flutter_gbk2utf8: ^1.0.1
   get_it: ^8.2.0
 

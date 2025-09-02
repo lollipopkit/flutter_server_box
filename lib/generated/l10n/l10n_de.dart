@@ -895,4 +895,20 @@ class AppLocalizationsDe extends AppLocalizations {
   String clearServerStatsContent(String serverName) {
     return 'Sind Sie sicher, dass Sie die Verbindungsstatistiken für Server \"$serverName\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.';
   }
+
+  @override
+  String get homeTabs => 'Home-Tabs';
+
+  @override
+  String get homeTabsCustomizeDesc =>
+      'Passen Sie an, welche Tabs auf der Startseite angezeigt werden und ihre Reihenfolge';
+
+  @override
+  String get reset => 'Zurücksetzen';
+
+  @override
+  String get availableTabs => 'Verfügbare Tabs';
+
+  @override
+  String get atLeastOneTab => 'Mindestens ein Tab muss ausgewählt sein';
 }

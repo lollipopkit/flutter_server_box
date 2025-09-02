@@ -1699,6 +1699,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Are you sure you want to clear connection statistics for server \"{serverName}\"? This action cannot be undone.'**
   String clearServerStatsContent(String serverName);
+
+  /// No description provided for @homeTabs.
+  ///
+  /// In en, this message translates to:
+  /// **'Home Tabs'**
+  String get homeTabs;
+
+  /// No description provided for @homeTabsCustomizeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize which tabs appear on the home page and their order'**
+  String get homeTabsCustomizeDesc;
+
+  /// No description provided for @reset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get reset;
+
+  /// No description provided for @availableTabs.
+  ///
+  /// In en, this message translates to:
+  /// **'Available Tabs'**
+  String get availableTabs;
+
+  /// No description provided for @atLeastOneTab.
+  ///
+  /// In en, this message translates to:
+  /// **'At least one tab must be selected'**
+  String get atLeastOneTab;
 }
 
 class _AppLocalizationsDelegate

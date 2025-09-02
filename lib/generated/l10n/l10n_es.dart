@@ -897,4 +897,20 @@ class AppLocalizationsEs extends AppLocalizations {
   String clearServerStatsContent(String serverName) {
     return '¿Estás seguro de que quieres limpiar las estadísticas de conexión del servidor \"$serverName\"? Esta acción no se puede deshacer.';
   }
+
+  @override
+  String get homeTabs => 'Pestañas de inicio';
+
+  @override
+  String get homeTabsCustomizeDesc =>
+      'Personaliza qué pestañas aparecen en la página de inicio y su orden';
+
+  @override
+  String get reset => 'Restablecer';
+
+  @override
+  String get availableTabs => 'Pestañas disponibles';
+
+  @override
+  String get atLeastOneTab => 'Al menos una pestaña debe estar seleccionada';
 }

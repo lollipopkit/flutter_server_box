@@ -893,4 +893,21 @@ class AppLocalizationsNl extends AppLocalizations {
   String clearServerStatsContent(String serverName) {
     return 'Weet u zeker dat u de verbindingsstatistieken voor server \"$serverName\" wilt wissen? Deze actie kan niet ongedaan worden gemaakt.';
   }
+
+  @override
+  String get homeTabs => 'Home-tabbladen';
+
+  @override
+  String get homeTabsCustomizeDesc =>
+      'Pas aan welke tabbladen op de startpagina worden weergegeven en hun volgorde';
+
+  @override
+  String get reset => 'Resetten';
+
+  @override
+  String get availableTabs => 'Beschikbare tabbladen';
+
+  @override
+  String get atLeastOneTab =>
+      'Er moet minimaal één tabblad worden geselecteerd';
 }

@@ -276,5 +276,10 @@
         "type": "String"
       }
     }
-  }
+  },
+  "homeTabs": "主页标签",
+  "homeTabsCustomizeDesc": "自定义主页上显示的标签及其顺序",
+  "reset": "重置",
+  "availableTabs": "可用标签",
+  "atLeastOneTab": "至少需要选择一个标签"
 }
