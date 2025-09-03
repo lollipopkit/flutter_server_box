@@ -2,7 +2,7 @@ use anyhow::Result;
 use dotenvy::dotenv;
 use server_box_monitor::cli::{build_cli, handle_matches};
 
-#[tokio::main]
+#[ntex::main]
 async fn main() -> Result<()> {
     // Load .env file
     dotenv().ok();

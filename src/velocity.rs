@@ -23,15 +23,17 @@ pub struct VelocityProcessor {
     cpu_series: CpuTimeSeries,
     metrics_history: TimeSeries<VelocityData>,
     db_pool: Arc<SqlitePool>,
+    server_name: String,
 }
 
 impl VelocityProcessor {
-    fn new(db_pool: Arc<SqlitePool>, cpu_core_count: usize) -> Self {
+    fn new(db_pool: Arc<SqlitePool>, cpu_core_count: usize, server_name: String) -> Self {
         Self {
             network_series: NetworkTimeSeries::new(),
             cpu_series: CpuTimeSeries::new(cpu_core_count),
             metrics_history: TimeSeries::new(1000), // Keep last 1000 velocity metrics
             db_pool,
+            server_name,
         }
     }
 
@@ -122,10 +124,11 @@ impl VelocityProcessor {
         sqlx::query!(
             r#"
             INSERT INTO velocity_metrics (
-                timestamp, network_rx_speed, network_tx_speed, cpu_usage_percent
-            ) VALUES (?, ?, ?, ?)
+                timestamp, server_name, network_rx_speed, network_tx_speed, cpu_usage_percent
+            ) VALUES (?, ?, ?, ?, ?)
             "#,
             data.timestamp,
+            self.server_name,
             data.network_rx_speed,
             data.network_tx_speed,
             data.cpu_usage_percent
@@ -181,7 +184,7 @@ impl VelocityManager {
         let processor = if let Some(processor) = self.processors.get(server_name) {
             processor.clone()
         } else {
-            let processor = Arc::new(RwLock::new(VelocityProcessor::new(self.db_pool.clone(), core_times.len())));
+            let processor = Arc::new(RwLock::new(VelocityProcessor::new(self.db_pool.clone(), core_times.len(), server_name.to_string())));
             self.processors.insert(server_name.to_string(), processor.clone());
             processor
         };

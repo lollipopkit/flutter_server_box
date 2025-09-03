@@ -21,7 +21,7 @@ pub fn build_cli() -> Command {
                         .value_name("ADDRESS")
                         .help("Listen address")
                         .default_value("0.0.0.0:3770")
-                        .env("SBM_ADDR")
+                        .env("SBM_ADDR"),
                 )
                 .arg(
                     Arg::new("cert")
@@ -29,7 +29,7 @@ pub fn build_cli() -> Command {
                         .long("cert")
                         .value_name("CERT_FILE")
                         .help("TLS certificate file path")
-                        .env("SBM_TLS_CERT")
+                        .env("SBM_TLS_CERT"),
                 )
                 .arg(
                     Arg::new("key")
@@ -37,24 +37,15 @@ pub fn build_cli() -> Command {
                         .long("key")
                         .value_name("KEY_FILE")
                         .help("TLS key file path")
-                        .env("SBM_TLS_KEY")
-                )
+                        .env("SBM_TLS_KEY"),
+                ),
         )
         .subcommand(
             Command::new("config")
                 .about("Configuration management")
-                .subcommand(
-                    Command::new("init")
-                        .about("Initialize default configuration")
-                )
-                .subcommand(
-                    Command::new("validate")
-                        .about("Validate configuration file")
-                )
-                .subcommand(
-                    Command::new("show")
-                        .about("Show current configuration")
-                )
+                .subcommand(Command::new("init").about("Initialize default configuration"))
+                .subcommand(Command::new("validate").about("Validate configuration file"))
+                .subcommand(Command::new("show").about("Show current configuration")),
         )
 }
 
@@ -75,21 +66,17 @@ pub async fn handle_matches(matches: clap::ArgMatches) -> anyhow::Result<()> {
 }
 
 async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
-    let _addr = matches.get_one::<String>("addr");
-    let _cert = matches.get_one::<String>("cert");
-    let _key = matches.get_one::<String>("key");
-    
-    info!("Starting ServerBox Monitor (Rust)");
-    
+    tracing::debug!("Matches: {:?}", matches);
+
     // Load configuration
     let config = Arc::new(Config::load().await?);
-    
+
     // Initialize database
     let db = database::init(&config.get_database_url()).await?;
-    
+
     // Create shared state
     let app_state = server::AppState::new(config.clone(), db);
-    
+
     // Start monitoring task
     let monitoring_handle = tokio::spawn({
         let state = app_state.clone();
@@ -99,7 +86,7 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
             }
         }
     });
-    
+
     // Run server and wait for shutdown signal concurrently
     tokio::select! {
         result = server::start_server(app_state) => {
@@ -111,11 +98,10 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
             info!("Shutdown signal received");
         }
     }
-    
+
     // Cancel monitoring task
     monitoring_handle.abort();
-    
-    info!("ServerBox Monitor stopped");
+
     Ok(())
 }
 
@@ -124,8 +110,8 @@ async fn handle_config(matches: &clap::ArgMatches) -> anyhow::Result<()> {
         Some(("init", _)) => {
             info!("Initializing default configuration...");
             let config = Config::default();
-            let content = serde_json::to_string_pretty(&config)?;
-            std::fs::write("config.json", content)?;
+            let content = toml::to_string_pretty(&config)?;
+            std::fs::write("config.toml", content)?;
             println!("Default configuration written to config.json");
         }
         Some(("validate", _)) => {

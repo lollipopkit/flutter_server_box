@@ -1,6 +1,7 @@
 use crate::{config::PushConfig, error::Result};
 use reqwest::Client;
 use serde_json::Value;
+use toml::Value as TomlValue;
 use tracing::{info, warn};
 
 pub async fn send_notification(config: &PushConfig, message: &str) -> Result<()> {
@@ -21,16 +22,34 @@ async fn send_webhook_notification(config: &PushConfig, message: &str) -> Result
     let client = Client::new();
     
     // Extract webhook configuration
-    let url = config.config["url"].as_str()
+    let url = config.config.get("url")
+        .and_then(|v| v.as_str())
         .ok_or_else(|| crate::error::MonitorError::Push("Missing webhook URL".to_string()))?;
     
-    let method = config.config["method"].as_str().unwrap_or("POST");
+    let method = config.config.get("method")
+        .and_then(|v| v.as_str())
+        .unwrap_or("POST");
     
-    let headers = config.config["headers"].as_object().cloned().unwrap_or_default();
+    let headers = config.config.get("headers")
+        .and_then(|v| v.as_table())
+        .cloned()
+        .unwrap_or_default();
     
     // Build request body from template
-    let mut body = config.config["body_template"].clone();
-    replace_template_variables(&mut body, message);
+    let body_template = config.config.get("body_template")
+        .and_then(|v| v.as_table())
+        .cloned()
+        .unwrap_or_default();
+    
+    let mut body = serde_json::Map::new();
+    for (key, toml_val) in body_template.iter() {
+        let json_val = toml_value_to_json(toml_val);
+        body.insert(key.clone(), json_val);
+    }
+    
+    // Replace template variables in the body
+    let mut body_value = Value::Object(body);
+    replace_template_variables(&mut body_value, message);
     
     // Build request
     let mut request = match method.to_uppercase().as_str() {
@@ -42,15 +61,15 @@ async fn send_webhook_notification(config: &PushConfig, message: &str) -> Result
     };
     
     // Add headers
-    for (key, value) in headers {
-        if let Some(value_str) = value.as_str() {
+    for (key, toml_val) in headers.iter() {
+        if let Some(value_str) = toml_val.as_str() {
             request = request.header(key, value_str);
         }
     }
     
     // Add body for non-GET requests
     if method.to_uppercase() != "GET" {
-        request = request.json(&body);
+        request = request.json(&body_value);
     }
     
     let response = request.send().await?;
@@ -68,11 +87,16 @@ async fn send_serverchan_notification(config: &PushConfig, message: &str) -> Res
     let client = Client::new();
     
     // Extract ServerChan configuration
-    let sc_key = config.config["sc_key"].as_str()
+    let sc_key = config.config.get("sc_key")
+        .and_then(|v| v.as_str())
         .ok_or_else(|| crate::error::MonitorError::Push("Missing ServerChan SCKey".to_string()))?;
     
-    let title = config.config["title"].as_str().unwrap_or("ServerBox Monitor");
-    let desp = config.config["desp"].as_str().unwrap_or(message);
+    let title = config.config.get("title")
+        .and_then(|v| v.as_str())
+        .unwrap_or("ServerBox Monitor");
+    let desp = config.config.get("desp")
+        .and_then(|v| v.as_str())
+        .unwrap_or(message);
     
     // Build URL with parameters
     let url = format!("https://sctapi.ftqq.com/{}.send", sc_key);
@@ -111,13 +135,22 @@ async fn send_bark_notification(config: &PushConfig, message: &str) -> Result<()
     let client = Client::new();
     
     // Extract Bark configuration
-    let server = config.config["server"].as_str().unwrap_or("https://api.day.app");
-    let key = config.config["key"].as_str()
+    let server = config.config.get("server")
+        .and_then(|v| v.as_str())
+        .unwrap_or("https://api.day.app");
+    let key = config.config.get("key")
+        .and_then(|v| v.as_str())
         .ok_or_else(|| crate::error::MonitorError::Push("Missing Bark key".to_string()))?;
     
-    let title = config.config["title"].as_str().unwrap_or("ServerBox Monitor");
-    let body = config.config["body"].as_str().unwrap_or(message);
-    let level = config.config["level"].as_str().unwrap_or("active");
+    let title = config.config.get("title")
+        .and_then(|v| v.as_str())
+        .unwrap_or("ServerBox Monitor");
+    let body = config.config.get("body")
+        .and_then(|v| v.as_str())
+        .unwrap_or(message);
+    let level = config.config.get("level")
+        .and_then(|v| v.as_str())
+        .unwrap_or("active");
     
     // Build URL
     let url = format!("{}/{}/{}", server, key, url_encode(&replace_template_string(body, message)));
@@ -132,19 +165,19 @@ async fn send_bark_notification(config: &PushConfig, message: &str) -> Result<()
     }
     
     // Add optional parameters
-    if let Some(group) = config.config["group"].as_str() {
+    if let Some(group) = config.config.get("group").and_then(|v| v.as_str()) {
         query_params.push(format!("group={}", url_encode(group)));
     }
     
-    if let Some(sound) = config.config["sound"].as_str() {
+    if let Some(sound) = config.config.get("sound").and_then(|v| v.as_str()) {
         query_params.push(format!("sound={}", url_encode(sound)));
     }
     
-    if let Some(icon) = config.config["icon"].as_str() {
+    if let Some(icon) = config.config.get("icon").and_then(|v| v.as_str()) {
         query_params.push(format!("icon={}", url_encode(icon)));
     }
     
-    if let Some(url_param) = config.config["url"].as_str() {
+    if let Some(url_param) = config.config.get("url").and_then(|v| v.as_str()) {
         query_params.push(format!("url={}", url_encode(url_param)));
     }
     
@@ -170,11 +203,16 @@ async fn send_ios_notification(config: &PushConfig, message: &str) -> Result<()>
     let client = Client::new();
     
     // Extract iOS configuration
-    let token = config.config["token"].as_str()
+    let token = config.config.get("token")
+        .and_then(|v| v.as_str())
         .ok_or_else(|| crate::error::MonitorError::Push("Missing iOS token".to_string()))?;
     
-    let title = config.config["title"].as_str().unwrap_or("ServerBox Monitor");
-    let content = config.config["content"].as_str().unwrap_or(message);
+    let title = config.config.get("title")
+        .and_then(|v| v.as_str())
+        .unwrap_or("ServerBox Monitor");
+    let content = config.config.get("content")
+        .and_then(|v| v.as_str())
+        .unwrap_or(message);
     
     // Build request body
     let body = serde_json::json!({
@@ -195,7 +233,7 @@ async fn send_ios_notification(config: &PushConfig, message: &str) -> Result<()>
     let response_text = response.text().await?;
     
     // Check if there's an expected response code
-    if let Some(expected_code) = config.config["code"].as_i64() {
+    if let Some(expected_code) = config.config.get("code").and_then(|v| v.as_integer()) {
         if status_code.as_u16() != expected_code as u16 {
             warn!("iOS notification failed: {} - {}", status_code, response_text);
             return Err(crate::error::MonitorError::Push(format!("Unexpected status code: {}", status_code)).into());
@@ -203,7 +241,7 @@ async fn send_ios_notification(config: &PushConfig, message: &str) -> Result<()>
     }
     
     // Check if there's a specific expected response pattern
-    if let Some(body_regex) = config.config["body_regex"].as_str() {
+    if let Some(body_regex) = config.config.get("body_regex").and_then(|v| v.as_str()) {
         let re = regex::Regex::new(body_regex)
             .map_err(|e| crate::error::MonitorError::Push(format!("Invalid regex pattern: {}", e)))?;
         
@@ -215,6 +253,24 @@ async fn send_ios_notification(config: &PushConfig, message: &str) -> Result<()>
     
     info!("iOS notification sent successfully to {}", config.name);
     Ok(())
+}
+
+fn toml_value_to_json(toml_val: &TomlValue) -> Value {
+    match toml_val {
+        TomlValue::String(s) => Value::String(s.clone()),
+        TomlValue::Integer(i) => Value::Number(serde_json::Number::from(*i)),
+        TomlValue::Float(f) => Value::Number(serde_json::Number::from_f64(*f).unwrap_or(serde_json::Number::from(0))),
+        TomlValue::Boolean(b) => Value::Bool(*b),
+        TomlValue::Array(arr) => Value::Array(arr.iter().map(toml_value_to_json).collect()),
+        TomlValue::Table(table) => {
+            let mut map = serde_json::Map::new();
+            for (key, val) in table.iter() {
+                map.insert(key.clone(), toml_value_to_json(val));
+            }
+            Value::Object(map)
+        }
+        TomlValue::Datetime(dt) => Value::String(dt.to_string()),
+    }
 }
 
 fn replace_template_variables(value: &mut Value, message: &str) {
@@ -268,11 +324,13 @@ mod tests {
         let config = crate::config::PushConfig {
             name: "test_serverchan".to_string(),
             push_type: "serverchan".to_string(),
-            config: serde_json::json!({
-                "sc_key": "test_key",
-                "title": "Test Title",
-                "desp": "Test {{message}}"
-            }),
+            config: {
+                let mut table = toml::Table::new();
+                table.insert("sc_key".to_string(), toml::Value::String("test_key".to_string()));
+                table.insert("title".to_string(), toml::Value::String("Test Title".to_string()));
+                table.insert("desp".to_string(), toml::Value::String("Test {{message}}".to_string()));
+                table
+            },
         };
 
         let result = send_serverchan_notification(&config, "Test Message").await;
@@ -285,13 +343,15 @@ mod tests {
         let config = crate::config::PushConfig {
             name: "test_bark".to_string(),
             push_type: "bark".to_string(),
-            config: serde_json::json!({
-                "server": "https://api.day.app",
-                "key": "test_key",
-                "title": "Test Title",
-                "body": "Test {{message}}",
-                "level": "active"
-            }),
+            config: {
+                let mut table = toml::Table::new();
+                table.insert("server".to_string(), toml::Value::String("https://api.day.app".to_string()));
+                table.insert("key".to_string(), toml::Value::String("test_key".to_string()));
+                table.insert("title".to_string(), toml::Value::String("Test Title".to_string()));
+                table.insert("body".to_string(), toml::Value::String("Test {{message}}".to_string()));
+                table.insert("level".to_string(), toml::Value::String("active".to_string()));
+                table
+            },
         };
 
         let result = send_bark_notification(&config, "Test Message").await;
@@ -304,11 +364,13 @@ mod tests {
         let config = crate::config::PushConfig {
             name: "test_serverchan".to_string(),
             push_type: "serverchan".to_string(),
-            config: serde_json::json!({
-                "sc_key": "test_key",
-                "title": "Test",
-                "desp": "{{message}}"
-            }),
+            config: {
+                let mut table = toml::Table::new();
+                table.insert("sc_key".to_string(), toml::Value::String("test_key".to_string()));
+                table.insert("title".to_string(), toml::Value::String("Test".to_string()));
+                table.insert("desp".to_string(), toml::Value::String("{{message}}".to_string()));
+                table
+            },
         };
 
         let result = send_notification(&config, "Test Message").await;
@@ -320,13 +382,15 @@ mod tests {
         let config = crate::config::PushConfig {
             name: "test_bark".to_string(),
             push_type: "bark".to_string(),
-            config: serde_json::json!({
-                "server": "https://api.day.app",
-                "key": "test_key",
-                "title": "Test",
-                "body": "{{message}}",
-                "level": "active"
-            }),
+            config: {
+                let mut table = toml::Table::new();
+                table.insert("server".to_string(), toml::Value::String("https://api.day.app".to_string()));
+                table.insert("key".to_string(), toml::Value::String("test_key".to_string()));
+                table.insert("title".to_string(), toml::Value::String("Test".to_string()));
+                table.insert("body".to_string(), toml::Value::String("{{message}}".to_string()));
+                table.insert("level".to_string(), toml::Value::String("active".to_string()));
+                table
+            },
         };
 
         let result = send_notification(&config, "Test Message").await;
@@ -338,7 +402,7 @@ mod tests {
         let config = crate::config::PushConfig {
             name: "test_unknown".to_string(),
             push_type: "unknown".to_string(),
-            config: serde_json::json!({}),
+            config: toml::Table::new(),
         };
 
         let result = send_notification(&config, "Test Message").await;
@@ -350,17 +414,19 @@ mod tests {
         let config = crate::config::PushConfig {
             name: "test_bark_full".to_string(),
             push_type: "bark".to_string(),
-            config: serde_json::json!({
-                "server": "https://api.day.app",
-                "key": "test_key",
-                "title": "Test Title",
-                "body": "Test {{message}}",
-                "level": "timeSensitive",
-                "group": "test_group",
-                "sound": "default",
-                "icon": "https://example.com/icon.png",
-                "url": "https://example.com"
-            }),
+            config: {
+                let mut table = toml::Table::new();
+                table.insert("server".to_string(), toml::Value::String("https://api.day.app".to_string()));
+                table.insert("key".to_string(), toml::Value::String("test_key".to_string()));
+                table.insert("title".to_string(), toml::Value::String("Test Title".to_string()));
+                table.insert("body".to_string(), toml::Value::String("Test {{message}}".to_string()));
+                table.insert("level".to_string(), toml::Value::String("timeSensitive".to_string()));
+                table.insert("group".to_string(), toml::Value::String("test_group".to_string()));
+                table.insert("sound".to_string(), toml::Value::String("default".to_string()));
+                table.insert("icon".to_string(), toml::Value::String("https://example.com/icon.png".to_string()));
+                table.insert("url".to_string(), toml::Value::String("https://example.com".to_string()));
+                table
+            },
         };
 
         let result = send_bark_notification(&config, "Test Message").await;

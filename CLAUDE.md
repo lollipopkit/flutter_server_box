@@ -70,7 +70,7 @@ cargo sqlx prepare
 ### Backend (Rust - `src/`)
 
 - **`main.rs`**: Application entry point, coordinates monitoring loop and web server
-- **`config.rs`**: Configuration management with .env support and JSON config files
+- **`config.rs`**: Configuration management with .env support and TOML/JSON config files
 - **`server.rs`**: ntex-based web server with API endpoints and JWT authentication
 - **`monitoring.rs`**: System metrics collection using sysinfo crate
 - **`rules.rs`**: Monitoring rule evaluation and threshold checking
@@ -98,15 +98,16 @@ cargo sqlx prepare
 1. **Async-first architecture**: Uses tokio for async runtime with concurrent tasks
 2. **Type-safe database**: sqlx with compile-time query verification
 3. **JWT authentication**: Secure token-based API access
-4. **Configuration-driven monitoring**: Rules and push configs in JSON/env files
+4. **Configuration-driven monitoring**: Rules and push configs in TOML/env files
 5. **Rate limiting**: Built-in rate limiting for push notifications
 6. **Separation of concerns**: Clean module boundaries between monitoring, API, and notifications
 
 ### Configuration
 
-Uses environment variables (.env file) and JSON config files:
+Uses environment variables (.env file) and TOML config files:
 - **Environment**: Database URL, JWT secret, server host/port, TLS settings
-- **JSON Config**: Monitoring rules, push notification settings, thresholds
+- **TOML Config**: Monitoring rules, push notification settings, thresholds
+- **Configuration file**: Defaults to `config.toml` (with JSON fallback support for `config.json`)
 
 ### Database Schema
 

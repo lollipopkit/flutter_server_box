@@ -64,7 +64,8 @@ pub struct MonitoringRule {
 pub struct PushConfig {
     pub name: String,
     pub push_type: String,
-    pub config: serde_json::Value,
+    #[serde(flatten)]
+    pub config: toml::Table,
 }
 
 // Go-compatible structures
@@ -86,8 +87,16 @@ pub struct GoPush {
 
 impl Config {
     pub async fn load() -> Result<Self> {
-        // Try to load from config file first
-        if Path::new("config.json").exists() {
+        // Try to load from config file first (TOML preferred, JSON fallback)
+        if Path::new("config.toml").exists() {
+            let content =
+                fs::read_to_string("config.toml").context("Failed to read config.toml")?;
+            let mut config: Self = toml::from_str(&content).context("Failed to parse config.toml")?;
+            
+            // Convert from Go format if needed
+            config.normalize()?;
+            return Ok(config);
+        } else if Path::new("config.json").exists() {
             let content =
                 fs::read_to_string("config.json").context("Failed to read config.json")?;
             let mut config: Self = serde_json::from_str(&content).context("Failed to parse config.json")?;
@@ -100,10 +109,10 @@ impl Config {
         // Create default config
         let config = Self::default();
 
-        // Save default config
+        // Save default config as TOML
         let content =
-            serde_json::to_string_pretty(&config).context("Failed to serialize default config")?;
-        fs::write("config.json", content).context("Failed to write default config.json")?;
+            toml::to_string_pretty(&config).context("Failed to serialize default config")?;
+        fs::write("config.toml", content).context("Failed to write default config.toml")?;
 
         Ok(config)
     }
@@ -155,7 +164,14 @@ impl Config {
                 go_pushes.iter().map(|gp| PushConfig {
                     name: gp.name.clone(),
                     push_type: gp.push_type.clone(),
-                    config: gp.iface.clone(),
+                    config: match gp.iface {
+                        serde_json::Value::Object(ref obj) => {
+                            obj.iter().map(|(k, v)| {
+                                (k.clone(), toml::Value::try_from(v.clone()).unwrap_or(toml::Value::String(v.to_string())))
+                            }).collect()
+                        }
+                        _ => toml::Table::new(),
+                    },
                 }).collect()
             }).unwrap_or_else(|| vec![]);
 
@@ -248,47 +264,58 @@ impl Default for Config {
                 PushConfig {
                     name: "webhook".to_string(),
                     push_type: "webhook".to_string(),
-                    config: serde_json::json!({
-                        "url": "http://localhost:5700",
-                        "method": "POST",
-                        "headers": {
-                            "Content-Type": "application/json"
-                        },
-                        "body_template": {
-                            "message": "Server {{name}}: {{message}}"
-                        }
-                    }),
+                    config: {
+                        let mut table = toml::Table::new();
+                        table.insert("url".to_string(), toml::Value::String("http://localhost:5700".to_string()));
+                        table.insert("method".to_string(), toml::Value::String("POST".to_string()));
+                        
+                        let mut headers = toml::Table::new();
+                        headers.insert("Content-Type".to_string(), toml::Value::String("application/json".to_string()));
+                        table.insert("headers".to_string(), toml::Value::Table(headers));
+                        
+                        let mut body_template = toml::Table::new();
+                        body_template.insert("message".to_string(), toml::Value::String("Server {{name}}: {{message}}".to_string()));
+                        table.insert("body_template".to_string(), toml::Value::Table(body_template));
+                        
+                        table
+                    },
                 },
                 PushConfig {
                     name: "serverchan".to_string(),
                     push_type: "serverchan".to_string(),
-                    config: serde_json::json!({
-                        "sc_key": "",
-                        "title": "ServerBox Monitor",
-                        "desp": "{{message}}"
-                    }),
+                    config: {
+                        let mut table = toml::Table::new();
+                        table.insert("sc_key".to_string(), toml::Value::String("".to_string()));
+                        table.insert("title".to_string(), toml::Value::String("ServerBox Monitor".to_string()));
+                        table.insert("desp".to_string(), toml::Value::String("{{message}}".to_string()));
+                        table
+                    },
                 },
                 PushConfig {
                     name: "bark".to_string(),
                     push_type: "bark".to_string(),
-                    config: serde_json::json!({
-                        "server": "https://api.day.app",
-                        "key": "",
-                        "title": "ServerBox Monitor",
-                        "body": "{{message}}",
-                        "level": "active"
-                    }),
+                    config: {
+                        let mut table = toml::Table::new();
+                        table.insert("server".to_string(), toml::Value::String("https://api.day.app".to_string()));
+                        table.insert("key".to_string(), toml::Value::String("".to_string()));
+                        table.insert("title".to_string(), toml::Value::String("ServerBox Monitor".to_string()));
+                        table.insert("body".to_string(), toml::Value::String("{{message}}".to_string()));
+                        table.insert("level".to_string(), toml::Value::String("active".to_string()));
+                        table
+                    },
                 },
                 PushConfig {
                     name: "ios".to_string(),
                     push_type: "ios".to_string(),
-                    config: serde_json::json!({
-                        "token": "",
-                        "title": "ServerBox Monitor",
-                        "content": "{{message}}",
-                        "body_regex": ".*",
-                        "code": 200
-                    }),
+                    config: {
+                        let mut table = toml::Table::new();
+                        table.insert("token".to_string(), toml::Value::String("".to_string()));
+                        table.insert("title".to_string(), toml::Value::String("ServerBox Monitor".to_string()));
+                        table.insert("content".to_string(), toml::Value::String("{{message}}".to_string()));
+                        table.insert("body_regex".to_string(), toml::Value::String(".*".to_string()));
+                        table.insert("code".to_string(), toml::Value::Integer(200));
+                        table
+                    },
                 },
             ]),
             // Go-compatible fields

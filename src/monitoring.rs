@@ -569,10 +569,16 @@ fn parse_macos_memory_metrics(segment: &str) -> Result<(MemoryMetrics, SwapMetri
         0.0
     };
 
+    let mem_free = if mem_total >= mem_used {
+        mem_total - mem_used
+    } else {
+        0
+    };
+
     let memory = MemoryMetrics {
         total: mem_total,
         used: mem_used,
-        free: mem_total - mem_used,
+        free: mem_free,
         usage_percent: mem_usage_percent,
     };
 

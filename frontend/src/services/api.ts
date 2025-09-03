@@ -3,8 +3,7 @@ import {
   LoginRequest, 
   LoginResponse, 
   StatusResponse, 
-  SystemMetrics,
-  ApiError 
+  SystemMetrics
 } from '../types';
 
 class ApiService {

@@ -2,9 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
-import LoginPage from '../src/pages/LoginPage';
-import DashboardPage from '../src/pages/DashboardPage';
-import { apiService } from '../src/services/api';
+import LoginPage from '../pages/LoginPage';
+import { apiService } from '../services/api';
 
 // Mock the API service
 vi.mock('../src/services/api');
@@ -36,7 +35,6 @@ describe('LoginPage', () => {
   });
 
   it('handles successful login', async () => {
-    const mockLogin = vi.fn();
     mockedApiService.login.mockResolvedValue({ token: 'test-token' });
     
     render(
