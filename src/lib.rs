@@ -1,4 +1,5 @@
 pub mod auth;
+pub mod cleanup;
 pub mod cli;
 pub mod config;
 pub mod config_manager;

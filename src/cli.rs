@@ -1,5 +1,5 @@
 use crate::config::Config;
-use crate::{database, server};
+use crate::{cleanup, database, server};
 use clap::{Arg, Command};
 use std::sync::Arc;
 use tracing::info;
@@ -47,6 +47,13 @@ pub fn build_cli() -> Command {
                 .subcommand(Command::new("validate").about("Validate configuration file"))
                 .subcommand(Command::new("show").about("Show current configuration")),
         )
+        .subcommand(
+            Command::new("cleanup")
+                .about("Data cleanup operations")
+                .subcommand(Command::new("run").about("Run data cleanup manually"))
+                .subcommand(Command::new("stats").about("Show database statistics"))
+                .subcommand(Command::new("vacuum").about("Run database VACUUM")),
+        )
 }
 
 pub async fn handle_matches(matches: clap::ArgMatches) -> anyhow::Result<()> {
@@ -56,6 +63,9 @@ pub async fn handle_matches(matches: clap::ArgMatches) -> anyhow::Result<()> {
         }
         Some(("config", sub_matches)) => {
             handle_config(sub_matches).await?;
+        }
+        Some(("cleanup", sub_matches)) => {
+            handle_cleanup(sub_matches).await?;
         }
         _ => {
             // Default to serve if no subcommand is provided
@@ -87,6 +97,13 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
         }
     });
 
+    // Start data cleanup scheduler if configured
+    if let Some(retention_config) = config.get_monitoring().data_retention {
+        if let Err(e) = cleanup::start_cleanup_scheduler(app_state.db.clone(), retention_config).await {
+            tracing::error!("Failed to start cleanup scheduler: {}", e);
+        }
+    }
+
     // Run server and wait for shutdown signal concurrently
     tokio::select! {
         result = server::start_server(app_state) => {
@@ -112,7 +129,7 @@ async fn handle_config(matches: &clap::ArgMatches) -> anyhow::Result<()> {
             let config = Config::default();
             let content = toml::to_string_pretty(&config)?;
             std::fs::write("config.toml", content)?;
-            println!("Default configuration written to config.json");
+            println!("Default configuration written to config.toml");
         }
         Some(("validate", _)) => {
             info!("Validating configuration...");
@@ -134,5 +151,51 @@ async fn handle_config(matches: &clap::ArgMatches) -> anyhow::Result<()> {
             eprintln!("Please specify a config subcommand. Use --help for more information.");
         }
     }
+    Ok(())
+}
+
+async fn handle_cleanup(matches: &clap::ArgMatches) -> anyhow::Result<()> {
+    // Load configuration
+    let config = Config::load().await?;
+    
+    // Initialize database
+    let db = database::init(&config.get_database_url()).await?;
+    
+    let retention_config = config.get_monitoring().data_retention
+        .ok_or_else(|| anyhow::anyhow!("Data retention configuration not found"))?;
+    
+    let cleanup_service = cleanup::DataCleanupService::new(db, retention_config);
+    
+    match matches.subcommand() {
+        Some(("run", _)) => {
+            info!("Running data cleanup manually...");
+            cleanup_service.cleanup_expired_data().await?;
+            println!("Data cleanup completed successfully");
+        }
+        Some(("stats", _)) => {
+            info!("Fetching database statistics...");
+            let stats = cleanup_service.get_data_statistics().await?;
+            println!("Database Statistics:");
+            println!("  Metrics records: {}", stats.metrics_count);
+            println!("  Alerts records: {}", stats.alerts_count);
+            
+            if let Some(oldest) = stats.oldest_metric {
+                println!("  Oldest metric: {}", oldest);
+            }
+            
+            if let Some(oldest) = stats.oldest_alert {
+                println!("  Oldest alert: {}", oldest);
+            }
+        }
+        Some(("vacuum", _)) => {
+            info!("Running database VACUUM...");
+            cleanup_service.vacuum_database().await?;
+            println!("Database VACUUM completed successfully");
+        }
+        _ => {
+            eprintln!("Please specify a cleanup subcommand. Use --help for more information.");
+        }
+    }
+    
     Ok(())
 }

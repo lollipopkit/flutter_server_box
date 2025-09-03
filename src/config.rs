@@ -50,6 +50,14 @@ pub struct TlsConfig {
 pub struct MonitoringConfig {
     pub interval_seconds: u64,
     pub rules: Vec<MonitoringRule>,
+    pub data_retention: Option<DataRetentionConfig>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DataRetentionConfig {
+    pub metrics_days: u32,
+    pub alerts_days: u32,
+    pub cleanup_interval_hours: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -158,6 +166,11 @@ impl Config {
                         matcher: gr.matcher.clone(),
                     }).collect()
                 }).unwrap_or_else(|| vec![]),
+                data_retention: Some(DataRetentionConfig {
+                    metrics_days: 30,
+                    alerts_days: 90,
+                    cleanup_interval_hours: 24,
+                }),
             };
 
             let push = self.pushes.as_ref().map(|go_pushes| {
@@ -200,6 +213,11 @@ impl Config {
         self.monitoring.clone().unwrap_or_else(|| MonitoringConfig {
             interval_seconds: 7,
             rules: vec![],
+            data_retention: Some(DataRetentionConfig {
+                metrics_days: 30,
+                alerts_days: 90,
+                cleanup_interval_hours: 24,
+            }),
         })
     }
 
@@ -255,6 +273,11 @@ impl Default for Config {
                         matcher: "disk".to_string(),
                     },
                 ],
+                data_retention: Some(DataRetentionConfig {
+                    metrics_days: 30,
+                    alerts_days: 90,
+                    cleanup_interval_hours: 24,
+                }),
             }),
             database_url: Some(env::var("DATABASE_URL")
                 .unwrap_or_else(|_| "sqlite:serverbox_monitor.db".to_string())),

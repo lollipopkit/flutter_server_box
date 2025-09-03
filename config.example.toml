@@ -21,6 +21,17 @@ port = 3770
 [monitoring]
 interval_seconds = 7
 
+# Data retention and cleanup settings
+[monitoring.data_retention]
+# How long to keep system metrics (in days)
+metrics_days = 30
+
+# How long to keep alert records (in days)  
+alerts_days = 90
+
+# How often to run cleanup (in hours)
+cleanup_interval_hours = 24
+
 # Monitoring rules
 [[monitoring.rules]]
 name = "High CPU Usage"
