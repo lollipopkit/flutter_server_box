@@ -26,10 +26,6 @@
 	<true/>
 	<key>com.apple.security.files.user-selected.read-write</key>
 	<true/>
-	<key>com.apple.security.temporary-exception.files.home-relative-path.read-only</key>
-	<array>
-		<string>.ssh/</string>
-	</array>
 	<key>keychain-access-groups</key>
 	<array/>
 </dict>
