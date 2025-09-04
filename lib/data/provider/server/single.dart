@@ -41,7 +41,7 @@ abstract class ServerState with _$ServerState {
 }
 
 // Individual server state management
-@riverpod
+@Riverpod(keepAlive: true)
 class ServerNotifier extends _$ServerNotifier {
   @override
   ServerState build(String serverId) {
