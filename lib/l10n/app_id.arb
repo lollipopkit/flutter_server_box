@@ -281,5 +281,6 @@
   "homeTabsCustomizeDesc": "Sesuaikan tab mana yang muncul di halaman beranda dan urutannya",
   "reset": "Reset",
   "availableTabs": "Tab Tersedia",
-  "atLeastOneTab": "Setidaknya satu tab harus dipilih"
+  "atLeastOneTab": "Setidaknya satu tab harus dipilih",
+  "serverTabRequired": "Server tab cannot be removed"
 }

@@ -916,4 +916,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get atLeastOneTab => 'Au moins un onglet doit être sélectionné';
+
+  @override
+  String get serverTabRequired => 'Server tab cannot be removed';
 }

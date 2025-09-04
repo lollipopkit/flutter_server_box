@@ -281,5 +281,6 @@
   "homeTabsCustomizeDesc": "Налаштуйте, які вкладки відображаються на головній сторінці та їх порядок",
   "reset": "Скинути",
   "availableTabs": "Доступні вкладки",
-  "atLeastOneTab": "Потрібно вибрати принаймні одну вкладку"
+  "atLeastOneTab": "Потрібно вибрати принаймні одну вкладку",
+  "serverTabRequired": "Server tab cannot be removed"
 }

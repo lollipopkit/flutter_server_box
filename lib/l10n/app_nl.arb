@@ -281,5 +281,6 @@
   "homeTabsCustomizeDesc": "Pas aan welke tabbladen op de startpagina worden weergegeven en hun volgorde",
   "reset": "Resetten",
   "availableTabs": "Beschikbare tabbladen",
-  "atLeastOneTab": "Er moet minimaal één tabblad worden geselecteerd"
+  "atLeastOneTab": "Er moet minimaal één tabblad worden geselecteerd",
+  "serverTabRequired": "Server tab cannot be removed"
 }

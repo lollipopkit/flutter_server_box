@@ -281,5 +281,6 @@
   "homeTabsCustomizeDesc": "自訂主頁上顯示的標籤及其順序",
   "reset": "重置",
   "availableTabs": "可用標籤",
-  "atLeastOneTab": "至少需要選擇一個標籤"
+  "atLeastOneTab": "至少需要選擇一個標籤",
+  "serverTabRequired": "服務器標籤不能被移除"
 }

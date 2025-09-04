@@ -1729,6 +1729,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'At least one tab must be selected'**
   String get atLeastOneTab;
+
+  /// No description provided for @serverTabRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Server tab cannot be removed'**
+  String get serverTabRequired;
 }
 
 class _AppLocalizationsDelegate

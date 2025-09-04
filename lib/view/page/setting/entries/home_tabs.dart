@@ -68,7 +68,7 @@ class _HomeTabsConfigPageState extends ConsumerState<HomeTabsConfigPage> {
   }
 
   Widget _buildTabItem(AppTab tab, int index, bool isSelected) {
-    final canRemove = _selectedTabs.length > 1;
+    final canRemove = _selectedTabs.length > 1 && tab != AppTab.server;
     final child = ListTile(
       leading: tab.navDestination.icon,
       title: Text(tab.navDestination.label),
@@ -77,7 +77,7 @@ class _HomeTabsConfigPageState extends ConsumerState<HomeTabsConfigPage> {
               icon: const Icon(Icons.delete),
               onPressed: canRemove ? () => _removeTab(tab) : null,
               color: canRemove ? null : Theme.of(context).disabledColor,
-              tooltip: canRemove ? libL10n.delete : l10n.atLeastOneTab,
+              tooltip: canRemove ? libL10n.delete : (tab == AppTab.server ? l10n.serverTabRequired : l10n.atLeastOneTab),
             )
           : IconButton(icon: const Icon(Icons.add), onPressed: () => _addTab(tab)),
       onTap: isSelected && canRemove ? () => _removeTab(tab) : null,
@@ -109,6 +109,10 @@ class _HomeTabsConfigPageState extends ConsumerState<HomeTabsConfigPage> {
   void _removeTab(AppTab tab) {
     if (_selectedTabs.length <= 1) {
       context.showSnackBar(l10n.atLeastOneTab);
+      return;
+    }
+    if (tab == AppTab.server) {
+      context.showSnackBar(l10n.serverTabRequired);
       return;
     }
     setState(() {

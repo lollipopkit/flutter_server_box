@@ -876,4 +876,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get atLeastOneTab => '少なくとも1つのタブを選択する必要があります';
+
+  @override
+  String get serverTabRequired => 'サーバータブは削除できません';
 }

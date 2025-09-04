@@ -281,5 +281,6 @@
   "homeTabsCustomizeDesc": "ホームページに表示するタブとその順序をカスタマイズします",
   "reset": "リセット",
   "availableTabs": "利用可能なタブ",
-  "atLeastOneTab": "少なくとも1つのタブを選択する必要があります"
+  "atLeastOneTab": "少なくとも1つのタブを選択する必要があります",
+  "serverTabRequired": "サーバータブは削除できません"
 }

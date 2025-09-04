@@ -903,4 +903,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get atLeastOneTab => 'En az bir sekme seçilmelidir';
+
+  @override
+  String get serverTabRequired => 'Server tab cannot be removed';
 }

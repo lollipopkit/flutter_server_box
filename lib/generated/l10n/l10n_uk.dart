@@ -909,4 +909,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get atLeastOneTab => 'Потрібно вибрати принаймні одну вкладку';
+
+  @override
+  String get serverTabRequired => 'Server tab cannot be removed';
 }

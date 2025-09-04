@@ -910,4 +910,7 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get atLeastOneTab =>
       'Er moet minimaal één tabblad worden geselecteerd';
+
+  @override
+  String get serverTabRequired => 'Server tab cannot be removed';
 }

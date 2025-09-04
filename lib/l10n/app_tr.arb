@@ -281,5 +281,6 @@
   "homeTabsCustomizeDesc": "Ana sayfada görünecek sekmeleri ve sıralarını özelleştirin",
   "reset": "Sıfırla",
   "availableTabs": "Mevcut Sekmeler",
-  "atLeastOneTab": "En az bir sekme seçilmelidir"
+  "atLeastOneTab": "En az bir sekme seçilmelidir",
+  "serverTabRequired": "Server tab cannot be removed"
 }

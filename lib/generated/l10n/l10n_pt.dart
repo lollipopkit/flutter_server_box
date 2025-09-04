@@ -906,4 +906,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get atLeastOneTab => 'Pelo menos uma aba deve ser selecionada';
+
+  @override
+  String get serverTabRequired => 'Server tab cannot be removed';
 }

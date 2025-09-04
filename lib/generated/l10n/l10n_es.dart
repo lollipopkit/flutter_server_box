@@ -913,4 +913,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get atLeastOneTab => 'Al menos una pestaña debe estar seleccionada';
+
+  @override
+  String get serverTabRequired => 'Server tab cannot be removed';
 }

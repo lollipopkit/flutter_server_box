@@ -281,5 +281,6 @@
   "homeTabsCustomizeDesc": "Настройте, какие вкладки появляются на главной странице и их порядок",
   "reset": "Сброс",
   "availableTabs": "Доступные вкладки",
-  "atLeastOneTab": "Должна быть выбрана хотя бы одна вкладка"
+  "atLeastOneTab": "Должна быть выбрана хотя бы одна вкладка",
+  "serverTabRequired": "Server tab cannot be removed"
 }

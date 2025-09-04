@@ -281,5 +281,6 @@
   "homeTabsCustomizeDesc": "Customize which tabs appear on the home page and their order",
   "reset": "Reset",
   "availableTabs": "Available Tabs",
-  "atLeastOneTab": "At least one tab must be selected"
+  "atLeastOneTab": "At least one tab must be selected",
+  "serverTabRequired": "Server tab cannot be removed"
 }

@@ -281,5 +281,6 @@
   "homeTabsCustomizeDesc": "Passen Sie an, welche Tabs auf der Startseite angezeigt werden und ihre Reihenfolge",
   "reset": "Zurücksetzen",
   "availableTabs": "Verfügbare Tabs",
-  "atLeastOneTab": "Mindestens ein Tab muss ausgewählt sein"
+  "atLeastOneTab": "Mindestens ein Tab muss ausgewählt sein",
+  "serverTabRequired": "Server-Tab kann nicht entfernt werden"
 }

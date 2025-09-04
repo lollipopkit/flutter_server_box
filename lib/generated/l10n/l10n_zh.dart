@@ -861,6 +861,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get atLeastOneTab => '至少需要选择一个标签';
+
+  @override
+  String get serverTabRequired => '服务器标签不能被移除';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1720,4 +1723,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get atLeastOneTab => '至少需要選擇一個標籤';
+
+  @override
+  String get serverTabRequired => '服務器標籤不能被移除';
 }

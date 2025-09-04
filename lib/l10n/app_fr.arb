@@ -281,5 +281,6 @@
   "homeTabsCustomizeDesc": "Personnalisez les onglets qui apparaissent sur la page d'accueil et leur ordre",
   "reset": "Réinitialiser",
   "availableTabs": "Onglets disponibles",
-  "atLeastOneTab": "Au moins un onglet doit être sélectionné"
+  "atLeastOneTab": "Au moins un onglet doit être sélectionné",
+  "serverTabRequired": "Server tab cannot be removed"
 }
