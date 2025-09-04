@@ -1,4 +1,4 @@
-use crate::{config::Config, server::AppState, error::Result, timeseries::CpuCoreTime};
+use crate::{core::config::Config, api::server::AppState, utils::error::Result, monitoring::timeseries::CpuCoreTime};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
@@ -75,7 +75,7 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
                 }
                 
                 // Check rules and send alerts with velocity data
-                if let Err(e) = crate::rules::check_rules_with_velocity(&metrics, &app_state.config, &*app_state.velocity_manager.read().await).await {
+                if let Err(e) = crate::monitoring::rules::check_rules_with_velocity(&metrics, &app_state.config, &*app_state.velocity_manager.read().await).await {
                     error!("Failed to check enhanced rules: {}", e);
                 }
                 
@@ -116,8 +116,8 @@ async fn execute_monitoring_commands() -> Result<String> {
                     .output()
             }
         }).await
-        .map_err(|e| crate::error::MonitorError::Monitoring(format!("Task join error: {}", e)))?
-        .map_err(crate::error::MonitorError::Io)?;
+        .map_err(|e| crate::utils::error::MonitorError::Monitoring(format!("Task join error: {}", e)))?
+        .map_err(crate::utils::error::MonitorError::Io)?;
 
         if result.status.success() {
             output.push_str(&String::from_utf8_lossy(&result.stdout));
@@ -173,7 +173,7 @@ async fn parse_shell_output(output: &str, _config: &Config) -> Result<SystemMetr
     let segments: Vec<&str> = output.split("SrvBox").collect();
     
     if segments.len() != 7 {
-        return Err(crate::error::MonitorError::Monitoring(format!(
+        return Err(crate::utils::error::MonitorError::Monitoring(format!(
             "Expected 7 segments in shell output, got {}", segments.len()
         )));
     }
@@ -423,7 +423,7 @@ fn parse_size_string(size_str: &str) -> Result<u64> {
     };
 
     let number: f64 = number_part.parse()
-        .map_err(|_| crate::error::MonitorError::Monitoring(format!("Invalid size number: {}", number_part)))?;
+        .map_err(|_| crate::utils::error::MonitorError::Monitoring(format!("Invalid size number: {}", number_part)))?;
 
     let multiplier = match unit.to_uppercase().as_str() {
         "K" | "KB" => 1024,
@@ -431,7 +431,7 @@ fn parse_size_string(size_str: &str) -> Result<u64> {
         "G" | "GB" => 1024 * 1024 * 1024,
         "T" | "TB" => 1024_u64.pow(4),
         "" => 1, // No unit, assume bytes
-        _ => return Err(crate::error::MonitorError::Monitoring(format!("Unknown size unit: {}", unit))),
+        _ => return Err(crate::utils::error::MonitorError::Monitoring(format!("Unknown size unit: {}", unit))),
     };
 
     Ok((number * multiplier as f64) as u64)
@@ -600,7 +600,7 @@ fn parse_size_string_macos(size_str: &str) -> Result<u64> {
     };
 
     let number: f64 = number_part.parse()
-        .map_err(|_| crate::error::MonitorError::Monitoring(format!("Invalid size number: {}", number_part)))?;
+        .map_err(|_| crate::utils::error::MonitorError::Monitoring(format!("Invalid size number: {}", number_part)))?;
 
     let multiplier = match unit.to_uppercase().as_str() {
         "K" | "KB" => 1024,
@@ -608,7 +608,7 @@ fn parse_size_string_macos(size_str: &str) -> Result<u64> {
         "G" | "GB" => 1024 * 1024 * 1024,
         "T" | "TB" => 1024_u64.pow(4),
         "" => 1,
-        _ => return Err(crate::error::MonitorError::Monitoring(format!("Unknown size unit: {}", unit))),
+        _ => return Err(crate::utils::error::MonitorError::Monitoring(format!("Unknown size unit: {}", unit))),
     };
 
     Ok((number * multiplier as f64) as u64)

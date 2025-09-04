@@ -1,7 +1,7 @@
 use anyhow::Result;
 use chrono::{Duration, Utc};
-use server_box_monitor::cleanup::DataCleanupService;
-use server_box_monitor::config::DataRetentionConfig;
+use server_box_monitor::db::cleanup::DataCleanupService;
+use server_box_monitor::core::config::DataRetentionConfig;
 use sqlx::SqlitePool;
 
 async fn setup_test_db() -> Result<SqlitePool> {
@@ -12,19 +12,6 @@ async fn setup_test_db() -> Result<SqlitePool> {
     sqlx::migrate!("./migrations").run(&pool).await?;
     
     Ok(pool)
-}
-
-#[tokio::test]
-async fn test_data_retention_config() {
-    let config = DataRetentionConfig {
-        metrics_days: 30,
-        alerts_days: 90,
-        cleanup_interval_hours: 24,
-    };
-    
-    assert_eq!(config.metrics_days, 30);
-    assert_eq!(config.alerts_days, 90);
-    assert_eq!(config.cleanup_interval_hours, 24);
 }
 
 #[tokio::test]

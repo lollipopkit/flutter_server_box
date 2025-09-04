@@ -1,4 +1,4 @@
-use server_box_monitor::config::Config;
+use server_box_monitor::core::config::Config;
 
 #[cfg(test)]
 mod test_file_loading {

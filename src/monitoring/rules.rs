@@ -1,4 +1,4 @@
-use crate::{config::{Config, MonitoringRule}, monitoring::SystemMetrics, error::Result, velocity::VelocityManager};
+use crate::{core::config::{Config, MonitoringRule}, monitoring::monitoring::SystemMetrics, utils::error::Result, monitoring::velocity::VelocityManager};
 use regex::Regex;
 use tracing::{info, warn};
 
@@ -46,7 +46,7 @@ async fn check_enhanced_rule(
         info!("Triggering enhanced alert: {}", message);
         
         for push_config in &config.get_push() {
-            if let Err(e) = crate::push::send_notification(push_config, &message).await {
+            if let Err(e) = crate::monitoring::push::send_notification(push_config, &message).await {
                 warn!("Failed to send push notification via '{}': {}", push_config.name, e);
             }
         }
@@ -278,8 +278,8 @@ fn format_network_speed(bytes_per_sec: f64) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::Config;
-    use crate::monitoring::SystemMetrics;
+    use crate::core::config::Config;
+    use crate::monitoring::monitoring::SystemMetrics;
     use chrono::Utc;
 
     #[tokio::test]
@@ -306,25 +306,25 @@ mod tests {
             timestamp: Utc::now(),
             server_name: "test".to_string(),
             cpu_usage: 85.0, // Should trigger CPU alert (>=77%)
-            cpu_cores: vec![crate::timeseries::CpuCoreTime { used: 85, total: 100 }],
-            memory: crate::monitoring::MemoryMetrics {
+            cpu_cores: vec![crate::monitoring::timeseries::CpuCoreTime { used: 85, total: 100 }],
+            memory: crate::monitoring::monitoring::MemoryMetrics {
                 total: 1000,
                 used: 800,
                 free: 200,
                 usage_percent: 80.0, // Should not trigger memory alert (>=85%)
             },
-            swap: crate::monitoring::SwapMetrics {
+            swap: crate::monitoring::monitoring::SwapMetrics {
                 total: 500,
                 used: 100,
                 usage_percent: 20.0,
             },
-            disk: crate::monitoring::DiskMetrics {
+            disk: crate::monitoring::monitoring::DiskMetrics {
                 total: 10000,
                 used: 9500,
                 free: 500,
                 usage_percent: 95.0, // Should trigger disk alert (>=90%)
             },
-            network: crate::monitoring::NetworkMetrics {
+            network: crate::monitoring::monitoring::NetworkMetrics {
                 rx_bytes: 1000,
                 tx_bytes: 2000,
             },

@@ -1,6 +1,6 @@
 use crate::{
-    error::Result,
-    timeseries::{TimeSeries, NetworkTimeSeries, CpuTimeSeries, CpuCoreTime, VelocityMetrics},
+    utils::error::Result,
+    monitoring::timeseries::{TimeSeries, NetworkTimeSeries, CpuTimeSeries, CpuCoreTime, VelocityMetrics},
 };
 use chrono::{DateTime, Utc};
 use std::sync::Arc;
@@ -135,7 +135,7 @@ impl VelocityProcessor {
         )
         .execute(&*self.db_pool)
         .await
-        .map_err(crate::error::MonitorError::Database)?;
+        .map_err(crate::utils::error::MonitorError::Database)?;
         
         Ok(())
     }

@@ -1,4 +1,4 @@
-use crate::{config::PushConfig, error::Result};
+use crate::{core::config::PushConfig, utils::error::Result};
 use reqwest::Client;
 use serde_json::Value;
 use toml::Value as TomlValue;
@@ -24,7 +24,7 @@ async fn send_webhook_notification(config: &PushConfig, message: &str) -> Result
     // Extract webhook configuration
     let url = config.config.get("url")
         .and_then(|v| v.as_str())
-        .ok_or_else(|| crate::error::MonitorError::Push("Missing webhook URL".to_string()))?;
+        .ok_or_else(|| crate::utils::error::MonitorError::Push("Missing webhook URL".to_string()))?;
     
     let method = config.config.get("method")
         .and_then(|v| v.as_str())
@@ -89,7 +89,7 @@ async fn send_serverchan_notification(config: &PushConfig, message: &str) -> Res
     // Extract ServerChan configuration
     let sc_key = config.config.get("sc_key")
         .and_then(|v| v.as_str())
-        .ok_or_else(|| crate::error::MonitorError::Push("Missing ServerChan SCKey".to_string()))?;
+        .ok_or_else(|| crate::utils::error::MonitorError::Push("Missing ServerChan SCKey".to_string()))?;
     
     let title = config.config.get("title")
         .and_then(|v| v.as_str())
@@ -140,7 +140,7 @@ async fn send_bark_notification(config: &PushConfig, message: &str) -> Result<()
         .unwrap_or("https://api.day.app");
     let key = config.config.get("key")
         .and_then(|v| v.as_str())
-        .ok_or_else(|| crate::error::MonitorError::Push("Missing Bark key".to_string()))?;
+        .ok_or_else(|| crate::utils::error::MonitorError::Push("Missing Bark key".to_string()))?;
     
     let title = config.config.get("title")
         .and_then(|v| v.as_str())
@@ -205,7 +205,7 @@ async fn send_ios_notification(config: &PushConfig, message: &str) -> Result<()>
     // Extract iOS configuration
     let token = config.config.get("token")
         .and_then(|v| v.as_str())
-        .ok_or_else(|| crate::error::MonitorError::Push("Missing iOS token".to_string()))?;
+        .ok_or_else(|| crate::utils::error::MonitorError::Push("Missing iOS token".to_string()))?;
     
     let title = config.config.get("title")
         .and_then(|v| v.as_str())
@@ -236,18 +236,18 @@ async fn send_ios_notification(config: &PushConfig, message: &str) -> Result<()>
     if let Some(expected_code) = config.config.get("code").and_then(|v| v.as_integer()) {
         if status_code.as_u16() != expected_code as u16 {
             warn!("iOS notification failed: {} - {}", status_code, response_text);
-            return Err(crate::error::MonitorError::Push(format!("Unexpected status code: {}", status_code)).into());
+            return Err(crate::utils::error::MonitorError::Push(format!("Unexpected status code: {}", status_code)).into());
         }
     }
     
     // Check if there's a specific expected response pattern
     if let Some(body_regex) = config.config.get("body_regex").and_then(|v| v.as_str()) {
         let re = regex::Regex::new(body_regex)
-            .map_err(|e| crate::error::MonitorError::Push(format!("Invalid regex pattern: {}", e)))?;
+            .map_err(|e| crate::utils::error::MonitorError::Push(format!("Invalid regex pattern: {}", e)))?;
         
         if !re.is_match(&response_text) {
             warn!("iOS notification response didn't match expected pattern: {}", response_text);
-            return Err(crate::error::MonitorError::Push(format!("Response validation failed: {}", response_text)).into());
+            return Err(crate::utils::error::MonitorError::Push(format!("Response validation failed: {}", response_text)).into());
         }
     }
     
@@ -321,7 +321,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_serverchan_notification() {
-        let config = crate::config::PushConfig {
+        let config = crate::core::config::PushConfig {
             name: "test_serverchan".to_string(),
             push_type: "serverchan".to_string(),
             config: {
@@ -340,7 +340,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_bark_notification() {
-        let config = crate::config::PushConfig {
+        let config = crate::core::config::PushConfig {
             name: "test_bark".to_string(),
             push_type: "bark".to_string(),
             config: {
@@ -361,7 +361,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_send_notification_serverchan() {
-        let config = crate::config::PushConfig {
+        let config = crate::core::config::PushConfig {
             name: "test_serverchan".to_string(),
             push_type: "serverchan".to_string(),
             config: {
@@ -379,7 +379,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_send_notification_bark() {
-        let config = crate::config::PushConfig {
+        let config = crate::core::config::PushConfig {
             name: "test_bark".to_string(),
             push_type: "bark".to_string(),
             config: {
@@ -399,7 +399,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_send_notification_unknown_type() {
-        let config = crate::config::PushConfig {
+        let config = crate::core::config::PushConfig {
             name: "test_unknown".to_string(),
             push_type: "unknown".to_string(),
             config: toml::Table::new(),
@@ -411,7 +411,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_bark_notification_with_optional_params() {
-        let config = crate::config::PushConfig {
+        let config = crate::core::config::PushConfig {
             name: "test_bark_full".to_string(),
             push_type: "bark".to_string(),
             config: {

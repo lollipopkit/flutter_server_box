@@ -1,7 +1,7 @@
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use chrono::{Duration, Utc};
-use crate::error::{MonitorError, Result};
+use crate::utils::error::{MonitorError, Result};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {

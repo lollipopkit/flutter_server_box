@@ -1,4 +1,4 @@
-use server_box_monitor::{config::Config, auth};
+use server_box_monitor::{core::config::Config, api::auth};
 use sqlx::Row;
 
 #[tokio::test]
@@ -17,7 +17,7 @@ async fn test_config_load_default() {
 async fn test_database_init() {
     // Test database initialization with in-memory database
     let db_url = "sqlite::memory:";
-    let pool = server_box_monitor::database::init(db_url).await;
+    let pool = server_box_monitor::db::database::init(db_url).await;
     
     assert!(pool.is_ok());
     

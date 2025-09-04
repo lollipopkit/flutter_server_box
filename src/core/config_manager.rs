@@ -1,4 +1,4 @@
-use crate::{config::Config, error::Result};
+use crate::{core::config::Config, utils::error::Result};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -44,9 +44,9 @@ impl ConfigManager {
     pub async fn initialize(&self) -> Result<()> {
         // Create directories if they don't exist
         fs::create_dir_all(&self.config_dir)
-            .map_err(|e| crate::error::MonitorError::Io(e))?;
+            .map_err(|e| crate::utils::error::MonitorError::Io(e))?;
         fs::create_dir_all(&self.backup_dir)
-            .map_err(|e| crate::error::MonitorError::Io(e))?;
+            .map_err(|e| crate::utils::error::MonitorError::Io(e))?;
 
         // Create history file if it doesn't exist
         if !self.history_file.exists() {
@@ -82,9 +82,9 @@ impl ConfigManager {
         // Save config file with version
         let version_file = self.backup_dir.join(format!("config_v{}.json", next_version));
         let config_json = serde_json::to_string_pretty(&config_version)
-            .map_err(|e| crate::error::MonitorError::Config(anyhow::anyhow!(e)))?;
+            .map_err(|e| crate::utils::error::MonitorError::Config(anyhow::anyhow!(e)))?;
         fs::write(&version_file, config_json)
-            .map_err(|e| crate::error::MonitorError::Io(e))?;
+            .map_err(|e| crate::utils::error::MonitorError::Io(e))?;
 
         // Update history
         history.current_version = next_version;
@@ -104,15 +104,15 @@ impl ConfigManager {
         let version_file = self.backup_dir.join(format!("config_v{}.json", version));
         
         if !version_file.exists() {
-            return Err(crate::error::MonitorError::Config(anyhow::anyhow!(
+            return Err(crate::utils::error::MonitorError::Config(anyhow::anyhow!(
                 "Config version {} not found", version
             )));
         }
 
         let content = fs::read_to_string(&version_file)
-            .map_err(|e| crate::error::MonitorError::Io(e))?;
+            .map_err(|e| crate::utils::error::MonitorError::Io(e))?;
         let config_version: ConfigVersion = serde_json::from_str(&content)
-            .map_err(|e| crate::error::MonitorError::Config(anyhow::anyhow!(e)))?;
+            .map_err(|e| crate::utils::error::MonitorError::Config(anyhow::anyhow!(e)))?;
 
         Ok(config_version.config)
     }
@@ -147,10 +147,10 @@ impl ConfigManager {
 
         // Update current config
         let config_json = serde_json::to_string_pretty(&config)
-            .map_err(|e| crate::error::MonitorError::Config(anyhow::anyhow!(e)))?;
+            .map_err(|e| crate::utils::error::MonitorError::Config(anyhow::anyhow!(e)))?;
         let main_config_file = self.config_dir.join("config.json");
         fs::write(&main_config_file, config_json)
-            .map_err(|e| crate::error::MonitorError::Io(e))?;
+            .map_err(|e| crate::utils::error::MonitorError::Io(e))?;
 
         info!("Rolled back configuration to version {}", version);
         Ok(config)
@@ -161,9 +161,9 @@ impl ConfigManager {
         let config_b = self.load_config_version(version_b).await?;
 
         let json_a = serde_json::to_string_pretty(&config_a)
-            .map_err(|e| crate::error::MonitorError::Config(anyhow::anyhow!(e)))?;
+            .map_err(|e| crate::utils::error::MonitorError::Config(anyhow::anyhow!(e)))?;
         let json_b = serde_json::to_string_pretty(&config_b)
-            .map_err(|e| crate::error::MonitorError::Config(anyhow::anyhow!(e)))?;
+            .map_err(|e| crate::utils::error::MonitorError::Config(anyhow::anyhow!(e)))?;
 
         // Simple diff - in a real implementation you might use a proper diff library
         let diff = if json_a == json_b {
@@ -235,10 +235,10 @@ impl ConfigManager {
         };
 
         let config_json = serde_json::to_string_pretty(&config)
-            .map_err(|e| crate::error::MonitorError::Config(anyhow::anyhow!(e)))?;
+            .map_err(|e| crate::utils::error::MonitorError::Config(anyhow::anyhow!(e)))?;
         
         fs::write(output_path, config_json)
-            .map_err(|e| crate::error::MonitorError::Io(e))?;
+            .map_err(|e| crate::utils::error::MonitorError::Io(e))?;
 
         info!("Exported config to: {:?}", output_path);
         Ok(())
@@ -246,10 +246,10 @@ impl ConfigManager {
 
     pub async fn import_config(&self, import_path: &Path, description: Option<String>) -> Result<u32> {
         let content = fs::read_to_string(import_path)
-            .map_err(|e| crate::error::MonitorError::Io(e))?;
+            .map_err(|e| crate::utils::error::MonitorError::Io(e))?;
         
         let config: Config = serde_json::from_str(&content)
-            .map_err(|e| crate::error::MonitorError::Config(anyhow::anyhow!(e)))?;
+            .map_err(|e| crate::utils::error::MonitorError::Config(anyhow::anyhow!(e)))?;
 
         // Validate imported config
         let warnings = self.validate_config(&config).await?;
@@ -264,10 +264,10 @@ impl ConfigManager {
 
         // Update main config file
         let config_json = serde_json::to_string_pretty(&config)
-            .map_err(|e| crate::error::MonitorError::Config(anyhow::anyhow!(e)))?;
+            .map_err(|e| crate::utils::error::MonitorError::Config(anyhow::anyhow!(e)))?;
         let main_config_file = self.config_dir.join("config.json");
         fs::write(&main_config_file, config_json)
-            .map_err(|e| crate::error::MonitorError::Io(e))?;
+            .map_err(|e| crate::utils::error::MonitorError::Io(e))?;
 
         info!("Imported config from: {:?} as version {}", import_path, version);
         Ok(version)
@@ -282,18 +282,18 @@ impl ConfigManager {
         }
 
         let content = fs::read_to_string(&self.history_file)
-            .map_err(|e| crate::error::MonitorError::Io(e))?;
+            .map_err(|e| crate::utils::error::MonitorError::Io(e))?;
         let history: ConfigHistory = serde_json::from_str(&content)
-            .map_err(|e| crate::error::MonitorError::Config(anyhow::anyhow!(e)))?;
+            .map_err(|e| crate::utils::error::MonitorError::Config(anyhow::anyhow!(e)))?;
 
         Ok(history)
     }
 
     async fn save_history(&self, history: &ConfigHistory) -> Result<()> {
         let content = serde_json::to_string_pretty(history)
-            .map_err(|e| crate::error::MonitorError::Config(anyhow::anyhow!(e)))?;
+            .map_err(|e| crate::utils::error::MonitorError::Config(anyhow::anyhow!(e)))?;
         fs::write(&self.history_file, content)
-            .map_err(|e| crate::error::MonitorError::Io(e))?;
+            .map_err(|e| crate::utils::error::MonitorError::Io(e))?;
 
         Ok(())
     }
@@ -323,7 +323,7 @@ impl ConfigManager {
 
     fn calculate_config_hash(&self, config: &Config) -> Result<String> {
         let config_json = serde_json::to_string(config)
-            .map_err(|e| crate::error::MonitorError::Config(anyhow::anyhow!(e)))?;
+            .map_err(|e| crate::utils::error::MonitorError::Config(anyhow::anyhow!(e)))?;
         
         // Simple hash - in production you might want to use SHA-256
         use std::collections::hash_map::DefaultHasher;
@@ -338,10 +338,10 @@ impl ConfigManager {
 
     fn validate_threshold_format(&self, threshold: &str) -> Result<()> {
         let re = regex::Regex::new(r"^(>=|<=|>|<|==|!=)(\d+(?:\.\d+)?)([%KMGTB]*)(/s)?$")
-            .map_err(|e| crate::error::MonitorError::Config(anyhow::anyhow!(e)))?;
+            .map_err(|e| crate::utils::error::MonitorError::Config(anyhow::anyhow!(e)))?;
         
         if !re.is_match(threshold) {
-            return Err(crate::error::MonitorError::Config(anyhow::anyhow!(
+            return Err(crate::utils::error::MonitorError::Config(anyhow::anyhow!(
                 "Invalid threshold format: {}", threshold
             )));
         }

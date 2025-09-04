@@ -1,12 +1,14 @@
-use crate::config::Config;
-use crate::{cleanup, database, server};
+use crate::core::config::Config;
+use crate::db;
+use crate::monitoring::monitoring;
+use crate::db::cleanup;
 use clap::{Arg, Command};
 use std::sync::Arc;
 use tracing::info;
 
 pub fn build_cli() -> Command {
     Command::new("server_box_monitor")
-        .about("ServerBox Monitor - a Rust-based server monitoring application")
+        .about("ServerBox Monitor - a server monitoring application")
         .version("0.1.0")
         .subcommand_required(false)
         .arg_required_else_help(false)
@@ -82,16 +84,16 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
     let config = Arc::new(Config::load().await?);
 
     // Initialize database
-    let db = database::init(&config.get_database_url()).await?;
+    let db = db::database::init(&config.get_database_url()).await?;
 
     // Create shared state
-    let app_state = server::AppState::new(config.clone(), db);
+    let app_state = crate::api::server::AppState::new(config.clone(), db);
 
     // Start monitoring task
     let monitoring_handle = tokio::spawn({
         let state = app_state.clone();
         async move {
-            if let Err(e) = crate::monitoring::run_monitoring_loop(state).await {
+            if let Err(e) = monitoring::run_monitoring_loop(state).await {
                 tracing::error!("Monitoring loop error: {}", e);
             }
         }
@@ -106,7 +108,7 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
 
     // Run server and wait for shutdown signal concurrently
     tokio::select! {
-        result = server::start_server(app_state) => {
+        result = crate::api::server::start_server(app_state) => {
             if let Err(e) = result {
                 tracing::error!("Server error: {}", e);
             }
@@ -159,12 +161,12 @@ async fn handle_cleanup(matches: &clap::ArgMatches) -> anyhow::Result<()> {
     let config = Config::load().await?;
     
     // Initialize database
-    let db = database::init(&config.get_database_url()).await?;
+    let db = db::database::init(&config.get_database_url()).await?;
     
     let retention_config = config.get_monitoring().data_retention
         .ok_or_else(|| anyhow::anyhow!("Data retention configuration not found"))?;
     
-    let cleanup_service = cleanup::DataCleanupService::new(db, retention_config);
+    let cleanup_service = db::cleanup::DataCleanupService::new(db, retention_config);
     
     match matches.subcommand() {
         Some(("run", _)) => {

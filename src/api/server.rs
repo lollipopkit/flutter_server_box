@@ -1,9 +1,8 @@
 use crate::{
-    auth,
-    config::Config,
-    error::Result,
-    monitoring::SystemMetrics,
-    velocity::{NetworkSpeedInfo, VelocityAnalysisResponse, VelocityManager},
+    core::config::Config,
+    utils::error::Result,
+    monitoring::monitoring::SystemMetrics,
+    monitoring::velocity::{NetworkSpeedInfo, VelocityAnalysisResponse, VelocityManager},
 };
 use ntex::web::{self, App, HttpRequest, HttpResponse, HttpServer, middleware::Logger};
 use ntex_files::Files;
@@ -135,7 +134,7 @@ async fn login(
     .await?;
 
     if let Some(user) = user
-        && auth::verify_password(&req.password, &user.password_hash)?
+        && crate::api::auth::verify_password(&req.password, &user.password_hash)?
     {
         // Update last login
         sqlx::query!(
@@ -146,7 +145,7 @@ async fn login(
         .await?;
 
         // Generate JWT token
-        let token = auth::generate_token(&user.username, &app_state.config.get_jwt_secret())?;
+        let token = crate::api::auth::generate_token(&user.username, &app_state.config.get_jwt_secret())?;
 
         return Ok(HttpResponse::Ok().json(&LoginResponse { token }));
     }
@@ -318,26 +317,26 @@ async fn health_check() -> HttpResponse {
     }))
 }
 
-fn verify_auth(req: &HttpRequest, jwt_secret: &str) -> Result<auth::Claims> {
+fn verify_auth(req: &HttpRequest, jwt_secret: &str) -> Result<crate::api::auth::Claims> {
     let auth_header = req
         .headers()
         .get("Authorization")
         .ok_or_else(|| {
-            crate::error::MonitorError::Auth("Missing Authorization header".to_string())
+            crate::utils::error::MonitorError::Auth("Missing Authorization header".to_string())
         })?
         .to_str()
         .map_err(|_| {
-            crate::error::MonitorError::Auth("Invalid Authorization header".to_string())
+            crate::utils::error::MonitorError::Auth("Invalid Authorization header".to_string())
         })?;
 
     if !auth_header.starts_with("Bearer ") {
-        return Err(crate::error::MonitorError::Auth(
+        return Err(crate::utils::error::MonitorError::Auth(
             "Invalid Authorization format".to_string(),
         ));
     }
 
     let token = &auth_header[7..];
-    auth::verify_token(token, jwt_secret)
+    crate::api::auth::verify_token(token, jwt_secret)
 }
 
 fn format_bytes(bytes: u64) -> String {

@@ -2,7 +2,7 @@ use anyhow::Result;
 use sqlx::SqlitePool;
 use tracing::{info, warn, error};
 use chrono::{Duration, Utc};
-use crate::config::DataRetentionConfig;
+use crate::core::config::DataRetentionConfig;
 
 pub struct DataCleanupService {
     pool: SqlitePool,

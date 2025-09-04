@@ -1,13 +1,6 @@
-pub mod auth;
-pub mod cleanup;
+pub mod api;
 pub mod cli;
-pub mod config;
-pub mod config_manager;
-pub mod database;
-pub mod error;
+pub mod core;
+pub mod db;
 pub mod monitoring;
-pub mod push;
-pub mod rules;
-pub mod server;
-pub mod timeseries;
-pub mod velocity;
+pub mod utils;
