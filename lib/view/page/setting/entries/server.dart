@@ -42,8 +42,8 @@ extension _Server on _AppSettingsPageState {
   Widget _buildConnectionStats() {
     return ListTile(
       leading: const Icon(Icons.analytics, size: _kIconSize),
-      title: const Text('连接统计'),
-      subtitle: const Text('查看服务器连接成功率和历史记录'),
+      title: Text(l10n.connectionStats),
+      subtitle: Text(l10n.connectionStatsDesc),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () {
         Navigator.of(context).push(

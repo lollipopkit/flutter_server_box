@@ -251,6 +251,7 @@
   "writeScriptFailTip": "Writing to the script failed, possibly due to lack of permissions or the directory does not exist.",
   "writeScriptTip": "After connecting to the server, a script will be written to `~/.config/server_box` \n | `/tmp/server_box` to monitor the system status. You can review the script content.",
   "connectionStats": "Connection Statistics",
+  "connectionStatsDesc": "View server connection success rate and history",
   "noConnectionStatsData": "No connection statistics data",
   "totalAttempts": "Total",
   "lastSuccess": "Last Success",

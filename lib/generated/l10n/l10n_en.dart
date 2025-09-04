@@ -848,6 +848,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get connectionStats => 'Connection Statistics';
 
   @override
+  String get connectionStatsDesc =>
+      'View server connection success rate and history';
+
+  @override
   String get noConnectionStatsData => 'No connection statistics data';
 
   @override

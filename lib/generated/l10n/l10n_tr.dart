@@ -848,6 +848,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get connectionStats => 'Bağlantı İstatistikleri';
 
   @override
+  String get connectionStatsDesc =>
+      'Sunucu bağlantı başarı oranını ve geçmişi görüntüle';
+
+  @override
   String get noConnectionStatsData => 'Bağlantı istatistik verisi yok';
 
   @override

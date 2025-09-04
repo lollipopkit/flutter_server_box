@@ -251,6 +251,7 @@
   "writeScriptFailTip": "スクリプトの書き込みに失敗しました。権限がないかディレクトリが存在しない可能性があります。",
   "writeScriptTip": "サーバーに接続すると、システムの状態を監視するためのスクリプトが `~/.config/server_box` \n | `/tmp/server_box` に書き込まれます。スクリプトの内容を確認できます。",
   "connectionStats": "接続統計",
+  "connectionStatsDesc": "サーバー接続成功率と履歴を表示",
   "noConnectionStatsData": "接続統計データがありません",
   "totalAttempts": "総計",
   "lastSuccess": "最後の成功",

@@ -251,6 +251,7 @@
   "writeScriptFailTip": "Das Schreiben des Skripts ist fehlgeschlagen, möglicherweise aufgrund fehlender Berechtigungen oder das Verzeichnis existiert nicht.",
   "writeScriptTip": "Nach der Verbindung mit dem Server wird ein Skript in `~/.config/server_box` \n | `/tmp/server_box` geschrieben, um den Systemstatus zu überwachen. Sie können den Skriptinhalt überprüfen.",
   "connectionStats": "Verbindungsstatistiken",
+  "connectionStatsDesc": "Server-Verbindungserfolgsrate und Verlauf anzeigen",
   "noConnectionStatsData": "Keine Verbindungsstatistikdaten",
   "totalAttempts": "Gesamt",
   "lastSuccess": "Letzter Erfolg",

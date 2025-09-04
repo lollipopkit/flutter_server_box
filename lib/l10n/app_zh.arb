@@ -251,6 +251,7 @@
   "writeScriptFailTip": "写入脚本失败，可能是没有权限/目录不存在等",
   "writeScriptTip": "在连接服务器后，会向 `~/.config/server_box` \n | `/tmp/server_box` 写入脚本来监测系统状态，你可以审查脚本内容。",
   "connectionStats": "连接统计",
+  "connectionStatsDesc": "查看服务器连接成功率和历史记录",
   "noConnectionStatsData": "暂无连接统计数据",
   "totalAttempts": "总次数",
   "lastSuccess": "最后成功",

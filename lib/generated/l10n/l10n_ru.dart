@@ -853,6 +853,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get connectionStats => 'Статистика соединений';
 
   @override
+  String get connectionStatsDesc =>
+      'Просмотр коэффициента успешности подключения к серверу и истории';
+
+  @override
   String get noConnectionStatsData => 'Нет данных статистики соединений';
 
   @override

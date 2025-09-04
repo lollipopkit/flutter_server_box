@@ -823,6 +823,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get connectionStats => '接続統計';
 
   @override
+  String get connectionStatsDesc => 'サーバー接続成功率と履歴を表示';
+
+  @override
   String get noConnectionStatsData => '接続統計データがありません';
 
   @override

@@ -848,6 +848,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get connectionStats => 'Statistik Koneksi';
 
   @override
+  String get connectionStatsDesc =>
+      'Lihat tingkat keberhasilan koneksi server dan riwayat';
+
+  @override
   String get noConnectionStatsData => 'Tidak ada data statistik koneksi';
 
   @override

@@ -854,6 +854,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get connectionStats => 'Verbindingsstatistieken';
 
   @override
+  String get connectionStatsDesc =>
+      'Bekijk server verbindingssucces ratio en geschiedenis';
+
+  @override
   String get noConnectionStatsData => 'Geen verbindingsstatistiekgegevens';
 
   @override

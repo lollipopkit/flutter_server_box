@@ -851,6 +851,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get connectionStats => 'Estatísticas de conexão';
 
   @override
+  String get connectionStatsDesc =>
+      'Ver taxa de sucesso de conexão do servidor e histórico';
+
+  @override
   String get noConnectionStatsData => 'Não há dados de estatísticas de conexão';
 
   @override

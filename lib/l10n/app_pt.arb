@@ -251,6 +251,7 @@
   "writeScriptFailTip": "Falha ao escrever no script, possivelmente devido à falta de permissões ou o diretório não existe.",
   "writeScriptTip": "Após conectar ao servidor, um script será escrito em `~/.config/server_box` \n | `/tmp/server_box` para monitorar o status do sistema. Você pode revisar o conteúdo do script.",
   "connectionStats": "Estatísticas de conexão",
+  "connectionStatsDesc": "Ver taxa de sucesso de conexão do servidor e histórico",
   "noConnectionStatsData": "Não há dados de estatísticas de conexão",
   "totalAttempts": "Total",
   "lastSuccess": "Último sucesso",

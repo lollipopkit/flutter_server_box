@@ -251,6 +251,7 @@
   "writeScriptFailTip": "寫入腳本失敗，可能是沒有權限/目錄不存在等。",
   "writeScriptTip": "連線到伺服器後，將會在 `~/.config/server_box` \n | `/tmp/server_box` 中寫入一個腳本來監測系統狀態。你可以審查腳本內容。",
   "connectionStats": "連線統計",
+  "connectionStatsDesc": "檢視伺服器連線成功率和歷史記錄",
   "noConnectionStatsData": "暫無連線統計資料",
   "totalAttempts": "總次數",
   "lastSuccess": "最後成功",

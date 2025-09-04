@@ -854,6 +854,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get connectionStats => 'Статистика з\'єднань';
 
   @override
+  String get connectionStatsDesc =>
+      'Переглянути коефіцієнт успішності підключення до сервера та історію';
+
+  @override
   String get noConnectionStatsData => 'Немає даних статистики з\'єднань';
 
   @override

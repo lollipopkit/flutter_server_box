@@ -808,6 +808,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get connectionStats => '连接统计';
 
   @override
+  String get connectionStatsDesc => '查看服务器连接成功率和历史记录';
+
+  @override
   String get noConnectionStatsData => '暂无连接统计数据';
 
   @override
@@ -1668,6 +1671,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get connectionStats => '連線統計';
+
+  @override
+  String get connectionStatsDesc => '檢視伺服器連線成功率和歷史記錄';
 
   @override
   String get noConnectionStatsData => '暫無連線統計資料';

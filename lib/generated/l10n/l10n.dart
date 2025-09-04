@@ -1628,6 +1628,12 @@ abstract class AppLocalizations {
   /// **'Connection Statistics'**
   String get connectionStats;
 
+  /// No description provided for @connectionStatsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'View server connection success rate and history'**
+  String get connectionStatsDesc;
+
   /// No description provided for @noConnectionStatsData.
   ///
   /// In en, this message translates to:

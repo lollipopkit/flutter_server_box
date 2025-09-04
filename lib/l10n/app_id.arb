@@ -251,6 +251,7 @@
   "writeScriptFailTip": "Penulisan ke skrip gagal, mungkin karena tidak ada izin atau direktori tidak ada.",
   "writeScriptTip": "Setelah terhubung ke server, sebuah skrip akan ditulis ke `~/.config/server_box` \n | `/tmp/server_box` untuk memantau status sistem. Anda dapat meninjau konten skrip tersebut.",
   "connectionStats": "Statistik Koneksi",
+  "connectionStatsDesc": "Lihat tingkat keberhasilan koneksi server dan riwayat",
   "noConnectionStatsData": "Tidak ada data statistik koneksi",
   "totalAttempts": "Total",
   "lastSuccess": "Sukses Terakhir",
