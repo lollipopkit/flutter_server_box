@@ -9,6 +9,11 @@ on:
 permissions:
   contents: write
 
+# Set by fl_build
+# env:
+#   APP_NAME: ServerBox
+#   BUILD_NUMBER: ${{ github.ref_name }}
+
 jobs:
   releaseAndroid:
     name: Release android
@@ -20,7 +25,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: "stable"
-          flutter-version: "3.35.1"
+          flutter-version: "3.35.3"
       - uses: actions/setup-java@v4
         with:
           distribution: "zulu"
@@ -98,16 +103,12 @@ jobs:
   #       uses: actions/checkout@v4
   #     - name: Install Flutter
   #       uses: subosito/flutter-action@v2
-  # with:
-  #   channel: 'stable'
-  #   flutter-version: '3.32.1'
   #     - name: Build
-  #       run: dart run fl_build -p ios,mac
+  #       run: dart run fl_build -p ios
   #     - name: Create Release
   #       uses: softprops/action-gh-release@v2
   #       with:
   #         files: |
-  #           ${{ env.APP_NAME }}_universal_macos.zip
   #           ${{ env.APP_NAME }}_universal.ipa
   #       env:
   #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
