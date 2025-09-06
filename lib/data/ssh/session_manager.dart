@@ -51,10 +51,29 @@ abstract final class TermSessionManager {
 
   static void init() {
     if (isAndroid) {
-      MethodChans.registerHandler((id) async {
-        _entries[id]?.disconnect?.call();
-      });
+      MethodChans.registerHandler(
+        (id) async {
+          _entries[id]?.disconnect?.call();
+        }, 
+        () {
+          // Stop all connections when notification "Stop All" is pressed
+          stopAllConnections();
+        },
+      );
     }
+  }
+
+  /// Called when Android notification "Stop All" button is pressed
+  static void stopAllConnections() {
+    // Disconnect all sessions
+    final disconnectCallbacks = _entries.values.map((e) => e.disconnect).where((cb) => cb != null).toList();
+    for (final disconnect in disconnectCallbacks) {
+      disconnect!();
+    }
+    // Clear all entries
+    _entries.clear();
+    _activeId = null;
+    _sync();
   }
 
   /// Add a session record and push update to Android.
