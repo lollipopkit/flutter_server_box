@@ -4,6 +4,9 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.IntentFilter
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterFragmentActivity
@@ -16,6 +19,8 @@ class MainActivity: FlutterFragmentActivity() {
     private lateinit var channel: MethodChannel
     private val ACTION_UPDATE_SESSIONS = "tech.lolli.toolbox.ACTION_UPDATE_SESSIONS"
     private val ACTION_DISCONNECT_SESSION = "tech.lolli.toolbox.ACTION_DISCONNECT_SESSION"
+    private val ACTION_STOP_ALL_CONNECTIONS = "tech.lolli.toolbox.STOP_ALL_CONNECTIONS"
+    private var stopAllReceiver: BroadcastReceiver? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -92,6 +97,9 @@ class MainActivity: FlutterFragmentActivity() {
 
         // Handle intent if launched via notification action
         handleActionIntent(intent)
+
+        // Register broadcast receiver for stop all connections
+        setupStopAllReceiver()
     }
 
     private fun reqPerm() {
@@ -139,6 +147,30 @@ class MainActivity: FlutterFragmentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    private fun setupStopAllReceiver() {
+        stopAllReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent?.action == ACTION_STOP_ALL_CONNECTIONS && ::channel.isInitialized) {
+                    try {
+                        channel.invokeMethod("stopAllConnections")
+                    } catch (e: Exception) {
+                        android.util.Log.e("MainActivity", "Failed to invoke stopAllConnections: ${e.message}")
+                    }
+                }
+            }
+        }
+        val filter = IntentFilter(ACTION_STOP_ALL_CONNECTIONS)
+        registerReceiver(stopAllReceiver, filter)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        stopAllReceiver?.let {
+            unregisterReceiver(it)
+            stopAllReceiver = null
         }
     }
 }

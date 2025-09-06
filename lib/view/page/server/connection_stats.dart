@@ -98,7 +98,7 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
                   ),
                 ),
                 Text(
-                  '${libL10n.success}: $successRate%',
+                  '${libL10n.success}: $successRate',
                   style: TextStyle(
                     fontSize: 16,
                     color: stats.successRate >= 0.8

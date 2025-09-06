@@ -77,8 +77,10 @@ abstract final class MethodChans {
   }
 
   /// Register a handler for native -> Flutter callbacks.
-  /// Currently handles: `disconnectSession` with argument map {id: string}
-  static void registerHandler(Future<void> Function(String id) onDisconnect) {
+  /// Currently handles: 
+  /// - `disconnectSession` with argument map {id: string}
+  /// - `stopAllConnections` with no arguments
+  static void registerHandler(Future<void> Function(String id) onDisconnect, [VoidCallback? onStopAll]) {
     _channel.setMethodCallHandler((call) async {
       switch (call.method) {
         case 'disconnectSession':
@@ -87,6 +89,9 @@ abstract final class MethodChans {
           if (id != null && id.isNotEmpty) {
             await onDisconnect(id);
           }
+          return;
+        case 'stopAllConnections':
+          onStopAll?.call();
           return;
         default:
           return;
