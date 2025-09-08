@@ -1838,8 +1838,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v4.0.3"
-      resolved-ref: c64183346b924173eb7251800001a64771911185
+      ref: "v4.0.4"
+      resolved-ref: "5747837cdb7b113ef733ce0104e4f2bfa1eb4a36"
       url: "https://github.com/lollipopkit/xterm.dart"
     source: git
     version: "4.0.0"
