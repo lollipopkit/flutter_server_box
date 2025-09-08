@@ -16,13 +16,11 @@
 	</array>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
-	<key>com.apple.security.device.camera</key>
+	<key>com.apple.security.files.user-selected.read-write</key>
 	<true/>
 	<key>com.apple.security.network.client</key>
 	<true/>
 	<key>com.apple.security.network.server</key>
-	<true/>
-	<key>com.apple.security.files.user-selected.read-write</key>
 	<true/>
 	<key>keychain-access-groups</key>
 	<array/>
