@@ -155,7 +155,7 @@ class MainActivity: FlutterFragmentActivity() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 if (intent?.action == ACTION_STOP_ALL_CONNECTIONS && ::channel.isInitialized) {
                     try {
-                        channel.invokeMethod("stopAllConnections")
+                        channel.invokeMethod("stopAllConnections", null)
                     } catch (e: Exception) {
                         android.util.Log.e("MainActivity", "Failed to invoke stopAllConnections: ${e.message}")
                     }
