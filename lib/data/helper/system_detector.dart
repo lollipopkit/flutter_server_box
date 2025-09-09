@@ -10,7 +10,7 @@ class SystemDetector {
   /// First checks if a custom system type is configured in [spi].
   /// If not, attempts to detect the system by running commands:
   /// 1. 'uname -a' command to detect Linux/BSD/Darwin
-  /// 2. 'echo %OS%' command to detect Windows (if uname fails)
+  /// 2. 'ver' command to detect Windows (if uname fails)
   ///
   /// Returns [SystemType.linux] as default if detection fails.
   static Future<SystemType> detect(SSHClient client, Spi spi) async {
@@ -35,10 +35,9 @@ class SystemDetector {
       }
 
       // If uname fails, try to detect Windows systems
-      // Use echo %OS% which is Windows-specific and doesn't create files on Unix
-      final windowsResult = await client.run('echo %OS%').string;
-      if (windowsResult.isNotEmpty && 
-          windowsResult.toLowerCase().contains('windows')) {
+      final powershellResult = await client.run('ver 2>nul').string;
+      if (powershellResult.isNotEmpty &&
+          (powershellResult.contains('Windows') || powershellResult.contains('NT'))) {
         detectedSystemType = SystemType.windows;
         dprint('Detected Windows system type for ${spi.oldId}');
         return detectedSystemType;
