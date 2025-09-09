@@ -32,7 +32,6 @@ jobs:
           path: |
             ${{ env.PUB_CACHE }}
             ~/.pub-cache
-            ${{ runner.tool_cache }}/flutter
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: |
             ${{ runner.os }}-pub-
