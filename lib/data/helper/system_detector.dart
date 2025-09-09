@@ -9,8 +9,8 @@ class SystemDetector {
   ///
   /// First checks if a custom system type is configured in [spi].
   /// If not, attempts to detect the system by running commands:
-  /// 1. 'ver' command to detect Windows
-  /// 2. 'uname -a' command to detect Linux/BSD/Darwin
+  /// 1. 'uname -a' command to detect Linux/BSD/Darwin
+  /// 2. 'echo %OS%' command to detect Windows (if uname fails)
   ///
   /// Returns [SystemType.linux] as default if detection fails.
   static Future<SystemType> detect(SSHClient client, Spi spi) async {
@@ -22,17 +22,8 @@ class SystemDetector {
     }
 
     try {
-      // Try to detect Windows systems first (more reliable detection)
-      final powershellResult = await client.run('ver 2>nul').string;
-      if (powershellResult.isNotEmpty &&
-          (powershellResult.contains('Windows') || powershellResult.contains('NT'))) {
-        detectedSystemType = SystemType.windows;
-        dprint('Detected Windows system type for ${spi.oldId}');
-        return detectedSystemType;
-      }
-
-      // Try to detect Unix/Linux/BSD systems
-      final unixResult = await client.run('uname -a').string;
+      // Try to detect Unix/Linux/BSD systems first (more reliable and doesn't create files)
+      final unixResult = await client.run('uname -a 2>/dev/null').string;
       if (unixResult.contains('Linux')) {
         detectedSystemType = SystemType.linux;
         dprint('Detected Linux system type for ${spi.oldId}');
@@ -40,6 +31,16 @@ class SystemDetector {
       } else if (unixResult.contains('Darwin') || unixResult.contains('BSD')) {
         detectedSystemType = SystemType.bsd;
         dprint('Detected BSD system type for ${spi.oldId}');
+        return detectedSystemType;
+      }
+
+      // If uname fails, try to detect Windows systems
+      // Use echo %OS% which is Windows-specific and doesn't create files on Unix
+      final windowsResult = await client.run('echo %OS%').string;
+      if (windowsResult.isNotEmpty && 
+          windowsResult.toLowerCase().contains('windows')) {
+        detectedSystemType = SystemType.windows;
+        dprint('Detected Windows system type for ${spi.oldId}');
         return detectedSystemType;
       }
     } catch (e) {
