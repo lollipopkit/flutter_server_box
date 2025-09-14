@@ -2,6 +2,8 @@ package tech.lolli.toolbox
 
 import android.app.*
 import android.content.Intent
+import android.content.pm.ServiceInfo
+import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
@@ -48,19 +50,22 @@ class ForegroundService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         try {
+            // Check notification permission for Android 13+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                 androidx.core.content.ContextCompat.checkSelfPermission(
                     this, android.Manifest.permission.POST_NOTIFICATIONS
                 ) != android.content.pm.PackageManager.PERMISSION_GRANTED
             ) {
-                Log.w("ForegroundService", "Notification permission denied. Stopping service.")
-                stopForegroundService()
+                Log.w("ForegroundService", "Notification permission denied. Stopping service gracefully.")
+                // Don't call stopForegroundService() here as we haven't started foreground yet
+                stopSelf()
                 return START_NOT_STICKY
             }
 
             if (intent == null) {
                 Log.w("ForegroundService", "onStartCommand called with null intent")
-                stopForegroundService()
+                // Don't call stopForegroundService() here as we haven't started foreground yet
+                stopSelf()
                 return START_NOT_STICKY
             }
 
@@ -101,33 +106,62 @@ class ForegroundService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val manager = getSystemService(NotificationManager::class.java)
-            if (manager == null) {
-                Log.e("ForegroundService", "Failed to get NotificationManager")
-                return
+            try {
+                val manager = getSystemService(NotificationManager::class.java)
+                if (manager == null) {
+                    Log.e("ForegroundService", "Failed to get NotificationManager")
+                    return
+                }
+                val serviceChannel = NotificationChannel(
+                    chanId,
+                    "ForegroundServiceChannel",
+                    NotificationManager.IMPORTANCE_DEFAULT
+                ).apply {
+                    description = "For foreground service"
+                }
+                manager.createNotificationChannel(serviceChannel)
+                Log.d("ForegroundService", "Notification channel created successfully")
+            } catch (e: Exception) {
+                logError("Failed to create notification channel", e)
             }
-            val serviceChannel = NotificationChannel(
-                chanId,
-                "ForegroundServiceChannel",
-                NotificationManager.IMPORTANCE_DEFAULT
-            ).apply {
-                description = "For foreground service"
-            }
-            manager.createNotificationChannel(serviceChannel)
         }
     }
 
     private fun ensureForeground(notification: Notification) {
         try {
+            // Double-check notification permission before starting foreground service
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                androidx.core.content.ContextCompat.checkSelfPermission(
+                    this, android.Manifest.permission.POST_NOTIFICATIONS
+                ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+            ) {
+                Log.w("ForegroundService", "Cannot start foreground service without notification permission")
+                stopSelf()
+                return
+            }
+
             if (!isFgStarted) {
-                startForeground(NOTIFICATION_ID, notification)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+                } else {
+                    startForeground(NOTIFICATION_ID, notification)
+                }
                 isFgStarted = true
+                Log.d("ForegroundService", "Foreground service started successfully")
             } else {
                 val nm = getSystemService(NotificationManager::class.java)
-                nm?.notify(NOTIFICATION_ID, notification)
+                if (nm != null) {
+                    nm.notify(NOTIFICATION_ID, notification)
+                } else {
+                    Log.w("ForegroundService", "NotificationManager is null, cannot update notification")
+                }
             }
+        } catch (e: SecurityException) {
+            logError("Security exception when starting foreground service (likely missing permission)", e)
+            stopSelf()
         } catch (e: Exception) {
             logError("Failed to start/update foreground", e)
+            // Don't stop the service for other exceptions, just log them
         }
     }
 
@@ -143,21 +177,22 @@ class ForegroundService : Service() {
         val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(this, chanId)
         } else {
+            @Suppress("DEPRECATION")
             Notification.Builder(this)
         }
 
         // Use the earliest session's start time for chronometer
         val earliestStartTime = sessions.minOfOrNull { it.startWhen } ?: System.currentTimeMillis()
 
-        val title = when {
-            count == 0 -> "Server Box"
-            count == 1 -> sessions.first().title
+        val title = when (count) {
+            0 -> "Server Box"
+            1 -> sessions.first().title
             else -> "SSH sessions: $count active"
         }
 
-        val contentText = when {
-            count == 0 -> "Ready for connections"
-            count == 1 -> {
+        val contentText = when (count) {
+            0 -> "Ready for connections"
+            1 -> {
                 val session = sessions.first()
                 "${session.subtitle} · ${session.status}"
             }
@@ -189,7 +224,13 @@ class ForegroundService : Service() {
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setContentIntent(pendingIntent)
-            .addAction(android.R.drawable.ic_delete, "Stop All", stopPending)
+            .addAction(
+                Notification.Action.Builder(
+                    Icon.createWithResource(this, android.R.drawable.ic_delete),
+                    "Stop All",
+                    stopPending
+                ).build()
+            )
 
         if (style != null) {
             notification.setStyle(style)
@@ -260,7 +301,10 @@ class ForegroundService : Service() {
 
     private fun stopForegroundService() {
         try {
-            stopForeground(true)
+            if (isFgStarted) {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+                isFgStarted = false
+            }
         } catch (e: Exception) {
             logError("Error stopping foreground", e)
         }
