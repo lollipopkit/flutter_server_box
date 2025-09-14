@@ -105,19 +105,24 @@ class MainActivity: FlutterFragmentActivity() {
     private fun reqPerm() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
         
-        // Check if we already have the permission to avoid unnecessary prompts
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-            != PackageManager.PERMISSION_GRANTED) {
-            try {
+        try {
+            // Check if we already have the permission to avoid unnecessary prompts
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+                // Check if we should show rationale
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.POST_NOTIFICATIONS)) {
+                    android.util.Log.i("MainActivity", "User previously denied notification permission")
+                }
+                
                 ActivityCompat.requestPermissions(
                     this,
                     arrayOf(Manifest.permission.POST_NOTIFICATIONS),
                     123,
                 )
-            } catch (e: Exception) {
-                // Log error but don't crash
-                android.util.Log.e("MainActivity", "Failed to request permissions: ${e.message}")
             }
+        } catch (e: Exception) {
+            // Log error but don't crash
+            android.util.Log.e("MainActivity", "Failed to request permissions: ${e.message}")
         }
     }
 
@@ -163,13 +168,37 @@ class MainActivity: FlutterFragmentActivity() {
             }
         }
         val filter = IntentFilter(ACTION_STOP_ALL_CONNECTIONS)
-        registerReceiver(stopAllReceiver, filter)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.registerReceiver(this, stopAllReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(stopAllReceiver, filter)
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 123) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                android.util.Log.i("MainActivity", "Notification permission granted")
+            } else {
+                android.util.Log.w("MainActivity", "Notification permission denied")
+                // Optionally inform user about the limitation
+            }
+        }
     }
 
     override fun onDestroy() {
         super.onDestroy()
         stopAllReceiver?.let {
-            unregisterReceiver(it)
+            try {
+                unregisterReceiver(it)
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Failed to unregister receiver: ${e.message}")
+            }
             stopAllReceiver = null
         }
     }
