@@ -1,6 +1,65 @@
 part of 'edit.dart';
 
 extension _Actions on _ServerEditPageState {
+  Future<void> _onTapSSHDiscovery() async {
+    try {
+      final result = await SshDiscoveryPage.route.go(context);
+      
+      if (result != null && result.isNotEmpty) {
+        await _processDiscoveredServers(result);
+      }
+    } catch (e, s) {
+      context.showErrDialog(e, s);
+    }
+  }
+
+  Future<void> _processDiscoveredServers(List<SshDiscoveryResult> discoveredServers) async {
+    if (discoveredServers.length == 1) {
+      // Single server - populate the current form
+      final server = discoveredServers.first;
+      _ipController.text = server.ip;
+      _portController.text = server.port.toString();
+      if (_nameController.text.isEmpty) {
+        _nameController.text = server.ip;
+      }
+      context.showSnackBar('${libL10n.found} 1 server');
+    } else {
+      // Multiple servers - show import dialog
+      final shouldImport = await context.showRoundDialog<bool>(
+        title: libL10n.import,
+        child: Text('${libL10n.found} ${discoveredServers.length} ${l10n.servers}. Import?'),
+        actions: Btnx.cancelOk,
+      );
+
+      if (shouldImport == true) {
+        final servers = discoveredServers.map((result) => Spi(
+          name: result.ip,
+          ip: result.ip,
+          port: result.port,
+          user: 'root', // Default username
+          keyId: _keyIdx.value?.toString(),
+          pwd: _passwordController.text.isEmpty ? null : _passwordController.text,
+        )).toList();
+
+        await _batchImportServers(servers);
+      }
+    }
+  }
+
+  Future<void> _batchImportServers(List<Spi> servers) async {
+    final store = Stores.server;
+    int imported = 0;
+    for (final server in servers) {
+      try {
+        store.put(server);
+        imported++;
+      } catch (e) {
+        dprint('Failed to import server ${server.name}: $e');
+      }
+    }
+    context.showSnackBar('Imported $imported ${l10n.servers}');
+    if (mounted) Navigator.of(context).pop(true);
+  }
   void _onTapSSHImport() async {
     try {
       final servers = await SSHConfig.parseConfig();

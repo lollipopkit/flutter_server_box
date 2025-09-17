@@ -28,6 +28,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get alreadyLastDir => 'すでに最上位のディレクトリです';
 
   @override
+  String get atLeastOneTab => '少なくとも1つのタブを選択する必要があります';
+
+  @override
   String get authFailTip => '認証に失敗しました。パスワード/鍵/ホスト/ユーザーなどが間違っていないか確認してください。';
 
   @override
@@ -41,6 +44,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get autoUpdateHomeWidget => 'ホームウィジェットを自動更新';
+
+  @override
+  String get availableTabs => '利用可能なタブ';
 
   @override
   String get backupEncrypted => 'バックアップは暗号化されています';
@@ -81,6 +87,25 @@ class AppLocalizationsJa extends AppLocalizations {
       'このスイッチはプログラムがバックグラウンドで実行を試みることを意味しますが、実際にバックグラウンドで実行できるかどうかは、権限が有効になっているかに依存します。AOSPベースのAndroid ROMでは、このアプリの「バッテリー最適化」をオフにしてください。MIUIでは、省エネモードを「無制限」に変更してください。';
 
   @override
+  String get clearAllStatsContent => 'すべてのサーバー接続統計を削除してもよろしいですか？この操作は元に戻せません。';
+
+  @override
+  String get clearAllStatsTitle => 'すべての統計をクリア';
+
+  @override
+  String clearServerStatsContent(String serverName) {
+    return 'サーバー\"$serverName\"の接続統計を削除してもよろしいですか？この操作は元に戻せません。';
+  }
+
+  @override
+  String clearServerStatsTitle(String serverName) {
+    return '$serverNameの統計をクリア';
+  }
+
+  @override
+  String get clearThisServerStats => 'このサーバーの統計をクリア';
+
+  @override
   String get closeAfterSave => '保存して閉じる';
 
   @override
@@ -91,6 +116,15 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get conn => '接続';
+
+  @override
+  String get connectionDetails => '接続の詳細';
+
+  @override
+  String get connectionStats => '接続統計';
+
+  @override
+  String get connectionStatsDesc => 'サーバー接続成功率と履歴を表示';
 
   @override
   String get container => 'コンテナ';
@@ -138,6 +172,18 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get disconnected => '接続が切断されました';
+
+  @override
+  String get discoverSshServers => 'SSHサーバーの発見';
+
+  @override
+  String get discoveryFailed => '発見に失敗';
+
+  @override
+  String get discoverySettings => '発見設定';
+
+  @override
+  String get discoverySummary => '発見の概要';
 
   @override
   String get disk => 'ディスク';
@@ -192,14 +238,17 @@ class AppLocalizationsJa extends AppLocalizations {
   String get editVirtKeys => '仮想キーを編集';
 
   @override
-  String get editor => 'エディター';
-
-  @override
   String get editorHighlightTip =>
       '現在のコードハイライトのパフォーマンスはかなり悪いため、改善するために無効にすることを選択できます。';
 
   @override
   String get emulator => 'エミュレーター';
+
+  @override
+  String get enableMdns => 'mDNSを有効化';
+
+  @override
+  String get enableMdnsDesc => 'mDNS/BonjourでSSHサービスを発見';
 
   @override
   String get encode => 'エンコード';
@@ -233,10 +282,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get followSystem => 'システムに従う';
+  String get finishedAt => '完了時刻';
 
   @override
-  String get font => 'フォント';
+  String get followSystem => 'システムに従う';
 
   @override
   String get fontSize => 'フォントサイズ';
@@ -270,6 +319,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get highlight => 'コードハイライト';
 
   @override
+  String get homeTabs => 'ホームタブ';
+
+  @override
+  String get homeTabsCustomizeDesc => 'ホームページに表示するタブとその順序をカスタマイズします';
+
+  @override
   String get homeWidgetUrlConfig => 'ホームウィジェットURL設定';
 
   @override
@@ -288,9 +343,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get imagesList => 'イメージリスト';
-
-  @override
-  String get init => '初期化する';
 
   @override
   String get inner => '内蔵';
@@ -321,13 +373,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get keyAuth => 'キー認証';
 
   @override
+  String get lastFailure => '最後の失敗';
+
+  @override
+  String get lastSuccess => '最後の成功';
+
+  @override
   String get letterCache => '文字キャッシング';
 
   @override
   String get letterCacheTip => '無効にすることを推奨しますが、無効にした後はCJK文字を入力することができなくなります。';
-
-  @override
-  String get license => 'オープンソースライセンス';
 
   @override
   String get location => '場所';
@@ -341,10 +396,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get manual => 'マニュアル';
+  String get max => '最大';
 
   @override
-  String get max => '最大';
+  String get maxConcurrency => '最大同時実行数';
 
   @override
   String get maxRetryCount => 'サーバーの再接続試行回数';
@@ -383,6 +438,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get newContainer => '新しいコンテナを作成';
+
+  @override
+  String get noConnectionStatsData => '接続統計データがありません';
 
   @override
   String get noLineChart => '折れ線グラフを使用しない';
@@ -450,9 +508,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get preferDiskAmount => 'ディスク容量を優先的に表示';
 
   @override
-  String get preview => 'プレビュー';
-
-  @override
   String get privateKey => '秘密鍵';
 
   @override
@@ -480,6 +535,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get reboot => '再起動';
+
+  @override
+  String get recentConnections => '最近の接続';
 
   @override
   String get rememberPwdInMem => 'メモリにパスワードを記憶する';
@@ -540,6 +598,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get serverOrder => 'サーバー順序';
+
+  @override
+  String get serverTabRequired => 'サーバータブは削除できません';
+
+  @override
+  String get servers => 'サーバー';
 
   @override
   String get sftpDlPrepare => 'サーバーへの接続を準備中...';
@@ -682,9 +746,6 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get sync => '同期する';
-
-  @override
   String get syncTip => '再起動が必要な場合があります。一部の変更はその後に有効になります。';
 
   @override
@@ -692,6 +753,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get tag => 'タグ';
+
+  @override
+  String get tapToStartDiscovery => '検索ボタンをタップしてネットワーク上のSSHサーバーを発見';
 
   @override
   String get temperature => '温度';
@@ -726,6 +790,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get total => '合計';
 
   @override
+  String get totalAttempts => '総計';
+
+  @override
   String get traffic => 'トラフィック';
 
   @override
@@ -751,9 +818,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get updateServerStatusInterval => 'サーバー状態の更新間隔';
 
   @override
-  String get upload => 'アップロード';
-
-  @override
   String get upsideDown => '上下逆転';
 
   @override
@@ -776,6 +840,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get view => 'ビュー';
+
+  @override
+  String get viewDetails => '詳細を表示';
 
   @override
   String get viewErr => 'エラーを表示';
@@ -818,68 +885,4 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'サーバーに接続すると、システムの状態を監視するためのスクリプトが `~/.config/server_box` \n | `/tmp/server_box` に書き込まれます。スクリプトの内容を確認できます。';
-
-  @override
-  String get connectionStats => '接続統計';
-
-  @override
-  String get connectionStatsDesc => 'サーバー接続成功率と履歴を表示';
-
-  @override
-  String get noConnectionStatsData => '接続統計データがありません';
-
-  @override
-  String get totalAttempts => '総計';
-
-  @override
-  String get lastSuccess => '最後の成功';
-
-  @override
-  String get lastFailure => '最後の失敗';
-
-  @override
-  String get recentConnections => '最近の接続';
-
-  @override
-  String get viewDetails => '詳細を表示';
-
-  @override
-  String get connectionDetails => '接続の詳細';
-
-  @override
-  String get clearThisServerStats => 'このサーバーの統計をクリア';
-
-  @override
-  String get clearAllStatsTitle => 'すべての統計をクリア';
-
-  @override
-  String get clearAllStatsContent => 'すべてのサーバー接続統計を削除してもよろしいですか？この操作は元に戻せません。';
-
-  @override
-  String clearServerStatsTitle(String serverName) {
-    return '$serverNameの統計をクリア';
-  }
-
-  @override
-  String clearServerStatsContent(String serverName) {
-    return 'サーバー\"$serverName\"の接続統計を削除してもよろしいですか？この操作は元に戻せません。';
-  }
-
-  @override
-  String get homeTabs => 'ホームタブ';
-
-  @override
-  String get homeTabsCustomizeDesc => 'ホームページに表示するタブとその順序をカスタマイズします';
-
-  @override
-  String get reset => 'リセット';
-
-  @override
-  String get availableTabs => '利用可能なタブ';
-
-  @override
-  String get atLeastOneTab => '少なくとも1つのタブを選択する必要があります';
-
-  @override
-  String get serverTabRequired => 'サーバータブは削除できません';
 }

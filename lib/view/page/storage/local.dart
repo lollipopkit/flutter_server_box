@@ -259,7 +259,7 @@ extension _Actions on _LocalFilePageState {
           ),
           Btn.tile(
             icon: const Icon(Icons.upload),
-            text: l10n.upload,
+            text: libL10n.upload,
             onTap: () => _onTapUpload(file, fileName),
           ),
           Btn.tile(

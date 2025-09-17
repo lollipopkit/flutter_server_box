@@ -123,7 +123,7 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
         [const CenterGreyTitle('App'), _buildApp()],
         [CenterGreyTitle(l10n.server), _buildServer()],
         [const CenterGreyTitle('SSH'), _buildSSH(), const CenterGreyTitle('SFTP'), _buildSFTP()],
-        [CenterGreyTitle(l10n.container), _buildContainer(), CenterGreyTitle(l10n.editor), _buildEditor()],
+        [CenterGreyTitle(l10n.container), _buildContainer(), CenterGreyTitle(libL10n.editor), _buildEditor()],
 
         /// Fullscreen Mode is designed for old mobile phone which can be
         /// used as a status screen.

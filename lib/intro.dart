@@ -31,7 +31,7 @@ final class _IntroPage extends StatelessWidget {
       padding: _introListPad,
       children: [
         SizedBox(height: padTop),
-        IntroPage.title(text: l10n.init, big: true),
+        IntroPage.title(text: libL10n.init, big: true),
         SizedBox(height: padTop),
         // Prompt to set backup password after migration or on first launch
         ListTile(

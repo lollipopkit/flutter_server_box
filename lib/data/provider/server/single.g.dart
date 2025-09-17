@@ -6,7 +6,7 @@ part of 'single.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$serverNotifierHash() => r'524647748cc3810c17e5c1cd29e360f3936f5014';
+String _$serverNotifierHash() => r'd9724fbe6d132f2e2ea4dfa5af73aeab168e1c57';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -29,8 +29,7 @@ class _SystemHash {
   }
 }
 
-abstract class _$ServerNotifier
-    extends BuildlessAutoDisposeNotifier<ServerState> {
+abstract class _$ServerNotifier extends BuildlessNotifier<ServerState> {
   late final String serverId;
 
   ServerState build(String serverId);
@@ -74,7 +73,7 @@ class ServerNotifierFamily extends Family<ServerState> {
 
 /// See also [ServerNotifier].
 class ServerNotifierProvider
-    extends AutoDisposeNotifierProviderImpl<ServerNotifier, ServerState> {
+    extends NotifierProviderImpl<ServerNotifier, ServerState> {
   /// See also [ServerNotifier].
   ServerNotifierProvider(String serverId)
     : this._internal(
@@ -124,8 +123,7 @@ class ServerNotifierProvider
   }
 
   @override
-  AutoDisposeNotifierProviderElement<ServerNotifier, ServerState>
-  createElement() {
+  NotifierProviderElement<ServerNotifier, ServerState> createElement() {
     return _ServerNotifierProviderElement(this);
   }
 
@@ -145,13 +143,13 @@ class ServerNotifierProvider
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-mixin ServerNotifierRef on AutoDisposeNotifierProviderRef<ServerState> {
+mixin ServerNotifierRef on NotifierProviderRef<ServerState> {
   /// The parameter `serverId` of this provider.
   String get serverId;
 }
 
 class _ServerNotifierProviderElement
-    extends AutoDisposeNotifierProviderElement<ServerNotifier, ServerState>
+    extends NotifierProviderElement<ServerNotifier, ServerState>
     with ServerNotifierRef {
   _ServerNotifierProviderElement(super.provider);
 

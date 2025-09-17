@@ -29,6 +29,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get alreadyLastDir => 'Already in last directory.';
 
   @override
+  String get atLeastOneTab => 'At least one tab must be selected';
+
+  @override
   String get authFailTip =>
       'Authentication failed, please check whether credentials are correct';
 
@@ -44,6 +47,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get autoUpdateHomeWidget => 'Automatic home widget update';
+
+  @override
+  String get availableTabs => 'Available Tabs';
 
   @override
   String get backupEncrypted => 'Backup is encrypted';
@@ -85,6 +91,26 @@ class AppLocalizationsEn extends AppLocalizations {
       'This switch only means the program will try to run in the background. Whether it can run in the background depends on whether the permission is enabled or not. For AOSP-based Android ROMs, please disable \"Battery Optimization\" in this app. For MIUI / HyperOS, please change the power saving policy to \"Unlimited\".';
 
   @override
+  String get clearAllStatsContent =>
+      'Are you sure you want to clear all server connection statistics? This action cannot be undone.';
+
+  @override
+  String get clearAllStatsTitle => 'Clear All Statistics';
+
+  @override
+  String clearServerStatsContent(String serverName) {
+    return 'Are you sure you want to clear connection statistics for server \"$serverName\"? This action cannot be undone.';
+  }
+
+  @override
+  String clearServerStatsTitle(String serverName) {
+    return 'Clear $serverName Statistics';
+  }
+
+  @override
+  String get clearThisServerStats => 'Clear This Server Statistics';
+
+  @override
   String get closeAfterSave => 'Save and close';
 
   @override
@@ -96,6 +122,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get conn => 'Connection';
+
+  @override
+  String get connectionDetails => 'Connection Details';
+
+  @override
+  String get connectionStats => 'Connection Statistics';
+
+  @override
+  String get connectionStatsDesc =>
+      'View server connection success rate and history';
 
   @override
   String get container => 'Container';
@@ -145,6 +181,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get disconnected => 'Disconnected';
+
+  @override
+  String get discoverSshServers => 'Discover SSH Servers';
+
+  @override
+  String get discoveryFailed => 'Discovery failed';
+
+  @override
+  String get discoverySettings => 'Discovery Settings';
+
+  @override
+  String get discoverySummary => 'Discovery Summary';
 
   @override
   String get disk => 'Disk';
@@ -199,14 +247,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editVirtKeys => 'Edit virtual keys';
 
   @override
-  String get editor => 'Editor';
-
-  @override
   String get editorHighlightTip =>
       'The current code highlighting performance is not ideal and can be optionally turned off to improve.';
 
   @override
   String get emulator => 'Emulator';
+
+  @override
+  String get enableMdns => 'Enable mDNS';
+
+  @override
+  String get enableMdnsDesc => 'Use mDNS/Bonjour to discover SSH services';
 
   @override
   String get encode => 'Encode';
@@ -240,10 +291,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get followSystem => 'Follow system';
+  String get finishedAt => 'Finished at';
 
   @override
-  String get font => 'Font';
+  String get followSystem => 'Follow system';
 
   @override
   String get fontSize => 'Font size';
@@ -277,6 +328,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get highlight => 'Code highlighting';
 
   @override
+  String get homeTabs => 'Home Tabs';
+
+  @override
+  String get homeTabsCustomizeDesc =>
+      'Customize which tabs appear on the home page and their order';
+
+  @override
   String get homeWidgetUrlConfig => 'Config home widget url';
 
   @override
@@ -295,9 +353,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get imagesList => 'Images list';
-
-  @override
-  String get init => 'Initialize';
 
   @override
   String get inner => 'Inner';
@@ -329,14 +384,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get keyAuth => 'Key Auth';
 
   @override
+  String get lastFailure => 'Last Failure';
+
+  @override
+  String get lastSuccess => 'Last Success';
+
+  @override
   String get letterCache => 'Letter caching';
 
   @override
   String get letterCacheTip =>
       'Recommended to disable, but after disabling, it will be impossible to input CJK characters.';
-
-  @override
-  String get license => 'License';
 
   @override
   String get location => 'Location';
@@ -350,10 +408,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get manual => 'Manual';
+  String get max => 'max';
 
   @override
-  String get max => 'max';
+  String get maxConcurrency => 'Max Concurrency';
 
   @override
   String get maxRetryCount => 'Number of server reconnections';
@@ -392,6 +450,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get newContainer => 'New container';
+
+  @override
+  String get noConnectionStatsData => 'No connection statistics data';
 
   @override
   String get noLineChart => 'Do not use line charts';
@@ -464,9 +525,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get preferDiskAmount => 'Prioritize displaying disk capacity';
 
   @override
-  String get preview => 'Preview';
-
-  @override
   String get privateKey => 'Private Key';
 
   @override
@@ -495,6 +553,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reboot => 'Reboot';
+
+  @override
+  String get recentConnections => 'Recent Connections';
 
   @override
   String get rememberPwdInMem => 'Remember password in memory';
@@ -555,6 +616,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get serverOrder => 'Server order';
+
+  @override
+  String get serverTabRequired => 'Server tab cannot be removed';
+
+  @override
+  String get servers => 'servers';
 
   @override
   String get sftpDlPrepare => 'Preparing to connect...';
@@ -703,9 +770,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get sync => 'Sync';
-
-  @override
   String get syncTip =>
       'A restart may be required for some changes to take effect.';
 
@@ -714,6 +778,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tag => 'Tags';
+
+  @override
+  String get tapToStartDiscovery =>
+      'Tap the search button to discover SSH servers on your network';
 
   @override
   String get temperature => 'Temperature';
@@ -748,6 +816,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get total => 'Total';
 
   @override
+  String get totalAttempts => 'Total';
+
+  @override
   String get traffic => 'Traffic';
 
   @override
@@ -773,9 +844,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updateServerStatusInterval => 'Server status update interval';
 
   @override
-  String get upload => 'Upload';
-
-  @override
   String get upsideDown => 'Upside Down';
 
   @override
@@ -799,6 +867,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get view => 'View';
+
+  @override
+  String get viewDetails => 'View Details';
 
   @override
   String get viewErr => 'See error';
@@ -843,71 +914,4 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'After connecting to the server, a script will be written to `~/.config/server_box` \n | `/tmp/server_box` to monitor the system status. You can review the script content.';
-
-  @override
-  String get connectionStats => 'Connection Statistics';
-
-  @override
-  String get connectionStatsDesc =>
-      'View server connection success rate and history';
-
-  @override
-  String get noConnectionStatsData => 'No connection statistics data';
-
-  @override
-  String get totalAttempts => 'Total';
-
-  @override
-  String get lastSuccess => 'Last Success';
-
-  @override
-  String get lastFailure => 'Last Failure';
-
-  @override
-  String get recentConnections => 'Recent Connections';
-
-  @override
-  String get viewDetails => 'View Details';
-
-  @override
-  String get connectionDetails => 'Connection Details';
-
-  @override
-  String get clearThisServerStats => 'Clear This Server Statistics';
-
-  @override
-  String get clearAllStatsTitle => 'Clear All Statistics';
-
-  @override
-  String get clearAllStatsContent =>
-      'Are you sure you want to clear all server connection statistics? This action cannot be undone.';
-
-  @override
-  String clearServerStatsTitle(String serverName) {
-    return 'Clear $serverName Statistics';
-  }
-
-  @override
-  String clearServerStatsContent(String serverName) {
-    return 'Are you sure you want to clear connection statistics for server \"$serverName\"? This action cannot be undone.';
-  }
-
-  @override
-  String get homeTabs => 'Home Tabs';
-
-  @override
-  String get homeTabsCustomizeDesc =>
-      'Customize which tabs appear on the home page and their order';
-
-  @override
-  String get reset => 'Reset';
-
-  @override
-  String get availableTabs => 'Available Tabs';
-
-  @override
-  String get atLeastOneTab => 'At least one tab must be selected';
-
-  @override
-  String get serverTabRequired => 'Server tab cannot be removed';
 }

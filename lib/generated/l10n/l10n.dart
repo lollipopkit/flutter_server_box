@@ -155,6 +155,12 @@ abstract class AppLocalizations {
   /// **'Already in last directory.'**
   String get alreadyLastDir;
 
+  /// No description provided for @atLeastOneTab.
+  ///
+  /// In en, this message translates to:
+  /// **'At least one tab must be selected'**
+  String get atLeastOneTab;
+
   /// No description provided for @authFailTip.
   ///
   /// In en, this message translates to:
@@ -184,6 +190,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Automatic home widget update'**
   String get autoUpdateHomeWidget;
+
+  /// No description provided for @availableTabs.
+  ///
+  /// In en, this message translates to:
+  /// **'Available Tabs'**
+  String get availableTabs;
 
   /// No description provided for @backupEncrypted.
   ///
@@ -257,6 +269,36 @@ abstract class AppLocalizations {
   /// **'This switch only means the program will try to run in the background. Whether it can run in the background depends on whether the permission is enabled or not. For AOSP-based Android ROMs, please disable \"Battery Optimization\" in this app. For MIUI / HyperOS, please change the power saving policy to \"Unlimited\".'**
   String get bgRunTip;
 
+  /// No description provided for @clearAllStatsContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to clear all server connection statistics? This action cannot be undone.'**
+  String get clearAllStatsContent;
+
+  /// No description provided for @clearAllStatsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear All Statistics'**
+  String get clearAllStatsTitle;
+
+  /// No description provided for @clearServerStatsContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to clear connection statistics for server \"{serverName}\"? This action cannot be undone.'**
+  String clearServerStatsContent(String serverName);
+
+  /// No description provided for @clearServerStatsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear {serverName} Statistics'**
+  String clearServerStatsTitle(String serverName);
+
+  /// No description provided for @clearThisServerStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear This Server Statistics'**
+  String get clearThisServerStats;
+
   /// No description provided for @closeAfterSave.
   ///
   /// In en, this message translates to:
@@ -280,6 +322,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connection'**
   String get conn;
+
+  /// No description provided for @connectionDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection Details'**
+  String get connectionDetails;
+
+  /// No description provided for @connectionStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection Statistics'**
+  String get connectionStats;
+
+  /// No description provided for @connectionStatsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'View server connection success rate and history'**
+  String get connectionStatsDesc;
 
   /// No description provided for @container.
   ///
@@ -371,6 +431,30 @@ abstract class AppLocalizations {
   /// **'Disconnected'**
   String get disconnected;
 
+  /// No description provided for @discoverSshServers.
+  ///
+  /// In en, this message translates to:
+  /// **'Discover SSH Servers'**
+  String get discoverSshServers;
+
+  /// No description provided for @discoveryFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Discovery failed'**
+  String get discoveryFailed;
+
+  /// No description provided for @discoverySettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Discovery Settings'**
+  String get discoverySettings;
+
+  /// No description provided for @discoverySummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Discovery Summary'**
+  String get discoverySummary;
+
   /// No description provided for @disk.
   ///
   /// In en, this message translates to:
@@ -452,12 +536,6 @@ abstract class AppLocalizations {
   /// **'Edit virtual keys'**
   String get editVirtKeys;
 
-  /// No description provided for @editor.
-  ///
-  /// In en, this message translates to:
-  /// **'Editor'**
-  String get editor;
-
   /// No description provided for @editorHighlightTip.
   ///
   /// In en, this message translates to:
@@ -469,6 +547,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Emulator'**
   String get emulator;
+
+  /// No description provided for @enableMdns.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable mDNS'**
+  String get enableMdns;
+
+  /// No description provided for @enableMdnsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Use mDNS/Bonjour to discover SSH services'**
+  String get enableMdnsDesc;
 
   /// No description provided for @encode.
   ///
@@ -524,17 +614,17 @@ abstract class AppLocalizations {
   /// **'File \'{file}\' too large {size}, max {sizeMax}'**
   String fileTooLarge(Object file, Object size, Object sizeMax);
 
+  /// No description provided for @finishedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Finished at'**
+  String get finishedAt;
+
   /// No description provided for @followSystem.
   ///
   /// In en, this message translates to:
   /// **'Follow system'**
   String get followSystem;
-
-  /// No description provided for @font.
-  ///
-  /// In en, this message translates to:
-  /// **'Font'**
-  String get font;
 
   /// No description provided for @fontSize.
   ///
@@ -596,6 +686,18 @@ abstract class AppLocalizations {
   /// **'Code highlighting'**
   String get highlight;
 
+  /// No description provided for @homeTabs.
+  ///
+  /// In en, this message translates to:
+  /// **'Home Tabs'**
+  String get homeTabs;
+
+  /// No description provided for @homeTabsCustomizeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize which tabs appear on the home page and their order'**
+  String get homeTabsCustomizeDesc;
+
   /// No description provided for @homeWidgetUrlConfig.
   ///
   /// In en, this message translates to:
@@ -631,12 +733,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Images list'**
   String get imagesList;
-
-  /// No description provided for @init.
-  ///
-  /// In en, this message translates to:
-  /// **'Initialize'**
-  String get init;
 
   /// No description provided for @inner.
   ///
@@ -692,6 +788,18 @@ abstract class AppLocalizations {
   /// **'Key Auth'**
   String get keyAuth;
 
+  /// No description provided for @lastFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Failure'**
+  String get lastFailure;
+
+  /// No description provided for @lastSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Success'**
+  String get lastSuccess;
+
   /// No description provided for @letterCache.
   ///
   /// In en, this message translates to:
@@ -703,12 +811,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recommended to disable, but after disabling, it will be impossible to input CJK characters.'**
   String get letterCacheTip;
-
-  /// No description provided for @license.
-  ///
-  /// In en, this message translates to:
-  /// **'License'**
-  String get license;
 
   /// No description provided for @location.
   ///
@@ -728,17 +830,17 @@ abstract class AppLocalizations {
   /// **'Made with ❤️ by {myGithub}'**
   String madeWithLove(Object myGithub);
 
-  /// No description provided for @manual.
-  ///
-  /// In en, this message translates to:
-  /// **'Manual'**
-  String get manual;
-
   /// No description provided for @max.
   ///
   /// In en, this message translates to:
   /// **'max'**
   String get max;
+
+  /// No description provided for @maxConcurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Max Concurrency'**
+  String get maxConcurrency;
 
   /// No description provided for @maxRetryCount.
   ///
@@ -811,6 +913,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New container'**
   String get newContainer;
+
+  /// No description provided for @noConnectionStatsData.
+  ///
+  /// In en, this message translates to:
+  /// **'No connection statistics data'**
+  String get noConnectionStatsData;
 
   /// No description provided for @noLineChart.
   ///
@@ -938,12 +1046,6 @@ abstract class AppLocalizations {
   /// **'Prioritize displaying disk capacity'**
   String get preferDiskAmount;
 
-  /// No description provided for @preview.
-  ///
-  /// In en, this message translates to:
-  /// **'Preview'**
-  String get preview;
-
   /// No description provided for @privateKey.
   ///
   /// In en, this message translates to:
@@ -997,6 +1099,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reboot'**
   String get reboot;
+
+  /// No description provided for @recentConnections.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Connections'**
+  String get recentConnections;
 
   /// No description provided for @rememberPwdInMem.
   ///
@@ -1117,6 +1225,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Server order'**
   String get serverOrder;
+
+  /// No description provided for @serverTabRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Server tab cannot be removed'**
+  String get serverTabRequired;
+
+  /// No description provided for @servers.
+  ///
+  /// In en, this message translates to:
+  /// **'servers'**
+  String get servers;
 
   /// No description provided for @sftpDlPrepare.
   ///
@@ -1358,12 +1478,6 @@ abstract class AppLocalizations {
   /// **'Switch to {val}'**
   String switchTo(Object val);
 
-  /// No description provided for @sync.
-  ///
-  /// In en, this message translates to:
-  /// **'Sync'**
-  String get sync;
-
   /// No description provided for @syncTip.
   ///
   /// In en, this message translates to:
@@ -1381,6 +1495,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tags'**
   String get tag;
+
+  /// No description provided for @tapToStartDiscovery.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the search button to discover SSH servers on your network'**
+  String get tapToStartDiscovery;
 
   /// No description provided for @temperature.
   ///
@@ -1442,6 +1562,12 @@ abstract class AppLocalizations {
   /// **'Total'**
   String get total;
 
+  /// No description provided for @totalAttempts.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get totalAttempts;
+
   /// No description provided for @traffic.
   ///
   /// In en, this message translates to:
@@ -1490,12 +1616,6 @@ abstract class AppLocalizations {
   /// **'Server status update interval'**
   String get updateServerStatusInterval;
 
-  /// No description provided for @upload.
-  ///
-  /// In en, this message translates to:
-  /// **'Upload'**
-  String get upload;
-
   /// No description provided for @upsideDown.
   ///
   /// In en, this message translates to:
@@ -1543,6 +1663,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View'**
   String get view;
+
+  /// No description provided for @viewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'View Details'**
+  String get viewDetails;
 
   /// No description provided for @viewErr.
   ///
@@ -1621,126 +1747,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'After connecting to the server, a script will be written to `~/.config/server_box` \n | `/tmp/server_box` to monitor the system status. You can review the script content.'**
   String get writeScriptTip;
-
-  /// No description provided for @connectionStats.
-  ///
-  /// In en, this message translates to:
-  /// **'Connection Statistics'**
-  String get connectionStats;
-
-  /// No description provided for @connectionStatsDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'View server connection success rate and history'**
-  String get connectionStatsDesc;
-
-  /// No description provided for @noConnectionStatsData.
-  ///
-  /// In en, this message translates to:
-  /// **'No connection statistics data'**
-  String get noConnectionStatsData;
-
-  /// No description provided for @totalAttempts.
-  ///
-  /// In en, this message translates to:
-  /// **'Total'**
-  String get totalAttempts;
-
-  /// No description provided for @lastSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Last Success'**
-  String get lastSuccess;
-
-  /// No description provided for @lastFailure.
-  ///
-  /// In en, this message translates to:
-  /// **'Last Failure'**
-  String get lastFailure;
-
-  /// No description provided for @recentConnections.
-  ///
-  /// In en, this message translates to:
-  /// **'Recent Connections'**
-  String get recentConnections;
-
-  /// No description provided for @viewDetails.
-  ///
-  /// In en, this message translates to:
-  /// **'View Details'**
-  String get viewDetails;
-
-  /// No description provided for @connectionDetails.
-  ///
-  /// In en, this message translates to:
-  /// **'Connection Details'**
-  String get connectionDetails;
-
-  /// No description provided for @clearThisServerStats.
-  ///
-  /// In en, this message translates to:
-  /// **'Clear This Server Statistics'**
-  String get clearThisServerStats;
-
-  /// No description provided for @clearAllStatsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Clear All Statistics'**
-  String get clearAllStatsTitle;
-
-  /// No description provided for @clearAllStatsContent.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to clear all server connection statistics? This action cannot be undone.'**
-  String get clearAllStatsContent;
-
-  /// No description provided for @clearServerStatsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Clear {serverName} Statistics'**
-  String clearServerStatsTitle(String serverName);
-
-  /// No description provided for @clearServerStatsContent.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to clear connection statistics for server \"{serverName}\"? This action cannot be undone.'**
-  String clearServerStatsContent(String serverName);
-
-  /// No description provided for @homeTabs.
-  ///
-  /// In en, this message translates to:
-  /// **'Home Tabs'**
-  String get homeTabs;
-
-  /// No description provided for @homeTabsCustomizeDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Customize which tabs appear on the home page and their order'**
-  String get homeTabsCustomizeDesc;
-
-  /// No description provided for @reset.
-  ///
-  /// In en, this message translates to:
-  /// **'Reset'**
-  String get reset;
-
-  /// No description provided for @availableTabs.
-  ///
-  /// In en, this message translates to:
-  /// **'Available Tabs'**
-  String get availableTabs;
-
-  /// No description provided for @atLeastOneTab.
-  ///
-  /// In en, this message translates to:
-  /// **'At least one tab must be selected'**
-  String get atLeastOneTab;
-
-  /// No description provided for @serverTabRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Server tab cannot be removed'**
-  String get serverTabRequired;
 }
 
 class _AppLocalizationsDelegate

@@ -28,6 +28,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get alreadyLastDir => 'Zaten son dizindesiniz.';
 
   @override
+  String get atLeastOneTab => 'En az bir sekme seçilmelidir';
+
+  @override
   String get authFailTip =>
       'Kimlik doğrulama başarısız oldu, lütfen kimlik bilgilerinin doğru olup olmadığını kontrol edin';
 
@@ -43,6 +46,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get autoUpdateHomeWidget => 'Ana ekran bileşenini otomatik güncelle';
+
+  @override
+  String get availableTabs => 'Mevcut Sekmeler';
 
   @override
   String get backupEncrypted => 'Yedekleme şifrelenmiş';
@@ -84,6 +90,26 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu anahtar yalnızca programın arka planda çalışmayı deneyeceği anlamına gelir. Arka planda çalışıp çalışamayacağı, iznin etkinleştirilip etkinleştirilmediğine bağlıdır. AOSP tabanlı Android ROM\'lar için lütfen bu uygulamada \"Pil Optimizasyonu\"nu devre dışı bırakın. MIUI / HyperOS için lütfen güç tasarrufu politikasını \"Sınırsız\" olarak değiştirin.';
 
   @override
+  String get clearAllStatsContent =>
+      'Tüm sunucu bağlantı istatistiklerini temizlemek istediğinizden emin misiniz? Bu işlem geri alınamaz.';
+
+  @override
+  String get clearAllStatsTitle => 'Tüm İstatistikleri Temizle';
+
+  @override
+  String clearServerStatsContent(String serverName) {
+    return '\"$serverName\" sunucusu için bağlantı istatistiklerini temizlemek istediğinizden emin misiniz? Bu işlem geri alınamaz.';
+  }
+
+  @override
+  String clearServerStatsTitle(String serverName) {
+    return '$serverName İstatistiklerini Temizle';
+  }
+
+  @override
+  String get clearThisServerStats => 'Bu Sunucu İstatistiklerini Temizle';
+
+  @override
   String get closeAfterSave => 'Kaydet ve kapat';
 
   @override
@@ -95,6 +121,16 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get conn => 'Bağlantı';
+
+  @override
+  String get connectionDetails => 'Bağlantı Detayları';
+
+  @override
+  String get connectionStats => 'Bağlantı İstatistikleri';
+
+  @override
+  String get connectionStatsDesc =>
+      'Sunucu bağlantı başarı oranını ve geçmişi görüntüle';
 
   @override
   String get container => 'Konteyner';
@@ -144,6 +180,18 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get disconnected => 'Bağlantı kesildi';
+
+  @override
+  String get discoverSshServers => 'SSH Sunucularını Keşfet';
+
+  @override
+  String get discoveryFailed => 'Keşif başarısız';
+
+  @override
+  String get discoverySettings => 'Keşif Ayarları';
+
+  @override
+  String get discoverySummary => 'Keşif Özeti';
 
   @override
   String get disk => 'Disk';
@@ -198,14 +246,18 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editVirtKeys => 'Sanal tuşları düzenle';
 
   @override
-  String get editor => 'Düzenleyici';
-
-  @override
   String get editorHighlightTip =>
       'Mevcut kod vurgulama performansı ideal değil ve isteğe bağlı olarak kapatılabilir.';
 
   @override
   String get emulator => 'Emülatör';
+
+  @override
+  String get enableMdns => 'mDNS\'yi Etkinleştir';
+
+  @override
+  String get enableMdnsDesc =>
+      'SSH hizmetlerini keşfetmek için mDNS/Bonjour kullan';
 
   @override
   String get encode => 'Kodla';
@@ -239,10 +291,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get followSystem => 'Sistemi takip et';
+  String get finishedAt => 'Tamamlandı:';
 
   @override
-  String get font => 'Yazı tipi';
+  String get followSystem => 'Sistemi takip et';
 
   @override
   String get fontSize => 'Yazı tipi boyutu';
@@ -276,6 +328,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get highlight => 'Kod vurgulama';
 
   @override
+  String get homeTabs => 'Ana Sayfa Sekmeleri';
+
+  @override
+  String get homeTabsCustomizeDesc =>
+      'Ana sayfada görünecek sekmeleri ve sıralarını özelleştirin';
+
+  @override
   String get homeWidgetUrlConfig => 'Ana ekran bileşeni URL\'sini yapılandır';
 
   @override
@@ -294,9 +353,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get imagesList => 'Görüntü listesi';
-
-  @override
-  String get init => 'Başlat';
 
   @override
   String get inner => 'İç';
@@ -328,14 +384,17 @@ class AppLocalizationsTr extends AppLocalizations {
   String get keyAuth => 'Anahtar Kimlik Doğrulama';
 
   @override
+  String get lastFailure => 'Son Başarısızlık';
+
+  @override
+  String get lastSuccess => 'Son Başarı';
+
+  @override
   String get letterCache => 'Harf önbelleği';
 
   @override
   String get letterCacheTip =>
       'Devre dışı bırakılması önerilir, ancak devre dışı bırakıldığında CJK karakterlerini girmek mümkün olmayacaktır.';
-
-  @override
-  String get license => 'Lisans';
 
   @override
   String get location => 'Konum';
@@ -349,10 +408,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get manual => 'Manuel';
+  String get max => 'maks';
 
   @override
-  String get max => 'maks';
+  String get maxConcurrency => 'Maksimum Eşzamanlılık';
 
   @override
   String get maxRetryCount => 'Sunucu yeniden bağlantı sayısı';
@@ -391,6 +450,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get newContainer => 'Yeni konteyner';
+
+  @override
+  String get noConnectionStatsData => 'Bağlantı istatistik verisi yok';
 
   @override
   String get noLineChart => 'Çizgi grafikleri kullanma';
@@ -463,9 +525,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get preferDiskAmount => 'Disk kapasitesini öncelikli olarak göster';
 
   @override
-  String get preview => 'Önizleme';
-
-  @override
   String get privateKey => 'Özel Anahtar';
 
   @override
@@ -494,6 +553,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get reboot => 'Yeniden başlat';
+
+  @override
+  String get recentConnections => 'Son Bağlantılar';
 
   @override
   String get rememberPwdInMem => 'Şifreyi bellekte hatırla';
@@ -555,6 +617,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get serverOrder => 'Sunucu sırası';
+
+  @override
+  String get serverTabRequired => 'Sunucu sekmesi kaldırılamaz';
+
+  @override
+  String get servers => 'sunucu';
 
   @override
   String get sftpDlPrepare => 'Bağlantı hazırlanıyor...';
@@ -704,9 +772,6 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get sync => 'Senkronize et';
-
-  @override
   String get syncTip =>
       'Bazı değişikliklerin etkili olması için yeniden başlatma gerekebilir.';
 
@@ -715,6 +780,10 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get tag => 'Etiketler';
+
+  @override
+  String get tapToStartDiscovery =>
+      'Ağınızdaki SSH sunucularını keşfetmek için arama düğmesine dokunun';
 
   @override
   String get temperature => 'Sıcaklık';
@@ -749,6 +818,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get total => 'Toplam';
 
   @override
+  String get totalAttempts => 'Toplam';
+
+  @override
   String get traffic => 'Trafik';
 
   @override
@@ -774,9 +846,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get updateServerStatusInterval => 'Sunucu durumu güncelleme aralığı';
 
   @override
-  String get upload => 'Yükle';
-
-  @override
   String get upsideDown => 'Başaşağı';
 
   @override
@@ -800,6 +869,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get view => 'Görünüm';
+
+  @override
+  String get viewDetails => 'Detayları Görüntüle';
 
   @override
   String get viewErr => 'Hatayı gör';
@@ -843,71 +915,4 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Sunucuya bağlandıktan sonra, sistem durumunu izlemek için `~/.config/server_box` \n | `/tmp/server_box` dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz.';
-
-  @override
-  String get connectionStats => 'Bağlantı İstatistikleri';
-
-  @override
-  String get connectionStatsDesc =>
-      'Sunucu bağlantı başarı oranını ve geçmişi görüntüle';
-
-  @override
-  String get noConnectionStatsData => 'Bağlantı istatistik verisi yok';
-
-  @override
-  String get totalAttempts => 'Toplam';
-
-  @override
-  String get lastSuccess => 'Son Başarı';
-
-  @override
-  String get lastFailure => 'Son Başarısızlık';
-
-  @override
-  String get recentConnections => 'Son Bağlantılar';
-
-  @override
-  String get viewDetails => 'Detayları Görüntüle';
-
-  @override
-  String get connectionDetails => 'Bağlantı Detayları';
-
-  @override
-  String get clearThisServerStats => 'Bu Sunucu İstatistiklerini Temizle';
-
-  @override
-  String get clearAllStatsTitle => 'Tüm İstatistikleri Temizle';
-
-  @override
-  String get clearAllStatsContent =>
-      'Tüm sunucu bağlantı istatistiklerini temizlemek istediğinizden emin misiniz? Bu işlem geri alınamaz.';
-
-  @override
-  String clearServerStatsTitle(String serverName) {
-    return '$serverName İstatistiklerini Temizle';
-  }
-
-  @override
-  String clearServerStatsContent(String serverName) {
-    return '\"$serverName\" sunucusu için bağlantı istatistiklerini temizlemek istediğinizden emin misiniz? Bu işlem geri alınamaz.';
-  }
-
-  @override
-  String get homeTabs => 'Ana Sayfa Sekmeleri';
-
-  @override
-  String get homeTabsCustomizeDesc =>
-      'Ana sayfada görünecek sekmeleri ve sıralarını özelleştirin';
-
-  @override
-  String get reset => 'Sıfırla';
-
-  @override
-  String get availableTabs => 'Mevcut Sekmeler';
-
-  @override
-  String get atLeastOneTab => 'En az bir sekme seçilmelidir';
-
-  @override
-  String get serverTabRequired => 'Server tab cannot be removed';
 }
