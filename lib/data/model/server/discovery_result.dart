@@ -33,6 +33,7 @@ abstract class SshDiscoveryConfig with _$SshDiscoveryConfig {
     @Default(700) int timeoutMs,
     @Default(128) int maxConcurrency,
     @Default(false) bool enableMdns,
+    @Default(4096) int hostEnumerationLimit,
   }) = _SshDiscoveryConfig;
 }
 
@@ -41,6 +42,7 @@ extension SshDiscoveryConfigX on SshDiscoveryConfig {
     final args = <String>[];
     args.add('--timeout-ms=$timeoutMs');
     args.add('--max-concurrency=$maxConcurrency');
+    args.add('--host-enumeration-limit=$hostEnumerationLimit');
     if (enableMdns) args.add('--enable-mdns');
     return args;
   }

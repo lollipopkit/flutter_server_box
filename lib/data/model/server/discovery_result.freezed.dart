@@ -564,7 +564,7 @@ as List<SshDiscoveryResult>,
 /// @nodoc
 mixin _$SshDiscoveryConfig {
 
- int get timeoutMs; int get maxConcurrency; bool get enableMdns;
+ int get timeoutMs; int get maxConcurrency; bool get enableMdns; int get hostEnumerationLimit;
 /// Create a copy of SshDiscoveryConfig
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -575,16 +575,16 @@ $SshDiscoveryConfigCopyWith<SshDiscoveryConfig> get copyWith => _$SshDiscoveryCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SshDiscoveryConfig&&(identical(other.timeoutMs, timeoutMs) || other.timeoutMs == timeoutMs)&&(identical(other.maxConcurrency, maxConcurrency) || other.maxConcurrency == maxConcurrency)&&(identical(other.enableMdns, enableMdns) || other.enableMdns == enableMdns));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SshDiscoveryConfig&&(identical(other.timeoutMs, timeoutMs) || other.timeoutMs == timeoutMs)&&(identical(other.maxConcurrency, maxConcurrency) || other.maxConcurrency == maxConcurrency)&&(identical(other.enableMdns, enableMdns) || other.enableMdns == enableMdns)&&(identical(other.hostEnumerationLimit, hostEnumerationLimit) || other.hostEnumerationLimit == hostEnumerationLimit));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,timeoutMs,maxConcurrency,enableMdns);
+int get hashCode => Object.hash(runtimeType,timeoutMs,maxConcurrency,enableMdns,hostEnumerationLimit);
 
 @override
 String toString() {
-  return 'SshDiscoveryConfig(timeoutMs: $timeoutMs, maxConcurrency: $maxConcurrency, enableMdns: $enableMdns)';
+  return 'SshDiscoveryConfig(timeoutMs: $timeoutMs, maxConcurrency: $maxConcurrency, enableMdns: $enableMdns, hostEnumerationLimit: $hostEnumerationLimit)';
 }
 
 
@@ -595,7 +595,7 @@ abstract mixin class $SshDiscoveryConfigCopyWith<$Res>  {
   factory $SshDiscoveryConfigCopyWith(SshDiscoveryConfig value, $Res Function(SshDiscoveryConfig) _then) = _$SshDiscoveryConfigCopyWithImpl;
 @useResult
 $Res call({
- int timeoutMs, int maxConcurrency, bool enableMdns
+ int timeoutMs, int maxConcurrency, bool enableMdns, int hostEnumerationLimit
 });
 
 
@@ -612,12 +612,13 @@ class _$SshDiscoveryConfigCopyWithImpl<$Res>
 
 /// Create a copy of SshDiscoveryConfig
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? timeoutMs = null,Object? maxConcurrency = null,Object? enableMdns = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? timeoutMs = null,Object? maxConcurrency = null,Object? enableMdns = null,Object? hostEnumerationLimit = null,}) {
   return _then(_self.copyWith(
 timeoutMs: null == timeoutMs ? _self.timeoutMs : timeoutMs // ignore: cast_nullable_to_non_nullable
 as int,maxConcurrency: null == maxConcurrency ? _self.maxConcurrency : maxConcurrency // ignore: cast_nullable_to_non_nullable
 as int,enableMdns: null == enableMdns ? _self.enableMdns : enableMdns // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,hostEnumerationLimit: null == hostEnumerationLimit ? _self.hostEnumerationLimit : hostEnumerationLimit // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
@@ -702,10 +703,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int timeoutMs,  int maxConcurrency,  bool enableMdns)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int timeoutMs,  int maxConcurrency,  bool enableMdns,  int hostEnumerationLimit)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SshDiscoveryConfig() when $default != null:
-return $default(_that.timeoutMs,_that.maxConcurrency,_that.enableMdns);case _:
+return $default(_that.timeoutMs,_that.maxConcurrency,_that.enableMdns,_that.hostEnumerationLimit);case _:
   return orElse();
 
 }
@@ -723,10 +724,10 @@ return $default(_that.timeoutMs,_that.maxConcurrency,_that.enableMdns);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int timeoutMs,  int maxConcurrency,  bool enableMdns)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int timeoutMs,  int maxConcurrency,  bool enableMdns,  int hostEnumerationLimit)  $default,) {final _that = this;
 switch (_that) {
 case _SshDiscoveryConfig():
-return $default(_that.timeoutMs,_that.maxConcurrency,_that.enableMdns);case _:
+return $default(_that.timeoutMs,_that.maxConcurrency,_that.enableMdns,_that.hostEnumerationLimit);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -743,10 +744,10 @@ return $default(_that.timeoutMs,_that.maxConcurrency,_that.enableMdns);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int timeoutMs,  int maxConcurrency,  bool enableMdns)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int timeoutMs,  int maxConcurrency,  bool enableMdns,  int hostEnumerationLimit)?  $default,) {final _that = this;
 switch (_that) {
 case _SshDiscoveryConfig() when $default != null:
-return $default(_that.timeoutMs,_that.maxConcurrency,_that.enableMdns);case _:
+return $default(_that.timeoutMs,_that.maxConcurrency,_that.enableMdns,_that.hostEnumerationLimit);case _:
   return null;
 
 }
@@ -758,12 +759,13 @@ return $default(_that.timeoutMs,_that.maxConcurrency,_that.enableMdns);case _:
 
 
 class _SshDiscoveryConfig implements SshDiscoveryConfig {
-  const _SshDiscoveryConfig({this.timeoutMs = 700, this.maxConcurrency = 128, this.enableMdns = false});
+  const _SshDiscoveryConfig({this.timeoutMs = 700, this.maxConcurrency = 128, this.enableMdns = false, this.hostEnumerationLimit = 4096});
   
 
 @override@JsonKey() final  int timeoutMs;
 @override@JsonKey() final  int maxConcurrency;
 @override@JsonKey() final  bool enableMdns;
+@override@JsonKey() final  int hostEnumerationLimit;
 
 /// Create a copy of SshDiscoveryConfig
 /// with the given fields replaced by the non-null parameter values.
@@ -775,16 +777,16 @@ _$SshDiscoveryConfigCopyWith<_SshDiscoveryConfig> get copyWith => __$SshDiscover
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SshDiscoveryConfig&&(identical(other.timeoutMs, timeoutMs) || other.timeoutMs == timeoutMs)&&(identical(other.maxConcurrency, maxConcurrency) || other.maxConcurrency == maxConcurrency)&&(identical(other.enableMdns, enableMdns) || other.enableMdns == enableMdns));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SshDiscoveryConfig&&(identical(other.timeoutMs, timeoutMs) || other.timeoutMs == timeoutMs)&&(identical(other.maxConcurrency, maxConcurrency) || other.maxConcurrency == maxConcurrency)&&(identical(other.enableMdns, enableMdns) || other.enableMdns == enableMdns)&&(identical(other.hostEnumerationLimit, hostEnumerationLimit) || other.hostEnumerationLimit == hostEnumerationLimit));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,timeoutMs,maxConcurrency,enableMdns);
+int get hashCode => Object.hash(runtimeType,timeoutMs,maxConcurrency,enableMdns,hostEnumerationLimit);
 
 @override
 String toString() {
-  return 'SshDiscoveryConfig(timeoutMs: $timeoutMs, maxConcurrency: $maxConcurrency, enableMdns: $enableMdns)';
+  return 'SshDiscoveryConfig(timeoutMs: $timeoutMs, maxConcurrency: $maxConcurrency, enableMdns: $enableMdns, hostEnumerationLimit: $hostEnumerationLimit)';
 }
 
 
@@ -795,7 +797,7 @@ abstract mixin class _$SshDiscoveryConfigCopyWith<$Res> implements $SshDiscovery
   factory _$SshDiscoveryConfigCopyWith(_SshDiscoveryConfig value, $Res Function(_SshDiscoveryConfig) _then) = __$SshDiscoveryConfigCopyWithImpl;
 @override @useResult
 $Res call({
- int timeoutMs, int maxConcurrency, bool enableMdns
+ int timeoutMs, int maxConcurrency, bool enableMdns, int hostEnumerationLimit
 });
 
 
@@ -812,12 +814,13 @@ class __$SshDiscoveryConfigCopyWithImpl<$Res>
 
 /// Create a copy of SshDiscoveryConfig
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? timeoutMs = null,Object? maxConcurrency = null,Object? enableMdns = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? timeoutMs = null,Object? maxConcurrency = null,Object? enableMdns = null,Object? hostEnumerationLimit = null,}) {
   return _then(_SshDiscoveryConfig(
 timeoutMs: null == timeoutMs ? _self.timeoutMs : timeoutMs // ignore: cast_nullable_to_non_nullable
 as int,maxConcurrency: null == maxConcurrency ? _self.maxConcurrency : maxConcurrency // ignore: cast_nullable_to_non_nullable
 as int,enableMdns: null == enableMdns ? _self.enableMdns : enableMdns // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,hostEnumerationLimit: null == hostEnumerationLimit ? _self.hostEnumerationLimit : hostEnumerationLimit // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 

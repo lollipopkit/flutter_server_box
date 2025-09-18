@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/discovery_result.dart';
 
 class SshDiscoveryService {
@@ -20,7 +21,7 @@ class SshDiscoveryService {
     final cidrs = await _localIPv4Cidrs();
     for (final c in cidrs) {
       if (c.prefix >= 24 && c.prefix <= 30) {
-        candidates.addAll(c.enumerateHosts(limit: 4096));
+        candidates.addAll(c.enumerateHosts(limit: config.hostEnumerationLimit));
       }
     }
 
@@ -29,8 +30,10 @@ class SshDiscoveryService {
       candidates.addAll(await _mdnsSshCandidates());
     }
 
-    // Filter out unwanted addresses
-    candidates.removeWhere((a) => a.isLoopback || a.isLinkLocal || a.address == '0.0.0.0');
+    // Filter out unwanted addresses: loopback, link-local, 0.0.0.0, broadcast, multicast
+    candidates.removeWhere(
+      (a) => a.isLoopback || a.isLinkLocal || a.address == '0.0.0.0' || _isBroadcastOrMulticast(a),
+    );
 
     // 4) Concurrent SSH port scanning
     final scanner = _Scanner(
@@ -97,11 +100,18 @@ class SshDiscoveryService {
     } else if (_isMac) {
       final s = await _run('/usr/sbin/arp', ['-an']);
       if (s != null) {
+        int matchCount = 0;
         for (final line in const LineSplitter().convert(s)) {
           final m = RegExp(r'\((\d+\.\d+\.\d+\.\d+)\)').firstMatch(line);
           if (m != null) {
             set.add(InternetAddress(m.group(1)!));
+            matchCount++;
           }
+        }
+        if (matchCount == 0) {
+          lprint(
+            '[ssh_discovery] Warning: No ARP entries parsed on macOS. Output may be unexpected or localized. Output sample: ${s.length > 100 ? '${s.substring(0, 100)}...' : s}',
+          );
         }
       }
     }
@@ -161,10 +171,15 @@ class SshDiscoveryService {
             continue;
           }
           if (line.contains('inet ') && !line.contains('127.0.0.1')) {
-            final ipm = RegExp(
-              r'inet\s+(\d+\.\d+\.\d+\.\d+)\s+netmask\s+0x([0-9a-fA-F]+)(?:\s+broadcast\s+(\d+\.\d+\.\d+\.\d+))?',
-            ).firstMatch(line);
-            if (ipm != null) {
+            try {
+              final ipm = RegExp(
+                r'inet\s+(\d+\.\d+\.\d+\.\d+)\s+netmask\s+0x([0-9a-fA-F]+)(?:\s+broadcast\s+(\d+\.\d+\.\d+\.\d+))?',
+              ).firstMatch(line);
+              if (ipm == null) {
+                // Log unexpected format but continue processing other lines
+                lprint('[ssh_discovery] Warning: Unexpected ifconfig line format: $line');
+                continue;
+              }
               final ip = InternetAddress(ipm.group(1)!);
               final hexMask = int.parse(ipm.group(2)!, radix: 16);
               final dotted =
@@ -174,12 +189,30 @@ class SshDiscoveryService {
               final net = _networkAddress(ip, mask);
               final brd = InternetAddress(ipm.group(3) ?? _broadcastAddress(ip, mask).address);
               res.add(_Cidr(ip, prefix, mask, net, brd));
+            } catch (e) {
+              lprint('[ssh_discovery] Error parsing ifconfig output: $e, line: $line');
+              continue;
             }
           }
         }
       }
     }
     return res;
+  }
+
+  static bool _isBroadcastOrMulticast(InternetAddress a) {
+    // IPv4 broadcast: ends with .255 or is 255.255.255.255
+    if (a.type == InternetAddressType.IPv4) {
+      if (a.address == '255.255.255.255') return true;
+      if (a.address.split('.').last == '255') return true;
+      // Multicast: 224.0.0.0 - 239.255.255.255
+      final firstOctet = int.tryParse(a.address.split('.').first) ?? 0;
+      if (firstOctet >= 224 && firstOctet <= 239) return true;
+    } else if (a.type == InternetAddressType.IPv6) {
+      // IPv6 multicast: starts with ff
+      if (a.address.toLowerCase().startsWith('ff')) return true;
+    }
+    return false;
   }
 
   static Future<Set<InternetAddress>> _mdnsSshCandidates() async {
@@ -278,18 +311,19 @@ class _Scanner {
   }
 
   Future<_ScanResult?> _probeSsh(InternetAddress ip) async {
+    Socket? socket;
+    StreamSubscription? sub;
     try {
-      final socket = await Socket.connect(ip, SshDiscoveryService._sshPort, timeout: timeout);
+      socket = await Socket.connect(ip, SshDiscoveryService._sshPort, timeout: timeout);
       socket.timeout(timeout);
       final c = Completer<String?>();
-      late StreamSubscription sub;
       sub = socket.listen(
         (data) {
           final s = utf8.decode(data, allowMalformed: true);
           final line = s.split('\n').firstWhere((_) => true, orElse: () => s);
           if (!c.isCompleted) {
             c.complete(line.trim());
-            sub.cancel();
+            sub?.cancel();
           }
         },
         onDone: () {
@@ -300,10 +334,12 @@ class _Scanner {
         },
       );
       final banner = await c.future.timeout(timeout, onTimeout: () => null);
-      socket.destroy();
       return _ScanResult(ip, banner);
     } catch (_) {
       return null;
+    } finally {
+      sub?.cancel();
+      socket?.destroy();
     }
   }
 }

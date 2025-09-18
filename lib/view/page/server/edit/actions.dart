@@ -22,26 +22,61 @@ extension _Actions on _ServerEditPageState {
       if (_nameController.text.isEmpty) {
         _nameController.text = server.ip;
       }
-      context.showSnackBar('${libL10n.found} 1 server');
+      context.showSnackBar('${libL10n.found} 1 ${l10n.server}');
     } else {
       // Multiple servers - show import dialog
       final shouldImport = await context.showRoundDialog<bool>(
         title: libL10n.import,
-        child: Text('${libL10n.found} ${discoveredServers.length} ${l10n.servers}. Import?'),
+        child: Text(libL10n.askContinue('${libL10n.found} ${discoveredServers.length} ${l10n.servers}')),
         actions: Btnx.cancelOk,
       );
 
       if (shouldImport == true) {
-        final servers = discoveredServers.map((result) => Spi(
-          name: result.ip,
-          ip: result.ip,
-          port: result.port,
-          user: 'root', // Default username
-          keyId: _keyIdx.value?.toString(),
-          pwd: _passwordController.text.isEmpty ? null : _passwordController.text,
-        )).toList();
+        // Prompt user to configure default values before importing
+        final defaultUsername = 'root';
+        final defaultKeyId = _keyIdx.value?.toString() ?? '';
+        final usernameController = TextEditingController(text: defaultUsername);
+        final keyIdController = TextEditingController(text: defaultKeyId);
+        
+        final shouldProceed = await context.showRoundDialog<bool>(
+          title: libL10n.import,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('${libL10n.found} ${discoveredServers.length} ${l10n.servers}.'),
+              const SizedBox(height: 8),
+              Text(libL10n.setting),
+              const SizedBox(height: 8),
+              TextField(
+                controller: usernameController,
+                decoration: InputDecoration(labelText: libL10n.user),
+              ),
+              TextField(
+                controller: keyIdController,
+                decoration: InputDecoration(labelText: l10n.privateKey),
+              ),
+            ],
+          ),
+          actions: Btnx.cancelOk,
+        );
 
-        await _batchImportServers(servers);
+        if (shouldProceed == true) {
+          final username = usernameController.text.isNotEmpty ? usernameController.text : defaultUsername;
+          final keyId = keyIdController.text.isNotEmpty ? keyIdController.text : null;
+          final servers = discoveredServers.map((result) => Spi(
+            name: result.ip,
+            ip: result.ip,
+            port: result.port,
+            user: username,
+            keyId: keyId,
+            pwd: _passwordController.text.isEmpty ? null : _passwordController.text,
+          )).toList();
+
+          await _batchImportServers(servers);
+        }
+        
+        usernameController.dispose();
+        keyIdController.dispose();
       }
     }
   }
