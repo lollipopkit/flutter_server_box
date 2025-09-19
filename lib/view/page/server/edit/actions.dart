@@ -92,7 +92,7 @@ extension _Actions on _ServerEditPageState {
         dprint('Failed to import server ${server.name}: $e');
       }
     }
-    context.showSnackBar('Imported $imported ${l10n.servers}');
+    context.showSnackBar('${libL10n.success}: $imported ${l10n.servers}');
     if (mounted) Navigator.of(context).pop(true);
   }
   void _onTapSSHImport() async {
