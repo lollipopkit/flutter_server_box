@@ -29,6 +29,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get alreadyLastDir => 'Sudah di direktori terakhir.';
 
   @override
+  String get atLeastOneTab => 'Setidaknya satu tab harus dipilih';
+
+  @override
   String get authFailTip =>
       'Otentikasi gagal, silakan periksa apakah kata sandi/kunci/host/pengguna, dll, salah.';
 
@@ -44,6 +47,9 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get autoUpdateHomeWidget => 'Widget Rumah Pembaruan Otomatis';
+
+  @override
+  String get availableTabs => 'Tab Tersedia';
 
   @override
   String get backupEncrypted => 'Cadangan telah dienkripsi';
@@ -85,6 +91,26 @@ class AppLocalizationsId extends AppLocalizations {
       'Sakelar ini hanya berarti aplikasi akan mencoba berjalan di latar belakang, apakah aplikasi dapat berjalan di latar belakang tergantung pada apakah izin diaktifkan atau tidak. Untuk Android asli, nonaktifkan \"Pengoptimalan Baterai\" di aplikasi ini, dan untuk miui, ubah kebijakan penghematan daya ke \"Tidak Terbatas\".';
 
   @override
+  String get clearAllStatsContent =>
+      'Apakah Anda yakin ingin menghapus semua statistik koneksi server? Tindakan ini tidak dapat dibatalkan.';
+
+  @override
+  String get clearAllStatsTitle => 'Hapus Semua Statistik';
+
+  @override
+  String clearServerStatsContent(String serverName) {
+    return 'Apakah Anda yakin ingin menghapus statistik koneksi untuk server \"$serverName\"? Tindakan ini tidak dapat dibatalkan.';
+  }
+
+  @override
+  String clearServerStatsTitle(String serverName) {
+    return 'Hapus Statistik $serverName';
+  }
+
+  @override
+  String get clearThisServerStats => 'Hapus Statistik Server Ini';
+
+  @override
   String get closeAfterSave => 'Simpan dan tutup';
 
   @override
@@ -96,6 +122,16 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get conn => 'Koneksi';
+
+  @override
+  String get connectionDetails => 'Detail Koneksi';
+
+  @override
+  String get connectionStats => 'Statistik Koneksi';
+
+  @override
+  String get connectionStatsDesc =>
+      'Lihat tingkat keberhasilan koneksi server dan riwayat';
 
   @override
   String get container => 'Wadah';
@@ -145,6 +181,18 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get disconnected => 'Terputus';
+
+  @override
+  String get discoverSshServers => 'Temukan Server SSH';
+
+  @override
+  String get discoveryFailed => 'Penemuan gagal';
+
+  @override
+  String get discoverySettings => 'Pengaturan Penemuan';
+
+  @override
+  String get discoverySummary => 'Ringkasan Penemuan';
 
   @override
   String get disk => 'Disk';
@@ -199,14 +247,18 @@ class AppLocalizationsId extends AppLocalizations {
   String get editVirtKeys => 'Edit kunci virtual';
 
   @override
-  String get editor => 'Editor';
-
-  @override
   String get editorHighlightTip =>
       'Performa penyorotan kode saat ini lebih buruk, dan dapat dimatikan secara opsional untuk perbaikan.';
 
   @override
   String get emulator => 'Emulator';
+
+  @override
+  String get enableMdns => 'Aktifkan mDNS';
+
+  @override
+  String get enableMdnsDesc =>
+      'Gunakan mDNS/Bonjour untuk menemukan layanan SSH';
 
   @override
   String get encode => 'Menyandi';
@@ -240,10 +292,10 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get followSystem => 'Ikuti sistem';
+  String get finishedAt => 'Selesai pada';
 
   @override
-  String get font => 'Font';
+  String get followSystem => 'Ikuti sistem';
 
   @override
   String get fontSize => 'Ukuran huruf';
@@ -277,6 +329,13 @@ class AppLocalizationsId extends AppLocalizations {
   String get highlight => 'Sorotan kode';
 
   @override
+  String get homeTabs => 'Tab Beranda';
+
+  @override
+  String get homeTabsCustomizeDesc =>
+      'Sesuaikan tab mana yang muncul di halaman beranda dan urutannya';
+
+  @override
   String get homeWidgetUrlConfig => 'Konfigurasi URL Widget Rumah';
 
   @override
@@ -295,9 +354,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get imagesList => 'Daftar gambar';
-
-  @override
-  String get init => 'Menginisialisasi';
 
   @override
   String get inner => 'Batin';
@@ -329,14 +385,17 @@ class AppLocalizationsId extends AppLocalizations {
   String get keyAuth => 'Auth kunci';
 
   @override
+  String get lastFailure => 'Gagal Terakhir';
+
+  @override
+  String get lastSuccess => 'Sukses Terakhir';
+
+  @override
   String get letterCache => 'Caching huruf';
 
   @override
   String get letterCacheTip =>
       'Direkomendasikan untuk menonaktifkan, tetapi setelah dinonaktifkan, tidak mungkin untuk memasukkan karakter CJK.';
-
-  @override
-  String get license => 'Lisensi';
 
   @override
   String get location => 'Lokasi';
@@ -350,10 +409,10 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get manual => 'Manual';
+  String get max => 'Max';
 
   @override
-  String get max => 'Max';
+  String get maxConcurrency => 'Konkurensi Maksimum';
 
   @override
   String get maxRetryCount => 'Jumlah penyambungan kembali server';
@@ -392,6 +451,9 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get newContainer => 'Wadah baru';
+
+  @override
+  String get noConnectionStatsData => 'Tidak ada data statistik koneksi';
 
   @override
   String get noLineChart => 'Jangan gunakan grafik garis';
@@ -464,9 +526,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get preferDiskAmount => 'Prioritaskan tampilan kapasitas disk';
 
   @override
-  String get preview => 'Pratinjau';
-
-  @override
   String get privateKey => 'Kunci Pribadi';
 
   @override
@@ -495,6 +554,9 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get reboot => 'Reboot';
+
+  @override
+  String get recentConnections => 'Koneksi Terkini';
 
   @override
   String get rememberPwdInMem => 'Ingat kata sandi di dalam memori';
@@ -556,6 +618,12 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get serverOrder => 'Pesanan server';
+
+  @override
+  String get serverTabRequired => 'Tab server tidak dapat dihapus';
+
+  @override
+  String get servers => 'server';
 
   @override
   String get sftpDlPrepare => 'Bersiap untuk terhubung ...';
@@ -704,9 +772,6 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get sync => 'Sinkronisasi';
-
-  @override
   String get syncTip =>
       'Pengaktifan ulang mungkin diperlukan agar beberapa perubahan dapat diterapkan.';
 
@@ -715,6 +780,10 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get tag => 'Tag';
+
+  @override
+  String get tapToStartDiscovery =>
+      'Tekan tombol pencarian untuk menemukan server SSH di jaringan Anda';
 
   @override
   String get temperature => 'Suhu';
@@ -749,6 +818,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get total => 'Total';
 
   @override
+  String get totalAttempts => 'Total';
+
+  @override
   String get traffic => 'Lalu lintas';
 
   @override
@@ -774,9 +846,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get updateServerStatusInterval => 'Interval Pembaruan Status Server';
 
   @override
-  String get upload => 'Mengunggah';
-
-  @override
   String get upsideDown => 'Terbalik';
 
   @override
@@ -800,6 +869,9 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get view => 'Tampilan';
+
+  @override
+  String get viewDetails => 'Lihat Detail';
 
   @override
   String get viewErr => 'Lihat kesalahan';
@@ -843,71 +915,4 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Setelah terhubung ke server, sebuah skrip akan ditulis ke `~/.config/server_box` \n | `/tmp/server_box` untuk memantau status sistem. Anda dapat meninjau konten skrip tersebut.';
-
-  @override
-  String get connectionStats => 'Statistik Koneksi';
-
-  @override
-  String get connectionStatsDesc =>
-      'Lihat tingkat keberhasilan koneksi server dan riwayat';
-
-  @override
-  String get noConnectionStatsData => 'Tidak ada data statistik koneksi';
-
-  @override
-  String get totalAttempts => 'Total';
-
-  @override
-  String get lastSuccess => 'Sukses Terakhir';
-
-  @override
-  String get lastFailure => 'Gagal Terakhir';
-
-  @override
-  String get recentConnections => 'Koneksi Terkini';
-
-  @override
-  String get viewDetails => 'Lihat Detail';
-
-  @override
-  String get connectionDetails => 'Detail Koneksi';
-
-  @override
-  String get clearThisServerStats => 'Hapus Statistik Server Ini';
-
-  @override
-  String get clearAllStatsTitle => 'Hapus Semua Statistik';
-
-  @override
-  String get clearAllStatsContent =>
-      'Apakah Anda yakin ingin menghapus semua statistik koneksi server? Tindakan ini tidak dapat dibatalkan.';
-
-  @override
-  String clearServerStatsTitle(String serverName) {
-    return 'Hapus Statistik $serverName';
-  }
-
-  @override
-  String clearServerStatsContent(String serverName) {
-    return 'Apakah Anda yakin ingin menghapus statistik koneksi untuk server \"$serverName\"? Tindakan ini tidak dapat dibatalkan.';
-  }
-
-  @override
-  String get homeTabs => 'Tab Beranda';
-
-  @override
-  String get homeTabsCustomizeDesc =>
-      'Sesuaikan tab mana yang muncul di halaman beranda dan urutannya';
-
-  @override
-  String get reset => 'Reset';
-
-  @override
-  String get availableTabs => 'Tab Tersedia';
-
-  @override
-  String get atLeastOneTab => 'Setidaknya satu tab harus dipilih';
-
-  @override
-  String get serverTabRequired => 'Server tab cannot be removed';
 }

@@ -240,7 +240,7 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
             ),
           ),
           ListTile(
-            title: Text(l10n.manual),
+            title: Text(libL10n.manual),
             trailing: webdavLoading.listenVal((loading) {
               if (loading) return SizedLoading.small;
 
@@ -301,7 +301,7 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
             ),
           ),
           ListTile(
-            title: Text(l10n.manual),
+            title: Text(libL10n.manual),
             trailing: gistLoading.listenVal((loading) {
               if (loading) return SizedLoading.small;
 
@@ -450,7 +450,7 @@ extension on _BackupPageState {
       await Webdav.shared.upload(relativePath: bakName);
       Loggers.app.info('Upload webdav backup success');
     } catch (e, s) {
-      context.showErrDialog(e, s, l10n.upload);
+      context.showErrDialog(e, s, libL10n.upload);
       Loggers.app.warning('Upload webdav backup failed', e, s);
     } finally {
       webdavLoading.value = false;
@@ -489,7 +489,7 @@ extension on _BackupPageState {
       await GistRs.shared.upload(relativePath: bakName);
       Loggers.app.info('Upload gist backup success');
     } catch (e, s) {
-      context.showErrDialog(e, s, l10n.upload);
+      context.showErrDialog(e, s, libL10n.upload);
       Loggers.app.warning('Upload gist backup failed', e, s);
     } finally {
       gistLoading.value = false;

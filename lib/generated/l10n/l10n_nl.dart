@@ -29,6 +29,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get alreadyLastDir => 'Al in de laatst gebruikte map.';
 
   @override
+  String get atLeastOneTab =>
+      'Er moet minimaal één tabblad worden geselecteerd';
+
+  @override
   String get authFailTip =>
       'Authenticatie mislukt, controleer of het wachtwoord/sleutel/host/gebruiker, enz., incorrect zijn.';
 
@@ -44,6 +48,9 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get autoUpdateHomeWidget => 'Automatische update van home-widget';
+
+  @override
+  String get availableTabs => 'Beschikbare tabbladen';
 
   @override
   String get backupEncrypted => 'Back-up is versleuteld';
@@ -85,6 +92,26 @@ class AppLocalizationsNl extends AppLocalizations {
       'Deze schakelaar betekent alleen dat het programma zal proberen op de achtergrond uit te voeren, of het in de achtergrond kan worden uitgevoerd, hangt af van of de toestemming is ingeschakeld of niet. Voor native Android, schakel \"Batterijoptimalisatie\" uit in deze app, en voor miui, wijzig de energiebesparingsbeleid naar \"Onbeperkt\".';
 
   @override
+  String get clearAllStatsContent =>
+      'Weet u zeker dat u alle serververbindingsstatistieken wilt wissen? Deze actie kan niet ongedaan worden gemaakt.';
+
+  @override
+  String get clearAllStatsTitle => 'Alle statistieken wissen';
+
+  @override
+  String clearServerStatsContent(String serverName) {
+    return 'Weet u zeker dat u de verbindingsstatistieken voor server \"$serverName\" wilt wissen? Deze actie kan niet ongedaan worden gemaakt.';
+  }
+
+  @override
+  String clearServerStatsTitle(String serverName) {
+    return 'Statistieken van $serverName wissen';
+  }
+
+  @override
+  String get clearThisServerStats => 'Statistieken van deze server wissen';
+
+  @override
   String get closeAfterSave => 'Opslaan en sluiten';
 
   @override
@@ -96,6 +123,16 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get conn => 'Verbinding';
+
+  @override
+  String get connectionDetails => 'Verbindingsdetails';
+
+  @override
+  String get connectionStats => 'Verbindingsstatistieken';
+
+  @override
+  String get connectionStatsDesc =>
+      'Bekijk server verbindingssucces ratio en geschiedenis';
 
   @override
   String get container => 'Container';
@@ -145,6 +182,18 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get disconnected => 'Verbroken';
+
+  @override
+  String get discoverSshServers => 'SSH-servers ontdekken';
+
+  @override
+  String get discoveryFailed => 'Ontdekking mislukt';
+
+  @override
+  String get discoverySettings => 'Ontdekkingsinstellingen';
+
+  @override
+  String get discoverySummary => 'Ontdekkingssamenvatting';
 
   @override
   String get disk => 'Schijf';
@@ -199,14 +248,18 @@ class AppLocalizationsNl extends AppLocalizations {
   String get editVirtKeys => 'Virtuele toetsen bewerken';
 
   @override
-  String get editor => 'Editor';
-
-  @override
   String get editorHighlightTip =>
       'De huidige codehighlighting-prestaties zijn slechter en kunnen optioneel worden uitgeschakeld om te verbeteren.';
 
   @override
   String get emulator => 'Emulator';
+
+  @override
+  String get enableMdns => 'mDNS inschakelen';
+
+  @override
+  String get enableMdnsDesc =>
+      'Gebruik mDNS/Bonjour om SSH-services te ontdekken';
 
   @override
   String get encode => 'Coderen';
@@ -240,10 +293,10 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get followSystem => 'Volg systeem';
+  String get finishedAt => 'Voltooid om';
 
   @override
-  String get font => 'Lettertype';
+  String get followSystem => 'Volg systeem';
 
   @override
   String get fontSize => 'Lettergrootte';
@@ -277,6 +330,13 @@ class AppLocalizationsNl extends AppLocalizations {
   String get highlight => 'Code-highlight';
 
   @override
+  String get homeTabs => 'Home-tabbladen';
+
+  @override
+  String get homeTabsCustomizeDesc =>
+      'Pas aan welke tabbladen op de startpagina worden weergegeven en hun volgorde';
+
+  @override
   String get homeWidgetUrlConfig => 'Home-widget-url configureren';
 
   @override
@@ -295,9 +355,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get imagesList => 'Lijst met afbeeldingen';
-
-  @override
-  String get init => 'Initialiseren';
 
   @override
   String get inner => 'Intern';
@@ -329,14 +386,17 @@ class AppLocalizationsNl extends AppLocalizations {
   String get keyAuth => 'Sleutelauthenticatie';
 
   @override
+  String get lastFailure => 'Laatst gefaald';
+
+  @override
+  String get lastSuccess => 'Laatst succesvol';
+
+  @override
   String get letterCache => 'Lettercaching';
 
   @override
   String get letterCacheTip =>
       'Aanbevolen om uit te schakelen, maar na het uitschakelen is het niet mogelijk om CJK-tekens in te voeren.';
-
-  @override
-  String get license => 'Licentie';
 
   @override
   String get location => 'Locatie';
@@ -350,10 +410,10 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get manual => 'Handleiding';
+  String get max => 'max';
 
   @override
-  String get max => 'max';
+  String get maxConcurrency => 'Maximale gelijktijdigheid';
 
   @override
   String get maxRetryCount => 'Aantal serverherverbindingen';
@@ -392,6 +452,9 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get newContainer => 'Nieuwe container';
+
+  @override
+  String get noConnectionStatsData => 'Geen verbindingsstatistiekgegevens';
 
   @override
   String get noLineChart => 'lijndiagrammen gebruiken';
@@ -465,9 +528,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Geef de schijfcapaciteit prioriteit bij weergave';
 
   @override
-  String get preview => 'Voorbeeld';
-
-  @override
   String get privateKey => 'Privésleutel';
 
   @override
@@ -496,6 +556,9 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get reboot => 'Herstart';
+
+  @override
+  String get recentConnections => 'Recente verbindingen';
 
   @override
   String get rememberPwdInMem => 'Wachtwoord onthouden in geheugen';
@@ -557,6 +620,12 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get serverOrder => 'Servervolgorde';
+
+  @override
+  String get serverTabRequired => 'Servertabblad kan niet worden verwijderd';
+
+  @override
+  String get servers => 'servers';
 
   @override
   String get sftpDlPrepare => 'Voorbereiden om verbinding te maken...';
@@ -708,9 +777,6 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get sync => 'Sync';
-
-  @override
   String get syncTip =>
       'Een herstart kan nodig zijn voor sommige wijzigingen om van kracht te worden.';
 
@@ -719,6 +785,10 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get tag => 'Labels';
+
+  @override
+  String get tapToStartDiscovery =>
+      'Tik op de zoekknop om SSH-servers op uw netwerk te ontdekken';
 
   @override
   String get temperature => 'Temperatuur';
@@ -753,6 +823,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get total => 'Totaal';
 
   @override
+  String get totalAttempts => 'Totaal';
+
+  @override
   String get traffic => 'Verkeer';
 
   @override
@@ -779,9 +852,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Interne server status bijwerking interval';
 
   @override
-  String get upload => 'Upload';
-
-  @override
   String get upsideDown => 'Ondersteboven';
 
   @override
@@ -805,6 +875,9 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get view => 'Weergave';
+
+  @override
+  String get viewDetails => 'Details bekijken';
 
   @override
   String get viewErr => 'Zie foutmelding';
@@ -849,72 +922,4 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Na het verbinden met de server wordt een script geschreven naar `~/.config/server_box` \n | `/tmp/server_box` om de systeemstatus te monitoren. U kunt de inhoud van het script controleren.';
-
-  @override
-  String get connectionStats => 'Verbindingsstatistieken';
-
-  @override
-  String get connectionStatsDesc =>
-      'Bekijk server verbindingssucces ratio en geschiedenis';
-
-  @override
-  String get noConnectionStatsData => 'Geen verbindingsstatistiekgegevens';
-
-  @override
-  String get totalAttempts => 'Totaal';
-
-  @override
-  String get lastSuccess => 'Laatst succesvol';
-
-  @override
-  String get lastFailure => 'Laatst gefaald';
-
-  @override
-  String get recentConnections => 'Recente verbindingen';
-
-  @override
-  String get viewDetails => 'Details bekijken';
-
-  @override
-  String get connectionDetails => 'Verbindingsdetails';
-
-  @override
-  String get clearThisServerStats => 'Statistieken van deze server wissen';
-
-  @override
-  String get clearAllStatsTitle => 'Alle statistieken wissen';
-
-  @override
-  String get clearAllStatsContent =>
-      'Weet u zeker dat u alle serververbindingsstatistieken wilt wissen? Deze actie kan niet ongedaan worden gemaakt.';
-
-  @override
-  String clearServerStatsTitle(String serverName) {
-    return 'Statistieken van $serverName wissen';
-  }
-
-  @override
-  String clearServerStatsContent(String serverName) {
-    return 'Weet u zeker dat u de verbindingsstatistieken voor server \"$serverName\" wilt wissen? Deze actie kan niet ongedaan worden gemaakt.';
-  }
-
-  @override
-  String get homeTabs => 'Home-tabbladen';
-
-  @override
-  String get homeTabsCustomizeDesc =>
-      'Pas aan welke tabbladen op de startpagina worden weergegeven en hun volgorde';
-
-  @override
-  String get reset => 'Resetten';
-
-  @override
-  String get availableTabs => 'Beschikbare tabbladen';
-
-  @override
-  String get atLeastOneTab =>
-      'Er moet minimaal één tabblad worden geselecteerd';
-
-  @override
-  String get serverTabRequired => 'Server tab cannot be removed';
 }

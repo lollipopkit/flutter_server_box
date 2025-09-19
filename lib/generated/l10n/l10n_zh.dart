@@ -27,6 +27,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get alreadyLastDir => '已是顶级目录';
 
   @override
+  String get atLeastOneTab => '至少需要选择一个标签';
+
+  @override
   String get authFailTip => '认证失败，请检查连接信息是否正确';
 
   @override
@@ -40,6 +43,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get autoUpdateHomeWidget => '自动更新桌面小部件';
+
+  @override
+  String get availableTabs => '可用标签';
 
   @override
   String get backupEncrypted => '备份已加密';
@@ -79,6 +85,25 @@ class AppLocalizationsZh extends AppLocalizations {
       '此开关只代表程序会尝试在后台运行，具体能否后台运行取决于是否开启了权限。原生 Android 请关闭本 App 的“电池优化”，MIUI / HyperOS 请将省电策略改为“无限制”。';
 
   @override
+  String get clearAllStatsContent => '确定要清空所有服务器的连接统计数据吗？此操作无法撤销。';
+
+  @override
+  String get clearAllStatsTitle => '清空所有统计';
+
+  @override
+  String clearServerStatsContent(String serverName) {
+    return '确定要清空服务器 \"$serverName\" 的连接统计数据吗？此操作无法撤销。';
+  }
+
+  @override
+  String clearServerStatsTitle(String serverName) {
+    return '清空 $serverName 统计';
+  }
+
+  @override
+  String get clearThisServerStats => '清空此服务器统计';
+
+  @override
   String get closeAfterSave => '保存后关闭';
 
   @override
@@ -89,6 +114,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get conn => '连接';
+
+  @override
+  String get connectionDetails => '连接详情';
+
+  @override
+  String get connectionStats => '连接统计';
+
+  @override
+  String get connectionStatsDesc => '查看服务器连接成功率和历史记录';
 
   @override
   String get container => '容器';
@@ -136,6 +170,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get disconnected => '已断开连接';
+
+  @override
+  String get discoverSshServers => '发现SSH服务器';
+
+  @override
+  String get discoveryFailed => '发现失败';
+
+  @override
+  String get discoverySettings => '发现设置';
+
+  @override
+  String get discoverySummary => '发现摘要';
 
   @override
   String get disk => '磁盘';
@@ -189,13 +235,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get editVirtKeys => '编辑虚拟按键';
 
   @override
-  String get editor => '编辑器';
-
-  @override
   String get editorHighlightTip => '代码高亮功能可能影响性能，可选择关闭。';
 
   @override
   String get emulator => '模拟器';
+
+  @override
+  String get enableMdns => '启用mDNS';
+
+  @override
+  String get enableMdnsDesc => '使用mDNS/Bonjour发现SSH服务';
 
   @override
   String get encode => '编码';
@@ -228,10 +277,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get followSystem => '跟随系统';
+  String get finishedAt => '完成于';
 
   @override
-  String get font => '字体';
+  String get followSystem => '跟随系统';
 
   @override
   String get fontSize => '字体大小';
@@ -264,6 +313,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get highlight => '代码高亮';
 
   @override
+  String get homeTabs => '主页标签';
+
+  @override
+  String get homeTabsCustomizeDesc => '自定义主页上显示的标签及其顺序';
+
+  @override
   String get homeWidgetUrlConfig => '桌面部件链接配置';
 
   @override
@@ -282,9 +337,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get imagesList => '镜像列表';
-
-  @override
-  String get init => '初始化';
 
   @override
   String get inner => '内置';
@@ -315,13 +367,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get keyAuth => '密钥认证';
 
   @override
+  String get lastFailure => '最后失败';
+
+  @override
+  String get lastSuccess => '最后成功';
+
+  @override
   String get letterCache => '输入法字符缓存';
 
   @override
   String get letterCacheTip => '推荐关闭，但是关闭后无法输入 CJK 等文字';
-
-  @override
-  String get license => '证书';
 
   @override
   String get location => '位置';
@@ -335,10 +390,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get manual => '手动';
+  String get max => '最大';
 
   @override
-  String get max => '最大';
+  String get maxConcurrency => '最大并发数';
 
   @override
   String get maxRetryCount => '服务器尝试重连次数';
@@ -377,6 +432,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get newContainer => '新建容器';
+
+  @override
+  String get noConnectionStatsData => '暂无连接统计数据';
 
   @override
   String get noLineChart => '不使用折线图';
@@ -444,9 +502,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get preferDiskAmount => '优先显示硬盘容量';
 
   @override
-  String get preview => '预览';
-
-  @override
   String get privateKey => '私钥';
 
   @override
@@ -472,6 +527,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get reboot => '重启';
+
+  @override
+  String get recentConnections => '最近连接记录';
 
   @override
   String get rememberPwdInMem => '在内存中记住密码';
@@ -532,6 +590,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get serverOrder => '服务器顺序';
+
+  @override
+  String get serverTabRequired => '服务器标签不能被移除';
+
+  @override
+  String get servers => '服务器';
 
   @override
   String get sftpDlPrepare => '准备连接至服务器...';
@@ -672,9 +736,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get sync => '同步';
-
-  @override
   String get syncTip => '可能需要重新启动，某些更改才能生效。';
 
   @override
@@ -682,6 +743,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tag => '标签';
+
+  @override
+  String get tapToStartDiscovery => '点击搜索按钮发现网络中的SSH服务器';
 
   @override
   String get temperature => '温度';
@@ -714,6 +778,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get total => '总共';
 
   @override
+  String get totalAttempts => '总次数';
+
+  @override
   String get traffic => '流量';
 
   @override
@@ -738,9 +805,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get updateServerStatusInterval => '服务器状态刷新间隔';
 
   @override
-  String get upload => '上传';
-
-  @override
   String get upsideDown => '上下交换';
 
   @override
@@ -763,6 +827,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get view => '视图';
+
+  @override
+  String get viewDetails => '查看详情';
 
   @override
   String get viewErr => '查看错误';
@@ -803,70 +870,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get writeScriptTip =>
       '在连接服务器后，会向 `~/.config/server_box` \n | `/tmp/server_box` 写入脚本来监测系统状态，你可以审查脚本内容。';
-
-  @override
-  String get connectionStats => '连接统计';
-
-  @override
-  String get connectionStatsDesc => '查看服务器连接成功率和历史记录';
-
-  @override
-  String get noConnectionStatsData => '暂无连接统计数据';
-
-  @override
-  String get totalAttempts => '总次数';
-
-  @override
-  String get lastSuccess => '最后成功';
-
-  @override
-  String get lastFailure => '最后失败';
-
-  @override
-  String get recentConnections => '最近连接记录';
-
-  @override
-  String get viewDetails => '查看详情';
-
-  @override
-  String get connectionDetails => '连接详情';
-
-  @override
-  String get clearThisServerStats => '清空此服务器统计';
-
-  @override
-  String get clearAllStatsTitle => '清空所有统计';
-
-  @override
-  String get clearAllStatsContent => '确定要清空所有服务器的连接统计数据吗？此操作无法撤销。';
-
-  @override
-  String clearServerStatsTitle(String serverName) {
-    return '清空 $serverName 统计';
-  }
-
-  @override
-  String clearServerStatsContent(String serverName) {
-    return '确定要清空服务器 \"$serverName\" 的连接统计数据吗？此操作无法撤销。';
-  }
-
-  @override
-  String get homeTabs => '主页标签';
-
-  @override
-  String get homeTabsCustomizeDesc => '自定义主页上显示的标签及其顺序';
-
-  @override
-  String get reset => '重置';
-
-  @override
-  String get availableTabs => '可用标签';
-
-  @override
-  String get atLeastOneTab => '至少需要选择一个标签';
-
-  @override
-  String get serverTabRequired => '服务器标签不能被移除';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -892,6 +895,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get alreadyLastDir => '已是頂層目錄';
 
   @override
+  String get atLeastOneTab => '至少需要選擇一個標籤';
+
+  @override
   String get authFailTip => '認證失敗，請檢查連線資訊是否正確';
 
   @override
@@ -905,6 +911,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get autoUpdateHomeWidget => '自動更新桌面小工具';
+
+  @override
+  String get availableTabs => '可用標籤';
 
   @override
   String get backupEncrypted => '備份已加密';
@@ -944,6 +953,25 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '此開關僅代表程式會嘗試於背景執行，能否成功取決於系統權限。在原生 Android 上，請關閉本應用的「電池最佳化」；在 MIUI / HyperOS 上，請將省電策略調整為「無限制」。';
 
   @override
+  String get clearAllStatsContent => '確定要清空所有伺服器的連線統計資料嗎？此操作無法撤銷。';
+
+  @override
+  String get clearAllStatsTitle => '清空所有統計';
+
+  @override
+  String clearServerStatsContent(String serverName) {
+    return '確定要清空伺服器 \"$serverName\" 的連線統計資料嗎？此操作無法撤銷。';
+  }
+
+  @override
+  String clearServerStatsTitle(String serverName) {
+    return '清空 $serverName 統計';
+  }
+
+  @override
+  String get clearThisServerStats => '清空此伺服器統計';
+
+  @override
   String get closeAfterSave => '儲存後關閉';
 
   @override
@@ -954,6 +982,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get conn => '連線';
+
+  @override
+  String get connectionDetails => '連線詳情';
+
+  @override
+  String get connectionStats => '連線統計';
+
+  @override
+  String get connectionStatsDesc => '檢視伺服器連線成功率和歷史記錄';
 
   @override
   String get container => '容器';
@@ -1001,6 +1038,18 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get disconnected => '已中斷連線';
+
+  @override
+  String get discoverSshServers => '發現SSH服務器';
+
+  @override
+  String get discoveryFailed => '發現失敗';
+
+  @override
+  String get discoverySettings => '發現設定';
+
+  @override
+  String get discoverySummary => '發現摘要';
 
   @override
   String get disk => '磁碟';
@@ -1054,13 +1103,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get editVirtKeys => '編輯虛擬按鍵';
 
   @override
-  String get editor => '編輯器';
-
-  @override
   String get editorHighlightTip => '程式碼高亮功能可能影響效能，可選擇性關閉。';
 
   @override
   String get emulator => '模擬器';
+
+  @override
+  String get enableMdns => '啟用mDNS';
+
+  @override
+  String get enableMdnsDesc => '使用mDNS/Bonjour發現SSH服務';
 
   @override
   String get encode => '編碼';
@@ -1093,10 +1145,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get followSystem => '跟隨系統';
+  String get finishedAt => '完成於';
 
   @override
-  String get font => '字型';
+  String get followSystem => '跟隨系統';
 
   @override
   String get fontSize => '字型大小';
@@ -1129,6 +1181,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get highlight => '程式碼標記';
 
   @override
+  String get homeTabs => '主頁標籤';
+
+  @override
+  String get homeTabsCustomizeDesc => '自訂主頁上顯示的標籤及其順序';
+
+  @override
   String get homeWidgetUrlConfig => '桌面小工具連結配置';
 
   @override
@@ -1147,9 +1205,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get imagesList => '映像檔列表';
-
-  @override
-  String get init => '初始化';
 
   @override
   String get inner => '內建';
@@ -1180,13 +1235,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get keyAuth => '金鑰認證';
 
   @override
+  String get lastFailure => '最後失敗';
+
+  @override
+  String get lastSuccess => '最後成功';
+
+  @override
   String get letterCache => '輸入法字符快取';
 
   @override
   String get letterCacheTip => '建議關閉，但關閉後將無法輸入 CJK 等文字。';
-
-  @override
-  String get license => '憑證';
 
   @override
   String get location => '位置';
@@ -1200,10 +1258,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get manual => '手動';
+  String get max => '最大';
 
   @override
-  String get max => '最大';
+  String get maxConcurrency => '最大並發數';
 
   @override
   String get maxRetryCount => '伺服器嘗試重連次數';
@@ -1242,6 +1300,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get newContainer => '新建容器';
+
+  @override
+  String get noConnectionStatsData => '暫無連線統計資料';
 
   @override
   String get noLineChart => '不使用折線圖';
@@ -1309,9 +1370,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get preferDiskAmount => '優先顯示硬碟容量';
 
   @override
-  String get preview => '預覽';
-
-  @override
   String get privateKey => '私鑰';
 
   @override
@@ -1337,6 +1395,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get reboot => '重開';
+
+  @override
+  String get recentConnections => '最近連線記錄';
 
   @override
   String get rememberPwdInMem => '在記憶體中記住密碼';
@@ -1397,6 +1458,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get serverOrder => '伺服器順序';
+
+  @override
+  String get serverTabRequired => '服務器標籤不能被移除';
+
+  @override
+  String get servers => '服務器';
 
   @override
   String get sftpDlPrepare => '準備連線至伺服器...';
@@ -1537,9 +1604,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get sync => '同步';
-
-  @override
   String get syncTip => '可能需要重新啟動，某些更改才能生效。';
 
   @override
@@ -1547,6 +1611,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get tag => '標籤';
+
+  @override
+  String get tapToStartDiscovery => '點擊搜尋按鈕發現網路中的SSH服務器';
 
   @override
   String get temperature => '溫度';
@@ -1579,6 +1646,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get total => '總共';
 
   @override
+  String get totalAttempts => '總次數';
+
+  @override
   String get traffic => '流量';
 
   @override
@@ -1603,9 +1673,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get updateServerStatusInterval => '伺服器狀態更新間隔';
 
   @override
-  String get upload => '上傳';
-
-  @override
   String get upsideDown => '上下交換';
 
   @override
@@ -1628,6 +1695,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get view => '檢視';
+
+  @override
+  String get viewDetails => '檢視詳情';
 
   @override
   String get viewErr => '查看錯誤';
@@ -1668,68 +1738,4 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get writeScriptTip =>
       '連線到伺服器後，將會在 `~/.config/server_box` \n | `/tmp/server_box` 中寫入一個腳本來監測系統狀態。你可以審查腳本內容。';
-
-  @override
-  String get connectionStats => '連線統計';
-
-  @override
-  String get connectionStatsDesc => '檢視伺服器連線成功率和歷史記錄';
-
-  @override
-  String get noConnectionStatsData => '暫無連線統計資料';
-
-  @override
-  String get totalAttempts => '總次數';
-
-  @override
-  String get lastSuccess => '最後成功';
-
-  @override
-  String get lastFailure => '最後失敗';
-
-  @override
-  String get recentConnections => '最近連線記錄';
-
-  @override
-  String get viewDetails => '檢視詳情';
-
-  @override
-  String get connectionDetails => '連線詳情';
-
-  @override
-  String get clearThisServerStats => '清空此伺服器統計';
-
-  @override
-  String get clearAllStatsTitle => '清空所有統計';
-
-  @override
-  String get clearAllStatsContent => '確定要清空所有伺服器的連線統計資料嗎？此操作無法撤銷。';
-
-  @override
-  String clearServerStatsTitle(String serverName) {
-    return '清空 $serverName 統計';
-  }
-
-  @override
-  String clearServerStatsContent(String serverName) {
-    return '確定要清空伺服器 \"$serverName\" 的連線統計資料嗎？此操作無法撤銷。';
-  }
-
-  @override
-  String get homeTabs => '主頁標籤';
-
-  @override
-  String get homeTabsCustomizeDesc => '自訂主頁上顯示的標籤及其順序';
-
-  @override
-  String get reset => '重置';
-
-  @override
-  String get availableTabs => '可用標籤';
-
-  @override
-  String get atLeastOneTab => '至少需要選擇一個標籤';
-
-  @override
-  String get serverTabRequired => '服務器標籤不能被移除';
 }

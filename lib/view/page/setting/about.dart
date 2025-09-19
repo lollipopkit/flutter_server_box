@@ -36,7 +36,7 @@ final class _AppAboutPageState extends State<_AppAboutPage> with AutomaticKeepAl
               ),
               Btn.elevated(
                 icon: const Icon(MingCute.question_fill),
-                text: l10n.license,
+                text: libL10n.license,
                 onTap: () => showLicensePage(context: context),
               ),
             ].joinWith(UIs.width13),

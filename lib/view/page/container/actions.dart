@@ -77,7 +77,7 @@ extension on _ContainerPageState {
 
   Future<void> _showAddCmdPreview(String cmd) async {
     await context.showRoundDialog(
-      title: l10n.preview,
+      title: libL10n.preview,
       child: Text(cmd),
       actions: [
         TextButton(onPressed: () => context.pop(), child: Text(libL10n.cancel)),

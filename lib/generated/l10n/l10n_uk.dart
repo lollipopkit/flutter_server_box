@@ -28,6 +28,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get alreadyLastDir => 'Вже в останньому каталозі.';
 
   @override
+  String get atLeastOneTab => 'Потрібно вибрати принаймні одну вкладку';
+
+  @override
   String get authFailTip =>
       'Авторизація не вдалася, будь ласка, перевірте правильність облікових даних';
 
@@ -44,6 +47,9 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get autoUpdateHomeWidget =>
       'Автоматичне оновлення віджетів на головному екрані';
+
+  @override
+  String get availableTabs => 'Доступні вкладки';
 
   @override
   String get backupEncrypted => 'Резервна копія зашифрована';
@@ -86,6 +92,26 @@ class AppLocalizationsUk extends AppLocalizations {
       'Цей перемикач лише вказує на те, що програма намагатиметься працювати у фоновому режимі. Чи може вона працювати у фоновому режимі, залежить від прав доступу. Для AOSP-орієнтованих Android ROM, будь ласка, вимкніть \"Оптимізацію акумулятора\" в цьому додатку. Для MIUI / HyperOS, будь ласка, змініть політику економії енергії на \"Нескінченна\".';
 
   @override
+  String get clearAllStatsContent =>
+      'Ви впевнені, що хочете очистити всю статистику з\'єднань сервера? Цю дію не можна скасувати.';
+
+  @override
+  String get clearAllStatsTitle => 'Очистити всю статистику';
+
+  @override
+  String clearServerStatsContent(String serverName) {
+    return 'Ви впевнені, що хочете очистити статистику з\'єднань для сервера \"$serverName\"? Цю дію не можна скасувати.';
+  }
+
+  @override
+  String clearServerStatsTitle(String serverName) {
+    return 'Очистити статистику $serverName';
+  }
+
+  @override
+  String get clearThisServerStats => 'Очистити статистику цього сервера';
+
+  @override
   String get closeAfterSave => 'Зберегти та закрити';
 
   @override
@@ -97,6 +123,16 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get conn => 'З\'єднання';
+
+  @override
+  String get connectionDetails => 'Деталі з\'єднання';
+
+  @override
+  String get connectionStats => 'Статистика з\'єднань';
+
+  @override
+  String get connectionStatsDesc =>
+      'Переглянути коефіцієнт успішності підключення до сервера та історію';
 
   @override
   String get container => 'Контейнер';
@@ -146,6 +182,18 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get disconnected => 'Відключено';
+
+  @override
+  String get discoverSshServers => 'Виявити SSH сервери';
+
+  @override
+  String get discoveryFailed => 'Виявлення не вдалось';
+
+  @override
+  String get discoverySettings => 'Налаштування виявлення';
+
+  @override
+  String get discoverySummary => 'Підсумок виявлення';
 
   @override
   String get disk => 'Диск';
@@ -200,14 +248,18 @@ class AppLocalizationsUk extends AppLocalizations {
   String get editVirtKeys => 'Редагувати віртуальні клавіші';
 
   @override
-  String get editor => 'Редактор';
-
-  @override
   String get editorHighlightTip =>
       'Поточна підсвітка коду не ідеальна і може бути вимкнена для покращення.';
 
   @override
   String get emulator => 'Емулятор';
+
+  @override
+  String get enableMdns => 'Увімкнути mDNS';
+
+  @override
+  String get enableMdnsDesc =>
+      'Використовувати mDNS/Bonjour для виявлення SSH сервісів';
 
   @override
   String get encode => 'Кодувати';
@@ -241,10 +293,10 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get followSystem => 'Слідувати системі';
+  String get finishedAt => 'Завершено о';
 
   @override
-  String get font => 'Шрифт';
+  String get followSystem => 'Слідувати системі';
 
   @override
   String get fontSize => 'Розмір шрифту';
@@ -278,6 +330,13 @@ class AppLocalizationsUk extends AppLocalizations {
   String get highlight => 'Підсвітка коду';
 
   @override
+  String get homeTabs => 'Домашні вкладки';
+
+  @override
+  String get homeTabsCustomizeDesc =>
+      'Налаштуйте, які вкладки відображаються на головній сторінці та їх порядок';
+
+  @override
   String get homeWidgetUrlConfig =>
       'Налаштувати URL віджета на головному екрані';
 
@@ -297,9 +356,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get imagesList => 'Список зображень';
-
-  @override
-  String get init => 'Ініціалізувати';
 
   @override
   String get inner => 'Внутрішній';
@@ -331,14 +387,17 @@ class AppLocalizationsUk extends AppLocalizations {
   String get keyAuth => 'Аутентифікація ключем';
 
   @override
+  String get lastFailure => 'Остання помилка';
+
+  @override
+  String get lastSuccess => 'Останній успіх';
+
+  @override
   String get letterCache => 'Кешування букв';
 
   @override
   String get letterCacheTip =>
       'Рекомендується відключити, але після вимкнення стане неможливим введення CJK (китайських, японських, корейських) символів.';
-
-  @override
-  String get license => 'Ліцензія';
 
   @override
   String get location => 'Місцезнаходження';
@@ -352,10 +411,10 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get manual => 'Посібник';
+  String get max => 'макс.';
 
   @override
-  String get max => 'макс.';
+  String get maxConcurrency => 'Максимальна паралельність';
 
   @override
   String get maxRetryCount =>
@@ -396,6 +455,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get newContainer => 'Новий контейнер';
+
+  @override
+  String get noConnectionStatsData => 'Немає даних статистики з\'єднань';
 
   @override
   String get noLineChart => 'Не використовувати лінійні діаграми';
@@ -468,9 +530,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get preferDiskAmount => 'Пріоритетно показувати ємність диска';
 
   @override
-  String get preview => 'Попередній перегляд';
-
-  @override
   String get privateKey => 'Приватний ключ';
 
   @override
@@ -499,6 +558,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get reboot => 'Перезавантажити';
+
+  @override
+  String get recentConnections => 'Останні з\'єднання';
 
   @override
   String get rememberPwdInMem => 'Запам\'ятати пароль у пам\'яті';
@@ -560,6 +622,12 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get serverOrder => 'Порядок сервера';
+
+  @override
+  String get serverTabRequired => 'Вкладку сервера не можна видалити';
+
+  @override
+  String get servers => 'серверів';
 
   @override
   String get sftpDlPrepare => 'Підготовка до підключення...';
@@ -709,9 +777,6 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get sync => 'Синхронізація';
-
-  @override
   String get syncTip =>
       'Може знадобитися перезапуск, щоб деякі зміни набрали чинності.';
 
@@ -720,6 +785,10 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get tag => 'Теги';
+
+  @override
+  String get tapToStartDiscovery =>
+      'Натисніть кнопку пошуку, щоб виявити SSH сервери у вашій мережі';
 
   @override
   String get temperature => 'Температура';
@@ -754,6 +823,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get total => 'Всього';
 
   @override
+  String get totalAttempts => 'Загальна кількість';
+
+  @override
   String get traffic => 'Трафік';
 
   @override
@@ -779,9 +851,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get updateServerStatusInterval => 'Інтервал оновлення статусу сервера';
 
   @override
-  String get upload => 'Завантаження';
-
-  @override
   String get upsideDown => 'Доверху дном';
 
   @override
@@ -805,6 +874,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get view => 'Переглянути';
+
+  @override
+  String get viewDetails => 'Переглянути деталі';
 
   @override
   String get viewErr => 'Переглянути помилку';
@@ -849,71 +921,4 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Після підключення до сервера скрипт буде записано у `~/.config/server_box` \n | `/tmp/server_box` для моніторингу стану системи. Ви можете переглянути вміст скрипта.';
-
-  @override
-  String get connectionStats => 'Статистика з\'єднань';
-
-  @override
-  String get connectionStatsDesc =>
-      'Переглянути коефіцієнт успішності підключення до сервера та історію';
-
-  @override
-  String get noConnectionStatsData => 'Немає даних статистики з\'єднань';
-
-  @override
-  String get totalAttempts => 'Загальна кількість';
-
-  @override
-  String get lastSuccess => 'Останній успіх';
-
-  @override
-  String get lastFailure => 'Остання помилка';
-
-  @override
-  String get recentConnections => 'Останні з\'єднання';
-
-  @override
-  String get viewDetails => 'Переглянути деталі';
-
-  @override
-  String get connectionDetails => 'Деталі з\'єднання';
-
-  @override
-  String get clearThisServerStats => 'Очистити статистику цього сервера';
-
-  @override
-  String get clearAllStatsTitle => 'Очистити всю статистику';
-
-  @override
-  String get clearAllStatsContent =>
-      'Ви впевнені, що хочете очистити всю статистику з\'єднань сервера? Цю дію не можна скасувати.';
-
-  @override
-  String clearServerStatsTitle(String serverName) {
-    return 'Очистити статистику $serverName';
-  }
-
-  @override
-  String clearServerStatsContent(String serverName) {
-    return 'Ви впевнені, що хочете очистити статистику з\'єднань для сервера \"$serverName\"? Цю дію не можна скасувати.';
-  }
-
-  @override
-  String get homeTabs => 'Домашні вкладки';
-
-  @override
-  String get homeTabsCustomizeDesc =>
-      'Налаштуйте, які вкладки відображаються на головній сторінці та їх порядок';
-
-  @override
-  String get reset => 'Скинути';
-
-  @override
-  String get availableTabs => 'Доступні вкладки';
-
-  @override
-  String get atLeastOneTab => 'Потрібно вибрати принаймні одну вкладку';
-
-  @override
-  String get serverTabRequired => 'Server tab cannot be removed';
 }

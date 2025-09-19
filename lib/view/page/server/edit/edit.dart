@@ -13,6 +13,7 @@ import 'package:server_box/core/utils/server_dedup.dart';
 import 'package:server_box/core/utils/ssh_config.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/custom.dart';
+import 'package:server_box/data/model/server/discovery_result.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
@@ -21,6 +22,7 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
+import 'package:server_box/view/page/server/discovery/discovery.dart';
 
 part 'actions.dart';
 part 'widget.dart';
@@ -30,17 +32,13 @@ class ServerEditPage extends ConsumerStatefulWidget {
 
   const ServerEditPage({super.key, this.args});
 
-  static const route = AppRoute<bool, SpiRequiredArgs>(
-    page: ServerEditPage.new,
-    path: '/servers/edit',
-  );
+  static const route = AppRoute<bool, SpiRequiredArgs>(page: ServerEditPage.new, path: '/servers/edit');
 
   @override
   ConsumerState<ServerEditPage> createState() => _ServerEditPageState();
 }
 
-class _ServerEditPageState extends ConsumerState<ServerEditPage>
-    with AfterLayoutMixin {
+class _ServerEditPageState extends ConsumerState<ServerEditPage> with AfterLayoutMixin {
   late final spi = widget.args?.spi;
   final _nameController = TextEditingController();
   final _ipController = TextEditingController();
@@ -137,11 +135,12 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
       _buildWriteScriptTip(),
       if (isMobile) _buildQrScan(),
       if (isDesktop) _buildSSHImport(),
+      _buildSSHDiscovery(),
     ];
     final children = [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: topItems.joinWith(UIs.width13).toList(),
+      SizedBox(
+        height: 50,
+        child: ListView(scrollDirection: Axis.horizontal, children: topItems.joinWith(UIs.width13).toList()),
       ),
       Input(
         autoFocus: true,
@@ -186,10 +185,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
         hint: 'root',
         suggestion: false,
       ),
-      TagTile(
-        tags: _tags,
-        allTags: ref.watch(serversNotifierProvider).tags,
-      ).cardx,
+      TagTile(tags: _tags, allTags: ref.watch(serversNotifierProvider).tags).cardx,
       ListTile(
         title: Text(l10n.autoConnect),
         trailing: _autoConnect.listenVal(

@@ -28,6 +28,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get alreadyLastDir => 'Já é o diretório mais alto';
 
   @override
+  String get atLeastOneTab => 'Pelo menos uma aba deve ser selecionada';
+
+  @override
   String get authFailTip =>
       'Autenticação falhou, por favor verifique se a senha/chave/host/usuário, etc., estão incorretos.';
 
@@ -44,6 +47,9 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get autoUpdateHomeWidget =>
       'Atualização automática do widget da tela inicial';
+
+  @override
+  String get availableTabs => 'Abas disponíveis';
 
   @override
   String get backupEncrypted => 'Backup está criptografado';
@@ -86,6 +92,26 @@ class AppLocalizationsPt extends AppLocalizations {
       'Este interruptor indica que o programa tentará rodar em segundo plano, mas a capacidade de fazer isso depende das permissões concedidas. No Android nativo, desative a \'Otimização de bateria\' para este app, no MIUI, altere a estratégia de economia de energia para \'Sem restrições\'.';
 
   @override
+  String get clearAllStatsContent =>
+      'Tem certeza de que deseja limpar todas as estatísticas de conexão do servidor? Esta ação não pode ser desfeita.';
+
+  @override
+  String get clearAllStatsTitle => 'Limpar todas as estatísticas';
+
+  @override
+  String clearServerStatsContent(String serverName) {
+    return 'Tem certeza de que deseja limpar as estatísticas de conexão para o servidor \"$serverName\"? Esta ação não pode ser desfeita.';
+  }
+
+  @override
+  String clearServerStatsTitle(String serverName) {
+    return 'Limpar estatísticas de $serverName';
+  }
+
+  @override
+  String get clearThisServerStats => 'Limpar estatísticas deste servidor';
+
+  @override
   String get closeAfterSave => 'Salvar e fechar';
 
   @override
@@ -96,6 +122,16 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get conn => 'Conectar';
+
+  @override
+  String get connectionDetails => 'Detalhes da conexão';
+
+  @override
+  String get connectionStats => 'Estatísticas de conexão';
+
+  @override
+  String get connectionStatsDesc =>
+      'Ver taxa de sucesso de conexão do servidor e histórico';
 
   @override
   String get container => 'Contêiner';
@@ -145,6 +181,18 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get disconnected => 'Desconectado';
+
+  @override
+  String get discoverSshServers => 'Descobrir servidores SSH';
+
+  @override
+  String get discoveryFailed => 'Descoberta falhou';
+
+  @override
+  String get discoverySettings => 'Configurações de descoberta';
+
+  @override
+  String get discoverySummary => 'Resumo da descoberta';
 
   @override
   String get disk => 'Disco';
@@ -199,14 +247,17 @@ class AppLocalizationsPt extends AppLocalizations {
   String get editVirtKeys => 'Editar teclas virtuais';
 
   @override
-  String get editor => 'Editor';
-
-  @override
   String get editorHighlightTip =>
       'O desempenho do destaque de código atualmente é ruim, pode optar por desativá-lo para melhorar.';
 
   @override
   String get emulator => 'Emulador';
+
+  @override
+  String get enableMdns => 'Ativar mDNS';
+
+  @override
+  String get enableMdnsDesc => 'Usar mDNS/Bonjour para descobrir serviços SSH';
 
   @override
   String get encode => 'Codificar';
@@ -240,10 +291,10 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get followSystem => 'Seguir sistema';
+  String get finishedAt => 'Terminado em';
 
   @override
-  String get font => 'Fonte';
+  String get followSystem => 'Seguir sistema';
 
   @override
   String get fontSize => 'Tamanho da fonte';
@@ -277,6 +328,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get highlight => 'Destaque de código';
 
   @override
+  String get homeTabs => 'Abas iniciais';
+
+  @override
+  String get homeTabsCustomizeDesc =>
+      'Personalize quais abas aparecem na página inicial e sua ordem';
+
+  @override
   String get homeWidgetUrlConfig =>
       'Configuração de URL do widget da tela inicial';
 
@@ -296,9 +354,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get imagesList => 'Lista de imagens';
-
-  @override
-  String get init => 'Inicializar';
 
   @override
   String get inner => 'Interno';
@@ -329,14 +384,17 @@ class AppLocalizationsPt extends AppLocalizations {
   String get keyAuth => 'Autenticação por chave';
 
   @override
+  String get lastFailure => 'Última falha';
+
+  @override
+  String get lastSuccess => 'Último sucesso';
+
+  @override
   String get letterCache => 'Cache de letras';
 
   @override
   String get letterCacheTip =>
       'Recomendado desativar, mas após desativar, será impossível inserir caracteres CJK.';
-
-  @override
-  String get license => 'Licença de código aberto';
 
   @override
   String get location => 'Localização';
@@ -350,10 +408,10 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get manual => 'Manual';
+  String get max => 'Máximo';
 
   @override
-  String get max => 'Máximo';
+  String get maxConcurrency => 'Concorrência máxima';
 
   @override
   String get maxRetryCount =>
@@ -393,6 +451,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get newContainer => 'Novo contêiner';
+
+  @override
+  String get noConnectionStatsData => 'Não há dados de estatísticas de conexão';
 
   @override
   String get noLineChart => 'Não usar gráficos de linha';
@@ -465,9 +526,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get preferDiskAmount => 'Priorizar a exibição da capacidade do disco';
 
   @override
-  String get preview => 'Pré-visualização';
-
-  @override
   String get privateKey => 'Chave privada';
 
   @override
@@ -496,6 +554,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get reboot => 'Reiniciar';
+
+  @override
+  String get recentConnections => 'Conexões recentes';
 
   @override
   String get rememberPwdInMem => 'Lembrar senha na memória';
@@ -557,6 +618,12 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get serverOrder => 'Ordem do servidor';
+
+  @override
+  String get serverTabRequired => 'A aba do servidor não pode ser removida';
+
+  @override
+  String get servers => 'servidores';
 
   @override
   String get sftpDlPrepare => 'Preparando para conectar ao servidor...';
@@ -706,9 +773,6 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get sync => 'Sincronizar';
-
-  @override
   String get syncTip =>
       'Pode ser necessário reiniciar para algumas mudanças surtirem efeito.';
 
@@ -717,6 +781,10 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get tag => 'Tag';
+
+  @override
+  String get tapToStartDiscovery =>
+      'Toque no botão de pesquisa para descobrir servidores SSH na sua rede';
 
   @override
   String get temperature => 'Temperatura';
@@ -751,6 +819,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get total => 'Total';
 
   @override
+  String get totalAttempts => 'Total';
+
+  @override
   String get traffic => 'Tráfego';
 
   @override
@@ -777,9 +848,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'Intervalo de atualização do estado do servidor';
 
   @override
-  String get upload => 'Upload';
-
-  @override
   String get upsideDown => 'Inverter verticalmente';
 
   @override
@@ -803,6 +871,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get view => 'Visualização';
+
+  @override
+  String get viewDetails => 'Ver detalhes';
 
   @override
   String get viewErr => 'Ver erro';
@@ -846,71 +917,4 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Após conectar ao servidor, um script será escrito em `~/.config/server_box` \n | `/tmp/server_box` para monitorar o status do sistema. Você pode revisar o conteúdo do script.';
-
-  @override
-  String get connectionStats => 'Estatísticas de conexão';
-
-  @override
-  String get connectionStatsDesc =>
-      'Ver taxa de sucesso de conexão do servidor e histórico';
-
-  @override
-  String get noConnectionStatsData => 'Não há dados de estatísticas de conexão';
-
-  @override
-  String get totalAttempts => 'Total';
-
-  @override
-  String get lastSuccess => 'Último sucesso';
-
-  @override
-  String get lastFailure => 'Última falha';
-
-  @override
-  String get recentConnections => 'Conexões recentes';
-
-  @override
-  String get viewDetails => 'Ver detalhes';
-
-  @override
-  String get connectionDetails => 'Detalhes da conexão';
-
-  @override
-  String get clearThisServerStats => 'Limpar estatísticas deste servidor';
-
-  @override
-  String get clearAllStatsTitle => 'Limpar todas as estatísticas';
-
-  @override
-  String get clearAllStatsContent =>
-      'Tem certeza de que deseja limpar todas as estatísticas de conexão do servidor? Esta ação não pode ser desfeita.';
-
-  @override
-  String clearServerStatsTitle(String serverName) {
-    return 'Limpar estatísticas de $serverName';
-  }
-
-  @override
-  String clearServerStatsContent(String serverName) {
-    return 'Tem certeza de que deseja limpar as estatísticas de conexão para o servidor \"$serverName\"? Esta ação não pode ser desfeita.';
-  }
-
-  @override
-  String get homeTabs => 'Abas iniciais';
-
-  @override
-  String get homeTabsCustomizeDesc =>
-      'Personalize quais abas aparecem na página inicial e sua ordem';
-
-  @override
-  String get reset => 'Redefinir';
-
-  @override
-  String get availableTabs => 'Abas disponíveis';
-
-  @override
-  String get atLeastOneTab => 'Pelo menos uma aba deve ser selecionada';
-
-  @override
-  String get serverTabRequired => 'Server tab cannot be removed';
 }

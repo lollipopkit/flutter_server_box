@@ -72,7 +72,7 @@ extension _App on _AppSettingsPageState {
           title: libL10n.setting,
           items: List.generate(10, (idx) => idx == 1 ? null : idx),
           initial: _setting.serverStatusUpdateInterval.fetch(),
-          display: (p0) => p0 == 0 ? l10n.manual : '$p0 ${l10n.second}',
+          display: (p0) => p0 == 0 ? libL10n.manual : '$p0 ${l10n.second}',
         );
         if (val != null) {
           _setting.serverStatusUpdateInterval.put(val);

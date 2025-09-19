@@ -42,7 +42,7 @@ extension _SFTP on _AppSettingsPageState {
     return _setting.sftpEditor.listenable().listenVal((val) {
       return ListTile(
         leading: const Icon(MingCute.edit_fill),
-        title: TipText(l10n.editor, l10n.sftpEditorTip),
+        title: TipText(libL10n.editor, l10n.sftpEditorTip),
         trailing: Text(val.isEmpty ? l10n.inner : val, style: UIs.text15),
         onTap: () async {
           final ctrl = TextEditingController(text: val);
@@ -57,7 +57,7 @@ extension _SFTP on _AppSettingsPageState {
             child: Input(
               controller: ctrl,
               autoFocus: true,
-              label: l10n.editor,
+              label: libL10n.editor,
               hint: '\$EDITOR / vim / nano ...',
               icon: Icons.edit,
               suggestion: false,

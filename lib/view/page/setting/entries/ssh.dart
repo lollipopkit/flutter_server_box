@@ -38,14 +38,14 @@ extension _SSH on _AppSettingsPageState {
   Widget _buildFont() {
     return ListTile(
       leading: const Icon(MingCute.font_fill),
-      title: Text(l10n.font),
+      title: Text(libL10n.font),
       trailing: _setting.fontPath.listenable().listenVal((val) {
         final fontName = val.getFileName();
         return Text(fontName ?? libL10n.empty, style: UIs.text15);
       }),
       onTap: () {
         context.showRoundDialog(
-          title: l10n.font,
+          title: libL10n.font,
           actions: [
             TextButton(onPressed: () async => await _pickFontFile(), child: Text(libL10n.file)),
             TextButton(

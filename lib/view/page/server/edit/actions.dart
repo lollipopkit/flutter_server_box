@@ -1,6 +1,100 @@
 part of 'edit.dart';
 
 extension _Actions on _ServerEditPageState {
+  Future<void> _onTapSSHDiscovery() async {
+    try {
+      final result = await SshDiscoveryPage.route.go(context);
+      
+      if (result != null && result.isNotEmpty) {
+        await _processDiscoveredServers(result);
+      }
+    } catch (e, s) {
+      context.showErrDialog(e, s);
+    }
+  }
+
+  Future<void> _processDiscoveredServers(List<SshDiscoveryResult> discoveredServers) async {
+    if (discoveredServers.length == 1) {
+      // Single server - populate the current form
+      final server = discoveredServers.first;
+      _ipController.text = server.ip;
+      _portController.text = server.port.toString();
+      if (_nameController.text.isEmpty) {
+        _nameController.text = server.ip;
+      }
+      context.showSnackBar('${libL10n.found} 1 ${l10n.server}');
+    } else {
+      // Multiple servers - show import dialog
+      final shouldImport = await context.showRoundDialog<bool>(
+        title: libL10n.import,
+        child: Text(libL10n.askContinue('${libL10n.found} ${discoveredServers.length} ${l10n.servers}')),
+        actions: Btnx.cancelOk,
+      );
+
+      if (shouldImport == true) {
+        // Prompt user to configure default values before importing
+        final defaultUsername = 'root';
+        final defaultKeyId = _keyIdx.value?.toString() ?? '';
+        final usernameController = TextEditingController(text: defaultUsername);
+        final keyIdController = TextEditingController(text: defaultKeyId);
+        
+        final shouldProceed = await context.showRoundDialog<bool>(
+          title: libL10n.import,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('${libL10n.found} ${discoveredServers.length} ${l10n.servers}.'),
+              const SizedBox(height: 8),
+              Text(libL10n.setting),
+              const SizedBox(height: 8),
+              TextField(
+                controller: usernameController,
+                decoration: InputDecoration(labelText: libL10n.user),
+              ),
+              TextField(
+                controller: keyIdController,
+                decoration: InputDecoration(labelText: l10n.privateKey),
+              ),
+            ],
+          ),
+          actions: Btnx.cancelOk,
+        );
+
+        if (shouldProceed == true) {
+          final username = usernameController.text.isNotEmpty ? usernameController.text : defaultUsername;
+          final keyId = keyIdController.text.isNotEmpty ? keyIdController.text : null;
+          final servers = discoveredServers.map((result) => Spi(
+            name: result.ip,
+            ip: result.ip,
+            port: result.port,
+            user: username,
+            keyId: keyId,
+            pwd: _passwordController.text.isEmpty ? null : _passwordController.text,
+          )).toList();
+
+          await _batchImportServers(servers);
+        }
+        
+        usernameController.dispose();
+        keyIdController.dispose();
+      }
+    }
+  }
+
+  Future<void> _batchImportServers(List<Spi> servers) async {
+    final store = Stores.server;
+    int imported = 0;
+    for (final server in servers) {
+      try {
+        store.put(server);
+        imported++;
+      } catch (e) {
+        dprint('Failed to import server ${server.name}: $e');
+      }
+    }
+    context.showSnackBar('${libL10n.success}: $imported ${l10n.servers}');
+    if (mounted) Navigator.of(context).pop(true);
+  }
   void _onTapSSHImport() async {
     try {
       final servers = await SSHConfig.parseConfig();
