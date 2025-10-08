@@ -113,12 +113,7 @@ class _ServerOrderPageState extends ConsumerState<ServerOrderPage> {
       return const SizedBox();
     }
 
-    final String name;
-    if (spi.name.isNotEmpty) {
-      name = String.fromCharCode(spi.name.runes.first);
-    } else {
-      name = '?';
-    }
+    final name = spi.name.characters.firstOrNull ?? '?';
 
     return ListTile(
       title: Text(spi.name, style: const TextStyle(fontWeight: FontWeight.w500)),
