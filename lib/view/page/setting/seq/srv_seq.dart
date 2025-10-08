@@ -113,11 +113,18 @@ class _ServerOrderPageState extends ConsumerState<ServerOrderPage> {
       return const SizedBox();
     }
 
+    final String name;
+    if (spi.name.isNotEmpty) {
+      name = String.fromCharCode(spi.name.runes.first);
+    } else {
+      name = '?';
+    }
+
     return ListTile(
       title: Text(spi.name, style: const TextStyle(fontWeight: FontWeight.w500)),
       subtitle: Text(spi.oldId, style: UIs.textGrey),
       leading: CircleAvatar(
-        child: Text(spi.name[0]),
+        child: Text(name),
       ),
       trailing: ReorderableDragStartListener(index: index, child: const Icon(Icons.drag_handle)),
     );
