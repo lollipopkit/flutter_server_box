@@ -239,6 +239,50 @@ class ServersNotifier extends _$ServersNotifier {
     bakSync.sync(milliDelay: 1000);
   }
 
+  void updateServerOrder(List<String> order) {
+    final seen = <String>{};
+    final newOrder = <String>[];
+
+    for (final id in order) {
+      if (!state.servers.containsKey(id)) {
+        continue;
+      }
+      if (!seen.add(id)) {
+        continue;
+      }
+      newOrder.add(id);
+    }
+
+    for (final id in state.servers.keys) {
+      if (seen.add(id)) {
+        newOrder.add(id);
+      }
+    }
+
+    if (_isSameOrder(newOrder, state.serverOrder)) {
+      return;
+    }
+
+    state = state.copyWith(serverOrder: newOrder);
+    Stores.setting.serverOrder.put(newOrder);
+    bakSync.sync(milliDelay: 1000);
+  }
+
+  bool _isSameOrder(List<String> a, List<String> b) {
+    if (identical(a, b)) {
+      return true;
+    }
+    if (a.length != b.length) {
+      return false;
+    }
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   Future<void> updateServer(Spi old, Spi newSpi) async {
     if (old != newSpi) {
       Stores.server.update(old, newSpi);
