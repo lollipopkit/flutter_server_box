@@ -60,7 +60,7 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
         ],
         [CenterGreyTitle(libL10n.import), _buildBulkImportServers, _buildImportSnippet],
       ],
-    );
+      );
   }
 
   Widget get _buildBakPwd {
@@ -400,7 +400,7 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
           child: SingleChildScrollView(child: Text(libL10n.askContinue('${libL10n.import} [$snippetNames]'))),
           actions: Btn.ok(
             onTap: () {
-              final notifier = ref.read(snippetNotifierProvider.notifier);
+              final notifier = ref.read(snippetProvider.notifier);
               for (final snippet in snippets) {
                 notifier.add(snippet);
               }

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 
 import 'package:server_box/data/provider/app.dart';
 import 'package:server_box/data/provider/private_key.dart';
@@ -10,7 +11,7 @@ import 'package:server_box/data/provider/snippet.dart';
 /// ref.useNotifier, ref.readProvider, ref.watchProvider
 /// 
 /// Usage:
-/// - `providers.read.server` -> `ref.read(serversNotifierProvider)`
+/// - `providers.read.server` -> `ref.read(serversProvider)`
 /// - `providers.use.snippet` -> `ref.read(snippetsNotifierProvider.notifier)`
 
 extension RiverpodNotifiers on ConsumerState {
@@ -45,11 +46,11 @@ final class ReadMyProvider {
   T call<T>(ProviderBase<T> provider) => ref.read(provider);
   
   // Specific provider getters
-  ServersState get server => ref.read(serversNotifierProvider);
-  SnippetState get snippet => ref.read(snippetNotifierProvider);
+  ServersState get server => ref.read(serversProvider);
+  SnippetState get snippet => ref.read(snippetProvider);
   AppState get app => ref.read(appStatesProvider);
-  PrivateKeyState get privateKey => ref.read(privateKeyNotifierProvider);
-  SftpState get sftp => ref.read(sftpNotifierProvider);
+  PrivateKeyState get privateKey => ref.read(privateKeyProvider);
+  SftpState get sftp => ref.read(sftpProvider);
 }
 
 final class WatchMyProvider {
@@ -59,11 +60,11 @@ final class WatchMyProvider {
   T call<T>(ProviderBase<T> provider) => ref.watch(provider);
   
   // Specific provider getters
-  ServersState get server => ref.watch(serversNotifierProvider);
-  SnippetState get snippet => ref.watch(snippetNotifierProvider);
+  ServersState get server => ref.watch(serversProvider);
+  SnippetState get snippet => ref.watch(snippetProvider);
   AppState get app => ref.watch(appStatesProvider);
-  PrivateKeyState get privateKey => ref.watch(privateKeyNotifierProvider);
-  SftpState get sftp => ref.watch(sftpNotifierProvider);
+  PrivateKeyState get privateKey => ref.watch(privateKeyProvider);
+  SftpState get sftp => ref.watch(sftpProvider);
 }
 
 final class UseNotifierMyProvider {
@@ -74,9 +75,9 @@ final class UseNotifierMyProvider {
       ref.read(provider.notifier);
   
   // Specific provider notifier getters
-  ServersNotifier get server => ref.read(serversNotifierProvider.notifier);
-  SnippetNotifier get snippet => ref.read(snippetNotifierProvider.notifier);
+  ServersNotifier get server => ref.read(serversProvider.notifier);
+  SnippetNotifier get snippet => ref.read(snippetProvider.notifier);
   AppStates get app => ref.read(appStatesProvider.notifier);
-  PrivateKeyNotifier get privateKey => ref.read(privateKeyNotifierProvider.notifier);
-  SftpNotifier get sftp => ref.read(sftpNotifierProvider.notifier);
+  PrivateKeyNotifier get privateKey => ref.read(privateKeyProvider.notifier);
+  SftpNotifier get sftp => ref.read(sftpProvider.notifier);
 }

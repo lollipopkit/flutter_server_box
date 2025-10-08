@@ -45,7 +45,7 @@ class PveNotifier extends _$PveNotifier {
   @override
   PveState build(Spi spiParam) {
     spi = spiParam;
-    final serverState = ref.watch(serverNotifierProvider(spi.id));
+    final serverState = ref.watch(serverProvider(spi.id));
     final client = serverState.client;
     if (client == null) {
       return const PveState(error: PveErr(type: PveErrType.net, message: 'Server client is null'));

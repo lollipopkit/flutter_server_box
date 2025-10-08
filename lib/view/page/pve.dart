@@ -33,7 +33,7 @@ final class _PvePageState extends ConsumerState<PvePage> {
   late MediaQueryData _media;
   Timer? _timer;
 
-  late final _provider = pveNotifierProvider(widget.args.spi);
+  late final _provider = pveProvider(widget.args.spi);
   late final _notifier = ref.read(_provider.notifier);
 
   @override

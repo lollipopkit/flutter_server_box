@@ -19,7 +19,7 @@ final class SystemdPage extends ConsumerStatefulWidget {
 }
 
 final class _SystemdPageState extends ConsumerState<SystemdPage> {
-  late final _pro = systemdNotifierProvider(widget.args.spi);
+  late final _pro = systemdProvider(widget.args.spi);
 
   late final _notifier = ref.read(_pro.notifier);
 

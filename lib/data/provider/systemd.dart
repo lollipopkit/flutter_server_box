@@ -25,7 +25,7 @@ class SystemdNotifier extends _$SystemdNotifier {
 
   @override
   SystemdState build(Spi spi) {
-    final si = ref.read(serverNotifierProvider(spi.id));
+    final si = ref.read(serverProvider(spi.id));
     _si = si;
     // Async initialization
     Future.microtask(() => getUnits());

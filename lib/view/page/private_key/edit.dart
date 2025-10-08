@@ -40,7 +40,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
 
   final _loading = ValueNotifier<Widget?>(null);
 
-  late final _notifier = ref.read(privateKeyNotifierProvider.notifier);
+  late final _notifier = ref.read(privateKeyProvider.notifier);
 
   PrivateKeyInfo? get pki => widget.args?.pki;
 

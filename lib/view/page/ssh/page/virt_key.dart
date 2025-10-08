@@ -52,7 +52,7 @@ extension _VirtKey on SSHPageState {
         }
         break;
       case VirtualKeyFunc.snippet:
-        final snippetState = ref.read(snippetNotifierProvider);
+        final snippetState = ref.read(snippetProvider);
         final snippets = await context.showPickWithTagDialog<Snippet>(
           title: l10n.snippet,
           tags: snippetState.tags.vn,

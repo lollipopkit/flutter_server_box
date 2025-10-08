@@ -36,7 +36,7 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage> with Automati
 
   Widget _buildBody() {
     // final isMobile = ResponsiveBreakpoints.of(context).isMobile;
-    final snippetState = ref.watch(snippetNotifierProvider);
+    final snippetState = ref.watch(snippetProvider);
     final snippets = snippetState.snippets;
     
     return _tag.listenVal((tag) {
@@ -56,7 +56,7 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage> with Automati
   }
 
   Widget _buildScaffold(List<Snippet> snippets, String tag) {
-    final snippetState = ref.watch(snippetNotifierProvider);
+    final snippetState = ref.watch(snippetProvider);
     return Scaffold(
       appBar: TagSwitcher(
         tags: snippetState.tags.vn,

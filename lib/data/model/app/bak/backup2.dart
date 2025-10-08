@@ -55,9 +55,9 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     await Mergeable.mergeStore(backupData: history, store: Stores.history, force: force);
     await Mergeable.mergeStore(backupData: settings, store: Stores.setting, force: force);
 
-    if (serverChanged) GlobalRef.gRef?.read(serversNotifierProvider.notifier).reload();
-    if (snippetChanged) GlobalRef.gRef?.read(snippetNotifierProvider.notifier).reload();
-    if (keyChanged) GlobalRef.gRef?.read(privateKeyNotifierProvider.notifier).reload();
+    if (serverChanged) GlobalRef.gRef?.read(serversProvider.notifier).reload();
+    if (snippetChanged) GlobalRef.gRef?.read(snippetProvider.notifier).reload();
+    if (keyChanged) GlobalRef.gRef?.read(privateKeyProvider.notifier).reload();
 
     _loggerV2.info('Merge completed');
   }

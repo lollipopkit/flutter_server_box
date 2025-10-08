@@ -42,7 +42,7 @@ class _ServerOrderPageState extends ConsumerState<ServerOrderPage> {
   }
 
   Widget _buildBody() {
-    final serverState = ref.watch(serversNotifierProvider);
+    final serverState = ref.watch(serversProvider);
     final order = serverState.serverOrder;
     
     if (order.isEmpty) {
@@ -77,7 +77,7 @@ class _ServerOrderPageState extends ConsumerState<ServerOrderPage> {
   }
 
   Widget _buildCardTile(int index) {
-    final serverState = ref.watch(serversNotifierProvider);
+    final serverState = ref.watch(serversProvider);
     final order = serverState.serverOrder;
     final id = order[index];
     final spi = serverState.servers[id];

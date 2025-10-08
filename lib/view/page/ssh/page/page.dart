@@ -118,7 +118,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     _setupDiscontinuityTimer();
     
     // Initialize client from provider
-    final serverState = ref.read(serverNotifierProvider(widget.args.spi.id));
+    final serverState = ref.read(serverProvider(widget.args.spi.id));
     _client = serverState.client;
 
     if (++_sshConnCount == 1) {

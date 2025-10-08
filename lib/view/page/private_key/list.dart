@@ -32,7 +32,7 @@ class _PrivateKeyListState extends ConsumerState<PrivateKeysListPage> with After
   }
 
   Widget _buildBody() {
-    final privateKeyState = ref.watch(privateKeyNotifierProvider);
+    final privateKeyState = ref.watch(privateKeyProvider);
     final pkis = privateKeyState.keys;
     
     if (pkis.isEmpty) {

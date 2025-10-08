@@ -43,8 +43,8 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
   @override
   void initState() {
     super.initState();
-    final serverState = ref.read(serverNotifierProvider(widget.args.spi.id));
-    _provider = containerNotifierProvider(
+    final serverState = ref.read(serverProvider(widget.args.spi.id));
+    _provider = containerProvider(
       serverState.client,
       widget.args.spi.user,
       widget.args.spi.id,

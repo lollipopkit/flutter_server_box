@@ -25,7 +25,7 @@ class _SftpMissionPageState extends ConsumerState<SftpMissionPage> {
   }
 
   Widget _buildBody() {
-    final status = ref.watch(sftpNotifierProvider.select((pro) => pro.requests));
+    final status = ref.watch(sftpProvider.select((pro) => pro.requests));
     if (status.isEmpty) {
       return Center(child: Text(libL10n.empty));
     }
@@ -143,7 +143,7 @@ class _SftpMissionPageState extends ConsumerState<SftpMissionPage> {
         child: Text(libL10n.askContinue('${libL10n.delete} ${l10n.mission}($name)')),
         actions: Btn.ok(
           onTap: () {
-            ref.read(sftpNotifierProvider.notifier).cancel(id);
+            ref.read(sftpProvider.notifier).cancel(id);
             context.pop();
           },
         ).toList,

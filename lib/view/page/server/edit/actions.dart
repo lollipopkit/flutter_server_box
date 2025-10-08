@@ -4,7 +4,7 @@ extension _Actions on _ServerEditPageState {
   Future<void> _onTapSSHDiscovery() async {
     try {
       final result = await SshDiscoveryPage.route.go(context);
-      
+
       if (result != null && result.isNotEmpty) {
         await _processDiscoveredServers(result);
       }
@@ -37,7 +37,7 @@ extension _Actions on _ServerEditPageState {
         final defaultKeyId = _keyIdx.value?.toString() ?? '';
         final usernameController = TextEditingController(text: defaultUsername);
         final keyIdController = TextEditingController(text: defaultKeyId);
-        
+
         final shouldProceed = await context.showRoundDialog<bool>(
           title: libL10n.import,
           child: Column(
@@ -63,18 +63,22 @@ extension _Actions on _ServerEditPageState {
         if (shouldProceed == true) {
           final username = usernameController.text.isNotEmpty ? usernameController.text : defaultUsername;
           final keyId = keyIdController.text.isNotEmpty ? keyIdController.text : null;
-          final servers = discoveredServers.map((result) => Spi(
-            name: result.ip,
-            ip: result.ip,
-            port: result.port,
-            user: username,
-            keyId: keyId,
-            pwd: _passwordController.text.isEmpty ? null : _passwordController.text,
-          )).toList();
+          final servers = discoveredServers
+              .map(
+                (result) => Spi(
+                  name: result.ip,
+                  ip: result.ip,
+                  port: result.port,
+                  user: username,
+                  keyId: keyId,
+                  pwd: _passwordController.text.isEmpty ? null : _passwordController.text,
+                ),
+              )
+              .toList();
 
           await _batchImportServers(servers);
         }
-        
+
         usernameController.dispose();
         keyIdController.dispose();
       }
@@ -93,8 +97,9 @@ extension _Actions on _ServerEditPageState {
       }
     }
     context.showSnackBar('${libL10n.success}: $imported ${l10n.servers}');
-    if (mounted) Navigator.of(context).pop(true);
+    if (mounted) context.pop(true);
   }
+
   void _onTapSSHImport() async {
     try {
       final servers = await SSHConfig.parseConfig();
@@ -114,8 +119,7 @@ extension _Actions on _ServerEditPageState {
   void _handleImportSSHCfgPermissionIssue(Object e, StackTrace s) async {
     dprint('Error importing SSH config: $e');
     // Check if it's a permission error and offer file picker as fallback
-    if (e is PathAccessException ||
-        e.toString().contains('Operation not permitted')) {
+    if (e is PathAccessException || e.toString().contains('Operation not permitted')) {
       final useFilePicker = await context.showRoundDialog<bool>(
         title: l10n.sshConfigImport,
         child: Column(
@@ -157,15 +161,10 @@ extension _Actions on _ServerEditPageState {
           children: [
             Text(l10n.sshConfigFoundServers('${summary.total}')),
             if (summary.hasDuplicates)
-              Text(
-                l10n.sshConfigDuplicatesSkipped('${summary.duplicates}'),
-                style: UIs.textGrey,
-              ),
+              Text(l10n.sshConfigDuplicatesSkipped('${summary.duplicates}'), style: UIs.textGrey),
             Text(l10n.sshConfigServersToImport('${summary.toImport}')),
             const SizedBox(height: 16),
-            ...resolved.map(
-              (s) => Text('• ${s.name} (${s.user}@${s.ip}:${s.port})'),
-            ),
+            ...resolved.map((s) => Text('• ${s.name} (${s.user}@${s.ip}:${s.port})')),
           ],
         ),
       ),
@@ -174,7 +173,7 @@ extension _Actions on _ServerEditPageState {
 
     if (shouldImport == true) {
       for (final server in resolved) {
-        ref.read(serversNotifierProvider.notifier).addServer(server);
+        ref.read(serversProvider.notifier).addServer(server);
       }
       context.showSnackBar(l10n.sshConfigImported('${resolved.length}'));
     }
@@ -203,10 +202,7 @@ extension _Actions on _ServerEditPageState {
   }
 
   void _onTapCustomItem() async {
-    final res = await KvEditor.route.go(
-      context,
-      KvEditorArgs(data: _customCmds.value),
-    );
+    final res = await KvEditor.route.go(context, KvEditorArgs(data: _customCmds.value));
     if (res == null) return;
     _customCmds.value = res;
   }
@@ -257,17 +253,10 @@ extension _Actions on _ServerEditPageState {
       scriptDir: _scriptDirCtrl.text.selfNotEmptyOrNull,
     );
 
-    final wolEmpty =
-        _wolMacCtrl.text.isEmpty &&
-        _wolIpCtrl.text.isEmpty &&
-        _wolPwdCtrl.text.isEmpty;
+    final wolEmpty = _wolMacCtrl.text.isEmpty && _wolIpCtrl.text.isEmpty && _wolPwdCtrl.text.isEmpty;
     final wol = wolEmpty
         ? null
-        : WakeOnLanCfg(
-            mac: _wolMacCtrl.text,
-            ip: _wolIpCtrl.text,
-            pwd: _wolPwdCtrl.text.selfNotEmptyOrNull,
-          );
+        : WakeOnLanCfg(mac: _wolMacCtrl.text, ip: _wolIpCtrl.text, pwd: _wolPwdCtrl.text.selfNotEmptyOrNull);
     if (wol != null) {
       final wolValidation = wol.validate();
       if (!wolValidation.$2) {
@@ -277,19 +266,13 @@ extension _Actions on _ServerEditPageState {
     }
 
     final spi = Spi(
-      name: _nameController.text.isEmpty
-          ? _ipController.text
-          : _nameController.text,
+      name: _nameController.text.isEmpty ? _ipController.text : _nameController.text,
       ip: _ipController.text,
       port: int.parse(_portController.text),
       user: _usernameController.text,
       pwd: _passwordController.text.selfNotEmptyOrNull,
       keyId: _keyIdx.value != null
-          ? ref
-                .read(privateKeyNotifierProvider)
-                .keys
-                .elementAt(_keyIdx.value!)
-                .id
+          ? ref.read(privateKeyProvider).keys.elementAt(_keyIdx.value!).id
           : null,
       tags: _tags.value.isEmpty ? null : _tags.value.toList(),
       alterUrl: _altUrlController.text.selfNotEmptyOrNull,
@@ -300,9 +283,7 @@ extension _Actions on _ServerEditPageState {
       envs: _env.value.isEmpty ? null : _env.value,
       id: widget.args?.spi.id ?? ShortId.generate(),
       customSystemType: _systemType.value,
-      disabledCmdTypes: _disabledCmdTypes.value.isEmpty
-          ? null
-          : _disabledCmdTypes.value.toList(),
+      disabledCmdTypes: _disabledCmdTypes.value.isEmpty ? null : _disabledCmdTypes.value.toList(),
     );
 
     if (this.spi == null) {
@@ -311,9 +292,9 @@ extension _Actions on _ServerEditPageState {
         context.showSnackBar('${l10n.sameIdServerExist}: ${spi.id}');
         return;
       }
-      ref.read(serversNotifierProvider.notifier).addServer(spi);
+      ref.read(serversProvider.notifier).addServer(spi);
     } else {
-      ref.read(serversNotifierProvider.notifier).updateServer(this.spi!, spi);
+      ref.read(serversProvider.notifier).updateServer(this.spi!, spi);
     }
 
     context.pop();
@@ -369,7 +350,7 @@ extension _Utils on _ServerEditPageState {
 
         // Import without asking again since user already gave permission
         for (final server in resolved) {
-          ref.read(serversNotifierProvider.notifier).addServer(server);
+          ref.read(serversProvider.notifier).addServer(server);
         }
         context.showSnackBar(l10n.sshConfigImported('${resolved.length}'));
       }
@@ -432,10 +413,7 @@ extension _Utils on _ServerEditPageState {
     if (spi.keyId == null) {
       _passwordController.text = spi.pwd ?? '';
     } else {
-      _keyIdx.value = ref
-          .read(privateKeyNotifierProvider)
-          .keys
-          .indexWhere((e) => e.id == spi.keyId);
+      _keyIdx.value = ref.read(privateKeyProvider).keys.indexWhere((e) => e.id == spi.keyId);
     }
 
     /// List in dart is passed by pointer, so you need to copy it here

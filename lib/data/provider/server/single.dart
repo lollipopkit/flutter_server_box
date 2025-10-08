@@ -45,7 +45,7 @@ abstract class ServerState with _$ServerState {
 class ServerNotifier extends _$ServerNotifier {
   @override
   ServerState build(String serverId) {
-    final serverNotifier = ref.read(serversNotifierProvider);
+    final serverNotifier = ref.read(serversProvider);
     final spi = serverNotifier.servers[serverId];
     if (spi == null) {
       throw StateError('Server $serverId not found');
@@ -160,7 +160,7 @@ class ServerNotifier extends _$ServerNotifier {
           id: sessionId,
           spi: spi,
           startTimeMs: time1.millisecondsSinceEpoch,
-          disconnect: () => ref.read(serversNotifierProvider.notifier).closeOneServer(spi.id),
+          disconnect: () => ref.read(serversProvider.notifier).closeOneServer(spi.id),
           status: TermSessionStatus.connecting,
         );
         TermSessionManager.setActive(sessionId, hasTerminal: false);

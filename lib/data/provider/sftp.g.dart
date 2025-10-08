@@ -6,20 +6,58 @@ part of 'sftp.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+
+@ProviderFor(SftpNotifier)
+const sftpProvider = SftpNotifierProvider._();
+
+final class SftpNotifierProvider
+    extends $NotifierProvider<SftpNotifier, SftpState> {
+  const SftpNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'sftpProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$sftpNotifierHash();
+
+  @$internal
+  @override
+  SftpNotifier create() => SftpNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(SftpState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SftpState>(value),
+    );
+  }
+}
+
 String _$sftpNotifierHash() => r'f8412a4bd1f2bc5919ec31a3eba1c27e9a578f41';
 
-/// See also [SftpNotifier].
-@ProviderFor(SftpNotifier)
-final sftpNotifierProvider = NotifierProvider<SftpNotifier, SftpState>.internal(
-  SftpNotifier.new,
-  name: r'sftpNotifierProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$sftpNotifierHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$SftpNotifier = Notifier<SftpState>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+abstract class _$SftpNotifier extends $Notifier<SftpState> {
+  SftpState build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<SftpState, SftpState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<SftpState, SftpState>,
+              SftpState,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}

@@ -131,7 +131,7 @@ class _PingPageState extends ConsumerState<PingPage> with AutomaticKeepAliveClie
       return;
     }
 
-    if (ref.read(serversNotifierProvider).serverOrder.isEmpty) {
+    if (ref.read(serversProvider).serverOrder.isEmpty) {
       context.showSnackBar(l10n.pingNoServer);
       return;
     }
@@ -143,8 +143,8 @@ class _PingPageState extends ConsumerState<PingPage> with AutomaticKeepAliveClie
     }
 
     await Future.wait(
-      ref.read(serversNotifierProvider).servers.values.map((spi) async {
-        final serverState = ref.read(serverNotifierProvider(spi.id));
+      ref.read(serversProvider).servers.values.map((spi) async {
+        final serverState = ref.read(serverProvider(spi.id));
         if (serverState.client == null) {
           return;
         }

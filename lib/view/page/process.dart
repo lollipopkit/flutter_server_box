@@ -37,7 +37,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
   ProcSortMode _procSortMode = ProcSortMode.cpu;
   List<ProcSortMode> _sortModes = List.from(ProcSortMode.values);
 
-  late final _provider = serverNotifierProvider(widget.args.spi.id);
+  late final _provider = serverProvider(widget.args.spi.id);
 
   @override
   void dispose() {

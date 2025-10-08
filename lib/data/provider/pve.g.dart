@@ -6,155 +6,96 @@ part of 'pve.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$pveNotifierHash() => r'b5da7240db1b9ee7d61f238cebca45821b7a3445';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
-abstract class _$PveNotifier extends BuildlessAutoDisposeNotifier<PveState> {
-  late final Spi spiParam;
-
-  PveState build(Spi spiParam);
-}
-
-/// See also [PveNotifier].
 @ProviderFor(PveNotifier)
-const pveNotifierProvider = PveNotifierFamily();
+const pveProvider = PveNotifierFamily._();
 
-/// See also [PveNotifier].
-class PveNotifierFamily extends Family<PveState> {
-  /// See also [PveNotifier].
-  const PveNotifierFamily();
+final class PveNotifierProvider
+    extends $NotifierProvider<PveNotifier, PveState> {
+  const PveNotifierProvider._({
+    required PveNotifierFamily super.from,
+    required Spi super.argument,
+  }) : super(
+         retry: null,
+         name: r'pveProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [PveNotifier].
-  PveNotifierProvider call(Spi spiParam) {
-    return PveNotifierProvider(spiParam);
+  @override
+  String debugGetCreateSourceHash() => _$pveNotifierHash();
+
+  @override
+  String toString() {
+    return r'pveProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  PveNotifierProvider getProviderOverride(
-    covariant PveNotifierProvider provider,
-  ) {
-    return call(provider.spiParam);
-  }
+  PveNotifier create() => PveNotifier();
 
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'pveNotifierProvider';
-}
-
-/// See also [PveNotifier].
-class PveNotifierProvider
-    extends AutoDisposeNotifierProviderImpl<PveNotifier, PveState> {
-  /// See also [PveNotifier].
-  PveNotifierProvider(Spi spiParam)
-    : this._internal(
-        () => PveNotifier()..spiParam = spiParam,
-        from: pveNotifierProvider,
-        name: r'pveNotifierProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$pveNotifierHash,
-        dependencies: PveNotifierFamily._dependencies,
-        allTransitiveDependencies: PveNotifierFamily._allTransitiveDependencies,
-        spiParam: spiParam,
-      );
-
-  PveNotifierProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.spiParam,
-  }) : super.internal();
-
-  final Spi spiParam;
-
-  @override
-  PveState runNotifierBuild(covariant PveNotifier notifier) {
-    return notifier.build(spiParam);
-  }
-
-  @override
-  Override overrideWith(PveNotifier Function() create) {
-    return ProviderOverride(
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PveState value) {
+    return $ProviderOverride(
       origin: this,
-      override: PveNotifierProvider._internal(
-        () => create()..spiParam = spiParam,
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        spiParam: spiParam,
-      ),
+      providerOverride: $SyncValueProvider<PveState>(value),
     );
   }
 
   @override
-  AutoDisposeNotifierProviderElement<PveNotifier, PveState> createElement() {
-    return _PveNotifierProviderElement(this);
-  }
-
-  @override
   bool operator ==(Object other) {
-    return other is PveNotifierProvider && other.spiParam == spiParam;
+    return other is PveNotifierProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, spiParam.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin PveNotifierRef on AutoDisposeNotifierProviderRef<PveState> {
-  /// The parameter `spiParam` of this provider.
-  Spi get spiParam;
-}
+String _$pveNotifierHash() => r'b5da7240db1b9ee7d61f238cebca45821b7a3445';
 
-class _PveNotifierProviderElement
-    extends AutoDisposeNotifierProviderElement<PveNotifier, PveState>
-    with PveNotifierRef {
-  _PveNotifierProviderElement(super.provider);
+final class PveNotifierFamily extends $Family
+    with $ClassFamilyOverride<PveNotifier, PveState, PveState, PveState, Spi> {
+  const PveNotifierFamily._()
+    : super(
+        retry: null,
+        name: r'pveProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  PveNotifierProvider call(Spi spiParam) =>
+      PveNotifierProvider._(argument: spiParam, from: this);
 
   @override
-  Spi get spiParam => (origin as PveNotifierProvider).spiParam;
+  String toString() => r'pveProvider';
 }
 
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+abstract class _$PveNotifier extends $Notifier<PveState> {
+  late final _$args = ref.$arg as Spi;
+  Spi get spiParam => _$args;
+
+  PveState build(Spi spiParam);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build(_$args);
+    final ref = this.ref as $Ref<PveState, PveState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<PveState, PveState>,
+              PveState,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}

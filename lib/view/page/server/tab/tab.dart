@@ -74,7 +74,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
   @override
   void initState() {
     super.initState();
-    _tags = ValueNotifier(ref.read(serversNotifierProvider).tags);
+    _tags = ValueNotifier(ref.read(serversProvider).tags);
     _startAvoidJitterTimer();
   }
 
@@ -89,7 +89,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
   Widget build(BuildContext context) {
     super.build(context);
     // Listen to provider changes and update the ValueNotifier
-    ref.listen(serversNotifierProvider, (previous, next) {
+    ref.listen(serversProvider, (previous, next) {
       _tags.value = next.tags;
     });
     return OrientationBuilder(
@@ -133,7 +133,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
   Widget _buildPortrait() {
     // final isMobile = ResponsiveBreakpoints.of(context).isMobile;
-    final serverState = ref.watch(serversNotifierProvider);
+    final serverState = ref.watch(serversProvider);
     return _tag.listenVal((val) {
       final filtered = _filterServers(serverState.serverOrder);
       final child = _buildScaffold(_buildBodySmall(filtered: filtered));
@@ -183,7 +183,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
                   // Last item is just spacing
                   if (index == lens) return SizedBox(height: 77);
 
-                  final individualState = ref.watch(serverNotifierProvider(serversInThisColumn[index]));
+                  final individualState = ref.watch(serverProvider(serversInThisColumn[index]));
 
                   return _buildEachServerCard(individualState);
                 },
@@ -339,8 +339,8 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
-    ref.read(serversNotifierProvider.notifier).refresh();
-    ref.read(serversNotifierProvider.notifier).startAutoRefresh();
+    ref.read(serversProvider.notifier).refresh();
+    ref.read(serversProvider.notifier).startAutoRefresh();
   }
 
   static const _kCardHeightMin = 23.0;

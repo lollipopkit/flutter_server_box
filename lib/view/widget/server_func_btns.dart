@@ -121,7 +121,7 @@ void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context, WidgetRe
 
       break;
     case ServerFuncBtn.snippet:
-      final snippetState = ref.read(snippetNotifierProvider);
+      final snippetState = ref.read(snippetProvider);
       if (snippetState.snippets.isEmpty) {
         context.showSnackBar(libL10n.empty);
         return;
@@ -273,7 +273,7 @@ void _gotoSSH(Spi spi, BuildContext context) async {
 }
 
 bool _checkClient(BuildContext context, String id, WidgetRef ref) {
-  final serverState = ref.read(serverNotifierProvider(id));
+  final serverState = ref.read(serverProvider(id));
   if (serverState.client == null) {
     context.showSnackBar(l10n.waitConnection);
     return false;

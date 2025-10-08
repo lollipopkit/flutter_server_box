@@ -50,7 +50,7 @@ class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
   @override
   void initState() {
     super.initState();
-    final serverState = ref.read(serverNotifierProvider(widget.args.spi.id));
+    final serverState = ref.read(serverProvider(widget.args.spi.id));
     _client = serverState.client!;
     _status = SftpBrowserStatus(_client);
   }
@@ -290,7 +290,7 @@ extension _Actions on _SftpPageState {
     final localPath = _getLocalPath(remotePath);
     final completer = Completer();
     final req = SftpReq(widget.args.spi, remotePath, localPath, SftpReqType.download);
-    ref.read(sftpNotifierProvider.notifier).add(req, completer: completer);
+    ref.read(sftpProvider.notifier).add(req, completer: completer);
     final (suc, err) = await context.showLoadingDialog(fn: () => completer.future);
     if (suc == null || err != null) return;
 
@@ -300,7 +300,7 @@ extension _Actions on _SftpPageState {
         path: localPath,
         onSave: (_) {
           ref
-              .read(sftpNotifierProvider.notifier)
+              .read(sftpProvider.notifier)
               .add(SftpReq(req.spi, remotePath, localPath, SftpReqType.upload));
           context.showSnackBar(l10n.added2List);
         },
@@ -323,7 +323,7 @@ extension _Actions on _SftpPageState {
             final remotePath = _getRemotePath(name);
 
             ref
-                .read(sftpNotifierProvider.notifier)
+                .read(sftpProvider.notifier)
                 .add(SftpReq(widget.args.spi, remotePath, _getLocalPath(remotePath), SftpReqType.download));
 
             context.pop();
@@ -653,7 +653,7 @@ extension _Actions on _SftpPageState {
         final remotePath = '$remoteDir/$fileName';
         Loggers.app.info('SFTP upload local: $path, remote: $remotePath');
         ref
-            .read(sftpNotifierProvider.notifier)
+            .read(sftpProvider.notifier)
             .add(SftpReq(widget.args.spi, remotePath, path, SftpReqType.upload));
       },
       icon: const Icon(Icons.upload_file),

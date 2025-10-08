@@ -98,7 +98,7 @@ extension _Utils on _ServerPageState {
     final tag = _tag.value;
     if (tag == TagSwitcher.kDefaultTag) return order;
     return order.where((e) {
-      final tags = ref.read(serversNotifierProvider).servers[e]?.tags;
+      final tags = ref.read(serversProvider).servers[e]?.tags;
       if (tags == null) return false;
       return tags.contains(tag);
     }).toList();

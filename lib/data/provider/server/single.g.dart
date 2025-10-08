@@ -6,156 +6,103 @@ part of 'single.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$serverNotifierHash() => r'd9724fbe6d132f2e2ea4dfa5af73aeab168e1c57';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
-abstract class _$ServerNotifier extends BuildlessNotifier<ServerState> {
-  late final String serverId;
-
-  ServerState build(String serverId);
-}
-
-/// See also [ServerNotifier].
 @ProviderFor(ServerNotifier)
-const serverNotifierProvider = ServerNotifierFamily();
+const serverProvider = ServerNotifierFamily._();
 
-/// See also [ServerNotifier].
-class ServerNotifierFamily extends Family<ServerState> {
-  /// See also [ServerNotifier].
-  const ServerNotifierFamily();
+final class ServerNotifierProvider
+    extends $NotifierProvider<ServerNotifier, ServerState> {
+  const ServerNotifierProvider._({
+    required ServerNotifierFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'serverProvider',
+         isAutoDispose: false,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [ServerNotifier].
-  ServerNotifierProvider call(String serverId) {
-    return ServerNotifierProvider(serverId);
+  @override
+  String debugGetCreateSourceHash() => _$serverNotifierHash();
+
+  @override
+  String toString() {
+    return r'serverProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  ServerNotifierProvider getProviderOverride(
-    covariant ServerNotifierProvider provider,
-  ) {
-    return call(provider.serverId);
-  }
+  ServerNotifier create() => ServerNotifier();
 
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'serverNotifierProvider';
-}
-
-/// See also [ServerNotifier].
-class ServerNotifierProvider
-    extends NotifierProviderImpl<ServerNotifier, ServerState> {
-  /// See also [ServerNotifier].
-  ServerNotifierProvider(String serverId)
-    : this._internal(
-        () => ServerNotifier()..serverId = serverId,
-        from: serverNotifierProvider,
-        name: r'serverNotifierProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$serverNotifierHash,
-        dependencies: ServerNotifierFamily._dependencies,
-        allTransitiveDependencies:
-            ServerNotifierFamily._allTransitiveDependencies,
-        serverId: serverId,
-      );
-
-  ServerNotifierProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.serverId,
-  }) : super.internal();
-
-  final String serverId;
-
-  @override
-  ServerState runNotifierBuild(covariant ServerNotifier notifier) {
-    return notifier.build(serverId);
-  }
-
-  @override
-  Override overrideWith(ServerNotifier Function() create) {
-    return ProviderOverride(
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ServerState value) {
+    return $ProviderOverride(
       origin: this,
-      override: ServerNotifierProvider._internal(
-        () => create()..serverId = serverId,
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        serverId: serverId,
-      ),
+      providerOverride: $SyncValueProvider<ServerState>(value),
     );
   }
 
   @override
-  NotifierProviderElement<ServerNotifier, ServerState> createElement() {
-    return _ServerNotifierProviderElement(this);
-  }
-
-  @override
   bool operator ==(Object other) {
-    return other is ServerNotifierProvider && other.serverId == serverId;
+    return other is ServerNotifierProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, serverId.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin ServerNotifierRef on NotifierProviderRef<ServerState> {
-  /// The parameter `serverId` of this provider.
-  String get serverId;
-}
+String _$serverNotifierHash() => r'd9724fbe6d132f2e2ea4dfa5af73aeab168e1c57';
 
-class _ServerNotifierProviderElement
-    extends NotifierProviderElement<ServerNotifier, ServerState>
-    with ServerNotifierRef {
-  _ServerNotifierProviderElement(super.provider);
+final class ServerNotifierFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          ServerNotifier,
+          ServerState,
+          ServerState,
+          ServerState,
+          String
+        > {
+  const ServerNotifierFamily._()
+    : super(
+        retry: null,
+        name: r'serverProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: false,
+      );
+
+  ServerNotifierProvider call(String serverId) =>
+      ServerNotifierProvider._(argument: serverId, from: this);
 
   @override
-  String get serverId => (origin as ServerNotifierProvider).serverId;
+  String toString() => r'serverProvider';
 }
 
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+abstract class _$ServerNotifier extends $Notifier<ServerState> {
+  late final _$args = ref.$arg as String;
+  String get serverId => _$args;
+
+  ServerState build(String serverId);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build(_$args);
+    final ref = this.ref as $Ref<ServerState, ServerState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<ServerState, ServerState>,
+              ServerState,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}

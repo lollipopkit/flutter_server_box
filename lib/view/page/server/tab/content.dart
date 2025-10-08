@@ -30,16 +30,16 @@ extension on _ServerPageState {
         const Icon(Icons.refresh, size: 21, color: Colors.grey),
         () {
           TryLimiter.reset(s.spi.id);
-          ref.read(serversNotifierProvider.notifier).refresh(spi: s.spi);
+          ref.read(serversProvider.notifier).refresh(spi: s.spi);
         },
       ),
       ServerConn.disconnected => (
         const Icon(MingCute.link_3_line, size: 19, color: Colors.grey),
-        () => ref.read(serversNotifierProvider.notifier).refresh(spi: s.spi),
+        () => ref.read(serversProvider.notifier).refresh(spi: s.spi),
       ),
       ServerConn.finished => (
         const Icon(MingCute.unlink_2_line, size: 17, color: Colors.grey),
-        () => ref.read(serversNotifierProvider.notifier).closeServer(id: s.spi.id),
+        () => ref.read(serversProvider.notifier).closeServer(id: s.spi.id),
       ),
     };
 
@@ -106,7 +106,7 @@ ${ss.err?.message ?? 'null'}
   Widget _buildNet(ServerStatus ss, String id) {
     final cardNoti = _getCardNoti(id);
     final type = cardNoti.value.net ?? Stores.setting.netViewType.fetch();
-    final device = ref.watch(serversNotifierProvider).servers[id]?.custom?.netDev;
+    final device = ref.watch(serversProvider).servers[id]?.custom?.netDev;
     final (a, b) = type.build(ss, dev: device);
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 377),

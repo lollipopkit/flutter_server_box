@@ -1,4 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:responsive_framework/responsive_framework.dart';
@@ -31,15 +32,19 @@ class _HomePageState extends ConsumerState<HomePage>
   bool _shouldAuth = false;
   DateTime? _pausedTime;
 
-  late final _notifier = ref.read(serversNotifierProvider.notifier);
-  late final _provider = ref.read(serversNotifierProvider);
+  late final _notifier = ref.read(serversProvider.notifier);
+  late final _provider = ref.read(serversProvider);
   late List<AppTab> _tabs = Stores.setting.homeTabs.fetch();
 
   @override
   void dispose() {
     super.dispose();
     WidgetsBinding.instance.removeObserver(this);
-    Future(() => _notifier.closeServer());
+    // In release builds (real app exit), close connections.
+    // In debug (hot reload), avoid forcing disconnects.
+    if (kReleaseMode) {
+      Future(() => _notifier.closeServer());
+    }
     _pageController.dispose();
     WakelockPlus.disable();
 

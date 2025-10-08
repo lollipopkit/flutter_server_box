@@ -359,7 +359,7 @@ extension _OnTapFile on _LocalFilePageState {
 
     final spi = await context.showPickSingleDialog<Spi>(
       title: libL10n.select,
-      items: ref.read(serversNotifierProvider).servers.values.toList(),
+      items: ref.read(serversProvider).servers.values.toList(),
       display: (e) => e.name,
     );
     if (spi == null) return;
@@ -370,7 +370,7 @@ extension _OnTapFile on _LocalFilePageState {
       return;
     }
 
-    ref.read(sftpNotifierProvider.notifier).add(SftpReq(spi, '$remotePath/$fileName', file.absolute.path, SftpReqType.upload));
+    ref.read(sftpProvider.notifier).add(SftpReq(spi, '$remotePath/$fileName', file.absolute.path, SftpReqType.upload));
     context.showSnackBar(l10n.added2List);
   }
 }

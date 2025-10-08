@@ -86,7 +86,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
 
   @override
   Widget build(BuildContext context) {
-    final serverState = ref.watch(serverNotifierProvider(widget.args.spi.id));
+    final serverState = ref.watch(serverProvider(widget.args.spi.id));
     if (serverState.client == null) {
       return Scaffold(
         appBar: CustomAppBar(),

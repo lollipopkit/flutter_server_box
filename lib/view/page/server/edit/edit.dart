@@ -185,7 +185,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage> with AfterLayou
         hint: 'root',
         suggestion: false,
       ),
-      TagTile(tags: _tags, allTags: ref.watch(serversNotifierProvider).tags).cardx,
+      TagTile(tags: _tags, allTags: ref.watch(serversProvider).tags).cardx,
       ListTile(
         title: Text(l10n.autoConnect),
         trailing: _autoConnect.listenVal(

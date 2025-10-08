@@ -653,7 +653,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox;
 				PRODUCT_NAME = "Server Box";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = hj_macmini_for_serverbox;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = serverbox_lkmm;
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;

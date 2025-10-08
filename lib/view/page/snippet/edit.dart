@@ -62,7 +62,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> with AfterLay
             child: Text(libL10n.askContinue('${libL10n.delete} ${l10n.snippet}(${snippet.name})')),
             actions: Btn.ok(
               onTap: () {
-                ref.read(snippetNotifierProvider.notifier).del(snippet);
+                ref.read(snippetProvider.notifier).del(snippet);
                 context.pop();
                 context.pop();
               },
@@ -96,7 +96,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> with AfterLay
           autoRunOn: _autoRunOn.value.isEmpty ? null : _autoRunOn.value,
         );
         final oldSnippet = widget.args?.snippet;
-        final notifier = ref.read(snippetNotifierProvider.notifier);
+        final notifier = ref.read(snippetProvider.notifier);
         if (oldSnippet != null) {
           notifier.update(oldSnippet, snippet);
         } else {
@@ -130,7 +130,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> with AfterLay
         ),
         Consumer(
           builder: (_, ref, _) {
-            final tags = ref.watch(snippetNotifierProvider.select((p) => p.tags));
+            final tags = ref.watch(snippetProvider.select((p) => p.tags));
             return TagTile(tags: _tags, allTags: tags).cardx;
           },
         ),
@@ -157,7 +157,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> with AfterLay
         builder: (vals) {
           final subtitle = vals.isEmpty
               ? null
-              : vals.map((e) => ref.read(serversNotifierProvider).servers[e]?.name ?? e).join(', ');
+              : vals.map((e) => ref.read(serversProvider).servers[e]?.name ?? e).join(', ');
           return ListTile(
             leading: const Padding(
               padding: EdgeInsets.only(left: 5),
@@ -170,11 +170,11 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> with AfterLay
                 : Text(subtitle, maxLines: 1, style: UIs.textGrey, overflow: TextOverflow.ellipsis),
             onTap: () async {
               // Create a filtered copy for the dialog, don't modify the original
-              final validServerIds = vals.where((e) => ref.read(serversNotifierProvider).serverOrder.contains(e)).toList();
+              final validServerIds = vals.where((e) => ref.read(serversProvider).serverOrder.contains(e)).toList();
               final serverIds = await context.showPickDialog(
                 title: l10n.autoRun,
-                items: ref.read(serversNotifierProvider).serverOrder,
-                display: (e) => ref.read(serversNotifierProvider).servers[e]?.name ?? e,
+                items: ref.read(serversProvider).serverOrder,
+                display: (e) => ref.read(serversProvider).servers[e]?.name ?? e,
                 initial: validServerIds,
                 clearable: true,
               );

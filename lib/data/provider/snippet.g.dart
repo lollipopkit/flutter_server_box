@@ -6,21 +6,58 @@ part of 'snippet.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+
+@ProviderFor(SnippetNotifier)
+const snippetProvider = SnippetNotifierProvider._();
+
+final class SnippetNotifierProvider
+    extends $NotifierProvider<SnippetNotifier, SnippetState> {
+  const SnippetNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'snippetProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$snippetNotifierHash();
+
+  @$internal
+  @override
+  SnippetNotifier create() => SnippetNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(SnippetState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SnippetState>(value),
+    );
+  }
+}
+
 String _$snippetNotifierHash() => r'8285c7edf905a4aaa41cd8b65b0a6755c8b97fc9';
 
-/// See also [SnippetNotifier].
-@ProviderFor(SnippetNotifier)
-final snippetNotifierProvider =
-    NotifierProvider<SnippetNotifier, SnippetState>.internal(
-      SnippetNotifier.new,
-      name: r'snippetNotifierProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$snippetNotifierHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
-
-typedef _$SnippetNotifier = Notifier<SnippetState>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+abstract class _$SnippetNotifier extends $Notifier<SnippetState> {
+  SnippetState build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<SnippetState, SnippetState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<SnippetState, SnippetState>,
+              SnippetState,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}

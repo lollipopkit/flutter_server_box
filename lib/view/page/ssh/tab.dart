@@ -249,7 +249,7 @@ class _AddPage extends ConsumerWidget {
     const viewPadding = 7.0;
     final viewWidth = context.windowSize.width - 2 * viewPadding;
 
-    final serverState = ref.watch(serversNotifierProvider);
+    final serverState = ref.watch(serversProvider);
     final itemCount = serverState.servers.length;
     const itemPadding = 1.0;
     const itemWidth = 150.0;
