@@ -504,9 +504,11 @@ packages:
   fl_lib:
     dependency: "direct main"
     description:
-      path: "../fl_lib"
-      relative: true
-    source: path
+      path: "."
+      ref: "v1.0.351"
+      resolved-ref: "98d480eb0128805b5b3361bcfb07c3b46b9f1391"
+      url: "https://github.com/lppcg/fl_lib"
+    source: git
     version: "0.0.1"
   flutter:
     dependency: "direct main"
@@ -646,14 +648,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.2"
-  flutter_staggered_grid_view:
-    dependency: transitive
-    description:
-      name: flutter_staggered_grid_view
-      sha256: "19e7abb550c96fbfeb546b23f3ff356ee7c59a019a651f8f102a4ba9b7349395"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.7.0"
   flutter_svg:
     dependency: transitive
     description:
