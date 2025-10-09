@@ -42,9 +42,9 @@ final class _TopBar extends ConsumerWidget implements PreferredSizeWidget {
       }
       final total = order.length;
       final connectionText = '$connected/$total ${context.l10n.conn}';
-      leading = Text(
-        connectionText,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      leading = InkWell(
+        onTap: () => ConnectionStatsPage.route.go(context),
+        child: Text(connectionText, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
       );
     }
 

@@ -89,9 +89,8 @@ extension _App on _AppSettingsPageState {
     return ListTile(
       leading: const Icon(Icons.colorize),
       title: Text(libL10n.primaryColorSeed),
-      trailing: _setting.colorSeed.listenable().listenVal((val) {
-        final c = Color(val);
-        return ClipOval(child: Container(color: c, height: 27, width: 27));
+      trailing: _setting.colorSeed.listenable().listenVal((_) {
+        return ClipOval(child: Container(color: UIs.primaryColor, height: 27, width: 27));
       }),
       onTap: () async {
         final ctrl = TextEditingController(text: UIs.primaryColor.toHex);
@@ -137,7 +136,6 @@ extension _App on _AppSettingsPageState {
     UIs.colorSeed = color;
     _setting.colorSeed.put(color.value255);
     context.pop();
-    Future.delayed(Durations.medium1, RNodes.app.notify);
   }
 
   Widget _buildMaxRetry() {

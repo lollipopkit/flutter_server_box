@@ -57,8 +57,10 @@ class MyApp extends StatelessWidget {
         final darkTheme = ThemeData(useMaterial3: true, brightness: Brightness.dark, colorScheme: dark);
         if (context.isDark && dark != null) {
           UIs.primaryColor = dark.primary;
+          UIs.colorSeed = dark.primary;
         } else if (!context.isDark && light != null) {
           UIs.primaryColor = light.primary;
+          UIs.colorSeed = light.primary;
         }
 
         return _buildApp(context, light: lightTheme, dark: darkTheme);
