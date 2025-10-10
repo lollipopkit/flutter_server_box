@@ -127,6 +127,9 @@ abstract final class GithubIds {
     'xiaomeng9597',
     'mingzhao2019',
     'HHXXYY123',
+    'Lancerys',
+    'yaziku',
+    'yeluosln',
   };
 }
 
