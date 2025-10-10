@@ -33,43 +33,6 @@ final class _IntroPage extends StatelessWidget {
         SizedBox(height: padTop),
         IntroPage.title(text: libL10n.init, big: true),
         SizedBox(height: padTop),
-        // Prompt to set backup password after migration or on first launch
-        ListTile(
-          leading: const Icon(Icons.lock),
-          title: Text(l10n.backupPassword),
-          subtitle: Text(l10n.backupPasswordTip, style: UIs.textGrey),
-          trailing: const Icon(Icons.keyboard_arrow_right),
-          onTap: () async {
-            final currentPwd = await SecureStoreProps.bakPwd.read();
-            final controller = TextEditingController(text: currentPwd ?? '');
-            final result = await ctx.showRoundDialog<bool>(
-              title: l10n.backupPassword,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(l10n.backupPasswordTip, style: UIs.textGrey),
-                  UIs.height13,
-                  Input(
-                    label: l10n.backupPassword,
-                    controller: controller,
-                    obscureText: true,
-                    onSubmitted: (_) => ctx.pop(true),
-                  ),
-                ],
-              ),
-              actions: Btnx.oks,
-            );
-            if (result == true) {
-              final pwd = controller.text.trim();
-              if (pwd.isEmpty) {
-                ctx.showSnackBar(libL10n.empty);
-                return;
-              }
-              await SecureStoreProps.bakPwd.write(pwd);
-              ctx.showSnackBar(l10n.backupPasswordSet);
-            }
-          },
-        ).cardx,
         ListTile(
           leading: const Icon(IonIcons.language),
           title: Text(libL10n.language),

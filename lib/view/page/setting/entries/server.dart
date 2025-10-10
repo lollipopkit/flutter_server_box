@@ -46,11 +46,7 @@ extension _Server on _AppSettingsPageState {
       subtitle: Text(l10n.connectionStatsDesc),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const ConnectionStatsPage(),
-          ),
-        );
+        ConnectionStatsPage.route.go(context);
       },
     );
   }

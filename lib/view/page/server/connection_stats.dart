@@ -7,6 +7,8 @@ import 'package:server_box/data/res/store.dart';
 class ConnectionStatsPage extends StatefulWidget {
   const ConnectionStatsPage({super.key});
 
+  static const route = AppRouteNoArg(page: ConnectionStatsPage.new, path: '/server/conn_stats');
+
   @override
   State<ConnectionStatsPage> createState() => _ConnectionStatsPageState();
 }
