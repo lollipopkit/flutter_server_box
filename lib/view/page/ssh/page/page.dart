@@ -25,16 +25,14 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
-
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
-import 'package:xterm/src/ui/custom_text_edit.dart';
 
+part 'ask_ai.dart';
 part 'init.dart';
 part 'keyboard.dart';
 part 'virt_key.dart';
-part 'ask_ai.dart';
 
 final class SshPageArgs {
   final Spi spi;

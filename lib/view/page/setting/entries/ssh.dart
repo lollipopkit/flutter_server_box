@@ -10,7 +10,6 @@ extension _SSH on _AppSettingsPageState {
         _buildFont(),
         _buildTermFontSize(),
         _buildSshBg(),
-        _buildAskAiConfig(),
         if (isDesktop) _buildDesktopTerminal(),
         _buildSSHVirtualKeyAutoOff(),
         if (isMobile) _buildSSHVirtKeys(),
@@ -33,61 +32,6 @@ extension _SSH on _AppSettingsPageState {
       title: Text(l10n.sshVirtualKeyAutoOff),
       subtitle: const Text('Ctrl & Alt', style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.sshVirtualKeyAutoOff),
-    );
-  }
-
-  Widget _buildAskAiConfig() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ListTile(
-          leading: const Icon(MingCute.robot_fill),
-          title: const TipText('Ask AI', 'Configure Ask AI service for the terminal'),
-        ),
-        const Divider(indent: 16, endIndent: 16, height: 0),
-        _setting.askAiBaseUrl.listenable().listenVal((val) {
-          final display = val.isEmpty ? libL10n.empty : val;
-          return ListTile(
-            leading: const Icon(MingCute.link_2_line),
-            title: const Text('Base URL'),
-            subtitle: Text(display, style: UIs.textGrey, maxLines: 2, overflow: TextOverflow.ellipsis),
-            onTap: () => _showAskAiFieldDialog(
-              prop: _setting.askAiBaseUrl,
-              title: 'Base URL',
-              hint: 'https://api.openai.com',
-            ),
-          );
-        }),
-        const Divider(indent: 16, endIndent: 16, height: 0),
-        _setting.askAiModel.listenable().listenVal((val) {
-          final display = val.isEmpty ? libL10n.empty : val;
-          return ListTile(
-            leading: const Icon(Icons.view_module),
-            title: const Text('Model'),
-            subtitle: Text(display, style: UIs.textGrey),
-            onTap: () => _showAskAiFieldDialog(
-              prop: _setting.askAiModel,
-              title: 'Model',
-              hint: 'gpt-4o-mini',
-            ),
-          );
-        }),
-        const Divider(indent: 16, endIndent: 16, height: 0),
-        _setting.askAiApiKey.listenable().listenVal((val) {
-          final hasKey = val.isNotEmpty;
-          return ListTile(
-            leading: const Icon(MingCute.key_2_line),
-            title: const Text('API Key'),
-            subtitle: Text(hasKey ? '••••••••' : libL10n.empty, style: UIs.textGrey),
-            onTap: () => _showAskAiFieldDialog(
-              prop: _setting.askAiApiKey,
-              title: 'API Key',
-              hint: 'sk-...',
-              obscure: true,
-            ),
-          );
-        }),
-      ],
     );
   }
 
@@ -116,44 +60,6 @@ extension _SSH on _AppSettingsPageState {
         );
       },
     );
-  }
-
-  Future<void> _showAskAiFieldDialog({
-    required HiveProp<String> prop,
-    required String title,
-    required String hint,
-    bool obscure = false,
-  }) async {
-    final ctrl = TextEditingController(text: prop.fetch());
-    void onSave() {
-      prop.put(ctrl.text.trim());
-      context.pop();
-    }
-
-    await context.showRoundDialog(
-      title: title,
-      child: Input(
-        controller: ctrl,
-        autoFocus: true,
-        label: title,
-        hint: hint,
-        icon: obscure ? MingCute.key_2_line : Icons.edit,
-        obscureText: obscure,
-        suggestion: !obscure,
-        onSubmitted: (_) => onSave(),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            prop.delete();
-            context.pop();
-          },
-          child: Text(libL10n.clear),
-        ),
-        TextButton(onPressed: onSave, child: Text(libL10n.ok)),
-      ],
-    );
-    ctrl.dispose();
   }
 
   Future<void> _pickFontFile() async {
@@ -210,27 +116,28 @@ extension _SSH on _AppSettingsPageState {
         leading: const Icon(Icons.terminal),
         title: TipText(l10n.terminal, l10n.desktopTerminalTip),
         trailing: Text(val, style: UIs.text15, maxLines: 1, overflow: TextOverflow.ellipsis),
-        onTap: () async {
-          final ctrl = TextEditingController(text: val);
-          void onSave() {
-            _setting.desktopTerminal.put(ctrl.text.trim());
-            context.pop();
-          }
+        onTap: () {
+          withTextFieldController((ctrl) async {
+            ctrl.text = val;
+            void onSave() {
+              _setting.desktopTerminal.put(ctrl.text.trim());
+              context.pop();
+            }
 
-          await context.showRoundDialog<bool>(
-            title: libL10n.select,
-            child: Input(
-              controller: ctrl,
-              autoFocus: true,
-              label: l10n.terminal,
-              hint: 'x-terminal-emulator / gnome-terminal',
-              icon: Icons.edit,
-              suggestion: false,
-              onSubmitted: (_) => onSave(),
-            ),
-            actions: Btn.ok(onTap: onSave).toList,
-          );
-          ctrl.dispose();
+            await context.showRoundDialog<bool>(
+              title: libL10n.select,
+              child: Input(
+                controller: ctrl,
+                autoFocus: true,
+                label: l10n.terminal,
+                hint: 'x-terminal-emulator / gnome-terminal',
+                icon: Icons.edit,
+                suggestion: false,
+                onSubmitted: (_) => onSave(),
+              ),
+              actions: Btn.ok(onTap: onSave).toList,
+            );
+          });
         },
       );
     });

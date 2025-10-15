@@ -65,7 +65,7 @@ dependencies:
   fl_lib:
     git:
       url: https://github.com/lppcg/fl_lib
-      ref: v1.0.355
+      ref: v1.0.356
 
 dependency_overrides:
   # webdav_client_plus:
@@ -74,8 +74,8 @@ dependency_overrides:
   #   path: ../dartssh2
   xterm:
     path: ../xterm.dart
-  # fl_lib:
-  #   path: ../fl_lib
+  fl_lib:
+    path: ../fl_lib
   # fl_build:
   #   path: ../fl_build
   gtk: # TODO: remove it after fixed in upstream

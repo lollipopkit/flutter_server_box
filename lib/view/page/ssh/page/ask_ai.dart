@@ -33,11 +33,7 @@ extension _AskAi on SSHPageState {
       isScrollControlled: true,
       useSafeArea: true,
       builder: (ctx) {
-        return _AskAiSheet(
-          selection: selection,
-          localeHint: localeHint,
-          onCommandApply: _applyAiCommand,
-        );
+        return _AskAiSheet(selection: selection, localeHint: localeHint, onCommandApply: _applyAiCommand);
       },
     );
   }
@@ -47,16 +43,12 @@ extension _AskAi on SSHPageState {
       return;
     }
     _terminal.textInput(command);
-    widget.args.focusNode?.requestFocus() ?? _termKey.currentState?.requestKeyboard();
+    (widget.args.focusNode?.requestFocus ?? _termKey.currentState?.requestKeyboard)?.call();
   }
 }
 
 class _AskAiSheet extends ConsumerStatefulWidget {
-  const _AskAiSheet({
-    required this.selection,
-    required this.localeHint,
-    required this.onCommandApply,
-  });
+  const _AskAiSheet({required this.selection, required this.localeHint, required this.onCommandApply});
 
   final String selection;
   final String? localeHint;
@@ -82,21 +74,21 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
         .read(askAiRepositoryProvider)
         .ask(selection: widget.selection, localeHint: widget.localeHint)
         .listen(
-      _handleEvent,
-      onError: (error, stack) {
-        if (!mounted) return;
-        setState(() {
-          _error = _describeError(error);
-          _isLoading = false;
-        });
-      },
-      onDone: () {
-        if (!mounted) return;
-        setState(() {
-          _isLoading = false;
-        });
-      },
-    );
+          _handleEvent,
+          onError: (error, stack) {
+            if (!mounted) return;
+            setState(() {
+              _error = _describeError(error);
+              _isLoading = false;
+            });
+          },
+          onDone: () {
+            if (!mounted) return;
+            setState(() {
+              _isLoading = false;
+            });
+          },
+        );
   }
 
   @override
@@ -169,16 +161,10 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
   Future<void> _handleApplyCommand(BuildContext context, AskAiCommand command) async {
     final confirmed = await context.showRoundDialog<bool>(
       title: '执行前确认',
-      child: SelectableText(
-        command.command,
-        style: const TextStyle(fontFamily: 'monospace'),
-      ),
+      child: SelectableText(command.command, style: const TextStyle(fontFamily: 'monospace')),
       actions: [
         TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
-        TextButton(
-          onPressed: () => context.pop(true),
-          child: Text(libL10n.ok),
-        ),
+        TextButton(onPressed: () => context.pop(true), child: Text(libL10n.ok)),
       ],
     );
     if (confirmed == true) {
@@ -211,16 +197,9 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
                   Text('问 AI', style: theme.textTheme.titleLarge),
                   const SizedBox(width: 8),
                   if (_isLoading)
-                    const SizedBox(
-                      height: 16,
-                      width: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
+                    const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2)),
                   const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
+                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.of(context).pop()),
                 ],
               ),
             ),
@@ -277,10 +256,7 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
                               ),
                               if (command.description.isNotEmpty) ...[
                                 const SizedBox(height: 6),
-                                Text(
-                                  command.description,
-                                  style: theme.textTheme.bodySmall,
-                                ),
+                                Text(command.description, style: theme.textTheme.bodySmall),
                               ],
                               const SizedBox(height: 12),
                               Row(
@@ -310,17 +286,11 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
                     CardX(
                       child: Padding(
                         padding: const EdgeInsets.all(12),
-                        child: Text(
-                          _error!,
-                          style: TextStyle(color: theme.colorScheme.error),
-                        ),
+                        child: Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
                       ),
                     ),
                   ],
-                  if (_isLoading) ...[
-                    const SizedBox(height: 16),
-                    const LinearProgressIndicator(),
-                  ],
+                  if (_isLoading) ...[const SizedBox(height: 16), const LinearProgressIndicator()],
                 ],
               ),
             ),

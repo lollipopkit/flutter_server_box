@@ -6,6 +6,7 @@ import 'package:meta/meta.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/setting.dart';
 
 final askAiRepositoryProvider = Provider<AskAiRepository>((ref) {
   return AskAiRepository();
@@ -73,7 +74,7 @@ class AskAiRepository {
     final contentBuffer = StringBuffer();
     final commands = <AskAiCommand>[];
     final toolBuilders = <int, _ToolCallBuilder>{};
-    final utf8Stream = body.stream.transform(utf8.decoder);
+    final utf8Stream = body.stream.cast<List<int>>().transform(utf8.decoder);
     final carry = StringBuffer();
 
     try {

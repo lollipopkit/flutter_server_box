@@ -35,6 +35,7 @@ part 'entries/full_screen.dart';
 part 'entries/server.dart';
 part 'entries/sftp.dart';
 part 'entries/ssh.dart';
+part 'entries/ai.dart';
 
 const _kIconSize = 23.0;
 
@@ -120,7 +121,7 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
   Widget build(BuildContext context) {
     return MultiList(
       children: [
-        [const CenterGreyTitle('App'), _buildApp()],
+        [const CenterGreyTitle('App'), _buildApp(), const CenterGreyTitle('AI'), _buildAskAiConfig()],
         [CenterGreyTitle(l10n.server), _buildServer()],
         [const CenterGreyTitle('SSH'), _buildSSH(), const CenterGreyTitle('SFTP'), _buildSFTP()],
         [CenterGreyTitle(l10n.container), _buildContainer(), CenterGreyTitle(libL10n.editor), _buildEditor()],
