@@ -72,8 +72,8 @@ dependency_overrides:
   #   path: ../webdav_client
   # dartssh2:
   #   path: ../dartssh2
-  # xterm:
-  #   path: ../xterm.dart
+  xterm:
+    path: ../xterm.dart
   # fl_lib:
   #   path: ../fl_lib
   # fl_build:
