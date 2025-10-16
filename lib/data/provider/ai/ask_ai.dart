@@ -23,6 +23,7 @@ class AskAiRepository {
   Stream<AskAiEvent> ask({
     required String selection,
     String? localeHint,
+    List<AskAiMessage> conversation = const [],
   }) async* {
     final baseUrl = _settings.askAiBaseUrl.fetch().trim();
     final apiKey = _settings.askAiApiKey.fetch().trim();
@@ -48,6 +49,7 @@ class AskAiRepository {
       model: model,
       selection: selection,
       localeHint: localeHint,
+      conversation: conversation,
     );
 
     Response<ResponseBody> response;
@@ -194,12 +196,13 @@ class AskAiRepository {
   Map<String, dynamic> _buildRequestBody({
     required String model,
     required String selection,
+    required List<AskAiMessage> conversation,
     String? localeHint,
   }) {
     final promptBuffer = StringBuffer()
       ..writeln('你是一个 SSH 终端助手。')
       ..writeln('用户会提供一段终端输出或命令，请结合上下文给出解释。')
-      ..writeln('当需要给出可执行命令时，调用 `suggest_command` 工具，并提供简短描述。')
+      ..writeln('当需要给出可执行命令时，调用 `recommend_shell` 工具，并提供简短描述。')
       ..writeln('仅在非常确定命令安全时才给出建议。');
 
     if (localeHint != null && localeHint.isNotEmpty) {
@@ -210,21 +213,30 @@ class AskAiRepository {
       promptBuffer.writeln('如果无法判断语言，请使用简体中文。');
     }
 
+    final messages = <Map<String, String>>[
+      {
+        'role': 'system',
+        'content': promptBuffer.toString(),
+      },
+      {
+        'role': 'user',
+        'content': '以下是终端选中的内容：\n$selection',
+      },
+      ...conversation.map((message) => {
+            'role': message.apiRole,
+            'content': message.content,
+          }),
+    ];
+
     return {
       'model': model,
       'stream': true,
-      'messages': [
-        {'role': 'system', 'content': promptBuffer.toString()},
-        {
-          'role': 'user',
-          'content': '以下是终端选中的内容：\n$selection',
-        },
-      ],
+      'messages': messages,
       'tools': [
         {
           'type': 'function',
           'function': {
-            'name': 'suggest_command',
+            'name': 'recommend_shell',
             'description': '返回一个用户可以直接复制执行的终端命令。',
             'parameters': {
               'type': 'object',

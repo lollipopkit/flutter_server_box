@@ -1,5 +1,28 @@
 import 'package:meta/meta.dart';
 
+/// Chat message exchanged with the Ask AI service.
+enum AskAiMessageRole { user, assistant }
+
+@immutable
+class AskAiMessage {
+  const AskAiMessage({
+    required this.role,
+    required this.content,
+  });
+
+  final AskAiMessageRole role;
+  final String content;
+
+  String get apiRole {
+    switch (role) {
+      case AskAiMessageRole.user:
+        return 'user';
+      case AskAiMessageRole.assistant:
+        return 'assistant';
+    }
+  }
+}
+
 /// Recommended command returned by the AI tool call.
 @immutable
 class AskAiCommand {
