@@ -284,5 +284,21 @@
   "wolTip": "Après avoir configuré le WOL (Wake-on-LAN), une requête WOL est envoyée chaque fois que le serveur est connecté.",
   "write": "Écrire",
   "writeScriptFailTip": "Échec de l'écriture dans le script, probablement en raison d'un manque de permissions ou que le répertoire n'existe pas.",
-  "writeScriptTip": "Après la connexion au serveur, un script sera écrit dans `~/.config/server_box` \n | `/tmp/server_box` pour surveiller l'état du système. Vous pouvez examiner le contenu du script."
+  "writeScriptTip": "Après la connexion au serveur, un script sera écrit dans `~/.config/server_box` \n | `/tmp/server_box` pour surveiller l'état du système. Vous pouvez examiner le contenu du script.",
+  "askAi": "Demander à l'IA",
+  "askAiUsageHint": "Utilisé dans le terminal SSH",
+  "askAiBaseUrl": "URL de base",
+  "askAiModel": "Modèle",
+  "askAiApiKey": "Clé API",
+  "askAiConfigMissing": "Veuillez configurer {fields} dans les paramètres.",
+  "askAiConfirmExecute": "Confirmer avant d'exécuter",
+  "askAiCommandInserted": "Commande insérée dans le terminal",
+  "askAiAwaitingResponse": "En attente de la réponse de l'IA...",
+  "askAiNoResponse": "Aucune réponse",
+  "askAiRecommendedCommand": "Commande suggérée par l'IA",
+  "askAiInsertTerminal": "Insérer dans le terminal",
+  "askAiSelectedContent": "Contenu sélectionné",
+  "askAiConversation": "Conversation avec l'IA",
+  "askAiFollowUpHint": "Poser une question supplémentaire...",
+  "askAiSend": "Envoyer"
 }

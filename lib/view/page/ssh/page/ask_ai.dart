@@ -15,7 +15,7 @@ extension _AskAi on SSHPageState {
     final items = List<ContextMenuButtonItem>.from(defaultItems);
     items.add(
       ContextMenuButtonItem(
-        label: 'Ask AI',
+        label: context.l10n.askAi,
         onPressed: () {
           state.hideToolbar();
           _showAskAiSheet(selection);
@@ -58,16 +58,32 @@ class _AskAiSheet extends ConsumerStatefulWidget {
   ConsumerState<_AskAiSheet> createState() => _AskAiSheetState();
 }
 
+enum _ChatEntryType { user, assistant, command }
+
+class _ChatEntry {
+  const _ChatEntry._({required this.type, this.content, this.command});
+
+  const _ChatEntry.user(String content) : this._(type: _ChatEntryType.user, content: content);
+
+  const _ChatEntry.assistant(String content) : this._(type: _ChatEntryType.assistant, content: content);
+
+  const _ChatEntry.command(AskAiCommand command) : this._(type: _ChatEntryType.command, command: command);
+
+  final _ChatEntryType type;
+  final String? content;
+  final AskAiCommand? command;
+}
+
 class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
   StreamSubscription<AskAiEvent>? _subscription;
-  final _commands = <AskAiCommand>[];
-  final _conversation = <AskAiMessage>[];
+  final _chatEntries = <_ChatEntry>[];
+  final _history = <AskAiMessage>[];
   final _scrollController = ScrollController();
   final _inputController = TextEditingController();
+  final _seenCommands = <String>{};
   String? _streamingContent;
   String? _error;
   bool _isStreaming = false;
-  bool _didApplyRecommendShell = false;
 
   @override
   void initState() {
@@ -97,18 +113,13 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
       _isStreaming = true;
       _error = null;
       _streamingContent = '';
-      _didApplyRecommendShell = false;
     });
 
-    final messages = List<AskAiMessage>.from(_conversation);
+    final messages = List<AskAiMessage>.from(_history);
 
     _subscription = ref
         .read(askAiRepositoryProvider)
-        .ask(
-          selection: widget.selection,
-          localeHint: widget.localeHint,
-          conversation: messages,
-        )
+        .ask(selection: widget.selection, localeHint: widget.localeHint, conversation: messages)
         .listen(
           _handleEvent,
           onError: (error, stack) {
@@ -130,28 +141,28 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
 
   void _handleEvent(AskAiEvent event) {
     if (!mounted) return;
-    if (event is AskAiToolSuggestion && event.command.toolName == 'recommend_shell') {
-      _handleRecommendShell(event.command);
-      return;
-    }
-
     var shouldScroll = false;
     setState(() {
       if (event is AskAiContentDelta) {
         _streamingContent = (_streamingContent ?? '') + event.delta;
         shouldScroll = true;
       } else if (event is AskAiToolSuggestion) {
-        _addCommand(event.command);
+        final inserted = _seenCommands.add(event.command.command);
+        if (inserted) {
+          _chatEntries.add(_ChatEntry.command(event.command));
+          shouldScroll = true;
+        }
       } else if (event is AskAiCompleted) {
         final fullText = event.fullText.isNotEmpty ? event.fullText : (_streamingContent ?? '');
         if (fullText.trim().isNotEmpty) {
-          _conversation.add(AskAiMessage(role: AskAiMessageRole.assistant, content: fullText));
+          final message = AskAiMessage(role: AskAiMessageRole.assistant, content: fullText);
+          _history.add(message);
+          _chatEntries.add(_ChatEntry.assistant(fullText));
         }
         for (final command in event.commands) {
-          if (command.toolName == 'recommend_shell') {
-            WidgetsBinding.instance.addPostFrameCallback((_) => _handleRecommendShell(command));
-          } else {
-            _addCommand(command);
+          final inserted = _seenCommands.add(command.command);
+          if (inserted) {
+            _chatEntries.add(_ChatEntry.command(command));
           }
         }
         _streamingContent = null;
@@ -169,13 +180,6 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
     }
   }
 
-  void _addCommand(AskAiCommand command) {
-    final exists = _commands.any((item) => item.command == command.command);
-    if (!exists) {
-      _commands.add(command);
-    }
-  }
-
   void _scheduleAutoScroll() {
     if (!_scrollController.hasClients) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -189,8 +193,24 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
   }
 
   String _describeError(Object error) {
+    final l10n = context.l10n;
     if (error is AskAiConfigException) {
-      return '请前往设置配置 ${error.missingFields.join('、')}';
+      final locale = Localizations.maybeLocaleOf(context);
+      final separator = switch (locale?.languageCode) {
+        'zh' => '、',
+        'ja' => '、',
+        _ => ', ',
+      };
+      final formattedFields = error.missingFields
+          .map(
+            (field) => switch (field) {
+              AskAiConfigField.baseUrl => l10n.askAiBaseUrl,
+              AskAiConfigField.apiKey => l10n.askAiApiKey,
+              AskAiConfigField.model => l10n.askAiModel,
+            },
+          )
+          .join(separator);
+      return l10n.askAiConfigMissing(formattedFields);
     }
     if (error is AskAiNetworkException) {
       return error.message;
@@ -198,22 +218,9 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
     return error.toString();
   }
 
-  void _handleRecommendShell(AskAiCommand command) {
-    if (_didApplyRecommendShell) {
-      return;
-    }
-    _didApplyRecommendShell = true;
-    widget.onCommandApply(command.command);
-    if (!mounted) {
-      return;
-    }
-    Navigator.of(context).pop();
-    context.showSnackBar('命令已插入终端');
-  }
-
   Future<void> _handleApplyCommand(BuildContext context, AskAiCommand command) async {
     final confirmed = await context.showRoundDialog<bool>(
-      title: '执行前确认',
+      title: context.l10n.askAiConfirmExecute,
       child: SelectableText(command.command, style: const TextStyle(fontFamily: 'monospace')),
       actions: [
         TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
@@ -223,7 +230,7 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
     if (confirmed == true) {
       widget.onCommandApply(command.command);
       if (!mounted) return;
-      context.showSnackBar('命令已插入终端');
+      context.showSnackBar(context.l10n.askAiCommandInserted);
     }
   }
 
@@ -238,33 +245,27 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
     final text = _inputController.text.trim();
     if (text.isEmpty) return;
     setState(() {
-      _conversation.add(AskAiMessage(role: AskAiMessageRole.user, content: text));
+      final message = AskAiMessage(role: AskAiMessageRole.user, content: text);
+      _history.add(message);
+      _chatEntries.add(_ChatEntry.user(text));
       _inputController.clear();
     });
     _startStream();
     _scheduleAutoScroll();
   }
 
-  List<Widget> _buildConversationWidgets(ThemeData theme) {
+  List<Widget> _buildConversationWidgets(BuildContext context, ThemeData theme) {
     final widgets = <Widget>[];
-    for (final message in _conversation) {
-      widgets.add(_buildMessageBubble(theme, message));
+    for (final entry in _chatEntries) {
+      widgets.add(_buildChatItem(context, theme, entry));
       widgets.add(const SizedBox(height: 12));
     }
 
     if (_streamingContent != null) {
-      widgets.add(_buildAssistantBubble(
-        theme,
-        content: _streamingContent!,
-        streaming: true,
-      ));
+      widgets.add(_buildAssistantBubble(theme, content: _streamingContent!, streaming: true));
       widgets.add(const SizedBox(height: 12));
-    } else if (_conversation.isEmpty && _error == null) {
-      widgets.add(_buildAssistantBubble(
-        theme,
-        content: '',
-        streaming: true,
-      ));
+    } else if (_chatEntries.isEmpty && _error == null) {
+      widgets.add(_buildAssistantBubble(theme, content: '', streaming: true));
       widgets.add(const SizedBox(height: 12));
     }
 
@@ -274,36 +275,76 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
     return widgets;
   }
 
-  Widget _buildMessageBubble(ThemeData theme, AskAiMessage message) {
-    if (message.role == AskAiMessageRole.user) {
-      return Align(
-        alignment: Alignment.centerRight,
-        child: CardX(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: SelectableText(message.content),
+  Widget _buildChatItem(BuildContext context, ThemeData theme, _ChatEntry entry) {
+    switch (entry.type) {
+      case _ChatEntryType.user:
+        return Align(
+          alignment: Alignment.centerRight,
+          child: CardX(
+            child: Padding(padding: const EdgeInsets.all(12), child: SelectableText(entry.content ?? '')),
           ),
-        ),
-      );
+        );
+      case _ChatEntryType.assistant:
+        return _buildAssistantBubble(theme, content: entry.content ?? '');
+      case _ChatEntryType.command:
+        final command = entry.command!;
+        return _buildCommandBubble(context, theme, command);
     }
-    return _buildAssistantBubble(theme, content: message.content);
   }
 
-  Widget _buildAssistantBubble(
-    ThemeData theme, {
-    required String content,
-    bool streaming = false,
-  }) {
+  Widget _buildAssistantBubble(ThemeData theme, {required String content, bool streaming = false}) {
     final trimmed = content.trim();
+    final l10n = context.l10n;
     final child = trimmed.isEmpty
-        ? Text(streaming ? '等待 AI 响应…' : '无回复内容', style: theme.textTheme.bodySmall)
+        ? Text(
+            streaming ? l10n.askAiAwaitingResponse : l10n.askAiNoResponse,
+            style: theme.textTheme.bodySmall,
+          )
         : SimpleMarkdown(data: content);
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: CardX(
+        child: Padding(padding: const EdgeInsets.all(12), child: child),
+      ),
+    );
+  }
+
+  Widget _buildCommandBubble(BuildContext context, ThemeData theme, AskAiCommand command) {
+    final l10n = context.l10n;
     return Align(
       alignment: Alignment.centerLeft,
       child: CardX(
         child: Padding(
           padding: const EdgeInsets.all(12),
-          child: child,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.askAiRecommendedCommand, style: theme.textTheme.labelMedium),
+              const SizedBox(height: 8),
+              SelectableText(command.command, style: const TextStyle(fontFamily: 'monospace')),
+              if (command.description.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(command.description, style: theme.textTheme.bodySmall),
+              ],
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton.icon(
+                    onPressed: () => _copyCommand(context, command),
+                    icon: const Icon(Icons.copy, size: 18),
+                    label: Text(libL10n.copy),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton.icon(
+                    onPressed: () => _handleApplyCommand(context, command),
+                    icon: const Icon(Icons.terminal, size: 18),
+                    label: Text(l10n.askAiInsertTerminal),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -312,7 +353,7 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+    final bottomPadding = MediaQuery.viewInsetsOf(context).bottom;
 
     return FractionallySizedBox(
       heightFactor: 0.85,
@@ -323,7 +364,7 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: Row(
                 children: [
-                  Text('问 AI', style: theme.textTheme.titleLarge),
+                  Text(context.l10n.askAi, style: theme.textTheme.titleLarge),
                   const SizedBox(width: 8),
                   if (_isStreaming)
                     const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2)),
@@ -339,7 +380,7 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
                   controller: _scrollController,
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                   children: [
-                    Text('选中的内容', style: theme.textTheme.titleMedium),
+                    Text(context.l10n.askAiSelectedContent, style: theme.textTheme.titleMedium),
                     const SizedBox(height: 6),
                     CardX(
                       child: Padding(
@@ -351,51 +392,9 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Text('AI 对话', style: theme.textTheme.titleMedium),
+                    Text(context.l10n.askAiConversation, style: theme.textTheme.titleMedium),
                     const SizedBox(height: 6),
-                    ..._buildConversationWidgets(theme),
-                    if (_commands.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      Text('建议命令', style: theme.textTheme.titleMedium),
-                      const SizedBox(height: 8),
-                      ..._commands.map((command) {
-                        return CardX(
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SelectableText(
-                                  command.command,
-                                  style: const TextStyle(fontFamily: 'monospace'),
-                                ),
-                                if (command.description.isNotEmpty) ...[
-                                  const SizedBox(height: 6),
-                                  Text(command.description, style: theme.textTheme.bodySmall),
-                                ],
-                                const SizedBox(height: 12),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    TextButton.icon(
-                                      onPressed: () => _copyCommand(context, command),
-                                      icon: const Icon(Icons.copy, size: 18),
-                                      label: Text(libL10n.copy),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    FilledButton.icon(
-                                      onPressed: () => _handleApplyCommand(context, command),
-                                      icon: const Icon(Icons.terminal, size: 18),
-                                      label: const Text('上屏'),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }),
-                    ],
+                    ..._buildConversationWidgets(context, theme),
                     if (_error != null) ...[
                       const SizedBox(height: 16),
                       CardX(
@@ -405,16 +404,12 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
                         ),
                       ),
                     ],
-                    if (_isStreaming) ...[
-                      const SizedBox(height: 16),
-                      const LinearProgressIndicator(),
-                    ],
+                    if (_isStreaming) ...[const SizedBox(height: 16), const LinearProgressIndicator()],
                     const SizedBox(height: 16),
                   ],
                 ),
               ),
             ),
-            const Divider(height: 1),
             Padding(
               padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + bottomPadding),
               child: Row(
@@ -424,6 +419,7 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
                       controller: _inputController,
                       minLines: 1,
                       maxLines: 4,
+                      hint: context.l10n.askAiFollowUpHint,
                       action: TextInputAction.send,
                       onSubmitted: (_) => _sendMessage(),
                     ),
@@ -434,7 +430,7 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
                     icon: const Icon(Icons.send, size: 18),
                   ),
                 ],
-              ),
+              ).cardx,
             ),
           ],
         ),

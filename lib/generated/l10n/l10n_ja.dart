@@ -885,4 +885,54 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'サーバーに接続すると、システムの状態を監視するためのスクリプトが `~/.config/server_box` \n | `/tmp/server_box` に書き込まれます。スクリプトの内容を確認できます。';
+
+  @override
+  String get askAi => 'AI に質問';
+
+  @override
+  String get askAiUsageHint => 'SSH ターミナルで使用';
+
+  @override
+  String get askAiBaseUrl => 'ベース URL';
+
+  @override
+  String get askAiModel => 'モデル';
+
+  @override
+  String get askAiApiKey => 'API キー';
+
+  @override
+  String askAiConfigMissing(String fields) {
+    return '設定で $fields を構成してください。';
+  }
+
+  @override
+  String get askAiConfirmExecute => '実行前に確認';
+
+  @override
+  String get askAiCommandInserted => 'コマンドをターミナルに挿入しました';
+
+  @override
+  String get askAiAwaitingResponse => 'AI の応答を待機中...';
+
+  @override
+  String get askAiNoResponse => '応答なし';
+
+  @override
+  String get askAiRecommendedCommand => 'AI 推奨コマンド';
+
+  @override
+  String get askAiInsertTerminal => 'ターミナルに挿入';
+
+  @override
+  String get askAiSelectedContent => '選択した内容';
+
+  @override
+  String get askAiConversation => 'AI 会話';
+
+  @override
+  String get askAiFollowUpHint => '追質問をする...';
+
+  @override
+  String get askAiSend => '送信';
 }

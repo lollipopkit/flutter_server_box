@@ -284,5 +284,21 @@
   "wolTip": "Después de configurar WOL (Wake-on-LAN), se envía una solicitud de WOL cada vez que se conecta el servidor.",
   "write": "Escribir",
   "writeScriptFailTip": "La escritura en el script falló, posiblemente por falta de permisos o porque el directorio no existe.",
-  "writeScriptTip": "Después de conectarse al servidor, se escribirá un script en `~/.config/server_box` \n | `/tmp/server_box` para monitorear el estado del sistema. Puedes revisar el contenido del script."
+  "writeScriptTip": "Después de conectarse al servidor, se escribirá un script en `~/.config/server_box` \n | `/tmp/server_box` para monitorear el estado del sistema. Puedes revisar el contenido del script.",
+  "askAi": "Preguntar a la IA",
+  "askAiUsageHint": "Usado en el terminal SSH",
+  "askAiBaseUrl": "URL base",
+  "askAiModel": "Modelo",
+  "askAiApiKey": "Clave API",
+  "askAiConfigMissing": "Configura {fields} en Ajustes.",
+  "askAiConfirmExecute": "Confirmar antes de ejecutar",
+  "askAiCommandInserted": "Comando insertado en el terminal",
+  "askAiAwaitingResponse": "Esperando la respuesta de la IA...",
+  "askAiNoResponse": "Sin respuesta",
+  "askAiRecommendedCommand": "Comando sugerido por la IA",
+  "askAiInsertTerminal": "Insertar en el terminal",
+  "askAiSelectedContent": "Contenido seleccionado",
+  "askAiConversation": "Conversación con la IA",
+  "askAiFollowUpHint": "Haz una pregunta adicional...",
+  "askAiSend": "Enviar"
 }

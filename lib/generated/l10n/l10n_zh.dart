@@ -870,6 +870,56 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get writeScriptTip =>
       '在连接服务器后，会向 `~/.config/server_box` \n | `/tmp/server_box` 写入脚本来监测系统状态，你可以审查脚本内容。';
+
+  @override
+  String get askAi => '问 AI';
+
+  @override
+  String get askAiUsageHint => '用于 SSH 终端';
+
+  @override
+  String get askAiBaseUrl => '基础 URL';
+
+  @override
+  String get askAiModel => '模型';
+
+  @override
+  String get askAiApiKey => 'API 密钥';
+
+  @override
+  String askAiConfigMissing(String fields) {
+    return '请前往设置配置 $fields';
+  }
+
+  @override
+  String get askAiConfirmExecute => '执行前确认';
+
+  @override
+  String get askAiCommandInserted => '命令已插入终端';
+
+  @override
+  String get askAiAwaitingResponse => '等待 AI 响应...';
+
+  @override
+  String get askAiNoResponse => '无回复内容';
+
+  @override
+  String get askAiRecommendedCommand => 'AI 推荐命令';
+
+  @override
+  String get askAiInsertTerminal => '插入终端';
+
+  @override
+  String get askAiSelectedContent => '选中的内容';
+
+  @override
+  String get askAiConversation => 'AI 对话';
+
+  @override
+  String get askAiFollowUpHint => '继续提问...';
+
+  @override
+  String get askAiSend => '发送';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1738,4 +1788,54 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get writeScriptTip =>
       '連線到伺服器後，將會在 `~/.config/server_box` \n | `/tmp/server_box` 中寫入一個腳本來監測系統狀態。你可以審查腳本內容。';
+
+  @override
+  String get askAi => '詢問 AI';
+
+  @override
+  String get askAiUsageHint => '於 SSH 終端機中使用';
+
+  @override
+  String get askAiBaseUrl => '基礎 URL';
+
+  @override
+  String get askAiModel => '模型';
+
+  @override
+  String get askAiApiKey => 'API 金鑰';
+
+  @override
+  String askAiConfigMissing(String fields) {
+    return '請前往設定配置 $fields';
+  }
+
+  @override
+  String get askAiConfirmExecute => '執行前確認';
+
+  @override
+  String get askAiCommandInserted => '指令已插入終端機';
+
+  @override
+  String get askAiAwaitingResponse => '等待 AI 回應...';
+
+  @override
+  String get askAiNoResponse => '無回覆內容';
+
+  @override
+  String get askAiRecommendedCommand => 'AI 推薦指令';
+
+  @override
+  String get askAiInsertTerminal => '插入終端機';
+
+  @override
+  String get askAiSelectedContent => '選取的內容';
+
+  @override
+  String get askAiConversation => 'AI 對話';
+
+  @override
+  String get askAiFollowUpHint => '繼續提問...';
+
+  @override
+  String get askAiSend => '傳送';
 }

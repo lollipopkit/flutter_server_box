@@ -29,10 +29,10 @@ class AskAiRepository {
     final apiKey = _settings.askAiApiKey.fetch().trim();
     final model = _settings.askAiModel.fetch().trim();
 
-    final missing = <String>[];
-    if (baseUrl.isEmpty) missing.add('Base URL');
-    if (apiKey.isEmpty) missing.add('API Key');
-    if (model.isEmpty) missing.add('Model');
+    final missing = <AskAiConfigField>[];
+    if (baseUrl.isEmpty) missing.add(AskAiConfigField.baseUrl);
+    if (apiKey.isEmpty) missing.add(AskAiConfigField.apiKey);
+    if (model.isEmpty) missing.add(AskAiConfigField.model);
     if (missing.isNotEmpty) {
       throw AskAiConfigException(missingFields: missing);
     }
@@ -301,13 +301,15 @@ class _ToolCallBuilder {
 }
 
 @immutable
+enum AskAiConfigField { baseUrl, apiKey, model }
+
 class AskAiConfigException implements Exception {
   const AskAiConfigException({required this.missingFields});
 
-  final List<String> missingFields;
+  final List<AskAiConfigField> missingFields;
 
   @override
-  String toString() => 'AskAiConfigException(missing: ${missingFields.join(', ')})';
+  String toString() => 'AskAiConfigException(missing: ${missingFields.map((e) => e.name).join(', ')})';
 }
 
 @immutable

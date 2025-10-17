@@ -921,4 +921,54 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Після підключення до сервера скрипт буде записано у `~/.config/server_box` \n | `/tmp/server_box` для моніторингу стану системи. Ви можете переглянути вміст скрипта.';
+
+  @override
+  String get askAi => 'Запитати ШІ';
+
+  @override
+  String get askAiUsageHint => 'Використовується в SSH-терміналі';
+
+  @override
+  String get askAiBaseUrl => 'Базова URL';
+
+  @override
+  String get askAiModel => 'Модель';
+
+  @override
+  String get askAiApiKey => 'Ключ API';
+
+  @override
+  String askAiConfigMissing(String fields) {
+    return 'Налаштуйте $fields у налаштуваннях.';
+  }
+
+  @override
+  String get askAiConfirmExecute => 'Підтвердити перед виконанням';
+
+  @override
+  String get askAiCommandInserted => 'Команду вставлено в термінал';
+
+  @override
+  String get askAiAwaitingResponse => 'Очікування відповіді ШІ...';
+
+  @override
+  String get askAiNoResponse => 'Відповідь відсутня';
+
+  @override
+  String get askAiRecommendedCommand => 'Команда, запропонована ШІ';
+
+  @override
+  String get askAiInsertTerminal => 'Вставити в термінал';
+
+  @override
+  String get askAiSelectedContent => 'Вибраний вміст';
+
+  @override
+  String get askAiConversation => 'Розмова з ШІ';
+
+  @override
+  String get askAiFollowUpHint => 'Поставте додаткове запитання...';
+
+  @override
+  String get askAiSend => 'Надіслати';
 }

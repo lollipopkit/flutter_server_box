@@ -284,5 +284,21 @@
   "wolTip": "После настройки WOL (Wake-on-LAN) при каждом подключении к серверу отправляется запрос WOL.",
   "write": "Запись",
   "writeScriptFailTip": "Запись скрипта не удалась, возможно, из-за отсутствия прав или потому что, директории не существует.",
-  "writeScriptTip": "После подключения к серверу скрипт будет записан в `~/.config/server_box` \n | `/tmp/server_box` для мониторинга состояния системы. Вы можете проверить содержимое скрипта."
+  "writeScriptTip": "После подключения к серверу скрипт будет записан в `~/.config/server_box` \n | `/tmp/server_box` для мониторинга состояния системы. Вы можете проверить содержимое скрипта.",
+  "askAi": "Спросить ИИ",
+  "askAiUsageHint": "Используется в SSH-терминале",
+  "askAiBaseUrl": "Базовый URL",
+  "askAiModel": "Модель",
+  "askAiApiKey": "Ключ API",
+  "askAiConfigMissing": "Настройте {fields} в настройках.",
+  "askAiConfirmExecute": "Подтвердите перед выполнением",
+  "askAiCommandInserted": "Команда вставлена в терминал",
+  "askAiAwaitingResponse": "Ожидание ответа ИИ...",
+  "askAiNoResponse": "Нет ответа",
+  "askAiRecommendedCommand": "Команда, предложенная ИИ",
+  "askAiInsertTerminal": "Вставить в терминал",
+  "askAiSelectedContent": "Выбранное содержимое",
+  "askAiConversation": "Разговор с ИИ",
+  "askAiFollowUpHint": "Задайте дополнительный вопрос...",
+  "askAiSend": "Отправить"
 }

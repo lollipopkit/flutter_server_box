@@ -917,4 +917,54 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Após conectar ao servidor, um script será escrito em `~/.config/server_box` \n | `/tmp/server_box` para monitorar o status do sistema. Você pode revisar o conteúdo do script.';
+
+  @override
+  String get askAi => 'Perguntar à IA';
+
+  @override
+  String get askAiUsageHint => 'Usado no terminal SSH';
+
+  @override
+  String get askAiBaseUrl => 'URL base';
+
+  @override
+  String get askAiModel => 'Modelo';
+
+  @override
+  String get askAiApiKey => 'Chave de API';
+
+  @override
+  String askAiConfigMissing(String fields) {
+    return 'Configure $fields nas configurações.';
+  }
+
+  @override
+  String get askAiConfirmExecute => 'Confirmar antes de executar';
+
+  @override
+  String get askAiCommandInserted => 'Comando inserido no terminal';
+
+  @override
+  String get askAiAwaitingResponse => 'Aguardando resposta da IA...';
+
+  @override
+  String get askAiNoResponse => 'Sem resposta';
+
+  @override
+  String get askAiRecommendedCommand => 'Comando sugerido pela IA';
+
+  @override
+  String get askAiInsertTerminal => 'Inserir no terminal';
+
+  @override
+  String get askAiSelectedContent => 'Conteúdo selecionado';
+
+  @override
+  String get askAiConversation => 'Conversa com a IA';
+
+  @override
+  String get askAiFollowUpHint => 'Faça uma pergunta adicional...';
+
+  @override
+  String get askAiSend => 'Enviar';
 }

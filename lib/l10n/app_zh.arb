@@ -284,5 +284,21 @@
   "wolTip": "配置 WOL 后，每次连接服务器时将自动发送唤醒请求",
   "write": "写",
   "writeScriptFailTip": "写入脚本失败，可能是没有权限/目录不存在等",
-  "writeScriptTip": "在连接服务器后，会向 `~/.config/server_box` \n | `/tmp/server_box` 写入脚本来监测系统状态，你可以审查脚本内容。"
+  "writeScriptTip": "在连接服务器后，会向 `~/.config/server_box` \n | `/tmp/server_box` 写入脚本来监测系统状态，你可以审查脚本内容。",
+  "askAi": "问 AI",
+  "askAiUsageHint": "用于 SSH 终端",
+  "askAiBaseUrl": "基础 URL",
+  "askAiModel": "模型",
+  "askAiApiKey": "API 密钥",
+  "askAiConfigMissing": "请前往设置配置 {fields}",
+  "askAiConfirmExecute": "执行前确认",
+  "askAiCommandInserted": "命令已插入终端",
+  "askAiAwaitingResponse": "等待 AI 响应...",
+  "askAiNoResponse": "无回复内容",
+  "askAiRecommendedCommand": "AI 推荐命令",
+  "askAiInsertTerminal": "插入终端",
+  "askAiSelectedContent": "选中的内容",
+  "askAiConversation": "AI 对话",
+  "askAiFollowUpHint": "继续提问...",
+  "askAiSend": "发送"
 }

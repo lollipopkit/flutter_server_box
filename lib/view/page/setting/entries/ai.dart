@@ -2,19 +2,20 @@ part of '../entry.dart';
 
 extension _AI on _AppSettingsPageState {
   Widget _buildAskAiConfig() {
+    final l10n = context.l10n;
     return ExpandTile(
       leading: const Icon(LineAwesome.robot_solid, size: _kIconSize),
-      title: TipText('Ask AI', 'Used in SSH Terminal'),
+      title: TipText(l10n.askAi, l10n.askAiUsageHint),
       children: [
         _setting.askAiBaseUrl.listenable().listenVal((val) {
           final display = val.isEmpty ? libL10n.empty : val;
           return ListTile(
             leading: const Icon(MingCute.link_2_line),
-            title: const Text('Base URL'),
+            title: Text(l10n.askAiBaseUrl),
             subtitle: Text(display, style: UIs.textGrey, maxLines: 2, overflow: TextOverflow.ellipsis),
             onTap: () => _showAskAiFieldDialog(
               prop: _setting.askAiBaseUrl,
-              title: 'Base URL',
+              title: l10n.askAiBaseUrl,
               hint: 'https://api.openai.com',
             ),
           );
@@ -23,11 +24,11 @@ extension _AI on _AppSettingsPageState {
           final display = val.isEmpty ? libL10n.empty : val;
           return ListTile(
             leading: const Icon(Icons.view_module),
-            title: const Text('Model'),
+            title: Text(l10n.askAiModel),
             subtitle: Text(display, style: UIs.textGrey),
             onTap: () => _showAskAiFieldDialog(
               prop: _setting.askAiModel,
-              title: 'Model',
+              title: l10n.askAiModel,
               hint: 'gpt-4o-mini',
             ),
           );
@@ -36,11 +37,11 @@ extension _AI on _AppSettingsPageState {
           final hasKey = val.isNotEmpty;
           return ListTile(
             leading: const Icon(MingCute.key_2_line),
-            title: const Text('API Key'),
+            title: Text(l10n.askAiApiKey),
             subtitle: Text(hasKey ? '••••••••' : libL10n.empty, style: UIs.textGrey),
             onTap: () => _showAskAiFieldDialog(
               prop: _setting.askAiApiKey,
-              title: 'API Key',
+              title: l10n.askAiApiKey,
               hint: 'sk-...',
               obscure: true,
             ),
