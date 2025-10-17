@@ -284,5 +284,21 @@
   "wolTip": "WOL (Wake-on-LAN) yapılandırıldıktan sonra, sunucuya her bağlanıldığında bir WOL isteği gönderilir.",
   "write": "Yaz",
   "writeScriptFailTip": "Betik yazma başarısız oldu, muhtemelen izin eksikliği veya dizin mevcut değil.",
-  "writeScriptTip": "Sunucuya bağlandıktan sonra, sistem durumunu izlemek için `~/.config/server_box` \n | `/tmp/server_box` dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz."
+  "writeScriptTip": "Sunucuya bağlandıktan sonra, sistem durumunu izlemek için `~/.config/server_box` \n | `/tmp/server_box` dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz.",
+  "askAi": "Yapay zekaya sor",
+  "askAiUsageHint": "SSH Terminalinde kullanılır",
+  "askAiBaseUrl": "Temel URL",
+  "askAiModel": "Model",
+  "askAiApiKey": "API anahtarı",
+  "askAiConfigMissing": "Lütfen Ayarlar'da {fields} öğesini yapılandırın.",
+  "askAiConfirmExecute": "Çalıştırmadan önce onayla",
+  "askAiCommandInserted": "Komut terminale eklendi",
+  "askAiAwaitingResponse": "Yapay zekâ yanıtı bekleniyor...",
+  "askAiNoResponse": "Yanıt yok",
+  "askAiRecommendedCommand": "YZ önerilen komut",
+  "askAiInsertTerminal": "Terminale ekle",
+  "askAiSelectedContent": "Seçilen içerik",
+  "askAiConversation": "YZ sohbeti",
+  "askAiFollowUpHint": "Yeni bir soru sor...",
+  "askAiSend": "Gönder"
 }

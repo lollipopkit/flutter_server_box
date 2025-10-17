@@ -1747,6 +1747,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'After connecting to the server, a script will be written to `~/.config/server_box` \n | `/tmp/server_box` to monitor the system status. You can review the script content.'**
   String get writeScriptTip;
+
+  /// No description provided for @askAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask AI'**
+  String get askAi;
+
+  /// No description provided for @askAiUsageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Used in SSH Terminal'**
+  String get askAiUsageHint;
+
+  /// No description provided for @askAiBaseUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Base URL'**
+  String get askAiBaseUrl;
+
+  /// No description provided for @askAiModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Model'**
+  String get askAiModel;
+
+  /// No description provided for @askAiApiKey.
+  ///
+  /// In en, this message translates to:
+  /// **'API Key'**
+  String get askAiApiKey;
+
+  /// No description provided for @askAiConfigMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Please configure {fields} in Settings.'**
+  String askAiConfigMissing(String fields);
+
+  /// No description provided for @askAiConfirmExecute.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm before executing'**
+  String get askAiConfirmExecute;
+
+  /// No description provided for @askAiCommandInserted.
+  ///
+  /// In en, this message translates to:
+  /// **'Command inserted into terminal'**
+  String get askAiCommandInserted;
+
+  /// No description provided for @askAiAwaitingResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for AI response...'**
+  String get askAiAwaitingResponse;
+
+  /// No description provided for @askAiNoResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'No response'**
+  String get askAiNoResponse;
+
+  /// No description provided for @askAiRecommendedCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'AI suggested command'**
+  String get askAiRecommendedCommand;
+
+  /// No description provided for @askAiInsertTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert into terminal'**
+  String get askAiInsertTerminal;
+
+  /// No description provided for @askAiSelectedContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected content'**
+  String get askAiSelectedContent;
+
+  /// No description provided for @askAiConversation.
+  ///
+  /// In en, this message translates to:
+  /// **'AI conversation'**
+  String get askAiConversation;
+
+  /// No description provided for @askAiFollowUpHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask a follow-up...'**
+  String get askAiFollowUpHint;
+
+  /// No description provided for @askAiSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get askAiSend;
 }
 
 class _AppLocalizationsDelegate

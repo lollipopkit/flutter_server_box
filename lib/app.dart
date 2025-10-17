@@ -11,8 +11,15 @@ import 'package:server_box/view/page/home.dart';
 
 part 'intro.dart';
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late final Future<List<IntroPageBuilder>> _introFuture = _IntroPage.builders;
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +98,7 @@ class MyApp extends StatelessWidget {
       theme: light.fixWindowsFont,
       darkTheme: (tMode < 3 ? dark : dark.toAmoled).fixWindowsFont,
       home: FutureBuilder<List<IntroPageBuilder>>(
-        future: _IntroPage.builders,
+        future: _introFuture,
         builder: (context, snapshot) {
           context.setLibL10n();
           final appL10n = AppLocalizations.of(context);

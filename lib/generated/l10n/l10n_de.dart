@@ -923,4 +923,54 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Nach der Verbindung mit dem Server wird ein Skript in `~/.config/server_box` \n | `/tmp/server_box` geschrieben, um den Systemstatus zu überwachen. Sie können den Skriptinhalt überprüfen.';
+
+  @override
+  String get askAi => 'KI fragen';
+
+  @override
+  String get askAiUsageHint => 'Verwendet im SSH-Terminal';
+
+  @override
+  String get askAiBaseUrl => 'Basis-URL';
+
+  @override
+  String get askAiModel => 'Modell';
+
+  @override
+  String get askAiApiKey => 'API-Schlüssel';
+
+  @override
+  String askAiConfigMissing(String fields) {
+    return 'Bitte konfigurieren Sie $fields in den Einstellungen.';
+  }
+
+  @override
+  String get askAiConfirmExecute => 'Vor Ausführung bestätigen';
+
+  @override
+  String get askAiCommandInserted => 'Befehl ins Terminal eingefügt';
+
+  @override
+  String get askAiAwaitingResponse => 'Warte auf KI-Antwort...';
+
+  @override
+  String get askAiNoResponse => 'Keine Antwort';
+
+  @override
+  String get askAiRecommendedCommand => 'KI-empfohlener Befehl';
+
+  @override
+  String get askAiInsertTerminal => 'In Terminal einfügen';
+
+  @override
+  String get askAiSelectedContent => 'Ausgewählter Inhalt';
+
+  @override
+  String get askAiConversation => 'KI-Unterhaltung';
+
+  @override
+  String get askAiFollowUpHint => 'Weitere Frage stellen...';
+
+  @override
+  String get askAiSend => 'Senden';
 }

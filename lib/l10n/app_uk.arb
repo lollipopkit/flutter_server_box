@@ -284,5 +284,21 @@
   "wolTip": "Після налаштування WOL (Wake-on-LAN), при кожному підключенні до сервера відправляється запит WOL.",
   "write": "Записати",
   "writeScriptFailTip": "Запис у скрипт не вдався, можливо, через брак дозволів або каталог не існує.",
-  "writeScriptTip": "Після підключення до сервера скрипт буде записано у `~/.config/server_box` \n | `/tmp/server_box` для моніторингу стану системи. Ви можете переглянути вміст скрипта."
+  "writeScriptTip": "Після підключення до сервера скрипт буде записано у `~/.config/server_box` \n | `/tmp/server_box` для моніторингу стану системи. Ви можете переглянути вміст скрипта.",
+  "askAi": "Запитати ШІ",
+  "askAiUsageHint": "Використовується в SSH-терміналі",
+  "askAiBaseUrl": "Базова URL",
+  "askAiModel": "Модель",
+  "askAiApiKey": "Ключ API",
+  "askAiConfigMissing": "Налаштуйте {fields} у налаштуваннях.",
+  "askAiConfirmExecute": "Підтвердити перед виконанням",
+  "askAiCommandInserted": "Команду вставлено в термінал",
+  "askAiAwaitingResponse": "Очікування відповіді ШІ...",
+  "askAiNoResponse": "Відповідь відсутня",
+  "askAiRecommendedCommand": "Команда, запропонована ШІ",
+  "askAiInsertTerminal": "Вставити в термінал",
+  "askAiSelectedContent": "Вибраний вміст",
+  "askAiConversation": "Розмова з ШІ",
+  "askAiFollowUpHint": "Поставте додаткове запитання...",
+  "askAiSend": "Надіслати"
 }

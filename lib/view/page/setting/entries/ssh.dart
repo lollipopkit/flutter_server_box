@@ -116,27 +116,28 @@ extension _SSH on _AppSettingsPageState {
         leading: const Icon(Icons.terminal),
         title: TipText(l10n.terminal, l10n.desktopTerminalTip),
         trailing: Text(val, style: UIs.text15, maxLines: 1, overflow: TextOverflow.ellipsis),
-        onTap: () async {
-          final ctrl = TextEditingController(text: val);
-          void onSave() {
-            _setting.desktopTerminal.put(ctrl.text.trim());
-            context.pop();
-          }
+        onTap: () {
+          withTextFieldController((ctrl) async {
+            ctrl.text = val;
+            void onSave() {
+              _setting.desktopTerminal.put(ctrl.text.trim());
+              context.pop();
+            }
 
-          await context.showRoundDialog<bool>(
-            title: libL10n.select,
-            child: Input(
-              controller: ctrl,
-              autoFocus: true,
-              label: l10n.terminal,
-              hint: 'x-terminal-emulator / gnome-terminal',
-              icon: Icons.edit,
-              suggestion: false,
-              onSubmitted: (_) => onSave(),
-            ),
-            actions: Btn.ok(onTap: onSave).toList,
-          );
-          ctrl.dispose();
+            await context.showRoundDialog<bool>(
+              title: libL10n.select,
+              child: Input(
+                controller: ctrl,
+                autoFocus: true,
+                label: l10n.terminal,
+                hint: 'x-terminal-emulator / gnome-terminal',
+                icon: Icons.edit,
+                suggestion: false,
+                onSubmitted: (_) => onSave(),
+              ),
+              actions: Btn.ok(onTap: onSave).toList,
+            );
+          });
         },
       );
     });

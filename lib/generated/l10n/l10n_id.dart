@@ -915,4 +915,54 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Setelah terhubung ke server, sebuah skrip akan ditulis ke `~/.config/server_box` \n | `/tmp/server_box` untuk memantau status sistem. Anda dapat meninjau konten skrip tersebut.';
+
+  @override
+  String get askAi => 'Tanya AI';
+
+  @override
+  String get askAiUsageHint => 'Digunakan di Terminal SSH';
+
+  @override
+  String get askAiBaseUrl => 'URL dasar';
+
+  @override
+  String get askAiModel => 'Model';
+
+  @override
+  String get askAiApiKey => 'Kunci API';
+
+  @override
+  String askAiConfigMissing(String fields) {
+    return 'Harap konfigurasikan $fields di Pengaturan.';
+  }
+
+  @override
+  String get askAiConfirmExecute => 'Konfirmasi sebelum menjalankan';
+
+  @override
+  String get askAiCommandInserted => 'Perintah dimasukkan ke terminal';
+
+  @override
+  String get askAiAwaitingResponse => 'Menunggu respons AI...';
+
+  @override
+  String get askAiNoResponse => 'Tidak ada respons';
+
+  @override
+  String get askAiRecommendedCommand => 'Perintah yang disarankan AI';
+
+  @override
+  String get askAiInsertTerminal => 'Masukkan ke terminal';
+
+  @override
+  String get askAiSelectedContent => 'Konten yang dipilih';
+
+  @override
+  String get askAiConversation => 'Percakapan AI';
+
+  @override
+  String get askAiFollowUpHint => 'Ajukan pertanyaan lanjutan...';
+
+  @override
+  String get askAiSend => 'Kirim';
 }

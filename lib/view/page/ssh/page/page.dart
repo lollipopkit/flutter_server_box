@@ -13,9 +13,11 @@ import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
+import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
+import 'package:server_box/data/provider/ai/ask_ai.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/provider/virtual_keyboard.dart';
@@ -23,11 +25,11 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
-
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
 
+part 'ask_ai.dart';
 part 'init.dart';
 part 'keyboard.dart';
 part 'virt_key.dart';
@@ -247,6 +249,7 @@ class SSHPageState extends ConsumerState<SSHPage>
           viewOffset: Offset(2 * _horizonPadding, CustomAppBar.sysStatusBarHeight),
           hideScrollBar: false,
           focusNode: widget.args.focusNode,
+          toolbarBuilder: _buildTerminalToolbar,
         ),
       ),
     );

@@ -92,37 +92,37 @@ extension _App on _AppSettingsPageState {
       trailing: _setting.colorSeed.listenable().listenVal((_) {
         return ClipOval(child: Container(color: UIs.primaryColor, height: 27, width: 27));
       }),
-      onTap: () async {
-        final ctrl = TextEditingController(text: UIs.primaryColor.toHex);
-        await context.showRoundDialog(
-          title: libL10n.primaryColorSeed,
-          child: StatefulBuilder(
-            builder: (context, setState) {
-              final children = <Widget>[
-                /// Plugin [dynamic_color] is not supported on iOS
-                if (!isIOS)
-                  ListTile(
-                    title: Text(l10n.followSystem),
-                    trailing: StoreSwitch(
-                      prop: _setting.useSystemPrimaryColor,
-                      callback: (_) => setState(() {}),
+      onTap: () {
+        withTextFieldController((ctrl) async {
+          await context.showRoundDialog(
+            title: libL10n.primaryColorSeed,
+            child: StatefulBuilder(
+              builder: (context, setState) {
+                final children = <Widget>[
+                  /// Plugin [dynamic_color] is not supported on iOS
+                  if (!isIOS)
+                    ListTile(
+                      title: Text(l10n.followSystem),
+                      trailing: StoreSwitch(
+                        prop: _setting.useSystemPrimaryColor,
+                        callback: (_) => setState(() {}),
+                      ),
                     ),
-                  ),
-              ];
-              if (!_setting.useSystemPrimaryColor.fetch()) {
-                children.add(
-                  ColorPicker(
-                    color: Color(_setting.colorSeed.fetch()),
-                    onColorChanged: (c) => ctrl.text = c.toHex,
-                  ),
-                );
-              }
-              return Column(mainAxisSize: MainAxisSize.min, children: children);
-            },
-          ),
-          actions: Btn.ok(onTap: () => _onSaveColor(ctrl.text)).toList,
-        );
-        ctrl.dispose();
+                ];
+                if (!_setting.useSystemPrimaryColor.fetch()) {
+                  children.add(
+                    ColorPicker(
+                      color: Color(_setting.colorSeed.fetch()),
+                      onColorChanged: (c) => ctrl.text = c.toHex,
+                    ),
+                  );
+                }
+                return Column(mainAxisSize: MainAxisSize.min, children: children);
+              },
+            ),
+            actions: Btn.ok(onTap: () => _onSaveColor(ctrl.text)).toList,
+          );
+        });
       },
     );
   }

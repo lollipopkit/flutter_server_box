@@ -915,4 +915,54 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Sunucuya bağlandıktan sonra, sistem durumunu izlemek için `~/.config/server_box` \n | `/tmp/server_box` dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz.';
+
+  @override
+  String get askAi => 'Yapay zekaya sor';
+
+  @override
+  String get askAiUsageHint => 'SSH Terminalinde kullanılır';
+
+  @override
+  String get askAiBaseUrl => 'Temel URL';
+
+  @override
+  String get askAiModel => 'Model';
+
+  @override
+  String get askAiApiKey => 'API anahtarı';
+
+  @override
+  String askAiConfigMissing(String fields) {
+    return 'Lütfen Ayarlar\'da $fields öğesini yapılandırın.';
+  }
+
+  @override
+  String get askAiConfirmExecute => 'Çalıştırmadan önce onayla';
+
+  @override
+  String get askAiCommandInserted => 'Komut terminale eklendi';
+
+  @override
+  String get askAiAwaitingResponse => 'Yapay zekâ yanıtı bekleniyor...';
+
+  @override
+  String get askAiNoResponse => 'Yanıt yok';
+
+  @override
+  String get askAiRecommendedCommand => 'YZ önerilen komut';
+
+  @override
+  String get askAiInsertTerminal => 'Terminale ekle';
+
+  @override
+  String get askAiSelectedContent => 'Seçilen içerik';
+
+  @override
+  String get askAiConversation => 'YZ sohbeti';
+
+  @override
+  String get askAiFollowUpHint => 'Yeni bir soru sor...';
+
+  @override
+  String get askAiSend => 'Gönder';
 }

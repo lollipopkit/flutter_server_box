@@ -142,6 +142,11 @@ class SettingStore extends HiveStore {
   /// Whether collapse UI items by default
   late final collapseUIDefault = propertyDefault('collapseUIDefault', true);
 
+  /// Terminal AI helper configuration
+  late final askAiBaseUrl = propertyDefault('askAiBaseUrl', 'https://api.openai.com');
+  late final askAiApiKey = propertyDefault('askAiApiKey', '');
+  late final askAiModel = propertyDefault('askAiModel', 'gpt-4o-mini');
+
   late final serverFuncBtns = listProperty('serverBtns', defaultValue: ServerFuncBtn.defaultIdxs);
 
   /// Docker is more popular than podman, set to `false` to use docker

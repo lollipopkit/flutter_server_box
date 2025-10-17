@@ -284,5 +284,21 @@
   "wolTip": "Setelah mengonfigurasi WOL (Wake-on-LAN), permintaan WOL dikirim setiap kali server terhubung.",
   "write": "Tulis",
   "writeScriptFailTip": "Penulisan ke skrip gagal, mungkin karena tidak ada izin atau direktori tidak ada.",
-  "writeScriptTip": "Setelah terhubung ke server, sebuah skrip akan ditulis ke `~/.config/server_box` \n | `/tmp/server_box` untuk memantau status sistem. Anda dapat meninjau konten skrip tersebut."
+  "writeScriptTip": "Setelah terhubung ke server, sebuah skrip akan ditulis ke `~/.config/server_box` \n | `/tmp/server_box` untuk memantau status sistem. Anda dapat meninjau konten skrip tersebut.",
+  "askAi": "Tanya AI",
+  "askAiUsageHint": "Digunakan di Terminal SSH",
+  "askAiBaseUrl": "URL dasar",
+  "askAiModel": "Model",
+  "askAiApiKey": "Kunci API",
+  "askAiConfigMissing": "Harap konfigurasikan {fields} di Pengaturan.",
+  "askAiConfirmExecute": "Konfirmasi sebelum menjalankan",
+  "askAiCommandInserted": "Perintah dimasukkan ke terminal",
+  "askAiAwaitingResponse": "Menunggu respons AI...",
+  "askAiNoResponse": "Tidak ada respons",
+  "askAiRecommendedCommand": "Perintah yang disarankan AI",
+  "askAiInsertTerminal": "Masukkan ke terminal",
+  "askAiSelectedContent": "Konten yang dipilih",
+  "askAiConversation": "Percakapan AI",
+  "askAiFollowUpHint": "Ajukan pertanyaan lanjutan...",
+  "askAiSend": "Kirim"
 }

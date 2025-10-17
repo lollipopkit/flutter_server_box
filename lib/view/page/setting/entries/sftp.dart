@@ -44,28 +44,28 @@ extension _SFTP on _AppSettingsPageState {
         leading: const Icon(MingCute.edit_fill),
         title: TipText(libL10n.editor, l10n.sftpEditorTip),
         trailing: Text(val.isEmpty ? l10n.inner : val, style: UIs.text15),
-        onTap: () async {
-          final ctrl = TextEditingController(text: val);
-          void onSave() {
-            final s = ctrl.text.trim();
-            _setting.sftpEditor.put(s);
-            context.pop();
-          }
+        onTap: () {
+          withTextFieldController((ctrl) async {
+            void onSave() {
+              final s = ctrl.text.trim();
+              _setting.sftpEditor.put(s);
+              context.pop();
+            }
 
-          await context.showRoundDialog<bool>(
-            title: libL10n.select,
-            child: Input(
-              controller: ctrl,
-              autoFocus: true,
-              label: libL10n.editor,
-              hint: '\$EDITOR / vim / nano ...',
-              icon: Icons.edit,
-              suggestion: false,
-              onSubmitted: (_) => onSave(),
-            ),
-            actions: Btn.ok(onTap: onSave).toList,
-          );
-          ctrl.dispose();
+            await context.showRoundDialog<bool>(
+              title: libL10n.select,
+              child: Input(
+                controller: ctrl,
+                autoFocus: true,
+                label: libL10n.editor,
+                hint: '\$EDITOR / vim / nano ...',
+                icon: Icons.edit,
+                suggestion: false,
+                onSubmitted: (_) => onSave(),
+              ),
+              actions: Btn.ok(onTap: onSave).toList,
+            );
+          });
         },
       );
     });

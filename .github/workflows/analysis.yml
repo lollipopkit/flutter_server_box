@@ -32,7 +32,6 @@ jobs:
           path: |
             ${{ env.PUB_CACHE }}
             ~/.pub-cache
-            .dart_tool/package_config.json
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}-${{ hashFiles('**/pubspec.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}-
