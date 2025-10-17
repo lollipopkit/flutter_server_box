@@ -504,9 +504,11 @@ packages:
   fl_lib:
     dependency: "direct main"
     description:
-      path: "../fl_lib"
-      relative: true
-    source: path
+      path: "."
+      ref: "v1.0.358"
+      resolved-ref: c8e55d054875bb3ccdab9894a01fe82d173dc54e
+      url: "https://github.com/lppcg/fl_lib"
+    source: git
     version: "0.0.1"
   flutter:
     dependency: "direct main"
@@ -1859,9 +1861,11 @@ packages:
   xterm:
     dependency: "direct main"
     description:
-      path: "../xterm.dart"
-      relative: true
-    source: path
+      path: "."
+      ref: "v4.0.11"
+      resolved-ref: "74546b4c4e81357448445c2b6f92411e72dbefec"
+      url: "https://github.com/lollipopkit/xterm.dart"
+    source: git
     version: "4.0.0"
   yaml:
     dependency: transitive

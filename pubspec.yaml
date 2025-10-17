@@ -49,7 +49,7 @@ dependencies:
   xterm:
     git:
       url: https://github.com/lollipopkit/xterm.dart
-      ref: v4.0.4
+      ref: v4.0.11
   computer:
     git:
       url: https://github.com/lollipopkit/dart_computer
@@ -65,17 +65,17 @@ dependencies:
   fl_lib:
     git:
       url: https://github.com/lppcg/fl_lib
-      ref: v1.0.356
+      ref: v1.0.358
 
 dependency_overrides:
   # webdav_client_plus:
   #   path: ../webdav_client
   # dartssh2:
   #   path: ../dartssh2
-  xterm:
-    path: ../xterm.dart
-  fl_lib:
-    path: ../fl_lib
+  # xterm:
+  #   path: ../xterm.dart
+  # fl_lib:
+  #   path: ../fl_lib
   # fl_build:
   #   path: ../fl_build
   gtk: # TODO: remove it after fixed in upstream
