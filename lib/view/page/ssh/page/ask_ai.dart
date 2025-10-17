@@ -195,6 +195,12 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
   String _describeError(Object error) {
     final l10n = context.l10n;
     if (error is AskAiConfigException) {
+      if (error.missingFields.isEmpty) {
+        if (error.hasInvalidBaseUrl) {
+          return 'Invalid Ask AI base URL: ${error.invalidBaseUrl}';
+        }
+        return error.toString();
+      }
       final locale = Localizations.maybeLocaleOf(context);
       final separator = switch (locale?.languageCode) {
         'zh' => '、',
@@ -210,7 +216,11 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
             },
           )
           .join(separator);
-      return l10n.askAiConfigMissing(formattedFields);
+      final message = l10n.askAiConfigMissing(formattedFields);
+      if (error.hasInvalidBaseUrl) {
+        return '$message (invalid URL: ${error.invalidBaseUrl})';
+      }
+      return message;
     }
     if (error is AskAiNetworkException) {
       return error.message;

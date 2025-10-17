@@ -37,6 +37,13 @@ class AskAiRepository {
       throw AskAiConfigException(missingFields: missing);
     }
 
+    final parsedBaseUri = Uri.tryParse(baseUrl);
+    final hasScheme = parsedBaseUri?.hasScheme ?? false;
+    final hasHost = (parsedBaseUri?.host ?? '').isNotEmpty;
+    if (!hasScheme || !hasHost) {
+      throw AskAiConfigException(invalidBaseUrl: baseUrl);
+    }
+
     final uri = _composeUri(baseUrl, '/v1/chat/completions');
     final authHeader = apiKey.startsWith('Bearer ') ? apiKey : 'Bearer $apiKey';
     final headers = <String, String>{
@@ -218,14 +225,14 @@ class AskAiRepository {
         'role': 'system',
         'content': promptBuffer.toString(),
       },
-      {
-        'role': 'user',
-        'content': '以下是终端选中的内容：\n$selection',
-      },
       ...conversation.map((message) => {
             'role': message.apiRole,
             'content': message.content,
           }),
+      {
+        'role': 'user',
+        'content': '以下是终端选中的内容：\n$selection',
+      },
     ];
 
     return {
@@ -304,12 +311,27 @@ class _ToolCallBuilder {
 enum AskAiConfigField { baseUrl, apiKey, model }
 
 class AskAiConfigException implements Exception {
-  const AskAiConfigException({required this.missingFields});
+  const AskAiConfigException({this.missingFields = const [], this.invalidBaseUrl});
 
   final List<AskAiConfigField> missingFields;
+  final String? invalidBaseUrl;
+
+  bool get hasInvalidBaseUrl => (invalidBaseUrl ?? '').isNotEmpty;
 
   @override
-  String toString() => 'AskAiConfigException(missing: ${missingFields.map((e) => e.name).join(', ')})';
+  String toString() {
+    final parts = <String>[];
+    if (missingFields.isNotEmpty) {
+      parts.add('missing: ${missingFields.map((e) => e.name).join(', ')}');
+    }
+    if (hasInvalidBaseUrl) {
+      parts.add('invalidBaseUrl: $invalidBaseUrl');
+    }
+    if (parts.isEmpty) {
+      return 'AskAiConfigException()';
+    }
+    return 'AskAiConfigException(${parts.join('; ')})';
+  }
 }
 
 @immutable
