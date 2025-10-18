@@ -85,6 +85,13 @@ class SSHPageState extends ConsumerState<SSHPage>
   SSHClient? _client;
   SSHSession? _session;
   Timer? _discontinuityTimer;
+  static const _connectionCheckInterval = Duration(seconds: 60);
+  static const _connectionCheckTimeout = Duration(seconds: 30);
+  static const _maxKeepAliveFailures = 3;
+  int _missedKeepAliveCount = 0;
+  bool _isCheckingConnection = false;
+  bool _disconnectDialogOpen = false;
+  bool _reportedDisconnected = false;
 
   /// Used for (de)activate the wake lock and forground service
   static var _sshConnCount = 0;

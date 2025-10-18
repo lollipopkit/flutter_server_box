@@ -113,34 +113,82 @@ extension _Init on SSHPageState {
   }
 
   void _setupDiscontinuityTimer() {
-    _discontinuityTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
-      var throwTimeout = true;
-      Future.delayed(const Duration(seconds: 3), () {
-        if (throwTimeout) {
-          _catchTimeout();
-        }
-      });
-      await _client?.ping();
-      throwTimeout = false;
-    });
-  }
-
-  void _catchTimeout() {
     _discontinuityTimer?.cancel();
     if (!mounted) return;
+
+    _missedKeepAliveCount = 0;
+    _discontinuityTimer = Timer.periodic(
+      SSHPageState._connectionCheckInterval,
+      (_) => _checkConnectionHealth(),
+    );
+  }
+
+  Future<void> _checkConnectionHealth() async {
+    if (!mounted || _client == null || _isCheckingConnection) return;
+    _isCheckingConnection = true;
+
+    try {
+      await _client!.ping().timeout(SSHPageState._connectionCheckTimeout);
+      _missedKeepAliveCount = 0;
+      if (_reportedDisconnected) {
+        _reportedDisconnected = false;
+        TermSessionManager.updateStatus(_sessionId, TermSessionStatus.connected);
+      }
+    } on TimeoutException catch (error) {
+      _handleConnectionCheckFailure(error);
+    } on Object catch (error, stackTrace) {
+      _handleConnectionCheckFailure(error, stackTrace);
+    } finally {
+      _isCheckingConnection = false;
+    }
+  }
+
+  void _handleConnectionCheckFailure(Object error, [StackTrace? stackTrace]) {
+    Loggers.root.warning('SSH keep-alive failed', error, stackTrace);
+    _missedKeepAliveCount += 1;
+
+    if (_missedKeepAliveCount < SSHPageState._maxKeepAliveFailures) {
+      return;
+    }
+
+    _missedKeepAliveCount = 0;
+    _onConnectionLossSuspected();
+  }
+
+  void _onConnectionLossSuspected() {
+    if (!mounted || _disconnectDialogOpen) return;
+
+    _disconnectDialogOpen = true;
+    _reportedDisconnected = true;
+    _discontinuityTimer?.cancel();
     _writeLn('\n\nConnection lost\r\n');
     TermSessionManager.updateStatus(_sessionId, TermSessionStatus.disconnected);
-    context.showRoundDialog(
+    unawaited(_showDisconnectDialog());
+  }
+
+  Future<void> _showDisconnectDialog() async {
+    final shouldLeave = await context.showRoundDialog<bool>(
       title: libL10n.attention,
       child: Text('${l10n.disconnected}\n${l10n.goBackQ}'),
       barrierDismiss: false,
-      actions: Btn.ok(
-        onTap: () {
-          contextSafe?.pop(); // Can't use tear-drop here
-          contextSafe?.pop(); // Pop the SSHPage
-        },
-      ).toList,
+      actions: [
+        TextButton(onPressed: () => context.pop(false), child: Text(libL10n.cancel)),
+        TextButton(onPressed: () => context.pop(true), child: Text(libL10n.ok)),
+      ],
     );
+
+    if (!mounted) return;
+
+    _disconnectDialogOpen = false;
+
+    if (shouldLeave == true) {
+      contextSafe?.pop(); // Pop the SSHPage
+      return;
+    }
+
+    _reportedDisconnected = false;
+    TermSessionManager.updateStatus(_sessionId, TermSessionStatus.connected);
+    _setupDiscontinuityTimer();
   }
 
   void _writeLn(String p0) {
