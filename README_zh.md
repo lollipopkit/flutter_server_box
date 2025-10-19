@@ -5,7 +5,7 @@
 <div align="center">
   <a href="https://cdn.lpkt.cn/donate"><img alt="donate" src="https://img.shields.io/badge/捐赠-我-pink"></a>
   <img alt="语言" src="https://img.shields.io/badge/语言-dart-cyan">
-  <img alt="license" src="https://img.shields.io/badge/证书-GPLv3-yellow">
+  <img alt="license" src="https://img.shields.io/badge/证书-AGPLv3-yellow">
   <a href="https://deepwiki.com/lollipopkit/flutter_server_box"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </div>
 
