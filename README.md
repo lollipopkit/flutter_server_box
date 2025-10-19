@@ -85,4 +85,4 @@ If I forgot to add your name to the contributors list, please add a comment in t
 
 ## 📝 License
 
-`GPL v3 lollipopkit`
+`AGPL v3 lollipopkit & all contributors`

@@ -86,4 +86,4 @@ Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/rel
 
 ## 📝 协议
 
-`GPL v3 lollipopkit`
+`AGPL v3 lollipopkit & 所有贡献者`
