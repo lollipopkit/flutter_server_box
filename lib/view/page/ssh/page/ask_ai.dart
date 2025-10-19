@@ -420,28 +420,39 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
                 ),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + bottomPadding),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Input(
-                      controller: _inputController,
-                      minLines: 1,
-                      maxLines: 4,
-                      hint: context.l10n.askAiFollowUpHint,
-                      action: TextInputAction.send,
-                      onSubmitted: (_) => _sendMessage(),
-                    ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Text(
+              context.l10n.askAiDisclaimer,
+              style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.error,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(width: 12),
-                  Btn.icon(
-                    onTap: _isStreaming || _inputController.text.trim().isEmpty ? null : _sendMessage,
-                    icon: const Icon(Icons.send, size: 18),
-                  ),
-                ],
-              ).cardx,
+              textAlign: TextAlign.center,
             ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + bottomPadding),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Input(
+                    controller: _inputController,
+                    minLines: 1,
+                    maxLines: 4,
+                    hint: context.l10n.askAiFollowUpHint,
+                    action: TextInputAction.send,
+                    onSubmitted: (_) => _sendMessage(),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Btn.icon(
+                  onTap: _isStreaming || _inputController.text.trim().isEmpty ? null : _sendMessage,
+                  icon: const Icon(Icons.send, size: 18),
+                ),
+              ],
+            ).cardx,
+          ),
           ],
         ),
       ),

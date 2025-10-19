@@ -1,25 +1,27 @@
 {
   "@@locale": "en",
-  "@clearServerStatsContent": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
-  "@clearServerStatsTitle": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
   "aboutThanks": "Thanks to the following people who participated in.",
   "acceptBeta": "Accept beta version updates",
   "addSystemPrivateKeyTip": "Currently private keys don't exist, do you want to add the one that comes with the system (~/.ssh/id_rsa)?",
   "added2List": "Added to task list",
   "addr": "Address",
   "alreadyLastDir": "Already in last directory.",
+  "askAi": "Ask AI",
+  "askAiApiKey": "API Key",
+  "askAiAwaitingResponse": "Waiting for AI response...",
+  "askAiBaseUrl": "Base URL",
+  "askAiCommandInserted": "Command inserted into terminal",
+  "askAiConfigMissing": "Please configure {fields} in Settings.",
+  "askAiConfirmExecute": "Confirm before executing",
+  "askAiConversation": "AI conversation",
+  "askAiDisclaimer": "AI may be incorrect. Review carefully before applying.",
+  "askAiFollowUpHint": "Ask a follow-up...",
+  "askAiInsertTerminal": "Insert into terminal",
+  "askAiModel": "Model",
+  "askAiNoResponse": "No response",
+  "askAiRecommendedCommand": "AI suggested command",
+  "askAiSelectedContent": "Selected content",
+  "askAiUsageHint": "Used in SSH Terminal",
   "atLeastOneTab": "At least one tab must be selected",
   "authFailTip": "Authentication failed, please check whether credentials are correct",
   "autoBackupConflict": "Only one automatic backup can be turned on at the same time.",
@@ -284,28 +286,5 @@
   "wolTip": "After configuring WOL (Wake-on-LAN), a WOL request is sent each time the server is connected.",
   "write": "Write",
   "writeScriptFailTip": "Writing to the script failed, possibly due to lack of permissions or the directory does not exist.",
-  "writeScriptTip": "After connecting to the server, a script will be written to `~/.config/server_box` \n | `/tmp/server_box` to monitor the system status. You can review the script content.",
-  "@askAiConfigMissing": {
-    "placeholders": {
-      "fields": {
-        "type": "String"
-      }
-    }
-  },
-  "askAi": "Ask AI",
-  "askAiUsageHint": "Used in SSH Terminal",
-  "askAiBaseUrl": "Base URL",
-  "askAiModel": "Model",
-  "askAiApiKey": "API Key",
-  "askAiConfigMissing": "Please configure {fields} in Settings.",
-  "askAiConfirmExecute": "Confirm before executing",
-  "askAiCommandInserted": "Command inserted into terminal",
-  "askAiAwaitingResponse": "Waiting for AI response...",
-  "askAiNoResponse": "No response",
-  "askAiRecommendedCommand": "AI suggested command",
-  "askAiInsertTerminal": "Insert into terminal",
-  "askAiSelectedContent": "Selected content",
-  "askAiConversation": "AI conversation",
-  "askAiFollowUpHint": "Ask a follow-up...",
-  "askAiSend": "Send"
+  "writeScriptTip": "After connecting to the server, a script will be written to `~/.config/server_box` \n | `/tmp/server_box` to monitor the system status. You can review the script content."
 }

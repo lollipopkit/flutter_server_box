@@ -1,25 +1,27 @@
 {
   "@@locale": "id",
-  "@clearServerStatsContent": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
-  "@clearServerStatsTitle": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
   "aboutThanks": "Terima kasih kepada orang -orang berikut yang berpartisipasi.",
   "acceptBeta": "Terima pembaruan versi uji coba",
   "addSystemPrivateKeyTip": "Saat ini tidak memiliki kunci privat, apakah Anda menambahkan kunci yang disertakan dengan sistem (~/.ssh/id_rsa)?",
   "added2List": "Ditambahkan ke Daftar Tugas",
   "addr": "Alamat",
   "alreadyLastDir": "Sudah di direktori terakhir.",
+  "askAi": "Tanya AI",
+  "askAiApiKey": "Kunci API",
+  "askAiAwaitingResponse": "Menunggu respons AI...",
+  "askAiBaseUrl": "URL dasar",
+  "askAiCommandInserted": "Perintah dimasukkan ke terminal",
+  "askAiConfigMissing": "Harap konfigurasikan {fields} di Pengaturan.",
+  "askAiConfirmExecute": "Konfirmasi sebelum menjalankan",
+  "askAiConversation": "Percakapan AI",
+  "askAiDisclaimer": "AI bisa saja salah. Gunakan dengan hati-hati.",
+  "askAiFollowUpHint": "Ajukan pertanyaan lanjutan...",
+  "askAiInsertTerminal": "Masukkan ke terminal",
+  "askAiModel": "Model",
+  "askAiNoResponse": "Tidak ada respons",
+  "askAiRecommendedCommand": "Perintah yang disarankan AI",
+  "askAiSelectedContent": "Konten yang dipilih",
+  "askAiUsageHint": "Digunakan di Terminal SSH",
   "atLeastOneTab": "Setidaknya satu tab harus dipilih",
   "authFailTip": "Otentikasi gagal, silakan periksa apakah kata sandi/kunci/host/pengguna, dll, salah.",
   "autoBackupConflict": "Hanya satu pencadangan otomatis yang dapat diaktifkan pada saat yang bersamaan.",
@@ -284,21 +286,5 @@
   "wolTip": "Setelah mengonfigurasi WOL (Wake-on-LAN), permintaan WOL dikirim setiap kali server terhubung.",
   "write": "Tulis",
   "writeScriptFailTip": "Penulisan ke skrip gagal, mungkin karena tidak ada izin atau direktori tidak ada.",
-  "writeScriptTip": "Setelah terhubung ke server, sebuah skrip akan ditulis ke `~/.config/server_box` \n | `/tmp/server_box` untuk memantau status sistem. Anda dapat meninjau konten skrip tersebut.",
-  "askAi": "Tanya AI",
-  "askAiUsageHint": "Digunakan di Terminal SSH",
-  "askAiBaseUrl": "URL dasar",
-  "askAiModel": "Model",
-  "askAiApiKey": "Kunci API",
-  "askAiConfigMissing": "Harap konfigurasikan {fields} di Pengaturan.",
-  "askAiConfirmExecute": "Konfirmasi sebelum menjalankan",
-  "askAiCommandInserted": "Perintah dimasukkan ke terminal",
-  "askAiAwaitingResponse": "Menunggu respons AI...",
-  "askAiNoResponse": "Tidak ada respons",
-  "askAiRecommendedCommand": "Perintah yang disarankan AI",
-  "askAiInsertTerminal": "Masukkan ke terminal",
-  "askAiSelectedContent": "Konten yang dipilih",
-  "askAiConversation": "Percakapan AI",
-  "askAiFollowUpHint": "Ajukan pertanyaan lanjutan...",
-  "askAiSend": "Kirim"
+  "writeScriptTip": "Setelah terhubung ke server, sebuah skrip akan ditulis ke `~/.config/server_box` \n | `/tmp/server_box` untuk memantau status sistem. Anda dapat meninjau konten skrip tersebut."
 }

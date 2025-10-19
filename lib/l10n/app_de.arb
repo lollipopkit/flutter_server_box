@@ -1,25 +1,27 @@
 {
   "@@locale": "de",
-  "@clearServerStatsContent": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
-  "@clearServerStatsTitle": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
   "aboutThanks": "Vielen Dank an die folgenden Personen, die daran teilgenommen haben.\n",
   "acceptBeta": "Akzeptieren Sie Testversion-Updates",
   "addSystemPrivateKeyTip": "Derzeit haben Sie keinen privaten Schlüssel, fügen Sie den Schlüssel hinzu, der mit dem System geliefert wird (~/.ssh/id_rsa)?",
   "added2List": "Zur Aufgabenliste hinzugefügt",
   "addr": "Adresse",
   "alreadyLastDir": "Bereits im letzten Verzeichnis.",
+  "askAi": "KI fragen",
+  "askAiApiKey": "API-Schlüssel",
+  "askAiAwaitingResponse": "Warte auf KI-Antwort...",
+  "askAiBaseUrl": "Basis-URL",
+  "askAiCommandInserted": "Befehl ins Terminal eingefügt",
+  "askAiConfigMissing": "Bitte konfigurieren Sie {fields} in den Einstellungen.",
+  "askAiConfirmExecute": "Vor Ausführung bestätigen",
+  "askAiConversation": "KI-Unterhaltung",
+  "askAiDisclaimer": "KI kann Fehler machen. Bitte vorsichtig verwenden.",
+  "askAiFollowUpHint": "Weitere Frage stellen...",
+  "askAiInsertTerminal": "In Terminal einfügen",
+  "askAiModel": "Modell",
+  "askAiNoResponse": "Keine Antwort",
+  "askAiRecommendedCommand": "KI-empfohlener Befehl",
+  "askAiSelectedContent": "Ausgewählter Inhalt",
+  "askAiUsageHint": "Verwendet im SSH-Terminal",
   "atLeastOneTab": "Mindestens ein Tab muss ausgewählt sein",
   "authFailTip": "Authentifizierung fehlgeschlagen, bitte überprüfen Sie, ob das Passwort/Schlüssel/Host/Benutzer usw. falsch sind.",
   "autoBackupConflict": "Es kann nur eine automatische Sicherung gleichzeitig aktiviert werden.",
@@ -284,21 +286,5 @@
   "wolTip": "Nach der Konfiguration von WOL (Wake-on-LAN) wird jedes Mal, wenn der Server verbunden wird, eine WOL-Anfrage gesendet.",
   "write": "Schreiben",
   "writeScriptFailTip": "Das Schreiben des Skripts ist fehlgeschlagen, möglicherweise aufgrund fehlender Berechtigungen oder das Verzeichnis existiert nicht.",
-  "writeScriptTip": "Nach der Verbindung mit dem Server wird ein Skript in `~/.config/server_box` \n | `/tmp/server_box` geschrieben, um den Systemstatus zu überwachen. Sie können den Skriptinhalt überprüfen.",
-  "askAi": "KI fragen",
-  "askAiUsageHint": "Verwendet im SSH-Terminal",
-  "askAiBaseUrl": "Basis-URL",
-  "askAiModel": "Modell",
-  "askAiApiKey": "API-Schlüssel",
-  "askAiConfigMissing": "Bitte konfigurieren Sie {fields} in den Einstellungen.",
-  "askAiConfirmExecute": "Vor Ausführung bestätigen",
-  "askAiCommandInserted": "Befehl ins Terminal eingefügt",
-  "askAiAwaitingResponse": "Warte auf KI-Antwort...",
-  "askAiNoResponse": "Keine Antwort",
-  "askAiRecommendedCommand": "KI-empfohlener Befehl",
-  "askAiInsertTerminal": "In Terminal einfügen",
-  "askAiSelectedContent": "Ausgewählter Inhalt",
-  "askAiConversation": "KI-Unterhaltung",
-  "askAiFollowUpHint": "Weitere Frage stellen...",
-  "askAiSend": "Senden"
+  "writeScriptTip": "Nach der Verbindung mit dem Server wird ein Skript in `~/.config/server_box` \n | `/tmp/server_box` geschrieben, um den Systemstatus zu überwachen. Sie können den Skriptinhalt überprüfen."
 }

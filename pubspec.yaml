@@ -41,7 +41,7 @@ dependencies:
   dartssh2:
     git:
       url: https://github.com/lollipopkit/dartssh2
-      ref: v1.0.285
+      ref: v1.0.293
   circle_chart:
     git:
       url: https://github.com/lollipopkit/circle_chart

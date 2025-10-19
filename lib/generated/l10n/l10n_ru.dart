@@ -28,6 +28,57 @@ class AppLocalizationsRu extends AppLocalizations {
   String get alreadyLastDir => 'Уже в корневом каталоге';
 
   @override
+  String get askAi => 'Спросить ИИ';
+
+  @override
+  String get askAiApiKey => 'Ключ API';
+
+  @override
+  String get askAiAwaitingResponse => 'Ожидание ответа ИИ...';
+
+  @override
+  String get askAiBaseUrl => 'Базовый URL';
+
+  @override
+  String get askAiCommandInserted => 'Команда вставлена в терминал';
+
+  @override
+  String askAiConfigMissing(Object fields) {
+    return 'Настройте $fields в настройках.';
+  }
+
+  @override
+  String get askAiConfirmExecute => 'Подтвердите перед выполнением';
+
+  @override
+  String get askAiConversation => 'Разговор с ИИ';
+
+  @override
+  String get askAiDisclaimer =>
+      'ИИ может ошибаться. Используйте с осторожностью.';
+
+  @override
+  String get askAiFollowUpHint => 'Задайте дополнительный вопрос...';
+
+  @override
+  String get askAiInsertTerminal => 'Вставить в терминал';
+
+  @override
+  String get askAiModel => 'Модель';
+
+  @override
+  String get askAiNoResponse => 'Нет ответа';
+
+  @override
+  String get askAiRecommendedCommand => 'Команда, предложенная ИИ';
+
+  @override
+  String get askAiSelectedContent => 'Выбранное содержимое';
+
+  @override
+  String get askAiUsageHint => 'Используется в SSH-терминале';
+
+  @override
   String get atLeastOneTab => 'Должна быть выбрана хотя бы одна вкладка';
 
   @override
@@ -99,12 +150,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get clearAllStatsTitle => 'Очистить всю статистику';
 
   @override
-  String clearServerStatsContent(String serverName) {
+  String clearServerStatsContent(Object serverName) {
     return 'Вы уверены, что хотите очистить статистику соединений для сервера \"$serverName\"? Это действие не может быть отменено.';
   }
 
   @override
-  String clearServerStatsTitle(String serverName) {
+  String clearServerStatsTitle(Object serverName) {
     return 'Очистить статистику $serverName';
   }
 
@@ -920,54 +971,4 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'После подключения к серверу скрипт будет записан в `~/.config/server_box` \n | `/tmp/server_box` для мониторинга состояния системы. Вы можете проверить содержимое скрипта.';
-
-  @override
-  String get askAi => 'Спросить ИИ';
-
-  @override
-  String get askAiUsageHint => 'Используется в SSH-терминале';
-
-  @override
-  String get askAiBaseUrl => 'Базовый URL';
-
-  @override
-  String get askAiModel => 'Модель';
-
-  @override
-  String get askAiApiKey => 'Ключ API';
-
-  @override
-  String askAiConfigMissing(String fields) {
-    return 'Настройте $fields в настройках.';
-  }
-
-  @override
-  String get askAiConfirmExecute => 'Подтвердите перед выполнением';
-
-  @override
-  String get askAiCommandInserted => 'Команда вставлена в терминал';
-
-  @override
-  String get askAiAwaitingResponse => 'Ожидание ответа ИИ...';
-
-  @override
-  String get askAiNoResponse => 'Нет ответа';
-
-  @override
-  String get askAiRecommendedCommand => 'Команда, предложенная ИИ';
-
-  @override
-  String get askAiInsertTerminal => 'Вставить в терминал';
-
-  @override
-  String get askAiSelectedContent => 'Выбранное содержимое';
-
-  @override
-  String get askAiConversation => 'Разговор с ИИ';
-
-  @override
-  String get askAiFollowUpHint => 'Задайте дополнительный вопрос...';
-
-  @override
-  String get askAiSend => 'Отправить';
 }

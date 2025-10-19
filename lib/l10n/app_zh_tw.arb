@@ -1,25 +1,27 @@
 {
   "@@locale": "zh_TW",
-  "@clearServerStatsContent": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
-  "@clearServerStatsTitle": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
   "aboutThanks": "感謝以下參與的各位。",
   "acceptBeta": "接受測試版更新推送",
   "addSystemPrivateKeyTip": "偵測到尚無私鑰，是否要加入系統預設的私鑰（~/.ssh/id_rsa）？",
   "added2List": "已新增至任務清單",
   "addr": "位址",
   "alreadyLastDir": "已是頂層目錄",
+  "askAi": "詢問 AI",
+  "askAiApiKey": "API 金鑰",
+  "askAiAwaitingResponse": "等待 AI 回應...",
+  "askAiBaseUrl": "基礎 URL",
+  "askAiCommandInserted": "指令已插入終端機",
+  "askAiConfigMissing": "請前往設定配置 {fields}",
+  "askAiConfirmExecute": "執行前確認",
+  "askAiConversation": "AI 對話",
+  "askAiDisclaimer": "AI 可能會犯錯，請謹慎使用。",
+  "askAiFollowUpHint": "繼續提問...",
+  "askAiInsertTerminal": "插入終端機",
+  "askAiModel": "模型",
+  "askAiNoResponse": "無回覆內容",
+  "askAiRecommendedCommand": "AI 推薦指令",
+  "askAiSelectedContent": "選取的內容",
+  "askAiUsageHint": "於 SSH 終端機中使用",
   "atLeastOneTab": "至少需要選擇一個標籤",
   "authFailTip": "認證失敗，請檢查連線資訊是否正確",
   "autoBackupConflict": "僅能啟用一項自動備份任務",
@@ -284,21 +286,5 @@
   "wolTip": "設定 WOL 後，每次連線伺服器時將自動發送喚醒請求",
   "write": "寫入",
   "writeScriptFailTip": "寫入腳本失敗，可能是沒有權限/目錄不存在等。",
-  "writeScriptTip": "連線到伺服器後，將會在 `~/.config/server_box` \n | `/tmp/server_box` 中寫入一個腳本來監測系統狀態。你可以審查腳本內容。",
-  "askAi": "詢問 AI",
-  "askAiUsageHint": "於 SSH 終端機中使用",
-  "askAiBaseUrl": "基礎 URL",
-  "askAiModel": "模型",
-  "askAiApiKey": "API 金鑰",
-  "askAiConfigMissing": "請前往設定配置 {fields}",
-  "askAiConfirmExecute": "執行前確認",
-  "askAiCommandInserted": "指令已插入終端機",
-  "askAiAwaitingResponse": "等待 AI 回應...",
-  "askAiNoResponse": "無回覆內容",
-  "askAiRecommendedCommand": "AI 推薦指令",
-  "askAiInsertTerminal": "插入終端機",
-  "askAiSelectedContent": "選取的內容",
-  "askAiConversation": "AI 對話",
-  "askAiFollowUpHint": "繼續提問...",
-  "askAiSend": "傳送"
+  "writeScriptTip": "連線到伺服器後，將會在 `~/.config/server_box` \n | `/tmp/server_box` 中寫入一個腳本來監測系統狀態。你可以審查腳本內容。"
 }

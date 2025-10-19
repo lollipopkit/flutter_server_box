@@ -29,6 +29,57 @@ class AppLocalizationsEn extends AppLocalizations {
   String get alreadyLastDir => 'Already in last directory.';
 
   @override
+  String get askAi => 'Ask AI';
+
+  @override
+  String get askAiApiKey => 'API Key';
+
+  @override
+  String get askAiAwaitingResponse => 'Waiting for AI response...';
+
+  @override
+  String get askAiBaseUrl => 'Base URL';
+
+  @override
+  String get askAiCommandInserted => 'Command inserted into terminal';
+
+  @override
+  String askAiConfigMissing(Object fields) {
+    return 'Please configure $fields in Settings.';
+  }
+
+  @override
+  String get askAiConfirmExecute => 'Confirm before executing';
+
+  @override
+  String get askAiConversation => 'AI conversation';
+
+  @override
+  String get askAiDisclaimer =>
+      'AI may be incorrect. Review carefully before applying.';
+
+  @override
+  String get askAiFollowUpHint => 'Ask a follow-up...';
+
+  @override
+  String get askAiInsertTerminal => 'Insert into terminal';
+
+  @override
+  String get askAiModel => 'Model';
+
+  @override
+  String get askAiNoResponse => 'No response';
+
+  @override
+  String get askAiRecommendedCommand => 'AI suggested command';
+
+  @override
+  String get askAiSelectedContent => 'Selected content';
+
+  @override
+  String get askAiUsageHint => 'Used in SSH Terminal';
+
+  @override
   String get atLeastOneTab => 'At least one tab must be selected';
 
   @override
@@ -98,12 +149,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clearAllStatsTitle => 'Clear All Statistics';
 
   @override
-  String clearServerStatsContent(String serverName) {
+  String clearServerStatsContent(Object serverName) {
     return 'Are you sure you want to clear connection statistics for server \"$serverName\"? This action cannot be undone.';
   }
 
   @override
-  String clearServerStatsTitle(String serverName) {
+  String clearServerStatsTitle(Object serverName) {
     return 'Clear $serverName Statistics';
   }
 
@@ -914,54 +965,4 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'After connecting to the server, a script will be written to `~/.config/server_box` \n | `/tmp/server_box` to monitor the system status. You can review the script content.';
-
-  @override
-  String get askAi => 'Ask AI';
-
-  @override
-  String get askAiUsageHint => 'Used in SSH Terminal';
-
-  @override
-  String get askAiBaseUrl => 'Base URL';
-
-  @override
-  String get askAiModel => 'Model';
-
-  @override
-  String get askAiApiKey => 'API Key';
-
-  @override
-  String askAiConfigMissing(String fields) {
-    return 'Please configure $fields in Settings.';
-  }
-
-  @override
-  String get askAiConfirmExecute => 'Confirm before executing';
-
-  @override
-  String get askAiCommandInserted => 'Command inserted into terminal';
-
-  @override
-  String get askAiAwaitingResponse => 'Waiting for AI response...';
-
-  @override
-  String get askAiNoResponse => 'No response';
-
-  @override
-  String get askAiRecommendedCommand => 'AI suggested command';
-
-  @override
-  String get askAiInsertTerminal => 'Insert into terminal';
-
-  @override
-  String get askAiSelectedContent => 'Selected content';
-
-  @override
-  String get askAiConversation => 'AI conversation';
-
-  @override
-  String get askAiFollowUpHint => 'Ask a follow-up...';
-
-  @override
-  String get askAiSend => 'Send';
 }

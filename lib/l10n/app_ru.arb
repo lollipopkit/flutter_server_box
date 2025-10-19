@@ -1,25 +1,27 @@
 {
   "@@locale": "ru",
-  "@clearServerStatsContent": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
-  "@clearServerStatsTitle": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
   "aboutThanks": "Благодарности всем участникам.",
   "acceptBeta": "Принять обновления тестовой версии",
   "addSystemPrivateKeyTip": "В данный момент приватные ключи отсутствуют. Добавить системный приватный ключ (~/.ssh/id_rsa)?",
   "added2List": "Добавлено в список задач",
   "addr": "Адрес",
   "alreadyLastDir": "Уже в корневом каталоге",
+  "askAi": "Спросить ИИ",
+  "askAiApiKey": "Ключ API",
+  "askAiAwaitingResponse": "Ожидание ответа ИИ...",
+  "askAiBaseUrl": "Базовый URL",
+  "askAiCommandInserted": "Команда вставлена в терминал",
+  "askAiConfigMissing": "Настройте {fields} в настройках.",
+  "askAiConfirmExecute": "Подтвердите перед выполнением",
+  "askAiConversation": "Разговор с ИИ",
+  "askAiDisclaimer": "ИИ может ошибаться. Используйте с осторожностью.",
+  "askAiFollowUpHint": "Задайте дополнительный вопрос...",
+  "askAiInsertTerminal": "Вставить в терминал",
+  "askAiModel": "Модель",
+  "askAiNoResponse": "Нет ответа",
+  "askAiRecommendedCommand": "Команда, предложенная ИИ",
+  "askAiSelectedContent": "Выбранное содержимое",
+  "askAiUsageHint": "Используется в SSH-терминале",
   "atLeastOneTab": "Должна быть выбрана хотя бы одна вкладка",
   "authFailTip": "Аутентификация не удалась, пожалуйста, проверьте, правильны ли пароль/ключ/хост/пользователь и т.д.",
   "autoBackupConflict": "Может быть включено только одно автоматическое резервное копирование",
@@ -284,21 +286,5 @@
   "wolTip": "После настройки WOL (Wake-on-LAN) при каждом подключении к серверу отправляется запрос WOL.",
   "write": "Запись",
   "writeScriptFailTip": "Запись скрипта не удалась, возможно, из-за отсутствия прав или потому что, директории не существует.",
-  "writeScriptTip": "После подключения к серверу скрипт будет записан в `~/.config/server_box` \n | `/tmp/server_box` для мониторинга состояния системы. Вы можете проверить содержимое скрипта.",
-  "askAi": "Спросить ИИ",
-  "askAiUsageHint": "Используется в SSH-терминале",
-  "askAiBaseUrl": "Базовый URL",
-  "askAiModel": "Модель",
-  "askAiApiKey": "Ключ API",
-  "askAiConfigMissing": "Настройте {fields} в настройках.",
-  "askAiConfirmExecute": "Подтвердите перед выполнением",
-  "askAiCommandInserted": "Команда вставлена в терминал",
-  "askAiAwaitingResponse": "Ожидание ответа ИИ...",
-  "askAiNoResponse": "Нет ответа",
-  "askAiRecommendedCommand": "Команда, предложенная ИИ",
-  "askAiInsertTerminal": "Вставить в терминал",
-  "askAiSelectedContent": "Выбранное содержимое",
-  "askAiConversation": "Разговор с ИИ",
-  "askAiFollowUpHint": "Задайте дополнительный вопрос...",
-  "askAiSend": "Отправить"
+  "writeScriptTip": "После подключения к серверу скрипт будет записан в `~/.config/server_box` \n | `/tmp/server_box` для мониторинга состояния системы. Вы можете проверить содержимое скрипта."
 }

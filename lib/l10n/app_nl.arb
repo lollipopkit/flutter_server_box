@@ -1,25 +1,27 @@
 {
   "@@locale": "nl",
-  "@clearServerStatsContent": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
-  "@clearServerStatsTitle": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
   "aboutThanks": "Met dank aan de volgende mensen die hebben deelgenomen aan.",
   "acceptBeta": "Accepteer testversie-updates",
   "addSystemPrivateKeyTip": "Er is momenteel geen privésleutel, wilt u degene toevoegen die bij het systeem wordt geleverd (~/.ssh/id_rsa)?",
   "added2List": "Toegevoegd aan takenlijst",
   "addr": "Adres",
   "alreadyLastDir": "Al in de laatst gebruikte map.",
+  "askAi": "AI vragen",
+  "askAiApiKey": "API-sleutel",
+  "askAiAwaitingResponse": "Wachten op AI-reactie...",
+  "askAiBaseUrl": "Basis-URL",
+  "askAiCommandInserted": "Commando in terminal ingevoegd",
+  "askAiConfigMissing": "Configureer {fields} in de instellingen.",
+  "askAiConfirmExecute": "Bevestigen voor uitvoeren",
+  "askAiConversation": "AI-gesprek",
+  "askAiDisclaimer": "AI kan fouten maken. Gebruik het zorgvuldig.",
+  "askAiFollowUpHint": "Stel een vervolgvraag...",
+  "askAiInsertTerminal": "In terminal invoegen",
+  "askAiModel": "Model",
+  "askAiNoResponse": "Geen reactie",
+  "askAiRecommendedCommand": "Door AI voorgestelde opdracht",
+  "askAiSelectedContent": "Geselecteerde inhoud",
+  "askAiUsageHint": "Gebruikt in de SSH-terminal",
   "atLeastOneTab": "Er moet minimaal één tabblad worden geselecteerd",
   "authFailTip": "Authenticatie mislukt, controleer of het wachtwoord/sleutel/host/gebruiker, enz., incorrect zijn.",
   "autoBackupConflict": "Er kan slechts één automatische back-up tegelijk worden ingeschakeld.",
@@ -284,21 +286,5 @@
   "wolTip": "Na het configureren van WOL (Wake-on-LAN), wordt elke keer dat de server wordt verbonden een WOL-verzoek verzonden.",
   "write": "Schrijven",
   "writeScriptFailTip": "Het schrijven naar het script is mislukt, mogelijk door gebrek aan rechten of omdat de map niet bestaat.",
-  "writeScriptTip": "Na het verbinden met de server wordt een script geschreven naar `~/.config/server_box` \n | `/tmp/server_box` om de systeemstatus te monitoren. U kunt de inhoud van het script controleren.",
-  "askAi": "AI vragen",
-  "askAiUsageHint": "Gebruikt in de SSH-terminal",
-  "askAiBaseUrl": "Basis-URL",
-  "askAiModel": "Model",
-  "askAiApiKey": "API-sleutel",
-  "askAiConfigMissing": "Configureer {fields} in de instellingen.",
-  "askAiConfirmExecute": "Bevestigen voor uitvoeren",
-  "askAiCommandInserted": "Commando in terminal ingevoegd",
-  "askAiAwaitingResponse": "Wachten op AI-reactie...",
-  "askAiNoResponse": "Geen reactie",
-  "askAiRecommendedCommand": "Door AI voorgestelde opdracht",
-  "askAiInsertTerminal": "In terminal invoegen",
-  "askAiSelectedContent": "Geselecteerde inhoud",
-  "askAiConversation": "AI-gesprek",
-  "askAiFollowUpHint": "Stel een vervolgvraag...",
-  "askAiSend": "Verzenden"
+  "writeScriptTip": "Na het verbinden met de server wordt een script geschreven naar `~/.config/server_box` \n | `/tmp/server_box` om de systeemstatus te monitoren. U kunt de inhoud van het script controleren."
 }

@@ -28,6 +28,57 @@ class AppLocalizationsFr extends AppLocalizations {
   String get alreadyLastDir => 'Déjà dans le dernier répertoire.';
 
   @override
+  String get askAi => 'Demander à l\'IA';
+
+  @override
+  String get askAiApiKey => 'Clé API';
+
+  @override
+  String get askAiAwaitingResponse => 'En attente de la réponse de l\'IA...';
+
+  @override
+  String get askAiBaseUrl => 'URL de base';
+
+  @override
+  String get askAiCommandInserted => 'Commande insérée dans le terminal';
+
+  @override
+  String askAiConfigMissing(Object fields) {
+    return 'Veuillez configurer $fields dans les paramètres.';
+  }
+
+  @override
+  String get askAiConfirmExecute => 'Confirmer avant d\'exécuter';
+
+  @override
+  String get askAiConversation => 'Conversation avec l\'IA';
+
+  @override
+  String get askAiDisclaimer =>
+      'L\'IA peut se tromper. Utilisez-la avec prudence.';
+
+  @override
+  String get askAiFollowUpHint => 'Poser une question supplémentaire...';
+
+  @override
+  String get askAiInsertTerminal => 'Insérer dans le terminal';
+
+  @override
+  String get askAiModel => 'Modèle';
+
+  @override
+  String get askAiNoResponse => 'Aucune réponse';
+
+  @override
+  String get askAiRecommendedCommand => 'Commande suggérée par l\'IA';
+
+  @override
+  String get askAiSelectedContent => 'Contenu sélectionné';
+
+  @override
+  String get askAiUsageHint => 'Utilisé dans le terminal SSH';
+
+  @override
   String get atLeastOneTab => 'Au moins un onglet doit être sélectionné';
 
   @override
@@ -99,12 +150,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get clearAllStatsTitle => 'Effacer toutes les statistiques';
 
   @override
-  String clearServerStatsContent(String serverName) {
+  String clearServerStatsContent(Object serverName) {
     return 'Êtes-vous sûr de vouloir effacer les statistiques de connexion du serveur \"$serverName\" ? Cette action ne peut pas être annulée.';
   }
 
   @override
-  String clearServerStatsTitle(String serverName) {
+  String clearServerStatsTitle(Object serverName) {
     return 'Effacer les statistiques de $serverName';
   }
 
@@ -928,54 +979,4 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Après la connexion au serveur, un script sera écrit dans `~/.config/server_box` \n | `/tmp/server_box` pour surveiller l\'état du système. Vous pouvez examiner le contenu du script.';
-
-  @override
-  String get askAi => 'Demander à l\'IA';
-
-  @override
-  String get askAiUsageHint => 'Utilisé dans le terminal SSH';
-
-  @override
-  String get askAiBaseUrl => 'URL de base';
-
-  @override
-  String get askAiModel => 'Modèle';
-
-  @override
-  String get askAiApiKey => 'Clé API';
-
-  @override
-  String askAiConfigMissing(String fields) {
-    return 'Veuillez configurer $fields dans les paramètres.';
-  }
-
-  @override
-  String get askAiConfirmExecute => 'Confirmer avant d\'exécuter';
-
-  @override
-  String get askAiCommandInserted => 'Commande insérée dans le terminal';
-
-  @override
-  String get askAiAwaitingResponse => 'En attente de la réponse de l\'IA...';
-
-  @override
-  String get askAiNoResponse => 'Aucune réponse';
-
-  @override
-  String get askAiRecommendedCommand => 'Commande suggérée par l\'IA';
-
-  @override
-  String get askAiInsertTerminal => 'Insérer dans le terminal';
-
-  @override
-  String get askAiSelectedContent => 'Contenu sélectionné';
-
-  @override
-  String get askAiConversation => 'Conversation avec l\'IA';
-
-  @override
-  String get askAiFollowUpHint => 'Poser une question supplémentaire...';
-
-  @override
-  String get askAiSend => 'Envoyer';
 }

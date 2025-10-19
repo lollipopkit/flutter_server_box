@@ -1,25 +1,27 @@
 {
   "@@locale": "uk",
-  "@clearServerStatsContent": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
-  "@clearServerStatsTitle": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
   "aboutThanks": "Дякуємо наступним особам, які взяли участь.",
   "acceptBeta": "Прийняти оновлення бета-версії",
   "addSystemPrivateKeyTip": "Наразі приватних ключів нема, хочете додати той, що йде з системою (~/.ssh/id_rsa)?",
   "added2List": "Додано до списку завдань",
   "addr": "Адреса",
   "alreadyLastDir": "Вже в останньому каталозі.",
+  "askAi": "Запитати ШІ",
+  "askAiApiKey": "Ключ API",
+  "askAiAwaitingResponse": "Очікування відповіді ШІ...",
+  "askAiBaseUrl": "Базова URL",
+  "askAiCommandInserted": "Команду вставлено в термінал",
+  "askAiConfigMissing": "Налаштуйте {fields} у налаштуваннях.",
+  "askAiConfirmExecute": "Підтвердити перед виконанням",
+  "askAiConversation": "Розмова з ШІ",
+  "askAiDisclaimer": "ШІ може помилятися. Користуйтеся обережно.",
+  "askAiFollowUpHint": "Поставте додаткове запитання...",
+  "askAiInsertTerminal": "Вставити в термінал",
+  "askAiModel": "Модель",
+  "askAiNoResponse": "Відповідь відсутня",
+  "askAiRecommendedCommand": "Команда, запропонована ШІ",
+  "askAiSelectedContent": "Вибраний вміст",
+  "askAiUsageHint": "Використовується в SSH-терміналі",
   "atLeastOneTab": "Потрібно вибрати принаймні одну вкладку",
   "authFailTip": "Авторизація не вдалася, будь ласка, перевірте правильність облікових даних",
   "autoBackupConflict": "Тільки одне автоматичне резервне копіювання може бути активне одночасно.",
@@ -284,21 +286,5 @@
   "wolTip": "Після налаштування WOL (Wake-on-LAN), при кожному підключенні до сервера відправляється запит WOL.",
   "write": "Записати",
   "writeScriptFailTip": "Запис у скрипт не вдався, можливо, через брак дозволів або каталог не існує.",
-  "writeScriptTip": "Після підключення до сервера скрипт буде записано у `~/.config/server_box` \n | `/tmp/server_box` для моніторингу стану системи. Ви можете переглянути вміст скрипта.",
-  "askAi": "Запитати ШІ",
-  "askAiUsageHint": "Використовується в SSH-терміналі",
-  "askAiBaseUrl": "Базова URL",
-  "askAiModel": "Модель",
-  "askAiApiKey": "Ключ API",
-  "askAiConfigMissing": "Налаштуйте {fields} у налаштуваннях.",
-  "askAiConfirmExecute": "Підтвердити перед виконанням",
-  "askAiCommandInserted": "Команду вставлено в термінал",
-  "askAiAwaitingResponse": "Очікування відповіді ШІ...",
-  "askAiNoResponse": "Відповідь відсутня",
-  "askAiRecommendedCommand": "Команда, запропонована ШІ",
-  "askAiInsertTerminal": "Вставити в термінал",
-  "askAiSelectedContent": "Вибраний вміст",
-  "askAiConversation": "Розмова з ШІ",
-  "askAiFollowUpHint": "Поставте додаткове запитання...",
-  "askAiSend": "Надіслати"
+  "writeScriptTip": "Після підключення до сервера скрипт буде записано у `~/.config/server_box` \n | `/tmp/server_box` для моніторингу стану системи. Ви можете переглянути вміст скрипта."
 }

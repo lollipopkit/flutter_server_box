@@ -214,10 +214,7 @@ class AskAiRepository {
 
     if (localeHint != null && localeHint.isNotEmpty) {
       promptBuffer
-        ..writeln('请优先使用用户的语言输出：$localeHint。')
-        ..writeln('如果无法判断语言，请使用简体中文。');
-    } else {
-      promptBuffer.writeln('如果无法判断语言，请使用简体中文。');
+        .writeln('请优先使用用户的语言输出：$localeHint。');
     }
 
     final messages = <Map<String, String>>[

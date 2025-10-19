@@ -1,25 +1,27 @@
 {
   "@@locale": "zh",
-  "@clearServerStatsContent": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
-  "@clearServerStatsTitle": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
   "aboutThanks": "感谢以下参与的各位。",
   "acceptBeta": "接受测试版更新推送",
   "addSystemPrivateKeyTip": "检测到暂无私钥，是否添加系统默认的私钥（~/.ssh/id_rsa）？",
   "added2List": "已添加至任务列表",
   "addr": "地址",
   "alreadyLastDir": "已是顶级目录",
+  "askAi": "问 AI",
+  "askAiApiKey": "API 密钥",
+  "askAiAwaitingResponse": "等待 AI 响应...",
+  "askAiBaseUrl": "基础 URL",
+  "askAiCommandInserted": "命令已插入终端",
+  "askAiConfigMissing": "请前往设置配置 {fields}",
+  "askAiConfirmExecute": "执行前确认",
+  "askAiConversation": "AI 对话",
+  "askAiDisclaimer": "AI 可能会犯错，请谨慎使用。",
+  "askAiFollowUpHint": "继续提问...",
+  "askAiInsertTerminal": "插入终端",
+  "askAiModel": "模型",
+  "askAiNoResponse": "无回复内容",
+  "askAiRecommendedCommand": "AI 推荐命令",
+  "askAiSelectedContent": "选中的内容",
+  "askAiUsageHint": "用于 SSH 终端",
   "atLeastOneTab": "至少需要选择一个标签",
   "authFailTip": "认证失败，请检查连接信息是否正确",
   "autoBackupConflict": "仅可启用一个自动备份任务",
@@ -284,21 +286,5 @@
   "wolTip": "配置 WOL 后，每次连接服务器时将自动发送唤醒请求",
   "write": "写",
   "writeScriptFailTip": "写入脚本失败，可能是没有权限/目录不存在等",
-  "writeScriptTip": "在连接服务器后，会向 `~/.config/server_box` \n | `/tmp/server_box` 写入脚本来监测系统状态，你可以审查脚本内容。",
-  "askAi": "问 AI",
-  "askAiUsageHint": "用于 SSH 终端",
-  "askAiBaseUrl": "基础 URL",
-  "askAiModel": "模型",
-  "askAiApiKey": "API 密钥",
-  "askAiConfigMissing": "请前往设置配置 {fields}",
-  "askAiConfirmExecute": "执行前确认",
-  "askAiCommandInserted": "命令已插入终端",
-  "askAiAwaitingResponse": "等待 AI 响应...",
-  "askAiNoResponse": "无回复内容",
-  "askAiRecommendedCommand": "AI 推荐命令",
-  "askAiInsertTerminal": "插入终端",
-  "askAiSelectedContent": "选中的内容",
-  "askAiConversation": "AI 对话",
-  "askAiFollowUpHint": "继续提问...",
-  "askAiSend": "发送"
+  "writeScriptTip": "在连接服务器后，会向 `~/.config/server_box` \n | `/tmp/server_box` 写入脚本来监测系统状态，你可以审查脚本内容。"
 }
