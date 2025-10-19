@@ -5,7 +5,7 @@ English | [简体中文](README_zh.md)
 <div align="center">
   <a href="https://cdn.lpkt.cn/donate"><img alt="donate" src="https://img.shields.io/badge/donate-me-pink"></a>
   <img alt="lang" src="https://img.shields.io/badge/lang-dart-cyan">
-  <img alt="license" src="https://img.shields.io/badge/license-GPLv3-yellow">
+  <img alt="license" src="https://img.shields.io/badge/license-AGPLv3-yellow">
   <a href="https://deepwiki.com/lollipopkit/flutter_server_box"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </div>
 
@@ -85,4 +85,4 @@ If I forgot to add your name to the contributors list, please add a comment in t
 
 ## 📝 License
 
-`GPL v3 lollipopkit`
+`AGPL v3 lollipopkit & all contributors`
