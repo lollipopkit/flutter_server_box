@@ -1148,6 +1148,12 @@ abstract class AppLocalizations {
   /// **'Private Key'**
   String get privateKey;
 
+  /// No description provided for @privateKeyNotFoundFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'Private key [{keyId}] not found.'**
+  String privateKeyNotFoundFmt(Object keyId);
+
   /// No description provided for @process.
   ///
   /// In en, this message translates to:
@@ -1471,6 +1477,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Imported {count} servers from SSH config'**
   String sshConfigImported(Object count);
+
+  /// No description provided for @sshHostKeyChangedDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'The SSH host key changed for {serverName}. Only continue if you trust this server.'**
+  String sshHostKeyChangedDesc(Object serverName);
+
+  /// No description provided for @sshHostKeyFingerprintMd5Base64.
+  ///
+  /// In en, this message translates to:
+  /// **'Fingerprint (MD5 base64): {fingerprint}'**
+  String sshHostKeyFingerprintMd5Base64(Object fingerprint);
+
+  /// No description provided for @sshHostKeyFingerprintMd5Hex.
+  ///
+  /// In en, this message translates to:
+  /// **'Fingerprint (MD5 hex): {fingerprint}'**
+  String sshHostKeyFingerprintMd5Hex(Object fingerprint);
+
+  /// No description provided for @sshHostKeyNewDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'A new SSH host key was received from {serverName}. Review the fingerprint before trusting.'**
+  String sshHostKeyNewDesc(Object serverName);
+
+  /// No description provided for @sshHostKeyStoredFingerprint.
+  ///
+  /// In en, this message translates to:
+  /// **'Stored fingerprint: {fingerprint}'**
+  String sshHostKeyStoredFingerprint(Object fingerprint);
 
   /// No description provided for @sshConfigManualSelect.
   ///

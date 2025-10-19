@@ -9,6 +9,8 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/sftpfile.dart';
 import 'package:server_box/core/utils/comparator.dart';
+import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/sftp/browser_status.dart';
 import 'package:server_box/data/model/sftp/worker.dart';
@@ -46,6 +48,26 @@ class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
   late final SftpBrowserStatus _status;
   late final SSHClient _client;
   final _sortOption = _SortOption().vn;
+
+  Future<bool> _ensureHostKeyAccepted(Spi spi) async {
+    final known = Stores.setting.sshKnownHostFingerprints.get();
+    final hostId = spi.id.isNotEmpty ? spi.id : spi.oldId;
+    final prefix = '$hostId::';
+    if (known.keys.any((key) => key.startsWith(prefix))) {
+      return true;
+    }
+
+    final (result, error) = await context.showLoadingDialog<bool>(
+      fn: () async {
+        await ensureKnownHostKey(
+          spi,
+          onKeyboardInteractive: (_) => KeybordInteractive.defaultHandle(spi, ctx: context),
+        );
+        return true;
+      },
+    );
+    return error == null && result == true;
+  }
   
   @override
   void initState() {
@@ -286,6 +308,10 @@ extension _Actions on _SftpPageState {
       return;
     }
 
+    if (!await _ensureHostKeyAccepted(widget.args.spi)) {
+      return;
+    }
+
     final remotePath = _getRemotePath(name);
     final localPath = _getLocalPath(remotePath);
     final completer = Completer();
@@ -298,7 +324,10 @@ extension _Actions on _SftpPageState {
       context,
       args: EditorPageArgs(
         path: localPath,
-        onSave: (_) {
+        onSave: (_) async {
+          if (!await _ensureHostKeyAccepted(req.spi)) {
+            return;
+          }
           ref
               .read(sftpProvider.notifier)
               .add(SftpReq(req.spi, remotePath, localPath, SftpReqType.upload));
@@ -321,6 +350,10 @@ extension _Actions on _SftpPageState {
           onPressed: () async {
             context.pop();
             final remotePath = _getRemotePath(name);
+
+            if (!await _ensureHostKeyAccepted(widget.args.spi)) {
+              return;
+            }
 
             ref
                 .read(sftpProvider.notifier)
@@ -652,6 +685,9 @@ extension _Actions on _SftpPageState {
         final fileName = path.split(Platform.pathSeparator).lastOrNull;
         final remotePath = '$remoteDir/$fileName';
         Loggers.app.info('SFTP upload local: $path, remote: $remotePath');
+        if (!await _ensureHostKeyAccepted(widget.args.spi)) {
+          return;
+        }
         ref
             .read(sftpProvider.notifier)
             .add(SftpReq(widget.args.spi, remotePath, path, SftpReqType.upload));

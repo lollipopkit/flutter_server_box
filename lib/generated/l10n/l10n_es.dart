@@ -584,6 +584,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get privateKey => 'Llave privada';
 
   @override
+  String privateKeyNotFoundFmt(Object keyId) {
+    return 'No se encontró la clave privada [$keyId].';
+  }
+
+  @override
   String get process => 'Proceso';
 
   @override
@@ -765,6 +770,31 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String sshConfigImported(Object count) {
     return 'Se importaron $count servidores desde la configuración SSH';
+  }
+
+  @override
+  String sshHostKeyChangedDesc(Object serverName) {
+    return 'La clave de host SSH de $serverName ha cambiado. Continúa solo si confías en este servidor.';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Base64(Object fingerprint) {
+    return 'Huella (MD5 Base64): $fingerprint';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
+    return 'Huella (MD5 hex): $fingerprint';
+  }
+
+  @override
+  String sshHostKeyNewDesc(Object serverName) {
+    return 'Se recibió una nueva clave de host SSH de $serverName. Revisa la huella antes de confiar.';
+  }
+
+  @override
+  String sshHostKeyStoredFingerprint(Object fingerprint) {
+    return 'Huella almacenada: $fingerprint';
   }
 
   @override

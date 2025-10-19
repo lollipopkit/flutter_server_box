@@ -579,6 +579,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String get privateKey => 'Özel Anahtar';
 
   @override
+  String privateKeyNotFoundFmt(Object keyId) {
+    return 'Özel anahtar [$keyId] bulunamadı.';
+  }
+
+  @override
   String get process => 'İşlem';
 
   @override
@@ -758,6 +763,31 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String sshConfigImported(Object count) {
     return 'SSH yapılandırmasından $count sunucu içe aktarıldı';
+  }
+
+  @override
+  String sshHostKeyChangedDesc(Object serverName) {
+    return '$serverName için SSH ana bilgisayar anahtarı değişti. Yalnızca bu sunucuya güveniyorsanız devam edin.';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Base64(Object fingerprint) {
+    return 'Parmak izi (MD5 Base64): $fingerprint';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
+    return 'Parmak izi (MD5 hex): $fingerprint';
+  }
+
+  @override
+  String sshHostKeyNewDesc(Object serverName) {
+    return '$serverName üzerinden yeni bir SSH ana bilgisayar anahtarı alındı. Güvenmeden önce parmak izini kontrol edin.';
+  }
+
+  @override
+  String sshHostKeyStoredFingerprint(Object fingerprint) {
+    return 'Kaydedilen parmak izi: $fingerprint';
   }
 
   @override

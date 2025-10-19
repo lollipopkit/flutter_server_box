@@ -579,6 +579,11 @@ class AppLocalizationsId extends AppLocalizations {
   String get privateKey => 'Kunci Pribadi';
 
   @override
+  String privateKeyNotFoundFmt(Object keyId) {
+    return 'Kunci privat [$keyId] tidak ditemukan.';
+  }
+
+  @override
   String get process => 'Proses';
 
   @override
@@ -757,6 +762,31 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String sshConfigImported(Object count) {
     return 'Berhasil mengimpor $count server dari konfigurasi SSH';
+  }
+
+  @override
+  String sshHostKeyChangedDesc(Object serverName) {
+    return 'Kunci host SSH untuk $serverName telah berubah. Lanjutkan hanya jika Anda mempercayai server ini.';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Base64(Object fingerprint) {
+    return 'Sidik jari (MD5 Base64): $fingerprint';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
+    return 'Sidik jari (MD5 hex): $fingerprint';
+  }
+
+  @override
+  String sshHostKeyNewDesc(Object serverName) {
+    return 'Kunci host SSH baru diterima dari $serverName. Periksa sidik jarinya sebelum mempercayai.';
+  }
+
+  @override
+  String sshHostKeyStoredFingerprint(Object fingerprint) {
+    return 'Sidik jari tersimpan: $fingerprint';
   }
 
   @override

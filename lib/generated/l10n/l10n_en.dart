@@ -579,6 +579,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get privateKey => 'Private Key';
 
   @override
+  String privateKeyNotFoundFmt(Object keyId) {
+    return 'Private key [$keyId] not found.';
+  }
+
+  @override
   String get process => 'Process';
 
   @override
@@ -756,6 +761,31 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String sshConfigImported(Object count) {
     return 'Imported $count servers from SSH config';
+  }
+
+  @override
+  String sshHostKeyChangedDesc(Object serverName) {
+    return 'The SSH host key changed for $serverName. Only continue if you trust this server.';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Base64(Object fingerprint) {
+    return 'Fingerprint (MD5 base64): $fingerprint';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
+    return 'Fingerprint (MD5 hex): $fingerprint';
+  }
+
+  @override
+  String sshHostKeyNewDesc(Object serverName) {
+    return 'A new SSH host key was received from $serverName. Review the fingerprint before trusting.';
+  }
+
+  @override
+  String sshHostKeyStoredFingerprint(Object fingerprint) {
+    return 'Stored fingerprint: $fingerprint';
   }
 
   @override

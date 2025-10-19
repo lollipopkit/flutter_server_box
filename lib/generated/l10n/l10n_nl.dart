@@ -581,6 +581,11 @@ class AppLocalizationsNl extends AppLocalizations {
   String get privateKey => 'Privésleutel';
 
   @override
+  String privateKeyNotFoundFmt(Object keyId) {
+    return 'Privésleutel [$keyId] niet gevonden.';
+  }
+
+  @override
   String get process => 'Proces';
 
   @override
@@ -761,6 +766,31 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String sshConfigImported(Object count) {
     return '$count servers geïmporteerd uit SSH-configuratie';
+  }
+
+  @override
+  String sshHostKeyChangedDesc(Object serverName) {
+    return 'De SSH-hostsleutel voor $serverName is gewijzigd. Ga alleen verder als u deze server vertrouwt.';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Base64(Object fingerprint) {
+    return 'Vingerafdruk (MD5 Base64): $fingerprint';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
+    return 'Vingerafdruk (MD5 hex): $fingerprint';
+  }
+
+  @override
+  String sshHostKeyNewDesc(Object serverName) {
+    return 'Er is een nieuwe SSH-hostsleutel ontvangen van $serverName. Controleer de vingerafdruk voordat u vertrouwt.';
+  }
+
+  @override
+  String sshHostKeyStoredFingerprint(Object fingerprint) {
+    return 'Opgeslagen vingerafdruk: $fingerprint';
   }
 
   @override

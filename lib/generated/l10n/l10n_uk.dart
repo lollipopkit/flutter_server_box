@@ -583,6 +583,11 @@ class AppLocalizationsUk extends AppLocalizations {
   String get privateKey => 'Приватний ключ';
 
   @override
+  String privateKeyNotFoundFmt(Object keyId) {
+    return 'Приватний ключ [$keyId] не знайдено.';
+  }
+
+  @override
   String get process => 'Процес';
 
   @override
@@ -762,6 +767,31 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String sshConfigImported(Object count) {
     return 'Імпортовано $count серверів з SSH-конфігурації';
+  }
+
+  @override
+  String sshHostKeyChangedDesc(Object serverName) {
+    return 'SSH-ключ хоста для $serverName змінено. Продовжуйте лише якщо довіряєте цьому серверу.';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Base64(Object fingerprint) {
+    return 'Відбиток (MD5 Base64): $fingerprint';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
+    return 'Відбиток (MD5 hex): $fingerprint';
+  }
+
+  @override
+  String sshHostKeyNewDesc(Object serverName) {
+    return 'Отримано новий SSH-ключ хоста від $serverName. Перевірте відбиток перед тим, як довіряти.';
+  }
+
+  @override
+  String sshHostKeyStoredFingerprint(Object fingerprint) {
+    return 'Збережений відбиток: $fingerprint';
   }
 
   @override

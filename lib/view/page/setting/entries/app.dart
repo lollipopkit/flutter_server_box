@@ -284,4 +284,122 @@ extension _App on _AppSettingsPageState {
       },
     );
   }
+
+  Widget _buildEditRawSettings() {
+    return ListTile(
+      title: const Text('(Dev) Edit raw json'),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: _editRawSettings,
+    );
+  }
+
+  Future<void> _editRawSettings() async {
+    final rawMap = Stores.setting.getAllMap(includeInternalKeys: true);
+    final map = Map<String, Object?>.from(rawMap);
+    final initialKeys = Set<String>.from(map.keys);
+    Map<String, Object?> mapForEditor = map;
+    String? encryptedKey;
+    String? passwordUsed;
+
+    Future<String?> resolvePassword() async {
+      final saved = await _setting.backupasswd.read();
+      if (saved?.isNotEmpty == true) return saved;
+      final backupPwd = await SecureStoreProps.bakPwd.read();
+      if (backupPwd?.isNotEmpty == true) return backupPwd;
+      final controller = TextEditingController();
+      try {
+        final result = await context.showRoundDialog<String>(
+          title: libL10n.pwd,
+          child: Input(
+            controller: controller,
+            label: libL10n.pwd,
+            obscureText: true,
+            onSubmitted: (_) => context.pop(controller.text.trim()),
+          ),
+          actions: [
+            TextButton(onPressed: () => context.pop(null), child: Text(libL10n.cancel)),
+            TextButton(onPressed: () => context.pop(controller.text.trim()), child: Text(libL10n.ok)),
+          ],
+        );
+        return result?.trim();
+      } finally {
+        controller.dispose();
+      }
+    }
+
+    for (final entry in map.entries) {
+      final value = entry.value;
+      if (value is String && Cryptor.isEncrypted(value)) {
+        final password = await resolvePassword();
+        if (password == null || password.isEmpty) {
+          context.showSnackBar(libL10n.cancel);
+          return;
+        }
+        try {
+          final decrypted = Cryptor.decrypt(value, password);
+          final decoded = json.decode(decrypted);
+          if (decoded is Map<String, dynamic>) {
+            mapForEditor = Map<String, Object?>.from(decoded);
+            encryptedKey = entry.key;
+            passwordUsed = password;
+            break;
+          } else {
+            context.showRoundDialog(title: libL10n.fail, child: Text(l10n.invalid));
+            return;
+          }
+        } catch (e, stack) {
+          final msg = e.toString().contains('Failed to decrypt') || e.toString().contains('incorrect password')
+              ? l10n.backupPasswordWrong
+              : '${libL10n.error}:\n$e';
+          context.showRoundDialog(title: libL10n.fail, child: Text(msg));
+          Loggers.app.warning('Decrypt raw settings failed', e, stack);
+          return;
+        }
+      }
+    }
+
+    void onSave(EditorPageRet ret) {
+      if (ret.typ != EditorPageRetType.text) {
+        context.showRoundDialog(title: libL10n.fail, child: Text(l10n.invalid));
+        return;
+      }
+      try {
+        final newSettings = json.decode(ret.val) as Map<String, dynamic>;
+        if (encryptedKey != null) {
+          final pwd = passwordUsed;
+          if (pwd == null || pwd.isEmpty) {
+            context.showRoundDialog(title: libL10n.fail, child: Text(l10n.invalid));
+            return;
+          }
+          final encrypted = Cryptor.encrypt(json.encode(newSettings), pwd);
+          Stores.setting.box.put(encryptedKey, encrypted);
+        } else {
+          Stores.setting.box.putAll(newSettings);
+          final newKeys = newSettings.keys.toSet();
+          final removedKeys = initialKeys.where((e) => !newKeys.contains(e));
+          for (final key in removedKeys) {
+            Stores.setting.box.delete(key);
+          }
+        }
+      } catch (e, trace) {
+        context.showRoundDialog(title: libL10n.error, child: Text('${l10n.save}:\n$e'));
+        Loggers.app.warning('Update json settings failed', e, trace);
+      }
+    }
+
+    /// Encode [map] to String with indent `\t`
+    final text = jsonIndentEncoder.convert(mapForEditor);
+    await EditorPage.route.go(
+      context,
+      args: EditorPageArgs(
+        text: text,
+        lang: ProgLang.json,
+        title: libL10n.setting,
+        onSave: onSave,
+        closeAfterSave: SettingStore.instance.closeAfterSave.fetch(),
+        softWrap: SettingStore.instance.editorSoftWrap.fetch(),
+        enableHighlight: SettingStore.instance.editorHighlight.fetch(),
+      ),
+    );
+  }
 }
