@@ -96,6 +96,7 @@ Future<SSHClient> genClient(
       username: alterUser ?? spi.user,
       onPasswordRequest: () => spi.pwd,
       onUserInfoRequest: onKeyboardInteractive,
+      onVerifyHostKey: (type, fingerprint) => true,
       // printDebug: debugPrint,
       // printTrace: debugPrint,
     );
@@ -109,6 +110,7 @@ Future<SSHClient> genClient(
     // Must use [compute] here, instead of [Computer.shared.start]
     identities: await compute(loadIndentity, privateKey),
     onUserInfoRequest: onKeyboardInteractive,
+    onVerifyHostKey: (type, fingerprint) => true,
     // printDebug: debugPrint,
     // printTrace: debugPrint,
   );

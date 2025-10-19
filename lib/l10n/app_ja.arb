@@ -1,25 +1,27 @@
 {
   "@@locale": "ja",
-  "@clearServerStatsContent": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
-  "@clearServerStatsTitle": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
   "aboutThanks": "以下の参加者に感謝します。",
   "acceptBeta": "テストバージョンの更新を受け入れる",
   "addSystemPrivateKeyTip": "現在秘密鍵がありません。システムのデフォルト(~/.ssh/id_rsa)を追加しますか？",
   "added2List": "タスクリストに追加されました",
   "addr": "アドレス",
   "alreadyLastDir": "すでに最上位のディレクトリです",
+  "askAi": "AI に質問",
+  "askAiApiKey": "API キー",
+  "askAiAwaitingResponse": "AI の応答を待機中...",
+  "askAiBaseUrl": "ベース URL",
+  "askAiCommandInserted": "コマンドをターミナルに挿入しました",
+  "askAiConfigMissing": "設定で {fields} を構成してください。",
+  "askAiConfirmExecute": "実行前に確認",
+  "askAiConversation": "AI 会話",
+  "askAiDisclaimer": "AI が誤る可能性があります。注意してご利用ください。",
+  "askAiFollowUpHint": "追質問をする...",
+  "askAiInsertTerminal": "ターミナルに挿入",
+  "askAiModel": "モデル",
+  "askAiNoResponse": "応答なし",
+  "askAiRecommendedCommand": "AI 推奨コマンド",
+  "askAiSelectedContent": "選択した内容",
+  "askAiUsageHint": "SSH ターミナルで使用",
   "atLeastOneTab": "少なくとも1つのタブを選択する必要があります",
   "authFailTip": "認証に失敗しました。パスワード/鍵/ホスト/ユーザーなどが間違っていないか確認してください。",
   "autoBackupConflict": "自動バックアップは一度に一つしか開始できません",
@@ -284,21 +286,5 @@
   "wolTip": "WOL（Wake-on-LAN）を設定した後、サーバーに接続するたびにWOLリクエストが送信されます。",
   "write": "書き込み",
   "writeScriptFailTip": "スクリプトの書き込みに失敗しました。権限がないかディレクトリが存在しない可能性があります。",
-  "writeScriptTip": "サーバーに接続すると、システムの状態を監視するためのスクリプトが `~/.config/server_box` \n | `/tmp/server_box` に書き込まれます。スクリプトの内容を確認できます。",
-  "askAi": "AI に質問",
-  "askAiUsageHint": "SSH ターミナルで使用",
-  "askAiBaseUrl": "ベース URL",
-  "askAiModel": "モデル",
-  "askAiApiKey": "API キー",
-  "askAiConfigMissing": "設定で {fields} を構成してください。",
-  "askAiConfirmExecute": "実行前に確認",
-  "askAiCommandInserted": "コマンドをターミナルに挿入しました",
-  "askAiAwaitingResponse": "AI の応答を待機中...",
-  "askAiNoResponse": "応答なし",
-  "askAiRecommendedCommand": "AI 推奨コマンド",
-  "askAiInsertTerminal": "ターミナルに挿入",
-  "askAiSelectedContent": "選択した内容",
-  "askAiConversation": "AI 会話",
-  "askAiFollowUpHint": "追質問をする...",
-  "askAiSend": "送信"
+  "writeScriptTip": "サーバーに接続すると、システムの状態を監視するためのスクリプトが `~/.config/server_box` \n | `/tmp/server_box` に書き込まれます。スクリプトの内容を確認できます。"
 }

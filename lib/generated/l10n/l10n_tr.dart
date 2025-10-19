@@ -28,6 +28,57 @@ class AppLocalizationsTr extends AppLocalizations {
   String get alreadyLastDir => 'Zaten son dizindesiniz.';
 
   @override
+  String get askAi => 'Yapay zekaya sor';
+
+  @override
+  String get askAiApiKey => 'API anahtarı';
+
+  @override
+  String get askAiAwaitingResponse => 'Yapay zekâ yanıtı bekleniyor...';
+
+  @override
+  String get askAiBaseUrl => 'Temel URL';
+
+  @override
+  String get askAiCommandInserted => 'Komut terminale eklendi';
+
+  @override
+  String askAiConfigMissing(Object fields) {
+    return 'Lütfen Ayarlar\'da $fields öğesini yapılandırın.';
+  }
+
+  @override
+  String get askAiConfirmExecute => 'Çalıştırmadan önce onayla';
+
+  @override
+  String get askAiConversation => 'YZ sohbeti';
+
+  @override
+  String get askAiDisclaimer =>
+      'Yapay zeka hata yapabilir. Lütfen dikkatli kullanın.';
+
+  @override
+  String get askAiFollowUpHint => 'Yeni bir soru sor...';
+
+  @override
+  String get askAiInsertTerminal => 'Terminale ekle';
+
+  @override
+  String get askAiModel => 'Model';
+
+  @override
+  String get askAiNoResponse => 'Yanıt yok';
+
+  @override
+  String get askAiRecommendedCommand => 'YZ önerilen komut';
+
+  @override
+  String get askAiSelectedContent => 'Seçilen içerik';
+
+  @override
+  String get askAiUsageHint => 'SSH Terminalinde kullanılır';
+
+  @override
   String get atLeastOneTab => 'En az bir sekme seçilmelidir';
 
   @override
@@ -97,12 +148,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get clearAllStatsTitle => 'Tüm İstatistikleri Temizle';
 
   @override
-  String clearServerStatsContent(String serverName) {
+  String clearServerStatsContent(Object serverName) {
     return '\"$serverName\" sunucusu için bağlantı istatistiklerini temizlemek istediğinizden emin misiniz? Bu işlem geri alınamaz.';
   }
 
   @override
-  String clearServerStatsTitle(String serverName) {
+  String clearServerStatsTitle(Object serverName) {
     return '$serverName İstatistiklerini Temizle';
   }
 
@@ -915,54 +966,4 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Sunucuya bağlandıktan sonra, sistem durumunu izlemek için `~/.config/server_box` \n | `/tmp/server_box` dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz.';
-
-  @override
-  String get askAi => 'Yapay zekaya sor';
-
-  @override
-  String get askAiUsageHint => 'SSH Terminalinde kullanılır';
-
-  @override
-  String get askAiBaseUrl => 'Temel URL';
-
-  @override
-  String get askAiModel => 'Model';
-
-  @override
-  String get askAiApiKey => 'API anahtarı';
-
-  @override
-  String askAiConfigMissing(String fields) {
-    return 'Lütfen Ayarlar\'da $fields öğesini yapılandırın.';
-  }
-
-  @override
-  String get askAiConfirmExecute => 'Çalıştırmadan önce onayla';
-
-  @override
-  String get askAiCommandInserted => 'Komut terminale eklendi';
-
-  @override
-  String get askAiAwaitingResponse => 'Yapay zekâ yanıtı bekleniyor...';
-
-  @override
-  String get askAiNoResponse => 'Yanıt yok';
-
-  @override
-  String get askAiRecommendedCommand => 'YZ önerilen komut';
-
-  @override
-  String get askAiInsertTerminal => 'Terminale ekle';
-
-  @override
-  String get askAiSelectedContent => 'Seçilen içerik';
-
-  @override
-  String get askAiConversation => 'YZ sohbeti';
-
-  @override
-  String get askAiFollowUpHint => 'Yeni bir soru sor...';
-
-  @override
-  String get askAiSend => 'Gönder';
 }

@@ -1,25 +1,27 @@
 {
   "@@locale": "es",
-  "@clearServerStatsContent": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
-  "@clearServerStatsTitle": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
   "aboutThanks": "Gracias a los siguientes participantes.",
   "acceptBeta": "Aceptar actualizaciones de la versión de prueba",
   "addSystemPrivateKeyTip": "Actualmente no hay ninguna llave privada, ¿quieres agregar la que viene por defecto en el sistema (~/.ssh/id_rsa)?",
   "added2List": "Añadido a la lista de tareas",
   "addr": "Dirección",
   "alreadyLastDir": "Ya estás en el directorio superior",
+  "askAi": "Preguntar a la IA",
+  "askAiApiKey": "Clave API",
+  "askAiAwaitingResponse": "Esperando la respuesta de la IA...",
+  "askAiBaseUrl": "URL base",
+  "askAiCommandInserted": "Comando insertado en el terminal",
+  "askAiConfigMissing": "Configura {fields} en Ajustes.",
+  "askAiConfirmExecute": "Confirmar antes de ejecutar",
+  "askAiConversation": "Conversación con la IA",
+  "askAiDisclaimer": "La IA puede equivocarse. Úsala con precaución.",
+  "askAiFollowUpHint": "Haz una pregunta adicional...",
+  "askAiInsertTerminal": "Insertar en el terminal",
+  "askAiModel": "Modelo",
+  "askAiNoResponse": "Sin respuesta",
+  "askAiRecommendedCommand": "Comando sugerido por la IA",
+  "askAiSelectedContent": "Contenido seleccionado",
+  "askAiUsageHint": "Usado en el terminal SSH",
   "atLeastOneTab": "Al menos una pestaña debe estar seleccionada",
   "authFailTip": "La autenticación ha fallado, por favor verifica si la contraseña/llave/host/usuario, etc., son incorrectos.",
   "autoBackupConflict": "Solo se puede activar una copia de seguridad automática a la vez",
@@ -284,21 +286,5 @@
   "wolTip": "Después de configurar WOL (Wake-on-LAN), se envía una solicitud de WOL cada vez que se conecta el servidor.",
   "write": "Escribir",
   "writeScriptFailTip": "La escritura en el script falló, posiblemente por falta de permisos o porque el directorio no existe.",
-  "writeScriptTip": "Después de conectarse al servidor, se escribirá un script en `~/.config/server_box` \n | `/tmp/server_box` para monitorear el estado del sistema. Puedes revisar el contenido del script.",
-  "askAi": "Preguntar a la IA",
-  "askAiUsageHint": "Usado en el terminal SSH",
-  "askAiBaseUrl": "URL base",
-  "askAiModel": "Modelo",
-  "askAiApiKey": "Clave API",
-  "askAiConfigMissing": "Configura {fields} en Ajustes.",
-  "askAiConfirmExecute": "Confirmar antes de ejecutar",
-  "askAiCommandInserted": "Comando insertado en el terminal",
-  "askAiAwaitingResponse": "Esperando la respuesta de la IA...",
-  "askAiNoResponse": "Sin respuesta",
-  "askAiRecommendedCommand": "Comando sugerido por la IA",
-  "askAiInsertTerminal": "Insertar en el terminal",
-  "askAiSelectedContent": "Contenido seleccionado",
-  "askAiConversation": "Conversación con la IA",
-  "askAiFollowUpHint": "Haz una pregunta adicional...",
-  "askAiSend": "Enviar"
+  "writeScriptTip": "Después de conectarse al servidor, se escribirá un script en `~/.config/server_box` \n | `/tmp/server_box` para monitorear el estado del sistema. Puedes revisar el contenido del script."
 }

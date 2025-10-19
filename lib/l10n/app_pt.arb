@@ -1,25 +1,27 @@
 {
   "@@locale": "pt",
-  "@clearServerStatsContent": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
-  "@clearServerStatsTitle": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
   "aboutThanks": "Agradecimentos a todos os participantes.",
   "acceptBeta": "Aceitar atualizações da versão de teste",
   "addSystemPrivateKeyTip": "Atualmente, não há nenhuma chave privada. Gostaria de adicionar a chave do sistema (~/.ssh/id_rsa)?",
   "added2List": "Adicionado à lista de tarefas",
   "addr": "Endereço",
   "alreadyLastDir": "Já é o diretório mais alto",
+  "askAi": "Perguntar à IA",
+  "askAiApiKey": "Chave de API",
+  "askAiAwaitingResponse": "Aguardando resposta da IA...",
+  "askAiBaseUrl": "URL base",
+  "askAiCommandInserted": "Comando inserido no terminal",
+  "askAiConfigMissing": "Configure {fields} nas configurações.",
+  "askAiConfirmExecute": "Confirmar antes de executar",
+  "askAiConversation": "Conversa com a IA",
+  "askAiDisclaimer": "A IA pode errar. Use com cautela.",
+  "askAiFollowUpHint": "Faça uma pergunta adicional...",
+  "askAiInsertTerminal": "Inserir no terminal",
+  "askAiModel": "Modelo",
+  "askAiNoResponse": "Sem resposta",
+  "askAiRecommendedCommand": "Comando sugerido pela IA",
+  "askAiSelectedContent": "Conteúdo selecionado",
+  "askAiUsageHint": "Usado no terminal SSH",
   "atLeastOneTab": "Pelo menos uma aba deve ser selecionada",
   "authFailTip": "Autenticação falhou, por favor verifique se a senha/chave/host/usuário, etc., estão incorretos.",
   "autoBackupConflict": "Apenas um backup automático pode ser ativado por vez",
@@ -284,21 +286,5 @@
   "wolTip": "Após configurar o WOL (Wake-on-LAN), um pedido de WOL é enviado cada vez que o servidor é conectado.",
   "write": "Escrita",
   "writeScriptFailTip": "Falha ao escrever no script, possivelmente devido à falta de permissões ou o diretório não existe.",
-  "writeScriptTip": "Após conectar ao servidor, um script será escrito em `~/.config/server_box` \n | `/tmp/server_box` para monitorar o status do sistema. Você pode revisar o conteúdo do script.",
-  "askAi": "Perguntar à IA",
-  "askAiUsageHint": "Usado no terminal SSH",
-  "askAiBaseUrl": "URL base",
-  "askAiModel": "Modelo",
-  "askAiApiKey": "Chave de API",
-  "askAiConfigMissing": "Configure {fields} nas configurações.",
-  "askAiConfirmExecute": "Confirmar antes de executar",
-  "askAiCommandInserted": "Comando inserido no terminal",
-  "askAiAwaitingResponse": "Aguardando resposta da IA...",
-  "askAiNoResponse": "Sem resposta",
-  "askAiRecommendedCommand": "Comando sugerido pela IA",
-  "askAiInsertTerminal": "Inserir no terminal",
-  "askAiSelectedContent": "Conteúdo selecionado",
-  "askAiConversation": "Conversa com a IA",
-  "askAiFollowUpHint": "Faça uma pergunta adicional...",
-  "askAiSend": "Enviar"
+  "writeScriptTip": "Após conectar ao servidor, um script será escrito em `~/.config/server_box` \n | `/tmp/server_box` para monitorar o status do sistema. Você pode revisar o conteúdo do script."
 }

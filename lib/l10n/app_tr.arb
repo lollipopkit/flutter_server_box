@@ -1,25 +1,27 @@
 {
   "@@locale": "tr",
-  "@clearServerStatsContent": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
-  "@clearServerStatsTitle": {
-    "placeholders": {
-      "serverName": {
-        "type": "String"
-      }
-    }
-  },
   "aboutThanks": "Aşağıdaki katılımcılara teşekkürler.",
   "acceptBeta": "Beta sürüm güncellemelerini kabul et",
   "addSystemPrivateKeyTip": "Şu anda özel anahtarlar mevcut değil, sistemle birlikte gelen anahtarı (~/.ssh/id_rsa) eklemek ister misiniz?",
   "added2List": "Görev listesine eklendi",
   "addr": "Adres",
   "alreadyLastDir": "Zaten son dizindesiniz.",
+  "askAi": "Yapay zekaya sor",
+  "askAiApiKey": "API anahtarı",
+  "askAiAwaitingResponse": "Yapay zekâ yanıtı bekleniyor...",
+  "askAiBaseUrl": "Temel URL",
+  "askAiCommandInserted": "Komut terminale eklendi",
+  "askAiConfigMissing": "Lütfen Ayarlar'da {fields} öğesini yapılandırın.",
+  "askAiConfirmExecute": "Çalıştırmadan önce onayla",
+  "askAiConversation": "YZ sohbeti",
+  "askAiDisclaimer": "Yapay zeka hata yapabilir. Lütfen dikkatli kullanın.",
+  "askAiFollowUpHint": "Yeni bir soru sor...",
+  "askAiInsertTerminal": "Terminale ekle",
+  "askAiModel": "Model",
+  "askAiNoResponse": "Yanıt yok",
+  "askAiRecommendedCommand": "YZ önerilen komut",
+  "askAiSelectedContent": "Seçilen içerik",
+  "askAiUsageHint": "SSH Terminalinde kullanılır",
   "atLeastOneTab": "En az bir sekme seçilmelidir",
   "authFailTip": "Kimlik doğrulama başarısız oldu, lütfen kimlik bilgilerinin doğru olup olmadığını kontrol edin",
   "autoBackupConflict": "Aynı anda yalnızca bir otomatik yedekleme açık olabilir.",
@@ -284,21 +286,5 @@
   "wolTip": "WOL (Wake-on-LAN) yapılandırıldıktan sonra, sunucuya her bağlanıldığında bir WOL isteği gönderilir.",
   "write": "Yaz",
   "writeScriptFailTip": "Betik yazma başarısız oldu, muhtemelen izin eksikliği veya dizin mevcut değil.",
-  "writeScriptTip": "Sunucuya bağlandıktan sonra, sistem durumunu izlemek için `~/.config/server_box` \n | `/tmp/server_box` dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz.",
-  "askAi": "Yapay zekaya sor",
-  "askAiUsageHint": "SSH Terminalinde kullanılır",
-  "askAiBaseUrl": "Temel URL",
-  "askAiModel": "Model",
-  "askAiApiKey": "API anahtarı",
-  "askAiConfigMissing": "Lütfen Ayarlar'da {fields} öğesini yapılandırın.",
-  "askAiConfirmExecute": "Çalıştırmadan önce onayla",
-  "askAiCommandInserted": "Komut terminale eklendi",
-  "askAiAwaitingResponse": "Yapay zekâ yanıtı bekleniyor...",
-  "askAiNoResponse": "Yanıt yok",
-  "askAiRecommendedCommand": "YZ önerilen komut",
-  "askAiInsertTerminal": "Terminale ekle",
-  "askAiSelectedContent": "Seçilen içerik",
-  "askAiConversation": "YZ sohbeti",
-  "askAiFollowUpHint": "Yeni bir soru sor...",
-  "askAiSend": "Gönder"
+  "writeScriptTip": "Sunucuya bağlandıktan sonra, sistem durumunu izlemek için `~/.config/server_box` \n | `/tmp/server_box` dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz."
 }
