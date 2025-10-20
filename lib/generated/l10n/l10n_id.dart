@@ -780,6 +780,9 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get sshHostKeyType => 'Jenis kunci host SSH';
+
+  @override
   String sshHostKeyNewDesc(Object serverName) {
     return 'Kunci host SSH baru diterima dari $serverName. Periksa sidik jarinya sebelum mempercayai.';
   }

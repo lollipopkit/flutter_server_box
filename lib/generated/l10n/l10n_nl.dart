@@ -784,6 +784,9 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String get sshHostKeyType => 'Type SSH-hostsleutel';
+
+  @override
   String sshHostKeyNewDesc(Object serverName) {
     return 'Er is een nieuwe SSH-hostsleutel ontvangen van $serverName. Controleer de vingerafdruk voordat u vertrouwt.';
   }

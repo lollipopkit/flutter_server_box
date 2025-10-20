@@ -229,6 +229,10 @@
   "sshHostKeyChangedDesc": "The SSH host key changed for {serverName}. Only continue if you trust this server.",
   "sshHostKeyFingerprintMd5Base64": "Fingerprint (MD5 base64): {fingerprint}",
   "sshHostKeyFingerprintMd5Hex": "Fingerprint (MD5 hex): {fingerprint}",
+  "sshHostKeyType": "SSH host key type",
+  "@sshHostKeyType": {
+    "description": "Label for the SSH host key type displayed in the host key verification dialog."
+  },
   "sshHostKeyNewDesc": "A new SSH host key was received from {serverName}. Review the fingerprint before trusting.",
   "sshHostKeyStoredFingerprint": "Stored fingerprint: {fingerprint}",
   "sshConfigManualSelect": "Would you like to select the SSH config file manually?",

@@ -779,6 +779,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get sshHostKeyType => 'SSH host key type';
+
+  @override
   String sshHostKeyNewDesc(Object serverName) {
     return 'A new SSH host key was received from $serverName. Review the fingerprint before trusting.';
   }

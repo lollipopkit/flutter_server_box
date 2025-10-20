@@ -229,6 +229,7 @@
   "sshHostKeyChangedDesc": "服务器 {serverName} 的 SSH 主机密钥已更改，仅在信任该服务器时继续。",
   "sshHostKeyFingerprintMd5Base64": "指纹（MD5 Base64）：{fingerprint}",
   "sshHostKeyFingerprintMd5Hex": "指纹（MD5 十六进制）：{fingerprint}",
+  "sshHostKeyType": "SSH 主机密钥类型",
   "sshHostKeyNewDesc": "收到来自 {serverName} 的新 SSH 主机密钥，在信任前请检查指纹。",
   "sshHostKeyStoredFingerprint": "已存储的指纹：{fingerprint}",
   "sshConfigManualSelect": "是否要手动选择 SSH 配置文件？",

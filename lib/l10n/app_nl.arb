@@ -229,6 +229,7 @@
   "sshHostKeyChangedDesc": "De SSH-hostsleutel voor {serverName} is gewijzigd. Ga alleen verder als u deze server vertrouwt.",
   "sshHostKeyFingerprintMd5Base64": "Vingerafdruk (MD5 Base64): {fingerprint}",
   "sshHostKeyFingerprintMd5Hex": "Vingerafdruk (MD5 hex): {fingerprint}",
+  "sshHostKeyType": "Type SSH-hostsleutel",
   "sshHostKeyNewDesc": "Er is een nieuwe SSH-hostsleutel ontvangen van {serverName}. Controleer de vingerafdruk voordat u vertrouwt.",
   "sshHostKeyStoredFingerprint": "Opgeslagen vingerafdruk: {fingerprint}",
   "sshConfigManualSelect": "Wilt u het SSH-configuratiebestand handmatig selecteren?",

@@ -1496,6 +1496,12 @@ abstract class AppLocalizations {
   /// **'Fingerprint (MD5 hex): {fingerprint}'**
   String sshHostKeyFingerprintMd5Hex(Object fingerprint);
 
+  /// Label for the SSH host key type displayed in the host key verification dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH host key type'**
+  String get sshHostKeyType;
+
   /// No description provided for @sshHostKeyNewDesc.
   ///
   /// In en, this message translates to:

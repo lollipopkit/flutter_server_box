@@ -780,6 +780,9 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get sshHostKeyType => 'Tipo de chave de host SSH';
+
+  @override
   String sshHostKeyNewDesc(Object serverName) {
     return 'Uma nova chave de host SSH foi recebida de $serverName. Verifique a impressão digital antes de confiar.';
   }

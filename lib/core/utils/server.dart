@@ -277,7 +277,7 @@ Future<bool> _defaultHostKeyPrompt(HostKeyPromptInfo info) async {
         const SizedBox(height: 12),
         SelectableText('${l10n.server}: ${info.spi.name}'),
         SelectableText('${libL10n.addr}: $hostLine'),
-        SelectableText('${l10n.privateKey}: ${info.keyType}'),
+        SelectableText('${l10n.sshHostKeyType}: ${info.keyType}'),
         SelectableText(l10n.sshHostKeyFingerprintMd5Hex(info.fingerprintHex)),
         SelectableText(l10n.sshHostKeyFingerprintMd5Base64(info.fingerprintBase64)),
         if (info.previousFingerprintHex != null) ...[

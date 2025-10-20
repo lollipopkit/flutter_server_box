@@ -229,6 +229,7 @@
   "sshHostKeyChangedDesc": "La clé d'hôte SSH de {serverName} a changé. Ne continuez que si vous faites confiance à ce serveur.",
   "sshHostKeyFingerprintMd5Base64": "Empreinte (MD5 Base64) : {fingerprint}",
   "sshHostKeyFingerprintMd5Hex": "Empreinte (MD5 hex) : {fingerprint}",
+  "sshHostKeyType": "Type de clé d'hôte SSH",
   "sshHostKeyNewDesc": "Une nouvelle clé d'hôte SSH a été reçue de {serverName}. Vérifiez l'empreinte avant de faire confiance.",
   "sshHostKeyStoredFingerprint": "Empreinte enregistrée : {fingerprint}",
   "sshConfigManualSelect": "Souhaitez-vous sélectionner manuellement le fichier de configuration SSH ?",

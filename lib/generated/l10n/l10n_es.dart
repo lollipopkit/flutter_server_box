@@ -788,6 +788,9 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get sshHostKeyType => 'Tipo de clave de host SSH';
+
+  @override
   String sshHostKeyNewDesc(Object serverName) {
     return 'Se recibió una nueva clave de host SSH de $serverName. Revisa la huella antes de confiar.';
   }

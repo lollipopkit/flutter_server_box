@@ -229,6 +229,7 @@
   "sshHostKeyChangedDesc": "A chave de host SSH de {serverName} foi alterada. Continue apenas se confiar neste servidor.",
   "sshHostKeyFingerprintMd5Base64": "Impressão digital (MD5 Base64): {fingerprint}",
   "sshHostKeyFingerprintMd5Hex": "Impressão digital (MD5 hex): {fingerprint}",
+  "sshHostKeyType": "Tipo de chave de host SSH",
   "sshHostKeyNewDesc": "Uma nova chave de host SSH foi recebida de {serverName}. Verifique a impressão digital antes de confiar.",
   "sshHostKeyStoredFingerprint": "Impressão digital armazenada: {fingerprint}",
   "sshConfigManualSelect": "Gostaria de selecionar manualmente o arquivo de configuração SSH?",

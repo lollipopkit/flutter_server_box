@@ -781,6 +781,9 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get sshHostKeyType => 'SSH ana bilgisayar anahtarı türü';
+
+  @override
   String sshHostKeyNewDesc(Object serverName) {
     return '$serverName üzerinden yeni bir SSH ana bilgisayar anahtarı alındı. Güvenmeden önce parmak izini kontrol edin.';
   }

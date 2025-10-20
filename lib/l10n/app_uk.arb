@@ -229,6 +229,7 @@
   "sshHostKeyChangedDesc": "SSH-ключ хоста для {serverName} змінено. Продовжуйте лише якщо довіряєте цьому серверу.",
   "sshHostKeyFingerprintMd5Base64": "Відбиток (MD5 Base64): {fingerprint}",
   "sshHostKeyFingerprintMd5Hex": "Відбиток (MD5 hex): {fingerprint}",
+  "sshHostKeyType": "Тип ключа хоста SSH",
   "sshHostKeyNewDesc": "Отримано новий SSH-ключ хоста від {serverName}. Перевірте відбиток перед тим, як довіряти.",
   "sshHostKeyStoredFingerprint": "Збережений відбиток: {fingerprint}",
   "sshConfigManualSelect": "Чи хочете ви вручну вибрати файл конфігурації SSH?",

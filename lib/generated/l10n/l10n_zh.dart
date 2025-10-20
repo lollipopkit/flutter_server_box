@@ -748,6 +748,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get sshHostKeyType => 'SSH 主机密钥类型';
+
+  @override
   String sshHostKeyNewDesc(Object serverName) {
     return '收到来自 $serverName 的新 SSH 主机密钥，在信任前请检查指纹。';
   }
@@ -1694,6 +1697,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
     return '指紋（MD5 十六進位）：$fingerprint';
   }
+
+  @override
+  String get sshHostKeyType => 'SSH 主機金鑰類型';
 
   @override
   String sshHostKeyNewDesc(Object serverName) {
