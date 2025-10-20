@@ -171,6 +171,7 @@
   "port": "Port",
   "preferDiskAmount": "Prioritize displaying disk capacity",
   "privateKey": "Private Key",
+  "privateKeyNotFoundFmt": "Private key [{keyId}] not found.",
   "process": "Process",
   "prune": "Prune",
   "pushToken": "Push token",
@@ -225,6 +226,15 @@
   "sshConfigImportPermission": "Would you like to give permission to read ~/.ssh/config and automatically import server settings?",
   "sshConfigImportTip": "Prompt to read ~/.ssh/config on first server creation",
   "sshConfigImported": "Imported {count} servers from SSH config",
+  "sshHostKeyChangedDesc": "The SSH host key changed for {serverName}. Only continue if you trust this server.",
+  "sshHostKeyFingerprintMd5Base64": "Fingerprint (MD5 base64): {fingerprint}",
+  "sshHostKeyFingerprintMd5Hex": "Fingerprint (MD5 hex): {fingerprint}",
+  "sshHostKeyType": "SSH host key type",
+  "@sshHostKeyType": {
+    "description": "Label for the SSH host key type displayed in the host key verification dialog."
+  },
+  "sshHostKeyNewDesc": "A new SSH host key was received from {serverName}. Review the fingerprint before trusting.",
+  "sshHostKeyStoredFingerprint": "Stored fingerprint: {fingerprint}",
   "sshConfigManualSelect": "Would you like to select the SSH config file manually?",
   "sshConfigNoServers": "No servers found in SSH config",
   "sshConfigPermissionDenied": "Cannot access SSH config file due to macOS permissions.",

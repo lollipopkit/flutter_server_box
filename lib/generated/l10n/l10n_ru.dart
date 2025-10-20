@@ -582,6 +582,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get privateKey => 'Приватный ключ';
 
   @override
+  String privateKeyNotFoundFmt(Object keyId) {
+    return 'Закрытый ключ [$keyId] не найден.';
+  }
+
+  @override
   String get process => 'Процесс';
 
   @override
@@ -762,6 +767,34 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String sshConfigImported(Object count) {
     return 'Импортировано $count серверов из SSH-конфигурации';
+  }
+
+  @override
+  String sshHostKeyChangedDesc(Object serverName) {
+    return 'SSH-ключ хоста для $serverName изменился. Продолжайте только если доверяете этому серверу.';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Base64(Object fingerprint) {
+    return 'Отпечаток (MD5 Base64): $fingerprint';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
+    return 'Отпечаток (MD5 hex): $fingerprint';
+  }
+
+  @override
+  String get sshHostKeyType => 'Тип ключа хоста SSH';
+
+  @override
+  String sshHostKeyNewDesc(Object serverName) {
+    return 'Получен новый SSH-ключ хоста от $serverName. Проверьте отпечаток перед продолжением.';
+  }
+
+  @override
+  String sshHostKeyStoredFingerprint(Object fingerprint) {
+    return 'Сохранённый отпечаток: $fingerprint';
   }
 
   @override

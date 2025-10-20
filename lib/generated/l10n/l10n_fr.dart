@@ -586,6 +586,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get privateKey => 'Clé privée';
 
   @override
+  String privateKeyNotFoundFmt(Object keyId) {
+    return 'Clé privée [$keyId] introuvable.';
+  }
+
+  @override
   String get process => 'Processus';
 
   @override
@@ -767,6 +772,34 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String sshConfigImported(Object count) {
     return '$count serveurs importés depuis la configuration SSH';
+  }
+
+  @override
+  String sshHostKeyChangedDesc(Object serverName) {
+    return 'La clé d\'hôte SSH de $serverName a changé. Ne continuez que si vous faites confiance à ce serveur.';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Base64(Object fingerprint) {
+    return 'Empreinte (MD5 Base64) : $fingerprint';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
+    return 'Empreinte (MD5 hex) : $fingerprint';
+  }
+
+  @override
+  String get sshHostKeyType => 'Type de clé d\'hôte SSH';
+
+  @override
+  String sshHostKeyNewDesc(Object serverName) {
+    return 'Une nouvelle clé d\'hôte SSH a été reçue de $serverName. Vérifiez l\'empreinte avant de faire confiance.';
+  }
+
+  @override
+  String sshHostKeyStoredFingerprint(Object fingerprint) {
+    return 'Empreinte enregistrée : $fingerprint';
   }
 
   @override

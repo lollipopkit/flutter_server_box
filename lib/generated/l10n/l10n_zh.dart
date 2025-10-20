@@ -555,6 +555,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get privateKey => '私钥';
 
   @override
+  String privateKeyNotFoundFmt(Object keyId) {
+    return '未找到私钥 [$keyId]。';
+  }
+
+  @override
   String get process => '进程';
 
   @override
@@ -725,6 +730,34 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String sshConfigImported(Object count) {
     return '从 SSH 配置导入了 $count 个服务器';
+  }
+
+  @override
+  String sshHostKeyChangedDesc(Object serverName) {
+    return '服务器 $serverName 的 SSH 主机密钥已更改，仅在信任该服务器时继续。';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Base64(Object fingerprint) {
+    return '指纹（MD5 Base64）：$fingerprint';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
+    return '指纹（MD5 十六进制）：$fingerprint';
+  }
+
+  @override
+  String get sshHostKeyType => 'SSH 主机密钥类型';
+
+  @override
+  String sshHostKeyNewDesc(Object serverName) {
+    return '收到来自 $serverName 的新 SSH 主机密钥，在信任前请检查指纹。';
+  }
+
+  @override
+  String sshHostKeyStoredFingerprint(Object fingerprint) {
+    return '已存储的指纹：$fingerprint';
   }
 
   @override
@@ -1473,6 +1506,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get privateKey => '私鑰';
 
   @override
+  String privateKeyNotFoundFmt(Object keyId) {
+    return '未找到私鑰 [$keyId]。';
+  }
+
+  @override
   String get process => '處理程序';
 
   @override
@@ -1643,6 +1681,34 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String sshConfigImported(Object count) {
     return '已從SSH設定匯入$count個伺服器';
+  }
+
+  @override
+  String sshHostKeyChangedDesc(Object serverName) {
+    return '伺服器 $serverName 的 SSH 主機金鑰已變更，僅在信任該伺服器時繼續。';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Base64(Object fingerprint) {
+    return '指紋（MD5 Base64）：$fingerprint';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
+    return '指紋（MD5 十六進位）：$fingerprint';
+  }
+
+  @override
+  String get sshHostKeyType => 'SSH 主機金鑰類型';
+
+  @override
+  String sshHostKeyNewDesc(Object serverName) {
+    return '收到來自 $serverName 的新 SSH 主機金鑰，信任前請先檢查指紋。';
+  }
+
+  @override
+  String sshHostKeyStoredFingerprint(Object fingerprint) {
+    return '已儲存的指紋：$fingerprint';
   }
 
   @override

@@ -561,6 +561,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get privateKey => '秘密鍵';
 
   @override
+  String privateKeyNotFoundFmt(Object keyId) {
+    return '秘密鍵 [$keyId] が見つかりません。';
+  }
+
+  @override
   String get process => 'プロセス';
 
   @override
@@ -735,6 +740,34 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String sshConfigImported(Object count) {
     return 'SSH設定から$count個のサーバーをインポートしました';
+  }
+
+  @override
+  String sshHostKeyChangedDesc(Object serverName) {
+    return '$serverName の SSH ホスト鍵が変更されました。このサーバーを信頼できる場合のみ続行してください。';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Base64(Object fingerprint) {
+    return 'フィンガープリント (MD5 Base64): $fingerprint';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
+    return 'フィンガープリント (MD5 16進): $fingerprint';
+  }
+
+  @override
+  String get sshHostKeyType => 'SSH ホストキーの種類';
+
+  @override
+  String sshHostKeyNewDesc(Object serverName) {
+    return '$serverName から新しい SSH ホスト鍵を受信しました。信頼する前にフィンガープリントを確認してください。';
+  }
+
+  @override
+  String sshHostKeyStoredFingerprint(Object fingerprint) {
+    return '保存済みフィンガープリント: $fingerprint';
   }
 
   @override

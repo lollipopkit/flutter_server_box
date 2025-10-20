@@ -9,6 +9,7 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/sftpfile.dart';
 import 'package:server_box/core/utils/comparator.dart';
+import 'package:server_box/core/utils/host_key_helper.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/sftp/browser_status.dart';
 import 'package:server_box/data/model/sftp/worker.dart';
@@ -46,7 +47,7 @@ class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
   late final SftpBrowserStatus _status;
   late final SSHClient _client;
   final _sortOption = _SortOption().vn;
-  
+
   @override
   void initState() {
     super.initState();
@@ -286,6 +287,10 @@ extension _Actions on _SftpPageState {
       return;
     }
 
+    if (!await ensureHostKeyAcceptedForSftp(context, widget.args.spi)) {
+      return;
+    }
+
     final remotePath = _getRemotePath(name);
     final localPath = _getLocalPath(remotePath);
     final completer = Completer();
@@ -298,7 +303,10 @@ extension _Actions on _SftpPageState {
       context,
       args: EditorPageArgs(
         path: localPath,
-        onSave: (_) {
+        onSave: (_) async {
+          if (!await ensureHostKeyAcceptedForSftp(context, req.spi)) {
+            return;
+          }
           ref
               .read(sftpProvider.notifier)
               .add(SftpReq(req.spi, remotePath, localPath, SftpReqType.upload));
@@ -321,6 +329,10 @@ extension _Actions on _SftpPageState {
           onPressed: () async {
             context.pop();
             final remotePath = _getRemotePath(name);
+
+            if (!await ensureHostKeyAcceptedForSftp(context, widget.args.spi)) {
+              return;
+            }
 
             ref
                 .read(sftpProvider.notifier)
@@ -652,6 +664,9 @@ extension _Actions on _SftpPageState {
         final fileName = path.split(Platform.pathSeparator).lastOrNull;
         final remotePath = '$remoteDir/$fileName';
         Loggers.app.info('SFTP upload local: $path, remote: $remotePath');
+        if (!await ensureHostKeyAcceptedForSftp(context, widget.args.spi)) {
+          return;
+        }
         ref
             .read(sftpProvider.notifier)
             .add(SftpReq(widget.args.spi, remotePath, path, SftpReqType.upload));

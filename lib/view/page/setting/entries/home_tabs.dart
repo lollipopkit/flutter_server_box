@@ -83,10 +83,10 @@ class _HomeTabsConfigPageState extends ConsumerState<HomeTabsConfigPage> {
       onTap: isSelected && canRemove ? () => _removeTab(tab) : null,
     );
 
-    return Card(
+    return Padding(
       key: ValueKey(tab.name),
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: isSelected ? ReorderableDragStartListener(index: index, child: child) : child,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+      child: (isSelected ? ReorderableDragStartListener(index: index, child: child) : child).cardx,
     );
   }
 
