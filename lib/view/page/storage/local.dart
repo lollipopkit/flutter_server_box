@@ -4,15 +4,13 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/utils/server.dart';
-import 'package:server_box/core/utils/ssh_auth.dart';
+import 'package:server_box/core/utils/host_key_helper.dart';
 import 'package:server_box/data/model/app/path_with_prefix.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/sftp/worker.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/res/misc.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/page/storage/sftp_mission.dart';
@@ -38,26 +36,6 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
   late final _path = LocalPath(widget.args?.initDir ?? Paths.file);
   final _sortType = _SortType.name.vn;
   bool get isPickFile => widget.args?.isPickFile ?? false;
-
-  Future<bool> _ensureHostKeyAccepted(Spi spi) async {
-    final known = Stores.setting.sshKnownHostFingerprints.get();
-    final hostId = spi.id.isNotEmpty ? spi.id : spi.oldId;
-    final prefix = '$hostId::';
-    if (known.keys.any((key) => key.startsWith(prefix))) {
-      return true;
-    }
-
-    final (result, error) = await context.showLoadingDialog<bool>(
-      fn: () async {
-        await ensureKnownHostKey(
-          spi,
-          onKeyboardInteractive: (_) => KeybordInteractive.defaultHandle(spi, ctx: context),
-        );
-        return true;
-      },
-    );
-    return error == null && result == true;
-  }
 
   @override
   void dispose() {
@@ -393,7 +371,7 @@ extension _OnTapFile on _LocalFilePageState {
       return;
     }
 
-    if (!await _ensureHostKeyAccepted(spi)) {
+    if (!await ensureHostKeyAcceptedForSftp(context, spi)) {
       return;
     }
 
