@@ -40,22 +40,15 @@ class ContainerNotifier extends _$ContainerNotifier {
   ContainerState build(SSHClient? client, String userName, String hostId, BuildContext context) {
     final type = Stores.container.getType(hostId);
     final initialState = ContainerState(type: type);
-    
+
     // Async initialization
     Future.microtask(() => refresh());
-    
+
     return initialState;
   }
 
   Future<void> setType(ContainerType type) async {
-    state = state.copyWith(
-      type: type,
-      error: null,
-      runLog: null,
-      items: null,
-      images: null,
-      version: null,
-    );
+    state = state.copyWith(type: type, error: null, runLog: null, items: null, images: null, version: null);
     Stores.container.setType(type, hostId);
     sudoCompleter = Completer<bool>();
     await refresh();
@@ -180,9 +173,13 @@ class ContainerNotifier extends _$ContainerNotifier {
     try {
       final statsLines = statsRaw.split('\n');
       statsLines.removeWhere((element) => element.isEmpty);
-      for (var item in state.items!) {
+      final items = state.items;
+      if (items == null) return;
+
+      for (var item in items) {
         final id = item.id;
         if (id == null) continue;
+        if (id.length < 5) continue;
         final statsLine = statsLines.firstWhereOrNull(
           /// Use 5 characters to match the container id, possibility of mismatch
           /// is very low.
@@ -266,7 +263,6 @@ class ContainerNotifier extends _$ContainerNotifier {
     return cmd;
   }
 }
-
 
 const _jsonFmt = '--format "{{json .}}"';
 
