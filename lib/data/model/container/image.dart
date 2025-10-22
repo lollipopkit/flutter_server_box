@@ -120,8 +120,8 @@ final class DockerImg implements ContainerImg {
   };
 }
 
-String _asString(dynamic val) {
-  if (val == null) return '';
+String? _asString(dynamic val) {
+  if (val == null) return null;
   if (val is String) return val;
   return val.toString();
 }
