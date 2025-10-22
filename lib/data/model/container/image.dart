@@ -37,12 +37,12 @@ final class PodmanImg implements ContainerImg {
   String toRawJson() => json.encode(toJson());
 
   factory PodmanImg.fromJson(Map<String, dynamic> json) => PodmanImg(
-    repository: json['repository'],
-    tag: json['tag'],
-    id: json['Id'],
-    created: json['Created'],
-    size: json['Size'],
-    containers: json['Containers'],
+    repository: _asString(json['repository']),
+    tag: _asString(json['tag']),
+    id: _asString(json['Id']),
+    created: _asInt(json['Created']),
+    size: _asInt(json['Size']),
+    containers: _asInt(json['Containers']),
   );
 
   Map<String, dynamic> toJson() => {
@@ -118,4 +118,17 @@ final class DockerImg implements ContainerImg {
     'Size': size,
     'Tag': tag,
   };
+}
+
+String? _asString(dynamic val) {
+  if (val == null) return null;
+  if (val is String) return val;
+  return val.toString();
+}
+
+int? _asInt(dynamic val) {
+  if (val == null) return null;
+  if (val is int) return val;
+  if (val is double) return val.toInt();
+  return int.tryParse(val.toString());
 }
