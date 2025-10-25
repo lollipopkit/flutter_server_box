@@ -149,11 +149,28 @@ abstract final class SSHConfig {
 
   /// Extract jump host from ProxyJump or ProxyCommand
   static String? _extractJumpHost(String value) {
-    // For ProxyJump, the format is usually: user@host:port
-    // For ProxyCommand, it's more complex and might need custom parsing
-    if (value.contains('@')) {
-      return value.split(' ').first;
+    // Normalize whitespace
+    final parts = value.trim().split(RegExp(r'\s+'));
+
+    // Try to find a token that looks like a user@host[:port]
+    // This covers common patterns like:
+    // - ProxyJump user@host
+    // - ProxyCommand ssh -W %h:%p user@host
+    for (final token in parts) {
+      if (token.contains('@')) {
+        // Strip any surrounding quotes just in case
+        var cleaned = token;
+        if ((cleaned.startsWith("'") && cleaned.endsWith("'")) ||
+            (cleaned.startsWith('"') && cleaned.endsWith('"'))) {
+          cleaned = cleaned.substring(1, cleaned.length - 1);
+        }
+        return cleaned;
+      }
     }
+
+    // ProxyJump may also be provided as just a hostname (no user@)
+    // In that case we don't have enough information to build an oldId-style reference,
+    // so we ignore it here and let the user configure a jump server manually.
     return null;
   }
 

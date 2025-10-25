@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/custom.dart';
+import 'package:server_box/data/model/server/proxy_command_config.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/store/server.dart';
@@ -45,14 +46,18 @@ abstract class Spi with _$Spi {
     @Default('') @JsonKey(fromJson: Spi.parseId) String id,
 
     /// Custom system type (unix or windows). If set, skip auto-detection.
-    @JsonKey(includeIfNull: false) SystemType? customSystemType,
+    SystemType? customSystemType,
 
     /// Disabled command types for this server
-    @JsonKey(includeIfNull: false) List<String>? disabledCmdTypes,
+    List<String>? disabledCmdTypes,
+
+    /// ProxyCommand configuration for SSH connections
+    ProxyCommandConfig? proxyCommand,
   }) = _Spi;
 
   factory Spi.fromJson(Map<String, dynamic> json) => _$SpiFromJson(json);
 
+  
   @override
   String toString() => 'Spi<$oldId>';
 

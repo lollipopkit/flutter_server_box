@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:server_box/app.dart';
+import 'package:server_box/core/utils/executable_manager.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/res/build_data.dart';
@@ -56,6 +57,9 @@ Future<void> _initData() async {
 
   await PrefStore.shared.init(); // Call this before accessing any store
   await Stores.init();
+
+  // Initialize executable manager
+  await ExecutableManager.initialize();
 
   // It may effect the following logic, so await it.
   // DO DB migration before load any provider.

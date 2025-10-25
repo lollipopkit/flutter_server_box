@@ -449,6 +449,115 @@ extension _Widgets on _ServerEditPageState {
     );
   }
 
+  Widget _buildProxyCommand() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ListTile(
+          title: Text('ProxyCommand'),
+          subtitle: Text('Use a proxy command for SSH connection'),
+          trailing: _proxyCommandEnabled.listenVal(
+            (enabled) => Switch(
+              value: enabled,
+              onChanged: (value) {
+                _proxyCommandEnabled.value = value;
+                if (value && _proxyCommandController.text.isEmpty) {
+                  // Set default preset when enabled
+                  _proxyCommandPreset.value = 'cloudflare_access';
+                  _proxyCommandController.text = 'cloudflared access ssh --hostname %h';
+                }
+              },
+            ),
+          ),
+        ),
+        _proxyCommandEnabled.listenVal((enabled) {
+          if (!enabled) return const SizedBox.shrink();
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Preset selection
+                Text('Presets:', style: Theme.of(context).textTheme.titleSmall),
+                const SizedBox(height: 8),
+                _proxyCommandPreset.listenVal((preset) {
+                  final presets = ProxyCommandExecutor.getPresets();
+                  return Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: presets.entries.map((entry) {
+                      final isSelected = preset == entry.key;
+                      return FilterChip(
+                        label: Text(_getPresetDisplayName(entry.key)),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          if (selected) {
+                            _proxyCommandPreset.value = entry.key;
+                            _proxyCommandController.text = entry.value.command;
+                          }
+                        },
+                      );
+                    }).toList(),
+                  );
+                }),
+
+                const SizedBox(height: 16),
+
+                // Custom command input
+                Input(
+                  controller: _proxyCommandController,
+                  type: TextInputType.text,
+                  label: 'Proxy Command',
+                  icon: Icons.settings_ethernet,
+                  hint: 'e.g., cloudflared access ssh --hostname %h',
+                  suggestion: false,
+                ),
+
+                const SizedBox(height: 8),
+
+                // Help text
+                Text(
+                  'Available placeholders:\n'
+                  '• %h - hostname\n'
+                  '• %p - port\n'
+                  '• %r - username',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.grey[600],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Timeout setting
+                _proxyCommandTimeout.listenVal((timeout) {
+                  return ListTile(
+                    title: Text('Connection Timeout'),
+                    subtitle: Text('$timeout seconds'),
+                    trailing: DropdownButton<int>(
+                      value: timeout,
+                      items: [10, 30, 60, 120].map((seconds) {
+                        return DropdownMenuItem(
+                          value: seconds,
+                          child: Text('${seconds}s'),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          _proxyCommandTimeout.value = value;
+                        }
+                      },
+                    ),
+                  );
+                }),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
   Widget _buildDelBtn() {
     return IconButton(
       onPressed: () {
@@ -471,5 +580,22 @@ extension _Widgets on _ServerEditPageState {
       },
       icon: const Icon(Icons.delete),
     );
+  }
+
+  String _getPresetDisplayName(String presetKey) {
+    switch (presetKey) {
+      case 'cloudflare_access':
+        return 'Cloudflare Access';
+      case 'ssh_via_bastion':
+        return 'SSH via Bastion';
+      case 'nc_netcat':
+        return 'Netcat';
+      case 'socat':
+        return 'Socat';
+      default:
+        return presetKey.split('_').map((word) =>
+          word[0].toUpperCase() + word.substring(1)
+        ).join(' ');
+    }
   }
 }

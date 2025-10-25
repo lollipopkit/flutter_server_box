@@ -113,13 +113,14 @@ class SpiAdapter extends TypeAdapter<Spi> {
       id: fields[13] == null ? '' : fields[13] as String,
       customSystemType: fields[14] as SystemType?,
       disabledCmdTypes: (fields[15] as List?)?.cast<String>(),
+      proxyCommand: fields[16] as ProxyCommandConfig?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Spi obj) {
     writer
-      ..writeByte(16)
+      ..writeByte(17)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -151,7 +152,9 @@ class SpiAdapter extends TypeAdapter<Spi> {
       ..writeByte(14)
       ..write(obj.customSystemType)
       ..writeByte(15)
-      ..write(obj.disabledCmdTypes);
+      ..write(obj.disabledCmdTypes)
+      ..writeByte(16)
+      ..write(obj.proxyCommand);
   }
 
   @override

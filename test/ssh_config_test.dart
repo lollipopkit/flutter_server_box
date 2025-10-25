@@ -286,6 +286,25 @@ Host jumpserver
       // ProxyJump is ignored in current implementation
     });
 
+    test('parseConfig handles ProxyCommand with ssh -W jump host', () async {
+      await configFile.writeAsString('''
+Host internal
+  HostName 172.16.0.50
+  User admin
+  ProxyCommand ssh -W %h:%p user@bastion.example.com
+''');
+
+      final servers = await SSHConfig.parseConfig(configFile.path);
+      expect(servers, hasLength(1));
+
+      final server = servers.first;
+      expect(server.name, 'internal');
+      expect(server.ip, '172.16.0.50');
+      expect(server.user, 'admin');
+      // Jump host extracted from ProxyCommand token containing user@host
+      expect(server.jumpId, 'user@bastion.example.com');
+    });
+
     test('parseConfig returns empty list for non-existent file', () async {
       final servers = await SSHConfig.parseConfig('/non/existent/path');
       expect(servers, isEmpty);

@@ -265,6 +265,35 @@ extension _Actions on _ServerEditPageState {
       }
     }
 
+    // ProxyCommand configuration
+    ProxyCommandConfig? proxyCommand;
+    if (_proxyCommandEnabled.value) {
+      final command = _proxyCommandController.text.trim();
+      if (command.isEmpty) {
+        context.showSnackBar('ProxyCommand is enabled but command is empty');
+        return;
+      }
+
+      // Check if command contains required placeholders
+      if (!command.contains('%h')) {
+        context.showSnackBar('ProxyCommand must contain %h (hostname) placeholder');
+        return;
+      }
+
+      // Determine if this requires an executable
+      final parts = command.split(' ');
+      final executable = parts.first;
+      final requiresExecutable = !['ssh', 'nc', 'socat'].contains(executable);
+
+      proxyCommand = ProxyCommandConfig(
+        command: command,
+        timeout: Duration(seconds: _proxyCommandTimeout.value),
+        retryOnFailure: true,
+        requiresExecutable: requiresExecutable,
+        executableName: requiresExecutable ? executable : null,
+      );
+    }
+
     final spi = Spi(
       name: _nameController.text.isEmpty ? _ipController.text : _nameController.text,
       ip: _ipController.text,
@@ -284,6 +313,7 @@ extension _Actions on _ServerEditPageState {
       id: widget.args?.spi.id ?? ShortId.generate(),
       customSystemType: _systemType.value,
       disabledCmdTypes: _disabledCmdTypes.value.isEmpty ? null : _disabledCmdTypes.value.toList(),
+      proxyCommand: proxyCommand,
     );
 
     if (this.spi == null) {
@@ -450,5 +480,27 @@ extension _Utils on _ServerEditPageState {
     final allAvailableCmdTypes = ShellCmdType.all.map((e) => e.displayName);
     disabledCmdTypes.removeWhere((e) => !allAvailableCmdTypes.contains(e));
     _disabledCmdTypes.value = disabledCmdTypes;
+
+    // Load ProxyCommand configuration
+    final proxyCommand = spi.proxyCommand;
+    if (proxyCommand != null) {
+      _proxyCommandEnabled.value = true;
+      _proxyCommandController.text = proxyCommand.command;
+      _proxyCommandTimeout.value = proxyCommand.timeout.inSeconds;
+
+      // Try to match with a preset
+      final presets = ProxyCommandExecutor.getPresets();
+      for (final entry in presets.entries) {
+        if (entry.value.command == proxyCommand.command) {
+          _proxyCommandPreset.value = entry.key;
+          break;
+        }
+      }
+    } else {
+      _proxyCommandEnabled.value = false;
+      _proxyCommandController.text = '';
+      _proxyCommandTimeout.value = 30;
+      _proxyCommandPreset.value = null;
+    }
   }
 }

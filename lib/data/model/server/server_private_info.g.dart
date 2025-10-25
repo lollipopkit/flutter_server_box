@@ -34,6 +34,11 @@ _Spi _$SpiFromJson(Map<String, dynamic> json) => _Spi(
   disabledCmdTypes: (json['disabledCmdTypes'] as List<dynamic>?)
       ?.map((e) => e as String)
       .toList(),
+  proxyCommand: json['proxyCommand'] == null
+      ? null
+      : ProxyCommandConfig.fromJson(
+          json['proxyCommand'] as Map<String, dynamic>,
+        ),
 );
 
 Map<String, dynamic> _$SpiToJson(_Spi instance) => <String, dynamic>{
@@ -53,6 +58,7 @@ Map<String, dynamic> _$SpiToJson(_Spi instance) => <String, dynamic>{
   'id': instance.id,
   'customSystemType': ?_$SystemTypeEnumMap[instance.customSystemType],
   'disabledCmdTypes': ?instance.disabledCmdTypes,
+  'proxyCommand': instance.proxyCommand?.toJson(),
 };
 
 const _$SystemTypeEnumMap = {

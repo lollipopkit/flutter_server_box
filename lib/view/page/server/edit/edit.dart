@@ -9,11 +9,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
+import 'package:server_box/core/utils/proxy_command_executor.dart';
 import 'package:server_box/core/utils/server_dedup.dart';
 import 'package:server_box/core/utils/ssh_config.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/discovery_result.dart';
+import 'package:server_box/data/model/server/proxy_command_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
@@ -74,6 +76,12 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage> with AfterLayou
   final _systemType = ValueNotifier<SystemType?>(null);
   final _disabledCmdTypes = <String>{}.vn;
 
+  // ProxyCommand fields
+  final _proxyCommandEnabled = ValueNotifier(false);
+  final _proxyCommandController = TextEditingController();
+  final _proxyCommandPreset = nvn<String>();
+  final _proxyCommandTimeout = ValueNotifier(30);
+
   @override
   void dispose() {
     super.dispose();
@@ -107,6 +115,11 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage> with AfterLayou
     _tags.dispose();
     _systemType.dispose();
     _disabledCmdTypes.dispose();
+
+    _proxyCommandEnabled.dispose();
+    _proxyCommandController.dispose();
+    _proxyCommandPreset.dispose();
+    _proxyCommandTimeout.dispose();
   }
 
   @override
@@ -200,6 +213,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage> with AfterLayou
       _buildAuth(),
       _buildSystemType(),
       _buildJumpServer(),
+      _buildProxyCommand(),
       _buildMore(),
     ];
     return AutoMultiList(children: children);

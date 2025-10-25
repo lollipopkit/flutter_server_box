@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/proxy_command_executor.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';
@@ -68,8 +69,7 @@ Future<SSHClient> genClient(
 
   String? alterUser;
 
-  final socket = await () async {
-    // Proxy
+  // Check for Jump Server first - this needs special handling
     final jumpSpi_ = () {
       // Multi-thread or key login
       if (jumpSpi != null) return jumpSpi;
@@ -77,6 +77,7 @@ Future<SSHClient> genClient(
       if (spi.jumpId != null) return Stores.server.box.get(spi.jumpId);
     }();
     if (jumpSpi_ != null) {
+      // For jump server, we establish connection through the jump client
       final jumpClient = await genClient(
         jumpSpi_,
         privateKey: jumpPrivateKey,
@@ -86,25 +87,82 @@ Future<SSHClient> genClient(
         onHostKeyPrompt: onHostKeyPrompt,
       );
 
-      return await jumpClient.forwardLocal(spi.ip, spi.port);
+      final forwardChannel = await jumpClient.forwardLocal(spi.ip, spi.port);
+
+      final hostKeyVerifier = _HostKeyVerifier(
+        spi: spi,
+        cache: hostKeyCache,
+        persistCallback: hostKeyPersist,
+        prompt: hostKeyPrompt,
+      );
+
+      final keyId = spi.keyId;
+      if (keyId == null) {
+        onStatus?.call(GenSSHClientStatus.pwd);
+        return SSHClient(
+          forwardChannel,
+          username: spi.user,
+          onPasswordRequest: () => spi.pwd,
+          onUserInfoRequest: onKeyboardInteractive,
+          onVerifyHostKey: hostKeyVerifier.call,
+        );
+      }
+
+      privateKey ??= getPrivateKey(keyId);
+      onStatus?.call(GenSSHClientStatus.key);
+      return SSHClient(
+        forwardChannel,
+        username: spi.user,
+        identities: await compute(loadIndentity, privateKey),
+        onUserInfoRequest: onKeyboardInteractive,
+        onVerifyHostKey: hostKeyVerifier.call,
+      );
     }
 
-    // Direct
+    // For ProxyCommand and direct connections, get SSHSocket
+    SSHSocket? socket;
     try {
-      return await SSHSocket.connect(spi.ip, spi.port, timeout: timeout);
-    } catch (e) {
-      Loggers.app.warning('genClient', e);
-      if (spi.alterUrl == null) rethrow;
-      try {
-        final res = spi.parseAlterUrl();
-        alterUser = res.$2;
-        return await SSHSocket.connect(res.$1, res.$3, timeout: timeout);
-      } catch (e) {
-        Loggers.app.warning('genClient alterUrl', e);
-        rethrow;
+      // ProxyCommand support - Check for ProxyCommand configuration first
+      if (spi.proxyCommand != null) {
+        try {
+          Loggers.app.info('Connecting via ProxyCommand: ${spi.proxyCommand!.command}');
+          socket = await ProxyCommandExecutor.executeProxyCommand(
+            spi.proxyCommand!,
+            hostname: spi.ip,
+            port: spi.port,
+            user: spi.user,
+          );
+        } catch (e) {
+          Loggers.app.warning('ProxyCommand failed', e);
+          if (!spi.proxyCommand!.retryOnFailure) {
+            rethrow;
+          }
+          // If retry is enabled, fall through to direct connection
+          Loggers.app.info('ProxyCommand failed, falling back to direct connection');
+        }
       }
+
+      // Direct connection (or fallback)
+      socket ??= await () async {
+        try {
+          return await SSHSocket.connect(spi.ip, spi.port, timeout: timeout);
+        } catch (e) {
+          Loggers.app.warning('genClient', e);
+          if (spi.alterUrl == null) rethrow;
+          try {
+            final res = spi.parseAlterUrl();
+            alterUser = res.$2;
+            return await SSHSocket.connect(res.$1, res.$3, timeout: timeout);
+          } catch (e) {
+            Loggers.app.warning('genClient alterUrl', e);
+            rethrow;
+          }
+        }
+      }();
+    } catch (e) {
+      Loggers.app.warning('Failed to establish connection', e);
+      rethrow;
     }
-  }();
 
   final hostKeyVerifier = _HostKeyVerifier(
     spi: spi,
@@ -122,8 +180,6 @@ Future<SSHClient> genClient(
       onPasswordRequest: () => spi.pwd,
       onUserInfoRequest: onKeyboardInteractive,
       onVerifyHostKey: hostKeyVerifier.call,
-      // printDebug: debugPrint,
-      // printTrace: debugPrint,
     );
   }
   privateKey ??= getPrivateKey(keyId);
@@ -132,12 +188,9 @@ Future<SSHClient> genClient(
   return SSHClient(
     socket,
     username: spi.user,
-    // Must use [compute] here, instead of [Computer.shared.start]
     identities: await compute(loadIndentity, privateKey),
     onUserInfoRequest: onKeyboardInteractive,
     onVerifyHostKey: hostKeyVerifier.call,
-    // printDebug: debugPrint,
-    // printTrace: debugPrint,
   );
 }
 
