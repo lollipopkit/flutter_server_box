@@ -33,6 +33,10 @@ abstract final class ProxyCommandExecutor {
     required int port,
     required String user,
   }) async {
+    if (Platform.isIOS) {
+      throw ProxyCommandException(message: 'ProxyCommand is not supported on iOS');
+    }
+
     final finalCommand = config.getFinalCommand(hostname: hostname, port: port, user: user);
 
     Loggers.app.info('Executing proxy command: $finalCommand');
@@ -99,6 +103,10 @@ abstract final class ProxyCommandExecutor {
 
   /// Validate proxy command configuration
   static Future<String?> validateConfig(ProxyCommandConfig config) async {
+    if (Platform.isIOS) {
+      return 'ProxyCommand is not supported on iOS';
+    }
+
     final testCommand = config.getFinalCommand(hostname: 'test.example.com', port: 22, user: 'testuser');
 
     // Check if required placeholders are present

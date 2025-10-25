@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
@@ -122,24 +123,27 @@ Future<SSHClient> genClient(
     // For ProxyCommand and direct connections, get SSHSocket
     SSHSocket? socket;
     try {
+      final proxyCommand = spi.proxyCommand;
       // ProxyCommand support - Check for ProxyCommand configuration first
-      if (spi.proxyCommand != null) {
+      if (proxyCommand != null && !Platform.isIOS) {
         try {
-          Loggers.app.info('Connecting via ProxyCommand: ${spi.proxyCommand!.command}');
+          Loggers.app.info('Connecting via ProxyCommand: ${proxyCommand.command}');
           socket = await ProxyCommandExecutor.executeProxyCommand(
-            spi.proxyCommand!,
+            proxyCommand,
             hostname: spi.ip,
             port: spi.port,
             user: spi.user,
           );
         } catch (e) {
           Loggers.app.warning('ProxyCommand failed', e);
-          if (!spi.proxyCommand!.retryOnFailure) {
+          if (!proxyCommand.retryOnFailure) {
             rethrow;
           }
           // If retry is enabled, fall through to direct connection
           Loggers.app.info('ProxyCommand failed, falling back to direct connection');
         }
+      } else if (proxyCommand != null && Platform.isIOS) {
+        Loggers.app.info('ProxyCommand configuration is ignored on iOS');
       }
 
       // Direct connection (or fallback)

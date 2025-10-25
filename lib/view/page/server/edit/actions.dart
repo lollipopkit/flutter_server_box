@@ -267,7 +267,7 @@ extension _Actions on _ServerEditPageState {
 
     // ProxyCommand configuration
     ProxyCommandConfig? proxyCommand;
-    if (_proxyCommandEnabled.value) {
+    if (!Platform.isIOS && _proxyCommandEnabled.value) {
       final command = _proxyCommandController.text.trim();
       if (command.isEmpty) {
         context.showSnackBar('ProxyCommand is enabled but command is empty');
@@ -292,6 +292,9 @@ extension _Actions on _ServerEditPageState {
         requiresExecutable: requiresExecutable,
         executableName: requiresExecutable ? executable : null,
       );
+    } else if (Platform.isIOS && _proxyCommandEnabled.value) {
+      context.showSnackBar('ProxyCommand is not supported on iOS');
+      return;
     }
 
     final spi = Spi(
@@ -483,7 +486,7 @@ extension _Utils on _ServerEditPageState {
 
     // Load ProxyCommand configuration
     final proxyCommand = spi.proxyCommand;
-    if (proxyCommand != null) {
+    if (proxyCommand != null && !Platform.isIOS) {
       _proxyCommandEnabled.value = true;
       _proxyCommandController.text = proxyCommand.command;
       _proxyCommandTimeout.value = proxyCommand.timeout.inSeconds;
@@ -497,6 +500,13 @@ extension _Utils on _ServerEditPageState {
         }
       }
     } else {
+      _proxyCommandEnabled.value = false;
+      _proxyCommandController.text = '';
+      _proxyCommandTimeout.value = 30;
+      _proxyCommandPreset.value = null;
+    }
+
+    if (Platform.isIOS) {
       _proxyCommandEnabled.value = false;
       _proxyCommandController.text = '';
       _proxyCommandTimeout.value = 30;

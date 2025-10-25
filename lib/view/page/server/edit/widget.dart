@@ -450,6 +450,14 @@ extension _Widgets on _ServerEditPageState {
   }
 
   Widget _buildProxyCommand() {
+    if (Platform.isIOS) {
+      return ListTile(
+        title: const Text('ProxyCommand'),
+        subtitle: const Text('ProxyCommand is not available on iOS'),
+        trailing: const Icon(Icons.block, color: Colors.grey),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
