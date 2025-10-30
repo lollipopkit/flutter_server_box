@@ -58,7 +58,7 @@ Map<String, dynamic> _$SpiToJson(_Spi instance) => <String, dynamic>{
   'id': instance.id,
   'customSystemType': ?_$SystemTypeEnumMap[instance.customSystemType],
   'disabledCmdTypes': ?instance.disabledCmdTypes,
-  'proxyCommand': instance.proxyCommand?.toJson(),
+  'proxyCommand': ?instance.proxyCommand,
 };
 
 const _$SystemTypeEnumMap = {

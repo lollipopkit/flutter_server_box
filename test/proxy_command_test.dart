@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/utils/proxy_command_executor.dart';
 import 'package:server_box/data/model/server/proxy_command_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
@@ -132,6 +133,33 @@ void main() {
       expect(deserializedSpi.proxyCommand!.command, equals(originalSpi.proxyCommand!.command));
       expect(deserializedSpi.proxyCommand!.requiresExecutable, equals(originalSpi.proxyCommand!.requiresExecutable));
       expect(deserializedSpi.proxyCommand!.executableName, equals(originalSpi.proxyCommand!.executableName));
+    });
+  });
+
+  group('ProxyCommandExecutor Tokenization', () {
+    test('tokenizeCommand handles quoted paths', () {
+      final tokens = ProxyCommandExecutor.tokenizeCommand(
+        'ssh -i "/Users/John Doe/.ssh/id_rsa" -W %h:%p bastion.example.com',
+      );
+
+      expect(
+        tokens,
+        equals([
+          'ssh',
+          '-i',
+          '/Users/John Doe/.ssh/id_rsa',
+          '-W',
+          '%h:%p',
+          'bastion.example.com',
+        ]),
+      );
+    });
+
+    test('tokenizeCommand throws on unmatched quote', () {
+      expect(
+        () => ProxyCommandExecutor.tokenizeCommand('ssh -i "/Users/John Doe/.ssh/id_rsa'),
+        throwsA(isA<ProxyCommandException>()),
+      );
     });
   });
 }

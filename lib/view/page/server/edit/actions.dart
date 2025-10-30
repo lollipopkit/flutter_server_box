@@ -280,17 +280,33 @@ extension _Actions on _ServerEditPageState {
         return;
       }
 
+      List<String> tokens;
+      try {
+        tokens = ProxyCommandExecutor.tokenizeCommand(command);
+      } on ProxyCommandException catch (e) {
+        context.showSnackBar(e.message);
+        return;
+      }
+      if (tokens.isEmpty) {
+        context.showSnackBar('ProxyCommand must not be empty');
+        return;
+      }
+
       // Determine if this requires an executable
-      final parts = command.split(' ');
-      final executable = parts.first;
-      final requiresExecutable = !['ssh', 'nc', 'socat'].contains(executable);
+      final executableToken = tokens.first;
+      var normalized = p.basename(executableToken).toLowerCase();
+      if (normalized.endsWith('.exe')) {
+        normalized = normalized.substring(0, normalized.length - 4);
+      }
+      const builtinExecutables = {'ssh', 'nc', 'socat'};
+      final requiresExecutable = !builtinExecutables.contains(normalized);
 
       proxyCommand = ProxyCommandConfig(
         command: command,
         timeout: Duration(seconds: _proxyCommandTimeout.value),
         retryOnFailure: true,
         requiresExecutable: requiresExecutable,
-        executableName: requiresExecutable ? executable : null,
+        executableName: requiresExecutable ? executableToken : null,
       );
     } else if (Platform.isIOS && _proxyCommandEnabled.value) {
       context.showSnackBar('ProxyCommand is not supported on iOS');

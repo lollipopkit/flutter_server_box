@@ -38,6 +38,11 @@ abstract final class ProxyCommandExecutor {
     }
 
     final finalCommand = config.getFinalCommand(hostname: hostname, port: port, user: user);
+    final tokens = _tokenizeCommand(finalCommand);
+    if (tokens.isEmpty) {
+      throw ProxyCommandException(message: 'ProxyCommand resolved to an empty command');
+    }
+    final executableToken = tokens.first;
 
     Loggers.app.info('Executing proxy command: $finalCommand');
 
@@ -46,15 +51,11 @@ abstract final class ProxyCommandExecutor {
     if (config.requiresExecutable && config.executableName != null) {
       executablePath = await ExecutableManager.ensureExecutable(config.executableName!);
     } else {
-      // Parse command to get executable
-      final parts = finalCommand.split(' ');
-      final executable = parts.first;
-      executablePath = await ExecutableManager.getExecutablePath(executable);
+      executablePath = await ExecutableManager.getExecutablePath(executableToken);
     }
 
     // Parse command and arguments
-    final parts = finalCommand.split(' ');
-    final args = parts.skip(1).toList();
+    final args = tokens.skip(1).toList();
 
     // Set up environment
     final environment = {...Platform.environment, ...?config.environment};
@@ -108,6 +109,15 @@ abstract final class ProxyCommandExecutor {
     }
 
     final testCommand = config.getFinalCommand(hostname: 'test.example.com', port: 22, user: 'testuser');
+    late final List<String> tokens;
+    try {
+      tokens = _tokenizeCommand(testCommand);
+    } on ProxyCommandException catch (e) {
+      return e.message;
+    }
+    if (tokens.isEmpty) {
+      return 'Proxy command must not be empty';
+    }
 
     // Check if required placeholders are present
     if (!config.command.contains('%h')) {
@@ -124,11 +134,8 @@ abstract final class ProxyCommandExecutor {
     }
 
     // Try to validate command syntax (dry run)
-    final parts = testCommand.split(' ');
-    final executable = parts.first;
-
     try {
-      await Process.run(executable, ['--help'], runInShell: true);
+      await Process.run(tokens.first, ['--help']);
     } catch (e) {
       return 'Command validation failed: $e';
     }
@@ -152,5 +159,71 @@ abstract final class ProxyCommandExecutor {
   static Future<void> removeCustomPreset(String name) async {
     // TODO: Implement custom preset removal
     Loggers.app.info('Removing custom proxy preset: $name');
+  }
+
+  static List<String> tokenizeCommand(String command) => _tokenizeCommand(command);
+
+  static List<String> _tokenizeCommand(String command) {
+    final tokens = <String>[];
+    final buffer = StringBuffer();
+    String? quote;
+    var escaped = false;
+
+    void flush() {
+      if (buffer.isEmpty) return;
+      tokens.add(buffer.toString());
+      buffer.clear();
+    }
+
+    for (final rune in command.runes) {
+      final char = String.fromCharCode(rune);
+
+      if (escaped) {
+        buffer.write(char);
+        escaped = false;
+        continue;
+      }
+
+      if (quote != null) {
+        if (char == '\\' && quote == '"') {
+          escaped = true;
+          continue;
+        }
+        if (char == quote) {
+          quote = null;
+          continue;
+        }
+        buffer.write(char);
+        continue;
+      }
+
+      if (char == '\\') {
+        escaped = true;
+        continue;
+      }
+
+      if (char == '"' || char == "'") {
+        quote = char;
+        continue;
+      }
+
+      if (char.trim().isEmpty) {
+        flush();
+        continue;
+      }
+
+      buffer.write(char);
+    }
+
+    if (quote != null) {
+      throw ProxyCommandException(message: 'ProxyCommand has unmatched quote');
+    }
+
+    if (escaped) {
+      throw ProxyCommandException(message: 'ProxyCommand ends with an incomplete escape sequence');
+    }
+
+    flush();
+    return tokens;
   }
 }

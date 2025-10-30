@@ -14,6 +14,7 @@ extension HiveRegistrar on HiveInterface {
     registerAdapter(ConnectionStatAdapter());
     registerAdapter(NetViewTypeAdapter());
     registerAdapter(PrivateKeyInfoAdapter());
+    registerAdapter(ProxyCommandConfigAdapter());
     registerAdapter(ServerConnectionStatsAdapter());
     registerAdapter(ServerCustomAdapter());
     registerAdapter(ServerFuncBtnAdapter());
@@ -32,6 +33,7 @@ extension IsolatedHiveRegistrar on IsolatedHiveInterface {
     registerAdapter(ConnectionStatAdapter());
     registerAdapter(NetViewTypeAdapter());
     registerAdapter(PrivateKeyInfoAdapter());
+    registerAdapter(ProxyCommandConfigAdapter());
     registerAdapter(ServerConnectionStatsAdapter());
     registerAdapter(ServerCustomAdapter());
     registerAdapter(ServerFuncBtnAdapter());

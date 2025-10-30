@@ -607,3 +607,66 @@ class SystemTypeAdapter extends TypeAdapter<SystemType> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+class ProxyCommandConfigAdapter extends TypeAdapter<ProxyCommandConfig> {
+  @override
+  final typeId = 10;
+
+  @override
+  ProxyCommandConfig read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return ProxyCommandConfig(
+      command: fields[0] as String,
+      args: (fields[1] as List?)?.cast<String>(),
+      workingDirectory: fields[2] as String?,
+      environment: (fields[3] as Map?)?.cast<String, String>(),
+      timeout: fields[4] == null
+          ? const Duration(seconds: 30)
+          : fields[4] as Duration,
+      retryOnFailure: fields[5] == null ? false : fields[5] as bool,
+      maxRetries: fields[6] == null ? 3 : (fields[6] as num).toInt(),
+      requiresExecutable: fields[7] == null ? false : fields[7] as bool,
+      executableName: fields[8] as String?,
+      executableDownloadUrl: fields[9] as String?,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, ProxyCommandConfig obj) {
+    writer
+      ..writeByte(10)
+      ..writeByte(0)
+      ..write(obj.command)
+      ..writeByte(1)
+      ..write(obj.args)
+      ..writeByte(2)
+      ..write(obj.workingDirectory)
+      ..writeByte(3)
+      ..write(obj.environment)
+      ..writeByte(4)
+      ..write(obj.timeout)
+      ..writeByte(5)
+      ..write(obj.retryOnFailure)
+      ..writeByte(6)
+      ..write(obj.maxRetries)
+      ..writeByte(7)
+      ..write(obj.requiresExecutable)
+      ..writeByte(8)
+      ..write(obj.executableName)
+      ..writeByte(9)
+      ..write(obj.executableDownloadUrl);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ProxyCommandConfigAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
