@@ -228,6 +228,10 @@ class SettingStore extends HiveStore {
 
   late final betaTest = propertyDefault('betaTest', false);
 
+  late final proxyCmdCustomExecs = listProperty('proxyCmdCustomExecs');
+
+  late final proxyCmdCustomPresets = listProperty('proxyCmdCustomPresets');
+
   /// For desktop only.
   /// Record the position and size of the window.
   late final windowState = property<WindowState>(

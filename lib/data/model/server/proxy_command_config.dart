@@ -1,5 +1,4 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:hive_ce_flutter/adapters.dart';
 
 part 'proxy_command_config.freezed.dart';
 part 'proxy_command_config.g.dart';

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dartssh2/dartssh2.dart';
@@ -6,6 +7,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/utils/executable_manager.dart';
 import 'package:server_box/core/utils/proxy_socket.dart';
 import 'package:server_box/data/model/server/proxy_command_config.dart';
+import 'package:server_box/data/store/setting.dart';
 
 /// Exception thrown when proxy command execution fails
 class ProxyCommandException implements Exception {
@@ -26,6 +28,58 @@ class ProxyCommandException implements Exception {
 
 /// Generic proxy command executor that handles SSH ProxyCommand functionality
 abstract final class ProxyCommandExecutor {
+  static final Map<String, ProxyCommandConfig> _customPresets = {};
+  static bool _customPresetsLoaded = false;
+
+  static void _ensureCustomPresetsLoaded() {
+    if (_customPresetsLoaded) return;
+
+    final List<dynamic> stored = SettingStore.instance.proxyCmdCustomPresets.get();
+    for (final raw in stored) {
+      final preset = _parsePreset(raw);
+      if (preset == null) continue;
+      _customPresets[preset.key] = preset.value;
+    }
+
+    _customPresetsLoaded = true;
+  }
+
+  static void _persistCustomPresets() {
+    final list = _customPresets.entries
+        .map((entry) => {
+              'name': entry.key,
+              'config': entry.value.toJson(),
+            })
+        .toList();
+    SettingStore.instance.proxyCmdCustomPresets.set(list);
+  }
+
+  static MapEntry<String, ProxyCommandConfig>? _parsePreset(dynamic raw) {
+    dynamic payload = raw;
+    if (payload is String) {
+      try {
+        payload = jsonDecode(payload);
+      } catch (e) {
+        Loggers.app.warning('Failed to decode custom proxy preset entry: $e');
+        return null;
+      }
+    }
+
+    if (payload is! Map) return null;
+
+    final name = payload['name']?.toString();
+    final configRaw = payload['config'];
+    if (name == null || name.isEmpty || configRaw is! Map) return null;
+
+    try {
+      final config = ProxyCommandConfig.fromJson(Map<String, dynamic>.from(configRaw));
+      return MapEntry(name, config);
+    } catch (e) {
+      Loggers.app.warning('Failed to parse custom proxy preset "$name": $e');
+      return null;
+    }
+  }
+
   /// Execute a proxy command and return a socket connected through the proxy
   static Future<SSHSocket> executeProxyCommand(
     ProxyCommandConfig config, {
@@ -124,10 +178,18 @@ abstract final class ProxyCommandExecutor {
       return 'Proxy command must contain %h (hostname) placeholder';
     }
 
-    // If executable is required, check if it exists
+    String executablePath;
+
+    // If executable is required, check if it exists and reuse resolved path
     if (config.requiresExecutable && config.executableName != null) {
       try {
-        await ExecutableManager.ensureExecutable(config.executableName!);
+        executablePath = await ExecutableManager.ensureExecutable(config.executableName!);
+      } catch (e) {
+        return e.toString();
+      }
+    } else {
+      try {
+        executablePath = await ExecutableManager.getExecutablePath(tokens.first);
       } catch (e) {
         return e.toString();
       }
@@ -135,7 +197,7 @@ abstract final class ProxyCommandExecutor {
 
     // Try to validate command syntax (dry run)
     try {
-      await Process.run(tokens.first, ['--help']);
+      await Process.run(executablePath, ['--help']);
     } catch (e) {
       return 'Command validation failed: $e';
     }
@@ -145,20 +207,29 @@ abstract final class ProxyCommandExecutor {
 
   /// Get available proxy command presets
   static Map<String, ProxyCommandConfig> getPresets() {
-    return proxyCommandPresets;
+    _ensureCustomPresetsLoaded();
+    return {
+      ...proxyCommandPresets,
+      ..._customPresets,
+    };
   }
 
   /// Add a custom preset
   static Future<void> addCustomPreset(String name, ProxyCommandConfig config) async {
-    // TODO: Implement custom preset storage
-    // This would involve storing custom presets in a persistent storage
+    _ensureCustomPresetsLoaded();
+    _customPresets[name] = config;
+    _persistCustomPresets();
     Loggers.app.info('Adding custom proxy preset: $name');
   }
 
   /// Remove a custom preset
   static Future<void> removeCustomPreset(String name) async {
-    // TODO: Implement custom preset removal
-    Loggers.app.info('Removing custom proxy preset: $name');
+    _ensureCustomPresetsLoaded();
+    final removed = _customPresets.remove(name);
+    if (removed != null) {
+      _persistCustomPresets();
+      Loggers.app.info('Removing custom proxy preset: $name');
+    }
   }
 
   static List<String> tokenizeCommand(String command) => _tokenizeCommand(command);

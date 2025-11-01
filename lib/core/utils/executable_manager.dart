@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
+import 'package:server_box/data/store/setting.dart';
 
 /// Exception thrown when executable management fails
 class ExecutableException implements Exception {
@@ -28,6 +30,8 @@ class ExecutableInfo {
 abstract final class ExecutableManager {
   static const String _executablesDirName = 'executables';
   static late final Directory _executablesDir;
+  static final Map<String, ExecutableInfo> _customExecutables = {};
+  static bool _customExecutablesLoaded = false;
 
   static Future<void> initialize() async {
     final appDir = await getApplicationSupportDirectory();
@@ -35,6 +39,8 @@ abstract final class ExecutableManager {
     if (!await _executablesDir.exists()) {
       await _executablesDir.create(recursive: true);
     }
+
+    _ensureCustomExecutablesLoaded();
   }
 
   /// Predefined executables
@@ -44,6 +50,52 @@ abstract final class ExecutableManager {
     'nc': ExecutableInfo(name: 'nc'),
     'socat': ExecutableInfo(name: 'socat'),
   };
+
+  static void _ensureCustomExecutablesLoaded() {
+    if (_customExecutablesLoaded) return;
+
+    final List<dynamic> stored = SettingStore.instance.proxyCmdCustomExecs.get();
+    for (final raw in stored) {
+      final info = _parseExecutableInfo(raw);
+      if (info == null) continue;
+      _customExecutables[info.name] = info;
+      _predefinedExecutables[info.name] = info;
+    }
+
+    _customExecutablesLoaded = true;
+  }
+
+  static void _persistCustomExecutables() {
+    final values = _customExecutables.values
+        .map((info) => {
+              'name': info.name,
+              if (info.spokenName != null) 'spokenName': info.spokenName,
+              if (info.version != null) 'version': info.version,
+            })
+        .toList();
+    SettingStore.instance.proxyCmdCustomExecs.set(values);
+  }
+
+  static ExecutableInfo? _parseExecutableInfo(dynamic raw) {
+    if (raw is String) {
+      try {
+        return _parseExecutableInfo(jsonDecode(raw));
+      } catch (e) {
+        Loggers.app.warning('Failed to decode custom executable entry: $e');
+        return null;
+      }
+    }
+    if (raw is! Map) return null;
+
+    final name = raw['name']?.toString();
+    if (name == null || name.isEmpty) return null;
+
+    return ExecutableInfo(
+      name: name,
+      spokenName: raw['spokenName']?.toString(),
+      version: raw['version']?.toString(),
+    );
+  }
 
   /// Check if an executable exists in PATH or local directory
   static Future<bool> isExecutableAvailable(String name) async {
@@ -224,18 +276,27 @@ abstract final class ExecutableManager {
 
   /// Get predefined executable info
   static ExecutableInfo? getExecutableInfo(String name) {
+    _ensureCustomExecutablesLoaded();
     return _predefinedExecutables[name];
   }
 
   /// Add a custom executable definition
   static void addCustomExecutable(String name, ExecutableInfo info) {
-    // TODO: Implement persistent storage for custom executables
+    _ensureCustomExecutablesLoaded();
+    _customExecutables[name] = info;
+    _predefinedExecutables[name] = info;
+    _persistCustomExecutables();
     Loggers.app.info('Adding custom executable: $name');
   }
 
   /// Remove a custom executable definition
   static void removeCustomExecutable(String name) {
-    // TODO: Implement persistent storage for custom executables
-    Loggers.app.info('Removing custom executable: $name');
+    _ensureCustomExecutablesLoaded();
+    final removed = _customExecutables.remove(name);
+    if (removed != null) {
+      _predefinedExecutables.remove(name);
+      _persistCustomExecutables();
+      Loggers.app.info('Removing custom executable: $name');
+    }
   }
 }
