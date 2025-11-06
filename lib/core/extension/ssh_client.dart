@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/widgets.dart';
+import 'package:server_box/data/helper/ssh_decoder.dart';
 import 'package:server_box/data/model/server/system.dart';
 
 import 'package:server_box/data/res/misc.dart';
@@ -169,5 +170,79 @@ extension SSHClientX on SSHClient {
       entry: entry,
     );
     return ret.$2;
+  }
+
+  /// Runs a command and decodes output safely with encoding fallback
+  ///
+  /// [systemType] - The system type (affects encoding choice)
+  /// [context] - Optional context for debugging
+  Future<String> runSafe(
+    String command, {
+    SystemType? systemType,
+    String? context,
+  }) async {
+    try {
+      final result = await run(command);
+      return SSHDecoder.decode(
+        result,
+        isWindows: systemType == SystemType.windows,
+        context: context,
+      );
+    } catch (e) {
+      throw Exception('Failed to run command${context != null ? " [$context]" : ""}: $e');
+    }
+  }
+
+  /// Executes a command with stdin and safely decodes stdout/stderr
+  Future<(String stdout, String stderr)> execSafe(
+    void Function(SSHSession session) callback, {
+    required String entry,
+    SystemType? systemType,
+    String? context,
+  }) async {
+    final stdoutBuilder = BytesBuilder(copy: false);
+    final stderrBuilder = BytesBuilder(copy: false);
+    final stdoutDone = Completer<void>();
+    final stderrDone = Completer<void>();
+
+    final session = await execute(entry);
+
+    session.stdout.listen(
+      (e) {
+        stdoutBuilder.add(e);
+      },
+      onDone: stdoutDone.complete,
+      onError: stdoutDone.completeError,
+    );
+
+    session.stderr.listen(
+      (e) {
+        stderrBuilder.add(e);
+      },
+      onDone: stderrDone.complete,
+      onError: stderrDone.completeError,
+    );
+
+    callback(session);
+
+    await stdoutDone.future;
+    await stderrDone.future;
+
+    final stdoutBytes = stdoutBuilder.takeBytes();
+    final stderrBytes = stderrBuilder.takeBytes();
+
+    final stdout = SSHDecoder.decode(
+      stdoutBytes,
+      isWindows: systemType == SystemType.windows,
+      context: context != null ? '$context (stdout)' : 'stdout',
+    );
+
+    final stderr = SSHDecoder.decode(
+      stderrBytes,
+      isWindows: systemType == SystemType.windows,
+      context: context != null ? '$context (stderr)' : 'stderr',
+    );
+
+    return (stdout, stderr);
   }
 }
