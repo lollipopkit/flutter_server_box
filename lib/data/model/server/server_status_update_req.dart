@@ -550,38 +550,33 @@ List<NetSpeedPart> _parseWindowsNetwork(String raw, int currentTime) {
     final dynamic jsonData = json.decode(raw);
     final List<NetSpeedPart> netParts = [];
 
-    // PowerShell Get-Counter returns a structure with CounterSamples
-    if (jsonData is Map && jsonData.containsKey('CounterSamples')) {
-      final samples = jsonData['CounterSamples'] as List?;
-      if (samples != null && samples.length >= 2) {
-        // We need 2 samples to calculate speed (interval between them)
-        final Map<String, double> interfaceRx = {};
-        final Map<String, double> interfaceTx = {};
-
-        for (final sample in samples) {
-          final path = sample['Path']?.toString() ?? '';
-          final cookedValue = sample['CookedValue'] as num? ?? 0;
-
-          if (path.contains('Bytes Received/sec')) {
-            final interfaceName = _extractInterfaceName(path);
-            if (interfaceName.isNotEmpty) {
-              interfaceRx[interfaceName] = cookedValue.toDouble();
-            }
-          } else if (path.contains('Bytes Sent/sec')) {
-            final interfaceName = _extractInterfaceName(path);
-            if (interfaceName.isNotEmpty) {
-              interfaceTx[interfaceName] = cookedValue.toDouble();
-            }
-          }
-        }
-
-        // Create NetSpeedPart for each interface
-        for (final interfaceName in interfaceRx.keys) {
-          final rx = interfaceRx[interfaceName] ?? 0;
-          final tx = interfaceTx[interfaceName] ?? 0;
-
+    if (jsonData is List && jsonData.length >= 2) {
+      var sample1 = jsonData[jsonData.length - 2];
+      var sample2 = jsonData[jsonData.length - 1];
+      if (sample1 is Map && sample1.containsKey('value')) {
+        sample1 = sample1['value'];
+      }
+      if (sample2 is Map && sample2.containsKey('value')) {
+        sample2 = sample2['value'];
+      }
+      if (sample1 is List && sample2 is List && sample1.length == sample2.length) {
+        for (int i = 0; i < sample1.length; i++) {
+          final s1 = sample1[i];
+          final s2 = sample2[i];
+          final name = s1['Name']?.toString() ?? '';
+          if (name.isEmpty || name == '_Total') continue;
+          final rx1 = (s1['BytesReceivedPersec'] as num?)?.toDouble() ?? 0;
+          final rx2 = (s2['BytesReceivedPersec'] as num?)?.toDouble() ?? 0;
+          final tx1 = (s1['BytesSentPersec'] as num?)?.toDouble() ?? 0;
+          final tx2 = (s2['BytesSentPersec'] as num?)?.toDouble() ?? 0;
+          final time1 = (s1['Timestamp_Sys100NS'] as num?)?.toDouble() ?? 0;
+          final time2 = (s2['Timestamp_Sys100NS'] as num?)?.toDouble() ?? 0;
+          final timeDelta = (time2 - time1) / 10000000;
+          if (timeDelta <= 0) continue;
+          final rxSpeed = ((rx2 - rx1) / timeDelta).abs();
+          final txSpeed = ((tx2 - tx1) / timeDelta).abs();
           netParts.add(
-            NetSpeedPart(interfaceName, BigInt.from(rx.toInt()), BigInt.from(tx.toInt()), currentTime),
+            NetSpeedPart(name, BigInt.from(rxSpeed.toInt()), BigInt.from(txSpeed.toInt()), currentTime),
           );
         }
       }
@@ -593,53 +588,42 @@ List<NetSpeedPart> _parseWindowsNetwork(String raw, int currentTime) {
   }
 }
 
-String _extractInterfaceName(String path) {
-  // Extract interface name from path like
-  // "\\Computer\\NetworkInterface(Interface Name)\\..."
-  final match = RegExp(r'\\NetworkInterface\(([^)]+)\)\\').firstMatch(path);
-  return match?.group(1) ?? '';
-}
-
 List<DiskIOPiece> _parseWindowsDiskIO(String raw, int currentTime) {
   try {
     final dynamic jsonData = json.decode(raw);
     final List<DiskIOPiece> diskParts = [];
 
-    // PowerShell Get-Counter returns a structure with CounterSamples
-    if (jsonData is Map && jsonData.containsKey('CounterSamples')) {
-      final samples = jsonData['CounterSamples'] as List?;
-      if (samples != null) {
-        final Map<String, double> diskReads = {};
-        final Map<String, double> diskWrites = {};
-
-        for (final sample in samples) {
-          final path = sample['Path']?.toString() ?? '';
-          final cookedValue = sample['CookedValue'] as num? ?? 0;
-
-          if (path.contains('Disk Read Bytes/sec')) {
-            final diskName = _extractDiskName(path);
-            if (diskName.isNotEmpty) {
-              diskReads[diskName] = cookedValue.toDouble();
-            }
-          } else if (path.contains('Disk Write Bytes/sec')) {
-            final diskName = _extractDiskName(path);
-            if (diskName.isNotEmpty) {
-              diskWrites[diskName] = cookedValue.toDouble();
-            }
-          }
-        }
-
-        // Create DiskIOPiece for each disk - convert bytes to sectors
-        // (assuming 512 bytes per sector)
-        for (final diskName in diskReads.keys) {
-          final readBytes = diskReads[diskName] ?? 0;
-          final writeBytes = diskWrites[diskName] ?? 0;
-          final sectorsRead = (readBytes / 512).round();
-          final sectorsWrite = (writeBytes / 512).round();
+    if (jsonData is List && jsonData.length >= 2) {
+      var sample1 = jsonData[jsonData.length - 2];
+      var sample2 = jsonData[jsonData.length - 1];
+      if (sample1 is Map && sample1.containsKey('value')) {
+        sample1 = sample1['value'];
+      }
+      if (sample2 is Map && sample2.containsKey('value')) {
+        sample2 = sample2['value'];
+      }
+      if (sample1 is List && sample2 is List && sample1.length == sample2.length) {
+        for (int i = 0; i < sample1.length; i++) {
+          final s1 = sample1[i];
+          final s2 = sample2[i];
+          final name = s1['Name']?.toString() ?? '';
+          if (name.isEmpty || name == '_Total') continue;
+          final read1 = (s1['DiskReadBytesPersec'] as num?)?.toDouble() ?? 0;
+          final read2 = (s2['DiskReadBytesPersec'] as num?)?.toDouble() ?? 0;
+          final write1 = (s1['DiskWriteBytesPersec'] as num?)?.toDouble() ?? 0;
+          final write2 = (s2['DiskWriteBytesPersec'] as num?)?.toDouble() ?? 0;
+          final time1 = (s1['Timestamp_Sys100NS'] as num?)?.toDouble() ?? 0;
+          final time2 = (s2['Timestamp_Sys100NS'] as num?)?.toDouble() ?? 0;
+          final timeDelta = (time2 - time1) / 10000000;
+          if (timeDelta <= 0) continue;
+          final readSpeed = ((read2 - read1) / timeDelta).abs();
+          final writeSpeed = ((write2 - write1) / timeDelta).abs();
+          final sectorsRead = (readSpeed / 512).round();
+          final sectorsWrite = (writeSpeed / 512).round();
 
           diskParts.add(
             DiskIOPiece(
-              dev: diskName,
+              dev: name,
               sectorsRead: sectorsRead,
               sectorsWrite: sectorsWrite,
               time: currentTime,
@@ -653,13 +637,6 @@ List<DiskIOPiece> _parseWindowsDiskIO(String raw, int currentTime) {
   } catch (e) {
     return [];
   }
-}
-
-String _extractDiskName(String path) {
-  // Extract disk name from path like
-  // "\\Computer\\PhysicalDisk(Disk Name)\\..."
-  final match = RegExp(r'\\PhysicalDisk\(([^)]+)\)\\').firstMatch(path);
-  return match?.group(1) ?? '';
 }
 
 void _parseWindowsTemperatures(Temperatures temps, String raw) {

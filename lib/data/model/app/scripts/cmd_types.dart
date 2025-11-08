@@ -166,18 +166,17 @@ enum WindowsStatusCmdType implements ShellCmdType {
   echo('echo ${SystemType.windowsSign}'),
   time('[DateTimeOffset]::UtcNow.ToUnixTimeSeconds()'),
 
-  /// Get network interface statistics using Windows Performance Counters
+  /// Get network interface statistics using WMI
   ///
-  /// Uses Get-Counter to collect network I/O metrics from all network interfaces:
-  /// - Collects bytes received and sent per second for all network interfaces
+  /// Uses WMI Win32_PerfRawData_Tcpip_NetworkInterface for cross-language compatibility:
   /// - Takes 2 samples with 1 second interval to calculate rates
-  /// - Outputs results in JSON format for easy parsing
-  /// - Counter paths use double backslashes to escape PowerShell string literals
   net(
-    r'Get-Counter -Counter '
-    r'"\\NetworkInterface(*)\\Bytes Received/sec", '
-    r'"\\NetworkInterface(*)\\Bytes Sent/sec" '
-    r'-SampleInterval 1 -MaxSamples 2 | ConvertTo-Json',
+    r'$s1 = @(Get-WmiObject Win32_PerfRawData_Tcpip_NetworkInterface | '
+    r'Select-Object Name, BytesReceivedPersec, BytesSentPersec, Timestamp_Sys100NS); '
+    r'Start-Sleep -Seconds 1; '
+    r'$s2 = @(Get-WmiObject Win32_PerfRawData_Tcpip_NetworkInterface | '
+    r'Select-Object Name, BytesReceivedPersec, BytesSentPersec, Timestamp_Sys100NS); '
+    r'@($s1, $s2) | ConvertTo-Json -Depth 5',
   ),
   sys('(Get-ComputerInfo).OsName'),
   cpu(
@@ -213,19 +212,19 @@ enum WindowsStatusCmdType implements ShellCmdType {
   ),
   host(r'Write-Output $env:COMPUTERNAME'),
 
-  /// Get disk I/O statistics using Windows Performance Counters
+  /// Get disk I/O statistics using WMI
   ///
-  /// Uses Get-Counter to collect disk I/O metrics from all physical disks:
+  /// Uses WMI Win32_PerfRawData_PerfDisk_PhysicalDisk:
   /// - Monitors read and write bytes per second for all physical disks
-  /// - Takes 2 samples with 1 second interval to calculate I/O rates
-  /// - Physical disk counters provide hardware-level I/O statistics
-  /// - Outputs results in JSON format for parsing
-  /// - Counter names use wildcard (*) to capture all disk instances
+  /// - Takes 2 samples with 1 second interval to calculate rates
+  /// - DiskReadBytesPersec and DiskWriteBytesPersec are cumulative counters
   diskio(
-    r'Get-Counter -Counter '
-    r'"\\PhysicalDisk(*)\\Disk Read Bytes/sec", '
-    r'"\\PhysicalDisk(*)\\Disk Write Bytes/sec" '
-    r'-SampleInterval 1 -MaxSamples 2 | ConvertTo-Json',
+    r'$s1 = @(Get-WmiObject Win32_PerfRawData_PerfDisk_PhysicalDisk | '
+    r'Select-Object Name, DiskReadBytesPersec, DiskWriteBytesPersec, Timestamp_Sys100NS); '
+    r'Start-Sleep -Seconds 1; '
+    r'$s2 = @(Get-WmiObject Win32_PerfRawData_PerfDisk_PhysicalDisk | '
+    r'Select-Object Name, DiskReadBytesPersec, DiskWriteBytesPersec, Timestamp_Sys100NS); '
+    r'@($s1, $s2) | ConvertTo-Json -Depth 5',
   ),
   battery(
     'Get-WmiObject -Class Win32_Battery | '
