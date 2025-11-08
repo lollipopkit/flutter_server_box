@@ -192,9 +192,7 @@ enum WindowsStatusCmdType implements ShellCmdType {
   /// - Returns pre-formatted string: "X days, H:MM" or "H:MM" (if less than 1 day)
   /// - Uses ToString('00') for zero-padding to avoid quote escaping issues
   uptime(
-    r'$up = (Get-Date) - (Get-CimInstance Win32_OperatingSystem).LastBootUpTime; '
-    r'if ($up.Days -gt 0) { "$($up.Days) days, $($up.Hours):$($up.Minutes.ToString(''00''))" } '
-    r'else { "$($up.Hours):$($up.Minutes.ToString(''00''))" }',
+    r"""$up = (Get-Date) - (Get-CimInstance Win32_OperatingSystem).LastBootUpTime; if ($up.Days -gt 0) { "$($up.Days) days, $($up.Hours):$($up.Minutes.ToString('00'))" } else { "$($up.Hours):$($up.Minutes.ToString('00'))" }""",
   ),
   conn('(netstat -an | findstr ESTABLISHED | Measure-Object -Line).Count'),
   disk(

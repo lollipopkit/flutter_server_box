@@ -576,8 +576,11 @@ List<NetSpeedPart> _parseWindowsNetwork(String raw, int currentTime) {
           final time2 = (s2['Timestamp_Sys100NS'] as num?)?.toDouble() ?? 0;
           final timeDelta = (time2 - time1) / 10000000;
           if (timeDelta <= 0) continue;
-          final rxSpeed = ((rx2 - rx1) / timeDelta).abs();
-          final txSpeed = ((tx2 - tx1) / timeDelta).abs();
+          final rxDelta = rx2 - rx1;
+          final txDelta = tx2 - tx1;
+          if (rxDelta < 0 || txDelta < 0) continue;
+          final rxSpeed = rxDelta / timeDelta;
+          final txSpeed = txDelta / timeDelta;
           netParts.add(
             NetSpeedPart(name, BigInt.from(rxSpeed.toInt()), BigInt.from(txSpeed.toInt()), currentTime),
           );
@@ -619,8 +622,11 @@ List<DiskIOPiece> _parseWindowsDiskIO(String raw, int currentTime) {
           final time2 = (s2['Timestamp_Sys100NS'] as num?)?.toDouble() ?? 0;
           final timeDelta = (time2 - time1) / 10000000;
           if (timeDelta <= 0) continue;
-          final readSpeed = ((read2 - read1) / timeDelta).abs();
-          final writeSpeed = ((write2 - write1) / timeDelta).abs();
+          final readDelta = read2 - read1;
+          final writeDelta = write2 - write1;
+          if (readDelta < 0 || writeDelta < 0) continue;
+          final readSpeed = readDelta / timeDelta;
+          final writeSpeed = writeDelta / timeDelta;
           final sectorsRead = (readSpeed / 512).round();
           final sectorsWrite = (writeSpeed / 512).round();
 

@@ -6,7 +6,7 @@ import 'package:server_box/data/res/status.dart';
 /// Capacity of the FIFO queue
 const _kCap = 30;
 
-class Cpus extends TimeSeq<List<SingleCpuCore>> {
+class Cpus extends TimeSeq<SingleCpuCore> {
   Cpus(super.init1, super.init2);
 
   final Map<String, int> brand = {};
