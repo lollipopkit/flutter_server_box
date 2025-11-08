@@ -14,13 +14,20 @@ class Cpus extends TimeSeq<List<SingleCpuCore>> {
   @override
   void onUpdate() {
     _coresCount = now.length;
+    if (pre.isEmpty || now.isEmpty || pre.length != now.length) {
+      _totalDelta = 0;
+      _user = 0;
+      _sys = 0;
+      _iowait = 0;
+      _idle = 0;
+      return;
+    }
     _totalDelta = now[0].total - pre[0].total;
     _user = _getUser();
     _sys = _getSys();
     _iowait = _getIowait();
     _idle = _getIdle();
     _updateSpots();
-    //_updateRange();
   }
 
   double usedPercent({int coreIdx = 0}) {

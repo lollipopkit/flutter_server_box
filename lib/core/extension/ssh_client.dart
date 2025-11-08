@@ -175,21 +175,26 @@ extension SSHClientX on SSHClient {
   /// Runs a command and decodes output safely with encoding fallback
   ///
   /// [systemType] - The system type (affects encoding choice)
-  /// [context] - Optional context for debugging
+  /// Runs a command and safely decodes the result
   Future<String> runSafe(
     String command, {
     SystemType? systemType,
     String? context,
   }) async {
+    // Let SSH errors propagate with their original type (e.g., SSHError subclasses)
+    final result = await run(command);
+    
+    // Only catch decoding failures and add context
     try {
-      final result = await run(command);
       return SSHDecoder.decode(
         result,
         isWindows: systemType == SystemType.windows,
         context: context,
       );
-    } catch (e) {
-      throw Exception('Failed to run command${context != null ? " [$context]" : ""}: $e');
+    } on FormatException catch (e) {
+      throw Exception(
+        'Failed to decode command output${context != null ? " [$context]" : ""}: $e',
+      );
     }
   }
 
@@ -231,17 +236,32 @@ extension SSHClientX on SSHClient {
     final stdoutBytes = stdoutBuilder.takeBytes();
     final stderrBytes = stderrBuilder.takeBytes();
 
-    final stdout = SSHDecoder.decode(
-      stdoutBytes,
-      isWindows: systemType == SystemType.windows,
-      context: context != null ? '$context (stdout)' : 'stdout',
-    );
+    // Only catch decoding failures, let other errors propagate
+    String stdout;
+    try {
+      stdout = SSHDecoder.decode(
+        stdoutBytes,
+        isWindows: systemType == SystemType.windows,
+        context: context != null ? '$context (stdout)' : 'stdout',
+      );
+    } on FormatException catch (e) {
+      throw Exception(
+        'Failed to decode stdout${context != null ? " [$context]" : ""}: $e',
+      );
+    }
 
-    final stderr = SSHDecoder.decode(
-      stderrBytes,
-      isWindows: systemType == SystemType.windows,
-      context: context != null ? '$context (stderr)' : 'stderr',
-    );
+    String stderr;
+    try {
+      stderr = SSHDecoder.decode(
+        stderrBytes,
+        isWindows: systemType == SystemType.windows,
+        context: context != null ? '$context (stderr)' : 'stderr',
+      );
+    } on FormatException catch (e) {
+      throw Exception(
+        'Failed to decode stderr${context != null ? " [$context]" : ""}: $e',
+      );
+    }
 
     return (stdout, stderr);
   }

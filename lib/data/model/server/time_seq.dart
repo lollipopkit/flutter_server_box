@@ -56,8 +56,18 @@ abstract class TimeSeq<T extends List<TimeSeqIface>> extends Fifo<T> {
     add(new_);
 
     if (pre.length != now.length) {
-      pre.removeWhere((e) => now.any((el) => e.same(el)));
-      pre.addAll(now.where((e) => pre.every((el) => !e.same(el))));
+      final sizeDiff = (pre.length - now.length).abs();
+      final isSignificantChange = sizeDiff > 1;
+      if (isSignificantChange) {
+        // Replace the pre entry with a new empty list instead of clearing it
+        // to avoid mutating the historical FIFO data
+        _list[length - 2] = <TimeSeqIface>[] as T;
+      } else {
+        final newPre = List<TimeSeqIface>.from(pre);
+        newPre.removeWhere((e) => now.any((el) => e.same(el)));
+        newPre.addAll(now.where((e) => newPre.every((el) => !e.same(el))));
+        _list[length - 2] = newPre as T;
+      }
     }
 
     onUpdate();

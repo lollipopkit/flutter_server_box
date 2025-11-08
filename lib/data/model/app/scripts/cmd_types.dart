@@ -182,7 +182,7 @@ enum WindowsStatusCmdType implements ShellCmdType {
   sys('(Get-ComputerInfo).OsName'),
   cpu(
     'Get-WmiObject -Class Win32_Processor | '
-    'Select-Object Name, LoadPercentage | ConvertTo-Json',
+    'Select-Object Name, LoadPercentage, NumberOfCores, NumberOfLogicalProcessors | ConvertTo-Json',
   ),
   uptime('(Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime'),
   conn('(netstat -an | findstr ESTABLISHED | Measure-Object -Line).Count'),
@@ -287,7 +287,7 @@ enum WindowsStatusCmdType implements ShellCmdType {
   String get separator => ScriptConstants.getCmdSeparator(name);
 
   @override
-  String get divider => ScriptConstants.getCmdDivider(name);
+  String get divider => ScriptConstants.getWindowsCmdDivider(name);
 
   @override
   CmdTypeSys get sysType => CmdTypeSys.windows;

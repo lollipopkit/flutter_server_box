@@ -378,17 +378,26 @@ void _parseWindowsCpuData(ServerStatusUpdateReq req, Map<String, String> parsedO
     // Windows CPU parsing - JSON format from PowerShell
     final cpuRaw = WindowsStatusCmdType.cpu.findInMap(parsedOutput);
     if (cpuRaw.isNotEmpty && cpuRaw != 'null' && !cpuRaw.contains('error') && !cpuRaw.contains('Exception')) {
-      final cpus = WindowsParser.parseCpu(cpuRaw, req.ss);
-      if (cpus.isNotEmpty) {
-        req.ss.cpu.update(cpus);
+      final cpuResult = WindowsParser.parseCpu(cpuRaw, req.ss);
+      if (cpuResult.cores.isNotEmpty) {
+        req.ss.cpu.update(cpuResult.cores);
+        final brandRaw = WindowsStatusCmdType.cpuBrand.findInMap(parsedOutput);
+        if (brandRaw.isNotEmpty && brandRaw != 'null') {
+          req.ss.cpu.brand.clear();
+          final brandLines = brandRaw.trim().split('\n');
+          final uniqueBrands = <String>{};
+          for (final line in brandLines) {
+            final trimmedLine = line.trim();
+            if (trimmedLine.isNotEmpty) {
+              uniqueBrands.add(trimmedLine);
+            }
+          }
+          if (uniqueBrands.isNotEmpty) {
+            final brandName = uniqueBrands.first;
+            req.ss.cpu.brand[brandName] = cpuResult.coreCount;
+          }
+        }
       }
-    }
-
-    // Windows CPU brand parsing
-    final brandRaw = WindowsStatusCmdType.cpuBrand.findInMap(parsedOutput);
-    if (brandRaw.isNotEmpty && brandRaw != 'null') {
-      req.ss.cpu.brand.clear();
-      req.ss.cpu.brand[brandRaw.trim()] = 1;
     }
   } catch (e, s) {
     Loggers.app.warning('Windows CPU parsing failed: $e', s);

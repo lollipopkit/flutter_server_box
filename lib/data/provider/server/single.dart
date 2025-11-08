@@ -1,15 +1,14 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter_gbk2utf8/flutter_gbk2utf8.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
+import 'package:server_box/data/helper/ssh_decoder.dart';
 import 'package:server_box/data/helper/system_detector.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
@@ -213,7 +212,9 @@ class ServerNotifier extends _$ServerNotifier {
         final newStatus = state.status..system = detectedSystemType;
         updateStatus(newStatus);
 
-        final (_, writeScriptResult) = await state.client!.exec(
+        Loggers.app.info('Writing script for ${spi.name} (${detectedSystemType.name})');
+        
+        final (stdoutResult, writeScriptResult) = await state.client!.execSafe(
           (session) async {
             final scriptRaw = ShellFuncManager.allScript(
               spi.custom?.cmds,
@@ -228,10 +229,22 @@ class ServerNotifier extends _$ServerNotifier {
             systemType: detectedSystemType,
             customDir: spi.custom?.scriptDir,
           ),
+          systemType: detectedSystemType,
+          context: 'WriteScript<${spi.name}>',
         );
-        if (writeScriptResult.isNotEmpty && detectedSystemType != SystemType.windows) {
-          ShellFuncManager.switchScriptDir(spi.id, systemType: detectedSystemType);
-          throw writeScriptResult;
+        
+        if (stdoutResult.isNotEmpty) {
+          Loggers.app.info('Script write stdout for ${spi.name}: $stdoutResult');
+        }
+        
+        if (writeScriptResult.isNotEmpty) {
+          Loggers.app.warning('Script write stderr for ${spi.name}: $writeScriptResult');
+          if (detectedSystemType != SystemType.windows) {
+            ShellFuncManager.switchScriptDir(spi.id, systemType: detectedSystemType);
+            throw writeScriptResult;
+          }
+        } else {
+          Loggers.app.info('Script written successfully for ${spi.name}');
         }
       } on SSHAuthAbortError catch (e) {
         TryLimiter.inc(sid);
@@ -278,43 +291,25 @@ class ServerNotifier extends _$ServerNotifier {
     String? raw;
 
     try {
-      final execResult = await state.client?.run(
-        ShellFunc.status.exec(spi.id, systemType: state.status.system, customDir: spi.custom?.scriptDir),
-      );
+      final statusCmd = ShellFunc.status.exec(spi.id, systemType: state.status.system, customDir: spi.custom?.scriptDir);
+      Loggers.app.info('Running status command for ${spi.name} (${state.status.system.name}): $statusCmd');
+      final execResult = await state.client?.run(statusCmd);
       if (execResult != null) {
-        String? rawStr;
-        bool needGbk = false;
-        try {
-          rawStr = utf8.decode(execResult, allowMalformed: true);
-          // If there are unparseable characters, try fallback to GBK decoding
-          if (rawStr.contains('�')) {
-            Loggers.app.warning('UTF8 decoding failed, use GBK decoding');
-            needGbk = true;
-          }
-        } catch (e) {
-          Loggers.app.warning('UTF8 decoding failed, use GBK decoding', e);
-          needGbk = true;
-        }
-        if (needGbk) {
-          try {
-            rawStr = gbk.decode(execResult);
-          } catch (e2) {
-            Loggers.app.warning('GBK decoding failed', e2);
-            rawStr = null;
-          }
-        }
-        if (rawStr == null) {
-          Loggers.app.warning('Decoding failed, execResult: $execResult');
-        }
-        raw = rawStr;
+        raw = SSHDecoder.decode(
+          execResult,
+          isWindows: state.status.system == SystemType.windows,
+          context: 'GetStatus<${spi.name}>',
+        );
+        Loggers.app.info('Status response length for ${spi.name}: ${raw.length} bytes');
       } else {
-        raw = execResult.toString();
+        raw = '';
+        Loggers.app.warning('No status result from ${spi.name}');
       }
 
-      if (raw == null || raw.isEmpty) {
+      if (raw.isEmpty) {
         TryLimiter.inc(sid);
         final newStatus = state.status
-          ..err = SSHErr(type: SSHErrType.segements, message: 'decode or split failed, raw:\n$raw');
+          ..err = SSHErr(type: SSHErrType.segements, message: 'Empty response from server');
         updateStatus(newStatus);
         updateConnection(ServerConn.failed);
 
@@ -324,7 +319,7 @@ class ServerNotifier extends _$ServerNotifier {
       }
 
       segments = raw.split(ScriptConstants.separator).map((e) => e.trim()).toList();
-      if (raw.isEmpty || segments.isEmpty) {
+      if (segments.isEmpty) {
         if (Stores.setting.keepStatusWhenErr.fetch()) {
           // Keep previous server status when error occurs
           if (state.conn != ServerConn.failed && state.status.more.isNotEmpty) {
@@ -333,7 +328,7 @@ class ServerNotifier extends _$ServerNotifier {
         }
         TryLimiter.inc(sid);
         final newStatus = state.status
-          ..err = SSHErr(type: SSHErrType.segements, message: 'Seperate segments failed, raw:\n$raw');
+          ..err = SSHErr(type: SSHErrType.segements, message: 'Separate segments failed, raw:\n$raw');
         updateStatus(newStatus);
         updateConnection(ServerConn.failed);
 
