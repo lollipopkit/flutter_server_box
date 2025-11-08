@@ -436,8 +436,11 @@ void _parseWindowsDiskData(ServerStatusUpdateReq req, Map<String, String> parsed
 /// Parse Windows uptime data
 void _parseWindowsUptimeData(ServerStatusUpdateReq req, Map<String, String> parsedOutput) {
   try {
-    final uptime = WindowsParser.parseUpTime(WindowsStatusCmdType.uptime.findInMap(parsedOutput));
-    if (uptime != null) {
+    final uptimeRaw = WindowsStatusCmdType.uptime.findInMap(parsedOutput);
+    if (uptimeRaw.isNotEmpty && uptimeRaw != 'null') {
+      // PowerShell now returns pre-formatted uptime string (e.g., "28 days, 5:00" or "5:00")
+      // No parsing needed - use it directly
+      final uptime = uptimeRaw.trim();
       req.ss.more[StatusCmdType.uptime] = uptime;
     }
   } catch (e, s) {

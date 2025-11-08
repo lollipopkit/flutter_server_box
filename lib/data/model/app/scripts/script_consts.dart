@@ -105,6 +105,7 @@ exec 2>/dev/null
 # DO NOT delete this file while app is running
 
 \$ErrorActionPreference = "SilentlyContinue"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 ''';
 }

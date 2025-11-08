@@ -9,7 +9,10 @@ class SSHDecoder {
   ///
   /// Tries in order:
   /// 1. UTF-8 (with allowMalformed for lenient parsing)
+  ///    - Windows PowerShell scripts now set UTF-8 output encoding by default
   /// 2. GBK (for Windows Chinese systems)
+  ///    - In some cases, Windows will still revert to GBK.
+  ///    - Only attempted if UTF-8 produces replacement characters (�)
   static String decode(
     List<int> bytes, {
     bool isWindows = false,
@@ -21,8 +24,14 @@ class SSHDecoder {
     try {
       final result = utf8.decode(bytes, allowMalformed: true);
       // Check if there are replacement characters indicating decode failure
+      // For non-Windows systems, always use UTF-8 result
       if (!result.contains('�') || !isWindows) {
         return result;
+      }
+      // For Windows with replacement chars, log and try GBK fallback
+      if (isWindows && result.contains('�')) {
+        final contextInfo = context != null ? ' [$context]' : '';
+        Loggers.app.info('UTF-8 decode has replacement chars$contextInfo, trying GBK fallback');
       }
     } catch (e) {
       final contextInfo = context != null ? ' [$context]' : '';

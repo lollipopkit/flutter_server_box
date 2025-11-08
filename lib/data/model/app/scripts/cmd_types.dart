@@ -183,7 +183,19 @@ enum WindowsStatusCmdType implements ShellCmdType {
     'Get-WmiObject -Class Win32_Processor | '
     'Select-Object Name, LoadPercentage, NumberOfCores, NumberOfLogicalProcessors | ConvertTo-Json',
   ),
-  uptime('(Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime'),
+
+  /// Get system uptime by calculating time since last boot
+  ///
+  /// Calculates uptime directly in PowerShell to avoid date format parsing issues:
+  /// - Gets LastBootUpTime from Win32_OperatingSystem
+  /// - Calculates difference from current time
+  /// - Returns pre-formatted string: "X days, H:MM" or "H:MM" (if less than 1 day)
+  /// - Uses ToString('00') for zero-padding to avoid quote escaping issues
+  uptime(
+    r'$up = (Get-Date) - (Get-CimInstance Win32_OperatingSystem).LastBootUpTime; '
+    r'if ($up.Days -gt 0) { "$($up.Days) days, $($up.Hours):$($up.Minutes.ToString(''00''))" } '
+    r'else { "$($up.Hours):$($up.Minutes.ToString(''00''))" }',
+  ),
   conn('(netstat -an | findstr ESTABLISHED | Measure-Object -Line).Count'),
   disk(
     'Get-WmiObject -Class Win32_LogicalDisk | '
