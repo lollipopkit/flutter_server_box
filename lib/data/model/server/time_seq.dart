@@ -37,27 +37,39 @@ class Fifo<T> extends ListBase<T> {
   }
 }
 
-abstract class TimeSeq<T extends List<TimeSeqIface>> extends Fifo<T> {
+abstract class TimeSeq<T extends TimeSeqIface<T>> extends Fifo<List<T>> {
   /// Due to the design, at least two elements are required, otherwise [pre] /
   /// [now] will throw.
-  TimeSeq(T init1, T init2, {super.capacity}) : super(list: [init1, init2]);
+  TimeSeq(List<T> init1, List<T> init2, {super.capacity}) : super(list: [init1, init2]);
 
-  T get pre {
+  List<T> get pre {
     return _list[length - 2];
   }
 
-  T get now {
+  List<T> get now {
     return _list[length - 1];
   }
 
   void onUpdate();
 
-  void update(T new_) {
+  void update(List<T> new_) {
     add(new_);
 
     if (pre.length != now.length) {
-      pre.removeWhere((e) => now.any((el) => e.same(el)));
-      pre.addAll(now.where((e) => pre.every((el) => !e.same(el))));
+      final previous = pre.toList(growable: false);
+      final remaining = previous.toList(growable: true);
+      final aligned = <T>[];
+
+      for (final current in now) {
+        final matchIndex = remaining.indexWhere((item) => item.same(current));
+        if (matchIndex >= 0) {
+          aligned.add(remaining.removeAt(matchIndex));
+        } else {
+          aligned.add(current);
+        }
+      }
+
+      _list[length - 2] = aligned;
     }
 
     onUpdate();

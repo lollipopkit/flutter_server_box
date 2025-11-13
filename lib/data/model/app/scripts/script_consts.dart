@@ -29,6 +29,9 @@ class ScriptConstants {
   /// Generate command-specific divider
   static String getCmdDivider(String cmdName) => '\necho ${getCmdSeparator(cmdName)}\n\t';
 
+  /// Generate command-specific divider for Windows PowerShell
+  static String getWindowsCmdDivider(String cmdName) => '\n    Write-Host "${getCmdSeparator(cmdName)}"\n    ';
+
   /// Parse script output into command-specific map
   static Map<String, String> parseScriptOutput(String raw) {
     final result = <String, String>{};
@@ -102,6 +105,7 @@ exec 2>/dev/null
 # DO NOT delete this file while app is running
 
 \$ErrorActionPreference = "SilentlyContinue"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 ''';
 }

@@ -1,5 +1,6 @@
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 
@@ -23,7 +24,10 @@ class SystemDetector {
 
     try {
       // Try to detect Unix/Linux/BSD systems first (more reliable and doesn't create files)
-      final unixResult = await client.run('uname -a 2>/dev/null').string;
+      final unixResult = await client.runSafe(
+        'uname -a 2>/dev/null',
+        context: 'uname detection for ${spi.oldId}',
+      );
       if (unixResult.contains('Linux')) {
         detectedSystemType = SystemType.linux;
         dprint('Detected Linux system type for ${spi.oldId}');
@@ -35,15 +39,19 @@ class SystemDetector {
       }
 
       // If uname fails, try to detect Windows systems
-      final powershellResult = await client.run('ver 2>nul').string;
+      final powershellResult = await client.runSafe(
+        'ver 2>nul',
+        systemType: SystemType.windows,
+        context: 'ver detection for ${spi.oldId}',
+      );
       if (powershellResult.isNotEmpty &&
           (powershellResult.contains('Windows') || powershellResult.contains('NT'))) {
         detectedSystemType = SystemType.windows;
         dprint('Detected Windows system type for ${spi.oldId}');
         return detectedSystemType;
       }
-    } catch (e) {
-      Loggers.app.warning('System detection failed for ${spi.oldId}: $e');
+    } catch (e, stackTrace) {
+      Loggers.app.warning('System detection failed for ${spi.oldId}: $e\n$stackTrace');
     }
 
     // Default fallback

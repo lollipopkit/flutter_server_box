@@ -7,6 +7,13 @@ import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/server.dart';
 
+/// Windows CPU parse result
+class WindowsCpuResult {
+  final List<SingleCpuCore> cores;
+  final int coreCount;
+  const WindowsCpuResult(this.cores, this.coreCount);
+}
+
 /// Windows-specific status parsing utilities
 ///
 /// This module handles parsing of Windows PowerShell command outputs
@@ -94,30 +101,75 @@ class WindowsParser {
   }
 
   /// Parse Windows CPU information from PowerShell output
-  static List<SingleCpuCore> parseCpu(String raw, ServerStatus serverStatus) {
+  /// Returns WindowsCpuResult containing CPU cores and total core count
+  static WindowsCpuResult parseCpu(String raw, ServerStatus serverStatus) {
     try {
       final dynamic jsonData = json.decode(raw);
       final List<SingleCpuCore> cpus = [];
+      int totalCoreCount = 1;
 
       if (jsonData is List) {
-        for (int i = 0; i < jsonData.length; i++) {
-          final cpu = jsonData[i];
-          final loadPercentage = cpu['LoadPercentage'] ?? 0;
-          final usage = loadPercentage as int;
+        // Multiple physical processors
+        totalCoreCount = 0; // Reset to sum up
+        var logicalProcessorOffset = 0;
+        final prevCpus = serverStatus.cpu.now;
+        for (int procIdx = 0; procIdx < jsonData.length; procIdx++) {
+          final processor = jsonData[procIdx];
+          final loadPercentage = (processor['LoadPercentage'] as num?) ?? 0;
+          final numberOfCores = (processor['NumberOfCores'] as int?) ?? 1;
+          final numberOfLogicalProcessors = (processor['NumberOfLogicalProcessors'] as int?) ?? numberOfCores;
+          totalCoreCount += numberOfCores;
+          final usage = loadPercentage.toInt();
           final idle = 100 - usage;
 
-          // Get previous CPU data to calculate cumulative values
-          final prevCpus = serverStatus.cpu.now;
-          final prevCpu = i < prevCpus.length ? prevCpus[i] : null;
+          // Create a SingleCpuCore entry for each logical processor
+          // Windows only reports overall CPU load, so we distribute it evenly
+          for (int i = 0; i < numberOfLogicalProcessors; i++) {
+            final coreId = logicalProcessorOffset + i;
+            // Skip summary entry at index 0 when looking up previous samples
+            final prevIndex = coreId + 1;
+            final prevCpu = prevIndex < prevCpus.length ? prevCpus[prevIndex] : null;
 
-          // LIMITATION: Windows CPU counters approach
-          // PowerShell provides LoadPercentage as instantaneous percentage, not cumulative time.
-          // We simulate cumulative counters by adding current percentages to previous totals.
-          // This approach has limitations:
-          // 1. Not as accurate as true cumulative time counters (Linux /proc/stat)
-          // 2. May drift over time with variable polling intervals
-          // 3. Results depend on consistent polling frequency
-          // However, this allows compatibility with existing delta-based CPU calculation logic.
+            // LIMITATION: Windows CPU counters approach
+            // PowerShell provides LoadPercentage as instantaneous percentage, not cumulative time.
+            // We simulate cumulative counters by adding current percentages to previous totals.
+            // Additionally, Windows only provides overall CPU load, not per-core load.
+            // We distribute the load evenly across all logical processors.
+            final newUser = (prevCpu?.user ?? 0) + usage;
+            final newIdle = (prevCpu?.idle ?? 0) + idle;
+
+            cpus.add(
+              SingleCpuCore(
+                'cpu$coreId',
+                newUser, // cumulative user time
+                0, // sys (not available)
+                0, // nice (not available)
+                newIdle, // cumulative idle time
+                0, // iowait (not available)
+                0, // irq (not available)
+                0, // softirq (not available)
+              ),
+            );
+          }
+          logicalProcessorOffset += numberOfLogicalProcessors;
+        }
+      } else if (jsonData is Map) {
+        // Single physical processor
+        final loadPercentage = (jsonData['LoadPercentage'] as num?) ?? 0;
+        final numberOfCores = (jsonData['NumberOfCores'] as int?) ?? 1;
+        final numberOfLogicalProcessors = (jsonData['NumberOfLogicalProcessors'] as int?) ?? numberOfCores;
+        totalCoreCount = numberOfCores;
+        final usage = loadPercentage.toInt();
+        final idle = 100 - usage;
+
+        // Create a SingleCpuCore entry for each logical processor
+        final prevCpus = serverStatus.cpu.now;
+        for (int i = 0; i < numberOfLogicalProcessors; i++) {
+          // Skip summary entry at index 0 when looking up previous samples
+          final prevIndex = i + 1;
+          final prevCpu = prevIndex < prevCpus.length ? prevCpus[prevIndex] : null;
+
+          // LIMITATION: See comment above for Windows CPU counter limitations
           final newUser = (prevCpu?.user ?? 0) + usage;
           final newIdle = (prevCpu?.idle ?? 0) + idle;
 
@@ -125,46 +177,43 @@ class WindowsParser {
             SingleCpuCore(
               'cpu$i',
               newUser, // cumulative user time
-              0, // sys (not available)
-              0, // nice (not available)
+              0, // sys
+              0, // nice
               newIdle, // cumulative idle time
-              0, // iowait (not available)
-              0, // irq (not available)
-              0, // softirq (not available)
+              0, // iowait
+              0, // irq
+              0, // softirq
             ),
           );
         }
-      } else if (jsonData is Map) {
-        // Single CPU core
-        final loadPercentage = jsonData['LoadPercentage'] ?? 0;
-        final usage = loadPercentage as int;
-        final idle = 100 - usage;
-
-        // Get previous CPU data to calculate cumulative values
-        final prevCpus = serverStatus.cpu.now;
-        final prevCpu = prevCpus.isNotEmpty ? prevCpus[0] : null;
-
-        // LIMITATION: See comment above for Windows CPU counter limitations
-        final newUser = (prevCpu?.user ?? 0) + usage;
-        final newIdle = (prevCpu?.idle ?? 0) + idle;
-
-        cpus.add(
-          SingleCpuCore(
-            'cpu0',
-            newUser, // cumulative user time
-            0, // sys
-            0, // nice
-            newIdle, // cumulative idle time
-            0, // iowait
-            0, // irq
-            0, // softirq
-          ),
-        );
       }
 
-      return cpus;
-    } catch (e) {
-      return [];
+      // Add a summary entry at the beginning (like Linux 'cpu' line)
+      // This is the aggregate of all logical processors
+      if (cpus.isNotEmpty) {
+        int totalUser = 0;
+        int totalIdle = 0;
+        for (final core in cpus) {
+          totalUser += core.user;
+          totalIdle += core.idle;
+        }
+        // Insert at the beginning with ID 'cpu' (matching Linux format)
+        cpus.insert(0, SingleCpuCore(
+          'cpu', // Summary entry, like Linux
+          totalUser,
+          0,
+          0,
+          totalIdle,
+          0,
+          0,
+          0,
+        ));
+      }
+
+      return WindowsCpuResult(cpus, totalCoreCount);
+    } catch (e, s) {
+      Loggers.app.warning('Windows CPU parsing failed: $e', s);
+      return WindowsCpuResult([], 1);
     }
   }
 
