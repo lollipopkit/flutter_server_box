@@ -5,7 +5,7 @@ version: 1.0.1270+1270
 
 environment:
   sdk: ">=3.9.0"
-  flutter: ">=3.35.0"
+  flutter: ">=3.38.0"
 
 dependencies:
   flutter:
@@ -25,7 +25,7 @@ dependencies:
   flutter_displaymode: ^0.7.0
   fl_chart: ^1.0.0
   freezed_annotation: ^3.0.0
-  get_it: ^8.2.0
+  get_it: ^9.0.5
   highlight: ^0.7.0
   hive_ce_flutter: ^2.3.1
   intl: ^0.20.2
@@ -84,7 +84,7 @@ dependency_overrides:
       ref: v0.0.36
 
 dev_dependencies:
-  analyzer: ^7.3.0
+  analyzer: ^8.1.1
   flutter_native_splash: ^2.1.6
   hive_ce_generator: ^1.9.2
   build_runner: ^2.4.15
