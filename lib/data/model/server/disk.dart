@@ -280,7 +280,7 @@ class Disk with EquatableMixin {
   ];
 }
 
-class DiskIO extends TimeSeq<List<DiskIOPiece>> {
+class DiskIO extends TimeSeq<DiskIOPiece> {
   DiskIO(super.init1, super.init2);
 
   @override

@@ -18,7 +18,7 @@ class NetSpeedPart extends TimeSeqIface<NetSpeedPart> {
 
 typedef CachedNetVals = ({String sizeIn, String sizeOut, String speedIn, String speedOut});
 
-class NetSpeed extends TimeSeq<List<NetSpeedPart>> {
+class NetSpeed extends TimeSeq<NetSpeedPart> {
   NetSpeed(super.init1, super.init2);
 
   @override
