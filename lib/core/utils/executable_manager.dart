@@ -29,6 +29,7 @@ class ExecutableInfo {
 /// Generic executable manager for downloading and managing external tools
 abstract final class ExecutableManager {
   static const String _executablesDirName = 'executables';
+  static const int _posixExecuteBitsMask = 0x49; // Equivalent to POSIX octal 0o111
   static late final Directory _executablesDir;
   static final Map<String, ExecutableInfo> _customExecutables = {};
   static bool _customExecutablesLoaded = false;
@@ -137,7 +138,7 @@ abstract final class ExecutableManager {
       return await getExecutablePath(name);
     }
 
-    return await getExecutablePath(name);
+    throw ExecutableException('Executable "$name" not found and automatic installation is not implemented');
   }
 
   /// Remove a local executable
@@ -270,7 +271,7 @@ abstract final class ExecutableManager {
     } else {
       // Check file permissions
       final stat = file.statSync();
-      return (stat.mode & 0x111) != 0; // Check execute bits
+      return (stat.mode & _posixExecuteBitsMask) != 0; // Check execute bits
     }
   }
 

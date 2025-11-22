@@ -52,13 +52,13 @@ Map<String, dynamic> _$SpiToJson(_Spi instance) => <String, dynamic>{
   'alterUrl': ?instance.alterUrl,
   'autoConnect': instance.autoConnect,
   'jumpId': ?instance.jumpId,
-  'custom': ?instance.custom,
-  'wolCfg': ?instance.wolCfg,
+  'custom': ?instance.custom?.toJson(),
+  'wolCfg': ?instance.wolCfg?.toJson(),
   'envs': ?instance.envs,
   'id': instance.id,
   'customSystemType': ?_$SystemTypeEnumMap[instance.customSystemType],
   'disabledCmdTypes': ?instance.disabledCmdTypes,
-  'proxyCommand': ?instance.proxyCommand,
+  'proxyCommand': ?instance.proxyCommand?.toJson(),
 };
 
 const _$SystemTypeEnumMap = {

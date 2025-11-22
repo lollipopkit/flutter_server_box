@@ -22,7 +22,7 @@ part 'server_private_info.g.dart';
 abstract class Spi with _$Spi {
   const Spi._();
 
-  @JsonSerializable(includeIfNull: false)
+  @JsonSerializable(includeIfNull: false, explicitToJson: true)
   const factory Spi({
     required String name,
     required String ip,

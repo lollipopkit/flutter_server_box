@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:server_box/core/utils/proxy_command_executor.dart' show ProxyCommandException;
 
 part 'proxy_command_config.freezed.dart';
 part 'proxy_command_config.g.dart';
@@ -65,6 +66,12 @@ const Map<String, ProxyCommandConfig> proxyCommandPresets = {
 extension ProxyCommandConfigExtension on ProxyCommandConfig {
   /// Get the final command with placeholders replaced
   String getFinalCommand({required String hostname, required int port, required String user}) {
+    if (!command.contains('%h') && !command.contains('%p') && !command.contains('%r')) {
+      throw ProxyCommandException(
+        message: 'Proxy command "$command" must include at least one placeholder (%h, %p, %r)',
+      );
+    }
+
     var finalCommand = command;
     finalCommand = finalCommand.replaceAll('%h', hostname);
     finalCommand = finalCommand.replaceAll('%p', port.toString());

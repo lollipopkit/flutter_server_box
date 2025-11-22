@@ -237,7 +237,7 @@ return $default(_that.name,_that.ip,_that.port,_that.user,_that.pwd,_that.keyId,
 
 /// @nodoc
 
-@JsonSerializable(includeIfNull: false)
+@JsonSerializable(includeIfNull: false, explicitToJson: true)
 class _Spi extends Spi {
   const _Spi({required this.name, required this.ip, required this.port, required this.user, this.pwd, @JsonKey(name: 'pubKeyId') this.keyId, final  List<String>? tags, this.alterUrl, this.autoConnect = true, this.jumpId, this.custom, this.wolCfg, final  Map<String, String>? envs, @JsonKey(fromJson: Spi.parseId) this.id = '', this.customSystemType, final  List<String>? disabledCmdTypes, this.proxyCommand}): _tags = tags,_envs = envs,_disabledCmdTypes = disabledCmdTypes,super._();
   factory _Spi.fromJson(Map<String, dynamic> json) => _$SpiFromJson(json);
