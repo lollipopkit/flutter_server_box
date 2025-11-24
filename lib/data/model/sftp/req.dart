@@ -8,6 +8,7 @@ class SftpReq {
   String? privateKey;
   Spi? jumpSpi;
   String? jumpPrivateKey;
+  Map<String, String>? knownHostFingerprints;
 
   SftpReq(this.spi, this.remotePath, this.localPath, this.type) {
     final keyId = spi.keyId;
@@ -17,6 +18,11 @@ class SftpReq {
     if (spi.jumpId != null) {
       jumpSpi = Stores.server.box.get(spi.jumpId);
       jumpPrivateKey = Stores.key.fetchOne(jumpSpi?.keyId)?.key;
+    }
+    try {
+      knownHostFingerprints = Map<String, String>.from(Stores.setting.sshKnownHostFingerprints.get());
+    } catch (_) {
+      knownHostFingerprints = null;
     }
   }
 }

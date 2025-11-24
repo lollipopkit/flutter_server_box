@@ -65,6 +65,7 @@ Future<void> _download(SftpReq req, SendPort mainSendPort, SendErrorFunction sen
       privateKey: req.privateKey,
       jumpSpi: req.jumpSpi,
       jumpPrivateKey: req.jumpPrivateKey,
+      knownHostFingerprints: req.knownHostFingerprints,
     );
     mainSendPort.send(SftpWorkerStatus.sshConnectted);
 
@@ -121,6 +122,7 @@ Future<void> _upload(SftpReq req, SendPort mainSendPort, SendErrorFunction sendE
       privateKey: req.privateKey,
       jumpSpi: req.jumpSpi,
       jumpPrivateKey: req.jumpPrivateKey,
+      knownHostFingerprints: req.knownHostFingerprints,
     );
     mainSendPort.send(SftpWorkerStatus.sshConnectted);
 
