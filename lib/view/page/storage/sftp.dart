@@ -177,32 +177,56 @@ extension _UI on _SftpPageState {
 
   Widget _buildItem(SftpName file, {VoidCallback? beforeTap}) {
     final isDir = file.attr.isDirectory;
-    final trailing = Text(
-      '${_getTime(file.attr.modifyTime)}\n${file.attr.mode?.str ?? ''}',
-      style: UIs.textGrey,
-      textAlign: TextAlign.right,
-    );
-    return CardX(
-      child: ListTile(
-        leading: Icon(isDir ? Icons.folder_outlined : Icons.insert_drive_file),
-        title: Text(file.filename),
-        trailing: trailing,
-        subtitle: isDir ? null : Text((file.attr.size ?? 0).bytes2Str, style: UIs.textGrey),
-        onTap: () {
-          beforeTap?.call();
-          if (isDir) {
-            _status.path.path = file.filename;
-            _listDir();
-          } else {
-            _onItemPress(file, true);
-          }
-        },
-        onLongPress: () {
-          beforeTap?.call();
-          _onItemPress(file, !isDir);
-        },
-      ),
-    );
+    final double screenWidth = MediaQuery.of(context).size.width;
+    if (screenWidth < 350) {
+      return CardX(
+        child: ListTile(
+          leading: Icon(isDir ? Icons.folder_outlined : Icons.insert_drive_file),
+          title: Text(file.filename),
+          subtitle: isDir ? Text('${_getTime(file.attr.modifyTime)}\n${file.attr.mode?.str ?? ''}', style: UIs.textGrey) :
+            Text('${(file.attr.size ?? 0).bytes2Str}\n${_getTime(file.attr.modifyTime)}\n${file.attr.mode?.str ?? ''}', style: UIs.textGrey),
+          onTap: () {
+            beforeTap?.call();
+            if (isDir) {
+              _status.path.path = file.filename;
+              _listDir();
+            } else {
+              _onItemPress(file, true);
+            }
+          },
+          onLongPress: () {
+            beforeTap?.call();
+            _onItemPress(file, !isDir);
+          },
+        ),
+      );
+    } else {
+      return CardX(
+        child: ListTile(
+          leading: Icon(isDir ? Icons.folder_outlined : Icons.insert_drive_file),
+          title: Text(file.filename),
+          trailing: Text(
+            '${_getTime(file.attr.modifyTime)}\n${file.attr.mode?.str ?? ''}',
+            style: UIs.textGrey,
+            textAlign: TextAlign.right,
+          ),
+          subtitle: isDir ? null : Text((file.attr.size ?? 0).bytes2Str, style: UIs.textGrey),
+          onTap: () {
+            beforeTap?.call();
+            if (isDir) {
+              _status.path.path = file.filename;
+              _listDir();
+            } else {
+              _onItemPress(file, true);
+            }
+          },
+          onLongPress: () {
+            beforeTap?.call();
+            _onItemPress(file, !isDir);
+          },
+        ),
+      );
+    }
   }
 }
 
