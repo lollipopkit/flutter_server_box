@@ -292,7 +292,7 @@ class ServerNotifier extends _$ServerNotifier {
 
     try {
       final statusCmd = ShellFunc.status.exec(spi.id, systemType: state.status.system, customDir: spi.custom?.scriptDir);
-      Loggers.app.info('Running status command for ${spi.name} (${state.status.system.name}): $statusCmd');
+      // Loggers.app.info('Running status command for ${spi.name} (${state.status.system.name}): $statusCmd');
       final execResult = await state.client?.run(statusCmd);
       if (execResult != null) {
         raw = SSHDecoder.decode(
@@ -300,7 +300,7 @@ class ServerNotifier extends _$ServerNotifier {
           isWindows: state.status.system == SystemType.windows,
           context: 'GetStatus<${spi.name}>',
         );
-        Loggers.app.info('Status response length for ${spi.name}: ${raw.length} bytes');
+        // Loggers.app.info('Status response length for ${spi.name}: ${raw.length} bytes');
       } else {
         raw = '';
         Loggers.app.warning('No status result from ${spi.name}');

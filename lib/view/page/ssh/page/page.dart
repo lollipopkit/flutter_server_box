@@ -252,7 +252,7 @@ class SSHPageState extends ConsumerState<SSHPage>
           deleteDetection: isMobile,
           autofocus: false,
           keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,
-          showToolbar: isMobile,
+          showToolbar: true,
           viewOffset: Offset(2 * _horizonPadding, CustomAppBar.sysStatusBarHeight),
           hideScrollBar: false,
           focusNode: widget.args.focusNode,

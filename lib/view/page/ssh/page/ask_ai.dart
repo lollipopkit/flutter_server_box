@@ -250,6 +250,13 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
     context.showSnackBar(libL10n.success);
   }
 
+  Future<void> _copyText(BuildContext context, String text) async {
+    if (text.trim().isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
+    context.showSnackBar(libL10n.success);
+  }
+
   void _sendMessage() {
     if (_isStreaming) return;
     final text = _inputController.text.trim();
@@ -310,7 +317,23 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
             streaming ? l10n.askAiAwaitingResponse : l10n.askAiNoResponse,
             style: theme.textTheme.bodySmall,
           )
-        : SimpleMarkdown(data: content);
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SimpleMarkdown(data: content),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton.icon(
+                    onPressed: () => _copyText(context, content),
+                    icon: const Icon(Icons.copy, size: 18),
+                    label: Text(libL10n.copy),
+                  ),
+                ],
+              ),
+            ],
+          );
     return Align(
       alignment: Alignment.centerLeft,
       child: CardX(
