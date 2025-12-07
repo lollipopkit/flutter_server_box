@@ -177,7 +177,7 @@ extension _UI on _SftpPageState {
 
   Widget _buildItem(SftpName file, {VoidCallback? beforeTap}) {
     final isDir = file.attr.isDirectory;
-    final double screenWidth = MediaQuery.of(context).size.width;
+    final double screenWidth = MediaQuery.sizeOf(context).width;
     if (screenWidth < 350) {
       return CardX(
         child: ListTile(

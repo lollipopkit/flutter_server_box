@@ -102,7 +102,7 @@ dev_dependencies:
   fl_build:
     git:
       url: https://github.com/lppcg/fl_build.git
-      ref: v1.0.52
+      ref: v1.0.53
 
 flutter:
   generate: true
