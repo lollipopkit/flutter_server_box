@@ -62,6 +62,7 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage> with Automati
         tags: snippetState.tags.vn,
         onTagChanged: (tag) => _tag.value = tag,
         initTag: _tag.value,
+        singleLine: true,
       ),
       body: _buildSnippetList(snippets, tag),
       floatingActionButton: FloatingActionButton(
