@@ -1011,9 +1011,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Después de conectarse al servidor, se escribirá un script en `~/.config/server_box` \n | `/tmp/server_box` para monitorear el estado del sistema. Puedes revisar el contenido del script.';
 
   @override
-  String get menuAbout => 'About';
-
-  @override
   String get menuSettings => 'Setting';
 
   @override

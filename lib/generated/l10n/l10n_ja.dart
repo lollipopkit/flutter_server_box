@@ -970,9 +970,6 @@ class AppLocalizationsJa extends AppLocalizations {
       'サーバーに接続すると、システムの状態を監視するためのスクリプトが `~/.config/server_box` \n | `/tmp/server_box` に書き込まれます。スクリプトの内容を確認できます。';
 
   @override
-  String get menuAbout => 'About';
-
-  @override
   String get menuSettings => 'Setting';
 
   @override

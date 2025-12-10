@@ -1886,12 +1886,6 @@ abstract class AppLocalizations {
   /// **'After connecting to the server, a script will be written to `~/.config/server_box` \n | `/tmp/server_box` to monitor the system status. You can review the script content.'**
   String get writeScriptTip;
 
-  /// No description provided for @menuAbout.
-  ///
-  /// In en, this message translates to:
-  /// **'About'**
-  String get menuAbout;
-
   /// No description provided for @menuSettings.
   ///
   /// In en, this message translates to:

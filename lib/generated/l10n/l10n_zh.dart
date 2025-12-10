@@ -955,9 +955,6 @@ class AppLocalizationsZh extends AppLocalizations {
       '在连接服务器后，会向 `~/.config/server_box` \n | `/tmp/server_box` 写入脚本来监测系统状态，你可以审查脚本内容。';
 
   @override
-  String get menuAbout => '关于';
-
-  @override
   String get menuSettings => '设置';
 
   @override

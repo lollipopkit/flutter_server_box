@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/res/url.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -18,7 +19,7 @@ class MacOSMenuBarManager {
         label: 'Server Box',
         menus: [
           PlatformMenuItem(
-            label: l10n.menuAbout,
+            label: libL10n.about,
             onSelected: () => _showAboutDialog(context),
           ),
           PlatformMenuItem(
@@ -42,11 +43,15 @@ class MacOSMenuBarManager {
         menus: [
           PlatformMenuItem(
             label: l10n.menuGitHubRepository,
-            onSelected: () => _openURL('https://github.com/lollipopkit/flutter_server_box'),
+            onSelected: () => _openURL(Urls.thisRepo),
           ),
           PlatformMenuItem(
             label: l10n.menuWiki,
-            onSelected: () => _openURL('https://github.com/lollipopkit/flutter_server_box/wiki'),
+            onSelected: () => _openURL(Urls.appWiki),
+          ),
+          PlatformMenuItem(
+            label: l10n.menuHelp,
+            onSelected: () => _openURL(Urls.appHelp),
           ),
         ],
       ),
