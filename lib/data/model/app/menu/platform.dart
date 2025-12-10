@@ -59,19 +59,19 @@ class MacOSMenuBarManager {
     Function(int) onTabChanged,
   ) {
     final menuItems = <PlatformMenuItem>[];
-    final tabConfigs = {
-      AppTab.server: (label: l10n.server, key: LogicalKeyboardKey.digit1),
-      AppTab.ssh: (label: 'SSH', key: LogicalKeyboardKey.digit2),
-      AppTab.file: (label: libL10n.file, key: LogicalKeyboardKey.digit3),
-      AppTab.snippet: (label: l10n.snippet, key: LogicalKeyboardKey.digit4),
+    final tabLabels = {
+      AppTab.server: l10n.server,
+      AppTab.ssh: 'SSH',
+      AppTab.file: libL10n.file,
+      AppTab.snippet: l10n.snippet,
     };
     for (var i = 0; i < homeTabs.length; i++) {
       final tab = homeTabs[i];
-      final config = tabConfigs[tab];
-      if (config == null) continue;
+      final label = tabLabels[tab];
+      if (label == null) continue;
       final shortcutKey = _getShortcutKeyForIndex(i);
       menuItems.add(PlatformMenuItem(
-        label: config.label,
+        label: label,
         shortcut: shortcutKey != null
             ? SingleActivator(shortcutKey, meta: true)
             : null,
@@ -101,7 +101,7 @@ class MacOSMenuBarManager {
     await channel.invokeMethod('showAboutPanel');
   }
 
-  static Future<void> _openSettings(BuildContext context) async {
+  static void _openSettings(BuildContext context) {
     SettingsPage.route.go(context);
   }
 
