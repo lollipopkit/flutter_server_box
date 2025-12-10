@@ -1,9 +1,10 @@
-import 'dart:io';
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/res/store.dart';
+import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -11,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 class MacOSMenuBarManager {
   static List<PlatformMenu> buildMenuBar(BuildContext context, Function(int) onTabChanged) {
     final l10n = context.l10n;
+    final homeTabs = Stores.setting.homeTabs.fetch();
     return [
       PlatformMenu(
         label: 'Server Box',
@@ -27,34 +29,13 @@ class MacOSMenuBarManager {
           PlatformMenuItem(
             label: l10n.menuQuit,
             shortcut: const SingleActivator(LogicalKeyboardKey.keyQ, meta: true),
-            onSelected: () => exit(0),
+            onSelected: () => SystemNavigator.pop(),
           ),
         ],
       ),
       PlatformMenu(
         label: l10n.menuNavigate,
-        menus: [
-          PlatformMenuItem(
-            label: l10n.server,
-            shortcut: const SingleActivator(LogicalKeyboardKey.digit1, meta: true),
-            onSelected: () => onTabChanged(0),
-          ),
-          PlatformMenuItem(
-            label: 'SSH',
-            shortcut: const SingleActivator(LogicalKeyboardKey.digit2, meta: true),
-            onSelected: () => onTabChanged(1),
-          ),
-          PlatformMenuItem(
-            label: libL10n.file,
-            shortcut: const SingleActivator(LogicalKeyboardKey.digit3, meta: true),
-            onSelected: () => onTabChanged(2),
-          ),
-          PlatformMenuItem(
-            label: l10n.snippet,
-            shortcut: const SingleActivator(LogicalKeyboardKey.digit4, meta: true),
-            onSelected: () => onTabChanged(3),
-          ),
-        ],
+        menus: _buildNavigateMenuItems(l10n, homeTabs, onTabChanged),
       ),
       PlatformMenu(
         label: l10n.menuHelp,
@@ -70,6 +51,49 @@ class MacOSMenuBarManager {
         ],
       ),
     ];
+  }
+
+  static List<PlatformMenuItem> _buildNavigateMenuItems(
+    AppLocalizations l10n,
+    List<AppTab> homeTabs,
+    Function(int) onTabChanged,
+  ) {
+    final menuItems = <PlatformMenuItem>[];
+    final tabConfigs = {
+      AppTab.server: (label: l10n.server, key: LogicalKeyboardKey.digit1),
+      AppTab.ssh: (label: 'SSH', key: LogicalKeyboardKey.digit2),
+      AppTab.file: (label: libL10n.file, key: LogicalKeyboardKey.digit3),
+      AppTab.snippet: (label: l10n.snippet, key: LogicalKeyboardKey.digit4),
+    };
+    for (var i = 0; i < homeTabs.length; i++) {
+      final tab = homeTabs[i];
+      final config = tabConfigs[tab];
+      if (config == null) continue;
+      final shortcutKey = _getShortcutKeyForIndex(i);
+      menuItems.add(PlatformMenuItem(
+        label: config.label,
+        shortcut: shortcutKey != null
+            ? SingleActivator(shortcutKey, meta: true)
+            : null,
+        onSelected: () => onTabChanged(i),
+      ));
+    }
+    return menuItems;
+  }
+
+  static LogicalKeyboardKey? _getShortcutKeyForIndex(int index) {
+    const keys = [
+      LogicalKeyboardKey.digit1,
+      LogicalKeyboardKey.digit2,
+      LogicalKeyboardKey.digit3,
+      LogicalKeyboardKey.digit4,
+      LogicalKeyboardKey.digit5,
+      LogicalKeyboardKey.digit6,
+      LogicalKeyboardKey.digit7,
+      LogicalKeyboardKey.digit8,
+      LogicalKeyboardKey.digit9,
+    ];
+    return index < keys.length ? keys[index] : null;
   }
 
   static Future<void> _showAboutDialog(BuildContext context) async {
