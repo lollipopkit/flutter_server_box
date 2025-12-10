@@ -1015,11 +1015,14 @@ class AppLocalizationsUk extends AppLocalizations {
   String get menuNavigate => 'Navigate';
 
   @override
-  String get menuHelp => 'Help';
+  String get menuInfo => 'Info';
 
   @override
   String get menuGitHubRepository => 'GitHub Repository';
 
   @override
   String get menuWiki => 'Wiki';
+
+  @override
+  String get menuHelp => 'Help';
 }

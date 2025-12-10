@@ -1904,11 +1904,11 @@ abstract class AppLocalizations {
   /// **'Navigate'**
   String get menuNavigate;
 
-  /// No description provided for @menuHelp.
+  /// No description provided for @menuInfo.
   ///
   /// In en, this message translates to:
-  /// **'Help'**
-  String get menuHelp;
+  /// **'Info'**
+  String get menuInfo;
 
   /// No description provided for @menuGitHubRepository.
   ///
@@ -1921,6 +1921,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Wiki'**
   String get menuWiki;
+
+  /// No description provided for @menuHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Help'**
+  String get menuHelp;
 }
 
 class _AppLocalizationsDelegate

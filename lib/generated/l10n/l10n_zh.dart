@@ -964,13 +964,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get menuNavigate => '导航';
 
   @override
-  String get menuHelp => '帮助';
+  String get menuInfo => '信息';
 
   @override
   String get menuGitHubRepository => 'GitHub 仓库';
 
   @override
   String get menuWiki => 'Wiki';
+
+  @override
+  String get menuHelp => '帮助';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).

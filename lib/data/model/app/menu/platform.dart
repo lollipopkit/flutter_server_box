@@ -39,7 +39,7 @@ class MacOSMenuBarManager {
         menus: _buildNavigateMenuItems(l10n, homeTabs, onTabChanged),
       ),
       PlatformMenu(
-        label: l10n.menuHelp,
+        label: l10n.menuInfo,
         menus: [
           PlatformMenuItem(
             label: l10n.menuGitHubRepository,
