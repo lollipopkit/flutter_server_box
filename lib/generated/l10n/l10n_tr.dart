@@ -999,4 +999,25 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Sunucuya bağlandıktan sonra, sistem durumunu izlemek için `~/.config/server_box` \n | `/tmp/server_box` dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz.';
+
+  @override
+  String get menuSettings => 'Setting';
+
+  @override
+  String get menuQuit => 'Quit';
+
+  @override
+  String get menuNavigate => 'Navigate';
+
+  @override
+  String get menuInfo => 'Info';
+
+  @override
+  String get menuGitHubRepository => 'GitHub Repository';
+
+  @override
+  String get menuWiki => 'Wiki';
+
+  @override
+  String get menuHelp => 'Help';
 }

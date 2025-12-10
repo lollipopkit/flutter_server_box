@@ -1004,4 +1004,25 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'После подключения к серверу скрипт будет записан в `~/.config/server_box` \n | `/tmp/server_box` для мониторинга состояния системы. Вы можете проверить содержимое скрипта.';
+
+  @override
+  String get menuSettings => 'Setting';
+
+  @override
+  String get menuQuit => 'Quit';
+
+  @override
+  String get menuNavigate => 'Navigate';
+
+  @override
+  String get menuInfo => 'Info';
+
+  @override
+  String get menuGitHubRepository => 'GitHub Repository';
+
+  @override
+  String get menuWiki => 'Wiki';
+
+  @override
+  String get menuHelp => 'Help';
 }

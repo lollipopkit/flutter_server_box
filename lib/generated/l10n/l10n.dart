@@ -1885,6 +1885,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'After connecting to the server, a script will be written to `~/.config/server_box` \n | `/tmp/server_box` to monitor the system status. You can review the script content.'**
   String get writeScriptTip;
+
+  /// No description provided for @menuSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Setting'**
+  String get menuSettings;
+
+  /// No description provided for @menuQuit.
+  ///
+  /// In en, this message translates to:
+  /// **'Quit'**
+  String get menuQuit;
+
+  /// No description provided for @menuNavigate.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigate'**
+  String get menuNavigate;
+
+  /// No description provided for @menuInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Info'**
+  String get menuInfo;
+
+  /// No description provided for @menuGitHubRepository.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub Repository'**
+  String get menuGitHubRepository;
+
+  /// No description provided for @menuWiki.
+  ///
+  /// In en, this message translates to:
+  /// **'Wiki'**
+  String get menuWiki;
+
+  /// No description provided for @menuHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Help'**
+  String get menuHelp;
 }
 
 class _AppLocalizationsDelegate

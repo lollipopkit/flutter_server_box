@@ -953,6 +953,27 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get writeScriptTip =>
       '在连接服务器后，会向 `~/.config/server_box` \n | `/tmp/server_box` 写入脚本来监测系统状态，你可以审查脚本内容。';
+
+  @override
+  String get menuSettings => '设置';
+
+  @override
+  String get menuQuit => '退出';
+
+  @override
+  String get menuNavigate => '导航';
+
+  @override
+  String get menuInfo => '信息';
+
+  @override
+  String get menuGitHubRepository => 'GitHub 仓库';
+
+  @override
+  String get menuWiki => 'Wiki';
+
+  @override
+  String get menuHelp => '帮助';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
@@ -5,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/sync.dart';
+import 'package:server_box/data/model/app/menu/platform.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/build_data.dart';
@@ -134,7 +137,7 @@ class _HomePageState extends ConsumerState<HomePage>
     super.build(context);
     final isMobile = ResponsiveBreakpoints.of(context).isMobile;
 
-    return Scaffold(
+    final Widget mainContent = Scaffold(
       appBar: _AppBar(MediaQuery.paddingOf(context).top),
       body: Row(
         children: [
@@ -157,6 +160,16 @@ class _HomePageState extends ConsumerState<HomePage>
       ),
       bottomNavigationBar: isMobile ? _buildBottomBar() : null,
     );
+
+    if (Platform.isMacOS) {
+      return PlatformMenuBar(
+        menus: MacOSMenuBarManager.buildMenuBar(context, (int index) {
+          _onDestinationSelected(index);
+        }),
+        child: mainContent,
+      );
+    }
+    return mainContent;
   }
 
   Widget _buildBottomBar() {

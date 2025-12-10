@@ -998,4 +998,25 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Setelah terhubung ke server, sebuah skrip akan ditulis ke `~/.config/server_box` \n | `/tmp/server_box` untuk memantau status sistem. Anda dapat meninjau konten skrip tersebut.';
+
+  @override
+  String get menuSettings => 'Setting';
+
+  @override
+  String get menuQuit => 'Quit';
+
+  @override
+  String get menuNavigate => 'Navigate';
+
+  @override
+  String get menuInfo => 'Info';
+
+  @override
+  String get menuGitHubRepository => 'GitHub Repository';
+
+  @override
+  String get menuWiki => 'Wiki';
+
+  @override
+  String get menuHelp => 'Help';
 }

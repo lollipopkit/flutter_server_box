@@ -1009,4 +1009,25 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Después de conectarse al servidor, se escribirá un script en `~/.config/server_box` \n | `/tmp/server_box` para monitorear el estado del sistema. Puedes revisar el contenido del script.';
+
+  @override
+  String get menuSettings => 'Setting';
+
+  @override
+  String get menuQuit => 'Quit';
+
+  @override
+  String get menuNavigate => 'Navigate';
+
+  @override
+  String get menuInfo => 'Info';
+
+  @override
+  String get menuGitHubRepository => 'GitHub Repository';
+
+  @override
+  String get menuWiki => 'Wiki';
+
+  @override
+  String get menuHelp => 'Help';
 }

@@ -293,5 +293,12 @@
   "wolTip": "配置 WOL 后，每次连接服务器时将自动发送唤醒请求",
   "write": "写",
   "writeScriptFailTip": "写入脚本失败，可能是没有权限/目录不存在等",
-  "writeScriptTip": "在连接服务器后，会向 `~/.config/server_box` \n | `/tmp/server_box` 写入脚本来监测系统状态，你可以审查脚本内容。"
+  "writeScriptTip": "在连接服务器后，会向 `~/.config/server_box` \n | `/tmp/server_box` 写入脚本来监测系统状态，你可以审查脚本内容。",
+  "menuSettings": "设置",
+  "menuQuit": "退出",
+  "menuNavigate": "导航",
+  "menuInfo": "信息",
+  "menuGitHubRepository": "GitHub 仓库",
+  "menuWiki": "Wiki",
+  "menuHelp": "帮助"
 }

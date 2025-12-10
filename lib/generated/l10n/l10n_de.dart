@@ -1007,4 +1007,25 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get writeScriptTip =>
       'Nach der Verbindung mit dem Server wird ein Skript in `~/.config/server_box` \n | `/tmp/server_box` geschrieben, um den Systemstatus zu überwachen. Sie können den Skriptinhalt überprüfen.';
+
+  @override
+  String get menuSettings => 'Setting';
+
+  @override
+  String get menuQuit => 'Quit';
+
+  @override
+  String get menuNavigate => 'Navigate';
+
+  @override
+  String get menuInfo => 'Info';
+
+  @override
+  String get menuGitHubRepository => 'GitHub Repository';
+
+  @override
+  String get menuWiki => 'Wiki';
+
+  @override
+  String get menuHelp => 'Help';
 }
