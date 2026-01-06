@@ -123,7 +123,7 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
 
             final item = items![index];
             final file = item.$1;
-            final fileName = file.path.split('/').last;
+            final fileName = file.path.split(Pfs.seperator).last;
             final stat = item.$2;
             final isDir = stat.type == FileSystemEntityType.directory;
 
@@ -216,7 +216,7 @@ extension _Actions on _LocalFilePageState {
   }
 
   Future<void> _showFileActionDialog(FileSystemEntity file) async {
-    final fileName = file.path.split('/').lastOrNull ?? '';
+    final fileName = file.path.split(Pfs.seperator).lastOrNull ?? '';
     if (isPickFile) {
       context.showRoundDialog(
         title: libL10n.file,
@@ -308,7 +308,7 @@ extension _Actions on _LocalFilePageState {
   }
 
   void _showDeleteDialog(FileSystemEntity file) {
-    final fileName = file.path.split('/').last;
+    final fileName = file.path.split(Pfs.seperator).last;
     context.showRoundDialog(
       title: libL10n.delete,
       child: Text(libL10n.askContinue('${libL10n.delete} $fileName')),

@@ -36,7 +36,7 @@ class SftpReqStatus {
   late SftpWorker worker;
   final Completer? completer;
 
-  String get fileName => req.localPath.split('/').last;
+  String get fileName => req.localPath.split(Pfs.seperator).last;
 
   // status of the download
   double? progress;
