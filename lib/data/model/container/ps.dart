@@ -88,7 +88,7 @@ final class PodmanPs implements ContainerPs {
 
     final diskIn = (stats['BlockInput'] as int? ?? 0).bytes2Str;
     final diskOut = (stats['BlockOutput'] as int? ?? 0).bytes2Str;
-    disk = '${l10n.read} $diskOut / ${l10n.write} $diskIn';
+    disk = '${l10n.read} $diskIn / ${l10n.write} $diskOut';
   }
 
   factory PodmanPs.fromRawJson(String str) => PodmanPs.fromJson(json.decode(str));
