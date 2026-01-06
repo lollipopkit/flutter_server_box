@@ -149,10 +149,12 @@ abstract final class SSHConfig {
 
   /// Extract jump host from ProxyJump or ProxyCommand
   static String? _extractJumpHost(String value) {
+    if (value.isEmpty) return null;
     // For ProxyJump, the format is usually: user@host:port
     // For ProxyCommand, it's more complex and might need custom parsing
     if (value.contains('@')) {
-      return value.split(' ').first;
+      final parts = value.split(' ');
+      return parts.isNotEmpty ? parts[0] : null;
     }
     return null;
   }

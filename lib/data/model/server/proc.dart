@@ -97,8 +97,8 @@ class Proc {
   }
 
   String get binary {
-    final parts = command.split(' ');
-    return parts[0];
+    final parts = command.trim().split(' ').where((e) => e.isNotEmpty).toList();
+    return parts.isNotEmpty ? parts[0] : '';
   }
 }
 
