@@ -186,7 +186,7 @@ class ContainerNotifier extends _$ContainerNotifier {
           (element) => element.contains(id.substring(0, 5)),
         );
         if (statsLine == null) continue;
-        item.parseStats(statsLine);
+        item.parseStats(statsLine, state.version);
       }
     } catch (e, trace) {
       state = state.copyWith(

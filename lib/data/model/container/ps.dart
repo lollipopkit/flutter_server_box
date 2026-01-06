@@ -20,7 +20,7 @@ sealed class ContainerPs {
 
   factory ContainerPs.fromRaw(String s, ContainerType typ) => typ.ps(s);
 
-  void parseStats(String s);
+  void parseStats(String s, [String? version]);
 }
 
 final class PodmanPs implements ContainerPs {
@@ -55,7 +55,7 @@ final class PodmanPs implements ContainerPs {
   ContainerStatus get status => ContainerStatus.fromPodmanExited(exited);
 
   @override
-  void parseStats(String s) {
+  void parseStats(String s, [String? version]) {
     final stats = json.decode(s);
     final cpuD = (stats['CPU'] as double? ?? 0).toStringAsFixed(1);
     final cpuAvgD = (stats['AvgCPU'] as double? ?? 0).toStringAsFixed(1);
@@ -63,9 +63,27 @@ final class PodmanPs implements ContainerPs {
     final memLimit = (stats['MemLimit'] as int? ?? 0).bytes2Str;
     final memUsage = (stats['MemUsage'] as int? ?? 0).bytes2Str;
     mem = '$memUsage / $memLimit';
-    final netIn = (stats['NetInput'] as int? ?? 0).bytes2Str;
-    final netOut = (stats['NetOutput'] as int? ?? 0).bytes2Str;
-    net = '↓ $netIn / ↑ $netOut';
+
+    int netIn = 0;
+    int netOut = 0;
+    final majorVersion = version?.split('.').firstOrNull;
+    // Podman 4.x uses top-level NetInput/NetOutput fields.
+    // Podman 5.x changed network backend (Netavark) and uses nested
+    // Network.{iface}.RxBytes/TxBytes structure instead.
+    if (majorVersion == '4') {
+      netIn = stats['NetInput'] as int? ?? 0;
+      netOut = stats['NetOutput'] as int? ?? 0;
+    } else if (majorVersion == '5') {
+      final network = stats['Network'] as Map<String, dynamic>?;
+      if (network != null) {
+        for (final interface in network.values) {
+          netIn += interface['RxBytes'] as int? ?? 0;
+          netOut += interface['TxBytes'] as int? ?? 0;
+        }
+      }
+    }
+    net = '↓ ${netIn.bytes2Str} / ↑ ${netOut.bytes2Str}';
+
     final diskIn = (stats['BlockInput'] as int? ?? 0).bytes2Str;
     final diskOut = (stats['BlockOutput'] as int? ?? 0).bytes2Str;
     disk = '${l10n.read} $diskOut / ${l10n.write} $diskIn';
@@ -125,7 +143,7 @@ final class DockerPs implements ContainerPs {
   ContainerStatus get status => ContainerStatus.fromDockerState(state);
 
   @override
-  void parseStats(String s) {
+  void parseStats(String s, [String? version]) {
     final stats = json.decode(s);
     cpu = stats['CPUPerc'];
     mem = stats['MemUsage'];
