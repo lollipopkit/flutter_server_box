@@ -70,7 +70,7 @@ Future<void> _download(SftpReq req, SendPort mainSendPort, SendErrorFunction sen
     mainSendPort.send(SftpWorkerStatus.sshConnectted);
 
     /// Create the directory if not exists
-    final dirPath = req.localPath.substring(0, req.localPath.lastIndexOf('/'));
+    final dirPath = req.localPath.substring(0, req.localPath.lastIndexOf(Pfs.seperator));
     await Directory(dirPath).create(recursive: true);
 
     /// Use [FileMode.write] to overwrite the file
