@@ -166,6 +166,7 @@ class SingleCpuCore extends TimeSeqIface<SingleCpuCore> {
       final id = item.split(' ').firstOrNull;
       if (id == null) continue;
       final matches = item.replaceFirst(id, '').trim().split(' ');
+      if (matches.length < 7) continue;
       cpus.add(
         SingleCpuCore(
           id,

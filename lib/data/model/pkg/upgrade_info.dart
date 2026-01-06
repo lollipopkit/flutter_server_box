@@ -62,6 +62,7 @@ class UpgradePkgInfo {
 
   void _parsePacman(String raw) {
     final parts = raw.split(' ');
+    if (parts.length < 4) return;
     package = parts[0];
     nowVersion = parts[1];
     newVersion = parts[3];
@@ -70,6 +71,7 @@ class UpgradePkgInfo {
 
   void _parseOpkg(String raw) {
     final parts = raw.split(' - ');
+    if (parts.length < 3) return;
     package = parts[0];
     nowVersion = parts[1];
     newVersion = parts[2];
@@ -80,6 +82,7 @@ class UpgradePkgInfo {
   void _parseApk(String raw) {
     final parts = raw.split(' ');
     final len = parts.length;
+    if (len < 2) return;
     newVersion = parts[len - 1];
     nowVersion = parts[0];
     newVersion = newVersion.substring(0, newVersion.length - 1);
