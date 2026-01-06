@@ -33,9 +33,11 @@ class Cpus extends TimeSeq<SingleCpuCore> {
   double usedPercent({int coreIdx = 0}) {
     if (now.length != pre.length) return 0;
     if (now.isEmpty) return 0;
+    if (coreIdx >= now.length) return 0;
     try {
       final idleDelta = now[coreIdx].idle - pre[coreIdx].idle;
       final totalDelta = now[coreIdx].total - pre[coreIdx].total;
+      if (totalDelta == 0) return 0;
       final used = idleDelta / totalDelta;
       return used.isNaN ? 0 : 100 - used * 100;
     } catch (e, s) {
