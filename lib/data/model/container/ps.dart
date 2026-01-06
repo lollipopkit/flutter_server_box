@@ -67,13 +67,15 @@ final class PodmanPs implements ContainerPs {
     int netIn = 0;
     int netOut = 0;
     final majorVersion = version?.split('.').firstOrNull;
-    // Podman 4.x uses top-level NetInput/NetOutput fields.
+    final majorVersionNum = majorVersion != null ? int.tryParse(majorVersion) : null;
+
+    // Podman 4.x and earlier use top-level NetInput/NetOutput fields.
     // Podman 5.x changed network backend (Netavark) and uses nested
     // Network.{iface}.RxBytes/TxBytes structure instead.
-    if (majorVersion == '4') {
+    if (majorVersionNum == null || majorVersionNum <= 4) {
       netIn = stats['NetInput'] as int? ?? 0;
       netOut = stats['NetOutput'] as int? ?? 0;
-    } else if (majorVersion == '5') {
+    } else if (majorVersionNum >= 5) {
       final network = stats['Network'] as Map<String, dynamic>?;
       if (network != null) {
         for (final interface in network.values) {
