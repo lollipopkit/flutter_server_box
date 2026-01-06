@@ -149,8 +149,14 @@ final class DockerPs implements ContainerPs {
     final stats = json.decode(s);
     cpu = stats['CPUPerc'];
     mem = stats['MemUsage'];
-    net = stats['NetIO'];
-    disk = stats['BlockIO'];
+
+    final netIO = stats['NetIO'] as String? ?? '0B / 0B';
+    final netParts = netIO.split(' / ');
+    net = '↓ ${netParts.firstOrNull ?? '0B'} / ↑ ${netParts.length > 1 ? netParts[1] : '0B'}';
+
+    final blockIO = stats['BlockIO'] as String? ?? '0B / 0B';
+    final blockParts = blockIO.split(' / ');
+    disk = '${l10n.read} ${blockParts.firstOrNull ?? '0B'} / ${l10n.write} ${blockParts.length > 1 ? blockParts[1] : '0B'}';
   }
 
   /// CONTAINER ID                   NAMES                          IMAGE                          STATUS
