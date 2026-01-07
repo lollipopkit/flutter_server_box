@@ -108,7 +108,7 @@ class PveNotifier extends _$PveNotifier {
       final newUrl = Uri.parse(
         addr,
       ).replace(host: 'localhost', port: _localPort).toString();
-      debugPrint('Forwarding $newUrl to $addr');
+      dprint('Forwarding $newUrl to $addr');
     }
   }
 
