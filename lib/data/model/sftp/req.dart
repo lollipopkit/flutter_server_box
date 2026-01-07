@@ -21,7 +21,8 @@ class SftpReq {
     }
     try {
       knownHostFingerprints = Map<String, String>.from(Stores.setting.sshKnownHostFingerprints.get());
-    } catch (_) {
+    } catch (e, s) {
+      Loggers.app.warning('Failed to load SSH known host fingerprints', e, s);
       knownHostFingerprints = null;
     }
   }

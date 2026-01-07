@@ -74,7 +74,8 @@ class SshDiscoveryService {
       // Some tools return non-zero but still have useful output
       if (out.trim().isNotEmpty) return out;
       return null;
-    } catch (_) {
+    } catch (e, s) {
+      Loggers.app.warning('Failed to run command: $exe ${args.join(' ')}', e, s);
       return null;
     }
   }
@@ -249,7 +250,9 @@ class SshDiscoveryService {
             }
           }
         }
-      } catch (_) {}
+      } catch (e, s) {
+        Loggers.app.warning('Failed to discover mDNS SSH candidates on macOS', e, s);
+      }
     } else if (_isLinux) {
       final s = await _run('/usr/bin/avahi-browse', ['-rat', '_ssh._tcp']);
       if (s != null) {
@@ -335,7 +338,8 @@ class _Scanner {
       );
       final banner = await c.future.timeout(timeout, onTimeout: () => null);
       return _ScanResult(ip, banner);
-    } catch (_) {
+    } catch (e, s) {
+      Loggers.app.warning('Failed to probe SSH at ${ip.address}', e, s);
       return null;
     } finally {
       sub?.cancel();

@@ -235,11 +235,15 @@ class PveNotifier extends _$PveNotifier {
   Future<void> dispose() async {
     try {
       await _serverSocket.close();
-    } catch (_) {}
+    } catch (e, s) {
+      Loggers.app.warning('Failed to close server socket', e, s);
+    }
     for (final forward in _forwards) {
       try {
         forward.close();
-      } catch (_) {}
+      } catch (e, s) {
+        Loggers.app.warning('Failed to close forward', e, s);
+      }
     }
   }
 }

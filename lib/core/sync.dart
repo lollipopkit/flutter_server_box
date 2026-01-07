@@ -26,7 +26,8 @@ final class BakSyncer extends SyncIface {
         return MergeableUtils.fromJsonString(content, pwd).$1;
       }
       return MergeableUtils.fromJsonString(content).$1;
-    } catch (_) {
+    } catch (e, s) {
+      Loggers.app.warning('Failed to parse backup file with password, trying without password', e, s);
       // Fallback: try without password if detection failed
       return MergeableUtils.fromJsonString(content).$1;
     }

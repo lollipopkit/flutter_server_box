@@ -35,8 +35,8 @@ abstract final class MethodChans {
     try {
       Loggers.app.info('Updating Android sessions: $payload');
       await _channel.invokeMethod('updateSessions', payload);
-    } catch (_) {
-      // ignore
+    } catch (e, s) {
+      Loggers.app.warning('Failed to update Android sessions', e, s);
     }
   }
 
@@ -46,7 +46,8 @@ abstract final class MethodChans {
     try {
       final res = await _channel.invokeMethod('isServiceRunning');
       return res == true;
-    } catch (_) {
+    } catch (e, s) {
+      Loggers.app.warning('Failed to check if Android service is running', e, s);
       return false;
     }
   }
@@ -57,7 +58,9 @@ abstract final class MethodChans {
     try {
       Loggers.app.info('Starting iOS Live Activity: $payload');
       await _channel.invokeMethod('startLiveActivity', payload);
-    } catch (_) {}
+    } catch (e, s) {
+      Loggers.app.warning('Failed to start iOS Live Activity', e, s);
+    }
   }
 
   static Future<void> updateLiveActivity(String payload) async {
@@ -65,7 +68,9 @@ abstract final class MethodChans {
     try {
       Loggers.app.info('Updating iOS Live Activity: $payload');
       await _channel.invokeMethod('updateLiveActivity', payload);
-    } catch (_) {}
+    } catch (e, s) {
+      Loggers.app.warning('Failed to update iOS Live Activity', e, s);
+    }
   }
 
   static Future<void> stopLiveActivity() async {
@@ -73,7 +78,9 @@ abstract final class MethodChans {
     try {
       Loggers.app.info('Stopping iOS Live Activity');
       await _channel.invokeMethod('stopLiveActivity');
-    } catch (_) {}
+    } catch (e, s) {
+      Loggers.app.warning('Failed to stop iOS Live Activity', e, s);
+    }
   }
 
   /// Register a handler for native -> Flutter callbacks.
