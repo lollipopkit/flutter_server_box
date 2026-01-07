@@ -1927,6 +1927,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Help'**
   String get menuHelp;
+
+  /// No description provided for @logs.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs'**
+  String get logs;
 }
 
 class _AppLocalizationsDelegate

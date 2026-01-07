@@ -71,9 +71,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with SingleTickerPr
         ),
         actions: [
           Btn.text(
-            text: 'Logs',
+            text: context.l10n.logs,
             onTap: () =>
-                DebugPage.route.go(context, args: const DebugPageArgs(title: 'Logs(${BuildData.build})')),
+                DebugPage.route.go(context, args: DebugPageArgs(title: '${context.l10n.logs}(${BuildData.build})')),
           ),
           Btn.icon(
             icon: const Icon(Icons.delete),

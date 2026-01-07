@@ -6,7 +6,6 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/context/locale.dart';

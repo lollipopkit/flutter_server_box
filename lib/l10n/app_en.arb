@@ -303,5 +303,6 @@
   "menuInfo": "Info",
   "menuGitHubRepository": "GitHub Repository",
   "menuWiki": "Wiki",
-    "menuHelp": "Help"
+    "menuHelp": "Help",
+  "logs": "Logs"
 }

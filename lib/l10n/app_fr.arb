@@ -293,5 +293,6 @@
   "wolTip": "Après avoir configuré le WOL (Wake-on-LAN), une requête WOL est envoyée chaque fois que le serveur est connecté.",
   "write": "Écrire",
   "writeScriptFailTip": "Échec de l'écriture dans le script, probablement en raison d'un manque de permissions ou que le répertoire n'existe pas.",
-  "writeScriptTip": "Après la connexion au serveur, un script sera écrit dans `~/.config/server_box` \n | `/tmp/server_box` pour surveiller l'état du système. Vous pouvez examiner le contenu du script."
+  "writeScriptTip": "Après la connexion au serveur, un script sera écrit dans `~/.config/server_box` \n | `/tmp/server_box` pour surveiller l'état du système. Vous pouvez examiner le contenu du script.",
+  "logs": "Journaux"
 }

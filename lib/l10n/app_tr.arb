@@ -293,5 +293,6 @@
   "wolTip": "WOL (Wake-on-LAN) yapılandırıldıktan sonra, sunucuya her bağlanıldığında bir WOL isteği gönderilir.",
   "write": "Yaz",
   "writeScriptFailTip": "Betik yazma başarısız oldu, muhtemelen izin eksikliği veya dizin mevcut değil.",
-  "writeScriptTip": "Sunucuya bağlandıktan sonra, sistem durumunu izlemek için `~/.config/server_box` \n | `/tmp/server_box` dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz."
+  "writeScriptTip": "Sunucuya bağlandıktan sonra, sistem durumunu izlemek için `~/.config/server_box` \n | `/tmp/server_box` dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz.",
+  "logs": "Günlükler"
 }

@@ -974,6 +974,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get menuHelp => '帮助';
+
+  @override
+  String get logs => '日志';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1925,4 +1928,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get writeScriptTip =>
       '連線到伺服器後，將會在 `~/.config/server_box` \n | `/tmp/server_box` 中寫入一個腳本來監測系統狀態。你可以審查腳本內容。';
+
+  @override
+  String get logs => '日誌';
 }
