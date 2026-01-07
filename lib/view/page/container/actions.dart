@@ -219,7 +219,7 @@ extension on _ContainerPageState {
               '${switch (_containerState.type) {
                 ContainerType.podman => 'podman',
                 ContainerType.docker => 'docker',
-              }} exec -it ${dItem.id} sh',
+              }} exec -it ${dItem.id} sh -c "command -v bash && exec bash || command -v ash && exec ash || exec sh"',
         );
         SSHPage.route.go(context, args);
         break;
