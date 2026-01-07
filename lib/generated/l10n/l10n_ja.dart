@@ -967,7 +967,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get writeScriptTip =>
-      'サーバーに接続すると、システムの状態を監視するためのスクリプトが `~/.config/server_box` \n | `/tmp/server_box` に書き込まれます。スクリプトの内容を確認できます。';
+      'サーバーへの接続後、システムステータスを監視するスクリプトが `~/.config/server_box` \n | `/tmp/server_box` に書き込まれます。スクリプトの内容を確認できます。';
 
   @override
   String get menuSettings => 'Setting';
@@ -989,4 +989,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get menuHelp => 'Help';
+
+  @override
+  String get logs => 'ログ';
 }

@@ -293,5 +293,6 @@
   "wolTip": "設定 WOL 後，每次連線伺服器時將自動發送喚醒請求",
   "write": "寫入",
   "writeScriptFailTip": "寫入腳本失敗，可能是沒有權限/目錄不存在等。",
-  "writeScriptTip": "連線到伺服器後，將會在 `~/.config/server_box` \n | `/tmp/server_box` 中寫入一個腳本來監測系統狀態。你可以審查腳本內容。"
+  "writeScriptTip": "連線到伺服器後，將會在 `~/.config/server_box` \n | `/tmp/server_box` 中寫入一個腳本來監測系統狀態。你可以審查腳本內容。",
+  "logs": "日誌"
 }

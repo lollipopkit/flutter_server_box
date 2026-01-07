@@ -74,7 +74,8 @@ class SshDiscoveryService {
       // Some tools return non-zero but still have useful output
       if (out.trim().isNotEmpty) return out;
       return null;
-    } catch (_) {
+    } catch (e, s) {
+      Loggers.app.warning('Failed to run command: $exe ${args.join(' ')}', e, s);
       return null;
     }
   }
@@ -109,7 +110,7 @@ class SshDiscoveryService {
           }
         }
         if (matchCount == 0) {
-          lprint(
+          Loggers.app.warning(
             '[ssh_discovery] Warning: No ARP entries parsed on macOS. Output may be unexpected or localized. Output sample: ${s.length > 100 ? '${s.substring(0, 100)}...' : s}',
           );
         }
@@ -176,8 +177,7 @@ class SshDiscoveryService {
                 r'inet\s+(\d+\.\d+\.\d+\.\d+)\s+netmask\s+0x([0-9a-fA-F]+)(?:\s+broadcast\s+(\d+\.\d+\.\d+\.\d+))?',
               ).firstMatch(line);
               if (ipm == null) {
-                // Log unexpected format but continue processing other lines
-                lprint('[ssh_discovery] Warning: Unexpected ifconfig line format: $line');
+                Loggers.app.warning('[ssh_discovery] Warning: Unexpected ifconfig line format: $line');
                 continue;
               }
               final ip = InternetAddress(ipm.group(1)!);
@@ -190,7 +190,7 @@ class SshDiscoveryService {
               final brd = InternetAddress(ipm.group(3) ?? _broadcastAddress(ip, mask).address);
               res.add(_Cidr(ip, prefix, mask, net, brd));
             } catch (e) {
-              lprint('[ssh_discovery] Error parsing ifconfig output: $e, line: $line');
+              Loggers.app.warning('[ssh_discovery] Error parsing ifconfig output: $e, line: $line');
               continue;
             }
           }
@@ -249,7 +249,9 @@ class SshDiscoveryService {
             }
           }
         }
-      } catch (_) {}
+      } catch (e, s) {
+        Loggers.app.warning('Failed to discover mDNS SSH candidates on macOS', e, s);
+      }
     } else if (_isLinux) {
       final s = await _run('/usr/bin/avahi-browse', ['-rat', '_ssh._tcp']);
       if (s != null) {
@@ -335,7 +337,8 @@ class _Scanner {
       );
       final banner = await c.future.timeout(timeout, onTimeout: () => null);
       return _ScanResult(ip, banner);
-    } catch (_) {
+    } catch (e, s) {
+      Loggers.app.warning('Failed to probe SSH at ${ip.address}', e, s);
       return null;
     } finally {
       sub?.cancel();

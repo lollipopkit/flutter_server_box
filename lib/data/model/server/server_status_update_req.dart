@@ -679,7 +679,7 @@ void _parseWindowsTemperatures(Temperatures temps, String raw) {
     if (typeLines.isNotEmpty && valueLines.isNotEmpty) {
       temps.parse(typeLines.join('\n'), valueLines.join('\n'));
     }
-  } catch (e) {
-    // If JSON parsing fails, ignore temperature data
+  } catch (e, s) {
+    Loggers.app.warning('Failed to parse Windows temperature data', e, s);
   }
 }

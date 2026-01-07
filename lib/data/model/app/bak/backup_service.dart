@@ -74,8 +74,8 @@ class BackupService {
           await _confirmAndRestore(context, backup);
           return;
         }
-      } catch (e) {
-        // Saved password failed, will prompt for manual input
+      } catch (e, s) {
+        Loggers.app.warning('Failed to restore with saved password, will prompt for manual input', e, s);
       }
     }
 

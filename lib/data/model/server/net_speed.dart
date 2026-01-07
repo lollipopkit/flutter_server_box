@@ -164,7 +164,8 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
         final bytesIn = BigInt.parse(bytes.first);
         final bytesOut = BigInt.parse(bytes[8]);
         results.add(NetSpeedPart(device, bytesIn, bytesOut, time));
-      } catch (_) {
+      } catch (e, s) {
+        Loggers.app.warning('Failed to parse net speed data: $item', e, s);
         continue;
       }
     }

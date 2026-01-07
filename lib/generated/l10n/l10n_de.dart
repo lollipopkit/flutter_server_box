@@ -1028,4 +1028,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get menuHelp => 'Help';
+
+  @override
+  String get logs => 'Protokolle';
 }

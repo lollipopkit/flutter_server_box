@@ -6,7 +6,6 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/context/locale.dart';
@@ -108,7 +107,7 @@ class PveNotifier extends _$PveNotifier {
       final newUrl = Uri.parse(
         addr,
       ).replace(host: 'localhost', port: _localPort).toString();
-      debugPrint('Forwarding $newUrl to $addr');
+      dprint('Forwarding $newUrl to $addr');
     }
   }
 
@@ -235,11 +234,15 @@ class PveNotifier extends _$PveNotifier {
   Future<void> dispose() async {
     try {
       await _serverSocket.close();
-    } catch (_) {}
+    } catch (e, s) {
+      Loggers.app.warning('Failed to close server socket', e, s);
+    }
     for (final forward in _forwards) {
       try {
         forward.close();
-      } catch (_) {}
+      } catch (e, s) {
+        Loggers.app.warning('Failed to close forward', e, s);
+      }
     }
   }
 }

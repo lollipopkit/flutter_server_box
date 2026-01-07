@@ -1026,4 +1026,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get menuHelp => 'Help';
+
+  @override
+  String get logs => 'Logboeken';
 }

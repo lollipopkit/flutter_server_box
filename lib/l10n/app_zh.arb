@@ -300,5 +300,6 @@
   "menuInfo": "信息",
   "menuGitHubRepository": "GitHub 仓库",
   "menuWiki": "Wiki",
-  "menuHelp": "帮助"
+  "menuHelp": "帮助",
+  "logs": "日志"
 }

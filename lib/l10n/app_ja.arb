@@ -293,5 +293,6 @@
   "wolTip": "WOL（Wake-on-LAN）を設定した後、サーバーに接続するたびにWOLリクエストが送信されます。",
   "write": "書き込み",
   "writeScriptFailTip": "スクリプトの書き込みに失敗しました。権限がないかディレクトリが存在しない可能性があります。",
-  "writeScriptTip": "サーバーに接続すると、システムの状態を監視するためのスクリプトが `~/.config/server_box` \n | `/tmp/server_box` に書き込まれます。スクリプトの内容を確認できます。"
+  "writeScriptTip": "サーバーへの接続後、システムステータスを監視するスクリプトが `~/.config/server_box` \n | `/tmp/server_box` に書き込まれます。スクリプトの内容を確認できます。",
+  "logs": "ログ"
 }
