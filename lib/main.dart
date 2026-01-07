@@ -70,7 +70,6 @@ void _setupDebug() {
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
     DebugProvider.addLog(record);
-    lprint(record);
     if (record.error != null) print(record.error);
     if (record.stackTrace != null) print(record.stackTrace);
   });
