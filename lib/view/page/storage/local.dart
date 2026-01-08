@@ -140,11 +140,23 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
     required FileStat stat,
     required bool isDir,
   }) {
+    final isServerFolder = isDir && file.parent.path == Paths.file;
+    String? serverName;
+    if (isServerFolder) {
+      final servers = ref.watch(serversProvider).servers;
+      final server = servers[fileName];
+      if (server != null) {
+        serverName = server.name;
+      }
+    }
+
     return CardX(
       child: ListTile(
         leading: isDir ? const Icon(Icons.folder_open) : const Icon(Icons.insert_drive_file),
-        title: Text(fileName),
-        subtitle: isDir ? null : Text(stat.size.bytes2Str, style: UIs.textGrey),
+        title: Text(serverName ?? fileName),
+        subtitle: isDir
+            ? (serverName != null ? Text(fileName, style: UIs.textGrey) : null)
+            : Text(stat.size.bytes2Str, style: UIs.textGrey),
         trailing: Text(stat.modified.ymdhms(), style: UIs.textGrey),
         onLongPress: () {
           if (isDir) {
