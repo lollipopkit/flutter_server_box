@@ -143,7 +143,7 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
     final isServerFolder = isDir && file.parent.path == Paths.file;
     String? serverName;
     if (isServerFolder) {
-      final servers = ref.watch(serversProvider).servers;
+      final servers = ref.read(serversProvider).servers;
       final server = servers[fileName];
       if (server != null) {
         serverName = server.name;
