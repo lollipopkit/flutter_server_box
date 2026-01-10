@@ -26,8 +26,6 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     _setup(context);
 
-    Stores.setting.useSystemPrimaryColor.fetch();
-
     return ListenableBuilder(
       listenable: RNodes.app,
       builder: (context, _) {

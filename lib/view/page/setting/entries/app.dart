@@ -104,7 +104,15 @@ extension _App on _AppSettingsPageState {
                     DynamicColorBuilder(
                       builder: (light, dark) {
                         final supported = light != null || dark != null;
-                        if (!supported) return const SizedBox.shrink();
+                        if (!supported) {
+                          if (!_setting.useSystemPrimaryColor.fetch()) {
+                            _setting.useSystemPrimaryColor.put(false);
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              setState(() {});
+                            });
+                          }
+                          return const SizedBox.shrink();
+                        }
                         return ListTile(
                           title: Text(l10n.followSystem),
                           trailing: StoreSwitch(
@@ -141,9 +149,14 @@ extension _App on _AppSettingsPageState {
       return;
     }
 
-    UIs.primaryColor = color;
-    UIs.colorSeed = color;
+    // Save the color seed to settings
     _setting.colorSeed.put(color.value255);
+
+    // Only update UIs colors if we're not in system mode
+    if (!_setting.useSystemPrimaryColor.fetch()) {
+      UIs.primaryColor = color;
+      UIs.colorSeed = color;
+    }
 
     RNodes.app.notify();
     context.pop();
