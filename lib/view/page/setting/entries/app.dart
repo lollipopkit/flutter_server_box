@@ -100,14 +100,19 @@ extension _App on _AppSettingsPageState {
             child: StatefulBuilder(
               builder: (context, setState) {
                 final children = <Widget>[
-                  /// Plugin [dynamic_color] is not supported on iOS
                   if (!isIOS)
-                    ListTile(
-                      title: Text(l10n.followSystem),
-                      trailing: StoreSwitch(
-                        prop: _setting.useSystemPrimaryColor,
-                        callback: (_) => setState(() {}),
-                      ),
+                    DynamicColorBuilder(
+                      builder: (light, dark) {
+                        final supported = light != null || dark != null;
+                        if (!supported) return const SizedBox.shrink();
+                        return ListTile(
+                          title: Text(l10n.followSystem),
+                          trailing: StoreSwitch(
+                            prop: _setting.useSystemPrimaryColor,
+                            callback: (_) => setState(() {}),
+                          ),
+                        );
+                      },
                     ),
                 ];
                 if (!_setting.useSystemPrimaryColor.fetch()) {

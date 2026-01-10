@@ -86,6 +86,10 @@ class _MyAppState extends State<MyApp> {
         } else if (!context.isDark && light != null) {
           UIs.primaryColor = light.primary;
           UIs.colorSeed = light.primary;
+        } else {
+          final fallbackColor = Color(Stores.setting.colorSeed.fetch());
+          UIs.primaryColor = fallbackColor;
+          UIs.colorSeed = fallbackColor;
         }
 
         return _buildApp(context, light: lightTheme, dark: darkTheme);

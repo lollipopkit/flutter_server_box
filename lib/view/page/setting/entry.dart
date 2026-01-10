@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_highlight/theme_map.dart';
@@ -28,6 +29,7 @@ import 'package:server_box/view/page/setting/seq/srv_seq.dart';
 import 'package:server_box/view/page/setting/seq/virt_key.dart';
 
 part 'about.dart';
+part 'entries/ai.dart';
 part 'entries/app.dart';
 part 'entries/container.dart';
 part 'entries/editor.dart';
@@ -35,7 +37,6 @@ part 'entries/full_screen.dart';
 part 'entries/server.dart';
 part 'entries/sftp.dart';
 part 'entries/ssh.dart';
-part 'entries/ai.dart';
 
 const _kIconSize = 23.0;
 
