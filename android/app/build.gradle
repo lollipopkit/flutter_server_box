@@ -1,6 +1,6 @@
 plugins {
     id "com.android.application"
-    id "kotlin-android" version "2.3.0"
+    id "kotlin-android"
     id "dev.flutter.flutter-gradle-plugin"
 }
 
