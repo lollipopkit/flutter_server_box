@@ -94,19 +94,33 @@ extension _App on _AppSettingsPageState {
       }),
       onTap: () {
         withTextFieldController((ctrl) async {
+          ctrl.text = Color(_setting.colorSeed.fetch()).toHex;
           await context.showRoundDialog(
             title: libL10n.primaryColorSeed,
             child: StatefulBuilder(
               builder: (context, setState) {
                 final children = <Widget>[
-                  /// Plugin [dynamic_color] is not supported on iOS
                   if (!isIOS)
-                    ListTile(
-                      title: Text(l10n.followSystem),
-                      trailing: StoreSwitch(
-                        prop: _setting.useSystemPrimaryColor,
-                        callback: (_) => setState(() {}),
-                      ),
+                    DynamicColorBuilder(
+                      builder: (light, dark) {
+                        final supported = light != null || dark != null;
+                        if (!supported) {
+                          if (!_setting.useSystemPrimaryColor.fetch()) {
+                            _setting.useSystemPrimaryColor.put(false);
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              setState(() {});
+                            });
+                          }
+                          return const SizedBox.shrink();
+                        }
+                        return ListTile(
+                          title: Text(l10n.followSystem),
+                          trailing: StoreSwitch(
+                            prop: _setting.useSystemPrimaryColor,
+                            callback: (_) => setState(() {}),
+                          ),
+                        );
+                      },
                     ),
                 ];
                 if (!_setting.useSystemPrimaryColor.fetch()) {
@@ -129,12 +143,22 @@ extension _App on _AppSettingsPageState {
 
   void _onSaveColor(String s) {
     final color = s.fromColorHex;
+
     if (color == null) {
       context.showSnackBar(libL10n.fail);
       return;
     }
-    UIs.colorSeed = color;
+
+    // Save the color seed to settings
     _setting.colorSeed.put(color.value255);
+
+    // Only update UIs colors if we're not in system mode
+    if (!_setting.useSystemPrimaryColor.fetch()) {
+      UIs.primaryColor = color;
+      UIs.colorSeed = color;
+    }
+
+    RNodes.app.notify();
     context.pop();
   }
 

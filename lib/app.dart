@@ -25,6 +25,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     _setup(context);
+
     return ListenableBuilder(
       listenable: RNodes.app,
       builder: (context, _) {
@@ -39,6 +40,7 @@ class _MyAppState extends State<MyApp> {
 
   Widget _build(BuildContext context) {
     final colorSeed = Color(Stores.setting.colorSeed.fetch());
+
     UIs.colorSeed = colorSeed;
     UIs.primaryColor = colorSeed;
 
@@ -61,14 +63,31 @@ class _MyAppState extends State<MyApp> {
   Widget _buildDynamicColor(BuildContext context) {
     return DynamicColorBuilder(
       builder: (light, dark) {
-        final lightTheme = ThemeData(useMaterial3: true, colorScheme: light);
-        final darkTheme = ThemeData(useMaterial3: true, brightness: Brightness.dark, colorScheme: dark);
+        final lightSeed = light?.primary;
+        final darkSeed = dark?.primary;
+
+        final lightTheme = ThemeData(
+          useMaterial3: true,
+          colorSchemeSeed: lightSeed,
+          appBarTheme: AppBarTheme(scrolledUnderElevation: 0.0),
+        );
+        final darkTheme = ThemeData(
+          useMaterial3: true,
+          brightness: Brightness.dark,
+          colorSchemeSeed: darkSeed,
+          appBarTheme: AppBarTheme(scrolledUnderElevation: 0.0),
+        );
+
         if (context.isDark && dark != null) {
           UIs.primaryColor = dark.primary;
           UIs.colorSeed = dark.primary;
         } else if (!context.isDark && light != null) {
           UIs.primaryColor = light.primary;
           UIs.colorSeed = light.primary;
+        } else {
+          final fallbackColor = Color(Stores.setting.colorSeed.fetch());
+          UIs.primaryColor = fallbackColor;
+          UIs.colorSeed = fallbackColor;
         }
 
         return _buildApp(context, light: lightTheme, dark: darkTheme);
