@@ -94,6 +94,7 @@ extension _App on _AppSettingsPageState {
       }),
       onTap: () {
         withTextFieldController((ctrl) async {
+          ctrl.text = Color(_setting.colorSeed.fetch()).toHex;
           await context.showRoundDialog(
             title: libL10n.primaryColorSeed,
             child: StatefulBuilder(
@@ -129,12 +130,16 @@ extension _App on _AppSettingsPageState {
 
   void _onSaveColor(String s) {
     final color = s.fromColorHex;
+
     if (color == null) {
       context.showSnackBar(libL10n.fail);
       return;
     }
+
     UIs.colorSeed = color;
     _setting.colorSeed.put(color.value255);
+
+    RNodes.app.notify();
     context.pop();
   }
 
