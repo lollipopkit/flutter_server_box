@@ -346,6 +346,6 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
   static const _kCardHeightMin = 23.0;
   static const _kCardHeightFlip = 99.0;
-  static const _kCardHeightNormal = 108.0;
+  static const _kCardHeightNormal = 110.0;
   static const _kCardHeightMoveOutFuncs = 135.0;
 }
