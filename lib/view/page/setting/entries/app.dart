@@ -141,6 +141,7 @@ extension _App on _AppSettingsPageState {
       return;
     }
 
+    UIs.primaryColor = color;
     UIs.colorSeed = color;
     _setting.colorSeed.put(color.value255);
 
