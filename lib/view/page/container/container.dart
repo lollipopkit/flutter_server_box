@@ -55,12 +55,12 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
 
   @override
   Widget build(BuildContext context) {
-    final errors = ref.watch(_provider.select((p) => p.errors));
+    final err = ref.watch(_provider.select((p) => p.error));
 
     return Scaffold(
       appBar: _buildAppBar(),
       body: SafeArea(child: _buildMain()),
-      floatingActionButton: errors.isEmpty ? _buildFAB() : null,
+      floatingActionButton: err == null ? _buildFAB() : null,
     );
   }
 
@@ -84,7 +84,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
   Widget _buildMain() {
     final containerState = _containerState;
 
-    if (containerState.errors.isNotEmpty && containerState.items == null) {
+    if (containerState.error != null && containerState.items == null) {
       return SizedBox.expand(
         child: Column(
           children: [
@@ -93,7 +93,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
             UIs.height13,
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 23),
-              child: Text(containerState.errors.map((e) => e.toString()).join('\n')),
+              child: Text(containerState.error.toString()),
             ),
             const Spacer(),
             UIs.height13,
@@ -341,7 +341,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
     return ExpandTile(
       leading: const Icon(Icons.settings),
       title: Text(libL10n.setting),
-      initiallyExpanded: containerState.errors.isNotEmpty,
+      initiallyExpanded: containerState.error != null,
       children: _SettingsMenuItems.values.map((item) => _buildSettingTile(item, containerState)).toList(),
     ).cardx;
   }
