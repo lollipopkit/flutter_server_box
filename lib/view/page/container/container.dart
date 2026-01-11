@@ -234,7 +234,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
     if (item.cpu == null || item.mem == null) return UIs.placeholder;
     return LayoutBuilder(
       builder: (_, cons) {
-        final width = cons.maxWidth / 2 - 41;
+        final width = cons.maxWidth / 2 - 6.5;
         return Column(
           children: [
             UIs.height13,
@@ -264,10 +264,17 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
       child: Column(
         children: [
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon, size: 12, color: Colors.grey),
               UIs.width7,
-              Text(value ?? l10n.unknown, style: UIs.text11Grey),
+              Expanded(
+                child: Text(
+                  value ?? l10n.unknown,
+                  style: UIs.text11Grey,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
         ],
