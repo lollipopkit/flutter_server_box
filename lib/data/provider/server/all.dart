@@ -92,8 +92,6 @@ class ServersNotifier extends _$ServersNotifier {
     return null;
   }
 
-  Future<void>? _refreshInProgress;
-
   /// if [spi] is specificed then only refresh this server
   /// [onlyFailed] only refresh failed servers
   Future<void> refresh({Spi? spi, bool onlyFailed = false}) async {
@@ -105,44 +103,34 @@ class ServersNotifier extends _$ServersNotifier {
       return;
     }
 
-    if (_refreshInProgress != null) return;
+    final serversToRefresh = <MapEntry<String, Spi>>[];
+    final idsToResetLimiter = <String>[];
 
-    final completer = Completer<void>();
-    _refreshInProgress = completer.future;
+    for (final entry in state.servers.entries) {
+      final serverId = entry.key;
+      final spi = entry.value;
 
-    try {
-      final serversToRefresh = <MapEntry<String, Spi>>[];
-      final idsToResetLimiter = <String>[];
+      if (state.manualDisconnectedIds.contains(serverId)) continue;
 
-      for (final entry in state.servers.entries) {
-        final serverId = entry.key;
-        final spi = entry.value;
+      final serverState = ref.read(serverProvider(serverId));
 
-        if (state.manualDisconnectedIds.contains(serverId)) continue;
-
-        final serverState = ref.read(serverProvider(serverId));
-
-        if (onlyFailed) {
-          if (serverState.conn != ServerConn.failed) continue;
-          idsToResetLimiter.add(serverId);
-        }
-
-        if (serverState.conn == ServerConn.disconnected && !spi.autoConnect) continue;
-
-        serversToRefresh.add(entry);
+      if (onlyFailed) {
+        if (serverState.conn != ServerConn.failed) continue;
+        idsToResetLimiter.add(serverId);
       }
 
-      for (final id in idsToResetLimiter) {
-        TryLimiter.reset(id);
-      }
+      if (serverState.conn == ServerConn.disconnected && !spi.autoConnect) continue;
 
-      for (final entry in serversToRefresh) {
-        final serverNotifier = ref.read(serverProvider(entry.key).notifier);
-        serverNotifier.refresh().ignore();
-      }
-    } finally {
-      _refreshInProgress = null;
-      completer.complete();
+      serversToRefresh.add(entry);
+    }
+
+    for (final id in idsToResetLimiter) {
+      TryLimiter.reset(id);
+    }
+
+    for (final entry in serversToRefresh) {
+      final serverNotifier = ref.read(serverProvider(entry.key).notifier);
+      serverNotifier.refresh().ignore();
     }
   }
 
