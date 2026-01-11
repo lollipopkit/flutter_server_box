@@ -92,7 +92,7 @@ class ServersNotifier extends _$ServersNotifier {
     return null;
   }
 
-  Future<void>? _refreshCompleter;
+  Future<void>? _refreshInProgress;
 
   /// if [spi] is specificed then only refresh this server
   /// [onlyFailed] only refresh failed servers
@@ -105,10 +105,10 @@ class ServersNotifier extends _$ServersNotifier {
       return;
     }
 
-    if (_refreshCompleter != null) return;
+    if (_refreshInProgress != null) return;
 
     final completer = Completer<void>();
-    _refreshCompleter = completer.future;
+    _refreshInProgress = completer.future;
 
     try {
       final serversToRefresh = <MapEntry<String, Spi>>[];
@@ -141,7 +141,7 @@ class ServersNotifier extends _$ServersNotifier {
         serverNotifier.refresh().ignore();
       }
     } finally {
-      _refreshCompleter = null;
+      _refreshInProgress = null;
       completer.complete();
     }
   }
