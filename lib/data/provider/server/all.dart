@@ -151,8 +151,8 @@ class ServersNotifier extends _$ServersNotifier {
     stopAutoRefresh();
     if (duration == 0) return;
     if (duration < 0 || duration > 10) {
-      duration = 3;
       Loggers.app.warning('Invalid duration: $duration, use default 3');
+      duration = 3;
     }
     final timer = Timer.periodic(Duration(seconds: duration), (_) async {
       await refresh();
