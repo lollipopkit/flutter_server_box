@@ -92,6 +92,8 @@ class ServersNotifier extends _$ServersNotifier {
     return null;
   }
 
+  Future<void>? _refreshCompleter;
+
   /// if [spi] is specificed then only refresh this server
   /// [onlyFailed] only refresh failed servers
   Future<void> refresh({Spi? spi, bool onlyFailed = false}) async {
@@ -103,34 +105,43 @@ class ServersNotifier extends _$ServersNotifier {
       return;
     }
 
-    final refreshFutures = <Future<void>>[];
-    for (final entry in state.servers.entries) {
-      final serverId = entry.key;
-      final spi = entry.value;
+    if (_refreshCompleter != null) return;
 
-      if (onlyFailed) {
+    final completer = Completer<void>();
+    _refreshCompleter = completer.future;
+    try {
+      final refreshFutures = <Future<void>>[];
+      for (final entry in state.servers.entries) {
+        final serverId = entry.key;
+        final spi = entry.value;
+
+        if (onlyFailed) {
+          final serverState = ref.read(serverProvider(serverId));
+          if (serverState.conn != ServerConn.failed) continue;
+          TryLimiter.reset(serverId);
+        }
+
+        if (state.manualDisconnectedIds.contains(serverId)) continue;
+
         final serverState = ref.read(serverProvider(serverId));
-        if (serverState.conn != ServerConn.failed) continue;
-        TryLimiter.reset(serverId);
+        if (serverState.conn == ServerConn.disconnected && !spi.autoConnect) continue;
+
+        final serverNotifier = ref.read(serverProvider(serverId).notifier);
+        refreshFutures.add(serverNotifier.refresh());
       }
 
-      if (state.manualDisconnectedIds.contains(serverId)) continue;
-
-      final serverState = ref.read(serverProvider(serverId));
-      if (serverState.conn == ServerConn.disconnected && !spi.autoConnect) continue;
-
-      final serverNotifier = ref.read(serverProvider(serverId).notifier);
-      refreshFutures.add(serverNotifier.refresh());
+      await Future.wait(refreshFutures);
+    } finally {
+      _refreshCompleter = null;
+      completer.complete();
     }
-
-    unawaited(Future.wait(refreshFutures));
   }
 
   Future<void> startAutoRefresh() async {
     var duration = Stores.setting.serverStatusUpdateInterval.fetch();
     stopAutoRefresh();
     if (duration == 0) return;
-    if (duration < 0 || duration > 10 || duration == 1) {
+    if (duration < 0 || duration > 10) {
       duration = 3;
       Loggers.app.warning('Invalid duration: $duration, use default 3');
     }
@@ -144,8 +155,8 @@ class ServersNotifier extends _$ServersNotifier {
     final timer = state.autoRefreshTimer;
     if (timer != null) {
       timer.cancel();
-      state = state.copyWith(autoRefreshTimer: null);
     }
+    state = state.copyWith(autoRefreshTimer: null);
   }
 
   bool get isAutoRefreshOn => state.autoRefreshTimer != null;
