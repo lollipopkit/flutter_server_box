@@ -103,28 +103,27 @@ class ServersNotifier extends _$ServersNotifier {
       return;
     }
 
-    await Future.wait(
-      state.servers.entries.map((entry) async {
-        final serverId = entry.key;
-        final spi = entry.value;
+    final refreshFutures = <Future<void>>[];
+    for (final entry in state.servers.entries) {
+      final serverId = entry.key;
+      final spi = entry.value;
 
-        if (onlyFailed) {
-          final serverState = ref.read(serverProvider(serverId));
-          if (serverState.conn != ServerConn.failed) return;
-          TryLimiter.reset(serverId);
-        }
-
-        if (state.manualDisconnectedIds.contains(serverId)) return;
-
+      if (onlyFailed) {
         final serverState = ref.read(serverProvider(serverId));
-        if (serverState.conn == ServerConn.disconnected && !spi.autoConnect) {
-          return;
-        }
+        if (serverState.conn != ServerConn.failed) continue;
+        TryLimiter.reset(serverId);
+      }
 
-        final serverNotifier = ref.read(serverProvider(serverId).notifier);
-        await serverNotifier.refresh();
-      }),
-    );
+      if (state.manualDisconnectedIds.contains(serverId)) continue;
+
+      final serverState = ref.read(serverProvider(serverId));
+      if (serverState.conn == ServerConn.disconnected && !spi.autoConnect) continue;
+
+      final serverNotifier = ref.read(serverProvider(serverId).notifier);
+      refreshFutures.add(serverNotifier.refresh());
+    }
+
+    unawaited(Future.wait(refreshFutures));
   }
 
   Future<void> startAutoRefresh() async {
