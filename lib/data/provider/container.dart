@@ -25,7 +25,7 @@ abstract class ContainerState with _$ContainerState {
     @Default(null) List<ContainerPs>? items,
     @Default(null) List<ContainerImg>? images,
     @Default(null) String? version,
-    @Default(null) ContainerErr? error,
+    @Default(<ContainerErr>[]) List<ContainerErr> errors,
     @Default(null) String? runLog,
     @Default(ContainerType.docker) ContainerType type,
     @Default(false) bool isBusy,
@@ -48,7 +48,7 @@ class ContainerNotifier extends _$ContainerNotifier {
   }
 
   Future<void> setType(ContainerType type) async {
-    state = state.copyWith(type: type, error: null, runLog: null, items: null, images: null, version: null);
+    state = state.copyWith(type: type, errors: [], runLog: null, items: null, images: null, version: null);
     Stores.container.setType(type, hostId);
     sudoCompleter = Completer<bool>();
     await refresh();
@@ -98,7 +98,7 @@ class ContainerNotifier extends _$ContainerNotifier {
 
     /// Code 127 means command not found
     if (code == 127 || raw.contains(_dockerNotFound)) {
-      state = state.copyWith(error: ContainerErr(type: ContainerErrType.notInstalled));
+      state = state.copyWith(errors: [ContainerErr(type: ContainerErrType.notInstalled)]);
       return;
     }
 
@@ -106,10 +106,12 @@ class ContainerNotifier extends _$ContainerNotifier {
     final segments = raw.split(ScriptConstants.separator);
     if (segments.length != ContainerCmdType.values.length) {
       state = state.copyWith(
-        error: ContainerErr(
-          type: ContainerErrType.segmentsNotMatch,
-          message: 'Container segments: ${segments.length}',
-        ),
+        errors: [
+          ContainerErr(
+            type: ContainerErrType.segmentsNotMatch,
+            message: 'Container segments: ${segments.length}',
+          ),
+        ],
       );
       Loggers.app.warning('Container segments: ${segments.length}\n$raw');
       return;
@@ -119,10 +121,10 @@ class ContainerNotifier extends _$ContainerNotifier {
     final verRaw = ContainerCmdType.version.find(segments);
     try {
       final version = json.decode(verRaw)['Client']['Version'];
-      state = state.copyWith(version: version, error: null);
+      state = state.copyWith(version: version);
     } catch (e, trace) {
       state = state.copyWith(
-        error: ContainerErr(type: ContainerErrType.invalidVersion, message: '$e'),
+        errors: [...state.errors, ContainerErr(type: ContainerErrType.invalidVersion, message: '$e')],
       );
       Loggers.app.warning('Container version failed', e, trace);
     }
@@ -140,7 +142,7 @@ class ContainerNotifier extends _$ContainerNotifier {
       state = state.copyWith(items: items);
     } catch (e, trace) {
       state = state.copyWith(
-        error: ContainerErr(type: ContainerErrType.parsePs, message: '$e'),
+        errors: [...state.errors, ContainerErr(type: ContainerErrType.parsePs, message: '$e')],
       );
       Loggers.app.warning('Container ps failed', e, trace);
     }
@@ -162,7 +164,7 @@ class ContainerNotifier extends _$ContainerNotifier {
       state = state.copyWith(images: images);
     } catch (e, trace) {
       state = state.copyWith(
-        error: ContainerErr(type: ContainerErrType.parseImages, message: '$e'),
+        errors: [...state.errors, ContainerErr(type: ContainerErrType.parseImages, message: '$e')],
       );
       Loggers.app.warning('Container images failed', e, trace);
     }
@@ -189,7 +191,7 @@ class ContainerNotifier extends _$ContainerNotifier {
       }
     } catch (e, trace) {
       state = state.copyWith(
-        error: ContainerErr(type: ContainerErrType.parseStats, message: '$e'),
+        errors: [...state.errors, ContainerErr(type: ContainerErrType.parseStats, message: '$e')],
       );
       Loggers.app.warning('Parse docker stats: $statsRaw', e, trace);
     }
