@@ -63,6 +63,9 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
   final _netSortType = ValueNotifier(_NetSortType.device);
   late final _collapse = _settings.collapseUIDefault.fetch();
   late final _textFactor = TextScaler.linear(_settings.textFactor.fetch());
+  late final _cpuViewAsProgress = _settings.cpuViewAsProgress.fetch();
+  late final _moveServerFuncs = _settings.moveServerFuncs.fetch();
+  late final _displayCpuIndexSetting = _settings.displayCpuIndex.fetch();
 
   @override
   void dispose() {
@@ -97,7 +100,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
   }
 
   Widget _buildMainPage(ServerState si) {
-    final buildFuncs = !Stores.setting.moveServerFuncs.fetch();
+    final buildFuncs = !_moveServerFuncs;
     final logo = _buildLogo(si);
     final children = <Widget>[if (logo != null) logo, if (buildFuncs) ServerFuncBtns(spi: si.spi)];
     for (final card in _cardsOrder) {
@@ -197,7 +200,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
       ]);
     }
 
-    final List<Widget> children = Stores.setting.cpuViewAsProgress.fetch()
+    final List<Widget> children = _cpuViewAsProgress
         ? _buildCPUProgress(ss.cpu)
         : [_buildCPUChart(ss)];
 
@@ -258,7 +261,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
     const kRowThreshold = 4;
     const kCoresCountThreshold = kMaxColumn * kRowThreshold;
     final children = <Widget>[];
-    final displayCpuIndexSetting = Stores.setting.displayCpuIndex.fetch();
+    final displayCpuIndexSetting = _displayCpuIndexSetting;
 
     if (cs.coresCount > kCoresCountThreshold) {
       final numCoresToDisplay = cs.coresCount - 1;
