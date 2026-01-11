@@ -49,7 +49,7 @@ extension _Operation on _ServerPageState {
           await context.showRoundDialog(title: libL10n.attention, child: Text(l10n.suspendTip));
           Stores.setting.showSuspendTip.put(false);
         }
-        srv.client?.execWithPwd(
+        await srv.client?.execWithPwd(
           ShellFunc.suspend.exec(srv.spi.id, systemType: srv.status.system, customDir: null),
           context: context,
           id: srv.id,
@@ -62,11 +62,13 @@ extension _Operation on _ServerPageState {
 
   void _onTapShutdown(ServerState srv) {
     _askFor(
-      func: () => srv.client?.execWithPwd(
-        ShellFunc.shutdown.exec(srv.spi.id, systemType: srv.status.system, customDir: null),
-        context: context,
-        id: srv.id,
-      ),
+      func: () async {
+        await srv.client?.execWithPwd(
+          ShellFunc.shutdown.exec(srv.spi.id, systemType: srv.status.system, customDir: null),
+          context: context,
+          id: srv.id,
+        );
+      },
       typ: l10n.shutdown,
       name: srv.spi.name,
     );
@@ -74,11 +76,13 @@ extension _Operation on _ServerPageState {
 
   void _onTapReboot(ServerState srv) {
     _askFor(
-      func: () => srv.client?.execWithPwd(
-        ShellFunc.reboot.exec(srv.spi.id, systemType: srv.status.system, customDir: null),
-        context: context,
-        id: srv.id,
-      ),
+      func: () async {
+        await srv.client?.execWithPwd(
+          ShellFunc.reboot.exec(srv.spi.id, systemType: srv.status.system, customDir: null),
+          context: context,
+          id: srv.id,
+        );
+      },
       typ: l10n.reboot,
       name: srv.spi.name,
     );

@@ -112,7 +112,7 @@ extension SSHClientX on SSHClient {
     return (session, result.takeBytes().string);
   }
 
-  Future<int?> execWithPwd(
+  Future<(int?, String)> execWithPwd(
     String script, {
     String? entry,
     BuildContext? context,
@@ -121,7 +121,7 @@ extension SSHClientX on SSHClient {
     required String id,
   }) async {
     var isRequestingPwd = false;
-    final (session, _) = await exec(
+    final (session, output) = await exec(
       (sess) {
         sess.stdin.add('$script\n'.uint8List);
         sess.stdin.close();
@@ -147,7 +147,7 @@ extension SSHClientX on SSHClient {
       onStdout: onStdout,
       entry: entry,
     );
-    return session.exitCode;
+    return (session.exitCode, output);
   }
 
   Future<String> execForOutput(

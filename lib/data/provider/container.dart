@@ -84,15 +84,14 @@ class ContainerNotifier extends _$ContainerNotifier {
     }
     final includeStats = Stores.setting.containerParseStat.fetch();
 
-    var raw = '';
     final cmd = _wrap(ContainerCmdType.execAll(state.type, sudo: sudo, includeStats: includeStats));
-    final code = await client?.execWithPwd(
-      cmd,
-      context: context,
-      onStdout: (data, _) => raw = '$raw$data',
-      id: hostId,
-    );
+    int? code;
+    String raw = '';
+    if (client != null) {
+      (code, raw) = await client!.execWithPwd(cmd, context: context, id: hostId);
+    }
 
+    if (!ref.mounted) return;
     state = state.copyWith(isBusy: false);
 
     if (!context.mounted) return;
@@ -234,7 +233,7 @@ class ContainerNotifier extends _$ContainerNotifier {
 
     state = state.copyWith(runLog: '');
     final errs = <String>[];
-    final code = await client?.execWithPwd(
+    final (code, _) = await client?.execWithPwd(
       _wrap((await sudoCompleter.future) ? 'sudo -S $cmd' : cmd),
       context: context,
       onStdout: (data, _) {
@@ -242,7 +241,7 @@ class ContainerNotifier extends _$ContainerNotifier {
       },
       onStderr: (data, _) => errs.add(data),
       id: hostId,
-    );
+    ) ?? (null, null);
     state = state.copyWith(runLog: null);
 
     if (code != 0) {
