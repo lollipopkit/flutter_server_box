@@ -136,13 +136,10 @@ class ServersNotifier extends _$ServersNotifier {
         TryLimiter.reset(id);
       }
 
-      final refreshFutures = <Future<void>>[];
       for (final entry in serversToRefresh) {
         final serverNotifier = ref.read(serverProvider(entry.key).notifier);
-        refreshFutures.add(serverNotifier.refresh());
+        serverNotifier.refresh().ignore();
       }
-
-      await Future.wait(refreshFutures);
     } finally {
       _refreshCompleter = null;
       completer.complete();
