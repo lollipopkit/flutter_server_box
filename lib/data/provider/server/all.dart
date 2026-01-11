@@ -109,24 +109,27 @@ class ServersNotifier extends _$ServersNotifier {
 
     final completer = Completer<void>();
     _refreshCompleter = completer.future;
+
     try {
-      final refreshFutures = <Future<void>>[];
-      for (final entry in state.servers.entries) {
+      final serversToRefresh = state.servers.entries.where((entry) {
         final serverId = entry.key;
         final spi = entry.value;
 
+        if (state.manualDisconnectedIds.contains(serverId)) return false;
         if (onlyFailed) {
           final serverState = ref.read(serverProvider(serverId));
-          if (serverState.conn != ServerConn.failed) continue;
+          if (serverState.conn != ServerConn.failed) return false;
           TryLimiter.reset(serverId);
         }
-
-        if (state.manualDisconnectedIds.contains(serverId)) continue;
-
         final serverState = ref.read(serverProvider(serverId));
-        if (serverState.conn == ServerConn.disconnected && !spi.autoConnect) continue;
+        if (serverState.conn == ServerConn.disconnected && !spi.autoConnect) return false;
 
-        final serverNotifier = ref.read(serverProvider(serverId).notifier);
+        return true;
+      }).toList();
+
+      final refreshFutures = <Future<void>>[];
+      for (final entry in serversToRefresh) {
+        final serverNotifier = ref.read(serverProvider(entry.key).notifier);
         refreshFutures.add(serverNotifier.refresh());
       }
 
