@@ -65,7 +65,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
   late final _textFactor = TextScaler.linear(_settings.textFactor.fetch());
   late final _cpuViewAsProgress = _settings.cpuViewAsProgress.fetch();
   late final _moveServerFuncs = _settings.moveServerFuncs.fetch();
-  late final _displayCpuIndexSetting = _settings.displayCpuIndex.fetch();
+  late final _displayCpuIndex = _settings.displayCpuIndex.fetch();
 
   @override
   void dispose() {
@@ -261,7 +261,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
     const kRowThreshold = 4;
     const kCoresCountThreshold = kMaxColumn * kRowThreshold;
     final children = <Widget>[];
-    final displayCpuIndexSetting = _displayCpuIndexSetting;
+    final displayCpuIndexSetting = _displayCpuIndex;
 
     if (cs.coresCount > kCoresCountThreshold) {
       final numCoresToDisplay = cs.coresCount - 1;
