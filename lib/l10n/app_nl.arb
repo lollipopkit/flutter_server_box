@@ -294,5 +294,6 @@
   "write": "Schrijven",
   "writeScriptFailTip": "Het schrijven naar het script is mislukt, mogelijk door gebrek aan rechten of omdat de map niet bestaat.",
   "writeScriptTip": "Na het verbinden met de server wordt een script geschreven naar `~/.config/server_box` \n | `/tmp/server_box` om de systeemstatus te monitoren. U kunt de inhoud van het script controleren.",
-  "logs": "Logboeken"
+  "logs": "Logboeken",
+  "podmanDockerEmulationDetected": "Podman Docker-emulatie gedetecteerd. Schakel over naar Podman in de instellingen."
 }

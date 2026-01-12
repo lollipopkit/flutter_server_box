@@ -1024,4 +1024,8 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get logs => 'Logs';
+
+  @override
+  String get podmanDockerEmulationDetected =>
+      'Emulação Podman Docker detectada. Por favor, alterne para Podman nas configurações.';
 }

@@ -1028,4 +1028,8 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get logs => 'Журнали';
+
+  @override
+  String get podmanDockerEmulationDetected =>
+      'Виявлено емуляцію Podman Docker. Будь ласка, переключіться на Podman у налаштуваннях.';
 }

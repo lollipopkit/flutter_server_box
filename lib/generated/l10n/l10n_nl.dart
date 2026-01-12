@@ -1029,4 +1029,8 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get logs => 'Logboeken';
+
+  @override
+  String get podmanDockerEmulationDetected =>
+      'Podman Docker-emulatie gedetecteerd. Schakel over naar Podman in de instellingen.';
 }

@@ -26,6 +26,7 @@ enum ContainerErrType {
   parsePs,
   parseImages,
   parseStats,
+  podmanDetected,
 }
 
 class ContainerErr extends Err<ContainerErrType> {
