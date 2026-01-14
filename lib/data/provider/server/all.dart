@@ -138,7 +138,7 @@ class ServersNotifier extends _$ServersNotifier {
     var duration = Stores.setting.serverStatusUpdateInterval.fetch();
     stopAutoRefresh();
     if (duration == 0) return;
-    if (duration < 0 || duration > 10) {
+    if (duration <= 1 || duration > 10) {
       Loggers.app.warning('Invalid duration: $duration, use default 3');
       duration = 3;
     }
