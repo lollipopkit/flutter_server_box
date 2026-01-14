@@ -84,6 +84,7 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
   String? _streamingContent;
   String? _error;
   bool _isStreaming = false;
+  bool _isMinimized = false;
 
   @override
   void initState() {
@@ -387,9 +388,10 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final bottomPadding = MediaQuery.viewInsetsOf(context).bottom;
+    final heightFactor = _isMinimized ? 0.18 : 0.85;
 
     return FractionallySizedBox(
-      heightFactor: 0.85,
+      heightFactor: heightFactor,
       child: SafeArea(
         child: Column(
           children: [
@@ -402,80 +404,92 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
                   if (_isStreaming)
                     const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2)),
                   const Spacer(),
+                  IconButton(
+                    icon: Icon(_isMinimized ? Icons.unfold_more : Icons.unfold_less),
+                    onPressed: () {
+                      FocusManager.instance.primaryFocus?.unfocus();
+                      setState(() {
+                        _isMinimized = !_isMinimized;
+                      });
+                    },
+                  ),
                   IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.of(context).pop()),
                 ],
               ),
             ),
-            Expanded(
-              child: Scrollbar(
-                controller: _scrollController,
-                child: ListView(
+            if (!_isMinimized) ...[
+              Expanded(
+                child: Scrollbar(
                   controller: _scrollController,
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                  children: [
-                    Text(context.l10n.askAiSelectedContent, style: theme.textTheme.titleMedium),
-                    const SizedBox(height: 6),
-                    CardX(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: SelectableText(
-                          widget.selection,
-                          style: const TextStyle(fontFamily: 'monospace'),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(context.l10n.askAiConversation, style: theme.textTheme.titleMedium),
-                    const SizedBox(height: 6),
-                    ..._buildConversationWidgets(context, theme),
-                    if (_error != null) ...[
-                      const SizedBox(height: 16),
+                  child: ListView(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                    children: [
+                      Text(context.l10n.askAiSelectedContent, style: theme.textTheme.titleMedium),
+                      const SizedBox(height: 6),
                       CardX(
                         child: Padding(
                           padding: const EdgeInsets.all(12),
-                          child: Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
+                          child: SelectableText(
+                            widget.selection,
+                            style: const TextStyle(fontFamily: 'monospace'),
+                          ),
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      Text(context.l10n.askAiConversation, style: theme.textTheme.titleMedium),
+                      const SizedBox(height: 6),
+                      ..._buildConversationWidgets(context, theme),
+                      if (_error != null) ...[
+                        const SizedBox(height: 16),
+                        CardX(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
+                          ),
+                        ),
+                      ],
+                      if (_isStreaming) ...[const SizedBox(height: 16), const LinearProgressIndicator()],
+                      const SizedBox(height: 16),
                     ],
-                    if (_isStreaming) ...[const SizedBox(height: 16), const LinearProgressIndicator()],
-                    const SizedBox(height: 16),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: Text(
-              context.l10n.askAiDisclaimer,
-              style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.error,
-                    fontWeight: FontWeight.bold,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + bottomPadding),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Input(
-                    controller: _inputController,
-                    minLines: 1,
-                    maxLines: 4,
-                    hint: context.l10n.askAiFollowUpHint,
-                    action: TextInputAction.send,
-                    onSubmitted: (_) => _sendMessage(),
-                  ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Text(
+                  context.l10n.askAiDisclaimer,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.error,
+                        fontWeight: FontWeight.bold,
+                      ),
+                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(width: 12),
-                Btn.icon(
-                  onTap: _isStreaming || _inputController.text.trim().isEmpty ? null : _sendMessage,
-                  icon: const Icon(Icons.send, size: 18),
-                ),
-              ],
-            ).cardx,
-          ),
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + bottomPadding),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Input(
+                        controller: _inputController,
+                        minLines: 1,
+                        maxLines: 4,
+                        hint: context.l10n.askAiFollowUpHint,
+                        action: TextInputAction.send,
+                        onSubmitted: (_) => _sendMessage(),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Btn.icon(
+                      onTap: _isStreaming || _inputController.text.trim().isEmpty ? null : _sendMessage,
+                      icon: const Icon(Icons.send, size: 18),
+                    ),
+                  ],
+                ).cardx,
+              ),
+            ] else
+              const SizedBox(height: 8),
           ],
         ),
       ),
