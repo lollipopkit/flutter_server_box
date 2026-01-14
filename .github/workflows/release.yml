@@ -108,7 +108,13 @@ jobs:
       - name: Build
         run: |
           dart run fl_build -p ios -- --no-codesign
-          cp build/ios/ipa/*.ipa ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_ios.ipa
+          IPA_FILE=$(find build/ios/ipa -name "*.ipa" | head -n 1)
+          if [ -z "$IPA_FILE" ]; then
+            echo "Error: No .ipa file found in build/ios/ipa"
+            exit 1
+          fi
+          echo "Found IPA: $IPA_FILE"
+          cp "$IPA_FILE" "${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_ios.ipa"
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
