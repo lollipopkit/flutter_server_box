@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ServerState {
 
- Spi get spi; ServerStatus get status; ServerConn get conn; SSHClient? get client; Future<void>? get updateFuture;
+ Spi get spi; ServerStatus get status; ServerConn get conn; SSHClient? get client;
 /// Create a copy of ServerState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $ServerStateCopyWith<ServerState> get copyWith => _$ServerStateCopyWithImpl<Serv
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServerState&&(identical(other.spi, spi) || other.spi == spi)&&(identical(other.status, status) || other.status == status)&&(identical(other.conn, conn) || other.conn == conn)&&(identical(other.client, client) || other.client == client)&&(identical(other.updateFuture, updateFuture) || other.updateFuture == updateFuture));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServerState&&(identical(other.spi, spi) || other.spi == spi)&&(identical(other.status, status) || other.status == status)&&(identical(other.conn, conn) || other.conn == conn)&&(identical(other.client, client) || other.client == client));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,spi,status,conn,client,updateFuture);
+int get hashCode => Object.hash(runtimeType,spi,status,conn,client);
 
 @override
 String toString() {
-  return 'ServerState(spi: $spi, status: $status, conn: $conn, client: $client, updateFuture: $updateFuture)';
+  return 'ServerState(spi: $spi, status: $status, conn: $conn, client: $client)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $ServerStateCopyWith<$Res>  {
   factory $ServerStateCopyWith(ServerState value, $Res Function(ServerState) _then) = _$ServerStateCopyWithImpl;
 @useResult
 $Res call({
- Spi spi, ServerStatus status, ServerConn conn, SSHClient? client, Future<void>? updateFuture
+ Spi spi, ServerStatus status, ServerConn conn, SSHClient? client
 });
 
 
@@ -62,14 +62,13 @@ class _$ServerStateCopyWithImpl<$Res>
 
 /// Create a copy of ServerState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? spi = null,Object? status = null,Object? conn = null,Object? client = freezed,Object? updateFuture = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? spi = null,Object? status = null,Object? conn = null,Object? client = freezed,}) {
   return _then(_self.copyWith(
 spi: null == spi ? _self.spi : spi // ignore: cast_nullable_to_non_nullable
 as Spi,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as ServerStatus,conn: null == conn ? _self.conn : conn // ignore: cast_nullable_to_non_nullable
 as ServerConn,client: freezed == client ? _self.client : client // ignore: cast_nullable_to_non_nullable
-as SSHClient?,updateFuture: freezed == updateFuture ? _self.updateFuture : updateFuture // ignore: cast_nullable_to_non_nullable
-as Future<void>?,
+as SSHClient?,
   ));
 }
 /// Create a copy of ServerState
@@ -163,10 +162,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Spi spi,  ServerStatus status,  ServerConn conn,  SSHClient? client,  Future<void>? updateFuture)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Spi spi,  ServerStatus status,  ServerConn conn,  SSHClient? client)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ServerState() when $default != null:
-return $default(_that.spi,_that.status,_that.conn,_that.client,_that.updateFuture);case _:
+return $default(_that.spi,_that.status,_that.conn,_that.client);case _:
   return orElse();
 
 }
@@ -184,10 +183,10 @@ return $default(_that.spi,_that.status,_that.conn,_that.client,_that.updateFutur
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Spi spi,  ServerStatus status,  ServerConn conn,  SSHClient? client,  Future<void>? updateFuture)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Spi spi,  ServerStatus status,  ServerConn conn,  SSHClient? client)  $default,) {final _that = this;
 switch (_that) {
 case _ServerState():
-return $default(_that.spi,_that.status,_that.conn,_that.client,_that.updateFuture);case _:
+return $default(_that.spi,_that.status,_that.conn,_that.client);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -204,10 +203,10 @@ return $default(_that.spi,_that.status,_that.conn,_that.client,_that.updateFutur
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Spi spi,  ServerStatus status,  ServerConn conn,  SSHClient? client,  Future<void>? updateFuture)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Spi spi,  ServerStatus status,  ServerConn conn,  SSHClient? client)?  $default,) {final _that = this;
 switch (_that) {
 case _ServerState() when $default != null:
-return $default(_that.spi,_that.status,_that.conn,_that.client,_that.updateFuture);case _:
+return $default(_that.spi,_that.status,_that.conn,_that.client);case _:
   return null;
 
 }
@@ -219,14 +218,13 @@ return $default(_that.spi,_that.status,_that.conn,_that.client,_that.updateFutur
 
 
 class _ServerState implements ServerState {
-  const _ServerState({required this.spi, required this.status, this.conn = ServerConn.disconnected, this.client, this.updateFuture});
+  const _ServerState({required this.spi, required this.status, this.conn = ServerConn.disconnected, this.client});
   
 
 @override final  Spi spi;
 @override final  ServerStatus status;
 @override@JsonKey() final  ServerConn conn;
 @override final  SSHClient? client;
-@override final  Future<void>? updateFuture;
 
 /// Create a copy of ServerState
 /// with the given fields replaced by the non-null parameter values.
@@ -238,16 +236,16 @@ _$ServerStateCopyWith<_ServerState> get copyWith => __$ServerStateCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServerState&&(identical(other.spi, spi) || other.spi == spi)&&(identical(other.status, status) || other.status == status)&&(identical(other.conn, conn) || other.conn == conn)&&(identical(other.client, client) || other.client == client)&&(identical(other.updateFuture, updateFuture) || other.updateFuture == updateFuture));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServerState&&(identical(other.spi, spi) || other.spi == spi)&&(identical(other.status, status) || other.status == status)&&(identical(other.conn, conn) || other.conn == conn)&&(identical(other.client, client) || other.client == client));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,spi,status,conn,client,updateFuture);
+int get hashCode => Object.hash(runtimeType,spi,status,conn,client);
 
 @override
 String toString() {
-  return 'ServerState(spi: $spi, status: $status, conn: $conn, client: $client, updateFuture: $updateFuture)';
+  return 'ServerState(spi: $spi, status: $status, conn: $conn, client: $client)';
 }
 
 
@@ -258,7 +256,7 @@ abstract mixin class _$ServerStateCopyWith<$Res> implements $ServerStateCopyWith
   factory _$ServerStateCopyWith(_ServerState value, $Res Function(_ServerState) _then) = __$ServerStateCopyWithImpl;
 @override @useResult
 $Res call({
- Spi spi, ServerStatus status, ServerConn conn, SSHClient? client, Future<void>? updateFuture
+ Spi spi, ServerStatus status, ServerConn conn, SSHClient? client
 });
 
 
@@ -275,14 +273,13 @@ class __$ServerStateCopyWithImpl<$Res>
 
 /// Create a copy of ServerState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? spi = null,Object? status = null,Object? conn = null,Object? client = freezed,Object? updateFuture = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? spi = null,Object? status = null,Object? conn = null,Object? client = freezed,}) {
   return _then(_ServerState(
 spi: null == spi ? _self.spi : spi // ignore: cast_nullable_to_non_nullable
 as Spi,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as ServerStatus,conn: null == conn ? _self.conn : conn // ignore: cast_nullable_to_non_nullable
 as ServerConn,client: freezed == client ? _self.client : client // ignore: cast_nullable_to_non_nullable
-as SSHClient?,updateFuture: freezed == updateFuture ? _self.updateFuture : updateFuture // ignore: cast_nullable_to_non_nullable
-as Future<void>?,
+as SSHClient?,
   ));
 }
 

@@ -35,7 +35,6 @@ abstract class ServerState with _$ServerState {
     required ServerStatus status,
     @Default(ServerConn.disconnected) ServerConn conn,
     SSHClient? client,
-    Future<void>? updateFuture,
   }) = _ServerState;
 }
 
@@ -81,19 +80,16 @@ class ServerNotifier extends _$ServerNotifier {
   }
 
   // Refresh server status
+  bool _isRefreshing = false;
+
   Future<void> refresh() async {
-    if (state.updateFuture != null) {
-      await state.updateFuture;
-      return;
-    }
+    if (_isRefreshing) return;
 
-    final updateFuture = _updateServer();
-    state = state.copyWith(updateFuture: updateFuture);
-
+    _isRefreshing = true;
     try {
-      await updateFuture;
+      await _updateServer();
     } finally {
-      state = state.copyWith(updateFuture: null);
+      _isRefreshing = false;
     }
   }
 

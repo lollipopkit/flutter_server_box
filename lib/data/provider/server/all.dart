@@ -103,37 +103,44 @@ class ServersNotifier extends _$ServersNotifier {
       return;
     }
 
-    await Future.wait(
-      state.servers.entries.map((entry) async {
-        final serverId = entry.key;
-        final spi = entry.value;
+    final serversToRefresh = <MapEntry<String, Spi>>[];
+    final idsToResetLimiter = <String>[];
 
-        if (onlyFailed) {
-          final serverState = ref.read(serverProvider(serverId));
-          if (serverState.conn != ServerConn.failed) return;
-          TryLimiter.reset(serverId);
-        }
+    for (final entry in state.servers.entries) {
+      final serverId = entry.key;
+      final spi = entry.value;
 
-        if (state.manualDisconnectedIds.contains(serverId)) return;
+      if (state.manualDisconnectedIds.contains(serverId)) continue;
 
-        final serverState = ref.read(serverProvider(serverId));
-        if (serverState.conn == ServerConn.disconnected && !spi.autoConnect) {
-          return;
-        }
+      final serverState = ref.read(serverProvider(serverId));
 
-        final serverNotifier = ref.read(serverProvider(serverId).notifier);
-        await serverNotifier.refresh();
-      }),
-    );
+      if (onlyFailed) {
+        if (serverState.conn != ServerConn.failed) continue;
+        idsToResetLimiter.add(serverId);
+      }
+
+      if (serverState.conn == ServerConn.disconnected && !spi.autoConnect) continue;
+
+      serversToRefresh.add(entry);
+    }
+
+    for (final id in idsToResetLimiter) {
+      TryLimiter.reset(id);
+    }
+
+    for (final entry in serversToRefresh) {
+      final serverNotifier = ref.read(serverProvider(entry.key).notifier);
+      serverNotifier.refresh().ignore();
+    }
   }
 
   Future<void> startAutoRefresh() async {
     var duration = Stores.setting.serverStatusUpdateInterval.fetch();
     stopAutoRefresh();
     if (duration == 0) return;
-    if (duration < 0 || duration > 10 || duration == 1) {
-      duration = 3;
+    if (duration <= 1 || duration > 10) {
       Loggers.app.warning('Invalid duration: $duration, use default 3');
+      duration = 3;
     }
     final timer = Timer.periodic(Duration(seconds: duration), (_) async {
       await refresh();
@@ -145,8 +152,8 @@ class ServersNotifier extends _$ServersNotifier {
     final timer = state.autoRefreshTimer;
     if (timer != null) {
       timer.cancel();
-      state = state.copyWith(autoRefreshTimer: null);
     }
+    state = state.copyWith(autoRefreshTimer: null);
   }
 
   bool get isAutoRefreshOn => state.autoRefreshTimer != null;
