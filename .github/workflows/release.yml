@@ -134,10 +134,27 @@ jobs:
         with:
           channel: "stable"
       - name: Build
+        env:
+          APP_NAME: ${{ env.APP_NAME }}
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: |
           dart run fl_build -p macos -- --no-codesign
-          cd build/macos/Build/Products/Release
-          zip -r "../../../../../${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_macos.zip" "${{ env.APP_NAME }}.app"
+
+          RELEASE_DIR="$GITHUB_WORKSPACE/build/macos/Build/Products/Release"
+          APP_DIR="$RELEASE_DIR/$APP_NAME.app"
+          OUT_ZIP="$GITHUB_WORKSPACE/${APP_NAME}_${BUILD_NUMBER}_macos.zip"
+
+          if [ ! -d "$RELEASE_DIR" ]; then
+            echo "Error: macOS release directory not found: $RELEASE_DIR"
+            exit 1
+          fi
+          if [ ! -d "$APP_DIR" ]; then
+            echo "Error: macOS app bundle not found: $APP_DIR"
+            exit 1
+          fi
+
+          cd "$RELEASE_DIR"
+          zip -r "$OUT_ZIP" "$APP_NAME.app"
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
