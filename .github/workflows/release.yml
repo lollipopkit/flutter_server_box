@@ -95,20 +95,47 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # releaseApple:
-  #   name: Release ios and macos
-  #   runs-on: macos-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v6
-  #     - name: Install Flutter
-  #       uses: subosito/flutter-action@v2
-  #     - name: Build
-  #       run: dart run fl_build -p ios
-  #     - name: Create Release
-  #       uses: softprops/action-gh-release@v2
-  #       with:
-  #         files: |
-  #           ${{ env.APP_NAME }}_universal.ipa
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  releaseIOS:
+    name: Release iOS
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+      - name: Build
+        run: |
+          dart run fl_build -p ios -- --no-codesign
+          cp build/ios/ipa/*.ipa ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_ios.ipa
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_ios.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  releaseMacOS:
+    name: Release macOS
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+      - name: Build
+        run: |
+          dart run fl_build -p macos -- --no-codesign
+          cd build/macos/Build/Products/Release
+          zip -r "../../../../../${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_macos.zip" "${{ env.APP_NAME }}.app"
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_macos.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
