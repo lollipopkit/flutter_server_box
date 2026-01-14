@@ -390,11 +390,16 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
     final bottomPadding = MediaQuery.viewInsetsOf(context).bottom;
     final heightFactor = _isMinimized ? 0.18 : 0.85;
 
-    return FractionallySizedBox(
-      heightFactor: heightFactor,
-      child: SafeArea(
-        child: Column(
-          children: [
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+      alignment: Alignment.topCenter,
+      child: ClipRect(
+        child: FractionallySizedBox(
+          heightFactor: heightFactor,
+          child: SafeArea(
+            child: Column(
+              children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: Row(
@@ -406,6 +411,7 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
                   const Spacer(),
                   IconButton(
                     icon: Icon(_isMinimized ? Icons.unfold_more : Icons.unfold_less),
+                    tooltip: libL10n.fold,
                     onPressed: () {
                       FocusManager.instance.primaryFocus?.unfocus();
                       setState(() {
@@ -490,7 +496,9 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
               ),
             ] else
               const SizedBox(height: 8),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );
