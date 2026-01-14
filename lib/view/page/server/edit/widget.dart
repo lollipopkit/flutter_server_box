@@ -349,36 +349,88 @@ extension _Widgets on _ServerEditPageState {
 
   Widget _buildJumpServer() {
     const padding = EdgeInsets.only(left: 13, right: 13, bottom: 7);
-    final srvs = ref
-        .watch(serversProvider)
-        .servers
-        .values
-        .where((e) => e.jumpId == null)
-        .where((e) => e.id != spi?.id)
-        .toList();
-    final choice = _jumpServer.listenVal((val) {
+    final servers = ref.watch(serversProvider).servers;
+    final selfId = spi?.id;
+
+    bool wouldCreateCycle(Spi candidate) {
+      if (selfId == null) return false;
+      if (candidate.id == selfId) return true;
+
+      final visited = <String>{selfId};
+      var current = candidate;
+      while (true) {
+        final jumpId = current.jumpId;
+        if (jumpId == null) return false;
+        if (jumpId == selfId) return true;
+        if (!visited.add(jumpId)) {
+          // Candidate already contains a loop; treat as invalid to avoid infinite jump.
+          return true;
+        }
+        final next = servers[jumpId];
+        if (next == null) return false;
+        current = next;
+      }
+    }
+
+    String? buildJumpChainText(String jumpId) {
+      final chain = <Spi>[];
+      final visited = <String>{};
+      var currentId = jumpId;
+
+      while (true) {
+        if (!visited.add(currentId)) {
+          break;
+        }
+        final srv = servers[currentId];
+        if (srv == null) break;
+        chain.add(srv);
+        final nextId = srv.jumpId;
+        if (nextId == null) break;
+        currentId = nextId;
+      }
+
+      if (chain.isEmpty) return null;
+      // Display as actual connection order: farthest -> ... -> nearest.
+      return chain.reversed.map((e) => e.name).join(' → ');
+    }
+
+    final srvs = servers.values.where((e) => e.id != selfId && !wouldCreateCycle(e)).toList();
+    final body = _jumpServer.listenVal((val) {
       final srv = srvs.firstWhereOrNull((e) => e.id == _jumpServer.value);
-      return Choice<Spi>(
-        multiple: false,
-        clearable: true,
-        value: srv != null ? [srv] : [],
-        builder: (state, _) => Wrap(
-          children: List<Widget>.generate(srvs.length, (index) {
-            final item = srvs[index];
-            return ChoiceChipX<Spi>(
-              label: item.name,
-              state: state,
-              value: item,
-              onSelected: (srv, on) {
-                if (on) {
-                  _jumpServer.value = srv.id;
-                } else {
-                  _jumpServer.value = null;
-                }
-              },
-            );
-          }),
-        ),
+      final chainText = val == null ? null : buildJumpChainText(val);
+
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (chainText != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 7),
+              child: Text(chainText, style: UIs.textGrey),
+            ),
+          Choice<Spi>(
+            multiple: false,
+            clearable: true,
+            value: srv != null ? [srv] : [],
+            builder: (state, _) => Wrap(
+              children: List<Widget>.generate(srvs.length, (index) {
+                final item = srvs[index];
+                return ChoiceChipX<Spi>(
+                  label: item.name,
+                  state: state,
+                  value: item,
+                  onSelected: (srv, on) {
+                    if (on) {
+                      _jumpServer.value = srv.id;
+                    } else {
+                      _jumpServer.value = null;
+                    }
+                  },
+                );
+              }),
+            ),
+          ),
+        ],
       );
     });
     return ExpandTile(
@@ -386,7 +438,7 @@ extension _Widgets on _ServerEditPageState {
       initiallyExpanded: _jumpServer.value != null,
       childrenPadding: padding,
       title: Text(l10n.jumpServer),
-      children: [choice],
+      children: [body],
     ).cardx;
   }
 

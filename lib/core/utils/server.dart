@@ -45,14 +45,17 @@ Future<SSHClient> genClient(
   /// Only pass this param if using multi-threading and key login
   String? privateKey,
 
-  /// Only pass this param if using multi-threading and key login
-  String? jumpPrivateKey,
-  Duration timeout = const Duration(seconds: 5),
-
-  /// [Spi] of the jump server
+  /// Pre-resolved jump chain (in `spi.jumpId` order: immediate -> farthest).
   ///
-  /// Must pass this param if using multi-threading and key login
-  Spi? jumpSpi,
+  /// This is mainly used when `Stores` is unavailable (e.g. in an isolate).
+  List<Spi>? jumpChain,
+
+  /// Private keys for [jumpChain], aligned by index.
+  ///
+  /// If a jump server uses key auth (`keyId != null`), you must provide the
+  /// decrypted key pem here (or `genClient` will try to read from `Stores`).
+  List<String?>? jumpPrivateKeys,
+  Duration timeout = const Duration(seconds: 5),
 
   /// Handle keyboard-interactive authentication
   SSHUserInfoRequestHandler? onKeyboardInteractive,
@@ -60,6 +63,39 @@ Future<SSHClient> genClient(
   void Function(String storageKey, String fingerprintHex)? onHostKeyAccepted,
   Future<bool> Function(HostKeyPromptInfo info)? onHostKeyPrompt,
 }) async {
+  return _genClientInternal(
+    spi,
+    onStatus: onStatus,
+    privateKey: privateKey,
+    jumpChain: jumpChain,
+    jumpPrivateKeys: jumpPrivateKeys,
+    timeout: timeout,
+    onKeyboardInteractive: onKeyboardInteractive,
+    knownHostFingerprints: knownHostFingerprints,
+    onHostKeyAccepted: onHostKeyAccepted,
+    onHostKeyPrompt: onHostKeyPrompt,
+    visited: <String>{},
+  );
+}
+
+Future<SSHClient> _genClientInternal(
+  Spi spi, {
+  void Function(GenSSHClientStatus)? onStatus,
+  String? privateKey,
+  List<Spi>? jumpChain,
+  List<String?>? jumpPrivateKeys,
+  Duration timeout = const Duration(seconds: 5),
+  SSHUserInfoRequestHandler? onKeyboardInteractive,
+  Map<String, String>? knownHostFingerprints,
+  void Function(String storageKey, String fingerprintHex)? onHostKeyAccepted,
+  Future<bool> Function(HostKeyPromptInfo info)? onHostKeyPrompt,
+  required Set<String> visited,
+}) async {
+  final identifier = _hostIdentifier(spi);
+  if (!visited.add(identifier)) {
+    throw SSHErr(type: SSHErrType.connect, message: 'Jump loop detected at ${spi.name} ($identifier)');
+  }
+
   onStatus?.call(GenSSHClientStatus.socket);
 
   final hostKeyCache = Map<String, String>.from(knownHostFingerprints ?? _loadKnownHostFingerprints());
@@ -70,20 +106,42 @@ Future<SSHClient> genClient(
 
   final socket = await () async {
     // Proxy
-    final jumpSpi_ = () {
-      // Multi-thread or key login
-      if (jumpSpi != null) return jumpSpi;
-      // Main thread
-      if (spi.jumpId != null) return Stores.server.box.get(spi.jumpId);
-    }();
+    final jumpId = spi.jumpId;
+    Spi? jumpSpi_;
+    String? jumpPrivateKey;
+
+    if (jumpId != null) {
+      if (jumpChain != null) {
+        final idx = jumpChain.indexWhere((e) => e.id == jumpId || e.oldId == jumpId);
+        if (idx == -1) {
+          throw SSHErr(type: SSHErrType.connect, message: 'Jump server not found in provided chain: $jumpId');
+        }
+        jumpSpi_ = jumpChain[idx];
+        jumpPrivateKey = jumpPrivateKeys != null && idx < jumpPrivateKeys.length ? jumpPrivateKeys[idx] : null;
+
+        if (jumpSpi_.keyId != null && jumpPrivateKey == null) {
+          throw SSHErr(
+            type: SSHErrType.noPrivateKey,
+            message: l10n.privateKeyNotFoundFmt(jumpSpi_.keyId ?? ''),
+          );
+        }
+      } else {
+        jumpSpi_ = Stores.server.box.get(jumpId);
+      }
+    }
+
     if (jumpSpi_ != null) {
-      final jumpClient = await genClient(
+      final jumpClient = await _genClientInternal(
         jumpSpi_,
         privateKey: jumpPrivateKey,
+        jumpChain: jumpChain,
+        jumpPrivateKeys: jumpPrivateKeys,
         timeout: timeout,
+        onKeyboardInteractive: onKeyboardInteractive,
         knownHostFingerprints: hostKeyCache,
         onHostKeyAccepted: hostKeyPersist,
-        onHostKeyPrompt: onHostKeyPrompt,
+        onHostKeyPrompt: hostKeyPrompt,
+        visited: visited,
       );
 
       return await jumpClient.forwardLocal(spi.ip, spi.port);
@@ -300,6 +358,25 @@ Future<void> ensureKnownHostKey(
   Duration timeout = const Duration(seconds: 5),
   SSHUserInfoRequestHandler? onKeyboardInteractive,
 }) async {
+  return _ensureKnownHostKeyInternal(
+    spi,
+    timeout: timeout,
+    onKeyboardInteractive: onKeyboardInteractive,
+    visited: <String>{},
+  );
+}
+
+Future<void> _ensureKnownHostKeyInternal(
+  Spi spi, {
+  Duration timeout = const Duration(seconds: 5),
+  SSHUserInfoRequestHandler? onKeyboardInteractive,
+  required Set<String> visited,
+}) async {
+  final identifier = _hostIdentifier(spi);
+  if (!visited.add(identifier)) {
+    throw SSHErr(type: SSHErrType.connect, message: 'Jump loop detected at ${spi.name} ($identifier)');
+  }
+
   final cache = _loadKnownHostFingerprints();
   if (_hasKnownHostFingerprintForSpi(spi, cache)) {
     return;
@@ -307,10 +384,11 @@ Future<void> ensureKnownHostKey(
 
   final jumpSpi = spi.jumpId != null ? Stores.server.box.get(spi.jumpId) : null;
   if (jumpSpi != null && !_hasKnownHostFingerprintForSpi(jumpSpi, cache)) {
-    await ensureKnownHostKey(
+    await _ensureKnownHostKeyInternal(
       jumpSpi,
       timeout: timeout,
       onKeyboardInteractive: onKeyboardInteractive,
+      visited: visited,
     );
     cache.addAll(_loadKnownHostFingerprints());
     if (_hasKnownHostFingerprintForSpi(spi, cache)) return;

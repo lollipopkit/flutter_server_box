@@ -6,8 +6,8 @@ class SftpReq {
   final String localPath;
   final SftpReqType type;
   String? privateKey;
-  Spi? jumpSpi;
-  String? jumpPrivateKey;
+  List<Spi>? jumpChain;
+  List<String?>? jumpPrivateKeys;
   Map<String, String>? knownHostFingerprints;
 
   SftpReq(this.spi, this.remotePath, this.localPath, this.type) {
@@ -16,8 +16,32 @@ class SftpReq {
       privateKey = getPrivateKey(keyId);
     }
     if (spi.jumpId != null) {
-      jumpSpi = Stores.server.box.get(spi.jumpId);
-      jumpPrivateKey = Stores.key.fetchOne(jumpSpi?.keyId)?.key;
+      final chain = <Spi>[];
+      final keys = <String?>[];
+      final visited = <String>{spi.id.isNotEmpty ? spi.id : spi.oldId};
+
+      var currentJumpId = spi.jumpId;
+      while (currentJumpId != null) {
+        final jumpSpi = Stores.server.box.get(currentJumpId);
+        if (jumpSpi == null) break;
+
+        // Prevent infinite loops if user mis-configured jump servers.
+        final jumpId = jumpSpi.id.isNotEmpty ? jumpSpi.id : jumpSpi.oldId;
+        if (!visited.add(jumpId)) {
+          throw SSHErr(
+            type: SSHErrType.connect,
+            message: 'Jump loop detected while building SFTP chain: ${jumpSpi.name}',
+          );
+        }
+
+        chain.add(jumpSpi);
+        keys.add(jumpSpi.keyId != null ? getPrivateKey(jumpSpi.keyId!) : null);
+        currentJumpId = jumpSpi.jumpId;
+      }
+
+      // Always set when `spi.jumpId != null` so the isolate won't fallback to Stores.
+      jumpChain = chain;
+      jumpPrivateKeys = keys;
     }
     try {
       knownHostFingerprints = Map<String, String>.from(Stores.setting.sshKnownHostFingerprints.get());
@@ -90,4 +114,4 @@ class SftpReqStatus {
   }
 }
 
-enum SftpWorkerStatus { preparing, sshConnectted, loading, finished }
+enum SftpWorkerStatus { preparing, sshConnected, loading, finished }

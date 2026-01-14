@@ -53,7 +53,7 @@ class _SftpMissionPageState extends ConsumerState<SftpMissionPage> {
     return switch (status.status) {
       const (SftpWorkerStatus.finished) => _buildFinished(status),
       const (SftpWorkerStatus.loading) => _buildLoading(status),
-      const (SftpWorkerStatus.sshConnectted) => _buildConnected(status),
+      const (SftpWorkerStatus.sshConnected) => _buildConnected(status),
       const (SftpWorkerStatus.preparing) => _buildPreparing(status),
       _ => _buildDefault(status),
     };
