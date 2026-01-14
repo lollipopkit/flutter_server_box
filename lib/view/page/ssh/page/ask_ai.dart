@@ -390,14 +390,19 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
     final bottomPadding = MediaQuery.viewInsetsOf(context).bottom;
     final heightFactor = _isMinimized ? 0.18 : 0.85;
 
-    return AnimatedSize(
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(end: heightFactor),
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOutCubic,
-      alignment: Alignment.topCenter,
-      child: ClipRect(
-        child: FractionallySizedBox(
-          heightFactor: heightFactor,
-          child: SafeArea(
+      builder: (context, animatedHeightFactor, child) {
+        return ClipRect(
+          child: FractionallySizedBox(
+            heightFactor: animatedHeightFactor,
+            child: child,
+          ),
+        );
+      },
+      child: SafeArea(
             child: Column(
               children: [
             Padding(
@@ -499,8 +504,6 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
               ],
             ),
           ),
-        ),
-      ),
     );
   }
 }
