@@ -188,10 +188,10 @@ Future<SSHClient> _genClientInternal(
         for (var i = 0; i < jumpChain.length; i++) {
           final s = jumpChain[i];
           injectedSpiMap[s.id] = s;
-          injectedSpiMap[s.oldId] = s;
+          if (s.oldId.isNotEmpty) injectedSpiMap[s.oldId] = s;
           if (jumpPrivateKeys != null && i < jumpPrivateKeys.length) {
             injectedKeyMap[s.id] = jumpPrivateKeys[i];
-            injectedKeyMap[s.oldId] = jumpPrivateKeys[i];
+            if (s.oldId.isNotEmpty) injectedKeyMap[s.oldId] = jumpPrivateKeys[i];
           }
         }
       }
